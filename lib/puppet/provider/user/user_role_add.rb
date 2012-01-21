@@ -2,7 +2,7 @@ require 'puppet/util/user_attr'
 
 Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source => :useradd do
 
-  desc "User management inherits `useradd` and adds logic to manage roles on Solaris using roleadd."
+  desc "User and role management on Solaris, via `useradd` and `roleadd`."
 
   defaultfor :operatingsystem => :solaris
 
@@ -168,25 +168,29 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   #Smooth like 80 grit
   def password=(cryptopw)
     begin
-      File.open("/etc/shadow", "r") do |shadow|
-        File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
+      File.open(shadow_file, "r") do |shadow|
+        File.open("#{shadow_file}_tmp", "w", 0600) do |shadow_tmp|
           while line = shadow.gets
             line_arr = line.split(':')
             if line_arr[0] == @resource[:name]
               line_arr[1] = cryptopw
+              line_arr[2] = Time.now().to_i / 86400
               line = line_arr.join(':')
             end
             shadow_tmp.print line
           end
         end
       end
-      File.rename("/etc/shadow_tmp", "/etc/shadow")
+      File.rename("#{shadow_file}_tmp", shadow_file)
     rescue => detail
       fail "Could not write temporary shadow file: #{detail}"
     ensure
       # Make sure this *always* gets deleted
-      File.unlink("/etc/shadow_tmp") if File.exist?("/etc/shadow_tmp")
+      File.unlink("#{shadow_file}_tmp") if File.exist?("#{shadow_file}_tmp")
     end
   end
-end
 
+  private
+
+  def shadow_file; '/etc/shadow'; end
+end

@@ -9,25 +9,39 @@ describe Puppet::Parser::AST::ResourceReference do
     @scope = Puppet::Parser::Scope.new
   end
 
+  def ast_name(value)
+    Puppet::Parser::AST::Name.new(:value => value)
+  end
+
   def newref(type, title)
-    title = stub 'title', :safeevaluate => title
-    ref = Puppet::Parser::AST::ResourceReference.new(:type => type, :title => title)
+    title_array = Puppet::Parser::AST::ASTArray.new(:children => [title])
+    ref = Puppet::Parser::AST::ResourceReference.new(:type => type, :title => title_array)
   end
 
   it "should correctly produce reference strings" do
-    newref("File", "/tmp/yay").evaluate(@scope).to_s.should == "File[/tmp/yay]"
+    newref("File", ast_name("/tmp/yay")).evaluate(@scope).to_s.should == "File[/tmp/yay]"
   end
 
   it "should produce a single resource when the title evaluates to a string" do
-    newref("File", "/tmp/yay").evaluate(@scope).should == Puppet::Resource.new("file", "/tmp/yay")
+    newref("File", ast_name("/tmp/yay")).evaluate(@scope).should == Puppet::Resource.new("file", "/tmp/yay")
   end
 
   it "should return an array of resources if given an array of titles" do
-    titles = mock 'titles', :safeevaluate => ["title1","title2"]
+    titles = Puppet::Parser::AST::ASTArray.new(:children => [ast_name("title1"), ast_name("title2")])
     ref = ast::ResourceReference.new( :title => titles, :type => "File" )
     ref.evaluate(@scope).should == [
       Puppet::Resource.new("file", "title1"),
       Puppet::Resource.new("file", "title2")
+    ]
+  end
+
+  it "should return an array of resources if given a variable containing an array of titles" do
+    @scope["my_files"] = ["foo", "bar"]
+    titles = Puppet::Parser::AST::Variable.new(:value => "my_files")
+    ref = newref('File', titles)
+    ref.evaluate(@scope).should == [
+      Puppet::Resource.new("file", "foo"),
+      Puppet::Resource.new("file", "bar")
     ]
   end
 

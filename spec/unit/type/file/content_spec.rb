@@ -1,5 +1,8 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet/network/http_pool'
+
+require 'puppet/network/resolver'
 
 content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
@@ -13,7 +16,7 @@ describe content do
 
   describe "when determining the checksum type" do
     it "should use the type specified in the source checksum if a source is set" do
-      @resource[:source] = "/foo"
+      @resource[:source] = File.expand_path("/foo")
       @resource.parameter(:source).expects(:checksum).returns "{md5lite}eh"
 
       @content = content.new(:resource => @resource)
@@ -178,7 +181,7 @@ describe content do
         it "should display a diff if the current contents are different from the desired content" do
           @content.should = "some content"
           @content.expects(:diff).returns("my diff").once
-          @content.expects(:print).with("my diff").once
+          @content.expects(:notice).with("\nmy diff").once
 
           @content.safe_insync?("other content")
         end
@@ -250,10 +253,11 @@ describe content do
     end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
-      @fh = File.open(@filename, 'w')
+      @fh = File.open(@filename, 'wb')
       @content.should = "{md5}foo"
       @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
       @content.write(@fh)
+      @fh.close
     end
 
     describe "from actual content" do
@@ -300,23 +304,23 @@ describe content do
 
     describe "from local source" do
       before(:each) do
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @sourcename = tmpfile('source')
-        @source_content = "source file content"*10000
-        @sourcefile = File.open(@sourcename, 'w') {|f| f.write @source_content}
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename
+
+        @source_content = "source file content\r\n"*10000
+        @sourcefile = File.open(@sourcename, 'wb') {|f| f.write @source_content}
 
         @content = @resource.newattr(:content)
-        @source = @resource.newattr(:source)
-        @source.stubs(:metadata).returns stub_everything('metadata', :source => @sourcename, :ftype => 'file')
+        @source = @resource.parameter :source #newattr(:source)
       end
 
       it "should copy content from the source to the file" do
         @resource.write(@source)
-        File.read(@filename).should == @source_content
+        Puppet::Util.binread(@filename).should == @source_content
       end
 
       it "should return the checksum computed" do
-        File.open(@filename, 'w') do |file|
+        File.open(@filename, 'wb') do |file|
           @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
         end
       end
@@ -326,11 +330,11 @@ describe content do
       before(:each) do
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @response = stub_everything 'response', :code => "200"
-        @source_content = "source file content"*10000
-        @response.stubs(:read_body).multiple_yields(*(["source file content"]*10000))
+        @source_content = "source file content\n"*10000
+        @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
 
         @conn = stub_everything 'connection'
-        @conn.stubs(:request_get).yields(@response)
+        @conn.stubs(:request_get).yields @response
         Puppet::Network::HttpPool.stubs(:http_instance).returns @conn
 
         @content = @resource.newattr(:content)
@@ -341,7 +345,7 @@ describe content do
 
       it "should write the contents to the file" do
         @resource.write(@source)
-        File.read(@filename).should == @source_content
+        Puppet::Util.binread(@filename).should == @source_content
       end
 
       it "should not write anything if source is not found" do

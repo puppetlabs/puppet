@@ -53,7 +53,7 @@ rescue LoadError
   $haverdoc = false
 end
 
-PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
+PREREQS = %w{openssl facter cgi}
 MIN_FACTER_VERSION = 1.5
 
 InstallOptions = OpenStruct.new
@@ -243,6 +243,14 @@ def prepare_installation
 
   if not InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
+  elsif $operatingsystem == "windows"
+    begin
+      require 'win32/dir'
+    rescue LoadError => e
+      puts "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir & win32-service gems: #{e}"
+      exit -1
+    end
+    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppet"
   end
@@ -283,18 +291,18 @@ def prepare_installation
   if not InstallOptions.destdir.nil?
     destdir = InstallOptions.destdir
   # To be deprecated once people move over to using --destdir option
-  elsif ENV['DESTDIR'] != nil?
+  elsif not ENV['DESTDIR'].nil?
     destdir = ENV['DESTDIR']
     warn "DESTDIR is deprecated. Use --destdir instead."
   else
     destdir = ''
   end
 
-  configdir = "#{destdir}#{configdir}"
-  bindir = "#{destdir}#{bindir}"
-  sbindir = "#{destdir}#{sbindir}"
-  mandir = "#{destdir}#{mandir}"
-  sitelibdir = "#{destdir}#{sitelibdir}"
+  configdir = join(destdir, configdir)
+  bindir = join(destdir, bindir)
+  sbindir = join(destdir, sbindir)
+  mandir = join(destdir, mandir)
+  sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
   FileUtils.makedirs(bindir)
@@ -311,6 +319,16 @@ def prepare_installation
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
   InstallOptions.man_dir  = mandir
+end
+
+##
+# Join two paths. On Windows, dir must be converted to a relative path,
+# by stripping the drive letter, but only if the basedir is not empty.
+#
+def join(basedir, dir)
+  return "#{basedir}#{dir[2..-1]}" if $operatingsystem == "windows" and basedir.length > 0 and dir.length > 2
+
+  "#{basedir}#{dir}"
 end
 
 ##
@@ -404,10 +422,14 @@ def install_binfile(from, op_file, target)
 
     if not installed_wrapper
       tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
-      cwn = File.join(Config::CONFIG['bindir'], op_file)
-      cwv = CMD_WRAPPER.gsub('<ruby>', ruby.gsub(%r{/}) { "\\" }).gsub!('<command>', cwn.gsub(%r{/}) { "\\" } )
-
-      File.open(tmp_file2, "wb") { |cw| cw.puts cwv }
+      cwv = <<-EOS
+@echo off
+setlocal
+set RUBY_BIN=%~dp0
+set RUBY_BIN=%RUBY_BIN:\\=/%
+"%RUBY_BIN%ruby.exe" -x "%RUBY_BIN%puppet" %*
+EOS
+      File.open(tmp_file2, "w") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
 
       File.unlink(tmp_file2)
@@ -417,17 +439,6 @@ def install_binfile(from, op_file, target)
   FileUtils.install(tmp_file, File.join(target, op_file), :mode => 0755, :verbose => true)
   File.unlink(tmp_file)
 end
-
-CMD_WRAPPER = <<-EOS
-@echo off
-if "%OS%"=="Windows_NT" goto WinNT
-<ruby> -x "<command>" %1 %2 %3 %4 %5 %6 %7 %8 %9
-goto done
-:WinNT
-<ruby> -x "<command>" %*
-goto done
-:done
-EOS
 
 check_prereqs
 prepare_installation

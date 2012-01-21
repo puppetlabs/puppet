@@ -2,9 +2,9 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec) do
+  include PuppetSpec::Files
+
   def exec_tester(command, exitstatus = 0, rest = {})
-    @user_name  = 'some_user_name'
-    @group_name = 'some_group_name'
     Puppet.features.stubs(:root?).returns(true)
 
     output = rest.delete(:output) || ''
@@ -13,8 +13,6 @@ describe Puppet::Type.type(:exec) do
     args = {
       :name      => command,
       :path      => @example_path,
-      :user      => @user_name,
-      :group     => @group_name,
       :logoutput => false,
       :loglevel  => :err,
       :returns   => 0
@@ -24,24 +22,30 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with([command], @user_name, @group_name).returns([output, status])
+      with(command, nil, nil).returns([output, status])
 
     return exec
   end
 
   before do
-    @command = Puppet.features.posix? ? '/bin/true whatever' : '"C:/Program Files/something.exe" whatever'
+    @command = make_absolute('/bin/true whatever')
+    @executable = make_absolute('/bin/true')
+    @bogus_cmd = make_absolute('/bogus/cmd')
   end
 
   describe "when not stubbing the provider" do
     before do
-      @executable = Puppet.features.posix? ? '/bin/true' : 'C:/Program Files/something.exe'
-      File.stubs(:exists?).returns false
-      File.stubs(:exists?).with(@executable).returns true
-      File.stubs(:exists?).with('/bin/false').returns true
-      @example_path = Puppet.features.posix? ? %w{/usr/bin /bin} : [ "C:/Program Files/something/bin", "C:/Ruby/bin" ]
-      File.stubs(:exists?).with(File.join(@example_path[0],"true")).returns true
-      File.stubs(:exists?).with(File.join(@example_path[0],"false")).returns true
+      path = tmpdir('path')
+      true_cmd = File.join(path, 'true')
+      false_cmd = File.join(path, 'false')
+
+      FileUtils.touch(true_cmd)
+      FileUtils.touch(false_cmd)
+
+      File.chmod(0755, true_cmd)
+      File.chmod(0755, false_cmd)
+
+      @example_path = [path]
     end
 
     it "should return :executed_command as its event" do
@@ -140,10 +144,11 @@ describe Puppet::Type.type(:exec) do
   end
 
   it "should be able to autorequire files mentioned in the command" do
+    foo = make_absolute('/bin/foo')
     catalog = Puppet::Resource::Catalog.new
-    tmp = Puppet::Type.type(:file).new(:name => "/bin/foo")
+    tmp = Puppet::Type.type(:file).new(:name => foo)
     catalog.add_resource tmp
-    execer = Puppet::Type.type(:exec).new(:name => "/bin/foo")
+    execer = Puppet::Type.type(:exec).new(:name => foo)
     catalog.add_resource execer
 
     catalog.relationship_graph.dependencies(execer).should == [tmp]
@@ -151,32 +156,68 @@ describe Puppet::Type.type(:exec) do
 
   describe "when handling the path parameter" do
     expect = %w{one two three four}
-    { "an array"                        => expect,
-      "a colon separated list"          => "one:two:three:four",
-      "a semi-colon separated list"     => "one;two;three;four",
-      "both array and colon lists"      => ["one", "two:three", "four"],
-      "both array and semi-colon lists" => ["one", "two;three", "four"],
-      "colon and semi-colon lists"      => ["one:two", "three;four"]
+    { "an array"                                      => expect,
+      "a path-separator delimited list"               => expect.join(File::PATH_SEPARATOR),
+      "both array and path-separator delimited lists" => ["one", "two#{File::PATH_SEPARATOR}three", "four"],
     }.each do |test, input|
       it "should accept #{test}" do
         type = Puppet::Type.type(:exec).new(:name => @command, :path => input)
         type[:path].should == expect
       end
     end
+
+    describe "on platforms where path separator is not :" do
+      before :each do
+        @old_verbosity = $VERBOSE
+        $VERBOSE = nil
+        @old_separator = File::PATH_SEPARATOR
+        File::PATH_SEPARATOR = 'q'
+      end
+
+      after :each do
+        File::PATH_SEPARATOR = @old_separator
+        $VERBOSE = @old_verbosity
+      end
+
+      it "should use the path separator of the current platform" do
+        type = Puppet::Type.type(:exec).new(:name => @command, :path => "fooqbarqbaz")
+        type[:path].should == %w[foo bar baz]
+      end
+    end
   end
 
   describe "when setting user" do
-    it "should fail if we are not root" do
-      Puppet.features.stubs(:root?).returns(false)
-      expect { Puppet::Type.type(:exec).new(:name => @command, :user => 'input') }.
-        should raise_error Puppet::Error, /Parameter user failed/
+    describe "on POSIX systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns(true)
+        Puppet.features.stubs(:microsoft_windows?).returns(false)
+      end
+
+      it "should fail if we are not root" do
+        Puppet.features.stubs(:root?).returns(false)
+        expect { Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input') }.
+          should raise_error Puppet::Error, /Parameter user failed/
+      end
+
+      ['one', 2, 'root', 4294967295, 4294967296].each do |value|
+        it "should accept '#{value}' as user if we are root" do
+          Puppet.features.stubs(:root?).returns(true)
+          type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => value)
+          type[:user].should == value
+        end
+      end
     end
 
-    ['one', 2, 'root', 4294967295, 4294967296].each do |value|
-      it "should accept '#{value}' as user if we are root" do
+    describe "on Windows systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns(false)
+        Puppet.features.stubs(:microsoft_windows?).returns(true)
         Puppet.features.stubs(:root?).returns(true)
-        type = Puppet::Type.type(:exec).new(:name => @command, :user => value)
-        type[:user].should == value
+      end
+
+      it "should reject user parameter" do
+        expect { Puppet::Type.type(:exec).new(:name => 'c:\windows\notepad.exe', :user => 'input') }.
+          should raise_error Puppet::Error, /Unable to execute commands as other users on Windows/
       end
     end
   end
@@ -205,7 +246,8 @@ describe Puppet::Type.type(:exec) do
   describe "when setting cwd" do
     it_should_behave_like "all path parameters", :cwd, :array => false do
       def instance(path)
-        Puppet::Type.type(:exec).new(:name => '/bin/true', :cwd => path)
+        # Specify shell provider so we don't have to care about command validation
+        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path, :provider => :shell)
       end
     end
   end
@@ -221,7 +263,7 @@ describe Puppet::Type.type(:exec) do
           if @param == :name then
             instance = Puppet::Type.type(:exec).new()
           else
-            instance = Puppet::Type.type(:exec).new(:name => "/bin/true")
+            instance = Puppet::Type.type(:exec).new(:name => @executable)
           end
           if valid then
             instance.provider.expects(:validatecmd).returns(true)
@@ -246,7 +288,7 @@ describe Puppet::Type.type(:exec) do
   shared_examples_for "all exec command parameters that take arrays" do |param|
     describe "when given an array of inputs" do
       before :each do
-        @test = Puppet::Type.type(:exec).new(:name => "/bin/true")
+        @test = Puppet::Type.type(:exec).new(:name => @executable)
       end
 
       it "should accept the array when all commands return valid" do
@@ -281,7 +323,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "for simple parameters" do
     before :each do
-      @exec = Puppet::Type.type(:exec).new(:name => '/bin/true')
+      @exec = Puppet::Type.type(:exec).new(:name => @executable)
     end
 
     describe "when setting environment" do
@@ -331,20 +373,29 @@ describe Puppet::Type.type(:exec) do
       end
 
       it "should fail if timeout is exceeded" do
-        File.stubs(:exists?).with('/bin/sleep').returns(true)
-        File.stubs(:exists?).with('sleep').returns(false)
-        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
+        Puppet::Util.stubs(:execute).with do |cmd,args|
+          sleep 1
+          true
+        end
+        FileTest.stubs(:file?).returns(false)
+        FileTest.stubs(:file?).with(File.expand_path('/bin/sleep')).returns(true)
+        FileTest.stubs(:executable?).returns(false)
+        FileTest.stubs(:executable?).with(File.expand_path('/bin/sleep')).returns(true)
+        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => [File.expand_path('/bin')], :timeout => '0.2')
+
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
       end
 
       it "should convert timeout to a float" do
-        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "12"
+        command = make_absolute('/bin/false')
+        resource = Puppet::Type.type(:exec).new :command => command, :timeout => "12"
         resource[:timeout].should be_a(Float)
         resource[:timeout].should == 12.0
       end
 
       it "should munge negative timeouts to 0.0" do
-        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "-12.0"
+        command = make_absolute('/bin/false')
+        resource = Puppet::Type.type(:exec).new :command => command, :timeout => "-12.0"
         resource.parameter(:timeout).value.should be_a(Float)
         resource.parameter(:timeout).value.should == 0.0
       end
@@ -442,7 +493,8 @@ describe Puppet::Type.type(:exec) do
     describe "when setting creates" do
       it_should_behave_like "all path parameters", :creates, :array => true do
         def instance(path)
-          Puppet::Type.type(:exec).new(:name => '/bin/true', :creates => path)
+          # Specify shell provider so we don't have to care about command validation
+          Puppet::Type.type(:exec).new(:name => @executable, :creates => path, :provider => :shell)
         end
       end
     end
@@ -460,7 +512,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "#check" do
     before :each do
-      @test = Puppet::Type.type(:exec).new(:name => "/bin/true")
+      @test = Puppet::Type.type(:exec).new(:name => @executable)
     end
 
     describe ":refreshonly" do
@@ -473,10 +525,10 @@ describe Puppet::Type.type(:exec) do
     end
 
     describe ":creates" do
-      before :all do
-        @exist   = "/"
-        @unexist = "/this/path/should/never/exist"
-        while FileTest.exist?(@unexist) do @unexist += "/foo" end
+      before :each do
+        @exist   = tmpfile('exist')
+        FileUtils.touch(@exist)
+        @unexist = tmpfile('unexist')
       end
 
       context "with a single item" do
@@ -525,8 +577,8 @@ describe Puppet::Type.type(:exec) do
     }.each do |param, sense|
       describe ":#{param}" do
         before :each do
-          @pass = "/magic/pass"
-          @fail = "/magic/fail"
+          @pass = make_absolute("/magic/pass")
+          @fail = make_absolute("/magic/fail")
 
           @pass_status = stub('status', :exitstatus => sense[:pass] ? 0 : 1)
           @fail_status = stub('status', :exitstatus => sense[:fail] ? 0 : 1)
@@ -586,7 +638,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "#retrieve" do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should return :notrun when check_all_attributes returns true" do
@@ -608,7 +660,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "#output" do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should return the provider's run output" do
@@ -625,14 +677,15 @@ describe Puppet::Type.type(:exec) do
 
   describe "#refresh" do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should call provider run with the refresh parameter if it is set" do
+      myother_bogus_cmd = make_absolute('/myother/bogus/cmd')
       provider = stub 'provider'
       @exec_resource.stubs(:provider).returns(provider)
-      @exec_resource.stubs(:[]).with(:refresh).returns('/myother/bogus/cmd')
-      provider.expects(:run).with('/myother/bogus/cmd')
+      @exec_resource.stubs(:[]).with(:refresh).returns(myother_bogus_cmd)
+      provider.expects(:run).with(myother_bogus_cmd)
 
       @exec_resource.refresh
     end
@@ -641,7 +694,7 @@ describe Puppet::Type.type(:exec) do
       provider = stub 'provider'
       status = stubs "process_status"
       status.stubs(:exitstatus).returns("0")
-      provider.expects(:run).with('/bogus/cmd').returns(["silly output", status])
+      provider.expects(:run).with(@bogus_cmd).returns(["silly output", status])
       @exec_resource.stubs(:provider).returns(provider)
 
       @exec_resource.refresh

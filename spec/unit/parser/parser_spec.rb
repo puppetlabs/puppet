@@ -369,6 +369,10 @@ describe Puppet::Parser do
       @parser.parse("class foobar { $var = val }").code[0].code.should_not be_nil
     end
 
+    it "should accept parametrized classes with trailing comma" do
+      @parser.parse("class foobar ($var1 = 0,) { $var = val }").code[0].code.should_not be_nil
+    end
+
     it "should define parameters when provided" do
       foobar = @parser.parse("class foobar($biz,$baz) {}").code[0].instantiate('')[0]
       foobar.arguments.should == {"biz" => nil, "baz" => nil}

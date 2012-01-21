@@ -91,7 +91,6 @@ describe Puppet::Parser::AST::ASTHash do
 
   it "should return a valid string with to_s" do
     hash = Puppet::Parser::AST::ASTHash.new(:value => { "a" => "b", "c" => "d" })
-
-    hash.to_s.should == '{a => b, c => d}'
+    ["{a => b, c => d}", "{c => d, a => b}"].should be_include hash.to_s
   end
 end

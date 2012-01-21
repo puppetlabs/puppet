@@ -2,18 +2,25 @@
 require 'spec_helper'
 
 require 'puppet/ssl/host'
-require 'puppet/sslcertificates'
-require 'puppet/sslcertificates/ca'
 
 describe Puppet::SSL::Host do
+  include PuppetSpec::Files
+
   before do
     Puppet::SSL::Host.indirection.terminus_class = :file
+
+    # Get a safe temporary file
+    dir = tmpdir("ssl_host_testing")
+    Puppet.settings[:confdir] = dir
+    Puppet.settings[:vardir] = dir
+    Puppet.settings.use :main, :ssl
+
     @host = Puppet::SSL::Host.new("myname")
   end
 
   after do
     # Cleaned out any cached localhost instance.
-    Puppet::Util::Cacher.expire
+    Puppet::SSL::Host.reset
     Puppet::SSL::Host.ca_location = :none
   end
 
@@ -56,6 +63,12 @@ describe Puppet::SSL::Host do
     Puppet::SSL::Host.should respond_to(:localhost)
   end
 
+  it "should allow to reset localhost" do
+    previous_host = Puppet::SSL::Host.localhost
+    Puppet::SSL::Host.reset
+    Puppet::SSL::Host.localhost.should_not == previous_host
+  end
+
   it "should generate the certificate for the localhost instance if no certificate is available" do
     host = stub 'host', :key => nil
     Puppet::SSL::Host.expects(:new).returns host
@@ -64,6 +77,97 @@ describe Puppet::SSL::Host do
     host.expects(:generate)
 
     Puppet::SSL::Host.localhost.should equal(host)
+  end
+
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
+    Puppet[:autosign] = true
+    Puppet[:confdir] = tmpdir('conf')
+    Puppet[:dns_alt_names] = "foo,bar,baz"
+    ca = Puppet::SSL::CertificateAuthority.new
+    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+
+    localhost = Puppet::SSL::Host.localhost
+    cert = localhost.certificate
+
+    cert.should be_a(Puppet::SSL::Certificate)
+    cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
+  end
+
+  context "with dns_alt_names" do
+    before :each do
+      @key = stub('key content')
+      key = stub('key', :generate => true, :content => @key)
+      Puppet::SSL::Key.stubs(:new).returns key
+      Puppet::SSL::Key.indirection.stubs(:save).with(key)
+
+      @cr = stub('certificate request')
+      Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
+      Puppet::SSL::CertificateRequest.indirection.stubs(:save).with(@cr)
+    end
+
+    describe "explicitly specified" do
+      before :each do
+        Puppet[:dns_alt_names] = 'one, two'
+      end
+
+      it "should not include subjectAltName if not the local node" do
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+      end
+
+      it "should include subjectAltName if I am a CA" do
+        @cr.expects(:generate).
+          with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+
+        Puppet::SSL::Host.localhost
+      end
+    end
+
+    describe "implicitly defaulted" do
+      let(:ca) { stub('ca', :sign => nil) }
+
+      before :each do
+        Puppet[:dns_alt_names] = ''
+
+        Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+      end
+
+      it "should not include defaults if we're not the CA" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns false
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.localhost
+      end
+
+      it "should not include defaults if not the local node" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+      end
+
+      it "should not include defaults if we can't resolve our fqdn" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+        Facter.stubs(:value).with(:fqdn).returns nil
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.localhost
+      end
+
+      it "should provide defaults if we're bootstrapping the local master" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+        Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
+        Facter.stubs(:value).with(:domain).returns 'foo.com'
+
+        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com"})
+
+        Puppet::SSL::Host.localhost
+      end
+    end
   end
 
   it "should always read the key for the localhost instance in from disk" do
@@ -78,67 +182,48 @@ describe Puppet::SSL::Host do
   it "should cache the localhost instance" do
     host = stub 'host', :certificate => "eh", :key => 'foo'
     Puppet::SSL::Host.expects(:new).once.returns host
-
     Puppet::SSL::Host.localhost.should == Puppet::SSL::Host.localhost
   end
 
-  it "should be able to expire the cached instance" do
-    one = stub 'host1', :certificate => "eh", :key => 'foo'
-    two = stub 'host2', :certificate => "eh", :key => 'foo'
-    Puppet::SSL::Host.expects(:new).times(2).returns(one).then.returns(two)
-
-    Puppet::SSL::Host.localhost.should equal(one)
-    Puppet::Util::Cacher.expire
-    Puppet::SSL::Host.localhost.should equal(two)
-  end
-
   it "should be able to verify its certificate matches its key" do
-    Puppet::SSL::Host.new("foo").should respond_to(:certificate_matches_key?)
+    Puppet::SSL::Host.new("foo").should respond_to(:validate_certificate_with_key)
   end
 
   it "should consider the certificate invalid if it cannot find a key" do
     host = Puppet::SSL::Host.new("foo")
+    certificate = mock('cert', :fingerprint => 'DEADBEEF')
+    host.expects(:certificate).twice.returns certificate
     host.expects(:key).returns nil
-
-    host.should_not be_certificate_matches_key
+    lambda { host.validate_certificate_with_key }.should raise_error(Puppet::Error, "No private key with which to validate certificate with fingerprint: DEADBEEF")
   end
 
   it "should consider the certificate invalid if it cannot find a certificate" do
     host = Puppet::SSL::Host.new("foo")
-    host.expects(:key).returns mock("key")
+    host.expects(:key).never
     host.expects(:certificate).returns nil
-
-    host.should_not be_certificate_matches_key
+    lambda { host.validate_certificate_with_key }.should raise_error(Puppet::Error, "No certificate to validate.")
   end
 
   it "should consider the certificate invalid if the SSL certificate's key verification fails" do
     host = Puppet::SSL::Host.new("foo")
-
     key = mock 'key', :content => "private_key"
     sslcert = mock 'sslcert'
-    certificate = mock 'cert', :content => sslcert
-
+    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
     host.stubs(:key).returns key
     host.stubs(:certificate).returns certificate
-
     sslcert.expects(:check_private_key).with("private_key").returns false
-
-    host.should_not be_certificate_matches_key
+    lambda { host.validate_certificate_with_key }.should raise_error(Puppet::Error, /DEADBEEF/)
   end
 
   it "should consider the certificate valid if the SSL certificate's key verification succeeds" do
     host = Puppet::SSL::Host.new("foo")
-
     key = mock 'key', :content => "private_key"
     sslcert = mock 'sslcert'
     certificate = mock 'cert', :content => sslcert
-
     host.stubs(:key).returns key
     host.stubs(:certificate).returns certificate
-
     sslcert.expects(:check_private_key).with("private_key").returns true
-
-    host.should be_certificate_matches_key
+    lambda{ host.validate_certificate_with_key }.should_not raise_error
   end
 
   describe "when specifying the CA location" do
@@ -382,7 +467,7 @@ describe Puppet::SSL::Host do
 
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent")
+      @request.expects(:generate).with("mycontent", {})
       Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       @host.generate_certificate_request.should be_true
@@ -417,15 +502,13 @@ describe Puppet::SSL::Host do
     before do
       @realcert = mock 'certificate'
       @cert = stub 'cert', :content => @realcert
-
       @host.stubs(:key).returns mock("key")
-      @host.stubs(:certificate_matches_key?).returns true
+      @host.stubs(:validate_certificate_with_key)
     end
 
     it "should find the CA certificate if it does not have a certificate" do
       Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
       Puppet::SSL::Certificate.indirection.stubs(:find).with("myname").returns @cert
-
       @host.certificate
     end
 
@@ -447,32 +530,20 @@ describe Puppet::SSL::Host do
     it "should find the key if it does not have one" do
       Puppet::SSL::Certificate.indirection.stubs(:find)
       @host.expects(:key).returns mock("key")
-
       @host.certificate
     end
 
     it "should generate the key if one cannot be found" do
       Puppet::SSL::Certificate.indirection.stubs(:find)
-
       @host.expects(:key).returns nil
       @host.expects(:generate_key)
-
       @host.certificate
     end
 
     it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
       Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
       Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns @cert
-
       @host.certificate.should equal(@cert)
-    end
-
-    it "should fail if the found certificate does not match the private key" do
-      @host.expects(:certificate_matches_key?).returns false
-
-      Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
-
-      lambda { @host.certificate }.should raise_error(Puppet::Error)
     end
 
     it "should return any previously found certificate" do
@@ -574,7 +645,7 @@ describe Puppet::SSL::Host do
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
 
-        @ca.expects(:sign).with(@host.name)
+        @ca.expects(:sign).with(@host.name, true)
 
         @host.generate
       end
@@ -711,13 +782,12 @@ describe Puppet::SSL::Host do
     end
   end
 
-  describe "when handling PSON" do
+  describe "when handling PSON", :unless => Puppet.features.microsoft_windows? do
     include PuppetSpec::Files
 
     before do
       Puppet[:vardir] = tmpdir("ssl_test_vardir")
       Puppet[:ssldir] = tmpdir("ssl_test_ssldir")
-      Puppet::SSLCertificates::CA.new.mkrootcert
       # localcacert is where each client stores the CA certificate
       # cacert is where the master stores the CA certificate
       # Since we need to play the role of both for testing we need them to be the same and exist

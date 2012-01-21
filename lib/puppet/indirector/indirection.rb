@@ -1,14 +1,19 @@
 require 'puppet/util/docs'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
-require 'puppet/util/cacher'
+require 'puppet/util/instrumentation/instrumentable'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
 # each of which is a subclass of Puppet::Indirector::Terminus.
 class Puppet::Indirector::Indirection
-  include Puppet::Util::Cacher
   include Puppet::Util::Docs
+  extend Puppet::Util::Instrumentation::Instrumentable
+
+  probe :find, :label => Proc.new { |parent, key, *args| "find_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
+  probe :save, :label => Proc.new { |parent, key, *args| "save_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
+  probe :search, :label => Proc.new { |parent, key, *args| "search_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
+  probe :destroy, :label => Proc.new { |parent, key, *args| "destroy_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
 
   @@indirections = []
 
@@ -32,6 +37,8 @@ class Puppet::Indirector::Indirection
   end
 
   attr_accessor :name, :model
+
+  attr_reader :termini
 
   # Create and return our cache terminus.
   def cache
@@ -88,6 +95,7 @@ class Puppet::Indirector::Indirection
   def initialize(model, name, options = {})
     @model = model
     @name = name
+    @termini = {}
 
     @cache_class = nil
     @terminus_class = nil
@@ -313,7 +321,4 @@ class Puppet::Indirector::Indirection
     end
     klass.new
   end
-
-  # Cache our terminus instances indefinitely, but make it easy to clean them up.
-  cached_attr(:termini) { Hash.new }
 end

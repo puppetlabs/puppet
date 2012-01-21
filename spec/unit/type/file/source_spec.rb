@@ -1,38 +1,92 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'uri'
 
 source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
+  include PuppetSpec::Files
+
   before do
     # Wow that's a messy interface to the resource.
     @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false), :line => 0, :file => ''
+    @foobar = make_absolute("/foo/bar baz")
+    @feebooz = make_absolute("/fee/booz baz")
+
+    @foobar_uri  = URI.unescape(Puppet::Util.path_to_uri(@foobar).to_s)
+    @feebooz_uri = URI.unescape(Puppet::Util.path_to_uri(@feebooz).to_s)
   end
 
   it "should be a subclass of Parameter" do
     source.superclass.must == Puppet::Parameter
   end
 
-  describe "when initializing" do
+  describe "#validate" do
+    let(:path) { tmpfile('file_source_validate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path) }
+
     it "should fail if the set values are not URLs" do
-      s = source.new(:resource => @resource)
       URI.expects(:parse).with('foo').raises RuntimeError
 
-      lambda { s.value = %w{foo} }.must raise_error(Puppet::Error)
+      lambda { resource[:source] = %w{foo} }.must raise_error(Puppet::Error)
     end
 
     it "should fail if the URI is not a local file, file URI, or puppet URI" do
-      s = source.new(:resource => @resource)
+      lambda { resource[:source] = %w{http://foo/bar} }.must raise_error(Puppet::Error, /Cannot use URLs of type 'http' as source for fileserving/)
+    end
 
-      lambda { s.value = %w{http://foo/bar} }.must raise_error(Puppet::Error)
+    it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
+      resource[:source] = "/foo/bar\\//"
+      resource[:source].should == %w{file:/foo/bar\\}
+    end
+
+    it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
+      resource[:source] = "X:/foo/bar\\//"
+      resource[:source].should == %w{file:/X:/foo/bar}
+    end
+
+    it "should accept an array of sources" do
+      resource[:source] = %w{file:///foo/bar puppet://host:8140/foo/bar}
+      resource[:source].should == %w{file:///foo/bar puppet://host:8140/foo/bar}
+    end
+
+    it "should accept file path characters that are not valid in URI" do
+      resource[:source] = 'file:///foo bar'
+    end
+
+    it "should reject relative URI sources" do
+      lambda { resource[:source] = 'foo/bar' }.must raise_error(Puppet::Error)
+    end
+
+    it "should reject opaque sources" do
+      lambda { resource[:source] = 'mailto:foo@com' }.must raise_error(Puppet::Error)
+    end
+
+    it "should accept URI authority component" do
+      resource[:source] = 'file://host/foo'
+      resource[:source].should == %w{file://host/foo}
+    end
+
+    it "should accept when URI authority is absent" do
+      resource[:source] = 'file:///foo/bar'
+      resource[:source].should == %w{file:///foo/bar}
     end
   end
 
-  it "should have a method for retrieving its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata)
-  end
+  describe "#munge" do
+    let(:path) { tmpfile('file_source_munge') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path) }
 
-  it "should have a method for setting its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata=)
+    it "should prefix file scheme to absolute paths" do
+      resource[:source] = path
+      resource[:source].should == [URI.unescape(Puppet::Util.path_to_uri(path).to_s)]
+    end
+
+    %w[file puppet].each do |scheme|
+      it "should not prefix valid #{scheme} URIs" do
+        resource[:source] = "#{scheme}:///foo bar"
+        resource[:source].should == ["#{scheme}:///foo bar"]
+      end
+    end
   end
 
   describe "when returning the metadata" do
@@ -52,57 +106,43 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
 
     it "should collect its metadata using the Metadata class if it is not already set" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns @metadata
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri).returns @metadata
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
       metadata = stub 'metadata', :source= => nil
-      @source = source.new(:resource => @resource, :value => ["/foo/bar", "/fee/booz"])
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
+      @source = source.new(:resource => @resource, :value => [@foobar, @feebooz])
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri).returns metadata
       @source.metadata.should equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
       metadata = mock 'metadata'
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns metadata
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri).returns metadata
 
-      metadata.expects(:source=).with("/foo/bar")
+      metadata.expects(:source=).with(@foobar_uri)
       @source.metadata
     end
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").raises RuntimeError
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri).raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
       lambda { @source.metadata }.should raise_error(ArgumentError)
     end
 
     it "should fail if no specified sources can be found" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri).returns nil
 
       @source.expects(:fail).raises RuntimeError
 
       lambda { @source.metadata }.should raise_error(RuntimeError)
-    end
-
-    it "should expire the metadata appropriately" do
-      expirer = stub 'expired', :dependent_data_expired? => true
-
-      metadata = stub 'metadata', :source= => nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
-
-      @source = source.new(:resource => @resource, :value => ["/fee/booz"])
-      @source.metadata = "foo"
-
-      @source.stubs(:expirer).returns expirer
-
-      @source.metadata.should_not == "foo"
     end
   end
 
@@ -113,11 +153,13 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   describe "when copying the source values" do
     before do
 
-      @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+      @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
-      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file"
+      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file", :source => @foobar
       @source.stubs(:metadata).returns @metadata
+
+      Puppet.features.stubs(:root?).returns true
     end
 
     it "should fail if there is no metadata" do
@@ -144,11 +186,10 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     describe "and the source is a file" do
       before do
         @metadata.stubs(:ftype).returns "file"
+        Puppet.features.stubs(:microsoft_windows?).returns false
       end
 
       it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
-        Puppet.features.expects(:root?).returns true
-
         @source.copy_source_values
 
         @resource[:owner].must == 100
@@ -181,6 +222,30 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:owner].should be_nil
         end
       end
+
+      describe "on Windows" do
+        before :each do
+          Puppet.features.stubs(:microsoft_windows?).returns true
+        end
+
+        it "should not copy owner and group from remote sources" do
+          @source.stubs(:local?).returns false
+
+          @source.copy_source_values
+
+          @resource[:owner].must be_nil
+          @resource[:group].must be_nil
+        end
+
+        it "should copy owner and group from local sources" do
+          @source.stubs(:local?).returns true
+
+          @source.copy_source_values
+
+          @resource[:owner].must == 100
+          @resource[:group].must == 200
+        end
+      end
     end
 
     describe "and the source is a link" do
@@ -203,67 +268,88 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   end
 
   context "when accessing source properties" do
-    before(:each) do
-      @source = source.new(:resource => @resource)
-      @metadata = stub_everything
-      @source.stubs(:metadata).returns(@metadata)
-    end
+    let(:path) { tmpfile('file_resource') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path) }
+    let(:sourcepath) { tmpfile('file_source') }
 
     describe "for local sources" do
-      before(:each) do
-        @metadata.stubs(:ftype).returns "file"
-        @metadata.stubs(:source).returns("file:///path/to/source")
+      before :each do
+        FileUtils.touch(sourcepath)
       end
 
-      it "should be local" do
-        @source.must be_local
+      describe "on POSIX systems", :if => Puppet.features.posix? do
+        ['', "file:", "file://"].each do |prefix|
+          it "with prefix '#{prefix}' should be local" do
+            resource[:source] = "#{prefix}#{sourcepath}"
+            resource.parameter(:source).must be_local
+          end
+
+          it "should be able to return the metadata source full path" do
+            resource[:source] = "#{prefix}#{sourcepath}"
+            resource.parameter(:source).full_path.should == sourcepath
+          end
+        end
       end
 
-      it "should be local if there is no scheme" do
-        @metadata.stubs(:source).returns("/path/to/source")
-        @source.must be_local
-      end
+      describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+        ['', "file:/", "file:///"].each do |prefix|
+          it "should be local with prefix '#{prefix}'" do
+            resource[:source] = "#{prefix}#{sourcepath}"
+            resource.parameter(:source).must be_local
+          end
 
-      it "should be able to return the metadata source full path" do
-        @source.full_path.should == "/path/to/source"
+          it "should be able to return the metadata source full path" do
+            resource[:source] = "#{prefix}#{sourcepath}"
+            resource.parameter(:source).full_path.should == sourcepath
+          end
+
+          it "should convert backslashes to forward slashes" do
+            resource[:source] = "#{prefix}#{sourcepath.gsub(/\\/, '/')}"
+          end
+        end
+
+        it "should be UNC with two slashes"
       end
     end
 
     describe "for remote sources" do
+      let(:sourcepath) { "/path/to/source" }
+      let(:uri) { URI::Generic.build(:scheme => 'puppet', :host => 'server', :port => 8192, :path => sourcepath).to_s }
+
       before(:each) do
-        @metadata.stubs(:ftype).returns "file"
-        @metadata.stubs(:source).returns("puppet://server:8192/path/to/source")
+        metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
+        #metadata = stub('remote', :ftype => "file", :source => uri)
+        Puppet::FileServing::Metadata.indirection.stubs(:find).with(uri).returns metadata
+        resource[:source] = uri
       end
 
       it "should not be local" do
-        @source.should_not be_local
+        resource.parameter(:source).should_not be_local
       end
 
       it "should be able to return the metadata source full path" do
-        @source.full_path.should == "/path/to/source"
+        resource.parameter(:source).full_path.should == "/path/to/source"
       end
 
       it "should be able to return the source server" do
-        @source.server.should == "server"
+        resource.parameter(:source).server.should == "server"
       end
 
       it "should be able to return the source port" do
-        @source.port.should == 8192
+        resource.parameter(:source).port.should == 8192
       end
 
       describe "which don't specify server or port" do
-        before(:each) do
-          @metadata.stubs(:source).returns("puppet:///path/to/source")
-        end
+        let(:uri) { "puppet:///path/to/source" }
 
         it "should return the default source server" do
           Puppet.settings.expects(:[]).with(:server).returns("myserver")
-          @source.server.should == "myserver"
+          resource.parameter(:source).server.should == "myserver"
         end
 
         it "should return the default source port" do
           Puppet.settings.expects(:[]).with(:masterport).returns(1234)
-          @source.port.should == 1234
+          resource.parameter(:source).port.should == 1234
         end
       end
     end

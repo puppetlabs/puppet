@@ -2,22 +2,22 @@ require 'puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face
   option "--terminus TERMINUS" do
-    summary "The indirector terminus to use for this action"
+    summary "The indirector terminus to use."
     description <<-EOT
-Indirector faces expose indirected subsystems of Puppet. These
-subsystems are each able to retrieve and alter a specific type of data
-(with the familiar actions of `find`, `search`, `save`, and `destroy`)
-from an arbitrary number of pluggable backends. In Puppet parlance,
-these backends are called terminuses.
+      Indirector faces expose indirected subsystems of Puppet. These
+      subsystems are each able to retrieve and alter a specific type of data
+      (with the familiar actions of `find`, `search`, `save`, and `destroy`)
+      from an arbitrary number of pluggable backends. In Puppet parlance,
+      these backends are called terminuses.
 
-Almost all indirected subsystems have a `rest` terminus that interacts
-with the puppet master's data. Most of them have additional terminuses
-for various local data models, which are in turn used by the indirected
-subsystem on the puppet master whenever it receives a remote request.
+      Almost all indirected subsystems have a `rest` terminus that interacts
+      with the puppet master's data. Most of them have additional terminuses
+      for various local data models, which are in turn used by the indirected
+      subsystem on the puppet master whenever it receives a remote request.
 
-The terminus for an action is often determined by context, but
-occasionally needs to be set explicitly. See the "Notes" section of this
-face's manpage for more details.
+      The terminus for an action is often determined by context, but
+      occasionally needs to be set explicitly. See the "Notes" section of this
+      face's manpage for more details.
     EOT
 
     before_action do |action, args, options|
@@ -48,44 +48,59 @@ face's manpage for more details.
     return result
   end
 
+  option "--extra HASH" do
+    summary "Extra arguments to pass to the indirection request"
+    description <<-end
+      A terminus can take additional arguments to refine the operation, which
+      are passed as an arbitrary hash to the back-end.  Anything passed as
+      the extra value is just send direct to the back-end.
+    end
+    default_to do Hash.new end
+  end
+
   action :destroy do
-    summary "Delete an object"
-    when_invoked { |key, options| call_indirection_method(:destroy, key, options) }
+    summary "Delete an object."
+    arguments "<key>"
+    when_invoked {|key, options| call_indirection_method :destroy, key, options[:extra] }
   end
 
   action :find do
-    summary "Retrieve an object by name"
-    when_invoked { |key, options| call_indirection_method(:find, key, options) }
+    summary "Retrieve an object by name."
+    arguments "<key>"
+    when_invoked {|key, options| call_indirection_method :find, key, options[:extra] }
   end
 
   action :save do
-    summary "Create or modify an object"
-    notes <<-EOT
-      Save actions cannot currently be invoked from the command line, and are
-      for API use only.
+    summary "API only: create or overwrite an object."
+    arguments "<object>"
+    description <<-EOT
+      API only: create or overwrite an object. As the Faces framework does not
+      currently accept data from STDIN, save actions cannot currently be invoked
+      from the command line.
     EOT
-    when_invoked { |key, options| call_indirection_method(:save, key, options) }
+    when_invoked {|key, options| call_indirection_method :save, key, options[:extra] }
   end
 
   action :search do
-    summary "Search for an object"
-    when_invoked { |key, options| call_indirection_method(:search, key, options) }
+    summary "Search for an object or retrieve multiple objects."
+    arguments "<query>"
+    when_invoked {|key, options| call_indirection_method :search, key, options[:extra] }
   end
 
   # Print the configuration for the current terminus class
   action :info do
-    summary "Print the default terminus class for this face"
+    summary "Print the default terminus class for this face."
     description <<-EOT
-      TK So this is per-face, right? No way to tell what the default terminus
-      is per-action, for subsystems that switch to REST for save but query
-      locally for find?
+      Prints the default terminus class for this subcommand. Note that different
+      run modes may have different default termini; when in doubt, specify the
+      run mode with the '--mode' option.
     EOT
 
-    when_invoked do |*args|
+    when_invoked do |options|
       if t = indirection.terminus_class
-        puts "Run mode '#{Puppet.run_mode.name}': #{t}"
+        "Run mode '#{Puppet.run_mode.name}': #{t}"
       else
-        $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+        "No default terminus class for run mode '#{Puppet.run_mode.name}'"
       end
     end
   end

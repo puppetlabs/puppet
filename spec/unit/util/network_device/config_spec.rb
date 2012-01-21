@@ -4,9 +4,11 @@ require 'spec_helper'
 require 'puppet/util/network_device/config'
 
 describe Puppet::Util::NetworkDevice::Config do
+  include PuppetSpec::Files
+
   before(:each) do
-    Puppet[:deviceconfig] = "/dummy"
-    FileTest.stubs(:exists?).with("/dummy").returns(true)
+    Puppet[:deviceconfig] = make_absolute("/dummy")
+    FileTest.stubs(:exists?).with(make_absolute("/dummy")).returns(true)
   end
 
   describe "when initializing" do
@@ -15,7 +17,7 @@ describe Puppet::Util::NetworkDevice::Config do
     end
 
     it "should use the deviceconfig setting as pathname" do
-      Puppet.expects(:[]).with(:deviceconfig).returns("/dummy")
+      Puppet.expects(:[]).with(:deviceconfig).returns(make_absolute("/dummy"))
 
       Puppet::Util::NetworkDevice::Config.new
     end
@@ -74,6 +76,13 @@ describe Puppet::Util::NetworkDevice::Config do
       @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', '[router.puppetlabs.com]')
 
       lambda { @config.read }.should raise_error
+    end
+
+    it "should accept device certname containing dashes" do
+      @fd.stubs(:each).yields('[router-1.puppetlabs.com]')
+
+      @config.read
+      @config.devices.should include('router-1.puppetlabs.com')
     end
 
     it "should create a new device for each found device line" do

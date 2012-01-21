@@ -1,5 +1,713 @@
-2.7.0rc2
-========
+2.7.9
+===
+da11dc7 Fix Ruby 1.8.5-incompatible code in FileBucket::Dipper spec
+737c2f6 Fix Ruby 1.8.5-incompatible code in Transaction#eval_generate
+042925d Fix Ruby 1.8.5-incompatible code in spec setup
+
+2.7.8
+===
+3eff60a Readying for 2.7.8rc release
+e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
+2dedee6 (#2744) Don't automatically enable show_diff in noop mode
+ef78358 Give variables more descriptive names
+cd3d4ea maint: Rename xgenerate to add_dynamically_generated_resources
+000a2d8 (#6907) Prefetch unsuitable providers
+70114e9 (#6907) Allow providers to be selected in the run they become suitable
+a0ee5c7 maint: Fix incorrect whitespace
+4e8a73c Fix description in service provider test for FreeBSD
+a2eab4f (#6697) Set service provider default path to /etc/rc.d on Archlinux
+da75795 (#6335) Allow optional trailing comma in argument lists.
+47c786e Update CHANGELOG and packaging for 2.7.7 final
+8030428 (#8255) Always use string modes when creating resources from FileSetting settings
+c804346 (#7274) Output 4-digit file modes in File type
+220f2ba (#10799) Regexp escaping too much
+4462eb5 Merged 2.6.x into 2.7x
+67e048b Updated CHANGELOG for 2.7.7rc2
+93aca5a maint: Fix failing specs for Windows exec provider
+7f3a1bb (#9617) Use an RbTreeMap to store ready resources
+9eff0f4 (#9671) Implement RbTreeMap#each recursively, and #first/#last explicitly
+5f7f467 (#9671) Return nodes from internal RbTreeMap recursion
+1dc9c72 (#9671) Stop tracking size and height of nodes in RbTreeMap
+f180f9b (#9617) Add a red-black tree map
+c62e949 (#9617) Keep track of blockers for resources when traversing
+2cb6d72 (#9671) Generated resources should not depend on the completed_ whit
+a5845b7 (#9671) Exit early from #eval_generate if nothing is created
+7002eff (#9617) Be smarter about finding parents when eval_generating
+11fda78 maint: Don't File#expand_path when unmunging file paths
+ad4316a (#9671) Use Array#concat rather than +=
+20260f3 maint: Correct the spelling of sentinel
+4f03384 (#10614) Detect when trying to managing ACLs on a non-ACL volume
+37b9f0f (#10614) Provide default metadata values for Windows ACLs
+1cb37c9 (#10614) Add method for detecting Windows volumes that support ACLs
+c9ee5a0 (#10614) Fix setting and clearing read-only attribute on Windows
+ed27a90 (#10614) Fix error checking for Windows BOOL return values
+7f0756d (#10727) Don't rely on Kernel#Pathname
+23379d0 (#10614) Detect when trying to managing ACLs on a non-ACL volume
+374fee5 (#10614) Provide default metadata values for Windows ACLs
+f60e889 (#10614) Add method for detecting Windows volumes that support ACLs
+1371dbd (#10614) Fix setting and clearing read-only attribute on Windows
+7eb0197 (#10614) Fix error checking for Windows BOOL return values
+9dfd011 (#5617)  Puppet queue logging
+0a34697 (#2744) Display file diffs through the Puppet log system.
+0c28238 (#9508) Be explicit is setting `auth any` for default ACLs.
+f140eca Updated CHANGELOG for 2.7.7rc1
+057cda6 (#9508) Default ACL of `auth any` makes sense where we had `auth no`
+78670ed (#9983) Checksum file in binary mode when storing to filebucket
+da11a78 (#9983) Serve file content in binary mode
+13f1054 (#9983) Read file content from disk using binary mode
+4b4bb8b (#9983) Use binary mode when reading and writing FileBucketFiles
+899833b (#9983) Read file content in binary mode when backing up
+dc8bcf8 (#9983) Restore files in binary mode
+489a679 (#9983) Checksum files in binary mode
+f7bfa05 (#9983) Add method for reading binary files
+674068a (#10269) Make directories executable so they can be cleaned up
+fd747cc (#10365) Add pending test when file overwrites an executable directory
+fe30d8f (#10315) Add pending tests when following symlinks
+a22c7aa Maint: Fix test breakage
+8576e86 (#10269) Search bit not set on newly created directories
+a91cfa1 maint: Fix failing spec on old version of rspec
+428e08c Stub File.open to not touch the disk
+aa2a762 (#10289) Add an ext script to upload facts to inventory server
+a97337f (#10346) Fix storeconfigs spec failures when run alone
+5129d38 (#10289) Add a safe alternative to REST for inventory service
+5c4daa4 (#7601) Use definition lists in indirection references
+7df46a2 (#7601) Use definition lists in type references
+ad97dc9 (#7601) Add markdown_definitionlist method to reference.rb
+455c9aa Maint: Revise reference text for most types and providers
+ced8e19 (#7601) Remove unnecessarily abstracted paramwrap method
+a6957ac (#7601) Rename "h" method to "markdown_header"
+7a0ade6 (#7601) Use << instead of += in references
+7d65796 (#9109) Retrieve request parameters from the request body for POSTs
+5a2952c (maint) Fix CA-related specs failing on Windows
+42fb76e Fix typo in report debug message
+eab5965 missing includes in network XML-RPC handlers
+7514d32 missing includes in network XML-RPC handlers
+614526a (#10244) Restore Mongrel XMLRPC functionality
+397a506 (#10244) Restore Mongrel XMLRPC functionality
+fcaf7c5 Updated CHANGELOG for 2.6.12
+f51d221 Improve the error message when a CSR is rejected
+d551747 Allow a master to bootstrap itself with dns_alt_names and autosign
+0405196 (maint) Remove ssl dir before starting a master with DNS alt names
+3ed6499 Backport Enumerable#count to Rubies < 1.8.7
+5f44c23 More 1.8.5 compatibility fixes.
+ef1b960 Better 1.8.5 compatible implementation of `lines`.
+246e875 (#2848) Config options require '_', not '-'.
+3bdeb3a Ruby 1.8.5 compatibility changes in tests and code.
+6866d4b Add `lines` alias for `each_line` in Ruby 1.8.5.
+2f9ec3c s/not_to/should_not/ for older versions of RSpec 2.
+56320ea (#2848) Eliminate redundant `master_dns_alt_names`.
+de19861 (#2848) Remove the legacy SSLCertificates code
+cf008a6 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+32be180 (#2848) Remove unused xmlrpc code
+5f2a44d (#2848) Consistent return values from `subject_alt_names` accessors.
+5e507f2 (#2848) Consistently use `subject_alt_names` as accessor name.
+5ac2417 (#2848) Don't strip the subjectAltName label when listing.
+44cf3a2 (#2848) Don't enable `emailProtection` for server keys.
+d66def9 (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+8174047 (#2848) Migrate `dns-alt-names` back to settings.
+f18df2b Wire up the `setbycli` slot in Puppet settings.
+efa61f2 (#2848) rename subject-alt-name option to dns-alt-names
+f103b20 (#2848) Rename `certdnsnames` to match new behaviour.
+363b47b (#2848) Use `certdnsnames` when bootstrapping a local master.
+49334ff (#2848) CSR subjectAltNames handling while signing.
+5f2af93 (#2848) List subject alt names in output of puppet cert --list
+bb475ec (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+bab9310 (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+fca1ff0 (#2848) Reject unknown (== all) extensions on the CSR.
+443a756 (#2848) extract the subjectAltName value from the CSR.
+66101f1 (#2848) Set `certdnsnames` values into the CSR.
+77b814f (#6928) Don't blow up when the method is undefined...
+5427f1e (#6928) backport Symbol#to_proc for Ruby < 1.8.7
+6ef1d3a (#6371) Update lastchg field in shadow file on Solaris.
+c343615 (#10161) Parenthesize method arguments
+5721ab9 Maint: Remove duplicate path extension code
+edc721e (#9636) Always set $CHILD_STATUS when executing on Windows
+448d5db (#9636) Fix PATHEXT resolution for paths other than system32
+424379d (#9996) Restore functionality for multi-line commands in exec resources
+ad98d47 (#9831) Standardize Windows provider confining
+cf8fae2 (#9832) General StoreConfigs regression.
+1e8a2cd (#9607) Only validate package source when it is set or needed
+0258096 (#9461) Resolve executables using PATHEXT on Windows
+d78afda (#9938) Allow directory sticky-ness to be set
+23b4864 Maint: Document tag metaparameter's ability to take an array
+b3c0f1d Stub method for getting roles from the user provider
+006a128 Set vardir so that msi package provider runs on Windows
+4185b4e Add Windows-specific tests when user parameter specified in exec
+aab6b40 Disable mount provider tests on Windows
+58f97e3 Update test due to lack of 'true' on Windows
+1fd90c3 Change tests to not use 'mount' provider
+220f5e0 Added 'touch' method enabling tests to run on Windows
+ca0bc4f Change test to not call 'rm -rf'
+1883455 Remove 'fails_on_windows' tag for passing tests
+0d7c797 (#8414) Create scheduled_task type for use with Windows scheduled tasks
+4ddef89 (#8414) Require win32-taskscheduler gem on Windows
+0ecf3ab Add ability to look up fully qualified local accounts using Puppet::Util::Adsi.sid_for_account
+23d5aeb Add support for displaying hashes to Puppet::Parameter.format_value_for_display
+f0c3414 Move parameter formatting rules into helper method
+845e05b Wrap long lines in Type::Package
+18d65ec Whitespace cleanup in Type::SshAuthorizedKey
+b2e2175 Include necessary Facter stubs
+f5bc897 Remove test dependencies on QUANTITY of calls
+51adf31 Reset the @macosx_version_major variable
+4b9dfdd Reset the @job_list variable between tests
+446a5bf Remove use of defined?()
+0e4079d Use memoization instead of 'unless'
+9d504ff (#9796) ssh_authorized_key supports whitespace again
+122b8c2 (#9459) Fix problems with Windows 'user' and 'group' providers.
+ee107cf Use instance variable for job_list
+d1e0fa1 Refactor launchd provider spec tests
+3440c10 Refactor status method
+62b8d6b Deprecation Warning if using Facter <= 1.5.5
+8a50c3a Test prefetching
+f09d264 Stub call to Facter
+a6bc5a5 Optimize @product_version variable
+af42ff8 Documentation Commit
+55610bf Whitespace Commit
+cf3d378 Change method used to get Fact Value
+ce776b0 Revert launchd_spec
+f65b111 Rearrange launchd provider
+ed90957 First attempt at launchd spec
+637b57b Implement Caching
+60482f4 Whitespace and Alignment Commit
+5b52bd6 Bring up to date with topic branch
+27057a6 Maint: Fix the "provider" parameter documentation
+
+2.7.6 (includes CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/
+===
+c09517a Improve the error message when a CSR is rejected
+9346530 Allow a master to bootstrap itself with dns_alt_names and autosign
+7679c66 (maint) Remove ssl dir before starting a master with DNS alt names
+e4c64c7 Fix failing CA Interface specs on Ruby 1.9
+9ee1215 Fix some inconsistencies from merging
+8144939 Add support for DNS alt names to `puppet ca`
+2ba56e3 More 1.8.5 compatibility fixes.
+6257188 Better 1.8.5 compatible implementation of `lines`.
+4ba4db7 (#2848) Config options require '_', not '-'.
+493f8d1 Add --allow-dns-alt-names option to `puppet certificate sign`
+0cc8936 Add support for dns-alt-names option to `puppet certificate generate`
+c65236d Ruby 1.8.5 compatibility changes in tests and code.
+6c37623 Add `lines` alias for `each_line` in Ruby 1.8.5.
+e29eb6a s/not_to/should_not/ for older versions of RSpec 2.
+f1f5298 (#2848) Eliminate redundant `master_dns_alt_names`.
+3a8b376 (#2848) Remove the legacy SSLCertificates code
+28dead0 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+a644514 (#2848) Remove unused xmlrpc code
+2b1ad43 (#2848) Consistent return values from `subject_alt_names` accessors.
+d8516d9 (#2848) Consistently use `subject_alt_names` as accessor name.
+0b45f4c (#2848) Don't strip the subjectAltName label when listing.
+99488f3 (#2848) Don't enable `emailProtection` for server keys.
+f1285a4 (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+e65a88e (#2848) Migrate `dns-alt-names` back to settings.
+b876c39 Wire up the `setbycli` slot in Puppet settings.
+a53f2f2 (#2848) rename subject-alt-name option to dns-alt-names
+bc2267a (#2848) Rename `certdnsnames` to match new behaviour.
+a720499 (#2848) Use `certdnsnames` when bootstrapping a local master.
+6e3f529 (#2848) CSR subjectAltNames handling while signing.
+978b65c (#2848) List subject alt names in output of puppet cert --list
+7460a5e (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+94345eb (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+a729d90 (#2848) Reject unknown (== all) extensions on the CSR.
+f4fc11d (#2848) extract the subjectAltName value from the CSR.
+d64b01b (#2848) Set `certdnsnames` values into the CSR.
+78a01a2 (#6928) Don't blow up when the method is undefined...
+43d1e38 (#9996) Restore functionality for multi-line commands in exec resources
+d457763 (#9832) General StoreConfigs regression.
+2958b05 maint: Deal with [].to_s problem in 1.9.2
+9c25af4 (#9027) Get rid of spurious info messages in groupadd
+1f25c20 (#8411) Fix change group for POSIX file provider
+599642d Fix problem with set_mode (chmod) behavior on different test environments.
+b43765d Undo change to failing test on 1.8.5
+c275a51 Resist directory traversal attacks through indirections.
+d759f84 (#9838) Return the tranaction report when doing a ral save
+127f83e (#9837) Split parameter pruning from manifest formatting
+9d5ce00 (#9837) Move resource formatting method to Puppet::Resource
+86230d8 (#9837) Move properties in prep to move proc to method
+bf952e1 (#9837) Make a clearer variable name in the specs
+6885c36 (#9837) Call puppet apply to avoid deprecation warning
+93f8057 (#9837) Extract methods from the main section of the resource application
+5d33214 (#9837) Start the cleanup of the puppet resource application
+54a2565 (#9832) Test failures with some ActiveRecord versions.
+2bf8004 Updates for 2.6.11
+8343077 (#9832) 2.7.4 StoreConfigs regression with PostgreSQL.
+dce82ea (#9458) Require main puppet module
+e158b26 (#9793) "secure" indirector file backed terminus base class.
+343c7bd (#9792) Predictable temporary filename in ralsh.
+88512e8 Drop privileges before creating and chmodding SSH keys.
+6533292 (#9328) Retrieve user and group SIDs on windows.
+2775c21 (#9794) k5login can overwrite arbitrary files as root
+e7a6995 (#9794) k5login can overwrite arbitrary files as root
+408d117 Updated CHANGELOG for 2.6.10
+ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
+4e8d3a1 (#9775) Only list managed resources in the resources file
+51b33d1 (#9326) Support plaintext passwords in Windows 'user' provider.
+fe2de81 Resist directory traversal attacks through indirections.
+5fea1dc Fix issues with Windows based file URIs
+1a13d24 Simplify absolute path detection
+a163cd5 Eliminate duplicate absolute path detection
+0ce60a5 Added methods for manipulating URI and file paths
+71ba92c Restrict the absolute path regex to the start of the string
+1edf767 Move group management into providers
+15149c1 Remove duplicate SID resolution code
+f932511 Move owner management into providers
+f05fc83 Add platform-specific metadata collectors
+db0b4fb Make string_to_sid_ptr block optional
+7fc6baf Add the ability to retrieve user and group SIDs
+22bfd9c Move mode management into the providers
+4c3aae8 Fix typo bug that prevented FILE_DELETE_CHILD from being set
+7de0a80 Sub away trailing backslashes at the end of sources on Windows
+44cb1f1 Refactor autorequire of parent to use pathname with ancestors
+1300e0a Remove unnecessary Windows-on-non-Windows-master code for path parameter
+1f9b57f Cleanup file type integration tests
+8d21262 Cleanup and improve coverage of file type unit tests
+0a92a70 Resist directory traversal attacks through indirections.
+8b6a775 Call Array#join explicitly on command
+ae74c68 Fix failing SSL Host test introduced by b6a67edc
+37a1975 (#4549) Fix templates to be able to call all functions
+a74e56d Expand paths in catalog_spec for windows testing
+8d86e5a (9547) Minor mods to acceptance tests
+8ec3c7b (#4135) Update pluginsync to only load ruby files.
+0c8a0c7 Fix order dependent test failures relating to ADSI
+c0edb76 (#9186) Fix tests that fail on 2008 when running as SYSTEM
+8e14de6 (#9186) Handle when running under non 'user' contexts
+7595475 Fix device.conf error reporting
+1d3a3a7 Fix #9164 - allow '-' in device certificate names
+b6a67ed Fix #7982 - puppet device doesn't reset all cached attributes
+ba1f469 (#9186) Change to shared_examples_for
+b27b013 (#8410) Fix child exit status on Windows
+42c9982 (#9186) Add the ability to get/set windows permissions
+d34d28d (#9435) Gracefully handle when syslog feature is unavailable
+f013c65 (#9435) Fix absolute path matching for file log destinations
+ea88745 (#9329) Disable agent daemonizing on Windows
+
+2.7.5
+===
+a36f39d Updating version numbers for 2.7.5
+de51f3d (#9832) 2.7.4 StoreConfigs regression with PostgreSQL.
+1aa9be5 (#9793) "secure" indirector file backed terminus base class.
+d76c309 (#9792) Predictable temporary filename in ralsh. (CVE-2011-3871)
+b29b178 Drop privileges before creating and chmodding SSH keys.(CVE-2011-3870)
+7d4c169 (#9794) k5login can overwrite arbitrary files as root (CVE-2011-3869)
+
+
+2.7.4
+===
+47135fb Resist directory traversal attacks through indirections. (CVE-2011-3484)
+9dd18cf Updated CHANGELOG for 2.7.4rc3
+fe92f20 (#9440) Allow cron vars to have leading whitespace
+da69637 Fix failing spec for resource file
+7a39ca7 (#8667) Write out a list of resources that are managed by puppet agent
+bc40516 Fix order dependent spec failure in exec specs
+a20551f Updated CHANGELOG for 2.7.4rc2
+d59a0b3 Update certificate_spec.rb test to include spec_helper
+f325b40 Fix #7984 - GigabitEthernet/TenGigabitEthernet are uncorrectly parsed
+6cc15c2 Fix #7983 - Cisco uptime facts doesn't always work
+41302e9 Fixes #9143, allows macauthorization provider to work on OS X Lion 10.7
+5a3f24d Updated CHANGELOG for 2.7.4rc1
+04519a7 Revert "Merge pull request #100 from glarizza/tickets/2.7.x/9192_launchd_fix"
+769f2b2 Revert "Merge pull request #99 from nigelkersten/tickets/2.7.x/9143-make-macauthorization-work-on-lion"
+ff13d8d Add comment explaining helper method
+40f64e9 Add has_macosx_plist_overrides? method
+670d30c Fix ActiveRecord handling of symbols in query interpolation.
+51b0c00 Fixes #9143, allows macauthorization provider to work on OS X Lion 10.7
+a04051a (#9051) Move complex collect expression error into terminus.
+f7e526b (#8413) Only try to catch Process::Error if it's defined
+2c96286 Debug order-dependent test failures in CI / ActiveRecord.
+38070d5 Don't toggle storeconfigs back and forth.
+cf60243 One character typo, entire code path broken...
+40dc39c More protection against accidentally using sqlite3
+f898749 Save and restore indirector configuration around all tests.
+e3073ac (#9051) More storeconfigs test cleanup.
+51461de (#9051) Protect SQLite tests from running without gem.
+bb0380f (#8662) Don't rely on error message to detect UAC capable platform
+2ab5634 (#8413) Properly clean up stale pidfile on Windows
+cc958e1 (#8412) Add MSI package provider for use with Windows
+878ea25 (#8412) Add optional type-level validation of the source parameter
+dad075d Correct grammar in parameter comment
+4168a4c Clean up formatting & whitespace in Puppet::Type
+fd1d4b9 (#9051) de-ActiveRecord-ify Collection expressions.
+78e33cc (#9051) Port query tests into the indirection.
+65580e7 (#9051) Implement the `resource` terminus for StoreConfigs.
+89aaa51 (#9051) Make generic tagging imported resource origins.
+d5b295d (#9051) Whitespace cleanup for puppet/parser/collector
+611c466 (#9051) Dead code elimination in the compiler terminus.
+6e0ff6a (#9051) Get the compiler out of the ActiveRecord business.
+4d51680 (#9051) Implement the StoreConfigs indirection itself.
+d0357c8 (#9051) Add configuration around StoreConfigs indirection.
+8700682 (#9051) de-ActiveRecord-ify Collection expressions.
+4274e15 (#9174) Provide a helpful error when missing a gem and installing on Windows
+f53db3d Clean up formatting & whitespace in package type & providers
+6dff78c (#8489) Use File::PATH_SEPARATOR in path attribute of service type
+64dbd3b (#8489) Use File::PATH_SEPARATOR for path attribute of exec type
+3e40207 (#8489) Use File::PATH_SEPARATOR rather than ':' for factpath setting
+c469294 (#8489) Use File::PATH_SEPARATOR rather than ':' for args to puppet doc
+a2ced0f Properly determine file deletion in puppet/unit/util_spec.rb
+bc5f1e3 (#9051) Port query tests into the indirection.
+fa78e99 (#9051) Implement the `resource` terminus for StoreConfigs.
+f6b91be (#8140) Add an exec provider for Windows
+18c322a (#8410) Factor out a base class for exec providers
+cb53870 (#8410) Cleanup and fix Windows support in Puppet::Util.execute
+39a582b (#8410) Use absolute_path? for Puppet::Parameter::Path validation
+fb6df31 (#8410) Add a helper to Puppet::Util to determine absoluteness of a path
+c2a432a maint: Fix trailing whitespace in lib/puppet/util.rb
+fab2fe7 (#9051) Make generic tagging imported resource origins.
+5300368 (#9051) Whitespace cleanup for puppet/parser/collector
+6420ede (#9051) Dead code elimination in the compiler terminus.
+543f331 (#9051) Get the compiler out of the ActiveRecord business.
+4b55e72 (#9051) Implement the StoreConfigs indirection itself.
+0f207a8 (#8662) Don't manage internal file permissions on Windows
+47058ab (#8662) Skip user and group resources when applying settings on Windows
+2ac8790 (#8662) Fix Puppet.features.root? on Windows
+ccdd043 (#8662) Break circular feature dependency
+4b29f5f (#9051) Add configuration around StoreConfigs indirection.
+9f39cc4 maint: Stub spec test so directory is not created unnecessarily
+66fb531 Don't use non-1.8.5-compatible methods 'Object#tap' and 'Dir.mktmpdir'
+2091cbe maint: Fix build break due to recent merge from 2.7.x to master
+2681ca5 Fix posix exec provider spec failures on Windows
+3812fc3 (#5495) Remove dead Windows-specific code from posix exec provider
+b6ca78c Stop trying to make config directories in Windows specs
+4237cb1 (#8272) Add missing tests for Windows service provider methods.
+a32c8be (#8409) Add a default group provider for Windows
+4f7170a (#8408) Add a default user provider for Windows
+f19a0ea (#8408/8409) Add a Windows ADSI helper module
+6919d2c (#8663) Exclude exec timeout test on Windows
+8009209 (#8663) Exclude git rev-parse HEAD spec test on Windows
+a0013e4 Check for the appropriate permissions in File type tests on Windows
+58c7dac Remove :fails_on_windows from file type tests that no longer fail on Windows
+9f2a7b9 Disable file bucket diffing tests on Windows
+1e59b26 Always put a slash between the checksum and path in filebucket URLs
+37f87b7 Treat Windows absolute paths as absolute paths
+4a6d617 Consolidate test logic determining if a registered file is in the temp directory
+8c88918 Clarify logic and error messages when initializing Puppet::FileBucket::File
+2efaa85 Disable symlink related file tests on Windows
+7259e1e (#8644) Host provider on Windows
+328eaa2 (#8660) Fix destdir option on Windows
+088c7ac (#8660) Default config dir to %PROGRAMDATA% on Windows
+925af95 (#8663) Disable spec tests for unsupported functionality on Windows
+04965d7 (#8663) Drive letters are not valid absolute paths on Windows
+f4598ec (#8663) Update the run_mode spec test on Windows to match the code
+68bdc74 (#8663) The ssh_authorized_key type is not supported on Windows
+9fbb0be (#8663) Reenable spec tests on Windows that now pass
+c930152 (#8392) Disable master related tests on Windows
+28b1658 (#8272) Allow disabled Windows services to be started
+c69baf6 (#8272) Refactor specs for Windows service provider
+881c385 (#8272) Use symbols instead of booleans for enabled property on Windows
+9c575bd (#8272) Fixup logging in Windows service provider
+ad29bf6 Fix issue with forward and backslashes in Windows paths
+eaa7d92 Disable spec tests for unsupported functionality on Windows
+945bf74 Update certificate spec tests for Windows
+3be4d79 Add basic service provider for Windows
+d9a693d Regexp escape substituted commands in Windows wrapper script
+49d1e9d Rework Puppet::Util::Cacher to only expire using TTLs
+9849d56 Remove use of Puppet::Util::Cacher in Puppet::SSL::Host
+028b795 Remove dead uses of Puppet::Util::Cacher from autoloader
+7c4dbeb Remove Puppet::Util::Cacher use from Puppet::Indirector::Indirection
+d6e0b71 Remove caching from the catalog, types, and parameters
+d49dd9e Remove cached_attrs from Puppet::Type::File
+546e0f9 Remove Puppet::Util::Cacher usage from Puppet::Util::Settings
+b6b5498 Remove Util::Cacher usage from SSL::CertificateAuthority
+777b2f2 Remove unused require 'puppet/util/cacher' from Network::HttpPool
+41425bd Remove use of Util::Cacher from FileServing::Mount::File
+8d53090 Remove use of Util::Cacher in FileServing::Configuration
+3093047 Remove Puppet::Network::HttpPool keep_alive handling
+57d6217 Fix spec test failure on 1.9.2
+5d3a40f Maint: Fix miscellaneous tests
+ce0c258 Maint: Don't test for extended signals on Windows
+bdc9790 Maint: Tagged spec tests that are known to fail on Windows
+c26f3e5 Fix tests with "relative" paths on Windows
+bfeb337 (#8268) Require windows drive letters in absolute file paths
+fe81dec (#8489) Consistently use File::PATH_SEPARATOR
+a437812 (#8356) Specify setting type for color
+af2446a (#8268) Fix resource harness spec tests
+d9c3b0f (#8356) Color defaults to false on Windows
+9ebe500 Disable the master on Windows instead of blowing up with failed resources
+7467a08 (#7581) Provide more detailed error message when missing gems on Windows
+654de01 Maint: Correct docs for filebucket type and file's backup parameter
+b623826 Maint: Fix line wrapping in create_resources function
+fd7332b maint: remove inaccurate copyright and license statements.
+a8b27de Maint: Improve create_resources function's doc string
+5f22985 maint: Fix order dependent test failure
+7ac1093 (#8037) Fix incorrect example in Augeas type reference
+35c1006 (#9039) Update Augeas commands documentation
+2bf6721 Reset indirector state after configurer tests.
+e9b558d Fix posix exec provider spec failures on Windows
+b28bcb0 (#5495) Remove dead Windows-specific code from posix exec provider
+2297899 Do not leak indirector state from apply tests
+b52fbf4 (#8612) Clarify the function of the example for exec's "creates" parameter
+bb224dd (#8770) Don't fail to set supplementary groups when changing user to root
+2a0de12 (#8770) Always fully drop privileges when changing user
+00c4b25 (#8662) Migrate suidmanager test case to rspec
+d7c9c76 (#8740) Do not enumerate files in the root directory.
+39da99d (#4411) Explain that runinterval = 0 does not mean "never run"
+4146a33 Maint: Fix missing option text in puppet agent and arrange options alphabetically
+0e00473 (#3553) Explain that cron resources require time attributes
+769d432 (#8302) Improve documentation of exec providers
+76d45d2 (#7853) Clarify and complete docs for the tagmail report processor
+d60852b Maint: Mention that audit metaparameter will accept "all"
+51d989e Maint: Adjust wording for file type's content parameter
+a110d83 Maint: Fix poor documentation for versioncmp function.
+746a374 maint: Fix case sensitive require
+310bd55 maint: Add inspect app options to help
+3a19628 maint: Fix inspect help
+344aef9 (#8808) Fail Augeas resource when unable to save changes
+c209f62 Add document outlining preferred contribution methods
+839e7c9 (#7999) Add some basic tests of the systemd provider
+1cae354 (#7999) Add a service provider that manages systemd services natively
+3b152e4 (#7114) Fix value validation on options
+aa1b36f (#7114) Add tests for option property
+
+2.7.3
+===
+7113448 (#4762) Ensure that clients on the moon can successfully connect.
+c8835ad Add document outlining preferred contribution methods
+b85f57c Add document outlining preferred contribution methods
+ea0f2bf Revert "Merge branch 'vcsrepo'"
+a5716e4 Revert "Merge branch 'vcsrepo'"
+94f0b93 (#8704) Give better errors for invalid fileserver.conf
+38801dd (Maint.) Disable cleaning of storeconfigs.
+023d959 (#8690) Accept 'global' options in Puppet Faces
+bff817c (Maint.) Fix spec failures related to leaking state.
+ccd622a (#1886) Clean up `node clean` for merge.
+c315da0 Fix #1886 - Add node cleanup capability
+7e6fc0d Deprecate RestAuthConfig#allowed? in favor of #check_authorization
+6401dfe Fix #6026 - security file should support inline comments
+0c385f1 Fix #5010 - Allow leading whitespace in auth.conf
+8da0486 Fix #5777 - rule interpolation broke auth.conf CIDR rules
+1d4acb5 maint: Suggest where to start troubleshooting SSL error message
+fb2ffd6 (#8596) Detect resource alias conflicts when titles do not match
+778127d maint: Fix cert app to print help and exit if no subcommand
+0366b18 (#7293) Set default format for SSL-related faces.
+cc2c3ed (Maint.) Unquoting HEREDOCs.
+89c021c (#8418) Fix inspect app to have the correct run_mode
+3165364 maint: Adding logging to include environment when source fails
+f484851 maint: Add debug logging when the master receives a report
+10e05ad (#7266) Move Certificate option validation into face.
+d522b0b maint: Fix Face testing bug 1.9.2 revealed.
+ae36003 (#7290) Update indirected Faces to avoid unknown options.
+88e9cd2 maint: don't print inside action implementations.
+82e5fa9 (#8561, #7290) Implement the option contract fully.
+77441be (#8561) Unify validation and modification of action arguments.
+69b4e70 (#7290) Fail on unknown options.
+6bec2df (#8561) Use canonical names for options to actions.
+532c4f3 (#7184) Load the core of obsolete versions of Faces.
+2cd3bc4 (#7184) Find actions bound to other versions of Faces.
+1e0655e (#7184) Centralize "find action for face" into Puppet::Face
+0396611 maint: better error reporting when test fails
+e639868 Confine password disclosure acceptance test to hosts with required libraries
+395c174 (#7123) Make `find` the default action...
+fd6a653 (#7123) Support runtime setting of 'default' on actions.
+b75b1c1 (#6787) Add `default_to` for options.
+8820a78 Replace calls to Array#count with #length
+bdd6a17 Fix order-dependent test failure in certificate_status/file spec
+c830ab0 (#6789) Port SSL::CertificateAuthority::Interface to a Face
+cc311ad maint: SSL::Inventory.serial should report missing names.
+72abe6c (#7204) Consolidate Semantic Versioning code.
+d02000b (#8401) Document that --detailed-exitcodes is a bitmask
+a109c90 (maint) Cleanup and strengthen acceptance tests
+c4848d2 maint: Fix documentation link for fileserver configuration
+b268fb3 (#7144) Update Settings#writesub to convert mode to Fixnum
+b82f29c (#7699) Help command should only list options once
+4a2f22c (maint) Fix platform dection for RHEL
+45b3908 (#4142) Fix module check not to fail when empty metadata.json
+1feccc3 Revert "Merge branch 'ticket/2.7.x/7699_fix_help_listing_options_twice' into 2.7.x"
+ae3ef42 (#7699) - Help should only show options once
+5826f73 (#8032) Add containment to create_resources
+98cd89b (#8147) Update test for default reporturl
+f6882d6 (#8147) Change default reporturl to match newer Dashboard versions
+111a4b5 (#6857) Password disclosure when changing a user's password
+Fix cross branch confusion on 2.7.2rc2
+8ec0804 (#8301) Red Hat spec file for 2.7.2rc1 won't work
+2263be6 (#5108) Update service type docs for new hasstatus default
+902c414 Update configurer_spec.rb to work with Ruby 1.8.5
+7ad1b04 Clean up indentation, whitespace, and commented out code
+014d952 Remove order dependency from functions integration spec
+243aaa9 (#7956) Porting cron tests
+3e3fc69 (#7956) Port resource acceptance tests
+534ccfe (#8048) Gem install puppet no longer fails if rdoc enabled.
+bbde5b5 Readying for release of 2.6.9
+5160822 Clean up indentation, whitespace, and commented out code
+92a8f4a Remove order dependency from functions integration spec
+31554c0 (#6854) Update Red Hat spec file
+cba645c Bumping release in lib/puppet.rb and updating CHANGELOG.
+43027de Bumping RPM spec file to 2.6.9rc1.
+99330fa (#7224) Reword 'hostname was not match' error message
+1d867b0 (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
+de06469 (#5641) Help text: document that puppet doc takes modulepath, manifestdir, and environment options
+381fa40 (#6418) Make test 64118 more portable
+98ba407 (#7127) Stop puppet if a prerun command fails
+6996e0b Do not needlessly create multiple reports when creating a transaction
+caca469 (#4416) Ensure types are providified after reloading
+413b136 (#4416) Always remove old provider before recreating it
+d866ce1 Cleanup indentation, comment, and unused code
+d1c965a Make temporary auth.conf in acceptance test readable by Puppet
+4af9784 (#7117) Use a different auth.conf instead of overwriting the default
+ecde134 (#3360) Delete SSL directory in acceptance test before running
+b502423 Update acceptance tests to use with_master_running_on
+053e613 Remove pending copy of an active acceptance test
+98f58ce (#2128) Add WARNING for node_name_{fact,value} descriptions
+1cd848c (#2128) Whitespace only reflow commit
+d9b5c1a (#2128) In-line docs for node_name_{fact,value}
+3f0dbb5 (#650) Allow symlinks for configuration directories
+c260cf1 Fix acceptance tests not managing their masters
+1c70f0c (#2128) Add support for setting node name based on a fact
+c629958 (#2128) Get facts before retrieving catalog
+cd4fe14 (#2128) Add the ability to specify a node name
+8ebec1e (#7193) Fix path issues with acceptance tests that call old shell tests
+16b2311 (#6885) puppet agent fingerprint requires --verbose to return a value.
+77a5987 maint: Confine augeas specs to require the augeas feature
+8eb0e16 (#2728) Add diff output for changes made by Augeas provider
+a00fd25 maint: Refactor specs in preparation for making node name more flexible
+2f8bc26 maint: Fix order dependent test failure
+c02126d (#5966) Add support for hostname regular expressions in auth.conf
+75e2764 (#5318) Always notice changes to manifests when compiling.
+bc71266 maint: Fix order dependent spec failure for face indirection
+6547835 (#7690) Don't blow up when listing terminuses available for faces
+0bcbca5 maint: Dedup the loadpath so we don't have to walk it multiple times
+4a5e99d (#7681) Add an acceptance test for resource refs with array variables
+996dc07 Maint: Fix ellipses for short descriptions
+53af6f3 (#7563) DRY: Remove indirector boilerplate from individual faces
+74aff59 (#7564) Finish templates
+3026333 (#7561) Complete help text for all faces and actions
+13e473e Maint: Add ellipsis to generated short_descriptions.
+89d447b (#6962) Add "arguments" method to help API
+646919e (4123) Fix test for 4123/4 on old egrep in cent4
+b101804 add puppet master polling step for ticket 7117
+9145569 maint: Remove reliance on system clock from schedule spec tests
+107b38a maint: Fix pacman provider to work with Ruby 1.9
+8eea3f5 Added the vcsrepo type and providers to the core
+8f0cecf Added the vcsrepo type and providers to the core
+4645c99 add puppet master polling step for ticket 7117
+17e7223 (#7507) Add exclude filter for ruby 1.9 spec failures
+181098b (#7502) Fixed parser spec for ruby 1.8.5
+9c3bedd (#7507) Add more 1.9 filters
+f037662 (#6395) Add extpuppet help, eval, and interfaces
+4d4d587 Adding a sleep state post starting master
+c81f5c6 Adding a sleep state post starting master
+d1cc24f maint: fix spec_helper inclusions again.
+3ac7aed (#7523) Refactor the grammar to reduce duplication
+d22b130 (#7114) Fix specs for ssh authorized key parsed provider
+551cb3e (#7114) Target returns correct value
+15c6fc7 (#7114) Add integration tests for authorized_key
+a5ac82a (#7114) Improve unit tests for ssh_authorized_key
+1c7f0c3 (#7114) Improve value validation for authorized_key
+0b8ebac (#7300) Fix instances method of mount provider
+1dc662a (#1853) Pacman package provider
+6bb2a85 (#1853) Pacman package provider
+c8775f9 (#7259) Remove ActiveRecord requirement from indirector face spec
+1ad8158 (#7259) Do not try to load all Terminus classes when configuring the Indirector
+8b76be3 (#3836) External nodes should only capture stdout
+d63fc34 Revert "(#7220) Add the ability to "inherit" options."
+c21539f maint: sync 'authconfig' to 'rest_authconfig' setting
+81d566f Fixed #7481 - Added MIT license to Thomas Bellman's function code
+1695dac (#7264) Docs: Clarify that subscribe/notify imply require/before
+8f907f2 adding test for ticket 7139
+90eb937 (#7139) Accept '/' as a valid path in filesets
+1f3b8e7 (#7300) Add specs for the mount provider
+1b2a7d9 case seems needless here as there is only two opts, also the rest of the file seems to use if so this should make things more consistant
+729336e (#6845) Mount writes incorrect vfstab entries
+16cf1ac (#6442) Be able to start agents --listen without namespaceauth.conf
+e059539 Update CHANGELOG for 2.6.8
+ac0581f (#7101) Fix template error messages in Ruby 1.8.5
+9d2500e (#7101) Fix template error messages in Ruby 1.8.5
+0352402 (#3420) Nagios "name" attribute does not output correctly
+f656818 (#4487) When setting environment on a host, ensure it is a string.
+89e9a21 add test for ticket 7101
+74498af add test for ticket 7101
+2cce326 add test for ticket 7101
+c1edcb2 add test for ticket 7101
+9329a1f (#7220) Add the ability to "inherit" options.
+c306db2 (#6487) Add some testing for OS X version support in DirectoryService provider
+0008b63 (#6487) Directoryservice provider will fail in future OS releases
+f21162b (#6368) Make the File type autorequire its nearest ancestor directory
+c3a76a9 (#7021) Fix order dependent spec failures
+7bd6a2f maint: Remove unused code
+34f9f41 Maint: Fix a #4655 introduced log inconsistency
+6981ee5 Maint: Fix a #4655 introduced log inconsistency
+cb43cfc Moving tests from Puppet-acceptance repo
+ac428b9 Move tests from Puppet-acceptance repo
+db26326 Move tests from puppet-acceptance repo
+6b18f8f Move acceptance tests from puppet-acceptance repo
+9a5bf6e Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+a18ac78 maint: Fix PSON order dependency in test
+656eff8 (#4655) Allow stage to be set using a default class parameter
+b3ab0d9 (#4655) Allow stage to be set using a default class parameter
+7d3c303 Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+7f658e6 vim: Initial ftplugin and indent support
+ccbe9f3 Fixed #6681 - Remove --force-yes option from aptitude is used
+
+2.7.1
+===
+a49d5b8 (#8048) Gem install puppet no longer fails if rdoc enabled.
+
+2.7.0
+===
+1a33bf8 (#7506) Specify supported Ruby versions in README.md
+d4c499d Updated CHANGELOG for 2.7.0rc4
+dbe2310 Maint: Update static man pages for 2.7.0
+50d188c Maint: Update static man page generator for Faces.
+f370d5a (#7833) Several help text/template edits
+90d2cf0 maint: more work on regexp matching in Test::Unit assertions.
+8c71df2 maint: acceptance tests need to search for bin/false
+0ae4732 (#7828) Fix whitespace in synopsis generator.
+b4e9791 maint: handle incoherent Test::Unit assertions.
+48aafa3 (#6873) Add Static Compiler terminus to 2.7.0
+9017fea (#7728) Acceptance test for whit notifications.
+973e752 (#7728) Suppress notifications from container whits.
+1772363 (#7764, 7775, 7778) Revisions to Faces help text
+5a9998e (#7773, 7776, 7764) Several help template tweaks
+5587b94 maint: remove an unhelpful pending test.
+bbf0a02 maint: fix misnamed acceptance test for #7139
+d4e6c26 (#7624) Manually fetch all properties in instances.
+c8df027 (#7193) Fix path issues with acceptance tests that call old shell tests
+31bf55c (#7632) Make secret_agent application compatible with secret_agent face
+c5448b7 (#7624) Auditing should not be enabled by default for purged resources.
+b70f32a (#7746) Fix bootstrap issues from #7717 fix.
+be233c3 (#7683) Use ronn, when available, to render the output.
+2389bdf (#7683) Add a 'man' face and subcommand to Puppet.
+e647f70 maint: remove obsolete work-around code from help face.
+796900b (#7699) Don't duplicate inherited action names on faces.
+a23cfd8 (#7177) Deprecate implicit 'puppet apply' for 2.7.0
+3f47b0c (#7717) Layout cleanup for subcommand extraction.
+8072b4b #7211: Test unknown options don't shadow unknown actions.
+dd8108c #7211: nasty logic error with global Face options taking arguments.
+618495c #7211: more helpful error messages in various cases.
+7df1fa4 (#7708) Delete extended documentation from configuration reference
+2935feb (#7707) Document signals in puppet agent and puppet master help
+3facc33 add puppet master polling step for ticket 7117
+68c106e (#5318) Always notice changes to manifests when compiling.
+a5a78a5 (#7557) Remove Faces Application
+ea7908b maint: Fix order dependent spec failure for face indirection
+2aa9f2f (#7690) Don't blow up when listing terminuses available for faces
+9447cb9 maint: Dedup the loadpath so we don't have to walk it multiple times
+149a12f Maint: Fix ellipses for short descriptions
+7688706 (#7563) DRY: Remove indirector boilerplate from individual faces
+4662f4d (#7564) Finish templates
+331d812 (#7561) Complete help text for all faces and actions
+069a6b8 Maint: Add ellipsis to generated short_descriptions.
+ebc642b (#6962) Add "arguments" method to help API
+163ff6b (#7681) Add an acceptance test for resource refs with array variables
+9f6dec2 (#7681) Allow array variables as resource references
+76ad2bb (#7507) Add exclude filter for ruby 1.9 spec failures
+3682025 maint: move trap call to Signal so we can stub it for specs
+fc0add1 Updated CHANGELOG for 2.7.0rc3
+83c7563 (#7259) Remove ActiveRecord requirement from indirector face spec
+aad2fd7 (#7259) Do not try to load all Terminus classes when configuring the Indirector
+3378841 Adding a sleep state post starting master
+d972cea (#7507) Add more filters for Ruby 1.9 spec failures
+9da1454 (#7507) Add ability to filter Ruby 1.9 spec failures
+47e4ac9 (#7507) Fix when_invoked action specs in Ruby 1.9
+809b6fe (#7297) Fix Puppet::Resource#to_manifest in Ruby 1.9
+3197e21 (#7298) require 'English' to provide $CHILD_STATUS in Ruby 1.9
+48923af (#7291) Fix issues with instance_methods in Ruby 1.9
+68065ff (#7291) Fixed ascii problem with Ruby 1.9.2
+1abb7c0 (#7291) Fix Ruby 1.9 face failures
+6159466 (#7291) The 'script' version of actions needs options argument
+09f5d9c (#7469) Add license to test face so tests pass
+a44cbb1 (#7264) Docs: Clarify that subscribe/notify imply require/before
+9377507 (#7468) Stub spec that tries to connect to pypi.python.org
+5db214c Prevent spec failure caused by network device mock leak
+3722520 Fix #7299 - do not require net/ssh for running rake spec
+b983386 Updated CHANGELOG for 2.7.0rc2
 61edff9 (#7353) Remove :for_humans format entirely.
 d2b5ec6 Adding test for ticket 7139
 6f2a129 add clean-up step to test for ticket_5477 to prevent site.pp from leaking to other tests
@@ -131,38 +839,7 @@ ca9d68f (#6408) Update puppet cert help for new subcommand action syntax.
 174e87a (#4258) Fix pkgutil spec test to have the correct provider
 e119739 (#6928) Add a notice to Parser#validate action when using default
 9bc4bce (#7103) Fix HEAD requests in the HTTP handler
-cb552af (#4258) Remove superfluous command check that called pkgutil
-fd98341 (#4258) Fix fd leak opening pkgutil config files
-7726dc3 (#4258) Permit variations of -nv in both pkgutil.conf files
-f8c2f1a (#4258) Stop file and config checks from breaking spec
-ef86105 (#4258) Check wgetopts in pkgutil.conf
-557ed85 (#4258) Fix hash duplication affecting canonical provider instance
-7c99dd9 (#4258) Use pkgutil -a to reliably determine package common names/aliases
-ab5bc35 (#4258) Update pkgutil spec for recent impl changes
-e582709 (#4258) pkgutil: bug fix: if shortname is not equal to package name
-58ac7d3 (#4258) pkgutil provider: better handling of short package names
-15a53f0 (#4258) pkgutil provider: misc enhancements
-15e225b Add spec tests for pkgutil package provider
-8462acd * Fix exception on parse failure of pkgutil output * Fix exception when querying latest version for unknown package
-3eace85 Fixing indentation
-f8e9155 Removing blastwave references and unused PAGER
-485ac38 Changing indentation to 2-spaces as per 2.6+ style
-9d63171 Single package queries made more robust when dealing with pkgutil noise
-f50fac7 Fixing wget verbose regex
-3003719 These regular expressions will not match anything.  pkgutil doesn't output anything that can be matched.
-2725fb3 Add comments that explain what we are ignoring in the package and remove legacy output
-143fc74 Ignoring lines from use_gpg and catalog fetching
-69a3451 Adding patch from Rudy Gevaert to fix not installed detection
-d026bb7 pkgutil provider: Using the --single option which speeds up execution.
-ec2a03c pkgutil provider: The path to the admin file is /var/opt/csw/pkgutil/admin
-0fc2aa6 pkgutil provider: Correcting a typo in a message.
-e02ba01 Using --single in the pkgutil provider.
-fc18591 Adding pkgutil support.
-9f365b1 Fixed #4258 - Added pkgutil package provider
-
-
-2.7.0rc1
-========
+97e9e5f Updated CHANGELOG & version for 2.7.0rc1
 5915814 Revert "(#6928) Removed --ignoreimport"
 24a277c (#6928) Removed --ignoreimport
 fc36e8d (#6928) Remove --parseonly
@@ -173,6 +850,11 @@ a688461 (#6928) Add a Parser face with Validate action
 78e181e (#7059) handle inherited action binding scope
 cc0f414 maint: ensure we handle '-foo=' options correctly in faces.
 f78ab09 (#2150) Fix File const lookup when configuring routes
+cb552af (#4258) Remove superfluous command check that called pkgutil
+fd98341 (#4258) Fix fd leak opening pkgutil config files
+7726dc3 (#4258) Permit variations of -nv in both pkgutil.conf files
+f8c2f1a (#4258) Stop file and config checks from breaking spec
+ef86105 (#4258) Check wgetopts in pkgutil.conf
 e852580 maint: install erb templates under lib/
 db11770 maint: clean up the spec test headers in bulk.
 4dd6a77 (#7056) Use 'face' rather than 'faces' in the production code.
@@ -347,6 +1029,7 @@ a1ce253 Adding Certficate#generate
 af79d3c maint: Fix order-dependent spec failures
 847ac20 maint: Implement an InterfaceCollection class to manage interfaces
 6180397 (#6527) Fix pip tests
+557ed85 (#4258) Fix hash duplication affecting canonical provider instance
 0170ceb (#6527) Fix uninstall problem and refactor
 af42367 (#6527) Added pip package provider.
 ee66f36 (#6814) Add missing require for specs
@@ -370,11 +1053,14 @@ ba67cc8 (#6785) Internal consistency for `--terminus`.
 a7173dc (#6786) Fixing a number of failing tests.
 9c85d70 (#6785) Rename the --from option to --terminus.
 b187e07 (#6786) Removing the #interface method.
+7c99dd9 (#4258) Use pkgutil -a to reliably determine package common names/aliases
+ab5bc35 (#4258) Update pkgutil spec for recent impl changes
 cf873c6 maint: Silence test output in the spec run
 f4401d3 (#6722) load all functions before testing...
 4905956 (5909) Function to dyncamically generate resources.
 1a55c7a (#5479) Test that we auto-require the zone dataset.
 0a2a58c (#5479) Autorequire zfs filesystem when zone dataset is configured
+e582709 (#4258) pkgutil: bug fix: if shortname is not equal to package name
 682686f (#6441) Add mount fixture for AIX's /etc/filesystems
 349f6f2 (#6641) Make it easier to add future platforms to the suite.
 6a96584 (#6441) Mark solaris tests pending, because we can't stub it.
@@ -382,6 +1068,7 @@ b4f1b98 (#6641) fix mount provider tests broken in the 2.6 merge.
 3b89f32 maint: use chdir rather than depend on bash for win32
 2a91572 (#4798) Make rdoc work if moduledir & manifestdir overlap
 28ce355 maint: Fix rdoc when documenting manifest files
+58ac7d3 (#4258) pkgutil provider: better handling of short package names
 9a1c3b5 maint: spec/integration/configurer has races in time checking.
 75af582 maint: Move puppetdoc settings to defaults so we can use them in tests
 124ff3c maint: Fix a randomization test failure
@@ -423,9 +1110,12 @@ c2715c0 Splitting the Application base class
 0cbdbce Renaming 'data_baseclass' to 'interface_base'
 ef289e5 Fixing indentation
 cf79349 Updating readme to reflect requirements
+15a53f0 (#4258) pkgutil provider: misc enhancements
 cde1baa Fixing Interface listing
 eff4eec (#3) Base application should catch SYSINT
 a54ee1e (#2) Should not assume interfaces have indirectors
+15e225b Add spec tests for pkgutil package provider
+8462acd * Fix exception on parse failure of pkgutil output * Fix exception when querying latest version for unknown package
 7639d5f Fix non-existent method called in SMF manifest import exception message, updated spec
 f5e21f0 (#6324) Use real service resource object instead of a stub
 ef9e929 (#6324) Add spec for SMF service provider
@@ -506,6 +1196,11 @@ beb85d6 Maint: Moved auto-signing logic into an indirector extension
 8766efe Maint: Make http handler code call the indirector through ".indirection"
 71ecad9 Maint: Refactor code to use <class>.indirection.<method>
 14f8160 Maint: Refactor tests to use <class>.indirection.<method>
+3eace85 Fixing indentation
+f8e9155 Removing blastwave references and unused PAGER
+485ac38 Changing indentation to 2-spaces as per 2.6+ style
+9d63171 Single package queries made more robust when dealing with pkgutil noise
+f50fac7 Fixing wget verbose regex
 0f00bf4 Maint: Removed unused monkey patch that connected OpenSSL::PKey::RSA to indirector
 c5a1ca0 (#5391) Include additional zfs properties
 3a815e1 (#5375) Rework puppet apply to use configurer.run
@@ -527,8 +1222,12 @@ cd8126f maint: Fix intermittent parser spec failures
 ee7d2f9 (#5274) New comment property for the hosttype
 8efdc76 (#5274) Tests for hostprovider removes comments
 28e5772 (#5304) Use internal_name rather than real_name for maillist provider
+3003719 These regular expressions will not match anything.  pkgutil doesn't output anything that can be matched.
 6c7290b (#5079) Refactor and cleanup mcxcontent provider
 c643e98 (#5079) Move methods around to make it clearer whether they're public or private
+2725fb3 Add comments that explain what we are ignoring in the package and remove legacy output
+143fc74 Ignoring lines from use_gpg and catalog fetching
+69a3451 Adding patch from Rudy Gevaert to fix not installed detection
 b753d83 Fixed #5288 - Changed report default to true
 ccc944f Fix #4339 - Locally save the last report to $lastrunreport
 8ab1aba Fix #4339 - Allow puppet apply to save last run summary
@@ -574,6 +1273,12 @@ df088c9 [4638] Cleanup of plurals and inheritance relationships in AST
 caca187 Moved perform_initial_import from Puppet::Resource::TypeCollection to Puppet::Node::Environment.
 6b1dd81 [#4472]+[#4483] Moved type-name resolution out of Puppet::Parser::TypeLoader.
 6dbd477 [#4397]+[#4344] Move type-name resolution out of Puppet::Resource into the AST resources.
+d026bb7 pkgutil provider: Using the --single option which speeds up execution.
+ec2a03c pkgutil provider: The path to the admin file is /var/opt/csw/pkgutil/admin
+0fc2aa6 pkgutil provider: Correcting a typo in a message.
+e02ba01 Using --single in the pkgutil provider.
+fc18591 Adding pkgutil support.
+9f365b1 Fixed #4258 - Added pkgutil package provider
 83d9874 Use the name in the search path for looking for metadata
 70c293a Fix for environments in startup script. - Dropped the forced --manifest switch in the   suse startup script to allow for environments   to re-define this. Otherwise, environments will   not work as puppet override configuration with   command line arguments.
 62bc09e Redmine: 2474 - Fix for mount fstype documentation
@@ -666,6 +1371,92 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
 
+2.6.13
+===
+e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
+9dfd011 (#5617)  Puppet queue logging
+a91cfa1 maint: Fix failing spec on old version of rspec
+aa2a762 (#10289) Add an ext script to upload facts to inventory server
+5129d38 (#10289) Add a safe alternative to REST for inventory service
+7514d32 missing includes in network XML-RPC handlers
+397a506 (#10244) Restore Mongrel XMLRPC functionality
+e7a6995 (#9794) k5login can overwrite arbitrary files as root
+0a92a70 Resist directory traversal attacks through indirections.
+8d86e5a (9547) Minor mods to acceptance tests
+2bf6721 Reset indirector state after configurer tests.
+bb224dd (#8770) Don't fail to set supplementary groups when changing user to root
+2a0de12 (#8770) Always fully drop privileges when changing user
+00c4b25 (#8662) Migrate suidmanager test case to rspec
+d7c9c76 (#8740) Do not enumerate files in the root directory.
+0e00473 (#3553) Explain that cron resources require time attributes
+769d432 (#8302) Improve documentation of exec providers
+c209f62 Add document outlining preferred contribution methods
+fb2ffd6 (#8596) Detect resource alias conflicts when titles do not match
+89c021c (#8418) Fix inspect app to have the correct run_mode
+3165364 maint: Adding logging to include environment when source fails
+f484851 maint: Add debug logging when the master receives a report
+e639868 Confine password disclosure acceptance test to hosts with required libraries
+a109c90 (maint) Cleanup and strengthen acceptance tests
+b268fb3 (#7144) Update Settings#writesub to convert mode to Fixnum
+4a2f22c (maint) Fix platform dection for RHEL
+111a4b5 (#6857) Password disclosure when changing a user's password
+
+2.6.12 (CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/)
+
+2.6.11
+===
+e158b26 (#9793) "secure" indirector file backed terminus base class.
+343c7bd (#9792) Predictable temporary filename in ralsh.
+88512e8 Drop privileges before creating and chmodding SSH keys.
+2775c21 (#9794) k5login can overwrite arbitrary files as root
+
+2.6.10
+===
+ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
+fe2de81 Resist directory traversal attacks through indirections. (CVE-2011-3484)
+243aaa9 (#7956) Porting cron tests
+3e3fc69 (#7956) Port resource acceptance tests
+
+2.6.9
+====
+db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
+381fa40 (#6418) Make test 64118 more portable
+98ba407 (#7127) Stop puppet if a prerun command fails
+6996e0b Do not needlessly create multiple reports when creating a transaction
+caca469 (#4416) Ensure types are providified after reloading
+413b136 (#4416) Always remove old provider before recreating it
+d866ce1 Cleanup indentation, comment, and unused code
+98f58ce (#2128) Add WARNING for node_name_{fact,value} descriptions
+1cd848c (#2128) Whitespace only reflow commit
+d9b5c1a (#2128) In-line docs for node_name_{fact,value}
+3f0dbb5 (#650) Allow symlinks for configuration directories
+c260cf1 Fix acceptance tests not managing their masters
+1c70f0c (#2128) Add support for setting node name based on a fact
+c629958 (#2128) Get facts before retrieving catalog
+cd4fe14 (#2128) Add the ability to specify a node name
+8ebec1e (#7193) Fix path issues with acceptance tests that call old shell tests
+16b2311 (#6885) puppet agent fingerprint requires --verbose to return a value.
+a00fd25 maint: Refactor specs in preparation for making node name more flexible
+75e2764 (#5318) Always notice changes to manifests when compiling.
+4a5e99d (#7681) Add an acceptance test for resource refs with array variables
+646919e (4123) Fix test for 4123/4 on old egrep in cent4
+8b76be3 (#3836) External nodes should only capture stdout
+8f907f2 adding test for ticket 7139
+90eb937 (#7139) Accept '/' as a valid path in filesets
+1b2a7d9 case seems needless here as there is only two opts, also the rest of the file seems to use if so this should make thin
+729336e (#6845) Mount writes incorrect vfstab entries
+16cf1ac (#6442) Be able to start agents --listen without namespaceauth.conf
+0352402 (#3420) Nagios "name" attribute does not output correctly
+f656818 (#4487) When setting environment on a host, ensure it is a string.
+2cce326 add test for ticket 7101
+c306db2 (#6487) Add some testing for OS X version support in DirectoryService provider
+0008b63 (#6487) Directoryservice provider will fail in future OS releases
+34f9f41 Maint: Fix a #4655 introduced log inconsistency
+6b18f8f Move acceptance tests from puppet-acceptance repo
+9a5bf6e Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+656eff8 (#4655) Allow stage to be set using a default class parameter
+7f658e6 vim: Initial ftplugin and indent support
+ccbe9f3 Fixed #6681 - Remove --force-yes option from aptitude is used
 
 2.6.8
 =====

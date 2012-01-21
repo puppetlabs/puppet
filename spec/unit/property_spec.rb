@@ -114,7 +114,7 @@ describe Puppet::Property do
       @event = Puppet::Transaction::Event.new
 
       # Use a real resource so we can test the event creation integration
-      @resource = Puppet::Type.type(:mount).new :name => "foo"
+      @resource = Puppet::Type.type(:host).new :name => "foo"
       @instance = @class.new(:resource => @resource)
       @instance.stubs(:should).returns "myval"
     end

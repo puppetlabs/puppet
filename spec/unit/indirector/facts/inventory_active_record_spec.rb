@@ -22,6 +22,9 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
   end
 
   before :each do
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+
     Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
     Puppet[:dbadapter]  = 'sqlite3'
     Puppet[:dblocation] = @dbfile.path
@@ -35,10 +38,22 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
   end
 
   describe "#save" do
+    let(:node) {
+      Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
+    }
+
+    let(:facts) {
+      Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
+    }
+
+    it "should retry on ActiveRecord error" do
+      Puppet::Rails::InventoryNode.expects(:create).twice.raises(ActiveRecord::StatementInvalid).returns node
+
+      Puppet::Node::Facts.indirection.save(facts)
+    end
+
     it "should use an existing node if possible" do
-      node = Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
       node.save
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryNode.count.should == 1
@@ -49,7 +64,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
       # This test isn't valid if there are nodes to begin with
       Puppet::Rails::InventoryNode.count.should == 0
 
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryNode.count.should == 1
@@ -57,7 +71,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     end
 
     it "should save the facts" do
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryFact.all.map{|f| [f.name,f.value]}.should =~ [["uptime_days","60"],["kernel","Darwin"]]

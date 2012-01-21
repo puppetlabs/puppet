@@ -5,46 +5,59 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "Compile, save, view, and convert catalogs."
-  description <<-EOT
-    This face primarily interacts with the compiling subsystem. By default,
-    it compiles a catalog using the default manifest and the hostname from
-    `certname`, but you can choose to retrieve a catalog from the server by
-    specifying `--terminus rest`.  You can also choose to print any catalog
-    in 'dot' format (for easy graph viewing with OmniGraffle or Graphviz)
-    with '--render-as dot'.
+  description <<-'EOT'
+    This subcommand deals with catalogs, which are compiled per-node artifacts
+    generated from a set of Puppet manifests. By default, it interacts with the
+    compiling subsystem and compiles a catalog using the default manifest and
+    `certname`, but you can change the source of the catalog with the
+    `--terminus` option. You can also choose to print any catalog in 'dot'
+    format (for easy graph viewing with OmniGraffle or Graphviz) with
+    '--render-as dot'.
   EOT
-  notes <<-EOT
-    This is an indirector face, which exposes find, search, save, and
-    destroy actions for an indirected subsystem of Puppet. Valid terminuses
-    for this face include:
+  short_description <<-'EOT'
+    This subcommand deals with catalogs, which are compiled per-node artifacts
+    generated from a set of Puppet manifests. By default, it interacts with the
+    compiling subsystem and compiles a catalog using the default manifest and
+    `certname`; use the `--terminus` option to change the source of the catalog.
+  EOT
 
-    * `active_record`
-    * `compiler`
-    * `queue`
-    * `rest`
-    * `yaml`
+  get_action(:destroy).summary "Invalid for this subcommand."
+  get_action(:search).summary "Invalid for this subcommand."
+  find = get_action(:find)
+  find.summary "Retrieve the catalog for a node."
+  find.arguments "<certname>"
+  find.returns <<-'EOT'
+    A serialized catalog. When used from the Ruby API, returns a
+    Puppet::Resource::Catalog object.
   EOT
 
   action(:apply) do
-    summary "Apply a Puppet::Resource::Catalog object"
-    description <<-EOT
-      Applies a catalog object retrieved with the `download` action. This
-      action cannot consume a serialized catalog, and is not intended for
-      command-line use."
+    summary "Find and apply a catalog."
+    description <<-'EOT'
+      Finds and applies a catalog. This action takes no arguments, but
+      the source of the catalog can be managed with the `--terminus` option.
     EOT
-    notes <<-EOT
-      This action returns a Puppet::Transaction::Report object.
+    returns <<-'EOT'
+      Nothing. When used from the Ruby API, returns a
+      Puppet::Transaction::Report object.
     EOT
-    examples <<-EOT
-      From `secret_agent.rb`:
+    examples <<-'EOT'
+      Apply the locally cached catalog:
 
-          Puppet::Face[:plugin, '0.0.1'].download
+      $ puppet catalog apply --terminus yaml
 
-          facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
-          catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
-          report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
+      Retrieve a catalog from the master and apply it, in one step:
 
-          Puppet::Face[:report, '0.0.1'].submit(report)
+      $ puppet catalog apply --terminus rest
+
+      From `secret_agent.rb` (API example):
+
+          # ...
+          Puppet::Face[:catalog, '0.0.1'].download
+          # (Termini are singletons; catalog.download has a side effect of
+          # setting the catalog terminus to yaml)
+          report  = Puppet::Face[:catalog, '0.0.1'].apply
+          # ...
     EOT
 
     when_invoked do |options|
@@ -53,6 +66,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       report = Puppet::Transaction::Report.new("apply")
       report.configuration_version = catalog.version
+      report.environment = Puppet[:environment]
 
       Puppet::Util::Log.newdestination(report)
 
@@ -71,23 +85,32 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   end
 
   action(:download) do
-    summary "Download this node's catalog from the puppet master server"
-    description <<-EOT
-      Retrieves a catalog from the puppet master. Unlike the `find` action,
-      `download` submits facts to the master as part of the request. This
-      action is not intended for command-line use.
+    summary "Download this node's catalog from the puppet master server."
+    description <<-'EOT'
+      Retrieves a catalog from the puppet master and saves it to the local yaml
+      cache. This action always contacts the puppet master and will ignore
+      alternate termini.
+
+      The saved catalog can be used in any subsequent catalog action by specifying
+      '--terminus yaml' for that action.
     EOT
-    notes "This action returns a Puppet::Resource::Catalog object."
-    examples <<-EOT
-      From `secret_agent.rb`:
+    returns "Nothing."
+    notes <<-'EOT'
+      When used from the Ruby API, this action has a side effect of leaving
+      Puppet::Resource::Catalog.indirection.terminus_class set to yaml. The
+      terminus must be explicitly re-set for subsequent catalog actions.
+    EOT
+    examples <<-'EOT'
+      Retrieve and store a catalog:
+
+      $ puppet catalog download
+
+      From `secret_agent.rb` (API example):
 
           Puppet::Face[:plugin, '0.0.1'].download
-
-          facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
-          catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
-          report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
-
-          Puppet::Face[:report, '0.0.1'].submit(report)
+          Puppet::Face[:facts, '0.0.1'].upload
+          Puppet::Face[:catalog, '0.0.1'].download
+          # ...
     EOT
     when_invoked do |options|
       Puppet::Resource::Catalog.indirection.terminus_class = :rest

@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'puppet/application/apply'
 require 'puppet/file_bucket/dipper'
 require 'puppet/configurer'
+require 'fileutils'
 
 describe Puppet::Application::Apply do
   before :each do
@@ -11,7 +12,15 @@ describe Puppet::Application::Apply do
     Puppet::Util::Log.stubs(:newdestination)
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
+  after :each do
+    Puppet::Node::Facts.indirection.reset_terminus_class
+    Puppet::Node::Facts.indirection.cache_class = nil
+
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+  end
+
+  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -44,10 +53,20 @@ describe Puppet::Application::Apply do
 
       @apply.handle_logdest("console")
     end
+
+    it "should deprecate --apply" do
+      Puppet.expects(:warning).with do |arg|
+        arg.match(/--apply is deprecated/)
+      end
+
+      command_line = Puppet::Util::CommandLine.new('puppet', ['apply', '--apply', 'catalog.json'])
+      apply = Puppet::Application::Apply.new(command_line)
+      apply.stubs(:run_command)
+      apply.run
+    end
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:parse_config)
@@ -56,16 +75,6 @@ describe Puppet::Application::Apply do
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
-    end
-
-    it "should set show_diff on --noop" do
-      Puppet.stubs(:[]=)
-      Puppet.stubs(:[]).with(:config)
-      Puppet.stubs(:[]).with(:noop).returns(true)
-
-      Puppet.expects(:[]=).with(:show_diff, true)
-
-      @apply.setup
     end
 
     it "should set console as the log destination if logdest option wasn't provided" do
@@ -111,7 +120,6 @@ describe Puppet::Application::Apply do
   end
 
   describe "when executing" do
-
     it "should dispatch to 'apply' if it was called with 'apply'" do
       @apply.options[:catalog] = "foo"
 
@@ -127,36 +135,44 @@ describe Puppet::Application::Apply do
     end
 
     describe "the main command" do
+      include PuppetSpec::Files
+
       before :each do
-        Puppet.stubs(:[])
-        Puppet.settings.stubs(:use)
-        Puppet.stubs(:[]).with(:prerun_command).returns ""
-        Puppet.stubs(:[]).with(:postrun_command).returns ""
-        Puppet.stubs(:[]).with(:trace).returns(true)
+        Puppet[:prerun_command] = ''
+        Puppet[:postrun_command] = ''
 
-        @apply.options.stubs(:[])
+        Puppet::Node::Facts.indirection.terminus_class = :memory
+        Puppet::Node::Facts.indirection.cache_class = :memory
+        Puppet::Node.indirection.terminus_class = :memory
+        Puppet::Node.indirection.cache_class = :memory
 
-        @facts = stub_everything 'facts'
-        Puppet::Node::Facts.indirection.stubs(:find).returns(@facts)
+        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
+        Puppet::Node::Facts.indirection.save(@facts)
 
-        @node = stub_everything 'node'
-        Puppet::Node.indirection.stubs(:find).returns(@node)
+        @node = Puppet::Node.new(Puppet[:node_name_value])
+        Puppet::Node.indirection.save(@node)
 
-        @catalog = stub_everything 'catalog'
+        @catalog = Puppet::Resource::Catalog.new
         @catalog.stubs(:to_ral).returns(@catalog)
+
         Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
 
         STDIN.stubs(:read)
 
-        @transaction = stub_everything 'transaction'
+        @transaction = Puppet::Transaction.new(@catalog)
         @catalog.stubs(:apply).returns(@transaction)
 
         Puppet::Util::Storage.stubs(:load)
         Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
+      after :each do
+        Puppet::Node::Facts.indirection.reset_terminus_class
+        Puppet::Node::Facts.indirection.cache_class = nil
+      end
+
       it "should set the code to run from --code" do
-        @apply.options.stubs(:[]).with(:code).returns("code to run")
+        @apply.options[:code] = "code to run"
         Puppet.expects(:[]=).with(:code,"code to run")
 
         expect { @apply.main }.to exit_with 0
@@ -172,47 +188,63 @@ describe Puppet::Application::Apply do
       end
 
       it "should set the manifest if a file is passed on command line and the file exists" do
-        File.stubs(:exist?).with('site.pp').returns true
-        @apply.command_line.stubs(:args).returns(['site.pp'])
+        manifest = tmpfile('site.pp')
+        FileUtils.touch(manifest)
+        @apply.command_line.stubs(:args).returns([manifest])
 
-        Puppet.expects(:[]=).with(:manifest,"site.pp")
+        Puppet.expects(:[]=).with(:manifest,manifest)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if a file is passed on command line and the file does not exist" do
-        File.stubs(:exist?).with('noexist.pp').returns false
-        @apply.command_line.stubs(:args).returns(['noexist.pp'])
-        lambda { @apply.main }.should raise_error(RuntimeError, 'Could not find file noexist.pp')
+        noexist = tmpfile('noexist.pp')
+        @apply.command_line.stubs(:args).returns([noexist])
+        lambda { @apply.main }.should raise_error(RuntimeError, "Could not find file #{noexist}")
       end
 
       it "should set the manifest to the first file and warn other files will be skipped" do
-        File.stubs(:exist?).with('starwarsIV').returns true
-        File.expects(:exist?).with('starwarsI').never
-        @apply.command_line.stubs(:args).returns(['starwarsIV', 'starwarsI', 'starwarsII'])
+        manifest = tmpfile('starwarsIV')
+        FileUtils.touch(manifest)
 
-        Puppet.expects(:[]=).with(:manifest,"starwarsIV")
+        @apply.command_line.stubs(:args).returns([manifest, 'starwarsI', 'starwarsII'])
+
+        Puppet.expects(:[]=).with(:manifest,manifest)
         Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
 
         expect { @apply.main }.to exit_with 0
       end
 
-      it "should collect the node facts" do
-        Puppet::Node::Facts.indirection.expects(:find).returns(@facts)
+      it "should set the facts name based on the node_name_fact" do
+        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+        Puppet::Node::Facts.indirection.save(@facts)
+
+        node = Puppet::Node.new('other_node_name')
+        Puppet::Node.indirection.save(node)
+
+        Puppet[:node_name_fact] = 'my_name_fact'
 
         expect { @apply.main }.to exit_with 0
+
+        @facts.name.should == 'other_node_name'
       end
 
-      it "should raise an error if we can't find the node" do
+      it "should set the node_name_value based on the node_name_fact" do
+        facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+        Puppet::Node::Facts.indirection.save(facts)
+        node = Puppet::Node.new('other_node_name')
+        Puppet::Node.indirection.save(node)
+        Puppet[:node_name_fact] = 'my_name_fact'
+
+        expect { @apply.main }.to exit_with 0
+
+        Puppet[:node_name_value].should == 'other_node_name'
+      end
+
+      it "should raise an error if we can't find the facts" do
         Puppet::Node::Facts.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
-      end
-
-      it "should look for the node" do
-        Puppet::Node.indirection.expects(:find).returns(@node)
-
-        expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if we can't find the node" do
@@ -222,21 +254,20 @@ describe Puppet::Application::Apply do
       end
 
       it "should merge in our node the loaded facts" do
-        @facts.stubs(:values).returns("values")
-
-        @node.expects(:merge).with("values")
+        @facts.values = {'key' => 'value'}
 
         expect { @apply.main }.to exit_with 0
+
+        @node.parameters['key'].should == 'value'
       end
 
       it "should load custom classes if loadclasses" do
-        @apply.options.stubs(:[]).with(:loadclasses).returns(true)
-        Puppet.stubs(:[]).with(:classfile).returns("/etc/puppet/classes.txt")
-        FileTest.stubs(:exists?).with("/etc/puppet/classes.txt").returns(true)
-        FileTest.stubs(:readable?).with("/etc/puppet/classes.txt").returns(true)
-        File.stubs(:read).with("/etc/puppet/classes.txt").returns("class")
+        @apply.options[:loadclasses] = true
+        classfile = tmpfile('classfile')
+        File.open(classfile, 'w') { |c| c.puts 'class' }
+        Puppet[:classfile] = classfile
 
-        @node.expects(:classes=)
+        @node.expects(:classes=).with(['class'])
 
         expect { @apply.main }.to exit_with 0
       end
@@ -261,8 +292,8 @@ describe Puppet::Application::Apply do
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
-        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command).returns(true)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command).returns(true)
 
         expect { @apply.main }.to exit_with 0
       end
@@ -274,7 +305,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should save the last run summary" do
-        Puppet.stubs(:[]).with(:noop).returns(false)
+        Puppet[:noop] = false
         report = Puppet::Transaction::Report.new("apply")
         Puppet::Transaction::Report.stubs(:new).returns(report)
 
@@ -283,25 +314,26 @@ describe Puppet::Application::Apply do
       end
 
       describe "with detailed_exitcodes" do
+        before :each do
+          @apply.options[:detailed_exitcodes] = true
+        end
+
         it "should exit with report's computed exit status" do
-          Puppet.stubs(:[]).with(:noop).returns(false)
-          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+          Puppet[:noop] = false
           Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
 
           expect { @apply.main }.to exit_with 666
         end
 
         it "should exit with report's computed exit status, even if --noop is set" do
-          Puppet.stubs(:[]).with(:noop).returns(true)
-          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+          Puppet[:noop] = true
           Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
 
           expect { @apply.main }.to exit_with 666
         end
 
         it "should always exit with 0 if option is disabled" do
-          Puppet.stubs(:[]).with(:noop).returns(false)
-          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
+          Puppet[:noop] = false
           report = stub 'report', :exit_status => 666
           @transaction.stubs(:report).returns(report)
 
@@ -309,8 +341,7 @@ describe Puppet::Application::Apply do
         end
 
         it "should always exit with 0 if --noop" do
-          Puppet.stubs(:[]).with(:noop).returns(true)
-          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+          Puppet[:noop] = true
           report = stub 'report', :exit_status => 666
           @transaction.stubs(:report).returns(report)
 

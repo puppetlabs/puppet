@@ -51,4 +51,17 @@ class Puppet::Interface::OptionBuilder
   def required(value = true)
     @option.required = value
   end
+
+  def default_to(&block)
+    block or raise ArgumentError, "#{@option} default_to requires a block"
+    if @option.has_default?
+      raise ArgumentError, "#{@option} already has a default value"
+    end
+    # Ruby 1.8 treats a block without arguments as accepting any number; 1.9
+    # gets this right, so we work around it for now... --daniel 2011-07-20
+    unless block.arity == 0 or (RUBY_VERSION =~ /^1\.8/ and block.arity == -1)
+      raise ArgumentError, "#{@option} default_to block should not take any arguments"
+    end
+    @option.default = block
+  end
 end

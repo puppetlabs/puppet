@@ -1,6 +1,24 @@
 # Download a specified file into the local filebucket.
 Puppet::Face.define(:file, '0.0.1') do
   action :download do |*args|
+    summary "Download a file into the local filebucket."
+    arguments "( {md5}<checksum> | <puppet_url> )"
+    returns "Nothing."
+    description <<-EOT
+      Downloads a file from the puppet master's filebucket and duplicates it in
+      the local filebucket. This action's checksum syntax differs from `find`'s,
+      and it can accept a <puppet:///> URL.
+    EOT
+    examples <<-'EOT'
+      Download a file by URL:
+
+      $ puppet file download puppet:///modules/editors/vim/.vimrc
+
+      Download a file by MD5 sum:
+
+      $ puppet file download {md5}8f798d4e754db0ac89186bbaeaf0af18
+    EOT
+
     when_invoked do |sum, options|
       if sum =~ /^puppet:\/\// # it's a puppet url
         require 'puppet/file_serving'

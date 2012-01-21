@@ -80,7 +80,8 @@ class Puppet::Parser::TypeLoader
 
     loaded_asts = []
     files.each do |file|
-      unless file =~ /^#{File::SEPARATOR}/
+      regex = Puppet.features.microsoft_windows? ? /^[A-Za-z]:#{File::SEPARATOR}/ : /^#{File::SEPARATOR}/
+      unless file =~ regex
         file = File.join(dir, file)
       end
       @loading_helper.do_once(file) do
@@ -111,7 +112,7 @@ class Puppet::Parser::TypeLoader
     # behavior) only load files from the first module of a given name.  E.g.,
     # given first/foo and second/foo, only files from first/foo will be loaded.
     module_names.each do |name|
-      mod = Puppet::Module.new(name, environment)
+      mod = Puppet::Module.new(name, :environment => environment)
       Find.find(File.join(mod.path, "manifests")) do |path|
         if path =~ /\.pp$/ or path =~ /\.rb$/
           import(path)

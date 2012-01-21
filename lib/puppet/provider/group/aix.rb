@@ -3,11 +3,11 @@
 #  mkgroup, rmgroup, lsgroup, chgroup
 #
 # Author::    Hector Rivas Gandara <keymon@gmail.com>
-#  
+#
 require 'puppet/provider/aixobject'
 
 Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject do
-  desc "Group management for AIX! Users are managed with mkgroup, rmgroup, lsgroup, chgroup"
+  desc "Group management for AIX."
 
   # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
@@ -29,7 +29,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   end
 
   # AIX attributes to properties mapping.
-  # 
+  #
   # Valid attributes to be managed by this provider.
   # It is a list with of hash
   #  :aix_attr      AIX command attribute name
@@ -43,10 +43,10 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       :from => :users_from_attr},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
   ]
-  
+
   #--------------
   # Command definition
-  
+
   # Return the IA module arguments based on the resource param ia_load_module
   def get_ia_module_args
     if @resource[:ia_load_module]
@@ -55,7 +55,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       []
     end
   end
-  
+
   def lscmd(value=@resource[:name])
     [self.class.command(:list)] +
       self.get_ia_module_args +
@@ -80,7 +80,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   def modifycmd(hash = property_hash)
     args = self.hash2args(hash)
     return nil if args.empty?
-    
+
     [self.class.command(:modify)] +
       self.get_ia_module_args +
       args + [@resource[:name]]
@@ -123,7 +123,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
     #self.class.validate(param, value)
     param = :attributes
     cmd = modifycmd({param => filter_attributes(attr_hash)})
-    if cmd 
+    if cmd
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail

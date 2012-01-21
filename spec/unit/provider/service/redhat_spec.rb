@@ -9,6 +9,8 @@ provider_class = Puppet::Type.type(:service).provider(:redhat)
 describe provider_class do
 
   before :each do
+    Puppet.features.stubs(:posix?).returns(true)
+    Puppet.features.stubs(:microsoft_windows?).returns(false)
     @class = Puppet::Type.type(:service).provider(:redhat)
     @resource = stub 'resource'
     @resource.stubs(:[]).returns(nil)
@@ -19,6 +21,15 @@ describe provider_class do
     @provider.stubs(:get).with(:hasstatus).returns false
     FileTest.stubs(:file?).with('/sbin/service').returns true
     FileTest.stubs(:executable?).with('/sbin/service').returns true
+  end
+
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      provider_class.default?.should be_true
+    end
   end
 
   # test self.instances

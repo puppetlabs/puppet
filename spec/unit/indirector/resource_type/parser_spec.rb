@@ -128,7 +128,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       second = File.join(dir, "second")
       FileUtils.mkdir_p(first)
       FileUtils.mkdir_p(second)
-      Puppet[:modulepath] = "#{first}:#{second}"
+      Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
 
       # Make a new request, since we've reset the env
       @request = Puppet::Indirector::Request.new(:resource_type, :search, "*")

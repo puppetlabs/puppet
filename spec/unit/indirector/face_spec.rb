@@ -12,6 +12,8 @@ describe Puppet::Indirector::Face do
     instance
   end
 
+  it { should be_option :extra }
+
   it "should be able to return a list of indirections" do
     Puppet::Indirector::Face.indirections.should be_include("catalog")
   end
@@ -48,7 +50,7 @@ describe Puppet::Indirector::Face do
     end
     it "should forward passed options" do
       subject.indirection.expects(method).with(:test, {'one'=>'1'})
-      subject.send(method, :test, {'one'=>'1'})
+      subject.send(method, :test, :extra => {'one'=>'1'})
     end
   end
 

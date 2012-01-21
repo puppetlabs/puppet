@@ -8,24 +8,22 @@ module Puppet
 
   newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
-      widely by platform --- some platforms have very little if any
-      concept of a running service, and some have a very codified and
-      powerful concept.  Puppet's service support will generally be able
-      to do the right thing regardless (e.g., if there is no
-      'status' command, then Puppet will look in the process table for a
-      command matching the service name), but the more information you
-      can provide, the better behaviour you will get. In particular, any
-      virtual services that don't have a predictable entry in the process table
-      (for example, `network` on Red Hat/CentOS systems) will manifest odd
-      behavior on restarts if you don't specify `hasstatus` or a `status`
-      command.
+      widely by platform --- some platforms have very little if any concept of a
+      running service, and some have a very codified and powerful concept.
+      Puppet's service support is usually capable of doing the right thing, but
+      the more information you can provide, the better behaviour you will get.
+
+      Puppet 2.7 and newer expect init scripts to have a working status command.
+      If this isn't the case for any of your services' init scripts, you will
+      need to set `hasstatus` to false and possibly specify a custom status
+      command in the `status` attribute.
 
       Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
-      service depends on the platform. You can provide an explicit command
-      for restarting with the `restart` attribute, or use the init script's
-      restart command with the `hasrestart` attribute; if you do neither,
-      the service's stop and start commands will be used."
+      service depends on the platform. You can provide an explicit command for
+      restarting with the `restart` attribute, or you can set `hasrestart` to
+      true to use the init script's restart command; if you do neither, the
+      service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
@@ -49,8 +47,18 @@ module Puppet
         provider.disable
       end
 
+      newvalue(:manual, :event => :service_manual_start) do
+        provider.manual_start
+      end
+
       def retrieve
         provider.enabled?
+      end
+
+      validate do |value|
+        if value == :manual and !Puppet.features.microsoft_windows?
+          raise Puppet::Error.new("Setting enable to manual is only supported on Microsoft Windows.")
+        end
       end
     end
 
@@ -93,19 +101,17 @@ module Puppet
     end
 
     newparam(:hasstatus) do
-      desc "Declare the the service's init script has a
-        functional status command.  Based on testing, it was found
-        that a large number of init scripts on different platforms do
-        not support any kind of status command; thus, you must specify
-        manually whether the service you are running has such a
-        command. Alternately, you can provide a specific command using the
-        `status` attribute.
+      desc "Declare whether the service's init script has a functional status
+        command; defaults to `true`. This attribute's default value changed in
+        Puppet 2.7.0.
 
-        If you specify neither of these, then Puppet will look for the
-        service name in the process table. Be aware that 'virtual' init
-        scripts such as networking will respond poorly to refresh events
-        (via notify and subscribe relationships) if you don't override
-        this default behavior."
+        If a service's init script does not support any kind of status command,
+        you should set `hasstatus` to false and either provide a specific
+        command using the `status` attribute or expect that Puppet will look for
+        the service name in the process table. Be aware that 'virtual' init
+        scripts (like 'network' under Red Hat systems) will respond poorly to
+        refresh events from other resources if you override the default behavior
+        without providing a status command."
 
       newvalues(:true, :false)
 
@@ -125,7 +131,7 @@ module Puppet
         value = [value] unless value.is_a?(Array)
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         # It affects stand-alone blocks, too.
-        paths = value.flatten.collect { |p| x = p.split(":") }.flatten
+        paths = value.flatten.collect { |p| x = p.split(File::PATH_SEPARATOR) }.flatten
       end
 
       defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }
@@ -137,10 +143,8 @@ module Puppet
         status on those service whose init scripts do not include a status
         command.
 
-        If this is left unspecified and is needed to check the status
-        of a service, then the service name will be used instead.
-
-        The pattern can be a simple string or any legal Ruby pattern."
+        Defaults to the name of the service. The pattern can be a simple string
+        or any legal Ruby pattern."
 
       defaultto { @resource[:binary] || @resource[:name] }
     end
@@ -158,7 +162,7 @@ module Puppet
         return 0 if the service is running and a nonzero value otherwise.
         Ideally, these return codes should conform to
         [the LSB's specification for init script status actions](http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html),
-        but puppet only considers the difference between 0 and nonzero
+        but Puppet only considers the difference between 0 and nonzero
         to be relevant.
 
         If left unspecified, the status method will be determined
@@ -178,8 +182,10 @@ module Puppet
     end
 
     newparam :hasrestart do
-      desc "Specify that an init script has a `restart` option.  Otherwise,
-        the init script's `stop` and `start` methods are used."
+      desc "Specify that an init script has a `restart` command.  If this is
+        false and you do not specify a command in the `restart` attribute,
+        the init script's `stop` and `start` commands will be used. Defaults
+        to true; note that this is a change from earlier versions of Puppet."
       newvalues(:true, :false)
     end
 

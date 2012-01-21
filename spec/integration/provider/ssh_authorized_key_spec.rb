@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
-describe "ssh_authorized_key provider (integration)" do
+describe "ssh_authorized_key provider (integration)", :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before :each do
@@ -151,10 +151,10 @@ describe "ssh_authorized_key provider (integration)" do
       end
 
       it "should modify options if options are out of sync" do
-        @example[:options]=[ 'from="correct.domain.com"', 'no-port-forwarding', 'no-pty' ]
-        create_fake_key(:root, @sample_lines + [ "from=\"incorrect.domain.com\",no-port-forwarding,no-pty ssh-rsa #{@sample_rsa_keys[0]} root@hostname"])
+        @example[:options]=[ 'from="*.domain1,host1.domain2"', 'no-port-forwarding', 'no-pty' ]
+        create_fake_key(:root, @sample_lines + [ "from=\"*.false,*.false2\",no-port-forwarding,no-pty ssh-rsa #{@sample_rsa_keys[0]} root@hostname"])
         run_in_catalog(@example)
-        check_fake_key(:root, @sample_lines + [ "from=\"correct.domain.com\",no-port-forwarding,no-pty ssh-rsa #{@sample_rsa_keys[0]} root@hostname"] )
+        check_fake_key(:root, @sample_lines + [ "from=\"*.domain1,host1.domain2\",no-port-forwarding,no-pty ssh-rsa #{@sample_rsa_keys[0]} root@hostname"] )
       end
 
     end

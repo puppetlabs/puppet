@@ -73,7 +73,7 @@ describe Puppet::FileServing::Content do
   it "should return an opened File when converted to raw" do
     content = Puppet::FileServing::Content.new("/path")
 
-    File.expects(:new).with("/path","r").returns :file
+    File.expects(:new).with("/path","rb").returns :file
 
     content.to_raw.should == :file
   end
@@ -102,13 +102,13 @@ describe Puppet::FileServing::Content, "when returning the contents" do
 
   it "should return the contents of the path if the file exists" do
     File.expects(:stat).with(@path).returns stub("stat", :ftype => "file")
-    File.expects(:read).with(@path).returns(:mycontent)
+    Puppet::Util.expects(:binread).with(@path).returns(:mycontent)
     @content.content.should == :mycontent
   end
 
   it "should cache the returned contents" do
     File.expects(:stat).with(@path).returns stub("stat", :ftype => "file")
-    File.expects(:read).with(@path).returns(:mycontent)
+    Puppet::Util.expects(:binread).with(@path).returns(:mycontent)
     @content.content
 
     # The second run would throw a failure if the content weren't being cached.

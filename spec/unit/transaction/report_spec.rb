@@ -9,9 +9,9 @@ describe Puppet::Transaction::Report do
     Puppet::Util::Storage.stubs(:store)
   end
 
-  it "should set its host name to the certname" do
-    Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Transaction::Report.new("apply").host.should == "myhost"
+  it "should set its host name to the node_name_value" do
+    Puppet[:node_name_value] = 'mynode'
+    Puppet::Transaction::Report.new("apply").host.should == "mynode"
   end
 
   it "should return its host name as its name" do
@@ -29,13 +29,23 @@ describe Puppet::Transaction::Report do
   end
 
   it "should take a 'configuration_version' as an argument" do
-    Puppet::Transaction::Report.new("inspect", "some configuration version").configuration_version.should == "some configuration version"
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").configuration_version.should == "some configuration version"
   end
 
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
     report.configuration_version.should == "some version"
+  end
+
+  it "should take 'environment' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment.should == "some environment"
+  end
+
+  it "should be able to set environment" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.environment = "some environment"
+    report.environment.should == "some environment"
   end
 
   it "should not include whits" do
@@ -103,10 +113,6 @@ describe Puppet::Transaction::Report do
       report.expects(:host).returns "me"
       report.name.should == "me"
     end
-
-    after do
-      Puppet::Util::Cacher.expire
-    end
   end
 
   describe "when computing exit status" do
@@ -154,7 +160,7 @@ describe Puppet::Transaction::Report do
 
     def add_statuses(count, type = :file)
       count.times do |i|
-        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => "/my/path#{i}"))
+        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => make_absolute("/my/path#{i}")))
         yield status if block_given?
         @report.add_resource_status status
       end
@@ -182,6 +188,11 @@ describe Puppet::Transaction::Report do
 
           @report.finalize_report
           metric(:resources, state.to_s).should == 3
+        end
+
+        it "should provide 0 for states not in status" do
+          @report.finalize_report
+          metric(:resources, state.to_s).should == 0
         end
       end
 
@@ -215,7 +226,7 @@ describe Puppet::Transaction::Report do
         add_statuses(3, :exec) do |status|
           status.evaluation_time = 2
         end
-        add_statuses(3, :mount) do |status|
+        add_statuses(3, :tidy) do |status|
           status.evaluation_time = 3
         end
 
@@ -223,7 +234,7 @@ describe Puppet::Transaction::Report do
 
         metric(:time, "file").should == 3
         metric(:time, "exec").should == 6
-        metric(:time, "mount").should == 9
+        metric(:time, "tidy").should == 9
       end
 
       it "should add any provided times from external sources" do
@@ -278,13 +289,14 @@ describe Puppet::Transaction::Report do
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
+      catalog.version = 1234567
       trans = catalog.apply
 
       @report = trans.report
       @report.finalize_report
     end
 
-    %w{changes time resources events}.each do |main|
+    %w{changes time resources events version}.each do |main|
       it "should include the key #{main} in the raw summary hash" do
         @report.raw_summary.should be_key main
       end
@@ -293,6 +305,28 @@ describe Puppet::Transaction::Report do
     it "should include the last run time in the raw summary hash" do
       Time.stubs(:now).returns(Time.utc(2010,11,10,12,0,24))
       @report.raw_summary["time"]["last_run"].should == 1289390424
+    end
+
+    it "should include all resource statuses" do
+      resources_report = @report.raw_summary["resources"]
+      Puppet::Resource::Status::STATES.each do |state|
+        resources_report.should be_include(state.to_s)
+      end
+    end
+
+    %w{total failure success}.each do |r|
+      it "should include event #{r}" do
+        events_report = @report.raw_summary["events"]
+        events_report.should be_include(r)
+      end
+    end
+
+    it "should include config version" do
+      @report.raw_summary["version"]["config"].should == 1234567
+    end
+
+    it "should include puppet version" do
+      @report.raw_summary["version"]["puppet"].should == Puppet.version
     end
 
     %w{Changes Total Resources Time Events}.each do |main|

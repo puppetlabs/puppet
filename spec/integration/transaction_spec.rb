@@ -1,9 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet_spec/files'
 require 'puppet/transaction'
-require 'puppet_spec/files'
 
 describe Puppet::Transaction do
   include PuppetSpec::Files
@@ -18,12 +16,20 @@ describe Puppet::Transaction do
     catalog
   end
 
+  def usr_bin_touch(path)
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32/cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
+  end
+
+  def touch(path)
+    Puppet.features.microsoft_windows? ? "cmd.exe /c \"type NUL >> \"#{path}\"\"" : "touch #{path}"
+  end
+
   it "should not apply generated resources if the parent resource fails" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+    resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
     catalog.add_resource resource
 
-    child_resource = Puppet::Type.type(:file).new :path => "/foo/bar/baz", :backup => false
+    child_resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar/baz"), :backup => false
 
     resource.expects(:eval_generate).returns([child_resource])
 
@@ -39,7 +45,7 @@ describe Puppet::Transaction do
 
   it "should not apply virtual resources" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+    resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
     resource.virtual = true
     catalog.add_resource resource
 
@@ -63,7 +69,7 @@ describe Puppet::Transaction do
 
   it "should not apply virtual exported resources" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+    resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
     resource.exported = true
     resource.virtual = true
     catalog.add_resource resource
@@ -91,7 +97,7 @@ describe Puppet::Transaction do
 
   it "should not apply host resources on device" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+    resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
     catalog.add_resource resource
 
     transaction = Puppet::Transaction.new(catalog)
@@ -137,7 +143,7 @@ describe Puppet::Transaction do
     transaction = nil
     file = Puppet::Type.type(:file).new :path => tmpfile("event_propagation"), :ensure => :present
     execfile = File.join(tmpdir("exec_event"), "exectestingness2")
-    exec = Puppet::Type.type(:exec).new :command => "touch #{execfile}", :path => ENV['PATH']
+    exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH']
     catalog = mk_catalog(file)
 
     fcomp = Puppet::Type.type(:component).new(:name => "Foo[file]")
@@ -169,14 +175,14 @@ describe Puppet::Transaction do
 
     exec1 = Puppet::Type.type(:exec).new(
       :path    => ENV["PATH"],
-      :command => "touch #{file1}",
+      :command => touch(file1),
       :refreshonly => true,
       :subscribe   => Puppet::Resource.new(:file, path)
     )
 
     exec2 = Puppet::Type.type(:exec).new(
       :path        => ENV["PATH"],
-      :command     => "touch #{file2}",
+      :command     => touch(file2),
       :refreshonly => true,
       :subscribe   => Puppet::Resource.new(:file, path)
     )
@@ -197,7 +203,7 @@ describe Puppet::Transaction do
 
     exec1 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
-      :command => "touch /this/cannot/possibly/exist",
+      :command => touch(File.expand_path("/this/cannot/possibly/exist")),
       :logoutput => true,
       :refreshonly => true,
       :subscribe => file,
@@ -206,7 +212,7 @@ describe Puppet::Transaction do
 
     exec2 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
-      :command => "touch #{newfile}",
+      :command => touch(newfile),
       :logoutput => true,
       :refreshonly => true,
       :subscribe => [file, exec1],
@@ -235,8 +241,8 @@ describe Puppet::Transaction do
     fname = tmpfile("exec")
 
     exec = Puppet::Type.type(:exec).new(
-      :name => "touch #{fname}",
-      :path => "/usr/bin:/bin",
+      :name => touch(fname),
+      :path => Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin",
       :schedule => "monthly",
       :subscribe => Puppet::Resource.new("file", file.name)
     )
@@ -275,7 +281,7 @@ describe Puppet::Transaction do
   it "should not attempt to evaluate resources with failed dependencies" do
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
+      :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
       :title => "mkdir"
     )
 
@@ -305,17 +311,17 @@ describe Puppet::Transaction do
     file2 = tmpfile("file2")
 
     create_file1 = Puppet::Type.type(:exec).new(
-      :command => "/usr/bin/touch #{file1}"
+      :command => usr_bin_touch(file1)
     )
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
+      :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
       :title => "mkdir",
       :notify => create_file1
     )
 
     create_file2 = Puppet::Type.type(:exec).new(
-      :command => "/usr/bin/touch #{file2}",
+      :command => usr_bin_touch(file2),
       :subscribe => exec
     )
 

@@ -24,4 +24,8 @@ describe Puppet::Transaction::Report::Rest do
     Puppet::Transaction::Report::Rest.server.should_not be_nil
     Puppet::Transaction::Report::Rest.port.should_not be_nil
   end
+
+  it "should use the :report SRV service" do
+    Puppet::Transaction::Report::Rest.srv_service.should == :report
+  end
 end

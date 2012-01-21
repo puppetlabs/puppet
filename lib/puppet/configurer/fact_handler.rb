@@ -6,17 +6,17 @@ require 'puppet/configurer/downloader'
 # just included into the agent, but having it here makes it
 # easier to test.
 module Puppet::Configurer::FactHandler
-  def download_fact_plugins?
-    Puppet[:factsync]
-  end
-
   def find_facts
     # This works because puppet agent configures Facts to use 'facter' for
     # finding facts and the 'rest' terminus for caching them.  Thus, we'll
     # compile them and then "cache" them on the server.
     begin
-      reload_facter
-      Puppet::Node::Facts.indirection.find(Puppet[:certname])
+      facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+      unless Puppet[:node_name_fact].empty?
+        Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
+        facts.name = Puppet[:node_name_value]
+      end
+      facts
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
@@ -38,35 +38,5 @@ module Puppet::Configurer::FactHandler
     text = facts.render(format)
 
     {:facts_format => format, :facts => CGI.escape(text)}
-  end
-
-  # Retrieve facts from the central server.
-  def download_fact_plugins
-    return unless download_fact_plugins?
-
-    # Deprecated prior to 0.25, as of 5/19/2008
-    Puppet.warning "Fact syncing is deprecated as of 0.25 -- use 'pluginsync' instead"
-
-    Puppet::Configurer::Downloader.new("fact", Puppet[:factdest], Puppet[:factsource], Puppet[:factsignore]).evaluate
-  end
-
-  # Clear out all of the loaded facts and reload them from disk.
-  # NOTE: This is clumsy and shouldn't be required for later (1.5.x) versions
-  # of Facter.
-  def reload_facter
-    Facter.clear
-
-    # Reload everything.
-    if Facter.respond_to? :loadfacts
-      Facter.loadfacts
-    elsif Facter.respond_to? :load
-      Facter.load
-    else
-      Puppet.warning "You should upgrade your version of Facter to at least 1.3.8"
-    end
-
-    # This loads all existing facts and any new ones.  We have to remove and
-    # reload because there's no way to unload specific facts.
-    Puppet::Node::Facts::Facter.load_fact_plugins
   end
 end

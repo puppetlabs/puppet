@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Rick Bradley on 2007-10-03.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/network/http'

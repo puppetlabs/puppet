@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/indirector/file_metadata/file'
@@ -19,10 +15,11 @@ describe Puppet::Indirector::FileMetadata::File do
   describe "when creating the instance for a single found file" do
     before do
       @metadata = Puppet::Indirector::FileMetadata::File.new
-      @uri = "file:///my/local"
+      @path = File.expand_path('/my/local')
+      @uri = Puppet::Util.path_to_uri(@path).to_s
       @data = mock 'metadata'
       @data.stubs(:collect)
-      FileTest.expects(:exists?).with("/my/local").returns true
+      FileTest.expects(:exists?).with(@path).returns true
 
       @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
     end
@@ -38,13 +35,14 @@ describe Puppet::Indirector::FileMetadata::File do
   describe "when searching for multiple files" do
     before do
       @metadata = Puppet::Indirector::FileMetadata::File.new
-      @uri = "file:///my/local"
+      @path = File.expand_path('/my/local')
+      @uri = Puppet::Util.path_to_uri(@path).to_s
 
       @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
     end
 
     it "should collect the attributes of the instances returned" do
-      FileTest.expects(:exists?).with("/my/local").returns true
+      FileTest.expects(:exists?).with(@path).returns true
       @metadata.expects(:path2instances).returns( [mock("one", :collect => nil), mock("two", :collect => nil)] )
       @metadata.search(@request)
     end

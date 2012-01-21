@@ -63,14 +63,16 @@ class Puppet::Configurer::Downloader
 
   private
 
+  require 'sys/admin' if Puppet.features.microsoft_windows?
+
   def default_arguments
     {
       :path => path,
       :recurse => true,
       :source => source,
       :tag => name,
-      :owner => Process.uid,
-      :group => Process.gid,
+      :owner => Puppet.features.microsoft_windows? ? Sys::Admin.get_login : Process.uid,
+      :group => Puppet.features.microsoft_windows? ? 'S-1-0-0' : Process.gid,
       :purge => true,
       :force => true,
       :backup => false,

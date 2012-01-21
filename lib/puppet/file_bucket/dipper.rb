@@ -31,15 +31,16 @@ class Puppet::FileBucket::Dipper
   # Back up a file to our bucket
   def backup(file)
     raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
-    contents = ::File.read(file)
+    contents = Puppet::Util.binread(file)
     begin
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
-      dest_path = "#{@rest_path}#{file_bucket_file.name}#{files_original_path}"
+      dest_path = "#{@rest_path}#{file_bucket_file.name}/#{files_original_path}"
+      file_bucket_path = "#{@rest_path}#{file_bucket_file.checksum_type}/#{file_bucket_file.checksum_data}/#{files_original_path}"
 
       # Make a HEAD request for the file so that we don't waste time
       # uploading it if it already exists in the bucket.
-      unless Puppet::FileBucket::File.indirection.head("#{@rest_path}#{file_bucket_file.checksum_type}/#{file_bucket_file.checksum_data}#{files_original_path}")
+      unless Puppet::FileBucket::File.indirection.head(file_bucket_path)
         Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
       end
 
@@ -63,7 +64,7 @@ class Puppet::FileBucket::Dipper
   def restore(file,sum)
     restore = true
     if FileTest.exists?(file)
-      cursum = Digest::MD5.hexdigest(::File.read(file))
+      cursum = Digest::MD5.hexdigest(Puppet::Util.binread(file))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -82,6 +83,7 @@ class Puppet::FileBucket::Dipper
           ::File.chmod(changed | 0200, file)
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
+          of.binmode
           of.print(newcontents)
         }
         ::File.chmod(changed, file) if changed

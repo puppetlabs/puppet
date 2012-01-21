@@ -1,20 +1,10 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-11-26.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 require 'puppet/network/http_pool'
 
 describe Puppet::Network::HttpPool do
   after do
-    Puppet::Util::Cacher.expire
-    Puppet::Network::HttpPool.clear_http_instances
     Puppet::Network::HttpPool.instance_variable_set("@ssl_host", nil)
-  end
-
-  it "should have keep-alive disabled" do
-    Puppet::Network::HttpPool::HTTP_KEEP_ALIVE.should be_false
   end
 
   it "should use the global SSL::Host instance to get its certificate information" do
@@ -58,71 +48,10 @@ describe Puppet::Network::HttpPool do
       Puppet::Network::HttpPool.http_instance("me", 54321).open_timeout.should == 120
     end
 
-    describe "and http keep-alive is enabled" do
-      before do
-        Puppet::Network::HttpPool.stubs(:keep_alive?).returns true
-      end
-
-      it "should cache http instances" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
-      end
-
-      it "should have a mechanism for getting a new http instance instead of the cached instance" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.http_instance("me", 54321, true).should_not equal(old)
-      end
-
-      it "should close existing, open connections when requesting a new connection" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        old.expects(:started?).returns(true)
-        old.expects(:finish)
-        Puppet::Network::HttpPool.http_instance("me", 54321, true)
-      end
-
-      it "should have a mechanism for clearing the http cache" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.clear_http_instances
-        Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
-      end
-
-      it "should close open http connections when clearing the cache" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        one = Puppet::Network::HttpPool.http_instance("me", 54321)
-        one.expects(:started?).returns(true)
-        one.expects(:finish).returns(true)
-        Puppet::Network::HttpPool.clear_http_instances
-      end
-
-      it "should not close unopened http connections when clearing the cache" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        one = Puppet::Network::HttpPool.http_instance("me", 54321)
-        one.expects(:started?).returns(false)
-        one.expects(:finish).never
-        Puppet::Network::HttpPool.clear_http_instances
-      end
-    end
-
-    describe "and http keep-alive is disabled" do
-      before do
-        Puppet::Network::HttpPool.stubs(:keep_alive?).returns false
-      end
-
-      it "should not cache http instances" do
-        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
-      end
-    end
-
-    after do
-      Puppet::Network::HttpPool.clear_http_instances
+    it "should not cache http instances" do
+      stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
+      old = Puppet::Network::HttpPool.http_instance("me", 54321)
+      Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
     end
   end
 

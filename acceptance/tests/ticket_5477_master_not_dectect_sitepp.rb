@@ -6,41 +6,29 @@
  
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
 
-# Kill running Puppet Master
-step "Master: kill running Puppet Master"
-on master, "ps -U puppet | awk '/puppet/ { print \$1 }' | xargs kill"
+manifest_file = "/tmp/missing_site-5477-#{$$}.pp"
 
-# Run tests against Master first
-step "Master: mv site.pp file to /tmp, if existing"
-on master, "if [ -e  /etc/puppet/manifests/site.pp ] ; then mv /etc/puppet/manifests/site.pp /tmp/site.pp-5477 ; fi"
+on master, "rm -f #{manifest_file}"
+on hosts, "rm -rf /etc/puppet/ssl"
 
-# Start Puppet Master
-#step "Master: Run Puppet Master in verbose mode"
-#on master, puppet_master("--verbose")
-step "Master: Start Puppet Master"
-on master, puppet_master("--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose")
+with_master_running_on(master, "--manifest #{manifest_file} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --verbose --filetimeout 1 --autosign true") do
+  # Run test on Agents
+  step "Agent: agent --test"
+  on agents, puppet_agent("--test --server #{master}")
 
-# Allow puppet server to start accepting conections
-sleep 10
+  # Create a new site.pp
+  step "Master: create basic site.pp file"
+  create_remote_file master, manifest_file, "notify{ticket_5477_notify:}"
 
-# Run test on Agents
-step "Agent: agent --test"
-agents.each { |agent|
-    on agent, puppet_agent("--test")
-}
- 
-# Create a new site.pp
-step "Master: create basic site.pp file"
-on master, "echo 'notify{ticket_5477_notify:}' > /etc/puppet/manifests/site.pp"
+  on master, "chmod 644 #{manifest_file}"
 
-sleep 20
+  sleep 3
 
-step "Agent: puppet agent --test"
-agents.each { |agent|
-  on agent, "puppet agent -t", :acceptable_exit_codes => [2]
-  fail_test "Site.pp not detect at Master?" unless
-    stdout.include? 'ticket_5477_notify'
-}
+  step "Agent: puppet agent --test"
 
-step "Clean-up site.pp"
-on master, "rm /etc/puppet/manifests/site.pp"
+  agents.each do |host|
+    on(host, puppet_agent("--test --server #{master}"), :acceptable_exit_codes => [2]) do
+      assert_match(/ticket_5477_notify/, stdout, "#{host}: Site.pp not detected on Puppet Master")
+    end
+  end
+end

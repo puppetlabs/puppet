@@ -63,7 +63,7 @@ class Puppet::Util::NetworkDevice::Cisco::Facts
   end
 
   def uptime_to_seconds(uptime)
-    captures = (uptime.match /^(?:(?:(?:(?:(\d+) years?,)?\s*(\d+) weeks?,)?\s*(\d+) days?,)?\s*(\d+) hours?,)?\s*(\d+) minutes?$/).captures
+    captures = (uptime.match /^(?:(\d+) years?,)?\s*(?:(\d+) weeks?,)?\s*(?:(\d+) days?,)?\s*(?:(\d+) hours?,)?\s*(\d+) minutes?$/).captures
     seconds = captures.zip([31536000, 604800, 86400, 3600, 60]).inject(0) do |total, (x,y)|
       total + (x.nil? ? 0 : x.to_i * y)
     end

@@ -19,13 +19,22 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @server_setting = setting
   end
 
-  def self.server
-    Puppet.settings[server_setting || :server]
-  end
-
   # Specify the setting that we should use to get the port.
   def self.use_port_setting(setting)
     @port_setting = setting
+  end
+
+  # Specify the service to use when doing SRV record lookup
+  def self.use_srv_service(service)
+    @srv_service = service
+  end
+
+  def self.srv_service
+    @srv_service || :puppet
+  end
+
+  def self.server
+    Puppet.settings[server_setting || :server]
   end
 
   def self.port
@@ -71,24 +80,68 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
   end
 
+  [:get, :post, :head, :delete, :put].each do |method|
+    define_method "http_#{method}" do |request, *args|
+      http_request(method, request, *args)
+    end
+  end
+
+  def http_request(method, request, *args)
+    http_connection = network(request)
+    peer_certs = []
+
+    # We add the callback to collect the certificates for use in constructing
+    # the error message if the verification failed.  This is necessary since we
+    # don't have direct access to the cert that we expected the connection to
+    # use otherwise.
+    #
+    http_connection.verify_callback = proc do |preverify_ok, ssl_context|
+      peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
+      preverify_ok
+    end
+
+    http_connection.send(method, *args)
+  rescue OpenSSL::SSL::SSLError => error
+    if error.message.include? "certificate verify failed"
+      raise Puppet::Error, "#{error.message}.  This is often because the time is out of sync on the server or client"
+    elsif error.message =~ /hostname (was )?not match/
+      raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
+
+      valid_certnames = [cert.name, *cert.subject_alt_names].uniq
+      msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+
+      raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
+    else
+      raise
+    end
+  end
+
   def find(request)
     uri, body = request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
-    http_connection = network(request)
-    # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
-    # http://redmine.ruby-lang.org/issues/show/3991
-    response = if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
-      http_connection.post(uri, body, headers)
-    else
-      http_connection.get(uri_with_query_string, headers)
+
+    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+      # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
+      # http://redmine.ruby-lang.org/issues/show/3991
+      if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
+        http_post(request, uri, body, headers)
+      else
+        http_get(request, uri_with_query_string, headers)
+      end
     end
-    result = deserialize response
+    result = deserialize(response)
+
+    return nil unless result
+
     result.name = request.key if result.respond_to?(:name=)
     result
   end
 
   def head(request)
-    response = network(request).head(indirection2uri(request), headers)
+    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+      http_head(request, indirection2uri(request), headers)
+    end
+
     case response.code
     when "404"
       return false
@@ -101,20 +154,28 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
-      return []
+    result = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+      deserialize(http_get(request, indirection2uri(request), headers), true)
     end
-    result
+
+    # result from the server can be nil, but we promise to return an array...
+    result || []
   end
 
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-    deserialize network(request).delete(indirection2uri(request), headers)
+
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+      return deserialize(http_delete(request, indirection2uri(request), headers))
+    end
   end
 
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-    deserialize network(request).put(indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+      deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    end
   end
 
   private

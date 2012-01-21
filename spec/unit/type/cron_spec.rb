@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Type.type(:cron) do
+describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
   before do
     @class = Puppet::Type.type(:cron)
 

@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/defaults'
 require 'puppet/indirector'
-require 'puppet/indirector/file'
+require 'puppet/indirector/memory'
 
 describe Puppet::Indirector::Terminus, :'fails_on_ruby_1.9.2' => true do
   before :each do
@@ -201,14 +201,14 @@ describe Puppet::Indirector::Terminus, " when parsing class constants for indire
     @subclass.expects(:indirection=).with(:test_ind)
     @subclass.stubs(:name=)
     @subclass.stubs(:terminus_type=)
-    Puppet::Indirector::File.inherited(@subclass)
+    Puppet::Indirector::Memory.inherited(@subclass)
   end
 
   it "should convert the indirection name to a downcased symbol" do
     @subclass.expects(:indirection=).with(:test_ind)
     @subclass.stubs(:name=)
     @subclass.stubs(:terminus_type=)
-    Puppet::Indirector::File.inherited(@subclass)
+    Puppet::Indirector::Memory.inherited(@subclass)
   end
 
   it "should convert camel case to lower case with underscores as word separators" do
@@ -242,3 +242,9 @@ describe Puppet::Indirector::Terminus, " when creating terminus class types", :'
   end
 end
 
+describe Puppet::Indirector::Terminus, " when listing terminus classes" do
+  it "should list the terminus files available to load" do
+    Puppet::Util::Autoload.any_instance.stubs(:files_to_load).returns ["/foo/bar/baz", "/max/runs/marathon"]
+    Puppet::Indirector::Terminus.terminus_classes('my_stuff').should == [:baz, :marathon]
+  end
+end

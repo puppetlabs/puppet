@@ -1,6 +1,6 @@
 test_name "puppet should remove a crontab entry based on command matching"
 
-tmpuser = "cron-test-#{Time.new.to_i}"
+tmpuser = "pl#{rand(999999).to_i}"
 tmpfile = "/tmp/cron-test-#{Time.new.to_i}"
 
 cron = '# Puppet Name: crontest\n* * * * * /bin/true\n1 1 1 1 1 /bin/true\n'
@@ -13,23 +13,22 @@ agents.each do |host|
     apply_manifest_on host, create_user
 
     step "create the existing job by hand..."
-    on host, "printf '#{cron}' | crontab -u #{tmpuser} -"
+    run_cron_on(host,:add,tmpuser,"* * * * * /bin/true")
 
-    step "apply the resource change on the host"
+    step "Remove cron resource"
     on(host, puppet_resource("cron", "bogus", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=absent")) do
-        fail_test "didn't see the output we expected..." unless
-            stdout.include? 'removed'
+      assert_match(/bogus\D+ensure: removed/, stdout, "Removing cron entry failed for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
-    on host, "crontab -l -u #{tmpuser}" do
+    run_cron_on(host,:list,tmpuser) do
         count = stdout.scan("/bin/true").length
-        fail_test "found /bin/true the wrong number of times (#{count})" unless count == 1
+        fail_test "found /bin/true the wrong number of times (#{count})" unless count == 0
     end
 
     step "remove the crontab file for that user"
-    on host, "crontab -r -u #{tmpuser}"
+    run_cron_on(host,:remove,tmpuser)
 
     step "remove the user from the system"
     apply_manifest_on host, delete_user

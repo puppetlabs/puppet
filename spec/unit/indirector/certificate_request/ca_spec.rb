@@ -1,16 +1,10 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2008-3-7.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/ssl/host'
-require 'puppet/sslcertificates'
-require 'puppet/sslcertificates/ca'
 require 'puppet/indirector/certificate_request/ca'
 
-describe Puppet::SSL::CertificateRequest::Ca do
+describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before :each do
@@ -18,7 +12,6 @@ describe Puppet::SSL::CertificateRequest::Ca do
 
     Puppet::SSL::Host.ca_location = :local
     Puppet[:localcacert] = Puppet[:cacert]
-    Puppet::SSLCertificates::CA.new.mkrootcert
 
     @ca = Puppet::SSL::CertificateAuthority.new
   end

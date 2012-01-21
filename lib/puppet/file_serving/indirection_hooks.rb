@@ -1,9 +1,6 @@
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'uri'
 require 'puppet/file_serving'
+require 'puppet/util'
 
 # This module is used to pick the appropriate terminus
 # in file-serving indirections.  This is necessary because
@@ -16,7 +13,7 @@ module Puppet::FileServing::IndirectionHooks
     # We rely on the request's parsing of the URI.
 
     # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.
-    return PROTOCOL_MAP["file"] if request.key =~ /^#{::File::SEPARATOR}/
+    return PROTOCOL_MAP["file"] if Puppet::Util.absolute_path?(request.key)
     return PROTOCOL_MAP["file"] if request.protocol == "file"
 
     # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'apply' or 'puppet'

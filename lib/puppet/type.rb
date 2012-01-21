@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/util/cacher'
 require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
@@ -21,7 +20,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::Util::Cacher
   include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
@@ -109,11 +107,9 @@ class Type
   def self.ensurable?
     # If the class has all three of these methods defined, then it's
     # ensurable.
-    ens = [:exists?, :create, :destroy].inject { |set, method|
-      set &&= self.public_method_defined?(method)
+    [:exists?, :create, :destroy].all? { |method|
+      self.public_method_defined?(method)
     }
-
-    ens
   end
 
   def self.apply_to_device
@@ -228,15 +224,14 @@ class Type
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
 
-      param = genclass(
-        name,
-      :parent => options[:parent] || Puppet::Parameter,
+    param = genclass(
+      name,
+      :parent     => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block => block,
-      :prefix => "Parameter",
-      :array => @parameters,
-
-      :hash => @paramhash
+      :block      => block,
+      :prefix     => "Parameter",
+      :array      => @parameters,
+      :hash       => @paramhash
     )
 
     handle_param_options(name, options)
@@ -469,12 +464,6 @@ class Type
     Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
-  # Let the catalog determine whether a given cached value is
-  # still valid or has expired.
-  def expirer
-    catalog
-  end
-
   # retrieve the 'should' value for a specified property
   def should(name)
     name = attr_alias(name)
@@ -644,6 +633,10 @@ class Type
   ###############################
   # Code related to evaluating the resources.
 
+  def ancestors
+    []
+  end
+
   # Flush the provider, if it supports it.  This is called by the
   # transaction.
   def flush
@@ -760,10 +753,6 @@ class Type
     noop?
   end
 
-  ###############################
-  # Code related to managing resource instances.
-  require 'puppet/transportable'
-
   # retrieve a named instance of the current type
   def self.[](name)
     raise "Global resource access is deprecated"
@@ -876,6 +865,12 @@ class Type
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
     providers_by_source.collect do |provider|
+      all_properties = self.properties.find_all do |property|
+        provider.supports_parameter?(property)
+      end.collect do |property|
+        property.name
+      end
+
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
@@ -886,7 +881,9 @@ class Type
         end
         provider_instances[instance.name] = instance
 
-        new(:name => instance.name, :provider => instance, :audit => :all)
+        result = new(:name => instance.name, :provider => instance)
+        properties.each { |name| result.newattr(name) }
+        result
       end
     end.flatten.compact
   end
@@ -972,7 +969,7 @@ class Type
 
   newmetaparam(:audit) do
     desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
-      attribute name or a list of attribute names.
+      attribute name, an array of attribute names, or `all`.
 
       Auditing a resource attribute has two effects: First, whenever a catalog
       is applied with puppet apply or puppet agent, Puppet will check whether
@@ -1117,13 +1114,22 @@ class Type
       (e.g., each class and definition containing the resource), it can
       be useful to add your own tags to a given resource.
 
-      Tags are currently useful for things like applying a subset of a
-      host's configuration:
+      Multiple tags can be specified as an array:
 
-          puppet agent --test --tags mytag
+          file {'/etc/hosts':
+            ensure => file,
+            source => 'puppet:///modules/site/hosts',
+            mode   => 0644,
+            tag    => ['bootstrap', 'minimumrun', 'mediumrun'],
+          }
 
-      This way, when you're testing a configuration you can run just the
-      portion you're testing."
+      Tags are useful for things like applying a subset of a host's configuration
+      with [the `tags` setting](/references/latest/configuration.html#tags):
+
+          puppet agent --test --tags bootstrap
+
+      This way, you can easily isolate the portion of the configuration you're
+      trying to test."
 
     munge do |tags|
       tags = [tags] unless tags.is_a? Array
@@ -1371,33 +1377,25 @@ class Type
 
   # Find the default provider.
   def self.defaultprovider
-    unless @defaultprovider
-      suitable = suitableprovider
+    return @defaultprovider if @defaultprovider
 
-      # Find which providers are a default for this system.
-      defaults = suitable.find_all { |provider| provider.default? }
+    suitable = suitableprovider
 
-      # If we don't have any default we use suitable providers
-      defaults = suitable if defaults.empty?
-      max = defaults.collect { |provider| provider.specificity }.max
-      defaults = defaults.find_all { |provider| provider.specificity == max }
+    # Find which providers are a default for this system.
+    defaults = suitable.find_all { |provider| provider.default? }
 
-      retval = nil
-      if defaults.length > 1
-        Puppet.warning(
-          "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
-        )
-        retval = defaults.shift
-      elsif defaults.length == 1
-        retval = defaults.shift
-      else
-        raise Puppet::DevError, "Could not find a default provider for #{self.name}"
-      end
+    # If we don't have any default we use suitable providers
+    defaults = suitable if defaults.empty?
+    max = defaults.collect { |provider| provider.specificity }.max
+    defaults = defaults.find_all { |provider| provider.specificity == max }
 
-      @defaultprovider = retval
+    if defaults.length > 1
+      Puppet.warning(
+        "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
+      )
     end
 
-    @defaultprovider
+    @defaultprovider = defaults.shift unless defaults.empty?
   end
 
   def self.provider_hash_by_type(type)
@@ -1434,9 +1432,8 @@ class Type
   def self.provide(name, options = {}, &block)
     name = Puppet::Util.symbolize(name)
 
-    if obj = provider_hash[name]
+    if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"
-      unprovide(name)
     end
 
     parent = if pname = options[:parent]
@@ -1459,16 +1456,14 @@ class Type
 
     self.providify
 
-
-      provider = genclass(
-        name,
-      :parent => parent,
-      :hash => provider_hash,
-      :prefix => "Provider",
-      :block => block,
-      :include => feature_module,
-      :extend => feature_module,
-
+    provider = genclass(
+      name,
+      :parent     => parent,
+      :hash       => provider_hash,
+      :prefix     => "Provider",
+      :block      => block,
+      :include    => feature_module,
+      :extend     => feature_module,
       :attributes => options
     )
 
@@ -1481,9 +1476,15 @@ class Type
     return if @paramhash.has_key? :provider
 
     newparam(:provider) do
-      desc "The specific backend for #{self.name.to_s} to use. You will
-        seldom need to specify this --- Puppet will usually discover the
-        appropriate provider for your platform."
+      # We're using a hacky way to get the name of our type, since there doesn't
+      # seem to be a correct way to introspect this at the time this code is run.
+      # We expect that the class in which this code is executed will be something
+      # like Puppet::Type::Ssh_authorized_key::ParameterProvider.
+      desc <<-EOT
+        The specific backend to use for this `#{self.to_s.split('::')[2].downcase}`
+        resource. You will seldom need to specify this --- Puppet will usually
+        discover the appropriate provider for your platform.
+      EOT
 
       # This is so we can refer back to the type to get a list of
       # providers for documentation.
@@ -1493,15 +1494,19 @@ class Type
 
       # We need to add documentation for each provider.
       def self.doc
-        @doc + "  Available providers are:\n\n" + parenttype.providers.sort { |a,b|
+        # Since we're mixing @doc with text from other sources, we must normalize
+        # its indentation with scrub. But we don't need to manually scrub the
+        # provider's doc string, since markdown_definitionlist sanitizes its inputs.
+        scrub(@doc) + "Available providers are:\n\n" + parenttype.providers.sort { |a,b|
           a.to_s <=> b.to_s
         }.collect { |i|
-          "* **#{i}**: #{parenttype().provider(i).doc}"
-        }.join("\n")
+          markdown_definitionlist( i, scrub(parenttype().provider(i).doc) )
+        }.join
       end
 
       defaultto {
-        @resource.class.defaultprovider.name
+        prov = @resource.class.defaultprovider
+        prov.name if prov
       }
 
       validate do |provider_class|
@@ -1528,18 +1533,11 @@ class Type
   end
 
   def self.unprovide(name)
-    if provider_hash.has_key? name
-
-      rmclass(
-        name,
-        :hash => provider_hash,
-
-        :prefix => "Provider"
-      )
-      if @defaultprovider and @defaultprovider.name == name
-        @defaultprovider = nil
-      end
+    if @defaultprovider and @defaultprovider.name == name
+      @defaultprovider = nil
     end
+
+    rmclass(name, :hash => provider_hash, :prefix => "Provider")
   end
 
   # Return an array of all of the suitable providers.
@@ -1550,6 +1548,24 @@ class Type
     }.collect { |name, provider|
       provider
     }.reject { |p| p.name == :fake } # For testing
+  end
+
+  def suitable?
+    # If we don't use providers, then we consider it suitable.
+    return true unless self.class.paramclass(:provider)
+
+    # We have a provider and it is suitable.
+    return true if provider && provider.class.suitable?
+
+    # We're using the default provider and there is one.
+    if !provider and self.class.defaultprovider
+      self.provider = self.class.defaultprovider.name
+      return true
+    end
+
+    # We specified an unsuitable provider, or there isn't any suitable
+    # provider.
+    false
   end
 
   def provider=(name)
@@ -1599,7 +1615,6 @@ class Type
 
       # Collect the current prereqs
       list.each { |dep|
-        obj = nil
         # Support them passing objects directly, to save some effort.
         unless dep.is_a? Puppet::Type
           # Skip autorequires that we aren't managing
@@ -1735,7 +1750,6 @@ class Type
 
   # initialize the type instance
   def initialize(resource)
-    raise Puppet::DevError, "Got TransObject instead of Resource or hash" if resource.is_a?(Puppet::TransObject)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
     # The list of parameter/property instances.
@@ -1885,15 +1899,9 @@ class Type
     self.ref
   end
 
-  # Convert to a transportable object
-  def to_trans(ret = true)
-    trans = TransObject.new(self.title, self.class.name)
-
-    values = retrieve_resource
-    values.each do |name, value|
-      name = name.name if name.respond_to? :name
-      trans[name] = value
-    end
+  def to_resource
+    resource = self.retrieve_resource
+    resource.tag(*self.tags)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
@@ -1901,20 +1909,10 @@ class Type
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)
-      trans[name] = param.value
+      resource[name] = param.value
     end
 
-    trans.tags = self.tags
-
-    # FIXME I'm currently ignoring 'parent' and 'path'
-
-    trans
-  end
-
-  def to_resource
-    # this 'type instance' versus 'resource' distinction seems artificial
-    # I'd like to see it collapsed someday ~JW
-    self.to_trans.to_resource
+    resource
   end
 
   def virtual?;  !!@virtual;  end

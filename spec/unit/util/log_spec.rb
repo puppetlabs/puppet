@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/util/log'
 
 describe Puppet::Util::Log do
+  include PuppetSpec::Files
+
   it "should write a given message to the specified destination" do
     arraydest = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
@@ -45,6 +47,12 @@ describe Puppet::Util::Log do
       Puppet[:color] = "invalid option"
 
       @console.colorize(:alert, "abc").should == "abc"
+    end
+  end
+
+  describe Puppet::Util::Log::DestSyslog do
+    before do
+      @syslog = Puppet::Util::Log::DestSyslog.new
     end
   end
 
@@ -165,9 +173,18 @@ describe Puppet::Util::Log do
       report.should be_include(log.time.to_s)
     end
 
+    it "should not create unsuitable log destinations" do
+      Puppet.features.stubs(:syslog?).returns(false)
+
+      Puppet::Util::Log::DestSyslog.expects(:suitable?)
+      Puppet::Util::Log::DestSyslog.expects(:new).never
+
+      Puppet::Util::Log.newdestination(:syslog)
+    end
+
     describe "when setting the source as a RAL object" do
       it "should tag itself with any tags the source has" do
-        source = Puppet::Type.type(:file).new :path => "/foo/bar"
+        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
         source.tags.each do |tag|
           log.tags.should be_include(tag)
@@ -188,7 +205,7 @@ describe Puppet::Util::Log do
       end
 
       it "should copy over any file and line information" do
-        source = Puppet::Type.type(:file).new :path => "/foo/bar"
+        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
         source.file = "/my/file"
         source.line = 50
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)

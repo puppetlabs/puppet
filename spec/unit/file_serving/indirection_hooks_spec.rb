@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/file_serving/indirection_hooks'
@@ -17,7 +13,7 @@ describe Puppet::FileServing::IndirectionHooks do
 
   describe "when being used to select termini" do
     it "should return :file if the request key is fully qualified" do
-      @request.expects(:key).returns "#{File::SEPARATOR}foo"
+      @request.expects(:key).returns File.expand_path('/foo')
       @object.select_terminus(@request).should == :file
     end
 

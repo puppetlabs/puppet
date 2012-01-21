@@ -5,57 +5,78 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Provide access to the CA for certificate management"
+  summary "Provide access to the CA for certificate management."
   description <<-EOT
-    This face interacts with a local or remote Puppet certificate
-    authority. Currently, its behavior is not a full superset of puppet
-    cert; specifically, it is unable to mimic puppet cert's "clean" option,
+    This subcommand interacts with a local or remote Puppet certificate
+    authority. Currently, its behavior is not a full superset of `puppet
+    cert`; specifically, it is unable to mimic puppet cert's "clean" option,
     and its "generate" action submits a CSR rather than creating a
     signed certificate.
   EOT
-  notes <<-EOT
-    This is an indirector face, which exposes find, search, save, and
-    destroy actions for an indirected subsystem of Puppet. Valid terminuses
-    for this face include:
-
-    * `ca`
-    * `file`
-    * `rest`
-  EOT
 
   option "--ca-location LOCATION" do
-    summary "The certificate authority to query"
+    required
+    summary "Which certificate authority to use (local or remote)."
     description <<-EOT
       Whether to act on the local certificate authority or one provided by a
       remote puppet master. Allowed values are 'local' and 'remote.'
+
+      This option is required.
     EOT
 
     before_action do |action, args, options|
+      unless [:remote, :local, :only].include? options[:ca_location].to_sym
+        raise ArgumentError, "Valid values for ca-location are 'remote', 'local', 'only'."
+      end
       Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
     end
   end
 
   action :generate do
-    summary "Generate a new certificate signing request for HOST"
+    summary "Generate a new certificate signing request."
+    arguments "<host>"
+    returns "Nothing."
     description <<-EOT
       Generates and submits a certificate signing request (CSR) for the
-      provided host identifier. This CSR will then have to be signed by a user
+      specified host. This CSR will then have to be signed by a user
       with the proper authorization on the certificate authority.
 
-      Puppet agent handles CSR submission automatically. This action is
+      Puppet agent usually handles CSR submission automatically. This action is
       primarily useful for requesting certificates for individual users and
       external applications.
     EOT
+    examples <<-EOT
+      Request a certificate for "somenode" from the site's CA:
+
+      $ puppet certificate generate somenode.puppetlabs.lan --ca-location remote
+    EOT
+
+    # Duplicate the option here explicitly to distinguish if it was passed arg
+    # us vs. set in the config file.
+    option "--dns-alt-names NAMES" do
+      summary "Additional DNS names to add to the certificate request"
+      description Puppet.settings.setting(:dns_alt_names).desc
+    end
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      host.generate_certificate_request
-      host.certificate_request.class.indirection.save(host.certificate_request)
+
+      # If dns_alt_names are specified via the command line, we will always add
+      # them. Otherwise, they will default to the config file setting iff this
+      # cert is for the host we're running on.
+
+      host.generate_certificate_request(:dns_alt_names => options[:dns_alt_names])
     end
   end
 
   action :list do
-    summary "List all certificate signing requests"
+    summary "List all certificate signing requests."
+    returns <<-EOT
+      An array of #inspect output from CSR objects. This output is
+      currently messy, but does contain the names of nodes requesting
+      certificates. This action returns #inspect strings even when used
+      from the Ruby API.
+    EOT
 
     when_invoked do |options|
       Puppet::SSL::Host.indirection.search("*", {
@@ -65,12 +86,63 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   end
 
   action :sign do
-    summary "Sign a certificate signing request for HOST"
+    summary "Sign a certificate signing request for HOST."
+    arguments "<host>"
+    returns <<-EOT
+      A string that appears to be (but isn't) an x509 certificate.
+    EOT
+    examples <<-EOT
+      Sign somenode.puppetlabs.lan's certificate:
+
+      $ puppet certificate sign somenode.puppetlabs.lan --ca-location remote
+    EOT
+
+    option("--[no-]allow-dns-alt-names") do
+      summary "Whether or not to accept DNS alt names in the certificate request"
+    end
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      host.desired_state = 'signed'
-      Puppet::SSL::Host.indirection.save(host)
+      if options[:ca_location] == :remote
+        if options[:allow_dns_alt_names]
+          raise ArgumentError, "--allow-dns-alt-names may not be specified with a remote CA"
+        end
+
+        host.desired_state = 'signed'
+        Puppet::SSL::Host.indirection.save(host)
+      else
+        # We have to do this case manually because we need to specify
+        # allow_dns_alt_names.
+        unless ca = Puppet::SSL::CertificateAuthority.instance
+          raise ArgumentError, "This process is not configured as a certificate authority"
+        end
+
+        ca.sign(name, options[:allow_dns_alt_names])
+      end
     end
   end
+
+  # Indirector action doc overrides
+  find = get_action(:find)
+  find.summary "Retrieve a certificate."
+  find.arguments "<host>"
+  find.render_as = :s
+  find.returns <<-EOT
+    An x509 SSL certificate.
+
+    Note that this action has a side effect of caching a copy of the
+    certificate in Puppet's `ssldir`.
+  EOT
+
+  destroy = get_action(:destroy)
+  destroy.summary "Delete a certificate."
+  destroy.arguments "<host>"
+  destroy.returns "Nothing."
+  destroy.description <<-EOT
+    Deletes a certificate. This action currently only works on the local CA.
+  EOT
+
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 end

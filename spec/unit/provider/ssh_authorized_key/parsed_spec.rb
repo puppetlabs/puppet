@@ -5,7 +5,7 @@ require 'puppet_spec/files'
 
 provider_class = Puppet::Type.type(:ssh_authorized_key).provider(:parsed)
 
-describe provider_class do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before :each do
@@ -63,6 +63,11 @@ describe provider_class do
     genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
   end
 
+  it "should be able to parse name if it includes whitespace" do
+    @provider_class.parse_line('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
+    @provider_class.parse_line('from="host1.reductlivelabs.com,host.reductivelabs.com",command="/usr/local/bin/run",ssh-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
+  end
+
   it "should be able to parse options containing commas via its parse_options method" do
     options = %w{from="host1.reductlivelabs.com,host.reductivelabs.com" command="/usr/local/bin/run" ssh-pty}
     optionstr = options.join(", ")
@@ -77,7 +82,7 @@ describe provider_class do
   end
 end
 
-describe provider_class do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :user => "random_bob")
 
@@ -110,15 +115,15 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the directory to the user" do
+      it "should absolutely not chown the directory to the user" do
         uid = Puppet::Util.uid("random_bob")
-        File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir")
+        File.expects(:chown).never
         @provider.flush
       end
 
-      it "should chown the key file to the user" do
+      it "should absolutely not chown the key file to the user" do
         uid = Puppet::Util.uid("random_bob")
-        File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir/place_to_put_authorized_keys")
+        File.expects(:chown).never
         @provider.flush
       end
 
@@ -153,11 +158,11 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the directory to the user if it creates it" do
+      it "should absolutely not chown the directory to the user if it creates it" do
         File.stubs(:exist?).with(@dir).returns false
         Dir.stubs(:mkdir).with(@dir,0700)
         uid = Puppet::Util.uid("nobody")
-        File.expects(:chown).with(uid, nil, @dir)
+        File.expects(:chown).never
         @provider.flush
       end
 
@@ -168,9 +173,9 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the key file to the user" do
+      it "should absolutely not chown the key file to the user" do
         uid = Puppet::Util.uid("nobody")
-        File.expects(:chown).with(uid, nil, File.expand_path("~nobody/.ssh/authorized_keys"))
+        File.expects(:chown).never
         @provider.flush
       end
 

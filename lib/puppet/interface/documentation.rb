@@ -61,6 +61,37 @@ class Puppet::Interface
     end
 
     attr_doc :description
+
+    def build_synopsis(face, action = nil, arguments = nil)
+      output = PrettyPrint.format do |s|
+        s.text("puppet #{face}")
+        s.text(" #{action}") unless action.nil?
+        s.text(" ")
+
+        options.each do |option|
+          option = get_option(option)
+          wrap = option.required? ? %w{ < > } : %w{ [ ] }
+
+          s.group(0, *wrap) do
+            option.optparse.each do |item|
+              unless s.current_group.first?
+                s.breakable
+                s.text '|'
+                s.breakable
+              end
+              s.text item
+            end
+          end
+
+          s.breakable
+        end
+
+        if arguments then
+          s.text arguments.to_s
+        end
+      end
+    end
+
   end
 
   module FullDocs
@@ -77,8 +108,10 @@ class Puppet::Interface
       if @short_description.nil? then
         return nil if @description.nil?
         lines = @description.split("\n")
-        grab  = [5, lines.index('') || 5].min
+        first_paragraph_break = lines.index('') || 5
+        grab  = [5, first_paragraph_break].min
         @short_description = lines[0, grab].join("\n")
+        @short_description += ' [...]' if (grab < lines.length and first_paragraph_break >= 5)
       end
       @short_description
     end

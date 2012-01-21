@@ -4,27 +4,50 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "View puppet server status"
-  description <<-EOT
-    This subcommand is only useful for determining whether a puppet master
-    server (or an agent node, if puppet was started with the `--listen`
-    option) is responding to requests.
+  summary "View puppet server status."
 
-    Only the `find` action is valid. If the server is responding to
-    requests, `find` will retrieve a status object; if not, the connection
-    will be refused. When invoked with the `local` terminus, `find` will
-    always return true.
+  get_action(:destroy).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
+  get_action(:search).summary "Invalid for this subcommand."
 
-    If you wish to query a server other than the master configured in
-    puppet.conf, you must set the `--server` and `--masterport` options on
-    the command line.
+  find = get_action(:find)
+  find.default = true
+  find.summary "Check status of puppet master server."
+  find.arguments "<dummy_text>"
+  find.returns <<-'EOT'
+    A "true" response or a low-level connection error. When used from the Ruby
+    API: returns a Puppet::Status object.
   EOT
-  notes <<-EOT
-    This is an indirector face, which exposes find, search, save, and
-    destroy actions for an indirected subsystem of Puppet. Valid terminuses
-    for this face include:
+  find.description <<-'EOT'
+    Checks whether a Puppet server is properly receiving and processing
+    HTTP requests. This action is only useful when used with '--terminus
+    rest'; when invoked with the `local` terminus, `find` will always
+    return true.
 
-    * `local`
-    * `rest`
+    Over REST, this action will query the configured puppet master by default.
+    To query other servers, including puppet agent nodes started with the
+    <--listen> option, you can set set the global <--server> and <--masterport>
+    options on the command line; note that agent nodes listen on port 8139.
+  EOT
+  find.short_description <<-EOT
+    Checks whether a Puppet server is properly receiving and processing HTTP
+    requests. Due to a known bug, this action requires a dummy argument, the
+    content of which is irrelevant. This action is only useful when used with
+    '--terminus rest', and will always return true when invoked locally.
+  EOT
+  find.notes <<-'EOT'
+    This action requires that the server's `auth.conf` file allow find
+    access to the `status` REST terminus. Puppet agent does not use this
+    facility, and it is turned off by default. See
+    <http://docs.puppetlabs.com/guides/rest_auth_conf.html> for more details.
+
+    Although this action always returns an unnamed status object, it requires a
+    dummy argument. This is a known bug.
+  EOT
+  find.examples <<-'EOT'
+    Check the status of the configured puppet master:
+
+    $ puppet status find x --terminus rest
   EOT
 end

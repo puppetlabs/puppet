@@ -3,16 +3,19 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
-require 'puppet/network/handler'
+require 'enumerator'
+require 'pathname'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
-require 'puppet/network/client'
 require 'puppet/util/backups'
+require 'puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
   include Puppet::Util::MethodHelper
   include Puppet::Util::Checksums
   include Puppet::Util::Backups
+  include Puppet::Util::SymbolicFileMode
+
   @doc = "Manages local files, including setting ownership and
     permissions, creation of both files and directories, and
     retrieving entire files from remote servers.  As Puppet matures, it
@@ -23,8 +26,10 @@ Puppet::Type.newtype(:file) do
     location, rather than using native resources, please contact
     Puppet Labs and we can hopefully work with you to develop a
     native resource to support what you are doing.
-    
-    **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
+
+    **Autorequires:** If Puppet is managing the user or group that owns a
+    file, the file resource will autorequire them. If Puppet is managing any
+    parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]
@@ -35,8 +40,7 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
-      # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and value =~ /^\//) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+      unless Puppet::Util.absolute_path?(value)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -44,19 +48,17 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      path, name = ::File.split(value.gsub(/\/+/,'/'))
+      # We know the value is absolute, so expanding it will just standardize it.
+      path, name = ::File.split(::File.expand_path(value))
+
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
 
     # and the reverse
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
-      # a lone slash as :name indicates a root dir on windows
-      if value[:name] == '/'
-        basedir
-      else
-        ::File.join( basedir, value[:name] )
-      end
+
+      ::File.join( basedir, value[:name] )
     end
   end
 
@@ -75,16 +77,18 @@ Puppet::Type.newtype(:file) do
 
       Puppet automatically creates a local filebucket named `puppet` and
       defaults to backing up there.  To use a server-based filebucket,
-      you must specify one in your configuration
+      you must specify one in your configuration.
 
             filebucket { main:
-              server => puppet
+              server => puppet,
+              path   => false,
+              # The path => false line works around a known issue with the filebucket type.
             }
 
       The `puppet master` daemon creates a filebucket by default,
       so you can usually back up to your main server with this
       configuration.  Once you've described the bucket in your
-      configuration, you can use it in any file
+      configuration, you can use it in any file's backup attribute:
 
             file { \"/my/file\":
               source => \"/path/in/nfs/or/something\",
@@ -93,12 +97,12 @@ Puppet::Type.newtype(:file) do
 
       This will back the file up to the central server.
 
-      At this point, the benefits of using a filebucket are that you do not
-      have backup files lying around on each of your machines, a given
-      version of a file is only backed up once, and you can restore
-      any given file manually, no matter how old.  Eventually,
-      transactional support will be able to automatically restore
-      filebucketed files.
+      At this point, the benefits of using a central filebucket are that you
+      do not have backup files lying around on each of your machines, a given
+      version of a file is only backed up once, you can restore any given file
+      manually (no matter how old), and you can use Puppet Dashboard to view
+      file contents.  Eventually, transactional support will be able to
+      automatically restore filebucketed files.
       "
 
     defaultto "puppet"
@@ -221,8 +225,8 @@ Puppet::Type.newtype(:file) do
       `follow` will copy the target file instead of the link, `manage`
       will copy the link itself, and `ignore` will just pass it by.
       When not copying, `manage` and `ignore` behave equivalently
-      (because you cannot really ignore links entirely during local recursion), and `follow` will manage the file to which the
-      link points."
+      (because you cannot really ignore links entirely during local
+      recursion), and `follow` will manage the file to which the link points."
 
     newvalues(:follow, :manage)
 
@@ -259,18 +263,18 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    basedir = ::File.dirname(self[:path])
-    if basedir != self[:path]
-      parents = []
-      until basedir == parents.last
-        parents << basedir
-        basedir = File.dirname(basedir)
+    req = []
+    path = Pathname.new(self[:path])
+    if !path.root?
+      # Start at our parent, to avoid autorequiring ourself
+      parents = path.parent.enum_for(:ascend)
+      if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+        req << found.to_s
       end
-      # The filename of the first ancestor found, or nil
-      parents.find { |dir| catalog.resource(:file, dir) }
-    else
-      nil
     end
+    # if the resource is a link, make sure the target is created first
+    req << self[:target] if self[:target]
+    req
   end
 
   # Autorequire the owner and group of the file.
@@ -309,6 +313,8 @@ Puppet::Type.newtype(:file) do
     end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+
+    provider.validate if provider.respond_to?(:validate)
   end
 
   def self.[](path)
@@ -316,8 +322,8 @@ Puppet::Type.newtype(:file) do
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
-  def self.instances(base = '/')
-    return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
+  def self.instances
+    return []
   end
 
   # Determine the user to write files as.
@@ -389,12 +395,18 @@ Puppet::Type.newtype(:file) do
     #end
   end
 
+  def ancestors
+    ancestors = Pathname.new(self[:path]).enum_for(:ascend).map(&:to_s)
+    ancestors.delete(self[:path])
+    ancestors
+  end
+
   def flush
     # We want to make sure we retrieve metadata anew on each transaction.
     @parameters.each do |name, param|
       param.flush if param.respond_to?(:flush)
     end
-    @stat = nil
+    @stat = :needs_stat
   end
 
   def initialize(hash)
@@ -413,7 +425,7 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    @stat = nil
+    @stat = :needs_stat
   end
 
   # Configure discovered resources to be purged.
@@ -616,6 +628,7 @@ Puppet::Type.newtype(:file) do
         FileUtils.rmtree(self[:path])
       else
         notice "Not removing directory; use 'force' to override"
+        return
       end
     when "link", "file"
       debug "Removing existing #{s.ftype} for replacement with #{should}"
@@ -623,7 +636,8 @@ Puppet::Type.newtype(:file) do
     else
       self.fail "Could not back up files of type #{s.ftype}"
     end
-    expire
+    @stat = :needs_stat
+    true
   end
 
   def retrieve
@@ -674,32 +688,34 @@ Puppet::Type.newtype(:file) do
   # use either 'stat' or 'lstat', and we expect the properties to use the
   # resulting stat object accordingly (mostly by testing the 'ftype'
   # value).
-  cached_attr(:stat) do
+  #
+  # We use the initial value :needs_stat to ensure we only stat the file once,
+  # but can also keep track of a failed stat (@stat == nil). This also allows
+  # us to re-stat on demand by setting @stat = :needs_stat.
+  def stat
+    return @stat unless @stat == :needs_stat
+
     method = :stat
 
     # Files are the only types that support links
     if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
       method = :lstat
     end
-    path = self[:path]
 
-    begin
+    @stat = begin
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
-      return nil
+      nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"
-      return nil
+      nil
     end
   end
 
-  # We have to hack this just a little bit, because otherwise we'll get
-  # an error when the target and the contents are created as properties on
-  # the far side.
-  def to_trans(retrieve = true)
-    obj = super
-    obj.delete(:target) if obj[:target] == :notlink
-    obj
+  def to_resource
+    resource = super
+    resource.delete(:target) if resource[:target] == :notlink
+    resource
   end
 
   # Write out the file.  Requires the property name for logging.
@@ -717,9 +733,9 @@ Puppet::Type.newtype(:file) do
 
     mode = self.should(:mode) # might be nil
     umask = mode ? 000 : 022
-    mode_int = mode ? mode.to_i(8) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, 0644) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'w', mode_int ) { |f| write_content(f) } }
+    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
 
     # And put our new file in place
     if use_temporary_file # This is only not true when our file is empty.
@@ -776,7 +792,7 @@ Puppet::Type.newtype(:file) do
       next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
       # Make sure we get a new stat objct
-      expire
+      @stat = :needs_stat
       currentvalue = thing.retrieve
       thing.sync unless thing.safe_insync?(currentvalue)
     end

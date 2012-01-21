@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-16.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet'
 require 'puppet/indirector'
 require 'puppet/file_serving'
@@ -21,24 +17,52 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
-  def attributes_with_tabs
-    raise(ArgumentError, "Cannot manage files of type #{ftype}") unless ['file','directory','link'].include? ftype
-    desc = []
-    PARAM_ORDER.each { |check|
-      check = :ftype if check == :type
-      desc << send(check)
-    }
-
-    desc << checksum
-    desc << @destination rescue nil if ftype == 'link'
-
-    desc.join("\t")
-  end
-
   def checksum_type=(type)
     raise(ArgumentError, "Unsupported checksum type #{type}") unless respond_to?("#{type}_file")
 
     @checksum_type = type
+  end
+
+  class MetaStat
+    extend Forwardable
+
+    def initialize(stat)
+      @stat = stat
+    end
+
+    def_delegator :@stat, :uid, :owner
+    def_delegator :@stat, :gid, :group
+    def_delegators :@stat, :mode, :ftype
+  end
+
+  class WindowsStat < MetaStat
+    if Puppet.features.microsoft_windows?
+      require 'puppet/util/windows/security'
+    end
+
+    def initialize(stat, path)
+      super(stat)
+      @path = path
+    end
+
+    { :owner => 'S-1-5-32-544',
+      :group => 'S-1-0-0',
+      :mode => 0644
+    }.each do |method, default_value|
+      define_method method do
+        Puppet::Util::Windows::Security.send("get_#{method}", @path) || default_value
+      end
+    end
+  end
+
+  def collect_stat(path)
+    stat = stat()
+
+    if Puppet.features.microsoft_windows?
+      WindowsStat.new(stat, path)
+    else
+      MetaStat.new(stat)
+    end
   end
 
   # Retrieve the attributes for this file, relative to a base directory.
@@ -46,11 +70,11 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   # method does not catch that exception.
   def collect
     real_path = full_path
-    stat = stat()
-    @owner = stat.uid
-    @group = stat.gid
-    @ftype = stat.ftype
 
+    stat = collect_stat(real_path)
+    @owner = stat.owner
+    @group = stat.group
+    @ftype = stat.ftype
 
     # We have to mask the mode, yay.
     @mode = stat.mode & 007777

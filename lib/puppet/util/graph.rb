@@ -1,6 +1,3 @@
-#  Created by Luke Kanies on 2006-11-16.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'puppet'
 require 'puppet/simple_graph'
 

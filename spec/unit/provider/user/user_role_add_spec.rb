@@ -1,9 +1,12 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet_spec/files'
 
 provider_class = Puppet::Type.type(:user).provider(:user_role_add)
 
 describe provider_class do
+  include PuppetSpec::Files
+
   before do
     @resource = stub("resource", :name => "myuser", :managehome? => nil)
     @resource.stubs(:should).returns "fakeval"
@@ -243,17 +246,44 @@ describe provider_class do
   end
 
   describe "when setting the password" do
-    #how can you mock these blocks up?
-    it "should open /etc/shadow for reading and /etc/shadow_tmp for writing" do
-      File.expects(:open).with("/etc/shadow", "r")
-      File.stubs(:rename)
-      @provider.password=("hashedpassword")
+    before :each do
+      @shadow_file = tmpfile('shadow')
+      File.open(@shadow_file, 'w') do |f|
+        f.puts 'fakeval:password:0'
+      end
+      @provider.stubs(:shadow_file).returns(@shadow_file)
     end
 
-    it "should rename the /etc/shadow_tmp to /etc/shadow" do
-      File.stubs(:open).with("/etc/shadow", "r")
-      File.expects(:rename).with("/etc/shadow_tmp", "/etc/shadow")
-      @provider.password=("hashedpassword")
+    it 'opens #shadow_file for reading' do
+      File.expects(:open).with(@shadow_file, "r")
+      File.stubs(:rename)
+
+      @provider.password = "hashedpassword"
+    end
+
+    it 'writes to "#{shadow_file}_tmp"' do
+      File.stubs(:rename)
+      File.stubs(:unlink)
+      @provider.password = 'hashedpassword'
+
+      File.read("#{@shadow_file}_tmp").should =~ /hashedpassword/
+    end
+
+    it 'renames "#{shadow_file}_tmp" to shadow_file' do
+      File.stubs(:open)
+      File.expects(:rename).with("#{@shadow_file}_tmp", @shadow_file)
+
+      @provider.password = "hashedpassword"
+    end
+
+    it 'updates the last changed field' do
+      Time.stubs(:now).returns(42 * 86400)
+
+      File.read(@shadow_file).should == "fakeval:password:0\n"
+
+      @provider.password = 'hashedpassword'
+
+      File.read(@shadow_file).should == "fakeval:hashedpassword:42"
     end
   end
 

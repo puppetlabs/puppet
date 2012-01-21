@@ -1,6 +1,3 @@
-#  Created by Luke A. Kanies on 2007-08-13.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
@@ -15,15 +12,19 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
+    # We get these from the environment and only cache them in a thread
+    # variable for the duration of the compilation.  If nothing else is using
+    # the thread, though, we can leave 'em hanging round with no ill effects,
+    # and this is safer than cleaning them at the end and assuming that will
+    # stick until the next entry to this function.
+    Thread.current[:known_resource_types] = nil
+    Thread.current[:env_module_directories] = nil
+
+    # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
-  ensure
-    # We get these from the environment and only cache them in a thread
-    # variable for the duration of the compilation.
-    Thread.current[:known_resource_types] = nil
-    Thread.current[:env_module_directories] = nil
  end
 
   attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
@@ -135,19 +136,21 @@ class Puppet::Parser::Compiler
   # evaluated later in the process.
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
-    param_classes = nil
+    class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
     if classes.class == Hash
-      param_classes = classes
+      class_parameters = classes
       classes = classes.keys
     end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
       if klass = scope.find_hostclass(name)
 
-        if param_classes
-          resource = klass.ensure_in_catalog(scope, param_classes[name] || {})
+        # If parameters are passed, then attempt to create a duplicate resource
+        # so the appropriate error is thrown.
+        if class_parameters
+          resource = klass.ensure_in_catalog(scope, class_parameters[name] || {})
         else
           next if scope.class_scope(klass)
           resource = klass.ensure_in_catalog(scope)
@@ -306,7 +309,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_overrides
     remaining = []
     @resource_overrides.each do |name, overrides|
-      remaining += overrides
+      remaining.concat overrides
     end
 
     unless remaining.empty?
@@ -446,7 +449,7 @@ class Puppet::Parser::Compiler
   # Set the node's parameters into the top-scope as variables.
   def set_node_parameters
     node.parameters.each do |param, value|
-      @topscope.setvar(param, value)
+      @topscope[param] = value
     end
 
     # These might be nil.
@@ -469,7 +472,7 @@ class Puppet::Parser::Compiler
 
     Puppet.settings.each do |name, setting|
       next if name.to_s == "name"
-      scope.setvar name.to_s, environment[name]
+      scope[name.to_s] = environment[name]
     end
   end
 

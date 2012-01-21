@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-22.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/file_serving'
 
 # The base class for Content and Metadata; provides common
@@ -53,7 +49,10 @@ class Puppet::FileServing::Base
   # Set our base path.
   attr_reader :path
   def path=(path)
-    raise ArgumentError.new("Paths must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
+    unless path =~ /^#{::File::SEPARATOR}/ or path =~ /^[a-z]:[\/\\]/i
+      raise ArgumentError.new("Paths must be fully qualified")
+    end
+
     @path = path
   end
 

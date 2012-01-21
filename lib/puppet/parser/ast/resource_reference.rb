@@ -7,7 +7,7 @@ class Puppet::Parser::AST::ResourceReference < Puppet::Parser::AST::Branch
   # Evaluate our object, but just return a simple array of the type
   # and name.
   def evaluate(scope)
-    titles = Array(title.safeevaluate(scope))
+    titles = Array(title.safeevaluate(scope)).flatten
 
     a_type, titles = scope.resolve_type_and_titles(type, titles)
 

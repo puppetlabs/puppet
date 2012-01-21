@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-22.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'find'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
@@ -59,8 +55,13 @@ class Puppet::FileServing::Fileset
   end
 
   def initialize(path, options = {})
-    path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
-    raise ArgumentError.new("Fileset paths must be fully qualified") unless File.expand_path(path) == path
+    if Puppet.features.microsoft_windows?
+      # REMIND: UNC path
+      path = path.chomp(File::SEPARATOR) unless path =~ /^[A-Za-z]:\/$/
+    else
+      path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
+    end
+    raise ArgumentError.new("Fileset paths must be fully qualified: #{path}") unless Puppet::Util.absolute_path?(path)
 
     @path = path
 

@@ -6,10 +6,12 @@ require 'puppet/indirector/report/rest'
 require 'tempfile'
 
 describe "Puppet::Application::Secret_agent" do
+  include PuppetSpec::Files
+
   it "should retrieve and apply a catalog and submit a report" do
     pending "REVISIT: 2.7 changes broke this, and we want the merge published"
 
-    dirname = Dir.mktmpdir("puppetdir")
+    dirname = tmpdir("puppetdir")
     Puppet[:vardir]   = dirname
     Puppet[:confdir]  = dirname
     Puppet[:certname] = "foo"

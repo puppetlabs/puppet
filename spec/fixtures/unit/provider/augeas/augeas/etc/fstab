@@ -1,0 +1,10 @@
+/dev/vg00/lv00          /                       ext3    defaults        1 1
+LABEL=/boot             /boot                   ext3    defaults        1 2
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+/dev/vg00/home          /home                   ext3    defaults        1 2
+proc                    /proc                   proc    defaults        0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+/dev/vg00/local         /local                  ext3    defaults        1 2
+/dev/vg00/images        /var/lib/xen/images     ext3    defaults        1 2
+/dev/vg00/swap          swap                    swap    defaults        0 0

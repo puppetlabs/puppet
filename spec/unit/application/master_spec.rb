@@ -5,7 +5,7 @@ require 'puppet/application/master'
 require 'puppet/daemon'
 require 'puppet/network/server'
 
-describe Puppet::Application::Master do
+describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @master = Puppet::Application[:master]
     @daemon = stub_everything 'daemon'
@@ -106,7 +106,6 @@ describe Puppet::Application::Master do
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
@@ -115,6 +114,12 @@ describe Puppet::Application::Master do
       Puppet.settings.stubs(:use)
 
       @master.options.stubs(:[]).with(any_parameters)
+    end
+
+    it "should abort stating that the master is not supported on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+
+      expect { @master.setup }.to raise_error(Puppet::Error, /Puppet master is not supported on Microsoft Windows/)
     end
 
     it "should set log level to debug if --debug was passed" do
@@ -307,19 +312,6 @@ describe Puppet::Application::Master do
         @master.main
       end
 
-      it "should create the server with the right XMLRPC handlers" do
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Status, :FileServer, :Master, :Report, :Filebucket]}
-
-        @master.main
-      end
-
-      it "should create the server with a :ca xmlrpc handler if needed" do
-        Puppet.stubs(:[]).with(:ca).returns(true)
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers].include?(:CA) }
-
-        @master.main
-      end
-
       it "should generate a SSL cert for localhost" do
         Puppet::SSL::Host.expects(:localhost)
 
@@ -360,17 +352,6 @@ describe Puppet::Application::Master do
         before do
           require 'puppet/network/http/rack'
           Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
-        end
-
-        it "it should create the app with REST and XMLRPC support" do
-          @master.options.stubs(:[]).with(:rack).returns(:true)
-
-          Puppet::Network::HTTP::Rack.expects(:new).with { |args|
-            args[:xmlrpc_handlers] == [:Status, :FileServer, :Master, :Report, :Filebucket] and
-            args[:protocols] == [:rest, :xmlrpc]
-          }
-
-          @master.main
         end
 
         it "it should not start a daemon" do

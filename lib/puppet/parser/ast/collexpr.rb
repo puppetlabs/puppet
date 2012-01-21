@@ -19,8 +19,8 @@ class CollExpr < AST::Branch
     end
 
     # The code is only used for virtual lookups
-    str1, code1 = @test1.safeevaluate scope
-    str2, code2 = @test2.safeevaluate scope
+    match1, code1 = @test1.safeevaluate scope
+    match2, code2 = @test2.safeevaluate scope
 
     # First build up the virtual code.
     # If we're a conjunction operator, then we're calling code.  I did
@@ -31,50 +31,21 @@ class CollExpr < AST::Branch
       when "and"; code1.call(resource) and code2.call(resource)
       when "or"; code1.call(resource) or code2.call(resource)
       when "=="
-        if str1 == "tag"
-          resource.tagged?(str2)
+        if match1 == "tag"
+          resource.tagged?(match2)
         else
-          if resource[str1].is_a?(Array)
-            resource[str1].include?(str2)
+          if resource[match1].is_a?(Array)
+            resource[match1].include?(match2)
           else
-            resource[str1] == str2
+            resource[match1] == match2
           end
         end
-      when "!="; resource[str1] != str2
+      when "!="; resource[match1] != match2
       end
     end
 
-    # Now build up the rails conditions code
-    if self.parens and self.form == :exported
-      Puppet.warning "Parentheses are ignored in Rails searches"
-    end
-
-    case @oper
-    when "and", "or"
-      if form == :exported
-        raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
-      end
-      oper = @oper.upcase
-    when "=="; oper = "="
-    else
-      oper = @oper
-    end
-
-    if oper == "=" or oper == "!="
-      # Add the rails association info where necessary
-      case str1
-      when "title"
-        str = "title #{oper} '#{str2}'"
-      when "tag"
-        str = "puppet_tags.name #{oper} '#{str2}'"
-      else
-        str = "param_values.value #{oper} '#{str2}' and param_names.name = '#{str1}'"
-      end
-    else
-      str = "(#{str1}) #{oper} (#{str2})"
-    end
-
-    return str, code
+    match = [match1, @oper, match2]
+    return match, code
   end
 
   def initialize(hash = {})

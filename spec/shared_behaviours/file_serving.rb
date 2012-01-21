@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 shared_examples_for "Puppet::FileServing::Files" do
   it "should use the rest terminus when the 'puppet' URI scheme is used and a host name is present" do
     uri = "puppet://myhost/fakemod/my/file"
@@ -47,13 +43,14 @@ shared_examples_for "Puppet::FileServing::Files" do
   end
 
   it "should use the file terminus when the 'file' URI scheme is used" do
-    uri = "file:///fakemod/my/file"
+    uri = Puppet::Util.path_to_uri(File.expand_path('/fakemod/my/other file'))
+    uri.scheme.should == 'file'
     @indirection.terminus(:file).expects(:find)
-    @indirection.find(uri)
+    @indirection.find(uri.to_s)
   end
 
   it "should use the file terminus when a fully qualified path is provided" do
-    uri = "/fakemod/my/file"
+    uri = File.expand_path("/fakemod/my/file")
     @indirection.terminus(:file).expects(:find)
     @indirection.find(uri)
   end

@@ -1,15 +1,14 @@
 # Manage Red Hat services.  Start/stop uses /sbin/service and enable/disable uses chkconfig
 
 Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init do
-  desc "Red Hat's (and probably many others) form of `init`-style service management:
-
-  Uses `chkconfig` for service enabling and disabling.
+  desc "Red Hat's (and probably many others') form of `init`-style service
+    management. Uses `chkconfig` for service enabling and disabling.
 
   "
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos, :sles, :oel, :ovm]
+  defaultfor :osfamily => [:redhat, :suse]
 
   def self.instances
     # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu

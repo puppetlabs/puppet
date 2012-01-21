@@ -4,13 +4,9 @@
  
 test_name "Tickets 6734 6256 5530 5503i Puppet Master fails to start"
 
-# Kill running Puppet Master
-step "Check for running Puppet Master"
-on master, "ps -ef | grep puppet"
-  fail_test "Puppet Master not running" unless
-    stdout.include? 'master'
-
-step "Check permissions on puppet/rrd/"
-on master, "ls -l /var/lib/puppet | grep rrd | awk '{print $3\" \"$4}'"
-  fail_test "puppet/rrd does not exist/wrong permission" unless
-    stdout.include? 'puppet puppet'
+with_master_running_on(master) do
+  step "Check permissions on puppet/rrd/"
+  on master, "ls -l /var/lib/puppet | grep rrd | awk '{print $3\" \"$4}'" do
+    assert_match(/puppet puppet/, stdout, "puppet/rrd does not exist/wrong permissions")
+  end
+end

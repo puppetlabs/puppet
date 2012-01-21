@@ -1,14 +1,7 @@
 # The standard init-based service type.  Many other service types are
 # customizations of this module.
 Puppet::Type.type(:service).provide :init, :parent => :base do
-  desc "Standard init service management.
-
-  This provider assumes that the init script has no `status` command,
-  because so few scripts do, so you need to either provide a status
-  command or specify via `hasstatus` that one already exists in the
-  init script.
-
-"
+  desc "Standard `init`-style service management."
 
   class << self
     attr_accessor :defpath
@@ -19,6 +12,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
   when "HP-UX"
     @defpath = "/sbin/init.d"
+  when "Archlinux"
+    @defpath = "/etc/rc.d"
   else
     @defpath = "/etc/init.d"
   end

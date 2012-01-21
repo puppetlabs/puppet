@@ -74,7 +74,7 @@ describe resources do
 
         describe "when the instance's do not have an ensure property" do
           it "should not be included in the generated resources" do
-            @no_ensure_resource = Puppet::Type.type(:exec).new(:name => '/usr/bin/env echo')
+            @no_ensure_resource = Puppet::Type.type(:exec).new(:name => "#{File.expand_path('/usr/bin/env')} echo")
             Puppet::Type.type(:host).stubs(:instances).returns [@no_ensure_resource]
             @resources.generate.collect { |r| r.ref }.should_not include(@no_ensure_resource.ref)
           end

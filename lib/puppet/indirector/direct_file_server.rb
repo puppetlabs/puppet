@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-24.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/file_serving/terminus_helper'
 require 'puppet/indirector/terminus'
 

@@ -8,7 +8,6 @@ class Puppet::Application::Resource < Puppet::Application
 
   def preinit
     @extra_params = []
-    @host = nil
     Facter.loadfacts
   end
 
@@ -138,9 +137,70 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    args = command_line.args
+    type, name, params = parse_args(command_line.args)
+
+    raise "You cannot edit a remote host" if options[:edit] and @host
+
+    resources = find_or_save_resources(type, name, params)
+    text = resources.
+      map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest }.
+      join("\n")
+
+    options[:edit] ?
+      handle_editing(text) :
+      (puts text)
+  end
+
+  def setup
+    Puppet::Util::Log.newdestination(:console)
+
+    Puppet.parse_config
+
+    if options[:debug]
+      Puppet::Util::Log.level = :debug
+    elsif options[:verbose]
+      Puppet::Util::Log.level = :info
+    end
+  end
+
+  private
+
+  def remote_key(type, name)
+    Puppet::Resource.indirection.terminus_class = :rest
+    port = Puppet[:puppetport]
+    ["https://#{@host}:#{port}", "production", "resources", type, name].join('/')
+  end
+
+  def local_key(type, name)
+    [type, name].join('/')
+  end
+
+  def handle_editing(text)
+    require 'tempfile'
+    # Prefer the current directory, which is more likely to be secure
+    # and, in the case of interactive use, accessible to the user.
+    tmpfile = Tempfile.new('x2puppet', Dir.pwd)
+    begin
+      # sync write, so nothing buffers before we invoke the editor.
+      tmpfile.sync = true
+      tmpfile.puts text
+
+      # edit the content
+      system(ENV["EDITOR"] || 'vi', tmpfile.path)
+
+      # ...and, now, pass that file to puppet to apply.  Because
+      # many editors rename or replace the original file we need to
+      # feed the pathname, not the file content itself, to puppet.
+      system('puppet apply -v ' + tmpfile.path)
+    ensure
+      # The temporary file will be safely removed.
+      tmpfile.close(true)
+    end
+  end
+
+  def parse_args(args)
     type = args.shift or raise "You must specify the type to display"
-    typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
+    Puppet::Type.type(type) or raise "Could not find type #{type}"
     name = args.shift
     params = {}
     args.each do |setting|
@@ -151,70 +211,27 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
     end
 
-    raise "You cannot edit a remote host" if options[:edit] and @host
+    [type, name, params]
+  end
 
-    properties = typeobj.properties.collect { |s| s.name }
+  def find_or_save_resources(type, name, params)
+    key = @host ? remote_key(type, name) : local_key(type, name)
 
-    format = proc {|trans|
-      trans.dup.collect do |param, value|
-        if value.nil? or value.to_s.empty?
-          trans.delete(param)
-        elsif value.to_s == "absent" and param.to_s != "ensure"
-          trans.delete(param)
-        end
-
-        trans.delete(param) unless properties.include?(param) or @extra_params.include?(param)
-      end
-      trans.to_manifest
-    }
-
-    if @host
-      Puppet::Resource.indirection.terminus_class = :rest
-      port = Puppet[:puppetport]
-      key = ["https://#{host}:#{port}", "production", "resources", type, name].join('/')
-    else
-      key = [type, name].join('/')
-    end
-
-    text = if name
+    if name
       if params.empty?
         [ Puppet::Resource.indirection.find( key ) ]
       else
-        [ Puppet::Resource.indirection.save(Puppet::Resource.new( type, name, :parameters => params ), key) ]
+        resource = Puppet::Resource.new( type, name, :parameters => params )
+
+        # save returns [resource that was saved, transaction log from applying the resource]
+        save_result = Puppet::Resource.indirection.save(resource, key)
+        [ save_result.first ]
       end
     else
+      if type == "file"
+        raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
+      end
       Puppet::Resource.indirection.search( key, {} )
-    end.map(&format).join("\n")
-
-    if options[:edit]
-      file = "/tmp/x2puppet-#{Process.pid}.pp"
-      begin
-        File.open(file, "w") do |f|
-          f.puts text
-        end
-        ENV["EDITOR"] ||= "vi"
-        system(ENV["EDITOR"], file)
-        system("puppet -v #{file}")
-      ensure
-        #if FileTest.exists? file
-        #    File.unlink(file)
-        #end
-      end
-    else
-      puts text
-    end
-  end
-
-  def setup
-    Puppet::Util::Log.newdestination(:console)
-
-    # Now parse the config
-    Puppet.parse_config
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
     end
   end
 end

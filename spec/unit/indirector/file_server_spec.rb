@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-19.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/indirector/file_server'
@@ -27,7 +23,7 @@ describe Puppet::Indirector::FileServer do
 
     @uri = "puppet://host/my/local/file"
     @configuration = mock 'configuration'
-    Puppet::FileServing::Configuration.stubs(:create).returns(@configuration)
+    Puppet::FileServing::Configuration.stubs(:configuration).returns(@configuration)
 
     @request = Puppet::Indirector::Request.new(:myind, :mymethod, @uri, :environment => "myenv")
   end

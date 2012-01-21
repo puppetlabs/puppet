@@ -1,7 +1,10 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'ostruct'
 
 describe Puppet::Util::Settings do
+  include PuppetSpec::Files
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Util::Settings.new
@@ -126,6 +129,16 @@ describe Puppet::Util::Settings do
       @settings[:myval] = "bob"
       @settings.handlearg("--no-myval", "")
       @settings[:myval].should == ""
+    end
+
+    it "should flag settings from the CLI" do
+      @settings.handlearg("--myval")
+      @settings.setting(:myval).setbycli.should be_true
+    end
+
+    it "should not flag settings memory" do
+      @settings[:myval] = "12"
+      @settings.setting(:myval).setbycli.should be_false
     end
 
     it "should clear the cache when setting getopt-specific values" do
@@ -377,7 +390,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should use its current ':config' value for the file to parse" do
-      myfile = Puppet.features.posix? ? "/my/file" : "C:/myfile" # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
+      myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
       File.expects(:read).with(myfile).returns "[main]"
@@ -444,25 +457,27 @@ describe Puppet::Util::Settings do
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
       @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
+      otherfile = make_absolute("/other/file")
       text = "[main]
-      myfile = /other/file {owner = service, group = service, mode = 644}
+      myfile = #{otherfile} {owner = service, group = service, mode = 644}
       "
       @settings.expects(:read_file).returns(text)
       @settings.parse
-      @settings[:myfile].should == "/other/file"
+      @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
 
     it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
       @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
+      otherfile = make_absolute("/other/file")
       text = "[main]
-      myfile = /other/file {owner = service}
+      myfile = #{otherfile} {owner = service}
       "
       file = "/some/file"
       @settings.expects(:read_file).returns(text)
       @settings.parse
-      @settings[:myfile].should == "/other/file"
+      @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
     end
 
@@ -601,16 +616,6 @@ describe Puppet::Util::Settings do
       @settings.reparse
     end
 
-    it "should use a cached LoadedFile instance" do
-      first = mock 'first'
-      second = mock 'second'
-      Puppet::Util::LoadedFile.expects(:new).times(2).with("/test/file").returns(first).then.returns(second)
-
-      @settings.file.should equal(first)
-      Puppet::Util::Cacher.expire
-      @settings.file.should equal(second)
-    end
-
     it "should replace in-memory values with on-file values" do
       # Init the value
       text = "[main]\none = disk-init\n"
@@ -725,9 +730,28 @@ describe Puppet::Util::Settings do
       @settings.to_catalog
     end
 
+    describe "on Microsoft Windows" do
+      before :each do
+        Puppet.features.stubs(:root?).returns true
+        Puppet.features.stubs(:microsoft_windows?).returns true
+
+        @settings.setdefaults :foo, :mkusers => [true, "e"], :user => ["suser", "doc"], :group => ["sgroup", "doc"]
+        @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+
+        @catalog = @settings.to_catalog
+      end
+
+      it "it should not add users and groups to the catalog" do
+        @catalog.resource(:user, "suser").should be_nil
+        @catalog.resource(:group, "sgroup").should be_nil
+      end
+    end
+
     describe "when adding users and groups to the catalog" do
       before do
         Puppet.features.stubs(:root?).returns true
+        Puppet.features.stubs(:microsoft_windows?).returns false
+
         @settings.setdefaults :foo, :mkusers => [true, "e"], :user => ["suser", "doc"], :group => ["sgroup", "doc"]
         @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
@@ -1103,5 +1127,15 @@ describe Puppet::Util::Settings do
     end
 
     it "should cache the result"
+  end
+
+  describe "#writesub" do
+    it "should only pass valid arguments to File.open" do
+      settings = Puppet::Util::Settings.new
+      settings.stubs(:get_config_file_default).with(:privatekeydir).returns(OpenStruct.new(:mode => "750"))
+
+      File.expects(:open).with("/path/to/keydir", "w", 750).returns true
+      settings.writesub(:privatekeydir, "/path/to/keydir")
+    end
   end
 end

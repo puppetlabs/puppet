@@ -175,6 +175,13 @@ describe provider_class do
       expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
     end
 
+    it "should output a useful error message if pip is missing" do
+      @provider.expects(:pip).with('freeze').raises(NoMethodError)
+      @provider.expects(:which).with('pip').returns(nil)
+      expect { @provider.method(:lazy_pip).call("freeze") }.
+        to raise_error(NoMethodError, 'Could not locate the pip command.')
+    end
+
   end
 
 end

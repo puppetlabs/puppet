@@ -1,6 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/file_bucket/dipper'
 
 class Puppet::Application::Inspect < Puppet::Application
 
@@ -33,7 +31,7 @@ Prepares and submits an inspection report to the puppet master.
 
 USAGE
 -----
-puppet inspect
+puppet inspect [--archive_files] [--archive_file_server]
 
 
 DESCRIPTION
@@ -58,6 +56,14 @@ also a valid long argument, e.g. '--server=master.domain.com'. See the
 configuration file documentation at
 http://docs.puppetlabs.com/references/latest/configuration.html for
 the full list of acceptable settings.
+
+* --archive_files:
+  During an inspect run, whether to archive files whose contents are audited to
+  a file bucket.
+
+* --archive_file_server:
+  During an inspect run, the file bucket server to archive files to if
+  archive_files is set.  The default value is '$server'.
 
 
 AUTHOR
@@ -98,6 +104,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Resource::Catalog.indirection.terminus_class = :yaml
   end
 
+  def preinit
+    require 'puppet'
+    require 'puppet/file_bucket/dipper'
+  end
+
   def run_command
     benchmark(:notice, "Finished inspection") do
       retrieval_starttime = Time.now
@@ -107,6 +118,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
 
       @report.configuration_version = catalog.version
+      @report.environment = Puppet[:environment]
 
       inspect_starttime = Time.now
       @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)

@@ -1,6 +1,7 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/util/pson'
+require 'puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -264,11 +265,7 @@ class Puppet::Resource
 
     attributes = attr.collect { |k|
       v = parameters[k]
-      if v.is_a? Array
-        "  %-#{attr_max}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
-      else
-        "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
-      end
+      "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
@@ -288,59 +285,31 @@ class Puppet::Resource
     end
   end
 
-  # Translate our object to a backward-compatible transportable object.
-  def to_trans
-    if builtin_type? and type.downcase.to_s != "stage"
-      result = to_transobject
-    else
-      result = to_transbucket
-    end
-
-    result.file = self.file
-    result.line = self.line
-
-    result
-  end
-
-  def to_trans_ref
-    [type.to_s, title.to_s]
-  end
-
-  # Create an old-style TransObject instance, for builtin resource types.
-  def to_transobject
-    # Now convert to a transobject
-    result = Puppet::TransObject.new(title, type)
-    to_hash.each do |p, v|
-      if v.is_a?(Puppet::Resource)
-        v = v.to_trans_ref
-      elsif v.is_a?(Array)
-        v = v.collect { |av|
-          av = av.to_trans_ref if av.is_a?(Puppet::Resource)
-          av
-        }
-      end
-
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p.to_s] = if v.is_a?(Array) and v.length == 1
-        v[0]
-          else
-            v
-              end
-    end
-
-    result.tags = self.tags
-
-    result
-  end
-
   def name
     # this is potential namespace conflict
     # between the notion of an "indirector name"
     # and a "resource name"
     [ type, title ].join('/')
+  end
+
+  def set_default_parameters(scope)
+    return [] unless resource_type and resource_type.respond_to?(:arguments)
+
+    result = []
+
+    resource_type.arguments.each do |param, default|
+      param = param.to_sym
+      next if parameters.include?(param)
+      unless is_a?(Puppet::Parser::Resource)
+        fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+      end
+
+      next if default.nil?
+
+      self[param] = default.safeevaluate(scope)
+      result << param
+    end
+    result
   end
 
   def to_resource
@@ -351,8 +320,37 @@ class Puppet::Resource
     resource_type.valid_parameter?(name)
   end
 
+  # Verify that all required arguments are either present or
+  # have been provided with defaults.
+  # Must be called after 'set_default_parameters'.  We can't join the methods
+  # because Type#set_parameters needs specifically ordered behavior.
+  def validate_complete
+    return unless resource_type and resource_type.respond_to?(:arguments)
+
+    resource_type.arguments.each do |param, default|
+      param = param.to_sym
+      fail Puppet::ParseError, "Must pass #{param} to #{self}" unless parameters.include?(param)
+    end
+  end
+
   def validate_parameter(name)
     raise ArgumentError, "Invalid parameter #{name}" unless valid_parameter?(name)
+  end
+
+  def prune_parameters(options = {})
+    properties = resource_type.properties.map(&:name)
+
+    dup.collect do |attribute, value|
+      if value.to_s.empty? or Array(value).empty?
+        delete(attribute)
+      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+        delete(attribute)
+      end
+
+      parameters_to_include = options[:parameters_to_include] || []
+      delete(attribute) unless properties.include?(attribute) || parameters_to_include.include?(attribute)
+    end
+    self
   end
 
   private
@@ -374,17 +372,6 @@ class Puppet::Resource
     else
       :name
     end
-  end
-
-  # Create an old-style TransBucket instance, for non-builtin resource types.
-  def to_transbucket
-    bucket = Puppet::TransBucket.new([])
-
-    bucket.type = self.type
-    bucket.name = self.title
-
-    # TransBuckets don't support parameters, which is why they're being deprecated.
-    bucket
   end
 
   def extract_parameters(params)

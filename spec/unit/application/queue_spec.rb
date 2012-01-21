@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/application/queue'
 require 'puppet/indirector/catalog/queue'
 
-describe Puppet::Application::Queue do
+describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @queue = Puppet::Application[:queue]
     @queue.stubs(:puts)
@@ -129,9 +129,8 @@ describe Puppet::Application::Queue do
       end
     end
 
-    it "should configure the Catalog class to use ActiveRecord" do
-      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:active_record)
-
+    it "should configure the Catalog class to use StoreConfigs" do
+      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:store_configs)
       @queue.setup
     end
 

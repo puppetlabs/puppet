@@ -47,10 +47,14 @@ module Puppet
       exits.  Comma-separate multiple values.  For a list of all values,
       specify 'all'.  This feature is only available in Puppet versions
       higher than 0.18.4."],
-    :color => ["ansi", "Whether to use colors when logging to the console.
+    :color => {
+      :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
+      :type    => :setting,
+      :desc    => "Whether to use colors when logging to the console.
       Valid values are `ansi` (equivalent to `true`), `html` (mostly
       used during testing with TextMate), and `false`, which produces
-      no color."],
+      no color.",
+    },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
       run as."],
@@ -105,12 +109,19 @@ module Puppet
     },
     :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
     :diff => ["diff", "Which diff command to use when printing differences between files."],
-    :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
-      is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
+    :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
+      partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
+      used with caution if you are sending Puppet's reports to an insecure destination.
       This feature currently requires the `diff/lcs` Ruby library."],
-    :daemonize => { :default => true,
+    :daemonize => {
+      :default => (Puppet.features.microsoft_windows? ? false : true),
       :desc => "Send the process into the background.  This is the default.",
-      :short => "D"
+      :short => "D",
+      :hook => proc do |value|
+        if value and Puppet.features.microsoft_windows?
+          raise "Cannot daemonize on Windows"
+        end
+      end
     },
     :maximum_uid => [4294967290, "The maximum allowed UID.  Some platforms use negative UIDs
       but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
@@ -125,7 +136,8 @@ module Puppet
       :desc => "The node facts terminus.",
       :hook => proc do |value|
         require 'puppet/node/facts'
-        if value.to_s == "rest"
+        # Cache to YAML if we're uploading facts away
+        if %w[rest inventory_service].include? value.to_s
           Puppet::Node::Facts.indirection.cache_class = :yaml
         end
       end
@@ -187,6 +199,10 @@ module Puppet
       essentially means that you can't have any code outside of a node, class, or definition other
       than in the site manifest."]
   )
+  Puppet.setdefaults(:module_tool,
+    :module_repository  => ['http://forge.puppetlabs.com', "The module repository"],
+    :module_working_dir => ['$vardir/puppet-module', "The directory into which module tool data is stored"]
+  )
 
   hostname = Facter["hostname"].value
   domain = Facter["domain"].value
@@ -206,9 +222,58 @@ module Puppet
       to the fully qualified domain name.",
       :call_on_define => true, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-    :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
-      If it's anything other than an empty string, it will be used as an alias in the created
-      certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
+    :certdnsnames => {
+      :default => '',
+      :hook    => proc do |value|
+        unless value.nil? or value == '' then
+          Puppet.warning <<WARN
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns_alt_names` command line option to set the
+labels added while generating your own CSR.
+WARN
+        end
+      end,
+      :desc    => <<EOT
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns_alt_names` command line option to set the
+labels added while generating your own CSR.
+EOT
+    },
+    :dns_alt_names => {
+      :default => '',
+      :desc    => <<EOT,
+The comma-separated list of alternative DNS names to use for the local host.
+
+When the node generates a CSR for itself, these are added to the request
+as the desired `subjectAltName` in the certificate: additional DNS labels
+that the certificate is also valid answering as.
+
+This is generally required if you use a non-hostname `certname`, or if you
+want to use `puppet kick` or `puppet resource -H` and the primary certname
+does not match the DNS name you use to communicate with the host.
+
+This is unnecessary for agents, unless you intend to use them as a server for
+`puppet kick` or remote `puppet resource` management.
+
+It is rarely necessary for servers; it is usually helpful only if you need to
+have a pool of multiple load balanced masters, or for the same master to
+respond on two physically separate networks under different names.
+EOT
+    },
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",
@@ -437,9 +502,11 @@ module Puppet
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
-    :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
-      :desc => "The search path for modules as a colon-separated list of
-      directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
+    :modulepath => {
+      :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :type => :setting # We don't want this to be considered a file, since it's multiple files.
+    },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
       client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
       to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
@@ -466,7 +533,7 @@ module Puppet
       :desc => "The directory in which to store reports
         received from the client.  Each client gets a separate
         subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
+    :reporturl => ["http://localhost:3000/reports/upload",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :strict_hostname_checking => [false, "Whether to only search for the complete
@@ -493,6 +560,25 @@ module Puppet
   )
 
   setdefaults(:agent,
+    :node_name_value => { :default => "$certname",
+      :desc => "The explicit value used for the node name for all requests the agent
+        makes to the master. WARNING: This setting is mutually exclusive with
+        node_name_fact.  Changing this setting also requires changes to the default
+        auth.conf configuration on the Puppet Master.  Please see
+        http://links.puppetlabs.com/node_name_value for more information."
+    },
+    :node_name_fact => { :default => "",
+      :desc => "The fact name used to determine the node name used for all requests the agent
+        makes to the master. WARNING: This setting is mutually exclusive with
+        node_name_value.  Changing this setting also requires changes to the default
+        auth.conf configuration on the Puppet Master.  Please see
+        http://links.puppetlabs.com/node_name_fact for more information.",
+      :hook => proc do |value|
+        if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
+          raise "Cannot specify both the node_name_value and node_name_fact settings"
+        end
+      end
+    },
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
       :mode => 0660,
@@ -514,22 +600,35 @@ module Puppet
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
         option."},
+    :resourcefile => { :default => "$statedir/resources.txt",
+      :owner => "root",
+      :mode => 0644,
+      :desc => "The file in which puppet agent stores a list of the resources
+        associated with the retrieved configuration."  },
     :puppetdlog => { :default => "$logdir/puppetd.log",
       :owner => "root",
       :mode => 0640,
       :desc => "The log file for puppet agent.  This is generally not used."
     },
-    :server => ["puppet", "The server to which server puppet agent should connect"],
+    :server => {
+      :default => "puppet",
+      :desc => "The server to which the puppet agent should connect"
+    },
+    :use_srv_records => [true, "Whether the server will search for SRV records in DNS for the current domain."],
+    :srv_domain => [ "#{domain}", "The domain which will be queried to find the SRV records of servers to use."],
     :ignoreschedules => [false,
       "Boolean; whether puppet agent should ignore schedules.  This is useful
       for initial puppet agent runs."],
     :puppetport => [8139, "Which port puppet agent listens on."],
     :noop => [false, "Whether puppet agent should be run in noop mode."],
     :runinterval => [1800, # 30 minutes
-      "How often puppet agent applies the client configuration; in seconds."],
+      "How often puppet agent applies the client configuration; in seconds.
+      Note that a runinterval of 0 means \"run continuously\" rather than
+      \"never run.\" If you want puppet agent to never run, you should start
+      it with the `--no-client` option."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
-      REST API requests, subject to the default ACLs and the ACLs set in 
+      REST API requests, subject to the default ACLs and the ACLs set in
       the `rest_authconfig` file. Puppet agent can respond usefully to
       requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
@@ -615,11 +714,11 @@ module Puppet
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => [false, "Whether to create dot graph files for the different
@@ -659,22 +758,13 @@ module Puppet
 
     setdefaults(
     :main,
-    :factpath => {:default => "$vardir/lib/facter:$vardir/facts",
+    :factpath => {:default => "$vardir/lib/facter#{File::PATH_SEPARATOR}$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
         be colon-separated, like normal PATH variables.",
 
       :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
       :type => :setting, # Don't consider it a file, because it could be multiple colon-separated files
-      :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
-    :factdest => ["$vardir/facts/",
-      "Where Puppet should store facts that it pulls down from the central
-      server."],
-    :factsource => ["puppet://$server/facts/",
-      "From where to retrieve facts.  The standard Puppet `file` type
-      is used for retrieval, so anything that is a valid file source can
-      be used here."],
-    :factsync => [false, "Whether facts should be synced with the central server."],
-    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."]
+      :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }}
   )
 
 
@@ -802,20 +892,36 @@ module Puppet
   )
 
   setdefaults(:master,
-    :storeconfigs => {:default => false, :desc => "Whether to store each client's configuration.  This
-      requires ActiveRecord from Ruby on Rails.",
-      :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
+    :storeconfigs => {
+      :default => false,
+      :desc => "Whether to store each client's configuration, including catalogs, facts,
+and related data.  This also enables the import and export of resources in
+the Puppet language - a mechanism for exchange resources between nodes.
+
+By default this uses ActiveRecord and an SQL database to store and query
+the data; this, in turn, will depend on Rails being available.
+
+You can adjust the backend using the storeconfigs_backend setting.",
+      # Call our hook with the default value, so we always get the libdir set.
+      :call_on_define => true,
       :hook => proc do |value|
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          require 'puppet/rails'
-          raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.indirection.cache_class = :active_record
-          Puppet::Node.indirection.cache_class = :active_record
+          Puppet.settings[:async_storeconfigs] or
+            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+          Puppet::Node::Facts.indirection.cache_class = :store_configs
+          Puppet::Node.indirection.cache_class = :store_configs
+
+          Puppet::Resource.indirection.terminus_class = :store_configs
         end
       end
+    },
+    :storeconfigs_backend => {
+      :default => "active_record",
+      :desc => "Configure the backend terminus used for StoreConfigs.
+By default, this uses the ActiveRecord store, which directly talks to the
+database from within the Puppet Master process."
     }
   )
 

@@ -1,6 +1,6 @@
 test_name "should create group"
 
-name = "test-group-#{Time.new.to_i}"
+name = "pl#{rand(999999).to_i}"
 
 def cleanup(name)
     step "remove group #{name} if it exists"
@@ -14,7 +14,7 @@ on(agents, puppet_resource('group', name, 'ensure=present'))
 
 step "verify the group #{name} was created"
 on(agents, "getent group #{name}") do
-    fail_test "group information is not sensible" unless stdout =~ /^#{name}:x:[0-9]+:/
+    fail_test "group information is not sensible" unless stdout =~ /^#{name}:.*:[0-9]+:/
 end
 
 cleanup(name)

@@ -1,15 +1,12 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
   before do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
-    @resource = stub 'resource'
-    @resource.stubs(:[]).returns("package")
-    @resource.stubs(:name).returns("name")
+    @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
 
@@ -47,7 +44,7 @@ describe provider do
       provider.
         expects(:execute).
         with { |args|
-          args[3,4] == ["-Sy", @resource[0]]
+          args[3,4] == ["-Sy", @resource[:name]]
         }.
         returns("")
 
@@ -59,6 +56,79 @@ describe provider do
       @provider.expects(:query).returns(nil)
 
       lambda { @provider.install }.should raise_exception(Puppet::ExecutionFailure)
+    end
+
+    context "when :source is specified" do
+      before :each do
+        @install = sequence("install")
+      end
+
+      context "recognizable by pacman" do
+        %w{
+          /some/package/file
+          http://some.package.in/the/air
+          ftp://some.package.in/the/air
+        }.each do |source|
+          it "should install #{source} directly" do
+            @resource[:source] = source
+
+            provider.expects(:execute).
+              with(all_of(includes("-Sy"), includes("--noprogressbar"))).
+              in_sequence(@install).
+              returns("")
+
+            provider.expects(:execute).
+              with(all_of(includes("-U"), includes(source))).
+              in_sequence(@install).
+              returns("")
+
+            @provider.install
+          end
+        end
+      end
+
+      context "as a file:// URL" do
+        before do
+          @package_file = "file:///some/package/file"
+          @actual_file_path = "/some/package/file"
+          @resource[:source] = @package_file
+        end
+
+        it "should install from the path segment of the URL" do
+          provider.expects(:execute).
+            with(all_of(includes("-Sy"), includes("--noprogressbar"),
+                        includes("--noconfirm"))).
+            in_sequence(@install).
+            returns("")
+
+          provider.expects(:execute).
+            with(all_of(includes("-U"), includes(@actual_file_path))).
+            in_sequence(@install).
+            returns("")
+
+          @provider.install
+        end
+      end
+
+      context "as a puppet URL" do
+        before do
+          @resource[:source] = "puppet://server/whatever"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
+
+      context "as a malformed URL" do
+        before do
+          @resource[:source] = "blah://"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
     end
   end
 
@@ -96,7 +166,7 @@ describe provider do
       provider.
         expects(:execute).
         with { |args|
-          args[3,4] == ["-R", @resource[0]]
+          args[3,4] == ["-R", @resource[:name]]
         }.
         returns("")
 
@@ -108,7 +178,7 @@ describe provider do
     it "should query pacman" do
       provider.
         expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", @resource[0]])
+        with(["/usr/bin/pacman", "-Qi", @resource[:name]])
       @provider.query
     end
 
@@ -150,7 +220,7 @@ EOF
       @provider.query.should == {
         :ensure => :purged,
         :status => 'missing',
-        :name => @resource[0],
+        :name => @resource[:name],
         :error => 'ok',
       }
     end
@@ -195,32 +265,30 @@ EOF
 
   describe "when determining the latest version" do
     it "should refresh package list" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
+      get_latest_version = sequence("get_latest_version")
       provider.
         expects(:execute).
-        when(refreshed.is('unrefreshed')).
-        with(['/usr/bin/pacman', '-Sy']).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sy'])
 
       provider.
         stubs(:execute).
-        when(refreshed.is('refreshed')).
+        in_sequence(get_latest_version).
         returns("")
 
       @provider.latest
     end
 
     it "should get query pacman for the latest version" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
+      get_latest_version = sequence("get_latest_version")
       provider.
         stubs(:execute).
-        when(refreshed.is('unrefreshed')).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version)
 
       provider.
         expects(:execute).
-        when(refreshed.is('refreshed')).
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[0]]).
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]]).
         returns("")
 
       @provider.latest

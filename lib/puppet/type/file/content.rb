@@ -16,8 +16,10 @@ module Puppet
     attr_reader :actual_content
 
     desc "Specify the contents of a file as a string.  Newlines, tabs, and
-      spaces can be specified using the escaped syntax (e.g., \\n for a newline).  The primary purpose of this parameter is to provide a
-      kind of limited templating:
+      spaces can be specified using standard escaped syntax in
+      double-quoted strings (e.g., \\n for a newline).
+
+      With very small files, you can construct strings directly...
 
           define resolve(nameserver1, nameserver2, domain, search) {
               $str = \"search $search
@@ -31,7 +33,9 @@ module Puppet
               }
           }
 
-      This attribute is especially useful when used with templating."
+      ...but for larger files, this attribute is more useful when combined with the
+      [template](http://docs.puppetlabs.com/references/latest/function.html#template)
+      function."
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.
@@ -100,7 +104,7 @@ module Puppet
 
       if ! result and Puppet[:show_diff]
         write_temporarily do |path|
-          print diff(@resource[:path], path)
+          notice "\n" + diff(@resource[:path], path)
         end
       end
       result
@@ -188,17 +192,25 @@ module Puppet
     end
 
     def chunk_file_from_disk(source_or_content)
-      File.open(source_or_content.full_path, "r") do |src|
+      File.open(source_or_content.full_path, "rb") do |src|
         while chunk = src.read(8192)
           yield chunk
         end
       end
     end
 
-    def chunk_file_from_source(source_or_content)
+    def get_from_source(source_or_content, &block)
       request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
-      connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
-      connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
+
+      request.do_request(:fileserver) do |req|
+        connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
+        connection.request_get(indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
+      end
+    end
+
+
+    def chunk_file_from_source(source_or_content)
+      get_from_source(source_or_content) do |response|
         case response.code
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else

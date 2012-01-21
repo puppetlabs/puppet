@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/application/cert'
 
-describe Puppet::Application::Cert, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Application::Cert => true do
   before :each do
     @cert_app = Puppet::Application[:cert]
     Puppet::Util::Log.stubs(:newdestination)
@@ -207,6 +207,16 @@ describe Puppet::Application::Cert, :'fails_on_ruby_1.9.2' => true do
 
         args.should == ["fun.example.com"]
       end
+    end
+
+    it "should print help and exit if there is no subcommand" do
+      args = []
+      @cert_app.command_line.stubs(:args).returns(args)
+      @cert_app.stubs(:help).returns("I called for help!")
+      @cert_app.expects(:puts).with("I called for help!")
+
+      expect { @cert_app.parse_options }.to exit_with 0
+      @cert_app.subcommand.should be_nil
     end
   end
 end

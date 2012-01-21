@@ -3,7 +3,6 @@ require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
 
-require 'puppet/util/cacher'
 require 'puppet/util/pson'
 
 require 'puppet/util/tagging'
@@ -20,7 +19,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   include Puppet::Util::Tagging
   extend Puppet::Util::Pson
-  include Puppet::Util::Cacher::Expirer
 
   # The host name this is a catalog for.
   attr_accessor :name
@@ -94,7 +92,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     resource.ref =~ /^(.+)\[/
     class_name = $1 || resource.class.name
 
-    newref = [class_name, key]
+    newref = [class_name, key].flatten
 
     if key.is_a? String
       ref_string = "#{class_name}[#{key}]"
@@ -107,7 +105,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      raise(ArgumentError, "Cannot alias #{resource.ref} to #{key.inspect}; resource #{newref.inspect} already exists")
+      resource_definition = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
+      existing_definition = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
+      msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_definition}; resource #{newref.inspect} already defined#{existing_definition}"
+      raise ArgumentError, msg
     end
     @resource_table[newref] = resource
     @aliases[resource.ref] ||= []
@@ -123,14 +124,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def apply(options = {})
     @applying = true
 
-    # Expire all of the resource data -- this ensures that all
-    # data we're operating against is entirely current.
-    expire
-
     Puppet::Util::Storage.load if host_config?
-    transaction = Puppet::Transaction.new(self)
 
-    transaction.report = options[:report] if options[:report]
+    transaction = Puppet::Transaction.new(self, options[:report])
+    register_report = options[:report].nil?
+
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
     transaction.for_network_device = options[:network_device]
@@ -138,7 +136,12 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 
     begin
-      transaction.evaluate
+      Puppet::Util::Log.newdestination(transaction.report) if register_report
+      begin
+        transaction.evaluate
+      ensure
+        Puppet::Util::Log.close(transaction.report) if register_report
+      end
     rescue Puppet::Error => detail
       puts detail.backtrace if Puppet[:trace]
       Puppet.err "Could not apply complete catalog: #{detail}"
@@ -156,7 +159,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     return transaction
   ensure
     @applying = false
-    cleanup
   end
 
   # Are we in the middle of applying the catalog?
@@ -189,67 +191,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     add_resource(resource)
     resource
-  end
-
-  def dependent_data_expired?(ts)
-    if applying?
-      return super
-    else
-      return true
-    end
-  end
-
-  # Turn our catalog graph into an old-style tree of TransObjects and TransBuckets.
-  # LAK:NOTE(20081211): This is a  pre-0.25 backward compatibility method.
-  # It can be removed as soon as xmlrpc is killed.
-  def extract
-    top = nil
-    current = nil
-    buckets = {}
-
-    unless main = resource(:stage, "main")
-      raise Puppet::DevError, "Could not find 'main' stage; cannot generate catalog"
-    end
-
-    if stages = vertices.find_all { |v| v.type == "Stage" and v.title != "main" } and ! stages.empty?
-      Puppet.warning "Stages are not supported by 0.24.x client; stage(s) #{stages.collect { |s| s.to_s }.join(', ') } will be ignored"
-    end
-
-    bucket = nil
-    walk(main, :out) do |source, target|
-      # The sources are always non-builtins.
-      unless tmp = buckets[source.to_s]
-        if tmp = buckets[source.to_s] = source.to_trans
-          bucket = tmp
-        else
-          # This is because virtual resources return nil.  If a virtual
-          # container resource contains realized resources, we still need to get
-          # to them.  So, we keep a reference to the last valid bucket
-          # we returned and use that if the container resource is virtual.
-        end
-      end
-      bucket = tmp || bucket
-      if child = target.to_trans
-        raise "No bucket created for #{source}" unless bucket
-        bucket.push child
-
-        # It's important that we keep a reference to any TransBuckets we've created, so
-        # we don't create multiple buckets for children.
-        buckets[target.to_s] = child unless target.builtin?
-      end
-    end
-
-    # Retrieve the bucket for the top-level scope and set the appropriate metadata.
-    unless result = buckets[main.to_s]
-      # This only happens when the catalog is entirely empty.
-      result = buckets[main.to_s] = main.to_trans
-    end
-
-    result.classes = classes
-
-    # Clear the cache to encourage the GC
-    buckets.clear
-    result
   end
 
   # Make sure all of our resources are "finished".
@@ -367,7 +308,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     #
     # These two hashes comprise the aforementioned attention to the possible
     #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinals but pass other verticies through.  Thus we
+    #   containers to their sentinels but pass other verticies through.  Thus we
     #   can "do the right thing" for references to other verticies that may or
     #   may not be containers.
     #
@@ -430,7 +371,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       res = Puppet::Resource.new(nil, type)
     end
     title_key      = [res.type, res.title.to_s]
-    uniqueness_key = [res.type, res.uniqueness_key]
+    uniqueness_key = [res.type, res.uniqueness_key].flatten
     @resource_table[title_key] || @resource_table[uniqueness_key]
   end
 
@@ -541,11 +482,28 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   # Store the classes in the classfile.
   def write_class_file
-      ::File.open(Puppet[:classfile], "w") do |f|
-        f.puts classes.join("\n")
-      end
+    ::File.open(Puppet[:classfile], "w") do |f|
+      f.puts classes.join("\n")
+    end
   rescue => detail
-      Puppet.err "Could not create class file #{Puppet[:classfile]}: #{detail}"
+    Puppet.err "Could not create class file #{Puppet[:classfile]}: #{detail}"
+  end
+
+  # Store the list of resources we manage
+  def write_resource_file
+    ::File.open(Puppet[:resourcefile], "w") do |f|
+      to_print = resources.map do |resource|
+        next unless resource.managed?
+        if resource.name_var
+          "#{resource.type}[#{resource[resource.name_var]}]"
+        else
+          "#{resource.ref.downcase}"
+        end
+      end.compact
+      f.puts to_print.join("\n")
+    end
+  rescue => detail
+    Puppet.err "Could not create resource file #{Puppet[:resourcefile]}: #{detail}"
   end
 
   # Produce the graph files if requested.
@@ -557,11 +515,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   private
-
-  def cleanup
-    # Expire any cached data the resources are keeping.
-    expire
-  end
 
   # Verify that the given resource isn't defined elsewhere.
   def fail_on_duplicate_type_and_title(resource)
@@ -596,9 +549,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       #has a reference to the catalog being converted. . . So, give it a reference to the new one
       #problem solved. . .
       if resource.class == Puppet::Resource
-        resource = resource.dup
-        resource.catalog = result
-      elsif resource.is_a?(Puppet::TransObject)
         resource = resource.dup
         resource.catalog = result
       elsif resource.is_a?(Puppet::Parser::Resource)

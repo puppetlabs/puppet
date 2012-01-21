@@ -163,7 +163,7 @@ describe Puppet::Parser::Resource do
       res.evaluate
     end
 
-    it "should add an edge to any specified stage for class resources" do
+    it "should add an edge to any specified stage for class resources", :'fails_on_ruby_1.9.2' => true do
       @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
 
       other_stage = Puppet::Parser::Resource.new(:stage, "other", :scope => @scope, :catalog => @catalog)
@@ -177,7 +177,7 @@ describe Puppet::Parser::Resource do
       @compiler.catalog.edge?(other_stage, resource).should be_true
     end
 
-    it "should fail if an unknown stage is specified" do
+    it "should fail if an unknown stage is specified", :'fails_on_ruby_1.9.2' => true do
       @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
 
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
@@ -186,7 +186,7 @@ describe Puppet::Parser::Resource do
       lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
     end
 
-    it "should add edges from the class resources to the parent's stage if no stage is specified" do
+    it "should add edges from the class resources to the parent's stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
       main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
@@ -200,7 +200,7 @@ describe Puppet::Parser::Resource do
       @compiler.catalog.should be_edge(foo_stage, resource)
     end
 
-    it "should add edges from top-level class resources to the main stage if no stage is specified" do
+    it "should add edges from top-level class resources to the main stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
       main = @compiler.catalog.resource(:stage, :main)
       @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
@@ -271,7 +271,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should not copy relationship metaparams when not in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns false
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
@@ -280,7 +280,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should copy relationship metaparams when in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns true
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
@@ -290,7 +290,7 @@ describe Puppet::Parser::Resource do
 
     it "should stack relationship metaparams when in metaparam compatibility mode" do
       @resource.set_parameter("require", "foo")
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns true
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
@@ -450,26 +450,6 @@ describe Puppet::Parser::Resource do
     @source = stub 'scope', :name => "myscope"
     @resource = mkresource :source => @source
     @resource.should respond_to(:to_resource)
-  end
-
-  it "should use its resource converter to convert to a transportable resource" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    newresource = Puppet::Resource.new(:file, "/my")
-    Puppet::Resource.expects(:new).returns(newresource)
-
-    newresource.expects(:to_trans).returns "mytrans"
-
-    @resource.to_trans.should == "mytrans"
-  end
-
-  it "should return nil if converted to a transportable resource and it is virtual" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    @resource.expects(:virtual?).returns true
-    @resource.to_trans.should be_nil
   end
 
   describe "when being converted to a resource" do

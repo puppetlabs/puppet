@@ -1,11 +1,6 @@
 #!/usr/bin/env rspec
-#
-#  Created by Rick Bradley on 2007-10-03.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 require 'puppet/network/server'
-require 'puppet/network/handler'
 
 describe Puppet::Network::Server do
   before do
@@ -23,7 +18,6 @@ describe Puppet::Network::Server do
   describe "when initializing" do
     before do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-      Puppet::Network::Handler.stubs(:handler).returns mock('xmlrpc_handler')
       Puppet.settings.stubs(:value).with(:bindaddress).returns("")
       Puppet.settings.stubs(:value).with(:masterport).returns('')
     end
@@ -98,25 +92,20 @@ describe Puppet::Network::Server do
       lambda { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
     end
 
-    it "should allow registering XMLRPC handlers" do
-      @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
-      lambda { @server.unregister_xmlrpc(:foo, :bar, :baz) }.should_not raise_error
-    end
-
     it "should not be listening after initialization" do
       Puppet::Network::Server.new(:port => 31337).should_not be_listening
     end
 
     it "should use the :main setting section" do
       Puppet.settings.expects(:use).with { |*args| args.include?(:main) }
-      @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
+      @server = Puppet::Network::Server.new(:port => 31337)
     end
 
     it "should use the Puppet[:name] setting section" do
       Puppet.settings.expects(:value).with(:name).returns "me"
       Puppet.settings.expects(:use).with { |*args| args.include?("me") }
 
-      @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
+      @server = Puppet::Network::Server.new(:port => 31337)
     end
   end
 
@@ -306,14 +295,6 @@ describe Puppet::Network::Server do
     @server.server_type.should == :suparserver
   end
 
-  it "should provide a means of determining which protocols are in use" do
-    @server.should respond_to(:protocols)
-  end
-
-  it "should set the protocols to :rest and :xmlrpc" do
-    @server.protocols.should == [ :rest, :xmlrpc ]
-  end
-
   it "should provide a means of determining the listening address" do
     @server.address.should == "127.0.0.1"
   end
@@ -332,70 +313,6 @@ describe Puppet::Network::Server do
     @server2.unregister(:foo, :xyzzy)
     lambda { @server.unregister(:xyzzy) }.should raise_error(ArgumentError)
     lambda { @server2.unregister(:bar) }.should raise_error(ArgumentError)
-  end
-
-  describe "when managing xmlrpc registrations" do
-    before do
-      Puppet::Network::Handler.stubs(:handler).returns mock('xmlrpc_handler')
-    end
-
-    it "should allow registering an xmlrpc handler by specifying its namespace" do
-      lambda { @server.register_xmlrpc(:foo) }.should_not raise_error
-    end
-
-    it "should require that the xmlrpc namespace be valid" do
-      Puppet::Network::Handler.stubs(:handler).returns nil
-
-      lambda { @server.register_xmlrpc(:foo) }.should raise_error(ArgumentError)
-    end
-
-    it "should require at least one namespace" do
-      lambda { @server.register_xmlrpc }.should raise_error(ArgumentError)
-    end
-
-    it "should allow multiple namespaces to be registered at once" do
-      lambda { @server.register_xmlrpc(:foo, :bar) }.should_not raise_error
-    end
-
-    it "should allow the use of namespaces to specify which are no longer accessible to clients" do
-      @server.register_xmlrpc(:foo, :bar)
-    end
-
-    it "should leave other namespaces accessible to clients when turning off xmlrpc namespaces" do
-      @server.register_xmlrpc(:foo, :bar)
-      @server.unregister_xmlrpc(:foo)
-      lambda { @server.unregister_xmlrpc(:bar)}.should_not raise_error
-    end
-
-    it "should allow specifying numerous namespaces which are to be no longer accessible to clients" do
-      @server.register_xmlrpc(:foo, :bar)
-      lambda { @server.unregister_xmlrpc(:foo, :bar) }.should_not raise_error
-    end
-
-    it "should not turn off any indirections if given unknown namespaces to turn off" do
-      @server.register_xmlrpc(:foo, :bar)
-      lambda { @server.unregister_xmlrpc(:foo, :bar, :baz) }.should raise_error(ArgumentError)
-      lambda { @server.unregister_xmlrpc(:foo, :bar) }.should_not raise_error
-    end
-
-    it "should not allow turning off unknown namespaces" do
-      @server.register_xmlrpc(:foo, :bar)
-      lambda { @server.unregister_xmlrpc(:baz) }.should raise_error(ArgumentError)
-    end
-
-    it "should disable client access immediately when turning off namespaces" do
-      @server.register_xmlrpc(:foo, :bar)
-      @server.unregister_xmlrpc(:foo)
-      lambda { @server.unregister_xmlrpc(:foo) }.should raise_error(ArgumentError)
-    end
-
-    it "should allow turning off all namespaces at once" do
-      @server.register_xmlrpc(:foo, :bar)
-      @server.unregister_xmlrpc
-      [ :foo, :bar, :baz].each do |indirection|
-        lambda { @server.unregister_xmlrpc(indirection) }.should raise_error(ArgumentError)
-      end
-    end
   end
 
   describe "when listening is off" do
@@ -444,9 +361,8 @@ describe Puppet::Network::Server do
   describe "when listening is being turned on" do
     before do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-      Puppet::Network::Handler.stubs(:handler).returns mock('xmlrpc_handler')
 
-      @server = Puppet::Network::Server.new(:port => 31337, :handlers => [:node], :xmlrpc_handlers => [:master])
+      @server = Puppet::Network::Server.new(:port => 31337, :handlers => [:node])
       @mock_http_server = mock('http server')
       @mock_http_server.stubs(:listen)
     end
@@ -483,22 +399,6 @@ describe Puppet::Network::Server do
       @server.stubs(:http_server).returns(@mock_http_server)
       @mock_http_server.expects(:listen).with do |args|
         args[:handlers] == [ :node ]
-      end
-      @server.listen
-    end
-
-    it "should pass a list of XMLRPC handlers to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:xmlrpc_handlers] == [ :master ]
-      end
-      @server.listen
-    end
-
-    it "should pass a list of protocols to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:protocols] == [ :rest, :xmlrpc ]
       end
       @server.listen
     end

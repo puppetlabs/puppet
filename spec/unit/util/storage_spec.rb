@@ -8,7 +8,7 @@ describe Puppet::Util::Storage do
   include PuppetSpec::Files
 
   before(:all) do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
     Puppet[:statedir] = tmpdir("statedir")
   end
 

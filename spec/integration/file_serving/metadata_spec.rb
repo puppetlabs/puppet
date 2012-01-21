@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/file_serving/metadata'
@@ -16,6 +12,4 @@ describe Puppet::FileServing::Metadata, " when finding files" do
     @test_class = Puppet::FileServing::Metadata
     @indirection = Puppet::FileServing::Metadata.indirection
   end
-
-  after { Puppet::Util::Cacher.expire }
 end

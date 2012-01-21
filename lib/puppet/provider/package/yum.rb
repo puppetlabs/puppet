@@ -1,4 +1,5 @@
 require 'puppet/util/package'
+
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   desc "Support via `yum`."
 
@@ -55,7 +56,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     wanted = @resource[:name]
     operation = :install
 
-    # XXX: We don't actually deal with epochs here.
     case should
     when true, false, Symbol
       # pass
@@ -86,7 +86,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     unless upd.nil?
       # FIXME: there could be more than one update for a package
       # because of multiarch
-      return "#{upd[:version]}-#{upd[:release]}"
+      return "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
     else
       # Yum didn't find updates, pretend the current
       # version is the latest
@@ -104,4 +104,3 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     yum "-y", :erase, @resource[:name]
   end
 end
-

@@ -1,0 +1,20 @@
+NameVirtualHost *:<%= port %>
+<VirtualHost *:<%= port %>>
+  ServerName <%= name %>
+<%if serveraliases.is_a? Array -%>
+<% serveraliases.each do |name| -%><%= "  ServerAlias #{name}\n" %><% end -%>
+<% elsif serveraliases != '' -%>
+<%= "  ServerAlias #{serveraliases}" -%>
+<% end -%>
+  DocumentRoot <%= docroot %>
+  <Directory <%= docroot %>>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order allow,deny
+    allow from all
+  </Directory>
+  ErrorLog /var/log/apache2/<%= name %>_error.log
+  LogLevel warn
+  CustomLog /var/log/apache2/<%= name %>_access.log combined
+  ServerSignature On
+</VirtualHost>

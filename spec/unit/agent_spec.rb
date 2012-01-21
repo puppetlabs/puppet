@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-11-12.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 require 'puppet/agent'
 
@@ -28,6 +24,7 @@ describe Puppet::Agent do
 
     # So we don't actually try to hit the filesystem.
     @agent.stubs(:lock).yields
+    @agent.stubs(:disabled?).returns(false)
 
     # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.
     without_warnings { Puppet::Application = Class.new(Puppet::Application) }
@@ -80,6 +77,7 @@ describe Puppet::Agent do
 
   describe "when being run" do
     before do
+      AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
     end
 
@@ -92,6 +90,12 @@ describe Puppet::Agent do
 
     it "should do nothing if already running" do
       @agent.expects(:running?).returns true
+      AgentTestClient.expects(:new).never
+      @agent.run
+    end
+
+    it "should do nothing if disabled" do
+      @agent.expects(:disabled?).returns(true)
       AgentTestClient.expects(:new).never
       @agent.run
     end

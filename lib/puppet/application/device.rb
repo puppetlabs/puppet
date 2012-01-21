@@ -11,7 +11,7 @@ class Puppet::Application::Device < Puppet::Application
 
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
       exit(0)
     end
@@ -113,10 +113,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   Enable full debugging.
 
 * --detailed-exitcodes:
-  Provide transaction information via exit codes.  If this is enabled, an
-  exit code of '2' means there were changes, and an exit code of '4' means
-  that there were failures during the transaction. This option only makes
-  sense in conjunction with --onetime.
+  Provide transaction information via exit codes. If this is enabled, an exit
+  code of '2' means there were changes, an exit code of '4' means there were
+  failures during the transaction, and an exit code of '6' means there were both
+  changes and failures.
 
 * --help:
   Print this help message
@@ -196,6 +196,7 @@ Licensed under the Apache 2.0 License
         Puppet.settings.set_value(:vardir, vardir, :cli)
         Puppet.settings.set_value(:confdir, confdir, :cli)
         Puppet.settings.set_value(:certname, certname, :cli)
+        Puppet::SSL::Host.reset
       end
     end
   end

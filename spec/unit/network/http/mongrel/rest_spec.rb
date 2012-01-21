@@ -57,7 +57,7 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel?, 
       end
 
       it "should return the request body as the body" do
-        @request.expects(:body).returns StringIO.new("mybody")
+        @request.stubs(:body).returns StringIO.new("mybody")
         @handler.body(@request).should == "mybody"
       end
 
@@ -109,136 +109,165 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel?, 
 
     describe "and determining the request parameters" do
       before do
-        @request.stubs(:params).returns({})
+        @params = {'REQUEST_METHOD' => 'GET'}
+        @request.stubs(:params).returns(@params)
       end
 
       it "should skip empty parameter values" do
-        @request.expects(:params).returns('QUERY_STRING' => "&=")
+        @params['QUERY_STRING'] = "&="
         lambda { @handler.params(@request) }.should_not raise_error
       end
 
       it "should include the HTTP request parameters, with the keys as symbols" do
-        @request.expects(:params).returns('QUERY_STRING' => 'foo=baz&bar=xyzzy')
+        @params['QUERY_STRING'] = 'foo=baz&bar=xyzzy'
         result = @handler.params(@request)
         result[:foo].should == "baz"
         result[:bar].should == "xyzzy"
       end
 
       it "should CGI-decode the HTTP parameters" do
-        encoding = CGI.escape("foo bar")
-        @request.expects(:params).returns('QUERY_STRING' => "foo=#{encoding}")
+        escaped = CGI.escape("foo bar")
+        @params['QUERY_STRING'] = "foo=#{escaped}"
         result = @handler.params(@request)
         result[:foo].should == "foo bar"
       end
 
+      it "should include parameters from the body of a POST request" do
+        @params.merge!(
+          'QUERY_STRING'   => nil,
+          'REQUEST_METHOD' => 'POST'
+        )
+        body = StringIO.new('foo=bar&baz=qux')
+        @request.stubs(:body).returns(body)
+
+        @handler.params(@request).should include(
+          :foo => 'bar',
+          :baz => 'qux'
+        )
+      end
+
       it "should convert the string 'true' to the boolean" do
-        @request.expects(:params).returns('QUERY_STRING' => 'foo=true')
+        @params['QUERY_STRING'] = 'foo=true'
         result = @handler.params(@request)
         result[:foo].should be_true
       end
 
       it "should convert the string 'false' to the boolean" do
-        @request.expects(:params).returns('QUERY_STRING' => 'foo=false')
+        @params['QUERY_STRING'] = 'foo=false'
         result = @handler.params(@request)
         result[:foo].should be_false
       end
 
       it "should convert integer arguments to Integers" do
-        @request.expects(:params).returns('QUERY_STRING' => 'foo=15')
+        @params['QUERY_STRING'] = 'foo=15'
         result = @handler.params(@request)
         result[:foo].should == 15
       end
 
       it "should convert floating point arguments to Floats" do
-        @request.expects(:params).returns('QUERY_STRING' => 'foo=1.5')
+        @params['QUERY_STRING'] = 'foo=1.5'
         result = @handler.params(@request)
         result[:foo].should == 1.5
       end
 
       it "should YAML-load and URI-decode values that are YAML-encoded" do
         escaping = CGI.escape(YAML.dump(%w{one two}))
-        @request.expects(:params).returns('QUERY_STRING' => "foo=#{escaping}")
+        @params['QUERY_STRING'] = "foo=#{escaping}"
         result = @handler.params(@request)
         result[:foo].should == %w{one two}
       end
 
       it "should not allow the client to set the node via the query string" do
-        @request.stubs(:params).returns('QUERY_STRING' => "node=foo")
+        @params['QUERY_STRING'] = "node=foo"
         @handler.params(@request)[:node].should be_nil
       end
 
       it "should not allow the client to set the IP address via the query string" do
-        @request.stubs(:params).returns('QUERY_STRING' => "ip=foo")
+        @params['QUERY_STRING'] = "ip=foo"
         @handler.params(@request)[:ip].should be_nil
       end
 
       it "should pass the client's ip address to model find" do
-        @request.stubs(:params).returns("REMOTE_ADDR" => "ipaddress")
+        @params['REMOTE_ADDR'] = "ipaddress"
         @handler.params(@request)[:ip].should == "ipaddress"
       end
 
       it "should pass the client's provided X-Forwared-For value as the ip" do
-        @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipaddress")
+        @params["HTTP_X_FORWARDED_FOR"] = "ipaddress"
         @handler.params(@request)[:ip].should == "ipaddress"
       end
 
       it "should pass the client's provided X-Forwared-For first value as the ip" do
-        @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipproxy1,ipproxy2,ipaddress")
+        @params["HTTP_X_FORWARDED_FOR"] = "ipproxy1,ipproxy2,ipaddress"
         @handler.params(@request)[:ip].should == "ipaddress"
       end
 
       it "should pass the client's provided X-Forwared-For value as the ip instead of the REMOTE_ADDR" do
-        @request.stubs(:params).returns("REMOTE_ADDR" => "remote_addr")
-        @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipaddress")
+        @params.merge!(
+          "REMOTE_ADDR"          => "remote_addr",
+          "HTTP_X_FORWARDED_FOR" => "ipaddress"
+        )
         @handler.params(@request)[:ip].should == "ipaddress"
       end
 
       it "should use the :ssl_client_header to determine the parameter when looking for the certificate" do
         Puppet.settings.stubs(:value).returns "eh"
         Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => "/CN=host.domain.com")
+        @params["myheader"] = "/CN=host.domain.com"
         @handler.params(@request)
       end
 
       it "should retrieve the hostname by matching the certificate parameter" do
         Puppet.settings.stubs(:value).returns "eh"
         Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => "/CN=host.domain.com")
+        @params["myheader"] = "/CN=host.domain.com"
         @handler.params(@request)[:node].should == "host.domain.com"
       end
 
       it "should use the :ssl_client_header to determine the parameter for checking whether the host certificate is valid" do
         Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
         Puppet.settings.expects(:value).with(:ssl_client_verify_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => "SUCCESS", "certheader" => "/CN=host.domain.com")
+        @params.merge!(
+          "myheader"   => "SUCCESS",
+          "certheader" => "/CN=host.domain.com"
+        )
         @handler.params(@request)
       end
 
       it "should consider the host authenticated if the validity parameter contains 'SUCCESS'" do
         Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
         Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => "SUCCESS", "certheader" => "/CN=host.domain.com")
+        @params.merge!(
+          "myheader"   => "SUCCESS",
+          "certheader" => "/CN=host.domain.com"
+        )
         @handler.params(@request)[:authenticated].should be_true
       end
 
       it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
         Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
         Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => "whatever", "certheader" => "/CN=host.domain.com")
+        @params.merge!(
+          "myheader"   => "whatever",
+          "certheader" => "/CN=host.domain.com"
+        )
         @handler.params(@request)[:authenticated].should be_false
       end
 
       it "should consider the host unauthenticated if no certificate information is present" do
         Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
         Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => nil, "certheader" => "SUCCESS")
+        @params.merge!(
+          "myheader"   => nil,
+          "certheader" => "SUCCESS"
+        )
         @handler.params(@request)[:authenticated].should be_false
       end
 
       it "should resolve the node name with an ip address look-up if no certificate is present" do
         Puppet.settings.stubs(:value).returns "eh"
         Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
-        @request.stubs(:params).returns("myheader" => nil)
+        @params["myheader"] = nil
         @handler.expects(:resolve_node).returns("host.domain.com")
         @handler.params(@request)[:node].should == "host.domain.com"
       end

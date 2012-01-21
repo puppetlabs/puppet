@@ -63,6 +63,20 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     it "should use the object's name to determine the file name" do
       @store.path(:me).should =~ %r{me.yaml$}
     end
+
+    ['../foo', '..\\foo', './../foo', '.\\..\\foo',
+     '/foo', '//foo', '\\foo', '\\\\goo',
+     "test\0/../bar", "test\0\\..\\bar",
+     "..\\/bar", "/tmp/bar", "/tmp\\bar", "tmp\\bar",
+     " / bar", " /../ bar", " \\..\\ bar",
+     "c:\\foo", "c:/foo", "\\\\?\\UNC\\bar", "\\\\foo\\bar",
+     "\\\\?\\c:\\foo", "//?/UNC/bar", "//foo/bar",
+     "//?/c:/foo",
+    ].each do |input|
+      it "should resist directory traversal attacks (#{input.inspect})" do
+        expect { @store.path(input) }.to raise_error
+      end
+    end
   end
 
   describe Puppet::Indirector::Yaml, " when storing objects as YAML" do
@@ -153,6 +167,24 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       @store.expects(:path).with(@request.key,'').returns :glob
       Dir.expects(:glob).with(:glob).returns []
       @store.search(@request).should == []
+    end
+
+    describe Puppet::Indirector::Yaml, " when destroying" do
+      it "should unlink the right yaml file if it exists" do
+        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
+        File.expects(:exists?).with(path).returns true
+        File.expects(:unlink).with(path)
+
+        @store.destroy(@request)
+      end
+
+      it "should not unlink the yaml file if it does not exists" do
+        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
+        File.expects(:exists?).with(path).returns false
+        File.expects(:unlink).with(path).never
+
+        @store.destroy(@request)
+      end
     end
   end
 end

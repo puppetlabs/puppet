@@ -7,13 +7,20 @@ Puppet::Face.define(:help, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Displays help about puppet subcommands"
+  summary "Display Puppet help."
 
   action(:help) do
-    summary "Display help about faces and their actions."
+    summary "Display help about Puppet subcommands and their actions."
+    arguments "[<subcommand>] [<action>]"
+    returns "Short help text for the specified subcommand or action."
+    examples <<-'EOT'
+      Get help for an action:
+
+      $ puppet help
+    EOT
 
     option "--version VERSION" do
-      summary "which version of the interface to show help for"
+      summary "The version of the subcommand for which to show help."
     end
 
     default
@@ -39,7 +46,7 @@ Puppet::Face.define(:help, '0.0.1') do
           EOT
           353.times{i,x=i.divmod(1184);a,b=x.divmod(37);print(c[a]*b)}
         end
-        raise ArgumentError, "help only takes two (optional) arguments, a face name, and an action"
+        raise ArgumentError, "Puppet help only takes two (optional) arguments: a subcommand and an action"
       end
 
       version = :current
@@ -48,7 +55,7 @@ Puppet::Face.define(:help, '0.0.1') do
           version = options[:version]
         else
           if args.length == 0 then
-            raise ArgumentError, "version only makes sense when a face is given"
+            raise ArgumentError, "Version only makes sense when a Faces subcommand is given"
           end
         end
       end
@@ -88,7 +95,7 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def erb(name)
     template = (Pathname(__FILE__).dirname + "help" + name)
-    erb = ERB.new(template.read, nil, '%')
+    erb = ERB.new(template.read, nil, '-')
     erb.filename = template.to_s
     return erb
   end

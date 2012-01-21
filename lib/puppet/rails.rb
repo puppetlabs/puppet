@@ -47,7 +47,7 @@ module Puppet::Rails
     case adapter
     when "sqlite3"
       args[:database] = Puppet[:dblocation]
-    when "mysql", "postgresql"
+    when "mysql", "mysql2", "postgresql"
       args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].to_s.empty?
       args[:port]     = Puppet[:dbport] unless Puppet[:dbport].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?

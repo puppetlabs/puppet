@@ -40,24 +40,24 @@ class TestScope < Test::Unit::TestCase
     scopes = {:top => topscope, :mid => midscope, :bot => botscope}
 
     # Set a variable in the top and make sure all three can get it
-    topscope.setvar("first", "topval")
+    topscope['first'] = 'topval'
     scopes.each do |name, scope|
-      assert_equal("topval", scope.lookupvar("first"), "Could not find var in #{name}")
+      assert_equal("topval", scope['first'], "Could not find var in #{name}")
     end
 
     # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
-    midscope.setvar("second", "midval")
-    assert_equal(:undefined, scopes[:top].lookupvar("second"), "Found child var in top scope")
+    midscope['second'] = "midval"
+    assert_nil(scopes[:top]['second'], "Found child var in top scope")
     [:mid, :bot].each do |name|
-      assert_equal("midval", scopes[name].lookupvar("second"), "Could not find var in #{name}")
+      assert_equal("midval", scopes[name]['second'], "Could not find var in #{name}")
     end
 
     # And set something in the bottom, and make sure we only find it there.
-    botscope.setvar("third", "botval")
+    botscope['third'] = "botval"
     [:top, :mid].each do |name|
-      assert_equal(:undefined, scopes[name].lookupvar("third"), "Found child var in top scope")
+      assert_nil(scopes[name]['third'], "Found child var in top scope")
     end
-    assert_equal("botval", scopes[:bot].lookupvar("third"), "Could not find var in bottom scope")
+    assert_equal("botval", scopes[:bot]['third'], "Could not find var in bottom scope")
 
 
     # Test that the scopes convert to hash structures correctly.
@@ -84,7 +84,7 @@ class TestScope < Test::Unit::TestCase
 
     # Finally, check the ability to shadow symbols by adding a shadow to
     # bottomscope, then checking that we see the right stuff.
-    botscope.setvar("first", "shadowval")
+    botscope['first'] = "shadowval"
 
       assert_equal(
         {"third" => "botval", "first" => "shadowval"},
@@ -105,16 +105,16 @@ class TestScope < Test::Unit::TestCase
     sub = mkscope(:parent => top)
 
     assert_nothing_raised {
-      top.setvar("test","value")
+      top['test'] = "value"
     }
     assert_raise(Puppet::ParseError) {
-      top.setvar("test","other")
+      top['test'] = 'other'
     }
     assert_nothing_raised {
-      sub.setvar("test","later")
+      top['other'] = 'later'
     }
     assert_raise(Puppet::ParseError) {
-      top.setvar("test","yeehaw")
+      top['other'] = 'yeehaw'
     }
   end
 
@@ -259,8 +259,8 @@ Host <<||>>"
   def test_lookupvar_with_undef
     scope = mkscope
 
-    scope.setvar("testing", :undef)
-    assert_equal(:undef, scope.lookupvar("testing"), "undef was not returned as :undef")
+    scope['testing'] = :undef
+    assert_equal(:undef, scope['testing'], "undef was not returned as :undef")
   end
 end
 

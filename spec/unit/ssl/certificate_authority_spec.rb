@@ -5,7 +5,7 @@ require 'puppet/ssl/certificate_authority'
 
 describe Puppet::SSL::CertificateAuthority do
   after do
-    Puppet::Util::Cacher.expire
+    Puppet::SSL::CertificateAuthority.instance_variable_set(:@singleton_instance, nil)
     Puppet.settings.clearused
   end
 
@@ -25,7 +25,7 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when finding an existing instance" do
     describe "and the host is a CA host and the run_mode is master" do
       before do
-        Puppet.settings.stubs(:value).with(:ca).returns true
+        Puppet[:ca] = true
         Puppet.run_mode.stubs(:master?).returns true
 
         @ca = mock('ca')
@@ -199,8 +199,9 @@ describe Puppet::SSL::CertificateAuthority do
       request = mock 'request'
       Puppet::SSL::CertificateRequest.expects(:new).with(@ca.host.name).returns request
       request.expects(:generate).with(@ca.host.key)
+      request.stubs(:request_extensions => [])
 
-      @ca.expects(:sign).with(@host.name, :ca, request)
+      @ca.expects(:sign).with(@host.name, false, request)
 
       @ca.stubs :generate_password
 
@@ -243,10 +244,10 @@ describe Puppet::SSL::CertificateAuthority do
       Puppet::SSL::Certificate.indirection.stubs(:save)
 
       # Stub out the factory
-      @factory = stub 'factory', :result => "my real cert"
-      Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
+      Puppet::SSL::CertificateFactory.stubs(:build).returns "my real cert"
 
-      @request = stub 'request', :content => "myrequest", :name => @name
+      @request_content = stub "request content stub", :subject => @name
+      @request = stub 'request', :name => @name, :request_extensions => [], :subject_alt_names => [], :content => @request_content
 
       # And the inventory
       @inventory = stub 'inventory', :add => nil
@@ -297,35 +298,43 @@ describe Puppet::SSL::CertificateAuthority do
       it "should not look up a certificate request for the host" do
         Puppet::SSL::CertificateRequest.indirection.expects(:find).never
 
-        @ca.sign(@name, :ca, @request)
+        @ca.sign(@name, true, @request)
       end
 
       it "should use a certificate type of :ca" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[0] == :ca
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the provided CSR as the CSR" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
-          args[1] == "myrequest"
-        end.returns @factory
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
+          args[1] == @request
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should use the provided CSR's content as the issuer" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
-          args[2] == "myrequest"
-        end.returns @factory
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
+          args[2].subject == "myhost"
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the next serial as the serial number" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[3] == @serial
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
+      end
+
+      it "should sign the certificate request even if it contains alt names" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name, false, @request)
+        end.should_not raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
       end
 
       it "should save the resulting certificate" do
@@ -345,9 +354,9 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should use a certificate type of :server" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[0] == :server
-        end.returns @factory
+        end.returns "my real cert"
 
         @ca.sign(@name)
       end
@@ -364,17 +373,45 @@ describe Puppet::SSL::CertificateAuthority do
         lambda { @ca.sign(@name) }.should raise_error(ArgumentError)
       end
 
+      it "should fail if an unknown request extension is present" do
+        @request.stubs :request_extensions => [{ "oid"   => "bananas",
+                                                 "value" => "delicious" }]
+        expect { @ca.sign(@name) }.
+          should raise_error(/CSR has request extensions that are not permitted/)
+      end
+
+      it "should fail if the CSR contains alt names and they are not expected" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name, false)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
+      end
+
+      it "should not fail if the CSR does not contain alt names and they are expected" do
+        @request.stubs(:subject_alt_names).returns []
+        expect { @ca.sign(@name, true) }.should_not raise_error
+      end
+
+      it "should reject alt names by default" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
+      end
+
       it "should use the CA certificate as the issuer" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[2] == @cacert.content
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name)
       end
 
       it "should pass the next serial as the serial number" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[3] == @serial
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name)
       end
 
@@ -398,6 +435,80 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet::SSL::CertificateRequest.indirection.expects(:destroy).with(@name)
 
         @ca.sign(@name)
+      end
+
+      it "should check the internal signing policies" do
+        @ca.expects(:check_internal_signing_policies).returns true
+        @ca.sign(@name)
+      end
+    end
+
+    context "#check_internal_signing_policies" do
+      before do
+        @serial = 10
+        @ca.stubs(:next_serial).returns @serial
+
+        Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
+        @cert.stubs :save
+      end
+
+      it "should reject a critical extension that isn't on the whitelist" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "banana",
+                                                       "value" => "yumm",
+                                                       "critical" => true }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject a non-critical extension that isn't on the whitelist" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "peach",
+                                                       "value" => "meh",
+                                                       "critical" => false }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject non-whitelist extensions even if a valid extension is present" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "peach",
+                                                       "value" => "meh",
+                                                       "critical" => false },
+                                                     { "oid" => "subjectAltName",
+                                                       "value" => "DNS:foo",
+                                                       "critical" => true }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject a subjectAltName for a non-DNS value" do
+        @request.stubs(:subject_alt_names).returns ['DNS:foo', 'email:bar@example.com']
+        expect { @ca.sign(@name, true) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subjectAltName outside the DNS label space/
+        )
+      end
+
+      it "should reject a wildcard subject" do
+        @request.content.stubs(:subject).
+          returns(OpenSSL::X509::Name.new([["CN", "*.local"]]))
+
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subject contains a wildcard/
+        )
+      end
+
+      it "should reject a wildcard subjectAltName" do
+        @request.stubs(:subject_alt_names).returns ['DNS:foo', 'DNS:*.bar']
+        expect { @ca.sign(@name, true) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subjectAltName contains a wildcard/
+        )
       end
     end
 
@@ -763,8 +874,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should sign the generated request" do
-        @ca.expects(:sign).with("him")
-
+        @ca.expects(:sign).with("him", false)
         @ca.generate("him")
       end
     end

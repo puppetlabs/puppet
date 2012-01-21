@@ -90,6 +90,57 @@ describe Puppet::Indirector::REST do
     @rest_class.port.should == 543
   end
 
+  describe "when making http requests" do
+    include PuppetSpec::Files
+
+    it "should provide a suggestive error message when certificate verify failed" do
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+
+      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
+
+      expect do
+        @searcher.http_request(:get, stub('request'))
+      end.to raise_error(/This is often because the time is out of sync on the server or client/)
+    end
+
+    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
+      Puppet[:confdir] = tmpdir('conf')
+      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
+
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+      ssl_context = OpenSSL::SSL::SSLContext.new
+      ssl_context.stubs(:current_cert).returns(cert)
+      connection.stubs(:get).with do
+        connection.verify_callback.call(true, ssl_context)
+      end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
+
+      msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+      expect { @searcher.http_request(:get, stub('request')) }.to(
+        raise_error(Puppet::Error, msg) do |error|
+          error.message =~ msg
+          $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
+        end
+      )
+    end
+
+    it "should pass along the error message otherwise" do
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+
+      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('some other message'))
+
+      expect do
+        @searcher.http_request(:get, stub('request'))
+      end.to raise_error(/some other message/)
+    end
+  end
+
+  it 'should default to :puppet for the srv_service' do
+    Puppet::Indirector::REST.srv_service.should == :puppet
+  end
+
   describe "when deserializing responses" do
     it "should return nil if the response code is 404" do
       response = mock 'response'
@@ -219,7 +270,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a find" do
     before :each do
-      @connection = stub('mock http connection', :get => @response)
+      @connection = stub('mock http connection', :get => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       # Use a key with spaces, so we can test escaping
@@ -313,7 +364,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a head" do
     before :each do
-      @connection = stub('mock http connection', :head => @response)
+      @connection = stub('mock http connection', :head => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)
 
       # Use a key with spaces, so we can test escaping
@@ -349,7 +400,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a search" do
     before :each do
-      @connection = stub('mock http connection', :get => @response)
+      @connection = stub('mock http connection', :get => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @model.stubs(:convert_from_multiple)
@@ -397,7 +448,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a destroy" do
     before :each do
-      @connection = stub('mock http connection', :delete => @response)
+      @connection = stub('mock http connection', :delete => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar")
@@ -453,7 +504,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a save" do
     before :each do
-      @connection = stub('mock http connection', :put => @response)
+      @connection = stub('mock http connection', :put => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @instance = stub 'instance', :render => "mydata", :mime => "mime"
@@ -515,6 +566,27 @@ describe Puppet::Indirector::REST do
     it "should generate an error when result data deserializes fails" do
       @searcher.expects(:deserialize).raises(ArgumentError)
       lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
+    end
+  end
+
+  context 'dealing with SRV settings' do
+    [
+      :destroy,
+      :find,
+      :head,
+      :save,
+      :search
+    ].each do |method|
+      it "##{method} passes the SRV service, and fall-back server & port to the request's do_request method" do
+        request = Puppet::Indirector::Request.new(:indirection, method, 'key')
+        stub_response = stub 'response'
+        stub_response.stubs(:code).returns('200')
+        @searcher.stubs(:deserialize)
+
+        request.expects(:do_request).with(@searcher.class.srv_service, @searcher.class.server, @searcher.class.port).returns(stub_response)
+
+        @searcher.send(method, request)
+      end
     end
   end
 end

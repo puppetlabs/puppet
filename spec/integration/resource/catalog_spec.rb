@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-4-8.
-#  Copyright (c) 2008. All rights reserved.
-
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog do
@@ -13,7 +9,6 @@ describe Puppet::Resource::Catalog do
   end
 
   describe "when using the indirector" do
-    after { Puppet::Util::Cacher.expire }
     before do
       # This is so the tests work w/out networking.
       Facter.stubs(:to_hash).returns({"hostname" => "foo.domain.com"})

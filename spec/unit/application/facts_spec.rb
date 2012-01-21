@@ -16,6 +16,7 @@ describe Puppet::Application::Facts do
   end
 
   it "should return facts if a key is given to find", :'fails_on_ruby_1.9.2' => true do
+    Puppet::Node::Facts.indirection.reset_terminus_class
     subject.command_line.stubs(:args).returns %w{find whatever --render-as yaml}
 
     expect {

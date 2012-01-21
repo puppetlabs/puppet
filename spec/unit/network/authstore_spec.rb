@@ -4,11 +4,12 @@ require 'spec_helper'
 require 'puppet/network/authconfig'
 
 describe Puppet::Network::AuthStore do
-  describe "when checking if the acl has some entries" do
-    before :each do
-      @authstore = Puppet::Network::AuthStore.new
-    end
+  before :each do
+    @authstore = Puppet::Network::AuthStore.new
+    @authstore.reset_interpolation
+  end
 
+  describe "when checking if the acl has some entries" do
     it "should be empty if no ACE have been entered" do
       @authstore.should be_empty
     end
@@ -30,6 +31,37 @@ describe Puppet::Network::AuthStore do
 
       @authstore.should_not be_empty
     end
+  end
+
+  describe "when checking global allow" do
+    it "should not be enabled by default" do
+      @authstore.should_not be_globalallow
+      @authstore.should_not be_allowed('foo.bar.com', '192.168.1.1')
+    end
+
+    it "should always allow when enabled" do
+      @authstore.allow('*')
+
+      @authstore.should be_globalallow
+      @authstore.should be_allowed('foo.bar.com', '192.168.1.1')
+    end
+  end
+
+  describe "when checking a regex type of allow" do
+    before :each do
+      @authstore.allow('/^(test-)?host[0-9]+\.other-domain\.(com|org|net)$|some-domain\.com/')
+      @ip = '192.168.1.1'
+    end
+    ['host5.other-domain.com', 'test-host12.other-domain.net', 'foo.some-domain.com'].each { |name|
+      it "should allow the host #{name}" do
+        @authstore.should be_allowed(name, @ip)
+      end
+    }
+    ['host0.some-other-domain.com',''].each { |name|
+      it "should not allow the host #{name}" do
+        @authstore.should_not be_allowed(name, @ip)
+      end
+    }
   end
 end
 

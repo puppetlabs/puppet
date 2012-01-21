@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/util/autoload'
 require 'puppet/interface/documentation'
 require 'prettyprint'
+require 'semver'
 
 class Puppet::Interface
   include FullDocs
@@ -63,6 +64,10 @@ class Puppet::Interface
       end
       face
     end
+
+    def find_action(name, action, version = :current)
+      Puppet::Interface::FaceCollection.get_action_for_face(name, action, version)
+    end
   end
 
   def set_default_format(format)
@@ -76,26 +81,7 @@ class Puppet::Interface
   # splits out this should merge into a module that both the action and face
   # include. --daniel 2011-04-17
   def synopsis
-    output = PrettyPrint.format do |s|
-      s.text("puppet #{name} <action>")
-      s.breakable
-
-      options.each do |option|
-        option = get_option(option)
-        wrap = option.required? ? %w{ < > } : %w{ [ ] }
-
-        s.group(0, *wrap) do
-          option.optparse.each do |item|
-            unless s.current_group.first?
-              s.breakable
-              s.text '|'
-              s.breakable
-            end
-            s.text item
-          end
-        end
-      end
-    end
+    build_synopsis self.name, '<action>'
   end
 
 
@@ -103,12 +89,12 @@ class Puppet::Interface
   attr_reader :name, :version
 
   def initialize(name, version, &block)
-    unless Puppet::Interface::FaceCollection.validate_version(version)
+    unless SemVer.valid?(version)
       raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
-    @version = version
+    @version = SemVer.new(version)
 
     # The few bits of documentation we actually demand.  The default license
     # is a favour to our end users; if you happen to get that in a core face

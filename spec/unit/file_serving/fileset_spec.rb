@@ -4,6 +4,12 @@ require 'spec_helper'
 require 'puppet/file_serving/fileset'
 
 describe Puppet::FileServing::Fileset, " when initializing" do
+  include PuppetSpec::Files
+
+  before :each do
+    @somefile = make_absolute("/some/file")
+  end
+
   it "should require a path" do
     proc { Puppet::FileServing::Fileset.new }.should raise_error(ArgumentError)
   end
@@ -13,83 +19,82 @@ describe Puppet::FileServing::Fileset, " when initializing" do
   end
 
   it "should not fail if the path is fully qualified, with a trailing separator" do
-    path = "/some/path/with/trailing/separator"
-    path_with_separator = "#{path}#{File::SEPARATOR}"
-    File.stubs(:lstat).with(path).returns stub('stat')
+    path_with_separator = "#{@somefile}#{File::SEPARATOR}"
+    File.stubs(:lstat).with(@somefile).returns stub('stat')
     fileset = Puppet::FileServing::Fileset.new(path_with_separator)
-    fileset.path.should == path
+    fileset.path.should == @somefile
   end
 
   it "should not fail if the path is just the file separator" do
-    path = File::SEPARATOR
+    path = File.expand_path(File::SEPARATOR)
     File.stubs(:lstat).with(path).returns stub('stat')
     fileset = Puppet::FileServing::Fileset.new(path)
     fileset.path.should == path
   end
 
   it "should fail if its path does not exist" do
-    File.expects(:lstat).with("/some/file").returns nil
-    proc { Puppet::FileServing::Fileset.new("/some/file") }.should raise_error(ArgumentError)
+    File.expects(:lstat).with(@somefile).returns nil
+    proc { Puppet::FileServing::Fileset.new(@somefile) }.should raise_error(ArgumentError)
   end
 
   it "should accept a 'recurse' option" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    set = Puppet::FileServing::Fileset.new("/some/file", :recurse => true)
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    set = Puppet::FileServing::Fileset.new(@somefile, :recurse => true)
     set.recurse.should be_true
   end
 
   it "should accept a 'recurselimit' option" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    set = Puppet::FileServing::Fileset.new("/some/file", :recurselimit => 3)
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    set = Puppet::FileServing::Fileset.new(@somefile, :recurselimit => 3)
     set.recurselimit.should == 3
   end
 
   it "should accept an 'ignore' option" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    set = Puppet::FileServing::Fileset.new("/some/file", :ignore => ".svn")
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    set = Puppet::FileServing::Fileset.new(@somefile, :ignore => ".svn")
     set.ignore.should == [".svn"]
   end
 
   it "should accept a 'links' option" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    set = Puppet::FileServing::Fileset.new("/some/file", :links => :manage)
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    set = Puppet::FileServing::Fileset.new(@somefile, :links => :manage)
     set.links.should == :manage
   end
 
   it "should accept a 'checksum_type' option" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    set = Puppet::FileServing::Fileset.new("/some/file", :checksum_type => :test)
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    set = Puppet::FileServing::Fileset.new(@somefile, :checksum_type => :test)
     set.checksum_type.should == :test
   end
 
   it "should fail if 'links' is set to anything other than :manage or :follow" do
-    proc { Puppet::FileServing::Fileset.new("/some/file", :links => :whatever) }.should raise_error(ArgumentError)
+    proc { Puppet::FileServing::Fileset.new(@somefile, :links => :whatever) }.should raise_error(ArgumentError)
   end
 
   it "should default to 'false' for recurse" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    Puppet::FileServing::Fileset.new("/some/file").recurse.should == false
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    Puppet::FileServing::Fileset.new(@somefile).recurse.should == false
   end
 
   it "should default to :infinite for recurselimit" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    Puppet::FileServing::Fileset.new("/some/file").recurselimit.should == :infinite
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    Puppet::FileServing::Fileset.new(@somefile).recurselimit.should == :infinite
   end
 
   it "should default to an empty ignore list" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    Puppet::FileServing::Fileset.new("/some/file").ignore.should == []
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    Puppet::FileServing::Fileset.new(@somefile).ignore.should == []
   end
 
   it "should default to :manage for links" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
-    Puppet::FileServing::Fileset.new("/some/file").links.should == :manage
+    File.expects(:lstat).with(@somefile).returns stub("stat")
+    Puppet::FileServing::Fileset.new(@somefile).links.should == :manage
   end
 
   it "should support using an Indirector Request for its options" do
-    File.expects(:lstat).with("/some/file").returns stub("stat")
+    File.expects(:lstat).with(@somefile).returns stub("stat")
     request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
-    lambda { Puppet::FileServing::Fileset.new("/some/file", request) }.should_not raise_error
+    lambda { Puppet::FileServing::Fileset.new(@somefile, request) }.should_not raise_error
   end
 
   describe "using an indirector request" do
@@ -97,40 +102,43 @@ describe Puppet::FileServing::Fileset, " when initializing" do
       File.stubs(:lstat).returns stub("stat")
       @values = {:links => :manage, :ignore => %w{a b}, :recurse => true, :recurselimit => 1234}
       @request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
+      @myfile = make_absolute("/my/file")
     end
 
     [:recurse, :recurselimit, :ignore, :links].each do |option|
       it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present" do
         @request.stubs(:options).returns(option => @values[option])
-        Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
+        Puppet::FileServing::Fileset.new(@myfile, @request).send(option).should == @values[option]
       end
 
       it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
         @request.stubs(:options).returns(option.to_s => @values[option])
-        Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
+        Puppet::FileServing::Fileset.new(@myfile, @request).send(option).should == @values[option]
       end
     end
 
     it "should convert the integer as a string to their integer counterpart when setting options" do
       @request.stubs(:options).returns(:recurselimit => "1234")
-      Puppet::FileServing::Fileset.new("/my/file", @request).recurselimit.should == 1234
+      Puppet::FileServing::Fileset.new(@myfile, @request).recurselimit.should == 1234
     end
 
     it "should convert the string 'true' to the boolean true when setting options" do
       @request.stubs(:options).returns(:recurse => "true")
-      Puppet::FileServing::Fileset.new("/my/file", @request).recurse.should == true
+      Puppet::FileServing::Fileset.new(@myfile, @request).recurse.should == true
     end
 
     it "should convert the string 'false' to the boolean false when setting options" do
       @request.stubs(:options).returns(:recurse => "false")
-      Puppet::FileServing::Fileset.new("/my/file", @request).recurse.should == false
+      Puppet::FileServing::Fileset.new(@myfile, @request).recurse.should == false
     end
   end
 end
 
 describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
+  include PuppetSpec::Files
+
   before do
-    @path = "/my/path"
+    @path = make_absolute("/my/path")
     File.expects(:lstat).with(@path).returns stub("stat")
     @fileset = Puppet::FileServing::Fileset.new(@path)
   end
@@ -166,8 +174,10 @@ describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
 end
 
 describe Puppet::FileServing::Fileset, " when recursing" do
+  include PuppetSpec::Files
+
   before do
-    @path = "/my/path"
+    @path = make_absolute("/my/path")
     File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
     @fileset = Puppet::FileServing::Fileset.new(@path)
 
@@ -257,7 +267,7 @@ describe Puppet::FileServing::Fileset, " when recursing" do
   end
 
   it "should succeed when paths have regexp significant characters" do
-    @path = "/my/path/rV1x2DafFr0R6tGG+1bbk++++TM"
+    @path = make_absolute("/my/path/rV1x2DafFr0R6tGG+1bbk++++TM")
     File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
     @fileset = Puppet::FileServing::Fileset.new(@path)
     mock_dir_structure(@path)
@@ -267,8 +277,10 @@ describe Puppet::FileServing::Fileset, " when recursing" do
 end
 
 describe Puppet::FileServing::Fileset, " when following links that point to missing files" do
+  include PuppetSpec::Files
+
   before do
-    @path = "/my/path"
+    @path = make_absolute("/my/path")
     File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
     @fileset = Puppet::FileServing::Fileset.new(@path)
     @fileset.links = :follow
@@ -291,8 +303,10 @@ describe Puppet::FileServing::Fileset, " when following links that point to miss
 end
 
 describe Puppet::FileServing::Fileset, " when ignoring" do
+  include PuppetSpec::Files
+
   before do
-    @path = "/my/path"
+    @path = make_absolute("/my/path")
     File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
     @fileset = Puppet::FileServing::Fileset.new(@path)
   end
@@ -318,8 +332,10 @@ describe Puppet::FileServing::Fileset, " when ignoring" do
 end
 
 describe Puppet::FileServing::Fileset, "when merging other filesets" do
+  include PuppetSpec::Files
+
   before do
-    @paths = %w{/first/path /second/path /third/path}
+    @paths = [make_absolute("/first/path"), make_absolute("/second/path"), make_absolute("/third/path")]
     File.stubs(:lstat).returns stub("stat", :directory? => false)
 
     @filesets = @paths.collect do |path|
@@ -331,32 +347,32 @@ describe Puppet::FileServing::Fileset, "when merging other filesets" do
   end
 
   it "should return a hash of all files in each fileset with the value being the base path" do
-    Dir.expects(:entries).with("/first/path").returns(%w{one uno})
-    Dir.expects(:entries).with("/second/path").returns(%w{two dos})
-    Dir.expects(:entries).with("/third/path").returns(%w{three tres})
+    Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one uno})
+    Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{two dos})
+    Dir.expects(:entries).with(make_absolute("/third/path")).returns(%w{three tres})
 
     Puppet::FileServing::Fileset.merge(*@filesets).should == {
-      "." => "/first/path",
-      "one" => "/first/path",
-      "uno" => "/first/path",
-      "two" => "/second/path",
-      "dos" => "/second/path",
-      "three" => "/third/path",
-      "tres" => "/third/path",
+      "." => make_absolute("/first/path"),
+      "one" => make_absolute("/first/path"),
+      "uno" => make_absolute("/first/path"),
+      "two" => make_absolute("/second/path"),
+      "dos" => make_absolute("/second/path"),
+      "three" => make_absolute("/third/path"),
+      "tres" => make_absolute("/third/path"),
     }
   end
 
   it "should include the base directory from the first fileset" do
-    Dir.expects(:entries).with("/first/path").returns(%w{one})
-    Dir.expects(:entries).with("/second/path").returns(%w{two})
+    Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one})
+    Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{two})
 
-    Puppet::FileServing::Fileset.merge(*@filesets)["."].should == "/first/path"
+    Puppet::FileServing::Fileset.merge(*@filesets)["."].should == make_absolute("/first/path")
   end
 
   it "should use the base path of the first found file when relative file paths conflict" do
-    Dir.expects(:entries).with("/first/path").returns(%w{one})
-    Dir.expects(:entries).with("/second/path").returns(%w{one})
+    Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one})
+    Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{one})
 
-    Puppet::FileServing::Fileset.merge(*@filesets)["one"].should == "/first/path"
+    Puppet::FileServing::Fileset.merge(*@filesets)["one"].should == make_absolute("/first/path")
   end
 end

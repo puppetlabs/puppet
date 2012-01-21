@@ -219,18 +219,5 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 
   end
-
-  # Check whether execute accepts strings in addition to arrays.
-  def test_string_exec
-    cmd = "/bin/echo howdy"
-    output = nil
-    assert_raise(ArgumentError) {
-      output = Puppet::Util.execute(cmd)
-    }
-    #assert_equal("howdy\n", output)
-    #assert_raise(RuntimeError) {
-    #    Puppet::Util.execute(cmd, 0, 0)
-    #}
-  end
 end
 

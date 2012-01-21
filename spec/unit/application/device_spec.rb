@@ -7,6 +7,8 @@ require 'ostruct'
 require 'puppet/configurer'
 
 describe Puppet::Application::Device do
+  include PuppetSpec::Files
+
   before :each do
     @device = Puppet::Application[:device]
     @device.preinit
@@ -39,7 +41,7 @@ describe Puppet::Application::Device do
     end
 
     it "should catch INT" do
-      @device.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @device.preinit
     end
@@ -264,8 +266,8 @@ describe Puppet::Application::Device do
 
     describe "for each device" do
       before(:each) do
-        Puppet[:vardir] = "/dummy"
-        Puppet[:confdir] = "/dummy"
+        Puppet[:vardir] = make_absolute("/dummy")
+        Puppet[:confdir] = make_absolute("/dummy")
         Puppet[:certname] = "certname"
         @device_hash = {
           "device1" => OpenStruct.new(:name => "device1", :url => "url", :provider => "cisco"),
@@ -281,12 +283,12 @@ describe Puppet::Application::Device do
       end
 
       it "should set vardir to the device vardir" do
-        Puppet.settings.expects(:set_value).with(:vardir, "/dummy/devices/device1", :cli)
+        Puppet.settings.expects(:set_value).with(:vardir, make_absolute("/dummy/devices/device1"), :cli)
         @device.main
       end
 
       it "should set confdir to the device confdir" do
-        Puppet.settings.expects(:set_value).with(:confdir, "/dummy/devices/device1", :cli)
+        Puppet.settings.expects(:set_value).with(:confdir, make_absolute("/dummy/devices/device1"), :cli)
         @device.main
       end
 
@@ -319,9 +321,9 @@ describe Puppet::Application::Device do
       [:vardir, :confdir].each do |setting|
         it "should cleanup the #{setting} setting after the run" do
           configurer = states('configurer').starts_as('notrun')
-          Puppet.settings.expects(:set_value).with(setting, "/dummy/devices/device1", :cli).when(configurer.is('notrun'))
+          Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy/devices/device1"), :cli).when(configurer.is('notrun'))
           @configurer.expects(:run).twice.then(configurer.is('run'))
-          Puppet.settings.expects(:set_value).with(setting, "/dummy", :cli).when(configurer.is('run'))
+          Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy"), :cli).when(configurer.is('run'))
 
           @device.main
         end
@@ -336,6 +338,11 @@ describe Puppet::Application::Device do
         @device.main
       end
 
+      it "should expire all cached attributes" do
+        Puppet::SSL::Host.expects(:reset).twice
+
+        @device.main
+      end
     end
   end
 end

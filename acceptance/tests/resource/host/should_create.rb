@@ -3,7 +3,7 @@ test_name "host should create"
 target = "/tmp/host-#{Time.new.to_i}"
 
 step "clean up for the test"
-on agents, "rm -vf #{target}"
+on agents, "rm -f #{target}"
 
 step "create the host record"
 on(agents, puppet_resource("host", "test", "ensure=present",

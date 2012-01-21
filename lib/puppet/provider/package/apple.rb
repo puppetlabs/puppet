@@ -13,13 +13,10 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
 
   def self.instances
     instance_by_name.collect do |name|
-
-            self.new(
-                
-        :name => name,
+      self.new(
+        :name     => name,
         :provider => :apple,
-        
-        :ensure => :installed
+        :ensure   => :installed
       )
     end
   end
@@ -48,4 +45,3 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
     installer "-pkg", source, "-target", "/"
   end
 end
-

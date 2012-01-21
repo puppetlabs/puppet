@@ -2,7 +2,7 @@ require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
 require 'cgi'
-
+require 'fileutils'
 
 class Puppet::Provider::NameService
 class DirectoryService < Puppet::Provider::NameService
@@ -21,6 +21,7 @@ class DirectoryService < Puppet::Provider::NameService
   commands :dscl => "/usr/bin/dscl"
   commands :dseditgroup => "/usr/sbin/dseditgroup"
   commands :sw_vers => "/usr/bin/sw_vers"
+  commands :plutil => '/usr/bin/plutil'
   confine :operatingsystem => :darwin
   defaultfor :operatingsystem => :darwin
 
@@ -60,6 +61,8 @@ class DirectoryService < Puppet::Provider::NameService
   }
 
   @@password_hash_dir = "/var/db/shadow/hash"
+  @@users_plist_dir    = '/var/db/dslocal/nodes/Default/users'
+
 
   def self.instances
     # JJM Class method that provides an array of instance objects of this
@@ -193,7 +196,7 @@ class DirectoryService < Puppet::Provider::NameService
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
     attribute_hash
   end
 
@@ -268,46 +271,144 @@ class DirectoryService < Puppet::Provider::NameService
   end
 
   def self.set_password(resource_name, guid, password_hash)
-    password_hash_file = "#{@@password_hash_dir}/#{guid}"
-    begin
-      File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
-    rescue Errno::EACCES => detail
-      fail("Could not write to password hash file: #{detail}")
-    end
+    # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
+    # version '10.10' would be < '10.7' with simple string comparison. This
+    # if-statement only executes if the current version is less-than 10.7
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
+      password_hash_file = "#{@@password_hash_dir}/#{guid}"
+      begin
+        File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
+      rescue Errno::EACCES => detail
+        fail("Could not write to password hash file: #{detail}")
+      end
 
-    # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
-    # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
-    # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
-    # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
-    # we can do this with the merge command. This allows people to continue to
-    # use other custom AuthenticationAuthority attributes without stomping on them.
-    #
-    # There is a potential problem here in that we're only doing this when setting
-    # the password, and the attribute could get modified at other times while the
-    # hash doesn't change and so this doesn't get called at all... but
-    # without switching all the other attributes to merge instead of create I can't
-    # see a simple enough solution for this that doesn't modify the user record
-    # every single time. This should be a rather rare edge case. (famous last words)
+      # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
+      # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
+      # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
+      # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
+      # we can do this with the merge command. This allows people to continue to
+      # use other custom AuthenticationAuthority attributes without stomping on them.
+      #
+      # There is a potential problem here in that we're only doing this when setting
+      # the password, and the attribute could get modified at other times while the
+      # hash doesn't change and so this doesn't get called at all... but
+      # without switching all the other attributes to merge instead of create I can't
+      # see a simple enough solution for this that doesn't modify the user record
+      # every single time. This should be a rather rare edge case. (famous last words)
 
-    dscl_vector = self.get_exec_preamble("-merge", resource_name)
-    dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
-    begin
-      dscl_output = execute(dscl_vector)
-    rescue Puppet::ExecutionFailure => detail
-      fail("Could not set AuthenticationAuthority.")
+      dscl_vector = self.get_exec_preamble("-merge", resource_name)
+      dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
+      begin
+        dscl_output = execute(dscl_vector)
+      rescue Puppet::ExecutionFailure => detail
+        fail("Could not set AuthenticationAuthority.")
+      end
+    else
+      # 10.7 uses salted SHA512 password hashes which are 128 characters plus
+      # an 8 character salt. Previous versions used a SHA1 hash padded with
+      # zeroes. If someone attempts to use a password hash that worked with
+      # a previous version of OX X, we will fail early and warn them.
+      if password_hash.length != 136
+        fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
+             Please check your password and try again.")
+      end
+
+      if File.exists?("#{@@users_plist_dir}/#{resource_name}.plist")
+        # If a plist already exists in /var/db/dslocal/nodes/Default/users, then
+        # we will need to extract the binary plist from the 'ShadowHashData'
+        # key, log the new password into the resultant plist's 'SALTED-SHA512'
+        # key, and then save the entire structure back.
+        users_plist = Plist::parse_xml(plutil( '-convert', 'xml1', '-o', '/dev/stdout', \
+                                       "#{@@users_plist_dir}/#{resource_name}.plist"))
+
+        # users_plist['ShadowHashData'][0].string is actually a binary plist
+        # that's nested INSIDE the user's plist (which itself is a binary
+        # plist).
+        password_hash_plist = users_plist['ShadowHashData'][0].string
+        converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+
+        # converted_hash_plist['SALTED-SHA512'].string expects a Base64 encoded
+        # string. The password_hash provided as a resource attribute is a
+        # hex value. We need to convert the provided hex value to a Base64
+        # encoded string to nest it in the converted hash plist.
+        converted_hash_plist['SALTED-SHA512'].string = \
+          password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
+
+        # Finally, we can convert the nested plist back to binary, embed it
+        # into the user's plist, and convert the resultant plist back to
+        # a binary plist.
+        changed_plist = convert_xml_to_binary(converted_hash_plist)
+        users_plist['ShadowHashData'][0].string = changed_plist
+        Plist::Emit.save_plist(users_plist, "#{@@users_plist_dir}/#{resource_name}.plist")
+        plutil('-convert', 'binary1', "#{@@users_plist_dir}/#{resource_name}.plist")
+      end
     end
   end
 
-  def self.get_password(guid)
-    password_hash = nil
-    password_hash_file = "#{@@password_hash_dir}/#{guid}"
-    if File.exists?(password_hash_file) and File.file?(password_hash_file)
-      fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
-      f = File.new(password_hash_file)
-      password_hash = f.read
-      f.close
+  def self.get_password(guid, username)
+    # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
+    # version '10.10' would be < '10.7' with simple string comparison. This
+    # if-statement only executes if the current version is less-than 10.7 
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
+      password_hash = nil
+      password_hash_file = "#{@@password_hash_dir}/#{guid}"
+      if File.exists?(password_hash_file) and File.file?(password_hash_file)
+        fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
+        f = File.new(password_hash_file)
+        password_hash = f.read
+        f.close
+      end
+      password_hash
+    else
+      if File.exists?("#{@@users_plist_dir}/#{username}.plist")
+        # If a plist exists in /var/db/dslocal/nodes/Default/users, we will
+        # extract the binary plist from the 'ShadowHashData' key, decode the
+        # salted-SHA512 password hash, and then return it.
+        users_plist = Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{@@users_plist_dir}/#{username}.plist"))
+        if users_plist['ShadowHashData']
+          # users_plist['ShadowHashData'][0].string is actually a binary plist
+          # that's nested INSIDE the user's plist (which itself is a binary
+          # plist).
+          password_hash_plist = users_plist['ShadowHashData'][0].string
+          converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+
+          # converted_hash_plist['SALTED-SHA512'].string is a Base64 encoded
+          # string. The password_hash provided as a resource attribute is a
+          # hex value. We need to convert the Base64 encoded string to a
+          # hex value and provide it back to Puppet.
+          password_hash = converted_hash_plist['SALTED-SHA512'].string.unpack("H*")[0]
+          password_hash
+        end
+      end
     end
-    password_hash
+  end
+
+  # This method will accept a hash that has been returned from Plist::parse_xml
+  # and convert it to a binary plist (string value).
+  def self.convert_xml_to_binary(plist_data)
+    Puppet.debug('Converting XML plist to binary')
+    Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
+    IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
+      io.write plist_data.to_plist
+      io.close_write
+      @converted_plist = io.read
+    end
+    @converted_plist
+  end
+
+  # This method will accept a binary plist (as a string) and convert it to a
+  # hash via Plist::parse_xml.
+  def self.convert_binary_to_xml(plist_data)
+    Puppet.debug('Converting binary plist to XML')
+    Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
+    IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
+      io.write plist_data
+      io.close_write
+      @converted_plist = io.read
+    end
+    Puppet.debug('Converting XML values to a hash.')
+    @plist_hash = Plist::parse_xml(@converted_plist)
+    @plist_hash
   end
 
   # Unlike most other *nixes, OS X doesn't provide built in functionality
@@ -468,7 +569,14 @@ class DirectoryService < Puppet::Provider::NameService
         begin
           execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-          fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          # TODO: We're falling back to removing the member using dscl due to rdar://8481241
+          # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
+          cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
+          begin
+            execute(cmd)
+          rescue Puppet::ExecutionFailure => detail
+            fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          end
         end
       end
     end
@@ -535,3 +643,4 @@ class DirectoryService < Puppet::Provider::NameService
   end
 end
 end
+

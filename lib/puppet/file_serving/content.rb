@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-16.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/file_serving/base'
@@ -39,12 +35,12 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
       # This stat can raise an exception, too.
       raise(ArgumentError, "Cannot read the contents of links unless following links") if stat.ftype == "symlink"
 
-      @content = ::File.read(full_path)
+      @content = Puppet::Util.binread(full_path)
     end
     @content
   end
 
   def to_raw
-    File.new(full_path, "r")
+    File.new(full_path, "rb")
   end
 end

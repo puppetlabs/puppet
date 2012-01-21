@@ -1,0 +1,18 @@
+#
+# Test vhost
+#
+NameVirtualHost *:80
+<VirtualHost *:80>
+  ServerName testvhost
+  DocumentRoot /tmp/testvhost
+  <Directory /tmp/testvhost>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order allow,deny
+    allow from all
+  </Directory>
+  ErrorLog /var/log/apache2/error.log
+  LogLevel warn
+  CustomLog /var/log/apache2/access.log combined
+  ServerSignature On
+</VirtualHost>

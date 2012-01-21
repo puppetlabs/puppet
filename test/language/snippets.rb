@@ -4,8 +4,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/parser/parser'
-require 'puppet/network/client'
-require 'puppet/network/handler'
 require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
@@ -69,13 +67,6 @@ class TestSnippets < Test::Unit::TestCase
     ast
   end
 
-  def client
-    args = {
-      :Listen => false
-    }
-    Puppet::Network::Client.new(args)
-  end
-
   def ast2scope(ast)
     scope = Puppet::Parser::Scope.new
     ast.evaluate(scope)
@@ -83,19 +74,9 @@ class TestSnippets < Test::Unit::TestCase
     scope
   end
 
-  def scope2objs(scope)
-    objs = scope.to_trans
-  end
-
   def snippet2scope(snippet)
     ast = snippet2ast(snippet)
     scope = ast2scope(ast)
-  end
-
-  def snippet2objs(snippet)
-    ast = snippet2ast(snippet)
-    scope = ast2scope(ast)
-    objs = scope2objs(scope)
   end
 
   def properties(type)

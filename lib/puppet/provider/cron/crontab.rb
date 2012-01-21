@@ -14,13 +14,13 @@ tab = case Facter.value(:operatingsystem)
 Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFile, :default_target => ENV["USER"] || "root", :filetype => tab) do
   commands :crontab => "crontab"
 
-  text_line :comment, :match => %r{^#}, :post_parse => proc { |record|
+  text_line :comment, :match => %r{^\s*#}, :post_parse => proc { |record|
     record[:name] = $1 if record[:line] =~ /Puppet Name: (.+)\s*$/
   }
 
   text_line :blank, :match => %r{^\s*$}
 
-  text_line :environment, :match => %r{^\w+=}
+  text_line :environment, :match => %r{^\s*\w+=}
 
   record_line :freebsd_special, :fields => %w{special command},
     :match => %r{^@(\w+)\s+(.+)$}, :pre_gen => proc { |record|

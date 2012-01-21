@@ -16,11 +16,9 @@ module Puppet::Parser::Functions
 
   def self.autoloader
     unless defined?(@autoloader)
-
-            @autoloader = Puppet::Util::Autoload.new(
+      @autoloader = Puppet::Util::Autoload.new(
         self,
         "puppet/parser/functions",
-
         :wrap => false
       )
     end
@@ -31,8 +29,11 @@ module Puppet::Parser::Functions
   Environment = Puppet::Node::Environment
 
   def self.environment_module(env = nil)
+    if env and ! env.is_a?(Puppet::Node::Environment)
+      env = Puppet::Node::Environment.new(env)
+    end
     @modules.synchronize {
-      @modules[ env || Environment.current || Environment.root ] ||= Module.new
+      @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
     }
   end
 
@@ -88,7 +89,6 @@ module Puppet::Parser::Functions
     ret = ""
 
     functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-      #ret += "#{name}\n#{hash[:type]}\n"
       ret += "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
         ret += Puppet::Util::Docs.scrub(hash[:doc])
@@ -114,11 +114,9 @@ module Puppet::Parser::Functions
   end
 
   # Runs a newfunction to create a function for each of the log levels
-
   Puppet::Util::Log.levels.each do |level|
     newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
       send(level, vals.join(" "))
     end
   end
-
 end
