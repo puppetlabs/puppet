@@ -369,6 +369,10 @@ module Puppet
           return false
         end
 
+        output.split(/\n/).each { |line|
+          self.debug(line)
+        }
+
         status.exitstatus != 0
       end
     end
@@ -411,6 +415,10 @@ module Puppet
           err "Check #{value.inspect} exceeded timeout"
           return false
         end
+
+        output.split(/\n/).each { |line|
+          self.debug(line)
+        }
 
         status.exitstatus == 0
       end
