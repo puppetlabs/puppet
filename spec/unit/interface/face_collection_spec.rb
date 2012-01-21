@@ -146,14 +146,16 @@ describe Puppet::Interface::FaceCollection do
   end
 
   describe "::underscorize" do
-    faulty = [1, "#foo", "$bar", "sturm und drang", :"sturm und drang"]
+    faulty = [1, "23foo", "#foo", "$bar", "sturm und drang", :"sturm und drang"]
     valid  = {
-      "Foo"      => :foo,
-      :Foo       => :foo,
-      "foo_bar"  => :foo_bar,
-      :foo_bar   => :foo_bar,
-      "foo-bar"  => :foo_bar,
-      :"foo-bar" => :foo_bar,
+      "Foo"       => :foo,
+      :Foo        => :foo,
+      "foo_bar"   => :foo_bar,
+      :foo_bar    => :foo_bar,
+      "foo-bar"   => :foo_bar,
+      :"foo-bar"  => :foo_bar,
+      "foo_bar23" => :foo_bar23,
+      :foo_bar23  => :foo_bar23,
     }
 
     valid.each do |input, expect|
