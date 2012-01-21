@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
@@ -22,7 +23,6 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   end
 
   describe "when validating attributes" do
-
     [:name, :provider].each do |param|
       it "should have a #{param} parameter" do
         @class.attrtype(param).should == :param
@@ -40,12 +40,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         @class.attrclass(cronparam).ancestors.should include CronParam
       end
     end
-
   end
 
 
   describe "when validating attribute" do
-
     describe "ensure" do
       it "should support present as a value for ensure" do
         proc { @class.new(:name => 'foo', :ensure => :present) }.should_not raise_error
@@ -57,7 +55,6 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     end
 
     describe "minute" do
-
       it "should support absent" do
         proc { @class.new(:name => 'foo', :minute => 'absent') }.should_not raise_error
       end
@@ -122,12 +119,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         # As it turns out cron does not complaining about steps that exceed the valid range
         # proc { @class.new(:name => 'foo', :minute => '*/120' ) }.should raise_error(Puppet::Error)
       end
-
     end
 
     describe "hour" do
-
-     it "should support absent" do
+      it "should support absent" do
         proc { @class.new(:name => 'foo', :hour => 'absent') }.should_not raise_error
       end
 
@@ -191,11 +186,9 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         # As it turns out cron does not complaining about steps that exceed the valid range
         # proc { @class.new(:name => 'foo', :hour => '*/26' ) }.should raise_error(Puppet::Error)
       end
-
     end
 
-   describe "weekday" do
-
+    describe "weekday" do
       it "should support absent" do
         proc { @class.new(:name => 'foo', :weekday => 'absent') }.should_not raise_error
       end
@@ -276,11 +269,9 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         # As it turns out cron does not complaining about steps that exceed the valid range
         # proc { @class.new(:name => 'foo', :weekday => '*/9' ) }.should raise_error(Puppet::Error)
       end
-
     end
 
     describe "month" do
-
       it "should support absent" do
         proc { @class.new(:name => 'foo', :month => 'absent') }.should_not raise_error
       end
@@ -378,11 +369,9 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         # As it turns out cron does not complaining about steps that exceed the valid range
         # proc { @class.new(:name => 'foo', :month => '*/13' ) }.should raise_error(Puppet::Error)
       end
-
     end
 
     describe "monthday" do
-
       it "should support absent" do
         proc { @class.new(:name => 'foo', :monthday => 'absent') }.should_not raise_error
       end
@@ -445,11 +434,9 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         # As it turns out cron does not complaining about steps that exceed the valid range
         # proc { @class.new(:name => 'foo', :monthday => '*/32' ) }.should raise_error(Puppet::Error)
       end
-
     end
 
     describe "environment" do
-
       it "it should accept an :environment that looks like a path" do
         lambda do
           @cron[:environment] = 'PATH=/bin:/usr/bin:/usr/sbin'
@@ -475,7 +462,6 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
     end
-
   end
 
   it "should require a command when adding an entry" do
