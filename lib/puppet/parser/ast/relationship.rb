@@ -23,8 +23,15 @@ class Puppet::Parser::AST::Relationship < Puppet::Parser::AST::Branch
     real_right = right.safeevaluate(scope)
 
     source, target = sides2edge(real_left, real_right)
-    result = Puppet::Parser::Relationship.new(source, target, type)
-    scope.compiler.add_relationship(result)
+    source_array = (source.is_a? Array) ? source : [source]
+    target_array = (target.is_a? Array) ? target : [target]
+   
+    source_array.each do |single_source|
+      target_array.each do |single_target|
+        result = Puppet::Parser::Relationship.new(single_source, single_target, type)
+        scope.compiler.add_relationship(result)
+      end
+    end
     real_right
   end
 
