@@ -51,6 +51,7 @@ function find_puppet_root() {
 function install_puppet() {
   echo "Installing Puppet to ${pkgroot}"
   "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sbindir="${SBINDIR}" --sitelibdir="${SITELIBDIR}"
+  mkdir -p ${pkgroot}/var/lib/puppet
   chown -R root:admin "${pkgroot}"
 }
 
