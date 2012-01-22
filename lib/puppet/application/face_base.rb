@@ -239,7 +239,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   rescue Exception => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err detail.to_s
-    Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
+    Puppet.err "See 'puppet help' for available puppet subcommands"
 
   ensure
     exit status
