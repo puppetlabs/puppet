@@ -146,7 +146,11 @@ class Puppet::Configurer
 
       begin
         execute_prerun_command or return nil
-        retrieve_and_apply_catalog(options, fact_options)
+        if retrieve_and_apply_catalog(options, fact_options)
+          report.exit_status
+        else
+          nil
+        end
       rescue SystemExit,NoMemoryError
         raise
       rescue => detail

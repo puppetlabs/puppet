@@ -1,6 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/daemon'
+require 'puppet/agent'
 
 def without_warnings
   flag = $VERBOSE
@@ -9,8 +10,15 @@ def without_warnings
   $VERBOSE = flag
 end
 
+class TestClient
+  def lockfile_path
+    "/dev/null"
+  end
+end
+
 describe Puppet::Daemon do
   before do
+    @agent = Puppet::Agent.new(TestClient.new)
     @daemon = Puppet::Daemon.new
   end
 
@@ -55,16 +63,22 @@ describe Puppet::Daemon do
     end
 
     it "should create its pidfile" do
-      @daemon.stubs(:agent).returns stub('agent', :start => nil)
+      @daemon.agent = @agent
 
       @daemon.expects(:create_pidfile)
       @daemon.start
     end
 
     it "should start the agent if the agent is configured" do
-      agent = mock 'agent'
-      agent.expects(:start)
-      @daemon.stubs(:agent).returns agent
+      @agent.expects(:start)
+      @daemon.agent = @agent
+
+      @daemon.start
+    end
+
+    it "should start the agent with should_fork at true" do
+      @agent.expects(:should_fork=).with(true)
+      @daemon.agent = @agent
 
       @daemon.start
     end
@@ -78,7 +92,7 @@ describe Puppet::Daemon do
     end
 
     it "should let the current EventLoop run" do
-      @daemon.stubs(:agent).returns stub('agent', :start => nil)
+      @daemon.agent = @agent
       EventLoop.current.expects(:run)
 
       @daemon.start
@@ -213,20 +227,18 @@ describe Puppet::Daemon do
     end
 
     it "should do nothing if the agent is running" do
-      agent = mock 'agent'
-      agent.expects(:running?).returns true
+      @agent.expects(:running?).returns true
 
-      @daemon.stubs(:agent).returns agent
+      @daemon.agent = @agent
 
       @daemon.reload
     end
 
     it "should run the agent if one is available and it is not running" do
-      agent = mock 'agent'
-      agent.expects(:running?).returns false
-      agent.expects :run
+      @agent.expects(:running?).returns false
+      @agent.expects :run
 
-      @daemon.stubs(:agent).returns agent
+      @daemon.agent = @agent
 
       @daemon.reload
     end
@@ -254,9 +266,8 @@ describe Puppet::Daemon do
     end
 
     it "should reexec itself if the agent is not running" do
-      agent = mock 'agent'
-      agent.expects(:running?).returns false
-      @daemon.stubs(:agent).returns agent
+      @agent.expects(:running?).returns false
+      @daemon.agent = @agent
       @daemon.expects(:reexec)
 
       @daemon.restart
