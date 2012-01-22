@@ -75,7 +75,7 @@ Puppet::Face.define(:ca, '0.1.0') do
         raise "Unable to fetch the CA"
       end
 
-      length = hosts.map{|x| x.name.length }.max + 1
+      length = hosts.map{|x| x.name.length }.max.to_i + 1
 
       hosts.map do |host|
         name = host.name.ljust(length)
