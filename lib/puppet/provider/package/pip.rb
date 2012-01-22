@@ -50,8 +50,11 @@ Puppet::Type.type(:package).provide :pip,
   def latest
     client = XMLRPC::Client.new2("http://pypi.python.org/pypi")
     client.http_header_extra = {"Content-Type" => "text/xml"}
+    client.timeout = 10
     result = client.call("package_releases", @resource[:name])
     result.first
+  rescue Timeout::Error => detail
+    raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}";
   end
 
   # Install a package.  The ensure parameter may specify installed,
