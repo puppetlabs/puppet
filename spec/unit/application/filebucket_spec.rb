@@ -182,6 +182,11 @@ describe Puppet::Application::Filebucket do
     end
 
     describe "the command backup" do
+      it "should fail if no arguments are specified" do
+        @filebucket.stubs(:args).returns([])
+        lambda { @filebucket.backup }.should raise_error
+      end
+
       it "should call the client backup method for each given parameter" do
         @filebucket.stubs(:puts)
         FileTest.stubs(:exists?).returns(true)

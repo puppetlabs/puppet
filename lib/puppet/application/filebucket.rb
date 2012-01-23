@@ -128,6 +128,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def backup
+    raise "You must specify a file to back up" unless args.length > 0
+
     args.each do |file|
       unless FileTest.exists?(file)
         $stderr.puts "#{file}: no such file"
