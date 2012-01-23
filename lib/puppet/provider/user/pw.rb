@@ -54,6 +54,12 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     cmd
   end
 
+  def deletecmd
+    cmd = super
+    cmd << "-r" if @resource.managehome?
+    cmd
+  end
+
   def create
     super
 
