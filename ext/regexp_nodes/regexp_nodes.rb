@@ -8,25 +8,41 @@
 # regexp_nodes.rb <host>
 #
 # = Description
-# This classifier implements filesystem autoloading: It looks through classes
-# and parameters subdirectories, looping through each file it finds there - the
-# contents are a regexp-per-line which, if they match the hostname passed us as
-# ARGV[0], will cause a class or parameter named the same thing as the file to
-# be set.
+# This classifier implements filesystem autoloading: It looks through classes,
+# parameters, and environment subdirectories, looping through each file it 
+# finds.  Each file's contents are a regexp-per-line which, if they match the 
+# hostname passed to the program as ARGV[0], sets a class, parameter value 
+# or environment named the same thing as the file itself. At the end, the
+# resultant data structure is returned back to the puppet master process as 
+# yaml.
+#
+# = Caveats
+# Since the files are read in directory order, multiple matches for a given
+# hostname in the parameters/ and environment/ subdirectories will return the
+# last-read value.  (Multiple classes/ matches don't cause a problem; the 
+# class is either incuded or it isn't)
+#
+# Unmatched hostnames in any of the environment/ files will cause 'production'
+# to be emitted; be aware of the complexity surrounding the interaction 
+# between ENC and environments as discussed in Redmine #XXX
 #
 # = Examples
 # Based on the example files in the classes/ and parameters/ subdirectories
 # in the distribution, classes/database will set the 'database' class for 
 # hosts matching %r{db\d{2}} (that is, 'db' followed by two digits) or with 
 # 'mysql' anywhere in the hostname.  Similarly, hosts beginning with 'www' or 
-# 'web' or the hostname 'leterel' (my workstation) will be assigned the 'webserver'
-# class.
+# 'web' or the hostname 'leterel' (my workstation) will be assigned the 
+# 'webserver' class.
 #
 # Under parameters/ there is one subdirectory 'service' which
 # sets the a parameter called 'service' to the value 'prod' for production
 # hosts (whose hostnames always end with a three-digit code), 'qa' for
 # anything that starts with 'qa-' 'qa2-' or 'qa3-', and 'sandbox' for any
 # development machines whose hostnames start with 'dev-'.
+#
+# In the environment/ subdirectory, any hosts matching '^dev-' and a single
+# production host which serves as 'canary in the coal mine' will be put into
+# the development environment 
 #
 # = Author
 # Eric Sorenson <eric@explosive.net>
@@ -63,7 +79,7 @@ WORKINGDIR = "#{p.realpath}"
 
 class ExternalNode
   # Make these instance variables get/set-able with eponymous methods
-  attr_accessor :classes, :parameters, :hostname
+  attr_accessor :classes, :parameters, :environment, :hostname
 
   # initialize takes three arguments:
   # hostname:: usually passed in via ARGV[0] but it could be anything
@@ -71,15 +87,17 @@ class ExternalNode
   # classes
   # parameterdir:: directory under WORKINGDIR to look for directories to set
   # parameters
-  def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
+  def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/', environmentdir = 'environment/')
     # instance variables that contain the lists of classes and parameters
     @hostname
     @classes = Set.new
     @parameters = Hash.new("unknown")  # sets a default value of "unknown"
+    @environment = "production"
 
     self.parse_argv(hostname)
-    self.match_classes(WORKINGDIR + "/#{classdir}")
-    self.match_parameters(WORKINGDIR + "/#{parameterdir}")
+    self.match_classes("#{WORKINGDIR}/#{classdir}")
+    self.match_parameters("#{WORKINGDIR}/#{parameterdir}")
+    self.match_environment("#{WORKINGDIR}/#{environmentdir}")
   end
 
   # private method called by initialize which sanity-checks our hostname.
@@ -105,7 +123,7 @@ class ExternalNode
     else
       parameters = self.parameters
     end
-    ({ 'classes' => classes, 'parameters' => parameters}).to_yaml
+    ({ 'classes' => classes, 'parameters' => parameters, 'environment' => environment}).to_yaml
   end
 
   # Private method that expects an absolute path to a file and a string to
@@ -165,17 +183,35 @@ class ExternalNode
       if matched_in_patternfile?(filepath,@hostname)
         @classes << patternfile.to_s
         log("Appended #{patternfile.to_s} to classes instance variable")
-      end # if
-    end # Dir.foreach
-  end # def
+      end
+    end
+  end
+
+  # match_environment is similar to match_classes but it overwrites 
+  # any previously set value (usually just the default, 'production')
+  # with a match
+  def match_environment(fullpath)
+    Dir.foreach(fullpath) do |patternfile|
+      filepath = "#{fullpath}/#{patternfile}"
+      next unless File.file?(filepath) and
+        File.readable?(filepath)
+        next if patternfile =~ /^\./
+      log("Attempting to match [#{@hostname}] in [#{filepath}]")
+      if matched_in_patternfile?(filepath,@hostname)
+        @environment = patternfile.to_s
+        log("Wrote #{patternfile.to_s} to environment instance variable")
+      end
+    end
+  end
+
 
   # Parameters are handled slightly differently; we make another level of
   # directories to get the parameter name, then use the names of the files
   # contained in there for the values of those parameters.
   #
-  # ex: cat /var/lib/puppet/bin/parameters/environment/production
+  # ex: cat ./parameters/service/production
   # ^prodweb
-  # would set parameters["environment"] = "production" for prodweb001
+  # would set parameters["service"] = "production" for prodweb001
   def match_parameters(fullpath)
     Dir.foreach(fullpath) do |parametername|
 
@@ -201,7 +237,7 @@ class ExternalNode
     end
   end
 
-end # Class
+end
 
 # Logic for local hacks that don't fit neatly into the autoloading model can
 # happen as we initialize a subclass
