@@ -44,7 +44,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   end
 
 
-  describe "when validating attribute" do
+  describe "when validating values" do
 
     describe "ensure" do
       it "should support present as a value for ensure" do
@@ -474,6 +474,32 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         end.should_not raise_error(Puppet::Error)
       end
 
+    end
+
+  end
+
+  describe "when autorequiring resources" do
+
+    before :each do
+      @user_bob = Puppet::Type.type(:user).new(:name => 'bob', :ensure => :present)
+      @user_alice = Puppet::Type.type(:user).new(:name => 'alice', :ensure => :present)
+      @catalog = Puppet::Resource::Catalog.new
+      @catalog.add_resource @user_bob, @user_alice
+    end
+
+    it "should not require anything if no user specified" do
+      @resource = described_class.new(:name => 'dummy', :command => '/usr/bin/uptime')
+      @catalog.add_resource @resource
+      @resource.autorequire.size.should == 0
+    end
+
+    it "should autorequire the user if specified" do
+      @resource = described_class.new(:name => 'dummy', :command => '/usr/bin/uptime', :user => 'alice')
+      @catalog.add_resource @resource
+      req = @resource.autorequire
+      req.size.should == 1
+      req[0].target.must == @resource
+      req[0].source.must == @user_alice
     end
 
   end
