@@ -376,11 +376,11 @@ class TestExec < Test::Unit::TestCase
       exec = Puppet::Type.type(:exec).new(
         :title     => "logoutputesting",
         :path      => "/usr/bin:/bin",
-        :command   => "echo logoutput is false",
-        :logoutput => false
+        :command   => "echo logoutput is false"
       )
     }
 
+    assert_equal(:on_failure, exec[:logoutput])
     assert_apply(exec)
 
     assert_nothing_raised {
@@ -388,6 +388,15 @@ class TestExec < Test::Unit::TestCase
       exec[:logoutput] = true
     }
 
+    assert_equal(:true, exec[:logoutput])
+    assert_apply(exec)
+
+    assert_nothing_raised {
+      exec[:command] = "echo logoutput is false"
+      exec[:logoutput] = false
+    }
+
+    assert_equal(:false, exec[:logoutput])
     assert_apply(exec)
 
     assert_nothing_raised {
@@ -395,6 +404,7 @@ class TestExec < Test::Unit::TestCase
       exec[:logoutput] = "on_failure"
     }
 
+    assert_equal(:on_failure, exec[:logoutput])
     assert_apply(exec)
   end
 
