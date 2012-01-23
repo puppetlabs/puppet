@@ -22,7 +22,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   it "should return an instance capable of returning its content" do
     FileTest.expects(:exists?).with(@filepath).returns(true)
     File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
-    Puppet::Util.expects(:binread).with(@filepath).returns("my content")
+    IO.expects(:binread).with(@filepath).returns("my content")
 
     instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}"))
 
