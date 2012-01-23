@@ -23,8 +23,8 @@
 # class is either incuded or it isn't)
 #
 # Unmatched hostnames in any of the environment/ files will cause 'production'
-# to be emitted; be aware of the complexity surrounding the interaction 
-# between ENC and environments as discussed in Redmine #XXX
+# to be emitted; be aware of the complexity surrounding the interaction between
+# ENC and environments as discussed in https://projects.puppetlabs.com/issues/3910
 #
 # = Examples
 # Based on the example files in the classes/ and parameters/ subdirectories
