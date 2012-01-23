@@ -88,6 +88,13 @@ describe provider_class do
       @resource.stubs(:managehome?).returns true
       @provider.check_manage_home.must == ["-m"]
     end
+    
+    it "should return an array with -r flag if home is managed" do
+      @resource.stubs(:managehome?).returns true
+      @resource.stubs(:ensure) == :absent
+      @provider.stubs(:command).returns("userdel")
+      @provider.deletecmd.must == ["userdel", "-r", "fakeval"]
+    end
 
     it "should return an array with -M if home is not managed and on Redhat" do
       Facter.stubs(:value).with("operatingsystem").returns("RedHat")
