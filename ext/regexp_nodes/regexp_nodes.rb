@@ -15,24 +15,21 @@
 # be set.
 #
 # = Examples
-# In the distribution there are two subdirectories test_classes/ and
-# test_parameters, which are passed as parameters to MyExternalNode.new.
-# test_classes/database will set the 'database' class for any hostnames
-# matching %r{db\d{2}} (that is, 'db' followed by two digits) or with 'mysql'
-# anywhere in the hostname.  Similarly, hosts beginning with 'www' or 'web'
-# or the hostname 'leterel' (my workstation) will be assigned the 'webserver'
+# Based on the example files in the classes/ and parameters/ subdirectories
+# in the distribution, classes/database will set the 'database' class for 
+# hosts matching %r{db\d{2}} (that is, 'db' followed by two digits) or with 
+# 'mysql' anywhere in the hostname.  Similarly, hosts beginning with 'www' or 
+# 'web' or the hostname 'leterel' (my workstation) will be assigned the 'webserver'
 # class.
 #
-# Under test_parameters/ there is one subdirectory 'environment' which
-# sets the a parameter called 'environment' to the value 'prod' for production
-# hosts (whose hostnames always end with three numbers for us), 'qa' for
+# Under parameters/ there is one subdirectory 'service' which
+# sets the a parameter called 'service' to the value 'prod' for production
+# hosts (whose hostnames always end with a three-digit code), 'qa' for
 # anything that starts with 'qa-' 'qa2-' or 'qa3-', and 'sandbox' for any
-# development machines which are, naturally, named after Autechre songs.
-#
+# development machines whose hostnames start with 'dev-'.
 #
 # = Author
-# Eric Sorenson <esorenson@apple.com>
-
+# Eric Sorenson <eric@explosive.net>
 
 # we need yaml or there's not much point in going on
 require 'yaml'
@@ -40,18 +37,25 @@ require 'yaml'
 # Sets are like arrays but automatically de-duplicate elements
 require 'set'
 
-# set up some nice logging
-require 'logger'
-# XXX flip this for production vs local sandbox
-# $LOG = Logger.new("/var/lib/puppet/log/extnodes.log")
-# $LOG.level = Logger::FATAL
-$LOG = Logger.new($stderr)
-$LOG.level = Logger::DEBUG
+# set up some syslog logging
+require 'syslog'
+Syslog.open('extnodes', Syslog::LOG_PID | Syslog::LOG_NDELAY, Syslog::LOG_DAEMON)
+# change this to LOG_UPTO(Sysslog::LOG_DEBUG) if you want to see everything
+# but remember your syslog.conf needs to match this or messages will be filtered
+Syslog.mask = Syslog::LOG_UPTO(Syslog::LOG_INFO)
 
-# paths for files we use will be relative to this directory
-# XXX flip this for production vs local sandbox
-# WORKINGDIR = "/var/lib/puppet/bin"
-WORKINGDIR = Dir.pwd
+# Helper method to log to syslog; we log at level debug if no level is specified
+# since those are the most frequent calls to this method
+def log(message,level=:debug)
+  Syslog.send(level,message)
+end
+
+
+# set our workingdir to be the directory we're executed from, regardless
+# of parent's cwd, symlinks, etc. via handy Pathname.realpath method
+require 'pathname'
+p = Pathname.new(File.dirname(__FILE__))
+WORKINGDIR = "#{p.realpath}"
 
 # This class holds all the methods for creating and accessing the properties
 # of an external node. There are really only two public methods: initialize
@@ -70,8 +74,8 @@ class ExternalNode
   def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
     # instance variables that contain the lists of classes and parameters
     @hostname
-    @classes = Set.new ["baseclass"]
-    @parameters = Hash.new("unknown")    # sets a default value of "unknown"
+    @classes = Set.new
+    @parameters = Hash.new("unknown")  # sets a default value of "unknown"
 
     self.parse_argv(hostname)
     self.match_classes(WORKINGDIR + "/#{classdir}")
@@ -81,12 +85,13 @@ class ExternalNode
   # private method called by initialize which sanity-checks our hostname.
   # good candidate for overriding in a subclass if you need different checks
   def parse_argv(hostname)
-    if hostname =~ /^([-\w]+?)\.([-\w\.]+)/    # non-greedy up to the first . is hostname
+    if hostname =~ /^([-\w]+?)\.([-\w\.]+)/  # non-greedy up to the first . is hostname
       @hostname = $1
-    elsif hostname =~ /^([-\w]+)$/       # sometimes puppet's @name is just a name
+    elsif hostname =~ /^([-\w]+)$/     # sometimes puppet's @name is just a name
       @hostname = hostname
+      log("got shortname for [#{hostname}]")
     else
-      $LOG.fatal("didn't receive parsable hostname, got: [#{hostname}]")
+      log("didn't receive parsable hostname, got: [#{hostname}]",:err)
       exit(1)
     end
   end
@@ -112,27 +117,40 @@ class ExternalNode
 
     begin
       open(filepath).each { |l|
-        pattern = %r{#{l.chomp!}}
+        l.chomp!
+
+        next if l =~ /^$/
+        next if l =~ /^#/
+
+		if l =~ /^\s*(\S+)/
+          m = Regexp.last_match
+          log("found a non-comment line, transforming [#{l}] into [#{m[1]}]")
+          l.gsub!(l,m[1])
+        else
+          next l
+        end
+
+        pattern = %r{#{l}}
         patternlist <<  pattern
-        $LOG.debug("appending [#{pattern}] to patternlist for [#{filepath}]")
+        log("appending [#{pattern}] to patternlist for [#{filepath}]")
       }
     rescue Exception
-      $LOG.fatal("Problem reading #{filepath}: #{$ERROR_INFO}")
+      log("Problem reading #{filepath}: #{$!}",:err)
       exit(1)
     end
 
-    $LOG.debug("list of patterns for #{filepath}: #{patternlist}")
+    log("list of patterns for #{filepath}: #{patternlist}")
 
     if matchthis =~ Regexp.union(patternlist)
-      $LOG.debug("matched #{$~.to_s} in #{matchthis}, returning true")
+      log("matched #{$~.to_s} in #{matchthis}, returning true")
       return true
 
-    else    # hostname didn't match anything in patternlist
-      $LOG.debug("#{matchthis} unmatched, returning false")
+    else  # hostname didn't match anything in patternlist
+      log("#{matchthis} unmatched, returning false")
       return nil
     end
 
-  end
+  end # def
 
   # private method - takes a path to look for files, iterates through all
   # readable, regular files it finds, and matches this instance's @hostname
@@ -142,13 +160,14 @@ class ExternalNode
       filepath = "#{fullpath}/#{patternfile}"
       next unless File.file?(filepath) and
         File.readable?(filepath)
-      $LOG.debug("Attempting to match [#{@hostname}] in [#{filepath}]")
+        next if patternfile =~ /^\./
+      log("Attempting to match [#{@hostname}] in [#{filepath}]")
       if matched_in_patternfile?(filepath,@hostname)
         @classes << patternfile.to_s
-        $LOG.debug("Appended #{patternfile.to_s} to classes instance variable")
-      end
-    end
-  end
+        log("Appended #{patternfile.to_s} to classes instance variable")
+      end # if
+    end # Dir.foreach
+  end # def
 
   # Parameters are handled slightly differently; we make another level of
   # directories to get the parameter name, then use the names of the files
@@ -161,28 +180,28 @@ class ExternalNode
     Dir.foreach(fullpath) do |parametername|
 
       filepath = "#{fullpath}/#{parametername}"
-      next if File.basename(filepath) =~ /^\./     # skip over dotfiles
+      next if File.basename(filepath) =~ /^\./   # skip over dotfiles
 
       next unless File.directory?(filepath) and
         File.readable?(filepath)        # skip over non-directories
 
-      $LOG.debug "Considering contents of #{filepath}"
+      log("Considering contents of #{filepath}")
 
       Dir.foreach("#{filepath}") do |patternfile|
         secondlevel = "#{filepath}/#{patternfile}"
-        $LOG.debug "Found parameters patternfile at #{secondlevel}"
+        log("Found parameters patternfile at #{secondlevel}")
         next unless File.file?(secondlevel) and
           File.readable?(secondlevel)
-        $LOG.debug("Attempting to match [#{@hostname}] in [#{secondlevel}]")
+        log("Attempting to match [#{@hostname}] in [#{secondlevel}]")
         if matched_in_patternfile?(secondlevel, @hostname)
           @parameters[ parametername.to_s ] = patternfile.to_s
-          $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
+          log("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
         end
       end
     end
   end
 
-end
+end # Class
 
 # Logic for local hacks that don't fit neatly into the autoloading model can
 # happen as we initialize a subclass
@@ -198,10 +217,11 @@ class MyExternalNode < ExternalNode
       match = Regexp.last_match
 
       hostclass = match[2]
-      $LOG.debug("matched hostclass #{hostclass}")
+      log("matched hostclass #{hostclass}")
       @parameters[ "hostclass" ] = hostclass
     else
-      $LOG.debug("hostclass couldn't figure out class from #{@hostname}")
+      log("couldn't figure out class from #{@hostname}",:warning)
+
     end
   end
 
@@ -210,6 +230,6 @@ end
 
 # Here we begin actual execution by calling methods defined above
 
-mynode = MyExternalNode.new(ARGV[0], classes = 'test_classes', parameters = 'test_parameters')
+mynode = MyExternalNode.new(ARGV[0])
 
 puts mynode.to_yaml
