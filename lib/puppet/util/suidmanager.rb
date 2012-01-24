@@ -150,8 +150,19 @@ module Puppet::Util::SUIDManager
 
   module_function :initgroups
 
-  def run_and_capture(command, new_uid=nil, new_gid=nil)
-    output = Puppet::Util.execute(command, :failonfail => false, :combine => true, :uid => new_uid, :gid => new_gid)
+  # Run a command and capture the output
+  # Parameters:
+  # [command] the command to execute
+  # [new_uid] (optional) a userid to run the command as
+  # [new_gid] (optional) a groupid to run the command as
+  # [override_locale] (optional, defaults to true) a flag indicating whether or puppet should temporarily override the
+  #   system locale for the duration of the command.  If true, the locale will be set to 'C' to ensure consistent
+  #   output / formatting from the command, which makes it much easier to parse the output.  If false, the system
+  #   locale will be respected.
+  def run_and_capture(command, new_uid=nil, new_gid=nil, override_locale=true)
+    output = Puppet::Util.execute(command, :failonfail => false, :combine => true,
+                                  :uid => new_uid, :gid => new_gid,
+                                  :override_locale => override_locale)
     [output, $CHILD_STATUS.dup]
   end
   module_function :run_and_capture

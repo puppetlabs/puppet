@@ -24,6 +24,9 @@ module Util
 
   @@sync_objects = {}.extend MonitorMixin
 
+  # This is a list of environment variables that we will set when we want to override the POSIX locale
+  POSIX_LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE']
+
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
@@ -290,15 +293,25 @@ module Util
         $stdout.reopen(stdout)
         $stderr.reopen(stderr)
 
+        # we are in a forked process, so we currently have access to all of the file descriptors
+        # from the parent process... which, in this case, is bad because we don't want
+        # to allow the user's command to have access to them.  Therefore, we'll close them off.
+        # (assumes that there are only 256 file descriptors available?)
         3.upto(256){|fd| IO::new(fd).close rescue nil}
 
         Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
         Puppet::Util::SUIDManager.change_user(arguments[:uid], true)  if arguments[:uid]
 
-        ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
+        # if the caller has requested that we override locale environment variables,
+        if (arguments[:override_locale]) then
+          # loop over them and set them to 'C' so that the command will have consistent, predictable output
+          POSIX_LOCALE_ENV_VARS.each { |name| ENV[name] = 'C' }
+        end
         Kernel.exec(*command)
       rescue => detail
-        puts detail.to_s
+        puts detail.message
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err "Could not execute posix command: #{detail}"
         exit!(1)
       end
     end
@@ -317,11 +330,36 @@ module Util
   module_function :execute_windows
 
   # Execute the desired command, and return the status and output.
-  # def execute(command, failonfail = true, uid = nil, gid = nil)
-  # :combine sets whether or not to combine stdout/stderr in the output
-  # :stdinfile sets a file that can be used for stdin. Passing a string
-  # for stdin is not currently supported.
-  def execute(command, arguments = {:failonfail => true, :combine => true})
+  # def execute(command, arguments)
+  # [arguments] a Hash optionally containing any of the following keys:
+  #   :failonfail (default true) -- if this value is set to true, then this method will raise an error if the
+  #      command is not executed successfully.
+  #   :uid (default nil) -- the user id of the user that the process should be run as
+  #   :gid (default nil) -- the group id of the group that the process should be run as
+  #   :combine (default true) -- sets whether or not to combine stdout/stderr in the output
+  #   :stdinfile (default nil) -- sets a file that can be used for stdin. Passing a string for stdin is not currently
+  #      supported.
+  #   :squelch (default false) -- if true, ignore stdout / stderr completely
+  #   :override_locale (default true) -- by default (and if this option is set to true), we will temporarily override
+  #     the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
+  #     This ensures that the output of the command will be formatted consistently, making it predictable for parsing.
+  #     Passing in a value of false for this option will allow the command to be executed using the user/system locale.
+  def execute(command, arguments = {})
+
+    # specifying these here rather than in the method signature to allow callers to pass in a partial
+    # set of overrides without affecting the default values for options that they don't pass in
+    default_arguments = {
+        :failonfail => true,
+        :uid => nil,
+        :gid => nil,
+        :combine => true,
+        :stdinfile => nil,
+        :squelch => false,
+        :override_locale => true,
+    }
+
+    arguments = default_arguments.merge(arguments)
+
     if command.is_a?(Array)
       command = command.flatten.map(&:to_s)
       str = command.join(" ")
@@ -379,6 +417,9 @@ module Util
     # Make sure the file's actually been written.  This is basically a race
     # condition, and is probably a horrible way to handle it, but, well, oh
     # well.
+    # (If this method were treated as private / inaccessible from outside of this file, we shouldn't have to worry
+    #  about a race condition because all of the places that we call this from are preceded by a call to "waitpid2",
+    #  meaning that the processes responsible for writing the file have completed before we get here.)
     2.times do |try|
       if File.exists?(stdout.path)
         output = stdout.open.read

@@ -46,8 +46,11 @@ class Puppet::Provider::Exec < Puppet::Provider
 
         withenv environment do
           Timeout::timeout(resource[:timeout]) do
+            # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
+            # default/system locale will be respected.  Callers may override this behavior by setting locale-related
+            # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
             output, status = Puppet::Util::SUIDManager.
-              run_and_capture(command, resource[:user], resource[:group])
+              run_and_capture(command, resource[:user], resource[:group], false)
           end
           # The shell returns 127 if the command is missing.
           if status.exitstatus == 127

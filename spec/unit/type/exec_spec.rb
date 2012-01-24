@@ -22,7 +22,7 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with(command, nil, nil).returns([output, status])
+      with(command, nil, nil, false).returns([output, status])
 
     return exec
   end

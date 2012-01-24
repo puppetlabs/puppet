@@ -112,5 +112,44 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.run(command)
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
+
+    describe "locale settings" do
+      # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
+      # system.
+      lang_sentinel_value = "es_ES.UTF-8"
+      # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
+      # "execute"
+      locale_sentinel_env = {}
+      Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
+
+      command = "/bin/echo $%s"
+
+      it "should not override user's locale during execution" do
+        # we'll do this once without any sentinel values, to give us a little more test coverage
+        orig_env = {}
+        Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| orig_env[var] = ENV[var] if ENV[var] }
+
+        orig_env.keys.each do |var|
+          output, status = provider.run(command % var)
+          output.strip.should == orig_env[var]
+        end
+
+        # now, once more... but with our sentinel values
+        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+            output, status = provider.run(command % var)
+            output.strip.should == locale_sentinel_env[var]
+          end
+        end
+      end
+
+      it "should respect locale overrides in user's 'environment' configuration" do
+        provider.resource[:environment] = ['LANG=foo', 'LC_ALL=bar']
+        output, status = provider.run(command % 'LANG')
+        output.strip.should == 'foo'
+        output, status = provider.run(command % 'LC_ALL')
+        output.strip.should == 'bar'
+      end
+    end
   end
 end
