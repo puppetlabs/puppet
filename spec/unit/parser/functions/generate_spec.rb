@@ -41,11 +41,7 @@ describe "the generate function" do
     scope.function_generate([command]).should == 'yay'
   end
 
-  describe "on Windows" do
-    before :each do
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
-    end
-
+  describe "on Windows", :as_platform => :windows do
     it "should accept lower-case drive letters" do
       command = 'd:/command/foo'
       Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
@@ -73,11 +69,7 @@ describe "the generate function" do
     end
   end
 
-  describe "on non-Windows" do
-    before :each do
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
-    end
-
+  describe "on non-Windows", :as_platform => :posix do
     it "should reject backslashes" do
       lambda { scope.function_generate(['/com\\mand']) }.should raise_error(Puppet::ParseError)
     end

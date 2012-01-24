@@ -196,7 +196,7 @@ module Util
       :posix   => %r!^/!,
     }
     require 'puppet'
-    platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
+    platform ||= File::ALT_SEPARATOR ? :windows : :posix
 
     !! (path =~ regexes[platform])
   end
