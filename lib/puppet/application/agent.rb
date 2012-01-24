@@ -27,6 +27,7 @@ class Puppet::Application::Agent < Puppet::Application
       :fqdn => nil,
       :serve => [],
       :digest => :MD5,
+      :graph => true,
       :fingerprint => false,
     }.each do |opt,val|
       options[opt] = val

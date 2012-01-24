@@ -4,7 +4,7 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.7.8
+Version: 2.7.10
 Release: 0.1rc1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System

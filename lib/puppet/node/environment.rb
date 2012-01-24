@@ -1,3 +1,4 @@
+require 'puppet/util'
 require 'puppet/util/cacher'
 require 'monitor'
 
@@ -143,18 +144,14 @@ class Puppet::Node::Environment
   end
 
   def validate_dirs(dirs)
-    dir_regex = Puppet.features.microsoft_windows? ? /^[A-Za-z]:#{File::SEPARATOR}/ : /^#{File::SEPARATOR}/
-    # REMIND: Dir.getwd on windows returns a path containing backslashes, which when joined with
-    # dir containing forward slashes, breaks our regex matching. In general, path validation needs
-    # to be refactored which will be handled in a future commit.
     dirs.collect do |dir|
-      if dir !~ dir_regex
+      unless Puppet::Util.absolute_path?(dir)
         File.expand_path(File.join(Dir.getwd, dir))
       else
         dir
       end
     end.find_all do |p|
-      p =~ dir_regex && FileTest.directory?(p)
+      Puppet::Util.absolute_path?(p) && FileTest.directory?(p)
     end
   end
 

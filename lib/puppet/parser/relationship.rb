@@ -3,19 +3,20 @@ class Puppet::Parser::Relationship
 
   PARAM_MAP = {:relationship => :before, :subscription => :notify}
 
+  def arrayify(resources)
+    case resources
+    when Puppet::Parser::Collector
+      resources.collected.values
+    when Array
+      resources
+    else
+      [resources]
+    end
+  end
+
   def evaluate(catalog)
-    if source.is_a?(Puppet::Parser::Collector)
-      sources = source.collected.values
-    else
-      sources = [source]
-    end
-    if target.is_a?(Puppet::Parser::Collector)
-      targets = target.collected.values
-    else
-      targets = [target]
-    end
-    sources.each do |s|
-      targets.each do |t|
+    arrayify(source).each do |s|
+      arrayify(target).each do |t|
         mk_relationship(s, t, catalog)
       end
     end
@@ -30,14 +31,30 @@ class Puppet::Parser::Relationship
   end
 
   def mk_relationship(source, target, catalog)
-    unless source_resource = catalog.resource(source.to_s)
+    # REVISIT: In Ruby 1.8 we applied `to_s` to source and target, rather than
+    # `join` without an argument.  In 1.9 the behaviour of Array#to_s changed,
+    # and it gives a different representation than just concat the stringified
+    # elements.
+    #
+    # This restores the behaviour, but doesn't address the underlying question
+    # of what would happen when more than one item was passed in that array.
+    # (Hint: this will not end well.)
+    #
+    # See http://projects.puppetlabs.com/issues/12076 for the ticket tracking
+    # the fact that we should dig out the sane version of this behaviour, then
+    # implement it - where we don't risk breaking a stable release series.
+    # --daniel 2012-01-21
+    source = source.is_a?(Array) ? source.join : source.to_s
+    target = target.is_a?(Array) ? target.join : target.to_s
+
+    unless source_resource = catalog.resource(source)
       raise ArgumentError, "Could not find resource '#{source}' for relationship on '#{target}'"
     end
-    unless target_resource = catalog.resource(target.to_s)
+    unless target_resource = catalog.resource(target)
       raise ArgumentError, "Could not find resource '#{target}' for relationship from '#{source}'"
     end
-    Puppet.debug "Adding relationship from #{source.to_s} to #{target.to_s} with '#{param_name}'"
+    Puppet.debug "Adding relationship from #{source} to #{target} with '#{param_name}'"
     source_resource[param_name] ||= []
-    source_resource[param_name] << target.to_s
+    source_resource[param_name] << target
   end
 end

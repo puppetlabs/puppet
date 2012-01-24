@@ -80,8 +80,7 @@ class Puppet::Parser::TypeLoader
 
     loaded_asts = []
     files.each do |file|
-      regex = Puppet.features.microsoft_windows? ? /^[A-Za-z]:#{File::SEPARATOR}/ : /^#{File::SEPARATOR}/
-      unless file =~ regex
+      unless Puppet::Util.absolute_path?(file)
         file = File.join(dir, file)
       end
       @loading_helper.do_once(file) do

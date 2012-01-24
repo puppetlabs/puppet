@@ -24,7 +24,7 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '2.7.9'
+  PUPPETVERSION = '2.7.10'
 
   def Puppet.version
     PUPPETVERSION
@@ -108,36 +108,6 @@ module Puppet
   # Parse the config file for this process.
   def self.parse_config
     Puppet.settings.parse
-  end
-
-  # XXX this should all be done using puppet objects, not using
-  # normal mkdir
-  def self.recmkdir(dir,mode = 0755)
-    if FileTest.exist?(dir)
-      return false
-    else
-      tmp = dir.sub(/^\//,'')
-      path = [File::SEPARATOR]
-      tmp.split(File::SEPARATOR).each { |dir|
-        path.push dir
-        if ! FileTest.exist?(File.join(path))
-          begin
-            Dir.mkdir(File.join(path), mode)
-          rescue Errno::EACCES => detail
-            Puppet.err detail.to_s
-            return false
-          rescue => detail
-            Puppet.err "Could not create #{path}: #{detail}"
-            return false
-          end
-        elsif FileTest.directory?(File.join(path))
-          next
-        else FileTest.exist?(File.join(path))
-          raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-        end
-      }
-      return true
-    end
   end
 
   # Create a new type.  Just proxy to the Type class.  The mirroring query

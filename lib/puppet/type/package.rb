@@ -313,10 +313,8 @@ module Puppet
         end
       }
 
-      if source = self[:source]
-        if source =~ /^#{File::SEPARATOR}/
-          autos << source
-        end
+      if source = self[:source] and absolute_path?(source)
+        autos << source
       end
       autos
     end

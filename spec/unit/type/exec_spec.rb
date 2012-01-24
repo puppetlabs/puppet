@@ -632,6 +632,13 @@ describe Puppet::Type.type(:exec) do
             @test.check_all_attributes.should == false
           end
         end
+
+        it "should emit output to debug" do
+          Puppet::Util::Log.level = :debug
+          @test[param] = @fail
+          @test.check_all_attributes.should == true
+          @logs.shift.message.should == "test output"
+        end
       end
     end
   end

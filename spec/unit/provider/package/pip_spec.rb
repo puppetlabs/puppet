@@ -8,10 +8,10 @@ describe provider_class do
   before do
     @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = provider_class.new(@resource)
-    client = stub_everything('client')
-    client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
-    client.stubs(:call).with('package_releases', 'fake_package').returns([])
-    XMLRPC::Client.stubs(:new2).returns(client)
+    @client = stub_everything('client')
+    @client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
+    @client.stubs(:call).with('package_releases', 'fake_package').returns([])
+    XMLRPC::Client.stubs(:new2).returns(@client)
   end
 
   describe "parse" do
@@ -84,6 +84,12 @@ describe provider_class do
     it "should not find a version number for fake_package" do
       @resource[:name] = "fake_package"
       @provider.latest.should == nil
+    end
+
+    it "should handle a timeout gracefully" do
+      @resource[:name] = "fake_package"
+      @client.stubs(:call).raises(Timeout::Error)
+      lambda { @provider.latest }.should raise_error(Puppet::Error)
     end
 
   end

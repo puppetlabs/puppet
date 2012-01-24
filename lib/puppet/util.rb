@@ -119,28 +119,6 @@ module Util
     end
   end
 
-  # XXX this should all be done using puppet objects, not using
-  # normal mkdir
-  def self.recmkdir(dir,mode = 0755)
-    if FileTest.exist?(dir)
-      return false
-    else
-      tmp = dir.sub(/^\//,'')
-      path = [File::SEPARATOR]
-      tmp.split(File::SEPARATOR).each { |dir|
-        path.push dir
-        if ! FileTest.exist?(File.join(path))
-          Dir.mkdir(File.join(path), mode)
-        elsif FileTest.directory?(File.join(path))
-          next
-        else FileTest.exist?(File.join(path))
-          raise "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-        end
-      }
-      return true
-    end
-  end
-
   # Execute a given chunk of code with a new umask.
   def self.withumask(mask)
     cur = File.umask(mask)

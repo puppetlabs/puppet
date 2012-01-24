@@ -18,7 +18,7 @@ Puppet::Type.newtype(:k5login) do
     desc "The path to the `.k5login` file to manage.  Must be fully qualified."
 
     validate do |value|
-      unless value =~ /^#{File::SEPARATOR}/
+      unless absolute_path?(value)
         raise Puppet::Error, "File paths must be fully qualified."
       end
     end

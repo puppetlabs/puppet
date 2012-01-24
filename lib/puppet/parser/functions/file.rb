@@ -7,7 +7,7 @@
     can be passed, and the first file that exists will be read in.") do |vals|
       ret = nil
       vals.each do |file|
-        unless file =~ /^#{File::SEPARATOR}/
+        unless Puppet::Util.absolute_path?(file)
           raise Puppet::ParseError, "Files must be fully qualified"
         end
         if FileTest.exists?(file)

@@ -100,6 +100,16 @@ describe Puppet::Agent do
       @agent.run
     end
 
+    it "(#11057) should notify the user about why a run is skipped" do
+      Puppet::Application.stubs(:controlled_run).returns(false)
+      Puppet::Application.stubs(:run_status).returns('MOCK_RUN_STATUS')
+      # This is the actual test that we inform the user why the run is skipped.
+      # We assume this information is contained in
+      # Puppet::Application.run_status
+      Puppet.expects(:notice).with(regexp_matches(/MOCK_RUN_STATUS/))
+      @agent.run
+    end
+
     it "should use Puppet::Application.controlled_run to manage process state behavior" do
       calls = sequence('calls')
       Puppet::Application.expects(:controlled_run).yields.in_sequence(calls)

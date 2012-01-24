@@ -1,4 +1,5 @@
 require 'puppet/file_serving'
+require 'puppet/util'
 
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
@@ -49,7 +50,7 @@ class Puppet::FileServing::Base
   # Set our base path.
   attr_reader :path
   def path=(path)
-    unless path =~ /^#{::File::SEPARATOR}/ or path =~ /^[a-z]:[\/\\]/i
+    unless Puppet::Util.absolute_path?(path)
       raise ArgumentError.new("Paths must be fully qualified")
     end
 
@@ -60,7 +61,7 @@ class Puppet::FileServing::Base
   # the file's path relative to the initial recursion point.
   attr_reader :relative_path
   def relative_path=(path)
-    raise ArgumentError.new("Relative paths must not be fully qualified") if path =~ /^#{::File::SEPARATOR}/
+    raise ArgumentError.new("Relative paths must not be fully qualified") if Puppet::Util.absolute_path?(path)
     @relative_path = path
   end
 
