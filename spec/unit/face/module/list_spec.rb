@@ -97,4 +97,7 @@ describe "puppet module list" do
     its(:returns)     { should =~ /hash of paths to module objects/i }
     its(:examples)    { should_not be_empty }
   end
+
+  describe "when rendering" do
+  end
 end
