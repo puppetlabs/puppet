@@ -127,11 +127,12 @@ class Parser
 
   # create documentation for the top level +container+
   def scan_top_level(container)
-    # use the module README as documentation for the module
+    # use the module README and/or README.rdoc as documentation for the module
     comment = ""
-    readme = File.join(File.dirname(File.dirname(@input_file_name)), "README")
-    comment = File.open(readme,"r") { |f| f.read } if FileTest.readable?(readme)
-    look_for_directives_in(container, comment) unless comment.empty?
+    Dir.glob(File.join(File.dirname(File.dirname(@input_file_name)), "README{,.rdoc}")) do |readme|
+      comment = File.open(readme,"r") { |f| f.read } if FileTest.readable?(readme)
+      look_for_directives_in(container, comment) unless comment.empty?
+    end
 
     # infer module name from directory
     name = split_module(@input_file_name)
