@@ -154,7 +154,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if options[:catalog] == "-"
       text = $stdin.read
     else
-      text = File.read(options[:catalog])
+      text = ::File.read(options[:catalog])
     end
 
     begin
@@ -177,7 +177,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:code] = options[:code] || STDIN.read
     else
       manifest = command_line.args.shift
-      raise "Could not find file #{manifest}" unless File.exist?(manifest)
+      raise "Could not find file #{manifest}" unless ::File.exist?(manifest)
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
       Puppet[:manifest] = manifest
     end
@@ -208,7 +208,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
           $stderr.puts "#{file} is not readable"
           exit(63)
         end
-        node.classes = File.read(file).split(/[\s\n]+/)
+        node.classes = ::File.read(file).split(/[\s\n]+/)
       end
     end
 
