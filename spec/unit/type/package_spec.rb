@@ -230,6 +230,7 @@ describe Puppet::Type.type(:package) do
       [:purged, :absent].each do |state|
         it "should install if it is #{state.to_s}" do
           @provider.stubs(:properties).returns(:ensure => state)
+          @package.property(:ensure).insync?(state).should be_false
           @provider.expects(:install)
           @catalog.apply
         end
@@ -237,14 +238,38 @@ describe Puppet::Type.type(:package) do
 
       it "should do nothing if the current version is equal to the desired version" do
         @provider.stubs(:properties).returns(:ensure => "1.0")
+        @package.property(:ensure).insync?('1.0').should be_true
         @provider.expects(:install).never
         @catalog.apply
       end
 
       it "should install if the current version is not equal to the specified version" do
         @provider.stubs(:properties).returns(:ensure => "2.0")
+        @package.property(:ensure).insync?('2.0').should be_false
         @provider.expects(:install)
         @catalog.apply
+      end
+
+      describe "when current value is an array" do
+        let(:installed_versions) { ["1.0", "2.0", "3.0"] }
+
+        before (:each) do
+          @provider.stubs(:properties).returns(:ensure => installed_versions)
+        end
+
+        it "should install if value not in the array" do
+          @package[:ensure] = "1.5"
+          @package.property(:ensure).insync?(installed_versions).should be_false
+          @provider.expects(:install)
+          @catalog.apply
+        end
+
+        it "should not install if value is in the array" do
+          @package[:ensure] = "2.0"
+          @package.property(:ensure).insync?(installed_versions).should be_true
+          @provider.expects(:install).never
+          @catalog.apply
+        end
       end
     end
   end

@@ -12,33 +12,26 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   commands :gemcmd => "gem"
 
-  def self.gemlist(hash)
-    command = [command(:gemcmd), "list"]
+  def self.gemlist(options)
+    gem_list_command = [command(:gemcmd), "list"]
 
-    if hash[:local]
-      command << "--local"
+    if options[:local]
+      gem_list_command << "--local"
     else
-      command << "--remote"
+      gem_list_command << "--remote"
     end
 
-    if name = hash[:justme]
-      command << name + "$"
+    if name = options[:justme]
+      gem_list_command << name + "$"
     end
 
     begin
-      list = execute(command).split("\n").collect do |set|
-        if gemhash = gemsplit(set)
-          gemhash[:provider] = :gem
-          gemhash
-        else
-          nil
-        end
-      end.compact
+      list = execute(gem_list_command).lines.map {|set| gemsplit(set) }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not list gems: #{detail}"
     end
 
-    if hash[:justme]
+    if options[:justme]
       return list.shift
     else
       return list
@@ -46,14 +39,19 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def self.gemsplit(desc)
-    case desc
-    when /^\*\*\*/, /^\s*$/, /^\s+/; return nil
-    when /^(\S+)\s+\((.+)\)/
+    # `gem list` when output console has a line like:
+    # *** LOCAL GEMS ***
+    # but when it's not to the console that line
+    # and all blank lines are stripped
+    # so we don't need to check for them
+
+    if desc =~ /^(\S+)\s+\((.+)\)/
       name = $1
-      version = $2.split(/,\s*/)[0]
-      return {
-        :name => name,
-        :ensure => version
+      versions = $2.split(/,\s*/)
+      {
+        :name     => name,
+        :ensure   => versions,
+        :provider => :gem
       }
     else
       Puppet.warning "Could not match #{desc}"
