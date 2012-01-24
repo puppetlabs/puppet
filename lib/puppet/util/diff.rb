@@ -4,7 +4,9 @@ module Puppet::Util::Diff
   require 'tempfile'
 
   def diff(old, new)
-    command = [Puppet[:diff]]
+    return '' unless diff_cmd = Puppet[:diff] and diff_cmd != ""
+
+    command = [diff_cmd]
     if args = Puppet[:diff_args] and args != ""
       command << args
     end
