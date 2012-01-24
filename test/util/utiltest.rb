@@ -176,7 +176,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     }
     File.chmod(0755, patricidecommand)
     assert_nothing_raised do
-      output = Puppet::Util.execute([patricidecommand], :squelch => true)
+      output = Puppet::Util.execute([patricidecommand], :squelch => true, :failonfail => false)
     end
     assert_equal(nil, output)
     # See what happens if we try and read the pipe to the command...
