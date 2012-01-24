@@ -2,11 +2,17 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:windows), :as_platform => :windows do
+describe Puppet::Type.type(:exec).provider(:windows) do
   include PuppetSpec::Files
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => 'C:\foo', :provider => :windows) }
   let(:provider) { described_class.new(resource) }
+
+  before :each do
+    Facter.stubs(:value).with(:operatingsystem).returns 'Windows'
+    Puppet.features.stubs(:microsoft_windows?).returns(true)
+    Puppet.features.stubs(:posix?).returns(false)
+  end
 
   after :all do
     # This provider may not be suitable on some machines, so we want to reset
