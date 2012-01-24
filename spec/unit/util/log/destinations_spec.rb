@@ -44,18 +44,14 @@ describe Puppet::Util::Log.desttypes[:file] do
       end
     end
 
-    describe "on POSIX systems" do
-      before :each do Puppet.features.stubs(:microsoft_windows?).returns false end
-
+    describe "on POSIX systems", :as_platform => :posix do
       let (:abspath) { '/tmp/log' }
       let (:relpath) { 'log' }
 
       it_behaves_like "file destination"
     end
 
-    describe "on Windows systems" do
-      before :each do Puppet.features.stubs(:microsoft_windows?).returns true end
-
+    describe "on Windows systems", :as_platform => :windows do
       let (:abspath) { 'C:\\temp\\log.txt' }
       let (:relpath) { 'log.txt' }
 

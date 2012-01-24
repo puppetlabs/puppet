@@ -187,12 +187,7 @@ describe Puppet::Type.type(:exec) do
   end
 
   describe "when setting user" do
-    describe "on POSIX systems" do
-      before :each do
-        Puppet.features.stubs(:posix?).returns(true)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
-      end
-
+    describe "on POSIX systems", :as_platform => :posix do
       it "should fail if we are not root" do
         Puppet.features.stubs(:root?).returns(false)
         expect { Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input') }.
@@ -208,10 +203,8 @@ describe Puppet::Type.type(:exec) do
       end
     end
 
-    describe "on Windows systems" do
+    describe "on Windows systems", :as_platform => :windows do
       before :each do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
         Puppet.features.stubs(:root?).returns(true)
       end
 
@@ -489,13 +482,13 @@ describe Puppet::Type.type(:exec) do
         end
       end
     end
+  end
 
-    describe "when setting creates" do
-      it_should_behave_like "all path parameters", :creates, :array => true do
-        def instance(path)
-          # Specify shell provider so we don't have to care about command validation
-          Puppet::Type.type(:exec).new(:name => @executable, :creates => path, :provider => :shell)
-        end
+  describe "when setting creates" do
+    it_should_behave_like "all path parameters", :creates, :array => true do
+      def instance(path)
+        # Specify shell provider so we don't have to care about command validation
+        Puppet::Type.type(:exec).new(:name => @executable, :creates => path, :provider => :shell)
       end
     end
   end
