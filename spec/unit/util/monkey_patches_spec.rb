@@ -53,3 +53,45 @@ describe "Array#combination" do
     [1,2,3,4].combination(3).to_a.should == [[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]
   end
 end
+
+describe IO do
+  include PuppetSpec::Files
+
+  let(:file) { tmpfile('io-binary') }
+  let(:content) { "\x01\x02\x03\x04" }
+
+  describe "::binread" do
+    it "should read in binary mode" do
+      File.open(file, 'wb') {|f| f.write(content) }
+      IO.binread(file).should == content
+    end
+
+    it "should read with a length and offset" do
+      offset = 1
+      length = 2
+      File.open(file, 'wb') {|f| f.write(content) }
+      IO.binread(file, length, offset).should == content[offset..length]
+    end
+
+    it "should raise an error if the file doesn't exist" do
+      expect { IO.binread('/path/does/not/exist') }.to raise_error(Errno::ENOENT)
+    end
+  end
+
+  describe "::binwrite" do
+    it "should write in binary mode" do
+      IO.binwrite(file, content).should == content.length
+      File.open(file, 'rb') {|f| f.read.should == content }
+    end
+
+    it "should write using an offset" do
+      offset = 1
+      IO.binwrite(file, content, offset).should == content.length - offset
+      File.open(file, 'rb') {|f| f.read.should == content[offset..-1] }
+    end
+
+    it "should raise an error if the file doesn't exist" do
+      expect { IO.binwrite('/path/does/not/exist', 'foo') }.to raise_error(Errno::ENOENT)
+    end
+  end
+end

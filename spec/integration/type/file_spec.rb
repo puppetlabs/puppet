@@ -360,7 +360,7 @@ describe Puppet::Type.type(:file) do
 
       File.open(file[:path], "wb") { |f| f.puts "bar" }
 
-      md5 = Digest::MD5.hexdigest(Puppet::Util.binread(file[:path]))
+      md5 = Digest::MD5.hexdigest(IO.binread(file[:path]))
 
       catalog.apply
 

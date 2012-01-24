@@ -314,7 +314,7 @@ describe content do
 
       it "should copy content from the source to the file" do
         @resource.write(@source)
-        Puppet::Util.binread(@filename).should == @source_content
+        IO.binread(@filename).should == @source_content
       end
 
       it "should return the checksum computed" do
@@ -343,7 +343,7 @@ describe content do
 
       it "should write the contents to the file" do
         @resource.write(@source)
-        Puppet::Util.binread(@filename).should == @source_content
+        IO.binread(@filename).should == @source_content
       end
 
       it "should not write anything if source is not found" do

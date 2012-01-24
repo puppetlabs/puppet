@@ -545,19 +545,4 @@ describe Puppet::Util do
       end
     end
   end
-
-  describe "#binread" do
-    let(:contents) { "foo\r\nbar" }
-
-    it "should preserve line endings" do
-      path = tmpfile('util_binread')
-      File.open(path, 'wb') { |f| f.print contents }
-
-      Puppet::Util.binread(path).should == contents
-    end
-
-    it "should raise an error if the file doesn't exist" do
-      expect { Puppet::Util.binread('/path/does/not/exist') }.to raise_error(Errno::ENOENT)
-    end
-  end
 end
