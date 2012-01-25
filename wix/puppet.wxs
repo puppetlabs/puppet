@@ -51,9 +51,11 @@
     -->
     <Feature Id="$(var.OurProductNameWord)Runtime" Title="$(var.OurProductName) Runtime" Level="1">
       <ComponentGroupRef Id="ruby" />
-      <!-- NOT YET IMPLEMENTED
       <ComponentGroupRef Id="puppet" />
       <ComponentGroupRef Id="facter" />
+      <ComponentGroupRef Id="bin" />
+      <!-- We may not need an etc directory out of the box.
+      <ComponentGroupRef Id="etc" />
       -->
     </Feature>
 

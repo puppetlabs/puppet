@@ -95,4 +95,31 @@ building MSI packages of Puppet for Windows.  Please see also
 [#11205](http://projects.puppetlabs.com/issues/11205) for up to date progress
 on this project.
 
+To build a specific version:
+
+    rake windows:checkout[refs/tags/2.7.10,refs/tags/1.6.4]
+    rake clean
+    rake windows:build
+
+To build a specific integration branch:
+
+    rake windows:checkout[refs/remotes/origin/2.7.x,refs/remotes/origin/1.6.x]
+    rake clean
+    rake windows:build
+
+To build from some other repository:
+
+    rake clobber
+    rake windows:clone[git://github.com/jeffmccune/puppet.git]
+    rake windows:checkout[refs/remotes/origin/feature/2.7.x/12066_myfeature]
+    rake clean
+    rake windows:build
+
+Note that the `downloads` directory is treated as a cache of sorts.  The
+version of Puppet and Facter checked out in the downloads directory will be
+copied into the staging directory and rolled into the MSI package.  The build
+task will not check out a different version but the checkout task will.  If a
+specific set of versions are to be built, I recommend using the checkout task
+to stage the appropriate version in the next build task.
+
 EOF

@@ -44,6 +44,7 @@ rescue LoadError
 end
 require 'optparse'
 require 'ostruct'
+require 'tempfile'
 
 begin
   require 'rdoc/rdoc'
@@ -420,22 +421,19 @@ def install_binfile(from, op_file, target)
       installed_wrapper = true
     end
 
-    if not installed_wrapper
-      tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
-      cwv = <<-EOS
-@echo off
-setlocal
-set RUBY_BIN=%~dp0
-set RUBY_BIN=%RUBY_BIN:\\=/%
-"%RUBY_BIN%ruby.exe" -x "%RUBY_BIN%puppet" %*
-EOS
-      File.open(tmp_file2, "w") { |cw| cw.puts cwv }
-      FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
-
-      File.unlink(tmp_file2)
+    if not installed_wrapper then
+      Tempfile.open([op_file, '.bat']) do |output|
+        File.open(File.join(File.dirname(__FILE__), "conf/windows/stagedir/bin/#{op_file}.bat"), 'r') do |input|
+          output.write input.read
+        end
+        # Flush the buffered writes before installing the file.
+        output.close
+        FileUtils.install(output.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
+      end
       installed_wrapper = true
     end
   end
+
   FileUtils.install(tmp_file, File.join(target, op_file), :mode => 0755, :verbose => true)
   File.unlink(tmp_file)
 end
