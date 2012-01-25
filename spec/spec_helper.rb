@@ -105,6 +105,11 @@ RSpec.configure do |config|
     end
     $saved_indirection_state = nil
 
+    # Some tests can cause us to connect, in which case the lingering
+    # connection is a resource that can cause unexpected failure in later
+    # tests, as well as sharing state accidentally.
+    Puppet.features.rails? and ActiveRecord::Base.remove_connection
+
     # This will perform a GC between tests, but only if actually required.  We
     # experimented with forcing a GC run, and that was less efficient than
     # just letting it run all the time.
