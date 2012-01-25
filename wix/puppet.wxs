@@ -53,6 +53,8 @@
       <ComponentGroupRef Id="ruby" />
       <ComponentGroupRef Id="puppet" />
       <ComponentGroupRef Id="facter" />
+      <ComponentGroupRef Id="bin" />
+      <ComponentGroupRef Id="etc" />
     </Feature>
 
   </Product>
