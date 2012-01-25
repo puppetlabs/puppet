@@ -24,10 +24,6 @@ require 'puppet_spec/matchers'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 
-Pathname.glob("#{dir}/shared_contexts/*.rb") do |file|
-  require file.relative_path_from(Pathname.new(dir))
-end
-
 Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
