@@ -102,9 +102,11 @@ class Puppet::Parser::Collector
 
       # key is '#{type}/#{name}', and host and filter.
       found = Puppet::Resource.indirection.
-        search(@type, :host => @scope.host, :filter => @equery)
+        search(@type, :host => @scope.host, :filter => @equery, :scope => @scope)
 
-      found.map {|x| x.to_resource(@scope) }.each do |item|
+      found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
+
+      found_resources.each do |item|
         if existing = @scope.findresource(item.type, item.title)
           unless existing.collector_id == item.collector_id
             # unless this is the one we've already collected

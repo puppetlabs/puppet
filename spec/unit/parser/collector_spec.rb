@@ -287,19 +287,14 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   context "with storeconfigs enabled" do
     before :each do
-      ActiveRecord::Base.remove_connection
-
       dir = Pathname(tmpdir('puppet-var'))
       Puppet[:vardir]       = dir.to_s
       Puppet[:dbadapter]    = 'sqlite3'
       Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
       Puppet[:storeconfigs] = true
       Puppet[:environment]  = "production"
+      Puppet[:storeconfigs_backend] = "active_record"
       Puppet::Rails.init
-    end
-
-    after :each do
-      ActiveRecord::Base.remove_connection
     end
 
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
@@ -336,7 +331,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       one.should_not be_virtual
     end
 
-    it "should convert all found resources into parser resources" do
+    it "should convert all found resources into parser resources if necessary" do
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
@@ -348,6 +343,19 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       result.first.should be_an_instance_of Puppet::Parser::Resource
       result.first.type.should == 'Notify'
       result.first.title.should == 'whammo'
+    end
+
+    it "should leave parser resources alone" do
+      resource = Puppet::Parser::Resource.new(:file, "/tmp/foo", :scope => @scope)
+      resource2 = Puppet::Parser::Resource.new(:file, "/tmp/bar", :scope => @scope)
+      resource.expects(:to_resource).never
+      resource2.expects(:to_resource).never
+
+      resources = [resource, resource2]
+
+      Puppet::Resource.indirection.stubs(:search).returns resources
+
+      @collector.evaluate.should == resources
     end
 
     it "should override all exported collected resources if collector has an override" do

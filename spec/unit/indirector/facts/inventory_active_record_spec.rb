@@ -34,7 +34,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
 
   after :each do
     Puppet::Rails.teardown
-    ActiveRecord::Base.remove_connection
   end
 
   describe "#save" do
