@@ -29,6 +29,14 @@ describe Puppet::Type.type(:filebucket) do
     Puppet::Type.type(:filebucket).new(:name => "main")[:server].should == Puppet[:server]
   end
 
+  it "should use the set the server to Puppet[:server] by default path" do
+    Puppet::Type.type(:filebucket).new(:name => "main", :path => '/tmp/bucket')[:server].should == Puppet[:server]
+  end
+
+  it "should set the path to false is server is provided" do
+    Puppet::Type.type(:filebucket).new(:name => "main", :server => 'puppet')[:path].should == false
+  end
+
   it "be local by default" do
     bucket = Puppet::Type.type(:filebucket).new :name => "main"
 

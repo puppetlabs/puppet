@@ -21,9 +21,7 @@ module Puppet
 
           # Define the bucket
           filebucket { 'main':
-            server => puppet,
-            path   => false,
-            # Due to a known issue, path must be set to false for remote filebuckets.
+            server => puppet.puppetlabs.lan
           }
 
           # Specify it as the default target
@@ -45,7 +43,17 @@ module Puppet
 
         Due to a known issue, you currently must set the `path` attribute to
         false if you wish to specify a `server` attribute."
-      defaultto { Puppet[:server] }
+
+      # Setting value to undef so we know whether the value is provide by user.
+      defaultto { :undef }
+      munge do |value|
+        if value == :undef
+          value = Puppet[:server]
+        else
+          resource[:path] = false
+        end
+        value
+      end
     end
 
     newparam(:port) do
@@ -58,9 +66,11 @@ module Puppet
     newparam(:path) do
       desc "The path to the local filebucket.  If this is
         unset, then the bucket is remote.  The parameter *server* must
-        can be specified to set the remote server."
+        be specified to set the remote server."
 
-      defaultto { Puppet[:clientbucketdir] }
+      defaultto {
+        Puppet[:clientbucketdir]
+      }
     end
 
     # Create a default filebucket.
