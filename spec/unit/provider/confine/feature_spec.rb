@@ -18,24 +18,22 @@ describe Puppet::Provider::Confine::Feature do
 
   describe "when testing values" do
     before do
-      @features = mock 'features'
-      Puppet.stubs(:features).returns @features
       @confine = Puppet::Provider::Confine::Feature.new("myfeature")
       @confine.label = "eh"
     end
 
     it "should use the Puppet features instance to test validity" do
-      @features.expects(:myfeature?)
+      Puppet.features.expects(:myfeature?)
       @confine.valid?
     end
 
     it "should return true if the feature is present" do
-      @features.expects(:myfeature?).returns true
+      Puppet.features.add(:myfeature) do true end
       @confine.pass?("myfeature").should be_true
     end
 
     it "should return false if the value is false" do
-      @features.expects(:myfeature?).returns false
+      Puppet.features.add(:myfeature) do false end
       @confine.pass?("myfeature").should be_false
     end
 

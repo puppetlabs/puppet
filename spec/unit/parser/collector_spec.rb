@@ -287,20 +287,14 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   context "with storeconfigs enabled" do
     before :each do
-      ActiveRecord::Base.remove_connection
-
       dir = Pathname(tmpdir('puppet-var'))
       Puppet[:vardir]       = dir.to_s
       Puppet[:dbadapter]    = 'sqlite3'
       Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
       Puppet[:storeconfigs] = true
       Puppet[:environment]  = "production"
-      Puppet[:storeconfigs_backend] = :active_record
+      Puppet[:storeconfigs_backend] = "active_record"
       Puppet::Rails.init
-    end
-
-    after :each do
-      ActiveRecord::Base.remove_connection
     end
 
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do

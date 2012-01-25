@@ -34,6 +34,9 @@ RSpec.configure do |config|
   config.mock_with :mocha
 
   config.before :each do
+    # Disabling garbage collection inside each test, and only running it at
+    # the end of each block, gives us an ~ 15 percent speedup, and more on
+    # some platforms *cough* windows *cough* that are a little slower.
     GC.disable
 
     # We need to preserve the current state of all our indirection cache and
@@ -102,6 +105,14 @@ RSpec.configure do |config|
     end
     $saved_indirection_state = nil
 
+    # Some tests can cause us to connect, in which case the lingering
+    # connection is a resource that can cause unexpected failure in later
+    # tests, as well as sharing state accidentally.
+    Puppet.features.rails? and ActiveRecord::Base.remove_connection
+
+    # This will perform a GC between tests, but only if actually required.  We
+    # experimented with forcing a GC run, and that was less efficient than
+    # just letting it run all the time.
     GC.enable
   end
 end
