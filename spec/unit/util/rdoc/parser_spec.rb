@@ -75,11 +75,35 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
     end
 
     it "should read any present README as module documentation" do
-      FileTest.stubs(:readable?).returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(true)
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(false)
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
       @module.expects(:comment=).with("readme")
+
+      @parser.scan_top_level(@topcontainer)
+    end
+
+    it "should read any present README.rdoc as module documentation" do
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(false)
+      File.stubs(:open).returns("readme")
+      @parser.stubs(:parse_elements)
+
+      @module.expects(:comment=).with("readme")
+
+      @parser.scan_top_level(@topcontainer)
+    end
+
+    it "should prefer README.rdoc over README as module documentation" do
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(true)
+      File.stubs(:open).with("module/README", "r").returns("readme")
+      File.stubs(:open).with("module/README.rdoc", "r").returns("readme.rdoc")
+      @parser.stubs(:parse_elements)
+
+      @module.expects(:comment=).with("readme.rdoc")
 
       @parser.scan_top_level(@topcontainer)
     end

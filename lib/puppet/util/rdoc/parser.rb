@@ -129,8 +129,10 @@ class Parser
   def scan_top_level(container)
     # use the module README as documentation for the module
     comment = ""
-    readme = File.join(File.dirname(File.dirname(@input_file_name)), "README")
-    comment = File.open(readme,"r") { |f| f.read } if FileTest.readable?(readme)
+    %w{README README.rdoc}.each do |rfile|
+      readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
+      comment = File.open(readme,"r") { |f| f.read } if FileTest.readable?(readme)
+    end
     look_for_directives_in(container, comment) unless comment.empty?
 
     # infer module name from directory
