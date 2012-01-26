@@ -5,11 +5,6 @@ require 'uri'
 require 'puppet/module_tool/utils'
 
 module Puppet::Forge
-  # Directory names that should not be checksummed.
-  ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
-  FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
-  REPOSITORY_URL = Puppet.settings[:module_repository]
-
   # = Repository
   #
   # This class is a file for accessing remote repositories with modules.

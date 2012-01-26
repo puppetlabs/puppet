@@ -77,7 +77,7 @@ Puppet::Face.define(:module, '1.0.0') do
       modules_by_path.each do |path, modules|
         output << "#{path}\n"
         if options[:tree]
-          # The modules with fewest things depending on them # will be the
+          # The modules with fewest things depending on them will be the
           # parent of the tree.  Can't assume to start with 0 dependencies since
           # dependencies may be cyclical
           modules_by_num_requires = modules.sort_by {|m| m.required_by.size}

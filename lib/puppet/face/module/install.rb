@@ -4,7 +4,7 @@ Puppet::Face.define(:module, '1.0.0') do
     description <<-EOT
       Install a module from a release archive file on-disk or by downloading
       one from a repository. Unpack the archive into the install directory
-      specified by the --install-dir option, which defaults to
+      specified by the --dir option, which defaults to
       #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}
     EOT
 
@@ -25,7 +25,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Install a module into a specific directory:
 
-      $ puppet module install puppetlabs/vcsrepo --install-dir=/usr/share/puppet/modules
+      $ puppet module install puppetlabs/vcsrepo --dir=/usr/share/puppet/modules
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
       /usr/share/puppet/modules/vcsrepo
 
@@ -45,7 +45,7 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--install-dir=", "-i=" do
+    option "--dir=", "-i=" do
       default_to { Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first }
       summary "The directory into which modules are installed."
       description <<-EOT
@@ -71,13 +71,13 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
+      Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
+      Puppet[:module_repository] = options[:module_repository] if options[:module_repository]
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end
 
     when_rendering :console do |return_value|
-      # Get the string representation of the Pathname object and print it to
-      # the console.
-      return_value.to_s
+      ''
     end
   end
 end

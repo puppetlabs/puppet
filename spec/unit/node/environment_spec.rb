@@ -131,7 +131,7 @@ describe Puppet::Node::Environment do
       Puppet[:modulepath] = "#{@path_one}#{sep}#{@path_two}"
     end
 
-    it "should not return non-directories" do
+    it "should not return non-directories and warn" do
       FileTest.expects(:directory?).with(@path_one).returns true
       FileTest.expects(:directory?).with(@path_two).returns false
 
@@ -322,7 +322,6 @@ describe Puppet::Node::Environment do
 
         it "should create modules with the correct environment" do
           FileUtils.mkdir_p(File.join(@first, 'foo'))
-
           env.modules.each {|mod| mod.environment.should == env }
         end
 
