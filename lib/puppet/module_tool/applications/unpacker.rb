@@ -9,7 +9,7 @@ module Puppet::Module::Tool
         @filename = Pathname.new(filename)
         parse_filename!
         super(options)
-        @module_dir = Pathname.new(options[:install_dir]) + @module_name
+        @module_dir = Pathname.new(options[:dir]) + @module_name
       end
 
       def run

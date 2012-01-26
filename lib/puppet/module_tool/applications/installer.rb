@@ -36,18 +36,11 @@ module Puppet::Module::Tool
       end
 
       def run
-        cache_path = @forge.get_release_package(@install_params)
+        cached_paths = @forge.get_release_packages(@install_params)
 
-        module_dir = Unpacker.run(cache_path, options)
-        # Return the Pathname object representing the path to the installed
-        # module. This return value is used by the module_tool face install
-        # action, and displayed to on the console.
-        #
-        # Example return value:
-        #
-        #   "/etc/puppet/modules/apache"
-        #
-        module_dir
+        cached_paths.each do |cache_path|
+          Unpacker.run(cache_path, options)
+        end
       end
     end
   end
