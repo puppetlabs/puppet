@@ -85,7 +85,7 @@ Puppet::Util::Instrumentation.new_listener(:process_name) do
     steps ||= 0
     if string.length > 0 && steps > 0
       steps = steps % string.length
-      return string[steps..-1].concat " -- #{string[0..(steps-1)]}"
+      return string[steps..-1].concat( " -- #{string[0..(steps-1)]}" )
     end
     string
   end
