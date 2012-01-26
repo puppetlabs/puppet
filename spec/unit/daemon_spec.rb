@@ -16,7 +16,7 @@ class TestClient
   end
 end
 
-describe Puppet::Daemon unless Puppet.features.microsoft_windows? do
+describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   before do
     @agent = Puppet::Agent.new(TestClient.new)
     @daemon = Puppet::Daemon.new

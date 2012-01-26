@@ -365,7 +365,7 @@ describe Puppet::Util do
       end
     end
 
-    describe "#execute (posix locale)" unless Puppet.features.microsoft_windows?  do
+    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
       get_env_var_cmd = 'echo $%s'

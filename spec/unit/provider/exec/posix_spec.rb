@@ -113,7 +113,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
 
-    describe "posix locale settings" unless Puppet.features.microsoft_windows? do
+    describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "es_ES.UTF-8"
