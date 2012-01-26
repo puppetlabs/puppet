@@ -75,7 +75,7 @@ class Puppet::Daemon
   def remove_pidfile
     Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
       locker = Puppet::Util::Pidlock.new(pidfile)
-      locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked?
+      locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked? and locker.mine?
     end
   end
 
