@@ -365,16 +365,16 @@ describe Puppet::Util do
       end
     end
 
-    describe "#execute" do
-      # build up a printf-style string that contains an OS-specific command to get the value of an environment variable
+    describe "#execute (posix locale)" unless Puppet.features.microsoft_windows?  do
+      # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
-      get_env_var_cmd = Puppet.features.microsoft_windows? ? 'cmd.exe /c "echo %%%s%%"' : 'echo $%s'
+      get_env_var_cmd = 'echo $%s'
 
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "es_ES.UTF-8"
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
-      # "execute"
+      # "execdaemoute"
       locale_sentinel_env = {}
       Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
 
