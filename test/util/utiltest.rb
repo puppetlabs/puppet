@@ -176,7 +176,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     }
     File.chmod(0755, patricidecommand)
     assert_nothing_raised do
-      output = Puppet::Util.execute([patricidecommand], :squelch => true)
+      output = Puppet::Util.execute([patricidecommand], :squelch => true, :failonfail => false)
     end
     assert_equal(nil, output)
     # See what happens if we try and read the pipe to the command...
@@ -188,36 +188,5 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
   end
 
-  def test_lang_environ_in_execute
-    orig_lang = ENV["LANG"]
-    orig_lc_all = ENV["LC_ALL"]
-    orig_lc_messages = ENV["LC_MESSAGES"]
-    orig_language = ENV["LANGUAGE"]
-
-    cleanup do
-      ENV["LANG"] = orig_lang
-      ENV["LC_ALL"] = orig_lc_all
-      ENV["LC_MESSAGES"] = orig_lc_messages
-      ENV["LANGUAGE"] = orig_lc_messages
-    end
-
-    # Mmm, we love gettext(3)
-    ENV["LANG"] = "en_US"
-    ENV["LC_ALL"] = "en_US"
-    ENV["LC_MESSAGES"] = "en_US"
-    ENV["LANGUAGE"] = "en_US"
-
-    %w{LANG LC_ALL LC_MESSAGES LANGUAGE}.each do |env|
-
-      assert_equal(
-        'C',
-          Puppet::Util.execute(['ruby', '-e', "print ENV['#{env}']"]),
-
-          "Environment var #{env} wasn't set to 'C'")
-
-      assert_equal 'en_US', ENV[env], "Environment var #{env} not set back correctly"
-    end
-
-  end
 end
 
