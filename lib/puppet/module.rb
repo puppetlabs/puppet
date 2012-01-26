@@ -50,7 +50,7 @@ class Puppet::Module
     @name = name
     @path = options[:path]
 
-    #assert_validity
+    assert_validity
 
     if options[:environment].is_a?(Puppet::Node::Environment)
       @environment = options[:environment]
@@ -112,6 +112,7 @@ class Puppet::Module
   def load_metadata
     data = PSON.parse File.read(metadata_file)
     @forge_name = data['name'].gsub('-', '/') if data['name']
+
     [:source, :author, :version, :license, :puppetversion, :dependencies].each do |attr|
       unless value = data[attr.to_s]
         unless attr == :puppetversion
