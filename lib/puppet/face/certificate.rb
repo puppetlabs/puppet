@@ -103,7 +103,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      if options[:ca_location] == :remote
+      if Puppet::SSL::Host.ca_location == :remote
         if options[:allow_dns_alt_names]
           raise ArgumentError, "--allow-dns-alt-names may not be specified with a remote CA"
         end
