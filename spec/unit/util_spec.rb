@@ -383,7 +383,9 @@ describe Puppet::Util do
         # execute is actually setting them.
         Puppet::Util::Execution.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
-            Puppet::Util::execute(get_env_var_cmd % var).strip.should == "C"
+            # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
+            expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
+            Puppet::Util::execute(get_env_var_cmd % var).strip.should == expected_value
           end
         end
       end
@@ -393,7 +395,9 @@ describe Puppet::Util do
         # execute is actually setting them.
         Puppet::Util::Execution.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
-            Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => true}).strip.should == "C"
+            # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
+            expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
+            Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => true}).strip.should == expected_value
           end
         end
       end

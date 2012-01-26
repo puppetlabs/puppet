@@ -25,7 +25,8 @@ module Util
   @@sync_objects = {}.extend MonitorMixin
 
   # This is a list of environment variables that we will set when we want to override the POSIX locale
-  POSIX_LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE']
+  POSIX_LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
+      'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -296,7 +297,7 @@ module Util
         # we are in a forked process, so we currently have access to all of the file descriptors
         # from the parent process... which, in this case, is bad because we don't want
         # to allow the user's command to have access to them.  Therefore, we'll close them off.
-        # (assumes that there are only 256 file descriptors available?)
+        # (assumes that there are only 256 file descriptors used)
         3.upto(256){|fd| IO::new(fd).close rescue nil}
 
         Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
@@ -304,8 +305,11 @@ module Util
 
         # if the caller has requested that we override locale environment variables,
         if (arguments[:override_locale]) then
-          # loop over them and set them to 'C' so that the command will have consistent, predictable output
-          POSIX_LOCALE_ENV_VARS.each { |name| ENV[name] = 'C' }
+          # loop over them and clear them
+          POSIX_LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
+          # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output
+          ENV['LANG'] = 'C'
+          ENV['LC_ALL'] = 'C'
         end
         Kernel.exec(*command)
       rescue => detail
