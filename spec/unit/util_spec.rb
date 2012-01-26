@@ -161,7 +161,7 @@ describe Puppet::Util do
     let(:pid) { 5501 }
     let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
 
-    describe "#execute_posix" do
+    describe "#execute_posix (stubs)" do
       before :each do
         # Most of the things this method does are bad to do during specs. :/
         Kernel.stubs(:fork).returns(pid).yields
@@ -233,7 +233,7 @@ describe Puppet::Util do
       end
     end
 
-    describe "#execute_windows" do
+    describe "#execute_windows (stubs)" do
       let(:proc_info_stub) { stub 'processinfo', :process_id => pid }
 
       before :each do
@@ -267,7 +267,7 @@ describe Puppet::Util do
       end
     end
 
-    describe "#execute" do
+    describe "#execute (stubs)" do
       before :each do
         Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
       end
@@ -365,6 +365,82 @@ describe Puppet::Util do
       end
     end
 
+    describe "#execute" do
+      # build up a printf-style string that contains an OS-specific command to get the value of an environment variable
+      # from the operating system.  We can substitute into this with the names of the desired environment variables later.
+      get_env_var_cmd = Puppet.features.microsoft_windows? ? 'cmd.exe /c "echo %%%s%%"' : 'echo $%s'
+
+      # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
+      # system.
+      lang_sentinel_value = "es_ES.UTF-8"
+      # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
+      # "execute"
+      locale_sentinel_env = {}
+      Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
+
+      it "should override the locale environment variables when :override_locale is not set (defaults to true)" do
+        # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
+        # execute is actually setting them.
+        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+            # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
+            expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
+            Puppet::Util::execute(get_env_var_cmd % var).strip.should == expected_value
+          end
+        end
+      end
+
+      it "should override the LANG environment variable when :override_locale is set to true" do
+        # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
+        # execute is actually setting them.
+        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+            # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
+            expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
+            Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => true}).strip.should == expected_value
+          end
+        end
+      end
+
+      it "should *not* override the LANG environment variable when :override_locale is set to false" do
+        # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
+        # execute is not setting them.
+        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+            Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => false}).strip.should == lang_sentinel_value
+          end
+        end
+      end
+
+      it "should have restored the LANG and locale environment variables after execution" do
+        # we'll do this once without any sentinel values, to give us a little more test coverage
+        orig_env_vals = {}
+        Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          orig_env_vals[var] = ENV[var]
+        end
+        # now we can really execute any command--doesn't matter what it is...
+        Puppet::Util::execute(get_env_var_cmd % 'anything', {:override_locale => true})
+        # now we check and make sure the original environment was restored
+        Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          ENV[var].should == orig_env_vals[var]
+        end
+
+        # now, once more... but with our sentinel values
+        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+          # now we can really execute any command--doesn't matter what it is...
+          Puppet::Util::execute(get_env_var_cmd % 'anything', {:override_locale => true})
+          # now we check and make sure the original environment was restored
+          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+            ENV[var].should == locale_sentinel_env[var]
+          end
+        end
+
+      end
+
+
+
+    end
+
     describe "after execution" do
       let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
 
@@ -393,7 +469,7 @@ describe Puppet::Util do
           then.returns(stdout).
           then.returns(stderr)
 
-        Puppet::Util.execute('test command', :squelch => true)
+        Puppet::Util.execute('test command', {:squelch => true, :combine => false})
       end
 
       it "should read and return the output if squelch is false" do
@@ -445,7 +521,19 @@ describe Puppet::Util do
           Puppet::Util.execute('fail command', :failonfail => true)
         }.not_to raise_error
       end
+
+      it "should respect default values for args that aren't overridden if a partial arg list is passed in" do
+        Process.expects(:waitpid2).with(pid).returns([pid, process_status(1)])
+        expect {
+          # here we are passing in a non-nil value for "arguments", but we aren't specifying a value for
+          # :failonfail.  We expect it to be set to its normal default value (true).
+          Puppet::Util.execute('fail command', { :squelch => true })
+        }.to raise_error(Puppet::ExecutionFailure, /Execution of 'fail command' returned 1/)
+      end
+
     end
+
+
   end
 
   describe "#which" do
