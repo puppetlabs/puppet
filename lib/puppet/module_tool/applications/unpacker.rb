@@ -36,7 +36,7 @@ module Puppet::Module::Tool
       def extract_module_to_install_dir
         delete_existing_installation_or_abort!
 
-        build_dir = Puppet::Module::Tool::Cache.base_path + "tmp-unpacker-#{Digest::SHA1.hexdigest(@filename.basename.to_s)}"
+        build_dir = Puppet::Forge::Cache.base_path + "tmp-unpacker-#{Digest::SHA1.hexdigest(@filename.basename.to_s)}"
         build_dir.mkpath
         begin
           Puppet.notice "Installing #{@filename.basename} to #{@module_dir.expand_path}"

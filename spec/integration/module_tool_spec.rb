@@ -8,7 +8,7 @@ def stub_repository_read(code, body)
   kind = Net::HTTPResponse.send(:response_class, code.to_s)
   response = kind.new('1.0', code.to_s, 'HTTP MESSAGE')
   response.stubs(:read_body).returns(body)
-  Puppet::Module::Tool::Repository.any_instance.stubs(:read_response).returns(response)
+  Puppet::Forge::Repository.any_instance.stubs(:read_response).returns(response)
 end
 
 def stub_installer_read(body)
@@ -16,7 +16,7 @@ def stub_installer_read(body)
 end
 
 def stub_cache_read(body)
-  Puppet::Module::Tool::Cache.any_instance.stubs(:read_retrieve).returns(body)
+  Puppet::Forge::Cache.any_instance.stubs(:read_retrieve).returns(body)
 end
 
 # Return path to temparory directory for testing.
@@ -98,11 +98,11 @@ describe "module_tool", :fails_on_windows => true do
 
   before :each do
     Puppet.settings.stubs(:parse)
-    Puppet::Module::Tool::Cache.clean
+    Puppet::Forge::Cache.clean
   end
 
   after :each do
-    Puppet::Module::Tool::Cache.clean
+    Puppet::Forge::Cache.clean
   end
 
   describe "generate" do
@@ -376,9 +376,8 @@ describe "module_tool", :fails_on_windows => true do
         stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
         FileUtils.rm_rf(@full_module_name)
 
-        stub_installer_read <<-HERE
-          {"file": "/foo/bar/#{@release_name}.tar.gz", "version": "#{@version}"}
-        HERE
+        release = {"file" => "/foo/bar/#{@release_name}.tar.gz", "version" => "#{@version}"}
+        Puppet::Forge::Forge.any_instance.stubs(:get_release).returns(release)
 
         Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options)
 
@@ -426,9 +425,8 @@ describe "module_tool", :fails_on_windows => true do
         stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
         FileUtils.rm_rf(@full_module_name)
 
-        stub_installer_read <<-HERE
-          {"file": "/foo/bar/#{@release_name}.tar.gz", "version": "#{@version}"}
-        HERE
+        release = {"file" => "/foo/bar/#{@release_name}.tar.gz", "version" => "#{@version}"}
+        Puppet::Forge::Forge.any_instance.stubs(:get_release).returns(release)
 
         Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options).should be_kind_of(Pathname)
       end
@@ -441,9 +439,9 @@ describe "module_tool", :fails_on_windows => true do
     it "should clean cache" do
       run do
         build_and_install_module
-        Puppet::Module::Tool::Cache.base_path.directory?.should == true
+        Puppet::Forge::Cache.base_path.directory?.should == true
         Puppet::Module::Tool::Applications::Cleaner.run
-        Puppet::Module::Tool::Cache.base_path.directory?.should == false
+        Puppet::Forge::Cache.base_path.directory?.should == false
       end
     end
 
