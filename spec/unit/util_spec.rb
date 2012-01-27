@@ -376,13 +376,13 @@ describe Puppet::Util do
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
       # "execute"
       locale_sentinel_env = {}
-      Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
+      Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
 
       it "should override the locale environment variables when :override_locale is not set (defaults to true)" do
         # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
         # execute is actually setting them.
         Puppet::Util::Execution.withenv(locale_sentinel_env) do
-          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
             expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
             Puppet::Util::execute(get_env_var_cmd % var).strip.should == expected_value
@@ -394,7 +394,7 @@ describe Puppet::Util do
         # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
         # execute is actually setting them.
         Puppet::Util::Execution.withenv(locale_sentinel_env) do
-          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             # we expect that all of the POSIX vars will have been cleared except for LANG and LC_ALL
             expected_value = (['LANG', 'LC_ALL'].include?(var)) ? "C" : ""
             Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => true}).strip.should == expected_value
@@ -406,7 +406,7 @@ describe Puppet::Util do
         # temporarily override the locale environment vars with a sentinel value, so that we can confirm that
         # execute is not setting them.
         Puppet::Util::Execution.withenv(locale_sentinel_env) do
-          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             Puppet::Util::execute(get_env_var_cmd % var, {:override_locale => false}).strip.should == lang_sentinel_value
           end
         end
@@ -415,13 +415,13 @@ describe Puppet::Util do
       it "should have restored the LANG and locale environment variables after execution" do
         # we'll do this once without any sentinel values, to give us a little more test coverage
         orig_env_vals = {}
-        Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+        Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
           orig_env_vals[var] = ENV[var]
         end
         # now we can really execute any command--doesn't matter what it is...
         Puppet::Util::execute(get_env_var_cmd % 'anything', {:override_locale => true})
         # now we check and make sure the original environment was restored
-        Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+        Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
           ENV[var].should == orig_env_vals[var]
         end
 
@@ -430,7 +430,7 @@ describe Puppet::Util do
           # now we can really execute any command--doesn't matter what it is...
           Puppet::Util::execute(get_env_var_cmd % 'anything', {:override_locale => true})
           # now we check and make sure the original environment was restored
-          Puppet::Util::POSIX_LOCALE_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             ENV[var].should == locale_sentinel_env[var]
           end
         end
@@ -449,14 +449,14 @@ describe Puppet::Util do
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
       # "execute"
       user_sentinel_env = {}
-      Puppet::Util::POSIX_USER_ENV_VARS.each { |var| user_sentinel_env[var] = user_sentinel_value }
+      Puppet::Util::POSIX::USER_ENV_VARS.each { |var| user_sentinel_env[var] = user_sentinel_value }
 
       it "should unset user-related environment vars during execution" do
         # first we set up a temporary execution environment with sentinel values for the user-related environment vars
         # that we care about.
         Puppet::Util::Execution.withenv(user_sentinel_env) do
           # with this environment, we loop over the vars in question
-          Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
             # ensure that our temporary environment is set up as we expect
             ENV[var].should == user_sentinel_env[var]
 
@@ -473,13 +473,13 @@ describe Puppet::Util do
       it "should have restored the user-related environment variables after execution" do
         # we'll do this once without any sentinel values, to give us a little more test coverage
         orig_env_vals = {}
-        Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+        Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
           orig_env_vals[var] = ENV[var]
         end
         # now we can really execute any command--doesn't matter what it is...
         Puppet::Util::execute(get_env_var_cmd % 'anything')
         # now we check and make sure the original environment was restored
-        Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+        Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
           ENV[var].should == orig_env_vals[var]
         end
 
@@ -488,7 +488,7 @@ describe Puppet::Util do
           # now we can really execute any command--doesn't matter what it is...
           Puppet::Util::execute(get_env_var_cmd % 'anything')
           # now we check and make sure the original environment was restored
-          Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+          Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
             ENV[var].should == user_sentinel_env[var]
           end
         end

@@ -1,6 +1,16 @@
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
 
+  # This is a list of environment variables that we will set when we want to override the POSIX locale
+  LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
+                           'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
+
+  # This is a list of user-related environment variables that we will unset when we want to provide a pristine
+  # environment for "exec" runs
+  USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
+
+
+
   # Retrieve a field from a POSIX Etc object.  The id can be either an integer
   # or a name.  This only works for users and groups.  It's also broken on
   # some platforms, unfortunately, which is why we fall back to the other

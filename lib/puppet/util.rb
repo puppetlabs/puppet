@@ -24,13 +24,6 @@ module Util
 
   @@sync_objects = {}.extend MonitorMixin
 
-  # This is a list of environment variables that we will set when we want to override the POSIX locale
-  POSIX_LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
-      'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
-
-  # This is a list of user-related environment variables that we will unset when we want to provide a pristine
-  # environment for "exec" runs
-  POSIX_USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -310,7 +303,7 @@ module Util
         # if the caller has requested that we override locale environment variables,
         if (arguments[:override_locale]) then
           # loop over them and clear them
-          POSIX_LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
+          Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
           # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output
           # it's OK to manipulate these directly rather than, e.g., via "withenv", because we are in
           # a forked process.
@@ -323,7 +316,7 @@ module Util
         # effects relating to user / home dir environment vars.
         # it's OK to manipulate these directly rather than, e.g., via "withenv", because we are in
         # a forked process.
-        POSIX_USER_ENV_VARS.each { |name| ENV.delete(name) }
+        Puppet::Util::POSIX::USER_ENV_VARS.each { |name| ENV.delete(name) }
 
         arguments[:custom_environment] ||= {}
         Puppet::Util::Execution.withenv(arguments[:custom_environment]) do
