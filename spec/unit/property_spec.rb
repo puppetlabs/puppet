@@ -3,6 +3,8 @@ require 'spec_helper'
 require 'puppet/property'
 
 describe Puppet::Property do
+  let :resource do Puppet::Type.type(:host).new :name => "foo" end
+
   let :subclass do
     # We need a completely fresh subclass every time, because we modify both
     # class and instance level things inside the tests.
@@ -11,8 +13,6 @@ describe Puppet::Property do
     subclass
   end
 
-  let :provider do mock('provider') end
-  let :resource do stub_everything('resource', :provider => provider) end
   let :property do subclass.new :resource => resource end
 
   it "should be able to look up the modified name for a given value" do
@@ -105,38 +105,34 @@ describe Puppet::Property do
   end
 
   describe "when creating an event" do
-    # Use a real resource so we can test the event creation integration
-    let :resource do Puppet::Type.type(:host).new :name => "foo" end
-    let :instance do
-      instance = subclass.new(:resource => resource)
-      instance.stubs(:should).returns "myval"
-      instance
+    before :each do
+      property.stubs(:should).returns "myval"
     end
 
     it "should use an event from the resource as the base event" do
       event = Puppet::Transaction::Event.new
       resource.expects(:event).returns event
 
-      instance.event.should equal(event)
+      property.event.should equal(event)
     end
 
     it "should have the default event name" do
-      instance.expects(:event_name).returns :my_event
-      instance.event.name.should == :my_event
+      property.expects(:event_name).returns :my_event
+      property.event.name.should == :my_event
     end
 
     it "should have the property's name" do
-      instance.event.property.should == instance.name.to_s
+      property.event.property.should == property.name.to_s
     end
 
     it "should have the 'should' value set" do
-      instance.stubs(:should).returns "foo"
-      instance.event.desired_value.should == "foo"
+      property.stubs(:should).returns "foo"
+      property.event.desired_value.should == "foo"
     end
 
     it "should provide its path as the source description" do
-      instance.stubs(:path).returns "/my/param"
-      instance.event.source_description.should == "/my/param"
+      property.stubs(:path).returns "/my/param"
+      property.event.source_description.should == "/my/param"
     end
   end
 
@@ -285,7 +281,7 @@ describe Puppet::Property do
     it "should validate that all required features are present" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      provider.expects(:satisfies?).with([:a, :b]).returns true
+      resource.provider.expects(:satisfies?).with([:a, :b]).returns true
 
       property.should = :foo
     end
@@ -293,7 +289,7 @@ describe Puppet::Property do
     it "should fail if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      provider.expects(:satisfies?).with([:a, :b]).returns false
+      resource.provider.expects(:satisfies?).with([:a, :b]).returns false
 
       lambda { property.should = :foo }.should raise_error(Puppet::Error)
     end
@@ -301,7 +297,7 @@ describe Puppet::Property do
     it "should internally raise an ArgumentError if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      provider.expects(:satisfies?).with([:a, :b]).returns false
+      resource.provider.expects(:satisfies?).with([:a, :b]).returns false
 
       lambda { property.validate_features_per_value :foo }.should raise_error(ArgumentError)
     end
@@ -309,7 +305,7 @@ describe Puppet::Property do
     it "should validate that all required features are present for regexes" do
       value = subclass.newvalue(/./, :required_features => [:a, :b])
 
-      provider.expects(:satisfies?).with([:a, :b]).returns true
+      resource.provider.expects(:satisfies?).with([:a, :b]).returns true
 
       property.should = "foo"
     end
@@ -317,7 +313,7 @@ describe Puppet::Property do
     it "should support specifying an individual required feature" do
       value = subclass.newvalue(/./, :required_features => :a)
 
-      provider.expects(:satisfies?).returns true
+      resource.provider.expects(:satisfies?).returns true
 
       property.should = "foo"
     end
@@ -368,7 +364,7 @@ describe Puppet::Property do
     describe "that was defined without a block" do
       it "should call the settor on the provider" do
         subclass.newvalue(:bar)
-        provider.expects(:foo=).with :bar
+        resource.provider.expects(:foo=).with :bar
         property.set(:bar)
       end
     end
