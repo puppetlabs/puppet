@@ -106,8 +106,6 @@ describe Puppet::Property do
 
   describe "when creating an event" do
     before :each do
-      @event = Puppet::Transaction::Event.new
-
       # Use a real resource so we can test the event creation integration
       @resource = Puppet::Type.type(:host).new :name => "foo"
       @instance = subclass.new(:resource => @resource)
