@@ -141,17 +141,18 @@ describe Puppet::Property do
   end
 
   describe "when shadowing metaparameters" do
-    before :each do
-      @shadow_class = Class.new(Puppet::Property) do
+    let :shadow_class do
+      shadow_class = Class.new(Puppet::Property) do
         @name = :alias
       end
-      @shadow_class.initvars
+      shadow_class.initvars
+      shadow_class
     end
 
     it "should create an instance of the metaparameter at initialization" do
       Puppet::Type.metaparamclass(:alias).expects(:new).with(:resource => resource)
 
-      @shadow_class.new :resource => resource
+      shadow_class.new :resource => resource
     end
 
     it "should munge values using the shadow's munge method" do
@@ -160,7 +161,7 @@ describe Puppet::Property do
 
       shadow.expects(:munge).with "foo"
 
-      property = @shadow_class.new :resource => resource
+      property = shadow_class.new :resource => resource
       property.munge("foo")
     end
   end
