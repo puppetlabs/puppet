@@ -12,11 +12,9 @@ describe Puppet::Property do
   end
 
   let :provider do mock('provider') end
-
+  let :resource do stub_everything('resource', :provider => provider) end
   before :each do
-    @resource = stub 'resource', :provider => provider
-    @resource.stub_everything
-    @property = subclass.new :resource => @resource
+    @property = subclass.new :resource => resource
   end
 
   it "should be able to look up the modified name for a given value" do
@@ -160,9 +158,9 @@ describe Puppet::Property do
     end
 
     it "should create an instance of the metaparameter at initialization" do
-      Puppet::Type.metaparamclass(:alias).expects(:new).with(:resource => @resource)
+      Puppet::Type.metaparamclass(:alias).expects(:new).with(:resource => resource)
 
-      @shadow_class.new :resource => @resource
+      @shadow_class.new :resource => resource
     end
 
     it "should munge values using the shadow's munge method" do
@@ -171,7 +169,7 @@ describe Puppet::Property do
 
       shadow.expects(:munge).with "foo"
 
-      property = @shadow_class.new :resource => @resource
+      property = @shadow_class.new :resource => resource
       property.munge("foo")
     end
   end
