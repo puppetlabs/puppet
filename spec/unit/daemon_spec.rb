@@ -184,7 +184,7 @@ describe Puppet::Daemon do
     end
 
     it "should unlock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile', :locked? => true
+      pidfile = mock 'pidfile', :locked? => true, :mine? => true
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
       pidfile.expects(:unlock).returns true
 
@@ -195,7 +195,7 @@ describe Puppet::Daemon do
     end
 
     it "should warn if it cannot remove the pidfile" do
-      pidfile = mock 'pidfile', :locked? => true
+      pidfile = mock 'pidfile', :locked? => true, :mine? => true
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
       pidfile.expects(:unlock).returns false
 
