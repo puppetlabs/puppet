@@ -436,10 +436,67 @@ describe Puppet::Util do
         end
 
       end
-
-
-
     end
+
+    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows?  do
+      # build up a printf-style string that contains a command to get the value of an environment variable
+      # from the operating system.  We can substitute into this with the names of the desired environment variables later.
+      get_env_var_cmd = 'echo $%s'
+
+      # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
+      # system.
+      user_sentinel_value = "Abracadabra"
+      # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
+      # "execute"
+      user_sentinel_env = {}
+      Puppet::Util::POSIX_USER_ENV_VARS.each { |var| user_sentinel_env[var] = user_sentinel_value }
+
+      it "should unset user-related environment vars during execution" do
+        # first we set up a temporary execution environment with sentinel values for the user-related environment vars
+        # that we care about.
+        Puppet::Util::Execution.withenv(user_sentinel_env) do
+          # with this environment, we loop over the vars in question
+          Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+            # ensure that our temporary environment is set up as we expect
+            ENV[var].should == user_sentinel_env[var]
+
+            # run an "exec" via the provider and ensure that it unsets the vars
+            Puppet::Util::execute(get_env_var_cmd % var).strip.should == ""
+
+            # ensure that after the exec, our temporary env is still intact
+            ENV[var].should == user_sentinel_env[var]
+          end
+
+        end
+      end
+
+      it "should have restored the user-related environment variables after execution" do
+        # we'll do this once without any sentinel values, to give us a little more test coverage
+        orig_env_vals = {}
+        Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+          orig_env_vals[var] = ENV[var]
+        end
+        # now we can really execute any command--doesn't matter what it is...
+        Puppet::Util::execute(get_env_var_cmd % 'anything')
+        # now we check and make sure the original environment was restored
+        Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+          ENV[var].should == orig_env_vals[var]
+        end
+
+        # now, once more... but with our sentinel values
+        Puppet::Util::Execution.withenv(user_sentinel_env) do
+          # now we can really execute any command--doesn't matter what it is...
+          Puppet::Util::execute(get_env_var_cmd % 'anything')
+          # now we check and make sure the original environment was restored
+          Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+            ENV[var].should == user_sentinel_env[var]
+          end
+        end
+
+      end
+    end
+
+
 
     describe "after execution" do
       let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }

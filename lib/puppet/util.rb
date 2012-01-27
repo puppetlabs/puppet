@@ -28,6 +28,10 @@ module Util
   POSIX_LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
       'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
 
+  # This is a list of user-related environment variables that we will unset when we want to provide a pristine
+  # environment for "exec" runs
+  POSIX_USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
+
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
@@ -308,10 +312,23 @@ module Util
           # loop over them and clear them
           POSIX_LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
           # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output
+          # it's OK to manipulate these directly rather than, e.g., via "withenv", because we are in
+          # a forked process.
           ENV['LANG'] = 'C'
           ENV['LC_ALL'] = 'C'
         end
-        Kernel.exec(*command)
+
+        # unset all of the user-related environment variables so that different methods of starting puppet
+        # (automatic start during boot, via 'service', via /etc/init.d, etc.) won't have unexpected side
+        # effects relating to user / home dir environment vars.
+        # it's OK to manipulate these directly rather than, e.g., via "withenv", because we are in
+        # a forked process.
+        POSIX_USER_ENV_VARS.each { |name| ENV.delete(name) }
+
+        arguments[:custom_environment] ||= {}
+        Puppet::Util::Execution.withenv(arguments[:custom_environment]) do
+          Kernel.exec(*command)
+        end
       rescue => detail
         puts detail.message
         puts detail.backtrace if Puppet[:trace]
@@ -328,7 +345,11 @@ module Util
       part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
     end.join(" ") if command.is_a?(Array)
 
-    process_info = Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
+    arguments[:custom_environment] ||= {}
+    process_info =
+        Puppet::Util::Execution.withenv(arguments[:custom_environment]) do
+          Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
+        end
     process_info.process_id
   end
   module_function :execute_windows
@@ -348,6 +369,8 @@ module Util
   #     the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
   #     This ensures that the output of the command will be formatted consistently, making it predictable for parsing.
   #     Passing in a value of false for this option will allow the command to be executed using the user/system locale.
+  #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
+  #     of the command
   def execute(command, arguments = {})
 
     # specifying these here rather than in the method signature to allow callers to pass in a partial
@@ -360,6 +383,7 @@ module Util
         :stdinfile => nil,
         :squelch => false,
         :override_locale => true,
+        :custom_environment => {},
     }
 
     arguments = default_arguments.merge(arguments)

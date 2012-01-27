@@ -16,12 +16,6 @@ test_name "#11860: exec resources should not override system locale"
 #
 #######################################################################################
 
-# utility method that adds an extra backslash to the double quotes in a string; this
-# just lets us keep our manifest strings looking normal
-def escape_quotes(str)
-  str.gsub("\"", '\"')
-end
-
 temp_file_name = "/tmp/11860_exec_should_not_override_locale.txt"
 locale_string = "es_ES.UTF-8"
 

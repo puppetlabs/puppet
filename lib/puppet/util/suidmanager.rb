@@ -157,22 +157,26 @@ module Puppet::Util::SUIDManager
   # [new_gid] (optional) a groupid to run the command as
   # [options] (optional, defaults to {}) a hash of option key/value pairs; currently supported:
   #   :override_locale (defaults to true) a flag indicating whether or puppet should temporarily override the
-  #   system locale for the duration of the command.  If true, the locale will be set to 'C' to ensure consistent
-  #   output / formatting from the command, which makes it much easier to parse the output.  If false, the system
-  #   locale will be respected.
+  #     system locale for the duration of the command.  If true, the locale will be set to 'C' to ensure consistent
+  #     output / formatting from the command, which makes it much easier to parse the output.  If false, the system
+  #     locale will be respected.
+  #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
+  #     of the command
   def run_and_capture(command, new_uid=nil, new_gid=nil, options = {})
 
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
         :override_locale => true,
+        :custom_environment => {},
     }
 
     options = default_options.merge(options)
 
     output = Puppet::Util.execute(command, :failonfail => false, :combine => true,
                                   :uid => new_uid, :gid => new_gid,
-                                  :override_locale => options[:override_locale])
+                                  :override_locale => options[:override_locale],
+                                  :custom_environment => options[:custom_environment])
     [output, $CHILD_STATUS.dup]
   end
   module_function :run_and_capture
