@@ -25,7 +25,18 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
 
   def unlock(opts = {})
     if mine?
-      File.unlink(@lockfile)
+      begin
+        File.unlink(@lockfile)
+      rescue Errno::ENOENT
+        # Someone deleted it for us ...and so we do nothing.  No point whining
+        # about a problem that the user can't actually do anything about.
+      rescue SystemCallError => e
+        # This one is a real failure though.  No idea what went wrong, but it
+        # is most likely "read only file(system)" or wrong permissions or
+        # something like that.
+        Puppet.err "Could not remove PID file #{@lockfile}: #{e}"
+        puts e.backtrace if Puppet[:trace]
+      end
       true
     else
       false
