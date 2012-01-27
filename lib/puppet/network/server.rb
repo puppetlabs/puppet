@@ -40,8 +40,7 @@ class Puppet::Network::Server
   # Remove the pid file for our daemon.
   def remove_pidfile
     Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
-      locker = Puppet::Util::Pidlock.new(pidfile)
-      locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked?
+      Puppet::Util::Pidlock.new(pidfile).unlock
     end
   end
 

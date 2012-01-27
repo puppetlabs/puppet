@@ -196,36 +196,18 @@ describe Puppet::Network::Server do
     end
 
     it "should do nothing if the pidfile is not present" do
-      pidfile = mock 'pidfile', :locked? => false
+      pidfile = mock 'pidfile', :unlock => false
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
       Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
 
-      pidfile.expects(:unlock).never
       @server.remove_pidfile
     end
 
     it "should unlock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile', :locked? => true
+      pidfile = mock 'pidfile', :unlock => true
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      pidfile.expects(:unlock).returns true
-
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
       Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
 
-      @server.remove_pidfile
-    end
-
-    it "should warn if it cannot remove the pidfile" do
-      pidfile = mock 'pidfile', :locked? => true
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      pidfile.expects(:unlock).returns false
-
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
-
-      Puppet.expects :err
       @server.remove_pidfile
     end
   end

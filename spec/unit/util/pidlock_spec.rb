@@ -88,6 +88,27 @@ describe Puppet::Util::Pidlock do
       @lock.unlock
       File.should_not be_exists(@lockfile)
     end
+
+    it "should not warn if the lockfile was deleted by someone else" do
+      @lock.lock
+      File.unlink(@lockfile)
+
+      Puppet.expects(:err).never # meh
+      @lock.unlock
+    end
+
+    it "should warn if the lockfile can't be deleted" do
+      @lock.lock
+      File.expects(:unlink).with(@lockfile).raises(Errno::EIO)
+      Puppet.expects(:err).with do |argument|
+        argument.should =~ /Input\/output error/
+      end
+      @lock.unlock
+
+      # This is necessary because our cleanup code uses File.unlink
+      File.unstub(:unlink)
+      @lock.unlock
+    end
   end
 
   describe "#locked?" do
@@ -176,6 +197,11 @@ describe Puppet::Util::Pidlock do
       it "should still not be our lock" do
         @lock.unlock
         @lock.should_not be_mine
+      end
+
+      it "should not warn" do
+        Puppet.expects(:err).never
+        @lock.unlock
       end
     end
   end
