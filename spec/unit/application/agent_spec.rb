@@ -83,6 +83,12 @@ describe Puppet::Application::Agent do
 
       @puppetd.options[:fingerprint].should be_false
     end
+
+    it "should init waitforcert to nil" do
+      @puppetd.preinit
+
+      @puppetd.options[:waitforcert].should be_nil
+    end
   end
 
   describe "when handling options" do
@@ -121,6 +127,12 @@ describe Puppet::Application::Agent do
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @puppetd.setup_host
+    end
+
+    it "should override default value for waitforcert from config" do
+      Puppet[:waitforcert] = 10
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
       @puppetd.setup_host
     end
 
