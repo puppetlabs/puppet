@@ -3,74 +3,78 @@ require 'spec_helper'
 require 'puppet/property'
 
 describe Puppet::Property do
-  before do
-    @class = Class.new(Puppet::Property) do
-      @name = :foo
-    end
-    @class.initvars
+  let :subclass do
+    # We need a completely fresh subclass every time, because we modify both
+    # class and instance level things inside the tests.
+    subclass = Class.new(Puppet::Property) do @name = :foo end
+    subclass.initvars
+    subclass
+  end
+
+  before :each do
     @provider = mock 'provider'
     @resource = stub 'resource', :provider => @provider
     @resource.stub_everything
-    @property = @class.new :resource => @resource
-  end
-
-  it "should return its name as a string when converted to a string" do
-    @property.to_s.should == @property.name.to_s
+    @property = subclass.new :resource => @resource
   end
 
   it "should be able to look up the modified name for a given value" do
-    @class.newvalue(:foo)
-    @class.value_name("foo").should == :foo
+    subclass.newvalue(:foo)
+    subclass.value_name("foo").should == :foo
   end
 
   it "should be able to look up the modified name for a given value matching a regex" do
-    @class.newvalue(%r{.})
-    @class.value_name("foo").should == %r{.}
+    subclass.newvalue(%r{.})
+    subclass.value_name("foo").should == %r{.}
   end
 
   it "should be able to look up a given value option" do
-    @class.newvalue(:foo, :event => :whatever)
-    @class.value_option(:foo, :event).should == :whatever
+    subclass.newvalue(:foo, :event => :whatever)
+    subclass.value_option(:foo, :event).should == :whatever
   end
 
   it "should be able to specify required features" do
-    @class.should respond_to(:required_features=)
+    subclass.should respond_to(:required_features=)
   end
 
   {"one" => [:one],:one => [:one],%w{a} => [:a],[:b] => [:b],%w{one two} => [:one,:two],[:a,:b] => [:a,:b]}.each { |in_value,out_value|
     it "should always convert required features into an array of symbols (e.g. #{in_value.inspect} --> #{out_value.inspect})" do
-      @class.required_features = in_value
-      @class.required_features.should == out_value
+      subclass.required_features = in_value
+      subclass.required_features.should == out_value
     end
   }
+
+  it "should return its name as a string when converted to a string" do
+    @property.to_s.should == @property.name.to_s
+  end
 
   it "should be able to shadow metaparameters" do
     @property.must respond_to(:shadow)
   end
 
   describe "when returning the default event name" do
-    before do
+    before :each do
       @resource = stub 'resource'
-      @instance = @class.new(:resource => @resource)
+      @instance = subclass.new(:resource => @resource)
       @instance.stubs(:should).returns "myval"
     end
 
     it "should use the current 'should' value to pick the event name" do
       @instance.expects(:should).returns "myvalue"
-      @class.expects(:value_option).with('myvalue', :event).returns :event_name
+      subclass.expects(:value_option).with('myvalue', :event).returns :event_name
 
       @instance.event_name
     end
 
     it "should return any event defined with the specified value" do
       @instance.expects(:should).returns :myval
-      @class.expects(:value_option).with(:myval, :event).returns :event_name
+      subclass.expects(:value_option).with(:myval, :event).returns :event_name
 
       @instance.event_name.should == :event_name
     end
 
     describe "and the property is 'ensure'" do
-      before do
+      before :each do
         @instance.stubs(:name).returns :ensure
         @resource.expects(:type).returns :mytype
       end
@@ -110,12 +114,12 @@ describe Puppet::Property do
   end
 
   describe "when creating an event" do
-    before do
+    before :each do
       @event = Puppet::Transaction::Event.new
 
       # Use a real resource so we can test the event creation integration
       @resource = Puppet::Type.type(:host).new :name => "foo"
-      @instance = @class.new(:resource => @resource)
+      @instance = subclass.new(:resource => @resource)
       @instance.stubs(:should).returns "myval"
     end
 
@@ -147,7 +151,7 @@ describe Puppet::Property do
   end
 
   describe "when shadowing metaparameters" do
-    before do
+    before :each do
       @shadow_class = Class.new(Puppet::Property) do
         @name = :alias
       end
@@ -173,7 +177,7 @@ describe Puppet::Property do
 
   describe "when defining new values" do
     it "should define a method for each value created with a block that's not a regex" do
-      @class.newvalue(:foo) { }
+      subclass.newvalue(:foo) { }
       @property.must respond_to(:set_foo)
     end
   end
@@ -196,7 +200,7 @@ describe Puppet::Property do
       @property.expects(:munge).with("two").returns :two
 
       # Do this so we get the whole array back.
-      @class.array_matching = :all
+      subclass.array_matching = :all
 
       @property.value = %w{one two}
       @property.should.must == [:one, :two]
@@ -213,24 +217,24 @@ describe Puppet::Property do
     end
 
     it "should return the first set 'should' value if :array_matching is set to :first" do
-      @class.array_matching = :first
+      subclass.array_matching = :first
       @property.should = %w{one two}
       @property.should.must == "one"
     end
 
     it "should return all set 'should' values as an array if :array_matching is set to :all" do
-      @class.array_matching = :all
+      subclass.array_matching = :all
       @property.should = %w{one two}
       @property.should.must == %w{one two}
     end
 
     it "should default to :first array_matching" do
-      @class.array_matching.should == :first
+      subclass.array_matching.should == :first
     end
 
     it "should unmunge the returned value if :array_matching is set to :first" do
       @property.class.unmunge do |v| v.to_sym end
-      @class.array_matching = :first
+      subclass.array_matching = :first
       @property.should = %w{one two}
 
       @property.should.must == :one
@@ -238,7 +242,7 @@ describe Puppet::Property do
 
     it "should unmunge all the returned values if :array_matching is set to :all" do
       @property.class.unmunge do |v| v.to_sym end
-      @class.array_matching = :all
+      subclass.array_matching = :all
       @property.should = %w{one two}
 
       @property.should.must == [:one, :two]
@@ -251,44 +255,44 @@ describe Puppet::Property do
     end
 
     it "should fail if the value is not a defined value or alias and does not match a regex" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
 
       lambda { @property.should = "bar" }.should raise_error
     end
 
     it "should succeeed if the value is one of the defined values" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
 
       lambda { @property.should = :foo }.should_not raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a symbol and the validation uses a string" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
 
       lambda { @property.should = "foo" }.should_not raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a string and the validation uses a symbol" do
-      @class.newvalue("foo")
+      subclass.newvalue("foo")
 
       lambda { @property.should = :foo }.should_not raise_error
     end
 
     it "should succeed if the value is one of the defined aliases" do
-      @class.newvalue("foo")
-      @class.aliasvalue("bar", "foo")
+      subclass.newvalue("foo")
+      subclass.aliasvalue("bar", "foo")
 
       lambda { @property.should = :bar }.should_not raise_error
     end
 
     it "should succeed if the value matches one of the regexes" do
-      @class.newvalue(/./)
+      subclass.newvalue(/./)
 
       lambda { @property.should = "bar" }.should_not raise_error
     end
 
     it "should validate that all required features are present" do
-      @class.newvalue(:foo, :required_features => [:a, :b])
+      subclass.newvalue(:foo, :required_features => [:a, :b])
 
       @provider.expects(:satisfies?).with([:a, :b]).returns true
 
@@ -296,7 +300,7 @@ describe Puppet::Property do
     end
 
     it "should fail if required features are missing" do
-      @class.newvalue(:foo, :required_features => [:a, :b])
+      subclass.newvalue(:foo, :required_features => [:a, :b])
 
       @provider.expects(:satisfies?).with([:a, :b]).returns false
 
@@ -304,7 +308,7 @@ describe Puppet::Property do
     end
 
     it "should internally raise an ArgumentError if required features are missing" do
-      @class.newvalue(:foo, :required_features => [:a, :b])
+      subclass.newvalue(:foo, :required_features => [:a, :b])
 
       @provider.expects(:satisfies?).with([:a, :b]).returns false
 
@@ -312,7 +316,7 @@ describe Puppet::Property do
     end
 
     it "should validate that all required features are present for regexes" do
-      value = @class.newvalue(/./, :required_features => [:a, :b])
+      value = subclass.newvalue(/./, :required_features => [:a, :b])
 
       @provider.expects(:satisfies?).with([:a, :b]).returns true
 
@@ -320,7 +324,7 @@ describe Puppet::Property do
     end
 
     it "should support specifying an individual required feature" do
-      value = @class.newvalue(/./, :required_features => :a)
+      value = subclass.newvalue(/./, :required_features => :a)
 
       @provider.expects(:satisfies?).returns true
 
@@ -334,30 +338,30 @@ describe Puppet::Property do
     end
 
     it "should return return any matching defined values" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
       @property.munge("foo").should == :foo
     end
 
     it "should return any matching aliases" do
-      @class.newvalue(:foo)
-      @class.aliasvalue(:bar, :foo)
+      subclass.newvalue(:foo)
+      subclass.aliasvalue(:bar, :foo)
       @property.munge("bar").should == :foo
     end
 
     it "should return the value if it matches a regex" do
-      @class.newvalue(/./)
+      subclass.newvalue(/./)
       @property.munge("bar").should == "bar"
     end
 
     it "should return the value if no other option is matched" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
       @property.munge("bar").should == "bar"
     end
   end
 
   describe "when syncing the 'should' value" do
     it "should set the value" do
-      @class.newvalue(:foo)
+      subclass.newvalue(:foo)
       @property.should = :foo
       @property.expects(:set).with(:foo)
       @property.sync
@@ -366,13 +370,13 @@ describe Puppet::Property do
 
   describe "when setting a value" do
     it "should catch exceptions and raise Puppet::Error" do
-      @class.newvalue(:foo) { raise "eh" }
+      subclass.newvalue(:foo) { raise "eh" }
       lambda { @property.set(:foo) }.should raise_error(Puppet::Error)
     end
 
     describe "that was defined without a block" do
       it "should call the settor on the provider" do
-        @class.newvalue(:bar)
+        subclass.newvalue(:bar)
         @provider.expects(:foo=).with :bar
         @property.set(:bar)
       end
@@ -380,13 +384,13 @@ describe Puppet::Property do
 
     describe "that was defined with a block" do
       it "should call the method created for the value if the value is not a regex" do
-        @class.newvalue(:bar) {}
+        subclass.newvalue(:bar) {}
         @property.expects(:set_bar)
         @property.set(:bar)
       end
 
       it "should call the provided block if the value is a regex" do
-        @class.newvalue(/./) { self.test }
+        subclass.newvalue(/./) { self.test }
         @property.expects(:test)
         @property.set("foo")
       end
