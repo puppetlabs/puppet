@@ -374,7 +374,7 @@ describe Puppet::Util do
       # system.
       lang_sentinel_value = "es_ES.UTF-8"
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
-      # "execute"
+      # "execdaemoute"
       locale_sentinel_env = {}
       Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
 
