@@ -397,4 +397,98 @@ describe Puppet::Property do
       property.change_to_s("foo", "bar").should =~ /changed/
     end
   end
+
+  shared_examples_for "#insync?" do
+    # We share a lot of behaviour between the all and first matching, so we
+    # use a shared behaviour set to emulate that.  The outside world makes
+    # sure the class, etc, point to the right content.
+    [[], [12], [12, 13]].each do |input|
+      it "should return true if should is empty with is => #{input.inspect}" do
+        property.should = []
+        property.must be_insync(input)
+      end
+    end
+  end
+
+  describe "#insync?" do
+    context "array_matching :all" do
+      # `@should` is an array of scalar values, and `is` is an array of scalar values.
+      before :each do
+        property.class.array_matching = :all
+      end
+
+      it_should_behave_like "#insync?"
+
+      context "if the should value is an array" do
+        before :each do property.should = [1, 2] end
+
+        it "should match if is exactly matches" do
+          property.must be_insync [1, 2]
+        end
+
+        it "should match if it matches, but all stringified" do
+          property.must be_insync ["1", "2"]
+        end
+
+        it "should not match if some-but-not-all values are stringified" do
+          property.must_not be_insync ["1", 2]
+          property.must_not be_insync [1, "2"]
+        end
+
+        it "should not match if order is different but content the same" do
+          property.must_not be_insync [2, 1]
+        end
+
+        it "should not match if there are more items in should than is" do
+          property.must_not be_insync [1]
+        end
+
+        it "should not match if there are less items in should than is" do
+          property.must_not be_insync [1, 2, 3]
+        end
+
+        it "should not match if `is` is empty but `should` isn't" do
+          property.must_not be_insync []
+        end
+      end
+    end
+
+    context "array_matching :first" do
+      # `@should` is an array of scalar values, and `is` is a scalar value.
+      before :each do
+        property.class.array_matching = :first
+      end
+
+      it_should_behave_like "#insync?"
+
+      [[1],                     # only the value
+       [1, 2],                  # matching value first
+       [2, 1],                  # matching value last
+       [0, 1, 2],               # matching value in the middle
+      ].each do |input|
+        it "should by true if one unmodified should value of #{input.inspect} matches what is" do
+          property.should = input
+          property.must be_insync 1
+        end
+
+        it "should be true if one stringified should value of #{input.inspect} matches what is" do
+          property.should = input
+          property.must be_insync "1"
+        end
+      end
+
+      it "should not match if we expect a string but get the non-stringified value" do
+        property.should = ["1"]
+        property.must_not be_insync 1
+      end
+
+      [[0], [0, 2]].each do |input|
+        it "should not match if no should values match what is" do
+          property.should = input
+          property.must_not be_insync 1
+          property.must_not be_insync "1" # shouldn't match either.
+        end
+      end
+    end
+  end
 end
