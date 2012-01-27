@@ -13,9 +13,7 @@ describe Puppet::Property do
 
   let :provider do mock('provider') end
   let :resource do stub_everything('resource', :provider => provider) end
-  before :each do
-    @property = subclass.new :resource => resource
-  end
+  let :property do subclass.new :resource => resource end
 
   it "should be able to look up the modified name for a given value" do
     subclass.newvalue(:foo)
@@ -44,11 +42,11 @@ describe Puppet::Property do
   }
 
   it "should return its name as a string when converted to a string" do
-    @property.to_s.should == @property.name.to_s
+    property.to_s.should == property.name.to_s
   end
 
   it "should be able to shadow metaparameters" do
-    @property.must respond_to(:shadow)
+    property.must respond_to(:shadow)
   end
 
   describe "when returning the default event name" do
@@ -177,54 +175,54 @@ describe Puppet::Property do
   describe "when defining new values" do
     it "should define a method for each value created with a block that's not a regex" do
       subclass.newvalue(:foo) { }
-      @property.must respond_to(:set_foo)
+      property.must respond_to(:set_foo)
     end
   end
 
   describe "when assigning the value" do
     it "should just set the 'should' value" do
-      @property.value = "foo"
-      @property.should.must == "foo"
+      property.value = "foo"
+      property.should.must == "foo"
     end
 
     it "should validate each value separately" do
-      @property.expects(:validate).with("one")
-      @property.expects(:validate).with("two")
+      property.expects(:validate).with("one")
+      property.expects(:validate).with("two")
 
-      @property.value = %w{one two}
+      property.value = %w{one two}
     end
 
     it "should munge each value separately and use any result as the actual value" do
-      @property.expects(:munge).with("one").returns :one
-      @property.expects(:munge).with("two").returns :two
+      property.expects(:munge).with("one").returns :one
+      property.expects(:munge).with("two").returns :two
 
       # Do this so we get the whole array back.
       subclass.array_matching = :all
 
-      @property.value = %w{one two}
-      @property.should.must == [:one, :two]
+      property.value = %w{one two}
+      property.should.must == [:one, :two]
     end
 
     it "should return any set value" do
-      (@property.value = :one).should == :one
+      (property.value = :one).should == :one
     end
   end
 
   describe "when returning the value" do
     it "should return nil if no value is set" do
-      @property.should.must be_nil
+      property.should.must be_nil
     end
 
     it "should return the first set 'should' value if :array_matching is set to :first" do
       subclass.array_matching = :first
-      @property.should = %w{one two}
-      @property.should.must == "one"
+      property.should = %w{one two}
+      property.should.must == "one"
     end
 
     it "should return all set 'should' values as an array if :array_matching is set to :all" do
       subclass.array_matching = :all
-      @property.should = %w{one two}
-      @property.should.must == %w{one two}
+      property.should = %w{one two}
+      property.should.must == %w{one two}
     end
 
     it "should default to :first array_matching" do
@@ -232,62 +230,62 @@ describe Puppet::Property do
     end
 
     it "should unmunge the returned value if :array_matching is set to :first" do
-      @property.class.unmunge do |v| v.to_sym end
+      property.class.unmunge do |v| v.to_sym end
       subclass.array_matching = :first
-      @property.should = %w{one two}
+      property.should = %w{one two}
 
-      @property.should.must == :one
+      property.should.must == :one
     end
 
     it "should unmunge all the returned values if :array_matching is set to :all" do
-      @property.class.unmunge do |v| v.to_sym end
+      property.class.unmunge do |v| v.to_sym end
       subclass.array_matching = :all
-      @property.should = %w{one two}
+      property.should = %w{one two}
 
-      @property.should.must == [:one, :two]
+      property.should.must == [:one, :two]
     end
   end
 
   describe "when validating values" do
     it "should do nothing if no values or regexes have been defined" do
-      lambda { @property.should = "foo" }.should_not raise_error
+      lambda { property.should = "foo" }.should_not raise_error
     end
 
     it "should fail if the value is not a defined value or alias and does not match a regex" do
       subclass.newvalue(:foo)
 
-      lambda { @property.should = "bar" }.should raise_error
+      lambda { property.should = "bar" }.should raise_error
     end
 
     it "should succeeed if the value is one of the defined values" do
       subclass.newvalue(:foo)
 
-      lambda { @property.should = :foo }.should_not raise_error
+      lambda { property.should = :foo }.should_not raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a symbol and the validation uses a string" do
       subclass.newvalue(:foo)
 
-      lambda { @property.should = "foo" }.should_not raise_error
+      lambda { property.should = "foo" }.should_not raise_error
     end
 
     it "should succeeed if the value is one of the defined values even if the definition uses a string and the validation uses a symbol" do
       subclass.newvalue("foo")
 
-      lambda { @property.should = :foo }.should_not raise_error
+      lambda { property.should = :foo }.should_not raise_error
     end
 
     it "should succeed if the value is one of the defined aliases" do
       subclass.newvalue("foo")
       subclass.aliasvalue("bar", "foo")
 
-      lambda { @property.should = :bar }.should_not raise_error
+      lambda { property.should = :bar }.should_not raise_error
     end
 
     it "should succeed if the value matches one of the regexes" do
       subclass.newvalue(/./)
 
-      lambda { @property.should = "bar" }.should_not raise_error
+      lambda { property.should = "bar" }.should_not raise_error
     end
 
     it "should validate that all required features are present" do
@@ -295,7 +293,7 @@ describe Puppet::Property do
 
       provider.expects(:satisfies?).with([:a, :b]).returns true
 
-      @property.should = :foo
+      property.should = :foo
     end
 
     it "should fail if required features are missing" do
@@ -303,7 +301,7 @@ describe Puppet::Property do
 
       provider.expects(:satisfies?).with([:a, :b]).returns false
 
-      lambda { @property.should = :foo }.should raise_error(Puppet::Error)
+      lambda { property.should = :foo }.should raise_error(Puppet::Error)
     end
 
     it "should internally raise an ArgumentError if required features are missing" do
@@ -311,7 +309,7 @@ describe Puppet::Property do
 
       provider.expects(:satisfies?).with([:a, :b]).returns false
 
-      lambda { @property.validate_features_per_value :foo }.should raise_error(ArgumentError)
+      lambda { property.validate_features_per_value :foo }.should raise_error(ArgumentError)
     end
 
     it "should validate that all required features are present for regexes" do
@@ -319,7 +317,7 @@ describe Puppet::Property do
 
       provider.expects(:satisfies?).with([:a, :b]).returns true
 
-      @property.should = "foo"
+      property.should = "foo"
     end
 
     it "should support specifying an individual required feature" do
@@ -327,86 +325,86 @@ describe Puppet::Property do
 
       provider.expects(:satisfies?).returns true
 
-      @property.should = "foo"
+      property.should = "foo"
     end
   end
 
   describe "when munging values" do
     it "should do nothing if no values or regexes have been defined" do
-      @property.munge("foo").should == "foo"
+      property.munge("foo").should == "foo"
     end
 
     it "should return return any matching defined values" do
       subclass.newvalue(:foo)
-      @property.munge("foo").should == :foo
+      property.munge("foo").should == :foo
     end
 
     it "should return any matching aliases" do
       subclass.newvalue(:foo)
       subclass.aliasvalue(:bar, :foo)
-      @property.munge("bar").should == :foo
+      property.munge("bar").should == :foo
     end
 
     it "should return the value if it matches a regex" do
       subclass.newvalue(/./)
-      @property.munge("bar").should == "bar"
+      property.munge("bar").should == "bar"
     end
 
     it "should return the value if no other option is matched" do
       subclass.newvalue(:foo)
-      @property.munge("bar").should == "bar"
+      property.munge("bar").should == "bar"
     end
   end
 
   describe "when syncing the 'should' value" do
     it "should set the value" do
       subclass.newvalue(:foo)
-      @property.should = :foo
-      @property.expects(:set).with(:foo)
-      @property.sync
+      property.should = :foo
+      property.expects(:set).with(:foo)
+      property.sync
     end
   end
 
   describe "when setting a value" do
     it "should catch exceptions and raise Puppet::Error" do
       subclass.newvalue(:foo) { raise "eh" }
-      lambda { @property.set(:foo) }.should raise_error(Puppet::Error)
+      lambda { property.set(:foo) }.should raise_error(Puppet::Error)
     end
 
     describe "that was defined without a block" do
       it "should call the settor on the provider" do
         subclass.newvalue(:bar)
         provider.expects(:foo=).with :bar
-        @property.set(:bar)
+        property.set(:bar)
       end
     end
 
     describe "that was defined with a block" do
       it "should call the method created for the value if the value is not a regex" do
         subclass.newvalue(:bar) {}
-        @property.expects(:set_bar)
-        @property.set(:bar)
+        property.expects(:set_bar)
+        property.set(:bar)
       end
 
       it "should call the provided block if the value is a regex" do
         subclass.newvalue(/./) { self.test }
-        @property.expects(:test)
-        @property.set("foo")
+        property.expects(:test)
+        property.set("foo")
       end
     end
   end
 
   describe "when producing a change log" do
     it "should say 'defined' when the current value is 'absent'" do
-      @property.change_to_s(:absent, "foo").should =~ /^defined/
+      property.change_to_s(:absent, "foo").should =~ /^defined/
     end
 
     it "should say 'undefined' when the new value is 'absent'" do
-      @property.change_to_s("foo", :absent).should =~ /^undefined/
+      property.change_to_s("foo", :absent).should =~ /^undefined/
     end
 
     it "should say 'changed' when neither value is 'absent'" do
-      @property.change_to_s("foo", "bar").should =~ /changed/
+      property.change_to_s("foo", "bar").should =~ /changed/
     end
   end
 end
