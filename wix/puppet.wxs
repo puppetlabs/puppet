@@ -51,10 +51,10 @@
     -->
     <Feature Id="$(var.OurProductNameWord)Runtime" Title="$(var.OurProductName) Runtime" Level="1">
       <ComponentGroupRef Id="ruby" />
-      <!-- NOT YET IMPLEMENTED
       <ComponentGroupRef Id="puppet" />
       <ComponentGroupRef Id="facter" />
-      -->
+      <ComponentGroupRef Id="bin" />
+      <ComponentGroupRef Id="etc" />
     </Feature>
 
   </Product>
