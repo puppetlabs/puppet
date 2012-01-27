@@ -50,63 +50,57 @@ describe Puppet::Property do
   end
 
   describe "when returning the default event name" do
-    before :each do
-      @resource = stub 'resource'
-      @instance = subclass.new(:resource => @resource)
-      @instance.stubs(:should).returns "myval"
-    end
-
     it "should use the current 'should' value to pick the event name" do
-      @instance.expects(:should).returns "myvalue"
+      property.expects(:should).returns "myvalue"
       subclass.expects(:value_option).with('myvalue', :event).returns :event_name
 
-      @instance.event_name
+      property.event_name
     end
 
     it "should return any event defined with the specified value" do
-      @instance.expects(:should).returns :myval
+      property.expects(:should).returns :myval
       subclass.expects(:value_option).with(:myval, :event).returns :event_name
 
-      @instance.event_name.should == :event_name
+      property.event_name.should == :event_name
     end
 
     describe "and the property is 'ensure'" do
       before :each do
-        @instance.stubs(:name).returns :ensure
-        @resource.expects(:type).returns :mytype
+        property.stubs(:name).returns :ensure
+        resource.expects(:type).returns :mytype
       end
 
       it "should use <type>_created if the 'should' value is 'present'" do
-        @instance.expects(:should).returns :present
-        @instance.event_name.should == :mytype_created
+        property.expects(:should).returns :present
+        property.event_name.should == :mytype_created
       end
 
       it "should use <type>_removed if the 'should' value is 'absent'" do
-        @instance.expects(:should).returns :absent
-        @instance.event_name.should == :mytype_removed
+        property.expects(:should).returns :absent
+        property.event_name.should == :mytype_removed
       end
 
       it "should use <type>_changed if the 'should' value is not 'absent' or 'present'" do
-        @instance.expects(:should).returns :foo
-        @instance.event_name.should == :mytype_changed
+        property.expects(:should).returns :foo
+        property.event_name.should == :mytype_changed
       end
 
       it "should use <type>_changed if the 'should value is nil" do
-        @instance.expects(:should).returns nil
-        @instance.event_name.should == :mytype_changed
+        property.expects(:should).returns nil
+        property.event_name.should == :mytype_changed
       end
     end
 
     it "should use <property>_changed if the property is not 'ensure'" do
-      @instance.stubs(:name).returns :myparam
-      @instance.expects(:should).returns :foo
-      @instance.event_name.should == :myparam_changed
+      property.stubs(:name).returns :myparam
+      property.expects(:should).returns :foo
+      property.event_name.should == :myparam_changed
     end
 
     it "should use <property>_changed if no 'should' value is set" do
-      @instance.stubs(:name).returns :myparam
-      @instance.expects(:should).returns nil
-      @instance.event_name.should == :myparam_changed
+      property.stubs(:name).returns :myparam
+      property.expects(:should).returns nil
+      property.event_name.should == :myparam_changed
     end
   end
 
