@@ -11,9 +11,10 @@ describe Puppet::Property do
     subclass
   end
 
+  let :provider do mock('provider') end
+
   before :each do
-    @provider = mock 'provider'
-    @resource = stub 'resource', :provider => @provider
+    @resource = stub 'resource', :provider => provider
     @resource.stub_everything
     @property = subclass.new :resource => @resource
   end
@@ -294,7 +295,7 @@ describe Puppet::Property do
     it "should validate that all required features are present" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      @provider.expects(:satisfies?).with([:a, :b]).returns true
+      provider.expects(:satisfies?).with([:a, :b]).returns true
 
       @property.should = :foo
     end
@@ -302,7 +303,7 @@ describe Puppet::Property do
     it "should fail if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      @provider.expects(:satisfies?).with([:a, :b]).returns false
+      provider.expects(:satisfies?).with([:a, :b]).returns false
 
       lambda { @property.should = :foo }.should raise_error(Puppet::Error)
     end
@@ -310,7 +311,7 @@ describe Puppet::Property do
     it "should internally raise an ArgumentError if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      @provider.expects(:satisfies?).with([:a, :b]).returns false
+      provider.expects(:satisfies?).with([:a, :b]).returns false
 
       lambda { @property.validate_features_per_value :foo }.should raise_error(ArgumentError)
     end
@@ -318,7 +319,7 @@ describe Puppet::Property do
     it "should validate that all required features are present for regexes" do
       value = subclass.newvalue(/./, :required_features => [:a, :b])
 
-      @provider.expects(:satisfies?).with([:a, :b]).returns true
+      provider.expects(:satisfies?).with([:a, :b]).returns true
 
       @property.should = "foo"
     end
@@ -326,7 +327,7 @@ describe Puppet::Property do
     it "should support specifying an individual required feature" do
       value = subclass.newvalue(/./, :required_features => :a)
 
-      @provider.expects(:satisfies?).returns true
+      provider.expects(:satisfies?).returns true
 
       @property.should = "foo"
     end
@@ -377,7 +378,7 @@ describe Puppet::Property do
     describe "that was defined without a block" do
       it "should call the settor on the provider" do
         subclass.newvalue(:bar)
-        @provider.expects(:foo=).with :bar
+        provider.expects(:foo=).with :bar
         @property.set(:bar)
       end
     end
