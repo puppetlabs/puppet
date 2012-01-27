@@ -105,37 +105,38 @@ describe Puppet::Property do
   end
 
   describe "when creating an event" do
-    before :each do
-      # Use a real resource so we can test the event creation integration
-      @resource = Puppet::Type.type(:host).new :name => "foo"
-      @instance = subclass.new(:resource => @resource)
-      @instance.stubs(:should).returns "myval"
+    # Use a real resource so we can test the event creation integration
+    let :resource do Puppet::Type.type(:host).new :name => "foo" end
+    let :instance do
+      instance = subclass.new(:resource => resource)
+      instance.stubs(:should).returns "myval"
+      instance
     end
 
     it "should use an event from the resource as the base event" do
       event = Puppet::Transaction::Event.new
-      @resource.expects(:event).returns event
+      resource.expects(:event).returns event
 
-      @instance.event.should equal(event)
+      instance.event.should equal(event)
     end
 
     it "should have the default event name" do
-      @instance.expects(:event_name).returns :my_event
-      @instance.event.name.should == :my_event
+      instance.expects(:event_name).returns :my_event
+      instance.event.name.should == :my_event
     end
 
     it "should have the property's name" do
-      @instance.event.property.should == @instance.name.to_s
+      instance.event.property.should == instance.name.to_s
     end
 
     it "should have the 'should' value set" do
-      @instance.stubs(:should).returns "foo"
-      @instance.event.desired_value.should == "foo"
+      instance.stubs(:should).returns "foo"
+      instance.event.desired_value.should == "foo"
     end
 
     it "should provide its path as the source description" do
-      @instance.stubs(:path).returns "/my/param"
-      @instance.event.source_description.should == "/my/param"
+      instance.stubs(:path).returns "/my/param"
+      instance.event.source_description.should == "/my/param"
     end
   end
 
