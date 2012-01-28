@@ -136,7 +136,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         end
 
         # now, once more... but with our sentinel values
-        Puppet::Util::Execution.withenv(locale_sentinel_env) do
+        Puppet::Util.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
             output, status = provider.run(command % var)
             output.strip.should == locale_sentinel_env[var]
@@ -164,7 +164,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       it "should unset user-related environment vars during execution" do
         # first we set up a temporary execution environment with sentinel values for the user-related environment vars
         # that we care about.
-        Puppet::Util::Execution.withenv(user_sentinel_env) do
+        Puppet::Util.withenv(user_sentinel_env) do
           # with this environment, we loop over the vars in question
           Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
             # ensure that our temporary environment is set up as we expect
