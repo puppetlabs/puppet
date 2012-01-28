@@ -491,4 +491,20 @@ describe Puppet::Property do
       end
     end
   end
+
+  describe "#property_matches?" do
+    [1, "1", [1], :one].each do |input|
+      it "should treat two equal objects as equal (#{input.inspect})" do
+        property.property_matches?(input, input).should be_true
+      end
+    end
+
+    it "should treat two objects as equal if the first argument is the stringified version of the second" do
+      property.property_matches?("1", 1).should be_true
+    end
+
+    it "should NOT treat two objects as equal if the first argument is not a string, and the second argument is a string, even if it stringifies to the first" do
+      property.property_matches?(1, "1").should be_false
+    end
+  end
 end
