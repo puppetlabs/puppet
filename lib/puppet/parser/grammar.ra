@@ -12,7 +12,7 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-token IN
+token IN UNLESS
 
 prechigh
   right NOT
@@ -60,6 +60,7 @@ statement_or_declaration:    resource
   | assignment
   | casestatement
   | ifstatement_begin
+  | unlessstatement
   | import
   | fstatement
   | definition
@@ -373,6 +374,24 @@ resourceref: NAME LBRACK expressions RBRACK {
   result = ast AST::ResourceReference, :type => val[0][:value], :line => val[0][:line], :title => val[2]
 }               | type LBRACK expressions RBRACK {
   result = ast AST::ResourceReference, :type => val[0].value, :title => val[2]
+}
+
+unlessstatement: UNLESS expression LBRACE statements RBRACE {
+  @lexer.commentpop
+  args = {
+    :test => ast(AST::Not, :value => val[1]),
+    :statements => val[3]
+  }
+
+  result = ast AST::IfStatement, args
+}
+  | UNLESS expression LBRACE RBRACE {
+    @lexer.commentpop
+    args = {
+      :test => ast(AST::Not, :value => val[1]), 
+      :statements => ast(AST::Nop)
+    }
+    result = ast AST::IfStatement, args
 }
 
 ifstatement_begin: IF ifstatement {
