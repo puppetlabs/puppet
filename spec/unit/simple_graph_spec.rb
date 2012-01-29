@@ -268,9 +268,24 @@ describe Puppet::SimpleGraph do
       @graph = Puppet::SimpleGraph.new
     end
 
+    # This works with `add_edges` to auto-vivify the resource instances.
+    let :vertex do
+      Hash.new do |hash, key|
+        hash[key] = Puppet::Type.type(:notify).new(:name => key.to_s)
+      end
+    end
+
     def add_edges(hash)
       hash.each do |a,b|
-        @graph.add_edge(a, b)
+        @graph.add_edge(vertex[a], vertex[b])
+      end
+    end
+
+    def simplify(cycles)
+      cycles.map do |x|
+        x.map do |y|
+          y.to_s.match(/^Notify\[(.*)\]$/)[1]
+        end
       end
     end
 
@@ -298,7 +313,7 @@ describe Puppet::SimpleGraph do
       add_edges :a => :b, :b => :a
       # cycle detection starts from a or b randomly
       # so we need to check for either ordering in the error message
-      want = %r{Found 1 dependency cycle:\n\((a => b => a|b => a => b)\)\nTry}
+      want = %r{Found 1 dependency cycle:\n\((Notify\[a\] => Notify\[b\] => Notify\[a\]|Notify\[b\] => Notify\[a\] => Notify\[b\])\)\nTry}
       expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error, want)
     end
 
@@ -308,8 +323,8 @@ describe Puppet::SimpleGraph do
       add_edges "b" => "c"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
-      cycles.should be == [["a", "b"]]
+      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      simplify(cycles).should be == [["a", "b"]]
     end
 
     it "cycle discovery should handle two distinct cycles" do
@@ -317,8 +332,8 @@ describe Puppet::SimpleGraph do
       add_edges "b" => "b1", "b1" => "b"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
-      cycles.should be == [["a", "a1"], ["b", "b1"]]
+      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      simplify(cycles).should be == [["a1", "a"], ["b1", "b"]]
     end
 
     it "cycle discovery should handle two cycles in a connected graph" do
@@ -327,8 +342,8 @@ describe Puppet::SimpleGraph do
       add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
-      cycles.should be == [%w{a a1}, %w{c c1 c2 c3}]
+      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      simplify(cycles).should be == [%w{a1 a}, %w{c1 c2 c3 c}]
     end
 
     it "cycle discovery should handle a complicated cycle" do
@@ -338,8 +353,8 @@ describe Puppet::SimpleGraph do
       add_edges "c" => "c2", "c2" => "b"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
-      cycles.should be == [%w{a b c c1 c2}]
+      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      simplify(cycles).should be == [%w{a b c1 c2 c}]
     end
 
     it "cycle discovery should not fail with large data sets" do
@@ -347,16 +362,16 @@ describe Puppet::SimpleGraph do
       (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
-      cycles.should be == []
+      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      simplify(cycles).should be == []
     end
 
     it "path finding should work with a simple cycle" do
       add_edges "a" => "b", "b" => "c", "c" => "a"
 
-      cycles = @graph.find_cycles_in_graph.sort
+      cycles = @graph.find_cycles_in_graph
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      paths.should be == [%w{a b c a}]
+      simplify(paths).should be == [%w{a b c a}]
     end
 
     it "path finding should work with two independent cycles" do
@@ -364,28 +379,28 @@ describe Puppet::SimpleGraph do
       add_edges "a" => "b2"
       add_edges "b1" => "a", "b2" => "a"
 
-      cycles = @graph.find_cycles_in_graph.sort
+      cycles = @graph.find_cycles_in_graph
       cycles.length.should be == 1
 
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      paths.sort.should be == [%w{a b1 a}, %w{a b2 a}]
+      simplify(paths).should be == [%w{a b2 a}, %w{a b1 a}]
     end
 
     it "path finding should prefer shorter paths in cycles" do
       add_edges "a" => "b", "b" => "c", "c" => "a"
       add_edges "b" => "a"
 
-      cycles = @graph.find_cycles_in_graph.sort
+      cycles = @graph.find_cycles_in_graph
       cycles.length.should be == 1
 
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      paths.should be == [%w{a b a}, %w{a b c a}]
+      simplify(paths).should be == [%w{a b a}, %w{a b c a}]
     end
 
     it "path finding should respect the max_path value" do
       (1..20).each do |n| add_edges "a" => "b#{n}", "b#{n}" => "a" end
 
-      cycles = @graph.find_cycles_in_graph.sort
+      cycles = @graph.find_cycles_in_graph
       cycles.length.should be == 1
 
       (1..20).each do |n|
