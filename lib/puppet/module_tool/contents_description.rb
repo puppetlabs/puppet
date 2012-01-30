@@ -73,7 +73,7 @@ module Puppet::Module::Tool
     # containing :name and :doc.
     def provider_doc(type)
       [].tap do |providers|
-        type.providers.sort_by{ |o| o.to_s }.each do |prov|
+        type.providers.sort.each do |prov|
           providers.push(:name => prov, :doc => type.provider(prov).doc)
         end
       end
