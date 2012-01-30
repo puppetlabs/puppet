@@ -22,7 +22,13 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with(command, nil, nil, :override_locale => false).returns([output, status])
+      with() { |*args|
+        args[0] == command &&
+        args[1] == nil &&
+        args[2] == nil &&
+        args[3][:override_locale] == false &&
+        args[3].has_key?(:custom_environment)
+      } .returns([output, status])
 
     return exec
   end

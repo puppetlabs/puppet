@@ -113,12 +113,13 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
 
+
     describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "es_ES.UTF-8"
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
-      # "execute"
+      # "exec"
       locale_sentinel_env = {}
       Puppet::Util::POSIX_LOCALE_ENV_VARS.each { |var| locale_sentinel_env[var] = lang_sentinel_value }
 
@@ -151,5 +152,53 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         output.strip.should == 'bar'
       end
     end
+
+    describe "posix user-related environment vars", :unless => Puppet.features.microsoft_windows? do
+      # a temporary hash that contains sentinel values for each of the user-related environment variables that we
+      # are expected to unset during an "exec"
+      user_sentinel_env = {}
+      Puppet::Util::POSIX_USER_ENV_VARS.each { |var| user_sentinel_env[var] = "Abracadabra" }
+
+      command = "/bin/echo $%s"
+
+      it "should unset user-related environment vars during execution" do
+        # first we set up a temporary execution environment with sentinel values for the user-related environment vars
+        # that we care about.
+        Puppet::Util::Execution.withenv(user_sentinel_env) do
+          # with this environment, we loop over the vars in question
+          Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+            # ensure that our temporary environment is set up as we expect
+            ENV[var].should == user_sentinel_env[var]
+
+            # run an "exec" via the provider and ensure that it unsets the vars
+            output, status = provider.run(command % var)
+            output.strip.should == ""
+
+            # ensure that after the exec, our temporary env is still intact
+            ENV[var].should == user_sentinel_env[var]
+          end
+
+        end
+      end
+
+      it "should respect overrides to user-related environment vars in caller's 'environment' configuration" do
+        sentinel_value = "Abracadabra"
+        # set the "environment" property of the resource, populating it with a hash containing sentinel values for
+        # each of the user-related posix environment variables
+        provider.resource[:environment] = Puppet::Util::POSIX_USER_ENV_VARS.collect { |var| "#{var}=#{sentinel_value}"}
+
+        # loop over the posix user-related environment variables
+        Puppet::Util::POSIX_USER_ENV_VARS.each do |var|
+          # run an 'exec' to get the value of each variable
+          output, status = provider.run(command % var)
+          # ensure that it matches our expected sentinel value
+          output.strip.should == sentinel_value
+        end
+      end
+
+
+    end
+
+
   end
 end

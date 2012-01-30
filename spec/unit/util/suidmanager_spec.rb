@@ -218,8 +218,15 @@ describe Puppet::Util::SUIDManager do
       it "should capture the output and return process status" do
         Puppet::Util.
           expects(:execute).
-          with('yay', :combine => true, :failonfail => false, :uid => user[:uid], :gid => user[:gid],
-               :override_locale => true).
+          with() { |*args|
+              args[0] == 'yay' &&
+              args[1][:combine] == true &&
+              args[1][:failonfail] == false &&
+              args[1][:uid] == user[:uid] &&
+              args[1][:gid] == user[:gid] &&
+              args[1][:override_locale] == true &&
+              args[1].has_key?(:custom_environment)
+        } .
           returns('output')
         output = Puppet::Util::SUIDManager.run_and_capture 'yay', user[:uid], user[:gid]
 
