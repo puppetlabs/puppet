@@ -116,6 +116,7 @@ class Puppet::Configurer
 
     report = options[:report]
     report.configuration_version = catalog.version
+    report.environment = Puppet[:environment]
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
