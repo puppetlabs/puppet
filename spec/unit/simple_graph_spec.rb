@@ -383,7 +383,7 @@ describe Puppet::SimpleGraph do
       cycles.length.should be == 1
 
       paths = @graph.paths_in_cycle(cycles.first, 100)
-      simplify(paths).should be == [%w{a b2 a}, %w{a b1 a}]
+      simplify(paths).should be == [%w{a b1 a}, %w{a b2 a}]
     end
 
     it "path finding should prefer shorter paths in cycles" do
