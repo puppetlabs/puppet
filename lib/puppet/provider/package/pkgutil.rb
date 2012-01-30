@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     correct_wgetopts = false
     [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
       File.open(confpath) do |conf|
-        conf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+        conf.each_line {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end
     if ! correct_wgetopts

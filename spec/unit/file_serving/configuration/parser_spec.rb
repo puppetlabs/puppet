@@ -14,7 +14,8 @@ module FSConfigurationParserTesting
   def mock_file_content(content)
     # We want an array, but we actually want our carriage returns on all of it.
     lines = content.split("\n").collect { |l| l + "\n" }
-    @filehandle.stubs(:each).multiple_yields(*lines)
+    @filehandle.stubs(:each_line).multiple_yields(*lines)
+    @filehandle.expects(:each).never
   end
 end
 
@@ -24,6 +25,7 @@ describe Puppet::FileServing::Configuration::Parser do
     FileTest.stubs(:exists?).with(@path).returns(true)
     FileTest.stubs(:readable?).with(@path).returns(true)
     @filehandle = mock 'filehandle'
+    @filehandle.expects(:each).never
     File.expects(:open).with(@path).yields(@filehandle)
     @parser = Puppet::FileServing::Configuration::Parser.new(@path)
   end
@@ -32,12 +34,12 @@ describe Puppet::FileServing::Configuration::Parser do
     include FSConfigurationParserTesting
 
     it "should allow comments" do
-      @filehandle.expects(:each).yields("# this is a comment\n")
+      @filehandle.expects(:each_line).yields("# this is a comment\n")
       proc { @parser.parse }.should_not raise_error
     end
 
     it "should allow blank lines" do
-      @filehandle.expects(:each).yields("\n")
+      @filehandle.expects(:each_line).yields("\n")
       proc { @parser.parse }.should_not raise_error
     end
 

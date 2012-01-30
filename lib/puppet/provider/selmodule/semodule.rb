@@ -21,7 +21,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   def exists?
     self.debug "Checking for module #{@resource[:name]}"
     execpipe("#{command(:semodule)} --list") do |out|
-      out.each do |line|
+      out.each_line do |line|
         if line =~ /#{@resource[:name]}\b/
           return :true
         end
@@ -118,7 +118,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     begin
       execpipe("#{command(:semodule)} --list") do |output|
         lines = output.readlines
-        lines.each do |line|
+        lines.each_line do |line|
           line.chomp!
           bits = line.split
           if bits[0] == @resource[:name]

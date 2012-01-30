@@ -89,7 +89,7 @@ module Puppet
         File.open(@file) { |f|
           right = nil
           count = 1
-          f.each { |line|
+          f.each_line { |line|
             case line
             when /^\s*#/ # skip comments
               count += 1
