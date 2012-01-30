@@ -104,9 +104,11 @@ namespace :windows do
       Dir.chdir repo_dir do
         sh 'git fetch origin'
         sh 'git fetch origin --tags'
-        # This git add add is so the reset hard results in a clean working directory.
-        sh 'git add .'
-        sh "git reset --hard #{args[:ref]}"
+        # We explicitly avoid using git clean -x because we rely on rake clean
+        # to clean up build artifacts.  Specifically, we don't want to clone
+        # and download zip files every single build
+        sh 'git clean -f -d'
+        sh "git checkout -f #{args[:ref]}"
       end
     end
   end
