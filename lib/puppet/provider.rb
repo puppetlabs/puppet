@@ -277,5 +277,14 @@ class Puppet::Provider
   def to_s
     "#{@resource}(provider=#{self.class.name})"
   end
+
+  # Make providers comparable.
+  include Comparable
+  def <=>(other)
+    # We can only have ordering against other providers.
+    return nil unless other.is_a? Puppet::Provider
+    # Otherwise, order by the providers class name.
+    return self.class.name <=> other.class.name
+  end
 end
 
