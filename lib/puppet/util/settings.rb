@@ -468,7 +468,7 @@ class Puppet::Util::Settings
       end
     end
     if new_type = @app_names[type]
-      Puppet.warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
+      Puppet.deprecation_warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
       return new_type
     end
     type

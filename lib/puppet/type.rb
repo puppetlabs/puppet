@@ -32,7 +32,7 @@ class Type
   end
 
   def self.states
-    warnonce "The states method is deprecated; use properties"
+    Puppet.deprecation_warning "The states method is deprecated; use properties"
     properties
   end
 
@@ -822,7 +822,7 @@ class Type
   # necessary.
   def self.create(args)
     # LAK:DEP Deprecation notice added 12/17/2008
-    Puppet.warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
+    Puppet.deprecation_warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
     new(args)
   end
 
@@ -1027,6 +1027,7 @@ class Type
       This parameter has been deprecated in favor of 'audit'."
 
     munge do |args|
+      Puppet.deprecation_warning "'check' attribute is deprecated; use 'audit' instead"
       resource.warning "'check' attribute is deprecated; use 'audit' instead"
       resource[:audit] = args
     end

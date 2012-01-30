@@ -383,7 +383,7 @@ EOT
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
       :hook => proc do |value|
         if value == 'false'
-          Puppet.warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
+          Puppet.deprecation_warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
         end
       end
     },
@@ -645,7 +645,7 @@ EOT
         matters on the client, since it asks the server for a specific format.",
       :hook => proc { |value|
         if value
-          Puppet.warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
+          Puppet.deprecation_warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
           Puppet.settings[:preferred_serialization_format] = value
         end
       }

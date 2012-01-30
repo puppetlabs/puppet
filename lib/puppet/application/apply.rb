@@ -14,7 +14,7 @@ class Puppet::Application::Apply < Puppet::Application
   option("--detailed-exitcodes")
 
   option("--apply catalog",  "-a catalog") do |arg|
-    Puppet.warning <<EOM
+    Puppet.deprecation_warning <<EOM
 --apply is deprecated and will be removed in the future. Please
 use 'puppet apply --catalog <catalog>'.
 EOM

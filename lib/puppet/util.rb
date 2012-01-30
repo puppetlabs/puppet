@@ -360,7 +360,6 @@ module Util
   # Deprecated methods relating to process execution; these have been moved to Puppet::Util::Execution
   #######################################################################################################
 
-
   def execpipe(command, failonfail = true, &block)
     Puppet.deprecation_warning("Puppet::Util.execpipe is deprecated; please use Puppet::Util::Execution.execpipe")
     Puppet::Util::Execution.execpipe(command, failonfail, &block)
@@ -368,14 +367,12 @@ module Util
   module_function :execpipe
 
   def execfail(command, exception)
-    #Puppet::Util::Warnings.warnonce("Puppet::Util.execfail is deprecated; please use Puppet::Util::Execution.execfail")
     Puppet.deprecation_warning("Puppet::Util.execfail is deprecated; please use Puppet::Util::Execution.execfail")
     Puppet::Util::Execution.execfail(command, exception)
   end
   module_function :execfail
 
   def execute(command, arguments = {})
-    #Puppet::Util::Warnings.warnonce("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
     Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
     Puppet::Util::Execution.execute(command, arguments)
   end

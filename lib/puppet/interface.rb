@@ -71,7 +71,7 @@ class Puppet::Interface
   end
 
   def set_default_format(format)
-    Puppet.warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
+    Puppet.deprecation_warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
   end
 
 
