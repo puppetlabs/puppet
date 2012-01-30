@@ -187,8 +187,22 @@ class Puppet::Property < Puppet::Parameter
       # If they were different lengths, they are not equal.
       return false unless is.length == @should.length
 
-      # Finally, are all the elements equal?
-      return is.zip(@should).all? {|a, b| property_matches?(a, b) }
+      # Finally, are all the elements equal?  In order to preserve the
+      # behaviour of previous 2.7.x releases, we need to impose some fun rules
+      # on "equality" here.
+      #
+      # Specifically, we need to implement *this* comparison: the two arrays
+      # are identical if the is values are == the should values, or if the is
+      # values are == the should values, stringified.
+      #
+      # This does mean that property equality is not commutative, and will not
+      # work unless the `is` value is carefully arranged to match the should.
+      return (is == @should or is == @should.map(&:to_s))
+
+      # When we stop being idiots about this, and actually have meaningful
+      # semantics, this version is the thing we actually want to do.
+      #
+      # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
     else
       return @should.any? {|want| property_matches?(is, want) }
     end
