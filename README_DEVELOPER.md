@@ -88,4 +88,11 @@ on Windows, so use the following rspec exclude filter:
 This will give you a shared filesystem with your Mac and allow you to run
 Puppet directly from source without using install.rb or copying files around.
 
+## Building Windows Packages ##
+
+Please see the README files in `tasks/windows/` for more information about
+building MSI packages of Puppet for Windows.  Please see also
+[#11205](http://projects.puppetlabs.com/issues/11205) for up to date progress
+on this project.
+
 EOF

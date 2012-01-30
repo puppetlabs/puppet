@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <?define OurCompanyName="Puppet Labs"?>
+
+  <!-- This variable will be substituted as much as possible
+       to make Puppet Enterprise and Puppet use similar build systems. -->
+  <?define OurProductName="Puppet" ?>
+  <?define OurProductNameWord="Puppet" ?>
+
+  <!--
+  Versioning. These have to be changed for upgrades.
+  It's not enough to just include newer files.
+  -->
+  <?define MajorVersion="2" ?>
+  <?define MinorVersion="5" ?>
+  <?define BuildVersion="0" ?>
+  <!-- Revision is NOT used by WiX in the upgrade procedure -->
+  <?define Revision="0" ?>
+  <!-- Full version number to display -->
+  <?define VersionNumber="$(var.MajorVersion).$(var.MinorVersion).$(var.BuildVersion).$(var.Revision)" ?>
+  <!--
+  Upgrade code HAS to be the same for all updates.
+  Once you've chosen it don't change it.
+  -->
+  <?define UpgradeCode="A8B348D0-998E-4A1C-9612-AFF9E01FD327" ?>
+  <!--
+  The name of your application exe file. This will be used to kill the process when updating
+  and creating the desktop shortcut
+  <?define ExeProcessName="ruby.exe" ?>
+  -->
+</Include>

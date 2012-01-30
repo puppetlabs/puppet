@@ -167,7 +167,7 @@ HELP
     unless @manifest
       env = Puppet::Node::Environment.new
       files += env.modulepath
-      files << File.dirname(env[:manifest])
+      files << ::File.dirname(env[:manifest])
     end
     files += command_line.args
     Puppet.info "scanning: #{files.inspect}"
@@ -252,7 +252,7 @@ HELP
       @unknown_args.each do |option|
         # force absolute path for modulepath when passed on commandline
         if option[:opt]=="--modulepath" or option[:opt] == "--manifestdir"
-          option[:arg] = option[:arg].split(File::PATH_SEPARATOR).collect { |p| File.expand_path(p) }.join(File::PATH_SEPARATOR)
+          option[:arg] = option[:arg].split(::File::PATH_SEPARATOR).collect { |p| ::File.expand_path(p) }.join(::File::PATH_SEPARATOR)
         end
         Puppet.settings.handlearg(option[:opt], option[:arg])
       end

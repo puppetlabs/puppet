@@ -17,6 +17,8 @@ class TestClient
 end
 
 describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
+  include PuppetSpec::Files
+
   before do
     @agent = Puppet::Agent.new(TestClient.new)
     @daemon = Puppet::Daemon.new
@@ -155,9 +157,9 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
       pidfile = mock 'pidfile'
 
       Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.expects(:value).with(:pidfile).returns "/my/file"
+      Puppet.settings.expects(:value).with(:pidfile).returns make_absolute("/my/file")
 
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
+      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
 
       pidfile.expects(:lock).returns true
       @daemon.create_pidfile
@@ -167,9 +169,9 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
       pidfile = mock 'pidfile'
 
       Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet.settings.stubs(:value).with(:pidfile).returns make_absolute("/my/file")
 
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
+      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
 
       pidfile.expects(:lock).returns false
 
@@ -187,36 +189,20 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should do nothing if the pidfile is not present" do
-      pidfile = mock 'pidfile', :locked? => false
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
+      pidfile = mock 'pidfile', :unlock => false
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = make_absolute("/my/file")
+      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
 
-      pidfile.expects(:unlock).never
       @daemon.remove_pidfile
     end
 
     it "should unlock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile', :locked? => true
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      pidfile.expects(:unlock).returns true
+      pidfile = mock 'pidfile', :unlock => true
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = make_absolute("/my/file")
+      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
 
-      @daemon.remove_pidfile
-    end
-
-    it "should warn if it cannot remove the pidfile" do
-      pidfile = mock 'pidfile', :locked? => true
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      pidfile.expects(:unlock).returns false
-
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
-
-      Puppet.expects :err
       @daemon.remove_pidfile
     end
   end

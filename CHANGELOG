@@ -1,5 +1,8 @@
-2.7.10rc1
+2.7.10
 ===
+e31369a (#6541) Use the same filebucket for backup and restore
+0d8a22a (#11767) No longer necessary to delete ssl directory in each test
+e1828ba Updated CHANGELOG for 2.7.10rc1
 8da947f (#11996) Fix file content test after hash changes.
 884fe75 (#11996) Fix file server recursion test after hash changes.
 3fb0938 (#11996) Fix graph cycle reporting order after hash changes.

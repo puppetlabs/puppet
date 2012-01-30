@@ -20,10 +20,6 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
     Puppet[:storeconfigs] = true
   end
 
-  after :each do
-    ActiveRecord::Base.remove_connection
-  end
-
   subject {
     require 'puppet/indirector/resource/active_record'
     Puppet::Resource.indirection.terminus(:active_record)

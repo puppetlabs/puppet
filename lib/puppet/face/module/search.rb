@@ -11,32 +11,8 @@ Puppet::Face.define(:module, '1.0.0') do
       Search the default repository for a module:
 
       $ puppet module search puppetlabs
-      notice: Searching http://forge.puppetlabs.com
-      notice: 24 found.
-      puppetlabs/apache (0.0.3)
-      puppetlabs/collectd (0.0.1)
-      puppetlabs/ruby (0.0.1)
-      puppetlabs/vcsrepo (0.0.4)
-      puppetlabs/gcc (0.0.3)
-      puppetlabs/passenger (0.0.2)
-      puppetlabs/DeveloperBootstrap (0.0.5)
-      jeffmccune/tomcat (1.0.1)
-      puppetlabs/motd (1.0.0)
-      puppetlabs/lvm (0.1.0)
-      puppetlabs/rabbitmq (1.0.4)
-      puppetlabs/prosvc_repo (1.0.1)
-      puppetlabs/stdlib (2.2.0)
-      puppetlabs/java (0.1.5)
-      puppetlabs/activemq (0.1.6)
-      puppetlabs/mcollective (0.1.8)
-      puppetlabs/git (0.0.2)
-      puppetlabs/ntp (0.0.4)
-      puppetlabs/nginx (0.0.1)
-      puppetlabs/cloud_provisioner (0.6.0rc1)
-      puppetlabs/mrepo (0.1.1)
-      puppetlabs/f5 (0.1.0)
-      puppetlabs/firewall (0.0.3)
-      puppetlabs/bprobe (0.0.3)
+      NAME          DESCRIPTION                          AUTHOR             KEYWORDS
+      bacula        This is a generic Apache module      @puppetlabs        backups
     EOT
 
     arguments "<term>"
@@ -50,17 +26,30 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |term, options|
-      Puppet.notice "Searching #{options[:module_repository]}"
       Puppet::Module::Tool::Applications::Searcher.run(term, options)
     end
 
     when_rendering :console do |return_value|
-      Puppet.notice "#{return_value.size} found."
+
+      FORMAT = "%-10s    %-32s     %-14s     %s\n"
+
+      def header
+        FORMAT % ['NAME', 'DESCRIPTION', 'AUTHOR', 'KEYWORDS']
+      end
+
+      def format_row(name, description, author, tag_list)
+        keywords = tag_list.join(' ')
+        FORMAT % [name[0..10], description[0..32], "@#{author[0..14]}", keywords]
+      end
+
+      output = ''
+      output << header unless return_value.empty?
+
       return_value.map do |match|
-        # We reference the full_name here when referring to the full_module_name,
-        # because full_name is what is returned from the forge API call.
-        "#{match['full_name']} (#{match['version']})"
-      end.join("\n")
+        output << format_row(match['name'], match['desc'], match['author'], match['tag_list'])
+      end
+
+      output
     end
   end
 end

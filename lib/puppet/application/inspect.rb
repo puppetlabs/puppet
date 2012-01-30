@@ -165,7 +165,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         end
         if Puppet[:archive_files] and ral_resource.type == :file and audited_attributes.include?(:content)
           path = ral_resource[:path]
-          if File.readable?(path)
+          if ::File.readable?(path)
             begin
               dipper.backup(path)
             rescue StandardError => detail

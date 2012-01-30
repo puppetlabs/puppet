@@ -38,6 +38,12 @@ describe Puppet::Application do
 
       expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
     end
+
+    it "#12114: should prevent File namespace collisions" do
+      # have to require the file face once, then the second time around it would fail
+      @klass.find("File").should == Puppet::Application::File
+      @klass.find("File").should == Puppet::Application::File
+    end
   end
 
   describe ".run_mode" do
