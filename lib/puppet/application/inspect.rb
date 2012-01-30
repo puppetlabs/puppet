@@ -118,6 +118,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
 
       @report.configuration_version = catalog.version
+      @report.environment = Puppet[:environment]
 
       inspect_starttime = Time.now
       @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)
