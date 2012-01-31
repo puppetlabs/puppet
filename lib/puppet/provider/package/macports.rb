@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
   def self.instances
     packages = []
-    port("-q", :installed).each do |line|
+    port("-q", :installed).each_line do |line|
       if hash = parse_installed_query_line(line)
         packages << new(hash)
       end

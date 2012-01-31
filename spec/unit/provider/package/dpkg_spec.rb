@@ -30,7 +30,8 @@ describe provider do
 
     it "should create and return an instance with each parsed line from dpkg-query" do
       pipe = mock 'pipe'
-      pipe.expects(:each).yields @fakeresult
+      pipe.expects(:each).never
+      pipe.expects(:each_line).yields @fakeresult
       provider.expects(:execpipe).yields pipe
 
       asdf = mock 'pkg1'
@@ -41,7 +42,8 @@ describe provider do
 
     it "should warn on and ignore any lines it does not understand" do
       pipe = mock 'pipe'
-      pipe.expects(:each).yields "foobar"
+      pipe.expects(:each).never
+      pipe.expects(:each_line).yields "foobar"
       provider.expects(:execpipe).yields pipe
 
       Puppet.expects(:warning)
