@@ -1,7 +1,6 @@
 require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
-require 'cgi'
 require 'fileutils'
 
 class Puppet::Provider::NameService
