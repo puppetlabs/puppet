@@ -200,6 +200,50 @@ describe Puppet::Parser::Resource do
       @compiler.catalog.should be_edge(foo_stage, resource)
     end
 
+    it "should allow edges to propagate multiple levels down the scope hierarchy" do
+      Puppet[:code] = <<-MANIFEST
+        stage { before: before => Stage[main] }
+
+        class alpha {
+          include beta
+        }
+        class beta {
+          include gamma
+        }
+        class gamma { }
+        class { alpha: stage => before }
+      MANIFEST
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+
+      # Stringify them to make for easier lookup
+      edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
+
+      edges.should include(["Stage[before]", "Class[Alpha]"])
+      edges.should include(["Stage[before]", "Class[Beta]"])
+      edges.should include(["Stage[before]", "Class[Gamma]"])
+    end
+
+    it "should use the specified stage even if the parent scope specifies one" do
+      Puppet[:code] = <<-MANIFEST
+        stage { before: before => Stage[main], }
+        stage { after: require => Stage[main], }
+
+        class alpha {
+          class { beta: stage => after }
+        }
+        class beta { }
+        class { alpha: stage => before }
+      MANIFEST
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+
+      edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
+
+      edges.should include(["Stage[before]", "Class[Alpha]"])
+      edges.should include(["Stage[after]", "Class[Beta]"])
+    end
+
     it "should add edges from top-level class resources to the main stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
       main = @compiler.catalog.resource(:stage, :main)
       @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
