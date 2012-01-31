@@ -112,11 +112,11 @@ module Puppet
         reposdir.gsub!(/[\n,]/, " ")
         reposdir.split.each do |dir|
           Dir::glob("#{dir}/*.repo").each do |file|
-            @inifile.read(file) if File.file?(file)
+            @inifile.read(file) if ::File.file?(file)
           end
         end
         reposdir.split.each do |dir|
-          if File::directory?(dir) && File::writable?(dir)
+          if ::File.directory?(dir) && ::File.writable?(dir)
             @defaultrepodir = dir
             break
           end
@@ -138,12 +138,12 @@ module Puppet
       reposdir.gsub!(/[\n,]/, " ")
       reposdir.split.each do |dir|
         Dir::glob("#{dir}/*.repo").each do |file|
-          result.read(file) if File.file?(file)
+          result.read(file) if ::File.file?(file)
         end
       end
       if @defaultrepodir.nil?
         reposdir.split.each do |dir|
-          if File::directory?(dir) && File::writable?(dir)
+          if ::File.directory?(dir) && ::File.writable?(dir)
             @defaultrepodir = dir
             break
           end
@@ -159,7 +159,7 @@ module Puppet
       if result.nil?
         # Brand new section
         path = yumconf
-        path = File::join(@defaultrepodir, "#{name}.repo") unless @defaultrepodir.nil?
+        path = ::File.join(@defaultrepodir, "#{name}.repo") unless @defaultrepodir.nil?
         Puppet::info "create new repo #{name} in file #{path}"
         result = inifile.add_section(name, path)
       end
@@ -172,10 +172,10 @@ module Puppet
       unless Puppet[:noop]
         target_mode = 0644 # FIXME: should be configurable
         inifile.each_file do |file|
-          current_mode = File.stat(file).mode & 0777
+          current_mode = ::File.stat(file).mode & 0777
           unless current_mode == target_mode
             Puppet::info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
-            File.chmod(target_mode, file)
+            ::File.chmod(target_mode, file)
           end
         end
       end
