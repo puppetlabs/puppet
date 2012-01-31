@@ -74,7 +74,7 @@ def build_dmg
   dmg_file          = "#{@title}.dmg"
   package_file      = "#{@title}.pkg"
   pm_extra_args     = '--verbose --no-recommend --no-relocate'
-  package_target_os = '10.4'
+  package_target_os = '10.5'
 
   # Build .pkg file
   system("sudo #{PACKAGEMAKER} --root #{@working_tree['working']} \

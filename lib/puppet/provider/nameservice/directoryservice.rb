@@ -1,7 +1,6 @@
 require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
-require 'cgi'
 require 'fileutils'
 
 class Puppet::Provider::NameService
@@ -105,7 +104,7 @@ class DirectoryService < Puppet::Provider::NameService
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
       end
-      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
@@ -122,46 +121,6 @@ class DirectoryService < Puppet::Provider::NameService
       fail("Could not get #{@resource_type.name} list from DirectoryService")
     end
     dscl_output.split("\n")
-  end
-
-  def self.parse_dscl_url_data(dscl_output)
-    # we need to construct a Hash from the dscl -url output to match
-    # that returned by the dscl -plist output for 10.5+ clients.
-    #
-    # Nasty assumptions:
-    #   a) no values *end* in a colon ':', only keys
-    #   b) if a line ends in a colon and the next line does start with
-    #      a space, then the second line is a value of the first.
-    #   c) (implied by (b)) keys don't start with spaces.
-
-    dscl_plist = {}
-    dscl_output.split("\n").inject([]) do |array, line|
-      if line =~ /^\s+/   # it's a value
-        array[-1] << line # add the value to the previous key
-      else
-        array << line
-      end
-      array
-    end.compact
-
-    dscl_output.each do |line|
-      # This should be a 'normal' entry. key and value on one line.
-      # We split on ': ' to deal with keys/values with a colon in them.
-      split_array = line.split(/:\s+/)
-      key = split_array.first
-      value = CGI::unescape(split_array.last.strip.chomp)
-      # We need to treat GroupMembership separately as it is currently
-      # the only attribute we care about multiple values for, and
-      # the values can never contain spaces (shortnames)
-      # We also make every value an array to be consistent with the
-      # output of dscl -plist under 10.5
-      if key == "GroupMembership"
-        dscl_plist[key] = value.split(/\s/)
-      else
-        dscl_plist[key] = [value]
-      end
-    end
-    dscl_plist
   end
 
   def self.parse_dscl_plist_data(dscl_output)
@@ -220,19 +179,15 @@ class DirectoryService < Puppet::Provider::NameService
       fail("Could not get report.  command execution failed.")
     end
 
-    # Two code paths is ugly, but until we can drop 10.4 support we don't
-    # have a lot of choice. Ultimately this should all be done using Ruby
-    # to access the DirectoryService APIs directly, but that's simply not
-    # feasible for a while yet.
-    if self.get_macosx_version_major > "10.4"
-      dscl_plist = self.parse_dscl_plist_data(dscl_output)
-    elsif self.get_macosx_version_major == "10.4"
-      dscl_plist = self.parse_dscl_url_data(dscl_output)
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    dscl_plist = self.parse_dscl_plist_data(dscl_output)
 
     self.generate_attribute_hash(dscl_plist, *type_properties)
+  end
+
+  def self.fail_if_wrong_version
+    fail("Puppet does not support OS X versions < 10.5") unless self.get_macosx_version_major >= "10.5"
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -243,17 +198,9 @@ class DirectoryService < Puppet::Provider::NameService
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-    # 10.4 doesn't support the -plist option for dscl, and 10.5 has a
-    # different format for the -url output with objects with spaces in
-    # their values. *sigh*. Use -url for 10.4 in the hope this can be
-    # deprecated one day, and use -plist for 10.5 and higher.
-    if self.get_macosx_version_major > "10.4"
-      command_vector = [ command(:dscl), "-plist", "." ]
-    elsif self.get_macosx_version_major == "10.4"
-      command_vector = [ command(:dscl), "-url", "." ]
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    command_vector = [ command(:dscl), "-plist", "." ]
 
     # JJM: The actual action to perform.  See "man dscl"
     #      Common actiosn: -create, -delete, -merge, -append, -passwd
