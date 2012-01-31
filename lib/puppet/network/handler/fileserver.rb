@@ -255,7 +255,7 @@ class Puppet::Network::Handler
         File.open(@configuration.file) { |f|
           mount = nil
           count = 1
-          f.each { |line|
+          f.each_line { |line|
             case line
             when /^\s*#/; next # skip comments
             when /^\s*$/; next # skip blank lines

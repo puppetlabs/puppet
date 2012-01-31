@@ -30,7 +30,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   end
 
   def restart
-      execute([command(:lssrc), "-Ss", @resource[:name]]).each do |line|
+      execute([command(:lssrc), "-Ss", @resource[:name]]).each_line do |line|
         args = line.split(":")
 
         next unless args[0] == @resource[:name]
@@ -62,7 +62,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   end
 
   def status
-      execute([command(:lssrc), "-s", @resource[:name]]).each do |line|
+      execute([command(:lssrc), "-s", @resource[:name]]).each_line do |line|
         args = line.split
 
         # This is the header line

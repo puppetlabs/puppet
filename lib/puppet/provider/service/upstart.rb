@@ -20,7 +20,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   def self.instances
     instances = []
     execpipe("#{command(:initctl)} list") { |process|
-      process.each { |line|
+      process.each_line { |line|
         # needs special handling of services such as network-interface:
         # initctl list:
         # network-interface (lo) start/running

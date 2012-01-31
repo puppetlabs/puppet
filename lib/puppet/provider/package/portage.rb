@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       packages = []
-      search_output.each do |search_result|
+      search_output.each_line do |search_result|
         match = result_format.match(search_result)
 
         if match
@@ -89,7 +89,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       packages = []
-      search_output.each do |search_result|
+      search_output.each_line do |search_result|
         match = result_format.match(search_result)
 
         if match

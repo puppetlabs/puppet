@@ -19,19 +19,19 @@ describe provider_class do
   describe "exists? method" do
     it "should find a module if it is already loaded" do
       @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
-      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields ["bar\t1.2.3\n", "foo\t4.4.4\n", "bang\t1.0.0\n"]
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields "bar\t1.2.3\nfoo\t4.4.4\nbang\t1.0.0\n"
       @provider.exists?.should == :true
     end
 
     it "should return nil if not loaded" do
       @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
-      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields ["bar\t1.2.3\n", "bang\t1.0.0\n"]
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields "bar\t1.2.3\nbang\t1.0.0\n"
       @provider.exists?.should be_nil
     end
 
     it "should return nil if no modules are loaded" do
       @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
-      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields []
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields ""
       @provider.exists?.should be_nil
     end
   end
