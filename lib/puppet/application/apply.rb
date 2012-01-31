@@ -156,19 +156,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       text = ::File.read(options[:catalog])
     end
-
-    begin
-      catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
-      catalog = Puppet::Resource::Catalog.pson_create(catalog) unless catalog.is_a?(Puppet::Resource::Catalog)
-    rescue => detail
-      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}"
-    end
-
-    catalog = catalog.to_ral
-
-    require 'puppet/configurer'
-    configurer = Puppet::Configurer.new
-    configurer.run :catalog => catalog
+    catalog = read_catalog(text)
+    apply_catalog(catalog)
   end
 
   def main
@@ -224,9 +213,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
       catalog.retrieval_duration = Time.now - starttime
 
-      require 'puppet/configurer'
-      configurer = Puppet::Configurer.new
-      exit_status = configurer.run(:skip_plugin_download => true, :catalog => catalog)
+      exit_status = apply_catalog(catalog)
 
       if not exit_status
         exit(1)
@@ -262,5 +249,27 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     elsif options[:verbose]
       Puppet::Util::Log.level = :info
     end
+
+    # Make pluginsync local
+    Puppet[:pluginsource] = 'puppet:///plugins'
+  end
+
+  private
+
+  def read_catalog(text)
+    begin
+      catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
+      catalog = Puppet::Resource::Catalog.pson_create(catalog) unless catalog.is_a?(Puppet::Resource::Catalog)
+    rescue => detail
+      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}"
+    end
+
+    catalog.to_ral
+  end
+
+  def apply_catalog(catalog)
+    require 'puppet/configurer'
+    configurer = Puppet::Configurer.new
+    configurer.run(:catalog => catalog)
   end
 end

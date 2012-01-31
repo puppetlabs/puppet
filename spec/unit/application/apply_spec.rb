@@ -117,6 +117,11 @@ describe Puppet::Application::Apply do
 
       @apply.setup
     end
+
+    it "should set pluginsource to be local" do
+      @apply.setup
+      Puppet[:pluginsource].should == 'puppet:///plugins'
+    end
   end
 
   describe "when executing" do
@@ -400,6 +405,14 @@ describe Puppet::Application::Apply do
 
         @apply.apply
       end
+    end
+  end
+
+  describe "apply_catalog" do
+    it "should call the configurer with the catalog" do
+      catalog = "I am a catalog"
+      Puppet::Configurer.any_instance.expects(:run).with(:catalog => catalog)
+      @apply.send(:apply_catalog, catalog)
     end
   end
 end
