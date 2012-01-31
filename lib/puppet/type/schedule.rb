@@ -309,6 +309,55 @@ module Puppet
       end
     end
 
+    newparam(:weekday) do
+      desc "The days of the week in which the schedule should be valid.
+        You may specify the full day name (Tuesday), the three character
+        abbreviation (Tue), or a number corresponding to the day of the
+        week where 0 is Sunday, 1 is Monday, etc. You may pass an array
+        to specify multiple days. If not specified, the day of the week
+        will not be considered in the schedule."
+
+      validate do |values|
+        values = [values] unless values.is_a?(Array)
+        values.each { |value|
+          unless value.is_a?(String) and
+              (value =~ /^[0-6]$/ or value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
+            raise ArgumentError, "%s is not a valid day of the week" % value
+          end
+        }
+      end
+
+      weekdays = {
+        'sun' => 0,
+        'mon' => 1,
+        'tue' => 2,
+        'wed' => 3,
+        'thu' => 4,
+        'fri' => 5,
+        'sat' => 6,
+      }
+
+      munge do |values|
+        values = [values] unless values.is_a?(Array)
+        ret = {}
+
+        values.each { |value|
+           if value =~ /^[0-6]$/
+              index = value.to_i
+           else
+              index = weekdays[value[0,3].downcase]
+           end
+            ret[index] = true
+        }
+        ret
+      end
+
+      def match?(previous, now)
+        return true if value.has_key?(now.wday)
+        false
+      end
+    end
+
     def self.instances
       []
     end
