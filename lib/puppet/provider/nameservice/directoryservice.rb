@@ -124,46 +124,6 @@ class DirectoryService < Puppet::Provider::NameService
     dscl_output.split("\n")
   end
 
-  def self.parse_dscl_url_data(dscl_output)
-    # we need to construct a Hash from the dscl -url output to match
-    # that returned by the dscl -plist output for 10.5+ clients.
-    #
-    # Nasty assumptions:
-    #   a) no values *end* in a colon ':', only keys
-    #   b) if a line ends in a colon and the next line does start with
-    #      a space, then the second line is a value of the first.
-    #   c) (implied by (b)) keys don't start with spaces.
-
-    dscl_plist = {}
-    dscl_output.split("\n").inject([]) do |array, line|
-      if line =~ /^\s+/   # it's a value
-        array[-1] << line # add the value to the previous key
-      else
-        array << line
-      end
-      array
-    end.compact
-
-    dscl_output.each do |line|
-      # This should be a 'normal' entry. key and value on one line.
-      # We split on ': ' to deal with keys/values with a colon in them.
-      split_array = line.split(/:\s+/)
-      key = split_array.first
-      value = CGI::unescape(split_array.last.strip.chomp)
-      # We need to treat GroupMembership separately as it is currently
-      # the only attribute we care about multiple values for, and
-      # the values can never contain spaces (shortnames)
-      # We also make every value an array to be consistent with the
-      # output of dscl -plist under 10.5
-      if key == "GroupMembership"
-        dscl_plist[key] = value.split(/\s/)
-      else
-        dscl_plist[key] = [value]
-      end
-    end
-    dscl_plist
-  end
-
   def self.parse_dscl_plist_data(dscl_output)
     Plist.parse_xml(dscl_output)
   end
