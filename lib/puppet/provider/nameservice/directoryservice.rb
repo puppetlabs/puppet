@@ -105,7 +105,7 @@ class DirectoryService < Puppet::Provider::NameService
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
       end
-      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
