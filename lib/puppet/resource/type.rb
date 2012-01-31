@@ -71,6 +71,8 @@ class Puppet::Resource::Type
 
     set_resource_parameters(resource, scope)
 
+    resource.add_edge_to_stage
+
     code.safeevaluate(scope) if code
 
     evaluate_ruby_code(resource, scope) if ruby_code
