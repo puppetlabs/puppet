@@ -45,6 +45,12 @@ describe Puppet::Application::Device do
 
       @device.preinit
     end
+
+    it "should init waitforcert to nil" do
+      @device.preinit
+
+      @device.options[:waitforcert].should be_nil
+    end
   end
 
   describe "when handling options" do
@@ -78,6 +84,12 @@ describe Puppet::Application::Device do
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @device.setup_host
+    end
+
+    it "should use the waitforcert setting when checking for a signed certificate" do
+      Puppet[:waitforcert] = 10
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
       @device.setup_host
     end
 
