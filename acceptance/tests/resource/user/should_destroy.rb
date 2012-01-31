@@ -1,19 +1,14 @@
-test_name "verify that puppet resource correctly destroys users"
+test_name "should delete a user"
 
-user = "pl#{rand(999999).to_i}"
-group = user
+name = "pl#{rand(999999).to_i}"
 
-step "ensure that the user and associated group exist"
-on(agents, puppet_resource('group', group, 'ensure=present'))
-on(agents, puppet_resource('user', user, 'ensure=present', "gid=#{group}"))
+agents.each do |agent|
+  step "ensure the user is present"
+  agent.user_present(name)
 
-step "try and delete the user"
-on(agents, puppet_resource('user', user, 'ensure=absent'))
+  step "delete the user"
+  on agent, puppet_resource('user', name, 'ensure=absent')
 
-step "verify that the user is no longer present"
-on(agents, "getent passwd #{user}", :acceptable_exit_codes => [2]) do
-    fail_test "found the user in the output" if stdout.include? "#{user}:"
+  step "verify the user was deleted"
+  agent.user_absent(name)
 end
-
-step "remove the group as well..."
-on(agents, puppet_resource('group', group, 'ensure=absent'))

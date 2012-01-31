@@ -4,6 +4,9 @@ user = "pl#{rand(999999).to_i}"
 group = "gp#{rand(999999).to_i}"
 
 agents.each do |host|
+  if host['platform'].include?('windows')
+    skip_test "Test not supported on this platform"
+  else
     step "user should not exist"
     on host, "if getent passwd #{user}; then userdel #{user}; fi"
 
@@ -27,4 +30,5 @@ agents.each do |host|
     step "clean up after the test is done"
     on(host, puppet_resource('user', user, 'ensure=absent'))
     on(host, puppet_resource('group', group, 'ensure=absent'))
+  end
 end
