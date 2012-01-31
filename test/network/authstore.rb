@@ -347,6 +347,23 @@ class TestAuthStore < Test::Unit::TestCase
     threads.each { |th| th.join }
   end
 
+  def test_catalog_class
+    klass = Declaration.new(:allow, "class:app_a")
+    catalog = Puppet::Resource::Catalog.new()
+    Puppet::Resource::Catalog.indirection.expects(:find).returns(catalog)
+    assert(! klass.match?("host.com", "192.168.0.1"))
+
+    catalog.add_class("app_a")
+    Puppet::Resource::Catalog.indirection.expects(:find).returns(catalog)
+    assert(klass.match?("host.com", "192.168.0.1"))
+  end
+
+  def test_hostname_regex
+    regex = Declaration.new(:allow, "/host[0-9]+.com/")
+    assert(regex.match?("host15.com", "192.168.0.1"))
+    assert(! regex.match?("host.com", "192.168.0.1"))
+  end
+
 end
 
 class TestAuthStoreDeclaration < PuppetTest::TestCase
@@ -376,6 +393,8 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
       "*.hostname.COM" => [:domain, %w{com hostname}, 2],
       "$1.hostname.COM" => [:dynamic, %w{com hostname $1}, nil],
       "192.168.$1.$2" => [:dynamic, %w{$2 $1 168 192}, nil],
+      "/^app[0-9]+.hostname.com$/" => [:regex, Regexp.new("^app[0-9]+.hostname.com$"), nil],
+      "classes:app_a,app_b" => [:klass, %w{app_a app_b}, nil],
       "8A5BC90C-B8FD-4CBC-81DA-BAD84D551791" => [:opaque, %w{8A5BC90C-B8FD-4CBC-81DA-BAD84D551791}, nil]
     }.each do |input, output|
 
@@ -516,23 +535,17 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
   end
 
   def test_match?
-    host = Declaration.new(:allow, "host.com")
-    host.expects(:matchname?).with("host.com")
-    host.match?("host.com", "192.168.0.1")
-
     ip = Declaration.new(:allow, "192.168.0.1")
     ip.pattern.expects(:include?)
     ip.match?("host.com", "192.168.0.1")
-  end
 
-  def test_matchname?
     host = Declaration.new(:allow, "host.com")
-    assert(host.send(:matchname?, "host.com"), "exact did not match")
-    assert(! host.send(:matchname?, "yay.com"), "incorrect match")
+    assert(host.send(:match?, "host.com", "1.2.3.4"), "exact did not match")
+    assert(! host.send(:match?, "yay.com", "1.2.3.4"), "incorrect match")
 
     domain = Declaration.new(:allow, "*.domain.com")
     %w{host.domain.com domain.com very.long.domain.com very-long.domain.com }.each do |name|
-      assert(domain.send(:matchname?, name), "Did not match #{name}")
+      assert(domain.send(:match?, name, "1.2.3.4"), "Did not match #{name}")
     end
   end
 end

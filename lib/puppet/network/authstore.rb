@@ -150,7 +150,18 @@ module Puppet
 
       # Does this declaration match the name/ip combo?
       def match?(name, ip)
-        ip? ? pattern.include?(IPAddr.new(ip)) : matchname?(name)
+        case @name
+          when :ip
+            pattern.include?(IPAddr.new(ip))
+          when :domain, :dynamic, :opaque
+            name = munge_name(name)
+            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+          when :regex
+            pattern.match(name)
+          when :klass
+            catalog = Puppet::Resource::Catalog.indirection.find(name)
+            pattern.detect { |klass| catalog.classes.include? klass }
+        end
       end
 
       # Set the pattern appropriately.  Also sets the name and length.
@@ -199,17 +210,6 @@ module Puppet
         (me and them) ? nil : me ? -1 : them ? 1 : nil
       end
 
-      # Does the name match our pattern?
-      def matchname?(name)
-        case @name
-          when :domain, :dynamic, :opaque
-            name = munge_name(name)
-            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
-          when :regex
-            Regexp.new(pattern.slice(1..-2)).match(name)
-        end
-      end
-
       # Convert the name to a common pattern.
       def munge_name(name)
         # LAK:NOTE http://snurl.com/21zf8  [groups_google_com]
@@ -229,7 +229,7 @@ module Puppet
       IP = "#{IPv4}|#{IPv6_full}".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
       def parse(value)
         @name,@exact,@length,@pattern = *case value
-        when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
+        when /^(?:#{IP})\/(\d+)$/                                 # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
           [:ip,:inexact,$1.to_i,IPAddr.new(value)]
         when /^(#{IP})$/                                          # 10.20.30.40,
           [:ip,:exact,nil,IPAddr.new(value)]
@@ -248,7 +248,10 @@ module Puppet
         when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
           [:opaque,:exact,nil,[value]]
         when /^\/.*\/$/                                           # a regular expression
-          [:regex,:inexact,nil,value]
+          [:regex,:inexact,nil,Regexp.new(value.slice(1..-2))]
+        when /^class(?:es)?:(.*)$/                                # a list of classes defined in catalog
+          klasses = value.split(':', 2)[1].split(',')
+          [:klass,:inexact,nil,klasses]
         else
           raise AuthStoreError, "Invalid pattern #{value}"
         end
