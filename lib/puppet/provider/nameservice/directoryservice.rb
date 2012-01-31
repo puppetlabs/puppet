@@ -220,19 +220,15 @@ class DirectoryService < Puppet::Provider::NameService
       fail("Could not get report.  command execution failed.")
     end
 
-    # Two code paths is ugly, but until we can drop 10.4 support we don't
-    # have a lot of choice. Ultimately this should all be done using Ruby
-    # to access the DirectoryService APIs directly, but that's simply not
-    # feasible for a while yet.
-    if self.get_macosx_version_major > "10.4"
-      dscl_plist = self.parse_dscl_plist_data(dscl_output)
-    elsif self.get_macosx_version_major == "10.4"
-      dscl_plist = self.parse_dscl_url_data(dscl_output)
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    dscl_plist = self.parse_dscl_plist_data(dscl_output)
 
     self.generate_attribute_hash(dscl_plist, *type_properties)
+  end
+
+  def self.fail_if_wrong_version
+    fail("Puppet does not support OS X versions < 10.5") unless self.get_macosx_version_major >= "10.5"
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -243,17 +239,9 @@ class DirectoryService < Puppet::Provider::NameService
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-    # 10.4 doesn't support the -plist option for dscl, and 10.5 has a
-    # different format for the -url output with objects with spaces in
-    # their values. *sigh*. Use -url for 10.4 in the hope this can be
-    # deprecated one day, and use -plist for 10.5 and higher.
-    if self.get_macosx_version_major > "10.4"
-      command_vector = [ command(:dscl), "-plist", "." ]
-    elsif self.get_macosx_version_major == "10.4"
-      command_vector = [ command(:dscl), "-url", "." ]
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    command_vector = [ command(:dscl), "-plist", "." ]
 
     # JJM: The actual action to perform.  See "man dscl"
     #      Common actiosn: -create, -delete, -merge, -append, -passwd
