@@ -1,3 +1,5 @@
+require 'puppet/util/terminal'
+
 Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
     summary "Search a repository for a module."
@@ -29,27 +31,59 @@ Puppet::Face.define(:module, '1.0.0') do
       Puppet::Module::Tool::Applications::Searcher.run(term, options)
     end
 
-    when_rendering :console do |return_value|
+    when_rendering :console do |results, term, options|
+      return '' if results.empty?
 
-      FORMAT = "%-10s    %-32s     %-14s     %s\n"
+      padding = '  '
+      headers = {
+        'full_name' => 'NAME',
+        'desc'      => 'DESCRIPTION',
+        'author'    => 'AUTHOR',
+        'tag_list'  => 'KEYWORDS',
+      }
 
-      def header
-        FORMAT % ['NAME', 'DESCRIPTION', 'AUTHOR', 'KEYWORDS']
+      min_widths = Hash[headers.map { |k,v| [k, v.length] }]
+      min_widths['full_name'] = min_widths['author'] = 12
+
+      min_width = min_widths.inject(0) { |sum,pair| sum += pair.last } + (padding.length * (headers.length - 1))
+
+      terminal_width = [Puppet::Util::Terminal.width, min_width].max
+
+      columns = results.inject(min_widths) do |hash, result|
+        {
+          'full_name' => [ hash['full_name'], result['full_name'].length          ].max,
+          'desc'      => [ hash['desc'],      result['desc'].length               ].max,
+          'author'    => [ hash['author'],    result['author'].length             ].max,
+          'tag_list'  => [ hash['tag_list'],  result['tag_list'].join(' ').length ].max,
+        }
       end
 
-      def format_row(name, description, author, tag_list)
-        keywords = tag_list.join(' ')
-        FORMAT % [name[0..10], description[0..32], "@#{author[0..14]}", keywords]
+      flex_width = terminal_width - columns['full_name'] - columns['author'] - (padding.length * (headers.length - 1))
+      tag_lists = results.map { |r| r['tag_list'] }
+
+      while (columns['tag_list'] > flex_width / 3)
+        longest_tag_list = tag_lists.max_by { |tl| tl.join(' ').length }
+        break if [ [], [term] ].include? longest_tag_list
+        longest_tag_list.delete(longest_tag_list.max_by { |t| t == term ? -1 : t.length })
+        columns['tag_list'] =  tag_lists.map { |tl| tl.join(' ').length }.max
       end
 
-      output = ''
-      output << header unless return_value.empty?
+      columns['tag_list'] = [
+        flex_width / 3,
+        tag_lists.map { |tl| tl.join(' ').length }.max,
+      ].max
+      columns['desc'] = flex_width - columns['tag_list']
 
-      return_value.map do |match|
-        output << format_row(match['name'], match['desc'], match['author'], match['tag_list'])
-      end
+      format = %w{full_name desc author tag_list}.map do |k|
+        "%-#{ [ columns[k], min_widths[k] ].max }s"
+      end.join(padding) + "\n"
 
-      output
+      format % [ headers['full_name'], headers['desc'], headers['author'], headers['tag_list'] ] +
+      results.map do |match|
+        name, desc, author, keywords = %w{full_name desc author tag_list}.map { |k| match[k] }
+        desc = desc[0...(columns['desc'] - 3)] + '...' if desc.length > columns['desc']
+        format % [name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ')]
+      end.join
     end
   end
 end
