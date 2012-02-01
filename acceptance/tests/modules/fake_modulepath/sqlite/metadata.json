@@ -1,0 +1,26 @@
+{
+  "description": "This module provides a sqlite class to manage\nthe installation of sqlite on a node.  It also provides\na sqlite::db defined type to manage databases on a system",
+  "source": "https://github.com/puppetlabs/puppetlabs-sqlite/",
+  "checksums": {
+    "spec/spec_helper.rb": "ca19ec4f451ebc7fdb035b52eae6e909",
+    "README.md": "ed04f8ed93d3a6ce19b9153b9444039c",
+    "tests/init.pp": "e8b321554c2d582e35beb01c57951062",
+    "manifests/db.pp": "ce94dbfcc3b10738eeec23304898ee78",
+    "metadata.json": "d34d0b70aba36510fbc2df4e667479ef",
+    "spec/spec.opts": "a600ded995d948e393fbe2320ba8e51c",
+    "Modulefile": "dda385f94c11e563df1fbe11eeba272d",
+    "manifests/init.pp": "859cb8ed63863adbaa202c45561280c5"
+  },
+  "summary": "Manage a sqlite installation and databases",
+  "author": "puppetlabs",
+  "dependencies": [
+
+  ],
+  "project_page": "http://projects.puppetlabs.com/projects/modules/issues",
+  "types": [
+
+  ],
+  "license": "Apache",
+  "version": "0.0.1.1",
+  "name": "puppetlabs-sqlite"
+}
