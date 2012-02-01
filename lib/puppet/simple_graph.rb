@@ -178,9 +178,7 @@ class Puppet::SimpleGraph
     # Given we are in a failure state here, any extra cost is more or less
     # irrelevant compared to the cost of a fix - which is on a human
     # time-scale.
-    state[:scc].select { |c| c.length > 1 }.map do |x|
-      x.sort_by {|a| a.to_s }
-    end.sort
+    state[:scc].select { |c| c.length > 1 }.map {|x| x.sort }.sort
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
@@ -214,7 +212,7 @@ class Puppet::SimpleGraph
       end
     end
 
-    return found
+    return found.sort
   end
 
   def report_cycles_in_graph

@@ -27,4 +27,36 @@ describe Puppet::Provider do
 
     two.specificity.should > one.specificity
   end
+
+  it "should be Comparable" do
+    res = Puppet::Type.type(:notify).new(:name => "res")
+
+    # Normally I wouldn't like the stubs, but the only way to name a class
+    # otherwise is to assign it to a constant, and that hurts more here in
+    # testing world. --daniel 2012-01-29
+    a = Class.new(Puppet::Provider).new(res)
+    a.class.stubs(:name).returns "Puppet::Provider::Notify::A"
+
+    b = Class.new(Puppet::Provider).new(res)
+    b.class.stubs(:name).returns "Puppet::Provider::Notify::B"
+
+    c = Class.new(Puppet::Provider).new(res)
+    c.class.stubs(:name).returns "Puppet::Provider::Notify::C"
+
+    [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]].each do |this|
+      this.sort.should == [a, b, c]
+    end
+
+    a.should be < b
+    a.should be < c
+    b.should be > a
+    b.should be < c
+    c.should be > a
+    c.should be > b
+
+    [a, b, c].each {|x| a.should be <= x }
+    [a, b, c].each {|x| c.should be >= x }
+
+    b.should be_between(a, c)
+  end
 end
