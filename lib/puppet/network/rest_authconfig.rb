@@ -36,7 +36,7 @@ module Puppet
       check_authorization(request)
     end
 
-    # check wether this request is allowed in our ACL
+    # check whether this request is allowed in our ACL
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
     def check_authorization(indirection, method, key, params)
