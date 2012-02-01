@@ -23,7 +23,11 @@ describe provider_class do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart, :status => "/bin/foo")
       provider = provider_class.new(resource)
 
-      provider.expects(:ucommand).with { `true`; true }
+      # Because we stub execution, we also need to stub the result of it, or a
+      # previously failing command execution will cause this test to do the
+      # wrong thing.
+      provider.expects(:ucommand)
+      $?.stubs(:exitstatus).returns(0)
       provider.status.should == :running
     end
 
