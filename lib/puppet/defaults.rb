@@ -757,7 +757,7 @@ EOT
       "From where to retrieve plugins.  The standard Puppet `file` type
       is used for retrieval, so anything that is a valid file source can
       be used here."],
-    :pluginsync => [false, "Whether plugins should be synced with the central server."],
+    :pluginsync => [true, "Whether plugins should be synced with the central server."],
 
     :pluginsignore => [".svn CVS .git", "What files to ignore when pulling down plugins."]
   )
