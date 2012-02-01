@@ -179,7 +179,7 @@ module Puppet
       end
     },
     :thin_storeconfigs => {:default => false, :desc =>
-      "Boolean; wether storeconfigs store in the database only the facts and exported resources.
+      "Boolean; whether storeconfigs store in the database only the facts and exported resources.
       If true, then storeconfigs performance will be higher and still allow exported/collected
       resources, but other usage external to Puppet might not work",
       :hook => proc do |value|
