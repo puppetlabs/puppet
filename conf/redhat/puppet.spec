@@ -79,7 +79,7 @@ for f in mac_dscl.pp mac_dscl_revert.pp \
   sed -i -e'1d' examples/$f
   chmod a-x examples/$f
 done
-for f in external/nagios.rb network/http_server/mongrel.rb relationship.rb; do
+for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
 chmod +x ext/puppetstoredconfigclean.rb
