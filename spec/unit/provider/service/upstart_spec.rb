@@ -6,13 +6,13 @@ provider_class = Puppet::Type.type(:service).provider(:upstart)
 describe provider_class do
   describe "#instances" do
     it "should be able to find all instances" do
-      processes = ["rc stop/waiting", "ssh start/running, process 712"]
+      processes = ["rc stop/waiting", "ssh start/running, process 712"].join("\n")
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.map {|provider| provider.name}.should =~ ["rc","ssh"]
     end
 
     it "should attach the interface name for network interfaces" do
-      processes = ["network-interface (eth0)"]
+      processes = ["network-interface (eth0)"].join("\n")
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
     end
