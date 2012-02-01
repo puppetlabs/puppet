@@ -572,7 +572,7 @@ Puppet::Type.newtype(:file) do
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
       break result if result and ! result.empty? and sourceselect == :first
       result
-    end.flatten
+    end.flatten.compact
 
     # This only happens if we have sourceselect == :all
     unless sourceselect == :first
