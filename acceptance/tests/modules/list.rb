@@ -3,9 +3,9 @@ test_name "puppet module list test output and dependency error checking"
 step "Run puppet module list"
 expected_stdout = <<-HEREDOC
 /opt/puppet-git-repos/puppet/acceptance/tests/modules/fake_modulepath
-  mysql (0.0.0)
   apache (0.0.3)
   bacula (0.0.2)
+  mysql (0.0.0)
   sqlite (0.0.1.1)
   HEREDOC
 
