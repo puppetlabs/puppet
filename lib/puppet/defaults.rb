@@ -843,10 +843,10 @@ EOT
     :main,
     :external_nodes => ["none",
 
-      "An external command that can produce node information.  The output
-      must be a YAML dump of a hash, and that hash must have one or both of
-      `classes` and `parameters`, where `classes` is an array and
-      `parameters` is a hash.  For unknown nodes, the commands should
+      "An external command that can produce node information.  The command's output
+      must be a YAML dump of a hash, and that hash must have a `classes` key and/or
+      a `parameters` key, where `classes` is an array or hash and
+      `parameters` is a hash.  For unknown nodes, the command should
       exit with a non-zero exit code.
 
       This command makes it straightforward to store your node mapping
