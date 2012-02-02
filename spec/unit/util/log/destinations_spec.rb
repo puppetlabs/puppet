@@ -107,5 +107,82 @@ describe Puppet::Util::Log.desttypes[:syslog] do
       klass.suitable?(:syslog).should be_false
     end
   end
+
+  describe Puppet::Util::Log.desttypes[:console] do
+    before :each do
+      Puppet[:color] = true
+    end
+
+    let (:dest) { Puppet::Util::Log.desttypes[:console].new }
+
+    describe "when color is enabled" do
+      let (:red_string)   { dest.colorize(:red, 'string') }
+      let (:reset_string) { dest.colorize(:reset, 'string') }
+
+      it "should color output" do
+        dest.colorize(:red, 'string').should == "[0;31mstring[0m"
+      end
+
+      it "should handle multiple overlapping colors in a stack-like way" do
+        dest.colorize(:green, "(#{red_string})").should == "[0;32m([0;31mstring[0;32m)[0m"
+      end
+
+      it "should handle resets in a stack-like way" do
+        dest.colorize(:green, "(#{reset_string})").should == "[0;32m([mstring[0;32m)[0m"
+      end
+
+      describe "when the message source is Puppet::Interface" do
+        before :each do
+          normal_msg.source  = 'Puppet::Interface'
+          warning_msg.source = 'Puppet::Interface'
+          error_msg.source   = 'Puppet::Interface'
+        end
+
+        let(:normal_msg)  { Puppet::Util::Log.new(:level => :info, :message => "Normal") }
+        let(:warning_msg) { Puppet::Util::Log.new(:level => :warning, :message => "Warning") }
+        let(:error_msg)   { Puppet::Util::Log.new(:level => :err, :message => "Error") }
+
+        it "should output normal messages to stdout" do
+          $stdout.expects(:puts)
+          dest.handle(normal_msg)
+        end
+
+        it "should output warning messages to stderr" do
+          $stderr.expects(:puts)
+          dest.handle(warning_msg)
+        end
+
+        it "should output error messages to stderr" do
+          $stderr.expects(:puts)
+          dest.handle(error_msg)
+        end
+
+        it "should not color normal messages" do
+          $stdout.expects(:puts).with("Normal")
+          dest.handle(normal_msg)
+        end
+
+        it "should color warning messages bright red" do
+          $stderr.expects(:puts).with("[1;31mWarning[0m")
+          dest.handle(warning_msg)
+        end
+
+        it "should color error messages bright red" do
+          $stderr.expects(:puts).with("[1;31mError[0m")
+          dest.handle(error_msg)
+        end
+      end
+    end
+
+    describe "when color is disabled" do
+      before :each do
+        Puppet[:color] = false
+      end
+
+      it "should not color output" do
+        dest.colorize(:red, 'output').should == "output"
+      end
+    end
+  end
 end
 

@@ -87,32 +87,78 @@ end
 
 Puppet::Util::Log.newdesttype :console do
 
+  RED        = {:console => "[0;31m", :html => "color: #FFA0A0"}
+  GREEN      = {:console => "[0;32m", :html => "color: #00CD00"}
+  YELLOW     = {:console => "[0;33m", :html => "color: #FFFF60"}
+  BLUE       = {:console => "[0;34m", :html => "color: #80A0FF"}
+  PURPLE     = {:console => "[0;35m", :html => "color: #FFA500"}
+  CYAN       = {:console => "[0;36m", :html => "color: #40FFFF"}
+  WHITE      = {:console => "[0;37m", :html => "color: #FFFFFF"}
+  HRED       = {:console => "[1;31m", :html => "color: #FFA0A0"}
+  HGREEN     = {:console => "[1;32m", :html => "color: #00CD00"}
+  HYELLOW    = {:console => "[1;33m", :html => "color: #FFFF60"}
+  HBLUE      = {:console => "[1;34m", :html => "color: #80A0FF"}
+  HPURPLE    = {:console => "[1;35m", :html => "color: #FFA500"}
+  HCYAN      = {:console => "[1;36m", :html => "color: #40FFFF"}
+  HWHITE     = {:console => "[1;37m", :html => "color: #FFFFFF"}
 
-  RED     = {:console => "[0;31m", :html => "FFA0A0"}
-  GREEN   = {:console => "[0;32m", :html => "00CD00"}
-  YELLOW  = {:console => "[0;33m", :html => "FFFF60"}
-  BLUE    = {:console => "[0;34m", :html => "80A0FF"}
-  PURPLE  = {:console => "[0;35m", :html => "FFA500"}
-  CYAN    = {:console => "[0;36m", :html => "40FFFF"}
-  WHITE   = {:console => "[0;37m", :html => "FFFFFF"}
-  HRED    = {:console => "[1;31m", :html => "FFA0A0"}
-  HGREEN  = {:console => "[1;32m", :html => "00CD00"}
-  HYELLOW = {:console => "[1;33m", :html => "FFFF60"}
-  HBLUE   = {:console => "[1;34m", :html => "80A0FF"}
-  HPURPLE = {:console => "[1;35m", :html => "FFA500"}
-  HCYAN   = {:console => "[1;36m", :html => "40FFFF"}
-  HWHITE  = {:console => "[1;37m", :html => "FFFFFF"}
-  RESET   = {:console => "[0m",    :html => ""      }
+  BG_RED     = {:console => "[0;41m", :html => "background: #FFA0A0"}
+  BG_GREEN   = {:console => "[0;42m", :html => "background: #00CD00"}
+  BG_YELLOW  = {:console => "[0;43m", :html => "background: #FFFF60"}
+  BG_BLUE    = {:console => "[0;44m", :html => "background: #80A0FF"}
+  BG_PURPLE  = {:console => "[0;45m", :html => "background: #FFA500"}
+  BG_CYAN    = {:console => "[0;46m", :html => "background: #40FFFF"}
+  BG_WHITE   = {:console => "[0;47m", :html => "background: #FFFFFF"}
+  BG_HRED    = {:console => "[1;41m", :html => "background: #FFA0A0"}
+  BG_HGREEN  = {:console => "[1;42m", :html => "background: #00CD00"}
+  BG_HYELLOW = {:console => "[1;43m", :html => "background: #FFFF60"}
+  BG_HBLUE   = {:console => "[1;44m", :html => "background: #80A0FF"}
+  BG_HPURPLE = {:console => "[1;45m", :html => "background: #FFA500"}
+  BG_HCYAN   = {:console => "[1;46m", :html => "background: #40FFFF"}
+  BG_HWHITE  = {:console => "[1;47m", :html => "background: #FFFFFF"}
+
+  RESET      = {:console => "[0m", :html => ""}
 
   Colormap = {
-    :debug => WHITE,
-    :info => GREEN,
-    :notice => CYAN,
-    :warning => YELLOW,
-    :err => HPURPLE,
-    :alert => RED,
-    :emerg => HRED,
-    :crit => HRED
+    :debug      => WHITE,
+    :info       => GREEN,
+    :notice     => CYAN,
+    :warning    => YELLOW,
+    :err        => HPURPLE,
+    :alert      => RED,
+    :emerg      => HRED,
+    :crit       => HRED,
+
+    :red        => RED,
+    :green      => GREEN,
+    :yellow     => YELLOW,
+    :blue       => BLUE,
+    :purple     => PURPLE,
+    :cyan       => CYAN,
+    :white      => WHITE,
+    :hred       => HRED,
+    :hgreen     => HGREEN,
+    :hyellow    => HYELLOW,
+    :hblue      => HBLUE,
+    :hpurple    => HPURPLE,
+    :hcyan      => HCYAN,
+    :hwhite     => HWHITE,
+    :bg_red     => BG_RED,
+    :bg_green   => BG_GREEN,
+    :bg_yellow  => BG_YELLOW,
+    :bg_blue    => BG_BLUE,
+    :bg_purple  => BG_PURPLE,
+    :bg_cyan    => BG_CYAN,
+    :bg_white   => BG_WHITE,
+    :bg_hred    => BG_HRED,
+    :bg_hgreen  => BG_HGREEN,
+    :bg_hyellow => BG_HYELLOW,
+    :bg_hblue   => BG_HBLUE,
+    :bg_hpurple => BG_HPURPLE,
+    :bg_hcyan   => BG_HCYAN,
+    :bg_hwhite  => BG_HWHITE,
+
+    :reset      => {:console => "[m", :html => ""}
   }
 
   def colorize(level, str)
@@ -125,21 +171,29 @@ Puppet::Util::Log.newdesttype :console do
   end
 
   def console_color(level, str)
-    Colormap[level][:console] + str + RESET[:console]
+    Colormap[level][:console] + str.gsub(RESET[:console], Colormap[level][:console]) + RESET[:console]
   end
 
   def html_color(level, str)
-    %{<span style="color: %s">%s</span>} % [Colormap[level][:html], str]
+    %{<span style="%s">%s</span>} % [Colormap[level][:html], str]
   end
 
   def initialize
     # Flush output immediately.
+    $stderr.sync = true
     $stdout.sync = true
   end
 
   def handle(msg)
-    if msg.source == "Puppet"
+    case msg.source
+    when "Puppet"
       puts colorize(msg.level, "#{msg.level}: #{msg}")
+    when "Puppet::Interface"
+      if [:err, :warning].include?(msg.level)
+        $stderr.puts colorize(:hred, "#{msg}")
+      else
+        $stdout.puts "#{msg}"
+      end
     else
       puts colorize(msg.level, "#{msg.level}: #{msg.source}: #{msg}")
     end
