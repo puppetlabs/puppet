@@ -106,6 +106,25 @@ describe provider_class do
       provider.expects(:execute).with([provider_class.command(:pw), "userdel", "testuser"])
       provider.delete
     end
+
+    # The above test covers this, but given the consequences of
+    # accidently deleting a user's home directory it seems better to
+    # have an explicit test.
+    it "should not use -r when managehome is not set" do
+      provider = resource.provider
+      provider.expects(:exists?).returns true
+      resource[:managehome] = false
+      provider.expects(:execute).with(Not(includes("-r")))
+      provider.delete
+    end
+
+    it "should use -r when managehome is set" do
+      provider = resource.provider
+      provider.expects(:exists?).returns true
+      resource[:managehome] = true
+      provider.expects(:execute).with(includes("-r"))
+      provider.delete
+    end
   end
 
   describe "when modifying users" do
