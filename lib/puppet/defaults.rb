@@ -506,7 +506,7 @@ EOT
     :ca => [true, "Wether the master should function as a certificate authority."],
     :modulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
-      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :desc => "The search path for modules, as a list of directories separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",
       :type => :setting # We don't want this to be considered a file, since it's multiple files.
     },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
@@ -757,7 +757,7 @@ EOT
     :main,
     :factpath => {:default => "$vardir/lib/facter#{File::PATH_SEPARATOR}$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
-        be colon-separated, like normal PATH variables.",
+        be separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",
 
       :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
       :type => :setting, # Don't consider it a file, because it could be multiple colon-separated files
