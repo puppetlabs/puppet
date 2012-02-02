@@ -67,7 +67,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       modules_by_path.each do |path, modules|
         output << "#{path}\n"
-        modules.each do |mod|
+        modules.sort_by {|mod| mod.name }.each do |mod|
           version_string = mod.version ? "(#{mod.version})" : ''
           output << "  #{mod.name} #{version_string}\n"
         end
