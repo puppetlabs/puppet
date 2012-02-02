@@ -126,6 +126,12 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.options.stubs(:[]).with(any_parameters)
     end
 
+    it "should abort stating that kick is not supported on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+
+      expect { @kick.setup }.to raise_error(Puppet::Error, /Puppet kick is not supported on Microsoft Windows/)
+    end
+
     it "should set log level to debug if --debug was passed" do
       @kick.options.stubs(:[]).with(:debug).returns(true)
       @kick.setup
