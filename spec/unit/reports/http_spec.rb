@@ -21,9 +21,10 @@ describe processor do
 
   it { should respond_to(:process) }
 
-  it "should use the reporturl setting's host and port" do
+  it "should use the reporturl setting's host, port and ssl option" do
     uri = URI.parse(Puppet[:reporturl])
-    Net::HTTP.expects(:new).with(uri.host, uri.port).returns(stub_everything('http'))
+    ssl = (uri.scheme == 'https')
+    Puppet::Network::HttpPool.expects(:http_instance).with(uri.host, uri.port, ssl).returns(stub_everything('http'))
     subject.process
   end
 
