@@ -78,8 +78,10 @@ tests.split("\n").map {|x| x.split(/\s+/)}.each do |data|
   step "test mode #{symbolic_mode} works on a file"
   manifest = "file { #{file.inspect}: ensure => file, mode => #{symbolic_mode} }"
   apply_manifest_on(agents, manifest) do
-    assert_match(/mode changed '#{start_mode}' to '#{file_mode}'/, stdout,
-                 "couldn't set file mode to #{symbolic_mode}")
+    unless start_mode == file_mode
+      assert_match(/mode changed '#{start_mode}' to '#{file_mode}'/, stdout,
+                   "couldn't set file mode to #{symbolic_mode}")
+    end
   end
 
   step "validate the mode changes applied to the file"
@@ -93,8 +95,10 @@ tests.split("\n").map {|x| x.split(/\s+/)}.each do |data|
   step "test mode #{symbolic_mode} works on a directory"
   manifest = "file { #{dir.inspect}: ensure => directory, mode => #{symbolic_mode} }"
   apply_manifest_on(agents, manifest) do
-    assert_match(/mode changed '#{start_mode}' to '#{dir_mode}'/, stdout,
-                 "couldn't set dir mode to #{symbolic_mode}")
+    unless start_mode == dir_mode
+      assert_match(/mode changed '#{start_mode}' to '#{dir_mode}'/, stdout,
+                   "couldn't set dir mode to #{symbolic_mode}")
+    end
   end
 
   step "validate the mode changes applied to the dir"
