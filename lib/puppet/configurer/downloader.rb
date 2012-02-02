@@ -2,25 +2,12 @@ require 'puppet/configurer'
 require 'puppet/resource/catalog'
 
 class Puppet::Configurer::Downloader
-  attr_reader :name, :path, :source, :ignore
-
-  # Determine the timeout value to use.
-  def self.timeout
-    timeout = Puppet[:configtimeout]
-    case timeout
-    when String
-      if timeout =~ /^\d+$/
-        timeout = Integer(timeout)
-      else
-        raise ArgumentError, "Configuration timeout must be an integer"
-      end
-    when Integer # nothing
-    else
-      raise ArgumentError, "Configuration timeout must be an integer"
-    end
-
-    timeout
+  require 'puppet/util/config_timeout'
+  class <<self
+    include Puppet::Util::ConfigTimeout
   end
+  
+  attr_reader :name, :path, :source, :ignore
 
   # Evaluate our download, returning the list of changed values.
   def evaluate
@@ -28,7 +15,7 @@ class Puppet::Configurer::Downloader
 
     files = []
     begin
-      Timeout.timeout(self.class.timeout) do
+      ::Timeout.timeout(self.class.timeout) do
         catalog.apply do |trans|
           trans.changed?.find_all do |resource|
             yield resource if block_given?
