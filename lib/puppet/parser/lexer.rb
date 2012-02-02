@@ -283,7 +283,8 @@ class Puppet::Parser::Lexer
       "false" => :FALSE,
       "true" => :TRUE,
 
-      "in" => :IN
+      "in" => :IN,
+      "unless" => :UNLESS
   )
 
   def clear

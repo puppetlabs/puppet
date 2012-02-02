@@ -83,6 +83,17 @@ describe Puppet::Parser do
     end
   end
 
+  describe "parsing 'unless'" do
+    it "should create the correct ast objects" do
+      Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
+      @parser.parse("unless false { $var = 1 }")
+    end
+    
+    it "should not raise an error with empty statements" do
+      lambda { @parser.parse("unless false { }") }.should_not raise_error
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
       Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
