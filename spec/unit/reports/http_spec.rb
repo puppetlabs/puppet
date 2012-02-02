@@ -28,6 +28,13 @@ describe processor do
     subject.process
   end
 
+  it "should use ssl if requested" do
+    Puppet[:reporturl] = Puppet[:reporturl].sub(/^http:\/\//, 'https://')
+    uri = URI.parse(Puppet[:reporturl])
+    Puppet::Network::HttpPool.expects(:http_instance).with(uri.host, uri.port, use_ssl=true).returns(stub_everything('http'))
+    subject.process
+  end
+
   describe "request" do
     before { subject.process }
 
