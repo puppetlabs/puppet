@@ -1,0 +1,53 @@
+{
+  "description": "This module manages Bacula, a complete backup solution",
+  "source": "http://github.com/puppetlabs/puppetlabs-bacula",
+  "checksums": {
+    "templates/client_config.erb": "5d4005eda5ace78fd90a8cb6dcb388bd",
+    "spec/spec_helper.rb": "ca19ec4f451ebc7fdb035b52eae6e909",
+    "templates/bacula-fd.conf.erb": "344fff616e138fbf8cd150f4bab8125d",
+    "CHANGELOG": "a20043858790de6086b9b30c36806cd2",
+    "manifests/config/validate.pp": "7d2f9f7cffb2bd1d221eb699ea55f246",
+    "LICENSE": "26ce13c80c7a8493533c65c32dc29f09",
+    "manifests/director.pp": "36f34f749314634173b6a47b92a58421",
+    "manifests/config/client.pp": "5d25cbfd94be2829d9d530673cd2307f",
+    "lib/puppet/parser/functions/generate_clients.rb": "e09d77f88d18ec3e59bbe7bae4a48036",
+    "manifests/common.pp": "67391e5560ee7fc97d873ab5c3e2f84c",
+    "manifests/client.pp": "42e9255711d0a6abed6ab8deafb1248c",
+    "manifests/console.pp": "4cf8ac2f96f9268e2a3d70ed777797b7",
+    "README.md": "13d0f1119d510e41c539cbc3825a4f82",
+    "templates/bacula-sd.conf.erb": "df7987695bf1dd18bb789a2673b2cd95",
+    "manifests/config.pp": "624a225f85f907e7db5cf717561953f3",
+    "tests/init.pp": "b95d199119d5e592df7e1580bf23fe06",
+    "templates/bconsole.conf.erb": "ba5e1ef7d320a48bde6e403dc956952a",
+    "manifests/bat.pp": "3743bddf0197b4110e54a8e297e927e8",
+    "manifests/storage.pp": "84f4ec1413df4fdec7288c18d6ba2897",
+    "templates/bacula-dir.conf.erb": "5ab5aa263cf318ebf65c6b52a0726647",
+    "metadata.json": "d34d0b70aba36510fbc2df4e667479ef",
+    "spec/spec.opts": "a600ded995d948e393fbe2320ba8e51c",
+    "Modulefile": "63f93af605871a69211cd3f79ac62582",
+    "manifests/init.pp": "fafac38161dd69f4b7e452cf910812f4"
+  },
+  "summary": "This module manages a bacula infrastructure",
+  "author": "Puppet Labs",
+  "dependencies": [
+    {
+      "version_requirement": ">= 2.2.0",
+      "name": "puppetlabs/stdlib"
+    },
+    {
+      "version_requirement": ">= 0.0.1",
+      "name": "puppetlabs/mysql"
+    },
+    {
+      "version_requirement": ">= 0.0.1",
+      "name": "puppetlabs/sqlite"
+    }
+  ],
+  "project_page": "http://github.com/puppetlabs/puppetlabs-bacula",
+  "types": [
+
+  ],
+  "license": "Apache",
+  "version": "0.0.2",
+  "name": "puppetlabs-bacula"
+}

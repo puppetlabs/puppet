@@ -48,8 +48,23 @@ Puppet::Face.define(:module, '1.0.0') do
       environment.modules_by_path
     end
 
-    when_rendering :console do |modules_by_path|
+    when_rendering :console do |modules_by_path, options|
       output = ''
+
+      Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
+      environment = Puppet::Node::Environment.new(options[:env])
+
+      dependency_errors = false
+
+      environment.modules.each do |mod|
+        mod.unsatisfied_dependencies.each do |dep_issue|
+          dependency_errors = true
+          $stderr.puts dep_issue.to_s
+        end
+      end
+
+      output << "\n" if dependency_errors
+
       modules_by_path.each do |path, modules|
         output << "#{path}\n"
         modules.each do |mod|
