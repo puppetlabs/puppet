@@ -113,7 +113,7 @@ class Puppet::Rails::Schema
 
         add_index :inventory_nodes, :name, :unique => true
 
-        create_table :inventory_facts, :id => false do |t|
+        create_table :inventory_facts do |t|
           t.column :node_id, :integer, :null => false
           t.column :name, :string, :null => false
           t.column :value, :text, :null => false
