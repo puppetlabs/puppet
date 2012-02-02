@@ -23,7 +23,7 @@ module Puppet::Network::HttpPool
 
   # Retrieve a cached http instance if caching is enabled, else return
   # a new one.
-  def self.http_instance(host, port, reset = false)
+  def self.http_instance(host, port, reset = false, use_ssl = true)
     args = [host, port]
     if Puppet[:http_proxy_host] == "none"
       args << nil << nil
@@ -36,7 +36,7 @@ module Puppet::Network::HttpPool
     # give us a reader for ca_file... Grr...
     class << http; attr_accessor :ca_file; end
 
-    http.use_ssl = true
+    http.use_ssl = use_ssl
     # Use configured timeout (#1176)
     http.read_timeout = Puppet[:configtimeout]
     http.open_timeout = Puppet[:configtimeout]
