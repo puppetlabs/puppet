@@ -12,8 +12,8 @@ class Puppet::Util::Autoload
   @loaded = []
 
   class << self
-    attr_reader :autoloaders
-    private :autoloaders
+    attr_reader :autoloaders, :loaded
+    private :autoloaders, :loaded
   end
 
   # Send [], []=, and :clear to the @autloaders hash
@@ -39,7 +39,7 @@ class Puppet::Util::Autoload
   # Save the fact that a given path has been loaded.  This is so
   # we can load downloaded plugins if they've already been loaded
   # into memory.
-  def self.loaded(file)
+  def self.mark_loaded(file)
     $" << file + ".rb" unless $".include?(file)
     @loaded << file unless @loaded.include?(file)
   end
@@ -76,7 +76,7 @@ class Puppet::Util::Autoload
       begin
         Kernel.load file, @wrap
         name = symbolize(name)
-        loaded name, file
+        mark_loaded(name, file)
         return true
       rescue SystemExit,NoMemoryError
         raise
@@ -91,8 +91,8 @@ class Puppet::Util::Autoload
 
   # Mark the named object as loaded.  Note that this supports unqualified
   # queries, while we store the result as a qualified query in the class.
-  def loaded(name, file)
-    self.class.loaded(File.join(@path, name.to_s))
+  def mark_loaded(name, file)
+    self.class.mark_loaded(File.join(@path, name.to_s))
   end
 
   # Indicate whether the specfied plugin has been loaded.
@@ -109,7 +109,7 @@ class Puppet::Util::Autoload
       next if loaded?(name)
       begin
         Kernel.require file
-        loaded(name, file)
+        mark_loaded(name, file)
       rescue SystemExit,NoMemoryError
         raise
       rescue Exception => detail

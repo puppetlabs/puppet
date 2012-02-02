@@ -12,6 +12,10 @@ describe Puppet::Util::Autoload do
     @autoload.stubs(:eachdir).yields "/my/dir"
   end
 
+  after :each do
+    @autoload.class.send(:loaded).clear
+  end
+
   describe "when building the search path" do
     before :each do
       @dira = make_absolute('/a')
