@@ -1,10 +1,10 @@
-# The majority of the system configuration parameters are set in this file.
+# The majority of Puppet's configuration settings are set in this file.
 module Puppet
   setdefaults(:main,
-    :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
+    :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this setting is calculated based on the user.  If the process
     is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it's running as any other user,
     it defaults to being in the user's home directory."],
-    :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
+    :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this setting is calculated specially, like `confdir`_."],
     :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
       default is essentially $0 without the path or `.rb`."],
     :run_mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
@@ -42,11 +42,10 @@ module Puppet
       sense when used interactively.  Takes into account arguments specified
       on the CLI."],
     :configprint => ["",
-      "Print the value of a specific configuration parameter.  If a
-      parameter is provided for this, then the value is printed and puppet
+      "Print the value of a specific configuration setting.  If the name of a
+      setting is provided for this, then the value is printed and puppet
       exits.  Comma-separate multiple values.  For a list of all values,
-      specify 'all'.  This feature is only available in Puppet versions
-      higher than 0.18.4."],
+      specify 'all'."],
     :color => {
       :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
       :type    => :setting,
@@ -94,9 +93,9 @@ module Puppet
         $LOAD_PATH << value
       end
     },
-    :ignoreimport => [false, "A parameter that can be used in commit
-      hooks, since it enables you to parse-check a single file rather
-      than requiring that all files exist."],
+    :ignoreimport => [false, "If true, allows the parser to continue without requiring
+      all files referenced with `import` statements to exist. This setting was primarily
+      designed for use with commit hooks for parse-checking."],
     :authconfig => [ "$confdir/namespaceauth.conf",
       "The configuration file that defines the rights to the different
       namespaces and methods.  This can be used as a coarse-grained
@@ -424,12 +423,12 @@ EOT
         uses that configuration file to determine which keys to sign."},
     :allow_duplicate_certs => [false, "Whether to allow a new certificate
       request to overwrite an existing certificate."],
-    :ca_days => ["", "How long a certificate should be valid.
-      This parameter is deprecated, use ca_ttl instead"],
+    :ca_days => ["", "How long a certificate should be valid, in days.
+      This setting is deprecated; use `ca_ttl` instead"],
     :ca_ttl => ["5y", "The default TTL for new certificates; valid values
       must be an integer, optionally followed by one of the units
       'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds. If this parameter
+      's' (seconds). The unit defaults to seconds. If this setting
       is set, ca_days is ignored. Examples are '3600' (one hour)
       and '1825d', which is the same as '5y' (5 years) "],
     :ca_md => ["md5", "The type of hash used in certificates."],
