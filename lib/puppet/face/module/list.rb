@@ -3,7 +3,9 @@ Puppet::Face.define(:module, '1.0.0') do
     summary "List installed modules"
     description <<-HEREDOC
       List puppet modules from a specific environment, specified modulepath or
-      default to listing modules in the default modulepath:
+      default to listing modules in the default modulepath.  The output will
+      include information about unmet module dependencies based on information
+      from module metadata.
       #{Puppet.settings[:modulepath]}
     HEREDOC
     returns "hash of paths to module objects"
@@ -29,6 +31,9 @@ Puppet::Face.define(:module, '1.0.0') do
       List installed modules from a specified environment:
 
       $ puppet module list --env 'test'
+        Missing dependency `stdlib`:
+          `rrd` (0.0.2) requires `puppetlabs/stdlib` (>= 2.2.0)
+
         /tmp/puppet/modules
           rrd (0.0.2)
 
@@ -56,10 +61,10 @@ Puppet::Face.define(:module, '1.0.0') do
 
       dependency_errors = false
 
-      environment.modules.each do |mod|
-        mod.unsatisfied_dependencies.each do |dep_issue|
+      environment.modules.sort_by {|mod| mod.name}.each do |mod|
+        mod.unmet_dependencies.sort_by {|dep| dep[:name]}.each do |dep|
           dependency_errors = true
-          $stderr.puts dep_issue.to_s
+          $stderr.puts dep[:error]
         end
       end
 

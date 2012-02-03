@@ -155,10 +155,10 @@ class Puppet::Module
     result
   end
 
-  def unsatisfied_dependencies
+  def unmet_dependencies
     return [] unless dependencies
 
-    unsatisfied_dependencies = []
+    unmet_dependencies = []
 
     dependencies.each do |dependency|
       forge_name = dependency['name']
@@ -170,14 +170,14 @@ class Puppet::Module
       unless dep_mod = environment.module(dep_name)
         msg =  "Missing dependency `#{dep_name}`:\n"
         msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unsatisfied_dependencies << msg
+        unmet_dependencies << { :name => forge_name, :error => msg }
         next
       end
 
       if dep_version && !dep_mod.version
         msg =  "Unversioned dependency `#{dep_mod.name}`:\n"
         msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unsatisfied_dependencies << msg
+        unmet_dependencies << { :name => forge_name, :error => msg }
         next
       end
 
@@ -188,19 +188,19 @@ class Puppet::Module
         rescue ArgumentError
           msg =  "Non semantic version dependency `#{dep_mod.name}` (#{dep_mod.version}):\n"
           msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unsatisfied_dependencies << msg
+          unmet_dependencies << { :name => forge_name, :error => msg }
           next
         end
 
         if !actual_version_semver.send(equality, required_version_semver)
           msg =  "Version dependency mismatch `#{dep_mod.name}` (#{dep_mod.version}):\n"
           msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unsatisfied_dependencies << msg
+          unmet_dependencies << { :name => forge_name, :error => msg }
           next
         end
       end
     end
-    unsatisfied_dependencies
+    unmet_dependencies
   end
 
   def validate_puppet_version
