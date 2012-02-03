@@ -138,7 +138,7 @@ class Puppet::Resource::TypeCollection
       return @version
     end
 
-    @version = Puppet::Util.execute([environment[:config_version]]).strip
+    @version = Puppet::Util::Execution.execute([environment[:config_version]]).strip
 
   rescue Puppet::ExecutionFailure => e
     raise Puppet::ParseError, "Unable to set config_version: #{e.message}"

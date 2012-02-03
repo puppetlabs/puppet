@@ -173,7 +173,7 @@ module Puppet::Util::SUIDManager
 
     options = default_options.merge(options)
 
-    output = Puppet::Util.execute(command, :failonfail => false, :combine => true,
+    output = Puppet::Util::Execution.execute(command, :failonfail => false, :combine => true,
                                   :uid => new_uid, :gid => new_gid,
                                   :override_locale => options[:override_locale],
                                   :custom_environment => options[:custom_environment])

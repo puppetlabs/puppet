@@ -1,6 +1,7 @@
 # The container class for implementations.
 class Puppet::Provider
   include Puppet::Util
+  include Puppet::Util::Execution
   include Puppet::Util::Errors
   include Puppet::Util::Warnings
   extend Puppet::Util::Warnings

@@ -101,6 +101,9 @@ RSpec.configure do |config|
     Puppet::Util::Log.close_all
     Puppet::Util::Log.level = @log_level
 
+    # uncommenting and manipulating this can be useful when tracking down calls to deprecated code
+    #Puppet.log_deprecations_to_file("deprecations.txt", /^Puppet::Util.exec/)
+
     # Restore the indirector configuration.  See before hook.
     indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
     indirections.each do |indirector|

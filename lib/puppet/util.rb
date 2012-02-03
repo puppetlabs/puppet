@@ -349,11 +349,45 @@ module Util
   end
   module_function :secure_open
 
+
   # Because IO#binread is only available in 1.9
   def binread(file)
     File.open(file, 'rb') { |f| f.read }
   end
   module_function :binread
+
+
+
+  # utility method to get the current call stack and format it to a human-readable string (which some IDEs/editors
+  # will recognize as links to the line numbers in the trace)
+  def self.pretty_backtrace()
+    caller(1).collect do |line|
+      file_path, line_num = line.split(":")
+      file_path = expand_symlinks(File.expand_path(file_path))
+
+      file_path + ":" + line_num
+    end .join("\n")
+
+  end
+
+  # utility method that takes a path as input, checks each component of the path to see if it is a symlink, and expands
+  # it if it is.  returns the expanded path.
+  def self.expand_symlinks(file_path)
+    file_path.split("/").inject do |full_path, next_dir|
+      next_path = full_path + "/" + next_dir
+      if File.symlink?(next_path) then
+        link = File.readlink(next_path)
+        next_path =
+            case link
+              when /^\// then link
+              else
+                File.expand_path(full_path + "/" + link)
+            end
+      end
+      next_path
+    end
+  end
+
 
 
   #######################################################################################################
@@ -373,11 +407,10 @@ module Util
   module_function :execfail
 
   def execute(command, arguments = {})
-    Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
+    Puppet.deprecation_warning("Puppet::Util::Execution.execute is deprecated; please use Puppet::Util::Execution.execute")
     Puppet::Util::Execution.execute(command, arguments)
   end
   module_function :execute
-
 
 end
 end

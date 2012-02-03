@@ -219,7 +219,7 @@ class Puppet::Configurer
     return true if (command = Puppet[setting]) == ""
 
     begin
-      Puppet::Util.execute([command])
+      Puppet::Util::Execution.execute([command])
       true
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
