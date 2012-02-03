@@ -1,5 +1,4 @@
 require 'puppet/application'
-
 class Puppet::Application::Doc < Puppet::Application
   should_not_parse_config
   run_mode :master
@@ -263,12 +262,7 @@ HELP
 
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-
+      set_log_level
       Puppet::Util::Log.newdestination(:console)
     end
   end

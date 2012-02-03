@@ -1,21 +1,13 @@
 require 'puppet/application'
 
 class Puppet::Application::Inspect < Puppet::Application
-
   should_parse_config
   run_mode :agent
 
   option("--debug","-d")
   option("--verbose","-v")
 
-  option("--logdest LOGDEST", "-l") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:logset] = true
-    rescue => detail
-      $stderr.puts detail.to_s
-    end
-  end
+  logdest_option
 
   def help
     <<-HELP
@@ -80,24 +72,18 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
-
+    exit_if_print_configs
+    
     raise "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting." unless Puppet[:report]
 
     @report = Puppet::Transaction::Report.new("inspect")
 
     Puppet::Util::Log.newdestination(@report)
-    Puppet::Util::Log.newdestination(:console) unless options[:logset]
+    setup_logs
 
     Signal.trap(:INT) do
       $stderr.puts "Exiting"
       exit(1)
-    end
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
     end
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest

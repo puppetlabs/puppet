@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Kick < Puppet::Application
-
   should_not_parse_config
 
   attr_accessor :hosts, :tags, :classes
@@ -287,12 +286,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    else
-      Puppet::Util::Log.level = :info
-    end
-
+    set_log_level
+    
     # Now parse the config
     Puppet.parse_config
 

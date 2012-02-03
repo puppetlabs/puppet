@@ -73,6 +73,9 @@ describe Puppet::Application::Resource do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:parse_config)
+      @resource_app.options.stubs(:[]).with(:setdest).returns(false)
+      @resource_app.options.stubs(:[]).with(:debug).returns(nil)
+      @resource_app.options.stubs(:[]).with(:verbose).returns(nil)
     end
 
     it "should set console as the log destination" do

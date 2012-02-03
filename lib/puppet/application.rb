@@ -238,6 +238,18 @@ class Application
       require 'puppet/util/run_mode'
       @run_mode = Puppet::Util::RunMode[ mode_name || :user ]
     end
+    
+    def logdest_option
+      option("--logdest DEST", "-l DEST") do |arg|
+        begin
+          Puppet::Util::Log.newdestination(arg)
+          options[:setdest] = true
+        rescue => detail
+          puts detail.backtrace if Puppet[:debug]
+          $stderr.puts detail.to_s
+        end
+      end
+    end
   end
 
   attr_reader :options, :command_line
@@ -318,17 +330,39 @@ class Application
   end
 
   def setup
-    # Handle the logging settings
-    if options[:debug] or options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-    end
+    setup_logs :console => :requires_explicit_option
+  end
 
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+  # Handle the logging settings.
+  def setup_logs(params = {})
+    
+    explicit = params[:console] == :requires_explicit_option
+    setdest = options[:setdest]
+    chatty = (options[:debug] or options[:verbose])
+    
+    Puppet::Util::Log.newdestination(:console) if explicit and chatty
+    Puppet::Util::Log.newdestination(:console) unless (explicit or setdest)
+    
+    set_log_level if chatty
+    
+    Puppet::Util::Log.newdestination(:syslog) if explicit and not setdest
+  end    
+
+  def set_log_level
+    Puppet::Util::Log.level = options[:debug] ? :debug : :info
+  end
+
+  def setup_central_logs
+    logdest = args[:Server]
+
+    logdest += ":" + args[:Port] if args.include?(:Port)
+    Puppet::Util::Log.newdestination(logdest)
+  end
+
+  def setup_host(fingerprint = false)
+    @host = Puppet::SSL::Host.new
+    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
+    cert = @host.wait_for_cert(waitforcert) unless fingerprint
   end
 
   def configure_indirector_routes
@@ -406,6 +440,10 @@ class Application
     puts detail.backtrace if Puppet[:trace]
     $stderr.puts "Could not #{message}: #{detail}"
     exit(code)
+  end
+  
+  def exit_if_print_configs
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
   end
 
   def hook(step,&block)

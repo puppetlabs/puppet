@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Apply < Puppet::Application
-
   should_parse_config
 
   option("--debug","-d")
@@ -25,14 +24,7 @@ EOM
     options[:catalog] = arg
   end
 
-  option("--logdest LOGDEST", "-l") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:logset] = true
-    rescue => detail
-      $stderr.puts detail.to_s
-    end
-  end
+  logdest_option
 
   option("--parseonly") do
     puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
@@ -230,9 +222,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
-
-    Puppet::Util::Log.newdestination(:console) unless options[:logset]
+    exit_if_print_configs
+    setup_logs
     client = nil
     server = nil
 
@@ -243,12 +234,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
 
     # Make pluginsync local
     Puppet[:pluginsource] = 'puppet:///plugins'
