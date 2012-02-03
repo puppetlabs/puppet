@@ -49,10 +49,9 @@ module Puppet
     :color => {
       :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
       :type    => :setting,
-      :desc    => "Whether to use colors when logging to the console.
-      Valid values are `ansi` (equivalent to `true`), `html` (mostly
-      used during testing with TextMate), and `false`, which produces
-      no color.",
+      :desc    => "Whether to use colors when logging to the console.  Valid values are
+      `ansi` (equivalent to `true`), `html`, and `false`, which produces no color.
+      Defaults to false on Windows, as its console does not support ansi colors.",
     },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
@@ -106,10 +105,13 @@ module Puppet
       is used to find modules and much more.  For servers (i.e., `puppet master`) this provides the default environment for nodes
       we know nothing about."
     },
-    :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
+    :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between
+      files. The command to use can be chosen with the `diff` setting."],
     :diff => {
       :default => (Puppet.features.microsoft_windows? ? "" : "diff"),
-      :desc    => "Which diff command to use when printing differences between files.",
+      :desc    => "Which diff command to use when printing differences between files. This setting
+        has no default value on Windows, as standard `diff` is not available, but Puppet can use many
+        third-party diff tools.",
     },
     :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
       partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
@@ -117,7 +119,8 @@ module Puppet
       This feature currently requires the `diff/lcs` Ruby library."],
     :daemonize => {
       :default => (Puppet.features.microsoft_windows? ? false : true),
-      :desc => "Send the process into the background.  This is the default.",
+      :desc => "Whether to send the process into the background.  This defaults to true on POSIX systems,
+        and to false on Windows (where Puppet currently cannot daemonize).",
       :short => "D",
       :hook => proc do |value|
         if value and Puppet.features.microsoft_windows?
