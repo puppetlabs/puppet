@@ -1,0 +1,19 @@
+Information for bash-3.1.17
+
+Comment:
+GNU Bourne Again Shell
+
+Description:
+Bash is the GNU Project's Bourne Again SHell, an sh-compatible
+command language interpreter that executes commands read from the
+standard input or from a file.  Bash also incorporates useful
+features from the Korn and C shells (ksh and csh).
+
+Bash is intended to be a conformant implementation of the IEEE POSIX
+Shell and Tools specification (IEEE Working Group 1003.2).
+
+Maintainer: Christian Weisgerber <naddy@openbsd.org>
+
+WWW: http://cnswww.cns.cwru.edu/~chet/bash/bashtop.html
+
+

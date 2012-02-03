@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def get_version
-    execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
+    execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
       regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
       fields = [ :name, :version, :flavor ]
@@ -98,17 +98,12 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def query
-    hash = {}
-    info = pkginfo @resource[:name]
-
     # Search for the version info
-    if info =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-      hash[:ensure] = $2
+    if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
+      return { :ensure => $2 }
     else
       return nil
     end
-
-    hash
   end
 
   def uninstall
