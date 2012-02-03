@@ -17,7 +17,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
 
   # Proxy the execution, so it's easier to test.
   def execute(command, arguments)
-    Puppet::Util.execute(command,arguments)
+    Puppet::Util::Execution.execute(command,arguments)
   end
 
   # Call the external command and see if it returns our output.

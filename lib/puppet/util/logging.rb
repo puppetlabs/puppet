@@ -15,15 +15,91 @@ module Puppet::Util::Logging
     end
   end
 
-  def deprecation_warning(message)
-    $deprecation_warnings ||= Hash.new(0)
-    if $deprecation_warnings.length < 100 and ($deprecation_warnings[message] += 1) == 1
-      warning message
+  # Log an exception.  Will also log the backtrace if Puppet[:trace] is set.
+  # Parameters:
+  # [exception] an Exception to log
+  # [options] an optional Hash containing some configuration options about how to log the exception.
+  #     Available options include:
+  #     * :message => an optional String overriding the message to be logged; by default, we log Exception.message.
+  #             If you pass a String here, your string will be logged instead.  You may also pass nil if you don't
+  #             wish to log a message at all; in this case it is likely that you are only calling this method in order
+  #             to take advantage of the backtrace logging.
+  #     * :level => the log level to log the message at.  Defaults to :err.
+  def log_exception(exception, options = {})
+
+    default_options = {
+      :message => :default,
+      :level => :err,
+    }
+
+    options = default_options.merge(options)
+
+    case options[:message]
+      when :default
+        send(options[:level], exception.message)
+      when nil
+        # don't log anything if they passed a nil; they are just calling for the optional backtrace logging
+      else
+        send(options[:level], options[:message])
     end
+
+    send(options[:level], exception.backtrace) if Puppet[:trace] && exception.backtrace
+  end
+
+  class DeprecationWarning < Exception; end
+
+  def deprecation_warning(message)
+    $deprecation_warnings ||= {}
+    if $deprecation_warnings.length < 100 then
+      offender = get_deprecation_offender()
+      if (! $deprecation_warnings.has_key?(offender)) then
+        $deprecation_warnings[offender] = message
+        log_exception(DeprecationWarning.new(message), :level => :warning)
+      end
+    end
+  end
+
+  def get_deprecation_offender()
+    # we have to put this in its own method to simplify testing; we need to be able to mock the offender results in
+    # order to test this class, and our framework does not appear to enjoy it if you try to mock Kernel.caller
+    #
+    # let's find the offending line;  we need to jump back up the stack a few steps to find the method that called
+    #  the deprecated method
+    caller()[2]
   end
 
   def clear_deprecation_warnings
     $deprecation_warnings.clear if $deprecation_warnings
+  end
+
+  # utility method that can be called, e.g., from spec_helper config.after, when tracking down calls to deprecated
+  # code.
+  # Parameters:
+  # [deprecations_file] relative or absolute path of a file to log the deprecations to
+  # [pattern] (default nil) if specified, will only log deprecations whose message matches the provided pattern
+  def log_deprecations_to_file(deprecations_file, pattern = nil)
+    # this method may get called lots and lots of times (e.g., from spec_helper config.after) without the global
+    # list of deprecation warnings being cleared out.  We don't want to keep logging the same offenders over and over,
+    # so, we need to keep track of what we've logged.
+    #
+    # It'd be nice if we could just clear out the list of deprecation warnings, but then the very next spec might
+    # find the same offender, and we'd end up logging it again.
+    $logged_deprecation_warnings ||= {}
+
+    File.open(deprecations_file, "a") do |f|
+      if ($deprecation_warnings) then
+        $deprecation_warnings.each do |offender, message|
+          if (! $logged_deprecation_warnings.has_key?(offender)) then
+            $logged_deprecation_warnings[offender] = true
+            if ((pattern.nil?) || (message =~ pattern)) then
+              f.puts(message)
+              f.puts(offender)
+              f.puts()
+            end
+          end
+        end
+      end
+    end
   end
 
   private

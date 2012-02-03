@@ -142,7 +142,7 @@ describe Puppet::FileServing::Configuration do
       mount = mock 'mount'
 
       config.stubs(:mounts).returns("modules" => mount)
-      Puppet::Util::Warnings.expects(:notice_once)
+      Puppet.expects(:deprecation_warning)
       config.find_mount("foo", env).should equal(mount)
     end
 

@@ -151,7 +151,7 @@ Puppet::Type.newtype(:file) do
       when :false; false
       when :remote; :remote
       when Integer, Fixnum, Bignum
-        self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
+        Puppet.deprecation_warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
 
         # recurse == 0 means no recursion
         return false if value == 0
@@ -159,7 +159,7 @@ Puppet::Type.newtype(:file) do
         resource[:recurselimit] = value
         true
       when /^\d+$/
-        self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
+        Puppet.deprecation_warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
         value = Integer(value)
 
         # recurse == 0 means no recursion

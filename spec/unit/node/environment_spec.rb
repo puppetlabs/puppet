@@ -113,7 +113,7 @@ describe Puppet::Node::Environment do
   end
 
   it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
-    Puppet::Util::Execution.withenv("PUPPETLIB" => %w{/l1 /l2}.join(File::PATH_SEPARATOR)) do
+    Puppet::Util.withenv("PUPPETLIB" => %w{/l1 /l2}.join(File::PATH_SEPARATOR)) do
       module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
       env.expects(:validate_dirs).with(%w{/l1 /l2 /one /two}).returns %w{/l1 /l2 /one /two}
       env.expects(:[]).with(:modulepath).returns module_path

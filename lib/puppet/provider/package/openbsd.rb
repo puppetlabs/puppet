@@ -68,7 +68,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       full_name = @resource[:source]
     end
 
-     Puppet::Util::Execution::withenv(e_vars) { pkgadd full_name }
+     Puppet::Util.withenv(e_vars) { pkgadd full_name }
   end
 
   def get_version

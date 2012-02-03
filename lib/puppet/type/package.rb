@@ -242,7 +242,7 @@ module Puppet
       desc "Deprecated form of `provider`."
 
       munge do |value|
-        warning "'type' is deprecated; use 'provider' instead"
+        Puppet.deprecation_warning "'type' is deprecated; use 'provider' instead"
         @resource[:provider] = value
 
         @resource[:provider]

@@ -8,7 +8,7 @@ describe Puppet::Util::ExecutionStub do
       "stub output"
     end
     Puppet::Util::ExecutionStub.current_value.should_not == nil
-    Puppet::Util.execute(['/bin/foo', 'bar']).should == "stub output"
+    Puppet::Util::Execution.execute(['/bin/foo', 'bar']).should == "stub output"
   end
 
   it "should automatically restore normal execution at the conclusion of each spec test" do
@@ -30,11 +30,11 @@ describe Puppet::Util::ExecutionStub do
       stub_call_count += 1
       'stub called'
     end
-    Puppet::Util.execute(true_command).should == 'stub called'
+    Puppet::Util::Execution.execute(true_command).should == 'stub called'
     stub_call_count.should == 1
     Puppet::Util::ExecutionStub.reset
     Puppet::Util::ExecutionStub.current_value.should == nil
-    Puppet::Util.execute(true_command).should == ''
+    Puppet::Util::Execution.execute(true_command).should == ''
     stub_call_count.should == 1
   end
 end

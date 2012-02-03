@@ -435,13 +435,13 @@ describe Puppet::Resource::TypeCollection do
     it "should use the output of the environment's config_version setting if one is provided" do
       @code.environment.stubs(:[]).with(:config_version).returns("/my/foo")
 
-      Puppet::Util.expects(:execute).with(["/my/foo"]).returns "output\n"
+      Puppet::Util::Execution.expects(:execute).with(["/my/foo"]).returns "output\n"
       @code.version.should == "output"
     end
 
     it "should raise a puppet parser error if executing config_version fails" do
       @code.environment.stubs(:[]).with(:config_version).returns("test")
-      Puppet::Util.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+      Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
 
       lambda { @code.version }.should raise_error(Puppet::ParseError)
     end
