@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Agent < Puppet::Application
-
   should_parse_config
   run_mode :agent
 
@@ -62,16 +61,8 @@ class Puppet::Application::Agent < Puppet::Application
   option("--detailed-exitcodes") do |arg|
     options[:detailed_exitcodes] = true
   end
-
-  option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
-    end
-  end
+  
+  logdest_option
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
     options[:waitforcert] = arg.to_i
@@ -361,20 +352,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     options[:detailed_exitcodes] = true
   end
 
-  # Handle the logging settings.
-  def setup_logs
-    if options[:debug] or options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-    end
-
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
-  end
-
   def enable_disable_client(agent)
     if options[:enable]
       agent.enable
@@ -397,12 +374,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @daemon.server = server
   end
 
-  def setup_host
-    @host = Puppet::SSL::Host.new
-    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    cert = @host.wait_for_cert(waitforcert) unless options[:fingerprint]
-  end
-
   def setup_agent
     # We need tomake the client either way, we just don't start it
     # if --no-client is set.
@@ -418,7 +389,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # waitforcert happens.
     @daemon.daemonize if Puppet[:daemonize]
 
-    setup_host
+    setup_host 
 
     @objects = []
 
@@ -435,9 +406,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup
     setup_test if options[:test]
 
-    setup_logs
+    setup_logs :console => :requires_explicit_option
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+    exit_if_print_configs
 
     args[:Server] = Puppet[:server]
     if options[:fqdn]
@@ -445,12 +416,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:certname] = options[:fqdn]
     end
 
-    if options[:centrallogs]
-      logdest = args[:Server]
-
-      logdest += ":" + args[:Port] if args.include?(:Port)
-      Puppet::Util::Log.newdestination(logdest)
-    end
+    setup_central_logs if options[:centrallogs]
 
     Puppet.settings.use :main, :agent, :ssl
 
@@ -479,7 +445,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     unless options[:fingerprint]
       setup_agent
     else
-      setup_host
+      setup_host options[:fingerprint]
     end
   end
 end

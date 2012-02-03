@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Resource < Puppet::Application
-
   should_not_parse_config
 
   attr_accessor :host, :extra_params
@@ -152,15 +151,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    Puppet::Util::Log.newdestination(:console)
+    setup_logs
 
     Puppet.parse_config
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
   end
 
   private

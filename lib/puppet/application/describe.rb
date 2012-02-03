@@ -150,18 +150,18 @@ class TypeDoc
   end
 
   def format_providers(type)
-    type.providers.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |prov|
+    sort_providers(type).each { |prov|
       puts "\n- **#{prov}**"
       puts @format.wrap(type.provider(prov).doc, :indent => 4, :scrub => true)
     }
   end
 
+  def sort_providers(type)
+    type.providers.sort { |a,b| a.to_s <=> b.to_s }
+  end
+
   def list_providers(type)
-    list = type.providers.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.join(", ")
+    list = sort_providers(type).join(", ")
     puts @format.wrap(list, :indent => 4)
   end
 

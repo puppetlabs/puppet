@@ -197,8 +197,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def setup
     require 'puppet/ssl/certificate_authority'
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
-
+    exit_if_print_configs
+    
     Puppet::Util::Log.newdestination :console
 
     if [:generate, :destroy].include? subcommand

@@ -1,7 +1,5 @@
 require 'puppet/application'
-
 class Puppet::Application::Master < Puppet::Application
-
   should_parse_config
   run_mode :master
 
@@ -14,16 +12,8 @@ class Puppet::Application::Master < Puppet::Application
   option("--compile host",  "-c host") do |arg|
     options[:node] = arg
   end
-
-  option("--logdest DEST",  "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
-    end
-  end
+  
+  logdest_option
 
   option("--parseonly") do
     puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
@@ -206,12 +196,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-
+      set_log_level
+      
       unless Puppet[:daemonize] or options[:rack]
         Puppet::Util::Log.newdestination(:console)
         options[:setdest] = true
@@ -220,8 +206,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
-
+    exit_if_print_configs
+    
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     # Cache our nodes in yaml.  Currently not configurable.

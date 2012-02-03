@@ -36,7 +36,7 @@ describe Puppet::Application::Inspect do
   describe "when executing" do
     before :each do
       Puppet[:report] = true
-      @inspect.options[:logset] = true
+      @inspect.options[:setdest] = true
       Puppet::Transaction::Report::Rest.any_instance.stubs(:save)
       @inspect.setup
     end

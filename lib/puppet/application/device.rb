@@ -1,9 +1,7 @@
 require 'puppet/application'
 require 'puppet/util/network_device'
 
-
 class Puppet::Application::Device < Puppet::Application
-
   should_parse_config
   run_mode :agent
 
@@ -38,15 +36,7 @@ class Puppet::Application::Device < Puppet::Application
     options[:detailed_exitcodes] = true
   end
 
-  option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
-    end
-  end
+  logdest_option
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
     options[:waitforcert] = arg.to_i
@@ -171,8 +161,9 @@ Licensed under the Apache 2.0 License
         Puppet.info "starting applying configuration to #{device.name} at #{device.url}"
 
         # override local $vardir and $certname
-        Puppet.settings.set_value(:confdir, ::File.join(Puppet[:devicedir], device.name), :cli)
-        Puppet.settings.set_value(:vardir, ::File.join(Puppet[:devicedir], device.name), :cli)
+        device_dir = ::File.join Puppet[:devicedir], device.name
+        Puppet.settings.set_value(:confdir, device_dir, :cli)
+        Puppet.settings.set_value(:vardir, device_dir, :cli)
         Puppet.settings.set_value(:certname, device.name, :cli)
 
         # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
@@ -201,36 +192,11 @@ Licensed under the Apache 2.0 License
     end
   end
 
-  # Handle the logging settings.
-  def setup_logs
-    if options[:debug] or options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-    end
-
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
-  end
-
-  def setup_host
-    @host = Puppet::SSL::Host.new
-    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    cert = @host.wait_for_cert(waitforcert)
-  end
-
   def setup
-    setup_logs
+    setup_logs :console => :requires_explicit_option
 
     args[:Server] = Puppet[:server]
-    if options[:centrallogs]
-      logdest = args[:Server]
-
-      logdest += ":" + args[:Port] if args.include?(:Port)
-      Puppet::Util::Log.newdestination(logdest)
-    end
+    setup_central_logs if options[:centrallogs]
 
     Puppet.settings.use :main, :agent, :device, :ssl
 

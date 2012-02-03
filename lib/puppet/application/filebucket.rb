@@ -170,7 +170,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Now parse the config
     Puppet.parse_config
 
-      exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+    exit_if_print_configs
 
     require 'puppet/file_bucket/dipper'
     begin
