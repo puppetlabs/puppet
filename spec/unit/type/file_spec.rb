@@ -159,9 +159,8 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should warn if recurse is specified as a number" do
+      Puppet.expects(:deprecation_warning).with("Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit")
       file[:recurse] = 3
-      message = /Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit/
-      @logs.find { |log| log.level == :warning and log.message =~ message}.should_not be_nil
     end
   end
 

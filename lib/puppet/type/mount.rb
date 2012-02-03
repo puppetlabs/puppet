@@ -203,7 +203,7 @@ module Puppet
       desc "The deprecated name for the mount point.  Please use `name` now."
 
       def value=(value)
-        warning "'path' is deprecated for mounts.  Please use 'name'."
+        Puppet.deprecation_warning "'path' is deprecated for mounts.  Please use 'name'."
         @resource[:name] = value
         super
       end

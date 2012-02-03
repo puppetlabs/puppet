@@ -1,7 +1,7 @@
 module Puppet::Util
   class ExecutionStub
     class << self
-      # Set a stub block that Puppet::Util.execute() should invoke instead
+      # Set a stub block that Puppet::Util::Execution.execute() should invoke instead
       # of actually executing commands on the target machine.  Intended
       # for spec testing.
       #
@@ -12,7 +12,7 @@ module Puppet::Util
       end
 
       # Uninstall any execution stub, so that calls to
-      # Puppet::Util.execute() behave normally again.
+      # Puppet::Util::Execution.execute() behave normally again.
       def reset
         @value = nil
       end

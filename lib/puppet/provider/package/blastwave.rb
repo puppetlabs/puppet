@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   commands :pkgget => pkgget
 
   def pkgget_with_cat(*args)
-    Puppet::Util::Execution::withenv(:PAGER => "/usr/bin/cat") { pkgget(*args) }
+    Puppet::Util.withenv(:PAGER => "/usr/bin/cat") { pkgget(*args) }
   end
 
   def self.extended(mod)
@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
     command << hash[:justme] if hash[:justme]
 
-    output = Puppet::Util::Execution::withenv(:PAGER => "/usr/bin/cat") { pkgget command }
+    output = Puppet::Util.withenv(:PAGER => "/usr/bin/cat") { pkgget command }
 
     list = output.split("\n").collect do |line|
       next if line =~ /^#/

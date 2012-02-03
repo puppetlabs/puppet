@@ -1,6 +1,7 @@
 # The container class for implementations.
 class Puppet::Provider
   include Puppet::Util
+  include Puppet::Util::Execution
   include Puppet::Util::Errors
   include Puppet::Util::Warnings
   extend Puppet::Util::Warnings
@@ -135,7 +136,7 @@ class Puppet::Provider
   # They all get stored in @property_hash.  This method is useful
   # for those providers that use prefetch and flush.
   def self.mkmodelmethods
-    warnonce "Provider.mkmodelmethods is deprecated; use Provider.mk_resource_methods"
+    Puppet.deprecation_warning "Provider.mkmodelmethods is deprecated; use Provider.mk_resource_methods"
     mk_resource_methods
   end
 
