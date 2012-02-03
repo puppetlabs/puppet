@@ -181,8 +181,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
       end
     rescue => detail
-      $stderr.puts detail
-      puts detail.backtrace if Puppet[:trace]
+      Puppet.log_exception(detail)
       exit(1)
     end
   end

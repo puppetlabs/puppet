@@ -307,9 +307,8 @@ class Puppet::Util::Settings
     return unless FileTest.exist?(file)
     begin
       data = parse_file(file)
-    rescue => details
-      puts details.backtrace if Puppet[:trace]
-      Puppet.err "Could not parse #{file}: #{details}"
+    rescue => detail
+      Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
       return
     end
 
@@ -622,8 +621,7 @@ if @config.include?(:run_mode)
       begin
         catalog = to_catalog(*sections).to_ral
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}"
+        Puppet.log_exception(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
 
         # We need some way to get rid of any resources created during the catalog creation
         # but not cleaned up.

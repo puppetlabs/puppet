@@ -136,8 +136,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           audited_resource = ral_resource.to_resource
         rescue StandardError => detail
-          puts detail.backtrace if Puppet[:trace]
-          ral_resource.err "Could not inspect #{ral_resource}; skipping: #{detail}"
+          ral_resource.log_exception(detail, "Could not inspect #{ral_resource}; skipping: #{detail}")
           audited_attributes.each do |name|
             event = ral_resource.event(
                                        :property => name,
@@ -183,8 +182,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       begin
         Puppet::Transaction::Report.indirection.save(@report)
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not send report: #{detail}"
+        Puppet.log_exception(detail, "Could not send report: #{detail}")
       end
     end
   end

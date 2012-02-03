@@ -26,8 +26,7 @@ module Puppet
           rescue InterfaceError
             raise
           rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not call #{method}: #{detail}"
+            Puppet.log_exception(detail, "Could not call #{method}: #{detail}")
           end
         end
 

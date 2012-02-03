@@ -37,8 +37,7 @@ class Puppet::Configurer::Downloader
         end
       end
     rescue Puppet::Error, Timeout::Error => detail
-      puts detail.backtrace if Puppet[:debug]
-      Puppet.err "Could not retrieve #{name}: #{detail}"
+      Puppet.log_exception(detail, "Could not retrieve #{name}: #{detail}")
     end
 
     files

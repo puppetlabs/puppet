@@ -74,8 +74,9 @@ module Puppet::Util::Backups
     begin
       File.unlink(newfile)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      self.fail "Could not remove old backup: #{detail}"
+      message = "Could not remove old backup: #{detail}"
+      self.log_exception(detail, message)
+      self.fail message
     end
   end
 

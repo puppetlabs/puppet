@@ -189,8 +189,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
       @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      puts detail.to_s
+      Puppet.log_exception(detail)
       exit(24)
     end
   end
@@ -219,8 +218,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     begin
       @ca = Puppet::SSL::CertificateAuthority.new
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      puts detail.to_s
+      Puppet.log_exception(detail)
       exit(23)
     end
   end

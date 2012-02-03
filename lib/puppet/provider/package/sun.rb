@@ -107,8 +107,9 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
       return hash
     rescue Puppet::ExecutionFailure => detail
       return {:ensure => :absent} if detail.message =~ /information for "#{Regexp.escape(@resource[:name])}" was not found/
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{detail}"
+      message = "Unable to get information about package #{@resource[:name]} because of: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
   end
 

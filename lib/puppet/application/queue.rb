@@ -113,8 +113,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -123,8 +122,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -139,8 +137,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           Puppet::Resource::Catalog.indirection.save(catalog)
         rescue => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not save queued catalog for #{catalog.name}: #{detail}"
+          Puppet.log_exception(detail, "Could not save queued catalog for #{catalog.name}: #{detail}")
         end
       end
     end

@@ -248,8 +248,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       result = run.status
       puts "status is #{result}"
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Host #{host} failed: #{detail}\n"
+      Puppet.log_exception(detail, "Host #{host} failed: #{detail}\n")
       exit(2)
     end
 

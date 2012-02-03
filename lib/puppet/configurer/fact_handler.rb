@@ -20,8 +20,9 @@ module Puppet::Configurer::FactHandler
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Could not retrieve local facts: #{detail}"
+      message = "Could not retrieve local facts: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
   end
 

@@ -51,14 +51,13 @@ class Puppet::Configurer
       Puppet::Util::Storage.load
       @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Corrupt state file #{Puppet[:statefile]}: #{detail}"
-      begin
-        ::File.unlink(Puppet[:statefile])
-        retry
-      rescue => detail
-        raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
-      end
+    Puppet.log_exception(detail, "Removing corrupt state file #{Puppet[:statefile]}: #{detail}")
+    begin
+      ::File.unlink(Puppet[:statefile])
+      retry
+    rescue => detail
+      raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
+    end
   end
 
   # Just so we can specify that we are "the" instance.
@@ -154,8 +153,7 @@ class Puppet::Configurer
       rescue SystemExit,NoMemoryError
         raise
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Failed to apply catalog: #{detail}"
+        Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
         return nil
       ensure
         execute_postrun_command or return nil
@@ -175,8 +173,7 @@ class Puppet::Configurer
     save_last_run_summary(report)
     Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not send report: #{detail}"
+    Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
 
   def save_last_run_summary(report)
@@ -192,8 +189,7 @@ class Puppet::Configurer
     ral.host_config = false
     ral.apply
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not save last run local report: #{detail}"
+    Puppet.log_exception(detail, "Could not save last run local report: #{detail}")
   end
 
   private
@@ -222,8 +218,7 @@ class Puppet::Configurer
       Puppet::Util::Execution.execute([command])
       true
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not run command from #{setting}: #{detail}"
+      Puppet.log_exception(detail, "Could not run command from #{setting}: #{detail}")
       false
     end
   end
@@ -236,8 +231,7 @@ class Puppet::Configurer
     Puppet.notice "Using cached catalog"
     result
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not retrieve catalog from cache: #{detail}"
+    Puppet.log_exception(detail, "Could not retrieve catalog from cache: #{detail}")
     return nil
   end
 
@@ -250,8 +244,7 @@ class Puppet::Configurer
   rescue SystemExit,NoMemoryError
     raise
   rescue Exception => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not retrieve catalog from remote server: #{detail}"
+    Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
   end
 end

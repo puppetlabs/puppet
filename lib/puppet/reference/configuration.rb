@@ -16,8 +16,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     begin
       str << object.desc.gsub(/\n/, " ")
     rescue => detail
-      puts detail.backtrace
-      puts detail
+      Puppet.log_exception(detail)
     end
     str << "\n\n"
 

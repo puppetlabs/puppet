@@ -117,7 +117,7 @@ class Puppet::Transaction::ResourceHarness
     end
     event
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
+    Puppet.log_exception(detail)
     event.status = "failure"
 
     event.message = "change from #{property.is_to_s(current_value)} to #{property.should_to_s(property.should)} failed: #{detail}"
@@ -142,8 +142,7 @@ class Puppet::Transaction::ResourceHarness
     return status
   rescue => detail
     resource.fail "Could not create resource status: #{detail}" unless status
-    puts detail.backtrace if Puppet[:trace]
-    resource.err "Could not evaluate: #{detail}"
+    resource.log_exception(detail, "Could not evaluate: #{detail}")
     status.failed = true
     return status
   ensure

@@ -143,11 +143,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         Puppet::Util::Log.close(transaction.report) if register_report
       end
     rescue Puppet::Error => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not apply complete catalog: #{detail}"
+      Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Got an uncaught exception of type #{detail.class}: #{detail}"
+      Puppet.log_exception(detail, "Got an uncaught exception of type #{detail.class}: #{detail}")
     ensure
       # Don't try to store state unless we're a host config
       # too recursive.

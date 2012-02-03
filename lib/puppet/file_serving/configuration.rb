@@ -110,8 +110,7 @@ class Puppet::FileServing::Configuration
       newmounts = @parser.parse
       @mounts = newmounts
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Error parsing fileserver configuration: #{detail}; using old configuration"
+      Puppet.log_exception(detail, "Error parsing fileserver configuration: #{detail}; using old configuration")
     end
 
   ensure
