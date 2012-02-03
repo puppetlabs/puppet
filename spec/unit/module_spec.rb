@@ -89,7 +89,7 @@ describe Puppet::Module do
     lambda { mod.validate_puppet_version }.should raise_error(Puppet::Module::IncompatibleModule)
   end
 
-  describe "when finding unsatisfied dependencies" do
+  describe "when finding unmet dependencies" do
     before do
       @mod = Puppet::Module.new("mymod")
       @mod.stubs(:dependencies).returns [
@@ -101,23 +101,27 @@ describe Puppet::Module do
     end
 
     it "should list modules that are missing" do
-      @mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      @mod.unmet_dependencies.should == [{
+        :name  => 'baz/foobar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Missing dependency `foobar`:
             `mymod` () requires `baz/foobar` (>= 2.2.0)
         HEREDOC
-      ]
+      }]
     end
 
-    it "should list modules with unsatisfied version" do
+    it "should list modules with unmet version" do
       foobar = Puppet::Module.new("foobar")
       foobar.version = '2.0.0'
       @mod.environment.expects(:module).with("foobar").returns foobar
 
-      @mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      @mod.unmet_dependencies.should == [{
+        :name  => 'baz/foobar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Version dependency mismatch `foobar` (2.0.0):
             `mymod` () requires `baz/foobar` (>= 2.2.0)
         HEREDOC
-      ]
+      }]
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do
@@ -127,33 +131,37 @@ describe Puppet::Module do
       foobar = Puppet::Module.new("foobar")
       mod.environment.expects(:module).with("foobar").returns foobar
 
-      mod.unsatisfied_dependencies.should be_empty
+      mod.unmet_dependencies.should be_empty
     end
 
-    it "should consider a dependency without a version to be unsatisfied" do
+    it "should consider a dependency without a version to be unmet" do
       foobar = Puppet::Module.new("foobar")
       @mod.environment.expects(:module).with("foobar").returns foobar
 
-      @mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      @mod.unmet_dependencies.should == [{
+        :name  => 'baz/foobar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Unversioned dependency `foobar`:
             `mymod` () requires `baz/foobar` (>= 2.2.0)
         HEREDOC
-      ]
+      }]
     end
 
-    it "should consider a dependency without a semantic version to be unsatisfied" do
+    it "should consider a dependency without a semantic version to be unmet" do
       foobar = Puppet::Module.new("foobar")
       foobar.version = '5.1'
       @mod.environment.expects(:module).with("foobar").returns foobar
 
-      @mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      @mod.unmet_dependencies.should == [{
+        :name  => 'baz/foobar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Non semantic version dependency `foobar` (5.1):
             `mymod` () requires `baz/foobar` (>= 2.2.0)
         HEREDOC
-      ]
+      }]
     end
 
-    it "should consider a dependency requirement without a semantic version to be unsatisfied" do
+    it "should consider a dependency requirement without a semantic version to be unmet" do
       foobar = Puppet::Module.new("foobar")
       foobar.version = '5.1.0'
 
@@ -161,20 +169,22 @@ describe Puppet::Module do
       mod.stubs(:dependencies).returns [{ "name" => "baz/foobar", "version_requirement" => '> 2.0' }]
       mod.environment.expects(:module).with("foobar").returns foobar
 
-      mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      mod.unmet_dependencies.should == [{
+        :name  => 'baz/foobar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Non semantic version dependency `foobar` (5.1.0):
             `mymod` () requires `baz/foobar` (> 2.0)
         HEREDOC
-      ]
+      }]
     end
 
     it "should have valid dependencies when no dependencies have been specified" do
       mod = Puppet::Module.new("mymod")
 
-      mod.unsatisfied_dependencies.should == []
+      mod.unmet_dependencies.should == []
     end
 
-    it "should only list unsatisfied dependencies" do
+    it "should only list unmet dependencies" do
       mod = Puppet::Module.new("mymod")
       mod.stubs(:dependencies).returns [
         {
@@ -193,11 +203,13 @@ describe Puppet::Module do
       mod.environment.expects(:module).with("satisfied").returns satisfied
       mod.environment.expects(:module).with("notsatisfied").returns nil
 
-      mod.unsatisfied_dependencies.should == [<<-HEREDOC.gsub(/^\s{10}/, '')
+      mod.unmet_dependencies.should == [{
+        :name  => 'baz/notsatisfied',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
           Missing dependency `notsatisfied`:
             `mymod` () requires `baz/notsatisfied` (>= 2.2.0)
         HEREDOC
-      ]
+      }]
     end
 
     it "should be empty when all dependencies are met" do
@@ -220,7 +232,7 @@ describe Puppet::Module do
       mod.environment.expects(:module).with("satisfied").returns satisfied
       mod.environment.expects(:module).with("alsosatisfied").returns alsosatisfied
 
-      mod.unsatisfied_dependencies.should be_empty
+      mod.unmet_dependencies.should be_empty
     end
   end
 
