@@ -30,12 +30,16 @@ Puppet::Util::Log.newdesttype :syslog do
     # cannot log a message with a '%' in it.  So, we get rid
     # of them.
     if msg.source == "Puppet"
-      @syslog.send(msg.level, msg.to_s.gsub("%", '%%'))
+      msg.to_s.split("\n").each do |line|
+        @syslog.send(msg.level, line.gsub("%", '%%'))
+      end
     else
-      @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
-          msg.to_s.gsub("%", '%%')
-        ]
-      )
+      msg.to_s.split("\n").each do |line|
+        @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
+            line.gsub("%", '%%')
+          ]
+        )
+      end
     end
   end
 end
