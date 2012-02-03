@@ -1,25 +1,24 @@
 test_name "#7101: template compile"
 
-manifest = %q{
+agents.each do |agent|
+  template = agent.tmpfile('template_7101.erb')
+  target = agent.tmpfile('file_7101.erb')
+
+  manifest = %Q{
 $bar = 'test 7101'
-file { '/tmp/file_7101.erb':
-  content => template('/tmp/template_7101.erb')
+file { '#{target}':
+  content => template("#{template}")
 }
 }
 
+  step "Agents: Create template file"
+  create_remote_file(agent, template, %w{<%= bar %>} )
 
-step "Agents: Create template file"
-agents.each do |host|
-  create_remote_file(host, '/tmp/template_7101.erb', %w{<%= bar %>} )
-end
+  step "Run manifest referencing template file"
+  apply_manifest_on(agent, manifest)
 
-step "Run manifest referencing template file"
-apply_manifest_on(agents, manifest)
-
-
-step "Agents: Verify file is created with correct contents "
-agents.each do |host|
-  on(host, "cat /tmp/file_7101.erb") do
-    assert_match(/test 7101/, stdout, "File /tmp/file_7101.erb not created with correct contents on #{host}" )
+  step "Agents: Verify file is created with correct contents "
+  on(agent, "cat #{target}") do
+    assert_match(/test 7101/, stdout, "File #{target} not created with correct contents on #{agent}" )
   end
 end
