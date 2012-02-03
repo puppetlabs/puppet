@@ -315,10 +315,9 @@ describe Puppet::Module do
     mod = Puppet::Module.new("foo")
     mod.stubs(:path).returns "/a/foo"
     FileTest.expects(:exist?).with("/a/foo/plugins").returns true
+    Puppet.expects(:deprecation_warning).with("using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'")
 
     mod.plugin_directory.should == "/a/foo/plugins"
-    @logs.first.message.should == "using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'"
-    @logs.first.level.should == :warning
   end
 
   it "should default to 'lib' for the plugins directory" do
