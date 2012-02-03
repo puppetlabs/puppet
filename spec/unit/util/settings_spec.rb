@@ -216,7 +216,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should warn and use [master] if we ask for [puppetmasterd]" do
-      Puppet.expects(:warning)
+      Puppet.expects(:deprecation_warning)
       @settings.set_value(:myval, "foo", :puppetmasterd)
 
       @settings.stubs(:run_mode).returns(:master)
@@ -224,7 +224,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should warn and use [agent] if we ask for [puppetd]" do
-      Puppet.expects(:warning)
+      Puppet.expects(:deprecation_warning)
       @settings.set_value(:myval, "foo", :puppetd)
 
       @settings.stubs(:run_mode).returns(:agent)
