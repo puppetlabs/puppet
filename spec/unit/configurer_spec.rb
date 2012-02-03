@@ -35,14 +35,14 @@ describe Puppet::Configurer do
 
     it "should execute any pre-run command provided via the 'prerun_command' setting" do
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_prerun_command
     end
 
     it "should fail if the command fails" do
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_prerun_command.should be_false
     end
@@ -58,14 +58,14 @@ describe Puppet::Configurer do
 
     it "should execute any post-run command provided via the 'postrun_command' setting" do
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_postrun_command
     end
 
     it "should fail if the command fails" do
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_postrun_command.should be_false
     end
@@ -236,7 +236,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
@@ -247,7 +247,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       report.expects(:<<).with { |log| log.message.include?("Could not run command from prerun_command") }
 
@@ -259,7 +259,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
@@ -270,7 +270,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       report.expects(:<<).with { |log| log.message.include?("Could not run command from postrun_command") }
 
@@ -280,8 +280,8 @@ describe Puppet::Configurer do
     it "should execute post-run command even if the pre-run command fails" do
       Puppet.settings[:prerun_command] = "/my/precommand"
       Puppet.settings[:postrun_command] = "/my/postcommand"
-      Puppet::Util.expects(:execute).with(["/my/precommand"]).raises(Puppet::ExecutionFailure, "Failed")
-      Puppet::Util.expects(:execute).with(["/my/postcommand"])
+      Puppet::Util::Execution.expects(:execute).with(["/my/precommand"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/postcommand"])
 
       @agent.run.should be_nil
     end
@@ -299,7 +299,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @catalog.expects(:apply).never()
       @agent.expects(:send_report)
@@ -312,7 +312,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @catalog.expects(:apply)
       @agent.expects(:send_report)
