@@ -120,7 +120,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     uri, body = request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
 
-    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    response = do_request(request) do |request|
       # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
       # http://redmine.ruby-lang.org/issues/show/3991
       if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
@@ -138,7 +138,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def head(request)
-    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    response = do_request(request) do |request|
       http_head(request, indirection2uri(request), headers)
     end
 
@@ -154,7 +154,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    result = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    result = do_request(request) do |request|
       deserialize(http_get(request, indirection2uri(request), headers), true)
     end
 
@@ -165,7 +165,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    do_request(request) do |request|
       return deserialize(http_delete(request, indirection2uri(request), headers))
     end
   end
@@ -173,9 +173,19 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
 
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    do_request(request) do |request|
       deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
     end
+  end
+
+  # Encapsulate call to request.do_request with the arguments from this class
+  # Then yield to the code block that was called in
+  # We certainly could have retained the full request.do_request(...) { |r| ... }
+  # but this makes the code much cleaner and we only then actually make the call
+  # to request.do_request from here, thus if we change what we pass or how we
+  # get it, we only need to change it here.
+  def do_request(request)
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
 
   private
