@@ -178,12 +178,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
   end
 
-  # Encapsulate call to request.do_request with the arguments from this class
-  # Then yield to the code block that was called in
-  # We certainly could have retained the full request.do_request(...) { |r| ... }
-  # but this makes the code much cleaner and we only then actually make the call
-  # to request.do_request from here, thus if we change what we pass or how we
-  # get it, we only need to change it here.
   def do_request(request)
     request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
