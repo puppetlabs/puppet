@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def self.listcmd
-    [command(:pkginfo), " -a"]
+    [command(:pkginfo), "-a"]
   end
 
   def install
