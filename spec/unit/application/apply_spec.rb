@@ -55,7 +55,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should deprecate --apply" do
-      Puppet.expects(:warning).with do |arg|
+      Puppet.expects(:deprecation_warning).with do |arg|
         arg.match(/--apply is deprecated/)
       end
 
