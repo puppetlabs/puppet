@@ -72,20 +72,33 @@ module Puppet::Util::SUIDManager
 
   # Runs block setting uid and gid if provided then restoring original ids
   def asuser(new_uid=nil, new_gid=nil)
-    return yield if Puppet.features.microsoft_windows? or !root?
+    return yield if Puppet.features.microsoft_windows?
+    return yield unless root?
+    return yield unless new_uid or new_gid
 
     old_euid, old_egid = self.euid, self.egid
     begin
-      change_group(new_gid) if new_gid
-      change_user(new_uid) if new_uid
+      change_privileges(new_uid, new_gid, false)
 
       yield
     ensure
-      change_group(old_egid)
-      change_user(old_euid)
+      change_privileges(new_uid ? old_euid : nil, old_egid, false)
     end
   end
   module_function :asuser
+
+  def change_privileges(uid=nil, gid=nil, permanently=false)
+    return unless uid or gid
+
+    unless gid
+      uid = convert_xid(:uid, uid)
+      gid = Etc.getpwuid(uid).gid
+    end
+
+    change_group(gid, permanently)
+    change_user(uid, permanently) if uid
+  end
+  module_function :change_privileges
 
   def change_group(group, permanently=false)
     gid = convert_xid(:gid, group)
@@ -158,14 +171,4 @@ module Puppet::Util::SUIDManager
     [output, $CHILD_STATUS.dup]
   end
   module_function :run_and_capture
-
-  def system(command, new_uid=nil, new_gid=nil)
-    status = nil
-    asuser(new_uid, new_gid) do
-      Kernel.system(command)
-      status = $CHILD_STATUS.dup
-    end
-    status
-  end
-  module_function :system
 end
