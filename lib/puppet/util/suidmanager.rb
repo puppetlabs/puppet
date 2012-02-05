@@ -93,11 +93,14 @@ module Puppet::Util::SUIDManager
     raise Puppet::Error, "No such user #{user}" unless uid
 
     if permanently
+      # If changing uid, we must be root. So initgroups first here.
+      initgroups(uid)
+
       begin
+        # Prefer the better `change_privilege` method, but if that fails us,
+        # fall back to directly setting the values.
         Process::UID.change_privilege(uid)
       rescue NotImplementedError
-        # If changing uid, we must be root. So initgroups first here.
-        initgroups(uid)
         Process.euid = uid
         Process.uid  = uid
       end

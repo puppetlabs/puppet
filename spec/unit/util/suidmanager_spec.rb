@@ -165,6 +165,8 @@ describe Puppet::Util::SUIDManager do
           Process.euid = uid
         end
 
+        Puppet::Util::SUIDManager.expects(:initgroups).with(42)
+
         Puppet::Util::SUIDManager.change_user(42, true)
 
         xids[:euid].should == 42
