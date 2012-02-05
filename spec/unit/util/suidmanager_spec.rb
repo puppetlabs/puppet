@@ -13,10 +13,22 @@ describe Puppet::Util::SUIDManager do
 
   before :each do
     Puppet::Util::SUIDManager.stubs(:convert_xid).returns(42)
-    Puppet::Util::SUIDManager.stubs(:initgroups)
 
     [:euid, :egid, :uid, :gid, :groups].each do |id|
-      Process.stubs("#{id}=").with {|value| xids[id] = value}
+      Process.stubs("#{id}=").with {|value| xids[id] = value }
+    end
+  end
+
+  describe "#initgroups" do
+    it "should use the primary group of the user as the 'basegid'" do
+      pwent = stub('pwent', :name => 'fred',
+                   :uid => Process.uid + 100,
+                   :gid => Process.gid + 100)
+
+      Etc.expects(:getpwuid).with(pwent.uid).returns(pwent)
+      Process.expects(:initgroups).with(pwent.name, pwent.gid)
+
+      described_class.initgroups(pwent.uid)
     end
   end
 
@@ -39,6 +51,7 @@ describe Puppet::Util::SUIDManager do
 
       Puppet::Util::SUIDManager.stubs(:convert_xid).with(:gid, 51).returns(51)
       Puppet::Util::SUIDManager.stubs(:convert_xid).with(:uid, 50).returns(50)
+      Puppet::Util::SUIDManager.stubs(:initgroups).returns([])
 
       yielded = false
       Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) do
@@ -129,6 +142,7 @@ describe Puppet::Util::SUIDManager do
 
     describe "when changing temporarily" do
       it "should change only euid and groups" do
+        Puppet::Util::SUIDManager.stubs(:initgroups).returns([])
         Puppet::Util::SUIDManager.change_user(42, false)
 
         xids[:euid].should == 42
