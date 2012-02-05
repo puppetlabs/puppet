@@ -1,5 +1,6 @@
 require 'puppet/util/warnings'
 require 'forwardable'
+require 'etc'
 
 module Puppet::Util::SUIDManager
   include Puppet::Util::Warnings
@@ -142,10 +143,12 @@ module Puppet::Util::SUIDManager
   end
   module_function :convert_xid
 
-  # Initialize supplementary groups
-  def initgroups(user)
-    require 'etc'
-    Process.initgroups(Etc.getpwuid(user).name, Process.gid)
+  # Initialize primary and supplemental groups to those of the target user.
+  # We take the UID and manually look up their details in the system database,
+  # including username and primary group.
+  def initgroups(uid)
+    pwent = Etc.getpwuid(uid)
+    Process.initgroups(pwent.name, pwent.gid)
   end
 
   module_function :initgroups
