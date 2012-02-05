@@ -287,8 +287,7 @@ module Util
           $stderr.reopen(error_file)
 
           3.upto(256){|fd| IO::new(fd).close rescue nil}
-          Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
-          Puppet::Util::SUIDManager.change_user(arguments[:uid], true) if arguments[:uid]
+          Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
           ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
           if command.is_a?(Array)
             Kernel.exec(*command)
