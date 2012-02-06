@@ -1,4 +1,5 @@
 # Plug-in type for handling k5login files
+require 'puppet/util'
 
 Puppet::Type.newtype(:k5login) do
   @doc = "Manage the `.k5login` file for a user.  Specify the full path to
@@ -79,8 +80,8 @@ Puppet::Type.newtype(:k5login) do
 
     private
     def write(value)
-      Puppet::Util.secure_open(@resource[:name], "w") do |f|
-        f.puts value.join("\n")
+      Puppet::Util.replace_file(@resource[:name], 0644) do |f|
+        f.puts value
       end
     end
   end
