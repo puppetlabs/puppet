@@ -6,24 +6,41 @@ module Puppet
     require 'puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
 
-    desc "Mode the file should be.  Currently relatively limited:
-      you must specify the exact mode the file should be.
+    desc <<-EOT
+      The desired permissions mode for the file, in symbolic or numeric
+      notation. Puppet uses traditional Unix permission schemes and translates
+      them to equivalent permissions for systems which represent permissions
+      differently, including Windows.
 
-      Note that when you set the mode of a directory, Puppet always
-      sets the search/traverse (1) bit anywhere the read (4) bit is set.
-      This is almost always what you want: read allows you to list the
-      entries in a directory, and search/traverse allows you to access
-      (read/write/execute) those entries.)  Because of this feature, you
-      can recursively make a directory and all of the files in it
-      world-readable by setting e.g.:
+      Numeric modes should use the standard four-digit octal notation of
+      `<setuid/setgid/sticky><owner><group><other>` (e.g. 0644). Each of the
+      "owner," "group," and "other" digits should be a sum of the
+      permissions for that class of users, where read = 4, write = 2, and
+      execute/search = 1. When setting numeric permissions for
+      directories, Puppet sets the search permission wherever the read
+      permission is set.
 
-          file { '/some/dir':
-            mode    => 644,
-            recurse => true,
-          }
+      Symbolic modes should be represented as a string of comma-separated
+      permission clauses, in the form `<who><op><perm>`:
 
-      In this case all of the files underneath `/some/dir` will have
-      mode 644, and all of the directories will have mode 755."
+      * "Who" should be u (user), g (group), o (other), and/or a (all)
+      * "Op" should be = (set exact permissions), + (add select permissions),
+        or - (remove select permissions)
+      * "Perm" should be one or more of:
+          * r (read)
+          * w (write)
+          * x (execute/search)
+          * t (sticky)
+          * s (setuid/setgid)
+          * X (execute/search if directory or if any one user can execute)
+          * u (user's current permissions)
+          * g (group's current permissions)
+          * o (other's current permissions)
+
+      Thus, mode `0664` could be represented symbolically as either `a=r,ug+w` or
+      `ug=rw,o=r`. See the manual page for GNU or BSD `chmod` for more details
+      on numeric and symbolic modes.
+    EOT
 
     validate do |value|
       unless value.nil? or valid_symbolic_mode?(value)
