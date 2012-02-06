@@ -36,14 +36,15 @@ class Puppet::Util::Reference
 
   def self.pdf(text)
     puts "creating pdf"
-    Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
-      f.puts text
-    end
-    rst2latex = which('rst2latex') || which('rst2latex.py') || raise("Could not find rst2latex")
+    rst2latex = which('rst2latex') || which('rst2latex.py') ||
+      raise("Could not find rst2latex")
+
     cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
-    Puppet::Util.secure_open("/tmp/puppetdoc.tex","w") do |f|
-      # If we get here without an error, /tmp/puppetdoc.tex isn't a tricky cracker's symlink
-    end
+    Puppet::Util.replace_file("/tmp/puppetdoc.txt") {|f| f.puts text }
+    # There used to be an attempt to use secure_open / replace_file to secure
+    # the target, too, but that did nothing: the race was still here.  We can
+    # get exactly the same benefit from running this effort:
+    File.unlink('/tmp/puppetdoc.tex') rescue nil
     output = %x{#{cmd}}
     unless $CHILD_STATUS == 0
       $stderr.puts "rst2latex failed"

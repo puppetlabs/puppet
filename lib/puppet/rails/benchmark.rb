@@ -58,6 +58,6 @@ module Puppet::Rails::Benchmark
       data = {}
     end
     data[branch] = $benchmarks
-    Puppet::Util.secure_open(file, "w") { |f| f.print YAML.dump(data) }
+    Puppet::Util.replace_file(file, 0644) { |f| f.print YAML.dump(data) }
   end
 end
