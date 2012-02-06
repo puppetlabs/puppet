@@ -1,3 +1,4 @@
+require 'puppet/util'
 require 'puppet/util/user_attr'
 
 Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source => :useradd do
@@ -145,11 +146,22 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     run([command(:modify)] + build_keys_cmd(keys_hash) << @resource[:name], "modify attribute key pairs")
   end
 
+
+  # This helper makes it possible to test this on stub data without having to
+  # do too many crazy things!
+  def target_file_path
+    "/etc/shadow"
+  end
+  private :target_file_path
+
   #Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return it
   #No abstraction, all esoteric knowledge of file formats, yay
   def shadow_entry
     return @shadow_entry if defined? @shadow_entry
-    @shadow_entry = File.readlines("/etc/shadow").reject { |r| r =~ /^[^\w]/ }.collect { |l| l.chomp.split(':') }.find { |user, _| user == @resource[:name] }
+    @shadow_entry = File.readlines(target_file_path).
+      reject { |r| r =~ /^[^\w]/ }.
+      collect { |l| l.chomp.split(':') }.
+      find { |user, _| user == @resource[:name] }
   end
 
   def password
@@ -164,28 +176,31 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     shadow_entry ? shadow_entry[4] : :absent
   end
 
-  #Read in /etc/shadow, find the line for our used and rewrite it with the new pw
-  #Smooth like 80 grit
+  # Read in /etc/shadow, find the line for our used and rewrite it with the
+  # new pw.  Smooth like 80 grit sandpaper.
+  #
+  # Now uses the `replace_file` mechanism to minimize the chance that we lose
+  # data, but it is still terrible.  We still skip platform locking, so a
+  # concurrent `vipw -s` session will have no idea we risk data loss.
   def password=(cryptopw)
     begin
-      File.open("/etc/shadow", "r") do |shadow|
-        File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
-          while line = shadow.gets
-            line_arr = line.split(':')
-            if line_arr[0] == @resource[:name]
-              line_arr[1] = cryptopw
-              line = line_arr.join(':')
-            end
-            shadow_tmp.print line
+      shadow = File.read(target_file_path)
+
+      # Go Mifune loves the race here where we can lose data because
+      # /etc/shadow changed between reading it and writing it.
+      # --daniel 2012-02-05
+      Puppet::Util.replace_file(target_file_path, 0640) do |fh|
+        shadow.each_line do |line|
+          line_arr = line.split(':')
+          if line_arr[0] == @resource[:name]
+            line_arr[1] = cryptopw
+            line = line_arr.join(':')
           end
+          fh.print line
         end
       end
-      File.rename("/etc/shadow_tmp", "/etc/shadow")
     rescue => detail
-      fail "Could not write temporary shadow file: #{detail}"
-    ensure
-      # Make sure this *always* gets deleted
-      File.unlink("/etc/shadow_tmp") if File.exist?("/etc/shadow_tmp")
+      fail "Could not write replace #{target_file_path}: #{detail}"
     end
   end
 end
