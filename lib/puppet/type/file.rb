@@ -191,9 +191,11 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:replace, :boolean => true) do
-    desc "Whether or not to replace a file that is
-      sourced but exists.  This is useful for using file sources
-      purely for initialization."
+    desc "Whether to replace a file that already exists on the local system but
+      whose content doesn't match what the `source` or `content` attribute
+      specifies.  Setting this to false allows file resources to initialize files
+      without overwriting future changes.  Note that this only affects content;
+      Puppet will still manage ownership and permissions."
     newvalues(:true, :false)
     aliasvalue(:yes, :true)
     aliasvalue(:no, :false)
@@ -251,11 +253,11 @@ Puppet::Type.newtype(:file) do
 
   newparam(:sourceselect) do
     desc "Whether to copy all valid sources, or just the first one.  This parameter
-      is only used in recursive copies; by default, the first valid source is the
-      only one used as a recursive source, but if this parameter is set to `all`,
-      then all valid sources will have all of their contents copied to the local host,
-      and for sources that have the same file, the source earlier in the list will
-      be used."
+      only affects recursive directory copies; by default, the first valid
+      source is the only one used, but if this parameter is set to `all`, then
+      all valid sources will have all of their contents copied to the local
+      system. If a given file exists in more than one source, the version from
+      the earliest source in the list will be used."
 
     defaultto :first
 
