@@ -163,7 +163,7 @@ module Puppet::Util::SELinux
     # Read all entries in /proc/mounts.  The second column is the
     # mountpoint and the third column is the filesystem type.
     # We skip rootfs because it is always mounted at /
-    mounts.collect do |line|
+    mounts.each_line do |line|
       params = line.split(' ')
       next if params[2] == 'rootfs'
       mntpoint[params[1]] = params[2]
