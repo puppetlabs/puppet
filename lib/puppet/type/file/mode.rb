@@ -40,6 +40,17 @@ module Puppet
       Thus, mode `0664` could be represented symbolically as either `a=r,ug+w` or
       `ug=rw,o=r`. See the manual page for GNU or BSD `chmod` for more details
       on numeric and symbolic modes.
+
+      On Windows, permissions are translated as follows:
+
+      * Owner and group names are mapped to Windows SIDs
+      * The "other" class of users maps to the "Everyone" SID
+      * The read/write/execute permissions map to the `FILE_GENERIC_READ`,
+        `FILE_GENERIC_WRITE`, and `FILE_GENERIC_EXECUTE` access rights; a
+        file's owner always has the `FULL_CONTROL` right
+      * "Other" users can't have any permissions a file's group lacks,
+        and its group can't have any permissions its owner lacks; that is, 0644
+        is an acceptable mode, but 0464 is not.
     EOT
 
     validate do |value|

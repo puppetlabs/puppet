@@ -17,16 +17,18 @@ Puppet::Type.newtype(:file) do
   include Puppet::Util::Backups
   include Puppet::Util::SymbolicFileMode
 
-  @doc = "Manages local files, including setting ownership and
-    permissions, creation of both files and directories, and
-    retrieving entire files from remote servers.  As Puppet matures, it
-    expected that the `file` resource will be used less and less to
-    manage content, and instead native resources will be used to do so.
+  @doc = "Manages files, including their content, ownership, and permissions.
 
-    If you find that you are often copying files in from a central
-    location, rather than using native resources, please contact
-    Puppet Labs and we can hopefully work with you to develop a
-    native resource to support what you are doing.
+    The `file` type can manage normal files, directories, and symlinks; the
+    type should be specified in the `ensure` attribute. Note that symlinks cannot
+    be managed on Windows systems.
+
+    File contents can be managed directly with the `content` attribute, or
+    downloaded from a remote source using the `source` attribute; the latter
+    can also be used to recursively serve directories (when the `recurse`
+    attribute is set to `true` or `local`). On Windows, note that file
+    contents are managed in binary mode; Puppet never automatically translates
+    line endings.
 
     **Autorequires:** If Puppet is managing the user or group that owns a
     file, the file resource will autorequire them. If Puppet is managing any
@@ -37,7 +39,12 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:path) do
-    desc "The path to the file to manage.  Must be fully qualified."
+    desc <<-EOT
+      The path to the file to manage.  Must be fully qualified.
+
+      On Windows, the path should include the drive letter and should use `/` as
+      the separator character (rather than `\\`).
+    EOT
     isnamevar
 
     validate do |value|

@@ -14,8 +14,10 @@ module Puppet
     attr_accessor :source, :local
     desc <<-EOT
       A source file, which will be copied into place on the local system.
-      Values can be URIs or fully qualified paths to local files. This attribute
-      is mutually exclusive with `content` and `target`.
+      Values can be URIs pointing to remote files, or fully qualified paths to
+      files available on the local system (including files on NFS shares or
+      Windows mapped drives). This attribute is mutually exclusive with
+      `content` and `target`.
 
       The available URI schemes are *puppet* and *file*. *Puppet*
       URIs will retrieve files from Puppet's built-in file server, and are
