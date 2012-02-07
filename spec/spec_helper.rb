@@ -101,6 +101,8 @@ RSpec.configure do |config|
     Puppet::Util::Log.close_all
     Puppet::Util::Log.level = @log_level
 
+    Puppet.clear_deprecation_warnings
+
     # uncommenting and manipulating this can be useful when tracking down calls to deprecated code
     #Puppet.log_deprecations_to_file("deprecations.txt", /^Puppet::Util.exec/)
 
