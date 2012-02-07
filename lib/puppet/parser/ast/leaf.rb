@@ -202,7 +202,7 @@ class Puppet::Parser::AST
     end
 
     def evaluate_match(value, scope, options = {})
-      value = value.is_a?(String) ? value : value.to_s
+      value = value == :undef ? '' : value.to_s
 
       if matched = @value.match(value)
         scope.ephemeral_from(matched, options[:file], options[:line])
