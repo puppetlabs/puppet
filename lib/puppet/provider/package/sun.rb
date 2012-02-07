@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     execpipe(cmd) { |process|
       # we're using the long listing, so each line is a separate
       # piece of information
-      process.each { |line|
+      process.each_line { |line|
         case line
         when /^$/
           hash[:provider] = :sun

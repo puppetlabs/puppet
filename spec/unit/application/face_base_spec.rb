@@ -224,7 +224,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should use its render method to render any result" do
-      app.expects(:render).with(app.arguments.length + 1)
+      app.expects(:render).with(app.arguments.length + 1, ["myname", "myarg"])
       expect { app.main }.to exit_with 0
     end
   end
@@ -270,19 +270,19 @@ describe Puppet::Application::FaceBase do
 
       ["hello", 1, 1.0].each do |input|
         it "should just return a #{input.class.name}" do
-          app.render(input).should == input
+          app.render(input, {}).should == input
         end
       end
 
       [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
         it "should render #{input.class} using JSON" do
-          app.render(input).should == input.to_pson.chomp
+          app.render(input, {}).should == input.to_pson.chomp
         end
       end
 
       it "should render a non-trivially-keyed Hash with using JSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        app.render(hash).should == hash.to_pson.chomp
+        app.render(hash, {}).should == hash.to_pson.chomp
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -292,7 +292,7 @@ describe Puppet::Application::FaceBase do
 
         # Gotta love ASCII-betical sort order.  Hope your objects are better
         # structured for display than my test one is. --daniel 2011-04-18
-        app.render(hash).should == <<EOT
+        app.render(hash, {}).should == <<EOT
 5      5
 6.0    6
 four   #{object.to_pson.chomp}
@@ -308,7 +308,7 @@ EOT
           "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
           "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
         }
-        app.render(hash).should == <<EOT
+        app.render(hash, {}).should == <<EOT
 number  {"1"=>"1111111111111111111111111111111111111111",
          "2"=>"2222222222222222222222222222222222222222",
          "3"=>"3333333333333333333333333333333333333333"}
@@ -318,14 +318,31 @@ text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 EOT
       end
 
-      it "should invoke the action rendering hook while rendering" do
-        app.action.set_rendering_method_for(:console, proc { |value| "bi-winning!" })
-        app.render("bi-polar?").should == "bi-winning!"
+      describe "when setting the rendering method" do
+        after do
+          # need to reset the when_rendering block so that other tests can set it later
+          app.action.instance_variable_set("@when_rendering", {})
+        end
+
+        it "should invoke the action rendering hook while rendering" do
+          app.action.set_rendering_method_for(:console, proc { |value| "bi-winning!" })
+          app.render("bi-polar?", {}).should == "bi-winning!"
+        end
+
+        it "should invoke the action rendering hook with args and options while rendering" do
+          app.action.instance_variable_set("@when_rendering", {})
+          app.action.when_invoked = proc { |name, options| 'just need to match arity for rendering' }
+          app.action.set_rendering_method_for(
+            :console,
+            proc { |value, name, options| "I'm #{name}, no wait, I'm #{options[:altername]}" }
+          )
+          app.render("bi-polar?", ['bob', {:altername => 'sue'}]).should == "I'm bob, no wait, I'm sue"
+        end
       end
 
       it "should render JSON when asked for json" do
         app.render_as = :json
-        json = app.render({ :one => 1, :two => 2 })
+        json = app.render({ :one => 1, :two => 2 }, {})
         json.should =~ /"one":\s*1\b/
         json.should =~ /"two":\s*2\b/
         PSON.parse(json).should == { "one" => 1, "two" => 2 }

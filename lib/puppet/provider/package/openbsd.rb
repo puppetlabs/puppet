@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         hash = {}
 
         # now turn each returned line into a package object
-        process.each { |line|
+        process.each_line { |line|
           if match = regex.match(line.split[0])
             fields.zip(match.captures) { |field,value|
               hash[field] = value
@@ -78,7 +78,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       fields = [ :name, :version, :flavor ]
       master_version = 0
 
-      process.each do |line|
+      process.each_line do |line|
         if match = regex.match(line.split[0])
           # now we return the first version, unless ensure is latest
           version = match.captures[1]

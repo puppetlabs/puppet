@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       hash = {}
 
       # now turn each returned line into a package object
-      process.each { |line|
+      process.each_line { |line|
         if hash = parse_line(line)
           packages << new(hash)
         end

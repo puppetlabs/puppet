@@ -24,7 +24,7 @@ Puppet::Type.type(:service).provide :base do
     regex = Regexp.new(@resource[:pattern])
     self.debug "Executing '#{ps}'"
     IO.popen(ps) { |table|
-      table.each { |line|
+      table.each_line { |line|
         if regex.match(line)
           ary = line.sub(/^\s+/, '').split(/\s+/)
           return ary[1]

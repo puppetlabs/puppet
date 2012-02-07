@@ -6,13 +6,13 @@ provider_class = Puppet::Type.type(:service).provider(:upstart)
 describe provider_class do
   describe "#instances" do
     it "should be able to find all instances" do
-      processes = ["rc stop/waiting", "ssh start/running, process 712"]
+      processes = ["rc stop/waiting", "ssh start/running, process 712"].join("\n")
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.map {|provider| provider.name}.should =~ ["rc","ssh"]
     end
 
     it "should attach the interface name for network interfaces" do
-      processes = ["network-interface (eth0)"]
+      processes = ["network-interface (eth0)"].join("\n")
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
     end
@@ -23,7 +23,11 @@ describe provider_class do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart, :status => "/bin/foo")
       provider = provider_class.new(resource)
 
-      provider.expects(:ucommand).with { `true`; true }
+      # Because we stub execution, we also need to stub the result of it, or a
+      # previously failing command execution will cause this test to do the
+      # wrong thing.
+      provider.expects(:ucommand)
+      $?.stubs(:exitstatus).returns(0)
       provider.status.should == :running
     end
 

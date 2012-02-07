@@ -4,6 +4,28 @@ require 'spec_helper'
 describe Puppet::Type, :fails_on_windows => true do
   include PuppetSpec::Files
 
+  it "should be Comparable" do
+    a = Puppet::Type.type(:notify).new(:name => "a")
+    b = Puppet::Type.type(:notify).new(:name => "b")
+    c = Puppet::Type.type(:notify).new(:name => "c")
+
+    [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]].each do |this|
+      this.sort.should == [a, b, c]
+    end
+
+    a.should be < b
+    a.should be < c
+    b.should be > a
+    b.should be < c
+    c.should be > a
+    c.should be > b
+
+    [a, b, c].each {|x| a.should be <= x }
+    [a, b, c].each {|x| c.should be >= x }
+
+    b.should be_between(a, c)
+  end
+
   it "should consider a parameter to be valid if it is a valid parameter" do
     Puppet::Type.type(:mount).should be_valid_parameter(:path)
   end

@@ -24,6 +24,17 @@ class Type
   include Puppet::Util::Tagging
 
   ###############################
+  # Comparing type instances.
+  include Comparable
+  def <=>(other)
+    # We only order against other types, not arbitrary objects.
+    return nil unless other.is_a? Puppet::Type
+    # Our natural order is based on the reference name we use when comparing
+    # against other type instances.
+    self.ref <=> other.ref
+  end
+
+  ###############################
   # Code related to resource type attributes.
   class << self
     include Puppet::Util::ClassGen

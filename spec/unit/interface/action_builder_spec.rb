@@ -114,16 +114,18 @@ describe Puppet::Interface::ActionBuilder do
           when_invoked do |options| true end
           when_rendering :json do true end
         end
-      }.to raise_error ArgumentError, /when_rendering methods take one argument, the result, not/
+      }.to raise_error ArgumentError,
+        /the puppet_interface_actionbuilder face foo action takes .* not/
     end
 
-    it "should fail if the block takes more than one argument" do
+    it "should fail if the when_rendering block takes a different number of arguments than when_invoked" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
           when_invoked do |options| true end
           when_rendering :json do |a, b, c| true end
         end
-      }.to raise_error ArgumentError, /when_rendering methods take one argument, the result, not/
+      }.to raise_error ArgumentError,
+        /the puppet_interface_actionbuilder face foo action takes .* not 3/
     end
 
     it "should fail if the block takes a variable number of arguments" do
@@ -132,8 +134,8 @@ describe Puppet::Interface::ActionBuilder do
           when_invoked do |options| true end
           when_rendering :json do |*args| true end
         end
-      }.to raise_error(ArgumentError,
-                       /when_rendering methods take one argument, the result, not/)
+      }.to raise_error ArgumentError,
+        /the puppet_interface_actionbuilder face foo action takes .* not/
     end
 
     it "should stash a rendering block" do

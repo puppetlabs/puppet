@@ -416,7 +416,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @compiler.add_resource(@scope, local)
 
       expect { @collector.evaluate }.
-        to raise_error Puppet::ParseError, /cannot override local resource/
+        to raise_error Puppet::ParseError, /exists with the type and title/
     end
 
     it "should ignore exported resources that match already-collected resources" do

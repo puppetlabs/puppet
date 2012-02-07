@@ -55,7 +55,7 @@ module Puppet::FileBucketFile
       paths_path = ::File.join(dir_path, 'paths')
       return false unless ::File.exists?(paths_path)
       ::File.open(paths_path) do |f|
-        f.each do |line|
+        f.each_line do |line|
           return true if line.chomp == files_original_path
         end
       end

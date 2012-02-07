@@ -148,7 +148,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # Get the groupname from its id
   def self.groupname_by_id(gid)
     groupname=nil
-    execute(lsgroupscmd("ALL")).each { |entry|
+    execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
       if attrs and attrs.include? :id and gid == attrs[:id].to_i
         groupname = entry.split(" ")[0]
@@ -229,9 +229,9 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     user = @resource[:name]
     f = File.open("/etc/security/passwd", 'r')
     # Skip to the user
-    f.each { |l| break if l  =~ /^#{user}:\s*$/ }
+    f.each_line { |l| break if l  =~ /^#{user}:\s*$/ }
     if ! f.eof?
-      f.each { |l|
+      f.each_line { |l|
         # If there is a new user stanza, stop
         break if l  =~ /^\S*:\s*$/
         # If the password= entry is found, return it

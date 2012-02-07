@@ -105,6 +105,12 @@ module Puppet
         command; defaults to `true`. This attribute's default value changed in
         Puppet 2.7.0.
 
+        The init script's status command must return 0 if the service is
+        running and a nonzero value otherwise. Ideally, these exit codes
+        should conform to [the LSB's specification][lsb-exit-codes] for init
+        script status actions, but Puppet only considers the difference
+        between 0 and nonzero to be relevant.
+
         If a service's init script does not support any kind of status command,
         you should set `hasstatus` to false and either provide a specific
         command using the `status` attribute or expect that Puppet will look for
@@ -160,14 +166,16 @@ module Puppet
     newparam(:status) do
       desc "Specify a *status* command manually.  This command must
         return 0 if the service is running and a nonzero value otherwise.
-        Ideally, these return codes should conform to
-        [the LSB's specification for init script status actions](http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html),
-        but Puppet only considers the difference between 0 and nonzero
-        to be relevant.
+        Ideally, these exit codes should conform to [the LSB's
+        specification][lsb-exit-codes] for init script status actions, but
+        Puppet only considers the difference between 0 and nonzero to be
+        relevant.
 
-        If left unspecified, the status method will be determined
+        If left unspecified, the status of the service will be determined
         automatically, usually by looking for the service in the process
-        table."
+        table.
+
+        [lsb-exit-codes]: http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html"
     end
 
     newparam(:stop) do

@@ -74,8 +74,12 @@ class Puppet::Interface::Action
       msg += ", not #{proc.class.name}" unless proc.nil?
       raise ArgumentError, msg
     end
-    if proc.arity != 1 then
-      msg = "when_rendering methods take one argument, the result, not "
+
+    if proc.arity != 1 and proc.arity != (@positional_arg_count + 1)
+      msg =  "the when_rendering method for the #{@face.name} face #{name} action "
+      msg += "takes either just one argument, the result of when_invoked, "
+      msg += "or the result plus the #{@positional_arg_count} arguments passed "
+      msg += "to the when_invoked block, not "
       if proc.arity < 0 then
         msg += "a variable number"
       else
