@@ -118,8 +118,14 @@ module Puppet
       defaultto :true
     end
     newparam(:name) do
-      desc "The name of the service to run.  This name is used to find
-        the service in whatever service subsystem it is in."
+      desc <<-EOT
+        The name of the service to run.
+
+        This name is used to find the service; on platforms where services
+        have short system names and long display names, this should be the
+        short name. (To take an example from Windows, you would use "wuauserv"
+        rather than "Automatic Updates.")
+      EOT
       isnamevar
     end
 
