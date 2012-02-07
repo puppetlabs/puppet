@@ -1,7 +1,13 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) do
-  desc "Package management by installing and removing MSIs."
+  desc "Windows package management by installing and removing MSIs.
+
+    This provider requires a `source` attribute, and will accept paths to local
+    files or files on mapped drives.
+
+    This provider cannot uninstall arbitrary MSI packages; it can only uninstall
+    packages which were originally installed by Puppet."
 
   confine    :operatingsystem => :windows
   defaultfor :operatingsystem => :windows
