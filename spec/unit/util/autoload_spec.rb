@@ -4,23 +4,19 @@ require 'spec_helper'
 require 'puppet/util/autoload'
 
 describe Puppet::Util::Autoload do
-  include PuppetSpec::Files
-
   before do
     @autoload = Puppet::Util::Autoload.new("foo", "tmp")
 
     @autoload.stubs(:eachdir).yields "/my/dir"
-  end
-
-  after :each do
-    @autoload.class.send(:loaded).clear
+    @loaded = {}
+    @autoload.class.stubs(:loaded).returns(@loaded)
   end
 
   describe "when building the search path" do
     before :each do
-      @dira = make_absolute('/a')
-      @dirb = make_absolute('/b')
-      @dirc = make_absolute('/c')
+      @dira = File.expand_path('/a')
+      @dirb = File.expand_path('/b')
+      @dirc = File.expand_path('/c')
     end
 
     it "should collect all of the plugins and lib directories that exist in the current environment's module path" do
@@ -92,6 +88,17 @@ describe Puppet::Util::Autoload do
       @autoload.load("foo").should == false
     end
 
+    it "should register loaded files with the autoloader" do
+      @autoload.stubs(:file_exist?).returns true
+      Kernel.stubs(:load)
+      @autoload.load("myfile")
+
+      @autoload.loaded?("myfile.rb").should be
+      @autoload.class.loaded?("tmp/myfile.rb").should be
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
+    end
+
     it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do
       @autoload.stubs(:file_exist?).returns true
       Kernel.stubs(:load)
@@ -99,6 +106,20 @@ describe Puppet::Util::Autoload do
       @autoload.load("myfile")
 
       $LOADED_FEATURES.should be_include("tmp/myfile.rb")
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
+    end
+
+    it "should load the first file in the searchpath" do
+      @autoload.unstub(:searchpath)
+      @autoload.stubs(:search_directories).returns %w{/a /b}
+      FileTest.stubs(:directory?).returns true
+      @autoload.stubs(:file_exist?).returns true
+      Kernel.expects(:load).with("/a/tmp/myfile.rb", optionally(anything))
+
+      @autoload.load("myfile")
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
   end
 
