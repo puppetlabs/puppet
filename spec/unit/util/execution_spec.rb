@@ -25,7 +25,7 @@ describe Puppet::Util::Execution do
     let(:pid) { 5501 }
     let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
 
-    describe "#execute_posix (stubs)" do
+    describe "#execute_posix (stubs)", :unless => Puppet.features.microsoft_windows? do
       before :each do
         # Most of the things this method does are bad to do during specs. :/
         Kernel.stubs(:fork).returns(pid).yields
@@ -41,7 +41,32 @@ describe Puppet::Util::Execution do
         @stdin  = File.open(null_file, 'r')
         @stdout = Tempfile.new('stdout')
         @stderr = File.open(null_file, 'w')
+
+        # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
+        #  of a forked process, but here, we're stubbing Kernel.fork, so the method has the ability to override the
+        #  "real" ENV.  To guard against this, we'll capture a snapshot of ENV before each test.
+        @saved_env = Hash[ENV.map {|key,val| [key, val]}]
+
+        # Now, we're going to effectively "mock" the magic ruby 'ENV' variable by creating a local definition of it
+        #  inside of the module we're testing.
+        Puppet::Util::Execution::ENV = {}
       end
+
+      after :each do
+        # And here we remove our "mock" version of 'ENV', which will allow us to validate that the real ENV has been
+        #  left unharmed.
+        Puppet::Util::Execution.send(:remove_const, :ENV)
+
+        # capture the current environment and make sure it's the same as it was before the test
+        cur_env = Hash[ENV.map {|key,val| [key, val]}]
+
+        # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
+        #  be a bit more explicit and laborious in the name of making the error more useful...
+        @saved_env.each_pair { |key,val| cur_env[key].should == val }
+        (cur_env.keys - @saved_env.keys).should == []
+
+      end
+
 
       it "should fork a child process to execute the command" do
         Kernel.expects(:fork).returns(pid).yields
@@ -230,6 +255,27 @@ describe Puppet::Util::Execution do
     end
 
     describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
+
+      before :each do
+        # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
+        #  of a forked process, but, in some of the previous tests in this file we're stubbing Kernel.fork., which could
+        #  allow the method to override the "real" ENV.  This shouldn't be a problem for these tests because they are
+        #  not stubbing Kernel.fork, but, better safe than sorry... so, to guard against this, we'll capture a snapshot
+        #  of ENV before each test.  We have to use this somewhat kludgy code to clone the ENV var, because ENV doesn't
+        #  provide a useful == method.
+        @saved_env = Hash[ENV.map {|key,val| [key, val]}]
+      end
+
+      after :each do
+        # capture the current environment and make sure it's the same as it was before the test
+        cur_env = Hash[ENV.map {|key,val| [key, val]}]
+        # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
+        #  be a bit more explicit and laborious in the name of making the error more useful...
+        @saved_env.each_pair { |key,val| cur_env[key].should == val }
+        (cur_env.keys - @saved_env.keys).should == []
+      end
+
+
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
       get_env_var_cmd = 'echo $%s'
