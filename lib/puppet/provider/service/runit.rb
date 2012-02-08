@@ -83,7 +83,14 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   end
 
   def start
-    enable unless enabled? == :true
+    if enabled? != :true
+        enable
+        # Work around issue #4480
+        # runsvdir takes up to 5 seconds to recognize
+        # the symlink created by this call to enable
+        Puppet.info "Waiting 5 seconds for runsvdir to discover service #{self.service}"
+        sleep 5
+    end
     sv "start", self.service
   end
 
