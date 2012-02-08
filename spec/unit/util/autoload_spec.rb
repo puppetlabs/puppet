@@ -32,7 +32,7 @@ describe Puppet::Util::Autoload do
         FileTest.expects(:directory?).with(d).returns true
       end
 
-      @autoload.module_directories.should == ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"]
+      @autoload.class.module_directories.should == ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"]
     end
 
     it "should not look for lib directories in directories starting with '.'" do
@@ -46,18 +46,18 @@ describe Puppet::Util::Autoload do
       FileTest.expects(:directory?).with("#{@dira}/../lib").never
       FileTest.expects(:directory?).with("#{@dira}/../plugins").never
 
-      @autoload.module_directories
+      @autoload.class.module_directories
     end
 
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
       Puppet.stubs(:[]).with(:libdir).returns(%w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR))
-      @autoload.expects(:module_directories).returns %w{/one /two}
-      @autoload.search_directories.should == %w{/one /two /libdir1 /lib/dir/two /third/lib/dir} + $LOAD_PATH
+      @autoload.class.expects(:module_directories).returns %w{/one /two}
+      @autoload.class.search_directories.should == %w{/one /two /libdir1 /lib/dir/two /third/lib/dir} + $LOAD_PATH
     end
 
     it "should include in its search path all of the unique search directories that have a subdirectory matching the autoload path" do
       @autoload = Puppet::Util::Autoload.new("foo", "loaddir")
-      @autoload.expects(:search_directories).returns %w{/one /two /three /three}
+      @autoload.class.expects(:search_directories).returns %w{/one /two /three /three}
       FileTest.expects(:directory?).with("/one/loaddir").returns true
       FileTest.expects(:directory?).with("/two/loaddir").returns false
       FileTest.expects(:directory?).with("/three/loaddir").returns true
@@ -71,12 +71,13 @@ describe Puppet::Util::Autoload do
 
   describe "when loading a file" do
     before do
-      @autoload.stubs(:searchpath).returns %w{/a}
+      @autoload.class.stubs(:search_directories).returns %w{/a}
+      FileTest.stubs(:directory?).returns true
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
       it "should die with Puppet::Error if a #{error.to_s} exception is thrown" do
-        @autoload.stubs(:file_exist?).returns true
+        File.stubs(:exist?).returns true
 
         Kernel.expects(:load).raises error
 
@@ -89,18 +90,17 @@ describe Puppet::Util::Autoload do
     end
 
     it "should register loaded files with the autoloader" do
-      @autoload.stubs(:file_exist?).returns true
+      File.stubs(:exist?).returns true
       Kernel.stubs(:load)
       @autoload.load("myfile")
 
-      @autoload.loaded?("myfile.rb").should be
       @autoload.class.loaded?("tmp/myfile.rb").should be
 
       $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
 
     it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do
-      @autoload.stubs(:file_exist?).returns true
+      File.stubs(:exist?).returns true
       Kernel.stubs(:load)
 
       @autoload.load("myfile")
@@ -114,7 +114,7 @@ describe Puppet::Util::Autoload do
       @autoload.unstub(:searchpath)
       @autoload.stubs(:search_directories).returns %w{/a /b}
       FileTest.stubs(:directory?).returns true
-      @autoload.stubs(:file_exist?).returns true
+      File.stubs(:exist?).returns true
       Kernel.expects(:load).with("/a/tmp/myfile.rb", optionally(anything))
 
       @autoload.load("myfile")
@@ -125,22 +125,24 @@ describe Puppet::Util::Autoload do
 
   describe "when loading all files" do
     before do
-      @autoload.stubs(:searchpath).returns %w{/a}
-      Dir.stubs(:glob).returns "/path/to/file.rb"
+      @autoload.class.stubs(:search_directories).returns %w{/a}
+      FileTest.stubs(:directory?).returns true
+      Dir.stubs(:glob).returns "/a/foo/file.rb"
+      File.stubs(:exist?).returns true
 
       @autoload.class.stubs(:loaded?).returns(false)
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
       it "should die an if a #{error.to_s} exception is thrown", :'fails_on_ruby_1.9.2' => true do
-        Kernel.expects(:require).raises error
+        Kernel.expects(:load).raises error
 
         lambda { @autoload.loadall }.should raise_error(Puppet::Error)
       end
     end
 
     it "should require the full path to the file", :'fails_on_ruby_1.9.2' => true do
-      Kernel.expects(:require).with("/path/to/file.rb")
+      Kernel.expects(:load).with("/a/foo/file.rb", optionally(anything))
 
       @autoload.loadall
     end
