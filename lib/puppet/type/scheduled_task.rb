@@ -3,98 +3,16 @@ require 'puppet/util'
 Puppet::Type.newtype(:scheduled_task) do
   include Puppet::Util
 
-  @doc = "Installs and manages Windows Scheduled Tasks.  All fields
-    except the name, command, and start_time are optional; specifying
-    no repetition parameters will result in a task that runs once on
-    the start date.
-
-    Examples:
-
-      # Create a task that will fire on August 31st, 2011 at 8am in
-      # the system's time-zone.
-      scheduled_task { 'One-shot task':
-        ensure    => present,
-        enabled   => true,
-        command   => 'C:\path\to\command.exe',
-        arguments => '/flags /to /pass',
-        trigger   => {
-          schedule   => once,
-          start_date => '2011-08-31', # Defaults to 'today'
-          start_time => '08:00',      # Must be specified
-        }
-      }
-
-      # Create a task that will fire every other day at 8am in the
-      # system's time-zone, starting August 31st, 2011.
-      scheduled_task { 'Daily task':
-        ensure    => present,
-        enabled   => true,
-        command   => 'C:\path\to\command.exe',
-        arguments => '/flags /to /pass',
-        trigger   => {
-          schedule   => daily,
-          every      => 2             # Defaults to 1
-          start_date => '2011-08-31', # Defaults to 'today'
-          start_time => '08:00',      # Must be specified
-        }
-      }
-
-      # Create a task that will fire at 8am Monday every third week,
-      # starting after August 31st, 2011.
-      scheduled_task { 'Weekly task':
-        ensure    => present,
-        enabled   => true,
-        command   => 'C:\path\to\command.exe',
-        arguments => '/flags /to /pass',
-        trigger   => {
-          schedule    => weekly,
-          every       => 3,           # Defaults to 1
-          start_date  => '2011-08-31' # Defaults to 'today'
-          start_time  => '08:00',     # Must be specified
-          day_of_week => [mon],       # Defaults to all
-        }
-      }
-
-      # Create a task that will fire at 8am on the 1st, 15th, and last
-      # day of the month in January, March, May, July, September, and
-      # November starting August 31st, 2011.
-      scheduled_task { 'Monthly date task':
-        ensure    => present,
-        enabled   => true,
-        command   => 'C:\path\to\command.exe',
-        arguments => '/flags /to /pass',
-        trigger   => {
-          schedule   => monthly,
-          start_date => '2011-08-31',   # Defaults to 'today'
-          start_time => '08:00',        # Must be specified
-          months     => [1,3,5,7,9,11], # Defaults to all
-          on         => [1, 15, last],  # Must be specified
-        }
-      }
-
-      # Create a task that will fire at 8am on the first Monday of the
-      # month for January, March, and May, after August 31st, 2011.
-      scheduled_task { 'Monthly day of week task':
-        enabled   => true,
-        ensure    => present,
-        command   => 'C:\path\to\command.exe',
-        arguments => '/flags /to /pass',
-        trigger   => {
-          schedule         => monthly,
-          start_date       => '2011-08-31', # Defaults to 'today'
-          start_time       => '08:00',      # Must be specified
-          months           => [1,3,5],      # Defaults to all
-          which_occurrence => first,        # Must be specified
-          day_of_week      => [mon],        # Must be specified
-        }
-      }"
+  @doc = "Installs and manages Windows Scheduled Tasks.  All attributes
+    except `name`, `command`, and `trigger` are optional; see the description
+    of the `trigger` attribute for details on setting schedules."
 
   ensurable
 
   newproperty(:enabled) do
-    desc "Whether the triggers for this task are enabled.  This only
-      supports enabling or disabling all of the triggers for a task,
-      not enabling or disabling them on an individual basis."
+    desc "Whether the triggers for this task should be enabled. This attribute
+      affects every trigger for the task; triggers cannot be enabled or
+      disabled individually."
 
     newvalue(:true,  :event => :task_enabled)
     newvalue(:false, :event => :task_disabled)
@@ -110,8 +28,7 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newproperty(:command) do
-    desc "The full path to the application to be run, without any
-      arguments."
+    desc "The full path to the application to run, without any arguments."
 
     validate do |value|
       raise Puppet::Error.new('Must be specified using an absolute path.') unless absolute_path?(value)
@@ -119,8 +36,7 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newproperty(:working_dir) do
-    desc "The full path of the directory in which to start the
-      command"
+    desc "The full path of the directory in which to start the command."
 
     validate do |value|
       raise Puppet::Error.new('Must be specified using an absolute path.') unless absolute_path?(value)
@@ -128,7 +44,8 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newproperty(:arguments, :array_matching => :all) do
-    desc "The optional arguments to pass to the command."
+    desc "Any arguments or flags that should be passed to the command. Multiple arguments
+      can be specified as an array or as a space-separated string."
   end
 
   newproperty(:user) do
@@ -149,7 +66,7 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newparam(:password) do
-    desc "The password for the user specified in the 'user' property.
+    desc "The password for the user specified in the 'user' attribute.
       This is only used if specifying a user other than 'SYSTEM'.
       Since there is no way to retrieve the password used to set the
       account information for a task, this parameter will not be used
@@ -157,43 +74,72 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newproperty(:trigger, :array_matching => :all) do
-    desc "This is a hash defining the properties of the trigger used
-      to fire the scheduled task.  The one key that is always required
-      is 'schedule', which can be one of 'daily', 'weekly', or
-      'monthly'.  The other valid & required keys depend on the value
-      of schedule.
+    desc <<-EOT
+      One or more triggers defining when the task should run. A single trigger is
+      represented as a hash, and multiple triggers can be specified with an array of
+      hashes.
 
-      When schedule is 'daily', you can specify a value for 'every'
-      which specifies that the task will trigger every N days.  If
-      'every' is not specified, it defaults to 1 (running every day).
+      A trigger can contain the following keys:
 
-      When schedule is 'weekly', you can specify values for 'every',
-      and 'day_of_week'.  'every' has similar behavior as when
-      specified for 'daily', though it repeats every N weeks, instead
-      of every N days.  'day_of_week' is used to specify on which days
-      of the week the task should be run.  This can be specified as an
-      array where the possible values are 'mon', 'tues', 'wed',
-      'thurs', 'fri', 'sat', and 'sun', or as the string 'all'.  The
-      default is 'all'.
+      * For all triggers:
+          * `schedule` **(Required)** --- The schedule type. Valid values are
+            `daily`, `weekly`, `monthly`, or `once`.
+          * `start_time` **(Required)** --- The time of day when the trigger should
+            first become active. Several time formats will work, but we
+            suggest 24-hour time formatted as HH:MM.
+          * `start_date` ---  The date when the trigger should first become active.
+            Defaults to "today." Several date formats will work, including
+            special dates like "today," but we suggest formatting dates as
+            YYYY-MM-DD.
+      * For daily triggers:
+          * `every` --- How often the task should run, as a number of days. Defaults
+            to 1. ("2" means every other day, "3" means every three days, etc.)
+      * For weekly triggers:
+          * `every` --- How often the task should run, as a number of weeks. Defaults
+            to 1. ("2" means every other week, "3" means every three weeks, etc.)
+          * `day_of_week` --- Which days of the week the task should run, as an array.
+            Defaults to all days. Each day must be one of `mon`, `tues`,
+            `wed`, `thurs`, `fri`, `sat`, `sun`, or `all`.
+      * For monthly-by-date triggers:
+          * `months` --- Which months the task should run, as an array. Defaults to
+            all months. Each month must be an integer between 1 and 12.
+          * `on` **(Required)** --- Which days of the month the task should run,
+            as an array. Each day must beeither an integer between 1 and 31,
+            or the special value `last,` which is always the last day of the month.
+      * For monthly-by-weekday triggers:
+          * `months` --- Which months the task should run, as an array. Defaults to
+            all months. Each month must be an integer between 1 and 12.
+          * `day_of_week` **(Required)** --- Which day of the week the task should
+            run, as an array with only one element. Each day must be one of `mon`,
+            `tues`, `wed`, `thurs`, `fri`, `sat`, `sun`, or `all`.
+          * `which_occurrence` **(Required)** --- The occurrence of the chosen weekday
+            when the task should run. Must be one of `first`, `second`, `third`,
+            `fourth`, `fifth`, or `last`.
 
-      When schedule is 'monthly', the syntax depends on whether you
-      wish to specify the trigger using absolute, or relative dates.
-      In either case, you can specify which months this trigger
-      applies to using 'months', and specifying an array of integer
-      months.  'months' defaults to all months.
+      Examples:
 
-      When specifying a monthly schedule with absolute dates, 'on'
-      must be provided as an array of days (1-31, or the special value
-      'last' which will always be the last day of the month).
+          # Run at 8am on the 1st, 15th, and last day of the month in January, March,
+          # May, July, September, and November, starting after August 31st, 2011.
+          trigger => {
+            schedule   => monthly,
+            start_date => '2011-08-31',   # Defaults to 'today'
+            start_time => '08:00',        # Must be specified
+            months     => [1,3,5,7,9,11], # Defaults to all
+            on         => [1, 15, last],  # Must be specified
+          }
 
-      When specifying a monthly schedule with relative dates,
-      'which_occurrence', and 'day_of_week' must be specified.  The
-      possible values for 'which_occurrence' are 'first', 'second',
-      'third', 'fourth', 'fifth', and 'last'.  'day_of_week' is an
-      array where the possible values are 'mon', 'tues', 'wed',
-      'thurs', 'fri', 'sat', and 'sun'.  These combine to be able to
-      specify things like: The task should run on the first Monday of
-      the specified month(s)."
+          # Run at 8am on the first Monday of the month for January, March, and May,
+          # starting after August 31st, 2011.
+          trigger => {
+            schedule         => monthly,
+            start_date       => '2011-08-31', # Defaults to 'today'
+            start_time       => '08:00',      # Must be specified
+            months           => [1,3,5],      # Defaults to all
+            which_occurrence => first,        # Must be specified
+            day_of_week      => [mon],        # Must be specified
+          }
+
+    EOT
 
     validate do |value|
       provider.validate_trigger(value)
