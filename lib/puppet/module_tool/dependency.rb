@@ -10,7 +10,7 @@ module Puppet::Module::Tool
       # TODO: add error checking, the next line raises ArgumentError when +full_module_name+ is invalid
       @username, @name = Puppet::Module::Tool.username_and_modname_from(full_module_name)
       @version_requirement = version_requirement
-      @repository = repository ? Repository.new(repository) : nil
+      @repository = repository ? Puppet::Forge::Repository.new(repository) : nil
     end
 
     # Return PSON representation of this data.

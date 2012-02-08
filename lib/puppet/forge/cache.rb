@@ -1,7 +1,6 @@
 require 'uri'
 
-module Puppet::Module::Tool
-
+module Puppet::Forge
   # = Cache
   #
   # Provides methods for reading files from local cache, filesystem or network.
