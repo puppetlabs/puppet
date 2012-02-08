@@ -244,8 +244,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     status = true
 
   rescue Exception => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err detail.to_s
+    Puppet.log_exception(detail)
     Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
 
   ensure

@@ -21,8 +21,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
           Puppet::Face[:report, "0.0.1"].save(report)
           Puppet.notice "Uploaded report for #{report.name}"
         rescue => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not send report: #{detail}"
+          Puppet.log_exception(detail, "Could not send report: #{detail}")
         end
   EOT
 
@@ -48,8 +47,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
         Puppet::Face[:report, "0.0.1"].save(report)
         Puppet.notice "Uploaded report for #{report.name}"
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not send report: #{detail}"
+        Puppet.log_exception(detail, "Could not send report: #{detail}")
       end
     end
   end

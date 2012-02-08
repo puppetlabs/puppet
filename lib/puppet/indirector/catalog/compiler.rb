@@ -89,8 +89,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     begin
       return nil unless node = Puppet::Node.indirection.find(name)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Failed when searching for node #{name}: #{detail}"
+      message = "Failed when searching for node #{name}: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
 
 

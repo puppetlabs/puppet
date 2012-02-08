@@ -403,8 +403,7 @@ class Application
   def exit_on_fail(message, code = 1)
     yield
   rescue ArgumentError, RuntimeError, NotImplementedError => detail
-    puts detail.backtrace if Puppet[:trace]
-    $stderr.puts "Could not #{message}: #{detail}"
+    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
     exit(code)
   end
 

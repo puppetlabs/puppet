@@ -293,8 +293,7 @@ ERROR_STRING
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not request certificate: #{detail}"
+      Puppet.log_exception(detail, "Could not request certificate: #{detail}")
       if time < 1
         puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
         exit(1)
@@ -315,8 +314,7 @@ ERROR_STRING
         break if certificate
         Puppet.notice "Did not receive certificate"
       rescue StandardError => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not request certificate: #{detail}"
+        Puppet.log_exception(detail, "Could not request certificate: #{detail}")
       end
     end
   end

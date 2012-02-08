@@ -153,8 +153,7 @@ class Puppet::Transaction
       return false if made.empty?
       made = made.inject({}) {|a,v| a.merge(v.name => v) }
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
+      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
     made.values.each do |res|
@@ -203,8 +202,7 @@ class Puppet::Transaction
     begin
       made = resource.generate
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      resource.err "Failed to generate additional resources using 'generate': #{detail}"
+      resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
     end
     return unless made
     made = [made] unless made.is_a?(Array)
@@ -285,8 +283,7 @@ class Puppet::Transaction
     begin
       provider_class.prefetch(resources)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}"
+      Puppet.log_exception(detail, "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}")
     end
     @prefetched_providers[type_name][provider_class.name] = true
   end

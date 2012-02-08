@@ -228,8 +228,7 @@ class Puppet::Indirector::Indirection
     Puppet.debug "Using cached #{self.name} for #{request.key}"
     cached
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Cached #{self.name} for #{request.key} failed: #{detail}"
+    Puppet.log_exception(detail, "Cached #{self.name} for #{request.key} failed: #{detail}")
     nil
   end
 

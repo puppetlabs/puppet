@@ -25,9 +25,7 @@ class Puppet::Network::HTTP::Rack
       response['Content-Type'] = 'text/plain'
       response.write 'Internal Server Error: "%s"' % detail.message
       # log what happened
-      Puppet.err "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\"" % detail.message
-      Puppet.err "Backtrace:"
-      detail.backtrace.each { |line| Puppet.err " > #{line}" }
+      Puppet.log_exception(detail, "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\"" % detail.message)
     end
     response.finish
   end

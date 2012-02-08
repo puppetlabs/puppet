@@ -15,46 +15,42 @@ module Puppet::Util::Logging
     end
   end
 
-  # Log an exception.  Will also log the backtrace if Puppet[:trace] is set.
+  # Log an exception via Puppet.err.  Will also log the backtrace if Puppet[:trace] is set.
   # Parameters:
   # [exception] an Exception to log
-  # [options] an optional Hash containing some configuration options about how to log the exception.
-  #     Available options include:
-  #     * :message => an optional String overriding the message to be logged; by default, we log Exception.message.
-  #             If you pass a String here, your string will be logged instead.  You may also pass nil if you don't
-  #             wish to log a message at all; in this case it is likely that you are only calling this method in order
-  #             to take advantage of the backtrace logging.
-  #     * :level => the log level to log the message at.  Defaults to :err.
-  def log_exception(exception, options = {})
+  # [message] an optional String overriding the message to be logged; by default, we log Exception.message.
+  #    If you pass a String here, your string will be logged instead.  You may also pass nil if you don't
+  #    wish to log a message at all; in this case it is likely that you are only calling this method in order
+  #    to take advantage of the backtrace logging.
+  def log_exception(exception, message = :default)
 
-    default_options = {
-      :message => :default,
-      :level => :err,
-    }
-
-    options = default_options.merge(options)
-
-    case options[:message]
+    case message
       when :default
-        send(options[:level], exception.message)
+        err(exception.message)
       when nil
         # don't log anything if they passed a nil; they are just calling for the optional backtrace logging
       else
-        send(options[:level], options[:message])
+        err(message)
     end
 
-    send(options[:level], exception.backtrace) if Puppet[:trace] && exception.backtrace
+    err(exception.backtrace) if Puppet[:trace] && exception.backtrace
   end
 
   class DeprecationWarning < Exception; end
 
+  # Log a warning indicating that the code path is deprecated.  Note that this method keeps track of the
+  # offending lines of code that triggered the deprecation warning, and will only log a warning once per
+  # offending line of code.  It will also stop logging deprecation warnings altogether after 100 unique
+  # deprecation warnings have been logged.
+  # Parameters:
+  # [message] The message to log (logs via )
   def deprecation_warning(message)
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
       offender = get_deprecation_offender()
       if (! $deprecation_warnings.has_key?(offender)) then
         $deprecation_warnings[offender] = message
-        log_exception(DeprecationWarning.new(message), :level => :warning)
+        warning("#{message}\n   (at #{offender})")
       end
     end
   end
@@ -71,6 +67,9 @@ module Puppet::Util::Logging
   def clear_deprecation_warnings
     $deprecation_warnings.clear if $deprecation_warnings
   end
+
+  # TODO: determine whether there might be a potential use for adding a puppet configuration option that would
+  # enable this deprecation logging.
 
   # utility method that can be called, e.g., from spec_helper config.after, when tracking down calls to deprecated
   # code.

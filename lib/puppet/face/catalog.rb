@@ -75,8 +75,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
           catalog.apply(:report => report)
         end
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Failed to apply catalog: #{detail}"
+        Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
       end
 
       report.finalize_report

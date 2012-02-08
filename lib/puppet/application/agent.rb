@@ -68,8 +68,7 @@ class Puppet::Application::Agent < Puppet::Application
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -328,8 +327,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       @agent.should_fork = false
       exitstatus = @agent.run
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err detail.to_s
+      Puppet.log_exception(detail)
     end
 
     @daemon.stop(:exit => false)

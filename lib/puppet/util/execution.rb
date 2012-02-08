@@ -178,9 +178,7 @@ module Util::Execution
           Kernel.exec(*command)
         end
       rescue => detail
-        puts detail.message
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not execute posix command: #{detail}"
+        Puppet.log_exception(detail, "Could not execute posix command: #{detail}")
         exit!(1)
       end
     end

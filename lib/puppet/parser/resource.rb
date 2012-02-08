@@ -284,7 +284,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source)
-      puts caller if Puppet[:trace]
       msg = "Parameter '#{param.name}' is already set on #{self}"
       msg += " by #{current.source}" if current.source.to_s != ""
       if current.file or current.line
@@ -294,6 +293,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         msg += " at #{fields.join(":")}"
       end
       msg += "; cannot redefine"
+      Puppet.log_exception(ArgumentError.new(), msg)
       raise Puppet::ParseError.new(msg, param.line, param.file)
     end
 

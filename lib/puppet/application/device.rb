@@ -43,8 +43,7 @@ class Puppet::Application::Device < Puppet::Application
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -190,8 +189,7 @@ Licensed under the Apache 2.0 License
         configurer = Puppet::Configurer.new
         report = configurer.run(:network_device => true)
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err detail.to_s
+        Puppet.log_exception(detail)
       ensure
         Puppet.settings.set_value(:vardir, vardir, :cli)
         Puppet.settings.set_value(:confdir, confdir, :cli)
