@@ -206,14 +206,14 @@ class Puppet::Indirector::Request
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file
     # source using a puppet:// URI with a specific server.
-    return yield self if !self.server.nil?
+    return yield(self) if !self.server.nil?
 
     if Puppet.settings[:use_srv_records]
       Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
         begin
           self.server = srv_server
           self.port   = srv_port
-          return yield self
+          return yield(self)
         rescue SystemCallError => e
           Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
         end
@@ -224,7 +224,7 @@ class Puppet::Indirector::Request
     Puppet.debug "No more servers left, falling back to #{default_server}:#{default_port}" if Puppet.settings[:use_srv_records]
     self.server = default_server
     self.port   = default_port
-    return yield self
+    return yield(self)
   end
 
   private
