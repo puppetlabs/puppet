@@ -6,9 +6,31 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
   confine    :operatingsystem => :windows
   defaultfor :operatingsystem => :windows
 
-  desc "Execute external binaries directly, on Windows systems.
-This does not pass through a shell, or perform any interpolation, but
-only directly calls the command with the arguments given."
+  desc <<-EOT
+    Execute external binaries on Windows systems. As with the `posix`
+    provider, this provider directly calls the command with the arguments
+    given, without passing it through a shell or performing any interpolation.
+    To use shell built-ins --- that is, to emulate the `shell` provider on
+    Windows --- a command must explicitly invoke the shell:
+
+        exec {'echo foo':
+          command => 'cmd.exe /c echo "foo"',
+        }
+
+    If no extension is specified for a command, Windows will use the `PATHEXT`
+    environment variable to locate the executable.
+
+    **Note on PowerShell scripts:** PowerShell's default `restricted`
+    execution policy doesn't allow it to run saved scripts. To run PowerShell
+    scripts, specify the `remotesigned` execution policy as part of the
+    command:
+
+        exec { 'test':
+          path    => 'C:/Windows/System32/WindowsPowerShell/v1.0',
+          command => 'powershell -executionpolicy remotesigned -file C:/test.ps1',
+        }
+
+  EOT
 
   # Verify that we have the executable
   def checkexe(command)

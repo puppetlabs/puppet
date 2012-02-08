@@ -1,10 +1,10 @@
-# The majority of the system configuration parameters are set in this file.
+# The majority of Puppet's configuration settings are set in this file.
 module Puppet
   setdefaults(:main,
-    :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
+    :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this setting is calculated based on the user.  If the process
     is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it's running as any other user,
     it defaults to being in the user's home directory."],
-    :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
+    :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this setting is calculated specially, like `confdir`_."],
     :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
       default is essentially $0 without the path or `.rb`."],
     :run_mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
@@ -42,18 +42,16 @@ module Puppet
       sense when used interactively.  Takes into account arguments specified
       on the CLI."],
     :configprint => ["",
-      "Print the value of a specific configuration parameter.  If a
-      parameter is provided for this, then the value is printed and puppet
+      "Print the value of a specific configuration setting.  If the name of a
+      setting is provided for this, then the value is printed and puppet
       exits.  Comma-separate multiple values.  For a list of all values,
-      specify 'all'.  This feature is only available in Puppet versions
-      higher than 0.18.4."],
+      specify 'all'."],
     :color => {
       :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
       :type    => :setting,
-      :desc    => "Whether to use colors when logging to the console.
-      Valid values are `ansi` (equivalent to `true`), `html` (mostly
-      used during testing with TextMate), and `false`, which produces
-      no color.",
+      :desc    => "Whether to use colors when logging to the console.  Valid values are
+      `ansi` (equivalent to `true`), `html`, and `false`, which produces no color.
+      Defaults to false on Windows, as its console does not support ansi colors.",
     },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
@@ -94,9 +92,9 @@ module Puppet
         $LOAD_PATH << value
       end
     },
-    :ignoreimport => [false, "A parameter that can be used in commit
-      hooks, since it enables you to parse-check a single file rather
-      than requiring that all files exist."],
+    :ignoreimport => [false, "If true, allows the parser to continue without requiring
+      all files referenced with `import` statements to exist. This setting was primarily
+      designed for use with commit hooks for parse-checking."],
     :authconfig => [ "$confdir/namespaceauth.conf",
       "The configuration file that defines the rights to the different
       namespaces and methods.  This can be used as a coarse-grained
@@ -107,10 +105,13 @@ module Puppet
       is used to find modules and much more.  For servers (i.e., `puppet master`) this provides the default environment for nodes
       we know nothing about."
     },
-    :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
+    :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between
+      files. The command to use can be chosen with the `diff` setting."],
     :diff => {
       :default => (Puppet.features.microsoft_windows? ? "" : "diff"),
-      :desc    => "Which diff command to use when printing differences between files.",
+      :desc    => "Which diff command to use when printing differences between files. This setting
+        has no default value on Windows, as standard `diff` is not available, but Puppet can use many
+        third-party diff tools.",
     },
     :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
       partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
@@ -118,7 +119,8 @@ module Puppet
       This feature currently requires the `diff/lcs` Ruby library."],
     :daemonize => {
       :default => (Puppet.features.microsoft_windows? ? false : true),
-      :desc => "Send the process into the background.  This is the default.",
+      :desc => "Whether to send the process into the background.  This defaults to true on POSIX systems,
+        and to false on Windows (where Puppet currently cannot daemonize).",
       :short => "D",
       :hook => proc do |value|
         if value and Puppet.features.microsoft_windows?
@@ -424,12 +426,12 @@ EOT
         uses that configuration file to determine which keys to sign."},
     :allow_duplicate_certs => [false, "Whether to allow a new certificate
       request to overwrite an existing certificate."],
-    :ca_days => ["", "How long a certificate should be valid.
-      This parameter is deprecated, use ca_ttl instead"],
+    :ca_days => ["", "How long a certificate should be valid, in days.
+      This setting is deprecated; use `ca_ttl` instead"],
     :ca_ttl => ["5y", "The default TTL for new certificates; valid values
       must be an integer, optionally followed by one of the units
       'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds. If this parameter
+      's' (seconds). The unit defaults to seconds. If this setting
       is set, ca_days is ignored. Examples are '3600' (one hour)
       and '1825d', which is the same as '5y' (5 years) "],
     :ca_md => ["md5", "The type of hash used in certificates."],
@@ -507,7 +509,7 @@ EOT
     :ca => [true, "Wether the master should function as a certificate authority."],
     :modulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
-      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :desc => "The search path for modules, as a list of directories separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",
       :type => :setting # We don't want this to be considered a file, since it's multiple files.
     },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
@@ -758,7 +760,7 @@ EOT
     :main,
     :factpath => {:default => "$vardir/lib/facter#{File::PATH_SEPARATOR}$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
-        be colon-separated, like normal PATH variables.",
+        be separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",
 
       :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
       :type => :setting, # Don't consider it a file, because it could be multiple colon-separated files
@@ -844,10 +846,10 @@ EOT
     :main,
     :external_nodes => ["none",
 
-      "An external command that can produce node information.  The output
-      must be a YAML dump of a hash, and that hash must have one or both of
-      `classes` and `parameters`, where `classes` is an array and
-      `parameters` is a hash.  For unknown nodes, the commands should
+      "An external command that can produce node information.  The command's output
+      must be a YAML dump of a hash, and that hash must have a `classes` key and/or
+      a `parameters` key, where `classes` is an array or hash and
+      `parameters` is a hash.  For unknown nodes, the command should
       exit with a non-zero exit code.
 
       This command makes it straightforward to store your node mapping
