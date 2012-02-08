@@ -101,7 +101,7 @@ class Puppet::Transaction::EventManager
     resource.err "Failed to call #{callback}: #{detail}"
 
     transaction.resource_status(resource).failed_to_restart = true
-    puts detail.backtrace if Puppet[:trace]
+    resource.log_exception(detail)
     return false
   end
 

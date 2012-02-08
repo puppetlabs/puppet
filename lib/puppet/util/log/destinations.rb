@@ -189,8 +189,7 @@ Puppet::Util::Log.newdesttype :host do
         # Add the hostname to the source
         @driver.addlog(tmp)
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err detail
+        Puppet.log_exception(detail)
         Puppet::Util::Log.close(self)
       end
     end

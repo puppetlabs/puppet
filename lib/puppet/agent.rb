@@ -49,8 +49,7 @@ class Puppet::Agent
           rescue SystemExit,NoMemoryError
             raise
           rescue Exception => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not run #{client_class}: #{detail}"
+            Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
           end
         end
       end
@@ -129,8 +128,7 @@ class Puppet::Agent
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not create instance of #{client_class}: #{detail}"
+      Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
       return
     end
     yield @client

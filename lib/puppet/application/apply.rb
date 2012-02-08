@@ -223,8 +223,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         exit(0)
       end
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts detail.message
+      Puppet.log_exception(detail)
       exit(1)
     end
   end

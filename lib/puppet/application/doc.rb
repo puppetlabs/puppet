@@ -182,8 +182,7 @@ HELP
         Puppet::Util::RDoc.rdoc(options[:outputdir], files, options[:charset])
       end
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Could not generate documentation: #{detail}"
+      Puppet.log_exception(detail, "Could not generate documentation: #{detail}")
       exit_code = 1
     end
     exit exit_code
@@ -201,8 +200,7 @@ HELP
         # Add the per-section text, but with no ToC
         text += section.send(options[:format], with_contents)
       rescue => detail
-        puts detail.backtrace
-        $stderr.puts "Could not generate reference #{name}: #{detail}"
+        Puppet.log_exception(detail, "Could not generate reference #{name}: #{detail}")
         exit_code = 1
         next
       end

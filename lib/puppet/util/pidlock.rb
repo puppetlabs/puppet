@@ -34,8 +34,7 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
         # This one is a real failure though.  No idea what went wrong, but it
         # is most likely "read only file(system)" or wrong permissions or
         # something like that.
-        Puppet.err "Could not remove PID file #{@lockfile}: #{e}"
-        puts e.backtrace if Puppet[:trace]
+        Puppet.log_exception(e, "Could not remove PID file #{@lockfile}: #{e}")
       end
       true
     else

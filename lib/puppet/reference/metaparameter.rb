@@ -34,8 +34,7 @@ in your manifest, including defined components.
       str << "\n\n"
     }
   rescue => detail
-    puts detail.backtrace
-    puts "incorrect metaparams: #{detail}"
+    Puppet.log_exception(detail, "incorrect metaparams: #{detail}")
     exit(1)
   end
 

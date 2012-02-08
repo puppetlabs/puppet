@@ -92,8 +92,9 @@ module Puppet
       begin
         @bucket = Puppet::FileBucket::Dipper.new(args)
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        self.fail("Could not create #{type} filebucket: #{detail}")
+        message = "Could not create #{type} filebucket: #{detail}"
+        self.log_exception(detail, message)
+        self.fail(message)
       end
 
       @bucket.name = self.name
