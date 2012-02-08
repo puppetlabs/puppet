@@ -2,8 +2,16 @@ module Puppet
   Puppet::Type.type(:file).newproperty(:owner) do
     include Puppet::Util::Warnings
 
-    desc "To whom the file should belong.  Argument can be user name or
-      user ID."
+    desc <<-EOT
+      The user to whom the file should belong.  Argument can be a user name or a
+      user ID.
+
+      On Windows, a group (such as "Administrators") can be set as a file's owner
+      and a user (such as "Administrator") can be set as a file's group; however,
+      a file's owner and group shouldn't be the same. (If the owner is also
+      the group, files with modes like `0640` will cause log churn, as they
+      will always appear out of sync.)
+    EOT
 
     def insync?(current)
       # We don't want to validate/munge users until we actually start to

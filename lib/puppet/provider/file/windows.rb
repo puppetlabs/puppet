@@ -1,5 +1,5 @@
 Puppet::Type.type(:file).provide :windows do
-  desc "Uses Microsoft Windows functionality to manage file's users and rights."
+  desc "Uses Microsoft Windows functionality to manage file ownership and permissions."
 
   confine :operatingsystem => :windows
 

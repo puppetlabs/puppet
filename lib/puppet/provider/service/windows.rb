@@ -5,11 +5,12 @@ require 'win32/service' if Puppet.features.microsoft_windows?
 Puppet::Type.type(:service).provide :windows do
 
   desc <<-EOT
-    Support for Windows Service Control Manager (SCM).
+    Support for Windows Service Control Manager (SCM). This provider can
+    start, stop, enable, and disable services, and the SCM provides working
+    status methods for all services.
 
-    Services are controlled according to the capabilities of the `win32-service`
-    gem. All SCM operations (start/stop/enable/disable/query) are supported.
-    Control of service groups (dependencies) is not yet supported.
+    Control of service groups (dependencies) is not yet supported, nor is running
+    services as a specific user.
   EOT
 
   defaultfor :operatingsystem => :windows
