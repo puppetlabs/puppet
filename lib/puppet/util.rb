@@ -188,12 +188,25 @@ module Util
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-        dest = File.expand_path(File.join(dir, bin))
+        begin
+          dest = File.expand_path(File.join(dir, bin))
+        rescue ArgumentError => e
+          # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
+          # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
+          # was thrown.
+          raise e unless ((dir =~ /~/) && ((ENV['HOME'].nil? || ENV['HOME'] == "")))
+
+          # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
+          # ignore this path element and carry on with our lives.
+          Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
+          next
+        end
         if Puppet.features.microsoft_windows? && File.extname(dest).empty?
           exts = ENV['PATHEXT']
           exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
           exts.each do |ext|
             destext = File.expand_path(dest + ext)
+
             return destext if FileTest.file? destext and FileTest.executable? destext
           end
         end

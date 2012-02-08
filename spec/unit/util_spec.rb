@@ -216,6 +216,13 @@ describe Puppet::Util do
       Puppet::Util.which('doesnotexist').should be_nil
     end
 
+    it "should warn if the user's HOME is not set but their PATH contains a ~" do
+      Puppet::Util.withenv({:HOME => nil, :PATH => "~/bin:/usr/bin:/bin"}) do
+        Puppet::Util::Warnings.expects(:warnonce).once
+        Puppet::Util.which('foo').should_not be_nil
+      end
+    end
+
     it "should reject directories" do
       Puppet::Util.which(base).should be_nil
     end
