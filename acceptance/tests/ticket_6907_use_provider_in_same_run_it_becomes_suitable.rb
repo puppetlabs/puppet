@@ -1,9 +1,10 @@
 test_name "providers should be useable in the same run they become suitable"
 
-dir = "/tmp/#{$$}-6907"
+agents.each do |agent|
+  dir = agent.tmpdir('provider-6907')
 
-on agents, "mkdir -p #{dir}/lib/puppet/{type,provider/test6907}"
-on agents, "cat > #{dir}/lib/puppet/type/test6907.rb", :stdin => <<TYPE
+  on agent, "mkdir -p #{dir}/lib/puppet/{type,provider/test6907}"
+  on agent, "cat > #{dir}/lib/puppet/type/test6907.rb", :stdin => <<TYPE
 Puppet::Type.newtype(:test6907) do
   newparam(:name, :namevar => true)
 
@@ -11,7 +12,7 @@ Puppet::Type.newtype(:test6907) do
 end
 TYPE
 
-on agents, "cat > #{dir}/lib/puppet/provider/test6907/only.rb", :stdin => <<PROVIDER
+  on agent, "cat > #{dir}/lib/puppet/provider/test6907/only.rb", :stdin => <<PROVIDER
 Puppet::Type.type(:test6907).provide(:only) do
   commands :anything => "#{dir}/must_exist"
   require 'fileutils'
@@ -26,7 +27,7 @@ Puppet::Type.type(:test6907).provide(:only) do
 end
 PROVIDER
 
-on agents, puppet_apply("--libdir #{dir}/lib --trace"), :stdin => <<MANIFEST
+  on agent, puppet_apply("--libdir #{dir}/lib --trace"), :stdin => <<MANIFEST
   test6907 { "test-6907":
     file => "#{dir}/test_file",
   }
@@ -37,4 +38,5 @@ on agents, puppet_apply("--libdir #{dir}/lib --trace"), :stdin => <<MANIFEST
   }
 MANIFEST
 
-on agents, "ls #{dir}/test_file"
+  on agent, "ls #{dir}/test_file"
+end

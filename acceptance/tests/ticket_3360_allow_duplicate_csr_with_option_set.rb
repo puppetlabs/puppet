@@ -3,8 +3,15 @@ test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 agent_hostnames = agents.map {|a| a.to_s}
 
 with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --verbose --noop" do
-  step "Generate a certificate request for the agent"
-  on agents, "puppet certificate generate `hostname -f` --ca-location remote --server #{master}"
+  agents.each do |agent|
+    if agent['platform'].include?('windows')
+      Log.warn("Pending: Windows does not support hostname -f")
+      next
+    end
+
+    step "Generate a certificate request for the agent"
+    on agent, "puppet certificate generate `hostname -f` --ca-location remote --server #{master}"
+  end
 
   step "Collect the original certs"
   on master, puppet_cert("--sign --all")
@@ -18,11 +25,17 @@ with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet
     end
   end
 
-  step "Make another request with the same certname"
-  on agents, "puppet certificate generate `hostname -f` --ca-location remote --server #{master}"
+  agents.each do |agent|
+    if agent['platform'].include?('windows')
+      Log.warn("Pending: Windows does not support hostname -f")
+      next
+    end
+
+    step "Make another request with the same certname"
+    on agent, "puppet certificate generate `hostname -f` --ca-location remote --server #{master}"
+  end
 
   step "Collect the new certs"
-
   on master, puppet_cert("--sign --all")
   new_cert_list = on master, puppet_cert("--list --all")
 

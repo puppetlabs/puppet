@@ -5,6 +5,9 @@ group1 = "#{user}old"
 group2 = "#{user}new"
 
 agents.each do |host|
+  if host['platform'].include?('windows')
+    skip_test "Test not supported on this platform"
+  else
     step "ensure that the groups both exist"
     on(host, puppet_resource('group', group1, 'ensure=present'))
     on(host, puppet_resource('group', group2, 'ensure=present'))
@@ -38,4 +41,5 @@ agents.each do |host|
     on(host, puppet_resource('user',  user,   'ensure=absent'))
     on(host, puppet_resource('group', group1, 'ensure=absent'))
     on(host, puppet_resource('group', group2, 'ensure=absent'))
+  end
 end

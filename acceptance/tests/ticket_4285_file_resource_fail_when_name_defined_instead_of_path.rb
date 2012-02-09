@@ -1,18 +1,20 @@
 test_name "Bug #4285: ArgumentError: Cannot alias File[mytitle] to [nil]"
 
-manifest = %q{
+agents.each do |host|
+  dir = host.tmpdir('4285-aliasing')
+
+manifest = %Q{
   file { "file1":
-      name => '/tmp/file1',
-      source => "/tmp/",
+      name => '#{dir}/file1',
+      source => "#{dir}/",
   }
 
   file { "file2":
-      name => '/tmp/file2',
-      source => "/tmp/",
+      name => '#{dir}/file2',
+      source => "#{dir}/",
   }
 }
 
-agents.each do |host|
   apply_manifest_on(host, manifest) do
     assert_no_match(/Cannot alias/, stdout, "#{host}: found the bug report output")
   end

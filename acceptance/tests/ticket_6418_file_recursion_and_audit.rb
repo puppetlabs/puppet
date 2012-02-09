@@ -5,29 +5,30 @@
 
 test_name "#6418: file recursion and audit"
 
-manifest = %q{
-    file { "/tmp/6418": ensure => directory }
-    file { "/tmp/6418/dir": ensure => directory}
-    file { "/tmp/6418/dir/dir": ensure => directory}
-    file { "/tmp/6418/dir/dir/dir": ensure => directory}
-    file { "/tmp/6418-copy": ensure => present, source => "/tmp/6418/" }
+agents.each do |agent|
+  dir = agent.tmpdir('6418-recurse-audit')
 
-    File["/tmp/6418"] -> File["/tmp/6418/dir"] -> File["/tmp/6418/dir/dir"] -> File["/tmp/6418/dir/dir/dir"] -> File["/tmp/6418-copy"]
+manifest = %Q{
+    file { "#{dir}/6418": ensure => directory }
+    file { "#{dir}/6418/dir": ensure => directory}
+    file { "#{dir}/6418/dir/dir": ensure => directory}
+    file { "#{dir}/6418/dir/dir/dir": ensure => directory}
+    file { "#{dir}/6418-copy": ensure => present, source => "#{dir}/6418/" }
+
+    File["#{dir}/6418"] -> File["#{dir}/6418/dir"] -> File["#{dir}/6418/dir/dir"] -> File["#{dir}/6418/dir/dir/dir"] -> File["#{dir}/6418-copy"]
 }
 
-step "Query agent for statefile"
-agent=agents.first
-on agent, puppet_agent('--configprint statefile')
-statefile=stdout.chomp
+  step "Query agent for statefile"
+  on agent, puppet_agent('--configprint statefile') do
+    statefile=stdout.chomp
 
-step "Remove the statefile on all Agents"
-on agents, "rm -f #{statefile}"
+    step "Remove the statefile on the agent"
+    on(agent, "rm -f '#{statefile}'")
 
-step "Apply the manifest"
-apply_manifest_on agents, manifest
+    step "Apply the manifest"
+    apply_manifest_on agent, manifest
 
-
-step "Verify corecct file recursion and audit state"
-agents.each do |agent|
-  on(agent, "grep ensure.*directory #{statefile}", :acceptable_exit_codes => [ 1 ])
+    step "Verify correct file recursion and audit state"
+    on(agent, "grep ensure.*directory '#{statefile}'", :acceptable_exit_codes => [ 1 ])
+  end
 end
