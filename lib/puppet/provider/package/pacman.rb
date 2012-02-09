@@ -5,11 +5,19 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   desc "Support for the Package Manager Utility (pacman) used in Archlinux."
 
   commands :pacman => "/usr/bin/pacman"
-  defaultfor :operatingsystem => :archlinux
-  confine    :operatingsystem => :archlinux
+  # Yaourt is a common AUR helper which, if installed, we can use to query the AUR
+  commands :yaourt => "/usr/bin/yaourt"
+
+  confine     :operatingsystem => :archlinux
+  defaultfor  :operatingsystem => :archlinux
   has_feature :upgradeable
 
-  # Install a package using 'pacman'.
+  # If yaourt is installed, we can make use of it
+  def yaourt?
+    return File.exists? '/usr/bin/yaourt'
+  end
+
+  # Install a package using 'pacman', or 'yaourt' if available.
   # Installs quietly, without confirmation or progressbar, updates package
   # list from servers defined in pacman.conf.
   def install
@@ -25,7 +33,11 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   end
 
   def install_from_repo
-    pacman "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]
+    if yaourt?
+      yaourt "--noconfirm", "-S", @resource[:name]
+    else
+        pacman "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]
+    end
   end
   private :install_from_repo
 
@@ -95,10 +107,28 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     self.install
   end
 
+  # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
   def latest
     pacman "-Sy"
-    output = pacman "-Sp", "--print-format", "%v", @resource[:name]
-    output.chomp
+    pacman_check = true   # Query the main repos first
+    begin
+      if pacman_check
+        output = pacman "-Sp", "--print-format", "%v", @resource[:name]
+        return output.chomp
+      else 
+        output = yaourt "-Qma", @resource[:name]
+        output.split("\n").each do |line|
+          return line.split[1].chomp if line =~ /^aur/
+        end  
+      end
+    rescue Puppet::ExecutionFailure
+      if pacman_check and self.yaourt?
+        pacman_check = false # now try the AUR
+        retry
+      else
+        raise
+      end
+    end
   end
 
   # Querys the pacman master list for information about the package.
