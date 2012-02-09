@@ -89,7 +89,10 @@ module Puppet::Network::HTTP::Handler
       status = 403 if status == 400
     end
     if exception.is_a?(Exception)
-      puts exception.backtrace if Puppet[:trace]
+      if Puppet[:trace] then
+        puts exception.backtrace
+        Puppet.err(exception.backtrace.join("\n"))
+      end
       Puppet.err(exception)
     end
     set_content_type(response, "text/plain")
