@@ -76,16 +76,39 @@ copy things like LDAP settings.
 
 USAGE NOTES
 -----------
-Puppet kick is useless unless puppet agent is listening for incoming
-connections and allowing access to the `run` endpoint. This entails
-starting the agent with `listen = true` in its puppet.conf file, and
-allowing access to the `/run` path in its auth.conf file; see
-`http://docs.puppetlabs.com/guides/rest_auth_conf.html` for more
-details.
+Puppet kick needs the puppet agent running as a daemon on the target machine,
+and configured to listen for incoming network connections, with an appropriate
+security configuration.
 
-Additionally, due to a known bug, you must make sure a
-namespaceauth.conf file exists in puppet agent's $confdir. This file
-will not be consulted, and may be left empty.  
+The specific changes required are:
+
+Set `listen = true` in `puppet.conf` or on the command line:
+
+Once this has taken effect your agent will be listening on port 8139 for HTTPS
+requests - including the trigger to kick off a Puppet run.
+
+If necessary, open firewall rules to allow access to that port on the agent.
+
+Allow kick access via REST authentication:
+
+Edit the `/etc/puppet/auth.conf` file and add:
+
+    path    /run
+    method  save
+    allow   workstation.example.com
+
+That will allow the machine `workstation.example.com` to trigger a Puppet run;
+you should adjust that to match your system.
+
+You can just allow anyone to trigger a Puppet run, but that allows for
+arbitrary numbers of Puppet runs to be triggered - consuming resources - and
+might make it easier to exploit any security issues that turn up.
+
+See `http://docs.puppetlabs.com/guides/rest_auth_conf.html` for more details.
+
+Additionally, due to a known bug, you must make sure a namespaceauth.conf file
+exists in puppet agent's $confdir. This file will not be consulted, and may be
+left empty.
 
 OPTIONS
 -------
