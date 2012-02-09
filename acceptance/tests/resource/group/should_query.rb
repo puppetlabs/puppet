@@ -1,15 +1,16 @@
-test_name "group should query"
+test_name "test that we can query and find a group that exists."
 
-name = "test-group-#{Time.new.to_i}"
+name = "pl#{rand(999999).to_i}"
 
-step "ensure the group exists on the target systems"
-on agents, "getent group #{name} || groupadd #{name}"
+agents.each do |agent|
+  step "ensure that our test group exists"
+  agent.group_present(name)
 
-step "ensure that the resource agent sees the group"
-on(agents, puppet_resource('group', name)) do
-    fail_test "missing group identifier" unless stdout.include? "group { '#{name}':"
-    fail_test "missing present attributed" unless stdout.include? "ensure => 'present'"
+  step "query for the resource and verify it was found"
+  on(agent, puppet_resource('group', name)) do
+    fail_test "didn't find the group #{name}" unless stdout.include? 'present'
+  end
+
+  step "clean up the group we added"
+  agent.group_absent(name)
 end
-
-step "clean up the system after the test"
-on(agents, puppet_resource('group', name, 'ensure=absent'))

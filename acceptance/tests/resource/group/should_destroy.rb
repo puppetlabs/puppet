@@ -1,14 +1,14 @@
 test_name "should destroy a group"
 
-name = "test-group-#{Time.new.to_i}"
+name = "pl#{rand(999999).to_i}"
 
-step "ensure the group exists on the target system"
-on agents, "getent group #{name} || groupadd #{name}"
+agents.each do |agent|
+  step "ensure the group is present"
+  agent.group_present(name)
 
-step "use puppet to remove the group"
-on(agents, puppet_resource('group', name, 'ensure=absent'))
+  step "delete the group"
+  on agent, puppet_resource('group', name, 'ensure=absent')
 
-step "verify that the group has been removed"
-# REVISIT: I /think/ that exit code 2 is standard across Linux, but I have no
-# idea what non-Linux platforms are going to return. --daniel 2010-12-24
-on agents, "getent group #{name}", :acceptable_exit_codes => [2]
+  step "verify the group was deleted"
+  agent.group_absent(name)
+end
