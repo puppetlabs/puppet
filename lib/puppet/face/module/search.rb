@@ -42,7 +42,7 @@ Puppet::Face.define(:module, '1.0.0') do
         'tag_list'  => 'KEYWORDS',
       }
 
-      min_widths = Hash[headers.map { |k,v| [k, v.length] }]
+      min_widths = Hash[ *headers.map { |k,v| [k, v.length] }.flatten ]
       min_widths['full_name'] = min_widths['author'] = 12
 
       min_width = min_widths.inject(0) { |sum,pair| sum += pair.last } + (padding.length * (headers.length - 1))
@@ -62,9 +62,9 @@ Puppet::Face.define(:module, '1.0.0') do
       tag_lists = results.map { |r| r['tag_list'] }
 
       while (columns['tag_list'] > flex_width / 3)
-        longest_tag_list = tag_lists.max_by { |tl| tl.join(' ').length }
+        longest_tag_list = tag_lists.sort_by { |tl| tl.join(' ').length }.last
         break if [ [], [term] ].include? longest_tag_list
-        longest_tag_list.delete(longest_tag_list.max_by { |t| t == term ? -1 : t.length })
+        longest_tag_list.delete(longest_tag_list.sort_by { |t| t == term ? -1 : t.length }.last)
         columns['tag_list'] =  tag_lists.map { |tl| tl.join(' ').length }.max
       end
 

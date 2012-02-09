@@ -133,7 +133,7 @@ EOT
 
         Puppet::Util::Terminal.expects(:width).returns(width)
         result = subject.render(results, ['apache', {}])
-        result.lines.max_by(&:length).chomp.length.should <= width
+        result.lines.sort_by(&:length).last.chomp.length.should <= width
         result.should == expectation
       end
     end
