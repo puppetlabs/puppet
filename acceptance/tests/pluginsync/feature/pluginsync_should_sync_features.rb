@@ -214,7 +214,8 @@ begin
 
     with_master_running_on(master,
                "--manifest=\"#{get_test_file_path(master, master_manifest_file)}\" " +
-               "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" --pluginsync") do
+               "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
+               "--autosign true --pluginsync") do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
