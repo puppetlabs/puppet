@@ -53,7 +53,7 @@ Puppet::Face.define(:module, '1.0.0') do
         {
           'full_name' => [ hash['full_name'], result['full_name'].length          ].max,
           'desc'      => [ hash['desc'],      result['desc'].length               ].max,
-          'author'    => [ hash['author'],    result['author'].length             ].max,
+          'author'    => [ hash['author'],    "@#{result['author']}".length       ].max,
           'tag_list'  => [ hash['tag_list'],  result['tag_list'].join(' ').length ].max,
         }
       end

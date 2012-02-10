@@ -102,30 +102,30 @@ describe "puppet module search" do
 
     {
       100 => <<-EOT,
-NAME          DESCRIPTION                                      AUTHOR        KEYWORDS               
-Name          This description is really too long to fit i...  @Author       tag1 tag2 taggitty3    
+NAME          DESCRIPTION                                     AUTHOR         KEYWORDS               
+Name          This description is really too long to fit ...  @JohnnyApples  tag1 tag2 taggitty3    
 EOT
 
       70 => <<-EOT,
-NAME          DESCRIPTION                  AUTHOR        KEYWORDS     
-Name          This description is real...  @Author       tag1 tag2    
+NAME          DESCRIPTION                 AUTHOR         KEYWORDS     
+Name          This description is rea...  @JohnnyApples  tag1 tag2    
 EOT
 
       80 => <<-EOT,
-NAME          DESCRIPTION                         AUTHOR        KEYWORDS        
-Name          This description is really too ...  @Author       tag1 tag2       
+NAME          DESCRIPTION                        AUTHOR         KEYWORDS        
+Name          This description is really too...  @JohnnyApples  tag1 tag2       
 EOT
 
       200 => <<-EOT,
-NAME          DESCRIPTION                                                                                                         AUTHOR        KEYWORDS                                                
-Name          This description is really too long to fit in a single data table, guys -- we should probably set about truncat...  @Author       tag1 tag2 taggitty3                                     
+NAME          DESCRIPTION                                                                                                        AUTHOR         KEYWORDS                                                
+Name          This description is really too long to fit in a single data table, guys -- we should probably set about trunca...  @JohnnyApples  tag1 tag2 taggitty3                                     
 EOT
     }.each do |width, expectation|
-      it 'should resize the table to fit the screen, when #{width} columns' do
+      it "should resize the table to fit the screen, when #{width} columns" do
         results = [
           {
             'full_name' => 'Name',
-            'author' => 'Author',
+            'author' => 'JohnnyApples',
             'desc' => 'This description is really too long to fit in a single data table, guys -- we should probably set about truncating it',
             'tag_list' => ['tag1', 'tag2', 'taggitty3'],
           },
