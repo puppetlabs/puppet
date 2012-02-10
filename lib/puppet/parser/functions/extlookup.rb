@@ -50,7 +50,7 @@ Now create the following data files in /etc/puppet/manifests/extdata:
 Now you can replace the case statement with the simple single line to achieve
 the exact same outcome:
 
-   $snmp_contact = extlookup(\"snmp_contact\")
+    $snmp_contact = extlookup(\"snmp_contact\")
 
 The above code shows some other features, you can use any fact or variable that
 is in scope by simply using %{varname} in your data files, you can return arrays
@@ -60,7 +60,7 @@ In the event that a variable is nowhere to be found a critical error will be rai
 that will prevent your manifest from compiling, this is to avoid accidentally putting
 in empty values etc.  You can however specify a default value:
 
-   $ntp_servers = extlookup(\"ntp_servers\", \"1.${country}.pool.ntp.org\")
+    $ntp_servers = extlookup(\"ntp_servers\", \"1.${country}.pool.ntp.org\")
 
 In this case it will default to \"1.${country}.pool.ntp.org\" if nothing is defined in
 any data file.
