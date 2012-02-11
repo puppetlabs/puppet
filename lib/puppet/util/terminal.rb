@@ -2,7 +2,7 @@ module Puppet::Util::Terminal
   # Attempts to determine the width of the terminal.  This is currently only
   # supported on POSIX systems, and relies on the claims of `stty` (or `tput`).
   #
-  # Borrowed shamelessly from Thor, who borrowed this from Rake.
+  # Inspired by code from Thor; thanks wycats!
   # @return [Number] The column width of the terminal.  Defaults to 80 columns.
   def self.width
     if Puppet.features.posix?
