@@ -124,6 +124,50 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
         end
       end
 
+      context "when the module has local changes" do
+
+        it "should not uninstall the module" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+          @uninstaller.any_instance.stubs(:has_local_changes?).returns(true)
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:removed_mods].should == []
+        end
+
+        it "should append an error" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+
+          expected_output = {
+            "puppetlabs-foo" => ["Installed version of foo (v1.0.0) has local changes"]
+          }
+
+          @uninstaller.any_instance.stubs(:has_local_changes?).returns(true)
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:errors].should == expected_output
+        end
+      end
+
+      context "when the module does not have local changes" do
+
+        it "should uninstall the module" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+
+          @uninstaller.any_instance.stubs(:has_local_changes?).returns(false)
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:removed_mods].length.should == 1
+          results[:removed_mods].first.forge_name.should == "puppetlabs/foo"
+        end
+
+        it "should not append an error" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+
+          expected_output = { "puppetlabs-foo" => [] }
+
+          @uninstaller.any_instance.stubs(:has_local_changes?).returns(false)
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:errors].should == expected_output
+        end
+      end
+
       # This test is pending work in #11803 to which will add
       # dependency resolution.
       it "should check for broken dependencies"
