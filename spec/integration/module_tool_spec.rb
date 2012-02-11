@@ -12,7 +12,7 @@ def stub_repository_read(code, body)
 end
 
 def stub_installer_read(body)
-  Puppet::Module::Tool::Applications::Installer.any_instance.stubs(:read_match).returns(body)
+  Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(body)
 end
 
 def stub_cache_read(body)
@@ -67,7 +67,7 @@ describe "module_tool", :fails_on_windows => true do
     Puppet[:module_repository] = "http://forge.puppetlabs.com"
     @mytmpdir = Pathname.new(tmpdir("module_tool_test"))
     @options = {}
-    @options[:install_dir] = @mytmpdir
+    @options[:dir] = @mytmpdir
     @options[:module_repository] = "http://forge.puppetlabs.com"
   end
 
@@ -349,8 +349,8 @@ describe "module_tool", :fails_on_windows => true do
     it "should install a module to the puppet modulepath by default" do
       myothertmpdir = Pathname.new(tmpdir("module_tool_test_myothertmpdir"))
       run do
-        @options[:install_dir] = myothertmpdir
-        Puppet::Module::Tool.unstub(:install_dir)
+        @options[:dir] = myothertmpdir
+        Puppet::Module::Tool.unstub(:dir)
 
         build_and_install_module
 
@@ -376,8 +376,15 @@ describe "module_tool", :fails_on_windows => true do
         stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
         FileUtils.rm_rf(@full_module_name)
 
-        release = {"file" => "/foo/bar/#{@release_name}.tar.gz", "version" => "#{@version}"}
-        Puppet::Forge::Forge.any_instance.stubs(:get_release).returns(release)
+        releases = {
+           'myuser/mymodule' => [
+            {
+              'file' => "/foo/bar/#{@release_name}.tar.gz",
+              'version' => @version,
+              'dependencies' => []
+            }]
+        }
+        Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(releases)
 
         Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options)
 
@@ -417,7 +424,7 @@ describe "module_tool", :fails_on_windows => true do
       end
     end
 
-    it "should return a Pathname object representing the path to the installed module" do
+    it "should return Pathname objects representing the paths to the installed modules" do
       run do
         Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
         Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
@@ -425,10 +432,17 @@ describe "module_tool", :fails_on_windows => true do
         stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
         FileUtils.rm_rf(@full_module_name)
 
-        release = {"file" => "/foo/bar/#{@release_name}.tar.gz", "version" => "#{@version}"}
-        Puppet::Forge::Forge.any_instance.stubs(:get_release).returns(release)
+        releases = {
+           'myuser/mymodule' => [
+            {
+              'file' => "/foo/bar/#{@release_name}.tar.gz",
+              'version' => @version,
+              'dependencies' => []
+            }]
+        }
+        Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(releases)
 
-        Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options).should be_kind_of(Pathname)
+        Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options).first.should be_kind_of(Pathname)
       end
     end
 
