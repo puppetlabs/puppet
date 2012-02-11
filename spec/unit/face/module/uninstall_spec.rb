@@ -34,10 +34,10 @@ describe "puppet module uninstall" do
 
     it "should accept the --modulepath option" do
       options[:modulepath] = "/foo/puppet/modules"
-      expected_options = { 
+      expected_options = {
         :modulepath => '/foo/puppet/modules',
         :environment => 'production',
-        :name => 'puppetlabs-apache', 
+        :name => 'puppetlabs-apache',
       }
       File.expects(:directory?).with("/foo/puppet/modules").returns(true)
       Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
@@ -46,10 +46,21 @@ describe "puppet module uninstall" do
 
     it "should accept the --version option" do
       options[:version] = "1.0.0"
-      expected_options = { 
+      expected_options = {
         :version => '1.0.0',
         :environment => 'production',
-        :name => 'puppetlabs-apache', 
+        :name => 'puppetlabs-apache',
+      }
+      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
+      subject.uninstall("puppetlabs-apache", options)
+    end
+
+    it "should accept the --force flag" do
+      options[:force] = true
+      expected_options = {
+        :environment => 'production',
+        :name => 'puppetlabs-apache',
+        :force => true
       }
       Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.uninstall("puppetlabs-apache", options)
