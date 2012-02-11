@@ -41,6 +41,8 @@ module Puppet::Module::Tool
         cached_paths.each do |cache_path|
           Unpacker.run(cache_path, options)
         end
+
+        cached_paths
       end
     end
   end

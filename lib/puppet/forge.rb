@@ -60,7 +60,7 @@ module Puppet::Forge
         if not params[:filename]
           raise ArgumentError, ":filename required"
         end
-        cache_paths = get_release_package_from_filesystem(params[:filename])
+        cache_paths = [get_release_package_from_filesystem(params[:filename])]
       else
         raise ArgumentError, "Could not determine installation source"
       end
@@ -109,24 +109,6 @@ module Puppet::Forge
     def repository
       @repository ||= Puppet::Forge::Repository.new(@uri)
     end
-
-    # Connect to the remote repository and locate a specific module release
-    # by author/name combination. If a version requirement is specified, search
-    # for that exact version, or grab the latest release available.
-    #
-    # Return the following response to the caller:
-    #
-    # {"file"=>"/system/releases/p/puppetlabs/puppetlabs-apache-0.0.3.tar.gz", "version"=>"0.0.3"}
-    #
-#   def get_release(author, modname, version_requirement=nil)
-#     begin
-#       response = repository.make_http_request(request)
-#     rescue => e
-#       raise  ArgumentError, "Could not find a release for this module (#{e.message})"
-#     end
-
-#     PSON.parse(response.body)
-#   end
 
     def remote_dependency_info(author, mod_name, version)
       version_string = version ? "&version=#{version}" : ''

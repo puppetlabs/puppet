@@ -12,7 +12,7 @@ describe "puppet module install" do
   describe "option validation" do
     let(:expected_options) do
       {
-        :install_dir => File.expand_path("/dev/null/modules"),
+        :dir => File.expand_path("/dev/null/modules"),
         :module_repository => "http://forge.puppetlabs.com",
       }
     end
@@ -36,8 +36,8 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --install-dir option" do
-      options[:install_dir] = "/foo/puppet/modules"
+    it "should accept the --dir option" do
+      options[:dir] = "/foo/puppet/modules"
       expected_options.merge!(options)
       Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.install("puppetlabs-apache", options)
@@ -56,6 +56,8 @@ describe "puppet module install" do
       Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.install("puppetlabs-apache", options)
     end
+    it "should set dir to be modulepath"
+    it "should override dir as modulepath if modulepath specified"
   end
 
   describe "inline documentation" do
