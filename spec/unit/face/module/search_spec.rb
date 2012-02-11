@@ -21,7 +21,7 @@ describe "puppet module search" do
     before { Puppet::Util::Terminal.stubs(:width).returns(100) }
 
     it 'should output nothing when receiving an empty dataset' do
-      subject.render([], ['apache', {}]).should == ''
+      subject.render([], ['apache', {}]).should == "No results found for 'apache'."
     end
 
     it 'should output a header when receiving a non-empty dataset' do

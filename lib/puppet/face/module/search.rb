@@ -28,11 +28,13 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |term, options|
+      server = options[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
+      Puppet.notice "Searching #{server} ..."
       Puppet::Module::Tool::Applications::Searcher.run(term, options)
     end
 
     when_rendering :console do |results, term, options|
-      return '' if results.empty?
+      return "No results found for '#{term}'." if results.empty?
 
       padding = '  '
       headers = {
