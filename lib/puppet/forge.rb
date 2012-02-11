@@ -137,8 +137,8 @@ module Puppet::Forge
         return results if version['dependencies'].empty?
         version['dependencies'].each do |dep|
           dep_name, dep_req = dep
-          working_version = find_latest_working_versions(dep_name, versions, ancestors)
-          results += working_version if working_version
+          working_versions = find_latest_working_versions(dep_name, versions, ancestors)
+          results += working_versions if working_versions
         end
         return results
       end
@@ -165,7 +165,7 @@ module Puppet::Forge
       local_deps = @environment.module_requirements
       versions.delete_if do |version_info|
         semver = SemVer.new(version_info['version'])
-        local_deps[forge_name] and local_deps[forge_name][:required_by].any? do |req|
+        local_deps[forge_name] and local_deps[forge_name].any? do |req|
           req_name, version_req = req
           equality, local_ver = version_req.split(/\s/)
           !(semver.send(equality, SemVer.new(local_ver)))

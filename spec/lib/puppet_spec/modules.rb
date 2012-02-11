@@ -22,31 +22,5 @@ module PuppetSpec::Modules
 
       Puppet::Module.new(name, :environment => environment, :path => module_dir)
     end
-
-    # Return path to temparory directory for testing.
-    def testdir
-      return @testdir ||= tmpdir("module_tool_testdir")
-    end
-
-    # Create a temporary testing directory, change into it, and execute the
-    # +block+. When the block exists, remove the test directory and change back
-    # to the previous directory.
-    def mktestdircd(&block)
-      previousdir = Dir.pwd
-      rmtestdir
-      FileUtils.mkdir_p(testdir)
-      Dir.chdir(testdir)
-      block.call
-    ensure
-      rmtestdir
-      Dir.chdir previousdir
-    end
-
-    # Remove the temporary test directory.
-    def rmtestdir
-      FileUtils.rm_rf(testdir) if File.directory?(testdir)
-    end
-    # END helper methods
-
   end
 end
