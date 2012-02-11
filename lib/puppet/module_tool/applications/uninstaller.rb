@@ -29,8 +29,21 @@ module Puppet::Module::Tool
         end
       end
 
+      # Only match installed modules by forge_name, which ensures the module
+      # has proper metadata and a good sign it was install by the module
+      # tool.
       def module_installed?
-        @environment.module(@name)
+        @environment.modules_by_path.each do |path, modules|
+          modules.each do |mod|
+            return false unless mod.has_metadata?
+
+            full_name = mod.forge_name.sub('/', '-')
+            if full_name == @name
+              return true
+            end
+          end
+        end
+        false
       end
 
       def has_changes?
@@ -41,7 +54,8 @@ module Puppet::Module::Tool
         # TODO: #11803 Check for broken dependencies before uninstalling modules.
         @environment.modules_by_path.each do |path, modules|
           modules.each do |mod|
-            if mod.name == @name
+            full_name = mod.forge_name.sub('/', '-')
+            if full_name == @name
               unless version_match?(mod)
                 @errors[@name] << "Installed version of #{mod.name} (v#{mod.version}) does not match version range"
               end
