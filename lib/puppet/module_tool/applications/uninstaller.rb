@@ -16,6 +16,7 @@ module Puppet::Module::Tool
         else
           @errors[@name] << "Module #{@name} is not installed"
         end
+
         { :removed_mods => @removed_mods, :errors => @errors, :options => @options }
       end
 
@@ -46,8 +47,9 @@ module Puppet::Module::Tool
         false
       end
 
-      def has_changes?
-        Puppet::Module::Tool::Applications::Checksummer.run(@module.path)
+      def has_local_changes?(path)
+        changes = Puppet::Module::Tool::Applications::Checksummer.run(path)
+        changes == [] ? false : true
       end
 
       def uninstall
@@ -58,6 +60,10 @@ module Puppet::Module::Tool
             if full_name == @name
               unless version_match?(mod)
                 @errors[@name] << "Installed version of #{mod.name} (v#{mod.version}) does not match version range"
+              end
+
+              if has_local_changes?(mod.path)
+                @errors[@name] << "Installed version of #{mod.name} (v#{mod.version}) has local changes"
               end
 
               if @errors[@name].empty?
