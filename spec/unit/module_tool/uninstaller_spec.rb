@@ -137,7 +137,7 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
           foo = mkmod("foo", modpath1, foo_metadata)
 
           expected_output = {
-            "puppetlabs-foo" => ["Installed version of foo (v1.0.0) has local changes"]
+            "puppetlabs-foo" => ["Installed version of puppetlabs-foo (v1.0.0) has local changes"]
           }
 
           @uninstaller.any_instance.stubs(:has_local_changes?).returns(true)
@@ -168,9 +168,22 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
         end
       end
 
-      # This test is pending work in #11803 to which will add
-      # dependency resolution.
-      it "should check for broken dependencies"
+      context "when uninstalling the module will cause broken dependencies" do
+        let(:fakemod) do
+          stub(
+            :forge_name => 'puppetlabs/fakemod',
+            :version    => '0.0.1'
+          )
+        end
+
+        it "should not uninstall the module" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+
+          @uninstaller.any_instance.stubs(:broken_dependencies).returns([fakemod])
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:removed_mods].length.should == 0
+        end
+      end
     end
   end
 end
