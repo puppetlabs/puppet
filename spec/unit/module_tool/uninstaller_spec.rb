@@ -184,6 +184,36 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
           results[:removed_mods].length.should == 0
         end
       end
+
+      context "when using the --force flag" do
+
+        let(:fakemod) do
+          stub(
+            :forge_name => 'puppetlabs/fakemod',
+            :version    => '0.0.1'
+          )
+        end
+
+        it "should ignore local changes" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+          options[:force] = true
+
+          @uninstaller.any_instance.stubs(:has_local_changes?).returns(true)
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:removed_mods].length.should == 1
+          results[:removed_mods].first.forge_name.should == "puppetlabs/foo"
+        end
+
+        it "should ignore broken dependencies" do
+          foo = mkmod("foo", modpath1, foo_metadata)
+          options[:force] = true
+
+          @uninstaller.any_instance.stubs(:broken_dependencies).returns([fakemod])
+          results = @uninstaller.new("puppetlabs-foo", options).run
+          results[:removed_mods].length.should == 1
+          results[:removed_mods].first.forge_name.should == "puppetlabs/foo"
+        end
+      end
     end
   end
 end

@@ -22,9 +22,9 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Uninstall a module from a specific environment:
 
-      $ puppet module uninstall --environment development 
+      $ puppet module uninstall --environment development
       Removed /etc/puppet/environments/development/modules/ssh (v1.0.0)
-      
+
       Uninstall a specific version of a module:
 
       $ puppet module uninstall --version 2.0.0 ssh
@@ -33,6 +33,14 @@ Puppet::Face.define(:module, '1.0.0') do
 
     arguments "<name>"
 
+    option "--force", "-f" do
+      summary "Force uninstall of an installed module."
+      description <<-EOT
+        Force the uninstall of an installed module even if there are local
+        changes or the possibility of causing broken dependencies.
+      EOT
+    end
+
     option "--environment=NAME", "--env=NAME" do
       default_to { "production" }
       summary "The target environment to search for modules."
@@ -40,7 +48,7 @@ Puppet::Face.define(:module, '1.0.0') do
         The target environment to search for modules.
       EOT
     end
-    
+
     option "--version=" do
       summary "The version of the module to uninstall"
       description <<-EOT
@@ -72,7 +80,7 @@ Puppet::Face.define(:module, '1.0.0') do
     when_rendering :console do |return_value|
       output = ''
 
-      return_value[:removed_mods].each do |mod| 
+      return_value[:removed_mods].each do |mod|
         output << "Removed #{mod.path} (v#{mod.version})\n"
       end
 

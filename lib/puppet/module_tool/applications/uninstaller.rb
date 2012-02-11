@@ -83,17 +83,25 @@ module Puppet::Module::Tool
 
               # Check for local changes
               if has_local_changes?(mod.path)
-                @errors[@name] << "Installed version of #{full_name} (v#{mod.version}) has local changes"
+                if @options[:force]
+                  Puppet.warning "Ignoring local changes..."
+                else
+                  @errors[@name] << "Installed version of #{full_name} (v#{mod.version}) has local changes"
+                end
               end
 
               # Check from broken dependencies
               requires_me = broken_dependencies(mod)
               if requires_me.count > 0
-                msg = []
-                msg << "Cannot uninstall #{full_name} (v#{mod.version}) still required by:\n"
-                requires_me.each { |m| msg << "  #{m.forge_name.sub('/', '-')} (v#{m.version})" }
-                Puppet.err msg
-                next
+                if @options[:force]
+                  Puppet.warning "Ignoring broken dependencies..."
+                else
+                  msg = []
+                  msg << "Cannot uninstall #{full_name} (v#{mod.version}) still required by:\n"
+                  requires_me.each { |m| msg << "  #{m.forge_name.sub('/', '-')} (v#{m.version})" }
+                  Puppet.err msg
+                  next
+                end
               end
 
               if @errors[@name].empty?
