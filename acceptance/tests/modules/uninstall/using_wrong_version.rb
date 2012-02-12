@@ -13,8 +13,8 @@ file {
 PP
 on master, '[ -d /etc/puppet/modules/crakorn ]'
 
-step "Try to uninstall the module crakorn"
-on master, puppet('module uninstall crakorn --version 0.5.x') do
+step "Try to uninstall the module jimmy-crakorn"
+on master, puppet('module uninstall jimmy-crakorn --version 0.5.x') do
   # TODO: Assert output.
 end
 on master, '[ -d /etc/puppet/modules/crakorn ]'
