@@ -110,7 +110,7 @@ describe Puppet::Forge::Forge do
     end
   end
 
-  describe "#find_latest_working_versions" do
+  describe "#resolve_remote_and_local_constraints" do
     let(:remote_deps) {{
       'matt/awesomemodule' => [
         {
@@ -143,6 +143,10 @@ describe Puppet::Forge::Forge do
       forge.expects(:remote_dependency_info).returns(remote_deps)
       @modulepath = tmpdir('modulepath')
       Puppet.settings[:modulepath] = @modulepath
+
+      # always having a local version without dependency info is useful to make sure
+      # everything works well in that situation
+      PuppetSpec::Modules.create('notdirectlyaffectinstall', @modulepath, :nometadata => true)
     end
 
     it "should use the latest versions" do
@@ -158,7 +162,6 @@ describe Puppet::Forge::Forge do
       PuppetSpec::Modules.create('dependable', @modulepath, :version => '1.0.1')
       forge.send(:resolve_remote_and_local_constraints, 'matt', 'awesomemodule').should =~ [
         ['matt/awesomemodule', '3.0.0', 'awesomefile'      ],
-        ['matt/dependable',    '1.0.1', 'dependablefile101'],
         ['matt/nester',        '2.0.0', 'nesterfile'       ],
         ['joe/circular',       '0.0.1', 'circularfile'     ]
       ]
