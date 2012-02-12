@@ -12,7 +12,7 @@ file {
   '/etc/puppet/modules/crakorn/metadata.json':
     content => '{ "full_name": "jimmy/crakorn", "version": "0.4.0" }';
   '/etc/puppet/modules/appleseed/metadata.json':
-    content => '{ "full_name": "jimmy/appleseed", "version": "1.1.0", "dependencies": { "jimmy/crackorn" => "0.4.0" } }';
+    content => '{ "full_name": "jimmy/appleseed", "version": "1.1.0", "dependencies": { "jimmy/crackorn": "0.4.0" } }';
 }
 PP
 on master, '[ -d /etc/puppet/modules/crakorn ]'
