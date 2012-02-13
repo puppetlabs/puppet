@@ -125,10 +125,10 @@ describe "puppet module list" do
       )
 
       output.should == <<-HEREDOC.gsub('        ', '')
-        #{@modpath1}
-        other_mod (1.0.0)
-          dependable (0.0.5)
         #{@modpath2} (No modules installed)
+        #{@modpath1}
+        matt-other_mod (1.0.0)
+          matt-dependable (0.0.5)
       HEREDOC
     end
   end
