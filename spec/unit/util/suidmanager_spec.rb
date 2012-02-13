@@ -134,20 +134,11 @@ describe Puppet::Util::SUIDManager do
 
   describe "#change_group" do
     describe "when changing permanently" do
-      it "should try to change_privilege if it is supported" do
+      it "should change_privilege" do
         Process::GID.expects(:change_privilege).with do |gid|
           Process.gid = gid
           Process.egid = gid
         end
-
-        Puppet::Util::SUIDManager.change_group(42, true)
-
-        xids[:egid].should == 42
-        xids[:gid].should == 42
-      end
-
-      it "should change both egid and gid if change_privilege isn't supported" do
-        Process::GID.stubs(:change_privilege).raises(NotImplementedError)
 
         Puppet::Util::SUIDManager.change_group(42, true)
 
@@ -168,22 +159,11 @@ describe Puppet::Util::SUIDManager do
 
   describe "#change_user" do
     describe "when changing permanently" do
-      it "should try to change_privilege if it is supported" do
+      it "should change_privilege" do
         Process::UID.expects(:change_privilege).with do |uid|
           Process.uid = uid
           Process.euid = uid
         end
-
-        Puppet::Util::SUIDManager.expects(:initgroups).with(42)
-
-        Puppet::Util::SUIDManager.change_user(42, true)
-
-        xids[:euid].should == 42
-        xids[:uid].should == 42
-      end
-
-      it "should change euid and uid and groups if change_privilege isn't supported" do
-        Process::UID.stubs(:change_privilege).raises(NotImplementedError)
 
         Puppet::Util::SUIDManager.expects(:initgroups).with(42)
 
