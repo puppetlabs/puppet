@@ -10,7 +10,7 @@ class Puppet::Util::Autoload
   include Puppet::Util::Autoload::FileCache
 
   @autoloaders = {}
-  @loaded = []
+  @loaded = {}
 
   class << self
     attr_reader :autoloaders, :loaded
@@ -18,7 +18,7 @@ class Puppet::Util::Autoload
 
     # List all loaded files.
     def list_loaded
-      @loaded.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
+      @loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
         "#{path}: #{hash[:file]}"
       end
     end
@@ -36,9 +36,9 @@ class Puppet::Util::Autoload
     # Save the fact that a given path has been loaded.  This is so
     # we can load downloaded plugins if they've already been loaded
     # into memory.
-    def mark_loaded(file)
-      $" << file + ".rb" unless $".include?(file)
-      @loaded << file unless @loaded.include?(file)
+    def mark_loaded(name, file)
+      $" << name + ".rb" unless $".include?(name)
+      @loaded[name] = [file, File.mtime(file)]
     end
 
     # Load a single plugin by name.  We use 'load' here so we can reload a
@@ -52,7 +52,7 @@ class Puppet::Util::Autoload
         next unless File.exist?(file)
         begin
           Kernel.load file, @wrap
-          mark_loaded(name)
+          mark_loaded(name, file)
           return true
         rescue SystemExit,NoMemoryError
           raise

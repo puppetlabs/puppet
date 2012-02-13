@@ -73,6 +73,8 @@ describe Puppet::Util::Autoload do
     before do
       @autoload.class.stubs(:search_directories).returns %w{/a}
       FileTest.stubs(:directory?).returns true
+      @time_a = Time.utc(2010, 'jan', 1, 6, 30)
+      File.stubs(:mtime).returns @time_a
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
@@ -129,6 +131,8 @@ describe Puppet::Util::Autoload do
       FileTest.stubs(:directory?).returns true
       Dir.stubs(:glob).returns "/a/foo/file.rb"
       File.stubs(:exist?).returns true
+      @time_a = Time.utc(2010, 'jan', 1, 6, 30)
+      File.stubs(:mtime).returns @time_a
 
       @autoload.class.stubs(:loaded?).returns(false)
     end
