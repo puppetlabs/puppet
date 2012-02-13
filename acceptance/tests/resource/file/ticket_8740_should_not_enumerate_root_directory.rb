@@ -10,7 +10,7 @@ on(agents, %Q{ruby -e "require 'socket'; UNIXServer::new('#{target}').close"})
 
 step "query for all files, which should return nothing"
 on(agents, puppet_resource('file'), :acceptable_exit_codes => [1]) do
-  assert_match(%r{Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc}, stderr)
+  assert_match(%r{Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc}, stdout)
 end
 
 ["/", "/etc"].each do |file|
