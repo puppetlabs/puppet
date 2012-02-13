@@ -105,6 +105,26 @@ describe "puppet module list" do
       HEREDOC
     end
 
+    it "should print both modules with and without metadata" do
+      modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = modpath
+      PuppetSpec::Modules.create('nometadata', modpath)
+      PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
+
+      dependency_tree = Puppet::Face[:module, :current].list
+
+      output = Puppet::Face[:module, :current].list_when_rendering_console(
+        dependency_tree,
+        {}
+      )
+
+      output.should == <<-HEREDOC.gsub('        ', '')
+        #{modpath}
+        metaman-metadata (9.9.9)
+        nometadata (???)
+      HEREDOC
+    end
+
     it "should print the modulepaths in the order they are in the modulepath setting" do
       path1 = tmpdir('b')
       path2 = tmpdir('c')
@@ -156,4 +176,5 @@ describe "puppet module list" do
       HEREDOC
     end
   end
+
 end
