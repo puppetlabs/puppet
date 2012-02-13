@@ -13,12 +13,13 @@ class Puppet::Util::Autoload
   @loaded = {}
 
   class << self
-    attr_reader :autoloaders, :loaded
+    attr_reader :autoloaders
+    attr_accessor :loaded
     private :autoloaders, :loaded
 
     # List all loaded files.
     def list_loaded
-      @loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
+      loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
         "#{path}: #{hash[:file]}"
       end
     end
@@ -30,7 +31,7 @@ class Puppet::Util::Autoload
     # reloaded.
     def loaded?(path)
       path = path.to_s.sub(/\.rb$/, '')
-      @loaded.include?(path)
+      loaded.include?(path)
     end
 
     # Save the fact that a given path has been loaded.  This is so
@@ -38,7 +39,17 @@ class Puppet::Util::Autoload
     # into memory.
     def mark_loaded(name, file)
       $" << name + ".rb" unless $".include?(name)
-      @loaded[name] = [file, File.mtime(file)]
+      loaded[name] = [file, File.mtime(file)]
+    end
+
+    def changed?(name)
+      return true unless loaded.include?(name)
+      file, old_mtime = loaded[name]
+      begin
+        old_mtime != File.mtime(file)
+      rescue Errno::ENOENT
+        true
+      end
     end
 
     # Load a single plugin by name.  We use 'load' here so we can reload a
@@ -71,6 +82,10 @@ class Puppet::Util::Autoload
         name = file.chomp(".rb")
         load_file(name) unless loaded?(name)
       end
+    end
+
+    def reload_changed
+      loaded.keys.each { |file| load_file(file) if changed?(file) }
     end
 
     def files_to_load(path)

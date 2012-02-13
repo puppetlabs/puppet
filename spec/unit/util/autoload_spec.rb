@@ -151,4 +151,58 @@ describe Puppet::Util::Autoload do
       @autoload.loadall
     end
   end
+
+  describe "when reloading files" do
+    before :each do
+      @file_a = "/a/file.rb"
+      @file_b = "/b/file.rb"
+      @first_time = Time.utc(2010, 'jan', 1, 6, 30)
+      @second_time = @first_time + 60
+    end
+
+    after :each do
+      $LOADED_FEATURES.delete("a/file.rb")
+      $LOADED_FEATURES.delete("b/file.rb")
+    end
+
+    describe "in one directory" do
+      before :each do
+        @autoload.class.stubs(:searchpath).returns %w{/a}
+        File.expects(:mtime).with(@file_a).returns(@first_time)
+        @autoload.class.mark_loaded("file", @file_a)
+      end
+
+      it "should reload if mtime changes" do
+        File.stubs(:mtime).with(@file_a).returns(@first_time + 60)
+        File.stubs(:exist?).with(@file_a).returns true
+        Kernel.expects(:load).with(@file_a, optionally(anything))
+        @autoload.class.reload_changed
+      end
+
+      it "should do nothing if the file is deleted" do
+        File.expects(:mtime).with(@file_a).raises(Errno::ENOENT)
+        File.stubs(:exist?).with(@file_a).returns false
+        Kernel.expects(:load).never
+        @autoload.class.reload_changed
+      end
+    end
+
+    describe "in two directories" do
+      before :each do
+        @autoload.class.stubs(:searchpath).returns %w{/a /b}
+        File.expects(:mtime).with(@file_a).returns(@first_time)
+        @autoload.class.mark_loaded("file", @file_a)
+      end
+
+      it "should load b/file when a/file is deleted" do
+        File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
+        File.stubs(:exist?).with(@file_a).returns false
+        File.stubs(:exist?).with(@file_b).returns true
+        File.stubs(:mtime).with(@file_b).returns @first_time
+        Kernel.expects(:load).with(@file_b, optionally(anything))
+        @autoload.class.reload_changed
+        @autoload.class.send(:loaded)["file"].should == [@file_b, @first_time]
+      end
+    end
+  end
 end
