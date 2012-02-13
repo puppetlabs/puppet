@@ -90,12 +90,7 @@ module Puppet::Util::SUIDManager
     raise Puppet::Error, "No such group #{group}" unless gid
 
     if permanently
-      begin
-        Process::GID.change_privilege(gid)
-      rescue NotImplementedError
-        Process.egid = gid
-        Process.gid  = gid
-      end
+      Process::GID.change_privilege(gid)
     else
       Process.egid = gid
     end
@@ -112,16 +107,10 @@ module Puppet::Util::SUIDManager
       # If changing uid, we must be root. So initgroups first here.
       initgroups(uid)
 
-      begin
-        # Prefer the better `change_privilege` method, but if that fails us,
-        # fall back to directly setting the values.
-        Process::UID.change_privilege(uid)
-      rescue NotImplementedError
-        Process.euid = uid
-        Process.uid  = uid
-      end
+      Process::UID.change_privilege(uid)
     else
-      # If we're already root, initgroups before changing euid. If we're not,
+      # We must be root to initgroups, so initgroups before dropping euid if
+      # we're root, otherwise elevate euid before initgroups.
       # change euid (to root) first.
       if Process.euid == 0
         initgroups(uid)
