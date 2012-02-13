@@ -157,20 +157,36 @@ module Puppet::Forge
         resolve_already_existing_module_constraints(mod_name, versions)
         resolve_local_constraints(mod_name, versions)
       end
+
       mod_download_list = find_latest_working_versions("#{author}/#{modname}", remote_deps)
-      already_installed_mods = @environment.modules.inject({}) do |mods, mod|
+      local_modules = @environment.modules
+      already_installed_mods = local_modules.inject({}) do |mods, mod|
         if mod.forge_name
           mods["#{mod.forge_name}@#{mod.version}"] = true
         end
         mods
       end
+
       mod_download_list.delete_if do |mod|
         forge_name, version, file = mod
+
         already_installed = already_installed_mods["#{forge_name}@#{version}"]
         if already_installed
           Puppet.debug "Not downloading #{forge_name} (#{version}) because it's already installed"
         end
         already_installed
+      end
+
+      mod_download_list.each do |mod|
+        forge_name, version, file = mod
+
+        if local_mod = @environment.module_by_forge_name(forge_name)
+          if local_mod.has_local_changes?
+            msg = "Module #{forge_name} needs to be upgraded to satisfy contraints, "
+            msg << "but can't be because it has local changes"
+            raise RuntimeError, msg
+          end
+        end
       end
 
       mod_download_list

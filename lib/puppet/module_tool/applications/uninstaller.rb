@@ -49,28 +49,7 @@ module Puppet::Module::Tool
         false
       end
 
-      def has_local_changes?(path)
-        changes = Puppet::Module::Tool::Applications::Checksummer.run(path)
-        changes == [] ? false : true
-      end
-
-      def broken_dependencies(mod)
-
-        requires_me = []
-        @environment.modules_by_path.each do |path, modules|
-          modules.each do |m|
-            next unless m.has_metadata?
-            m.dependencies.each do |dep|
-              requires_me << m if dep["name"] == mod.forge_name
-            end
-          end
-        end
-
-        requires_me
-      end
-
       def uninstall
-        # TODO: #11803 Check for broken dependencies before uninstalling modules.
         @environment.modules_by_path.each do |path, modules|
           modules.each do |mod|
             full_name = mod.forge_name.sub('/', '-')
@@ -81,8 +60,7 @@ module Puppet::Module::Tool
                 @errors[@name] << "Installed version of #{full_name} (v#{mod.version}) does not match version range"
               end
 
-              # Check for local changes
-              if has_local_changes?(mod.path)
+              if mod.has_local_changes?
                 if @options[:force]
                   Puppet.warning "Ignoring local changes..."
                 else
@@ -90,15 +68,22 @@ module Puppet::Module::Tool
                 end
               end
 
-              # Check from broken dependencies
-              requires_me = broken_dependencies(mod)
-              if requires_me.count > 0
+              requires_me = mod.required_by
+              if !requires_me.empty?
                 if @options[:force]
-                  Puppet.warning "Ignoring broken dependencies..."
+                  msg = "Ignoring broken dependencies for #{full_name} (#{mod.version}); still required by:\n"
+                  Puppet.warning msg
+                  requires_me.each do |req|
+                    forge_name, version_requirement = req
+                    msg << "  #{forge_name.sub('/', '-')} (#{version_requirement})"
+                  end
                 else
                   msg = []
                   msg << "Cannot uninstall #{full_name} (v#{mod.version}) still required by:\n"
-                  requires_me.each { |m| msg << "  #{m.forge_name.sub('/', '-')} (v#{m.version})" }
+                  requires_me.each do |req|
+                    forge_name, version_requirement = req
+                    msg << "  #{forge_name.sub('/', '-')} (#{version_requirement})"
+                  end
                   Puppet.err msg
                   next
                 end
