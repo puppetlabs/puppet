@@ -70,7 +70,13 @@ module Puppet::Util::SUIDManager
     group and group.members.index(Sys::Admin.get_login) != nil
   end
 
-  # Runs block setting uid and gid if provided then restoring original ids
+  # Methods to handle changing uid/gid of the running process. In general,
+  # these will noop or fail on Windows, and require root to change to anything
+  # but the current uid/gid (which is a noop).
+
+  # Runs block setting euid and egid if provided then restoring original ids.
+  # If running on Windows or without root, the block will be run with the
+  # current euid/egid.
   def asuser(new_uid=nil, new_gid=nil)
     return yield if Puppet.features.microsoft_windows?
     return yield unless root?
@@ -87,6 +93,11 @@ module Puppet::Util::SUIDManager
   end
   module_function :asuser
 
+  # If `permanently` is set, will permanently change the uid/gid of the
+  # process. If not, it will only set the euid/egid. If only uid is supplied,
+  # the primary group of the supplied gid will be used. If only gid is
+  # supplied, only gid will be changed. This method will fail if used on
+  # Windows.
   def change_privileges(uid=nil, gid=nil, permanently=false)
     return unless uid or gid
 
@@ -100,6 +111,9 @@ module Puppet::Util::SUIDManager
   end
   module_function :change_privileges
 
+  # Changes the egid of the process if `permanently` is not set, otherwise
+  # changes gid. This method will fail if used on Windows, or attempting to
+  # change to a different gid without root.
   def change_group(group, permanently=false)
     gid = convert_xid(:gid, group)
     raise Puppet::Error, "No such group #{group}" unless gid
@@ -117,6 +131,8 @@ module Puppet::Util::SUIDManager
   end
   module_function :change_group
 
+  # As change_group, but operates on uids. If changing user permanently,
+  # supplementary groups will be set the to default groups for the new uid.
   def change_user(user, permanently=false)
     uid = convert_xid(:uid, user)
     raise Puppet::Error, "No such user #{user}" unless uid
@@ -159,9 +175,10 @@ module Puppet::Util::SUIDManager
   end
   module_function :convert_xid
 
-  # Initialize primary and supplemental groups to those of the target user.
-  # We take the UID and manually look up their details in the system database,
-  # including username and primary group.
+  # Initialize primary and supplemental groups to those of the target user.  We
+  # take the UID and manually look up their details in the system database,
+  # including username and primary group. This method will fail on Windows, or
+  # if used without root to initgroups of another user.
   def initgroups(uid)
     pwent = Etc.getpwuid(uid)
     Process.initgroups(pwent.name, pwent.gid)
