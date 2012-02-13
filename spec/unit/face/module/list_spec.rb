@@ -35,16 +35,16 @@ describe "puppet module list" do
 
     Puppet::Face[:module, :current].list.should == {
       @modpath1 => [
-        Puppet::Module.new('bar', :environment => env, :path => barmod1),
-        Puppet::Module.new('foo', :environment => env, :path => foomod1)
+        Puppet::Module.new('bar', :environment => env, :path => barmod1.path),
+        Puppet::Module.new('foo', :environment => env, :path => foomod1.path)
       ],
-      @modpath2 => [Puppet::Module.new('foo', :environment => env, :path => foomod2)]
+      @modpath2 => [Puppet::Module.new('foo', :environment => env, :path => foomod2.path)]
     }
   end
 
   it "should use the specified environment" do
-    foomod1 = PuppetSpec::Modules.create('foo', @modpath1)
-    barmod1 = PuppetSpec::Modules.create('bar', @modpath1)
+    PuppetSpec::Modules.create('foo', @modpath1)
+    PuppetSpec::Modules.create('bar', @modpath1)
 
     usedenv = Puppet::Node::Environment.new('useme')
     usedenv.modulepath = [@modpath1, @modpath2]
@@ -59,8 +59,8 @@ describe "puppet module list" do
   end
 
   it "should use the specified modulepath" do
-    foomod1 = PuppetSpec::Modules.create('foo', @modpath1)
-    barmod2 = PuppetSpec::Modules.create('bar', @modpath2)
+    PuppetSpec::Modules.create('foo', @modpath1)
+    PuppetSpec::Modules.create('bar', @modpath2)
 
     Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}").should == {
       @modpath1 => [ Puppet::Module.new('foo') ],
@@ -80,8 +80,8 @@ describe "puppet module list" do
     # to have a different object_id than the env above
     env = Puppet::Node::Environment.new('myenv')
     list.should == {
-      @modpath1 => [ Puppet::Module.new('foo', :environment => env, :path => foomod1) ],
-      @modpath2 => [ Puppet::Module.new('bar', :environment => env, :path => barmod2) ]
+      @modpath1 => [ Puppet::Module.new('foo', :environment => env, :path => foomod1.path) ],
+      @modpath2 => [ Puppet::Module.new('bar', :environment => env, :path => barmod2.path) ]
     }
   end
 
@@ -105,16 +105,40 @@ describe "puppet module list" do
       HEREDOC
     end
 
+    it "should print the modulepaths in the order they are in the modulepath setting" do
+      path1 = tmpdir('b')
+      path2 = tmpdir('c')
+      path3 = tmpdir('a')
+
+      sep = File::PATH_SEPARATOR
+      Puppet.settings[:modulepath] = "#{path1}#{sep}#{path2}#{sep}#{path3}"
+
+      Puppet::Face[:module, :current].list_when_rendering_console(
+        {
+          path2 => [],
+          path3 => [],
+          path1 => [],
+        },
+        {}
+      ).should == <<-HEREDOC.gsub('        ', '')
+        #{path1} (No modules installed)
+        #{path2} (No modules installed)
+        #{path3} (No modules installed)
+      HEREDOC
+    end
+
     it "should print dependencies as a tree" do
-      PuppetSpec::Modules.create('dependable', @modpath1, :version => '0.0.5')
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.5'})
       PuppetSpec::Modules.create(
         'other_mod',
         @modpath1,
-        :version => '1.0.0',
-        :dependencies => [{
-          "version_requirement" => ">= 0.0.5",
-          "name"                => "matt/dependable"
-        }]
+        :metadata => {
+          :version => '1.0.0',
+          :dependencies => [{
+            "version_requirement" => ">= 0.0.5",
+            "name"                => "puppetlabs/dependable"
+          }]
+        }
       )
 
       dependency_tree = Puppet::Face[:module, :current].list
@@ -125,10 +149,10 @@ describe "puppet module list" do
       )
 
       output.should == <<-HEREDOC.gsub('        ', '')
-        #{@modpath2} (No modules installed)
         #{@modpath1}
-        matt-other_mod (1.0.0)
-          matt-dependable (0.0.5)
+        puppetlabs-other_mod (1.0.0)
+          puppetlabs-dependable (0.0.5)
+        #{@modpath2} (No modules installed)
       HEREDOC
     end
   end
