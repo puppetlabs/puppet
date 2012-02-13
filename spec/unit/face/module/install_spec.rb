@@ -56,8 +56,32 @@ describe "puppet module install" do
       Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.install("puppetlabs-apache", options)
     end
-    it "should set dir to be modulepath"
-    it "should override dir as modulepath if modulepath specified"
+
+    it "should set dir to be modulepath" do
+      myfakepath = "/my/fake/path"
+      options[:dir] = myfakepath
+      expected_options.merge!(options)
+
+      Puppet.settings[:modulepath].should_not == myfakepath
+      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+      Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+
+      Puppet.settings[:modulepath].should == myfakepath
+    end
+
+    it "should prepend dir in modulepath if modulepath specified also" do
+      myfakepath = "/my/fake/path"
+      options[:dir] = myfakepath
+      sep = File::PATH_SEPARATOR
+      current_modpath = "/my/current/modpath#{sep}/backup/path"
+      options[:modulepath] = current_modpath
+      expected_options.merge!(options)
+
+      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+      Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+
+      Puppet.settings[:modulepath].should == "#{myfakepath}#{sep}#{current_modpath}"
+    end
   end
 
   describe "inline documentation" do

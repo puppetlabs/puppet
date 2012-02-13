@@ -71,8 +71,18 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      Puppet[:module_repository] = options[:module_repository] if options[:module_repository]
+      sep = File::PATH_SEPARATOR
+      if options[:dir]
+        if options[:modulepath]
+          Puppet.settings[:modulepath] = "#{options[:dir]}#{sep}#{options[:modulepath]}"
+        else
+          Puppet.settings[:modulepath] = options[:dir]
+        end
+      elsif options[:modulepath]
+        Puppet.settings[:modulepath] = options[:modulepath]
+      end
+
+      Puppet.settings[:module_repository] = options[:module_repository] if options[:module_repository]
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end
 
