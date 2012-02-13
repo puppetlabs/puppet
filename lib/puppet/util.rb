@@ -424,22 +424,37 @@ module Util
   # The filename is the file we are going to replace.
   #
   # The default_mode is the mode to use when the target file doesn't already
-  # exist; if the file is present we copy the existing mode value across.
+  # exist; if the file is present we copy the existing mode/owner/group values
+  # across.
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
 
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
 
-    # If we don't have an explicit mode, fetch it from the target file, or use
-    # the provided default if the file doesn't presently exist. We only care
-    # about the four lowest-order octets. Higher octets are filesystem-specific.
-    mode = if file.exist? then file.stat.mode & 07777 else default_mode end
+    file_exists = file.exist?
 
-    # Set the mode of the temporary file before we write the content, because
+    # If the file exists, use its current mode/owner/group. If it doesn't, use
+    # the supplied mode, and default to current user/group.
+    if file_exists
+      stat = file.lstat
+
+      # We only care about the four lowest-order octets. Higher octets are
+      # filesystem-specific.
+      mode = stat.mode & 07777
+      uid = stat.uid
+      gid = stat.gid
+    else
+      mode = default_mode
+      uid = Process.euid
+      gid = Process.egid
+    end
+
+    # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
     # that it avoids races around creating the file.
     tempfile.chmod(mode)
+    tempfile.chown(uid, gid)
 
     # OK, now allow the caller to write the content of the file.
     yield tempfile
