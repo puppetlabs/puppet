@@ -1,7 +1,6 @@
-test_name "puppet module uninstall (with active dependency)"
+begin test_name "puppet module uninstall (with active dependency)"
 
 step "Setup"
-on master, 'whoami'
 apply_manifest_on master, <<-PP
 file {
   [
@@ -10,15 +9,42 @@ file {
     '/etc/puppet/modules/appleseed',
   ]: ensure => directory;
   '/etc/puppet/modules/crakorn/metadata.json':
-    content => '{ "full_name": "jimmy/crakorn", "version": "0.4.0" }';
+    content => '{
+      "name": "jimmy/crakorn",
+      "version": "0.4.0",
+      "source": "",
+      "author": "jimmy",
+      "license": "MIT",
+      "dependencies": []
+    }';
   '/etc/puppet/modules/appleseed/metadata.json':
-    content => '{ "full_name": "jimmy/appleseed", "version": "1.1.0", "dependencies": { "jimmy/crackorn": "0.4.0" } }';
+    content => '{
+      "name": "jimmy/appleseed",
+      "version": "1.1.0",
+      "source": "",
+      "author": "jimmy",
+      "license": "MIT",
+      "dependencies": [
+        { "name": "jimmy/crackorn", "version_requirement": "0.4.0" }
+      ]
+    }';
 }
 PP
 on master, '[ -d /etc/puppet/modules/crakorn ]'
+on master, '[ -d /etc/puppet/modules/appleseed ]'
 
-step "Uninstall the module jimmy-crakorn"
+step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn') do
-  # TODO: Assert output.
+  assert_equal '', stdout
+  assert_equal <<-STDERR, stderr
+Error: Could not uninstall module 'jimmy-crakorn' (v0.5.x):
+  Module 'jimmy-crakorn' (v0.4.0) is required by 'jimmy-appleseed' (v1.1.x)
+    Supply the `--force` flag to uninstall this module anyway
+STDERR
 end
 on master, '[ -d /etc/puppet/modules/crakorn ]'
+on master, '[ -d /etc/puppet/modules/appleseed ]'
+
+ensure step "Teardown"
+apply_manifest_on master, "file { '/etc/puppet/modules': recurse => true, purge => true, force => true }"
+end
