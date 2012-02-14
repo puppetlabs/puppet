@@ -245,9 +245,7 @@ describe Puppet::Module::Tool::Applications::Installer do
         'No working versions for puppetlabs/dependable'
       )
     end
-
   end
-
 
   context "when the source is a filesystem" do
     before do
