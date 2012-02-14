@@ -15,7 +15,7 @@ module Puppet
   setdefaults(:main,
     :trace => [false, "Whether to print stack traces on some errors"],
     :autoflush => {
-      :default => false,
+      :default => true,
       :desc    => "Whether log files should always flush to disk.",
       :hook    => proc { |value| Log.autoflush = value }
     },
