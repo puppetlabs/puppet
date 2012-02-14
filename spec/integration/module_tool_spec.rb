@@ -12,7 +12,7 @@ def stub_repository_read(code, body)
 end
 
 def stub_installer_read(body)
-  Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(body)
+  Puppet::Forge::Forge.stubs(:remote_dependency_info).returns(body)
 end
 
 def stub_cache_read(body)
@@ -384,7 +384,7 @@ describe "module_tool", :fails_on_windows => true do
               'dependencies' => []
             }]
         }
-        Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(releases)
+        Puppet::Forge::Forge.stubs(:remote_dependency_info).returns(releases)
 
         Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options)
 
@@ -440,7 +440,7 @@ describe "module_tool", :fails_on_windows => true do
               'dependencies' => []
             }]
         }
-        Puppet::Forge::Forge.any_instance.stubs(:remote_dependency_info).returns(releases)
+        Puppet::Forge::Forge.stubs(:remote_dependency_info).returns(releases)
 
         Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options).first.should be_kind_of(Pathname)
       end
