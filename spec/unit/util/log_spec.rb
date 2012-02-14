@@ -34,7 +34,7 @@ describe Puppet::Util::Log do
     it "should htmlize if Puppet[:color] is :html" do
       Puppet[:color] = :html
 
-      @console.colorize(:alert, "abc").should == "<span style=\"color: FFA0A0\">abc</span>"
+      @console.colorize(:alert, "abc").should == "<span style=\"color: #FFA0A0\">abc</span>"
     end
 
     it "should do nothing if Puppet[:color] is false" do
