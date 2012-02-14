@@ -331,7 +331,7 @@ class Application
       end
     end
 
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+    Puppet::Util::Log.setup_default unless options[:setdest]
   end
 
   def configure_indirector_routes

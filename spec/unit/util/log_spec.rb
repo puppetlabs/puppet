@@ -14,6 +14,22 @@ describe Puppet::Util::Log do
     message.should == "foo"
   end
 
+  describe ".setup_default" do
+    it "should default to :syslog" do
+      Puppet.features.stubs(:syslog?).returns(true)
+      Puppet::Util::Log.expects(:newdestination).with(:syslog)
+
+      Puppet::Util::Log.setup_default
+    end
+
+    it "should fall back to :file" do
+      Puppet.features.stubs(:syslog?).returns(false)
+      Puppet::Util::Log.expects(:newdestination).with(Puppet[:puppetdlog])
+
+      Puppet::Util::Log.setup_default
+    end
+  end
+
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new

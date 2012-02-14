@@ -189,10 +189,14 @@ class Puppet::Util::Log
       }
     rescue => detail
       if @destinations.empty?
-        Log.newdestination(:syslog)
+        Log.setup_default
         Puppet.err detail.to_s
       end
     end
+  end
+
+  def self.setup_default
+    Log.newdestination(Puppet.features.syslog? ? :syslog : Puppet[:puppetdlog])
   end
 
   # Is the passed level a valid log level?
