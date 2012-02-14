@@ -39,7 +39,7 @@ module Puppet::Forge
 
     # Return Pathname for repository's cache directory, create it if needed.
     def path
-      return @path ||= (self.class.base_path + @repository.cache_key).tap{ |o| o.mkpath }
+      (self.class.base_path + @repository.cache_key).tap{ |o| o.mkpath }
     end
 
     # Return the base Pathname for all the caches.
