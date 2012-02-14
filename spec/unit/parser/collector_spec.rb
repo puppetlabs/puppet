@@ -1,11 +1,5 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-
 require 'puppet/rails'
 require 'puppet/parser/collector'
 
@@ -267,7 +261,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
   end
 end
 
-describe Puppet::Parser::Collector, "when collecting exported resources", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe Puppet::Parser::Collector, "when collecting exported resources", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before do
@@ -287,14 +281,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   context "with storeconfigs enabled" do
     before :each do
-      dir = Pathname(tmpdir('puppet-var'))
-      Puppet[:vardir]       = dir.to_s
-      Puppet[:dbadapter]    = 'sqlite3'
-      Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+      setup_scratch_database
       Puppet[:storeconfigs] = true
       Puppet[:environment]  = "production"
       Puppet[:storeconfigs_backend] = "active_record"
-      Puppet::Rails.init
     end
 
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do

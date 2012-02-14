@@ -1,22 +1,14 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-begin
-  require 'sqlite3'
-rescue LoadError
-  # this code deliberately left blank.
-end
 
-describe "Puppet::Resource::Catalog::ActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   require 'puppet/rails'
 
   before :each do
     require 'puppet/indirector/catalog/active_record'
-    Puppet[:dbadapter]  = 'sqlite3'
-    Puppet[:dblocation] = tmpdir('puppet-catalog-activerecord') + '/test.sqlite'
-    Puppet[:railslog]   = "/dev/null"
-    Puppet::Rails.init
+    setup_scratch_database
   end
 
   let :terminus do
