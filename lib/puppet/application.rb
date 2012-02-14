@@ -318,7 +318,10 @@ class Application
   end
 
   def setup
-    # Handle the logging settings
+    setup_logs
+  end
+
+  def setup_logs
     if options[:debug] or options[:verbose]
       Puppet::Util::Log.newdestination(:console)
       if options[:debug]
