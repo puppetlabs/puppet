@@ -105,9 +105,6 @@ describe Puppet::Module::Tool::Applications::Installer do
       ]
     end
 
-    it "should not install if the module is already installed" do
-    end
-
     it "should use local version when already exists and satisfies constraints" do
       PuppetSpec::Modules.create(
         'dependable',
@@ -115,9 +112,24 @@ describe Puppet::Module::Tool::Applications::Installer do
         :metadata => { :version => '1.0.1' }
       )
       installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile'      ],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'       ],
-        ['joe/circular',             '0.0.1', 'circularfile'     ]
+        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile' ],
+        ['puppetlabs/nester',        '2.0.0', 'nesterfile'  ],
+        ['joe/circular',             '0.0.1', 'circularfile']
+      ]
+    end
+
+    it "should reinstall the local version and warn if force is used" do
+      PuppetSpec::Modules.create(
+        'awesomemodule',
+        @modulepath,
+        :metadata => { :version => '3.0.0' }
+      )
+      installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
+      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
+        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile' ],
+        ['puppetlabs/dependable',    '1.0.2', 'dependablefile102'],
+        ['puppetlabs/nester',        '2.0.0', 'nesterfile'  ],
+        ['joe/circular',             '0.0.1', 'circularfile']
       ]
     end
 
@@ -156,27 +168,40 @@ describe Puppet::Module::Tool::Applications::Installer do
       ]
     end
 
-    it "should error when a local module needs upgrading to satisfy constraints but has changes" do
-      foo_checksum = 'd3b07384d113edec49eaa6238ad5ff00'
-      checksummed_module = PuppetSpec::Modules.create(
-        'dependable',
-        @modulepath,
-        :metadata => {
-          :version => '0.0.5',
-          :checksums => {
-            "foo" => foo_checksum,
+    describe "when a local module needs upgrading to satisfy constraints but has changes" do
+      before do
+        foo_checksum = 'd3b07384d113edec49eaa6238ad5ff00'
+        checksummed_module = PuppetSpec::Modules.create(
+          'dependable',
+          @modulepath,
+          :metadata => {
+            :version => '0.0.5',
+            :checksums => {
+              "foo" => foo_checksum,
+            }
           }
-        }
-      )
+        )
 
-      foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
-      File.open(foo_path, 'w') { |f| f.puts 'notfoo' }
-      checksummed_module.has_local_changes?.should be_true
+        foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
+        File.open(foo_path, 'w') { |f| f.puts 'notfoo' }
+        checksummed_module.has_local_changes?.should be_true
+      end
 
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        "Module puppetlabs/dependable (1.0.2) needs to be installed to satisfy contraints, but can't be because it has local changes"
-      )
+      it "should error" do
+        expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
+          RuntimeError,
+          "Module puppetlabs/dependable (1.0.2) needs to be installed to satisfy contraints, but can't be because it has local changes"
+        )
+      end
+
+      it "should warn and continue if force is used" do
+        installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
+        installer.send(:resolve_remote_and_local_constraints, remote_deps)
+        @logs.map {|l| [l.level, l.message]}.should == [[
+          :warning,
+          "Overwriting module puppetlabs/dependable (1.0.2) despite local changes because of force flag"
+        ]]
+      end
     end
 
     it "should error when a local version of a dependency has no version metadata" do
