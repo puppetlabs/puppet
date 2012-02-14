@@ -1,6 +1,8 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_spec/modules'
+require 'puppet/module_tool/checksums'
 
 describe Puppet::Module do
   include PuppetSpec::Files
@@ -532,13 +534,14 @@ describe Puppet::Module, "when finding matching manifests" do
 end
 
 describe Puppet::Module do
+  include PuppetSpec::Files
   before do
-    Puppet::Module.any_instance.stubs(:path).returns "/my/mod/path"
-    @module = Puppet::Module.new("foo")
+    @modpath = tmpdir('modpath')
+    @module = PuppetSpec::Modules.create('mymod', @modpath)
   end
 
   it "should use 'License' in its current path as its metadata file" do
-    @module.license_file.should == "/my/mod/path/License"
+    @module.license_file.should == "#{@modpath}/mymod/License"
   end
 
   it "should return nil as its license file when the module has no path" do
@@ -547,13 +550,13 @@ describe Puppet::Module do
   end
 
   it "should cache the license file" do
-    Puppet::Module.any_instance.expects(:path).once.returns nil
-    mod = Puppet::Module.new("foo")
-    mod.license_file.should == mod.license_file
+    @module.expects(:path).once.returns nil
+    @module.license_file
+    @module.license_file
   end
 
   it "should use 'metadata.json' in its current path as its metadata file" do
-    @module.metadata_file.should == "/my/mod/path/metadata.json"
+    @module.metadata_file.should == "#{@modpath}/mymod/metadata.json"
   end
 
   it "should return nil as its metadata file when the module has no path" do
@@ -656,5 +659,65 @@ describe Puppet::Module do
     end
 
     it "should fail if the discovered name is different than the metadata name"
+  end
+
+  it "should be able to tell if there are local changes" do
+    modpath = tmpdir('modpath')
+    foo_checksum = 'acbd18db4cc2f85cedef654fccc4a4d8'
+    checksummed_module = PuppetSpec::Modules.create(
+      'changed',
+      modpath,
+      :metadata => {
+        :checksums => {
+          "foo" => foo_checksum,
+        }
+      }
+    )
+
+    foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
+
+    IO.binwrite(foo_path, 'notfoo')
+    Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
+    checksummed_module.has_local_changes?.should be_true
+
+    IO.binwrite(foo_path, 'foo')
+
+    Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
+    checksummed_module.has_local_changes?.should be_false
+  end
+
+  it "should know what other modules require it" do
+    Puppet.settings[:modulepath] = @modpath
+    dependable = PuppetSpec::Modules.create(
+      'dependable',
+      @modpath,
+      :metadata => {:author => 'puppetlabs'}
+    )
+    PuppetSpec::Modules.create(
+      'needy',
+      @modpath,
+      :metadata => {
+        :author => 'beggar',
+        :dependencies => [{
+            "version_requirement" => ">= 2.2.0",
+            "name" => "puppetlabs/dependable"
+        }]
+      }
+    )
+    PuppetSpec::Modules.create(
+      'wantit',
+      @modpath,
+      :metadata => {
+        :author => 'spoiled',
+        :dependencies => [{
+            "version_requirement" => "< 5.0.0",
+            "name" => "puppetlabs/dependable"
+        }]
+      }
+    )
+    dependable.required_by.should =~ [
+      ["beggar/needy", ">= 2.2.0"],
+      ["spoiled/wantit", "< 5.0.0"]
+    ]
   end
 end
