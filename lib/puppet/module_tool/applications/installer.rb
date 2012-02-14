@@ -11,6 +11,7 @@ module Puppet::Module::Tool
       def initialize(name, options = {})
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force = options[:force]
+        @ignore_dependencies = options[:ignore_dependencies]
 
         if File.exist?(name)
           if File.directory?(name)
@@ -23,6 +24,7 @@ module Puppet::Module::Tool
         else
           @source = :repository
           begin
+            @forge_name = name
             @author, @modname = Puppet::Module::Tool::username_and_modname_from(name)
           rescue ArgumentError
             raise "Could not install module with invalid name: #{name}"
@@ -51,6 +53,9 @@ module Puppet::Module::Tool
         case @source
         when :repository
           remote_dependency_info = Puppet::Forge::Forge.remote_dependency_info(@author, @modname, @version)
+          if @ignore_dependencies
+            ignore_dependencies(remote_dependency_info)
+          end
           install_list = resolve_remote_and_local_constraints(remote_dependency_info)
           install_list.map do |release|
             modname, version, file = release
@@ -62,6 +67,16 @@ module Puppet::Module::Tool
         end
 
         cache_paths
+      end
+
+      def ignore_dependencies(remote_dependency_info)
+        remote_dependency_info.delete_if do |mod, versions|
+          mod != @forge_name
+        end
+        remote_dependency_info[@forge_name].each do |release|
+          release['dependencies'] = []
+        end
+        remote_dependency_info
       end
 
       def find_latest_working_versions(name, versions, ancestors = [])

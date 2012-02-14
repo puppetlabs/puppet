@@ -57,6 +57,13 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
+    it "should accept the --ignore-dependencies option" do
+      options[:ignore_dependencies] = true
+      expected_options.merge!(options)
+      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+      subject.install("puppetlabs-apache", options)
+    end
+
     it "should set dir to be modulepath" do
       myfakepath = "/my/fake/path"
       options[:dir] = myfakepath

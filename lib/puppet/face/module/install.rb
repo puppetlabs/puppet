@@ -64,6 +64,13 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
+    option "--ignore-dependencies" do
+      summary "Do not attempt to install dependencies"
+      description <<-EOT
+        Do not attempt to install dependencies
+      EOT
+    end
+
     option "--modulepath MODULEPATH" do
       summary "Which directories to look for modules in"
       description <<-EOT

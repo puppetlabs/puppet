@@ -56,35 +56,50 @@ describe Puppet::Module::Tool::Applications::Installer do
     end
   end
 
-  describe ".resolve_remote_and_local_constraints" do
-    let(:remote_deps) {{
-      'puppetlabs/awesomemodule' => [
-        {
-          'file' => 'awesomefile',
-          'version' => '3.0.0',
-          'dependencies' => [
-            ['puppetlabs/dependable', "1.0.x"   ],
-            ['puppetlabs/nester',     ">= 2.0.0"]
-          ]
-        },
-      ],
-      'puppetlabs/dependable' => [
-        { 'file' => 'dependablefile100', 'version' => '1.0.0', 'dependencies' => [] },
-        { 'file' => 'dependablefile101', 'version' => '1.0.1', 'dependencies' => [] },
-        { 'file' => 'dependablefile102', 'version' => '1.0.2', 'dependencies' => [] }
-      ],
-      'puppetlabs/nester' => [
-        {
-          'file' => 'nesterfile',
-          'version' => '2.0.0',
-          'dependencies' => [ [ 'joe/circular', "= 0.0.1" ] ]
-        },
-      ],
-      'joe/circular' => [
-        { 'file' => 'circularfile', 'version' => '0.0.1', 'dependencies' =>  [ ['puppetlabs/awesomemodule', ">= 2.0.1" ] ] },
-      ]
-    }}
+  let(:remote_deps) {{
+    'puppetlabs/awesomemodule' => [
+      {
+        'file' => 'awesomefile',
+        'version' => '3.0.0',
+        'dependencies' => [
+          ['puppetlabs/dependable', "1.0.x"   ],
+          ['puppetlabs/nester',     ">= 2.0.0"]
+        ]
+      },
+    ],
+    'puppetlabs/dependable' => [
+      { 'file' => 'dependablefile100', 'version' => '1.0.0', 'dependencies' => [] },
+      { 'file' => 'dependablefile101', 'version' => '1.0.1', 'dependencies' => [] },
+      { 'file' => 'dependablefile102', 'version' => '1.0.2', 'dependencies' => [] }
+    ],
+    'puppetlabs/nester' => [
+      {
+        'file' => 'nesterfile',
+        'version' => '2.0.0',
+        'dependencies' => [ [ 'joe/circular', "= 0.0.1" ] ]
+      },
+    ],
+    'joe/circular' => [
+      { 'file' => 'circularfile', 'version' => '0.0.1', 'dependencies' =>  [ ['puppetlabs/awesomemodule', ">= 2.0.1" ] ] },
+    ]
+  }}
 
+  describe ".ignore_dependencies" do
+    it "should remove dependencies from remote dependency info" do
+      installer = installer_class.new('puppetlabs/awesomemodule', :ignore_dependencies => true)
+      installer.send(:ignore_dependencies, remote_deps).should == {
+        'puppetlabs/awesomemodule' => [
+          {
+            'file' => 'awesomefile',
+            'version' => '3.0.0',
+            'dependencies' => []
+          },
+        ],
+      }
+    end
+  end
+
+  describe ".resolve_remote_and_local_constraints" do
     let(:installer) { installer = installer_class.new('puppetlabs/awesomemodule') }
 
     before do
