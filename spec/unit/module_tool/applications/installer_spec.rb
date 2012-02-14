@@ -63,7 +63,7 @@ describe Puppet::Module::Tool::Applications::Installer do
           'file' => 'awesomefile',
           'version' => '3.0.0',
           'dependencies' => [
-            ['puppetlabs/dependable', ">= 1.0.0"],
+            ['puppetlabs/dependable', "1.0.x"   ],
             ['puppetlabs/nester',     ">= 2.0.0"]
           ]
         },
@@ -242,7 +242,7 @@ describe Puppet::Module::Tool::Applications::Installer do
         @modulepath,
         :metadata => {
           :dependencies => [{
-            "version_requirement" => "< 1.0.0",
+            "version_requirement" => "0.0.x",
             "name"                => "puppetlabs/dependable"
           }]
         }
