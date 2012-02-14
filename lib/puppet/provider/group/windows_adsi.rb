@@ -1,7 +1,7 @@
 require 'puppet/util/adsi'
 
 Puppet::Type.type(:group).provide :windows_adsi do
-  desc "Group management for Windows"
+  desc "Local group management for Windows. Nested groups are not supported."
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows

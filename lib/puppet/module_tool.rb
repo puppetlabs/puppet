@@ -37,42 +37,6 @@ module Puppet
         end
       end
 
-      # Read HTTP proxy configurationm from Puppet's config file, or the
-      # http_proxy environment variable.
-      def self.http_proxy_env
-        proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"] || nil
-        begin
-          return URI.parse(proxy_env) if proxy_env
-        rescue URI::InvalidURIError
-          return nil
-        end
-        return nil
-      end
-
-      def self.http_proxy_host
-        env = http_proxy_env
-
-        if env and env.host then
-          return env.host
-        end
-
-        if Puppet.settings[:http_proxy_host] == 'none'
-          return nil
-        end
-
-        return Puppet.settings[:http_proxy_host]
-      end
-
-      def self.http_proxy_port
-        env = http_proxy_env
-
-        if env and env.port then
-          return env.port
-        end
-
-        return Puppet.settings[:http_proxy_port]
-      end
-
       def self.find_module_root(path)
         for dir in [path, Dir.pwd].compact
           if File.exist?(File.join(dir, 'Modulefile'))
@@ -87,11 +51,11 @@ end
 
 # Load remaining libraries
 require 'puppet/module_tool/applications'
-require 'puppet/module_tool/cache'
 require 'puppet/module_tool/checksums'
 require 'puppet/module_tool/contents_description'
 require 'puppet/module_tool/dependency'
 require 'puppet/module_tool/metadata'
 require 'puppet/module_tool/modulefile'
-require 'puppet/module_tool/repository'
 require 'puppet/module_tool/skeleton'
+require 'puppet/forge/cache'
+require 'puppet/forge'

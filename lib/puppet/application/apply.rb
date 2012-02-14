@@ -171,12 +171,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:manifest] = manifest
     end
 
-    # Collect our facts.
-    unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
-      raise "Could not find facts for #{Puppet[:node_name_value]}"
-    end
-
     unless Puppet[:node_name_fact].empty?
+      # Collect our facts.
+      unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+        raise "Could not find facts for #{Puppet[:node_name_value]}"
+      end
+
       Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
       facts.name = Puppet[:node_name_value]
     end
@@ -187,7 +187,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     # Merge in the facts.
-    node.merge(facts.values)
+    node.merge(facts.values) if facts
 
     # Allow users to load the classes that puppet agent creates.
     if options[:loadclasses]

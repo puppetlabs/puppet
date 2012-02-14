@@ -5,9 +5,9 @@ require 'puppet/util/checksums'
 Puppet::Type.type(:file).newparam(:checksum) do
   include Puppet::Util::Checksums
 
-  desc "The checksum type to use when checksumming a file.
+  desc "The checksum type to use when determining whether to replace a file's contents.
 
-    The default checksum parameter, if checksums are enabled, is md5."
+    The default checksum type is md5."
 
   newvalues "md5", "md5lite", "mtime", "ctime", "none"
 

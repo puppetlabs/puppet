@@ -2,13 +2,19 @@ require 'net/http'
 require 'digest/sha1'
 require 'uri'
 
-module Puppet::Module::Tool
+require 'puppet/module_tool/utils'
+
+module Puppet::Forge
+  # Directory names that should not be checksummed.
+  ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
+  FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
+  REPOSITORY_URL = Puppet.settings[:module_repository]
 
   # = Repository
   #
   # This class is a file for accessing remote repositories with modules.
   class Repository
-    include Utils::Interrogation
+    include Puppet::Module::Tool::Utils::Interrogation
 
     attr_reader :uri, :cache
 
@@ -17,6 +23,42 @@ module Puppet::Module::Tool
     def initialize(url=Puppet[:module_repository])
       @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
       @cache = Cache.new(self)
+    end
+
+    # Read HTTP proxy configurationm from Puppet's config file, or the
+    # http_proxy environment variable.
+    def http_proxy_env
+      proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"] || nil
+      begin
+        return URI.parse(proxy_env) if proxy_env
+      rescue URI::InvalidURIError
+        return nil
+      end
+      return nil
+    end
+
+    def http_proxy_host
+      env = http_proxy_env
+
+      if env and env.host then
+        return env.host
+      end
+
+      if Puppet.settings[:http_proxy_host] == 'none'
+        return nil
+      end
+
+      return Puppet.settings[:http_proxy_host]
+    end
+
+    def http_proxy_port
+      env = http_proxy_env
+
+      if env and env.port then
+        return env.port
+      end
+
+      return Puppet.settings[:http_proxy_port]
     end
 
     # Return a Net::HTTPResponse read for this +request+.
@@ -37,8 +79,8 @@ module Puppet::Module::Tool
     def read_response(request)
       begin
         Net::HTTP::Proxy(
-            Puppet::Module::Tool::http_proxy_host,
-            Puppet::Module::Tool::http_proxy_port
+            http_proxy_host,
+            http_proxy_port
             ).start(@uri.host, @uri.port) do |http|
           http.request(request)
         end

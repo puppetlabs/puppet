@@ -1,9 +1,10 @@
 module Puppet
   Puppet::Type.type(:file).newproperty(:target) do
     desc "The target for creating a link.  Currently, symlinks are the
-      only type supported.
+      only type supported. This attribute is mutually exclusive with `source`
+      and `content`.
 
-      You can make relative links:
+      Symlink targets can be relative, as well as absolute:
 
           # (Useful on Solaris)
           file { \"/etc/inetd.conf\":
@@ -11,10 +12,9 @@ module Puppet
             target => \"inet/inetd.conf\",
           }
 
-      You can also make recursive symlinks, which will create a
-      directory structure that maps to the target directory,
-      with directories corresponding to each directory
-      and links corresponding to each file."
+      Directories of symlinks can be served recursively by instead using the
+      `source` attribute, setting `ensure` to `directory`, and setting the
+      `links` attribute to `manage`."
 
     newvalue(:notlink) do
       # We do nothing if the value is absent

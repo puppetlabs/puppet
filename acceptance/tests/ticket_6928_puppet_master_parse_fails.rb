@@ -11,25 +11,22 @@ on master, puppet_master( %w{--parseonly /tmp/bad.pp} ), :acceptable_exit_codes 
 
 step "Agents: create valid, invalid formatted manifests"
 agents.each do |host|
-  create_remote_file(host, '/tmp/good.pp', %w{notify{good:}} )
-  create_remote_file(host, '/tmp/bad.pp', 'notify{bad:')
-end
+  good = host.tmpfile('good-6928')
+  bad = host.tmpfile('bad-6928')
 
-step "Agents: use --parseonly on an invalid manifest, should return 1 and issue deprecation warning"
-agents.each do |host|
-  on(host, "puppet --parseonly /tmp/bad.pp}", :acceptable_exit_codes => [ 1 ]) do
+  create_remote_file(host, good, %w{notify{good:}} )
+  create_remote_file(host, bad, 'notify{bad:')
+
+  step "Agents: use --parseonly on an invalid manifest, should return 1 and issue deprecation warning"
+  on(host, puppet('--parseonly', bad), :acceptable_exit_codes => [ 1 ]) do
     assert_match(/--parseonly has been removed. Please use \'puppet parser validate <manifest>\'/, stdout, "Deprecation warning not issued for --parseonly on #{host}" )
   end
-end
 
-step "Test Face for ‘parser validate’ with good manifest -- should pass"
-agents.each do |host|
-  on(host, "puppet parser validate /tmp/good.pp", :acceptable_exit_codes => [ 0 ])
-end
+  step "Test Face for 'parser validate' with good manifest -- should pass"
+  on(host, puppet('parser', 'validate', good), :acceptable_exit_codes => [ 0 ])
 
-step "Test Faces for ‘parser validate’ with bad manifest -- should fail"
-agents.each do |host|
-  on(host, "puppet parser validate /tmp/bad.pp", :acceptable_exit_codes => [ 1 ]) do
+  step "Test Faces for 'parser validate' with bad manifest -- should fail"
+  on(host, puppet('parser', 'validate', bad), :acceptable_exit_codes => [ 1 ]) do
     assert_match(/err: Could not parse for environment production/, stdout, "Bad manifest detection failed on #{host}" )
   end
 end

@@ -220,50 +220,10 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
-      it "should set the facts name based on the node_name_fact" do
-        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(@facts)
-
-        node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
-
-        Puppet[:node_name_fact] = 'my_name_fact'
-
-        expect { @apply.main }.to exit_with 0
-
-        @facts.name.should == 'other_node_name'
-      end
-
-      it "should set the node_name_value based on the node_name_fact" do
-        facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(facts)
-        node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
-        Puppet[:node_name_fact] = 'my_name_fact'
-
-        expect { @apply.main }.to exit_with 0
-
-        Puppet[:node_name_value].should == 'other_node_name'
-      end
-
-      it "should raise an error if we can't find the facts" do
-        Puppet::Node::Facts.indirection.expects(:find).returns(nil)
-
-        lambda { @apply.main }.should raise_error
-      end
-
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
-      end
-
-      it "should merge in our node the loaded facts" do
-        @facts.values = {'key' => 'value'}
-
-        expect { @apply.main }.to exit_with 0
-
-        @node.parameters['key'].should == 'value'
       end
 
       it "should load custom classes if loadclasses" do
@@ -316,6 +276,40 @@ describe Puppet::Application::Apply do
 
         Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         expect { @apply.main }.to exit_with 0
+      end
+
+      describe "when using node_name_fact" do
+        before :each do
+          @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+          Puppet::Node::Facts.indirection.save(@facts)
+          @node = Puppet::Node.new('other_node_name')
+          Puppet::Node.indirection.save(@node)
+          Puppet[:node_name_fact] = 'my_name_fact'
+        end
+
+        it "should set the facts name based on the node_name_fact" do
+          expect { @apply.main }.to exit_with 0
+          @facts.name.should == 'other_node_name'
+        end
+
+        it "should set the node_name_value based on the node_name_fact" do
+          expect { @apply.main }.to exit_with 0
+          Puppet[:node_name_value].should == 'other_node_name'
+        end
+
+        it "should merge in our node the loaded facts" do
+          @facts.values.merge!('key' => 'value')
+
+          expect { @apply.main }.to exit_with 0
+
+          @node.parameters['key'].should == 'value'
+        end
+
+        it "should raise an error if we can't find the facts" do
+          Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+
+          lambda { @apply.main }.should raise_error
+        end
       end
 
       describe "with detailed_exitcodes" do

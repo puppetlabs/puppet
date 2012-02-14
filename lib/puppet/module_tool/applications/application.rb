@@ -16,10 +16,6 @@ module Puppet::Module::Tool
         @options = options
       end
 
-      def repository
-        @repository ||= Repository.new(@options[:module_repository])
-      end
-
       def run
         raise NotImplementedError, "Should be implemented in child classes."
       end

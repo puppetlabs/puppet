@@ -1,39 +1,42 @@
 test_name "#4655: Allow setting the default stage for parameterized classes"
 
-temp_file_name = "/tmp/4655-stage-in-parameterized-class.#{$$}"
+agents.each do |agent|
+  temp_file_name = agent.tmpfile('4655-stage-in-parameterized-class')
 test_manifest = <<HERE
 stage { one: before => Stage[two] }
 stage { two: before => Stage[three] }
 stage { three: before => Stage[main] }
 
 class in_one {
-  exec { "echo 'in_one' > #{temp_file_name}":
-    path => '/usr/bin:/bin',
+  exec { "#{agent.echo('in_one', false)} > #{temp_file_name}":
+    path => '#{agent.path}',
   }
 }
 class { in_one: stage => "one" }
 
 class in_two( $stage=two ){
-  exec { "echo 'in_two' >> #{temp_file_name}":
-    path => '/usr/bin:/bin',
+  exec { "#{agent.echo('in_two', false)} >> #{temp_file_name}":
+    path => '#{agent.path}',
   }
 }
 class { in_two: }
 
 class in_three {
-  exec { "echo 'in_three' >> #{temp_file_name}":
-    path => '/usr/bin:/bin',
+  exec { "#{agent.echo('in_three', false)} >> #{temp_file_name}":
+    path => '#{agent.path}',
   }
 }
 class { "in_three": stage => "three" }
 HERE
 
-expected_results = "in_one
+  expected_results = "in_one
 in_two
 in_three
 "
-apply_manifest_on agents, test_manifest
+  apply_manifest_on agent, test_manifest
 
-on(agents, "cat #{temp_file_name}").each do |result|
-    assert_equal(expected_results, "#{result.stdout}", "Unexpected result for host '#{result.host}'")
+  on(agent, "cat #{temp_file_name}") do
+    # echo on windows adds \r\n, so do dotall regexp match
+    assert_match(/in_one\s*in_two\s*\in_three/m, stdout, "Unexpected result for host '#{agent}'")
+  end
 end

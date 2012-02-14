@@ -10,7 +10,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
   #on zypper versions <1.0, the version option returns 1
   #some versions of zypper output on stderr
   def zypper_version
-    zypper "--version", { :failonfail => false, :combine => true}
+    cmd = [self.class.command(:zypper),"--version"]
+    execute(cmd, { :failonfail => false, :combine => true})
   end
 
   # Install a package using 'zypper'.
