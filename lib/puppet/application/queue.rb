@@ -118,16 +118,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
-  option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
-    end
-  end
-
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
@@ -146,19 +136,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     Thread.list.each { |thread| thread.join }
-  end
-
-  # Handle the logging settings.
-  def setup_logs
-    if options[:debug] or options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-    end
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
   def setup
