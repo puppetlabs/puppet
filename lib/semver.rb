@@ -1,8 +1,10 @@
-class SemVer
-  VERSION = /^v?(\d+)\.(\d+)\.(\d+)([A-Za-z][0-9A-Za-z-]*|)$/
-  SIMPLE_RANGE = /^v?(\d+|[xX])(?:\.(\d+|[xX])(?:\.(\d+|[xX]))?)?$/
+require 'puppet/util/monkey_patches'
 
+class SemVer
   include Comparable
+
+  VERSION = /^v?(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z-]*|)$/
+  SIMPLE_RANGE = /^v?(\d+|[xX])(?:\.(\d+|[xX])(?:\.(\d+|[xX]))?)?$/
 
   def self.valid?(ver)
     VERSION =~ ver
@@ -10,6 +12,45 @@ class SemVer
 
   def self.find_matching(pattern, versions)
     versions.select { |v| v.matched_by?("#{pattern}") }.sort.last
+  end
+
+  def self.[](range)
+    range.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
+      case r
+      when SemVer::VERSION
+        SemVer.new(r + '-') .. SemVer.new(r)
+      when SemVer::SIMPLE_RANGE
+        r += ".0" unless SemVer.valid?(r.gsub(/x/i, '0'))
+        SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-')
+      when /\s+-\s+/
+        a, b = r.split(/\s+-\s+/)
+        SemVer.new(a + '-') .. SemVer.new(b)
+      when /^~/
+        ver = r.sub(/~/, '').split('.').map(&:to_i)
+        start = (ver + [0] * (3 - ver.length)).join('.')
+
+        ver.pop unless ver.length == 1
+        ver[-1] = ver.last + 1
+
+        finish = (ver + [0] * (3 - ver.length)).join('.')
+        SemVer.new(start + '-') ... SemVer.new(finish + '-')
+      when /^>=/
+        ver = r.sub(/^>=/, '')
+        SemVer.new(ver + '-') .. SemVer::MAX
+      when /^<=/
+        ver = r.sub(/^<=/, '')
+        SemVer::MIN .. SemVer.new(ver)
+      when /^>/
+        ver = r.sub(/^>/, '').split('.').map(&:to_i)
+        ver[2] = ver.last + 1
+        SemVer.new(ver.join('.') + '-') .. SemVer::MAX
+      when /^</
+        ver = r.sub(/^</, '')
+        SemVer::MIN ... SemVer.new(ver + '-')
+      else
+        (1..1)
+      end
+    end.inject { |a,e| a & e }
   end
 
   attr_reader :major, :minor, :tiny, :special
@@ -62,4 +103,17 @@ class SemVer
     "v#{@major}.#{@minor}.#{@tiny}#{@special}"
   end
   alias :to_s :inspect
+
+  MIN = SemVer.new('0.0.0-')
+
+  MAX = SemVer.new('8.0.0')
+  MAX.send(:instance_variable_set, :@major, (1.0/0)) # => Infinity
+
+  def MIN.inspect
+    'vMIN'
+  end
+
+  def MAX.inspect
+    'vMAX'
+  end
 end
