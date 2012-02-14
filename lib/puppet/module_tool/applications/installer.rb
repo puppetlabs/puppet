@@ -120,7 +120,12 @@ module Puppet::Module::Tool
 
           already_installed = already_installed_mods["#{forge_name}@#{version}"]
           if already_installed
-            Puppet.debug "Not downloading #{forge_name} (#{version}) because it's already installed"
+            if @force
+              already_installed = false
+              Puppet.warning "Installing #{forge_name} (#{version}) even though it's already installed because of the force flag"
+            else
+              Puppet.info "Not downloading #{forge_name} (#{version}) because it's already installed"
+            end
           end
           already_installed
         end
@@ -132,9 +137,14 @@ module Puppet::Module::Tool
 
           if local_mod = @environment.module_by_forge_name(forge_name)
             if local_mod.has_local_changes?
-              msg = "Module #{forge_name} (#{version}) needs to be installed to satisfy contraints, "
-              msg << "but can't be because it has local changes"
-              raise RuntimeError, msg
+              if @force
+                msg = "Overwriting module #{forge_name} (#{version}) despite local changes because of force flag"
+                Puppet.warning msg
+              else
+                msg = "Module #{forge_name} (#{version}) needs to be installed to satisfy contraints, "
+                msg << "but can't be because it has local changes"
+                raise RuntimeError, msg
+              end
             end
           end
         end
