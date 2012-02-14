@@ -29,8 +29,8 @@ describe Puppet::Util::Log.desttypes[:file] do
     @class = Puppet::Util::Log.desttypes[:file]
   end
 
-  it "should default to autoflush false" do
-    @class.new('/tmp/log').autoflush.should == false
+  it "should default to autoflush true" do
+    @class.new('/tmp/log').autoflush.should == true
   end
 
   describe "when matching" do
