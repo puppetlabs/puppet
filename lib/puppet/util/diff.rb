@@ -1,6 +1,6 @@
 # Provide a diff between two strings.
 module Puppet::Util::Diff
-  include Puppet::Util
+  include Puppet::Util::Execution
   require 'tempfile'
 
   def diff(old, new)
