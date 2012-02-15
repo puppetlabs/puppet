@@ -23,6 +23,7 @@ module Puppet::Module::Tool
             msg << "    You may have meant `puppet module uninstall #{suggestion}`\n"
           end
           $stderr << msg
+          exit(1)
         end
 
         if (@errors.count > 0) && @removed_mods.empty?
@@ -36,6 +37,7 @@ module Puppet::Module::Tool
               details[:errors].map { |error| $stderr << "  #{error}\n" }
             end
           end
+          exit(1)
         end
 
         { :removed_mods => @removed_mods, :options => @options }
