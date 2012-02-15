@@ -82,8 +82,8 @@ class Puppet::Util::Autoload
     def get_file(name, env=nil)
       name = name + '.rb' unless name.end_with?('.rb')
       dirname, base = File.split(name)
-      path = searchpath(dirname, env).find { |dir| File.exist?(File.join(dir, base)) }
-      path and File.join(path, base)
+      path = search_directories(env).find { |dir| File.exist?(File.join(dir, name)) }
+      path and File.join(path, name)
     end
 
     def files_to_load(path)
@@ -95,10 +95,6 @@ class Puppet::Util::Autoload
       Dir.glob(File.join(dir, path, "*.rb")).collect do |file|
         Pathname.new(file).relative_path_from(dir).to_s
       end
-    end
-
-    def searchpath(path, env=nil)
-      search_directories(env).uniq.collect { |d| File.join(d, path) }.find_all { |d| FileTest.directory?(d) }
     end
 
     def module_directories(env=nil)
@@ -164,10 +160,5 @@ class Puppet::Util::Autoload
 
   def files_to_load
     self.class.files_to_load(@path)
-  end
-
-  # The list of directories to search through for loadable plugins.
-  def searchpath(env=nil)
-    self.class.searchpath(@path, env)
   end
 end

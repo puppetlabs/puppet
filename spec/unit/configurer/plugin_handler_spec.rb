@@ -43,9 +43,9 @@ describe Puppet::Configurer::PluginHandler do
   it "should use an Agent Downloader, with the name, source, destination, and ignore set correctly, to download plugins when downloading is enabled" do
     downloader = mock 'downloader'
 
-    Puppet.settings.expects(:value).with(:pluginsource).returns "psource"
-    Puppet.settings.expects(:value).with(:plugindest).returns "pdest"
-    Puppet.settings.expects(:value).with(:pluginsignore).returns "pignore"
+    Puppet[:pluginsource] = "psource"
+    Puppet[:plugindest] = "pdest"
+    Puppet[:pluginsignore] = "pignore"
 
     Puppet::Configurer::Downloader.expects(:new).with("plugin", "pdest", "psource", "pignore").returns downloader
 

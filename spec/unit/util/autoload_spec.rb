@@ -50,18 +50,9 @@ describe Puppet::Util::Autoload do
     end
 
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
-      Puppet.stubs(:[]).with(:libdir).returns(%w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR))
+      Puppet[:libdir] = %w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR)
       @autoload.class.expects(:module_directories).returns %w{/one /two}
       @autoload.class.search_directories.should == %w{/one /two /libdir1 /lib/dir/two /third/lib/dir} + $LOAD_PATH
-    end
-
-    it "should include in its search path all of the unique search directories that have a subdirectory matching the autoload path" do
-      @autoload = Puppet::Util::Autoload.new("foo", "loaddir")
-      @autoload.class.expects(:search_directories).returns %w{/one /two /three /three}
-      FileTest.expects(:directory?).with("/one/loaddir").returns true
-      FileTest.expects(:directory?).with("/two/loaddir").returns false
-      FileTest.expects(:directory?).with("/three/loaddir").returns true
-      @autoload.searchpath.should == ["/one/loaddir", "/three/loaddir"]
     end
   end
 
@@ -109,7 +100,6 @@ describe Puppet::Util::Autoload do
     end
 
     it "should load the first file in the searchpath" do
-      @autoload.unstub(:searchpath)
       @autoload.stubs(:search_directories).returns %w{/a /b}
       FileTest.stubs(:directory?).returns true
       File.stubs(:exist?).returns true
@@ -163,7 +153,7 @@ describe Puppet::Util::Autoload do
 
     describe "in one directory" do
       before :each do
-        @autoload.class.stubs(:searchpath).returns %w{/a}
+        @autoload.class.stubs(:search_directories).returns %w{/a}
         File.expects(:mtime).with(@file_a).returns(@first_time)
         @autoload.class.mark_loaded("file", @file_a)
       end
@@ -185,7 +175,7 @@ describe Puppet::Util::Autoload do
 
     describe "in two directories" do
       before :each do
-        @autoload.class.stubs(:searchpath).returns %w{/a /b}
+        @autoload.class.stubs(:search_directories).returns %w{/a /b}
       end
 
       it "should load b/file when a/file is deleted" do
