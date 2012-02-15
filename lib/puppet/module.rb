@@ -172,7 +172,7 @@ class Puppet::Module
   end
 
   def required_by
-    environment.module_requirements[self.forge_name] || []
+    environment.module_requirements[self.forge_name] || {}
   end
 
   def has_local_changes?
