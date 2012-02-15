@@ -176,7 +176,7 @@ describe Puppet::Util::Autoload do
       end
 
       it "should do nothing if the file is deleted" do
-        File.expects(:mtime).with(@file_a).raises(Errno::ENOENT)
+        File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
         File.stubs(:exist?).with(@file_a).returns false
         Kernel.expects(:load).never
         @autoload.class.reload_changed
@@ -186,11 +186,11 @@ describe Puppet::Util::Autoload do
     describe "in two directories" do
       before :each do
         @autoload.class.stubs(:searchpath).returns %w{/a /b}
-        File.expects(:mtime).with(@file_a).returns(@first_time)
-        @autoload.class.mark_loaded("file", @file_a)
       end
 
       it "should load b/file when a/file is deleted" do
+        File.expects(:mtime).with(@file_a).returns(@first_time)
+        @autoload.class.mark_loaded("file", @file_a)
         File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
         File.stubs(:exist?).with(@file_a).returns false
         File.stubs(:exist?).with(@file_b).returns true
@@ -198,6 +198,18 @@ describe Puppet::Util::Autoload do
         Kernel.expects(:load).with(@file_b, optionally(anything))
         @autoload.class.reload_changed
         @autoload.class.send(:loaded)["file"].should == [@file_b, @first_time]
+      end
+
+      it "should load a/file when b/file is loaded and a/file is created" do
+        File.stubs(:mtime).with(@file_b).returns @first_time
+        File.stubs(:exist?).with(@file_b).returns true
+        @autoload.class.mark_loaded("file", @file_b)
+
+        File.stubs(:mtime).with(@file_a).returns @first_time
+        File.stubs(:exist?).with(@file_a).returns true
+        Kernel.expects(:load).with(@file_a, optionally(anything))
+        @autoload.class.reload_changed
+        @autoload.class.send(:loaded)["file"].should == [@file_a, @first_time]
       end
     end
   end

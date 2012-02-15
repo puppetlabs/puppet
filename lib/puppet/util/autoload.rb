@@ -39,6 +39,7 @@ class Puppet::Util::Autoload
     def changed?(name)
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
+      return true unless file == get_file(name)
       begin
         old_mtime != File.mtime(file)
       rescue Errno::ENOENT
@@ -49,25 +50,19 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load_file(name, env=nil)
-      path = name.to_s + ".rb"
-
-      dirname, base = File.split(path)
-      searchpath(dirname, env).each do |dir|
-        file = File.join(dir, base)
-        next unless File.exist?(file)
-        begin
-          Kernel.load file, @wrap
-          mark_loaded(name, file)
-          return true
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
-          message = "Could not autoload #{name}: #{detail}"
-          Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
-        end
+      file = get_file(name.to_s, env)
+      return false unless file
+      begin
+        Kernel.load file, @wrap
+        mark_loaded(name, file)
+        return true
+      rescue SystemExit,NoMemoryError
+        raise
+      rescue Exception => detail
+        message = "Could not autoload #{name}: #{detail}"
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message
       end
-      false
     end
 
     def loadall(path)
@@ -80,6 +75,15 @@ class Puppet::Util::Autoload
 
     def reload_changed
       loaded.keys.each { |file| load_file(file) if changed?(file) }
+    end
+
+    # Get the correct file to load for a given path
+    # returns nil if no file is found
+    def get_file(name, env=nil)
+      name = name + '.rb' unless name.end_with?('.rb')
+      dirname, base = File.split(name)
+      path = searchpath(dirname, env).find { |dir| File.exist?(File.join(dir, base)) }
+      path and File.join(path, base)
     end
 
     def files_to_load(path)
