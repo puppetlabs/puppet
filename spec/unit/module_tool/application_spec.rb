@@ -4,9 +4,9 @@ require 'puppet/module_tool'
 describe Puppet::Module::Tool::Applications::Application do
   describe 'app' do
 
-    good_versions = %w{ 1.2.4 0.0.1 0.0.0 0.0.2git-8-g3d316d1 0.0.3b1 10.100.10000
-                         0.1.2rc1 0.1.2dev-1 0.1.2svn12345 }
-    bad_versions = %w{ 0.1.2-3 0.1 0 0.1.2.3 dev }
+    good_versions = %w{ 1.2.4 0.0.1 0.0.0 0.0.2-git-8-g3d316d1 0.0.3-b1 10.100.10000
+                         0.1.2-rc1 0.1.2-dev-1 0.1.2-svn12345 0.1.2-3 }
+    bad_versions = %w{ 0.1 0 0.1.2.3 dev 0.1.2beta }
 
     before do
       @app = Class.new(described_class).new
