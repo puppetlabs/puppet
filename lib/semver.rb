@@ -1,6 +1,9 @@
 require 'puppet/util/monkey_patches'
 
-class SemVer
+# We need to subclass Numeric to force range comparisons not to try to iterate over SemVer
+# and instead use numeric comparisons (eg >, <, >=, <=)
+# Ruby 1.8 already did this for all ranges, but Ruby 1.9 changed range include behavior
+class SemVer < Numeric
   include Comparable
 
   VERSION = /^v?(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z-]*|)$/
@@ -100,20 +103,14 @@ class SemVer
   end
 
   def inspect
-    "v#{@major}.#{@minor}.#{@tiny}#{@special}"
+    @vstring || "v#{@major}.#{@minor}.#{@tiny}#{@special}"
   end
   alias :to_s :inspect
 
   MIN = SemVer.new('0.0.0-')
+  MIN.instance_variable_set(:@vstring, 'vMIN')
 
   MAX = SemVer.new('8.0.0')
-  MAX.send(:instance_variable_set, :@major, (1.0/0)) # => Infinity
-
-  def MIN.inspect
-    'vMIN'
-  end
-
-  def MAX.inspect
-    'vMAX'
-  end
+  MAX.instance_variable_set(:@major, (1.0/0)) # => Infinity
+  MAX.instance_variable_set(:@vstring, 'vMAX')
 end
