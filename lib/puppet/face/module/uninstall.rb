@@ -81,16 +81,10 @@ Puppet::Face.define(:module, '1.0.0') do
       output = ''
 
       return_value[:removed_mods].each do |mod|
-        output << "Removed #{mod.path} (v#{mod.version})\n"
-      end
-
-      return_value[:errors].map do |mod_name, errors|
-        if ! errors.empty?
-          header = "Could not uninstall module #{return_value[:options][:name]}"
-          header << " (v#{return_value[:options][:version]})" if return_value[:options][:version]
-          output << "#{header}:\n"
-          errors.map { |error| output << "  #{error}\n" }
-        end
+        msg = "Removed #{mod.path}"
+        msg << " (v#{mod.version})" if mod.version
+        msg << "\n"
+        output << msg
       end
 
       output

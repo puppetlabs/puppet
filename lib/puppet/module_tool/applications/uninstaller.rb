@@ -7,8 +7,9 @@ module Puppet::Module::Tool
       def initialize(name, options)
         @name = name
         @options = options
-        @errors = Hash.new {|h, k| h[k] = []}
+        @errors = Hash.new {|h, k| h[k] = {}}
         @removed_mods = []
+        @suggestions = []
         @environment = Puppet::Node::Environment.new(options[:environment])
       end
 
@@ -16,17 +17,35 @@ module Puppet::Module::Tool
         if module_installed?
           uninstall
         else
-          @errors[@name] << "Module #{@name} is not installed"
+          msg = "Error: Could not uninstall module '#{@name}':\n"
+          msg << "  Module '#{@name}' is not installed\n"
+          @suggestions.each do |suggestion|
+            msg << "    You may have meant `puppet module uninstall #{suggestion}`\n"
+          end
+          $stderr << msg
         end
 
-        { :removed_mods => @removed_mods, :errors => @errors, :options => @options }
+        if (@errors.count > 0) && @removed_mods.empty?
+          @errors.map do |mod_name, details|
+            unless details[:errors].empty?
+              mod_version = options[:version] || details[:version]
+
+              header = "Error: Could not uninstall module '#{mod_name}'"
+              header << " (v#{mod_version})"
+              $stderr << "#{header}:\n"
+              details[:errors].map { |error| $stderr << "  #{error}\n" }
+            end
+          end
+        end
+
+        { :removed_mods => @removed_mods, :options => @options }
       end
 
       private
 
       def version_match?(mod)
         if @options[:version]
-          mod.version == @options[:version]
+          SemVer[@options[:version]].include? SemVer.new(mod.version)
         else
           true
         end
@@ -38,61 +57,67 @@ module Puppet::Module::Tool
       def module_installed?
         @environment.modules_by_path.each do |path, modules|
           modules.each do |mod|
-            return false unless mod.has_metadata?
-
-            full_name = mod.forge_name.sub('/', '-')
-            if full_name == @name
-              return true
+            if mod.has_metadata?
+              full_name = mod.forge_name.sub('/', '-')
+              if full_name == @name
+                return true
+              else
+                if full_name =~ /#{@name}/
+                  @suggestions << full_name
+                end
+              end
+            elsif mod.name == @name
+               return true
             end
           end
         end
+
         false
       end
 
       def uninstall
         @environment.modules_by_path.each do |path, modules|
           modules.each do |mod|
-            full_name = mod.forge_name.sub('/', '-')
-            if full_name == @name
 
-              # If required, check for version match
-              unless version_match?(mod)
-                @errors[@name] << "Installed version of #{full_name} (v#{mod.version}) does not match version range"
-              end
+            if mod.has_metadata?
+              full_name = mod.forge_name.sub('/', '-')
 
-              if mod.has_local_changes?
-                if @options[:force]
-                  Puppet.warning "Ignoring local changes..."
-                else
-                  @errors[@name] << "Installed version of #{full_name} (v#{mod.version}) has local changes"
-                end
-              end
+              if full_name == @name
+                @errors[full_name][:version] = mod.version
+                @errors[full_name][:errors]  = []
 
-              requires_me = mod.required_by
-              if !requires_me.empty?
-                if @options[:force]
-                  msg = "Ignoring broken dependencies for #{full_name} (#{mod.version}); still required by:\n"
-                  Puppet.warning msg
-                  requires_me.each do |req|
-                    forge_name, version_requirement = req
-                    msg << "  #{forge_name.sub('/', '-')} (#{version_requirement})"
-                  end
-                else
-                  msg = []
-                  msg << "Cannot uninstall #{full_name} (v#{mod.version}) still required by:\n"
-                  requires_me.each do |req|
-                    forge_name, version_requirement = req
-                    msg << "  #{forge_name.sub('/', '-')} (#{version_requirement})"
-                  end
-                  Puppet.err msg
+                # If required, check for version match
+                unless version_match?(mod)
+                  @errors[full_name][:errors] << "Installed version of '#{full_name}' (v#{mod.version}) does not match (v#{@options[:version]})"
                   next
                 end
-              end
 
-              if @errors[@name].empty?
-                FileUtils.rm_rf(mod.path)
-                @removed_mods << mod
+                if mod.has_local_changes?
+                  unless @options[:force]
+                    @errors[full_name][:errors] << "Installed version of #{full_name} (v#{mod.version}) has local changes"
+                  end
+                end
+
+                requires_me = mod.required_by
+                unless requires_me.empty? or @options[:force]
+                  requires_me.each do |req|
+                    req_name = req['name'].sub('/', '-')
+                    req_version = req['version']
+
+                    @errors[full_name][:errors] << "Module '#{full_name}' (v#{mod.version}) is required by '#{req_name}' (v#{req_version})"
+                    @errors[full_name][:errors] << "  Supply the `--force` flag to uninstall this module anyway"
+                    next
+                  end
+                end
+
+                if @errors[full_name][:errors].empty? && @errors[full_name][:version] == mod.version
+                  FileUtils.rm_rf(mod.path)
+                  @removed_mods << mod
+                end
               end
+            elsif mod.name == @name
+              FileUtils.rm_rf(mod.path)
+              @removed_mods << mod
             end
           end
         end

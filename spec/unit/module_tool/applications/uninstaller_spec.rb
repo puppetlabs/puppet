@@ -125,31 +125,23 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
 
       context "when the module has local changes" do
 
-        it "should not uninstall the module and append an error" do
+        it "should not uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
           Puppet::Module.any_instance.stubs(:has_local_changes?).returns(true)
           results = @uninstaller.new("puppetlabs-foo", options).run
           results[:removed_mods].should == []
-
-          expected_output = {
-            "puppetlabs-foo" => ["Installed version of puppetlabs-foo (v1.0.0) has local changes"]
-          }
-          results[:errors].should == expected_output
         end
 
       end
 
       context "when the module does not have local changes" do
 
-        it "should uninstall the module and have no errors" do
+        it "should uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
 
           results = @uninstaller.new("puppetlabs-foo", options).run
           results[:removed_mods].length.should == 1
           results[:removed_mods].first.forge_name.should == "puppetlabs/foo"
-
-          expected_output = { "puppetlabs-foo" => [] }
-          results[:errors].should == expected_output
         end
       end
 
@@ -172,9 +164,6 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
 
           results = @uninstaller.new("puppetlabs-foo", options).run
           results[:removed_mods].should be_empty
-          @logs.map {|l| [l.level, l.message]}.should == [
-            [:err, "Cannot uninstall puppetlabs-foo (v1.0.0) still required by:\n   beggar-needy (>= 1.0.0)"]
-          ]
         end
       end
 
@@ -217,11 +206,6 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
           results = @uninstaller.new("puppetlabs-foo", options).run
           results[:removed_mods].length.should == 1
           results[:removed_mods].first.forge_name.should == "puppetlabs/foo"
-
-          @logs.map {|l| [l.level, l.message]}.should == [[
-            :warning,
-            "Ignoring broken dependencies for puppetlabs-foo (1.0.0); still required by:\n  beggar-needy (>= 1.0.0)"
-          ]]
         end
       end
     end
