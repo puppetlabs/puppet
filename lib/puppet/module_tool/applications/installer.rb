@@ -155,7 +155,8 @@ module Puppet::Module::Tool
         versions.delete_if do |version_info|
           remote_ver = SemVer.new(version_info['version'])
           local_deps[forge_name] and local_deps[forge_name].any? do |req|
-            req_name, version_req = req
+            req_name    = req['name']
+            version_req = req['version_requirement']
             equality, local_ver = version_req.split(/\s/)
             local_ver_range = SemVer[version_req]
             !(local_ver_range.include? remote_ver)
