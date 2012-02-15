@@ -716,8 +716,16 @@ describe Puppet::Module do
       }
     )
     dependable.required_by.should =~ [
-      ["beggar/needy", ">= 2.2.0"],
-      ["spoiled/wantit", "< 5.0.0"]
+      {
+        "name"    => "beggar/needy",
+        "version" => "9.9.9",
+        "version_requirement" => ">= 2.2.0"
+      },
+      {
+        "name"    => "spoiled/wantit",
+        "version" => "9.9.9",
+        "version_requirement" => "< 5.0.0"
+      }
     ]
   end
 end

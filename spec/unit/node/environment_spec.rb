@@ -237,8 +237,25 @@ describe Puppet::Node::Environment do
           )
 
           env.module_requirements.should == {
-            'puppetlabs/foo' => [['puppetlabs/bar', '<= 2.0.0']],
-            'puppetlabs/bar' => [['puppetlabs/baz', '3.0.0'], ['puppetlabs/foo', '>= 1.0.0']],
+            'puppetlabs/foo' => [
+              {
+                "name"    => "puppetlabs/bar",
+                "version" => "9.9.9",
+                "version_requirement" => "<= 2.0.0"
+              }
+            ],
+            'puppetlabs/bar' => [
+              {
+                "name"    => "puppetlabs/baz",
+                "version" => "9.9.9",
+                "version_requirement" => "3.0.0"
+              },
+              {
+                "name"    => "puppetlabs/foo",
+                "version" => "9.9.9",
+                "version_requirement" => ">= 1.0.0"
+              }
+            ],
             'puppetlabs/baz' => []
           }
         end
