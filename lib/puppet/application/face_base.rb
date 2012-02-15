@@ -243,6 +243,16 @@ class Puppet::Application::FaceBase < Puppet::Application
     puts render(result, arguments) unless result.nil?
     status = true
 
+  # We need an easy way for the action to set a specific exit code, so we
+  # rescue SystemExit here; This allows each action to set the desired exit
+  # code by simply calling Kernel::exit.  eg:
+  #
+  #   exit(2)
+  #
+  # --kelsey 2012-02-14
+  rescue SystemExit => detail
+    status = detail.status
+
   rescue Exception => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err detail.to_s
