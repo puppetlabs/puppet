@@ -65,10 +65,6 @@ describe Puppet::Util::Autoload do
     end
   end
 
-  it "should include its FileCache module" do
-    Puppet::Util::Autoload.ancestors.should be_include(Puppet::Util::Autoload::FileCache)
-  end
-
   describe "when loading a file" do
     before do
       @autoload.class.stubs(:search_directories).returns %w{/a}
