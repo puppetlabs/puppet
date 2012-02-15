@@ -34,8 +34,8 @@ on master, '[ -d /etc/puppet/modules/crakorn ]'
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 
 step "Try to uninstall the module jimmy-crakorn"
-on master, puppet('module uninstall jimmy-crakorn') do
-  assert_equal "\n", stdout
+on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [1] do
+  assert_equal '', stdout
   assert_equal <<-STDERR, stderr
 Error: Could not uninstall module 'jimmy-crakorn' (v0.4.0):
   Module 'jimmy-crakorn' (v0.4.0) is required by 'jimmy-appleseed' (v1.1.0)

@@ -56,9 +56,8 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
     end
 
     context "when the module is not installed" do
-      it "should return an empty list" do
-        results = @uninstaller.new('fakemod_not_installed', options).run
-        results[:removed_mods].should == []
+      it "should exit with the proper status code" do
+        expect { @uninstaller.new('fakemod_not_installed', options).run }.to exit_with 1
       end
     end
 
@@ -108,8 +107,7 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
 
           options[:version] = "2.0.0"
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
-          results[:removed_mods].should == []
+          expect { @uninstaller.new("puppetlabs-foo", options).run }.to exit_with 1
         end
       end
 
@@ -118,8 +116,7 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
         it "should not uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1)
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
-          results[:removed_mods].should == []
+          expect { @uninstaller.new("puppetlabs-foo", options).run }.to exit_with 1
         end
       end
 
@@ -128,8 +125,8 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
         it "should not uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
           Puppet::Module.any_instance.stubs(:has_local_changes?).returns(true)
-          results = @uninstaller.new("puppetlabs-foo", options).run
-          results[:removed_mods].should == []
+
+          expect { @uninstaller.new("puppetlabs-foo", options).run }.to exit_with 1
         end
 
       end
@@ -162,8 +159,7 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
             }
           )
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
-          results[:removed_mods].should be_empty
+          expect { @uninstaller.new("puppetlabs-foo", options).run }.to exit_with 1
         end
       end
 
