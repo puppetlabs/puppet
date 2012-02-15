@@ -226,7 +226,16 @@ module Puppet
     :certname => {:default => fqdn.downcase, :desc => "The name to use when handling certificates.  Defaults
       to the fully qualified domain name.",
       :call_on_define => true, # Call our hook with the default value, so we're always downcased
-      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
+      :hook => proc do |value|
+        lowercase_value = value.downcase
+        if value != lowercase_value then
+          Puppet.info "Using the implicit certname value of #{lowercase_value} instead of the explicit #{value} value"
+        end
+        # I have no idea why I need to modify the value in place, but I
+        # do to get the settings system to honor it in the spec test. 
+        value.downcase!
+      end
+    },
     :certdnsnames => {
       :default => '',
       :hook    => proc do |value|

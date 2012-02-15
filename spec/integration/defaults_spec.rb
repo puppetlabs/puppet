@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/defaults'
@@ -17,8 +17,16 @@ describe "Puppet defaults" do
   end
 
   describe "when setting the :certname" do
-    it "should fail if the certname is not downcased" do
-      lambda { Puppet.settings[:certname] = "Host.Domain.Com" }.should raise_error(ArgumentError)
+    it "should implicitly downcase the :certname (#1168)" do
+      Puppet.settings[:certname] = "Host.Domain.Baz"
+      Puppet.settings[:certname].should == "host.domain.baz"
+    end
+    it "should not modify a lower case :certname (#1168)" do
+      Puppet.settings[:certname] = "jeff.foo.yay"
+      Puppet.settings[:certname].should == "jeff.foo.yay"
+    end
+    it "should not fail if the certname is uppercase (#1168)" do
+      lambda { Puppet.settings[:certname] = "Host.Domain.Com" }.should_not raise_error
     end
   end
 
