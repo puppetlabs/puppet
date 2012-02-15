@@ -80,7 +80,11 @@ module Puppet::Forge
           http.request(request)
         end
       rescue Errno::ECONNREFUSED, SocketError
-        raise RuntimeError, "Could not reach remote repository"
+        msg = "Error: Could not connect to #{@uri}\n"
+        msg << "  There was a network communications problem\n"
+        msg << "    Check your network connection and try again\n"
+        $stderr << msg
+        exit(1)
       end
     end
 
