@@ -435,8 +435,8 @@ EOT
       is set, ca_days is ignored. Examples are '3600' (one hour)
       and '1825d', which is the same as '5y' (5 years) "],
     :ca_md => ["md5", "The type of hash used in certificates."],
-    :req_bits => [2048, "The bit length of the certificates."],
-    :keylength => [1024, "The bit length of keys."],
+    :req_bits => [4096, "The bit length of the certificates."],
+    :keylength => [4096, "The bit length of keys."],
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
       :mode => 0644,
