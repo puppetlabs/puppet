@@ -26,14 +26,14 @@ step "Try to uninstall the module apache"
 on master, puppet('module uninstall apache') do
   assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
-Removed module /etc/puppet/modules/apache
+Removed /etc/puppet/modules/apache
 STDOUT
 end
 on master, '[ ! -d /etc/puppet/modules/apache ]'
 
 step "Try to uninstall the module crakorn"
-on master, puppet('module uninstall crakorn'), :acceptable_exit_codes => [1] do
-  assert_equal '', stdout
+on master, puppet('module uninstall crakorn'), :acceptable_exit_codes => [0] do
+  assert_equal "\n", stdout
   assert_equal <<-STDERR, stderr
 Error: Could not uninstall module 'crakorn':
   Module 'crakorn' is not installed
