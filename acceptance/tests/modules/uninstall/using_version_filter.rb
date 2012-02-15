@@ -22,7 +22,7 @@ file {
   '/usr/share/puppet/modules/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",
-      "version": "v0.5.1",
+      "version": "0.5.1",
       "source": "",
       "author": "jimmy",
       "license": "MIT",
@@ -35,15 +35,17 @@ on master, '[ -d /usr/share/puppet/modules/crakorn ]'
 
 step "Uninstall jimmy-crakorn version 0.5.x"
 on master, puppet('module uninstall jimmy-crakorn --version 0.5.x') do
-  assert_equal '', stdout
-  assert_equal 'Removed /usr/share/puppet/modules/crakorn (v0.5.1)', stderr
+  assert_equal '', stderr
+  assert_equal <<-STDOUT, stdout
+Removed /usr/share/puppet/modules/crakorn (v0.5.1)
+STDOUT
 end
 on master, '[ -d /etc/puppet/modules/crakorn ]'
 on master, '[ ! -d /usr/share/puppet/modules/crakorn ]'
 
 step "Try to uninstall jimmy-crakorn v0.4.0 with `--version 0.5.x`"
 on master, puppet('module uninstall jimmy-crakorn --version 0.5.x') do
-  assert_equal '', stdout
+  assert_equal "\n", stdout
   assert_equal <<-STDERR, stderr
 Error: Could not uninstall module 'jimmy-crakorn' (v0.5.x):
   Installed version of 'jimmy-crakorn' (v0.4.0) does not match (v0.5.x)

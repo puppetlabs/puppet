@@ -25,7 +25,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "0.4.0" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.0" }
       ]
     }';
 }
@@ -35,10 +35,10 @@ on master, '[ -d /etc/puppet/modules/appleseed ]'
 
 step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn') do
-  assert_equal '', stdout
+  assert_equal "\n", stdout
   assert_equal <<-STDERR, stderr
-Error: Could not uninstall module 'jimmy-crakorn' (v0.5.x):
-  Module 'jimmy-crakorn' (v0.4.0) is required by 'jimmy-appleseed' (v1.1.x)
+Error: Could not uninstall module 'jimmy-crakorn' (v0.4.0):
+  Module 'jimmy-crakorn' (v0.4.0) is required by 'jimmy-appleseed' (v1.1.0)
     Supply the `--force` flag to uninstall this module anyway
 STDERR
 end
