@@ -160,7 +160,7 @@ class Range
     end
   end unless method_defined? :intersection
 
-  alias_method :&, :intersection unless method_defined? :intersection
+  alias_method :&, :intersection unless method_defined? :&
 end
 
 # Ruby 1.8.5 doesn't have tap
