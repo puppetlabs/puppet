@@ -84,11 +84,12 @@ module Puppet::Module::Tool
         ancestors << name
 
         if !versions[name] || versions[name].empty?
-          # Raising here prevents us from backtracking and trying earlier
-          # versions This means installations are less likely to succeed, but
-          # should be more predictable If it's later decided that backtracking
-          # is desired, replacing the raise with a `return false` should work
-          raise RuntimeError, "No working versions for #{name}"
+          if @force
+            Puppet.warning "No working versions for #{name}, skipping because of force"
+            return
+          else
+            raise RuntimeError, "No working versions for #{name}"
+          end
         end
         versions[name].sort_by {|v| v['version']}.reverse.each do |version|
           results = [[name, version['version'], version['file']]]
