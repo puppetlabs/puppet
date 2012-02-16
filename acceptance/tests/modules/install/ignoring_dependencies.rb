@@ -9,8 +9,11 @@ step "Install a module, but ignore dependencies"
 on master, "puppet module install pmtacceptance-java --ignore-dependencies" do
   assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
 /etc/puppet/modules
-└── java (v1.7.0)
+└── pmtacceptance-java (v1.7.0)
 STDOUT
 end
 on master, '[ -d /etc/puppet/modules/java ]'
