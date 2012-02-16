@@ -52,7 +52,7 @@ module Puppet::Module::Tool
         cache_paths = nil
         case @source
         when :repository
-          remote_dependency_info = Puppet::Forge::Forge.remote_dependency_info(@author, @modname, @version)
+          remote_dependency_info = Puppet::Forge.remote_dependency_info(@author, @modname, @version)
           if @ignore_dependencies
             ignore_dependencies(remote_dependency_info)
           end
@@ -61,9 +61,9 @@ module Puppet::Module::Tool
             modname, version, file = release
             file
           end
-          cache_paths = Puppet::Forge::Forge.get_release_packages_from_repository(install_list)
+          cache_paths = Puppet::Forge.get_release_packages_from_repository(install_list)
         when :filesystem
-          cache_paths = [Puppet::Forge::Forge.get_release_package_from_filesystem(@filename)]
+          cache_paths = [Puppet::Forge.get_release_package_from_filesystem(@filename)]
         end
 
         cache_paths
