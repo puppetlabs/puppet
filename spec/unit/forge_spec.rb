@@ -3,7 +3,7 @@ require 'puppet/forge'
 require 'net/http'
 require 'puppet/module_tool'
 
-describe Puppet::Forge::Forge do
+describe Puppet::Forge do
   include PuppetSpec::Files
 
   let(:response_body) do
@@ -36,7 +36,7 @@ describe Puppet::Forge::Forge do
       end
 
       it "should return a list of matches from the forge" do
-        Puppet::Forge::Forge.search('bacula').should == PSON.load(response_body)
+        Puppet::Forge.search('bacula').should == PSON.load(response_body)
       end
     end
 
@@ -44,7 +44,7 @@ describe Puppet::Forge::Forge do
       let(:response)  { stub(:body => '[]', :code => '404') }
 
       it "should raise an error" do
-        lambda { Puppet::Forge::Forge.search('bacula') }.should raise_error RuntimeError
+        lambda { Puppet::Forge.search('bacula') }.should raise_error RuntimeError
       end
     end
   end

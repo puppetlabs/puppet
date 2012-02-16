@@ -328,7 +328,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       filemod = File.join(@sourcedir, 'author-modname-1.0.0.tar.gz')
       File.open(filemod, 'w') {|f| f.puts 'not really a tar'}
 
-      Puppet::Forge::Forge.
+      Puppet::Forge.
         expects(:get_release_package_from_filesystem).
         returns ['fake_cache_path']
       Puppet::Module::Tool::Applications::Unpacker.expects(:run).with(['fake_cache_path'], {})

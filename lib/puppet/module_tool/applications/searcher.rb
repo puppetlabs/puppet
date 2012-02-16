@@ -8,7 +8,7 @@ module Puppet::Module::Tool
       end
 
       def run
-        Puppet::Forge::Forge.search(@term)
+        Puppet::Forge.search(@term)
       end
     end
   end

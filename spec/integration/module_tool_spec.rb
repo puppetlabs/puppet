@@ -292,7 +292,7 @@ describe "module_tool", :fails_on_windows => true do
           'dependencies' => []
         }]
       }
-      Puppet::Forge::Forge.expects(:remote_dependency_info).returns(releases)
+      Puppet::Forge.expects(:remote_dependency_info).returns(releases)
 
       Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options)
 
@@ -307,13 +307,13 @@ describe "module_tool", :fails_on_windows => true do
     end
 
     it "should fail if module doesn't exist on webserver" do
-      Puppet::Forge::Forge.stubs(:remote_dependency_info).returns({})
+      Puppet::Forge.stubs(:remote_dependency_info).returns({})
       lambda { Puppet::Module::Tool::Applications::Installer.run("not-found", @options) }.should raise_error(RuntimeError)
     end
 
     it "should fail gracefully when receiving invalid PSON" do
       pending "Implement PSON error wrapper" # TODO
-      Puppet::Forge::Forge.stubs(:remote_dependency_info).returns('1/0')
+      Puppet::Forge.stubs(:remote_dependency_info).returns('1/0')
       lambda { Puppet::Module::Tool::Applications::Installer.run("not-found") }.should raise_error(SystemExit)
     end
 
@@ -333,7 +333,7 @@ describe "module_tool", :fails_on_windows => true do
           'dependencies' => []
         }]
       }
-      Puppet::Forge::Forge.expects(:remote_dependency_info).returns(releases)
+      Puppet::Forge.expects(:remote_dependency_info).returns(releases)
 
       Puppet::Module::Tool::Applications::Installer.
         run(@full_module_name, @options).
