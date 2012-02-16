@@ -135,7 +135,7 @@ describe Puppet::Util::Log.desttypes[:console] do
   end
 end
 
-describe Puppet::Util::Log.desttypes[:new_console] do
+describe Puppet::Util::Log.desttypes[:telly_prototype_console] do
   describe "when color is available" do
     it "should support color output" do
       Puppet.stubs(:[]).with(:color).returns(true)
