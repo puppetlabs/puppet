@@ -45,18 +45,17 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--dir=", "-i=" do
-      default_to { Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first }
+    option "--dir DIR", "-i DIR" do
       summary "The directory into which modules are installed."
       description <<-EOT
         The directory into which modules are installed, defaults to the first
-        directory in the modulepath.  Setting just the dir option sets the modulepath
-        as well.  If you want install to check for dependencies in other paths,
-        also give the modulepath option.
+        directory in the modulepath.  Setting just the dir option sets the
+        modulepath as well.  If you want install to check for dependencies in
+        other paths, also give the modulepath option.
       EOT
     end
 
-    option "--module-repository=", "-r=" do
+    option "--module-repository REPO", "-r REPO" do
       default_to { Puppet.settings[:module_repository] }
       summary "Module repository to use."
       description <<-EOT
@@ -75,12 +74,12 @@ Puppet::Face.define(:module, '1.0.0') do
       summary "Which directories to look for modules in"
       description <<-EOT
         The directory into which modules are installed, defaults to the first
-        directory in the modulepath.  If the dir option is also given, it is prepended
-        to the modulepath.
+        directory in the modulepath.  If the dir option is also given, it is
+        prepended to the modulepath.
       EOT
     end
 
-    option "--version=", "-v=" do
+    option "--version VER", "-v VER" do
       summary "Module version to install."
       description <<-EOT
         Module version to install, can be a requirement string, eg '>= 1.0.3',
@@ -89,16 +88,18 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
+      sep = File::PATH_SEPARATOR
       if options[:dir]
         if options[:modulepath]
-          sep = File::PATH_SEPARATOR
-          Puppet.settings[:modulepath] = "#{options[:dir]}#{sep}#{options[:modulepath]}"
+          options[:modulepath] = "#{options[:dir]}#{sep}#{options[:modulepath]}"
+          Puppet.settings[:modulepath] = options[:modulepath]
         else
           Puppet.settings[:modulepath] = options[:dir]
         end
       elsif options[:modulepath]
         Puppet.settings[:modulepath] = options[:modulepath]
       end
+      options[:dir] = Puppet.settings[:modulepath].split(sep).first
 
       Puppet.settings[:module_repository] = options[:module_repository] if options[:module_repository]
       Puppet::Module::Tool::Applications::Installer.run(name, options)

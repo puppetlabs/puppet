@@ -17,6 +17,12 @@ describe "puppet module install" do
       }
     end
 
+    let(:sep) { File::PATH_SEPARATOR }
+    let(:fakefirstpath)  { "/my/fake/modpath" }
+    let(:fakesecondpath) { "/other/fake/path" }
+    let(:fakemodpath)    { "#{fakefirstpath}#{sep}#{fakesecondpath}" }
+    let(:fakedirpath)    { "/my/fake/path" }
+
     context "without any options" do
       it "should require a name" do
         pattern = /wrong number of arguments/
@@ -64,30 +70,71 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should set dir to be modulepath" do
-      myfakepath = "/my/fake/path"
-      options[:dir] = myfakepath
-      expected_options.merge!(options)
+    describe "when modulepath option is passed" do
+      let(:expected_options) { { :modulepath => fakemodpath, :module_repository => "http://forge.puppetlabs.com" } }
+      let(:options)          { { :modulepath => fakemodpath } }
 
-      Puppet.settings[:modulepath].should_not == myfakepath
-      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
-      Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+      describe "when dir option is not passed" do
+        it "should set dir to be first path from modulepath" do
+          expected_options[:dir] = fakefirstpath
 
-      Puppet.settings[:modulepath].should == myfakepath
+          Puppet::Module::Tool::Applications::Installer.
+            expects(:run).
+            with("puppetlabs-apache", expected_options)
+
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+
+          Puppet.settings[:modulepath].should == fakemodpath
+        end
+      end
+
+      describe "when dir option is passed" do
+        it "should set dir to be first path of modulepath" do
+          options[:dir] = fakedirpath
+          expected_options[:dir] = fakedirpath
+          expected_options[:modulepath] = "#{fakedirpath}#{sep}#{fakemodpath}"
+
+          Puppet::Module::Tool::Applications::Installer.
+            expects(:run).
+            with("puppetlabs-apache", expected_options)
+
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+
+          Puppet.settings[:modulepath].should == "#{fakedirpath}#{sep}#{fakemodpath}"
+        end
+      end
     end
 
-    it "should prepend dir in modulepath if modulepath specified also" do
-      myfakepath = "/my/fake/path"
-      options[:dir] = myfakepath
-      sep = File::PATH_SEPARATOR
-      current_modpath = "/my/current/modpath#{sep}/backup/path"
-      options[:modulepath] = current_modpath
-      expected_options.merge!(options)
+    describe "when modulepath option is not passed" do
+      before do
+        Puppet.settings[:modulepath] = fakemodpath
+      end
 
-      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
-      Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+      describe "when dir option is not passed" do
+        it "should set dir to be first path of default mod path" do
+          expected_options[:dir] = fakefirstpath
 
-      Puppet.settings[:modulepath].should == "#{myfakepath}#{sep}#{current_modpath}"
+          Puppet::Module::Tool::Applications::Installer.
+            expects(:run).
+            with("puppetlabs-apache", expected_options)
+
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+        end
+      end
+
+      describe "when dir option is passed" do
+        it "should set modulepath to dir" do
+          options[:dir] = fakedirpath
+          expected_options[:dir] = fakedirpath
+
+          Puppet::Module::Tool::Applications::Installer.
+            expects(:run).
+            with("puppetlabs-apache", expected_options)
+
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+          Puppet.settings[:modulepath].should == fakedirpath
+        end
+      end
     end
   end
 
