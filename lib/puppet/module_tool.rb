@@ -1,7 +1,6 @@
 # Load standard libraries
 require 'pathname'
 require 'fileutils'
-require 'puppet/module_tool/utils'
 
 # Define tool
 module Puppet
