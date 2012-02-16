@@ -79,14 +79,13 @@ describe Puppet::Configurer::Downloader do
     end
 
     describe "on Windows", :if => Puppet.features.microsoft_windows? do
-      it "should always set the owner to the current user" do
-        Sys::Admin.expects(:get_login).returns 'foo'
-        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 'foo' }
+      it "should omit the owner" do
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == nil }
         @dler.file
       end
 
-      it "should always set the group to nobody" do
-        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == 'S-1-0-0' }
+      it "should omit the group" do
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == nil }
         @dler.file
       end
     end

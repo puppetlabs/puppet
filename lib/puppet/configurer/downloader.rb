@@ -71,12 +71,16 @@ class Puppet::Configurer::Downloader
       :recurse => true,
       :source => source,
       :tag => name,
-      :owner => Puppet.features.microsoft_windows? ? Sys::Admin.get_login : Process.uid,
-      :group => Puppet.features.microsoft_windows? ? 'S-1-0-0' : Process.gid,
       :purge => true,
       :force => true,
       :backup => false,
       :noop => false
-    }
+    }.merge(
+      Puppet.features.microsoft_windows? ? {} :
+      {
+        :owner => Process.uid,
+        :group => Process.gid
+      }
+    )
   end
 end
