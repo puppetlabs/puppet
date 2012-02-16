@@ -180,11 +180,6 @@ class Puppet::Module
     !changes.empty?
   end
 
-  def has_local_changes?
-    changes = Puppet::Module::Tool::Applications::Checksummer.run(path)
-    !changes.empty?
-  end
-
   def unmet_dependencies
     return [] unless dependencies
 
@@ -197,7 +192,13 @@ class Puppet::Module
 
       equality, dep_version = version_string ? version_string.split("\s") : [nil, nil]
 
-      unless dep_mod = environment.module(dep_name)
+      dep_mod = begin
+        environment.module(dep_name)
+      rescue => e
+        nil
+      end
+
+      unless dep_mod
         msg =  "Missing dependency `#{dep_name}`:\n"
         msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
         unmet_dependencies << { :name => forge_name, :error => msg }

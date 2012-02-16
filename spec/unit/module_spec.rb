@@ -112,6 +112,22 @@ describe Puppet::Module do
       }]
     end
 
+    it "should list modules that are missing and have invalid names" do
+      @mod.stubs(:dependencies).returns [
+        {
+          "version_requirement" => ">= 2.2.0",
+          "name"                => "baz/foo=bar"
+        }
+      ]
+      @mod.unmet_dependencies.should == [{
+        :name  => 'baz/foo=bar',
+        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
+          Missing dependency `foo=bar`:
+            `mymod` () requires `baz/foo=bar` (>= 2.2.0)
+        HEREDOC
+      }]
+    end
+
     it "should list modules with unmet version" do
       foobar = Puppet::Module.new("foobar")
       foobar.version = '2.0.0'
