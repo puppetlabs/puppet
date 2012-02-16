@@ -7,6 +7,6 @@ hosts.each do |host|
   unless host['platform'].include?('el-')
     skip_test "Test not supported on this plaform"
    else
-    run_script_on(host,'acceptance-tests/tests/resource/service/ticket_4124_should_list_all_disabled.sh')
+    run_script_on(host, File.join(File.dirname(__FILE__), 'ticket_4124_should_list_all_disabled.sh'))
   end
 end
