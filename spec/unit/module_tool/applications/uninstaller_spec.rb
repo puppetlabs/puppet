@@ -35,23 +35,23 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
 
     let(:foo_metadata) do
       {
-        "author"       => "puppetlabs",
-        "name"         => "puppetlabs/foo",
-        "version"      => "1.0.0",
-        "source"       => "http://dummyurl/foo",
-        "license"      => "Apache2",
-        "dependencies" => [],
+        :author       => "puppetlabs",
+        :name         => "puppetlabs/foo",
+        :version      => "1.0.0",
+        :source       => "http://dummyurl/foo",
+        :license      => "Apache2",
+        :dependencies => [],
       }
     end
 
     let(:bar_metadata) do
       {
-        "author"       => "puppetlabs",
-        "name"         => "puppetlabs/bar",
-        "version"      => "1.0.0",
-        "source"       => "http://dummyurl/bar",
-        "license"      => "Apache2",
-        "dependencies" => [],
+        :author       => "puppetlabs",
+        :name         => "puppetlabs/bar",
+        :version      => "1.0.0",
+        :source       => "http://dummyurl/bar",
+        :license      => "Apache2",
+        :dependencies => [],
       }
     end
 
