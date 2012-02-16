@@ -2,14 +2,11 @@ require 'net/http'
 require 'digest/sha1'
 require 'uri'
 
-require 'puppet/module_tool/utils'
-
 module Puppet::Forge
   # = Repository
   #
   # This class is a file for accessing remote repositories with modules.
   class Repository
-    include Puppet::Module::Tool::Utils::Interrogation
 
     attr_reader :uri, :cache
 
@@ -57,13 +54,7 @@ module Puppet::Forge
     end
 
     # Return a Net::HTTPResponse read for this +request+.
-    #
-    # Options:
-    # * :authenticate => Request authentication on the terminal. Defaults to false.
     def make_http_request(request, options = {})
-      if options[:authenticate]
-        authenticate(request)
-      end
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
@@ -86,15 +77,6 @@ module Puppet::Forge
         $stderr << msg
         exit(1)
       end
-    end
-
-    # Set the HTTP Basic Authentication parameters for the Net::HTTPRequest
-    # +request+ by asking the user for input on the console.
-    def authenticate(request)
-      Puppet.notice "Authenticating for #{@uri}"
-      email = prompt('Email Address')
-      password = prompt('Password', true)
-      request.basic_auth(email, password)
     end
 
     # Return the local file name containing the data downloaded from the

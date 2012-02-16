@@ -54,16 +54,10 @@ module Puppet::Module::Tool
       def delete_existing_installation_or_abort!
         return unless @module_dir.exist?
 
-        if !options[:force]
-          Puppet.warning "Existing module '#{@module_dir.expand_path}' found"
-          response = prompt "Overwrite module installed at #{@module_dir.expand_path}? [y/N]"
-          unless response =~ /y/i
-            raise RuntimeError, "Aborted installation."
-          end
+        if options[:force]
+          Puppet.warning "Deleting #{@module_dir.expand_path}"
+          FileUtils.rm_rf @module_dir
         end
-
-        Puppet.warning "Deleting #{@module_dir.expand_path}"
-        FileUtils.rm_rf @module_dir
       end
     end
   end
