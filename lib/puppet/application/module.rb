@@ -5,7 +5,7 @@ class Puppet::Application::Module < Puppet::Application::FaceBase
     super
     if self.render_as.name == :console
       Puppet::Util::Log.close(:console)
-      Puppet::Util::Log.newdestination(:new_console)
+      Puppet::Util::Log.newdestination(:telly_prototype_console)
     end
   end
 end
