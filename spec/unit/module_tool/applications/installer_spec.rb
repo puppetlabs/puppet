@@ -269,6 +269,29 @@ describe Puppet::Module::Tool::Applications::Installer do
       )
     end
 
+    it "should warn and skip a dependency with no version that satisfies constraints if force is used" do
+      PuppetSpec::Modules.create(
+        'dependnotable',
+        @modulepath,
+        :metadata => {
+          :dependencies => [{
+            "version_requirement" => "< 1.0.0",
+            "name"                => "puppetlabs/dependable"
+          }]
+        }
+      )
+      installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
+      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
+        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile'      ],
+        ['puppetlabs/nester',        '2.0.0', 'nesterfile'       ],
+        ['joe/circular',             '0.0.1', 'circularfile'     ]
+      ]
+      @logs.map {|l| [l.level, l.message]}.should == [[
+        :warning,
+        "No working versions for puppetlabs/dependable, skipping because of force"
+      ]]
+    end
+
     it "should error when no version for a dependency meets constraints" do
       PuppetSpec::Modules.create(
         'dependnotable',
