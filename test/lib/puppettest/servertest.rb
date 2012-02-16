@@ -31,6 +31,10 @@ module PuppetTest::ServerTest
 
   # create a server, forked into the background
   def mkserver(handlers = nil)
+    # The defaults make for very slow tests.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     Puppet[:name] = "puppetmasterd"
     # our default handlers
     unless handlers
