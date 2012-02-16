@@ -26,7 +26,7 @@ module Puppet::Module::Tool
           exit(1)
         end
 
-        if (@errors.count > 0) && @removed_mods.empty?
+        if (@errors.keys.count > 0) && @removed_mods.empty?
           @errors.map do |mod_name, details|
             unless details[:errors].empty?
               mod_version = options[:version] || details[:version]
