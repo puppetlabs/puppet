@@ -131,7 +131,7 @@ describe Puppet::Node::Environment do
       Puppet[:modulepath] = "#{@path_one}#{sep}#{@path_two}"
     end
 
-    it "should not return non-directories and warn" do
+    it "should not return non-directories" do
       FileTest.expects(:directory?).with(@path_one).returns true
       FileTest.expects(:directory?).with(@path_two).returns false
 
