@@ -1,4 +1,4 @@
-begin test_name "puppet module list"
+begin test_name "puppet module list (with invalid dependencies)"
 
 step "Setup"
 apply_manifest_on master, <<-PP

@@ -1,12 +1,13 @@
-begin test_name "puppet module list (with missing dependencies)"
+begin test_name "puppet module list (with repeated dependencies)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
 file {
   [
     '/etc/puppet/modules',
-    '/etc/puppet/modules/appleseed',
     '/etc/puppet/modules/crakorn',
+    '/etc/puppet/modules/steward',
+    '/etc/puppet/modules/appleseed',
     '/etc/puppet/modules/thelock',
     '/usr/share/puppet',
     '/usr/share/puppet/modules',
@@ -15,6 +16,26 @@ file {
      recurse => true,
      purge => true,
      force => true;
+  '/etc/puppet/modules/crakorn/metadata.json':
+    content => '{
+      "name": "jimmy/crakorn",
+      "version": "0.4.0",
+      "source": "",
+      "author": "jimmy",
+      "license": "MIT",
+      "dependencies": [
+        { "name": "jimmy/steward", "version_requirement": ">= 0.0.0" }
+      ]
+    }';
+  '/etc/puppet/modules/steward/metadata.json':
+    content => '{
+      "name": "jimmy/steward",
+      "version": "0.9.0",
+      "source": "",
+      "author": "jimmy",
+      "license": "MIT",
+      "dependencies": []
+    }';
   '/etc/puppet/modules/appleseed/metadata.json':
     content => '{
       "name": "jimmy/appleseed",
@@ -34,8 +55,8 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/appleseed", "version_requirement": "1.x" },
-        { "name": "jimmy/sprinkles", "version_requirement": "2.x" }
+        { "name": "jimmy/crakorn", "version_requirement": ">= v0.0.0" },
+        { "name": "jimmy/appleseed", "version_requirement": "1.x" }
       ]
     }';
   '/usr/share/puppet/modules/crick/metadata.json':
@@ -51,22 +72,20 @@ file {
     }';
 }
 PP
+on master, '[ -d /etc/puppet/modules/crakorn ]'
+on master, '[ -d /etc/puppet/modules/steward ]'
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 on master, '[ -d /etc/puppet/modules/thelock ]'
 on master, '[ -d /usr/share/puppet/modules/crick ]'
 
 step "List the installed modules"
 on master, puppet('module list') do
-  assert_equal <<-STDERR, stderr
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v2.x)
-STDERR
+  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 ├── jimmy-appleseed (v1.1.0)
+├── jimmy-crakorn (v0.4.0)
+└── jimmy-steward (v0.9.0)
 └── jimmy-thelock (v1.0.0)
 /usr/share/puppet/modules
 └── jimmy-crick (v1.0.1)
@@ -75,22 +94,18 @@ end
 
 step "List the installed modules as a dependency tree"
 on master, puppet('module list') do
-  assert_equal <<-STDERR, stderr
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v2.x)
-STDERR
+  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 └─┬ jimmy-thelock (v1.0.0)
-| └─┬ jimmy-appleseed (v1.1.0)
-|   └── UNMET DEPENDENCY jimmy-crakorn (v0.4.0)
-└── UNMET DEPENDENCY jimmy-sprinkles (v2.x)
+  └─┬ jimmy-appleseed (v1.1.0)
+  │ └── jimmy-crakorn (v0.4.0)
+  └─┬ jimmy-crakorn (v0.4.0)
+    └── jimmy-steward (v0.9.0)
 /usr/share/puppet/modules
 └─┬ jimmy-crick (v1.0.1)
-  └── UNMET DEPENDENCY jimmy-crakorn (v0.4.x)
+  └─┬ jimmy-crakorn (v0.4.0) [/etc/puppet/modules]
+    └── jimmy-steward (v0.9.0) [/etc/puppet/modules]
 STDOUT
 end
 
