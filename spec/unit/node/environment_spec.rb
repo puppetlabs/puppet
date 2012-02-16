@@ -235,8 +235,17 @@ describe Puppet::Node::Environment do
               :dependencies => [{ 'name' => 'puppetlabs/bar', "version_requirement" => "3.0.0" }]
             }
           )
+          PuppetSpec::Modules.create(
+            'alpha',
+            @first,
+            :metadata => {
+              :author       => 'puppetlabs',
+              :dependencies => [{ 'name' => 'puppetlabs/bar', "version_requirement" => "~3.0.0" }]
+            }
+          )
 
           env.module_requirements.should == {
+            'puppetlabs/alpha' => [],
             'puppetlabs/foo' => [
               {
                 "name"    => "puppetlabs/bar",
@@ -245,6 +254,11 @@ describe Puppet::Node::Environment do
               }
             ],
             'puppetlabs/bar' => [
+              {
+                "name"    => "puppetlabs/alpha",
+                "version" => "9.9.9",
+                "version_requirement" => "~3.0.0"
+              },
               {
                 "name"    => "puppetlabs/baz",
                 "version" => "9.9.9",
