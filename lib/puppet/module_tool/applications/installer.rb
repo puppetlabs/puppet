@@ -171,12 +171,14 @@ module Puppet::Module::Tool
             :action => action,
             :previous_version => @installed[mod],
             :file => @urls["#{mod}@#{version[:vstring]}"],
+            :dependencies => []
           }
         end.compact
         dependencies.each do |mod|
           deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"]
           mod[:dependencies] = resolve_constraints(deps, mod[:module], seen)
-        end
+        end unless options[:ignore_dependencies]
+        return dependencies
       end
 
       def download_tarballs(graph)
