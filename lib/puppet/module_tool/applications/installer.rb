@@ -40,7 +40,7 @@ module Puppet::Module::Tool
         cached_paths = get_release_packages
 
         unless @graph.empty?
-          Puppet.notice 'Unpacking -- do not interrupt ...'
+          Puppet.notice 'Installing -- do not interrupt ...'
           cached_paths.each do |cache_path|
             Unpacker.run(cache_path, options)
           end
