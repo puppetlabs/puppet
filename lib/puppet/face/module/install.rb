@@ -107,15 +107,17 @@ Puppet::Face.define(:module, '1.0.0') do
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end
 
-    when_rendering :console do |return_value|
-      build_tree(return_value)
+    when_rendering :console do |return_value, name, options|
+      format_tree(return_value)
+      options[:dir] + "\n" +
+      Puppet::Module::Tool.build_tree(return_value)
     end
   end
 end
 
-def build_tree(mods, indent = '')
-  mods.map do |mod|
-    "#{indent}#{mod[:module]} (#{mod[:version][:vstring].sub(/^(?=v)/, 'v')})\n" +
-    build_tree(mod[:dependencies], indent + '  ')
-  end.flatten.join
+def format_tree(mods, indent = '')
+  mods.each do |mod|
+    mod[:text] = "#{mod[:module]} (#{mod[:version][:vstring].sub(/^(?!v)/, 'v')})"
+    format_tree(mod[:dependencies])
+  end
 end
