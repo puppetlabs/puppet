@@ -43,8 +43,12 @@ describe Puppet::Forge do
     context "when the connection to the forge fails" do
       let(:response)  { stub(:body => '[]', :code => '404') }
 
-      it "should raise an error" do
+      it "should raise an error for search" do
         lambda { Puppet::Forge.search('bacula') }.should raise_error RuntimeError
+      end
+
+      it "should raise an error for remote_dependency_info" do
+        lambda { Puppet::Forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
       end
     end
   end
