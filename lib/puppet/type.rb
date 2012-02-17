@@ -1258,7 +1258,7 @@ class Type
             require => File[\"/usr/local/scripts\"]
           }
 
-      Multiple dependencies can be specified by providing a comma-seperated list
+      Multiple dependencies can be specified by providing a comma-separated list
       of resources, enclosed in square brackets:
 
           require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
