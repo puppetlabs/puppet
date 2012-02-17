@@ -44,6 +44,28 @@ module Puppet
         end
         raise ArgumentError, "Could not find a valid module at #{path ? path.inspect : 'current directory'}"
       end
+
+      # Builds a formatted tree from a list of node hashes containing +:text+
+      # and +:dependencies+ keys.
+      def self.build_tree(nodes, level = 0)
+        str = ''
+        nodes.each_with_index do |node, i|
+          last_node = nodes.length - 1 == i
+          deps = node[:dependencies] || []
+
+          str << (indent = "  " * level)
+          str << (last_node ? "└" : "├")
+          str << "─"
+          str << (deps.empty? ? "─" : "┬")
+          str << " #{node[:text]}\n"
+
+          branch = build_tree(deps, level + 1)
+          branch.gsub!(/^#{indent} /, indent + '│') unless last_node
+          str << branch
+        end
+
+        return str
+      end
     end
   end
 end
