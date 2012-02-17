@@ -43,12 +43,13 @@ module Puppet::Forge
   def self.remote_dependency_info(author, mod_name, version)
     version_string = version ? "&version=#{version}" : ''
     request = Net::HTTP::Get.new("/api/v1/releases.json?module=#{author}/#{mod_name}" + version_string)
-    begin
-      response = repository.make_http_request(request)
-    rescue => e
-      raise ArgumentError, "Could not find release information for this module (#{e.message})"
+    response = repository.make_http_request(request)
+    case response.code
+    when "200"
+      return PSON.parse(response.body)
+    else
+      raise RuntimeError, "Could not find release information for this module (#{author}/#{mod_name}) (HTTP #{response.code})"
     end
-    PSON.parse(response.body)
   end
 
   def self.get_release_packages_from_repository(install_list)
