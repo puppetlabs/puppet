@@ -39,7 +39,7 @@ module Puppet::Module::Tool
         build_dir = Puppet::Forge::Cache.base_path + "tmp-unpacker-#{Digest::SHA1.hexdigest(@filename.basename.to_s)}"
         build_dir.mkpath
         begin
-          Puppet.notice "Installing #{@filename.basename} to #{@module_dir.expand_path}"
+          # Puppet.notice "Installing #{@filename.basename} to #{@module_dir.expand_path}"
           unless system "tar xzf #{@filename} -C #{build_dir}"
             raise RuntimeError, "Could not extract contents of module archive."
           end
