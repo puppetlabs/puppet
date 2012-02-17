@@ -108,9 +108,9 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_rendering :console do |return_value, name, options|
-      format_tree(return_value)
-      options[:dir] + "\n" +
-      Puppet::Module::Tool.build_tree(return_value)
+      format_tree(return_value[:installed_modules])
+      return_value[:install_dir] + "\n" +
+      Puppet::Module::Tool.build_tree(return_value[:installed_modules])
     end
   end
 end

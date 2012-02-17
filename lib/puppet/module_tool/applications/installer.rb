@@ -46,7 +46,7 @@ module Puppet::Module::Tool
           end
         end
 
-        @graph
+        { :install_dir => options[:dir], :installed_modules => @graph }
       end
 
       def skip_upgrades_with_local_changes(mod_download_list)
