@@ -102,11 +102,20 @@ Puppet::Face.define(:module, '1.0.0') do
       options[:dir] = Puppet.settings[:modulepath].split(sep).first
 
       Puppet.settings[:module_repository] = options[:module_repository] if options[:module_repository]
+
+      Puppet.notice "Preparing to install into #{options[:dir]} ..."
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end
 
     when_rendering :console do |return_value|
-      ''
+      build_tree(return_value)
     end
   end
+end
+
+def build_tree(mods, indent = '')
+  mods.map do |mod|
+    "#{indent}#{mod[:module]} (#{mod[:version][:vstring].sub(/^(?=v)/, 'v')})\n" +
+    build_tree(mod[:dependencies], indent + '  ')
+  end.flatten.join
 end
