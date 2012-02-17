@@ -941,7 +941,7 @@ database from within the Puppet Master process."
 
     :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
     :templatedir => ["$vardir/templates",
-      "Where Puppet looks for template files.  Can be a list of colon-seperated
+      "Where Puppet looks for template files.  Can be a list of colon-separated
       directories."
     ]
   )
