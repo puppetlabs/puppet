@@ -143,7 +143,7 @@ module Puppet::Module::Tool
 
           range = (@conditions[mod] + [ { :dependency => range } ]).map do |r|
             SemVer[r[:dependency]] rescue SemVer['>= 0.0.0']
-          end.inject(:&)
+          end.inject(&:&)
 
           if seen.include? mod
             next if range === seen[mod][:semver]
