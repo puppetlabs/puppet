@@ -33,7 +33,7 @@ module Puppet::Util::Logging
         err(message)
     end
 
-    err(exception.backtrace) if Puppet[:trace] && exception.backtrace
+    err(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
   end
 
   class DeprecationWarning < Exception; end
