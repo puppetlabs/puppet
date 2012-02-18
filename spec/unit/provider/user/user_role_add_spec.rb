@@ -4,7 +4,7 @@ require 'tempfile'
 
 provider_class = Puppet::Type.type(:user).provider(:user_role_add)
 
-describe provider_class do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before do

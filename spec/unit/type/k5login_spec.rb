@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'fileutils'
 require 'puppet/type'
 
-describe Puppet::Type.type(:k5login) do
+describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   context "the type class" do
@@ -100,7 +100,7 @@ describe Puppet::Type.type(:k5login) do
         File.read(path).should == content.join("\n") + "\n"
       end
 
-      describe "when setting the mode", :unless => Puppet.features.microsoft_windows? do
+      describe "when setting the mode" do
         # The defined input type is "mode, as an octal string"
         ["400", "600", "700", "644", "664"].each do |mode|
           it "should update the mode to #{mode}" do
