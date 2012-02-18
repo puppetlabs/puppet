@@ -124,7 +124,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
       end
     end
 
