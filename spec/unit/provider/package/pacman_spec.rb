@@ -157,7 +157,7 @@ EOF
 
   describe "when fetching a package list" do
     it "should query pacman" do
-      provider.expects(:execpipe).with(["/usr/bin/pacman", ' -Q'])
+      provider.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
       provider.instances
     end
 

@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def self.listcmd
-    [command(:pkginfo), " -a"]
+    [command(:pkginfo), "-a"]
   end
 
   def install
@@ -57,26 +57,27 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     unless @resource[:source]
       raise Puppet::Error,
-        "You must specify a package source for BSD packages"
+      "You must specify a package source for BSD packages"
     end
 
-    if @resource[:source][-1,1] == ::File::PATH_SEPARATOR
-      e_vars = { :PKG_PATH => @resource[:source] }
-      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-')
+    if @resource[:source][-1,1] == ::File::SEPARATOR
+      e_vars = { 'PKG_PATH' => @resource[:source] }
+      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
     else
       e_vars = {}
       full_name = @resource[:source]
     end
 
-     Puppet::Util::Execution::withenv(e_vars) { pkgadd full_name }
+    Puppet::Util::Execution::withenv(e_vars) { pkgadd full_name }
   end
 
   def get_version
-    execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
+    execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
       regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
       fields = [ :name, :version, :flavor ]
       master_version = 0
+      version = -1
 
       process.each_line do |line|
         if match = regex.match(line.split[0])
@@ -89,6 +90,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       end
 
       return master_version unless master_version == 0
+      return '' if version == -1
       raise Puppet::Error, "#{version} is not available for this package"
     end
   rescue Puppet::ExecutionFailure
@@ -96,17 +98,12 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def query
-    hash = {}
-    info = pkginfo @resource[:name]
-
     # Search for the version info
-    if info =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-      hash[:ensure] = $2
+    if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
+      return { :ensure => $2 }
     else
       return nil
     end
-
-    hash
   end
 
   def uninstall

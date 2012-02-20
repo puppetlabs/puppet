@@ -448,6 +448,39 @@ describe Puppet::Util do
     end
   end
 
+  describe "#execpipe" do
+    let :instance do
+      instance = Class.new.new
+      instance.send(:extend, Puppet::Util)
+      instance
+    end
+
+    it "should execute a string as a string" do
+      instance.expects(:open).with('| echo hello 2>&1').returns('hello')
+      instance.execpipe('echo hello').should == 'hello'
+    end
+
+    it "should execute an array by pasting together with spaces" do
+      instance.expects(:open).with('| echo hello 2>&1').returns('hello')
+      instance.execpipe(['echo', 'hello']).should == 'hello'
+    end
+
+    it "should fail if asked to fail, and the child does" do
+      instance.stubs(:open).returns('error message')
+      $CHILD_STATUS.expects(:==).with(0).returns(false)
+      expect { instance.execpipe('echo hello') }.
+        to raise_error Puppet::ExecutionFailure, /error message/
+    end
+
+    it "should not fail if asked not to fail, and the child does" do
+      instance.stubs(:open).returns('error message')
+      $CHILD_STATUS.stubs(:==).with(0).returns(false)
+      expect do
+        instance.execpipe('echo hello', false).should == 'error message'
+      end.not_to raise_error
+    end
+  end
+
   describe "#which" do
     let(:base) { File.expand_path('/bin') }
     let(:path) { File.join(base, 'foo') }
