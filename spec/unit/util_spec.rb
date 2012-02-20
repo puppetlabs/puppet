@@ -5,12 +5,6 @@ require 'spec_helper'
 describe Puppet::Util do
   include PuppetSpec::Files
 
-  def process_status(exitstatus)
-    return exitstatus if Puppet.features.microsoft_windows?
-
-    stub('child_status', :exitstatus => exitstatus)
-  end
-
   describe "#absolute_path?" do
     it "should default to the platform of the local system" do
       Puppet.features.stubs(:posix?).returns(true)
@@ -159,7 +153,20 @@ describe Puppet::Util do
 
   describe "execution methods" do
     let(:pid) { 5501 }
+    let(:process_handle) { 0xDEADBEEF }
+    let(:thread_handle) { 0xCAFEBEEF }
+    let(:proc_info_stub) { stub 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
     let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
+
+    def stub_process_wait(exitstatus)
+      if Puppet.features.microsoft_windows?
+        Puppet::Util::Windows::Process.stubs(:wait_process).with(process_handle).returns(exitstatus)
+        Process.stubs(:CloseHandle).with(process_handle)
+        Process.stubs(:CloseHandle).with(thread_handle)
+      else
+        Process.stubs(:waitpid2).with(pid).returns([pid, stub('child_status', :exitstatus => exitstatus)])
+      end
+    end
 
     describe "#execute_posix" do
       before :each do
@@ -233,12 +240,10 @@ describe Puppet::Util do
       end
     end
 
-    describe "#execute_windows" do
-      let(:proc_info_stub) { stub 'processinfo', :process_id => pid }
-
+    describe "#execute_windows", :if => Puppet.features.microsoft_windows? do
       before :each do
         Process.stubs(:create).returns(proc_info_stub)
-        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
+        stub_process_wait(0)
 
         @stdin  = File.open(null_file, 'r')
         @stdout = Tempfile.new('stdout')
@@ -248,14 +253,15 @@ describe Puppet::Util do
       it "should create a new process for the command" do
         Process.expects(:create).with(
           :command_line => "test command",
-          :startup_info => {:stdin => @stdin, :stdout => @stdout, :stderr => @stderr}
+          :startup_info => {:stdin => @stdin, :stdout => @stdout, :stderr => @stderr},
+          :close_handles => false
         ).returns(proc_info_stub)
 
         Puppet::Util.execute_windows('test command', {}, @stdin, @stdout, @stderr)
       end
 
-      it "should return the pid of the child process" do
-        Puppet::Util.execute_windows('test command', {}, @stdin, @stdout, @stderr).should == pid
+      it "should return the process info of the child process" do
+        Puppet::Util.execute_windows('test command', {}, @stdin, @stdout, @stderr).should == proc_info_stub
       end
 
       it "should quote arguments containing spaces if command is specified as an array" do
@@ -269,7 +275,7 @@ describe Puppet::Util do
 
     describe "#execute" do
       before :each do
-        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
+        stub_process_wait(0)
       end
 
       describe "when an execution stub is specified" do
@@ -294,6 +300,7 @@ describe Puppet::Util do
       describe "when setting up input and output files" do
         include PuppetSpec::Files
         let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
+        let(:rval) { Puppet.features.microsoft_windows? ? proc_info_stub : pid }
 
         before :each do
           Puppet::Util.stubs(:wait_for_output)
@@ -305,7 +312,7 @@ describe Puppet::Util do
 
           Puppet::Util.expects(executor).with do |_,_,stdin,_,_|
             stdin.path == input
-          end.returns(pid)
+          end.returns(rval)
 
           Puppet::Util.execute('test command', :stdinfile => input)
         end
@@ -313,7 +320,7 @@ describe Puppet::Util do
         it "should set stdin to the null file if not specified" do
           Puppet::Util.expects(executor).with do |_,_,stdin,_,_|
             stdin.path == null_file
-          end.returns(pid)
+          end.returns(rval)
 
           Puppet::Util.execute('test command')
         end
@@ -322,7 +329,7 @@ describe Puppet::Util do
           it "should set stdout and stderr to the null file" do
             Puppet::Util.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == null_file and stderr.path == null_file
-            end.returns(pid)
+            end.returns(rval)
 
             Puppet::Util.execute('test command', :squelch => true)
           end
@@ -335,7 +342,7 @@ describe Puppet::Util do
 
             Puppet::Util.expects(executor).with do |_,_,_,stdout,_|
               stdout.path == outfile.path
-            end.returns(pid)
+            end.returns(rval)
 
             Puppet::Util.execute('test command', :squelch => false)
           end
@@ -346,7 +353,7 @@ describe Puppet::Util do
 
             Puppet::Util.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == outfile.path
-            end.returns(pid)
+            end.returns(rval)
 
             Puppet::Util.execute('test command', :squelch => false, :combine => true)
           end
@@ -357,27 +364,39 @@ describe Puppet::Util do
 
             Puppet::Util.expects(executor).with do |_,_,_,stdout,stderr|
               stdout.path == outfile.path and stderr.path == null_file
-            end.returns(pid)
+            end.returns(rval)
 
             Puppet::Util.execute('test command', :squelch => false, :combine => false)
           end
         end
       end
+
+      describe "on Windows", :if => Puppet.features.microsoft_windows? do
+        it "should always close the process and thread handles" do
+          Puppet::Util.stubs(:execute_windows).returns(proc_info_stub)
+
+          Puppet::Util::Windows::Process.expects(:wait_process).with(process_handle).raises('whatever')
+          Process.expects(:CloseHandle).with(thread_handle)
+          Process.expects(:CloseHandle).with(process_handle)
+
+          expect { Puppet::Util.execute('test command') }.should raise_error(RuntimeError)
+        end
+      end
     end
 
     describe "after execution" do
-      let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
-
       before :each do
-        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
+        stub_process_wait(0)
 
-        Puppet::Util.stubs(executor).returns(pid)
+        if Puppet.features.microsoft_windows?
+          Puppet::Util.stubs(:execute_windows).returns(proc_info_stub)
+        else
+          Puppet::Util.stubs(:execute_posix).returns(pid)
+        end
       end
 
       it "should wait for the child process to exit" do
         Puppet::Util.stubs(:wait_for_output)
-
-        Process.expects(:waitpid2).with(pid).returns([pid, process_status(0)])
 
         Puppet::Util.execute('test command')
       end
@@ -423,7 +442,7 @@ describe Puppet::Util do
       end
 
       it "should raise an error if failonfail is true and the child failed" do
-        Process.expects(:waitpid2).with(pid).returns([pid, process_status(1)])
+        stub_process_wait(1)
 
         expect {
           Puppet::Util.execute('fail command', :failonfail => true)
@@ -431,7 +450,7 @@ describe Puppet::Util do
       end
 
       it "should not raise an error if failonfail is false and the child failed" do
-        Process.expects(:waitpid2).with(pid).returns([pid, process_status(1)])
+        stub_process_wait(1)
 
         expect {
           Puppet::Util.execute('fail command', :failonfail => false)
@@ -439,8 +458,6 @@ describe Puppet::Util do
       end
 
       it "should not raise an error if failonfail is true and the child succeeded" do
-        Process.expects(:waitpid2).with(pid).returns([pid, process_status(0)])
-
         expect {
           Puppet::Util.execute('fail command', :failonfail => true)
         }.not_to raise_error
