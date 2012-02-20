@@ -1,3 +1,41 @@
+2.7.11
+===
+0486462 (#12412) Mark symbolic file modes test as pending on Windows
+115ba71 Symbolic file mode test fixes when no mode change happens.
+dde3945 Disable specs that use replace_file on Windows
+4272d1f Disable replace_file on Windows
+4bcbad4 Remove unnecessary fallbacks in change_{user,group}
+ff372fb Document uid/gid-related methods in Puppet::Util
+5f8f3ba Copy owner/group in replace_file
+f0c9995 (#12463) eliminate `secure_open` in favour of `replace_file`
+0c96703 (#12460) use `replace_file` for the .k5login file
+7900a66 (#12462) user_role_add: use `replace_file` for /etc/shadow
+f9f9961 (#12463) add secure `replace_file` to Puppet::Util
+db0f872 (#12459) drop supplementary groups when permanently dropping UID
+7f26d28 (#12458) default to users primary group, not root, in `asuser`
+a96babf (#12457) add users primary group, not Process.gid, in initgroups
+2f21546 Restore compatible `insync?` behaviour for matching arrays.
+6ffe25b Fix bugs around the finer-grained insync? protocol.
+133b739 Add unit tests for the `insysc?` method of a property.
+908bfbd Property Spec cleanup: eliminate stubbing of resource and provider.
+0d95eb7 Property Spec cleanup: last let method extraction.
+5394413 Property Spec cleanup: extract more let methods.
+f919e17 Property Spec cleanup: remove unused instance variable.
+7bb261b Property Spec cleanup: remove some pointless extra stubs.
+e81f02c Property Spec cleanup: extract property instance to a let method.
+4fc4dd4 Property Spec cleanup: extract mock resource to let method.
+9083fc6 Property Spec cleanup: extract mock provider to let method.
+25d7c99 Property Spec cleanup: extract new subclass to let method.
+3638651 (#2927) Acceptance test for symbolic file modes.
+daa247e (#12296) Acceptance test for cycle detection in graphs.
+1f0f40e Use natural ordering of Puppet::Provider.
+3c1604a Make `Puppet::Provider` ordered.
+50dc35d (#12296) Now that `Puppet::Type` is ordered, use that.
+9962ac0 (#12296) Make `Puppet::Type` ordered.
+b28d4ce (#12296) Test cycle detection on real Puppet::Type instances.
+103a554 (#12310) Remove process_name instrumentation listener
+f11ee44 (#12464) Avoid unnecessarily reloading facts when node_name_fact is not set
+
 2.7.10
 ===
 e31369a (#6541) Use the same filebucket for backup and restore
