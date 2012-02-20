@@ -64,8 +64,18 @@ class Puppet::Module
     # A boolean method to let external callers determine if
     # we have files of a given type.
     define_method(type +'?') do
-      return false unless path
-      return false unless FileTest.exist?(subpath(type))
+      unless path
+        Puppet.debug("No #{type} found; path not specified")
+        return false
+      end
+
+      type_subpath = subpath(type)
+      unless FileTest.exist?(type_subpath)
+        Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
+                         "(file / directory does not exist)")
+        return false
+      end
+
       return true
     end
 
