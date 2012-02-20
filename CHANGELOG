@@ -1,3 +1,21 @@
+2.6.14
+===
+ade5965 Remove unnecessary fallbacks in change_{user,group}
+0a09a64 Document uid/gid-related methods in Puppet::Util
+2599d56 Copy owner/group in replace_file
+ead36ff (#12463) eliminate `secure_open` in favour of `replace_file`
+1469538 (#12460) use `replace_file` for the .k5login file
+8461203 (#12462) user_role_add: use `replace_file` for /etc/shadow
+0ad532a (#12463) add secure `replace_file` to Puppet::Util
+76d0749 (#12459) drop supplementary groups when permanently dropping UID
+50909b9 (#12458) default to users primary group, not root, in `asuser`
+d00c5cc (#12457) add users primary group, not Process.gid, in initgroups
+d937ae3 (#6541) Use the same filebucket for backup and restore
+a758066 (#11996) Fix test failures due to hash processing order changes.
+e0e31d5 (#5246) Puppetd does not remove it's pidfile when it exits
+0ab4597 (#11764) Fix failing cron test
+073ca03 (#11764) Fix cron jobs for passing block to method
+
 2.6.13
 ===
 e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
