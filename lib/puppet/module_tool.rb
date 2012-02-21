@@ -7,8 +7,8 @@ module Puppet
   class Module
     module Tool
 
-      # Directory names that should not be checksummed.
-      ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
+      # Directory and names that should not be checksummed.
+      ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage', 'metadata.json']
       FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
       REPOSITORY_URL = Puppet.settings[:module_repository]
 
