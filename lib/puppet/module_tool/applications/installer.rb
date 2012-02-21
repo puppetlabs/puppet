@@ -8,6 +8,24 @@ require 'puppet/module_tool'
 module Puppet::Module::Tool
   module Applications
     class Installer < Application
+      class AlreadyInstalledError < Exception
+        attr_accessor :module_name, :installed_version, :requested_version
+        def initialize(options)
+          @module_name       = options[:module_name      ]
+          @installed_version = options[:installed_version]
+          @requested_version = options[:requested_version]
+          super multiline
+        end
+
+        def multiline
+          <<-MSG.gsub(/^\s+$/, '')
+Could not install module '#{@module_name}' (#{@requested_version}):
+  Module '#{@module_name}' is already installed (#{@installed_version})
+    Use `puppet module upgrade` to install a different version
+    Use `puppet module install --force` to re-install only this module
+          MSG
+        end
+      end
 
       def initialize(name, options = {})
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
@@ -122,11 +140,17 @@ module Puppet::Module::Tool
         cache_paths = nil
         case @source
         when :repository
-          Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
           @local = get_local_constraints
-          @remote = get_remote_constraints
 
-          raise "Already installed!" if @installed.include? @forge_name
+          if @installed.include? @forge_name
+            raise AlreadyInstalledError,
+              :module_name       => @forge_name,
+              :installed_version => @installed[@forge_name],
+              :requested_version => @version || (@conditions[@forge_name].empty? ? :latest : :best)
+          end
+
+          Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
+          @remote = get_remote_constraints
 
           @graph = resolve_constraints({ @forge_name => @version || '>= 0.0.0' })
           return download_tarballs(@graph)
