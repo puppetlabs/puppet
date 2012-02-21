@@ -53,8 +53,8 @@ class Puppet::Util::Autoload
       file = get_file(name.to_s, env)
       return false unless file
       begin
-        Kernel.load file, @wrap
         mark_loaded(name, file)
+        Kernel.load file, @wrap
         return true
       rescue SystemExit,NoMemoryError
         raise
