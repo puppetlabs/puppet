@@ -60,10 +60,16 @@ Puppet::Type.type(:package).provide :pip,
   # Install a package.  The ensure parameter may specify installed,
   # latest, a version number, or, in conjunction with the source
   # parameter, an SCM revision.  In that case, the source parameter
-  # gives the fully-qualified URL to the repository.
+  # gives the fully-qualified URL to the repository. The source parameter
+  # can also specify the --extra-index-url or --index-url by prepending
+  # the option and a colon in front of the url like so:
+  #   source => 'extra-index-url: http://server/pypi'
   def install
     args = %w{install -q}
-    if @resource[:source]
+
+    if @resource[:source] and
+        !(eurl = /^extra-index-url:(.*)/.match(@resource[:source]) or
+          iurl = /^index-url:(.*)/.match(@resource[:source]))
       args << "-e"
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
@@ -72,6 +78,12 @@ Puppet::Type.type(:package).provide :pip,
         args << "#{@resource[:source]}#egg=#{@resource[:name]}"
       end
     else
+      if eurl
+        args << "--extra-index-url='" + eurl[1].strip + "'"
+      elsif iurl
+        args << "--index-url=" + iurl[1].strip
+      end
+
       case @resource[:ensure]
       when String
         args << "#{@resource[:name]}==#{@resource[:ensure]}"
