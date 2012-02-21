@@ -180,6 +180,10 @@ class Puppet::Module
     !changes.empty?
   end
 
+  def local_changes
+    Puppet::Module::Tool::Applications::Checksummer.run(path)
+  end
+
   def unmet_dependencies
     return [] unless dependencies
 
