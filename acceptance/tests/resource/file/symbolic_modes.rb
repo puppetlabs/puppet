@@ -4,19 +4,18 @@ def validate(path, mode)
   "ruby -e 'exit (File::Stat.new(#{path.inspect}).mode & 0777 == #{mode})'"
 end
 
-def tmpfile(what)
-  "/tmp/symbolic-mode-#{what}-" +
-    "#{Time.now.strftime("%Y%m%d")}-#{$$}-" +
-    "#{rand(0x100000000).to_s(36)}.test"
-end
+agents.each do |agent|
+  if agent['platform'].include?('windows')
+    Log.warn("Pending: this does not currently work on Windows")
+    next
+  end
 
-# Generate some standard, remote-safe names for our scratch content, and make
-# sure that they exist already.  Don't need to care about modes or owners, as
-# we reset anything that matters inside the test loop.
-file = tmpfile('file')
-dir  = tmpfile('dir')
+  user = agent['user']
+  group = agent['group'] || user
+  file = agent.tmpfile('symbolic-mode-file')
+  dir = agent.tmpdir('symbolic-mode-dir')
 
-on agents, "touch #{file} ; mkdir #{dir}"
+  on(agent, "touch #{file} ; mkdir -p #{dir}")
 
 # Infrastructure for a nice, table driven test.  Yum.
 #
@@ -72,40 +71,44 @@ tests.split("\n").map {|x| x.split(/\s+/)}.each do |data|
   dir_mode      = '%04o' % data[3].to_i(8)
 
   step "ensure permissions for testing #{symbolic_mode}"
-  on agents, "chmod #{start_mode} #{file} && chown root:root #{file}"
-  on agents, "chmod #{start_mode} #{dir}  && chown root:root #{dir}"
+  on agent, "chmod #{start_mode} #{file} && chown #{user}:#{group} #{file}"
+  on agent, "chmod #{start_mode} #{dir}  && chown #{user}:#{group} #{dir}"
 
   step "test mode #{symbolic_mode} works on a file"
   manifest = "file { #{file.inspect}: ensure => file, mode => #{symbolic_mode} }"
-  apply_manifest_on(agents, manifest) do
-    assert_match(/mode changed '#{start_mode}' to '#{file_mode}'/, stdout,
-                 "couldn't set file mode to #{symbolic_mode}")
+  apply_manifest_on(agent, manifest) do
+    unless start_mode == file_mode
+      assert_match(/mode changed '#{start_mode}' to '#{file_mode}'/, stdout,
+                   "couldn't set file mode to #{symbolic_mode}")
+    end
   end
 
   step "validate the mode changes applied to the file"
-  on agents, "test -f #{file} && " + validate(file, file_mode)
+  on agent, "test -f #{file} && " + validate(file, file_mode)
 
   # Validate that we don't reapply the changes - that they are stable.
-  apply_manifest_on(agents, manifest) do
+  apply_manifest_on(agent, manifest) do
     assert_no_match(/mode changed/, stdout, "reapplied the symbolic mode change")
   end
 
   step "test mode #{symbolic_mode} works on a directory"
   manifest = "file { #{dir.inspect}: ensure => directory, mode => #{symbolic_mode} }"
-  apply_manifest_on(agents, manifest) do
-    assert_match(/mode changed '#{start_mode}' to '#{dir_mode}'/, stdout,
-                 "couldn't set dir mode to #{symbolic_mode}")
+  apply_manifest_on(agent, manifest) do
+    unless start_mode == dir_mode
+      assert_match(/mode changed '#{start_mode}' to '#{dir_mode}'/, stdout,
+                   "couldn't set dir mode to #{symbolic_mode}")
+    end
   end
 
   step "validate the mode changes applied to the dir"
-  on agents, "test -d #{dir} && " + validate(file, dir_mode)
+  on agent, "test -d #{dir} && " + validate(file, dir_mode)
 
   # Validate that we don't reapply the changes - that they are stable.
-  apply_manifest_on(agents, manifest) do
+  apply_manifest_on(agent, manifest) do
     assert_no_match(/mode changed/, stdout, "reapplied the symbolic mode change")
   end
 end
 
-
 step "clean up old test things"
-on agents, "rm -rf #{file} #{dir}"
+on agent, "rm -rf #{file} #{dir}"
+end
