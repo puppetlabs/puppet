@@ -325,8 +325,7 @@ module Util
       part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
     end.join(" ") if command.is_a?(Array)
 
-    process_info = Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
-    process_info.process_id
+    Puppet::Util::Windows::Process.execute(command, arguments, stdin, stdout, stderr)
   end
   module_function :execute_windows
 
@@ -363,13 +362,13 @@ module Util
       child_pid = execute_posix(*exec_args)
       exit_status = Process.waitpid2(child_pid).last.exitstatus
     elsif Puppet.features.microsoft_windows?
-      child_pid = execute_windows(*exec_args)
-      exit_status = Process.waitpid2(child_pid).last
-      # $CHILD_STATUS is not set when calling win32/process Process.create
-      # and since it's read-only, we can't set it. But we can execute a
-      # a shell that simply returns the desired exit status, which has the
-      # desired effect.
-      %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+      process_info = execute_windows(*exec_args)
+      begin
+        exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
+      ensure
+        Process.CloseHandle(process_info.process_handle)
+        Process.CloseHandle(process_info.thread_handle)
+      end
     end
 
     [stdin, stdout, stderr].each {|io| io.close rescue nil}

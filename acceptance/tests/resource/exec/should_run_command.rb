@@ -15,11 +15,6 @@ def after(agent, touched)
 end
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    Log.warn('Pending due to #11740')
-    next
-  end
-
   touched = before(agent)
   apply_manifest_on(agent, "exec {'test': command=>'#{agent.touch(touched)}'}") do
     fail_test "didn't seem to run the command" unless
