@@ -457,11 +457,13 @@ describe Puppet::Util do
 
     it "should execute a string as a string" do
       instance.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
       instance.execpipe('echo hello').should == 'hello'
     end
 
     it "should execute an array by pasting together with spaces" do
       instance.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
       instance.execpipe(['echo', 'hello']).should == 'hello'
     end
 
