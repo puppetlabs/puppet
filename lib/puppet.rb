@@ -2,6 +2,7 @@
 begin
   require 'rubygems'
 rescue LoadError
+
 end
 
 # see the bottom of the file for further inclusions

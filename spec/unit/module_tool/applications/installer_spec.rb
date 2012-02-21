@@ -205,7 +205,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       it "should error" do
         expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
           RuntimeError,
-          "Module puppetlabs/dependable (1.0.2) needs to be installed to satisfy contraints, but can't be because it has local changes"
+          "Changes in these files foo\nModule puppetlabs/dependable (1.0.2) needs to be installed to satisfy contraints, but can't be because it has local changes"
         )
       end
 
@@ -214,7 +214,7 @@ describe Puppet::Module::Tool::Applications::Installer do
         installer.send(:resolve_remote_and_local_constraints, remote_deps)
         @logs.map {|l| [l.level, l.message]}.should == [[
           :warning,
-          "Overwriting module puppetlabs/dependable (1.0.2) despite local changes because of force flag"
+          "Changes in these files foo\nOverwriting module puppetlabs/dependable (1.0.2) despite local changes because of force flag"
         ]]
       end
     end

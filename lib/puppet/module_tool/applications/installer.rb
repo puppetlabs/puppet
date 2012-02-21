@@ -153,11 +153,12 @@ module Puppet::Module::Tool
 
           if local_mod = @environment.module_by_forge_name(forge_name)
             if local_mod.has_local_changes?
+              msg = "Changes in these files #{local_mod.local_changes.join(' ')}\n"
               if @force
-                msg = "Overwriting module #{forge_name} (#{version}) despite local changes because of force flag"
+                msg << "Overwriting module #{forge_name} (#{version}) despite local changes because of force flag"
                 Puppet.warning msg
               else
-                msg = "Module #{forge_name} (#{version}) needs to be installed to satisfy contraints, "
+                msg << "Module #{forge_name} (#{version}) needs to be installed to satisfy contraints, "
                 msg << "but can't be because it has local changes"
                 raise RuntimeError, msg
               end
