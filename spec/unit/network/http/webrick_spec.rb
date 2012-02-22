@@ -4,13 +4,13 @@ require 'puppet/network/handler'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
 
-describe Puppet::Network::HTTP::WEBrick, "after initializing", :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Network::HTTP::WEBrick, "after initializing" do
   it "should not be listening" do
     Puppet::Network::HTTP::WEBrick.new.should_not be_listening
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
   before do
     @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
@@ -139,7 +139,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless =>
 end
 
 
-describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol", :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol" do
   it "should require a protocol" do
     lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
   end
@@ -157,7 +157,7 @@ describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a 
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick, "when turning off listening", :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
   before do
     @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
@@ -184,7 +184,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening", :unless =
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Network::HTTP::WEBrick do
   before do
     @mock_webrick = stub('webrick', :[] => {})
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
@@ -196,7 +196,7 @@ describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_wi
     before do
       Puppet.settings.stubs(:value).returns "something"
       Puppet.settings.stubs(:use)
-      @filehandle = stub 'handle', :fcntl => nil, :sync => nil
+      @filehandle = stub 'handle', :fcntl => nil, :sync= => nil
 
       File.stubs(:open).returns @filehandle
     end
@@ -227,14 +227,18 @@ describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_wi
     end
 
     describe "and creating the logging filehandle" do
-      it "should set fcntl to 'Fcntl::F_SETFD, Fcntl::FD_CLOEXEC'" do
-        @filehandle.expects(:fcntl).with(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+      it "should set the close-on-exec flag if supported" do
+        if defined? Fcntl::FD_CLOEXEC
+          @filehandle.expects(:fcntl).with(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+        else
+          @filehandle.expects(:fcntl).never
+        end
 
         @server.setup_logger
       end
 
       it "should sync the filehandle" do
-        @filehandle.expects(:sync)
+        @filehandle.expects(:sync=).with(true)
 
         @server.setup_logger
       end
