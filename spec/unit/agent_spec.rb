@@ -260,36 +260,4 @@ describe Puppet::Agent do
       end
     end
   end
-
-  describe "when starting" do
-    before do
-      @agent.stubs(:observe_signal)
-    end
-
-    it "should create a timer with the runinterval, a tolerance of 1, and :start? set to true" do
-      Puppet.settings.expects(:value).with(:runinterval).returns 5
-      timer = stub 'timer', :sound_alarm => nil
-      EventLoop::Timer.expects(:new).with(:interval => 5, :start? => true, :tolerance => 1).returns timer
-
-      @agent.stubs(:run)
-      @agent.start
-    end
-
-    it "should run once immediately" do
-      timer = mock 'timer'
-      EventLoop::Timer.expects(:new).returns timer
-
-      timer.expects(:sound_alarm)
-
-      @agent.start
-    end
-
-    it "should run within the block passed to the timer" do
-      timer = stub 'timer', :sound_alarm => nil
-      EventLoop::Timer.expects(:new).returns(timer).yields
-      @agent.expects(:run)
-
-      @agent.start
-    end
-  end
 end
