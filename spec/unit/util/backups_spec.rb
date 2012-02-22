@@ -13,7 +13,7 @@ describe Puppet::Util::Backups do
 
   describe "when backing up a file" do
     it "should noop if the file does not exist" do
-      FileTest.expects(:exists?).returns false
+      FileTest.expects(:exists?).with(@nosuchfile).returns false
       file = Puppet::Type.type(:file).new(:name => @nosuchfile)
       file.expects(:bucket).never
 
