@@ -196,7 +196,7 @@ describe Puppet::Network::HTTP::WEBrick do
     before do
       Puppet.settings.stubs(:value).returns "something"
       Puppet.settings.stubs(:use)
-      @filehandle = stub 'handle', :fcntl => nil, :sync => nil
+      @filehandle = stub 'handle', :fcntl => nil, :sync= => nil
 
       File.stubs(:open).returns @filehandle
     end
@@ -238,7 +238,7 @@ describe Puppet::Network::HTTP::WEBrick do
       end
 
       it "should sync the filehandle" do
-        @filehandle.expects(:sync)
+        @filehandle.expects(:sync=).with(true)
 
         @server.setup_logger
       end
