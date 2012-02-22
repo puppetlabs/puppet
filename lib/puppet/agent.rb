@@ -1,5 +1,4 @@
 require 'sync'
-require 'puppet/external/event-loop'
 require 'puppet/application'
 
 # A general class for triggering a run of another

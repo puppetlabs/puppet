@@ -1,6 +1,5 @@
 require 'puppet'
 require 'puppet/util/pidlock'
-require 'puppet/external/event-loop'
 require 'puppet/application'
 
 # A module that handles operations common to all daemons.  This is included

@@ -1,7 +1,6 @@
 require 'puppet'
 require 'sync'
 require 'getoptlong'
-require 'puppet/external/event-loop'
 require 'puppet/util/loadedfile'
 
 # The class for handling configuration files.
