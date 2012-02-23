@@ -68,8 +68,10 @@ class Puppet::Network::HTTP::WEBrick
 
     # open the log manually to prevent file descriptor leak
     file_io = ::File.open(file, "a+")
-    file_io.sync
-    file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    file_io.sync = true
+    if defined?(Fcntl::FD_CLOEXEC)
+      file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    end
 
     args = [file_io]
     args << WEBrick::Log::DEBUG if Puppet::Util::Log.level == :debug

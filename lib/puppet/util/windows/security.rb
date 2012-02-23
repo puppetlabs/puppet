@@ -369,13 +369,15 @@ module Puppet::Util::Windows::Security
       #puts "ace: nobody #{well_known_nobody_sid}, mask 0x#{nobody_allow.to_s(16)}"
       add_access_allowed_ace(acl, nobody_allow, well_known_nobody_sid)
 
-      # add inheritable aces for child dirs and files that are created within the dir
+      # add inherit-only aces for child dirs and files that are created within the dir
       if isdir
-        inherit = INHERIT_ONLY_ACE | OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE
-
+        inherit = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE
         add_access_allowed_ace(acl, owner_allow, Win32::Security::SID::CreatorOwner, inherit)
         add_access_allowed_ace(acl, group_allow, Win32::Security::SID::CreatorGroup, inherit)
-        add_access_allowed_ace(acl, other_allow, well_known_world_sid, inherit)
+
+        inherit = INHERIT_ONLY_ACE |  OBJECT_INHERIT_ACE
+        add_access_allowed_ace(acl, owner_allow & ~FILE_EXECUTE, Win32::Security::SID::CreatorOwner, inherit)
+        add_access_allowed_ace(acl, group_allow & ~FILE_EXECUTE, Win32::Security::SID::CreatorGroup, inherit)
       end
     end
 

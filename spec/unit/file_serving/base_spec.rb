@@ -127,4 +127,23 @@ describe Puppet::FileServing::Base do
       file.stat
     end
   end
+
+  describe "#absolute?" do
+    it "should be accept POSIX paths" do
+      Puppet::FileServing::Base.should be_absolute('/')
+    end
+
+    it "should accept Windows paths on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+      Puppet.features.stubs(:posix?).returns(false)
+
+      Puppet::FileServing::Base.should be_absolute('c:/foo')
+    end
+
+    it "should reject Windows paths on POSIX" do
+      Puppet.features.stubs(:microsoft_windows?).returns(false)
+
+      Puppet::FileServing::Base.should_not be_absolute('c:/foo')
+    end
+  end
 end

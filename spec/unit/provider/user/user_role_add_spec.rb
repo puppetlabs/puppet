@@ -1,10 +1,10 @@
-#!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'tempfile'
 
 provider_class = Puppet::Type.type(:user).provider(:user_role_add)
 
-describe provider_class do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before do
@@ -246,44 +246,51 @@ describe provider_class do
   end
 
   describe "when setting the password" do
+    let(:path) { tmpfile('etc-shadow') }
+
     before :each do
-      @shadow_file = tmpfile('shadow')
-      File.open(@shadow_file, 'w') do |f|
-        f.puts 'fakeval:password:0'
-      end
-      @provider.stubs(:shadow_file).returns(@shadow_file)
+      @provider.stubs(:target_file_path).returns(path)
     end
 
-    it 'opens #shadow_file for reading' do
-      File.expects(:open).with(@shadow_file, "r")
-      File.stubs(:rename)
-
-      @provider.password = "hashedpassword"
+    def write_fixture(content)
+      File.open(path, 'w') { |f| f.print(content) }
     end
 
-    it 'writes to "#{shadow_file}_tmp"' do
-      File.stubs(:rename)
-      File.stubs(:unlink)
-      @provider.password = 'hashedpassword'
-
-      File.read("#{@shadow_file}_tmp").should =~ /hashedpassword/
+    it "should update the target user" do
+      write_fixture <<FIXTURE
+fakeval:seriously:15315:0:99999:7:::
+FIXTURE
+      @provider.password = "totally"
+      File.read(path).should =~ /^fakeval:totally:/
     end
 
-    it 'renames "#{shadow_file}_tmp" to shadow_file' do
-      File.stubs(:open)
-      File.expects(:rename).with("#{@shadow_file}_tmp", @shadow_file)
-
-      @provider.password = "hashedpassword"
+    it "should only update the target user" do
+      write_fixture <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakeval:seriously:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
+      @provider.password = "totally"
+      File.read(path).should == <<EOT
+before:seriously:15315:0:99999:7:::
+fakeval:totally:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+EOT
     end
 
-    it 'updates the last changed field' do
-      Time.stubs(:now).returns(42 * 86400)
+    # This preserves the current semantics, but is it right? --daniel 2012-02-05
+    it "should do nothing if the target user is missing" do
+      fixture = <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
 
-      File.read(@shadow_file).should == "fakeval:password:0\n"
-
-      @provider.password = 'hashedpassword'
-
-      File.read(@shadow_file).should == "fakeval:hashedpassword:42"
+      write_fixture fixture
+      @provider.password = "totally"
+      File.read(path).should == fixture
     end
   end
 

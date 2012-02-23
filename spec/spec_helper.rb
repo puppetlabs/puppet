@@ -70,6 +70,17 @@ RSpec.configure do |config|
     # I suck for letting this float. --daniel 2011-04-21
     Signal.stubs(:trap)
 
+    # Longer keys are secure, but they sure make for some slow testing - both
+    # in terms of generating keys, and in terms of anything the next step down
+    # the line doing validation or whatever.  Most tests don't care how long
+    # or secure it is, just that it exists, so these are better and faster
+    # defaults, in testing only.
+    #
+    # I would make these even shorter, but OpenSSL doesn't support anything
+    # below 512 bits.  Sad, really, because a 0 bit key would be just fine.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     # Set the confdir and vardir to gibberish so that tests
     # have to be correctly mocked.
     Puppet[:confdir] = "/dev/null"

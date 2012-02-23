@@ -199,20 +199,6 @@ Licensed under the Apache 2.0 License
     end
   end
 
-  # Handle the logging settings.
-  def setup_logs
-    if options[:debug] or options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-    end
-
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
-  end
-
   def setup_host
     @host = Puppet::SSL::Host.new
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])

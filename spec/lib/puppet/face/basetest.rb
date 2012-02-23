@@ -43,4 +43,9 @@ Puppet::Face.define(:basetest, '0.0.1') do
     summary "return the count of arguments given"
     when_invoked do |*args| args.length - 1 end
   end
+
+  action :with_specific_exit_code do
+    summary "just call exit with the desired exit code"
+    when_invoked do |options| exit(5) end
+  end
 end

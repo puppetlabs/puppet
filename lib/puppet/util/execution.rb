@@ -8,7 +8,14 @@ module Puppet
 
 module Util::Execution
 
-  # Execute the provided command in a pipe, yielding the pipe object.
+  # Execute the provided command with STDIN connected to a pipe, yielding the
+  # pipe object.  That allows data to be fed to that subprocess.
+  #
+  # The command can be a simple string, which is executed as-is, or an Array,
+  # which is treated as a set of command arguments to pass through.#
+  #
+  # In all cases this is passed directly to the shell, and STDOUT and STDERR
+  # are connected together during execution.
   def self.execpipe(command, failonfail = true)
     if respond_to? :debug
       debug "Executing '#{command}'"
@@ -16,7 +23,14 @@ module Util::Execution
       Puppet.debug "Executing '#{command}'"
     end
 
-    command_str = command.respond_to?(:join) ? command.join('') : command
+    # Paste together an array with spaces.  We used to paste directly
+    # together, no spaces, which made for odd invocations; the user had to
+    # include whitespace between arguments.
+    #
+    # Having two spaces is really not a big drama, since this passes to the
+    # shell anyhow, while no spaces makes for a small developer cost every
+    # time this is invoked. --daniel 2012-02-13
+    command_str = command.respond_to?(:join) ? command.join(' ') : command
     output = open("| #{command_str} 2>&1") do |pipe|
       yield pipe
     end
@@ -100,13 +114,13 @@ module Util::Execution
       child_pid = execute_posix(*exec_args)
       exit_status = Process.waitpid2(child_pid).last.exitstatus
     elsif Puppet.features.microsoft_windows?
-      child_pid = execute_windows(*exec_args)
-      exit_status = Process.waitpid2(child_pid).last
-      # $CHILD_STATUS is not set when calling win32/process Process.create
-      # and since it's read-only, we can't set it. But we can execute a
-      # a shell that simply returns the desired exit status, which has the
-      # desired effect.
-      %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+      process_info = execute_windows(*exec_args)
+      begin
+        exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
+      ensure
+        Process.CloseHandle(process_info.process_handle)
+        Process.CloseHandle(process_info.thread_handle)
+      end
     end
 
     [stdin, stdout, stderr].each {|io| io.close rescue nil}
@@ -158,8 +172,7 @@ module Util::Execution
         # (assumes that there are only 256 file descriptors used)
         3.upto(256){|fd| IO::new(fd).close rescue nil}
 
-        Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
-        Puppet::Util::SUIDManager.change_user(arguments[:uid], true)  if arguments[:uid]
+        Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
 
         # if the caller has requested that we override locale environment variables,
         if (arguments[:override_locale]) then
@@ -200,11 +213,9 @@ module Util::Execution
     end.join(" ") if command.is_a?(Array)
 
     arguments[:custom_environment] ||= {}
-    process_info =
-        Puppet::Util.withenv(arguments[:custom_environment]) do
-          Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
-        end
-    process_info.process_id
+    Puppet::Util.withenv(arguments[:custom_environment]) do
+      Puppet::Util::Windows::Process.execute(command, arguments, stdin, stdout, stderr)
+    end
   end
   private_class_method :execute_windows
 

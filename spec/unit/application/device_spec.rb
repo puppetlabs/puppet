@@ -175,10 +175,10 @@ describe Puppet::Application::Device do
         end
       end
 
-      it "should set syslog as the log destination if no --logdest" do
+      it "should set a default log destination if no --logdest" do
         @device.options.stubs(:[]).with(:setdest).returns(false)
 
-        Puppet::Util::Log.expects(:newdestination).with(:syslog)
+        Puppet::Util::Log.expects(:setup_default)
 
         @device.setup_logs
       end

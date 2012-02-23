@@ -257,6 +257,11 @@ describe Puppet::Application::FaceBase do
       app.action = app.face.get_action :return_raise
       expect { app.main }.not_to exit_with 0
     end
+
+    it "should use the exit code set by the action" do
+      app.action = app.face.get_action :with_specific_exit_code
+      expect { app.main }.to exit_with 5
+    end
   end
 
   describe "#render" do

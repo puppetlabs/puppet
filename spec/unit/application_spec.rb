@@ -68,6 +68,7 @@ describe Puppet::Application do
       end
     end
 
+    Puppet.features.stubs(:syslog?).returns(true)
     Puppet[:run_mode].should == "user"
 
     expect {
@@ -390,7 +391,7 @@ describe Puppet::Application do
     it "should honor setdest option" do
       @app.options.stubs(:[]).with(:setdest).returns(false)
 
-      Puppet::Util::Log.expects(:newdestination).with(:syslog)
+      Puppet::Util::Log.expects(:setup_default)
 
       @app.setup
     end

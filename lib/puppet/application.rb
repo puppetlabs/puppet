@@ -318,7 +318,10 @@ class Application
   end
 
   def setup
-    # Handle the logging settings
+    setup_logs
+  end
+
+  def setup_logs
     if options[:debug] or options[:verbose]
       Puppet::Util::Log.newdestination(:console)
       if options[:debug]
@@ -328,7 +331,7 @@ class Application
       end
     end
 
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+    Puppet::Util::Log.setup_default unless options[:setdest]
   end
 
   def configure_indirector_routes

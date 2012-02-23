@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   private :install_from_file
 
   def self.listcmd
-    [command(:pacman), " -Q"]
+    [command(:pacman), "-Q"]
   end
 
   # Fetch the list of packages currently installed on the system.

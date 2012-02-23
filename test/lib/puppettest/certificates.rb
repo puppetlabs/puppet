@@ -17,6 +17,10 @@ module PuppetTest::Certificates
   end
 
   def mkCA
+    # The defaults make tests that consume this very slow.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     ca = nil
     assert_nothing_raised {
       ca = Puppet::SSLCertificates::CA.new
@@ -26,6 +30,10 @@ module PuppetTest::Certificates
   end
 
   def mkStore(ca)
+    # The defaults make tests that consume this very slow.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     store = OpenSSL::X509::Store.new
     store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
     store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK
@@ -35,6 +43,10 @@ module PuppetTest::Certificates
   end
 
   def mkcert(hostname)
+    # The defaults make tests that consume this very slow.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     cert = nil
     assert_nothing_raised {
       cert = Puppet::SSLCertificates::Certificate.new(:name => hostname)
@@ -45,6 +57,10 @@ module PuppetTest::Certificates
   end
 
   def mksignedcert(ca = nil, hostname = nil)
+    # The defaults make tests that consume this very slow.
+    Puppet[:req_bits]  = 512
+    Puppet[:keylength] = 512
+
     ca ||= mkCA()
     hostname ||= "ttltest.example.com"
 

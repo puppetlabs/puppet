@@ -246,10 +246,10 @@ describe Puppet::Application::Agent do
         end
       end
 
-      it "should set syslog as the log destination if no --logdest" do
+      it "should set a default log destination if no --logdest" do
         @puppetd.options.stubs(:[]).with(:setdest).returns(false)
 
-        Puppet::Util::Log.expects(:newdestination).with(:syslog)
+        Puppet::Util::Log.expects(:setup_default)
 
         @puppetd.setup_logs
       end
@@ -272,7 +272,7 @@ describe Puppet::Application::Agent do
     it "should set a central log destination with --centrallogs" do
       @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
       Puppet[:server] = "puppet.reductivelabs.com"
-      Puppet::Util::Log.stubs(:newdestination).with(:syslog)
+      Puppet::Util::Log.stubs(:setup_default)
 
       Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
 
