@@ -1,5 +1,10 @@
 2.7.11
 ===
+01b57e9 (#12188) Better handling of PID file cleanup warnings.
+a8b6088 (#12572) Add acceptance test to make sure no last_run_summary diff is printed
+40480ed (#12572) Revert fix for #7106 and implement a more minimal fix
+0486462 (#12412) Mark symbolic file modes test as pending on Windows
+115ba71 Symbolic file mode test fixes when no mode change happens.
 dde3945 Disable specs that use replace_file on Windows
 4272d1f Disable replace_file on Windows
 4bcbad4 Remove unnecessary fallbacks in change_{user,group}
