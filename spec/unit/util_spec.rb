@@ -5,6 +5,30 @@ require 'spec_helper'
 describe Puppet::Util do
   include PuppetSpec::Files
 
+  if Puppet.features.microsoft_windows?
+    def set_mode(mode, file)
+      Puppet::Util::Windows::Security.set_mode(mode, file)
+    end
+
+    def get_mode(file)
+      Puppet::Util::Windows::Security.get_mode(file) & 07777
+    end
+  else
+    def set_mode(mode, file)
+      File.chmod(mode, file)
+    end
+
+    def get_mode(file)
+      File.lstat(file).mode & 07777
+    end
+  end
+
+  def process_status(exitstatus)
+    return exitstatus if Puppet.features.microsoft_windows?
+
+    stub('child_status', :exitstatus => exitstatus)
+  end
+
   describe "#absolute_path?" do
     it "should default to the platform of the local system" do
       Puppet.features.stubs(:posix?).returns(true)
@@ -594,6 +618,129 @@ describe Puppet::Util do
 
           Puppet::Util.which('foo').should == File.join(base, 'foo')
         end
+      end
+    end
+  end
+
+  describe "#binread" do
+    let(:contents) { "foo\r\nbar" }
+
+    it "should preserve line endings" do
+      path = tmpfile('util_binread')
+      File.open(path, 'wb') { |f| f.print contents }
+
+      Puppet::Util.binread(path).should == contents
+    end
+
+    it "should raise an error if the file doesn't exist" do
+      expect { Puppet::Util.binread('/path/does/not/exist') }.to raise_error(Errno::ENOENT)
+    end
+  end
+
+  context "#replace_file" do
+    describe "on POSIX platforms", :if => Puppet.features.posix? do
+      subject { Puppet::Util }
+      it { should respond_to :replace_file }
+
+      let :target do
+        target = Tempfile.new("puppet-util-replace-file")
+        target.puts("hello, world")
+        target.flush              # make sure content is on disk.
+        target.fsync rescue nil
+        target.close
+        target
+      end
+
+      it "should fail if no block is given" do
+        expect { subject.replace_file(target.path, 0600) }.to raise_error /block/
+      end
+
+      it "should replace a file when invoked" do
+        # Check that our file has the expected content.
+        File.read(target.path).should == "hello, world\n"
+
+        # Replace the file.
+        subject.replace_file(target.path, 0600) do |fh|
+          fh.puts "I am the passenger..."
+        end
+
+        # ...and check the replacement was complete.
+        File.read(target.path).should == "I am the passenger...\n"
+      end
+
+      [0555, 0600, 0660, 0700, 0770].each do |mode|
+        it "should copy 0#{mode.to_s(8)} permissions from the target file by default" do
+          set_mode(mode, target.path)
+
+          get_mode(target.path).should == mode
+
+          subject.replace_file(target.path, 0000) {|fh| fh.puts "bazam" }
+
+          get_mode(target.path).should == mode
+          File.read(target.path).should == "bazam\n"
+        end
+      end
+
+      it "should copy the permissions of the source file before yielding" do
+        set_mode(0555, target.path)
+        inode = File.stat(target.path).ino unless Puppet.features.microsoft_windows?
+
+        yielded = false
+        subject.replace_file(target.path, 0600) do |fh|
+          get_mode(fh.path).should == 0555
+          yielded = true
+        end
+        yielded.should be_true
+
+        # We can't check inode on Windows
+        File.stat(target.path).ino.should_not == inode unless Puppet.features.microsoft_windows?
+
+        get_mode(target.path).should == 0555
+      end
+
+      it "should use the default permissions if the source file doesn't exist" do
+        new_target = target.path + '.foo'
+        File.should_not be_exist(new_target)
+
+        begin
+          subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
+          get_mode(new_target).should == 0555
+        ensure
+          File.unlink(new_target) if File.exists?(new_target)
+        end
+      end
+
+      it "should not replace the file if an exception is thrown in the block" do
+        yielded = false
+        threw   = false
+
+        begin
+          subject.replace_file(target.path, 0600) do |fh|
+            yielded = true
+            fh.puts "different content written, then..."
+            raise "...throw some random failure"
+          end
+        rescue Exception => e
+          if e.to_s =~ /some random failure/
+            threw = true
+          else
+            raise
+          end
+        end
+
+        yielded.should be_true
+        threw.should be_true
+
+        # ...and check the replacement was complete.
+        File.read(target.path).should == "hello, world\n"
+      end
+    end
+
+    describe "on Windows platforms" do
+      it "should fail and complain" do
+        Puppet.features.stubs(:microsoft_windows?).returns true
+
+        expect { Puppet::Util.replace_file("C:/foo", 0644) {} }.to raise_error(Puppet::DevError, "replace_file is non-functional on Windows")
       end
     end
   end

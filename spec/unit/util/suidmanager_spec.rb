@@ -13,10 +13,18 @@ describe Puppet::Util::SUIDManager do
 
   before :each do
     Puppet::Util::SUIDManager.stubs(:convert_xid).returns(42)
-    Puppet::Util::SUIDManager.stubs(:initgroups)
+    pwent = stub('pwent', :name => 'fred', :uid => 42, :gid => 42)
+    Etc.stubs(:getpwuid).with(42).returns(pwent)
 
     [:euid, :egid, :uid, :gid, :groups].each do |id|
-      Process.stubs("#{id}=").with {|value| xids[id] = value}
+      Process.stubs("#{id}=").with {|value| xids[id] = value }
+    end
+  end
+
+  describe "#initgroups" do
+    it "should use the primary group of the user as the 'basegid'" do
+      Process.expects(:initgroups).with('fred', 42)
+      described_class.initgroups(42)
     end
   end
 
@@ -31,32 +39,8 @@ describe Puppet::Util::SUIDManager do
   end
 
   describe "#asuser" do
-    it "should set euid/egid when root" do
-      Process.stubs(:uid).returns(0)
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
-
-      Process.stubs(:egid).returns(51)
-      Process.stubs(:euid).returns(50)
-
-      Puppet::Util::SUIDManager.stubs(:convert_xid).with(:gid, 51).returns(51)
-      Puppet::Util::SUIDManager.stubs(:convert_xid).with(:uid, 50).returns(50)
-
-      yielded = false
-      Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) do
-        xids[:egid].should == user[:gid]
-        xids[:euid].should == user[:uid]
-        yielded = true
-      end
-
-      xids[:egid].should == 51
-      xids[:euid].should == 50
-
-      # It's possible asuser could simply not yield, so the assertions in the
-      # block wouldn't fail. So verify those actually got checked.
-      yielded.should be_true
-    end
-
     it "should not get or set euid/egid when not root" do
+      Puppet.features.stubs(:microsoft_windows?).returns(false)
       Process.stubs(:uid).returns(1)
 
       Process.stubs(:egid).returns(51)
@@ -65,6 +49,78 @@ describe Puppet::Util::SUIDManager do
       Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) {}
 
       xids.should be_empty
+    end
+
+    context "when root and not windows" do
+      before :each do
+        Process.stubs(:uid).returns(0)
+        Puppet.features.stubs(:microsoft_windows?).returns(false)
+      end
+
+      it "should set euid/egid when root" do
+        Process.stubs(:uid).returns(0)
+
+        Process.stubs(:egid).returns(51)
+        Process.stubs(:euid).returns(50)
+
+        Puppet::Util::SUIDManager.stubs(:convert_xid).with(:gid, 51).returns(51)
+        Puppet::Util::SUIDManager.stubs(:convert_xid).with(:uid, 50).returns(50)
+        Puppet::Util::SUIDManager.stubs(:initgroups).returns([])
+
+        yielded = false
+        Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) do
+          xids[:egid].should == user[:gid]
+          xids[:euid].should == user[:uid]
+          yielded = true
+        end
+
+        xids[:egid].should == 51
+        xids[:euid].should == 50
+
+        # It's possible asuser could simply not yield, so the assertions in the
+        # block wouldn't fail. So verify those actually got checked.
+        yielded.should be_true
+      end
+
+      it "should just yield if user and group are nil" do
+        yielded = false
+        Puppet::Util::SUIDManager.asuser(nil, nil) { yielded = true }
+        yielded.should be_true
+        xids.should == {}
+      end
+
+      it "should just change group if only group is given" do
+        yielded = false
+        Puppet::Util::SUIDManager.asuser(nil, 42) { yielded = true }
+        yielded.should be_true
+        xids.should == { :egid => 42 }
+      end
+
+      it "should change gid to the primary group of uid by default" do
+        Process.stubs(:initgroups)
+
+        yielded = false
+        Puppet::Util::SUIDManager.asuser(42) { yielded = true }
+        yielded.should be_true
+        xids.should == { :euid => 42, :egid => 42 }
+      end
+
+      it "should change both uid and gid if given" do
+        # I don't like the sequence, but it is the only way to assert on the
+        # internal behaviour in a reliable fashion, given we need multiple
+        # sequenced calls to the same methods. --daniel 2012-02-05
+        horror = sequence('of user and group changes')
+        Puppet::Util::SUIDManager.expects(:change_group).with(43, false).in_sequence(horror)
+        Puppet::Util::SUIDManager.expects(:change_user).with(42, false).in_sequence(horror)
+        Puppet::Util::SUIDManager.expects(:change_group).
+          with(Puppet::Util::SUIDManager.egid, false).in_sequence(horror)
+        Puppet::Util::SUIDManager.expects(:change_user).
+          with(Puppet::Util::SUIDManager.euid, false).in_sequence(horror)
+
+        yielded = false
+        Puppet::Util::SUIDManager.asuser(42, 43) { yielded = true }
+        yielded.should be_true
+      end
     end
 
     it "should not get or set euid/egid on Windows" do
@@ -78,20 +134,11 @@ describe Puppet::Util::SUIDManager do
 
   describe "#change_group" do
     describe "when changing permanently" do
-      it "should try to change_privilege if it is supported" do
+      it "should change_privilege" do
         Process::GID.expects(:change_privilege).with do |gid|
           Process.gid = gid
           Process.egid = gid
         end
-
-        Puppet::Util::SUIDManager.change_group(42, true)
-
-        xids[:egid].should == 42
-        xids[:gid].should == 42
-      end
-
-      it "should change both egid and gid if change_privilege isn't supported" do
-        Process::GID.stubs(:change_privilege).raises(NotImplementedError)
 
         Puppet::Util::SUIDManager.change_group(42, true)
 
@@ -112,20 +159,11 @@ describe Puppet::Util::SUIDManager do
 
   describe "#change_user" do
     describe "when changing permanently" do
-      it "should try to change_privilege if it is supported" do
+      it "should change_privilege" do
         Process::UID.expects(:change_privilege).with do |uid|
           Process.uid = uid
           Process.euid = uid
         end
-
-        Puppet::Util::SUIDManager.change_user(42, true)
-
-        xids[:euid].should == 42
-        xids[:uid].should == 42
-      end
-
-      it "should change euid and uid and groups if change_privilege isn't supported" do
-        Process::UID.stubs(:change_privilege).raises(NotImplementedError)
 
         Puppet::Util::SUIDManager.expects(:initgroups).with(42)
 
@@ -138,6 +176,7 @@ describe Puppet::Util::SUIDManager do
 
     describe "when changing temporarily" do
       it "should change only euid and groups" do
+        Puppet::Util::SUIDManager.stubs(:initgroups).returns([])
         Puppet::Util::SUIDManager.change_user(42, false)
 
         xids[:euid].should == 42
@@ -172,46 +211,6 @@ describe Puppet::Util::SUIDManager do
     before :each do
       # We want to make sure $CHILD_STATUS is set
       Kernel.system '' if $CHILD_STATUS.nil?
-    end
-
-    describe "with #system" do
-      it "should set euid/egid when root" do
-        Process.stubs(:uid).returns(0)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
-
-        Process.stubs(:egid).returns(51)
-        Process.stubs(:euid).returns(50)
-
-        Puppet::Util::SUIDManager.stubs(:convert_xid).with(:gid, 51).returns(51)
-        Puppet::Util::SUIDManager.stubs(:convert_xid).with(:uid, 50).returns(50)
-
-        Puppet::Util::SUIDManager.expects(:change_group).with(user[:uid])
-        Puppet::Util::SUIDManager.expects(:change_user).with(user[:uid])
-
-        Puppet::Util::SUIDManager.expects(:change_group).with(51)
-        Puppet::Util::SUIDManager.expects(:change_user).with(50)
-
-        Kernel.expects(:system).with('blah')
-        Puppet::Util::SUIDManager.system('blah', user[:uid], user[:gid])
-      end
-
-      it "should not get or set euid/egid when not root" do
-        Process.stubs(:uid).returns(1)
-        Kernel.expects(:system).with('blah')
-
-        Puppet::Util::SUIDManager.system('blah', user[:uid], user[:gid])
-
-        xids.should be_empty
-      end
-
-      it "should not get or set euid/egid on Windows" do
-        Puppet.features.stubs(:microsoft_windows?).returns true
-        Kernel.expects(:system).with('blah')
-
-        Puppet::Util::SUIDManager.system('blah', user[:uid], user[:gid])
-
-        xids.should be_empty
-      end
     end
 
     describe "with #run_and_capture" do

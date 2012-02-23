@@ -33,9 +33,9 @@ class Puppet::Daemon
       Puppet::Util::Log.reopen
     rescue => detail
       Puppet.err "Could not start #{Puppet[:name]}: #{detail}"
-      Puppet::Util::secure_open("/tmp/daemonout", "w") { |f|
+      Puppet::Util::replace_file("/tmp/daemonout", 0644) do |f|
         f.puts "Could not start #{Puppet[:name]}: #{detail}"
-      }
+      end
       exit(12)
     end
   end
