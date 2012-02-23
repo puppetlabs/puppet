@@ -5,7 +5,6 @@ require 'puppet/rails'
 require 'puppet/file_bucket/dipper'
 require 'puppet/rails/resource'
 require 'puppet/rails/param_value'
-require 'puppet/network/client'
 require 'puppet/parser/collector'
 require 'puppet/provider/naginator'
 
