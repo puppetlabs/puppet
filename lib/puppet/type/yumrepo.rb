@@ -357,5 +357,26 @@ module Puppet
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end
+
+    newproperty(:sslverify, :parent => Puppet::IniProperty) do
+      desc "Whether to verify SSL certificates/hosts at all. 
+        Possible values are '0', and '1'. \n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{(0|1)}) { }
+    end
+
+    newproperty(:sslclientcert, :parent => Puppet::IniProperty) do
+      desc "Path to the SSL client certificate yum should use 
+        to connect to repos/remote sites.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(/.*/) { }
+    end
+
+    newproperty(:sslclientkey, :parent => Puppet::IniProperty) do
+      desc " Path to the SSL client key yum should use to connect 
+        to repos/remote sites.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(/.*/) { }
+    end
   end
 end
