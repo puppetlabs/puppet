@@ -430,7 +430,7 @@ describe Puppet::Configurer do
     end
 
     it "should log but not fail if saving the last run summary fails" do
-      Puppet[:lastrunfile] = "/dev/null/inexistant"
+      Puppet::Util::FileLocking.expects(:writelock).raises "exception"
       Puppet.expects(:err)
       lambda { @configurer.save_last_run_summary(@report) }.should_not raise_error
     end
