@@ -1,11 +1,10 @@
 require 'puppet/provider/parsedfile'
 
-
-      Puppet::Type.type(:ssh_authorized_key).provide(
-        :parsed,
-  :parent => Puppet::Provider::ParsedFile,
+# Ssh AuthorizedKeys Provider based on ParsedFile
+Puppet::Type.type(:ssh_authorized_key).provide(
+  :parsed,
+  :parent   => Puppet::Provider::ParsedFile,
   :filetype => :flat,
-        
   :default_target => ''
 ) do
   desc "Parse and generate authorized_keys files for SSH."
