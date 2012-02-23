@@ -1,10 +1,13 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'tempfile'
 
 provider_class = Puppet::Type.type(:user).provider(:user_role_add)
 
 describe provider_class do
+  include PuppetSpec::Files
+
   before do
     @resource = stub("resource", :name => "myuser", :managehome? => nil)
     @resource.stubs(:should).returns "fakeval"
@@ -244,17 +247,51 @@ describe provider_class do
   end
 
   describe "when setting the password" do
-    #how can you mock these blocks up?
-    it "should open /etc/shadow for reading and /etc/shadow_tmp for writing" do
-      File.expects(:open).with("/etc/shadow", "r")
-      File.stubs(:rename)
-      @provider.password=("hashedpassword")
+    let(:path) { tmpfile('etc-shadow') }
+
+    before :each do
+      @provider.stubs(:target_file_path).returns(path)
     end
 
-    it "should rename the /etc/shadow_tmp to /etc/shadow" do
-      File.stubs(:open).with("/etc/shadow", "r")
-      File.expects(:rename).with("/etc/shadow_tmp", "/etc/shadow")
-      @provider.password=("hashedpassword")
+    def write_fixture(content)
+      File.open(path, 'w') { |f| f.print(content) }
+    end
+
+    it "should update the target user" do
+      write_fixture <<FIXTURE
+fakeval:seriously:15315:0:99999:7:::
+FIXTURE
+      @provider.password = "totally"
+      File.read(path).should =~ /^fakeval:totally:/
+    end
+
+    it "should only update the target user" do
+      write_fixture <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakeval:seriously:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
+      @provider.password = "totally"
+      File.read(path).should == <<EOT
+before:seriously:15315:0:99999:7:::
+fakeval:totally:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+EOT
+    end
+
+    # This preserves the current semantics, but is it right? --daniel 2012-02-05
+    it "should do nothing if the target user is missing" do
+      fixture = <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
+
+      write_fixture fixture
+      @provider.password = "totally"
+      File.read(path).should == fixture
     end
   end
 

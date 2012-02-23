@@ -1,10 +1,11 @@
 # A module to collect utility functions.
-
 require 'puppet/util/monkey_patches'
-require 'sync'
 require 'puppet/external/lock'
-require 'monitor'
 require 'puppet/util/execution_stub'
+require 'sync'
+require 'monitor'
+require 'tempfile'
+require 'pathname'
 
 module Puppet
   # A command failed to execute.
@@ -261,7 +262,6 @@ module Util
     output_file="/dev/null"
     error_file="/dev/null"
     if ! arguments[:squelch]
-      require "tempfile"
       output_file = Tempfile.new("puppet")
       error_file=output_file if arguments[:combine]
     end
@@ -287,8 +287,7 @@ module Util
           $stderr.reopen(error_file)
 
           3.upto(256){|fd| IO::new(fd).close rescue nil}
-          Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
-          Puppet::Util::SUIDManager.change_user(arguments[:uid], true) if arguments[:uid]
+          Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
           ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
           if command.is_a?(Array)
             Kernel.exec(*command)
@@ -409,27 +408,82 @@ module Util
 
   module_function :memory, :thinmark
 
-  def secure_open(file,must_be_w,&block)
-    raise Puppet::DevError,"secure_open only works with mode 'w'" unless must_be_w == 'w'
-    raise Puppet::DevError,"secure_open only requires a block"    unless block_given?
-    Puppet.warning "#{file} was a symlink to #{File.readlink(file)}" if File.symlink?(file)
-    if File.exists?(file) or File.symlink?(file)
-      wait = File.symlink?(file) ? 5.0 : 0.1
-      File.delete(file)
-      sleep wait # give it a chance to reappear, just in case someone is actively trying something.
+  # Replace a file, securely.  This takes a block, and passes it the file
+  # handle of a file open for writing.  Write the replacement content inside
+  # the block and it will safely replace the target file.
+  #
+  # This method will make no changes to the target file until the content is
+  # successfully written and the block returns without raising an error.
+  #
+  # As far as possible the state of the existing file, such as mode, is
+  # preserved.  This works hard to avoid loss of any metadata, but will result
+  # in an inode change for the file.
+  #
+  # Arguments: `filename`, `default_mode`
+  #
+  # The filename is the file we are going to replace.
+  #
+  # The default_mode is the mode to use when the target file doesn't already
+  # exist; if the file is present we copy the existing mode/owner/group values
+  # across.
+  def replace_file(file, default_mode, &block)
+    raise Puppet::DevError, "replace_file requires a block" unless block_given?
+
+    file     = Pathname(file)
+    tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
+
+    file_exists = file.exist?
+
+    # If the file exists, use its current mode/owner/group. If it doesn't, use
+    # the supplied mode, and default to current user/group.
+    if file_exists
+      stat = file.lstat
+
+      # We only care about the four lowest-order octets. Higher octets are
+      # filesystem-specific.
+      mode = stat.mode & 07777
+      uid = stat.uid
+      gid = stat.gid
+    else
+      mode = default_mode
+      uid = Process.euid
+      gid = Process.egid
     end
+
+    # Set properties of the temporary file before we write the content, because
+    # Tempfile doesn't promise to be safe from reading by other people, just
+    # that it avoids races around creating the file.
+    tempfile.chmod(mode)
+    tempfile.chown(uid, gid)
+
+    # OK, now allow the caller to write the content of the file.
+    yield tempfile
+
+    # Now, make sure the data (which includes the mode) is safe on disk.
+    tempfile.flush
     begin
-      File.open(file,File::CREAT|File::EXCL|File::TRUNC|File::WRONLY,&block)
-    rescue Errno::EEXIST
-      desc = File.symlink?(file) ? "symlink to #{File.readlink(file)}" : File.stat(file).ftype
-      puts "Warning: #{file} was apparently created by another process (as"
-      puts "a #{desc}) as soon as it was deleted by this process.  Someone may be trying"
-      puts "to do something objectionable (such as tricking you into overwriting system"
-      puts "files if you are running as root)."
-      raise
+      tempfile.fsync
+    rescue NotImplementedError
+      # fsync may not be implemented by Ruby on all platforms, but
+      # there is absolutely no recovery path if we detect that.  So, we just
+      # ignore the return code.
+      #
+      # However, don't be fooled: that is accepting that we are running in
+      # an unsafe fashion.  If you are porting to a new platform don't stub
+      # that out.
     end
+
+    tempfile.close
+
+    File.rename(tempfile.path, file)
+
+    # Ideally, we would now fsync the directory as well, but Ruby doesn't
+    # have support for that, and it doesn't matter /that/ much...
+
+    # Return something true, and possibly useful.
+    file
   end
-  module_function :secure_open
+  module_function :replace_file
 end
 end
 
