@@ -35,7 +35,8 @@ module PuppetSpec::Files
     path
   end
 
-  def tmpfile(name)
+  def tmpfile(name) PuppetSpec::Files.tmpfile(name) end
+  def self.tmpfile(name)
     # Generate a temporary file, just for the name...
     source = Tempfile.new(name)
     path = source.path
@@ -49,7 +50,8 @@ module PuppetSpec::Files
     path
   end
 
-  def tmpdir(name)
+  def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
+  def self.tmpdir(name)
     path = tmpfile(name)
     FileUtils.mkdir_p(path)
     path
