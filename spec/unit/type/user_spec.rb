@@ -218,6 +218,56 @@ describe Puppet::Type.type(:user) do
     end
   end
 
+  describe "when managing groups" do
+    it "should support a singe group" do
+      lambda { described_class.new(:name => 'foo', :groups => 'bar') }.should_not raise_error
+    end
+
+    it "should support multiple groups as an array" do
+      lambda { described_class.new(:name => 'foo', :groups => [ 'bar' ]) }.should_not raise_error
+      lambda { described_class.new(:name => 'foo', :groups => [ 'bar', 'baz' ]) }.should_not raise_error
+    end
+
+    it "should not support a comma separated list" do
+      lambda { described_class.new(:name => 'foo', :groups => 'bar,baz') }.should raise_error(Puppet::Error, /Group names must be provided as an array/)
+    end
+
+    it "should not support an empty string" do
+      lambda { described_class.new(:name => 'foo', :groups => '') }.should raise_error(Puppet::Error, /Group names must not be empty/)
+    end
+
+    describe "when testing is in sync" do
+
+      before :each do
+        # the useradd provider uses a single string to represent groups and so does Puppet::Property::List when converting to should values
+        @provider = @provider_class.new(:name => 'foo', :groups => 'a,b,e,f')
+      end
+
+      it "should not care about order" do
+        @property = described_class.new(:name => 'foo', :groups => [ 'a', 'c', 'b' ]).property(:groups)
+        @property.must be_safe_insync([ 'a', 'b', 'c' ])
+        @property.must be_safe_insync([ 'a', 'c', 'b' ])
+        @property.must be_safe_insync([ 'b', 'a', 'c' ])
+        @property.must be_safe_insync([ 'b', 'c', 'a' ])
+        @property.must be_safe_insync([ 'c', 'a', 'b' ])
+        @property.must be_safe_insync([ 'c', 'b', 'a' ])
+      end
+
+      it "should merge current value and desired value if membership minimal" do
+        @instance = described_class.new(:name => 'foo', :groups => [ 'a', 'c', 'b' ], :provider => @provider)
+        @instance[:membership] = :minimum
+        @instance[:groups].should == 'a,b,c,e,f'
+      end
+
+      it "should not treat a subset of groups insync if membership inclusive" do
+        @instance = described_class.new(:name => 'foo', :groups => [ 'a', 'c', 'b' ], :provider => @provider)
+        @instance[:membership] = :inclusive
+        @instance[:groups].should == 'a,b,c'
+      end
+    end
+  end
+
+
   describe "when managing expiry" do
     it "should fail if given an invalid date" do
       lambda { described_class.new(:name => 'foo', :expiry => "200-20-20") }.should raise_error(Puppet::Error, /Expiry dates must be YYYY-MM-DD/)
