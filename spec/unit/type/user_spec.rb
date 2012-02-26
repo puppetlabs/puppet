@@ -1,9 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-user = Puppet::Type.type(:user)
-
-describe user do
+describe Puppet::Type.type(:user) do
   before do
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @provider = stub 'provider'
@@ -11,48 +9,48 @@ describe user do
   end
 
   it "should have a default provider inheriting from Puppet::Provider" do
-    user.defaultprovider.ancestors.should be_include(Puppet::Provider)
+    described_class.defaultprovider.ancestors.should be_include(Puppet::Provider)
   end
 
   it "should be able to create a instance" do
-    user.new(:name => "foo").should_not be_nil
+    described_class.new(:name => "foo").should_not be_nil
   end
 
   it "should have an allows_duplicates feature" do
-    user.provider_feature(:allows_duplicates).should_not be_nil
+    described_class.provider_feature(:allows_duplicates).should_not be_nil
   end
 
   it "should have an manages_homedir feature" do
-    user.provider_feature(:manages_homedir).should_not be_nil
+    described_class.provider_feature(:manages_homedir).should_not be_nil
   end
 
   it "should have an manages_passwords feature" do
-    user.provider_feature(:manages_passwords).should_not be_nil
+    described_class.provider_feature(:manages_passwords).should_not be_nil
   end
 
   it "should have a manages_solaris_rbac feature" do
-    user.provider_feature(:manages_solaris_rbac).should_not be_nil
+    described_class.provider_feature(:manages_solaris_rbac).should_not be_nil
   end
 
   it "should have a manages_expiry feature" do
-    user.provider_feature(:manages_expiry).should_not be_nil
+    described_class.provider_feature(:manages_expiry).should_not be_nil
   end
 
   it "should have a manages_password_age feature" do
-    user.provider_feature(:manages_password_age).should_not be_nil
+    described_class.provider_feature(:manages_password_age).should_not be_nil
   end
 
   it "should have a system_users feature" do
-    user.provider_feature(:system_users).should_not be_nil
+    described_class.provider_feature(:system_users).should_not be_nil
   end
 
   describe "instances" do
     it "should have a valid provider" do
-      user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
+      described_class.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
     end
 
     it "should delegate existence questions to its provider" do
-      instance = user.new(:name => "foo")
+      instance = described_class.new(:name => "foo")
       instance.provider.expects(:exists?).returns "eh"
       instance.exists?.should == "eh"
     end
@@ -62,11 +60,11 @@ describe user do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      user.attrclass(property).ancestors.should be_include(Puppet::Property)
+      described_class.attrclass(property).ancestors.should be_include(Puppet::Property)
     end
 
     it "should have documentation for its #{property} property" do
-      user.attrclass(property).doc.should be_instance_of(String)
+      described_class.attrclass(property).doc.should be_instance_of(String)
     end
   end
 
@@ -74,21 +72,21 @@ describe user do
 
   list_properties.each do |property|
     it "should have a list '#{property}'" do
-      user.attrclass(property).ancestors.should be_include(Puppet::Property::List)
+      described_class.attrclass(property).ancestors.should be_include(Puppet::Property::List)
     end
   end
 
   it "should have an ordered list 'profiles'" do
-    user.attrclass(:profiles).ancestors.should be_include(Puppet::Property::OrderedList)
+    described_class.attrclass(:profiles).ancestors.should be_include(Puppet::Property::OrderedList)
   end
 
   it "should have key values 'keys'" do
-    user.attrclass(:keys).ancestors.should be_include(Puppet::Property::KeyValue)
+    described_class.attrclass(:keys).ancestors.should be_include(Puppet::Property::KeyValue)
   end
 
   describe "when retrieving all current values" do
     before do
-      @user = user.new(:name => "foo", :uid => 10)
+      @user = described_class.new(:name => "foo", :uid => 10)
     end
 
     it "should return a hash containing values for all set properties" do
@@ -115,7 +113,7 @@ describe user do
 
   describe "when managing the ensure property" do
     before do
-      @ensure = user.attrclass(:ensure).new(:resource => @resource)
+      @ensure = described_class.attrclass(:ensure).new(:resource => @resource)
     end
 
     it "should support a :present value" do
@@ -153,19 +151,19 @@ describe user do
 
   describe "when managing the uid property" do
     it "should convert number-looking strings into actual numbers" do
-      uid = user.attrclass(:uid).new(:resource => @resource)
+      uid = described_class.attrclass(:uid).new(:resource => @resource)
       uid.should = "50"
       uid.should.must == 50
     end
 
     it "should support UIDs as numbers" do
-      uid = user.attrclass(:uid).new(:resource => @resource)
+      uid = described_class.attrclass(:uid).new(:resource => @resource)
       uid.should = 50
       uid.should.must == 50
     end
 
     it "should :absent as a value" do
-      uid = user.attrclass(:uid).new(:resource => @resource)
+      uid = described_class.attrclass(:uid).new(:resource => @resource)
       uid.should = :absent
       uid.should.must == :absent
     end
@@ -173,36 +171,36 @@ describe user do
 
   describe "when managing the gid" do
     it "should :absent as a value" do
-      gid = user.attrclass(:gid).new(:resource => @resource)
+      gid = described_class.attrclass(:gid).new(:resource => @resource)
       gid.should = :absent
       gid.should.must == :absent
     end
 
     it "should convert number-looking strings into actual numbers" do
-      gid = user.attrclass(:gid).new(:resource => @resource)
+      gid = described_class.attrclass(:gid).new(:resource => @resource)
       gid.should = "50"
       gid.should.must == 50
     end
 
     it "should support GIDs specified as integers" do
-      gid = user.attrclass(:gid).new(:resource => @resource)
+      gid = described_class.attrclass(:gid).new(:resource => @resource)
       gid.should = 50
       gid.should.must == 50
     end
 
     it "should support groups specified by name" do
-      gid = user.attrclass(:gid).new(:resource => @resource)
+      gid = described_class.attrclass(:gid).new(:resource => @resource)
       gid.should = "foo"
       gid.should.must == "foo"
     end
 
     describe "when testing whether in sync" do
       before do
-        @gid = user.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})
+        @gid = described_class.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})
       end
 
       it "should return true if no 'should' values are set" do
-        @gid = user.attrclass(:gid).new(:resource => @resource)
+        @gid = described_class.attrclass(:gid).new(:resource => @resource)
 
         @gid.must be_safe_insync(500)
       end
@@ -224,7 +222,7 @@ describe user do
 
     describe "when syncing" do
       before do
-        @gid = user.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})
+        @gid = described_class.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})
       end
 
       it "should use the first found, specified group as the desired value and send it to the provider" do
@@ -240,7 +238,7 @@ describe user do
 
   describe "when managing expiry" do
     before do
-      @expiry = user.attrclass(:expiry).new(:resource => @resource)
+      @expiry = described_class.attrclass(:expiry).new(:resource => @resource)
     end
 
     it "should fail if given an invalid date" do
@@ -250,7 +248,7 @@ describe user do
 
   describe "when managing minimum password age" do
     before do
-      @age = user.attrclass(:password_min_age).new(:resource => @resource)
+      @age = described_class.attrclass(:password_min_age).new(:resource => @resource)
     end
 
     it "should accept a negative minimum age" do
@@ -264,7 +262,7 @@ describe user do
 
   describe "when managing maximum password age" do
     before do
-      @age = user.attrclass(:password_max_age).new(:resource => @resource)
+      @age = described_class.attrclass(:password_max_age).new(:resource => @resource)
     end
 
     it "should accept a negative maximum age" do
@@ -278,7 +276,7 @@ describe user do
 
   describe "when managing passwords" do
     before do
-      @password = user.attrclass(:password).new(:resource => @resource, :should => "mypass")
+      @password = described_class.attrclass(:password).new(:resource => @resource, :should => "mypass")
     end
 
     it "should not include the password in the change log when adding the password" do
@@ -313,7 +311,7 @@ describe user do
     end
 
     it "should support a :role value for ensure" do
-      @ensure = user.attrclass(:ensure).new(:resource => @resource)
+      @ensure = described_class.attrclass(:ensure).new(:resource => @resource)
       lambda { @ensure.should = :role }.should_not raise_error
     end
   end
@@ -321,7 +319,7 @@ describe user do
   describe "when user has roles" do
     before do
       # To test this feature, we have to support it.
-      user.new(:name => "foo").provider.class.stubs(:feature?).returns(true)
+      described_class.new(:name => "foo").provider.class.stubs(:feature?).returns(true)
     end
 
     it "should autorequire roles" do
