@@ -16,6 +16,7 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
   def search(relative_path, request)
     # We currently only support one kind of search on plugins - return
     # them all.
+    Puppet.debug("Warning: calling Plugins.search with empty module path.") if request.environment.modules.empty?
     paths = request.environment.modules.find_all { |mod| mod.plugins? }.collect { |mod| mod.plugin_directory }
     if paths.empty?
       # If the modulepath is valid then we still need to return a valid root
