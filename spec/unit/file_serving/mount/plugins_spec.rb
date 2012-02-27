@@ -37,7 +37,7 @@ describe Puppet::FileServing::Mount::Plugins do
 
   describe "when searching for files" do
     it "should use the node's environment to find the modules" do
-      @environment.expects(:modules).returns []
+      @environment.expects(:modules).at_least_once.returns []
       @environment.stubs(:modulepath).returns ["/tmp/modules"]
 
       @mount.search("foo", @request)

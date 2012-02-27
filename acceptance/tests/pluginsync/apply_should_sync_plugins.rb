@@ -6,6 +6,8 @@ on agents, "rm -rf #{basedir}"
 
 on agents, "mkdir -p #{basedir}/1/a/lib/ #{basedir}/2/a/lib"
 
+# create two modules called "a", in different paths... this is intended to validate precedence in the module path;
+#  if two modules are found with the same name, the one that is found earlier in the path should be used.
 create_remote_file(agents, "#{basedir}/1/a/lib/foo.rb", "#1a")
 create_remote_file(agents, "#{basedir}/2/a/lib/foo.rb", "#2a")
 on agents, puppet_apply("--modulepath=#{basedir}/1:#{basedir}/2 --pluginsync -e 'notify { \"hello\": }'") do
