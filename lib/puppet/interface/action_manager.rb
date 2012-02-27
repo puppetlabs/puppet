@@ -7,7 +7,7 @@ module Puppet::Interface::ActionManager
     require 'puppet/interface/action_builder'
 
     @actions ||= {}
-    raise "Action #{name} already defined for #{self}" if action?(name)
+    Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
 
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
 
