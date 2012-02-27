@@ -1,5 +1,182 @@
+2.7.12rc1
+===
+90fb5c8 Maint: Fix bad copy and paste
+aa8a00b (#12725) Fix puppet agent --listen on Windows
+c5d3825 (#11740) Wait on the handle from the PROCESS_INFORMATION structure
+4f493a3 (#12564) Stub CHILDSTATUS in all test cases, not just failure cases.
+0a7d05a Fix spec ordering failure on environment
+8be0882 Typo: "Seperated" -> "separated"
+86f2876 (#11408): Don't add execute bit to newly created files on Windows
+673c425 (#11408) Skip default file permissions for sync'ed files on Windows
+94f5f53 (#11408) Allow POSIX paths for files served to Windows agents
+e323bce Fix a test that tries to create a dir with '*' in the name
+03bd20b (#12631) Remove puppet module face
+edf13c1 Fix range intersection monkey patch :& alias
+f903c41 (#12256) Fix SemVer's range behavior to work with Ruby 1.9
+bbff8d0 (#12256) module_requirements should include versions
+7156e9c Update module and environment with functionality for the module tool
+b6d052e (#12424) Update SemVer to use ranges and new comparison operators
+2e98bd1 (#12645) Face actions should be able to set exit codes
+50082e3 (#6663) Raise default key lengths in Puppet.
+6fc9ccd (#12403) Always create a default log destination
+babe7e4 Maint: Remove duplicate code from bad merge conflict
+27476f6 (#12403) Refactor duplicate log setup
+4720a94 (#12080) Implement a rich console logging prototype.
+7f6947a (#12564) Paste execpipe commands together with spaces.
+9e672a3 Add tests for the OpenBSD package provider.
+74cc1eb Whitespace cleanup on OpenBSD package provider.
+3d1c687 Possible fix for #8435 - remote package installation broken
+25bbecf (#12310) Remove process_name instrumentation listener
+0eab682 (#5454) add "autosign" argument
+1e54190 (#10299) Use CheckTokenMembership to see if user has admin rights
+44af10f (#10299) Refactor Windows administrator detection
+a195717 (#12412) Don't assume the `root` user exists
+2dd0f55 (#12106) Enhance the uninstall PMT action for UX
+9ff4d1f Improve guidance for getting `puppet kick` to work.
+6e39e58 Revert "(#12106) Enhance the uninstall PMT action for UX"
+bad1d31 (#5454) Acceptance test to verify that pluginsync works properly with "features"
+b222cd5 (#12106) Enhance the uninstall PMT action for UX
+b8d77a6 Revert "(#12339) Adding basic search output formatting."
+c01571a Revert "(#12339) Improving documentation around Puppet::Util::Terminal.width."
+00685a2 Revert "(#12339) Clarifying source attribution."
+3d518b0 (#12454) device_spec.rb fails with ruby 1.8.7-p357 and mocha v.0.9.12
+6569af3 (#12244) All forge interactions should be centralized
+15de31a (#11535) Edit scheduled_task type docs
+163da19 (#11535) Update Windows exec provider docs
+44bd741 (#11535) Update package type docs w/ Windows-specific quirks
+4ec0bc8 (#11535) Update service type w/ Windows-specific quirks
+7cfcbda (#11535) Update group type's docs w/ Windows-specific quirks
+27aa560 Maint: Kill bogus allowdupe compatibility warning for FreeBSD
+675ddbb (#11535) Update user type docs w/ Windows-specific quirks
+3b0e359 (#12452) Make Puppet::Util::SELinux#read_mounts work on Ruby 1.9
+e32a39c (#12464) Avoid unnecessarily reloading facts when node_name_fact is not set
+f5067ed (#11535) Update file type with Windows-specific quirks
+f16881f (#2927) Document symbolic modes in mode parameter
+ba6b8b5 (#7485) Support zypper 0.6 with zypper package provider
+0b95f3a (#12412) Mark symbolic file modes test as pending on Windows
+8ae9247 (#12412) Skip ca acceptance test on Window agents
+104192d (#12412) Refactor execution of echo in acceptance tests
+dce3d58 (#12412) Use host-specific methods for generating tmp file/dir
+75d484e (#12412) Warn when running hostname -f on Windows agents
+e1f1f41 (#12412) Skip symlink tests on Windows
+6201ecd (#12412) Refactor puppet_resource('exec')
+1d1f687 (#12412) Refactor puppet_resource('host')
+612f945 (#12412) Refactor puppet_resource('tidy')
+0544ca7 (#12412) Skip cron on Windows
+41e91d8 (#12412) Refactor puppet_resource('file')
+fb28ce0 (#12412) Refactor puppet_resource('group') tests
+85fd690 (#12412) Refactor puppet_resource('user') tests
+9b4c97d Maint: General improvement of file type parameter doc strings
+2a9562a Maint: Improve documentation of file type's source parameter
+8b87452 Maint: Clarify ancient text about directories of symlinks
+3365c85 (#12349) Order stderr output to fix acceptance test for `module list`
+bfcb775 (#12339) Clarifying source attribution.
+2575417 (#12405) Remove obsolete storeconfig purging code.
+f73a741 (#7485) Support zypper 0.6 with zypper package provider
+0e7d2f0 (#12339) Improving documentation around Puppet::Util::Terminal.width.
+64abee3 (#11535) Call out differing config defaults on Windows
+99e6708 (#11535) Platform agnosticism: Desc strings should refer to path separator instead of ':'
+de58c0b (#12349) Order module list output
+77f5a48 Symbolic file mode test fixes when no mode change happens.
+9e2705b Maint: Update external_nodes setting description for changes from 2.6.5
+d14ee6a Maint: Configuration settings shouldn't be referred to as "parameters"
+5225d39 (#12386) Disable puppet kick on windows
+984997f (#12372) Remove duplicate methods from certificate_request
+a7bd569 (#12339) Adding basic search output formatting.
+0578737 (#12356) Mention the expected exit codes in the hasstatus parameter doc
+8fd54b1 Restore compatible `insync?` behaviour for matching arrays.
+5520726 Fix bugs around the finer-grained insync? protocol.
+7c9f861 Finer-grained protocol for property `insync?`.
+c0e28b0 Add unit tests for the `insysc?` method of a property.
+7f84c49 Property Spec cleanup: eliminate stubbing of resource and provider.
+d66bb00 Property Spec cleanup: last let method extraction.
+2775dd7 Property Spec cleanup: extract more let methods.
+cd536ab Property Spec cleanup: remove unused instance variable.
+a5d7bd6 Property Spec cleanup: remove some pointless extra stubs.
+f17dbf7 Property Spec cleanup: extract property instance to a let method.
+4157102 Property Spec cleanup: extract mock resource to let method.
+8f9214e Property Spec cleanup: extract mock provider to let method.
+47510b0 Property Spec cleanup: extract new subclass to let method.
+03e3756 (#2927) Acceptance test for symbolic file modes.
+51fa666 (#12363) Use Tempfile to generate temp files
+7da2c58 Alternate, and portable, stubbing of execution for upstart spec.
+a6c196f (#12349) Add module dependency errors to module list output
+17d3e31 (#12268) Fix upstart test to work with String#each_line
+2303a81 Revert "Merge pull request #396 from jeffmccune/feature/2.7.x/12088_windows_build_tasks"
+a116726 (#12329) Allow faces when_rendering blocks to take options
+a8a0f5f (#12268) String#each is not available in Ruby 1.9
+20e03a9 (#11423) Better error when imported resources overlap.
+f8d4be6 (#12296) Acceptance test for cycle detection in graphs.
+d89423f Use natural ordering of Puppet::Provider.
+83ca48d Make `Puppet::Provider` ordered.
+3f88882 (#12296) Now that `Puppet::Type` is ordered, use that.
+316de58 (#12296) Make `Puppet::Type` ordered.
+37a3e82 (#12296) Test cycle detection on real Puppet::Type instances.
+289dddc (#12188) Handle Win32 as well as Unix in pidfile tests.
+25a0a69 (#10064) Add the Puppet environment to reports
+3310470 (#12188) Better handling of PID file cleanup warnings.
+744dfa4 Revert "Finer-grained protocol for property `insync?`."
+4911faf (#12195) Fix future ruby warning messaves in process_name
+f11201e (#12169) Correct redhat spec changelog chronology issue
+5c97173 (#8855) Follow HTTP redirects is {app,pkg}dmg providers.
+e81de1e (#6771) Check for ActiveRecord::Base instead of Puppet.features.rails?
+3892875 (#6771) Stop other AR connection handling.
+80ecd88 (#6771) Stop stubbing some feature tests.
+ed24b80 (#6771) Disconnect any ActiveRecord connection after every test.
+dd0e405 Document why we disable GC during the test runs.
+afe93b7 Allow storeconfigs collector to accept parser resources
+b0c8d2c (#12114) Qualify usages of `::File` to avoid conflict with file face
+8ec0b6c Revert "(#12101) Add shared context for specs to imitate windows or posix"
+33420a6 Revert "(#12101) Make Puppet::Util::absolute_path? usable in autoloader"
+85e8cea (#12101) Make Puppet::Util::absolute_path? usable in autoloader
+edc544d (#12101) Add shared context for specs to imitate windows or posix
+60c6150 (#11804) Enhance PMT search action output
+e415daa (#2279) Handle providers with multiple installed versions - ruby gems
+e56dd9a (#2279) Convert package specs to not use mocks
+d28768a (#10417) Disable `diff` on Windows by default
+1c9e68c (#12088) Add windows:build task to build MSI package
+1cb8462 (#12088) Add rake download and unpack handlers
+d937ae3 (#6541) Use the same filebucket for backup and restore
+e4f6bc9 Revert "(#11600) Remove module face"
+f56a09a (#11955) Refactor to use IO.binread
+d3cc7d6 (#12081) ensure user deletes respect managehome
+8202729 (#11955) Monkey patch IO.binread and IO.binwrite
+3abfa67 (#10296) Switch schedule tests from should to must
+72a2fe0 (#5445) Create /var/lib/puppet in OS X Package
+0f2bb27 (#6710) Fix Ruby 1.9.2 failures due to Array#to_s changes.
+0f19cbe (#11990) Puppetdoc rdoc should also parse README.rdoc
+a6255d2 (6404) Failing when no file is specified to backup
+9345497 (2056) Launchd now supports overriding stop/start
+11dc062 Removing resource stubbing from launchd tests
+17ac2c1 (#11826) Fix error when no certs were printed to console from ca face
+ad83422 (#5353) Change agent default to graph=true
+5f5e103 (#11961) Apply and catch a timeout when contacting PyPI over XMLRPC
+f2c407a (#12051) Send exec onlyif/unless command output to debug log
+9e6a01f (#12070) Fix crontab value munging
+b1eda36 maint: Add expected error messages to cron spec
+c86c97d maint: Use a real provider class in cron spec
+01e7200 maint: Remove unused vars in cron spec
+38f386f maint: Fix indention in cron spec
+d60a88e (#11930) Add validation of Windows paths in the generate function
+aa48965 (#11930) Use Puppet::Util.absolute_path? to validate paths
+1ffbeb1 (#11930) Use FileUtils.mkdir_p to recursively create directories
+eee3511 (Maint) Remove dead code
+64446ac (maint) Fix test 3360 to use per host cfg data
+5d1b7fe (#11057) Add spec, should notify why a run is skipped
+9e7ce16 (#11057) Note why a scheduled run was skipped in Puppet.
+b26e03a Fix stage inheritance between multiple included classes
+4f295f3 (#11451) Fix improper use of "defined" in the duplicate declaration error
+132dca4 (#6710) Support relationships for resources defined by other constructs
+982564e (#6710) Support relationship arrows between resource refs with title arrays
+0e6d0a4 maint: Unify 'type' and 'classref' non-terminals in the grammar
+
 2.7.11
 ===
+01b57e9 (#12188) Better handling of PID file cleanup warnings.
+a8b6088 (#12572) Add acceptance test to make sure no last_run_summary diff is printed
+40480ed (#12572) Revert fix for #7106 and implement a more minimal fix
+0486462 (#12412) Mark symbolic file modes test as pending on Windows
+115ba71 Symbolic file mode test fixes when no mode change happens.
 dde3945 Disable specs that use replace_file on Windows
 4272d1f Disable replace_file on Windows
 4bcbad4 Remove unnecessary fallbacks in change_{user,group}
