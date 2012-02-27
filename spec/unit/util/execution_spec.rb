@@ -156,7 +156,7 @@ describe Puppet::Util::Execution do
       end
 
       it "should return the process info of the child process" do
-        Puppet::Util::Execution.execute_windows('test command', {}, @stdin, @stdout, @stderr).should == proc_info_stub
+        call_exec_windows('test command', {}, @stdin, @stdout, @stderr).should == proc_info_stub
       end
 
       it "should quote arguments containing spaces if command is specified as an array" do
