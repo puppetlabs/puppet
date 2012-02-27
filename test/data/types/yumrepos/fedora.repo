@@ -1,9 +1,0 @@
-[base]
-name=Fedora Core $releasever - $basearch - Base
-mirrorlist=http://fedora.redhat.com/download/mirrors/fedora-core-$releasever
-enabled=1
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora
-exclude=foo
-  bar
-  baz
