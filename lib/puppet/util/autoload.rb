@@ -32,7 +32,7 @@ class Puppet::Util::Autoload
     # we can load downloaded plugins if they've already been loaded
     # into memory.
     def mark_loaded(name, file)
-      $" << name + ".rb" unless $".include?(name)
+      $LOADED_FEATURES << name + ".rb" unless $LOADED_FEATURES.include?(name)
       loaded[name] = [file, File.mtime(file)]
     end
 
