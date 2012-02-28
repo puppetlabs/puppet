@@ -109,6 +109,19 @@ describe Puppet::Util::Autoload do
 
       $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
+
+    it "should treat equivalent paths to a loaded file as loaded" do
+      File.stubs(:exist?).returns true
+      Kernel.stubs(:load)
+      @autoload.load("myfile")
+
+      @autoload.class.loaded?("tmp/myfile").should be
+      @autoload.class.loaded?("tmp/./myfile.rb").should be
+      @autoload.class.loaded?("./tmp/myfile.rb").should be
+      @autoload.class.loaded?("tmp/../tmp/myfile.rb").should be
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
+    end
   end
 
   describe "when loading all files" do

@@ -24,7 +24,7 @@ class Puppet::Util::Autoload
     # see if a given plugin is currently loaded and thus should be
     # reloaded.
     def loaded?(path)
-      path = path.to_s.sub(/\.rb$/, '')
+      path = cleanpath(path).chomp('.rb')
       loaded.include?(path)
     end
 
@@ -32,11 +32,13 @@ class Puppet::Util::Autoload
     # we can load downloaded plugins if they've already been loaded
     # into memory.
     def mark_loaded(name, file)
+      name = cleanpath(name)
       $LOADED_FEATURES << name + ".rb" unless $LOADED_FEATURES.include?(name)
       loaded[name] = [file, File.mtime(file)]
     end
 
     def changed?(name)
+      name = cleanpath(name)
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
       return true unless file == get_file(name)
@@ -122,6 +124,12 @@ class Puppet::Util::Autoload
 
     def search_directories(env=nil)
       [module_directories(env), Puppet[:libdir].split(File::PATH_SEPARATOR), $LOAD_PATH].flatten
+    end
+
+    # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
+    # and eliminates unnecessary parts of a path.
+    def cleanpath(path)
+      Pathname.new(path).cleanpath.to_s
     end
   end
 
