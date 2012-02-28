@@ -26,6 +26,7 @@ Puppet::Type.type(:service).provide :base do
     IO.popen(ps) { |table|
       table.each_line { |line|
         if regex.match(line)
+          self.debug "Process matched: #{line}"
           ary = line.sub(/^\s+/, '').split(/\s+/)
           return ary[1]
         end
