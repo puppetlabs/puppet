@@ -106,14 +106,9 @@ class Puppet::Util::Autoload
 
       real_env = Puppet::Node::Environment.new(env)
 
-      # We're using a per-thread cache of said module directories, so that
-      # we don't scan the filesystem each time we try to load something with
-      # this autoload instance. But since we don't want to cache for the eternity
-      # this env_module_directories gets reset after the compilation on the master.
-      # This is also reset after an agent ran.
-      # One of the side effect of this change is that this module directories list will be
-      # shared among all autoload that we have running at a time. But that won't be an issue
-      # as by definition those directories are shared by all autoload.
+      # We're using a per-thread cache of module directories so that we don't
+      # scan the filesystem each time we try to load something. This is reset
+      # at the beginning of compilation and at the end of an agent run.
       Thread.current[:env_module_directories] ||= {}
       Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
@@ -133,7 +128,7 @@ class Puppet::Util::Autoload
     end
   end
 
-  # Send [], []=, and :clear to the @autloaders hash
+  # Send [] and []= to the @autoloaders hash
   Puppet::Util.classproxy self, :autoloaders, "[]", "[]="
 
   attr_accessor :object, :path, :objwarn, :wrap
