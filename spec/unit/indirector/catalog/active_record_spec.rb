@@ -1,34 +1,20 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
+describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do
+  include PuppetSpec::Files
 
-describe "Puppet::Resource::Catalog::ActiveRecord", :if => Puppet.features.rails? do
   require 'puppet/rails'
 
-  before :all do
-    class Tableless < ActiveRecord::Base
-      def self.columns
-        @columns ||= []
-      end
-      def self.column(name, sql_type=nil, default=nil, null=true)
-        columns << ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, sql_type.to_s, null)
-      end
-    end
-
-    class Host < Tableless
-      column :name, :string, :null => false
-      column :ip, :string
-      column :environment, :string
-      column :last_compile, :datetime
-    end
-  end
-
-  before do
+  before :each do
     require 'puppet/indirector/catalog/active_record'
-    Puppet.features.stubs(:rails?).returns true
-    Puppet::Rails.stubs(:init)
-    @terminus = Puppet::Resource::Catalog::ActiveRecord.new
+    setup_scratch_database
   end
+
+  let :terminus do
+    Puppet::Resource::Catalog::ActiveRecord.new
+  end
+
 
   it "should be a subclass of the ActiveRecord terminus class" do
     Puppet::Resource::Catalog::ActiveRecord.ancestors.should be_include(Puppet::Indirector::ActiveRecord)
@@ -40,72 +26,75 @@ describe "Puppet::Resource::Catalog::ActiveRecord", :if => Puppet.features.rails
 
   describe "when finding an instance" do
     it "should return nil" do
-      request = stub 'request', :key => "foo"
-      @terminus.find(request).should be_nil
+      r = stub 'request', :key => "foo", :options => {:cache_integration_hack => false}
+      terminus.find(r).should be_nil
     end
 
+    # This used to make things go to the database, but that is code that is as
+    # dead as a doornail.  This just checks we don't blow up unexpectedly, and
+    # can go away after a few releases. --daniel 2012-02-27
+    it "should always return nil" do
+      r = stub 'request', :key => "foo", :options => {:cache_integration_hack => true}
+      terminus.find(r).should be_nil
+    end
   end
 
   describe "when saving an instance" do
-    before do
-      @host = Host.new(:name => "foo")
-      @host.stubs(:merge_resources)
-      @host.stubs(:save)
-      @host.stubs(:railsmark).yields
+    let :catalog do Puppet::Resource::Catalog.new("foo") end
+    let :request do Puppet::Indirector::Request.new(:active_record, :save, catalog) end
+    let :node do Puppet::Node.new("foo", :environment => "environment") end
 
-      @node = Puppet::Node.new("foo", :environment => "environment")
-      Puppet::Node.indirection.stubs(:find).with("foo").returns(@node)
-
-      Puppet::Rails::Host.stubs(:find_by_name).returns @host
-      @catalog = Puppet::Resource::Catalog.new("foo")
-      @request = Puppet::Indirector::Request.new(:active_record, :save, @catalog)
+    before :each do
+      Puppet::Node.indirection.stubs(:find).with("foo").returns(node)
     end
 
     it "should find the Rails host with the same name" do
-      Puppet::Rails::Host.expects(:find_by_name).with("foo").returns @host
-
-      @terminus.save(@request)
+      Puppet::Rails::Host.expects(:find_by_name).with("foo")
+      terminus.save(request)
     end
 
     it "should create a new Rails host if none can be found" do
-      Puppet::Rails::Host.expects(:find_by_name).with("foo").returns nil
-
-      Puppet::Rails::Host.expects(:create).with(:name => "foo").returns @host
-
-      @terminus.save(@request)
+      Puppet::Rails::Host.find_by_name('foo').should be_nil
+      terminus.save(request)
+      Puppet::Rails::Host.find_by_name('foo').should be_valid
     end
 
     it "should set the catalog vertices as resources on the Rails host instance" do
-      @catalog.expects(:vertices).returns "foo"
-      @host.expects(:merge_resources).with("foo")
+      # We need to stub this so we get the same object, not just the same
+      # content, otherwise the expect can't fire. :(
+      host = Puppet::Rails::Host.create!(:name => "foo")
+      Puppet::Rails::Host.expects(:find_by_name).with("foo").returns(host)
+      catalog.expects(:vertices).returns("foo")
+      host.expects(:merge_resources).with("foo")
 
-      @terminus.save(@request)
+      terminus.save(request)
     end
 
     it "should set host ip if we could find a matching node" do
-      @node.stubs(:parameters).returns({"ipaddress" => "192.168.0.1"})
-
-      @terminus.save(@request)
-      @host.ip.should == '192.168.0.1'
+      node.merge("ipaddress" => "192.168.0.1")
+      terminus.save(request)
+      Puppet::Rails::Host.find_by_name("foo").ip.should == '192.168.0.1'
     end
 
     it "should set host environment if we could find a matching node" do
-      @terminus.save(@request)
-      @host.environment.should == "environment"
+      terminus.save(request)
+      Puppet::Rails::Host.find_by_name("foo").environment.should == "environment"
     end
 
     it "should set the last compile time on the host" do
       now = Time.now
-      Time.expects(:now).returns now
+      Time.stubs(:now).returns now
 
-      @terminus.save(@request)
-      @host.last_compile.should == now
+      terminus.save(request)
+      Puppet::Rails::Host.find_by_name("foo").last_compile.should == now
     end
 
     it "should save the Rails host instance" do
-      @host.expects(:save)
+      host = Puppet::Rails::Host.create!(:name => "foo")
+      Puppet::Rails::Host.expects(:find_by_name).with("foo").returns(host)
+      host.expects(:save)
 
-      @terminus.save(@request)
+      terminus.save(request)
     end
   end
 end

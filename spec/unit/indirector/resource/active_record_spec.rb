@@ -1,22 +1,13 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-
 require 'puppet/rails'
 require 'puppet/node/facts'
 
-describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before :each do
-    dir = Pathname(tmpdir('puppet-var'))
-    Puppet[:vardir]       = dir.to_s
-    Puppet[:dbadapter]    = 'sqlite3'
-    Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+    setup_scratch_database
     Puppet[:storeconfigs] = true
   end
 
