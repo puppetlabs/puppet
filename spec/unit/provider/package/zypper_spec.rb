@@ -64,17 +64,13 @@ describe provider_class do
   end
 
   describe "when getting latest version" do
-    it "should return a version string" do
+    it "should return a version string with valid list-updates data from SLES11sp1" do
+      fake_data = File.read(File.join(PuppetSpec::FIXTURE_DIR,
+        'unit/provider/package/zypper/zypper-list-updates-SLES11sp1.out'))
 
-      fake_data = "Loading repository data...
-Reading installed packages...
-S | Repository     | Name                  | Version         | Arch
---+----------------+-----------------------+-----------------+-------
-v | SLES11-Updates | cups                  | 1.1.1           | x86_64
-v | SLES11-Updates | mypackage             | 1.3.9h-8.20.1   | x86_64"
-
-  @provider.expects(:zypper).with("list-updates").returns fake_data
-  @provider.latest.should == "1.3.9h-8.20.1"
+      @resource.stubs(:[]).with(:name).returns "at"
+      @provider.expects(:zypper).with("list-updates").returns fake_data
+      @provider.latest.should == "3.1.8-1069.18.2"
     end
   end
 

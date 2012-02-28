@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     #zypper can only get a list of *all* available packages?
     output = zypper "list-updates"
 
-    if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/
+    if output =~ /#{Regexp.escape @resource[:name]}\s*\|.*?\|\s*([^\s\|]+)/
       return $1
     else
       # zypper didn't find updates, pretend the current
