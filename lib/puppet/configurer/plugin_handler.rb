@@ -16,22 +16,7 @@ module Puppet::Configurer::PluginHandler
       Puppet[:pluginsignore]
     )
 
-    plugin_downloader.evaluate.each { |file| load_plugin(file) }
-  end
-
-  def load_plugin(file)
-    return unless FileTest.exist?(file)
-    return if FileTest.directory?(file)
-
-    begin
-      if file =~ /.rb$/
-        Puppet.info "Loading downloaded plugin #{file}"
-        load file
-      else
-        Puppet.debug "Skipping downloaded plugin #{file}"
-      end
-    rescue Exception => detail
-      Puppet.err "Could not load downloaded file #{file}: #{detail}"
-    end
+    plugin_downloader.evaluate
+    Puppet::Util::Autoload.reload_changed
   end
 end

@@ -107,7 +107,7 @@ class Puppet::Interface
 
   # Try to find actions defined in other files.
   def load_actions
-    Puppet::Interface.autoloader.search_directories.each do |dir|
+    Puppet::Interface.autoloader.class.search_directories.each do |dir|
       Dir.glob(File.join(dir, "puppet/face/#{name}", "*.rb")).each do |file|
         action = file.sub(dir, '').sub(/^[\\\/]/, '').sub(/\.rb/, '')
         Puppet.debug "Loading action '#{action}' for '#{name}' from '#{dir}/#{action}.rb'"
