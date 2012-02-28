@@ -468,4 +468,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     entry = described_class.new(:name => "test_entry", :ensure => :absent)
     entry.value(:command).should == nil
   end
+
+  it "should default to user => root if Etc.getpwuid(Process.uid) returns nil (#12357)" do
+    Etc.expects(:getpwuid).returns(nil)
+    entry = described_class.new(:name => "test_entry", :ensure => :present)
+    entry.value(:user).should eql "root"
+  end
 end
