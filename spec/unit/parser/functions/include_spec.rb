@@ -28,6 +28,18 @@ describe "the 'include' function" do
     @scope.function_include(["foo","bar"])
   end
 
+  it "should include multiple classes passed in an array" do
+    inc = ["foo","bar"]
+    @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == inc}.returns(inc)
+    @scope.function_include([["foo","bar"]])
+  end
+
+  it "should flatten nested arrays" do
+    inc = ["foo","bar","baz"]
+    @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| klasses == inc}.returns(inc)
+    @scope.function_include([["foo","bar"],"baz"])
+  end
+
   it "should not lazily evaluate the included class" do
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| lazy == false}.returns("foo")
     @scope.function_include("foo")
