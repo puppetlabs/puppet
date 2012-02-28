@@ -52,7 +52,7 @@ describe Puppet::Util::Autoload do
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
       Puppet[:libdir] = %w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR)
       @autoload.class.expects(:module_directories).returns %w{/one /two}
-      @autoload.class.search_directories.should == %w{/one /two /libdir1 /lib/dir/two /third/lib/dir} + $LOAD_PATH
+      @autoload.class.search_directories.should == %w{/one /two} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
     end
   end
 
