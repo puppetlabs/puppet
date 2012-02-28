@@ -50,12 +50,10 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
   def munge(value)
     # If it's not a fully qualified path...
     if value.is_a?(String) and value !~ /^\$/ and value != 'false'
-      # Make it one
+      # Preserve trailing slash (stripped by expand_path)
+      isdir = value =~ /\/$/
       value = File.expand_path(value)
-    end
-    if value.to_s =~ /\/$/
-      @type = :directory
-      return value.sub(/\/$/, '')
+      value += '/' if isdir
     end
     value
   end
