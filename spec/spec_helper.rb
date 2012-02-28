@@ -21,6 +21,7 @@ require 'puppet_spec/verbose'
 require 'puppet_spec/files'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
+require 'puppet_spec/database'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 

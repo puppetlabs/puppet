@@ -1,24 +1,18 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-require 'tempfile'
 require 'puppet/rails'
 
-describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_database? do
+  include PuppetSpec::Files
+
   let(:terminus) { Puppet::Node::Facts::InventoryActiveRecord.new }
 
   before :all do
     require 'puppet/indirector/facts/inventory_active_record'
-    @dbfile = Tempfile.new("testdb")
-    @dbfile.close
   end
 
-  after :all do
+  after :each do
     Puppet::Node::Facts.indirection.reset_terminus_class
-    @dbfile.unlink
   end
 
   before :each do
@@ -26,14 +20,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     Puppet::Node.indirection.cache_class = nil
 
     Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
-    Puppet[:dbadapter]  = 'sqlite3'
-    Puppet[:dblocation] = @dbfile.path
-    Puppet[:railslog] = "/dev/null"
-    Puppet::Rails.init
-  end
-
-  after :each do
-    Puppet::Rails.teardown
+    setup_scratch_database
   end
 
   describe "#save" do
