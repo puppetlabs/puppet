@@ -352,7 +352,10 @@ Puppet::Type.newtype(:cron) do
 
       The user defaults to whomever Puppet is running as."
 
-    defaultto { Etc.getpwuid(Process.uid).name || "root" }
+    defaultto {
+      struct = Etc.getpwuid(Process.uid)
+      struct.respond_to?(:name) && struct.name or 'root'
+    }
   end
 
   newproperty(:target) do
