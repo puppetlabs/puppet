@@ -9,14 +9,16 @@ describe 'up2date package provider' do
     Puppet::Type.type(:package).provider(:up2date)
   end
 
-  osfamily = [ 'redhat' ]
+  osfamilies = [ 'redhat' ]
   releases = [ '2.1', '3', '4' ]
 
-  osfamily.product(releases).each do |osfamily, release|
-    it "should be the default provider on #{osfamily} #{release}" do
-      Facter.expects(:value).with(:osfamily).returns(osfamily)
-      Facter.expects(:value).with(:lsbdistrelease).returns(release)
-      subject.default?.should be_true
+  osfamilies.each do |osfamily|
+    releases.each do |release|
+      it "should be the default provider on #{osfamily} #{release}" do
+        Facter.expects(:value).with(:osfamily).returns(osfamily)
+        Facter.expects(:value).with(:lsbdistrelease).returns(release)
+        subject.default?.should be_true
+      end
     end
   end
 end
