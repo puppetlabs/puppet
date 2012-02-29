@@ -10,7 +10,7 @@ class Puppet::Util::Feature
   # successfully.
   def add(name, options = {})
     method = name.to_s + "?"
-    raise ArgumentError, "Feature #{name} is already defined" if self.class.respond_to?(method)
+    @results.delete(name)
 
     if block_given?
       begin

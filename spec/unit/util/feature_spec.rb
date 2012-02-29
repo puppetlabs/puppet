@@ -47,6 +47,16 @@ describe Puppet::Util::Feature do
     $loaded_feature.should == 1
   end
 
+  it "should invalidate the cache for the feature when loading" do
+    # block defined features are evaluated at load time
+    @features.add(:myfeature) { false }
+    @features.should_not be_myfeature
+    # features with no block have deferred evaluation so an existing cached
+    # value would take precedence
+    @features.add(:myfeature)
+    @features.should be_myfeature
+  end
+
   it "should support features with libraries" do
     lambda { @features.add(:puppet, :libs => %w{puppet}) }.should_not raise_error
   end
