@@ -3,16 +3,10 @@ require 'spec_helper'
 
 require 'puppet/node/environment'
 
-describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
-  def column(name, type)
-    ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
-  end
-
+describe "Puppet::Rails::Host", :if => can_use_scratch_database? do
   before do
     require 'puppet/rails/host'
-
-    # Stub this so we don't need access to the DB.
-    Puppet::Rails::Host.stubs(:columns).returns([column("name", "string"), column("environment", "string"), column("ip", "string")])
+    setup_scratch_database
 
     @node = Puppet::Node.new("foo")
     @node.environment = "production"
@@ -96,7 +90,7 @@ describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
 
   describe "when merging catalog resources and database resources" do
     before :each do
-      Puppet.settings.stubs(:[]).with(:thin_storeconfigs).returns(false)
+      Puppet[:thin_storeconfigs] = false
       @resource1 = stub_everything 'res1'
       @resource2 = stub_everything 'res2'
       @resources = [ @resource1, @resource2 ]
@@ -131,7 +125,7 @@ describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
     end
 
     it "should compare only exported resources in thin_storeconfigs mode" do
-      Puppet.settings.stubs(:[]).with(:thin_storeconfigs).returns(true)
+      Puppet[:thin_storeconfigs] = true
       @resource1.stubs(:exported?).returns(true)
 
       @host.expects(:compare_to_catalog).with(@dbresources, [ @resource1 ])
@@ -142,7 +136,7 @@ describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
 
   describe "when searching the database for host resources" do
     before :each do
-      Puppet.settings.stubs(:[]).with(:thin_storeconfigs).returns(false)
+      Puppet[:thin_storeconfigs] = false
       @resource1 = stub_everything 'res1', :id => 1
       @resource2 = stub_everything 'res2', :id => 2
       @resources = [ @resource1, @resource2 ]
@@ -159,7 +153,7 @@ describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
     end
 
     it "should return a hash keyed by id of only exported resources in thin_storeconfigs mode" do
-      Puppet.settings.stubs(:[]).with(:thin_storeconfigs).returns(true)
+      Puppet[:thin_storeconfigs] = true
       @dbresources.expects(:find).with { |*h| h[1][:conditions] == { :exported => true } }.returns([])
 
       @host.find_resources
