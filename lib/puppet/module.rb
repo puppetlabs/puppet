@@ -184,57 +184,94 @@ class Puppet::Module
     Puppet::Module::Tool::Applications::Checksummer.run(path)
   end
 
+  # Identify and mark unmet dependencies.  A dependency will be marked unmet
+  # for the following reasons:
+  #
+  #   * not installed and is thus considered missing
+  #   * installed and does not meet the version requirements for this module
+  #   * installed and doesn't use semantic versioning
+  #
+  # Returns a list of hashes representing the details of an unmet dependency.
+  #
+  # Example:
+  #
+  #   [
+  #     {
+  #       :reason => :missing,
+  #       :name   => 'puppetlabs-mysql',
+  #       :version_constraint => 'v0.0.1',
+  #       :mod_details => {
+  #         :installed_version => '0.0.1'
+  #       }
+  #       :parent => {
+  #         :name    => 'puppetlabs-bacula',
+  #         :version => 'v1.0.0'
+  #       }
+  #     }
+  #   ]
+  #
   def unmet_dependencies
-    return [] unless dependencies
-
     unmet_dependencies = []
+    return unmet_dependencies unless dependencies
 
     dependencies.each do |dependency|
       forge_name = dependency['name']
-      author, dep_name = forge_name.split('/')
-      version_string = dependency['version_requirement']
+      version_string = dependency['version_requirement'] || '>= 0.0.0'
 
-      equality, dep_version = version_string ? version_string.split("\s") : [nil, nil]
+      if version_string =~ /[<=>][=]*\s[x0-9][.][x0-9]+([.][x0-9])*/
+        equality, dep_version = version_string ? version_string.split("\s") : [nil, nil]
+      else
+        equality, dep_version = ['>=', version_string]
+      end
 
       dep_mod = begin
-        environment.module(dep_name)
+        environment.module_by_forge_name(forge_name)
       rescue => e
         nil
       end
 
-      unless dep_mod
-        msg =  "Missing dependency `#{dep_name}`:\n"
-        msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unmet_dependencies << { :name => forge_name, :error => msg }
-        next
-      end
+      error_details = {
+        :name => forge_name,
+        :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
+        :parent => {
+          :name => self.forge_name,
+          :version => self.version.gsub(/^(?=\d)/, "v")
+        },
+        :mod_details => {
+          :installed_version => dep_mod.nil? ? nil : dep_mod.version
+        }
+      }
 
-      if dep_version && !dep_mod.version
-        msg =  "Unversioned dependency `#{dep_mod.name}`:\n"
-        msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unmet_dependencies << { :name => forge_name, :error => msg }
+      unless dep_mod
+        error_details[:reason] = :missing
+        unmet_dependencies << error_details
         next
       end
 
       if dep_version
         begin
-          required_version_semver = SemVer.new(dep_version)
+          required_version_semver = SemVer[dep_version]
           actual_version_semver = SemVer.new(dep_mod.version)
         rescue ArgumentError
-          msg =  "Non semantic version dependency `#{dep_mod.name}` (#{dep_mod.version}):\n"
-          msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unmet_dependencies << { :name => forge_name, :error => msg }
+          error_details[:reason] = :non_semantic_version
+          unmet_dependencies << error_details
           next
         end
 
-        if !actual_version_semver.send(equality, required_version_semver)
-          msg =  "Version dependency mismatch `#{dep_mod.name}` (#{dep_mod.version}):\n"
-          msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unmet_dependencies << { :name => forge_name, :error => msg }
+        if dep_version.include?('x')
+          dep_version_range = dep_version
+        else
+          dep_version_range = equality + dep_version
+        end
+
+        unless SemVer[dep_version_range].include? SemVer.new(dep_mod.version)
+          error_details[:reason] = :version_mismatch
+          unmet_dependencies << error_details
           next
         end
       end
     end
+
     unmet_dependencies
   end
 
@@ -266,8 +303,8 @@ class Puppet::Module
 
   def ==(other)
     self.name == other.name &&
-      self.version == other.version &&
-      self.path == other.path &&
-      self.environment == other.environment
+    self.version == other.version &&
+    self.path == other.path &&
+    self.environment == other.environment
   end
 end

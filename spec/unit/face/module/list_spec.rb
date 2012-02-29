@@ -101,7 +101,7 @@ describe "puppet module list" do
         { empty_modpath => [] },
         {:modulepath => empty_modpath}
       ).should == <<-HEREDOC.gsub('        ', '')
-        #{empty_modpath} (No modules installed)
+        #{empty_modpath} (no modules installed)
       HEREDOC
     end
 
@@ -120,8 +120,8 @@ describe "puppet module list" do
 
       output.should == <<-HEREDOC.gsub('        ', '')
         #{modpath}
-        metaman-metadata (9.9.9)
-        nometadata (???)
+        ├── metaman-metadata (v9.9.9)
+        └── nometadata (???)
       HEREDOC
     end
 
@@ -141,9 +141,9 @@ describe "puppet module list" do
         },
         {}
       ).should == <<-HEREDOC.gsub('        ', '')
-        #{path1} (No modules installed)
-        #{path2} (No modules installed)
-        #{path3} (No modules installed)
+        #{path1} (no modules installed)
+        #{path2} (no modules installed)
+        #{path3} (no modules installed)
       HEREDOC
     end
 
@@ -170,9 +170,9 @@ describe "puppet module list" do
 
       output.should == <<-HEREDOC.gsub('        ', '')
         #{@modpath1}
-        puppetlabs-other_mod (1.0.0)
-          puppetlabs-dependable (0.0.5)
-        #{@modpath2} (No modules installed)
+        └─┬ puppetlabs-other_mod (v1.0.0)
+          └── puppetlabs-dependable (v0.0.5)
+        #{@modpath2} (no modules installed)
       HEREDOC
     end
   end
