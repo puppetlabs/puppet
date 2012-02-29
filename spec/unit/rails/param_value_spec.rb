@@ -2,18 +2,13 @@
 require 'spec_helper'
 require 'puppet/rails'
 
-describe "Puppet::Rails::ParamValue", :if => Puppet.features.rails? do
-  def column(name, type)
-    ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
-  end
-
+describe "Puppet::Rails::ParamValue", :if => can_use_scratch_database? do
   before do
     require 'puppet/rails/param_value'
-
-    name = stub 'param_name', :name => "foo"
+    setup_scratch_database
 
     # Stub this so we don't need access to the DB.
-    Puppet::Rails::ParamValue.stubs(:columns).returns([column("value", "string")])
+    name = stub 'param_name', :name => "foo"
     Puppet::Rails::ParamName.stubs(:find_or_create_by_name).returns(name)
   end
 
