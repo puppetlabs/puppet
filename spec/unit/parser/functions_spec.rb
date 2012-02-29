@@ -43,11 +43,12 @@ describe Puppet::Parser::Functions do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
     end
 
-    it "should raise an error if the function already exists" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }.once
+    it "should warn if the function already exists" do
+      @module.expects(:define_method).with { |name,block| name == "function_name" }.twice
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      Puppet.expects(:warning)
 
-      lambda { Puppet::Parser::Functions.newfunction("name", :type => :rvalue) }.should raise_error
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
     end
 
     it "should raise an error if the function type is not correct" do
