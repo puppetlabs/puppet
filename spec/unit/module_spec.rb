@@ -93,162 +93,207 @@ describe Puppet::Module do
 
   describe "when finding unmet dependencies" do
     before do
-      @mod = Puppet::Module.new("mymod")
-      @mod.stubs(:dependencies).returns [
-        {
-          "version_requirement" => ">= 2.2.0",
-          "name"                => "baz/foobar"
-        }
-      ]
+      FileTest.unstub(:exist?)
+      @modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = @modpath
     end
 
     it "should list modules that are missing" do
-      @mod.unmet_dependencies.should == [{
-        :name  => 'baz/foobar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Missing dependency `foobar`:
-            `mymod` () requires `baz/foobar` (>= 2.2.0)
-        HEREDOC
+      mod = PuppetSpec::Modules.create(
+        'needy',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "version_requirement" => ">= 2.2.0",
+            "name" => "baz/foobar"
+          }]
+        }
+      )
+      mod.unmet_dependencies.should == [{
+        :reason => :missing,
+        :name   => "baz/foobar",
+        :version_constraint => ">= 2.2.0",
+        :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
+        :mod_details => { :installed_version => nil }
       }]
     end
 
     it "should list modules that are missing and have invalid names" do
-      @mod.stubs(:dependencies).returns [
-        {
-          "version_requirement" => ">= 2.2.0",
-          "name"                => "baz/foo=bar"
+      mod = PuppetSpec::Modules.create(
+        'needy',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "version_requirement" => ">= 2.2.0",
+            "name" => "baz/foobar=bar"
+          }]
         }
-      ]
-      @mod.unmet_dependencies.should == [{
-        :name  => 'baz/foo=bar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Missing dependency `foo=bar`:
-            `mymod` () requires `baz/foo=bar` (>= 2.2.0)
-        HEREDOC
+      )
+      mod.unmet_dependencies.should == [{
+        :reason => :missing,
+        :name   => "baz/foobar=bar",
+        :version_constraint => ">= 2.2.0",
+        :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
+        :mod_details => { :installed_version => nil }
       }]
     end
 
     it "should list modules with unmet version" do
-      foobar = Puppet::Module.new("foobar")
-      foobar.version = '2.0.0'
-      @mod.environment.expects(:module).with("foobar").returns foobar
+      mod = PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "version_requirement" => ">= 2.2.0",
+            "name" => "baz/foobar"
+          }]
+        }
+      )
+      PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => { :version => '2.0.0', :author  => 'baz' }
+      )
 
-      @mod.unmet_dependencies.should == [{
-        :name  => 'baz/foobar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Version dependency mismatch `foobar` (2.0.0):
-            `mymod` () requires `baz/foobar` (>= 2.2.0)
-        HEREDOC
+      mod.unmet_dependencies.should == [{
+        :reason => :version_mismatch,
+        :name   => "baz/foobar",
+        :version_constraint => ">= 2.2.0",
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
+        :mod_details => { :installed_version => "2.0.0" }
       }]
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do
-      mod = Puppet::Module.new("mymod")
-      mod.stubs(:dependencies).returns [{ "name" => "baz/foobar" }]
-
-      foobar = Puppet::Module.new("foobar")
-      mod.environment.expects(:module).with("foobar").returns foobar
+      mod = PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "name" => "baz/foobar"
+          }]
+        }
+      )
+      PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :version => '2.0.0',
+          :author  => 'baz'
+        }
+      )
 
       mod.unmet_dependencies.should be_empty
     end
 
-    it "should consider a dependency without a version to be unmet" do
-      foobar = Puppet::Module.new("foobar")
-      @mod.environment.expects(:module).with("foobar").returns foobar
-
-      @mod.unmet_dependencies.should == [{
-        :name  => 'baz/foobar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Unversioned dependency `foobar`:
-            `mymod` () requires `baz/foobar` (>= 2.2.0)
-        HEREDOC
-      }]
-    end
-
     it "should consider a dependency without a semantic version to be unmet" do
-      foobar = Puppet::Module.new("foobar")
-      foobar.version = '5.1'
-      @mod.environment.expects(:module).with("foobar").returns foobar
-
-      @mod.unmet_dependencies.should == [{
-        :name  => 'baz/foobar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Non semantic version dependency `foobar` (5.1):
-            `mymod` () requires `baz/foobar` (>= 2.2.0)
-        HEREDOC
-      }]
-    end
-
-    it "should consider a dependency requirement without a semantic version to be unmet" do
-      foobar = Puppet::Module.new("foobar")
-      foobar.version = '5.1.0'
-
-      mod = Puppet::Module.new("mymod")
-      mod.stubs(:dependencies).returns [{ "name" => "baz/foobar", "version_requirement" => '> 2.0' }]
-      mod.environment.expects(:module).with("foobar").returns foobar
+      mod = PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "name" => "baz/foobar"
+          }]
+        }
+      )
+      PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :version => '5.1',
+          :author  => 'baz'
+        }
+      )
 
       mod.unmet_dependencies.should == [{
-        :name  => 'baz/foobar',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Non semantic version dependency `foobar` (5.1.0):
-            `mymod` () requires `baz/foobar` (> 2.0)
-        HEREDOC
+        :reason => :non_semantic_version,
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
+        :mod_details => { :installed_version => "5.1" },
+        :name => "baz/foobar",
+        :version_constraint => ">= 0.0.0"
       }]
     end
 
     it "should have valid dependencies when no dependencies have been specified" do
-      mod = Puppet::Module.new("mymod")
+      mod = PuppetSpec::Modules.create(
+        'foobar',
+        @modpath,
+        :metadata => {
+          :dependencies => []
+        }
+      )
 
       mod.unmet_dependencies.should == []
     end
 
     it "should only list unmet dependencies" do
-      mod = Puppet::Module.new("mymod")
-      mod.stubs(:dependencies).returns [
-        {
-          "version_requirement" => ">= 2.2.0",
-          "name"                => "baz/satisfied"
-        },
-        {
-          "version_requirement" => ">= 2.2.0",
-          "name"                => "baz/notsatisfied"
+      mod = PuppetSpec::Modules.create(
+        'mymod',
+        @modpath,
+        :metadata => {
+          :dependencies => [
+            {
+              "version_requirement" => ">= 2.2.0",
+              "name" => "baz/satisfied"
+            },
+            {
+              "version_requirement" => ">= 2.2.0",
+              "name" => "baz/notsatisfied"
+            }
+          ]
         }
-      ]
-
-      satisfied = Puppet::Module.new("satisfied")
-      satisfied.version = "3.3.0"
-
-      mod.environment.expects(:module).with("satisfied").returns satisfied
-      mod.environment.expects(:module).with("notsatisfied").returns nil
+      )
+      PuppetSpec::Modules.create(
+        'satisfied',
+        @modpath,
+        :metadata => {
+          :version => '3.3.0',
+          :author  => 'baz'
+        }
+      )
 
       mod.unmet_dependencies.should == [{
-        :name  => 'baz/notsatisfied',
-        :error => <<-HEREDOC.gsub(/^\s{10}/, '')
-          Missing dependency `notsatisfied`:
-            `mymod` () requires `baz/notsatisfied` (>= 2.2.0)
-        HEREDOC
+        :reason => :missing,
+        :mod_details => { :installed_version => nil },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/mymod" },
+        :name => "baz/notsatisfied",
+        :version_constraint => ">= 2.2.0"
       }]
     end
 
     it "should be empty when all dependencies are met" do
-      mod = Puppet::Module.new("mymod")
-      mod.stubs(:dependencies).returns [
-        {
-          "version_requirement" => ">= 2.2.0",
-          "name"                => "baz/satisfied"
-        },
-        {
-          "version_requirement" => "< 2.2.0",
-          "name"                => "baz/alsosatisfied"
+      mod = PuppetSpec::Modules.create(
+        'mymod2',
+        @modpath,
+        :metadata => {
+          :dependencies => [
+            {
+              "version_requirement" => ">= 2.2.0",
+              "name" => "baz/satisfied"
+            },
+            {
+              "version_requirement" => "< 2.2.0",
+              "name" => "baz/alsosatisfied"
+            }
+          ]
         }
-      ]
-      satisfied = Puppet::Module.new("satisfied")
-      satisfied.version = "3.3.0"
-      alsosatisfied = Puppet::Module.new("alsosatisfied")
-      alsosatisfied.version = "2.1.0"
-
-      mod.environment.expects(:module).with("satisfied").returns satisfied
-      mod.environment.expects(:module).with("alsosatisfied").returns alsosatisfied
+      )
+      PuppetSpec::Modules.create(
+        'satisfied',
+        @modpath,
+        :metadata => {
+          :version => '3.3.0',
+          :author  => 'baz'
+        }
+      )
+      PuppetSpec::Modules.create(
+        'alsosatisfied',
+        @modpath,
+        :metadata => {
+          :version => '2.1.0',
+          :author  => 'baz'
+        }
+      )
 
       mod.unmet_dependencies.should be_empty
     end

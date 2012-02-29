@@ -27,27 +27,39 @@ Puppet::Face.define(:module, '1.0.0') do
 
       $ puppet module list
         /etc/puppet/modules
-          bacula (0.0.2)
-        /usr/share/puppet/modules
-          apache (0.0.3)
-          bacula (0.0.1)
+        ├── bodepd-create_resources (v0.0.1)
+        ├── puppetlabs-bacula (v0.0.2)
+        ├── puppetlabs-mysql (v0.0.1)
+        ├── puppetlabs-sqlite (v0.0.1)
+        └── puppetlabs-stdlib (v2.2.1)
+        /usr/share/puppet/modules (no modules installed)
+
+      List installed modules in a tree view:
+
+      $ puppet module list --tree
+        /etc/puppet/modules
+        └─┬ puppetlabs-bacula (v0.0.2)
+          ├── puppetlabs-stdlib (v2.2.1)
+          ├─┬ puppetlabs-mysql (v0.0.1)
+          │ └── bodepd-create_resources (v0.0.1)
+          └── puppetlabs-sqlite (v0.0.1)
+        /usr/share/puppet/modules (no modules installed)
 
       List installed modules from a specified environment:
 
-      $ puppet module list --env 'test'
-        Missing dependency `stdlib`:
-          `rrd` (0.0.2) requires `puppetlabs/stdlib` (>= 2.2.0)
-
-        /tmp/puppet/modules
-          rrd (0.0.2)
+      $ puppet module list --env 'production'
+        /etc/puppet/modules
+        ├── bodepd-create_resources (v0.0.1)
+        ├── puppetlabs-bacula (v0.0.2)
+        ├── puppetlabs-mysql (v0.0.1)
+        ├── puppetlabs-sqlite (v0.0.1)
+        └── puppetlabs-stdlib (v2.2.1)
+        /usr/share/puppet/modules (no modules installed)
 
       List installed modules from a specified modulepath:
 
-      $ puppet module list --modulepath /tmp/facts1:/tmp/facts2
-        /tmp/facts1
-          stdlib
-        /tmp/facts2
-          nginx (1.0.0)
+      $ puppet module list --modulepath /usr/share/puppet/modules
+        /usr/share/puppet/modules (no modules installed)
     EOT
 
     when_invoked do |options|
@@ -63,60 +75,194 @@ Puppet::Face.define(:module, '1.0.0') do
       Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
       environment = Puppet::Node::Environment.new(options[:env])
 
-      dependency_errors = false
+      error_types = {
+        :non_semantic_version => {
+          :title => "Non semantic version dependency"
+        },
+        :missing => {
+          :title => "Missing dependency"
+        },
+        :version_mismatch => {
+          :title => "Module '%s' (v%s) fails to meet some dependencies:"
+        }
+      }
 
-      environment.modules.sort_by {|mod| mod.name}.each do |mod|
-        mod.unmet_dependencies.sort_by {|dep| dep[:name]}.each do |dep|
-          dependency_errors = true
-          $stderr.puts dep[:error]
+      @unmet_deps = {}
+      error_types.each_key do |type|
+        @unmet_deps[type] = Hash.new do |hash, key|
+          hash[key] = { :errors => [], :parent => nil }
         end
       end
 
-      output << "\n" if dependency_errors
+      # Prepare the unmet dependencies for display on the console.
+      environment.modules.sort_by {|mod| mod.name}.each do |mod|
+        unmet_grouped = mod.unmet_dependencies.group_by { |dep| dep[:reason] }
+        unmet_grouped.each do |type, deps|
+          unless deps.empty?
+            unmet_grouped[type].sort_by { |dep| dep[:name] }.each do |dep|
+              dep_name           = dep[:name].gsub('/', '-')
+              installed_version  = dep[:mod_details][:installed_version]
+              version_constraint = dep[:version_constraint]
+              parent_name        = dep[:parent][:name].gsub('/', '-')
+              parent_version     = dep[:parent][:version]
+
+              msg = "'#{parent_name}' (#{parent_version})"
+              msg << " requires '#{dep_name}' (#{version_constraint})"
+              @unmet_deps[type][dep[:name]][:errors] << msg
+              @unmet_deps[type][dep[:name]][:parent] = {
+                :name    => dep[:parent][:name],
+                :version => parent_version
+              }
+              @unmet_deps[type][dep[:name]][:version] = installed_version
+            end
+          end
+        end
+      end
+
+      # Display unmet dependencies by category.
+      error_types.each_key do |type|
+        unless @unmet_deps[type].empty?
+          @unmet_deps[type].each_key.sort_by {|dep| dep }.each do |dep|
+            name    = dep.gsub('/', '-')
+            title   = error_types[type][:title]
+            errors  = @unmet_deps[type][dep][:errors]
+            version = @unmet_deps[type][dep][:version]
+
+            msg = case type
+                  when :version_mismatch
+                    title % [name, version] + "\n"
+                  when :non_semantic_version
+                    title + " '#{name}' (v#{version}):\n"
+                  else
+                    title + " '#{name}':\n"
+                  end
+
+            errors.each { |error_string| msg << "  #{error_string}\n" }
+            Puppet.warning msg.chomp
+          end
+        end
+      end
 
       environment.modulepath.each do |path|
         modules = modules_by_path[path]
-        no_mods = modules.empty? ? ' (No modules installed)' : ''
+        no_mods = modules.empty? ? ' (no modules installed)' : ''
         output << "#{path}#{no_mods}\n"
+
         if options[:tree]
           # The modules with fewest things depending on them will be the
-          # parent of the tree.  Can't assume to start with 0 dependencies since
-          # dependencies may be cyclical
+          # parent of the tree.  Can't assume to start with 0 dependencies
+          # since dependencies may be cyclical.
           modules_by_num_requires = modules.sort_by {|m| m.required_by.size}
-
-          while !modules_by_num_requires.empty?
-            mod = modules_by_num_requires.shift
-
-            tree_print(mod, modules_by_num_requires, [], output)
-          end
+          @seen = {}
+          tree = list_format_tree(modules_by_num_requires, [], nil,
+            :label_unmet => true, :path => path, :label_invalid => false)
         else
-          modules.sort_by {|mod| mod.name }.each do |mod|
-            output << print(mod)
+          tree = []
+          modules.sort_by { |mod| mod.forge_name or mod.name  }.each do |mod|
+            tree << list_format_node(mod, path, :label_unmet => false,
+                      :path => path, :label_invalid => true)
           end
         end
+
+        output << Puppet::Module::Tool.build_tree(tree)
       end
 
       output
     end
-
   end
 
-  def tree_print(mod, modules_left_to_print, ancestors, output)
-    output << print(mod, ancestors.size)
-    return if ancestors.include? mod
+  # Prepare a list of module objects and their dependencies for print in a
+  # tree view.
+  #
+  # Returns an Array of Hashes
+  #
+  # Example:
+  #
+  #   [
+  #     {
+  #       :text => "puppetlabs-bacula (v0.0.2)",
+  #       :dependencies=> [
+  #         { :text => "puppetlabs-stdlib (v2.2.1)", :dependencies => [] },
+  #         {
+  #           :text => "puppetlabs-mysql (v1.0.0)"
+  #           :dependencies => [
+  #             {
+  #               :text => "bodepd-create_resources (v0.0.1)",
+  #               :dependencies => []
+  #             }
+  #           ]
+  #         },
+  #         { :text => "puppetlabs-sqlite (v0.0.1)", :dependencies => [] },
+  #       ]
+  #     }
+  #   ]
+  #
+  # When the above data structure is passed to Puppet::Module::Tool.build_tree
+  # you end up with something like this:
+  #
+  #   /etc/puppet/modules
+  #   └─┬ puppetlabs-bacula (v0.0.2)
+  #   ├── puppetlabs-stdlib (v2.2.1)
+  #   ├─┬ puppetlabs-mysql (v1.0.0)
+  #   │ └── bodepd-create_resources (v0.0.1)
+  #   └── puppetlabs-sqlite (v0.0.1)
+  #
+  def list_format_tree(list, ancestors=[], parent=nil, params={})
+    list.map do |mod|
+      next if @seen[(mod.forge_name or mod.name)]
+      node = list_format_node(mod, parent, params)
+      @seen[(mod.forge_name or mod.name)] = true
 
-    mod.dependencies_as_modules.each do |dep_mod|
-      modules_left_to_print.delete(dep_mod)
+      unless ancestors.include?(mod)
+        node[:dependencies] ||= []
+        missing_deps = mod.unmet_dependencies.select do |dep|
+          dep[:reason] == :missing
+        end
+        missing_deps.map do |mis_mod|
+          str = "UNMET DEPENDENCY #{mis_mod[:name].gsub('/', '-')} "
+          str << "(#{mis_mod[:version_constraint]})"
+          node[:dependencies] << { :text => str }
+        end
+        node[:dependencies] += list_format_tree(mod.dependencies_as_modules,
+          ancestors + [mod], mod, params)
+      end
 
-      tree_print(dep_mod, modules_left_to_print, ancestors.dup << mod, output)
+      node
+    end.compact
+  end
+
+  # Prepare a module object for print in a tree view.  Each node in the tree
+  # must be a Hash in the following format:
+  #
+  #    { :text => "puppetlabs-mysql (v1.0.0)" }
+  #
+  # The value of a module's :text is affected by three (3) factors: the format
+  # of the tree, it's dependency status, and the location in the modulepath
+  # relative to it's parent.
+  #
+  # Returns a Hash
+  #
+  def list_format_node(mod, parent, params)
+    str = ''
+    str << (mod.forge_name ? mod.forge_name.gsub('/', '-') : mod.name)
+    str << (mod.version ? " (v#{mod.version})" : ' (???)')
+
+    unless File.dirname(mod.path) == params[:path]
+      str << " [#{File.dirname(mod.path)}]"
     end
-  end
 
-  def print(mod, indent_level = 0)
-    indent = '  ' * indent_level
-    version_string = mod.version ? "(#{mod.version})" : '(???)'
-    unmet_dependency = mod.unmet_dependencies.empty? ? '' : 'UNMET DEPENDENCY '
-    display_name = mod.forge_name ? mod.forge_name.gsub('/', '-') : mod.name
-    "#{indent}#{unmet_dependency}#{display_name} #{version_string}\n"
+    if @unmet_deps[:version_mismatch].include?(mod.forge_name)
+      if params[:label_invalid]
+        str << ' invalid'
+      elsif parent.respond_to?(:forge_name)
+        unmet_parent = @unmet_deps[:version_mismatch][mod.forge_name][:parent]
+        if (unmet_parent[:name] == parent.forge_name &&
+            unmet_parent[:version] == "v#{parent.version}")
+          str << ' invalid'
+        end
+      end
+    end
+
+    { :text => str }
   end
 end
