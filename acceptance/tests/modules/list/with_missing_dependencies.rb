@@ -6,7 +6,6 @@ file {
   [
     '/etc/puppet/modules',
     '/etc/puppet/modules/appleseed',
-    '/etc/puppet/modules/crakorn',
     '/etc/puppet/modules/thelock',
     '/usr/share/puppet',
     '/usr/share/puppet/modules',
@@ -23,7 +22,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "0.4.0" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.0" }
       ]
     }';
   '/etc/puppet/modules/thelock/metadata.json':
@@ -46,7 +45,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "v0.4.x" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.x" }
       ]
     }';
 }
@@ -58,11 +57,11 @@ on master, '[ -d /usr/share/puppet/modules/crick ]'
 step "List the installed modules"
 on master, puppet('module list') do
   assert_equal <<-STDERR, stderr
-Warning: Missing dependency 'jimmy-crakorn':
+\e[1;31mWarning: Missing dependency 'jimmy-crakorn':
   'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v2.x)
+  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
+\e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
+  'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
@@ -74,20 +73,20 @@ STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list') do
+on master, puppet('module list --tree') do
   assert_equal <<-STDERR, stderr
-Warning: Missing dependency 'jimmy-crakorn':
+\e[1;31mWarning: Missing dependency 'jimmy-crakorn':
   'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
-Warning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v2.x)
+  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
+\e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
+  'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 └─┬ jimmy-thelock (v1.0.0)
-| └─┬ jimmy-appleseed (v1.1.0)
-|   └── UNMET DEPENDENCY jimmy-crakorn (v0.4.0)
-└── UNMET DEPENDENCY jimmy-sprinkles (v2.x)
+  ├── UNMET DEPENDENCY jimmy-sprinkles (v2.x)
+  └─┬ jimmy-appleseed (v1.1.0)
+    └── UNMET DEPENDENCY jimmy-crakorn (v0.4.0)
 /usr/share/puppet/modules
 └─┬ jimmy-crick (v1.0.1)
   └── UNMET DEPENDENCY jimmy-crakorn (v0.4.x)

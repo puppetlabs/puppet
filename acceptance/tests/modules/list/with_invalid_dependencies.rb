@@ -54,7 +54,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crakorn", "version_requirement": "v0.4.x" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.x" }
       ]
     }';
 }
@@ -67,14 +67,13 @@ on master, '[ -d /usr/share/puppet/modules/crick ]'
 step "List the installed modules"
 on master, puppet('module list') do
   assert_equal <<-STDERR, stderr
-Warning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.x)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
+\e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
+  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 ├── jimmy-appleseed (v1.1.0)
-├── jimmy-crakorn (v0.3.0)
+├── jimmy-crakorn (v0.3.0) invalid
 └── jimmy-thelock (v1.0.0)
 /usr/share/puppet/modules
 └── jimmy-crick (v1.0.1)
@@ -82,11 +81,10 @@ STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list') do
+on master, puppet('module list --tree') do
   assert_equal <<-STDERR, stderr
-Warning: Module 'jimmy-crakorn' (v0.3.0) fails to meet dependencies:
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.x)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)
+\e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
+  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
@@ -95,7 +93,7 @@ STDERR
     └── jimmy-crakorn (v0.3.0)
 /usr/share/puppet/modules
 └─┬ jimmy-crick (v1.0.1)
-  └── jimmy-crakorn (v0.3.0) [/etc/puppet/modules]  invalid
+  └── jimmy-crakorn (v0.3.0) [/etc/puppet/modules] invalid
 STDOUT
 end
 

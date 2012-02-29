@@ -44,7 +44,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "0.4.0" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.0" }
       ]
     }';
   '/etc/puppet/modules/thelock/metadata.json':
@@ -55,7 +55,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crakorn", "version_requirement": ">= v0.0.0" },
+        { "name": "jimmy/crakorn", "version_requirement": ">= 0.0.0" },
         { "name": "jimmy/appleseed", "version_requirement": "1.x" }
       ]
     }';
@@ -67,7 +67,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "v0.4.x" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.x" }
       ]
     }';
 }
@@ -85,7 +85,7 @@ on master, puppet('module list') do
 /etc/puppet/modules
 ├── jimmy-appleseed (v1.1.0)
 ├── jimmy-crakorn (v0.4.0)
-└── jimmy-steward (v0.9.0)
+├── jimmy-steward (v0.9.0)
 └── jimmy-thelock (v1.0.0)
 /usr/share/puppet/modules
 └── jimmy-crick (v1.0.1)
@@ -93,15 +93,14 @@ STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list') do
+on master, puppet('module list --tree') do
   assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 └─┬ jimmy-thelock (v1.0.0)
-  └─┬ jimmy-appleseed (v1.1.0)
-  │ └── jimmy-crakorn (v0.4.0)
-  └─┬ jimmy-crakorn (v0.4.0)
-    └── jimmy-steward (v0.9.0)
+  ├─┬ jimmy-crakorn (v0.4.0)
+  │ └── jimmy-steward (v0.9.0)
+  └── jimmy-appleseed (v1.1.0)
 /usr/share/puppet/modules
 └─┬ jimmy-crick (v1.0.1)
   └─┬ jimmy-crakorn (v0.4.0) [/etc/puppet/modules]
