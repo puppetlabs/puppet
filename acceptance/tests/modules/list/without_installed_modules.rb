@@ -5,7 +5,7 @@ apply_manifest_on master, <<-PP
 file {
   [
     '/etc/puppet/modules',
-    '/usr/share/puppet',
+    '/usr/share/puppet/modules',
   ]: ensure => directory,
      recurse => true,
      purge => true,

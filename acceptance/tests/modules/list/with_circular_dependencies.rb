@@ -32,7 +32,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "jimmy/crackorn", "version_requirement": "0.4.0" }
+        { "name": "jimmy/crakorn", "version_requirement": "0.4.0" }
       ]
     }';
 }
@@ -52,13 +52,12 @@ STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list') do
+on master, puppet('module list --tree') do
   assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 └─┬ jimmy-appleseed (v1.1.0)
-  └─┬ jimmy-crakorn (v0.4.0) [/usr/share/puppet/modules]
-    └── jimmy-appleseed (v1.1.0)
+  └── jimmy-crakorn (v0.4.0) [/usr/share/puppet/modules]
 /usr/share/puppet/modules
 └─┬ jimmy-crakorn (v0.4.0)
   └── jimmy-appleseed (v1.1.0) [/etc/puppet/modules]
