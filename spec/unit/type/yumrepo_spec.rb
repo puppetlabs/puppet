@@ -4,6 +4,7 @@ require 'spec_helper'
 
 
 describe Puppet::Type.type(:yumrepo) do
+  include PuppetSpec::Files
 
   describe "When validating attributes" do
 
@@ -88,7 +89,7 @@ describe Puppet::Type.type(:yumrepo) do
 
 
     before(:each) do
-      @yumdir = Dir.mktmpdir("yumrepo_spec_tmpdir")
+      @yumdir = tmpdir("yumrepo_spec_tmpdir")
       @yumconf = File.join(@yumdir, "yum.conf")
       File.open(@yumconf, "w") do |f|
         f.print "[main]\nreposdir=#{@yumdir} /no/such/dir\n"
@@ -98,11 +99,6 @@ describe Puppet::Type.type(:yumrepo) do
       # It needs to be reset each time, otherwise the cache is used.
       Puppet::Type.type(:yumrepo).inifile = nil
     end
-
-    after(:each) do
-      FileUtils.rm_rf(@yumdir)
-    end
-
 
 
     it "should be able to create a valid config file" do
