@@ -7,10 +7,9 @@ module Puppet::Util::Terminal
   def self.width
     if Puppet.features.posix?
       result = %x{stty size 2>/dev/null}.split[1] ||
-               %x{tput cols 2>/dev/null}.split[0] ||
-              '80'
+               %x{tput cols 2>/dev/null}.split[0]
     end
-    return result.to_i
+    return (result || '80').to_i
   rescue
     return 80
   end
