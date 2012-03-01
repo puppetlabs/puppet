@@ -321,9 +321,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   end
 
   def execute_changes
+    # Workaround Augeas bug where changing the save mode doesn't trigger a
+    # reload of the previously saved file(s) when we call Augeas#load
+    @aug.match("/augeas/events/saved").each do |file|
+      @aug.rm("/augeas#{@aug.get(file)}/mtime")
+    end
+
     # Reload augeas, and execute the changes for real
-    aug.load
     set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
+    @aug.load
     do_execute_changes
     success = @aug.save
     fail("Save failed with return code #{success}") if success != true
