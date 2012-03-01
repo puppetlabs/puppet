@@ -20,6 +20,14 @@ describe Puppet::Util::Execution do
     Puppet::Util::Execution.send(:execute_windows, command, arguments, stdin, stdout, stderr)
   end
 
+  # utility method for cloning the ENV object.  Because it is not ACTUALLY a Hash instance,
+  # we can't use the built-in #clone method, and because Ruby 1.8.5 doesn't support some of
+  # the newer constructors for the Hash object, this slightly hacky syntax was the best I
+  # could come up with.  At least it's isolated to one line of code :)
+  def clone_env()
+    ENV.inject(Hash.new) {|result,entry| result[entry[0]] = entry[1] ; result }
+  end
+
 
   describe "execution methods" do
     let(:pid) { 5501 }
@@ -58,7 +66,7 @@ describe Puppet::Util::Execution do
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
         #  of a forked process, but here, we're stubbing Kernel.fork, so the method has the ability to override the
         #  "real" ENV.  To guard against this, we'll capture a snapshot of ENV before each test.
-        @saved_env = Hash[ENV.map {|key,val| [key, val]}]
+        @saved_env = clone_env
 
         # Now, we're going to effectively "mock" the magic ruby 'ENV' variable by creating a local definition of it
         #  inside of the module we're testing.
@@ -71,7 +79,7 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.send(:remove_const, :ENV)
 
         # capture the current environment and make sure it's the same as it was before the test
-        cur_env = Hash[ENV.map {|key,val| [key, val]}]
+        cur_env = clone_env
 
         # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
         #  be a bit more explicit and laborious in the name of making the error more useful...
@@ -286,14 +294,13 @@ describe Puppet::Util::Execution do
         #  of a forked process, but, in some of the previous tests in this file we're stubbing Kernel.fork., which could
         #  allow the method to override the "real" ENV.  This shouldn't be a problem for these tests because they are
         #  not stubbing Kernel.fork, but, better safe than sorry... so, to guard against this, we'll capture a snapshot
-        #  of ENV before each test.  We have to use this somewhat kludgy code to clone the ENV var, because ENV doesn't
-        #  provide a useful == method.
-        @saved_env = Hash[ENV.map {|key,val| [key, val]}]
+        #  of ENV before each test.
+        @saved_env = clone_env
       end
 
       after :each do
         # capture the current environment and make sure it's the same as it was before the test
-        cur_env = Hash[ENV.map {|key,val| [key, val]}]
+        cur_env = clone_env
         # we will get some fairly useless output if we just use the raw == operator on the hashes here, so we'll
         #  be a bit more explicit and laborious in the name of making the error more useful...
         @saved_env.each_pair { |key,val| cur_env[key].should == val }
