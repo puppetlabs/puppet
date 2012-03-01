@@ -37,9 +37,9 @@ step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [1] do
   assert_equal '', stdout
   assert_equal <<-STDERR, stderr
-Error: Could not uninstall module 'jimmy-crakorn' (v0.4.0):
+\e[1;31mError: Could not uninstall module 'jimmy-crakorn' (v0.4.0):
   Module 'jimmy-crakorn' (v0.4.0) is required by 'jimmy-appleseed' (v1.1.0)
-    Supply the `--force` flag to uninstall this module anyway
+    Supply the `--force` flag to uninstall this module anyway\e[0m
 STDERR
 end
 on master, '[ -d /etc/puppet/modules/crakorn ]'

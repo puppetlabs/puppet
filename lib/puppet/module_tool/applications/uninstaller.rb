@@ -1,5 +1,3 @@
-require 'set'
-
 module Puppet::Module::Tool
   module Applications
     class Uninstaller < Application
@@ -17,26 +15,28 @@ module Puppet::Module::Tool
         if module_installed?
           uninstall
         else
-          msg = "Error: Could not uninstall module '#{@name}':\n"
+          msg = "Could not uninstall module '#{@name}':\n"
           msg << "  Module '#{@name}' is not installed\n"
           @suggestions.each do |suggestion|
             msg << "    You may have meant `puppet module uninstall #{suggestion}`\n"
           end
-          $stderr << msg
+          Puppet.err msg.chomp
           exit(1)
         end
 
         if (@errors.keys.count > 0) && @removed_mods.empty?
+          msg = ''
           @errors.map do |mod_name, details|
             unless details[:errors].empty?
               mod_version = options[:version] || details[:version]
 
-              header = "Error: Could not uninstall module '#{mod_name}'"
+              header = "Could not uninstall module '#{mod_name}'"
               header << " (v#{mod_version})"
-              $stderr << "#{header}:\n"
-              details[:errors].map { |error| $stderr << "  #{error}\n" }
+              msg << "#{header}:\n"
+              details[:errors].map { |error| msg << "  #{error}\n" }
             end
           end
+          Puppet.err msg.chomp
           exit(1)
         end
 

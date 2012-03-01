@@ -35,9 +35,9 @@ step "Try to uninstall the module crakorn"
 on master, puppet('module uninstall crakorn'), :acceptable_exit_codes => [1] do
   assert_equal '', stdout
   assert_equal <<-STDERR, stderr
-Error: Could not uninstall module 'crakorn':
+\e[1;31mError: Could not uninstall module 'crakorn':
   Module 'crakorn' is not installed
-    You may have meant `puppet module uninstall jimmy-crakorn`
+    You may have meant `puppet module uninstall jimmy-crakorn`\e[0m
 STDERR
 end
 on master, '[ -d /etc/puppet/modules/crakorn ]'
