@@ -150,12 +150,16 @@ class DirectoryService < Puppet::Provider::NameService
       end
       attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value
     end
-
+    converted_hash_plist = get_shadowhashdata(attribute_hash[:name])
     # NBK: need to read the existing password here as it's not actually
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name], converted_hash_plist) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    # GDL: The salt and iterations properties are only available in versions of
+    # OS X greater than 10.7.
+    attribute_hash[:salt] = self.get_salt(attribute_hash[:name], converted_hash_plist)
+    attribute_hash[:iterations] = self.get_iterations(attribute_hash[:name], converted_hash_plist)
     attribute_hash
   end
 
@@ -254,45 +258,26 @@ class DirectoryService < Puppet::Provider::NameService
       # 10.7 uses salted SHA512 password hashes which are 128 characters plus
       # an 8 character salt. Previous versions used a SHA1 hash padded with
       # zeroes. If someone attempts to use a password hash that worked with
-      # a previous version of OX X, we will fail early and warn them.
-      if password_hash.length != 136
-        fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
-             Please check your password and try again.")
-      end
-
-      if File.exists?("#{@@users_plist_dir}/#{resource_name}.plist")
-        # If a plist already exists in /var/db/dslocal/nodes/Default/users, then
-        # we will need to extract the binary plist from the 'ShadowHashData'
-        # key, log the new password into the resultant plist's 'SALTED-SHA512'
-        # key, and then save the entire structure back.
-        users_plist = Plist::parse_xml(plutil( '-convert', 'xml1', '-o', '/dev/stdout', \
-                                       "#{@@users_plist_dir}/#{resource_name}.plist"))
-
-        # users_plist['ShadowHashData'][0].string is actually a binary plist
-        # that's nested INSIDE the user's plist (which itself is a binary
-        # plist).
-        password_hash_plist = users_plist['ShadowHashData'][0].string
-        converted_hash_plist = convert_binary_to_xml(password_hash_plist)
-
-        # converted_hash_plist['SALTED-SHA512'].string expects a Base64 encoded
-        # string. The password_hash provided as a resource attribute is a
-        # hex value. We need to convert the provided hex value to a Base64
-        # encoded string to nest it in the converted hash plist.
-        converted_hash_plist['SALTED-SHA512'].string = \
-          password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
-
-        # Finally, we can convert the nested plist back to binary, embed it
-        # into the user's plist, and convert the resultant plist back to
-        # a binary plist.
-        changed_plist = convert_xml_to_binary(converted_hash_plist)
-        users_plist['ShadowHashData'][0].string = changed_plist
-        Plist::Emit.save_plist(users_plist, "#{@@users_plist_dir}/#{resource_name}.plist")
-        plutil('-convert', 'binary1', "#{@@users_plist_dir}/#{resource_name}.plist")
+      # a previous version of OX X, we will fail early and warn them. If
+      # the version of OS X is greater than 10.7, a salted-sha512 PBKDF2
+      # password will be utilized (and Puppet will fail if the password
+      # hash isn't 256 characters).
+      if get_macosx_version_major == '10.7' and password_hash.length != 136
+        fail("OS X 10.7 requires a Salted SHA512 password hash of 136 characters. Please check your password and try again.")
+      elsif get_macosx_version_major != '10.7' and password_hash.length != 256
+        fail("OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password hash and try again.")
+      else
+        converted_hash_plist = get_shadowhashdata(resource_name)
+        if get_macosx_version_major == '10.7'
+          set_salted_sha512(resource_name, password_hash, converted_hash_plist)
+        else
+          set_salted_sha512_pbkdf2(resource_name, 'entropy', password_hash, converted_hash_plist)
+        end
       end
     end
   end
 
-  def self.get_password(guid, username)
+  def self.get_password(guid, username, converted_hash_plist)
     # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
     # version '10.10' would be < '10.7' with simple string comparison. This
     # if-statement only executes if the current version is less-than 10.7 
@@ -307,32 +292,126 @@ class DirectoryService < Puppet::Provider::NameService
       end
       password_hash
     else
-      if File.exists?("#{@@users_plist_dir}/#{username}.plist")
-        # If a plist exists in /var/db/dslocal/nodes/Default/users, we will
-        # extract the binary plist from the 'ShadowHashData' key, decode the
-        # salted-SHA512 password hash, and then return it.
-        users_plist = Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{@@users_plist_dir}/#{username}.plist"))
-        if users_plist['ShadowHashData']
-          # users_plist['ShadowHashData'][0].string is actually a binary plist
-          # that's nested INSIDE the user's plist (which itself is a binary
-          # plist).
-          password_hash_plist = users_plist['ShadowHashData'][0].string
-          converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+      return nil if not converted_hash_plist
 
-          # converted_hash_plist['SALTED-SHA512'].string is a Base64 encoded
-          # string. The password_hash provided as a resource attribute is a
-          # hex value. We need to convert the Base64 encoded string to a
-          # hex value and provide it back to Puppet.
-          password_hash = converted_hash_plist['SALTED-SHA512'].string.unpack("H*")[0]
-          password_hash
-        end
+      if get_macosx_version_major == '10.7'
+        get_salted_sha512(converted_hash_plist)
+      else
+        get_salted_sha512_pbkdf2(converted_hash_plist, 'entropy')
       end
     end
   end
 
+  def self.get_shadowhashdata(resource_name)
+  #  This method will convert the user's plist located in
+  #  /var/db/dslocal/nodes/Default/users to XML and return the
+  #  value of the ShadowHashData key.  This value is a binary
+  #  encoded plist that is converted and returned as a Hash.
+    if (not File.exists?("#{@@users_plist_dir}/#{resource_name}.plist")) \
+    or (not File.readable?("#{@@users_plist_dir}/#{resource_name}.plist"))
+      fail("#{@@users_plist_dir}/#{resource_name}.plist is not readable, please check that permissions are correct and that the file is not corrupt.")
+    else
+      converted_users_plist = plutil('-convert',    \
+                                     'xml1',        \
+                                     '-o',          \
+                                     '/dev/stdout', \
+                                     "#{@@users_plist_dir}/#{resource_name}.plist")
+      users_plist = Plist::parse_xml(converted_users_plist)
+      if users_plist['ShadowHashData']
+        password_hash_plist = users_plist['ShadowHashData'][0].string
+        convert_binary_to_xml(password_hash_plist)
+      else
+        false
+      end
+    end
+  end
+
+  def self.set_shadowhashdata(resource_name, converted_hash_plist, users_plist)
+  # This method converts the nested plist back to binary, embeds it
+  # into the user's plist, and convert the resultant plist back to
+  # a binary plist that can be read by the system. Arguments passed
+  # are the username, the nested plist, and the user's plist (as a hash)
+    changed_plist = convert_xml_to_binary(converted_hash_plist)
+    users_plist['ShadowHashData'][0].string = changed_plist
+    Plist::Emit.save_plist(users_plist, "#{@@users_plist_dir}/#{resource_name}.plist")
+    plutil('-convert', 'binary1', "#{@@users_plist_dir}/#{resource_name}.plist")
+  end
+
+  def self.get_salted_sha512(converted_hash_plist)
+  # This method retrieves the password hash from the embedded-plist
+  # retrieved from the 'ShadowHashData' key in the user's plist.
+  # Converted_hash_plist['SALTED-SHA512'].string is a Base64 encoded
+  # string. The password_hash provided as a resource attribute is a
+  # hex value. We need to convert the Base64 encoded string to a
+  # hex value and provide it back to Puppet.
+    converted_hash_plist['SALTED-SHA512'].string.unpack("H*").first
+  end
+
+  def self.set_salted_sha512(resource_name, password_hash, converted_hash_plist)
+    # This method takes passed arguments of the username, the password hash
+    # to be set, and the current converted_hash_plist retrieved from the
+    # system and sets the salted-sha512 hash according to how OS X 10.7 prefers
+    # to use it. Finally, set_shadowhashdata() is called to save the changes
+    # back to the local system.
+    converted_users_plist = plutil('-convert',    \
+                                   'xml1',        \
+                                   '-o',          \
+                                   '/dev/stdout', \
+                                   "#{@@users_plist_dir}/#{resource_name}.plist")
+    users_plist = Plist::parse_xml(converted_users_plist)
+    converted_hash_plist['SALTED-SHA512'].string = \
+      password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
+    set_shadowhashdata(resource_name, converted_hash_plist, users_plist)
+  end
+
+  def self.get_salted_sha512_pbkdf2(converted_hash_plist, field)
+  # This method reads the passed converted_hash_plist hash and returns values
+  # according to which field is passed.  Arguments passed are the hash
+  # containing the value read from the 'ShadowHashData' key in the User's
+  # plist, and the field to be read (one of 'entropy', 'salt', or 'iterations')
+    case field
+    when 'entropy', 'salt'
+      converted_hash_plist['SALTED-SHA512-PBKDF2'][field].string.unpack('H*').first
+    when 'iterations'
+      Integer(converted_hash_plist['SALTED-SHA512-PBKDF2'][field])
+    else
+      fail("Puppet has tried to read an incorrect value from the \
+            'SALTED-SHA512-PBKDF2' hash. Acceptable fields are 'salt', \
+            'entropy', or 'iterations'.")
+    end
+  end
+
+  def self.set_salted_sha512_pbkdf2(resource_name, field, value, converted_hash_plist)
+  # This method accepts a passed value and one of three fields: 'salt',
+  # 'entropy', or 'iterations'.  These fields correspond with the fields
+  # utilized in a PBKDF2 password hashing system.
+  # (see http://en.wikipedia.org/wiki/PBKDF2 for more information).
+  # The arguments passed are the username, the field to be changed (whether
+  # 'salt, 'entropy, or 'iterations'), and a hash containing the value
+  # to be set for the 'ShadowHashData' key in the User's plist.
+    case field
+    when 'salt', 'entropy'
+      converted_hash_plist['SALTED-SHA512-PBKDF2'][field].string =  \
+        value.unpack('a2'*(value.size/2)).collect { |i| i.hex.chr }.join
+    when 'iterations'
+      converted_hash_plist['SALTED-SHA512-PBKDF2'][field] = Integer(value)
+    else
+      fail("Puppet has tried to set an incorrect field for the \
+            'SALTED-SHA512-PBKDF2' hash. Acceptable fields are 'salt', \
+            'entropy', or 'iterations'.")
+    end
+    converted_users_plist = plutil('-convert',    \
+                                   'xml1',        \
+                                   '-o',          \
+                                   '/dev/stdout', \
+                                   "#{@@users_plist_dir}/#{resource_name}.plist")
+    users_plist = Plist::parse_xml(converted_users_plist)
+    set_shadowhashdata(resource_name, converted_hash_plist, users_plist)
+  end
+
+  def self.convert_xml_to_binary(plist_data)
   # This method will accept a hash that has been returned from Plist::parse_xml
   # and convert it to a binary plist (string value).
-  def self.convert_xml_to_binary(plist_data)
     Puppet.debug('Converting XML plist to binary')
     Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
     IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
@@ -343,9 +422,9 @@ class DirectoryService < Puppet::Provider::NameService
     @converted_plist
   end
 
+  def self.convert_binary_to_xml(plist_data)
   # This method will accept a binary plist (as a string) and convert it to a
   # hash via Plist::parse_xml.
-  def self.convert_binary_to_xml(plist_data)
     Puppet.debug('Converting binary plist to XML')
     Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
     IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
@@ -419,6 +498,44 @@ class DirectoryService < Puppet::Provider::NameService
       self.class.set_password(@resource.name, guid, passphrase)
     rescue Puppet::ExecutionFailure => detail
       fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
+    end
+  end
+
+  def salt=(salt)
+  # This is the setter method for the 'salt' property that is only used when
+  # PBKDF2 passwords are necessary. This method uses
+  # self.set_salted_sha512_pbkdf2() to set the value in the User's plist.
+    if (Puppet::Util::Package.versioncmp(self.class.get_macosx_version_major, '10.7') == 1)
+      converted_hash_plist = self.class.get_shadowhashdata(@resource[:name])
+      self.class.set_salted_sha512_pbkdf2(@resource[:name], 'salt', salt, converted_hash_plist)
+    end
+  end
+
+  def iterations=(iterations)
+  # This is the setter method for the 'iterations' property that is only used
+  # when PBKDF2 passwords are necessary. This method uses
+  # self.set_salted_sha512_pbkdf2() to set the value in the User's plist.
+    if (Puppet::Util::Package.versioncmp(self.class.get_macosx_version_major, '10.7') == 1)
+      converted_hash_plist = self.class.get_shadowhashdata(@resource[:name])
+      self.class.set_salted_sha512_pbkdf2(@resource[:name], 'iterations', iterations, converted_hash_plist)
+    end
+  end
+
+  def self.get_iterations(username, converted_hash_plist)
+  # This is the getter method for the 'iterations' property that is only used
+  # when PBKDF2 passwords are necessary. This method uses
+  # self.get_salted_sha512_pbkdf2() to get the value from the User's plist.
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == 1)
+      get_salted_sha512_pbkdf2(converted_hash_plist, 'iterations') if converted_hash_plist
+    end
+  end
+
+  def self.get_salt(username, converted_hash_plist)
+  # This is the getter method for the 'salt' property that is only used
+  # when PBKDF2 passwords are necessary. This method uses
+  # self.get_salted_sha512_pbkdf2() to get the value from the User's plist.
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == 1)
+      get_salted_sha512_pbkdf2(converted_hash_plist, 'salt') if converted_hash_plist
     end
   end
 
