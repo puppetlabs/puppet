@@ -16,8 +16,8 @@ PP
 step "Try to install a module to a non-existent directory"
 on master, puppet("module install pmtacceptance-nginx --dir /tmp/modules"), :acceptable_exit_codes => [1] do
   assert_equal <<-STDERR, stderr
-Could not install module 'pmtacceptance-nginx' (latest):
-  Directory /tmp/modules does not exist
+\e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
+  Directory /tmp/modules does not exist\e[0m
 STDERR
   assert_equal '', stdout
 end
@@ -26,8 +26,8 @@ on master, '[ ! -d /etc/puppet/modules/nginx ]'
 step "Try to install a module to a non-existent implicit directory"
 on master, puppet("module install pmtacceptance-nginx") do
   assert_equal <<-STDERR, stderr
-Could not install module 'pmtacceptance-nginx' (latest):
-  Directory /etc/puppet/modules does not exist
+\e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
+  Directory /etc/puppet/modules does not exist\e[0m
 STDERR
   assert_equal '', stdout
 end
