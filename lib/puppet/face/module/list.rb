@@ -125,7 +125,7 @@ Puppet::Face.define(:module, '1.0.0') do
       # Display unmet dependencies by category.
       error_types.each_key do |type|
         unless @unmet_deps[type].empty?
-          @unmet_deps[type].each_key.sort_by {|dep| dep }.each do |dep|
+          @unmet_deps[type].keys.sort_by {|dep| dep }.each do |dep|
             name    = dep.gsub('/', '-')
             title   = error_types[type][:title]
             errors  = @unmet_deps[type][dep][:errors]
