@@ -35,6 +35,10 @@ module Puppet::Agent::Locker
   end
 
   def running?
-    lockfile.locked?
+    lockfile.locked? and !lockfile.anonymous?
+  end
+
+  def disabled?
+    lockfile.locked? and lockfile.anonymous?
   end
 end
