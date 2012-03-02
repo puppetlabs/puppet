@@ -1,7 +1,11 @@
 require 'fileutils'
-require 'puppet/util/anonymous_filelock'
 
-class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
+class Puppet::Util::Pidlock
+  attr_reader :lockfile
+
+  def initialize(lockfile)
+    @lockfile = lockfile
+  end
 
   def locked?
     clear_if_stale
@@ -13,36 +17,37 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
   end
 
   def anonymous?
-    false
+    return false unless File.exists?(@lockfile)
+    File.read(@lockfile) == ""
   end
 
-  def lock
-    return mine? if locked?
+  def lock(opts = {})
+    opts = {:anonymous => false}.merge(opts)
 
-    File.open(@lockfile, "w") { |fd| fd.write(Process.pid) }
-    true
+    if locked?
+      mine?
+    else
+      if opts[:anonymous]
+        File.open(@lockfile, 'w') { |fd| true }
+      else
+        File.open(@lockfile, "w") { |fd| fd.write(Process.pid) }
+      end
+      true
+    end
   end
 
   def unlock(opts = {})
-    if mine?
-      begin
-        File.unlink(@lockfile)
-      rescue Errno::ENOENT
-        # Someone deleted it for us ...and so we do nothing.  No point whining
-        # about a problem that the user can't actually do anything about.
-      rescue SystemCallError => e
-        # This one is a real failure though.  No idea what went wrong, but it
-        # is most likely "read only file(system)" or wrong permissions or
-        # something like that.
-        Puppet.err "Could not remove PID file #{@lockfile}: #{e}"
-        puts e.backtrace if Puppet[:trace]
-      end
+    opts = {:anonymous => false}.merge(opts)
+
+    if mine? or (opts[:anonymous] and anonymous?)
+      File.unlink(@lockfile)
       true
     else
       false
     end
   end
 
+  private
   def lock_pid
     if File.exists? @lockfile
       File.read(@lockfile).to_i
@@ -51,7 +56,6 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
     end
   end
 
-  private
   def clear_if_stale
     return if lock_pid.nil?
 
