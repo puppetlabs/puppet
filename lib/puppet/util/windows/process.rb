@@ -11,7 +11,9 @@ module Puppet::Util::Windows::Process
   module_function :execute
 
   def wait_process(handle)
-    WaitForSingleObject(handle, Windows::Synchronize::INFINITE)
+    while WaitForSingleObject(handle, 0) == Windows::Synchronize::WAIT_TIMEOUT
+      sleep(1)
+    end
 
     exit_status = [0].pack('L')
     unless GetExitCodeProcess(handle, exit_status)
