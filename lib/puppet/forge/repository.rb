@@ -13,7 +13,7 @@ module Puppet::Forge
     # Instantiate a new repository instance rooted at the optional string
     # +url+, else an instance of the default Puppet modules repository.
     def initialize(url=Puppet[:module_repository])
-      @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
+      @uri = url.is_a?(::URI) ? url : ::URI.parse(url.sub(/^(?!https?:\/\/)/, 'http://'))
       @cache = Cache.new(self)
     end
 
