@@ -12,8 +12,9 @@ module Puppet::Module::Tool
         attr_accessor :module_name, :installed_version, :requested_version
         def initialize(options)
           @module_name       = options[:module_name      ]
-          @installed_version = options[:installed_version]
+          @installed_version = options[:installed_version].sub(/^(?=\d)/, 'v')
           @requested_version = options[:requested_version]
+          @requested_version.sub!(/^(?=\d)/, 'v') if @requested_version.is_a? String
           super "'#{@module_name}' (#{@requested_version}) requested; '#{@module_name}' (#{@installed_version}) already installed"
         end
 
