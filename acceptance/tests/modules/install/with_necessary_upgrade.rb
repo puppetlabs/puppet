@@ -12,9 +12,12 @@ end
 
 on master, puppet('module list') do
   assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
 /etc/puppet/modules
-├── pmtacceptance-java (v1.6.0)
-└── pmtacceptance-stdlib (v1.0.0)
+└─┬ pmtacceptance-java (v1.6.0)
+  └── pmtacceptance-stdlib (v1.0.0)
 /usr/share/puppet/modules (no modules installed)
 STDOUT
 end
@@ -22,9 +25,15 @@ end
 
 step "Install a module that requires the older module dependency be upgraded"
 on master, puppet("module install pmtacceptance-apollo") do
-  assert_equal <<-STDERR,  stderr
-\e[1;31mWarning: Deleting /etc/puppet/modules/java\e[0m
-STDERR
+  assert_equal '', stderr
+  assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
+/etc/puppet/modules
+└─┬ pmtacceptance-apollo (v0.0.1)
+  └── pmtacceptance-stdlib (v1.6.0 -> v1.7.1)
+STDOUT
 end
 
 on master, puppet('module list') do

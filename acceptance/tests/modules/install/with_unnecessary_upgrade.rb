@@ -8,9 +8,18 @@ apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/mod
 step "Install an older module version"
 on master, puppet("module install pmtacceptance-java --version 1.7.0") do
   assert_equal '', stderr
+  assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
+/etc/puppet/modules
+└─┬ pmtacceptance-java (v1.7.0)
+  └── pmtacceptance-stdlib (v1.0.0)
+STDOUT
 end
 
 on master, puppet('module list') do
+  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 ├── pmtacceptance-java (v1.7.0)
@@ -23,9 +32,17 @@ end
 step "Install a module that depends on a dependency that could be upgraded, but already satisfies constraints"
 on master, puppet("module install pmtacceptance-apollo") do
   assert_equal '', stderr
+  assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
+/etc/puppet/modules
+└── pmtacceptance-apollo (v0.0.1)
+STDOUT
 end
 
 on master, puppet('module list') do
+  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 /etc/puppet/modules
 ├── pmtacceptance-apollo (v0.0.1)

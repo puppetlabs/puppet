@@ -6,19 +6,19 @@ apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
 
 step "Install a module with dependencies"
-on master, puppet("module install pmtacceptance-apollo") do
+on master, puppet("module install pmtacceptance-java") do
   assert_equal '', stderr
-end
-
-on master, puppet('module list') do
   assert_equal <<-STDOUT, stdout
+Preparing to install into /etc/puppet/modules ...
+Downloading from http://forge.puppetlabs.com ...
+Installing -- do not interrupt ...
 /etc/puppet/modules
-├── pmtacceptance-apollo (v0.0.1)
-├── pmtacceptance-java (v1.7.1)
-└── pmtacceptance-stdlib (v1.0.0)
-/usr/share/puppet/modules (no modules installed)
+└─┬ pmtacceptance-java (v1.7.1)
+  └── pmtacceptance-stdlib (v0.0.1)
 STDOUT
 end
+on master, '[ -d /etc/puppet/modules/java ]'
+on master, '[ -d /etc/puppet/modules/stdlib ]'
 
 ensure step "Teardown"
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
