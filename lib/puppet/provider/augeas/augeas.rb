@@ -285,10 +285,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
       unless force
         # If we have a verison of augeas which is at least 0.3.6 then we
-        # can make the changes now, see if changes were made, and
-        # actually do the save.
+        # can make the changes now and see if changes were made.
         if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
+          # Execute in NEWFILE mode so we can show a diff
           set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
@@ -302,9 +302,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
               if Puppet[:show_diff]
                 notice "\n" + diff(saved_file, saved_file + ".augnew")
               end
-              if resource.noop?
-                File.delete(saved_file + ".augnew")
-              end
+              File.delete(saved_file + ".augnew")
             end
             debug("Files changed, should execute")
             return_value = true
@@ -323,32 +321,22 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   end
 
   def execute_changes
-    # Re-connect to augeas, and re-execute the changes
-    begin
-      open_augeas
-      saved_files = @aug.match("/augeas/events/saved")
-      unless saved_files.empty?
-        saved_files.each do |key|
-          root = resource[:root].sub(/^\/$/, "")
-          saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
-          if File.exists?(saved_file + ".augnew")
-            success = File.rename(saved_file + ".augnew", saved_file)
-            debug(saved_file + ".augnew moved to " + saved_file)
-            fail("Rename failed with return code #{success}") if success != 0
-          end
-        end
-      else
-        debug("No saved files, re-executing augeas")
-        set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
-        do_execute_changes
-        success = @aug.save
-        fail("Save failed with return code #{success}") if success != true
-      end
-    ensure
-      close_augeas
+    # Workaround Augeas bug where changing the save mode doesn't trigger a
+    # reload of the previously saved file(s) when we call Augeas#load
+    @aug.match("/augeas/events/saved").each do |file|
+      @aug.rm("/augeas#{@aug.get(file)}/mtime")
     end
 
+    # Reload augeas, and execute the changes for real
+    set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
+    @aug.load
+    do_execute_changes
+    success = @aug.save
+    fail("Save failed with return code #{success}") if success != true
+
     :executed
+  ensure
+    close_augeas
   end
 
   # Actually execute the augeas changes.
