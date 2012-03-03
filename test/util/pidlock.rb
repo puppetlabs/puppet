@@ -91,12 +91,11 @@ class TestPuppetUtilPidlock < Test::Unit::TestCase
     assert l.locked?
     assert l.mine?
 
-    # unlock should fail, and should *not* molest the existing lockfile,
-    # despite it being stale
+    # unlock should fail, but should clear the stale lockfile.
     File.open(l.lockfile, 'w') { |fd| fd.write(childpid) }
     assert File.exists?(l.lockfile)
     assert !l.unlock
-    assert File.exists?(l.lockfile)
+    assert !File.exists?(l.lockfile)
   end
 
   def test_40_not_locked_at_all
