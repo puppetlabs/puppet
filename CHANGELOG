@@ -1,3 +1,18 @@
+2.7.12rc2
+===
+21cdab1 (#7592) Remove redundant call to String#to_s
+5474941 (#11988) Work around Augeas reload bug when changing save modes
+f4d9753 (#11988) Don't overwrite symlinks in augeas provider
+c085327 (#8312) Fix zypper provider so ensure => 'latest' now works
+28d5d9b (#12844) Fix a unit test relating to lockfiles
+1d058ce (#12914) Allow puppet to be interrupted while waiting for child
+8f626d0 (#12933) Better error message when agent is administratively disabled
+30855bd (#12844) Agent lockfiles: backwards compatibility with 2.7.10/2.7.11
+bcbe2a3 Revert "Merge remote-tracking branch 'masterzen/tickets/2.7.x/3757' into 2.7.x"
+95810ad Revert "(#12844) Backwards compatibility for 'puppet agent --enable'"
+2d8d9ce (#12881) Fix cron type default name error on windows
+fcac8f7 (#12844) Backwards compatibility for 'puppet agent --enable'
+
 2.7.12rc1
 ===
 90fb5c8 Maint: Fix bad copy and paste
