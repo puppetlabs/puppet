@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     packages
   end
 
-  self::REGEX = %r{^(\S+)\s+(\S+)\s+(\S+)\s+}
+  self::REGEX = %r{^(\S+)\s+(?:\(.+\)\s+)?(\S+)\s+(\S+)\s+}
   self::FIELDS = [:name, :version, :status]
 
   def self.parse_line(line)
@@ -59,7 +59,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def latest
     version = nil
     pkg(:list, "-Ha", @resource[:name]).split("\n").each do |line|
-      v = line.split[2]
+      v = line.split[-2]
       case v
       when "known"
         return v
