@@ -14,7 +14,7 @@ Downloading from http://forge.puppetlabs.com ...
 Installing -- do not interrupt ...
 /etc/puppet/modules
 └─┬ pmtacceptance-java (v1.7.1)
-  └── pmtacceptance-stdlib (v0.0.1)
+  └── pmtacceptance-stdlib (v1.0.0)
 STDOUT
 end
 on master, '[ -d /etc/puppet/modules/java ]'
