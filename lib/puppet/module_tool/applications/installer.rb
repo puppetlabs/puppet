@@ -56,6 +56,13 @@ Could not install module '#{@module_name}' (#{@requested_version}):
       end
 
       def run
+        unless File.directory? options[:dir]
+          msg = "Could not install module '#{@forge_name}' (#{@version || 'latest'}):\n"
+          msg << "  Directory #{options[:dir]} does not exist"
+          Puppet.err msg
+          exit(1)
+        end
+
         results = {
           :module_name    => @forge_name,
           :module_version => @version,

@@ -9,7 +9,7 @@ file {
   [
     '/etc/puppet/modules',
     '/tmp/modules',
-  ]: ensure => absent;
+  ]: ensure => absent, recurse => true, force => true;
 }
 PP
 
@@ -19,21 +19,22 @@ on master, puppet("module install pmtacceptance-nginx --dir /tmp/modules"), :acc
 \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
   Directory /tmp/modules does not exist\e[0m
 STDERR
-  assert_equal '', stdout
+  assert_equal "Preparing to install into /tmp/modules ...\n", stdout
 end
 on master, '[ ! -d /etc/puppet/modules/nginx ]'
 
 step "Try to install a module to a non-existent implicit directory"
-on master, puppet("module install pmtacceptance-nginx") do
+on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_equal <<-STDERR, stderr
 \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
   Directory /etc/puppet/modules does not exist\e[0m
 STDERR
-  assert_equal '', stdout
+  assert_equal "Preparing to install into /etc/puppet/modules ...\n", stdout
 end
-on master, '[ -d /etc/puppet/modules/nginx ]'
+on master, '[ ! -d /etc/puppet/modules/nginx ]'
 
 ensure step "Teardown"
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
+apply_manifest_on master, "file { '/etc/puppet/modules': ensure => directory }"
 apply_manifest_on master, "file { '/etc/puppet/modules': recurse => true, purge => true, force => true }"
 end
