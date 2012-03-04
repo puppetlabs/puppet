@@ -54,7 +54,6 @@ module Puppet::Module::Tool
       def delete_existing_installation_or_abort!
         return unless @module_dir.exist?
 
-        Puppet.warning "Deleting #{@module_dir.expand_path}"
         FileUtils.rm_rf @module_dir
       end
     end

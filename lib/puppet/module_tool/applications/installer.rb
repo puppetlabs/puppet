@@ -71,7 +71,6 @@ Could not install module '#{@module_name}' (#{@requested_version}):
 
         begin
           cached_paths = get_release_packages
-
           unless @graph.empty?
             Puppet.notice 'Installing -- do not interrupt ...'
             cached_paths.each do |cache_path|
@@ -168,7 +167,9 @@ Could not install module '#{@module_name}' (#{@requested_version}):
         when :repository
           @local = get_local_constraints
 
-          if @installed.include? @forge_name
+          if @force
+            options[:ignore_dependencies] = true
+          elsif @installed.include? @forge_name
             raise AlreadyInstalledError,
               :module_name       => @forge_name,
               :installed_version => @installed[@forge_name],
@@ -200,7 +201,7 @@ Could not install module '#{@module_name}' (#{@requested_version}):
             raise "Invalid dependency cycle."
           end
 
-          if @installed[mod]
+          if @installed[mod] && ! @force
             next if range === SemVer.new(@installed[mod])
             action = :upgrade
             # TODO: Update invalid installed dependencies.
