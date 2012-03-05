@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
+require 'semver'
 
 describe Puppet::Module::Tool::Applications::Installer do
   include PuppetSpec::Files
@@ -41,11 +42,8 @@ describe Puppet::Module::Tool::Applications::Installer do
   #   foo -> bar > 2
   #   bar 1.1 already installed
   #   baz already installed -> bar < 2
-
-
-  it "should install a specific version"
-  it "should prompt to overwrite"
-  it "should output warnings"
+  before do
+  end
 
   let(:installer_class) { Puppet::Module::Tool::Applications::Installer }
 
@@ -84,229 +82,380 @@ describe Puppet::Module::Tool::Applications::Installer do
     ]
   }}
 
-  describe ".ignore_dependencies" do
-    it "should remove dependencies from remote dependency info" do
-      installer = installer_class.new('puppetlabs/awesomemodule', :ignore_dependencies => true)
-      installer.send(:ignore_dependencies, remote_deps).should == {
-        'puppetlabs/awesomemodule' => [
-          {
-            'file' => 'awesomefile',
-            'version' => '3.0.0',
-            'dependencies' => []
-          },
-        ],
-      }
-    end
+  let(:remote_dependency_info) do
+    {
+      "pmtacceptance/stdlib" => [
+        { "dependencies" => [],
+          "version"      => "0.0.1",
+          "file"         => "/pmtacceptance-stdlib-0.0.1.tar.gz" },
+        { "dependencies" => [],
+          "version"      => "0.0.2",
+          "file"         => "/pmtacceptance-stdlib-0.0.2.tar.gz" },
+        { "dependencies" => [],
+          "version"      => "1.0.0",
+          "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" }
+      ],
+      "pmtacceptance/java" => [
+        { "dependencies" => [["pmtacceptance/stdlib", ">= 0.0.1"]],
+          "version"      => "1.7.0",
+          "file"         => "/pmtacceptance-java-1.7.0.tar.gz" },
+        { "dependencies" => [["pmtacceptance/stdlib", "1.0.0"]],
+          "version"      => "1.7.1",
+          "file"         => "/pmtacceptance-java-1.7.1.tar.gz" }
+      ],
+      "pmtacceptance/apollo" => [
+        { "dependencies" => [
+            ["pmtacceptance/java", ">= 1.7.0"],
+            ["pmtacceptance/stdlib", ">= 1.0.0"]
+          ],
+          "version" => "0.0.1",
+          "file"=> "/pmtacceptance-apollo-0.0.1.tar.gz" }
+      ]
+    }
   end
 
-  describe ".resolve_remote_and_local_constraints" do
-    let(:installer) { installer = installer_class.new('puppetlabs/awesomemodule') }
-
+  describe "the behavior of get_local_constraints" do
     before do
-      @modulepath = tmpdir('modulepath')
-      Puppet.settings[:modulepath] = @modulepath
+      Puppet.settings[:modulepath] = modulepath
 
-      # always having a local version without metadata is useful to make sure
-      # everything works well in that situation
-      PuppetSpec::Modules.create('notdirectlyaffectinstall', @modulepath)
-    end
-
-    it "should use the latest versions" do
-      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile'      ],
-        ['puppetlabs/dependable',    '1.0.2', 'dependablefile102'],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'       ],
-        ['joe/circular',             '0.0.1', 'circularfile'     ]
-      ]
-    end
-
-    it "should use local version when already exists and satisfies constraints" do
       PuppetSpec::Modules.create(
         'dependable',
-        @modulepath,
+        modulepath,
         :metadata => { :version => '1.0.1' }
       )
-      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile' ],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'  ],
-        ['joe/circular',             '0.0.1', 'circularfile']
-      ]
-    end
 
-    it "should reinstall the local version and warn if force is used" do
-      PuppetSpec::Modules.create(
-        'awesomemodule',
-        @modulepath,
-        :metadata => { :version => '3.0.0' }
-      )
-      installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
-      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile' ],
-        ['puppetlabs/dependable',    '1.0.2', 'dependablefile102'],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'  ],
-        ['joe/circular',             '0.0.1', 'circularfile']
-      ]
-    end
-
-    it "should upgrade local version when necessary to satisfy constraints" do
-      PuppetSpec::Modules.create(
-        'dependable',
-        @modulepath,
-        :metadata => { :version => '0.0.5' }
-      )
       PuppetSpec::Modules.create(
         'other_mod',
-        @modulepath,
+        modulepath,
         :metadata => {
+          :version => '1.0.0',
           :dependencies => [{
             "version_requirement" => ">= 0.0.5",
             "name"                => "puppetlabs/dependable"
           }]
         }
       )
-      PuppetSpec::Modules.create(
-        'otro_mod',
-        @modulepath,
-        :metadata => {
-          :dependencies => [{
-            "version_requirement" => "<= 1.0.1",
-            "name"                => "puppetlabs/dependable"
-          }]
-        }
-      )
-
-      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile'      ],
-        ['puppetlabs/dependable',    '1.0.1', 'dependablefile101'],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'       ],
-        ['joe/circular',             '0.0.1', 'circularfile'     ]
-      ]
     end
 
-    describe "when a local module needs upgrading to satisfy constraints but has changes" do
-      before do
-        foo_checksum = 'd3b07384d113edec49eaa6238ad5ff00'
-        checksummed_module = PuppetSpec::Modules.create(
-          'dependable',
-          @modulepath,
-          :metadata => {
-            :version => '0.0.5',
-            :checksums => {
-              "foo" => foo_checksum,
-            }
+    let(:modulepath) { tmpdir('modulepath') }
+
+    it "shoud return the local module constraints" do
+      expected_output = {
+        "puppetlabs-other_mod@1.0.0" => {
+          "puppetlabs-dependable" => ">= 0.0.5"
+        },
+        "puppetlabs-dependable@1.0.1" => {}
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_local_constraints).should == expected_output
+    end
+
+    it "should set the @installed instance variable" do
+      expected_output = {
+        "puppetlabs-other_mod"  => "1.0.0",
+        "puppetlabs-dependable" => "1.0.1"
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_local_constraints)
+      installer.instance_variable_get(:@installed).should == expected_output
+    end
+
+    it "should set the @conditions instance variable" do
+      expected_output = {
+        "puppetlabs-dependable" => [
+          {
+            :dependency => ">= 0.0.5",
+            :version    => "1.0.0",
+            :module     => "puppetlabs-other_mod"
+         }
+        ]
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_local_constraints)
+      installer.instance_variable_get(:@conditions).should == expected_output
+    end
+  end
+
+  describe "the behavior of get_remote_constraints" do
+    before do
+      Puppet::Forge.stubs(:remote_dependency_info).returns(remote_dependency_info)
+    end
+
+    let(:remote_dependency_info) do
+      {
+        "pmtacceptance/stdlib" => [
+          { "dependencies" => [],
+            "version"      => "0.0.1",
+            "file"         => "/pmtacceptance-stdlib-0.0.1.tar.gz" },
+          { "dependencies" => [],
+            "version"      => "0.0.2",
+            "file"         => "/pmtacceptance-stdlib-0.0.2.tar.gz" },
+          { "dependencies" => [],
+            "version"      => "1.0.0",
+            "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" }
+        ],
+        "pmtacceptance/java" => [
+          { "dependencies" => [["pmtacceptance/stdlib", ">= 0.0.1"]],
+            "version"      => "1.7.0",
+            "file"         => "/pmtacceptance-java-1.7.0.tar.gz" },
+          { "dependencies" => [["pmtacceptance/stdlib", "1.0.0"]],
+            "version"      => "1.7.1",
+            "file"         => "/pmtacceptance-java-1.7.1.tar.gz" }
+        ],
+        "pmtacceptance/apollo" => [
+          { "dependencies" => [
+              ["pmtacceptance/java", ">= 1.7.0"],
+              ["pmtacceptance/stdlib", ">= 1.0.0"]
+            ],
+            "version" => "0.0.1",
+            "file"=> "/pmtacceptance-apollo-0.0.1.tar.gz" }
+        ]
+      }
+    end
+
+    it "should return remote constraints" do
+      expected_output = {
+        "pmtacceptance-stdlib@1.0.0" => {},
+        "pmtacceptance-stdlib@0.0.1" => {},
+        "pmtacceptance-apollo@0.0.1" => {
+          "pmtacceptance-stdlib" => ">= 1.0.0",
+          "pmtacceptance-java"   => ">= 1.7.0"
+        },
+        "pmtacceptance-stdlib@0.0.2" => {},
+        "pmtacceptance-java@1.7.0"   => {"pmtacceptance-stdlib" => ">= 0.0.1"},
+        "pmtacceptance-java@1.7.1"   => {"pmtacceptance-stdlib" => "1.0.0"}
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_remote_constraints).should == expected_output
+    end
+
+    it "should set the @versions instance variable" do
+      expected_output = {
+        "pmtacceptance-stdlib" => [
+          {:semver => SemVer.new("0.0.1"), :vstring => "0.0.1"},
+          {:semver => SemVer.new("0.0.2"), :vstring => "0.0.2"},
+          {:semver => SemVer.new("1.0.0"), :vstring => "1.0.0"}
+        ],
+        "pmtacceptance-java" => [
+          {:semver => SemVer.new("1.7.0"), :vstring => "1.7.0"},
+          {:semver => SemVer.new("1.7.1"), :vstring => "1.7.1"}
+        ],
+        "pmtacceptance-apollo" => [
+          {:semver => SemVer.new("0.0.1"), :vstring => "0.0.1"}
+        ]
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_remote_constraints)
+      installer.instance_variable_get(:@versions).should == expected_output
+    end
+
+    it "should set the @urls instance variable" do
+      expected_output = {
+        "pmtacceptance-stdlib@1.0.0" => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+        "pmtacceptance-stdlib@0.0.1" => "/pmtacceptance-stdlib-0.0.1.tar.gz",
+        "pmtacceptance-apollo@0.0.1" => "/pmtacceptance-apollo-0.0.1.tar.gz",
+        "pmtacceptance-stdlib@0.0.2" => "/pmtacceptance-stdlib-0.0.2.tar.gz",
+        "pmtacceptance-java@1.7.0"   => "/pmtacceptance-java-1.7.0.tar.gz",
+        "pmtacceptance-java@1.7.1"   => "/pmtacceptance-java-1.7.1.tar.gz"
+      }
+
+      installer = installer_class.new('puppetlabs/awesomefile')
+      installer.send(:get_remote_constraints)
+      installer.instance_variable_get(:@urls).should == expected_output
+    end
+  end
+
+  describe "the behavior of resolve_constraints" do
+    let(:versions) do
+      {
+        "pmtacceptance-stdlib" => [
+          {:semver => SemVer.new("0.0.1"), :vstring => "0.0.1"},
+          {:semver => SemVer.new("0.0.2"), :vstring => "0.0.2"},
+          {:semver => SemVer.new("1.0.0"), :vstring => "1.0.0"}
+        ],
+        "pmtacceptance-java" => [
+          {:semver => SemVer.new("1.7.0"), :vstring => "1.7.0"},
+          {:semver => SemVer.new("1.7.1"), :vstring => "1.7.1"}
+        ],
+        "pmtacceptance-apollo" => [
+          {:semver => SemVer.new("0.0.1"), :vstring => "0.0.1"}
+        ]
+      }
+    end
+
+    let(:urls) do
+      {
+        "pmtacceptance-stdlib@1.0.0" => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+        "pmtacceptance-stdlib@0.0.1" => "/pmtacceptance-stdlib-0.0.1.tar.gz",
+        "pmtacceptance-apollo@0.0.1" => "/pmtacceptance-apollo-0.0.1.tar.gz",
+        "pmtacceptance-stdlib@0.0.2" => "/pmtacceptance-stdlib-0.0.2.tar.gz",
+        "pmtacceptance-java@1.7.0"   => "/pmtacceptance-java-1.7.0.tar.gz",
+        "pmtacceptance-java@1.7.1"   => "/pmtacceptance-java-1.7.1.tar.gz"
+      }
+    end
+
+    let(:remote) do
+      {
+        "pmtacceptance-stdlib@1.0.0" => {},
+        "pmtacceptance-stdlib@0.0.1" => {},
+        "pmtacceptance-apollo@0.0.1" => {
+          "pmtacceptance-stdlib" => ">= 1.0.0",
+          "pmtacceptance-java"   => ">= 1.7.0"
+        },
+        "pmtacceptance-stdlib@0.0.2" => {},
+        "pmtacceptance-java@1.7.0"   => {"pmtacceptance-stdlib" => ">= 0.0.1"},
+        "pmtacceptance-java@1.7.1"   => {"pmtacceptance-stdlib" => "1.0.0"}
+      }
+    end
+
+    context "when there are no installed modules" do
+      let(:conditions) { Hash.new { |h,k| h[k] = [] } }
+      let(:installed)  { Hash.new }
+      let(:installer) do
+        installer = installer_class.new('pmtacceptance/apollo')
+        installer.instance_variable_set(:@installed, installed)
+        installer.instance_variable_set(:@conditions, conditions)
+        installer.instance_variable_set(:@versions, versions)
+        installer.instance_variable_set(:@urls, urls)
+        installer.instance_variable_set(:@remote, remote)
+        installer
+      end
+
+      it "should resolve constraints" do
+        expected_output = [
+          { :module       => "pmtacceptance-apollo",
+            :dependencies => [
+              { :module       => "pmtacceptance-stdlib",
+                :dependencies => [],
+                :version      => {:semver => SemVer.new('1.0.0'), :vstring => "1.0.0"},
+                :file         => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+                :action       => :install,
+                :previous_version => nil },
+              { :module       => "pmtacceptance-java",
+                :dependencies => [],
+                :version      => {:semver => SemVer.new('1.7.1'), :vstring => "1.7.1"},
+                :file         => "/pmtacceptance-java-1.7.1.tar.gz",
+                :action       => :install,
+                :previous_version => nil }
+            ],
+           :version => {:semver => SemVer.new('0.0.1'), :vstring => "0.0.1"},
+           :file    => "/pmtacceptance-apollo-0.0.1.tar.gz",
+           :action  => :install,
+           :previous_version => nil
           }
-        )
+        ]
 
-        foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
-        File.open(foo_path, 'w') { |f| f.puts 'notfoo' }
-        checksummed_module.has_local_changes?.should be_true
+        results = installer.send(:resolve_constraints, {'pmtacceptance-apollo' => '0.0.1'})
+        expected_output[0].keys.each do |key|
+          if key == :dependencies
+            next
+          end
+          results[0][key].should == expected_output[0][key]
+        end
       end
 
-      it "should error" do
-        expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-          RuntimeError,
-          "Changes in these files foo\nModule puppetlabs/dependable (1.0.2) needs to be installed to satisfy contraints, but can't be because it has local changes"
-        )
+      it "should use the latest versions" do
+        expected_output = [
+          { :module       => "pmtacceptance-stdlib",
+            :dependencies => [],
+            :action       => :install,
+            :version      => {:semver => SemVer.new('1.0.0'), :vstring => "1.0.0"},
+            :file         => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+            :previous_version => nil
+          }
+        ]
+
+        installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '>= 0.0.0'}).should == expected_output
       end
 
-      it "should warn and continue if force is used" do
-        installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
-        installer.send(:resolve_remote_and_local_constraints, remote_deps)
-        @logs.map {|l| [l.level, l.message]}.should == [[
-          :warning,
-          "Changes in these files foo\nOverwriting module puppetlabs/dependable (1.0.2) despite local changes because of force flag"
-        ]]
+      context "when there are modules installed" do
+        let(:installed) do
+          { 'pmtacceptance-stdlib' => "1.0.0" }
+        end
+
+        it "should use local version when already exists and satisfies constraints" do
+          installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '>= 0.0.0'}).should == []
+          installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'}).should == []
+        end
+
+        it "should reinstall the local version and if force is used" do
+          expected_output = [
+            { :action       => :install,
+              :dependencies => [],
+              :version      => {:semver => SemVer.new('1.0.0'), :vstring => "1.0.0"},
+              :previous_version => "1.0.0",
+              :file         => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+              :module       => "pmtacceptance-stdlib"
+            }
+          ]
+          installer.instance_variable_set(:@force, true)
+          installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'}).should == expected_output
+        end
+
+        it "should upgrade local version when necessary to satisfy constraints" do
+          expected_version_hash = {
+            :semver  => SemVer.new('1.0.0'),
+            :vstring => "1.0.0"
+          }
+          installer.instance_variable_set(:@installed, {'pmtacceptance-stdlib' => "0.0.5"})
+          result = installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'})
+          result[0][:action].should  == :upgrade
+          result[0][:version].should == expected_version_hash
+        end
+
+        it "should error when a local version can't be upgraded to satisfy constraints" do
+          broken_remote = {
+            "pmtacceptance-broken@1.0.0" => {"pmtacceptance-stdlib" => ">= 10.0.0"}
+          }
+          broken_versions = {
+            "pmtacceptance-broken" => [
+              {:semver => SemVer.new("1.0.0"), :vstring => "1.0.0"}
+            ]
+          }
+
+          broken_remote.merge!(remote_dependency_info)
+          broken_versions.merge!(versions)
+
+          installer.instance_variable_set(:@installed, {'pmtacceptance-stdlib' => "1.0.0"})
+          installer.instance_variable_set(:@remote, broken_remote)
+          installer.instance_variable_set(:@versions, broken_versions)
+
+          lambda do
+            installer.send(:resolve_constraints, {'pmtacceptance-broken' => '1.0.0'})
+          end.should raise_error (RuntimeError, "No versions satisfy!")
+        end
       end
-    end
 
-    it "should error when a local version of a dependency has no version metadata" do
-      PuppetSpec::Modules.create('dependable', @modulepath, :metadata => {:version => ''})
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        'A local version of the dependable module exists without version info'
-      )
-    end
+      context "when a local module needs upgrading to satisfy constraints but has changes" do
+        it "should error"
+        it "should warn and continue if force is used"
+      end
 
-    it "should error when a local version of a dependency has a non-semver version" do
-      PuppetSpec::Modules.create('dependable', @modulepath, :metadata => {:version => '1.1'})
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        'A local version of the dependable module declares a non semantic version (1.1)'
-      )
-    end
+      it "should error when a local version of a dependency has no version metadata"
+      it "should error when a local version of a dependency has a non-semver version"
+      it "should error when a local version of a dependency has a different forge name"
+      it "should error when a local version of a dependency has no metadata"
+      it "should warn and skip a dependency with no version that satisfies constraints if force is used"
 
-    it "should error when a local version of a dependency has a different forge name" do
-      PuppetSpec::Modules.create('dependable', @modulepath, :metadata => {:author => 'notpuppetlabs'})
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        "A local version of the dependable module exists but has a different name (notpuppetlabs/dependable)"
-      )
-    end
+      it "should error when no version for a dependency meets constraints" do
+        lambda do
+          installer.send(:resolve_constraints, {'pmtacceptance-apollo' => '5.0.0'})
+        end.should raise_error (RuntimeError, "No versions satisfy!")
+      end
 
-    it "should error when a local version of a dependency has no metadata" do
-      PuppetSpec::Modules.create('dependable', @modulepath)
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        "A local version of the dependable module exists but has no metadata"
-      )
-    end
+      context "when 'options[:ignore_dependencies]' is set to true" do
+        it "should ignore dependencies" do
+          installer.stubs(:options).returns({:ignore_dependencies => true})
 
-    it "should error when a local version can't be upgraded to satisfy constraints" do
-      PuppetSpec::Modules.create(
-        'dependnotable',
-        @modulepath,
-        :metadata => {
-          :dependencies => [{
-            "version_requirement" => "0.0.x",
-            "name"                => "puppetlabs/dependable"
-          }]
-        }
-      )
-      PuppetSpec::Modules.create('dependable', @modulepath, :metadata => {:version => '0.0.5'})
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        'No working versions for puppetlabs/dependable'
-      )
-    end
-
-    it "should warn and skip a dependency with no version that satisfies constraints if force is used" do
-      PuppetSpec::Modules.create(
-        'dependnotable',
-        @modulepath,
-        :metadata => {
-          :dependencies => [{
-            "version_requirement" => "< 1.0.0",
-            "name"                => "puppetlabs/dependable"
-          }]
-        }
-      )
-      installer = installer_class.new('puppetlabs/awesomemodule', :force => true)
-      installer.send(:resolve_remote_and_local_constraints, remote_deps).should =~ [
-        ['puppetlabs/awesomemodule', '3.0.0', 'awesomefile'      ],
-        ['puppetlabs/nester',        '2.0.0', 'nesterfile'       ],
-        ['joe/circular',             '0.0.1', 'circularfile'     ]
-      ]
-      @logs.map {|l| [l.level, l.message]}.should == [[
-        :warning,
-        "No working versions for puppetlabs/dependable, skipping because of force"
-      ]]
-    end
-
-    it "should error when no version for a dependency meets constraints" do
-      PuppetSpec::Modules.create(
-        'dependnotable',
-        @modulepath,
-        :metadata => {
-          :dependencies => [{
-            "version_requirement" => "< 1.0.0",
-            "name"                => "puppetlabs/dependable"
-          }]
-        }
-      )
-      expect { installer.send(:resolve_remote_and_local_constraints, remote_deps) }.to raise_error(
-        RuntimeError,
-        'No working versions for puppetlabs/dependable'
-      )
+          results = installer.send(:resolve_constraints, {'pmtacceptance-apollo' => '0.0.1'})
+          results[0][:dependencies].should == []
+        end
+      end
     end
   end
 
@@ -324,16 +473,6 @@ describe Puppet::Module::Tool::Applications::Installer do
       )
     end
 
-    it "should try to get_release_package_from_filesystem if it has a valid name" do
-      filemod = File.join(@sourcedir, 'author-modname-1.0.0.tar.gz')
-      File.open(filemod, 'w') {|f| f.puts 'not really a tar'}
-
-      Puppet::Forge.
-        expects(:get_release_package_from_filesystem).
-        returns ['fake_cache_path']
-      Puppet::Module::Tool::Applications::Unpacker.expects(:run).with(['fake_cache_path'], {})
-
-      installer_class.run(filemod)
-    end
+    it "should try to get_release_package_from_filesystem if it has a valid name"
   end
 end
