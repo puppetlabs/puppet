@@ -1,25 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-
 require 'puppet/reports'
-
-# FakeHTTP fakes the behavior of Net::HTTP#request and acts as a sensor for an
-# otherwise difficult to trace method call.
-#
-class FakeHTTP
-  REQUESTS = {}
-  def self.request(req)
-    REQUESTS[req.path] = req
-  end
-end
 
 processor = Puppet::Reports.report(:http)
 
 describe processor do
-  before  { Net::HTTP.any_instance.stubs(:start).yields(FakeHTTP) }
   subject { Puppet::Transaction::Report.new("apply").extend(processor) }
-
-  it { should respond_to(:process) }
 
   it "should use the reporturl setting's host and port" do
     uri = URI.parse(Puppet[:reporturl])
@@ -27,29 +13,36 @@ describe processor do
     subject.process
   end
 
-  describe "request" do
-    before { subject.process }
+  describe "when making a request" do
+    let(:http) { mock "http" }
+    let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
-    describe "path" do
-      it "should use the path specified by the 'reporturl' setting" do
-        reports_request.path.should == URI.parse(Puppet[:reporturl]).path
-      end
+    before :each do
+      Net::HTTP.any_instance.expects(:start).yields(http)
     end
 
-    describe "body" do
-      it "should be the report as YAML" do
-        reports_request.body.should == subject.to_yaml
-      end
+    it "should use the path specified by the 'reporturl' setting" do
+      http.expects(:request).with {|req|
+        req.path.should == URI.parse(Puppet[:reporturl]).path
+      }.returns(httpok)
+
+      subject.process
     end
 
-    describe "content type" do
-      it "should be 'application/x-yaml'" do
-        reports_request.content_type.should == "application/x-yaml"
-      end
+    it "should give the body as the report as YAML" do
+      http.expects(:request).with {|req|
+        req.body.should == subject.to_yaml
+      }.returns(httpok)
+
+      subject.process
+    end
+
+    it "should set content-type to 'application/x-yaml'" do
+      http.expects(:request).with {|req|
+        req.content_type.should == "application/x-yaml"
+      }.returns(httpok)
+
+      subject.process
     end
   end
-
-  private
-
-  def reports_request; FakeHTTP::REQUESTS[URI.parse(Puppet[:reporturl]).path] end
 end
