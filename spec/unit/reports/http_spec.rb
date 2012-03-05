@@ -44,5 +44,28 @@ describe processor do
 
       subject.process
     end
+
+    Net::HTTPResponse::CODE_TO_OBJ.each do |code, klass|
+      if code.to_i >= 200 and code.to_i < 300
+        it "should succeed on http code #{code}" do
+          response = klass.new('1.1', code, '')
+          http.expects(:request).returns(response)
+
+          Puppet.expects(:err).never
+          subject.process
+        end
+      end
+
+      if code.to_i >= 300
+        it "should log error on http code #{code}" do
+          response = klass.new('1.1', code, '')
+          http.expects(:request).returns(response)
+
+          Puppet.expects(:err)
+          subject.process
+        end
+      end
+    end
+
   end
 end
