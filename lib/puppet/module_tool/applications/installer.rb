@@ -32,7 +32,6 @@ Could not install module '#{@module_name}' (#{@requested_version}):
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force = options[:force]
         @ignore_dependencies = options[:ignore_dependencies]
-
         if File.exist?(name)
           if File.directory?(name)
             # TODO Unify this handling with that of Unpacker#check_clobber!
@@ -182,6 +181,7 @@ Could not install module '#{@module_name}' (#{@requested_version}):
           @graph = resolve_constraints({ @forge_name => @version || '>= 0.0.0' })
           return download_tarballs(@graph)
         when :filesystem
+          @graph = []
           cache_paths = [Puppet::Forge.get_release_package_from_filesystem(@filename)]
         end
 
