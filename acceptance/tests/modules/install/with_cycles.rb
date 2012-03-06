@@ -7,24 +7,23 @@ apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/mod
 
 step "Install a module with cycles"
 on master, puppet("module install pmtacceptance-php --version 0.0.1") do
-  assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-Preparing to install into /etc/puppet/modules ...
-Downloading from http://forge.puppetlabs.com ...
-Installing -- do not interrupt ...
-/etc/puppet/modules
-└─┬ pmtacceptance-php (v0.0.1)
-  └── pmtacceptance-apache (v0.0.1)
-STDOUT
+  assert_output <<-OUTPUT
+    Preparing to install into /etc/puppet/modules ...
+    Downloading from http://forge.puppetlabs.com ...
+    Installing -- do not interrupt ...
+    /etc/puppet/modules
+    └─┬ pmtacceptance-php (v0.0.1)
+      └── pmtacceptance-apache (v0.0.1)
+  OUTPUT
 end
 
 on master, puppet('module list') do
-  assert_equal <<-STDOUT, stdout
-/etc/puppet/modules
-├── pmtacceptance-apache (v0.0.1)
-└── pmtacceptance-php (v0.0.1)
-/usr/share/puppet/modules (no modules installed)
-STDOUT
+  assert_output <<-OUTPUT
+    /etc/puppet/modules
+    ├── pmtacceptance-apache (v0.0.1)
+    └── pmtacceptance-php (v0.0.1)
+    /usr/share/puppet/modules (no modules installed)
+  OUTPUT
 end
 
 ensure step "Teardown"

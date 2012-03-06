@@ -7,14 +7,13 @@ apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/mod
 
 step "Install a module, but ignore dependencies"
 on master, puppet("module install pmtacceptance-java --ignore-dependencies") do
-  assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-Preparing to install into /etc/puppet/modules ...
-Downloading from http://forge.puppetlabs.com ...
-Installing -- do not interrupt ...
-/etc/puppet/modules
-└── pmtacceptance-java (v1.7.1)
-STDOUT
+  assert_output <<-OUTPUT
+    Preparing to install into /etc/puppet/modules ...
+    Downloading from http://forge.puppetlabs.com ...
+    Installing -- do not interrupt ...
+    /etc/puppet/modules
+    └── pmtacceptance-java (v1.7.1)
+  OUTPUT
 end
 on master, '[ -d /etc/puppet/modules/java ]'
 on master, '[ ! -d /etc/puppet/modules/stdlib ]'
