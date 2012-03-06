@@ -18,6 +18,8 @@ describe Puppet::Interface::FaceCollection do
     $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     subject.instance_variable_get(:@faces).clear
     subject.instance_variable_set(:@loaded, false)
+    @autoload_loaded = {}
+    Puppet::Util::Autoload.stubs(:loaded).returns(@autoload_loaded)
   end
 
   after :each do

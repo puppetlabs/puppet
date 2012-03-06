@@ -86,7 +86,8 @@ class Puppet::Interface
 
 
   ########################################################################
-  attr_reader :name, :version
+  attr_reader :name, :version, :loader
+  private :loader
 
   def initialize(name, version, &block)
     unless SemVer.valid?(version)
@@ -102,18 +103,13 @@ class Puppet::Interface
     @authors  = []
     @license  = 'All Rights Reserved'
 
+    @loader = Puppet::Util::Autoload.new(@name, "puppet/face/#{@name}")
     instance_eval(&block) if block_given?
   end
 
   # Try to find actions defined in other files.
   def load_actions
-    Puppet::Interface.autoloader.class.search_directories.each do |dir|
-      Dir.glob(File.join(dir, "puppet/face/#{name}", "*.rb")).each do |file|
-        action = file.sub(dir, '').sub(/^[\\\/]/, '').sub(/\.rb/, '')
-        Puppet.debug "Loading action '#{action}' for '#{name}' from '#{dir}/#{action}.rb'"
-        require(action)
-      end
-    end
+    loader.loadall
   end
 
   def to_s
