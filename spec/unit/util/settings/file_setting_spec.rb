@@ -286,5 +286,14 @@ describe Puppet::Util::Settings::FileSetting do
       @file.to_resource[:links].should == :follow
     end
   end
+
+  describe "when munging a filename" do
+    it "should preserve trailing slashes" do
+      settings = mock 'settings'
+      file = Puppet::Util::Settings::FileSetting.new(:settings => settings, :desc => "eh", :name => :mydir, :section => "mysect")
+      path = @basepath + '/'
+      file.munge(path).should == path
+    end
+  end
 end
 
