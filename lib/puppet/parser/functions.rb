@@ -41,7 +41,7 @@ module Puppet::Parser::Functions
   def self.newfunction(name, options = {}, &block)
     name = symbolize(name)
 
-    raise Puppet::DevError, "Function #{name} already defined" if functions.include?(name)
+    Puppet.warning "Overwriting previous definition for function #{name}" if functions.include?(name)
 
     ftype = options[:type] || :statement
 
