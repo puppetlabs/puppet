@@ -28,7 +28,7 @@ on master, puppet("module install pmtacceptance-git"), :acceptable_exit_codes =>
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mCould not install module 'pmtacceptance-git' (best: v0.0.1):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-git' (best: v0.0.1)
     STDERR>   No version of 'pmtacceptance-git' will satisfy dependencies:
     STDERR>     'jimmy/crakorn' (v0.0.1) requires 'pmtacceptance-stdlib' (v1.x)
     STDERR>     'pmtacceptance-git' (v0.1.0) requires 'pmtacceptance-stdlib' (>= 2.0.0)
@@ -54,7 +54,7 @@ on master, puppet("module install pmtacceptance-stdlib --version 1.x"), :accepta
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mCould not install module 'pmtacceptance-git' (best):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-git' (best)
     STDERR>   No version of 'pmtacceptance-git' will satisfy dependencies:
     STDERR>     You specified 'pmtacceptance-stdlib' (v1.x)
     STDERR>     'jimmy/crakorn' (v0.0.1) requires 'pmtacceptance-stdlib' (v1.x)
@@ -69,7 +69,7 @@ on master, puppet("module install pmtacceptance-stdlib"), :acceptable_exit_codes
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mCould not install module 'pmtacceptance-git' (best):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-git' (best)
     STDERR>   No version of 'pmtacceptance-git' will satisfy dependencies:
     STDERR>     You specified 'pmtacceptance-stdlib' (best)
     STDERR>     'jimmy/crakorn' (v0.0.1) requires 'pmtacceptance-stdlib' (v1.x)
