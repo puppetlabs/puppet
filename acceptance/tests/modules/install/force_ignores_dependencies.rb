@@ -10,7 +10,7 @@ on master, puppet("module install pmtacceptance-php"), :acceptable_exit_codes =>
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mCould not install module 'pmtacceptance-php' (latest: v0.0.2):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-php' (latest: v0.0.2)
     STDERR>   No version of 'pmtacceptance-php' will satisfy dependencies:
     STDERR>     You specified 'pmtacceptance-php' (latest: v0.0.2),
     STDERR>     which depends on 'pmtacceptance-apache' (v0.0.1),

@@ -25,7 +25,7 @@ step "Try to install a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest)
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
     STDERR>     Use `puppet module upgrade` to install a different version
     STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
@@ -37,7 +37,7 @@ step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx --version 1.x"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (v1.x):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (v1.x)
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
     STDERR>     Use `puppet module upgrade` to install a different version
     STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
