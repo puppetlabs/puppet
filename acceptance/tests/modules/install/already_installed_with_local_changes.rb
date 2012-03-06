@@ -1,4 +1,4 @@
-begin test_name "puppet module install (already installed elsewhere)"
+begin test_name "puppet module install (already installed with local changes)"
 
 step 'Setup'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
@@ -7,18 +7,18 @@ apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/mod
 apply_manifest_on master, <<-PP
 file {
   [
-    '/etc/puppet/modules',
-    '/usr/share/puppet',
-    '/usr/share/puppet/modules',
-    '/usr/share/puppet/modules/nginx',
+    '/etc/puppet/modules/nginx',
   ]: ensure => directory;
-  '/usr/share/puppet/modules/nginx/metadata.json':
+  '/etc/puppet/modules/nginx/metadata.json':
     content => '{
       "name": "pmtacceptance/nginx",
       "version": "0.0.1",
       "source": "",
       "author": "pmtacceptance",
       "license": "MIT",
+      "checksums": {
+        "README": "2a3adc3b053ef1004df0a02cefbae31f"
+      },
       "dependencies": []
     }';
 }
@@ -28,13 +28,14 @@ step "Try to install a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest):
+    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (v1.x):
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
+    STDERR>     Installed module has had changes made locally
     STDERR>     Use `puppet module upgrade` to install a different version
     STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ -d /etc/puppet/modules/nginx ]'
 
 step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx --version 1.x"), :acceptable_exit_codes => [1] do
@@ -42,11 +43,12 @@ on master, puppet("module install pmtacceptance-nginx --version 1.x"), :acceptab
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (v1.x):
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
+    STDERR>     Installed module has had changes made locally
     STDERR>     Use `puppet module upgrade` to install a different version
     STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ -d /etc/puppet/modules/nginx ]'
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install pmtacceptance-nginx --force") do
