@@ -87,7 +87,7 @@ describe Puppet::Util::CommandLine do
     it "should find and invoke an executable with a hyphenated name" do
       commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
       Puppet::Util.expects(:which).with('puppet-whatever').returns('/dev/null/puppet-whatever')
-      commandline.expects(:system).with('/dev/null/puppet-whatever', 'argument')
+      commandline.expects(:exec).with('/dev/null/puppet-whatever', 'argument')
 
       commandline.execute
     end
@@ -96,7 +96,7 @@ describe Puppet::Util::CommandLine do
       it "should abort and show the usage message" do
         commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
         Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
-        commandline.expects(:system).never
+        commandline.expects(:exec).never
 
         expect {
           commandline.execute
