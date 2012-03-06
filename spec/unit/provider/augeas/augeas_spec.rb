@@ -322,13 +322,14 @@ describe provider_class do
         Puppet[:show_diff] = true
 
         @resource[:root] = ""
-        @provider.stubs(:get_augeas_version).returns("0.7.2")
+        @provider.stubs(:get_augeas_version).returns("0.10.0")
         @augeas.stubs(:set).returns(true)
         @augeas.stubs(:save).returns(true)
       end
 
       it "should call diff when a file is shown to have been changed" do
         file = "/etc/hosts"
+        File.stubs(:delete)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
@@ -345,6 +346,7 @@ describe provider_class do
       it "should call diff for each file thats changed" do
         file1 = "/etc/hosts"
         file2 = "/etc/resolv.conf"
+        File.stubs(:delete)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
@@ -364,6 +366,7 @@ describe provider_class do
         it "should call diff when a file is shown to have been changed" do
           root = "/tmp/foo"
           file = "/etc/hosts"
+          File.stubs(:delete)
 
           @resource[:context] = "/files"
           @resource[:changes] = ["set #{file}/foo bar"]
@@ -394,10 +397,9 @@ describe provider_class do
         @provider.should_not be_need_to_run
       end
 
-      it "should cleanup when in noop mode" do
+      it "should cleanup the .augnew file" do
         file = "/etc/hosts"
 
-        @resource[:noop] = true
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
@@ -430,7 +432,7 @@ describe provider_class do
 
   describe "augeas execution integration" do
     before do
-      @augeas = stub("augeas")
+      @augeas = stub("augeas", :load)
       @augeas.stubs("close")
       @augeas.stubs(:match).with("/augeas/events/saved").returns([])
 
@@ -555,6 +557,35 @@ describe provider_class do
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
+    end
+  end
+
+  describe "when making changes", :if => Puppet.features.augeas? do
+    include PuppetSpec::Files
+
+    it "should not clobber the file if it's a symlink" do
+      Puppet::Util::Storage.stubs(:store)
+
+      link = tmpfile('link')
+      target = tmpfile('target')
+      FileUtils.touch(target)
+      FileUtils.symlink(target, link)
+
+      resource = Puppet::Type.type(:augeas).new(
+        :name => 'test',
+        :incl => link,
+        :lens => 'Sshd.lns',
+        :changes => "set PermitRootLogin no"
+      )
+
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource resource
+
+      catalog.apply
+
+      File.ftype(link).should == 'link'
+      File.readlink(link).should == target
+      File.read(target).should =~ /PermitRootLogin no/
     end
   end
 

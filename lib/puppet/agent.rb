@@ -8,9 +8,6 @@ class Puppet::Agent
   require 'puppet/agent/locker'
   include Puppet::Agent::Locker
 
-  require 'puppet/agent/disabler'
-  include Puppet::Agent::Disabler
-
   attr_reader :client_class, :client, :splayed
   attr_accessor :should_fork
 
@@ -36,9 +33,10 @@ class Puppet::Agent
       return
     end
     if disabled?
-      Puppet.notice "Skipping run of #{client_class}; administratively disabled: #{disable_message}"
+      Puppet.notice "Skipping run of #{client_class}; administratively disabled; use 'puppet #{client_class} --enable' to re-enable."
       return
     end
+
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
