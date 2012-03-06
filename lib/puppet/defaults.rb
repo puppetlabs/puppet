@@ -1,11 +1,17 @@
+# !!!! TODO: get rid of all run_mode/application_name calls in here...
+
 # The majority of Puppet's configuration settings are set in this file.
 module Puppet
+
+  # TODO: get rid of all Puppet.run_mode and Puppet.application_name from this file.
+
   setdefaults(:main,
     :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this setting is calculated based on the user.  If the process
     is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it's running as any other user,
     it defaults to being in the user's home directory."],
     :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this setting is calculated specially, like `confdir`_."],
-    :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
+  ### TODO: introduce a constant for this...
+    :name => ['apply', "The name of the application, if we are running as one.  The
       default is essentially $0 without the path or `.rb`."],
     :run_mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
   )
@@ -137,7 +143,9 @@ module Puppet
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
     :facts_terminus => {
+      ### TODO: re-wire the master to override this to yaml
       :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
+      #:default => 'facter',
       :desc => "The node facts terminus.",
       :hook => proc do |value|
         require 'puppet/node/facts'

@@ -102,7 +102,7 @@ RSpec.configure do |config|
   end
 
   config.after :each do
-    Puppet.settings.clear
+    Puppet.settings.send(:clear_for_tests)
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
     Puppet::Util::ExecutionStub.reset

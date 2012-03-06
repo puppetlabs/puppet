@@ -56,24 +56,41 @@ class Puppet::Util::Settings
   end
 
   # Remove all set values, potentially skipping cli values.
-  def clear(exceptcli = false)
+  def clear
     @sync.synchronize do
-      unsafe_clear(exceptcli)
+      unsafe_clear
     end
   end
 
   # Remove all set values, potentially skipping cli values.
-  def unsafe_clear(exceptcli = false)
+  def unsafe_clear(clear_cli = true, clear_mutable_defaults = false)
     @values.each do |name, values|
-      @values.delete(name) unless exceptcli and name == :cli
+      next if ((name == :mutable_defaults) and !clear_mutable_defaults)
+      next if ((name == :cli) and !clear_cli)
+      @values.delete(name)
     end
+
+    # TODO: if this condition is really based on the fact that we are reparsing
+    #  the config file, then our parameters should be named more clearly.
+    #  --cprice 2012-03-06
 
     # Don't clear the 'used' in this case, since it's a config file reparse,
     # and we want to retain this info.
-    @used = [] unless exceptcli
+    @used = [] if clear_cli
 
     @cache.clear
   end
+  private :unsafe_clear
+
+  # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
+  #
+  # @return nil
+  def clear_for_tests()
+    @sync.synchronize do
+      unsafe_clear(true, true)
+    end
+  end
+  private :clear_for_tests
 
   # This is mostly just used for testing.
   def clearused
@@ -83,7 +100,7 @@ class Puppet::Util::Settings
 
   # Do variable interpolation on the value.
   def convert(value, environment = nil)
-    return value unless value
+    return nil if value.nil?
     return value unless value.is_a? String
     newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
       varname = $2 || $1
@@ -312,7 +329,7 @@ class Puppet::Util::Settings
       return
     end
 
-    unsafe_clear(true)
+    unsafe_clear(false)
 
     metas = {}
     data.each do |area, values|
@@ -355,6 +372,12 @@ class Puppet::Util::Settings
       end
     end
   end
+
+
+  # The following method strikes me as a good example of how dynamic languages
+  #  can be abused; I'd really like to see some stronger typing on this stuff.
+  #  And I will totally try to do that if I get a chance.  :)
+  #  --cprice 2012-03-06
 
   # Create a new setting.  The value is passed in because it's used to determine
   # what kind of setting we're creating, but the value itself might be either
@@ -456,17 +479,9 @@ class Puppet::Util::Settings
   end
 
   def legacy_to_mode(type, param)
-    if not defined?(@app_names)
-      require 'puppet/util/command_line'
-      command_line = Puppet::Util::CommandLine.new
-      @app_names = Puppet::Util::CommandLine::LegacyName.inject({}) do |hash, pair|
-        app, legacy = pair
-        command_line.require_application app
-        hash[legacy.to_sym] = Puppet::Application.find(app).run_mode.name
-        hash
-      end
-    end
-    if new_type = @app_names[type]
+    require 'puppet/util/legacy_command_line'
+    if Puppet::Util::LegacyCommandLine::LEGACY_APPS.has_key?(type)
+      new_type = Puppet::Util::LegacyCommandLine::LEGACY_APPS[type].run_mode
       Puppet.deprecation_warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
       return new_type
     end
@@ -483,6 +498,7 @@ class Puppet::Util::Settings
           "Attempt to assign a value to unknown configuration parameter #{param.inspect}"
       end
     end
+
     value = setting.munge(value) if setting.respond_to?(:munge)
     setting.handle(value) if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
     if ReadOnly.include? param and type != :mutable_defaults
@@ -650,6 +666,10 @@ if @config.include?(:run_mode)
   def uninterpolated_value(param, environment = nil)
     param = param.to_sym
     environment &&= environment.to_sym
+
+    ## do we really need to be using throw here? isn't that a fairly slow operation?
+    ##  I guess if we are caching the values then this shouldn't get called all that
+    ##  often.  --cprice 2012-03-06
 
     # See if we can find it within our searchable list of values
     val = catch :foundval do
@@ -866,11 +886,15 @@ if @config.include?(:run_mode)
     # Default to 'main' for the section.
     section = :main
     result[section][:_meta] = {}
-    text.split(/\n/).each { |line|
+    text.split(/\n/).each do |line|
       count += 1
       case line
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
+        #disallow mutable_defaults in config file
+        if section == :mutable_defaults
+          raise Puppet::Error.new("Illegal section 'mutable_defaults' in config file", file, line)
+        end
         # Add a meta section
         result[section][:_meta] ||= {}
       when /^\s*#/; next # Skip comments
@@ -905,7 +929,7 @@ if @config.include?(:run_mode)
         error.line = line
         raise error
       end
-    }
+    end
 
     result
   end

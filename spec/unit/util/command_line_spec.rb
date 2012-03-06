@@ -75,12 +75,12 @@ describe Puppet::Util::CommandLine do
 
   it "should translate subcommand names into their legacy equivalent" do
     command_line = Puppet::Util::CommandLine.new("puppet", ["master"], @tty)
-    command_line.legacy_executable_name.should == "puppetmasterd"
+    command_line.legacy_executable_name.should == :puppetmasterd
   end
 
   it "should leave legacy command names alone" do
     command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], @tty)
-    command_line.legacy_executable_name.should == "puppetmasterd"
+    command_line.legacy_executable_name.should == :puppetmasterd
   end
 
   describe "when the subcommand is not implemented" do

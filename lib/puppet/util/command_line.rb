@@ -1,22 +1,9 @@
+require 'puppet'
 require "puppet/util/plugins"
 
 module Puppet
   module Util
     class CommandLine
-
-      LegacyName = Hash.new{|h,k| k}.update(
-        'agent'      => 'puppetd',
-        'cert'       => 'puppetca',
-        'doc'        => 'puppetdoc',
-        'filebucket' => 'filebucket',
-        'apply'      => 'puppet',
-        'describe'   => 'pi',
-        'queue'      => 'puppetqd',
-        'resource'   => 'ralsh',
-        'kick'       => 'puppetrun',
-        'master'     => 'puppetmasterd',
-        'device'     => 'puppetdevice'
-      )
 
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @zero  = zero
@@ -86,7 +73,9 @@ module Puppet
       end
 
       def legacy_executable_name
-        LegacyName[ subcommand_name ]
+        name = LegacyCommandLine::LEGACY_NAMES[ subcommand_name.intern ]
+        return name unless name.nil?
+        return subcommand_name.intern
       end
 
       private

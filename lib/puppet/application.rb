@@ -229,6 +229,11 @@ class Application
       find(name).new
     end
 
+    #
+    # TODO: look into changing this into two methods (getter/setter)
+    #  --cprice 2012-03-06
+    #
+
     # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
     # passed. Otherwise, gets the run_mode or a default run_mode
     #
@@ -286,6 +291,16 @@ class Application
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
+    # XXXXXXXXXXX TODO: this is crap.  need to refactor this so that applications have a hook to initialize
+    #  the settings that are specific to them; need to decide whether to formally specify the list of such
+    #  settings, or just allow them to run willy-nilly.
+    if (mode.name == :master)
+      Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
+    end
+
+
+    ## TODO: get rid of this whole block, push it to some kind of application-specific hook or something
+
     if Puppet.respond_to? :settings
       # This is to reduce the amount of confusion in rspec
       # because it might have loaded defaults.rb before the globals were set
@@ -293,7 +308,7 @@ class Application
       Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
       Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
       Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
-      Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
+      #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
       Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
