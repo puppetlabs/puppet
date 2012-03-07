@@ -430,6 +430,8 @@ class Puppet::Parser::Compiler
     @catalog = Puppet::Resource::Catalog.new(@node.name)
     @catalog.version = known_resource_types.version
 
+    @catalog.environment = @node.environment.to_s
+
     # Create our initial scope and a resource that will evaluate main.
     @topscope = Puppet::Parser::Scope.new(:compiler => self)
 
