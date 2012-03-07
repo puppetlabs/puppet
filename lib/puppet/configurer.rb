@@ -33,11 +33,6 @@ class Puppet::Configurer
     Puppet[:puppetdlockfile]
   end
 
-  def clear
-    @catalog.clear(true) if @catalog
-    @catalog = nil
-  end
-
   def execute_postrun_command
     execute_from_setting(:postrun_command)
   end
