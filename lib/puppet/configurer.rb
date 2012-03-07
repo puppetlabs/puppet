@@ -97,14 +97,29 @@ class Puppet::Configurer
     catalog
   end
 
-  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
-  # the options, then apply that one, otherwise retrieve it.
-  def retrieve_and_apply_catalog(options, fact_options)
+  def prepare_and_retrieve_catalog(options)
+    prepare(options)
+
+    if Puppet::Resource::Catalog.indirection.terminus_class == :rest
+      # This is a bit complicated.  We need the serialized and escaped facts,
+      # and we need to know which format they're encoded in.  Thus, we
+      # get a hash with both of these pieces of information.
+      fact_options = facts_for_uploading
+    end
+
+    # set report host name now that we have the fact
+    options[:report].host = Puppet[:node_name_value]
+
     unless catalog = (options.delete(:catalog) || retrieve_catalog(fact_options))
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
+    catalog
+  end
 
+  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
+  # the options, then apply that one, otherwise retrieve it.
+  def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
     report.environment = Puppet[:environment]
@@ -126,25 +141,29 @@ class Puppet::Configurer
 
     Puppet::Util::Log.newdestination(report)
     begin
-      prepare(options)
-
-      if Puppet::Resource::Catalog.indirection.terminus_class == :rest
-        # This is a bit complicated.  We need the serialized and escaped facts,
-        # and we need to know which format they're encoded in.  Thus, we
-        # get a hash with both of these pieces of information.
-        fact_options = facts_for_uploading
-      end
-
-      # set report host name now that we have the fact
-      report.host = Puppet[:node_name_value]
-
       begin
-        execute_prerun_command or return nil
-        if retrieve_and_apply_catalog(options, fact_options)
-          report.exit_status
-        else
-          nil
+        unless catalog = prepare_and_retrieve_catalog(options)
+          return nil
         end
+
+        # Here we set the local environment based on what we get from the
+        # catalog. Since a change in environment means a change in facts, and
+        # facts may be used to determine which catalog we get, we need to
+        # rerun the process if the environment is changed.
+        tries = 0
+        while catalog.environment and not catalog.environment.empty? and catalog.environment != Puppet[:environment]
+          if tries > 3
+            raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
+          end
+          Puppet.warning "Local environment: \"#{Puppet[:environment]}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
+          Puppet[:environment] = catalog.environment
+          return nil unless catalog = prepare_and_retrieve_catalog(options)
+          tries += 1
+        end
+
+        execute_prerun_command or return nil
+        apply_catalog(catalog, options)
+        report.exit_status
       rescue SystemExit,NoMemoryError
         raise
       rescue => detail

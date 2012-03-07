@@ -454,7 +454,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         'tags'      => tags,
         'name'      => name,
         'version'   => version,
-        'environment' => environment,
+        'environment' => environment.to_s,
         'resources' => vertices.collect { |v| v.to_pson_data_hash },
         'edges'     => edges.   collect { |e| e.to_pson_data_hash },
         'classes'   => classes
