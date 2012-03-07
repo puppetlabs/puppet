@@ -31,18 +31,18 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       described_class.expects(:pkg).with(:list,'-H').returns File.read(my_fixture('simple'))
       @instances = described_class.instances.map { |p| Hash.new(:name => p.get(:name), :ensure => p.get(:ensure)) }
       @instances.size.should == 4
-      @instances[0].should eql Hash.new(:name => 'SUNPython', :ensure => :present)
-      @instances[1].should eql Hash.new(:name => 'SUNWbind', :ensure => :present)
-      @instances[2].should eql Hash.new(:name => 'SUNWdistro-license-copyright', :ensure => :present)
-      @instances[3].should eql Hash.new(:name => 'SUNWfppd', :ensure => :present)
+      @instances[0].should == Hash.new(:name => 'SUNPython', :ensure => :present)
+      @instances[1].should == Hash.new(:name => 'SUNWbind', :ensure => :present)
+      @instances[2].should == Hash.new(:name => 'SUNWdistro-license-copyright', :ensure => :present)
+      @instances[3].should == Hash.new(:name => 'SUNWfppd', :ensure => :present)
     end
 
     it "should correctly parse lines with non preferred publisher" do
       described_class.expects(:pkg).with(:list,'-H').returns File.read(my_fixture('publisher'))
       @instances = described_class.instances.map { |p| Hash.new(:name => p.get(:name), :ensure => p.get(:ensure)) }
       @instances.size.should == 2
-      @instances[0].should eql Hash.new(:name => 'SUNWpcre', :ensure => :present)
-      @instances[1].should eql Hash.new(:name => 'service/network/ssh', :ensure => :present)
+      @instances[0].should == Hash.new(:name => 'SUNWpcre', :ensure => :present)
+      @instances[1].should == Hash.new(:name => 'service/network/ssh', :ensure => :present)
     end
 
     it "should warn about incorrect lines" do
