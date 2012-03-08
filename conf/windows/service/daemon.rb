@@ -46,6 +46,10 @@ class WindowsDaemon < Win32::Daemon
       log_debug("Using '#{puppet}'")
       begin
         runinterval = %x{ "#{puppet}" config print runinterval }.to_i
+        if runinterval == 0
+          runinterval = 1800
+          log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
+        end
       rescue Exception => e
         log_exception(e)
         runinterval = 1800
