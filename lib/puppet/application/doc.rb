@@ -59,6 +59,8 @@ SYNOPSIS
 Generates a reference for all Puppet types. Largely meant for internal
 Puppet Labs use.
 
+WARNING: RDoc support is only available under Ruby 1.8.7 and earlier.
+
 
 USAGE
 -----
@@ -81,6 +83,11 @@ can be changed with the 'outputdir' option.
 
 If the command is run with the name of a manifest file as an argument,
 puppet doc will output a single manifest's documentation on stdout.
+
+WARNING: RDoc support is only available under Ruby 1.8.7 and earlier.
+The internal API used to support manifest documentation has changed
+radically in newer versions, and support is not yet available for
+using those versions of RDoc.
 
 
 OPTIONS

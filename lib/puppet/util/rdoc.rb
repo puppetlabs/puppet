@@ -5,36 +5,43 @@ module Puppet::Util::RDoc
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-    Puppet[:ignoreimport] = true
+    unless Puppet.features.rdoc1?
+      raise "the version of RDoc included in Ruby #{::RUBY_VERSION} is not supported"
+    end
 
-    # then rdoc
-    require 'rdoc/rdoc'
-    require 'rdoc/options'
+    begin
+      Puppet[:ignoreimport] = true
 
-    # load our parser
-    require 'puppet/util/rdoc/parser'
+      # then rdoc
+      require 'rdoc/rdoc'
+      require 'rdoc/options'
 
-    r = RDoc::RDoc.new
+      # load our parser
+      require 'puppet/util/rdoc/parser'
 
-    RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
-      "puppet/util/rdoc/generators/puppet_generator.rb",
-      :PuppetGenerator,
-      "puppet")
+      r = RDoc::RDoc.new
 
-    # specify our own format & where to output
-    options = [ "--fmt", "puppet",
-                "--quiet",
-                "--exclude", "/modules/[^/]*/files/.*\.pp$",
-                "--op", outputdir ]
+      RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
+        "puppet/util/rdoc/generators/puppet_generator.rb",
+        :PuppetGenerator,
+        "puppet"
+      )
 
-    options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
-    options += [ "--charset", charset] if charset
-    options += files
+      # specify our own format & where to output
+      options = [ "--fmt", "puppet",
+                  "--quiet",
+                  "--exclude", "/modules/[^/]*/files/.*\.pp$",
+                  "--op", outputdir ]
 
-    # launch the documentation process
-    r.document(options)
-  rescue RDoc::RDocError => e
-    raise Puppet::ParseError.new("RDoc error #{e}")
+      options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
+      options += [ "--charset", charset] if charset
+      options += files
+
+      # launch the documentation process
+      r.document(options)
+    rescue RDoc::RDocError => e
+      raise Puppet::ParseError.new("RDoc error #{e}")
+    end
   end
 
   # launch a output to console manifest doc
