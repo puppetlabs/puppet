@@ -38,7 +38,7 @@ on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes 
     STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
   OUTPUT
 end
-on master, '[ f /etc/puppet/modules/nginx/extra.json ]'
+on master, '[ -f /etc/puppet/modules/nginx/extra.json ]'
 
 step "Try to install an module with a path collision"
 on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes => [1] do
@@ -46,12 +46,12 @@ on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes
     STDOUT> Preparing to install into /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-apache' (latest: v0.0.1)
-    STDERR>   Installation would overwrite /etc/puppet/modules/nginx
+    STDERR>   Installation would overwrite /etc/puppet/modules/apache
     STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
     STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
   OUTPUT
 end
-on master, '[ f /etc/puppet/modules/apache/extra.json ]'
+on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 
 step "Try to install an module with a dependency that has collides"
 on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptable_exit_codes => [1] do
@@ -64,10 +64,10 @@ on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptab
     STDERR>     Use `puppet module install --ignore-dependencies` to install only this module\e[0m
   OUTPUT
 end
-on master, '[ f /etc/puppet/modules/apache/extra.json ]'
+on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 
 step "Install an module with a name collision by using --force"
-on master, puppet("module install pmtacceptance-nginx --force"), :acceptable_exit_codes => [1] do
+on master, puppet("module install pmtacceptance-nginx --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
     Preparing to install into /etc/puppet/modules ...
     Downloading from http://forge.puppetlabs.com ...
@@ -79,7 +79,7 @@ end
 on master, '[ ! -f /etc/puppet/modules/nginx/extra.json ]'
 
 step "Install an module with a name collision by using --force"
-on master, puppet("module install pmtacceptance-apache --force"), :acceptable_exit_codes => [1] do
+on master, puppet("module install pmtacceptance-apache --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
     Preparing to install into /etc/puppet/modules ...
     Downloading from http://forge.puppetlabs.com ...
