@@ -67,10 +67,7 @@ module Puppet
           end
 
           app.run
-        elsif execute_external_subcommand then
-          # Logically, we shouldn't get here, but we do, so whatever.  We just
-          # return to the caller.  How strange we are. --daniel 2011-04-11
-        else
+        elsif ! execute_external_subcommand then
           unless subcommand_name.nil? then
             puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
           end
@@ -85,8 +82,7 @@ module Puppet
         path_to_subcommand = Puppet::Util.which(external_command)
         return false unless path_to_subcommand
 
-        system(path_to_subcommand, *args)
-        true
+        exec(path_to_subcommand, *args)
       end
 
       def legacy_executable_name
