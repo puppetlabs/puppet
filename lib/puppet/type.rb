@@ -905,9 +905,10 @@ class Type
 
   # Return a list of one suitable provider per source, with the default provider first.
   def self.providers_by_source
-    # Put the default provider first, then the rest of the suitable providers.
+    # Put the default provider first (can be nil), then the rest of the suitable providers.
     sources = []
     [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
+      next if provider.nil?
       next if sources.include?(provider.source)
 
       sources << provider.source
