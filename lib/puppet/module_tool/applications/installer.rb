@@ -8,30 +8,12 @@ require 'puppet/module_tool'
 module Puppet::Module::Tool
   module Applications
     class Installer < Application
-      class AlreadyInstalledError < Exception
-        attr_accessor :module_name, :installed_version, :requested_version
-        def initialize(options)
-          @module_name       = options[:module_name      ]
-          @installed_version = options[:installed_version].sub(/^(?=\d)/, 'v')
-          @requested_version = options[:requested_version]
-          @requested_version.sub!(/^(?=\d)/, 'v') if @requested_version.is_a? String
-          super "'#{@module_name}' (#{@requested_version}) requested; '#{@module_name}' (#{@installed_version}) already installed"
-        end
-
-        def multiline
-          <<-MSG.strip
-Could not install module '#{@module_name}' (#{@requested_version}):
-  Module '#{@module_name}' (#{@installed_version}) is already installed
-    Use `puppet module upgrade` to install a different version
-    Use `puppet module install --force` to re-install only this module
-          MSG
-        end
-      end
+      require 'puppet/module_tool/applications/installer/exceptions'
 
       def initialize(name, options = {})
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force = options[:force]
-        @ignore_dependencies = options[:ignore_dependencies]
+        @ignore_dependencies = @force || options[:ignore_dependencies]
         if File.exist?(name)
           if File.directory?(name)
             # TODO Unify this handling with that of Unpacker#check_clobber!
@@ -56,7 +38,7 @@ Could not install module '#{@module_name}' (#{@requested_version}):
 
       def run
         unless File.directory? options[:dir]
-          msg = "Could not install module '#{@forge_name}' (#{@version || 'latest'}):\n"
+          msg = "Could not install module '#{@forge_name}' (#{@version || 'latest'})\n"
           msg << "  Directory #{options[:dir]} does not exist"
           Puppet.err msg
           exit(1)
@@ -76,7 +58,8 @@ Could not install module '#{@module_name}' (#{@requested_version}):
               Unpacker.run(cache_path, options)
             end
           end
-        rescue AlreadyInstalledError => err
+        rescue AlreadyInstalledError, NoVersionSatisfyError,
+               InvalidDependencyCycleError, InstallConflictError => err
           results[:error] = {
             :oneline   => err.message,
             :multiline => err.multiline,
@@ -118,6 +101,7 @@ Could not install module '#{@module_name}' (#{@requested_version}):
         @installed = { }
         @environment.modules.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
           deps.tap do
+            next unless mod.has_metadata?
             mod_name = mod.forge_name.gsub('/', '-')
             @installed[mod_name] = mod.version
             d = deps["#{mod_name}@#{mod.version}"]
@@ -178,7 +162,8 @@ Could not install module '#{@module_name}' (#{@requested_version}):
           Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
           @remote = get_remote_constraints
 
-          @graph = resolve_constraints({ @forge_name => @version || '>= 0.0.0' })
+          @graph = resolve_constraints({ @forge_name => @version })
+          resolve_install_conflicts(@graph) unless @force
           return download_tarballs(@graph)
         when :filesystem
           @graph = []
@@ -188,17 +173,33 @@ Could not install module '#{@module_name}' (#{@requested_version}):
         cache_paths
       end
 
-      def resolve_constraints(dependencies, source = :you, seen = {})
+      def resolve_constraints(dependencies, source = [{:name => :you}], seen = {})
         dependencies = dependencies.map do |mod, range|
           action = :install
 
-          range = (@conditions[mod] + [ { :dependency => range } ]).map do |r|
+          source.last[:dependency] = range
+
+          @conditions[mod] << {
+            :module     => source.last[:name],
+            :version    => source.last[:version],
+            :dependency => range
+          }
+
+          range = (@conditions[mod]).map do |r|
             SemVer[r[:dependency]] rescue SemVer['>= 0.0.0']
           end.inject(&:&)
 
+          best_requested_versions = @versions["#{@forge_name}"].sort_by { |h| h[:semver] }
+
           if seen.include? mod
             next if range === seen[mod][:semver]
-            raise "Invalid dependency cycle."
+            raise InvalidDependencyCycleError,
+              :module_name       => mod,
+              :source            => source,
+              :version           => 'v1.0.0',
+              :requested_module  => @forge_name,
+              :requested_version => @version || (best_requested_versions.empty? ? 'latest' : "latest: #{best_requested_versions.last[:semver]}"),
+              :conditions        => @conditions
           end
 
           if @installed[mod] && ! @force
@@ -211,10 +212,25 @@ Could not install module '#{@module_name}' (#{@requested_version}):
           valid_versions = @versions["#{mod}"].select { |h| range === h[:semver] } \
                                               .sort_by { |h| h[:semver] }
 
-          raise "No versions satisfy!" unless version = valid_versions.last
+          unless version = valid_versions.last or @force
+
+            raise NoVersionSatisfyError,
+              :module_name       => mod,
+              :source            => source.last,
+              :version           => valid_versions.empty? ? 'best' : "best: #{valid_versions.last}",
+              :requested_module  => @forge_name,
+              :requested_version => @version || (best_requested_versions.empty? ? 'best' : "best: #{best_requested_versions.last[:semver]}"),
+              :conditions        => @conditions
+          end
 
           seen[mod] = version
-          @conditions[mod] << { source => range }
+
+          # Get the best available version of the requested module and install
+          # it and ignore dependencies.
+          if @force
+            mod     = @forge_name
+            version = @versions["#{@forge_name}"].sort_by { |h| h[:semver] }.last
+          end
 
           {
             :module => mod,
@@ -227,7 +243,7 @@ Could not install module '#{@module_name}' (#{@requested_version}):
         end.compact
         dependencies.each do |mod|
           deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"]
-          mod[:dependencies] = resolve_constraints(deps, mod[:module], seen)
+          mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen)
         end unless options[:ignore_dependencies]
         return dependencies
       end
@@ -242,6 +258,42 @@ Could not install module '#{@module_name}' (#{@requested_version}):
           end
           [ cache_path, *download_tarballs(release[:dependencies]) ]
         end.flatten
+      end
+
+      def resolve_install_conflicts(graph, is_dependency = false)
+        graph.each do |release|
+          @environment.modules_by_path[options[:dir]].each do |mod|
+            
+            if mod.has_metadata?
+              metadata = {
+                :name    => mod.forge_name.gsub('/', '-'),
+                :version => mod.version
+              }
+              match = release[:module] =~ /#{metadata[:name]}/
+              next if match == 0
+            else
+              metadata = nil
+            end
+
+            if release[:module] =~ /#{mod.name}/
+              dependency_info = {
+                :name    => release[:module],
+                :version => release[:version][:vstring]
+              }
+              dependency = is_dependency ? dependency_info : nil
+              latest_version = @versions["#{@forge_name}"].sort_by { |h| h[:semver] }.last[:vstring]
+
+              raise InstallConflictError,
+                :requested_module  => @forge_name,
+                :requested_version => @version || "latest: v#{latest_version}",
+                :dependency        => dependency,
+                :directory         => mod.path,
+                :metadata          => metadata
+            end
+
+            resolve_install_conflicts(release[:dependencies], true)
+          end
+        end
       end
     end
   end
