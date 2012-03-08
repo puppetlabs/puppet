@@ -20,7 +20,7 @@ end
 step "Try to upgrade a module that exists multiple locations in the module path"
 on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Finding module 'pmtacceptance-java' in module path ...
+    STDOUT> Preparing to upgrade 'pmtacceptance-java' ...
     STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java'
     STDERR>   Module 'pmtacceptance-java' appears multiple places in the module path
     STDERR>     'pmtacceptance-java' (v1.6.0) was found in /etc/puppet/modules
