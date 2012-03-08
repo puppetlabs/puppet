@@ -75,8 +75,6 @@ describe Puppet::Network::FormatHandler.format(:pson), :'fails_on_ruby_1.9.2' =>
     end
 
     it "should be able to render multiple instances to pson" do
-      Puppet.features.add(:pson, :libs => ["pson"])
-
       one = PsonIntTest.new("one")
       two = PsonIntTest.new("two")
 
