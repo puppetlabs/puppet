@@ -1,42 +1,40 @@
-
+require 'puppet/util'
 module Puppet::Util::RDoc
-
   module_function
 
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-      Puppet[:ignoreimport] = true
+    Puppet[:ignoreimport] = true
 
-      # then rdoc
-      require 'rdoc/rdoc'
-      require 'rdoc/options'
+    # then rdoc
+    require 'rdoc/rdoc'
+    require 'rdoc/options'
 
-      # load our parser
-      require 'puppet/util/rdoc/parser'
+    # load our parser
+    require 'puppet/util/rdoc/parser'
 
-      r = RDoc::RDoc.new
+    r = RDoc::RDoc.new
 
-      RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
-          "puppet/util/rdoc/generators/puppet_generator.rb",
-          "PuppetGenerator".intern,
-          "puppet")
+    RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
+      "puppet/util/rdoc/generators/puppet_generator.rb",
+      :PuppetGenerator,
+      "puppet")
 
-      # specify our own format & where to output
-      options = [ "--fmt", "puppet",
-        "--quiet",
-        "--exclude", "/modules/[^/]*/files/.*\.pp$",
-        "--op", outputdir ]
+    # specify our own format & where to output
+    options = [ "--fmt", "puppet",
+                "--quiet",
+                "--exclude", "/modules/[^/]*/files/.*\.pp$",
+                "--op", outputdir ]
 
-      options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
-      options += [ "--charset", charset] if charset
-      options += files
-      #TODO dedup file paths (not strict duplication sense, parents, children, etc
+    options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
+    options += [ "--charset", charset] if charset
+    options += files
 
-      # launch the documentation process
-      r.document(options)
+    # launch the documentation process
+    r.document(options)
   rescue RDoc::RDocError => e
-      raise Puppet::ParseError.new("RDoc error #{e}")
+    raise Puppet::ParseError.new("RDoc error #{e}")
   end
 
   # launch a output to console manifest doc
@@ -82,5 +80,4 @@ module Puppet::Util::RDoc
       end
     end
   end
-
 end
