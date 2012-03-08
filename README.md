@@ -30,7 +30,7 @@ Generally, you need the following things installed:
   available separately.  You could probably just compile and install that one
   library, though.
 
-* Facter => 1.5.1 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter).
+* Facter => 1.5.1 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter)).
 
 License
 -------
