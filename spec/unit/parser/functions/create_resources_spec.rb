@@ -20,16 +20,19 @@ describe 'function for dynamically creating resources' do
   it "should exist" do
     Puppet::Parser::Functions.function(:create_resources).should == "function_create_resources"
   end
+
   it 'should require two or three arguments' do
-    lambda { @scope.function_create_resources(['foo']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (1; must be 2 or 3)')
-    lambda { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
+    expect { @scope.function_create_resources(['foo']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (1; must be 2 or 3)')
+    expect { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
   end
+
   describe 'when creating native types' do
     before :each do
       Puppet[:code]='notify{test:}'
       get_scope
       @scope.resource=Puppet::Parser::Resource.new('class', 't', :scope => @scope)
     end
+
     it 'empty hash should not cause resources to be added' do
       @scope.function_create_resources(['file', {}])
       @compiler.catalog.resources.size == 1
@@ -47,7 +50,7 @@ describe 'function for dynamically creating resources' do
       @compiler.catalog.resource(:notify, "bar")['message'].should == 'two'
     end
     it 'should fail to add non-existing type' do
-      lambda { @scope.function_create_resources(['foo', {}]) }.should raise_error(ArgumentError, 'could not create resource of unknown type foo')
+      expect { @scope.function_create_resources(['create-resource-foo', {}]) }.should raise_error(ArgumentError, 'could not create resource of unknown type create-resource-foo')
     end
     it 'should be able to add edges' do
       @scope.function_create_resources(['notify', {'foo'=>{'require' => 'Notify[test]'}}])
@@ -68,7 +71,7 @@ describe 'function for dynamically creating resources' do
   describe 'when dynamically creating resource types' do
     before :each do 
       Puppet[:code]=
-'define foo($one){notify{$name: message => $one}}
+'define foocreateresource($one){notify{$name: message => $one}}
 notify{test:}
 '
       get_scope
@@ -76,21 +79,21 @@ notify{test:}
       Puppet::Parser::Functions.function(:create_resources)
     end
     it 'should be able to create defined resoure types' do
-      @scope.function_create_resources(['foo', {'blah'=>{'one'=>'two'}}])
+      @scope.function_create_resources(['foocreateresource', {'blah'=>{'one'=>'two'}}])
       # still have to compile for this to work...
       # I am not sure if this constraint ruins the tests
       @scope.compiler.compile
       @compiler.catalog.resource(:notify, "blah")['message'].should == 'two'
     end
     it 'should fail if defines are missing params' do
-      @scope.function_create_resources(['foo', {'blah'=>{}}])
-      lambda { @scope.compiler.compile }.should raise_error(Puppet::ParseError, 'Must pass one to Foo[blah] at line 1')
+      @scope.function_create_resources(['foocreateresource', {'blah'=>{}}])
+      expect { @scope.compiler.compile }.should raise_error(Puppet::ParseError, 'Must pass one to Foocreateresource[blah] at line 1')
     end
     it 'should be able to add multiple defines' do
       hash = {}
       hash['blah'] = {'one' => 'two'}
       hash['blaz'] = {'one' => 'three'}
-      @scope.function_create_resources(['foo', hash])
+      @scope.function_create_resources(['foocreateresource', hash])
       # still have to compile for this to work...
       # I am not sure if this constraint ruins the tests
       @scope.compiler.compile
@@ -98,7 +101,7 @@ notify{test:}
       @compiler.catalog.resource(:notify, "blaz")['message'].should == 'three'
     end
     it 'should be able to add edges' do
-      @scope.function_create_resources(['foo', {'blah'=>{'one'=>'two', 'require' => 'Notify[test]'}}])
+      @scope.function_create_resources(['foocreateresource', {'blah'=>{'one'=>'two', 'require' => 'Notify[test]'}}])
       @scope.compiler.compile
       rg = @scope.compiler.catalog.to_ral.relationship_graph
       test = rg.vertices.find { |v| v.title == 'test' }
@@ -110,7 +113,7 @@ notify{test:}
       @compiler.catalog.resource(:notify, "blah")['message'].should == 'two'
     end
     it 'should account for default values' do
-      @scope.function_create_resources(['foo', {'blah'=>{}}, {'one' => 'two'}])
+      @scope.function_create_resources(['foocreateresource', {'blah'=>{}}, {'one' => 'two'}])
       @scope.compiler.compile
       @compiler.catalog.resource(:notify, "blah")['message'].should == 'two'
     end
@@ -129,10 +132,10 @@ notify{tester:}
       @scope.function_create_resources(['class', {'bar'=>{'one'=>'two'}}])
       @scope.compiler.compile
       @compiler.catalog.resource(:notify, "test")['message'].should == 'two'
-      @compiler.catalog.resource(:class, "bar").should_not be_nil#['message'].should == 'two'
+      @compiler.catalog.resource(:class, "bar").should_not be_nil
     end
     it 'should fail to create non-existing classes' do
-      lambda { @scope.function_create_resources(['class', {'blah'=>{'one'=>'two'}}]) }.should raise_error(ArgumentError ,'could not find hostclass blah')
+      expect { @scope.function_create_resources(['class', {'blah'=>{'one'=>'two'}}]) }.should raise_error(ArgumentError ,'could not find hostclass blah')
     end
     it 'should be able to add edges' do
       @scope.function_create_resources(['class', {'bar'=>{'one'=>'two', 'require' => 'Notify[tester]'}}])
@@ -148,7 +151,7 @@ notify{tester:}
       @scope.function_create_resources(['class', {'bar'=>{}}, {'one' => 'two'}])
       @scope.compiler.compile
       @compiler.catalog.resource(:notify, "test")['message'].should == 'two'
-      @compiler.catalog.resource(:class, "bar").should_not be_nil#['message'].should == 'two'
+      @compiler.catalog.resource(:class, "bar").should_not be_nil
     end
   end
 end
