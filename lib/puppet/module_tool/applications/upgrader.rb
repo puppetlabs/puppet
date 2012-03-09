@@ -1,17 +1,32 @@
 module Puppet::Module::Tool
   module Applications
     class Upgrader
-      class UpgradeException < Exception
-        def add_v(version)
-          if version.is_a? String
-            version.sub(/^(?=\d)/, 'v')
-          else
-            version
-          end
+      class UpgradeError < StandardError
+        def v(version)
+          version.to_s.sub(/^(?=\d)/, 'v')
         end
       end
 
-      class NoVersionSatisfyError < UpgradeException
+      class MultipleInstalledModulesError < UpgradeError
+        def initialize(options)
+          @module_name = options[:module_name]
+          @modules     = options[:installed_modules]
+          super "Could not upgrade '#{@module_name}'; module appears in multiple places in the module path"
+        end
+        
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}'"
+          message << "  Module '#{@module_name}' appears multiple places in the module path"
+          message << @modules.map do |mod|
+            "    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.path.sub(/#{File::Separator}(#{mod.name})$/, '')}"
+          end
+          message << "    Use the `--modulepath` option to limit the search to specific directories"
+          message.join("\n")
+        end
+      end
+
+      class NoVersionSatisfyError < UpgradeError
         attr_accessor :requested_module, :requested_version
 
         def initialize(options)
@@ -57,8 +72,12 @@ module Puppet::Module::Tool
         begin
           @local = get_local_constraints
 
+          if @installed[@module_name].length > 1
+            raise MultipleInstalledModulesError,
+              :module_name       => @module_name,
+              :installed_modules => @installed[@module_name]
+          end
           raise "Too few modules named #{@module_name}!" if @installed[@module_name].length < 1
-          raise "Too many modules named #{@module_name}!" if @installed[@module_name].length > 1
 
           @module = @installed[@module_name].last
           results[:module_name] = @module_name
@@ -92,7 +111,7 @@ module Puppet::Module::Tool
         rescue => e
           results[:error] = {
             :oneline => e.message,
-            :multiline => [e.to_s, e.backtrace].join("\n")
+            :multiline => e.respond_to?(:multiline) ? e.multiline : [e.to_s, e.backtrace].join("\n")
           }
         ensure
           results[:result] ||= :failure
@@ -105,7 +124,7 @@ module Puppet::Module::Tool
       def get_local_constraints
         @conditions = Hash.new { |h,k| h[k] = [] }
         @installed = Hash.new { |h,k| h[k] = [] }
-        @environment.modules.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
+        @environment.modules_by_path.values.flatten.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
           deps.tap do
             mod_name = (mod.forge_name || mod.name).gsub('/', '-')
             @installed[mod_name] << mod
