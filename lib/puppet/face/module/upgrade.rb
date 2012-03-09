@@ -65,7 +65,7 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 1
       else
-        tree = format_tree(return_value[:affected_modules])
+        tree = format_tree(return_value[:affected_modules], return_value[:base_dir])
         return_value[:base_dir] + "\n" +
         Puppet::Module::Tool.build_tree(tree)
       end
@@ -73,7 +73,7 @@ Puppet::Face.define(:module, '1.0.0') do
   end
 end
 
-def format_tree(mods, indent = '')
+def format_tree(mods, dir)
   mods.each do |mod|
     version_string = mod[:version][:vstring].sub(/^(?!v)/, 'v')
 
@@ -83,6 +83,7 @@ def format_tree(mods, indent = '')
     end
 
     mod[:text] = "#{mod[:module]} (#{version_string})"
-    format_tree(mod[:dependencies])
+    mod[:text] += " [#{mod[:path]}]" unless mod[:path] == dir
+    format_tree(mod[:dependencies], dir)
   end
 end

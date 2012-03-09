@@ -12,7 +12,7 @@ on master, puppet("module list") do
     ├── pmtacceptance-java (v1.6.0)
     └── pmtacceptance-stdlib (v1.0.0)
     /usr/share/puppet/modules
-    ├── pmtacceptance-java (v1.6.0)
+    ├── pmtacceptance-java (v1.7.0)
     └── pmtacceptance-stdlib (v1.0.0)
   OUTPUT
 end
