@@ -630,6 +630,26 @@ describe Puppet::Type, :fails_on_windows => true do
     end
   end
 
+  describe "::instances" do
+    it "should not fail if no suitable providers are found" do
+      fake_type = Puppet::Type.newtype(:type_spec_fake_type) do
+        newparam(:name) do
+          isnamevar
+        end
+        newproperty(:prop1) do
+        end
+
+        provide(:fake1) do
+          confine :exists => '/no/such/file'
+          mk_resource_methods
+        end
+      end
+
+      expect { fake_type.instances }.should_not raise_error
+    end
+  end
+
+
   describe "::ensurable?" do
     before :each do
       class TestEnsurableType < Puppet::Type

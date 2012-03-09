@@ -123,6 +123,13 @@ class Type
     }
   end
 
+  # These `apply_to` methods are horrible.  They should really be implemented
+  # as part of the usual system of constraints that apply to a type and
+  # provider pair, but were implemented as a separate shadow system.
+  #
+  # We should rip them out in favour of a real constraint pattern around the
+  # target device - whatever that looks like - and not have this additional
+  # magic here. --daniel 2012-03-08
   def self.apply_to_device
     @apply_to = :device
   end
@@ -901,9 +908,10 @@ class Type
 
   # Return a list of one suitable provider per source, with the default provider first.
   def self.providers_by_source
-    # Put the default provider first, then the rest of the suitable providers.
+    # Put the default provider first (can be nil), then the rest of the suitable providers.
     sources = []
     [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
+      next if provider.nil?
       next if sources.include?(provider.source)
 
       sources << provider.source
