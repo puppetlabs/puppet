@@ -12,7 +12,7 @@ class Puppet::Module
       require 'puppet/module_tool/applications/searcher'
       require 'puppet/module_tool/applications/unpacker'
       require 'puppet/module_tool/applications/uninstaller'
-      require 'puppet/module_tool/applications/updater'
+      require 'puppet/module_tool/applications/upgrader'
     end
   end
 end
