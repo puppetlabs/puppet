@@ -238,6 +238,7 @@ module Puppet::Module::Tool
             :action => action,
             :previous_version => @installed[mod],
             :file => @urls["#{mod}@#{version[:vstring]}"],
+            :path => @options[:dir],
             :dependencies => []
           }
         end.compact
