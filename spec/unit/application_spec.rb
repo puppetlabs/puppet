@@ -32,9 +32,11 @@ describe Puppet::Application do
     end
 
     it "should exit if it can't find a class" do
-      reg = "Unable to find application 'ThisShallNeverEverEverExist'.  "
-      reg += "no such file to load -- puppet/application/thisshallneverevereverexist"
-      @klass.expects(:puts).with(reg)
+      @klass.expects(:puts).with do |value|
+        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
+          value =~ /puppet\/application\/thisshallneverevereverexist/ and
+          value =~ /no such file to load|cannot load such file/
+      end
 
       expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
     end
