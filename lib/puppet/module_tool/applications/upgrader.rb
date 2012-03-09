@@ -3,11 +3,11 @@ module Puppet::Module::Tool
     class Upgrader
       class UpgradeError < StandardError
         def v(version)
-          version.to_s.sub(/^(?=\d)/, 'v')
+          (version || '???').to_s.sub(/^(?=\d)/, 'v')
         end
       end
 
-      class MultipleInstalledModulesError < UpgradeError
+      class MultipleInstalledError < UpgradeError
         def initialize(options)
           @module_name = options[:module_name]
           @modules     = options[:installed_modules]
@@ -26,6 +26,55 @@ module Puppet::Module::Tool
         end
       end
 
+      class NotInstalledError < UpgradeError
+        def initialize(options)
+          @module_name = options[:module_name]
+          super "Could not upgrade '#{@module_name}'; module is not installed"
+        end
+
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}'"
+          message << "  Module '#{@module_name}' is not installed"
+          message << "    Use `puppet module install` to install this module"
+          message.join("\n")
+        end
+      end
+
+      class UnknownModuleError < UpgradeError
+        def initialize(options)
+          @module_name       = options[:module_name]
+          @installed_version = options[:installed_version]
+          @requested_version = options[:requested_version]
+          @repository        = options[:repository]
+          super "Could not upgrade '#{@module_name}'; module is unknown to #{@repository}"
+        end
+
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
+          message << "  Module '#{@module_name}' does not exist on #{@repository}"
+          message.join("\n")
+        end
+      end
+
+      class UnknownVersionError < UpgradeError
+        def initialize(options)
+          @module_name       = options[:module_name]
+          @installed_version = options[:installed_version]
+          @requested_version = options[:requested_version]
+          @repository        = options[:repository]
+          super "Could not upgrade '#{@module_name}'; module has no versions #{ @requested_version && "matching #{v(@requested_version)} "}published on #{@repository}"
+        end
+
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
+          message << "  No version matching '#{@requested_version || ">= 0.0.0"}' exists on #{@repository}"
+          message.join("\n")
+        end
+      end
+
       class NoVersionSatisfyError < UpgradeError
         attr_accessor :requested_module, :requested_version
 
@@ -35,7 +84,7 @@ module Puppet::Module::Tool
           @requested_version = options[:requested_version]
           @conditions        = options[:conditions]
           @source            = options[:source]
-          @requested_version = add_v(@requested_version)
+          @requested_version = v(@requested_version)
           super "'#{@requested_module}' (#{@requested_version}) requested; No version of '#{@requested_module}' will satisfy dependencies"
         end
 
@@ -46,7 +95,7 @@ module Puppet::Module::Tool
           message << "    You specified '#{@requested_module}' (#{@requested_version})\n" if @source[:name] == :you
           @conditions[@module_name].select  {|cond| cond[:module] != :you} \
                                    .sort_by {|cond| cond[:module]}.each do |cond|
-            message << "    '#{cond[:module]}' (#{add_v(cond[:version])}) requires '#{@module_name}' (#{add_v(cond[:dependency])})\n"
+            message << "    '#{cond[:module]}' (#{v(cond[:version])}) requires '#{@module_name}' (#{v(cond[:dependency])})\n"
           end
 
           if @source[:name] == :you
@@ -73,22 +122,29 @@ module Puppet::Module::Tool
           @local = get_local_constraints
 
           if @installed[@module_name].length > 1
-            raise MultipleInstalledModulesError,
+            raise MultipleInstalledError,
               :module_name       => @module_name,
-              :installed_modules => @installed[@module_name]
+              :installed_modules => @installed[@module_name].sort_by { |mod| @environment.modulepath.index(mod.path.sub(/#{File::Separator}#{mod.name}$/, '')) }
+          elsif @installed[@module_name].empty?
+            raise NotInstalledError, :module_name => @module_name
           end
-          raise "Too few modules named #{@module_name}!" if @installed[@module_name].length < 1
 
           @module = @installed[@module_name].last
           results[:module_name] = @module_name
-          results[:installed_version] = @module.version.sub(/^(?=\d)/, 'v')
-          results[:requested_version] = @options[:version]
+          results[:installed_version] = @module.version ? @module.version.sub(/^(?=\d)/, 'v') : nil
+          results[:requested_version] = @options[:version] || (@conditions[@module_name].empty? ? :latest : :best)
           dir = @module.path.sub(/\/#{@module.name}/, '')
-          Puppet.notice "Found '#{@module_name}' (#{results[:installed_version]}) in #{dir} ..."
+          Puppet.notice "Found '#{@module_name}' (#{results[:installed_version] || '???'}) in #{dir} ..."
 
-          Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
-          @author, @modname = Puppet::Module::Tool.username_and_modname_from(@module_name)
-          @remote = get_remote_constraints
+          begin
+            Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
+            @author, @modname = Puppet::Module::Tool.username_and_modname_from(@module_name)
+            @remote = get_remote_constraints
+          rescue => e
+            raise UnknownModuleError, results.merge(:repository => Puppet::Forge.repository.uri)
+          else
+            raise UnknownVersionError, results.merge(:repository => Puppet::Forge.repository.uri) if @remote.empty?
+          end
 
           raise "Already there!" if @versions["#{@module_name}"].sort_by { |h| h[:semver] }.last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
 
@@ -129,7 +185,7 @@ module Puppet::Module::Tool
             mod_name = (mod.forge_name || mod.name).gsub('/', '-')
             @installed[mod_name] << mod
             d = deps["#{mod_name}@#{mod.version}"]
-            mod.dependencies.each do |hash|
+            (mod.dependencies || []).each do |hash|
               name, conditions = hash['name'], hash['version_requirement']
               name = name.gsub('/', '-')
               d[name] = conditions

@@ -44,11 +44,17 @@ module Puppet::Forge
     version_string = version ? "&version=#{version}" : ''
     request = Net::HTTP::Get.new("/api/v1/releases.json?module=#{author}/#{mod_name}" + version_string)
     response = repository.make_http_request(request)
+    json = PSON.parse(response.body) rescue {}
     case response.code
     when "200"
-      return PSON.parse(response.body)
+      return json
     else
-      raise RuntimeError, "Could not find release information for this module (#{author}/#{mod_name}) (HTTP #{response.code})"
+      error = json['error'] || ''
+      if error =~ /^Module #{author}\/#{mod_name} has no release/
+        return []
+      else
+        raise RuntimeError, "Could not find release information for this module (#{author}/#{mod_name}) (HTTP #{response.code})"
+      end
     end
   end
 
