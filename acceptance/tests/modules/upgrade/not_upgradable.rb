@@ -25,10 +25,10 @@ on master, puppet("module install pmtacceptance-java --version 1.6.0")
 on master, puppet("module list") do
   assert_output <<-OUTPUT
     /etc/puppet/modules
-    ├── pmtacceptance-java (v1.6.0)
-    ├── pmtacceptance-stdlib (v1.0.0)
     ├── nginx (???)
-    └── notpmtacceptance-unicorns (v0.0.3)
+    ├── notpmtacceptance-unicorns (v0.0.3)
+    ├── pmtacceptance-java (v1.6.0)
+    └── pmtacceptance-stdlib (v1.0.0)
     /usr/share/puppet/modules (no modules installed)
   OUTPUT
 end

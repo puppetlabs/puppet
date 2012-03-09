@@ -107,7 +107,7 @@ module Puppet::Module::Tool
         @installed = Hash.new { |h,k| h[k] = [] }
         @environment.modules.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
           deps.tap do
-            mod_name = mod.forge_name.gsub('/', '-')
+            mod_name = (mod.forge_name || mod.name).gsub('/', '-')
             @installed[mod_name] << mod
             d = deps["#{mod_name}@#{mod.version}"]
             mod.dependencies.each do |hash|
@@ -214,7 +214,7 @@ module Puppet::Module::Tool
           }
         end.compact
         dependencies.each do |mod|
-          deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"]
+          deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"].sort_by(&:first)
           mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen)
         end unless @options[:ignore_dependencies] || @force
         return dependencies
