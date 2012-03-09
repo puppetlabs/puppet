@@ -37,14 +37,14 @@ step "Try to upgrade a module that is not installed"
 on master, puppet("module upgrade pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to upgrade 'pmtacceptance-nginx' ...
-    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-nginx' (??? -> latest)
+    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-nginx'
     STDERR>   Module 'pmtacceptance-nginx' is not installed
     STDERR>     Use `puppet module install` to install this module\e[0m
   OUTPUT
 end
 
 step "Try to upgrade a local module"
-on master, puppet("module upgrade nginx") do
+on master, puppet("module upgrade nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to upgrade 'nginx' ...
     STDOUT> Found 'nginx' (???) in /etc/puppet/modules ...
@@ -55,7 +55,7 @@ on master, puppet("module upgrade nginx") do
 end
 
 step "Try to upgrade a module that doesn't exist"
-on master, puppet("module upgrade notpmtacceptance-unicorns") do
+on master, puppet("module upgrade notpmtacceptance-unicorns"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to upgrade 'notpmtacceptance-unicorns' ...
     STDOUT> Found 'notpmtacceptance-unicorns' (v0.0.3) in /etc/puppet/modules ...
@@ -66,7 +66,7 @@ on master, puppet("module upgrade notpmtacceptance-unicorns") do
 end
 
 step "Try to upgrade an installed module to a version that doesn't exist"
-on master, puppet("module upgrade pmtacceptance-java --version 2.0.0") do
+on master, puppet("module upgrade pmtacceptance-java --version 2.0.0"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to upgrade 'pmtacceptance-java' ...
     STDOUT> Found 'pmtacceptance-java' (v1.6.0) in /etc/puppet/modules ...
