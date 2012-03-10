@@ -124,7 +124,8 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       # Display unmet dependencies by category.
-      error_types.each_key do |type|
+      error_display_order = [:non_semantic_version, :version_mismatch, :missing]
+      error_display_order.each do |type|
         unless @unmet_deps[type].empty?
           @unmet_deps[type].keys.sort_by {|dep| dep }.each do |dep|
             name    = dep.gsub('/', '-')
