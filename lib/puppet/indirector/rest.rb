@@ -101,6 +101,13 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     http_connection.send(method, *args)
+  rescue SocketError => error
+    case error.message
+    when /nodename nor servname provided, or not known/
+      raise Puppet::Error, "Could not resolve hostname '#{http_connection.address}'"
+    else
+      raise
+    end
   rescue OpenSSL::SSL::SSLError => error
     if error.message.include? "certificate verify failed"
       raise Puppet::Error, "#{error.message}.  This is often because the time is out of sync on the server or client"
