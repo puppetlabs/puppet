@@ -14,6 +14,13 @@ module Puppet::Module::Tool
         if metadata_file.exist?
           sums = Puppet::Module::Tool::Checksums.new(@path)
           (metadata['checksums'] || {}).each do |child_path, canonical_checksum|
+
+            # Work around an issue where modules built with an older version
+            # of PMT would include the metadata.json file in the list of files
+            # checksummed. This causes metadata.json to always report local
+            # changes.
+            next if File.basename(child_path) == "metadata.json"
+
             path = @path + child_path
             if canonical_checksum != sums.checksum(path)
               changes << child_path
@@ -30,7 +37,7 @@ module Puppet::Module::Tool
         #
         # Example return value:
         #
-        #   [ "REVISION", "metadata.json", "manifests/init.pp"]
+        #   [ "REVISION", "manifests/init.pp"]
         #
         changes
       end
