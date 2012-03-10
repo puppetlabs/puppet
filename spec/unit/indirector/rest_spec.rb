@@ -93,6 +93,13 @@ describe Puppet::Indirector::REST do
   describe "when making http requests" do
     include PuppetSpec::Files
 
+    it "should provide a helpful error message when name resolution fails" do
+      connection = Net::HTTP.new('a_hopefully_unresolvable_name', 0)
+      @searcher.stubs(:network).returns connection
+
+      expect { @searcher.http_request(:get, stub('request'), '/') }.to raise_error(/Could not resolve hostname 'a_hopefully_unresolvable_name'/)
+    end
+
     it "should provide a suggestive error message when certificate verify failed" do
       connection = Net::HTTP.new('my_server', 8140)
       @searcher.stubs(:network).returns(connection)
