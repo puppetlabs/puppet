@@ -26,9 +26,9 @@ Puppet::Face.define(:module, '1.0.0') do
       /usr/share/puppet/environments/test/modules
       └── puppetlabs-apache (v1.0.0 -> v2.4.0)
     EOT
-    
+
     arguments "<name>"
-    
+
     option "--force", "-f" do
       summary "Force upgrade of an installed module."
       description <<-EOT
@@ -36,7 +36,14 @@ Puppet::Face.define(:module, '1.0.0') do
         changes or the possibility of causing broken dependencies.
       EOT
     end
-    
+
+    option "--ignore-dependencies" do
+      summary "Do not attempt to install dependencies"
+      description <<-EOT
+        Do not attempt to install dependencies
+      EOT
+    end
+
     option "--environment=NAME", "--env=NAME" do
       default_to { "production" }
       summary "The target environment to search for modules."
@@ -44,14 +51,14 @@ Puppet::Face.define(:module, '1.0.0') do
         The target environment to search for modules.
       EOT
     end
-    
+
     option "--version=" do
       summary "The version of the module to upgrade"
       description <<-EOT
         The version of the module to upgrade.
       EOT
     end
-    
+
     when_invoked do |name, options|
       Puppet.settings[:module_repository] = ENV['PUPPET_FORGE'] if ENV['PUPPET_FORGE']
 
