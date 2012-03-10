@@ -4,6 +4,8 @@ require 'puppet/util/terminal'
 
 describe Puppet::Util::Terminal do
   describe '.width' do
+    before { Puppet.features.stubs(:posix?).returns(true) }
+
     it 'should invoke `stty` and return the width' do
       height, width = 100, 200
       subject.expects(:`).with('stty size 2>/dev/null').returns("#{height} #{width}\n")
@@ -28,6 +30,12 @@ describe Puppet::Util::Terminal do
       width = 80
       subject.expects(:`).with('stty size 2>/dev/null').raises()
       subject.stubs(:`).with('tput cols 2>/dev/null').returns("#{width + 1000}\n")
+      subject.width.should == width
+    end
+
+    it 'should default to 80 columns if not in a POSIX environment' do
+      width = 80
+      Puppet.features.stubs(:posix?).returns(false)
       subject.width.should == width
     end
   end
