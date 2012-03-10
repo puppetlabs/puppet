@@ -82,7 +82,8 @@ module Puppet
 
         This is mostly useful for restricting certain resources to being
         applied in maintenance windows or during off-peak hours. Multiple
-        ranges can be applied in array context.
+        ranges can be applied in array context. As a convenience when specifying
+        ranges, you may cross midnight (e.g.: range => "22:00 - 04:00").
       EOT
 
       # This is lame; properties all use arrays as values, but parameters don't.
@@ -118,11 +119,6 @@ module Puppet
 
           [range[0][1], range[1][1]].each do |n|
             raise ArgumentError, "Invalid minute '#{n}'" if n and (n < 0 or n > 59)
-          end
-          if range[0][0] > range[1][0]
-            self.fail(("Invalid range #{value}; ") +
-              "ranges cannot span days."
-            )
           end
           ret << range
         }
@@ -168,17 +164,33 @@ module Puppet
             "Assuming upper limit should be that time the next day"
             )
 
-            ary = limits[1].to_a
-            ary[3] += 1
-            limits[1] = Time.local(*ary)
+            # Find midnight between the two days. Adding one second
+            # to the end of the day is easier than dealing with dates.
+            ary = limits[0].to_a
+            ary[0] = 59
+            ary[1] = 59
+            ary[2] = 23
+            midnight = Time.local(*ary)+1
 
-            #self.devfail("Lower limit is above higher limit: %s" %
-            #    limits.inspect
-            #)
+            # If it is currently between the range start and midnight
+            # we consider that a successful match.
+            return true if now.between?(limits[0], midnight)
+
+            # If we didn't match between the starting time and midnight
+            # we must now move our midnight back 24 hours and try
+            # between the new midnight (24 hours prior) and the
+            # ending time.
+            midnight -= 86400
+
+            # Now we compare the current time between midnight and the
+            # end time.
+            return true if now.between?(midnight, limits[1])
+
+            # If neither of the above matched then we don't match the
+            # range schedule.
+            return false
           end
 
-          #self.info limits.inspect
-          #self.notice now
           return true if now.between?(*limits)
         end
 

@@ -95,12 +95,6 @@ describe Puppet::Type.type(:schedule) do
       @schedule.must_not be_match
     end
 
-    it "should throw an error if the upper limit is less than the lower limit" do
-      pending "bug #7639"
-      @schedule[:range] = "01:02:03 - 01:00:00"
-      @schedule.must_throw Puppet::Error
-    end
-
     it "should not match the current time fails between an array of ranges" do
       @schedule[:range] = ["4-6", "20-23"]
       @schedule.must_not be_match
@@ -114,6 +108,55 @@ describe Puppet::Type.type(:schedule) do
     it "should match the upper array of ranges" do
       @schedule[:range] = ["4-6", "11-12"]
       @schedule.must be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 1" do
+    include ScheduleTesting
+
+    before do
+      # Test with the current time at a month's end boundary to ensure we are
+      # advancing the day properly when we push the ending limit out a day.
+      # For example, adding 1 to 31 would throw an error instead of advancing
+      # the date.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
+    end
+
+    it "should match when the start time is before the current time and the end time is after the current time" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule.must be_match
+    end
+
+    it "should not match when the current time is outside the range" do
+      @schedule[:range] = "23:30:00 - 21:00:00"
+      @schedule.must_not be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 2" do
+    include ScheduleTesting
+
+    before do
+      # Test with the current time at a month's end boundary to ensure we are
+      # advancing the day properly when we push the ending limit out a day.
+      # For example, adding 1 to 31 would throw an error instead of advancing
+      # the date.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
+    end
+
+    it "should match when the start time is before the current time and the end time is after the current time" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule.must be_match
+    end
+
+    it "should not match when the start time is after the current time" do
+      @schedule[:range] = "02:00:00 - 00:30:00"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the end time is before the current time" do
+      @schedule[:range] = "22:00:00 - 01:00:00"
+      @schedule.must_not be_match
     end
   end
 
@@ -420,6 +463,73 @@ describe Puppet::Type.type(:schedule) do
     it "should match if weekday is ['Sun', 'Mon']" do
       @schedule[:weekday] = ["Sun", "Mon"]
       @schedule.match?.should be_true
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 1" do
+    include ScheduleTesting
+
+    before do
+      # Test with ranges and days-of-week both set. 2011-03-31 was a Thursday.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
+    end
+
+    it "should match when the range and day of week matches" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule[:weekday] = "Thursday"
+      @schedule.must be_match
+    end
+
+    it "should not match when the range doesn't match even if the day-of-week matches" do
+      @schedule[:range] = "23:30:00 - 21:00:00"
+      @schedule[:weekday] = "Thursday"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when day-of-week doesn't match even if the range matches (1 day later)" do
+      @schedule[:range] = "22:00:00 - 01:00:00"
+      @schedule[:weekday] = "Friday"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when day-of-week doesn't match even if the range matches (1 day earlier)" do
+      @schedule[:range] = "22:00:00 - 01:00:00"
+      @schedule[:weekday] = "Wednesday"
+      @schedule.must_not be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 2" do
+    include ScheduleTesting
+
+    before do
+      # 2011-03-31 was a Thursday. As the end-time of a day spanning match, that means
+      # we need to match on Wednesday.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
+    end
+
+    it "should match when the range matches and the day of week should match" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule[:weekday] = "Wednesday"
+      @schedule.must be_match
+    end
+
+    it "should not match when the range does not match and the day of week should match" do
+      @schedule[:range] = "22:00:00 - 01:00:00"
+      @schedule[:weekday] = "Thursday"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the range matches but the day-of-week does not (1 day later)" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule[:weekday] = "Thursday"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the range matches but the day-of-week does not (1 day later)" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule[:weekday] = "Tuesday"
+      @schedule.must_not be_match
     end
   end
 end
