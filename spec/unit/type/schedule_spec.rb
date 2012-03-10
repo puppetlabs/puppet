@@ -122,7 +122,7 @@ describe Puppet::Type.type(:schedule) do
       Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
     end
 
-    it "should match when the start time is before the current time and the end time is after the current time" do
+    it "should match when the start time is before current time and the end time is the following day" do
       @schedule[:range] = "22:00:00 - 02:00:00"
       @schedule.must be_match
     end
@@ -144,7 +144,7 @@ describe Puppet::Type.type(:schedule) do
       Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
     end
 
-    it "should match when the start time is before the current time and the end time is after the current time" do
+    it "should match when the start time is the day before the current time and the end time is after the current time" do
       @schedule[:range] = "22:00:00 - 02:00:00"
       @schedule.must be_match
     end
