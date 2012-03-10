@@ -132,6 +132,22 @@ Could not install module '#{@module_name}' (#{@requested_version})
           message
         end
       end
+
+      class MissingPackageError < InstallException
+        attr_accessor :requested_package
+        def initialize(options)
+          @requested_package = options[:requested_package]
+          super "#{@requested_package} requested; Currently, #{@requested_package} does not exist"
+        end
+
+        def multiline
+          <<-MSG.strip
+Could not install package #{@requested_package}
+  Currently, #{@requested_package} does not exist
+    Please check the local filesystem and try again
+          MSG
+        end
+      end
     end
   end
 end
