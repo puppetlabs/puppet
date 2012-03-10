@@ -174,7 +174,14 @@ module Puppet
 
             # If it is currently between the range start and midnight
             # we consider that a successful match.
-            return true if now.between?(limits[0], midnight)
+            if now.between?(limits[0], midnight)
+              # We have to check the weekday match here as it is special-cased
+              # to support day-spanning ranges.
+              if @resource[:weekday]
+                return false unless @resource[:weekday].has_key?(now.wday)
+              end
+              return true
+            end
 
             # If we didn't match between the starting time and midnight
             # we must now move our midnight back 24 hours and try
@@ -184,11 +191,28 @@ module Puppet
 
             # Now we compare the current time between midnight and the
             # end time.
-            return true if now.between?(midnight, limits[1])
+            if now.between?(midnight, limits[1])
+              # This case is the reason weekday matching is special cased
+              # in the range parameter. If we match a range that has spanned
+              # past midnight we want to match against the weekday when the range
+              # started, not when it currently is.
+              if @resource[:weekday]
+                return false unless @resource[:weekday].has_key?((now - 86400).wday)
+              end
+              return true
+            end
 
             # If neither of the above matched then we don't match the
             # range schedule.
             return false
+          end
+
+          # Check to see if a weekday parameter was specified and, if so,
+          # do we match it or not. If we fail we can stop here.
+          # This is required because spanning ranges forces us to check
+          # weekday within the range parameter.
+          if @resource[:weekday]
+            return false unless @resource[:weekday].has_key?(now.wday)
           end
 
           return true if now.between?(*limits)
@@ -322,12 +346,27 @@ module Puppet
     end
 
     newparam(:weekday) do
-      desc "The days of the week in which the schedule should be valid.
+      desc <<-EOT
+        The days of the week in which the schedule should be valid.
         You may specify the full day name (Tuesday), the three character
         abbreviation (Tue), or a number corresponding to the day of the
         week where 0 is Sunday, 1 is Monday, etc. You may pass an array
         to specify multiple days. If not specified, the day of the week
-        will not be considered in the schedule."
+        will not be considered in the schedule.
+
+        If you are also using a range match that spans across midnight
+        then this parameter will match the day that it was at the start
+        of the range, not necessarily the day that it is when it matches.
+        For example, consider this schedule:
+
+          schedule { 'maintenance_window':
+            range   => '22:00 - 04:00',
+            weekday => 'Saturday',
+          }
+
+        This will match at 11 PM on Saturday and 2 AM on Sunday, but not
+        at 2 AM on Saturday.
+      EOT
 
       validate do |values|
         values = [values] unless values.is_a?(Array)
@@ -365,6 +404,12 @@ module Puppet
       end
 
       def match?(previous, now)
+        # Special case weekday matching with ranges to a no-op here.
+        # If the ranges span days then we can't simply match the current
+        # weekday, as we want to match the weekday as it was when the range
+        # started.  As a result, all of that logic is in range, not here.
+        return true if @resource[:range]
+
         return true if value.has_key?(now.wday)
         false
       end
