@@ -115,7 +115,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     field = symbolize(field)
     id_generators = {:user => :uid, :group => :gid}
     if id_generators[@resource.class.name] == field
-      return autogen_id(field)
+      return self.class.autogen_id(field, @resource.class.name)
     else
       if value = self.class.autogen_default(field)
         return value
@@ -127,33 +127,33 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
   end
 
-  # Autogenerate either a uid or a gid.  This is hard-coded: we can only
-  # generate one field type per class.
-  def autogen_id(field)
-    highest = 0
-
-    group = method = nil
-    case @resource.class.name
-    when :user; group = :passwd; method = :uid
-    when :group; group = :group; method = :gid
+  # Autogenerate either a uid or a gid.  This is not very flexible: we can
+  # only generate one field type per class, and get kind of confused if asked
+  # for both.
+  def self.autogen_id(field, resource_type)
+    # Figure out what sort of value we want to generate.
+    case resource_type
+    when :user;   group = :passwd;  method = :uid
+    when :group;  group = :group;   method = :gid
     else
       raise Puppet::DevError, "Invalid resource name #{resource}"
     end
 
-    # Make sure we don't use the same value multiple times
-    if defined?(@@prevauto)
-      @@prevauto += 1
-    else
+    # Initialize from the data set, if needed.
+    unless @prevauto
+      highest = 0
+
       Etc.send(group) { |obj|
         if obj.gid > highest
           highest = obj.send(method) unless obj.send(method) > 65000
         end
       }
 
-      @@prevauto = highest + 1
+      @prevauto = highest
     end
 
-    @@prevauto
+    # ...and finally increment and return the next value.
+    @prevauto += 1
   end
 
   def create
