@@ -95,12 +95,6 @@ describe Puppet::Type.type(:schedule) do
       @schedule.must_not be_match
     end
 
-    it "should throw an error if the upper limit is less than the lower limit" do
-      pending "bug #7639"
-      @schedule[:range] = "01:02:03 - 01:00:00"
-      @schedule.must_throw Puppet::Error
-    end
-
     it "should not match the current time fails between an array of ranges" do
       @schedule[:range] = ["4-6", "20-23"]
       @schedule.must_not be_match
@@ -114,6 +108,60 @@ describe Puppet::Type.type(:schedule) do
     it "should match the upper array of ranges" do
       @schedule[:range] = ["4-6", "11-12"]
       @schedule.must be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 1" do
+    include ScheduleTesting
+
+    before do
+      # Test with the current time at a month's end boundary to ensure we are
+      # advancing the day properly when we push the ending limit out a day.
+      # For example, adding 1 to 31 would throw an error instead of advancing
+      # the date.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
+    end
+
+    it "should match when the start time is before the current time and the end time is after the current time" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule.must be_match
+    end
+
+    it "should not match when the start time is after the current time" do
+      @schedule[:range] = "23:30:00 - 21:00:00"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the end time is before the current time" do
+      @schedule[:range] = "23:00:00 - 01:00:00"
+      @schedule.must_not be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 2" do
+    include ScheduleTesting
+
+    before do
+      # Test with the current time at a month's end boundary to ensure we are
+      # advancing the day properly when we push the ending limit out a day.
+      # For example, adding 1 to 31 would throw an error instead of advancing
+      # the date.
+      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
+    end
+
+    it "should match when the start time is before the current time and the end time is after the current time" do
+      @schedule[:range] = "22:00:00 - 02:00:00"
+      @schedule.must be_match
+    end
+
+    it "should not match when the start time is after the current time" do
+      @schedule[:range] = "02:00:00 - 00:30:00"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the end time is before the current time" do
+      @schedule[:range] = "22:00:00 - 01:00:00"
+      @schedule.must_not be_match
     end
   end
 
