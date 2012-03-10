@@ -19,17 +19,19 @@ module Puppet::Module::Tool
           @module_name       = options[:module_name      ]
           @installed_version = options[:installed_version].sub(/^(?=\d)/, 'v')
           @requested_version = options[:requested_version]
+          @local_changes     = options[:local_changes]
           @requested_version.sub!(/^(?=\d)/, 'v') if @requested_version.is_a? String
           super "'#{@module_name}' (#{@requested_version}) requested; '#{@module_name}' (#{@installed_version}) already installed"
         end
 
         def multiline
-          <<-MSG.strip
-Could not install module '#{@module_name}' (#{@requested_version})
-  Module '#{@module_name}' (#{@installed_version}) is already installed
-    Use `puppet module upgrade` to install a different version
-    Use `puppet module install --force` to re-install only this module
-          MSG
+          message = ''
+          message << "Could not install module '#{@module_name}' (#{@requested_version})\n"
+          message << "  Module '#{@module_name}' (#{@installed_version}) is already installed\n"
+          message << "    Installed module has had changes made locally\n" unless @local_changes.empty?
+          message << "    Use `puppet module upgrade` to install a different version\n"
+          message << "    Use `puppet module install --force` to re-install only this module"
+          message
         end
       end
 
@@ -148,6 +150,7 @@ Could not install package #{@requested_package}
           MSG
         end
       end
+
     end
   end
 end

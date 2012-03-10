@@ -79,36 +79,24 @@ module Puppet::Module::Tool
         results
       end
 
-      def skip_upgrades_with_local_changes(mod_download_list)
-        mod_download_list.each do |mod|
-          forge_name, version, file = mod
-
-          if local_mod = @environment.module_by_forge_name(forge_name)
-            if local_mod.has_local_changes?
-              msg = "Changes in these files #{local_mod.local_changes.join(' ')}\n"
-              if @force
-                msg << "Overwriting module #{forge_name} (#{version}) despite local changes because of force flag"
-                Puppet.warning msg
-              else
-                msg << "Module #{forge_name} (#{version}) needs to be installed to satisfy contraints, "
-                msg << "but can't be because it has local changes"
-                raise RuntimeError, msg
-              end
-            end
-          end
-        end
-      end
-
       private
 
       def get_local_constraints
         @conditions = Hash.new { |h,k| h[k] = [] }
-        @installed = { }
+        @installed = Hash.new
         @environment.modules.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
           deps.tap do
             next unless mod.has_metadata?
             mod_name = mod.forge_name.gsub('/', '-')
-            @installed[mod_name] = mod.version
+            @installed[mod_name] = {}
+            @installed[mod_name][:version] = mod.version
+
+            # Work around an issue where modules built with an older version
+            # of PMT would include the metadata.json file in the list of files
+            # checksummed. This causes metadata.json to always report local
+            # changes.
+            @installed[mod_name][:local_changes] = mod.local_changes.reject {|c| c == "metadata.json"}
+
             d = deps["#{mod_name}@#{mod.version}"]
             mod.dependencies.each do |hash|
               name, conditions = hash['name'], hash['version_requirement']
@@ -156,10 +144,12 @@ module Puppet::Module::Tool
         if @force
           options[:ignore_dependencies] = true
         elsif @installed.include? @forge_name
+
           raise AlreadyInstalledError,
             :module_name       => @forge_name,
-            :installed_version => @installed[@forge_name],
-            :requested_version => @version || (@conditions[@forge_name].empty? ? :latest : :best)
+            :installed_version => @installed[@forge_name][:version],
+            :requested_version => @version || (@conditions[@forge_name].empty? ? :latest : :best),
+            :local_changes     => @installed[@forge_name][:local_changes]
         end
 
         if options[:ignore_dependencies] && @source == :filesystem
@@ -209,7 +199,7 @@ module Puppet::Module::Tool
           end
 
           if @installed[mod] && ! @force
-            next if range === SemVer.new(@installed[mod])
+            next if range === SemVer.new(@installed[mod][:version])
             action = :upgrade
             # TODO: Update invalid installed dependencies.
             # TODO: Update conditions when upgrading a local module.
@@ -242,7 +232,7 @@ module Puppet::Module::Tool
             :module => mod,
             :version => version,
             :action => action,
-            :previous_version => @installed[mod],
+            :previous_version => @installed[mod] ? @installed[mod][:version] : nil,
             :file => @urls["#{mod}@#{version[:vstring]}"],
             :path => @options[:dir],
             :dependencies => []
