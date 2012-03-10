@@ -18,7 +18,7 @@ module Puppet::Module::Tool
           message = []
           message << "Could not upgrade module '#{@module_name}'"
           message << "  Module '#{@module_name}' appears multiple places in the module path"
-          message << @modules.map do |mod|
+          message += @modules.map do |mod|
             "    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.path.sub(/#{File::Separator}(#{mod.name})$/, '')}"
           end
           message << "    Use the `--modulepath` option to limit the search to specific directories"
@@ -64,7 +64,7 @@ module Puppet::Module::Tool
           @installed_version = options[:installed_version]
           @requested_version = options[:requested_version]
           @repository        = options[:repository]
-          super "Could not upgrade '#{@module_name}'; module has no versions #{ @requested_version && "matching #{v(@requested_version)} "}published on #{@repository}"
+          super "Could not upgrade '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)}); module has no versions #{ @requested_version && "matching #{v(@requested_version)} "}published on #{@repository}"
         end
 
         def multiline
@@ -75,36 +75,31 @@ module Puppet::Module::Tool
         end
       end
 
-      class NoVersionSatisfyError < UpgradeError
+      class NoVersionsSatisfyError < UpgradeError
         attr_accessor :requested_module, :requested_version
 
         def initialize(options)
           @module_name       = options[:module_name]
-          @requested_module  = options[:requested_module]
-          @requested_version = options[:requested_version]
+          @requested_version = v(options[:requested_version])
+          @installed_version = v(options[:installed_version])
+          @dependency_name   = options[:dependency_name]
           @conditions        = options[:conditions]
           @source            = options[:source]
-          @requested_version = v(@requested_version)
-          super "'#{@requested_module}' (#{@requested_version}) requested; No version of '#{@requested_module}' will satisfy dependencies"
+          super "Could not upgrade '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)}); module '#{@dependency_name}' cannot satisfy dependencies"
         end
 
         def multiline
-          message = ''
-          message << "Could not upgrade module '#{@requested_module}' (#{@requested_version})\n"
-          message << "  No version of '#{@requested_module}' will satisfy dependencies:\n"
-          message << "    You specified '#{@requested_module}' (#{@requested_version})\n" if @source[:name] == :you
-          @conditions[@module_name].select  {|cond| cond[:module] != :you} \
-                                   .sort_by {|cond| cond[:module]}.each do |cond|
-            message << "    '#{cond[:module]}' (#{v(cond[:version])}) requires '#{@module_name}' (#{v(cond[:dependency])})\n"
+          message = []
+          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
+          message << "  No version of '#{@dependency_name}' will satisfy dependencies"
+          message += @conditions.select { |c| c[:module] == :you }.map do |c|
+            "    You specified '#{@dependency_name}' (#{v(c[:version])})"
           end
-
-          if @source[:name] == :you
-            message << "    Use `puppet module install --force` to install this module anyway"
-          else
-            message << "    Use `puppet module install --ignore-dependencies` to install only this module"
+          message += @conditions.select { |c| c[:module] != :you }.map do |c|
+             "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@dependency_name}' (#{v(c[:dependency])})"
           end
-
-          message
+          message << "    Use `puppet module upgrade --force` to install this module anyway"
+          message.join("\n")
         end
       end
 
@@ -241,16 +236,15 @@ module Puppet::Module::Tool
 
           best_requested_versions = @versions["#{@forge_name}"].sort_by { |h| h[:semver] }
 
-          if seen.include? mod
-            next if range === seen[mod][:semver]
-            raise InvalidDependencyCycleError,
-              :module_name       => mod,
-              :source            => source,
-              :version           => 'v1.0.0',
-              :requested_module  => @module_name,
-              :requested_version => @version || (best_requested_versions.empty? ? 'latest' : "latest: #{best_requested_versions.last[:semver]}"),
-              :conditions        => @conditions
-          end
+          # if seen.include? mod
+          #   next if range === seen[mod][:semver]
+          #   raise InvalidDependencyCycleError,
+          #     :requested_module  => @module_name,
+          #     :requested_version => @version || (best_requested_versions.empty? ? 'latest' : "latest: #{best_requested_versions.last[:semver]}"),
+          #     :dependency_name   => mod,
+          #     :source            => source,
+          #     :conditions        => @conditions[mod]
+          # end
 
           if !(@force || @installed[mod].empty?) && source.last[:name] != :you
             next if range === SemVer.new(@installed[mod].last.version)
@@ -267,13 +261,14 @@ module Puppet::Module::Tool
                                               .sort_by { |h| h[:semver] }
 
           unless version = valid_versions.last
-            raise NoVersionSatisfyError,
-              :module_name       => mod,
-              :source            => source.last,
-              :version           => valid_versions.empty? ? 'best' : "best: #{valid_versions.last}",
-              :requested_module  => @module_name,
-              :requested_version => @version || (best_requested_versions.empty? ? 'best' : "best: #{best_requested_versions.last[:semver]}"),
-              :conditions        => @conditions
+            raise NoVersionsSatisfyError,
+              :module_name       => @module_name,
+              :requested_version => @version || ((@conditions[@module_name].length == 1 ? 'latest' : 'best') + (seen[@module_name] ? ": #{seen[@module_name][:vstring].sub(/^(?=\d)/, 'v')}" : '')),
+              :installed_version => @installed[@module_name].last.version,
+              :dependency_name   => mod,
+              :conditions        => @conditions[mod]
+              # :source            => source.last,
+              # :version           => valid_versions.empty? ? 'best' : "best: #{valid_versions.last}",
           end
 
           seen[mod] = version
