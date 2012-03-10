@@ -14,14 +14,13 @@ module Puppet::Module::Tool
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force = options[:force]
         @ignore_dependencies = @force || options[:ignore_dependencies]
-        if File.exist?(name)
-          if File.directory?(name)
-            # TODO Unify this handling with that of Unpacker#check_clobber!
-            raise ArgumentError, "Module already installed: #{name}"
-          end
+
+        if is_package?(name)
           @filename = File.expand_path(name)
           @source = :filesystem
-          parse_filename!
+
+          @forge_name, @author,  @modname, @version = parse_filename!
+          @urls = { }
         else
           @source = :repository
           begin
@@ -37,12 +36,6 @@ module Puppet::Module::Tool
       end
 
       def run
-        unless File.directory? options[:dir]
-          msg = "Could not install module '#{@forge_name}' (#{@version || 'latest'})\n"
-          msg << "  Directory #{options[:dir]} does not exist"
-          Puppet.err msg
-          exit(1)
-        end
 
         results = {
           :module_name    => @forge_name,
@@ -51,6 +44,18 @@ module Puppet::Module::Tool
         }
 
         begin
+          unless File.directory? options[:dir]
+            msg = "Could not install module '#{@forge_name}' (#{@version || 'latest'})\n"
+            msg << "  Directory #{options[:dir]} does not exist"
+            Puppet.err msg
+            exit(1)
+          end
+
+          if @source == :filesystem && !File.exist?(@filename)
+            raise MissingPackageError,
+              :requested_package => @filename
+          end
+
           cached_paths = get_release_packages
           unless @graph.empty?
             Puppet.notice 'Installing -- do not interrupt ...'
@@ -58,7 +63,7 @@ module Puppet::Module::Tool
               Unpacker.run(cache_path, options)
             end
           end
-        rescue AlreadyInstalledError, NoVersionSatisfyError,
+        rescue AlreadyInstalledError, NoVersionSatisfyError, MissingPackageError,
                InvalidDependencyCycleError, InstallConflictError => err
           results[:error] = {
             :oneline   => err.message,
@@ -146,31 +151,32 @@ module Puppet::Module::Tool
       # release package in the `Puppet.settings[:module_working_dir]`.
       def get_release_packages
         cache_paths = nil
-        case @source
-        when :repository
-          @local = get_local_constraints
+        @local = get_local_constraints
 
-          if @force
-            options[:ignore_dependencies] = true
-          elsif @installed.include? @forge_name
-            raise AlreadyInstalledError,
-              :module_name       => @forge_name,
-              :installed_version => @installed[@forge_name],
-              :requested_version => @version || (@conditions[@forge_name].empty? ? :latest : :best)
-          end
-
-          Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
-          @remote = get_remote_constraints
-
-          @graph = resolve_constraints({ @forge_name => @version })
-          resolve_install_conflicts(@graph) unless @force
-          return download_tarballs(@graph)
-        when :filesystem
-          @graph = []
-          cache_paths = [Puppet::Forge.get_release_package_from_filesystem(@filename)]
+        if @force
+          options[:ignore_dependencies] = true
+        elsif @installed.include? @forge_name
+          raise AlreadyInstalledError,
+            :module_name       => @forge_name,
+            :installed_version => @installed[@forge_name],
+            :requested_version => @version || (@conditions[@forge_name].empty? ? :latest : :best)
         end
 
-        cache_paths
+        if options[:ignore_dependencies] && @source == :filesystem
+          @remote = {
+            "#{@forge_name}@#{@version}" => { }
+          }
+          @versions = {
+            @forge_name => [{:vstring => @version, :semver => SemVer.new(@version)}]
+          }
+        else
+          Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
+          @remote = get_remote_constraints
+        end
+
+        @graph = resolve_constraints({ @forge_name => @version })
+        resolve_install_conflicts(@graph) unless @force
+        download_tarballs(@graph)
       end
 
       def resolve_constraints(dependencies, source = [{:name => :you}], seen = {})
@@ -253,7 +259,11 @@ module Puppet::Module::Tool
         graph.map do |release|
           cache_path = nil
           begin
-            cache_path = Puppet::Forge.repository.retrieve(release[:file])
+            if release[:module] == @forge_name && @source == :filesystem
+              cache_path = Pathname(@filename)
+            else
+              cache_path = Puppet::Forge.repository.retrieve(release[:file])
+            end
           rescue OpenURI::HTTPError => e
             raise RuntimeError, "Could not download module: #{e.message}"
           end
@@ -295,6 +305,11 @@ module Puppet::Module::Tool
             resolve_install_conflicts(release[:dependencies], true)
           end
         end
+      end
+
+      def is_package?(name)
+        filename = File.expand_path(name)
+        filename =~ /.tar.gz$/
       end
     end
   end

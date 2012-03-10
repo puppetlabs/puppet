@@ -72,6 +72,7 @@ module Puppet::Module::Tool
         unless SemVer.valid?(@version)
           raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
         end
+        return [@full_module_name, @username, @module_name, @version]
       end
     end
   end
