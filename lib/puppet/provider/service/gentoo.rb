@@ -12,8 +12,6 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
   confine :operatingsystem => :gentoo
 
-  defaultfor :operatingsystem => :gentoo
-
   def self.defpath
     superclass.defpath
   end
