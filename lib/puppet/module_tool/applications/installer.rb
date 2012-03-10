@@ -90,12 +90,7 @@ module Puppet::Module::Tool
             mod_name = mod.forge_name.gsub('/', '-')
             @installed[mod_name] = {}
             @installed[mod_name][:version] = mod.version
-
-            # Work around an issue where modules built with an older version
-            # of PMT would include the metadata.json file in the list of files
-            # checksummed. This causes metadata.json to always report local
-            # changes.
-            @installed[mod_name][:local_changes] = mod.local_changes.reject {|c| c == "metadata.json"}
+            @installed[mod_name][:local_changes] = mod.local_changes
 
             d = deps["#{mod_name}@#{mod.version}"]
             mod.dependencies.each do |hash|
