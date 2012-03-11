@@ -104,7 +104,7 @@ describe Puppet::Interface do
     it "should instance-eval any provided block", :'fails_on_ruby_1.9.2' => true do
       face = subject.new(:face_test_block, '0.0.1') do
         action(:something) do
-          when_invoked { "foo" }
+          when_invoked {|_| "foo" }
         end
       end
 
@@ -143,7 +143,7 @@ describe Puppet::Interface do
         option "--foo"
         option "--bar"
         action :baz do
-          when_invoked { true }
+          when_invoked {|_| true }
           option "--quux"
         end
       end
@@ -154,7 +154,7 @@ describe Puppet::Interface do
       expect {
         subject.new(:action_level_options, '0.0.1') do
           action :bar do
-            when_invoked { true }
+            when_invoked {|_| true }
             option "--foo"
           end
           option "--foo"
@@ -164,8 +164,8 @@ describe Puppet::Interface do
 
     it "should work when two actions have the same option" do
       face = subject.new(:with_options, '0.0.1') do
-        action :foo do when_invoked { true } ; option "--quux" end
-        action :bar do when_invoked { true } ; option "--quux" end
+        action :foo do when_invoked {|_| true } ; option "--quux" end
+        action :bar do when_invoked {|_| true } ; option "--quux" end
       end
 
       face.get_action(:foo).options.should =~ [:quux]
@@ -185,14 +185,14 @@ describe Puppet::Interface do
     let :parent do
       parent = Class.new(subject)
       parent.option("--inherited")
-      parent.action(:parent_action) do when_invoked { true } end
+      parent.action(:parent_action) do when_invoked {|_| true } end
       parent
     end
 
     let :face do
       face = parent.new(:example, '0.2.1')
       face.option("--local")
-      face.action(:face_action) do when_invoked { true } end
+      face.action(:face_action) do when_invoked {|_| true } end
       face
     end
 
