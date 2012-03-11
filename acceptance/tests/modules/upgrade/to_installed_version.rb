@@ -21,7 +21,7 @@ on master, puppet("module upgrade pmtacceptance-java --version 1.6.x"), :accepta
     STDOUT> Found 'pmtacceptance-java' (v1.6.0) in /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
     STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> v1.6.x)
-    STDERR>   The installed version is already the best fit for these dependencies:
+    STDERR>   The installed version is already the best fit for the current dependencies
     STDERR>     You specified 'pmtacceptance-java' (v1.6.x)
     STDERR>     Use `puppet module install --force` to re-install this module\e[0m
   OUTPUT
