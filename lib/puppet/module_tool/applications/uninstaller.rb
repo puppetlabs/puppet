@@ -40,7 +40,12 @@ module Puppet::Module::Tool
           exit(1)
         end
 
-        { :removed_mods => @removed_mods, :options => @options }
+        {
+          :removed_mods => @removed_mods.sort_by do |mod|
+            @environment.modulepath.index(mod.path.sub(/#{File::Separator}#{mod.name}$/, ''))
+          end,
+          :options => @options
+        }
       end
 
       private
