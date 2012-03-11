@@ -90,7 +90,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       file = mock 'file'
       path = @store.send(:path, @subject.name)
       FileTest.expects(:exist?).with(File.dirname(path)).returns(true)
-      @store.expects(:writelock).with(path, 0660).yields(file)
+      Puppet::Util.expects(:replace_file).with(path, 0660).yields(file)
       file.expects(:print).with(yaml)
 
       @store.save(@request)
@@ -105,7 +105,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       FileTest.expects(:exist?).with(dir).returns(false)
       Dir.expects(:mkdir).with(dir)
 
-      @store.expects(:writelock).yields(file)
+      Puppet::Util.expects(:replace_file).yields(file)
       file.expects(:print).with(yaml)
 
       @store.save(@request)
@@ -119,9 +119,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       yaml = @subject.to_yaml
       FileTest.expects(:exist?).with(path).returns(true)
 
-      fh = mock 'filehandle'
-      @store.expects(:readlock).with(path).yields fh
-      fh.expects(:read).returns yaml
+      File.expects(:read).with(path).returns yaml
 
       @store.find(@request).instance_variable_get("@name").should == :me
     end
@@ -133,9 +131,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       # Something that will fail in yaml
       yaml = "--- !ruby/object:Hash"
 
-      fh = mock 'filehandle'
-      @store.expects(:readlock).yields fh
-      fh.expects(:read).returns yaml
+      File.expects(:read).returns yaml
 
       proc { @store.find(@request) }.should raise_error(Puppet::Error)
     end
