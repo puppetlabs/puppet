@@ -13,7 +13,11 @@ module Puppet::Module::Tool
       def initialize(name, options = {})
         @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force = options[:force]
-        @ignore_dependencies = @force || options[:ignore_dependencies]
+        @ignore_dependencies = options[:ignore_dependencies]
+
+        if @force
+          @ignore_dependencies = true
+        end
 
         if is_package?(name)
           @filename = File.expand_path(name)
@@ -136,9 +140,7 @@ module Puppet::Module::Tool
         cache_paths = nil
         @local = get_local_constraints
 
-        if @force
-          options[:ignore_dependencies] = true
-        elsif @installed.include? @forge_name
+        if !@force && @installed.include?(@forge_name)
 
           raise AlreadyInstalledError,
             :module_name       => @forge_name,
@@ -147,7 +149,7 @@ module Puppet::Module::Tool
             :local_changes     => @installed[@forge_name][:local_changes]
         end
 
-        if options[:ignore_dependencies] && @source == :filesystem
+        if @ignore_dependencies && @source == :filesystem
           @remote = {
             "#{@forge_name}@#{@version}" => { }
           }
@@ -236,7 +238,7 @@ module Puppet::Module::Tool
         dependencies.each do |mod|
           deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"]
           mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen)
-        end unless options[:ignore_dependencies]
+        end unless @ignore_dependencies
         return dependencies
       end
 

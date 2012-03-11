@@ -41,7 +41,7 @@ describe Puppet::Forge do
     end
 
     context "when the connection to the forge fails" do
-      let(:response)  { stub(:body => '[]', :code => '404') }
+      let(:response)  { stub(:body => '{}', :code => '404') }
 
       it "should raise an error for search" do
         lambda { Puppet::Forge.search('bacula') }.should raise_error RuntimeError

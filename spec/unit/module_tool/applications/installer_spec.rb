@@ -54,34 +54,6 @@ describe Puppet::Module::Tool::Applications::Installer do
     end
   end
 
-  let(:remote_deps) {{
-    'puppetlabs/awesomemodule' => [
-      {
-        'file' => 'awesomefile',
-        'version' => '3.0.0',
-        'dependencies' => [
-          ['puppetlabs/dependable', "1.0.x"   ],
-          ['puppetlabs/nester',     ">= 2.0.0"]
-        ]
-      },
-    ],
-    'puppetlabs/dependable' => [
-      { 'file' => 'dependablefile100', 'version' => '1.0.0', 'dependencies' => [] },
-      { 'file' => 'dependablefile101', 'version' => '1.0.1', 'dependencies' => [] },
-      { 'file' => 'dependablefile102', 'version' => '1.0.2', 'dependencies' => [] }
-    ],
-    'puppetlabs/nester' => [
-      {
-        'file' => 'nesterfile',
-        'version' => '2.0.0',
-        'dependencies' => [ [ 'joe/circular', "= 0.0.1" ] ]
-      },
-    ],
-    'joe/circular' => [
-      { 'file' => 'circularfile', 'version' => '0.0.1', 'dependencies' =>  [ ['puppetlabs/awesomemodule', ">= 2.0.1" ] ] },
-    ]
-  }}
-
   let(:remote_dependency_info) do
     {
       "pmtacceptance/stdlib" => [
@@ -153,8 +125,8 @@ describe Puppet::Module::Tool::Applications::Installer do
 
     it "should set the @installed instance variable" do
       expected_output = {
-        "puppetlabs-other_mod"  => "1.0.0",
-        "puppetlabs-dependable" => "1.0.1"
+        "puppetlabs-other_mod"  => {:local_changes => [], :version => "1.0.0"},
+        "puppetlabs-dependable" => {:local_changes => [], :version => "1.0.1"}
       }
 
       installer = installer_class.new('puppetlabs/awesomefile')
@@ -182,38 +154,6 @@ describe Puppet::Module::Tool::Applications::Installer do
   describe "the behavior of get_remote_constraints" do
     before do
       Puppet::Forge.stubs(:remote_dependency_info).returns(remote_dependency_info)
-    end
-
-    let(:remote_dependency_info) do
-      {
-        "pmtacceptance/stdlib" => [
-          { "dependencies" => [],
-            "version"      => "0.0.1",
-            "file"         => "/pmtacceptance-stdlib-0.0.1.tar.gz" },
-          { "dependencies" => [],
-            "version"      => "0.0.2",
-            "file"         => "/pmtacceptance-stdlib-0.0.2.tar.gz" },
-          { "dependencies" => [],
-            "version"      => "1.0.0",
-            "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" }
-        ],
-        "pmtacceptance/java" => [
-          { "dependencies" => [["pmtacceptance/stdlib", ">= 0.0.1"]],
-            "version"      => "1.7.0",
-            "file"         => "/pmtacceptance-java-1.7.0.tar.gz" },
-          { "dependencies" => [["pmtacceptance/stdlib", "1.0.0"]],
-            "version"      => "1.7.1",
-            "file"         => "/pmtacceptance-java-1.7.1.tar.gz" }
-        ],
-        "pmtacceptance/apollo" => [
-          { "dependencies" => [
-              ["pmtacceptance/java", ">= 1.7.0"],
-              ["pmtacceptance/stdlib", ">= 1.0.0"]
-            ],
-            "version" => "0.0.1",
-            "file"=> "/pmtacceptance-apollo-0.0.1.tar.gz" }
-        ]
-      }
     end
 
     it "should return remote constraints" do
@@ -366,6 +306,7 @@ describe Puppet::Module::Tool::Applications::Installer do
             :action       => :install,
             :version      => {:semver => SemVer.new('1.0.0'), :vstring => "1.0.0"},
             :file         => "/pmtacceptance-stdlib-1.0.0.tar.gz",
+            :path         => nil,
             :previous_version => nil
           }
         ]
@@ -375,7 +316,7 @@ describe Puppet::Module::Tool::Applications::Installer do
 
       context "when there are modules installed" do
         let(:installed) do
-          { 'pmtacceptance-stdlib' => "1.0.0" }
+          { 'pmtacceptance-stdlib' => {:version => "1.0.0", :local_changes => []} }
         end
 
         it "should use local version when already exists and satisfies constraints" do
@@ -383,17 +324,21 @@ describe Puppet::Module::Tool::Applications::Installer do
           installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'}).should == []
         end
 
-        it "should reinstall the local version and if force is used" do
+        it "should reinstall the local version if force is used" do
           expected_output = [
             { :action       => :install,
               :dependencies => [],
               :version      => {:semver => SemVer.new('1.0.0'), :vstring => "1.0.0"},
               :previous_version => "1.0.0",
               :file         => "/pmtacceptance-stdlib-1.0.0.tar.gz",
-              :module       => "pmtacceptance-stdlib"
+              :module       => "pmtacceptance-stdlib",
+              :path         => nil,
             }
           ]
           installer.instance_variable_set(:@force, true)
+          installer.instance_variable_set(:@installed, installed)
+          installer.instance_variable_set(:@forge_name, 'pmtacceptance-stdlib')
+          installer.stubs(:options).returns({:ignore_dependencies => true})
           installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'}).should == expected_output
         end
 
@@ -402,7 +347,8 @@ describe Puppet::Module::Tool::Applications::Installer do
             :semver  => SemVer.new('1.0.0'),
             :vstring => "1.0.0"
           }
-          installer.instance_variable_set(:@installed, {'pmtacceptance-stdlib' => "0.0.5"})
+          installer.instance_variable_set(:@installed,
+            {'pmtacceptance-stdlib' => {:version => "0.0.5", :local_changes => []}})
           result = installer.send(:resolve_constraints, {'pmtacceptance-stdlib' => '1.0.0'})
           result[0][:action].should  == :upgrade
           result[0][:version].should == expected_version_hash
@@ -421,13 +367,16 @@ describe Puppet::Module::Tool::Applications::Installer do
           broken_remote.merge!(remote_dependency_info)
           broken_versions.merge!(versions)
 
-          installer.instance_variable_set(:@installed, {'pmtacceptance-stdlib' => "1.0.0"})
+          installer.instance_variable_set(:@installed, {'pmtacceptance-stdlib' => {:version => "1.0.0", :local_changes => []}})
           installer.instance_variable_set(:@remote, broken_remote)
           installer.instance_variable_set(:@versions, broken_versions)
 
+          error = "'pmtacceptance-apollo' (best: v0.0.1) requested; "\
+                  "No version of 'pmtacceptance-apollo' will satisfy dependencies"
+
           lambda do
             installer.send(:resolve_constraints, {'pmtacceptance-broken' => '1.0.0'})
-          end.should raise_error (RuntimeError, "No versions satisfy!")
+          end.should raise_error(Puppet::Module::Tool::Applications::Installer::NoVersionSatisfyError, error)
         end
       end
 
@@ -443,18 +392,15 @@ describe Puppet::Module::Tool::Applications::Installer do
       it "should warn and skip a dependency with no version that satisfies constraints if force is used"
 
       it "should error when no version for a dependency meets constraints" do
+        error = "'pmtacceptance-apollo' (best: v0.0.1) requested; No version"\
+                " of 'pmtacceptance-apollo' will satisfy dependencies"
         lambda do
           installer.send(:resolve_constraints, {'pmtacceptance-apollo' => '5.0.0'})
-        end.should raise_error (RuntimeError, "No versions satisfy!")
+        end.should raise_error(Puppet::Module::Tool::Applications::Installer::NoVersionSatisfyError, error)
       end
 
       context "when 'options[:ignore_dependencies]' is set to true" do
-        it "should ignore dependencies" do
-          installer.stubs(:options).returns({:ignore_dependencies => true})
-
-          results = installer.send(:resolve_constraints, {'pmtacceptance-apollo' => '0.0.1'})
-          results[0][:dependencies].should == []
-        end
+        it "should ignore dependencies"
       end
     end
   end
@@ -468,8 +414,8 @@ describe Puppet::Module::Tool::Applications::Installer do
       filemod = File.join(@sourcedir, 'notparseable')
       File.open(filemod, 'w') {|f| f.puts 'ha ha cant parse'}
       expect { installer_class.run(filemod) }.to raise_error(
-        ArgumentError,
-        'Could not parse filename to obtain the username, module name and version.  (notparseable)'
+        RuntimeError,
+        "Could not install module with invalid name: #{filemod}"
       )
     end
 
