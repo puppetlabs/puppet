@@ -41,6 +41,35 @@ module Puppet::Module::Tool
         end
       end
 
+      class VersionAlreadyInstalledError < UpgradeError
+        def initialize(options)
+          @module_name       = options[:module_name]
+          @requested_version = v(options[:requested_version])
+          @installed_version = v(options[:installed_version])
+          @dependency_name   = options[:dependency_name]
+          @conditions        = options[:conditions]
+          super "Could not upgrade '#{@module_name}'; module is not installed"
+        end
+
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
+          if @conditions.length == 1 && @conditions.last[:version].nil?
+            message << "  The installed version is already the latest version"
+          else
+            message << "  The installed version is already the best fit for the current dependencies"
+            message += @conditions.select { |c| c[:module] == :you && c[:version] }.map do |c|
+              "    You specified '#{@module_name}' (#{v(c[:version])})"
+            end
+            message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
+               "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@module_name}' (#{v(c[:dependency])})"
+            end
+          end
+          message << "    Use `puppet module install --force` to re-install this module"
+          message.join("\n")
+        end
+      end
+
       class UnknownModuleError < UpgradeError
         def initialize(options)
           @module_name       = options[:module_name]
@@ -84,7 +113,6 @@ module Puppet::Module::Tool
           @installed_version = v(options[:installed_version])
           @dependency_name   = options[:dependency_name]
           @conditions        = options[:conditions]
-          @source            = options[:source]
           super "Could not upgrade '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)}); module '#{@dependency_name}' cannot satisfy dependencies"
         end
 
@@ -95,10 +123,10 @@ module Puppet::Module::Tool
           message += @conditions.select { |c| c[:module] == :you }.map do |c|
             "    You specified '#{@dependency_name}' (#{v(c[:version])})"
           end
-          message += @conditions.select { |c| c[:module] != :you }.map do |c|
+          message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
              "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@dependency_name}' (#{v(c[:dependency])})"
           end
-          message << "    Use `puppet module upgrade --force` to install this module anyway"
+          message << "    Use `puppet module upgrade --force` to upgrade just this module"
           message.join("\n")
         end
       end
@@ -141,7 +169,13 @@ module Puppet::Module::Tool
             raise UnknownVersionError, results.merge(:repository => Puppet::Forge.repository.uri) if @remote.empty?
           end
 
-          raise "Already there!" if @versions["#{@module_name}"].sort_by { |h| h[:semver] }.last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
+          if !@options[:force] && @versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
+            raise VersionAlreadyInstalledError,
+              :module_name       => @module_name,
+              :requested_version => @version || ((@conditions[@module_name].empty? ? 'latest' : 'best') + ": #{@versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v')}"),
+              :installed_version => @installed[@module_name].last.version,
+              :conditions        => @conditions[@module_name] + [{ :module => :you, :version => @version }]
+          end
 
           @graph = resolve_constraints({ @module_name => @version })
 
@@ -159,6 +193,12 @@ module Puppet::Module::Tool
           results[:result] = :success
           results[:base_dir] = @graph.first[:path]
           results[:affected_modules] = @graph
+        rescue VersionAlreadyInstalledError => e
+          results[:result] = :noop
+          results[:error] = {
+            :oneline   => e.message,
+            :multiline => e.multiline
+          }
         rescue => e
           results[:error] = {
             :oneline => e.message,
@@ -204,10 +244,8 @@ module Puppet::Module::Tool
             mod_name = mod_name.gsub('/', '-')
             releases.each do |rel|
               semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer.MIN
-              @versions[mod_name] << {
-                :vstring => rel['version'],
-                :semver => semver
-              }
+              @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
+              @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
               @urls["#{mod_name}@#{rel['version']}"] = rel['file']
               d = deps["#{mod_name}@#{rel['version']}"]
               (rel['dependencies'] || []).each do |name, conditions|

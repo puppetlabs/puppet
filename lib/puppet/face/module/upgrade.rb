@@ -71,6 +71,9 @@ Puppet::Face.define(:module, '1.0.0') do
       if return_value[:result] == :failure
         Puppet.err(return_value[:error][:multiline])
         exit 1
+      elsif return_value[:result] == :noop
+        Puppet.err(return_value[:error][:multiline])
+        exit 0
       else
         tree = format_tree(return_value[:affected_modules], return_value[:base_dir])
         return_value[:base_dir] + "\n" +

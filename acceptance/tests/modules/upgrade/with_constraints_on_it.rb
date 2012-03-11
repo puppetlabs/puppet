@@ -34,8 +34,9 @@ on master, puppet("module upgrade pmtacceptance-stdlib"), :acceptable_exit_codes
     STDOUT> Preparing to upgrade 'pmtacceptance-stdlib' ...
     STDOUT> Found 'pmtacceptance-stdlib' (v1.0.0) in /etc/puppet/modules ...
     STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-stdlib' (v1.0.0 -> latest: v1.0.0)
-    STDERR>   The installed version is already the best fit for these dependencies:
+    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-stdlib' (v1.0.0 -> best: v1.0.0)
+    STDERR>   The installed version is already the best fit for the current dependencies
+    STDERR>     'pmtacceptance-apollo' (v0.0.1) requires 'pmtacceptance-stdlib' (>= 1.0.0)
     STDERR>     'pmtacceptance-java' (v1.7.1) requires 'pmtacceptance-stdlib' (v1.0.0)
     STDERR>     Use `puppet module install --force` to re-install this module\e[0m
   OUTPUT
