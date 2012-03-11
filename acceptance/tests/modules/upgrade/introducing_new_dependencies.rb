@@ -26,8 +26,7 @@ on master, puppet("module upgrade pmtacceptance-postgresql") do
     Upgrading -- do not interrupt ...
     /etc/puppet/modules
     └─┬ pmtacceptance-postgresql (v0.0.2 -> v1.0.0)
-      ├── pmtacceptance-geordi (v0.0.1)
-      └── pmtacceptance-stdlib (v0.0.2 -> v1.0.0)
+      └── pmtacceptance-geordi (v0.0.1)
   OUTPUT
 end
 

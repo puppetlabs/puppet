@@ -25,8 +25,7 @@ on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes =
   assert_output <<-OUTPUT
     STDOUT> Preparing to upgrade 'pmtacceptance-java' ...
     STDOUT> Found 'pmtacceptance-java' (v1.6.0) in /etc/puppet/modules ...
-    STDOUT> Downloading from http://forge.puppetlabs.com ...
-    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> latest: v1.7.1)
+    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> latest)
     STDERR>   Installed module has had changes made locally
     STDERR>     Use `puppet module upgrade --force` to upgrade this module anyway\e[0m
   OUTPUT
