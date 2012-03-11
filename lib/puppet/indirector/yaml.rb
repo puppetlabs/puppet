@@ -2,6 +2,12 @@ require 'puppet/indirector/terminus'
 
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
+  if defined?(::Psych::SyntaxError)
+    YamlLoadExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError]
+  else
+    YamlLoadExceptions = [::StandardError, ::ArgumentError]
+  end
+
   # Read a given name's file in and convert it from YAML.
   def find(request)
     file = path(request.key)
@@ -16,7 +22,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     begin
       return from_yaml(yaml)
-    rescue => detail
+    rescue *YamlLoadExceptions => detail
       raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
     end
   end
