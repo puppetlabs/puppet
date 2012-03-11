@@ -148,7 +148,7 @@ class Object
         else
           instance_variables.each { |v|
             z.nl
-            v[1..-1].to_zaml(z)       # Remove leading '@'
+            v.to_s[1..-1].to_zaml(z)       # Remove leading '@'
             z.emit(': ')
             yaml_property_munge(instance_variable_get(v)).to_zaml(z)
           }

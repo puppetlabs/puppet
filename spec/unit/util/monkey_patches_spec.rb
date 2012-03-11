@@ -172,3 +172,16 @@ describe Range do
     end
   end
 end
+
+
+describe Object, "#instance_variables" do
+  it "should work with no instance variables" do
+    Object.new.instance_variables.should == []
+  end
+
+  it "should return symbols, not strings" do
+    o = Object.new
+    ["@foo", "@bar", "@baz"].map {|x| o.instance_variable_set(x, x) }
+    o.instance_variables.should =~ [:@foo, :@bar, :@baz]
+  end
+end

@@ -153,3 +153,56 @@ module Kernel
     self
   end unless method_defined?(:tap)
 end
+
+
+########################################################################
+# The return type of `instance_variables` changes between Ruby 1.8 and 1.9
+# releases; it used to return an array of strings in the form "@foo", but
+# now returns an array of symbols in the form :@foo.
+#
+# Nothing else in the stack cares which form you get - you can pass the
+# string or symbol to things like `instance_variable_set` and they will work
+# transparently.
+#
+# Having the same form in all releases of Puppet is a win, though, so we
+# pick a unification and enforce than on all releases.  That way developers
+# who do set math on them (eg: for YAML rendering) don't have to handle the
+# distinction themselves.
+#
+# In the sane tradition, we bring older releases into conformance with newer
+# releases, so we return symbols rather than strings, to be more like the
+# future versions of Ruby are.
+#
+# We also carefully support reloading, by only wrapping when we don't
+# already have the original version of the method aliased away somewhere.
+if RUBY_VERSION[0,3] == '1.8'
+  unless Object.respond_to?(:puppet_original_instance_variables)
+
+    # Add our wrapper to the method.
+    class Object
+      alias :puppet_original_instance_variables :instance_variables
+
+      def instance_variables
+        puppet_original_instance_variables.map(&:to_sym)
+      end
+    end
+
+    # The one place that Ruby 1.8 assumes something about the return format of
+    # the `instance_variables` method is actually kind of odd, because it uses
+    # eval to get at instance variables of another object.
+    #
+    # This takes the original code and applies replaces instance_eval with
+    # instance_variable_get through it.  All other bugs in the original (such
+    # as equality depending on the instance variables having the same order
+    # without any promise from the runtime) are preserved. --daniel 2012-03-11
+    require 'resolv'
+    class Resolv::DNS::Resource
+      def ==(other) # :nodoc:
+        return self.class == other.class &&
+          self.instance_variables == other.instance_variables &&
+          self.instance_variables.collect {|name| self.instance_variable_get name} ==
+          other.instance_variables.collect {|name| other.instance_variable_get name}
+      end
+    end
+  end
+end
