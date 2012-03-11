@@ -41,6 +41,23 @@ module Puppet::Module::Tool
         end
       end
 
+      class LocalChangesError < UpgradeError
+        def initialize(options)
+          @module_name = options[:module_name]
+          @requested_version = v(options[:requested_version])
+          @installed_version = v(options[:installed_version])
+          super "Could not upgrade '#{@module_name}'; module is not installed"
+        end
+
+        def multiline
+          message = []
+          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
+          message << "  Installed module has had changes made locally"
+          message << "    Use `puppet module upgrade --force` to upgrade this module anyway"
+          message.join("\n")
+        end
+      end
+
       class VersionAlreadyInstalledError < UpgradeError
         def initialize(options)
           @module_name       = options[:module_name]
@@ -157,7 +174,14 @@ module Puppet::Module::Tool
           results[:installed_version] = @module.version ? @module.version.sub(/^(?=\d)/, 'v') : nil
           results[:requested_version] = @options[:version] || (@conditions[@module_name].empty? ? :latest : :best)
           dir = @module.path.sub(/\/#{@module.name}/, '')
+
           Puppet.notice "Found '#{@module_name}' (#{results[:installed_version] || '???'}) in #{dir} ..."
+          if !@options[:force] && @installed[@module_name].last.has_metadata? && @installed[@module_name].last.has_local_changes?
+            raise LocalChangesError,
+              :module_name => @module_name,
+              :requested_version => @version || (@conditions[@module_name].empty? ? 'latest' : 'best'),
+              :installed_version => @installed[@module_name].last.version
+          end
 
           begin
             Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
@@ -179,7 +203,7 @@ module Puppet::Module::Tool
 
           @graph = resolve_constraints({ @module_name => @version })
 
-          tarballs = download_tarballs(@graph)
+          tarballs = download_tarballs(@graph, @graph.last[:path])
 
           unless @graph.empty?
             Puppet.notice 'Upgrading -- do not interrupt ...'
@@ -315,7 +339,7 @@ module Puppet::Module::Tool
             :module => mod,
             :version => version,
             :action => action,
-            :previous_version => @installed[mod].last.version,
+            :previous_version => @installed[mod].empty? ? nil : @installed[mod].last.version,
             :file => @urls["#{mod}@#{version[:vstring]}"],
             :path => @installed[mod].empty? ? nil : @installed[mod].last.path.sub(/\/#{@installed[mod].last.name}/, ''),
             :dependencies => []
@@ -328,7 +352,7 @@ module Puppet::Module::Tool
         return dependencies
       end
 
-      def download_tarballs(graph)
+      def download_tarballs(graph, default_path)
         graph.map do |release|
           cache_path = nil
           begin
@@ -336,7 +360,10 @@ module Puppet::Module::Tool
           rescue OpenURI::HTTPError => e
             raise RuntimeError, "Could not download module: #{e.message}"
           end
-          [ {release[:path] => cache_path}, *download_tarballs(release[:dependencies]) ]
+          [
+            { (release[:path] ||= default_path) => cache_path},
+            *download_tarballs(release[:dependencies], default_path)
+          ]
         end.flatten
       end
     end
