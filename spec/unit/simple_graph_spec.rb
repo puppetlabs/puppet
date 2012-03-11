@@ -790,7 +790,7 @@ describe Puppet::SimpleGraph do
     # Test serialization of graph to YAML.
     [:old, :new].each do |which_format|
       all_test_graphs.each do |graph_to_test|
-        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)" do
+        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)", :if => (RUBY_VERSION[0,3] == '1.8' or YAML::ENGINE.syck?) do
           graph = Puppet::SimpleGraph.new
           send(graph_to_test, graph)
           yaml_form = graph_to_yaml(graph, which_format)
