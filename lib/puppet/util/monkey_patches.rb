@@ -58,23 +58,6 @@ class Object
   def daemonize
     raise NotImplementedError, "Kernel.daemonize is too dangerous, please don't try to use it."
   end
-
-  # The following code allows callers to make assertions that are only
-  # checked when the environment variable PUPPET_ENABLE_ASSERTIONS is
-  # set to a non-empty string.  For example:
-  #
-  #   assert_that { condition }
-  #   assert_that(message) { condition }
-  if ENV["PUPPET_ENABLE_ASSERTIONS"].to_s != ''
-    def assert_that(message = nil)
-      unless yield
-        raise Exception.new("Assertion failure: #{message}")
-      end
-    end
-  else
-    def assert_that(message = nil)
-    end
-  end
 end
 
 # Workaround for yaml_initialize, which isn't supported before Ruby
