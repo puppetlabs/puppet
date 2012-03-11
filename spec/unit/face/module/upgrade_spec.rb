@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet/face'
 require 'puppet/module_tool'
 
-describe "puppet module update" do
+describe "puppet module upgrade" do
   subject { Puppet::Face[:module, :current] }
 
   let(:options) do
@@ -10,10 +10,10 @@ describe "puppet module update" do
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module, :current].get_action :update }
+    subject { Puppet::Face[:module, :current].get_action :upgrade }
 
-    its(:summary)     { should =~ /update.*module/im }
-    its(:description) { should =~ /update.*module/im }
+    its(:summary)     { should =~ /upgrade.*module/im }
+    its(:description) { should =~ /upgrade.*module/im }
     its(:returns)     { should =~ /hash/i }
     its(:examples)    { should_not be_empty }
 
