@@ -72,6 +72,7 @@ module Puppet::Module::Tool
         attr_accessor :requested_module, :requested_version
 
         def initialize(options)
+          @module_name       = options[:module_name]
           @requested_module  = options[:requested_module]
           @requested_version = options[:requested_version]
           @requested_version = add_v(@requested_version)
@@ -83,14 +84,11 @@ module Puppet::Module::Tool
         def multiline
           message = ''
           message << "Could not install module '#{@requested_module}' (#{@requested_version})\n"
-          message << "  No version of '#{@requested_module}' will satisfy dependencies:\n"
-          message << "    You specified '#{@requested_module}' (#{@requested_version}),\n"
+          message << "  No version of '#{@module_name}' will satisfy dependencies:\n"
 
-          broken_tree = @source.reject {|mod| mod[:name] == :you}.reverse
-          broken_tree.each do |mod|
-            message << "    which depends on '#{mod[:name]}' (#{add_v(mod[:dependency])})"
-            message << ',' unless broken_tree.last == mod
-            message << "\n"
+          @conditions[@module_name].select  {|cond| cond[:module] != :you} \
+                                   .sort_by {|cond| cond[:module]}.each do |cond|
+            message << "    '#{cond[:module]}' (#{add_v(cond[:version])}) requires '#{@module_name}' (#{add_v(cond[:dependency])})\n"
           end
 
           message << "    Use `puppet module install --force` to install this module anyway"
