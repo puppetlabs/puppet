@@ -455,8 +455,22 @@ describe Puppet::SimpleGraph do
   describe "when matching edges", :'fails_on_ruby_1.9.2' => true do
     before do
       @graph = Puppet::SimpleGraph.new
-      @event = Puppet::Transaction::Event.new(:name => :yay, :resource => "a")
-      @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => "a")
+
+      # The Ruby 1.8 semantics for String#[] are that treating it like an
+      # array and asking for `"a"[:whatever]` returns `nil`.  Ruby 1.9
+      # enforces that your index has to be numeric.
+      #
+      # Now, the real object here, a resource, implements [] and does
+      # something sane, but we don't care about any of the things that get
+      # asked for.  Right now, anyway.
+      #
+      # So, in 1.8 we could just pass a string and it worked.  For 1.9 we can
+      # fake it well enough by stubbing out the operator to return nil no
+      # matter what input we give. --daniel 2012-03-11
+      resource = "a"
+      resource.stubs(:[])
+      @event = Puppet::Transaction::Event.new(:name => :yay, :resource => resource)
+      @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => resource)
 
       @edges = {}
       @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
