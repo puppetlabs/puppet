@@ -108,7 +108,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when connecting to ldap", :if => Puppet.features.ldap?, :'fails_on_ruby_1.9.2' => true do
+  describe "when connecting to ldap", :if => Puppet.features.ldap? do
     it "should create and start a Util::Ldap::Connection instance" do
       conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn

@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet/network/server'
 require 'net/http'
 
-describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Network::Server do
   describe "when using mongrel", :if => Puppet.features.mongrel? do
 
     # This reduces the odds of conflicting port numbers between concurrent runs

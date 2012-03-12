@@ -239,7 +239,7 @@ describe Puppet::Util::Log do
     end
   end
 
-  describe "to_yaml", :'fails_on_ruby_1.9.2' => true do
+  describe "to_yaml" do
     it "should not include the @version attribute" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
       log.to_yaml_properties.should_not include('@version')

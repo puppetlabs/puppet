@@ -452,7 +452,7 @@ describe Puppet::SimpleGraph do
     end
   end
 
-  describe "when matching edges", :'fails_on_ruby_1.9.2' => true do
+  describe "when matching edges" do
     before do
       @graph = Puppet::SimpleGraph.new
 

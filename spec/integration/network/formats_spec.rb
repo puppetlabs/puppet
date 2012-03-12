@@ -44,7 +44,7 @@ describe Puppet::Network::FormatHandler.format(:s) do
   end
 end
 
-describe Puppet::Network::FormatHandler.format(:pson), :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Network::FormatHandler.format(:pson) do
   describe "when pson is absent", :if => (! Puppet.features.pson?) do
 
     before do
