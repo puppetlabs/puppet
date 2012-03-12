@@ -4,7 +4,7 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.7.10
+Version: 2.7.12
 Release: 1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
@@ -136,6 +136,9 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Mar 12 2012 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.12-1
+- Update for 2.7.12
+
 * Wed Jan 25 2012 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.10-1
 - Update for 2.7.10
 
