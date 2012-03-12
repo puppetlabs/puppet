@@ -97,3 +97,27 @@ describe "UTF-8 encoded String#to_yaml (Bug #11246)" do
     end
   end
 end
+
+describe "binary data" do
+  subject { "M\xC0\xDF\xE5tt\xF6" }
+
+  it "should not explode encoding binary data" do
+    expect { subject.to_yaml }.not_to raise_error
+  end
+
+  it "should mark the binary data as binary" do
+    subject.to_yaml.should =~ /!binary/
+  end
+
+  it "should round-trip the data" do
+    yaml = subject.to_yaml
+    read = YAML.load(yaml)
+
+    if read.respond_to? :force_encoding
+      read.force_encoding('binary')
+      subject.force_encoding('binary')
+    end
+
+    read.should == subject
+  end
+end
