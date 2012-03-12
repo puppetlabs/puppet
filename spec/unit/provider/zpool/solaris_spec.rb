@@ -6,7 +6,7 @@ provider_class = Puppet::Type.type(:zpool).provider(:solaris)
 describe provider_class do
   before do
     @resource = stub("resource", :name => "mypool")
-    @resource.stubs(:[]).returns "shouldvalue"
+    @resource.stubs(:[]).returns ["shouldvalue"]
     @provider = provider_class.new(@resource)
   end
 

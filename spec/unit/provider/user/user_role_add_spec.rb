@@ -9,8 +9,11 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
   before do
     @resource = stub("resource", :name => "myuser", :managehome? => nil)
+
     @resource.stubs(:should).returns "fakeval"
+    @resource.stubs(:should).with(:keys).returns Hash.new
     @resource.stubs(:[]).returns "fakeval"
+
     @resource.stubs(:allowdupe?).returns false
     @provider = provider_class.new(@resource)
   end

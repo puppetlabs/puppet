@@ -54,7 +54,7 @@ describe Puppet::Parser::AST::Function do
       func = Puppet::Parser::AST::Function.new :name => "exist", :ftype => :statement, :arguments => argument
       @scope.stubs(:function_exist)
 
-      argument.expects(:safeevaluate).with(@scope).returns("argument")
+      argument.expects(:safeevaluate).with(@scope).returns(["argument"])
 
       func.evaluate(@scope)
     end

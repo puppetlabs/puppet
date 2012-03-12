@@ -131,7 +131,7 @@ describe Puppet::Util::Autoload do
     before do
       @autoload.class.stubs(:search_directories).returns %w{/a}
       FileTest.stubs(:directory?).returns true
-      Dir.stubs(:glob).returns "/a/foo/file.rb"
+      Dir.stubs(:glob).returns ["/a/foo/file.rb"]
       File.stubs(:exist?).returns true
       @time_a = Time.utc(2010, 'jan', 1, 6, 30)
       File.stubs(:mtime).returns @time_a
