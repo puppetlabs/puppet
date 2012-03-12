@@ -35,67 +35,6 @@ module Puppet::Module::Tool
         end
       end
 
-      class NoVersionSatisfyError < InstallException
-        attr_accessor :requested_module, :requested_version
-
-        def initialize(options)
-          @module_name       = options[:module_name]
-          @requested_module  = options[:requested_module]
-          @requested_version = options[:requested_version]
-          @conditions        = options[:conditions]
-          @source            = options[:source]
-          @requested_version = add_v(@requested_version)
-          super "'#{@requested_module}' (#{@requested_version}) requested; No version of '#{@requested_module}' will satisfy dependencies"
-        end
-
-        def multiline
-          message = ''
-          message << "Could not install module '#{@requested_module}' (#{@requested_version})\n"
-          message << "  No version of '#{@requested_module}' will satisfy dependencies:\n"
-          message << "    You specified '#{@requested_module}' (#{@requested_version})\n" if @source[:name] == :you
-          @conditions[@module_name].select  {|cond| cond[:module] != :you} \
-                                   .sort_by {|cond| cond[:module]}.each do |cond|
-            message << "    '#{cond[:module]}' (#{add_v(cond[:version])}) requires '#{@module_name}' (#{add_v(cond[:dependency])})\n"
-          end
-
-          if @source[:name] == :you
-            message << "    Use `puppet module install --force` to install this module anyway"
-          else
-            message << "    Use `puppet module install --ignore-dependencies` to install only this module"
-          end
-
-          message
-        end
-      end
-
-      class InvalidDependencyCycleError < InstallException
-        attr_accessor :requested_module, :requested_version
-
-        def initialize(options)
-          @module_name       = options[:module_name]
-          @requested_module  = options[:requested_module]
-          @requested_version = options[:requested_version]
-          @requested_version = add_v(@requested_version)
-          @conditions        = options[:conditions]
-          @source            = options[:source]
-          super "'#{@requested_module}' (#{@requested_version}) requested; Invalid dependency cycle"
-        end
-
-        def multiline
-          message = ''
-          message << "Could not install module '#{@requested_module}' (#{@requested_version})\n"
-          message << "  No version of '#{@module_name}' will satisfy dependencies:\n"
-
-          @conditions[@module_name].select  {|cond| cond[:module] != :you} \
-                                   .sort_by {|cond| cond[:module]}.each do |cond|
-            message << "    '#{cond[:module]}' (#{add_v(cond[:version])}) requires '#{@module_name}' (#{add_v(cond[:dependency])})\n"
-          end
-
-          message << "    Use `puppet module install --force` to install this module anyway"
-          message
-        end
-      end
-
       class InstallConflictError < InstallException
         attr_accessor :requested_module, :requested_version
         def initialize(options)

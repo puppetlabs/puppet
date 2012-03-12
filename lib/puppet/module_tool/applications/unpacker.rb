@@ -7,14 +7,13 @@ module Puppet::Module::Tool
 
       def initialize(filename, options = {})
         @filename = Pathname.new(filename)
-        parse_filename!
+        parsed = parse_filename(filename)
         super(options)
-        @module_dir = Pathname.new(options[:dir]) + @module_name
+        @module_dir = Pathname.new(options[:dir]) + parsed[:dir_name]
       end
 
       def run
         extract_module_to_install_dir
-        tag_revision
 
         # Return the Pathname object representing the directory where the
         # module release archive was unpacked the to, and the module release
@@ -23,16 +22,6 @@ module Puppet::Module::Tool
       end
 
       private
-
-      def tag_revision
-        File.open("#{@module_dir}/REVISION", 'w') do |f|
-          f.puts "module: #{@username}/#{@module_name}"
-          f.puts "version: #{@version}"
-          f.puts "url: file://#{@filename.expand_path}"
-          f.puts "installed: #{Time.now}"
-        end
-      end
-
       def extract_module_to_install_dir
         delete_existing_installation_or_abort!
 
@@ -53,7 +42,6 @@ module Puppet::Module::Tool
 
       def delete_existing_installation_or_abort!
         return unless @module_dir.exist?
-
         FileUtils.rm_rf @module_dir
       end
     end

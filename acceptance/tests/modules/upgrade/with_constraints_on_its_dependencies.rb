@@ -44,7 +44,7 @@ on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes =
     STDERR>   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     STDERR>     'notpmtacceptance-unicorns' (v0.0.3) requires 'pmtacceptance-stdlib' (v0.0.2)
     STDERR>     'pmtacceptance-java' (v1.7.1) requires 'pmtacceptance-stdlib' (v1.0.0)
-    STDERR>     Use `puppet module upgrade --force` to upgrade just this module\e[0m
+    STDERR>     Use `puppet module upgrade --ignore-dependencies` to upgrade only this module\e[0m
   OUTPUT
 end
 

@@ -42,7 +42,7 @@ module Puppet::Module::Tool
 
         {
           :removed_mods => @removed_mods.sort_by do |mod|
-            @environment.modulepath.index(mod.path.sub(/#{File::Separator}#{mod.name}$/, ''))
+            @environment.modulepath.index(mod.modulepath)
           end,
           :options => @options
         }

@@ -447,6 +447,20 @@ describe Puppet::Module do
     end
   end
 
+  describe '#modulepath' do
+    it "should return the directory the module is installed in, if a path exists" do
+      mod = Puppet::Module.new("foo")
+      mod.stubs(:path).returns "/a/foo"
+      mod.modulepath.should == '/a'
+    end
+
+    it "should return nil if no path exists" do
+      mod = Puppet::Module.new("foo")
+      mod.stubs(:path).returns nil
+      mod.modulepath.should be_nil
+    end
+  end
+
   it "should be considered existent if it exists in at least one module path" do
     mod = Puppet::Module.new("foo")
     mod.expects(:path).returns "/a/foo"

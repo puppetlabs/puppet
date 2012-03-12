@@ -54,25 +54,23 @@ module Puppet::Module::Tool
         metadata(true)
       end
 
-      # Use to extract and validate a module name and version from a
-      # filename
-      # Note: Must have @filename set to use this
-      def parse_filename!
-        @release_name = File.basename(@filename,'.tar.gz')
-        match = /^(.*?)-(.*?)-(\d+\.\d+\.\d+.*?)$/.match(@release_name)
-        if match then
-          @username, @module_name, @version = match.captures
+      def parse_filename(filename)
+        if match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename,'.tar.gz'))
+          module_name, author, shortname, version = match.captures
         else
           raise ArgumentError, "Could not parse filename to obtain the username, module name and version.  (#{@release_name})"
         end
-        @full_module_name = [@username, @module_name].join('-')
-        unless @username && @module_name
-          raise ArgumentError, "Username and Module name not provided"
+
+        unless SemVer.valid?(version)
+          raise ArgumentError, "Invalid version format: #{version} (Semantic Versions are acceptable: http://semver.org)"
         end
-        unless SemVer.valid?(@version)
-          raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
-        end
-        return [@full_module_name, @username, @module_name, @version]
+
+        return {
+          :module_name => module_name,
+          :author      => author,
+          :dir_name    => shortname,
+          :version     => version
+        }
       end
     end
   end

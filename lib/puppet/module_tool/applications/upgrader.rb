@@ -19,7 +19,7 @@ module Puppet::Module::Tool
           message << "Could not upgrade module '#{@module_name}'"
           message << "  Module '#{@module_name}' appears multiple places in the module path"
           message += @modules.map do |mod|
-            "    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.path.sub(/#{File::Separator}(#{mod.name})$/, '')}"
+            "    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.modulepath}"
           end
           message << "    Use the `--modulepath` option to limit the search to specific directories"
           message.join("\n")
@@ -121,72 +121,45 @@ module Puppet::Module::Tool
         end
       end
 
-      class NoVersionsSatisfyError < UpgradeError
-        attr_accessor :requested_module, :requested_version
-
-        def initialize(options)
-          @module_name       = options[:module_name]
-          @requested_version = v(options[:requested_version])
-          @installed_version = v(options[:installed_version])
-          @dependency_name   = options[:dependency_name]
-          @conditions        = options[:conditions]
-          super "Could not upgrade '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)}); module '#{@dependency_name}' cannot satisfy dependencies"
-        end
-
-        def multiline
-          message = []
-          message << "Could not upgrade module '#{@module_name}' (#{v(@installed_version)} -> #{v(@requested_version)})"
-          message << "  No version of '#{@dependency_name}' will satisfy dependencies"
-          message += @conditions.select { |c| c[:module] == :you }.map do |c|
-            "    You specified '#{@dependency_name}' (#{v(c[:version])})"
-          end
-          message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
-             "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@dependency_name}' (#{v(c[:dependency])})"
-          end
-          message << "    Use `puppet module upgrade --force` to upgrade just this module"
-          message.join("\n")
-        end
-      end
-
       def initialize(name, options)
-        @environment = Puppet::Node::Environment.new(Puppet.settings[:environment])
-        @module_name = name
-        @options = options
-        @version = options[:version]
+        @action              = :upgrade
+        @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
+        @module_name         = name
+        @options             = options
+        @force               = options[:force]
+        @ignore_dependencies = options[:force] || options[:ignore_dependencies]
+        @version             = options[:version]
       end
 
       def run
-        results = { }
-
         begin
-          @local = get_local_constraints
+          results = { :module_name => @module_name }
+
+          get_local_constraints
 
           if @installed[@module_name].length > 1
             raise MultipleInstalledError,
               :module_name       => @module_name,
-              :installed_modules => @installed[@module_name].sort_by { |mod| @environment.modulepath.index(mod.path.sub(/#{File::Separator}#{mod.name}$/, '')) }
+              :installed_modules => @installed[@module_name].sort_by { |mod| @environment.modulepath.index(mod.modulepath) }
           elsif @installed[@module_name].empty?
             raise NotInstalledError, :module_name => @module_name
           end
 
           @module = @installed[@module_name].last
-          results[:module_name] = @module_name
           results[:installed_version] = @module.version ? @module.version.sub(/^(?=\d)/, 'v') : nil
-          results[:requested_version] = @options[:version] || (@conditions[@module_name].empty? ? :latest : :best)
-          dir = @module.path.sub(/\/#{@module.name}/, '')
+          results[:requested_version] = @version || (@conditions[@module_name].empty? ? :latest : :best)
+          dir = @module.modulepath
 
           Puppet.notice "Found '#{@module_name}' (#{results[:installed_version] || '???'}) in #{dir} ..."
-          if !@options[:force] && @installed[@module_name].last.has_metadata? && @installed[@module_name].last.has_local_changes?
+          if !@options[:force] && @module.has_metadata? && @module.has_local_changes?
             raise LocalChangesError,
-              :module_name => @module_name,
-              :requested_version => @version || (@conditions[@module_name].empty? ? 'latest' : 'best'),
-              :installed_version => @installed[@module_name].last.version
+              :module_name       => @module_name,
+              :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
+              :installed_version => @module.version
           end
 
           begin
-            Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
-            @author, @modname = Puppet::Module::Tool.username_and_modname_from(@module_name)
-            @remote = get_remote_constraints
+            get_remote_constraints
           rescue => e
             raise UnknownModuleError, results.merge(:repository => Puppet::Forge.repository.uri)
           else
@@ -236,136 +209,7 @@ module Puppet::Module::Tool
       end
 
       private
-      def get_local_constraints
-        @conditions = Hash.new { |h,k| h[k] = [] }
-        @installed = Hash.new { |h,k| h[k] = [] }
-        @environment.modules_by_path.values.flatten.inject(Hash.new { |h,k| h[k] = { } }) do |deps, mod|
-          deps.tap do
-            mod_name = (mod.forge_name || mod.name).gsub('/', '-')
-            @installed[mod_name] << mod
-            d = deps["#{mod_name}@#{mod.version}"]
-            (mod.dependencies || []).each do |hash|
-              name, conditions = hash['name'], hash['version_requirement']
-              name = name.gsub('/', '-')
-              d[name] = conditions
-              @conditions[name] << {
-                :module => mod_name,
-                :version => mod.version,
-                :dependency => conditions
-              }
-            end
-          end
-        end
-      end
-
-      def get_remote_constraints
-        @urls = {}
-        @versions = Hash.new { |h,k| h[k] = [] }
-        info = Puppet::Forge.remote_dependency_info(@author, @modname, @version)
-        info.inject(Hash.new { |h,k| h[k] = { } }) do |deps, pair|
-          deps.tap do
-            mod_name, releases = pair
-            mod_name = mod_name.gsub('/', '-')
-            releases.each do |rel|
-              semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer.MIN
-              @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
-              @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
-              @urls["#{mod_name}@#{rel['version']}"] = rel['file']
-              d = deps["#{mod_name}@#{rel['version']}"]
-              (rel['dependencies'] || []).each do |name, conditions|
-                d[name.gsub('/', '-')] = conditions
-              end
-            end
-          end
-        end
-      end
-
-      def resolve_constraints(dependencies, source = [{:name => :you}], seen = {})
-        dependencies = dependencies.map do |mod, range|
-          action = :upgrade
-
-          source.last[:dependency] = range
-
-          @conditions[mod] << {
-            :module     => source.last[:name],
-            :version    => source.last[:version],
-            :dependency => range
-          }
-
-          range = (@conditions[mod]).map do |r|
-            SemVer[r[:dependency]] rescue SemVer['>= 0.0.0']
-          end.inject(&:&)
-
-          best_requested_versions = @versions["#{@forge_name}"].sort_by { |h| h[:semver] }
-
-          # if seen.include? mod
-          #   next if range === seen[mod][:semver]
-          #   raise InvalidDependencyCycleError,
-          #     :requested_module  => @module_name,
-          #     :requested_version => @version || (best_requested_versions.empty? ? 'latest' : "latest: #{best_requested_versions.last[:semver]}"),
-          #     :dependency_name   => mod,
-          #     :source            => source,
-          #     :conditions        => @conditions[mod]
-          # end
-
-          if !(@force || @installed[mod].empty?) && source.last[:name] != :you
-            next if range === SemVer.new(@installed[mod].last.version)
-            action = :upgrade
-          elsif action == :upgrade && @installed[mod].empty?
-            action = :install
-          end
-
-          action == :upgrade && @conditions.each do |_, conditions|
-            conditions.delete_if { |c| c[:module] == mod }
-          end
-
-          valid_versions = @versions["#{mod}"].select { |h| @force || range === h[:semver] } \
-                                              .sort_by { |h| h[:semver] }
-
-          unless version = valid_versions.last
-            raise NoVersionsSatisfyError,
-              :module_name       => @module_name,
-              :requested_version => @version || ((@conditions[@module_name].length == 1 ? 'latest' : 'best') + (seen[@module_name] ? ": #{seen[@module_name][:vstring].sub(/^(?=\d)/, 'v')}" : '')),
-              :installed_version => @installed[@module_name].last.version,
-              :dependency_name   => mod,
-              :conditions        => @conditions[mod]
-              # :source            => source.last,
-              # :version           => valid_versions.empty? ? 'best' : "best: #{valid_versions.last}",
-          end
-
-          seen[mod] = version
-
-          {
-            :module => mod,
-            :version => version,
-            :action => action,
-            :previous_version => @installed[mod].empty? ? nil : @installed[mod].last.version,
-            :file => @urls["#{mod}@#{version[:vstring]}"],
-            :path => @installed[mod].empty? ? nil : @installed[mod].last.path.sub(/\/#{@installed[mod].last.name}/, ''),
-            :dependencies => []
-          }
-        end.compact
-        dependencies.each do |mod|
-          deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"].sort_by(&:first)
-          mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen)
-        end unless @options[:ignore_dependencies] || @force
-        return dependencies
-      end
-
-      def download_tarballs(graph, default_path)
-        graph.map do |release|
-          cache_path = nil
-          begin
-            cache_path = Puppet::Forge.repository.retrieve(release[:file])
-          rescue OpenURI::HTTPError => e
-            raise RuntimeError, "Could not download module: #{e.message}"
-          end
-          [
-            { (release[:path] ||= default_path) => cache_path},
-            *download_tarballs(release[:dependencies], default_path)
-          ]
-        end.flatten
-      end
+      include Puppet::Module::Tool::Shared
     end
   end
 end

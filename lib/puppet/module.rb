@@ -144,6 +144,10 @@ class Puppet::Module
     @path ||= environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
   end
 
+  def modulepath
+    File.dirname(path) if path
+  end
+
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
   def plugin_directory
     subpath("plugins")
