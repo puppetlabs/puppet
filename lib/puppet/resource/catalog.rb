@@ -44,6 +44,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Some metadata to help us compile and generally respond to the current state.
   attr_accessor :client_version, :server_version
 
+  # The environment for this catalog
+  attr_accessor :environment
+
   # Add classes to our class list.
   def add_class(*classes)
     classes.each do |klass|
@@ -396,6 +399,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       result.version = version
     end
 
+    if environment = data['environment']
+      result.environment = environment
+    end
+
     if resources = data['resources']
       resources = PSON.parse(resources) if resources.is_a?(String)
       resources.each do |res|
@@ -447,6 +454,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         'tags'      => tags,
         'name'      => name,
         'version'   => version,
+        'environment' => environment.to_s,
         'resources' => vertices.collect { |v| v.to_pson_data_hash },
         'edges'     => edges.   collect { |e| e.to_pson_data_hash },
         'classes'   => classes
@@ -536,6 +544,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result = self.class.new(self.name)
 
     result.version = self.version
+    result.environment = self.environment
 
     map = {}
     vertices.each do |resource|

@@ -249,9 +249,8 @@ describe Puppet::Configurer do
       Puppet.settings[:prerun_command] = "/my/command"
       Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
-      report.expects(:<<).with { |log| log.message.include?("Could not run command from prerun_command") }
-
       @agent.run.should be_nil
+      report.logs.find { |x| x.message =~ /Could not run command from prerun_command/ }.should be
     end
 
     it "should send the transaction report even if the post-run command fails" do
@@ -318,6 +317,22 @@ describe Puppet::Configurer do
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
+    end
+
+    it "should refetch the catalog if the server specifies a new environment in the catalog" do
+      @catalog.stubs(:environment).returns("second_env")
+      @agent.expects(:prepare).twice
+      @agent.expects(:retrieve_catalog).returns(@catalog).twice
+
+      @agent.run
+    end
+
+    it "should change the environment setting if the server specifies a new environment in the catalog" do
+      @catalog.stubs(:environment).returns("second_env")
+
+      @agent.run
+
+      Puppet[:environment].should == "second_env"
     end
 
     describe "when not using a REST terminus for catalogs" do
