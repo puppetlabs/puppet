@@ -21,7 +21,10 @@ class Puppet::Network::HTTP::Mongrel
 
   def unlisten
     raise "Mongrel server is not listening" unless listening?
-    @server.stop
+    # We wait until the running process has terminated, rather than letting
+    # the shutdown happen in the background.  This might delay exit, but is
+    # nicer than the alternative of killing something horribly. --daniel 2012-03-12
+    @server.stop(true)
     @server = nil
     @listening = false
   end

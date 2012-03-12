@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/network/server'
-require 'socket'
+require 'net/http'
 
 describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
   describe "when using mongrel", :if => Puppet.features.mongrel? do
@@ -13,18 +13,21 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
       @server = Puppet::Network::Server.new(@params)
     end
 
-    after { Puppet.settings.clear }
+    after :each do
+      @server.unlisten if @server.listening?
+    end
 
     describe "before listening" do
       it "should not be reachable at the specified address and port" do
-        lambda { TCPSocket.new('127.0.0.1', 34346) }.should raise_error(Errno::ECONNREFUSED)
+        lambda { Net::HTTP.get('127.0.0.1', '/', 34346) }.
+          should raise_error(Errno::ECONNREFUSED)
       end
     end
 
     describe "when listening" do
       it "should be reachable on the specified address and port" do
         @server.listen
-        lambda { TCPSocket.new('127.0.0.1', 34346) }.should_not raise_error
+        expect { Net::HTTP.get('127.0.0.1', '/', 34346) }.should_not raise_error
       end
 
       it "should default to '127.0.0.1' as its bind address" do
@@ -53,12 +56,9 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
       it "should not be reachable on the port and address assigned" do
         @server.listen
         @server.unlisten
-        lambda { TCPSocket.new('127.0.0.1', 34346) }.should raise_error(Errno::ECONNREFUSED)
+        expect { Net::HTTP.get('127.0.0.1', '/', 34346) }.
+          should raise_error Errno::ECONNREFUSED
       end
-    end
-
-    after :each do
-      @server.unlisten if @server.listening?
     end
   end
 end
