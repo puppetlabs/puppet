@@ -23,7 +23,7 @@ class Symbol
   end
   def <=> (other)
     self.to_s <=> other.to_s
-  end
+  end unless method_defined? "<=>"
 end
 
 [Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
@@ -103,7 +103,7 @@ class String
     lines = split(separator)
     block_given? and lines.each {|line| yield line }
     lines
-  end
+  end unless method_defined? :lines
 end
 
 class IO
@@ -111,7 +111,7 @@ class IO
     lines = split(separator)
     block_given? and lines.each {|line| yield line }
     lines
-  end
+  end unless method_defined? :lines
 
   def self.binread(name, length = nil, offset = 0)
     File.open(name, 'rb') do |f|
@@ -125,7 +125,6 @@ class IO
       f.write(offset > 0 ? string[offset..-1] : string)
     end
   end unless singleton_methods.include?(:binwrite)
-
 end
 
 class Range
