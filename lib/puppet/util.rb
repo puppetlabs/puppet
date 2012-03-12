@@ -1,7 +1,6 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/util/monkey_patches'
 require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
@@ -12,8 +11,8 @@ require 'tempfile'
 require 'pathname'
 
 module Puppet
-
 module Util
+  require 'puppet/util/monkey_patches'
   require 'benchmark'
 
   # These are all for backward compatibility -- these are methods that used

@@ -1,3 +1,6 @@
+require 'puppet/util'
+module Puppet::Util::MonkeyPatches
+end
 
 unless defined? JRUBY_VERSION
   Process.maxgroups = 1024
@@ -97,21 +100,18 @@ class Symbol
   end unless method_defined? :to_proc
 end
 
-
 class String
-  def lines(separator = $/)
-    lines = split(separator)
-    block_given? and lines.each {|line| yield line }
-    lines
-  end unless method_defined? :lines
+  unless method_defined? :lines
+    require 'puppet/util/monkey_patches/lines'
+    include Puppet::Util::MonkeyPatches::Lines
+  end
 end
 
 class IO
-  def lines(separator = $/)
-    lines = split(separator)
-    block_given? and lines.each {|line| yield line }
-    lines
-  end unless method_defined? :lines
+  unless method_defined? :lines
+    require 'puppet/util/monkey_patches/lines'
+    include Puppet::Util::MonkeyPatches::Lines
+  end
 
   def self.binread(name, length = nil, offset = 0)
     File.open(name, 'rb') do |f|

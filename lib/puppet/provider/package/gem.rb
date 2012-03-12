@@ -26,7 +26,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute(gem_list_command).lines.map {|set| gemsplit(set) }
+      list = execute(gem_list_command).lines.
+        map    {|set| gemsplit(set) }.
+        reject {|item| item.nil? }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not list gems: #{detail}"
     end
@@ -54,7 +56,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         :provider => :gem
       }
     else
-      Puppet.warning "Could not match #{desc}"
+      Puppet.warning "Could not match #{desc}" unless desc.chomp.empty?
       nil
     end
   end
