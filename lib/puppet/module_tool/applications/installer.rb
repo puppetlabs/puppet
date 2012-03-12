@@ -188,8 +188,7 @@ module Puppet::Module::Tool
             next if range === seen[mod][:semver]
             raise InvalidDependencyCycleError,
               :module_name       => mod,
-              :source            => source,
-              :version           => 'v1.0.0',
+              :source            => source.last,
               :requested_module  => @forge_name,
               :requested_version => @version || (best_requested_versions.empty? ? 'latest' : "latest: #{best_requested_versions.last[:semver]}"),
               :conditions        => @conditions
