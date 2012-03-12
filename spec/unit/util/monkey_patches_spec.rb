@@ -84,13 +84,40 @@ describe IO do
       File.open(file, 'rb') {|f| f.read.should == content }
     end
 
-    it "should write using an offset" do
-      offset = 1
-      IO.binwrite(file, content, offset).should == content.length - offset
-      File.open(file, 'rb') {|f| f.read.should == content[offset..-1] }
+    (0..10).each do |offset|
+      it "should write correctly using an offset of #{offset}" do
+        IO.binwrite(file, content, offset).should == content.length
+        File.open(file, 'rb') {|f| f.read.should == ("\x00" * offset) + content }
+      end
     end
 
-    it "should raise an error if the file doesn't exist" do
+    context "truncation" do
+      let :input do "welcome to paradise, population ... YOU!" end
+      before :each do IO.binwrite(file, input) end
+
+      it "should truncate if no offset is given" do
+        IO.binwrite(file, "boo").should == 3
+        File.read(file).should == "boo"
+      end
+
+      (0..10).each do |offset|
+        it "should not truncate if an offset of #{offset} is given" do
+          expect = input.dup
+          expect[offset, 3] = "BAM"
+
+          IO.binwrite(file, "BAM", offset).should == 3
+          File.read(file).should == expect
+        end
+      end
+
+      it "should pad with NULL bytes if writing past EOF without truncate" do
+        expect = input + ("\x00" * 4) + "BAM"
+        IO.binwrite(file, "BAM", input.length + 4).should == 3
+        File.read(file).should == expect
+      end
+    end
+
+    it "should raise an error if the directory containing the file doesn't exist" do
       expect { IO.binwrite('/path/does/not/exist', 'foo') }.to raise_error(Errno::ENOENT)
     end
   end

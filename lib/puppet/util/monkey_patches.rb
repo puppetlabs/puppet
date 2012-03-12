@@ -107,6 +107,7 @@ class String
   end
 end
 
+require 'fcntl'
 class IO
   unless method_defined? :lines
     require 'puppet/util/monkey_patches/lines'
@@ -120,9 +121,25 @@ class IO
     end
   end unless singleton_methods.include?(:binread)
 
-  def self.binwrite(name, string, offset = 0)
-    File.open(name, 'wb') do |f|
-      f.write(offset > 0 ? string[offset..-1] : string)
+  def self.binwrite(name, string, offset = nil)
+    # Determine if we should truncate or not.  Since the truncate method on a
+    # file handle isn't implemented on all platforms, safer to do this in what
+    # looks like the libc interface - which is usually pretty robust.
+    # --daniel 2012-03-11
+    mode = Fcntl::O_CREAT | Fcntl::O_WRONLY | (offset.nil? ? Fcntl::O_TRUNC : 0)
+    IO.open(IO::sysopen(name, mode)) do |f|
+      # ...seek to our desired offset, then write the bytes.  Don't try to
+      # seek past the start of the file, eh, because who knows what platform
+      # would legitimately blow up if we did that.
+      #
+      # Double-check the positioning, too, since destroying data isn't my idea
+      # of a good time. --daniel 2012-03-11
+      target = [0, offset.to_i].max
+      unless (landed = f.sysseek(target, IO::SEEK_SET)) == target
+        raise "unable to seek to target offset #{target} in #{name}: got to #{landed}"
+      end
+
+      f.syswrite(string)
     end
   end unless singleton_methods.include?(:binwrite)
 end
