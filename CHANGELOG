@@ -1,5 +1,8 @@
-2.7.12rc2
+2.7.12
 ===
+36ca299 Update packaging spec files for 2.7.12
+ea116f5 Updating puppet.spec for 2.7.11-1, 2.7.11-2
+6cb0690 Updating CHANGELOG for 2.7.12rc2
 21cdab1 (#7592) Remove redundant call to String#to_s
 5474941 (#11988) Work around Augeas reload bug when changing save modes
 f4d9753 (#11988) Don't overwrite symlinks in augeas provider
@@ -12,9 +15,7 @@ bcbe2a3 Revert "Merge remote-tracking branch 'masterzen/tickets/2.7.x/3757' into
 95810ad Revert "(#12844) Backwards compatibility for 'puppet agent --enable'"
 2d8d9ce (#12881) Fix cron type default name error on windows
 fcac8f7 (#12844) Backwards compatibility for 'puppet agent --enable'
-
-2.7.12rc1
-===
+5f0f269 Updating CHANGELOG and lib/puppet.rb for 2.7.12rc1
 90fb5c8 Maint: Fix bad copy and paste
 aa8a00b (#12725) Fix puppet agent --listen on Windows
 c5d3825 (#11740) Wait on the handle from the PROCESS_INFORMATION structure
