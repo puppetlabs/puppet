@@ -123,7 +123,7 @@ describe "Puppet defaults" do
 
   [:modulepath, :factpath].each do |setting|
     it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
-      Puppet.settings.setting(setting).should be_instance_of(Puppet::Util::Settings::Setting)
+      Puppet.settings.setting(setting).should be_instance_of(Puppet::Util::Settings::StringSetting)
     end
   end
 

@@ -4,18 +4,46 @@ require 'getoptlong'
 require 'puppet/external/event-loop'
 require 'puppet/util/loadedfile'
 
+class Puppet::SettingsError < Puppet::Error
+end
+
 # The class for handling configuration files.
 class Puppet::Util::Settings
   include Enumerable
 
-  require 'puppet/util/settings/setting'
+  require 'puppet/util/settings/string_setting'
   require 'puppet/util/settings/file_setting'
+  require 'puppet/util/settings/dir_setting'
   require 'puppet/util/settings/boolean_setting'
 
-  attr_accessor :file
+  attr_accessor :files
   attr_reader :timer
 
   ReadOnly = [:run_mode, :name]
+
+  # TODO cprice: determine which of these are actually useful / meaningful
+  REQUIRED_APP_SETTINGS = [:name, :run_mode, :logdir, :confdir, :vardir]
+
+  def self.default_global_config_dir()
+    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
+  end
+
+  def self.default_user_config_dir()
+    "~/.puppet"
+  end
+
+  def self.default_global_var_dir()
+    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"
+  end
+
+  def self.default_user_var_dir()
+    "~/.puppet/var"
+  end
+
+  def self.default_config_file_name()
+    "puppet.conf"
+  end
+
 
   # Retrieve a config value
   def [](param)
@@ -63,9 +91,9 @@ class Puppet::Util::Settings
   end
 
   # Remove all set values, potentially skipping cli values.
-  def unsafe_clear(clear_cli = true, clear_mutable_defaults = false)
+  def unsafe_clear(clear_cli = true, clear_application_defaults = false)
     @values.each do |name, values|
-      next if ((name == :mutable_defaults) and !clear_mutable_defaults)
+      next if ((name == :application_defaults) and !clear_application_defaults)
       next if ((name == :cli) and !clear_cli)
       @values.delete(name)
     end
@@ -88,6 +116,7 @@ class Puppet::Util::Settings
   def clear_for_tests()
     @sync.synchronize do
       unsafe_clear(true, true)
+      @app_defaults_initialized = false
     end
   end
   private :clear_for_tests
@@ -96,6 +125,23 @@ class Puppet::Util::Settings
   def clearused
     @cache.clear
     @used = []
+  end
+
+
+  def app_defaults_initialized?()
+    @app_defaults_initialized
+  end
+
+  def initialize_app_defaults(app_defaults)
+    REQUIRED_APP_SETTINGS.each do |key|
+      raise Puppet::SettingsError, "missing required app default setting '#{key}'" unless app_defaults.has_key?(key)
+    end
+    app_defaults.each do |key, value|
+      set_value(key, value, :application_defaults)
+    end
+
+
+    @app_defaults_initialized = true
   end
 
   # Do variable interpolation on the value.
@@ -109,7 +155,7 @@ class Puppet::Util::Settings
       elsif pval = self.value(varname, environment)
         pval
       else
-        raise Puppet::DevError, "Could not find value for #{value}"
+        raise Puppet::SettingsError, "Could not find value for #{value}"
       end
     end
 
@@ -316,10 +362,18 @@ class Puppet::Util::Settings
   # Parse the configuration file.  Just provides
   # thread safety.
   def parse
-    raise "No :config setting defined; cannot parse unknown config file" unless self[:config]
+    #config_file_paths =
+    #    begin
+    #      self[:config]
+    #    rescue SettingsError => err
+    #      "/etc/puppet/"
+    #    end
+    #raise "No :config setting defined; cannot parse unknown config file" unless self[:config]
 
+    # TODO cprice: document... precedence et al
     @sync.synchronize do
-      unsafe_parse(self[:config])
+      unsafe_parse(main_config_file)
+      unsafe_parse(user_config_file) unless Puppet.features.root?
     end
 
     # Create a timer so that this file will get checked automatically
@@ -327,11 +381,38 @@ class Puppet::Util::Settings
     set_filetimeout_timer
   end
 
+  def main_config_file
+    begin
+      return self[:config] if self[:config]
+    rescue Puppet::SettingsError => err
+      # TODO cprice: doc
+    end
+    return File.join(self.class.default_global_config_dir, config_file_name)
+  end
+  private :main_config_file
+
+  def user_config_file
+    return File.join(self.class.default_user_config_dir, config_file_name)
+  end
+  private :user_config_file
+
+  def config_file_name
+    begin
+      return self[:config_file_name] if self[:config_file_name]
+    rescue Puppet::SettingsError => err
+      # TODO cprice: doc
+    end
+    return self.class.default_config_file_name
+  end
+  private :config_file_name
+
   # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
   def unsafe_parse(file)
+    Puppet.debug("Looking for config file '#{file}'")
     return unless FileTest.exist?(file)
     begin
       data = parse_file(file)
+      Puppet.debug("Parsed config file '#{file}'")
     rescue => detail
       Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
       return
@@ -393,22 +474,32 @@ class Puppet::Util::Settings
   def newsetting(hash)
     klass = nil
     hash[:section] = hash[:section].to_sym if hash[:section]
+
+    # TODO cprice: document these setting types and mention that some are placeholders for the future
+
     if type = hash[:type]
-      unless klass = {:setting => Setting, :file => FileSetting, :boolean => BooleanSetting}[type]
+      unless klass = {
+          :string     => StringSetting,
+          :file       => FileSetting,
+          :directory  => DirSetting,
+          :path       => StringSetting,
+          :boolean    => BooleanSetting,
+      } [type]
         raise ArgumentError, "Invalid setting type '#{type}'"
       end
       hash.delete(:type)
     else
-      case hash[:default]
-      when true, false, "true", "false"
-        klass = BooleanSetting
-      when /^\$\w+\//, /^\//, /^\w:\//
-        klass = FileSetting
-      when String, Integer, Float # nothing
-        klass = Setting
-      else
-        raise ArgumentError, "Invalid value '#{hash[:default].inspect}' for #{hash[:name]}"
-      end
+      #case hash[:default]
+      #when true, false, "true", "false"
+      #  klass = BooleanSetting
+      #when /^\$\w+\//, /^\//, /^\w:\//
+      #  klass = FileSetting
+      #when String, Integer, Float, nil # nothing
+      #  klass = Setting
+      #else
+      #  raise ArgumentError, "Invalid value '#{hash[:default].inspect}' for #{hash[:name]}"
+      #end
+      klass = StringSetting
     end
     hash[:settings] = self
     setting = klass.new(hash)
@@ -429,19 +520,27 @@ class Puppet::Util::Settings
     }
   end
 
-  def file
-    return @file if @file
-    if path = self[:config] and FileTest.exist?(path)
-      @file = Puppet::Util::LoadedFile.new(path)
+  def files
+    return @files if @files
+    @files = []
+    [main_config_file, user_config_file].each do |path|
+      if FileTest.exist?(path)
+        @files << Puppet::Util::LoadedFile.new(path)
+      end
     end
+    @files
   end
 
   # Reparse our config file, if necessary.
   def reparse
-    if file and file.changed?
-      Puppet.notice "Reparsing #{file.file}"
-      parse
-      reuse
+    if files
+      files.each do |file|
+        if file.changed?
+          Puppet.notice "Reparsing #{file.file}"
+          parse
+          reuse
+        end
+      end
     end
   end
 
@@ -457,9 +556,9 @@ class Puppet::Util::Settings
   # The order in which to search for values.
   def searchpath(environment = nil)
     if environment
-      [:cli, :memory, environment, :run_mode, :main, :mutable_defaults]
+      [:cli, :memory, environment, :run_mode, :main, :application_defaults]
     else
-      [:cli, :memory, :run_mode, :main, :mutable_defaults]
+      [:cli, :memory, :run_mode, :main, :application_defaults]
     end
   end
 
@@ -509,7 +608,7 @@ class Puppet::Util::Settings
 
     value = setting.munge(value) if setting.respond_to?(:munge)
     setting.handle(value) if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
-    if ReadOnly.include? param and type != :mutable_defaults
+    if ReadOnly.include? param and type != :application_defaults
       raise ArgumentError,
         "You're attempting to set configuration parameter $#{param}, which is read-only."
     end
@@ -536,20 +635,23 @@ class Puppet::Util::Settings
     value
   end
 
+  # TODO cprice: rename this.
+
   # Set a bunch of defaults in a given section.  The sections are actually pretty
   # pointless, but they help break things up a bit, anyway.
   def setdefaults(section, defs)
     section = section.to_sym
     call = []
     defs.each { |name, hash|
-      if hash.is_a? Array
-        unless hash.length == 2
-          raise ArgumentError, "Defaults specified as an array must contain only the default value and the decription"
-        end
-        tmp = hash
-        hash = {}
-        [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
-      end
+      raise ArgumentError, "setting definition for '#{name}' is not a hash!" unless hash.is_a? Hash
+      #if hash.is_a? Array
+      #  unless hash.length == 2
+      #    raise ArgumentError, "Defaults specified as an array must contain only the default value and the decription"
+      #  end
+      #  tmp = hash
+      #  hash = {}
+      #  [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
+      #end
       name = name.to_sym
       hash[:name] = name
       hash[:section] = section
@@ -584,10 +686,15 @@ class Puppet::Util::Settings
 
     catalog = Puppet::Resource::Catalog.new("Settings")
 
-    @config.values.find_all { |value| value.is_a?(FileSetting) }.each do |file|
+    #@config.each.find_all { |key, value| value.is_a?(FileSetting) }.each do |key, file|
+    @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
+      file = @config[key]
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
+
+      # This can be really useful for debugging...
+      #puts("Using settings: adding file resource '#{key}': '#{resource.inspect}'")
 
       catalog.add_resource(resource)
     end
@@ -645,11 +752,12 @@ if @config.include?(:run_mode)
       begin
         catalog = to_catalog(*sections).to_ral
       rescue => detail
-        Puppet.log_exception(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
+        Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
 
-        # We need some way to get rid of any resources created during the catalog creation
-        # but not cleaned up.
-        return
+        # TODO cprice: kill
+        ## We need some way to get rid of any resources created during the catalog creation
+        ## but not cleaned up.
+        #return
       end
 
       catalog.host_config = false
@@ -724,7 +832,12 @@ if @config.include?(:run_mode)
     end
 
     # Convert it if necessary
-    val = convert(val, environment)
+    begin
+      val = convert(val, environment)
+    rescue Puppet::SettingsError => err
+      raise Puppet::SettingsError.new("Error converting value for param '#{param}': #{err}")
+    end
+
 
     # And cache it
     @cache[environment||"none"][param] = val
@@ -899,9 +1012,9 @@ if @config.include?(:run_mode)
       case line
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
-        #disallow mutable_defaults in config file
-        if section == :mutable_defaults
-          raise Puppet::Error.new("Illegal section 'mutable_defaults' in config file", file, line)
+        #disallow application_defaults in config file
+        if section == :application_defaults
+          raise Puppet::Error.new("Illegal section 'application_defaults' in config file", file, line)
         end
         # Add a meta section
         result[section][:_meta] ||= {}

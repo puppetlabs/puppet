@@ -130,5 +130,6 @@ module Puppet::Rails
   end
 end
 
+# TODO cprice: hmmm..
 require 'puppet/rails/host' if Puppet.features.rails?
 

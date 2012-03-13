@@ -110,15 +110,28 @@ class Puppet::Util::Autoload
       # scan the filesystem each time we try to load something. This is reset
       # at the beginning of compilation and at the end of an agent run.
       Thread.current[:env_module_directories] ||= {}
-      Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
+      # TODO cprice: document this...
+      if Puppet.settings.app_defaults_initialized?
+        Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
         end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
           FileTest.directory?(d)
         end
+      else
+        Thread.current[:env_module_directories][real_env] = []
+      end
+    end
+
+    def libdirs()
+      if (Puppet.settings.app_defaults_initialized?)
+        Puppet[:libdir].split(File::PATH_SEPARATOR)
+      else
+        []
+      end
     end
 
     def search_directories(env=nil)
-      [module_directories(env), Puppet[:libdir].split(File::PATH_SEPARATOR), $LOAD_PATH].flatten
+        [module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows

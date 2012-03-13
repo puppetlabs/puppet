@@ -19,6 +19,7 @@ require 'tmpdir'
 
 require 'puppet_spec/verbose'
 require 'puppet_spec/files'
+require 'puppet_spec/settings'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
 require 'puppet_spec/database'
@@ -82,10 +83,27 @@ RSpec.configure do |config|
     Puppet[:req_bits]  = 512
     Puppet[:keylength] = 512
 
-    # Set the confdir and vardir to gibberish so that tests
-    # have to be correctly mocked.
-    Puppet[:confdir] = "/dev/null"
-    Puppet[:vardir] = "/dev/null"
+    # TODO cprice: revisit this; is there an advantage to calling set_value directly as opposed to calling
+    #  "initialize_app_defaults"?  Maybe it would allow us to prevent that method from getting called twice?
+    ### Set the confdir and vardir to gibberish so that tests
+    ### have to be correctly mocked.
+    ##Puppet.settings.initialize_app_defaults({
+    ##    :run_mode => :user,
+    ##    :logdir  => "/dev/null",
+    ##    :confdir => "/dev/null",
+    ##})
+    ###Puppet[:confdir] = "/dev/null"
+    ###Puppet[:vardir] = "/dev/null"
+    #Puppet.settings.set_value(:run_mode, :user, :application_defaults)
+    #Puppet.settings.set_value(:name, :apply, :application_defaults)
+    #Puppet.settings.set_value(:logdir, "/dev/null", :application_defaults)
+    #Puppet.settings.set_value(:confdir, "/dev/null", :application_defaults)
+    #Puppet.settings.set_value(:vardir, "/dev/null", :application_defaults)
+    #Puppet.settings.set_value(:rundir, "/dev/null", :application_defaults)
+    PuppetSpec::Settings::TEST_APP_DEFAULTS.each do |key, value|
+      Puppet.settings.set_value(key, value, :application_defaults)
+    end
+
 
     # Avoid opening ports to the outside world
     Puppet.settings[:bindaddress] = "127.0.0.1"

@@ -25,19 +25,18 @@ module Puppet
         name == :user
       end
 
-      # TODO cprice: None of the following three methods seems to do anything that relates to run mode in any way;
-      #  I wonder if this is the right place for them to be defined?  --cprice 2012-03-06
+
       def conf_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"),
-          "~/.puppet"
+            Puppet::Util::Settings.default_global_config_dir,
+            Puppet::Util::Settings.default_user_config_dir
         )
       end
 
       def var_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"),
-          "~/.puppet/var"
+            Puppet::Util::Settings.default_global_var_dir,
+            Puppet::Util::Settings.default_user_var_dir
         )
       end
 
@@ -45,18 +44,28 @@ module Puppet
         "$vardir/run"
       end
 
-      def logopts
-        if master?
-          {
-            :default => "$vardir/log",
-            :mode    => 0750,
-            :owner   => "service",
-            :group   => "service",
-            :desc    => "The Puppet log directory."
-          }
-        else
-          ["$vardir/log", "The Puppet log directory."]
-        end
+      #def logopts
+        # TODO cprice: need to look into how to get this into the catalog during a "use", because
+        #  these are not getting set as "defaults" any more.  Best options are probably:
+        #   1. special-case this during "initialize_application_defaults" in settings.rb,
+        #   2. Allow :application_defaults settings category to carry these hashes with them somehow,
+        #   3. delay the original call to setdefaults/definesettings for the application settings,
+        #   4. make a second (override) call to "setdefaults/definesettings" during initialize_application_defaults
+        #if master?
+        #  {
+        #    :default => "$vardir/log",
+        #    :mode    => 0750,
+        #    :owner   => "service",
+        #    :group   => "service",
+        #    :desc    => "The Puppet log directory."
+        #  }
+        #else
+        #  ["$vardir/log", "The Puppet log directory."]
+        #end
+      #end
+
+      def log_dir
+        "$vardir/log"
       end
 
       private

@@ -1,12 +1,8 @@
 test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
 
 #
-# This test is intended to ensure that pluginsync syncs app and face definitions to the agents.
-# Further, the apps and faces should be runnable on the agent after the sync has occurred.
-#
-# (NOTE: When this test is passing, it should resolve both #7316 re: verifying that apps/faces can
-#  be run on the agent node after a plugin sync, and #6753 re: being able to run a face without
-#  having a placeholder stub file in the "applications" directory.)
+# This test is intended to ensure that pluginsync syncs app definitions to the agents.
+# Further, the apps should be runnable on the agent after the sync has occurred.
 #
 
 ###############################################################################
@@ -62,11 +58,10 @@ end
 # tests to be written using only a relative path to specify file locations, while still taking advantage
 # of automatic temp file cleanup at test completion.
 def test_file_exists?(host, file_rel_path)
-  # I don't think we can easily use "test -f" here, because our "execute" commands are all built around reading
-  # stdout as opposed to reading process exit codes
-  result = host.execute("ruby -e \"print File.exists?('#{get_test_file_path(host, file_rel_path)}')\"")
-  # get a boolean return value
-  result == "true"
+  host.execute("test -f \"#{get_test_file_path(host, file_rel_path)}\"",
+               :acceptable_exit_codes => [0, 1])  do |result|
+    return result.exit_code == 0
+  end
 end
 
 def tmpdir(host, basename)
@@ -146,32 +141,11 @@ end
 HERE
 
 
-master_module_file_content["face"] = <<-HERE
-Puppet::Face.define(:#{app_name}, '0.0.1') do
-  copyright "Puppet Labs", 2011
-  license   "Apache 2 license; see COPYING"
-
-  summary "#{app_desc % "face"}"
-
-  action(:foo) do
-    summary "a test action defined in the test face in the main puppet lib dir"
-
-    default
-    when_invoked do |*args|
-      puts "#{app_output % "face"}"
-    end
-  end
-
-end
-HERE
-
-
-
 # this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
 # test.
 begin
 
-  modes = ["application", "face"]
+  modes = ["application"]
 
   modes.each do |mode|
 
@@ -193,7 +167,8 @@ begin
 
     step "start the master" do
       with_master_running_on(master,
-             "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\"") do
+             "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
+             "--autosign true") do
 
         # the module files shouldn't exist on the agent yet because they haven't been synced
         step "verify that the module files don't exist on the agent path" do

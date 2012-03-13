@@ -93,6 +93,8 @@ module Puppet
       def execute
         # TODO cprice: document, possibly refactor into some kind of setup/init method
         Puppet::Util.exit_on_fail("parse global options")     { parse_global_options }
+
+
         # NOTE: this is a change in behavior where we are now parsing the config file on every run; before, there
         #  were several apps that did not do this.
         Puppet::Util.exit_on_fail("parse configuration file") { Puppet.settings.parse }

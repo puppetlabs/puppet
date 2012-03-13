@@ -1,7 +1,7 @@
-require 'puppet/util/settings/setting'
+require 'puppet/util/settings/string_setting'
 
 # A file.
-class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
+class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::StringSetting
   AllowedOwners = %w{root service}
   AllowedGroups = %w{root service}
 
@@ -57,6 +57,9 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     end
     value
   end
+
+  # TODO cprice: this method is EVIL.  We should get rid of it and replace it with a new subclass called DirectorySetting.
+  #  I am going to do this very soon.  --cprice 2012-03-14
 
   # Return the appropriate type.
   def type

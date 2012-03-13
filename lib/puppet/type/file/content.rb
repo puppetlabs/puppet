@@ -168,8 +168,12 @@ module Puppet
       }
     end
 
+    # TODO: this is another terrible, fragile means of determining whether or not to
+    #  make a web request... it makes me tempted to get rid of the ":name" setting
+    #  entirely... --cprice 2012-03-14
+
     def self.standalone?
-      Puppet.settings[:name] == "apply"
+      Puppet.settings[:name] == :apply
     end
 
     # the content is munged so if it's a checksum source_or_content is nil

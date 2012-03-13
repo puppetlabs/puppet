@@ -118,6 +118,8 @@ module Puppet
   end
 end
 
+# TODO cprice: hmmmm....
+
 require 'puppet/type'
 require 'puppet/parser'
 require 'puppet/resource'

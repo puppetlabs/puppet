@@ -14,13 +14,15 @@ describe Puppet::Util::Settings do
       @settings.params.length.should == 0
     end
 
-    it "should allow specification of default values associated with a section as an array" do
-      @settings.setdefaults(:section, :myvalue => ["defaultval", "my description"])
+    it "should not allow specification of default values associated with a section as an array" do
+      expect {
+        @settings.setdefaults(:section, :myvalue => ["defaultval", "my description"])
+      }.to raise_error
     end
 
     it "should not allow duplicate parameter specifications" do
-      @settings.setdefaults(:section, :myvalue => ["a", "b"])
-      lambda { @settings.setdefaults(:section, :myvalue => ["c", "d"]) }.should raise_error(ArgumentError)
+      @settings.setdefaults(:section, :myvalue => { :default => "a", :desc => "b" })
+      lambda { @settings.setdefaults(:section, :myvalue => { :default => "c", :desc => "d" }) }.should raise_error(ArgumentError)
     end
 
     it "should allow specification of default values associated with a section as a hash" do
@@ -28,24 +30,21 @@ describe Puppet::Util::Settings do
     end
 
     it "should consider defined parameters to be valid" do
-      @settings.setdefaults(:section, :myvalue => ["defaultval", "my description"])
+      @settings.setdefaults(:section, :myvalue => { :default => "defaultval", :desc => "my description" })
       @settings.valid?(:myvalue).should be_true
-    end
-
-    it "should require a description when defaults are specified with an array" do
-      lambda { @settings.setdefaults(:section, :myvalue => ["a value"]) }.should raise_error(ArgumentError)
     end
 
     it "should require a description when defaults are specified with a hash" do
       lambda { @settings.setdefaults(:section, :myvalue => {:default => "a value"}) }.should raise_error(ArgumentError)
     end
 
-    it "should raise an error if we can't guess the type" do
-      lambda { @settings.setdefaults(:section, :myvalue => {:default => Object.new, :desc => "An impossible object"}) }.should raise_error(ArgumentError)
-    end
+    # We no longer try to guess the type
+    #it "should raise an error if we can't guess the type" do
+    #  lambda { @settings.setdefaults(:section, :myvalue => {:default => Object.new, :desc => "An impossible object"}) }.should raise_error(ArgumentError)
+    #end
 
     it "should support specifying owner, group, and mode when specifying files" do
-      @settings.setdefaults(:section, :myvalue => {:default => "/some/file", :owner => "service", :mode => "boo", :group => "service", :desc => "whatever"})
+      @settings.setdefaults(:section, :myvalue => {:type => :file, :default => "/some/file", :owner => "service", :mode => "boo", :group => "service", :desc => "whatever"})
     end
 
     it "should support specifying a short name" do
@@ -53,8 +52,8 @@ describe Puppet::Util::Settings do
     end
 
     it "should support specifying the setting type" do
-      @settings.setdefaults(:section, :myvalue => {:default => "/w", :desc => "b", :type => :setting})
-      @settings.setting(:myvalue).should be_instance_of(Puppet::Util::Settings::Setting)
+      @settings.setdefaults(:section, :myvalue => {:default => "/w", :desc => "b", :type => :string})
+      @settings.setting(:myvalue).should be_instance_of(Puppet::Util::Settings::StringSetting)
     end
 
     it "should fail if an invalid setting type is specified" do
@@ -67,11 +66,15 @@ describe Puppet::Util::Settings do
     end
   end
 
+  describe "when initializing application defaults do" do
+    # TODO cprice: write these tests
+  end
+
   describe "when setting values" do
     before do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :main, :myval => ["val", "desc"]
-      @settings.setdefaults :main, :bool => [true, "desc"]
+      @settings.setdefaults :main, :myval => { :default => "val", :desc => "desc" }
+      @settings.setdefaults :main, :bool => { :type => :boolean, :default => true, :desc => "desc" }
     end
 
     it "should provide a method for setting values from other objects" do
@@ -142,7 +145,9 @@ describe Puppet::Util::Settings do
     end
 
     it "should clear the cache when setting getopt-specific values" do
-      @settings.setdefaults :mysection, :one => ["whah", "yay"], :two => ["$one yay", "bah"]
+      @settings.setdefaults :mysection,
+          :one => { :default => "whah", :desc => "yay" },
+          :two => { :default => "$one yay", :desc => "bah" }
       @settings[:two].should == "whah yay"
       @settings.handlearg("--one", "else")
       @settings[:two].should == "else yay"
@@ -186,7 +191,7 @@ describe Puppet::Util::Settings do
 
     it "should pass the fully interpolated value to the hook when called on definition" do
       values = []
-      @settings.setdefaults(:section, :one => ["test", "a"])
+      @settings.setdefaults(:section, :one => { :default => "test", :desc => "a" })
       @settings.setdefaults(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_on_define => true, :hook => lambda { |v| values << v }})
       values.should == %w{test/yay}
     end
@@ -235,7 +240,12 @@ describe Puppet::Util::Settings do
   describe "when returning values" do
     before do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :section, :config => ["/my/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"]
+      @settings.setdefaults :section,
+          :config => { :type => :file, :default => "/my/file", :desc => "eh" },
+          :one    => { :default => "ONE", :desc => "a" },
+          :two    => { :default => "$one TWO", :desc => "b"},
+          :three  => { :default => "$one $two THREE", :desc => "c"},
+          :four   => { :default => "$two $three FOUR", :desc => "d"}
       FileTest.stubs(:exist?).returns true
     end
 
@@ -295,9 +305,9 @@ describe Puppet::Util::Settings do
     before do
       @settings = Puppet::Util::Settings.new
       @settings.setdefaults :section,
-        :config => ["/my/file", "a"],
-        :one => ["ONE", "a"],
-        :two => ["TWO", "b"]
+        :config => { :type => :file, :default => "/my/file", :desc => "a" },
+        :one => { :default => "ONE", :desc => "a" },
+        :two => { :default => "TWO", :desc => "b" }
       FileTest.stubs(:exist?).returns true
       Puppet.stubs(:run_mode).returns stub('run_mode', :name => :mymode)
     end
@@ -345,7 +355,7 @@ describe Puppet::Util::Settings do
     end
 
     it 'should use the current environment for $environment' do
-      @settings.setdefaults :main, :myval => ["$environment/foo", "mydocs"]
+      @settings.setdefaults :main, :myval => { :default => "$environment/foo", :desc => "mydocs" }
 
       @settings.value(:myval, "myenv").should == "myenv/foo"
     end
@@ -371,19 +381,27 @@ describe Puppet::Util::Settings do
       @settings = Puppet::Util::Settings.new
       @settings.stubs(:service_user_available?).returns true
       @file = "/some/file"
-      @settings.setdefaults :section, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
-      @settings.setdefaults :section, :config => ["/some/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
-      FileTest.stubs(:exist?).returns true
+      @settings.setdefaults :section, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
+      @settings.setdefaults :section,
+          :config => { :type => :file, :default => "/some/file", :desc => "eh" },
+          :one => { :default => "ONE", :desc => "a" },
+          :two => { :default => "$one TWO", :desc => "b" },
+          :three => { :default => "$one $two THREE", :desc => "c" }
+      @settings.stubs(:user_config_file).returns("/test/userconfigfile")
+      FileTest.stubs(:exist?).with("/some/file").returns true
+      FileTest.stubs(:exist?).with("/test/userconfigfile").returns false
     end
 
     it "should not ignore the report setting" do
-      @settings.setdefaults :section, :report => ["false", "a"]
-      myfile = stub "myfile"
+      @settings.setdefaults :section, :report => { :default => "false", :desc => "a" }
+      # This is needed in order to make sure we pass on windows
+      myfile = File.expand_path("/my/file")
       @settings[:config] = myfile
       text = <<-CONF
         [puppetd]
           report=true
       CONF
+      FileTest.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
       @settings.parse
       @settings[:report].should be_true
@@ -393,15 +411,21 @@ describe Puppet::Util::Settings do
       myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
+      FileTest.expects(:exist?).with(myfile).returns(true)
+
       File.expects(:read).with(myfile).returns "[main]"
 
       @settings.parse
     end
 
-    it "should fail if no configuration setting is defined" do
-      @settings = Puppet::Util::Settings.new
-      lambda { @settings.parse }.should raise_error(RuntimeError)
-    end
+    # TODO cprice: this test needs to be replaced with one that checks to ensure it uses the proper default files if
+    #  no config setting is defined
+    #it "should fail if no configuration setting is defined" do
+    #  @settings = Puppet::Util::Settings.new
+    #  #lambda {
+    #    @settings.parse
+    #  #}.should raise_error(RuntimeError)
+    #end
 
     it "should not try to parse non-existent files" do
       FileTest.expects(:exist?).with("/some/file").returns false
@@ -455,7 +479,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
-      @settings.setdefaults :section, :myfile => ["/myfile", "a"]
+      @settings.setdefaults :section, :myfile => { :type => :file, :default => "/myfile", :desc => "a" }
 
       otherfile = make_absolute("/other/file")
       text = "[main]
@@ -468,7 +492,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
-      @settings.setdefaults :section, :myfile => ["/myfile", "a"]
+      @settings.setdefaults :section, :myfile => { :type => :file, :default => "/myfile", :desc => "a" }
 
       otherfile = make_absolute("/other/file")
       text = "[main]
@@ -510,8 +534,8 @@ describe Puppet::Util::Settings do
     it "should pass the environment-specific value to the hook when one is available" do
       values = []
       @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
-      @settings.setdefaults :section, :environment => ["yay", "a"]
-      @settings.setdefaults :section, :environments => ["yay,foo", "a"]
+      @settings.setdefaults :section, :environment => { :default => "yay", :desc => "a" }
+      @settings.setdefaults :section, :environments => { :default => "yay,foo", :desc => "a" }
 
       text = "[main]
       mysetting = setval
@@ -537,7 +561,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should allow empty values" do
-      @settings.setdefaults :section, :myarg => ["myfile", "a"]
+      @settings.setdefaults :section, :myarg => { :default => "myfile", :desc => "a" }
 
       text = "[main]
       myarg =
@@ -549,7 +573,7 @@ describe Puppet::Util::Settings do
 
     describe "and when reading a non-positive filetimeout value from the config file" do
       before do
-        @settings.setdefaults :foo, :filetimeout => [5, "eh"]
+        @settings.setdefaults :foo, :filetimeout => { :default => 5, :desc => "eh" }
 
         somefile = "/some/file"
         text = "[main]
@@ -571,8 +595,14 @@ describe Puppet::Util::Settings do
   describe "when reparsing its configuration" do
     before do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :section, :config => ["/test/file", "a"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
-      FileTest.stubs(:exist?).returns true
+      @settings.setdefaults :section,
+          :config => { :type => :file, :default => "/test/file", :desc => "a" },
+          :one => { :default => "ONE", :desc => "a" },
+          :two => { :default => "$one TWO", :desc => "b" },
+          :three => { :default => "$one $two THREE", :desc => "c" }
+      FileTest.stubs(:exist?).with("/test/file").returns true
+      FileTest.stubs(:exist?).with("/test/userconfigfile").returns false
+      @settings.stubs(:user_config_file).returns("/test/userconfigfile")
     end
 
     it "should use a LoadedFile instance to determine if the file has changed" do
@@ -623,7 +653,7 @@ describe Puppet::Util::Settings do
       file.stubs(:changed?).returns(true)
       file.stubs(:file).returns("/test/file")
       @settings[:one] = "init"
-      @settings.file = file
+      @settings.files = [file]
 
       # Now replace the value
       text = "[main]\none = disk-replace\n"
@@ -669,13 +699,14 @@ describe Puppet::Util::Settings do
     it "should retain in-memory values if the file has a syntax error" do
       # Init the value
       text = "[main]\none = initial-value\n"
-      @settings.expects(:read_file).returns(text)
+      @settings.expects(:read_file).with("/test/file").returns(text)
+      #@settings.expects(:new).with("/test/userconfigfile").returns
       @settings.parse
       @settings[:one].should == "initial-value"
 
       # Now replace the value with something bogus
       text = "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n"
-      @settings.expects(:read_file).returns(text)
+      @settings.expects(:read_file).with("/test/file").returns(text)
       @settings.parse
 
       # The originally-overridden value should not be replaced with the default
@@ -698,8 +729,11 @@ describe Puppet::Util::Settings do
     end
 
     it "should add all file resources to the catalog if no sections have been specified" do
-      @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"], :seconddir => [@prefix+"/seconddir", "a"]
-      @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
+      @settings.setdefaults :main,
+          :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a"},
+          :seconddir => { :type => :directory, :default => @prefix+"/seconddir", :desc => "a"}
+      @settings.setdefaults :other,
+          :otherdir => { :type => :directory, :default => @prefix+"/otherdir", :desc => "a" }
 
       catalog = @settings.to_catalog
 
@@ -709,21 +743,21 @@ describe Puppet::Util::Settings do
     end
 
     it "should add only files in the specified sections if section names are provided" do
-      @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
-      @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
+      @settings.setdefaults :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
+      @settings.setdefaults :other, :otherdir => { :type => :directory, :default => @prefix+"/otherdir", :desc => "a" }
       catalog = @settings.to_catalog(:main)
       catalog.resource(:file, @prefix+"/otherdir").should be_nil
       catalog.resource(:file, @prefix+"/maindir").should be_instance_of(Puppet::Resource)
     end
 
     it "should not try to add the same file twice" do
-      @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
-      @settings.setdefaults :other, :otherdir => [@prefix+"/maindir", "a"]
+      @settings.setdefaults :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
+      @settings.setdefaults :other, :otherdir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
       lambda { @settings.to_catalog }.should_not raise_error
     end
 
     it "should ignore files whose :to_resource method returns nil" do
-      @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
+      @settings.setdefaults :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
       @settings.setting(:maindir).expects(:to_resource).returns nil
 
       Puppet::Resource::Catalog.any_instance.expects(:add_resource).never
@@ -735,8 +769,12 @@ describe Puppet::Util::Settings do
         Puppet.features.stubs(:root?).returns true
         Puppet.features.stubs(:microsoft_windows?).returns true
 
-        @settings.setdefaults :foo, :mkusers => [true, "e"], :user => ["suser", "doc"], :group => ["sgroup", "doc"]
-        @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+        @settings.setdefaults :foo,
+            :mkusers => { :type => :boolean, :default => true, :desc => "e" },
+            :user => { :default => "suser", :desc => "doc" },
+            :group => { :default => "sgroup", :desc => "doc" }
+        @settings.setdefaults :other,
+            :otherdir => { :type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
         @catalog = @settings.to_catalog
       end
@@ -752,8 +790,11 @@ describe Puppet::Util::Settings do
         Puppet.features.stubs(:root?).returns true
         Puppet.features.stubs(:microsoft_windows?).returns false
 
-        @settings.setdefaults :foo, :mkusers => [true, "e"], :user => ["suser", "doc"], :group => ["sgroup", "doc"]
-        @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+        @settings.setdefaults :foo,
+            :mkusers => { :type => :boolean, :default => true, :desc => "e" },
+            :user => { :default => "suser", :desc => "doc" },
+            :group => { :default => "sgroup", :desc => "doc" }
+        @settings.setdefaults :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
         @catalog = @settings.to_catalog
       end
@@ -764,7 +805,7 @@ describe Puppet::Util::Settings do
       end
 
       it "should only add users and groups to the catalog from specified sections" do
-        @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
+        @settings.setdefaults :yay, :yaydir => { :type => :directory, :default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
         catalog = @settings.to_catalog(:other)
         catalog.resource(:user, "jane").should be_nil
         catalog.resource(:group, "billy").should be_nil
@@ -781,7 +822,7 @@ describe Puppet::Util::Settings do
       it "should not add users or groups to the catalog if :mkusers is not a valid setting" do
         Puppet.features.stubs(:root?).returns true
         settings = Puppet::Util::Settings.new
-        settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+        settings.setdefaults :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
         catalog = settings.to_catalog
         catalog.resource(:user, "suser").should be_nil
@@ -797,7 +838,7 @@ describe Puppet::Util::Settings do
       end
 
       it "should not try to add users or groups to the catalog twice" do
-        @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
+        @settings.setdefaults :yay, :yaydir => {:type => :directory, :default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
 
         # This would fail if users/groups were added twice
         lambda { @settings.to_catalog }.should_not raise_error
@@ -814,7 +855,7 @@ describe Puppet::Util::Settings do
 
       it "should not attempt to manage the root user" do
         Puppet.features.stubs(:root?).returns true
-        @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "service"}
+        @settings.setdefaults :foo, :foodir => {:type => :directory, :default => "/foodir", :desc => "a", :owner => "root", :group => "service"}
 
         @settings.to_catalog.resource(:user, "root").should be_nil
       end
@@ -828,7 +869,9 @@ describe Puppet::Util::Settings do
   describe "when being converted to a manifest" do
     it "should produce a string with the code for each resource joined by two carriage returns" do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
+      @settings.setdefaults :main,
+          :maindir => { :type => :directory, :default => "/maindir", :desc => "a"},
+          :seconddir => { :type => :directory, :default => "/seconddir", :desc => "a"}
 
       main = stub 'main_resource', :ref => "File[/maindir]"
       main.expects(:to_manifest).returns "maindir"
@@ -845,12 +888,14 @@ describe Puppet::Util::Settings do
     before do
       @settings = Puppet::Util::Settings.new
       @settings.stubs(:service_user_available?).returns true
-      @settings.setdefaults :main, :noop => [false, ""]
-      @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
-      @settings.setdefaults :main, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
-      @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service", :mode => 0755}
-      @settings.setdefaults :third, :thirddir => ["/thirddir", "b"]
-      @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
+      @settings.setdefaults :main, :noop => { :default => false, :desc => "", :type => :boolean }
+      @settings.setdefaults :main,
+          :maindir => { :type => :directory, :default => "/maindir", :desc => "a" },
+          :seconddir => { :type => :directory, :default => "/seconddir", :desc => "a"}
+      @settings.setdefaults :main, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
+      @settings.setdefaults :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service", :mode => 0755}
+      @settings.setdefaults :third, :thirddir => { :type => :directory, :default => "/thirddir", :desc => "b"}
+      @settings.setdefaults :files, :myfile => {:type => :file, :default => "/myfile", :desc => "a", :mode => 0755}
     end
 
     it "should provide a method that writes files with the correct modes" do
@@ -1060,7 +1105,7 @@ describe Puppet::Util::Settings do
   describe "when setting a timer to trigger configuration file reparsing" do
     before do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :foo, :filetimeout => [5, "eh"]
+      @settings.setdefaults :foo, :filetimeout => { :default => 5, :desc => "eh"}
     end
 
     it "should do nothing if no filetimeout setting is available" do
@@ -1104,7 +1149,7 @@ describe Puppet::Util::Settings do
 
     it "should return false if the user provider says the user is missing" do
       settings = Puppet::Util::Settings.new
-      settings.setdefaults :main, :user => ["foo", "doc"]
+      settings.setdefaults :main, :user => { :default => "foo", :desc => "doc" }
 
       user = mock 'user'
       user.expects(:exists?).returns false
@@ -1116,7 +1161,7 @@ describe Puppet::Util::Settings do
 
     it "should return true if the user provider says the user is present" do
       settings = Puppet::Util::Settings.new
-      settings.setdefaults :main, :user => ["foo", "doc"]
+      settings.setdefaults :main, :user => { :default => "foo", :desc => "doc" }
 
       user = mock 'user'
       user.expects(:exists?).returns true

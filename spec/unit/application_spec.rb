@@ -15,6 +15,23 @@ describe Puppet::Application do
     @app.stubs(:name).returns("test_app")
     # avoid actually trying to parse any settings
     Puppet.settings.stubs(:parse)
+
+    #@app.stubs(:get_app_defaults).returns({
+    #    :run_mode => :user,
+    #    :logdir   => "/dev/null",
+    #    :confdir  => "/dev/null",
+    #    :vardir   => "/dev/null",
+    #})
+  end
+
+  describe "application defaults" do
+    it "should fail if required app default values are missing" do
+      @app.stubs(:app_defaults).returns({ :foo => 'bar' })
+      Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
+      expect {
+        @app.run
+      }.to exit_with 1
+    end
   end
 
   describe "finding" do
@@ -57,54 +74,54 @@ describe Puppet::Application do
     end
   end
 
-  # TODO cprice: look into fixing this
+  # TODO cprice: look into fixing these
 
-  it "should sadly and frighteningly allow run_mode to change at runtime" do
-    class TestApp < Puppet::Application
-      run_mode :master
-      def run_command
-        # This is equivalent to calling these methods externally to the
-        # instance, but since this is what "real world" code is likely to do
-        # (and we need the class anyway) we may as well test that. --daniel 2011-02-03
-        set_run_mode self.class.run_mode "agent"
-      end
-    end
-
-    Puppet.features.stubs(:syslog?).returns(true)
-    Puppet[:run_mode].should == "user"
-
-    expect {
-      app = TestApp.new
-
-      Puppet[:run_mode].should == "master"
-
-      app.run
-
-      app.class.run_mode.name.should == :agent
-      $puppet_application_mode.name.should == :agent
-    }.should_not raise_error
-
-    Puppet[:run_mode].should == "agent"
-  end
-
-  # TODO cprice: look into fixing this
-
-  it "it should not allow run mode to be set multiple times" do
-    pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
-    app = Puppet::Application.new
-    expect {
-      app.set_run_mode app.class.run_mode "master"
-      $puppet_application_mode.name.should == :master
-      app.set_run_mode app.class.run_mode "agent"
-      $puppet_application_mode.name.should == :agent
-    }.should raise_error
-  end
-
-  # TODO cprice: look into fixing this
-
-  it "should explode when an invalid run mode is set at runtime, for great victory"
-  # ...but you can, and while it will explode, that only happens too late for
-  # us to easily test. --daniel 2011-02-03
+  #it "should sadly and frighteningly allow run_mode to change at runtime" do
+  #  class TestApp < Puppet::Application
+  #    run_mode :master
+  #    def run_command
+  #      # This is equivalent to calling these methods externally to the
+  #      # instance, but since this is what "real world" code is likely to do
+  #      # (and we need the class anyway) we may as well test that. --daniel 2011-02-03
+  #      set_run_mode self.class.run_mode "agent"
+  #    end
+  #  end
+  #
+  #  Puppet.features.stubs(:syslog?).returns(true)
+  #  Puppet[:run_mode].should == "user"
+  #
+  #  expect {
+  #    app = TestApp.new
+  #
+  #    Puppet[:run_mode].should == "master"
+  #
+  #    app.run
+  #
+  #    app.class.run_mode.name.should == :agent
+  #    $puppet_application_mode.name.should == :agent
+  #  }.should_not raise_error
+  #
+  #  Puppet[:run_mode].should == "agent"
+  #end
+  #
+  ## TODO cprice: look into fixing this
+  #
+  #it "it should not allow run mode to be set multiple times" do
+  #  pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
+  #  app = Puppet::Application.new
+  #  expect {
+  #    app.set_run_mode app.class.run_mode "master"
+  #    $puppet_application_mode.name.should == :master
+  #    app.set_run_mode app.class.run_mode "agent"
+  #    $puppet_application_mode.name.should == :agent
+  #  }.should raise_error
+  #end
+  #
+  ## TODO cprice: look into fixing this
+  #
+  #it "should explode when an invalid run mode is set at runtime, for great victory"
+  ## ...but you can, and while it will explode, that only happens too late for
+  ## us to easily test. --daniel 2011-02-03
 
   it "should have a run entry-point" do
     @app.should respond_to(:run)
@@ -131,9 +148,13 @@ describe Puppet::Application do
     @app.run_command
   end
 
-  it "should initialize the Puppet Instrumentation layer on creation" do
-    Puppet::Util::Instrumentation.expects(:init)
-    Class.new(Puppet::Application).new
+  it "should initialize the Puppet Instrumentation layer early in the life cycle" do
+    startup_sequence = sequence('startup')
+    @app.expects(:initialize_app_defaults).in_sequence(startup_sequence)
+    Puppet::Util::Instrumentation.expects(:init).in_sequence(startup_sequence)
+    @app.expects(:preinit).in_sequence(startup_sequence)
+
+    expect { @app.run }.to exit_with(1)
   end
 
   describe 'when invoking clear!' do

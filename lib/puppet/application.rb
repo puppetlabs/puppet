@@ -1,5 +1,6 @@
 require 'optparse'
 require 'puppet/util/plugins'
+require 'puppet/error'
 
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
@@ -120,6 +121,7 @@ class Application
   include Puppet::Util
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
+
 
   class << self
     include Puppet::Util
@@ -246,6 +248,21 @@ class Application
     exit
   end
 
+  def app_defaults()
+    {
+        :name     => name,
+        :run_mode => @run_mode.name,
+        :confdir  => @run_mode.conf_dir,
+        :vardir   => @run_mode.var_dir,
+        :rundir   => @run_mode.run_dir,
+        :logdir   => @run_mode.log_dir,
+    }
+  end
+
+  def initialize_app_defaults()
+    Puppet.settings.initialize_app_defaults(app_defaults)
+  end
+
   # override to execute code before running anything else
   def preinit
   end
@@ -257,9 +274,6 @@ class Application
     set_run_mode self.class.run_mode
     @options = {}
 
-    require 'puppet'
-    require 'puppet/util/instrumentation'
-    Puppet::Util::Instrumentation.init
   end
 
   # WARNING: This is a totally scary, frightening, and nasty internal API.  We
@@ -274,31 +288,43 @@ class Application
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
-    # XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
-    #  the settings that are specific to them; need to decide whether to formally specify the list of such
-    #  settings, or just allow them to run willy-nilly.
-    if (mode.name == :master)
-      Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
-    end
-
-
-    ## TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
-
-    if Puppet.respond_to? :settings
-      # This is to reduce the amount of confusion in rspec
-      # because it might have loaded defaults.rb before the globals were set
-      # and thus have the wrong defaults for the current application
-      Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
-      Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
-      Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
-      #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
-      Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-      Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
-    end
+    ## XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
+    ##  the settings that are specific to them; need to decide whether to formally specify the list of such
+    ##  settings, or just allow them to run willy-nilly.
+    #if (mode.name == :master)
+    #  Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
+    #end
+    #
+    #
+    ### TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
+    #
+    #if Puppet.respond_to? :settings
+    #  # This is to reduce the amount of confusion in rspec
+    #  # because it might have loaded defaults.rb before the globals were set
+    #  # and thus have the wrong defaults for the current application
+    #  Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
+    #  Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
+    #  Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
+    #  #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
+    #  Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
+    #  Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
+    #end
   end
 
   # This is the main application entry point
   def run
+
+    # TODO cprice: the names of these lifecycle phases really suck... but I'm not sure we can do anything about them
+    #  because existing apps/faces use them... maybe make some deprecated aliases?
+
+    exit_on_fail("get application-specific default settings") do
+      plugin_hook('initialize_app_defaults') { initialize_app_defaults }
+    end
+
+    require 'puppet'
+    require 'puppet/util/instrumentation'
+    Puppet::Util::Instrumentation.init
+
     exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
     exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
     exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
@@ -347,7 +373,7 @@ class Application
     # TODO cprice: document this better.  We need to include the globals so that the app
     #  has an opportunity to override them.
     # Might be able to make this a little more efficient by sharing the Parser object
-    #  betwween the command line class and this one.
+    #  between the command line class and this one.
     #
     # Add all global options to it.
     Puppet.settings.optparse_addargs([]).each do |option|

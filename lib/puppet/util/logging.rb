@@ -1,5 +1,6 @@
 # A module to make logging a bit easier.
 require 'puppet/util/log'
+require 'puppet/error'
 
 module Puppet::Util::Logging
 
@@ -22,28 +23,39 @@ module Puppet::Util::Logging
   #    If you pass a String here, your string will be logged instead.  You may also pass nil if you don't
   #    wish to log a message at all; in this case it is likely that you are only calling this method in order
   #    to take advantage of the backtrace logging.
-  def log_exception(exception, message = :default)
-
-    # TODO cprice: document this insanity
-    log_proc = Proc.new do |msg|
-      if (Puppet::Util::Log.destinations.length == 0)
-        STDERR.puts(msg)
-        err(msg)
-      else
-        err(msg)
-      end
-    end
+  # [options] supported options:
+  #    :force_console => if true, will ensure that the error is written to the console, even if the console is not
+  #       on the configured list of logging destinations
+  def log_exception(exception, message = :default, options = {})
+    ## TODO cprice: document this insanity
+    #log_proc = Proc.new do |msg|
+    #  if ((Puppet::Util::Log.destinations.length == 0) or
+    #      (options[:force_console]) and
+    #          !(Puppet::Util::Log.destinations.has_key?(:console)) and
+    #    )
+    #    STDERR.puts("err: " + msg)
+    #    err(msg)
+    #  else
+    #    err(msg)
+    #  end
+    #end
 
     case message
       when :default
-        log_proc.call(exception.message)
+        err(exception.message)
       when nil
         # don't log anything if they passed a nil; they are just calling for the optional backtrace logging
       else
-        log_proc.call(message)
+        err(message)
     end
 
-    log_proc.call(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
+    err(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
+  end
+
+
+  def log_and_raise(exception, message)
+    log_exception(exception, message)
+    raise Puppet::Error.new(message + "\n" + exception)
   end
 
 

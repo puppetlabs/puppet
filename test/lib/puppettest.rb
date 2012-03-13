@@ -168,8 +168,12 @@ module PuppetTest
     Puppet[:user] = $user
     Puppet[:group] = $group
 
+
+    Puppet.settings.set_value(:name, "unittest", :application_defaults)
     Puppet[:confdir] = @configpath
     Puppet[:vardir] = @configpath
+    Puppet[:logdir] = @configpath
+    Puppet[:rundir] = @configpath
 
     Dir.mkdir(@configpath) unless File.exists?(@configpath)
 
