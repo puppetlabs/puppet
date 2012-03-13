@@ -4,7 +4,8 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
     summary "Search a repository for a module."
     description <<-EOT
-      Search a repository for modules whose names match a specific substring.
+      Searches a repository for modules whose names, descriptions, or keywords
+      match the provided search term.
     EOT
 
     returns "Array of module metadata hashes"
@@ -17,13 +18,13 @@ Puppet::Face.define(:module, '1.0.0') do
       bacula        This is a generic Apache module      @puppetlabs        backups
     EOT
 
-    arguments "<term>"
+    arguments "<search_term>"
 
     option "--module-repository=", "-r=" do
       default_to { Puppet.settings[:module_repository] }
-      summary "Module repository to use."
+      summary "The module repository to use."
       description <<-EOT
-        Module repository to use.
+        The module repository to use. Defaults to http://forge.puppetlabs.com.
       EOT
     end
 

@@ -2,11 +2,12 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:list) do
     summary "List installed modules"
     description <<-HEREDOC
-      List puppet modules from a specific environment, specified modulepath or
-      default to listing modules in the default modulepath.  The output will
-      include information about unmet module dependencies based on information
-      from module metadata.
-      #{Puppet.settings[:modulepath]}
+      Lists the installed puppet modules. By default, this action scans the
+      modulepath from puppet.conf's `[main]` block; use the --modulepath
+      option to change which directories are scanned.
+
+      The output of this action includes information from the module's
+      metadata, including version numbers and unmet module dependencies.
     HEREDOC
     returns "hash of paths to module objects"
 
@@ -16,6 +17,10 @@ Puppet::Face.define(:module, '1.0.0') do
 
     option "--modulepath MODULEPATH" do
       summary "Which directories to look for modules in"
+      description <<-EOT
+        Which directories to look for modules in; use the system path separator
+        character (`:` on Unix-like systems) to specify multiple directories.
+      EOT
     end
 
     option "--tree" do
