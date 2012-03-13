@@ -9,25 +9,18 @@ describe Puppet::Module::Tool::Applications::Installer do
   before do
     FileUtils.mkdir_p(modpath1)
     fake_env.modulepath = [modpath1]
+    FileUtils.touch(stdlib_pkg)
     Puppet.settings[:modulepath] = modpath1
     Puppet::Forge.stubs(:remote_dependency_info).returns(remote_dependency_info)
     Puppet::Forge.stubs(:repository).returns(repository)
   end
 
-
-  let(:unpacker) do
-    unpacker = mock
-    unpacker.stubs(:run)
-    unpacker
-  end
+  let(:unpacker)        { stub(:run) }
   let(:installer_class) { Puppet::Module::Tool::Applications::Installer }
-  let(:modpath1) { File.join(tmpdir("installer"), "modpath1") }
-  let(:fake_env) { Puppet::Node::Environment.new('fake_env') }
-  let(:options) do
-    {
-      :dir => modpath1
-    }
-  end
+  let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
+  let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
+  let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
+  let(:options)         { Hash[:dir => modpath1] }
 
   let(:repository) do
     repository = mock()
@@ -79,6 +72,18 @@ describe Puppet::Module::Tool::Applications::Installer do
           "file"    => "/pmtacceptance-apollo-0.0.2.tar.gz" }
       ]
     }
+  end
+
+  describe "the behavior of .is_module_package?" do
+    it "should return true when file is a module package" do
+      installer = installer_class.new("foo", options)
+      installer.send(:is_module_package?, stdlib_pkg).should be_true
+    end
+
+    it "should return false when file is not a module package" do
+      installer = installer_class.new("foo", options)
+      installer.send(:is_module_package?, "pmtacceptance-apollo-0.0.2.tar").should be_false
+    end
   end
 
   context "when the source is a repository" do

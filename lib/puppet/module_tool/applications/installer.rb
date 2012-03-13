@@ -43,10 +43,10 @@ module Puppet::Module::Tool
           }
 
           unless File.directory? options[:dir]
-            msg = "Could not install module '#{@module_name}' (#{@version || 'latest'})\n"
-            msg << "  Directory #{options[:dir]} does not exist"
-            Puppet.err msg
-            exit(1)
+            raise MissingInstallDirectoryError,
+              :requested_module  => @module_name,
+              :requested_version => @version || 'latest',
+              :directory         => options[:dir]
           end
 
           cached_paths = get_release_packages
@@ -60,16 +60,12 @@ module Puppet::Module::Tool
             end
           end
         rescue AlreadyInstalledError, NoVersionsSatisfyError, MissingPackageError,
-               InvalidDependencyCycleError, InstallConflictError => err
+               InvalidDependencyCycleError, MissingInstallDirectoryError,
+               InstallConflictError => err
           results[:error] = {
             :oneline   => err.message,
             :multiline => err.multiline,
           }
-        #rescue => err
-        #  results[:error] = {
-        #    :oneline => err.message,
-        #    :multiline => [err.message, err.backtrace].join("\n")
-        #  }
         else
           results[:result] = :success
           results[:installed_modules] = @graph
@@ -115,6 +111,20 @@ module Puppet::Module::Tool
         download_tarballs(@graph, @graph.last[:path])
       end
 
+      #
+      # Resolve installation conflicts by checking if the requested module
+      # or one of it's dependencies conflicts with an installed module.
+      #
+      # Conflicts occur under the following conditions:
+      #
+      # When installing 'puppetlabs-foo' and an existing directory in the
+      # target install path contains a 'foo' directory and we cannot determine
+      # the "full name" of the installed module.
+      #
+      # When installing 'puppetlabs-foo' and 'pete-foo' is already installed.
+      # This is considered a conflict because 'puppetlabs-foo' and 'pete-foo'
+      # install into the same directory 'foo'.
+      #
       def resolve_install_conflicts(graph, is_dependency = false)
         graph.each do |release|
           @environment.modules_by_path[options[:dir]].each do |mod|
@@ -149,6 +159,13 @@ module Puppet::Module::Tool
         end
       end
 
+      #
+      # Check if a file is a vaild module package.
+      # ---
+      # FIXME: Checking for a valid module package should be more robust and
+      # use the acutal metadata contained in the package. 03132012 - Hightower
+      # +++
+      #
       def is_module_package?(name)
         filename = File.expand_path(name)
         filename =~ /.tar.gz$/
