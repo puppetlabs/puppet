@@ -2,10 +2,12 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:install) do
     summary "Install a module from a repository or release archive."
     description <<-EOT
-      Install a module from a release archive file on-disk or by downloading
-      one from a repository. Unpack the archive into the install directory
-      specified by the --dir option, which defaults to
-      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}
+      Installs a module from the Puppet Forge, from a release archive file
+      on-disk, or from a private Forge-like repository.
+
+      The specified module will be installed into the directory
+      specified with the --dir option, which defaults to
+      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}.
     EOT
 
     returns "Pathname object representing the path to the installed module."
@@ -59,7 +61,7 @@ Puppet::Face.define(:module, '1.0.0') do
       default_to { Puppet.settings[:module_repository] }
       summary "Module repository to use."
       description <<-EOT
-        Module repository to use.
+        The module repository to use, as a URL. Defaults to http://forge.puppetlabs.com.
       EOT
     end
 
@@ -73,7 +75,7 @@ Puppet::Face.define(:module, '1.0.0') do
     option "--modulepath MODULEPATH" do
       summary "Which directories to look for modules in"
       description <<-EOT
-        The directory into which modules are installed, defaults to the first
+        The directory into which modules are installed; defaults to the first
         directory in the modulepath.  If the dir option is also given, it is
         prepended to the modulepath.
       EOT
@@ -82,8 +84,8 @@ Puppet::Face.define(:module, '1.0.0') do
     option "--version VER", "-v VER" do
       summary "Module version to install."
       description <<-EOT
-        Module version to install, can be a requirement string, eg '>= 1.0.3',
-        defaults to latest version.
+        Module version to install; can be an exact version or a requirement string,
+        eg '>= 1.0.3'. Defaults to latest version.
       EOT
     end
 
