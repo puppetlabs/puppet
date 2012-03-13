@@ -9,7 +9,8 @@ require 'puppet/module_tool/shared_behaviors'
 module Puppet::Module::Tool
   module Applications
     class Installer < Application
-      require 'puppet/module_tool/applications/installer/exceptions'
+
+      include Puppet::Module::Tool::Errors
 
       def initialize(name, options = {})
         @action              = :install
@@ -59,9 +60,7 @@ module Puppet::Module::Tool
               end
             end
           end
-        rescue AlreadyInstalledError, NoVersionsSatisfyError, MissingPackageError,
-               InvalidDependencyCycleError, MissingInstallDirectoryError,
-               InstallConflictError => err
+        rescue ModuleToolError => err
           results[:error] = {
             :oneline   => err.message,
             :multiline => err.multiline,

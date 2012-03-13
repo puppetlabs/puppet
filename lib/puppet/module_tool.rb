@@ -71,6 +71,7 @@ module Puppet
 end
 
 # Load remaining libraries
+require 'puppet/module_tool/errors'
 require 'puppet/module_tool/applications'
 require 'puppet/module_tool/checksums'
 require 'puppet/module_tool/contents_description'
