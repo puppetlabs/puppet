@@ -1,12 +1,12 @@
 Puppet::Face.define(:module, '1.0.0') do
   action(:upgrade) do
-    summary "upgrade a puppet module."
+    summary "Upgrade a puppet module."
     description <<-EOT
-      upgrade a puppet module
+      Upgrades a puppet module.
     EOT
-    
+
     returns "Hash"
-    
+
     examples <<-EOT
       upgrade an installed module to the latest version
 
@@ -38,7 +38,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-dependencies" do
-      summary "Do not attempt to install dependencies"
+      summary "Do not attempt to install dependencies."
       description <<-EOT
         Do not attempt to install dependencies
       EOT
@@ -53,9 +53,9 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--version=" do
-      summary "The version of the module to upgrade"
+      summary "The version of the module to upgrade to."
       description <<-EOT
-        The version of the module to upgrade.
+        The version of the module to upgrade to.
       EOT
     end
 
@@ -66,7 +66,7 @@ Puppet::Face.define(:module, '1.0.0') do
       Puppet.notice "Preparing to upgrade '#{name}' ..."
       Puppet::Module::Tool::Applications::Upgrader.new(name, options).run
     end
-    
+
     when_rendering :console do |return_value|
       if return_value[:result] == :failure
         Puppet.err(return_value[:error][:multiline])

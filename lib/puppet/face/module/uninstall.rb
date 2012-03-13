@@ -2,9 +2,8 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:uninstall) do
     summary "Uninstall a puppet module."
     description <<-EOT
-      Uninstall a puppet module from the modulepath or a specific
-      target directory which defaults to
-      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).join(', ')}.
+      Uninstalls a puppet module from the modulepath (or a specific
+      target directory).
     EOT
 
     returns "Hash of module objects representing uninstalled modules and related errors."

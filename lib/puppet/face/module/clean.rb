@@ -2,11 +2,11 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:clean) do
     summary "Clean the module download cache."
     description <<-EOT
-      Clean the module download cache.
+      Cleans the module download cache.
     EOT
 
     returns <<-EOT
-      Return a status Hash:
+      A status Hash:
 
         { :status => "success", :msg => "Cleaned module cache." }
     EOT
