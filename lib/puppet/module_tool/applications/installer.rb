@@ -65,11 +65,11 @@ module Puppet::Module::Tool
             :oneline   => err.message,
             :multiline => err.multiline,
           }
-        rescue => err
-          results[:error] = {
-            :oneline => err.message,
-            :multiline => [err.message, err.backtrace].join("\n")
-          }
+        #rescue => err
+        #  results[:error] = {
+        #    :oneline => err.message,
+        #    :multiline => [err.message, err.backtrace].join("\n")
+        #  }
         else
           results[:result] = :success
           results[:installed_modules] = @graph

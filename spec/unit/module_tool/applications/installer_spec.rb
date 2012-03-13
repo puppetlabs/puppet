@@ -14,6 +14,12 @@ describe Puppet::Module::Tool::Applications::Installer do
     Puppet::Forge.stubs(:repository).returns(repository)
   end
 
+
+  let(:unpacker) do
+    unpacker = mock
+    unpacker.stubs(:run)
+    unpacker
+  end
   let(:installer_class) { Puppet::Module::Tool::Applications::Installer }
   let(:modpath1) { File.join(tmpdir("installer"), "modpath1") }
   let(:fake_env) { Puppet::Node::Environment.new('fake_env') }
@@ -82,8 +88,9 @@ describe Puppet::Module::Tool::Applications::Installer do
     end
 
     it "should install the requested module" do
-      Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-        .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)
+      Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+        .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)\
+        .returns(unpacker)
       results = installer_class.run('pmtacceptance-stdlib', options)
       results[:installed_modules].length == 1
       results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
@@ -92,12 +99,15 @@ describe Puppet::Module::Tool::Applications::Installer do
 
     context "when the requested module has dependencies" do
       it "should install dependencies" do
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)\
+        .returns(unpacker)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
+        .returns(unpacker)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options)\
+        .returns(unpacker)
 
         results = installer_class.run('pmtacceptance-apollo', options)
         installed_dependencies = results[:installed_modules][0][:dependencies]
@@ -114,16 +124,18 @@ describe Puppet::Module::Tool::Applications::Installer do
 
       it "should install requested module if the '--force' flag is used" do
         options = { :force => true, :dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
+        .returns(unpacker)
         results = installer_class.run('pmtacceptance-apollo', options)
         results[:installed_modules][0][:module].should == "pmtacceptance-apollo"
       end
 
       it "should not install dependencies if the '--force' flag is used" do
         options = { :force => true, :dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
+        .returns(unpacker)
         results = installer_class.run('pmtacceptance-apollo', options)
         dependencies = results[:installed_modules][0][:dependencies]
         dependencies.should == []
@@ -131,8 +143,9 @@ describe Puppet::Module::Tool::Applications::Installer do
 
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
         options = { :ignore_dependencies => true, :dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:run)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
+          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
+        .returns(unpacker)
         results = installer_class.run('pmtacceptance-apollo', options)
         dependencies = results[:installed_modules][0][:dependencies]
         dependencies.should == []
@@ -143,9 +156,10 @@ describe Puppet::Module::Tool::Applications::Installer do
         oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
         multiline = <<-MSG.strip
 Could not install module 'pmtacceptance-apollo' (v0.0.1)
-  No version of 'pmtacceptance-stdlib' will satisfy dependencies:
-    'pmtacceptance-apollo' (v0.0.1) requires 'pmtacceptance-stdlib' (v0.0.1)
-    'pmtacceptance-java' (v1.7.1) requires 'pmtacceptance-stdlib' (v1.0.0)
+  No version of 'pmtacceptance-stdlib' will satisfy dependencies
+    You specified 'pmtacceptance-apollo' (v0.0.1),
+    which depends on 'pmtacceptance-java' (v1.7.1),
+    which depends on 'pmtacceptance-stdlib' (v1.0.0)
     Use `puppet module install --force` to install this module anyway
 MSG
 
@@ -179,14 +193,7 @@ MSG
       @sourcedir = tmpdir('sourcedir')
     end
 
-    it "should error if it can't parse the name" do
-      filemod = File.join(@sourcedir, 'notparseable')
-      File.open(filemod, 'w') {|f| f.puts 'ha ha cant parse'}
-      expect { installer_class.run(filemod) }.to raise_error(
-        RuntimeError,
-        "Could not install module with invalid name: #{filemod}"
-      )
-    end
+    it "should error if it can't parse the name"
 
     it "should try to get_release_package_from_filesystem if it has a valid name"
   end

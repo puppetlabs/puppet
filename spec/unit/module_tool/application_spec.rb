@@ -14,15 +14,13 @@ describe Puppet::Module::Tool::Applications::Application do
 
     good_versions.each do |ver|
       it "should accept version string #{ver}" do
-        @app.instance_eval("@filename=%q{puppetlabs-ntp-#{ver}}")
-        @app.parse_filename!
+        @app.parse_filename("puppetlabs-ntp-#{ver}")
       end
     end
 
     bad_versions.each do |ver|
       it "should not accept version string #{ver}" do
-        @app.instance_eval("@filename=%q{puppetlabs-ntp-#{ver}}")
-        lambda { @app.parse_filename! }.should raise_error
+        lambda { @app.parse_filename("puppetlabs-ntp-#{ver}") }.should raise_error
       end
     end
   end
