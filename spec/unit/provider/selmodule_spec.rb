@@ -6,6 +6,7 @@
 # 256 bytes taken from /usr/share/selinux/targeted/nagios.pp on Fedora 9
 
 require 'spec_helper'
+require 'stringio'
 
 provider_class = Puppet::Type.type(:selmodule).provider(:semodule)
 
@@ -60,7 +61,13 @@ describe provider_class do
       @provider.expects(:selmodversion_loaded).returns nil
       @provider.syncversion.should == :false
     end
-
   end
 
+  describe "selmodversion_loaded" do
+    it "should return the version of a loaded module" do
+      @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields StringIO.new("bar\t1.2.3\nfoo\t4.4.4\nbang\t1.0.0\n")
+      @provider.selmodversion_loaded.should == "4.4.4"
+    end
+  end
 end
