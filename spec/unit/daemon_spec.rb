@@ -49,7 +49,7 @@ describe Puppet::Daemon do
     before do
       @daemon.stubs(:create_pidfile)
       @daemon.stubs(:set_signal_traps)
-      EventLoop.current.stubs(:run)
+      @daemon.stubs(:run_event_loop)
     end
 
     it "should fail if it has neither agent nor server" do
@@ -58,16 +58,7 @@ describe Puppet::Daemon do
 
     it "should create its pidfile" do
       @daemon.stubs(:agent).returns stub('agent', :start => nil)
-
       @daemon.expects(:create_pidfile)
-      @daemon.start
-    end
-
-    it "should start the agent if the agent is configured" do
-      agent = mock 'agent'
-      agent.expects(:start)
-      @daemon.stubs(:agent).returns agent
-
       @daemon.start
     end
 
@@ -75,13 +66,6 @@ describe Puppet::Daemon do
       server = mock 'server'
       server.expects(:start)
       @daemon.stubs(:server).returns server
-
-      @daemon.start
-    end
-
-    it "should let the current EventLoop run" do
-      @daemon.stubs(:agent).returns stub('agent', :start => nil)
-      EventLoop.current.expects(:run)
 
       @daemon.start
     end
