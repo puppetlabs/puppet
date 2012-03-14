@@ -106,6 +106,27 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
+  describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications" do
+    before do
+      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 45, 59))
+    end
+
+    it "should match when just an hour is specified" do
+      @schedule[:range] = "11-12"
+      @schedule.must be_match
+    end
+
+    it "should not match when the ending hour is the current hour" do
+      @schedule[:range] = "10-11"
+      @schedule.must_not be_match
+    end
+
+    it "should not match when the ending minute is the current minute" do
+      @schedule[:range] = "10:00 - 11:45"
+      @schedule.must_not be_match
+    end
+  end
+
   describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 1" do
     before do
       # Test with the current time at a month's end boundary to ensure we are
