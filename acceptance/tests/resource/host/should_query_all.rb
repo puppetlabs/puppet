@@ -24,5 +24,5 @@ agents.each do |agent|
   end
 
   step "clean up the system afterwards"
-  on agent, "mv -f #{backup} /etc/hosts"
+  on agent, "cat #{backup} > /etc/hosts && rm -f #{backup}"
 end
