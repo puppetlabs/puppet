@@ -642,7 +642,7 @@ describe provider_class do
     end
 
     # Optimisations added for Augeas 0.8.2 or higher is available, see #7285
-    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
+    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Facter.value(:augeasversion) && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
       it "should only load one file if relevant context given" do
         @resource[:context] = "/files/etc/fstab"
 
