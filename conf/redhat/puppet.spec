@@ -5,9 +5,9 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.11
+Version:        2.7.12
 #Release:        0.1rc1%{?dist}
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
@@ -25,7 +25,7 @@ BuildRequires:  ruby >= 1.8.1
 
 %if 0%{?fedora} || 0%{?rhel} >= 5
 BuildArch:      noarch
-Requires:       ruby(abi) = 1.8
+Requires:       ruby(abi) >= 1.8
 Requires:       ruby-shadow
 %endif
 
@@ -82,7 +82,7 @@ done
 for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
-chmod +x ext/puppetstoredconfigclean.rb
+#chmod +x ext/puppetstoredconfigclean.rb
 
 find examples/ -type f -empty | xargs rm
 find examples/ -type f | xargs chmod a-x
@@ -287,6 +287,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Mon Mar 12 2012 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.12-1
+- Update for 2.7.12
+
 * Fri Feb 24 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.11-2
 - Update 2.7.11 from proper tag, including #12572
 
