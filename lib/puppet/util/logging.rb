@@ -24,16 +24,35 @@ module Puppet::Util::Logging
   #    to take advantage of the backtrace logging.
   def log_exception(exception, message = :default)
 
+    # TODO cprice: document this insanity
+    log_proc = Proc.new do |msg|
+      if (Puppet::Util::Log.destinations.length == 0)
+        STDERR.puts(msg)
+        err(msg)
+      else
+        err(msg)
+      end
+    end
+
     case message
       when :default
-        err(exception.message)
+        log_proc.call(exception.message)
       when nil
         # don't log anything if they passed a nil; they are just calling for the optional backtrace logging
       else
-        err(message)
+        log_proc.call(message)
     end
 
-    err(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
+    log_proc.call(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
+  end
+
+
+  #TODO cprice: document or get rid of these
+  def superdebug(msg)
+    err("\n\n\n********************* #{msg}***********************\n\n\n")
+  end
+  def supertrace(msg)
+    err("\n\n\n********************* #{msg}***********************\n#{Puppet::Util.pretty_backtrace}\n\n\n")
   end
 
   class DeprecationWarning < Exception; end

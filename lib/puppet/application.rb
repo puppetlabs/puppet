@@ -174,19 +174,6 @@ class Application
       result
     end
 
-    def should_parse_config
-      @parse_config = true
-    end
-
-    def should_not_parse_config
-      @parse_config = false
-    end
-
-    def should_parse_config?
-      @parse_config = true if ! defined?(@parse_config)
-      @parse_config
-    end
-
     # used to declare code that handle an option
     def option(*options, &block)
       long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).gsub('-','_')
@@ -230,7 +217,7 @@ class Application
     end
 
     #
-    # TODO: look into changing this into two methods (getter/setter)
+    # TODO cprice: look into changing this into two methods (getter/setter)
     #  --cprice 2012-03-06
     #
 
@@ -257,10 +244,6 @@ class Application
   option("--help", "-h") do |v|
     puts help
     exit
-  end
-
-  def should_parse_config?
-    self.class.should_parse_config?
   end
 
   # override to execute code before running anything else
@@ -291,7 +274,7 @@ class Application
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
-    # XXXXXXXXXXX TODO: this is crap.  need to refactor this so that applications have a hook to initialize
+    # XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
     #  the settings that are specific to them; need to decide whether to formally specify the list of such
     #  settings, or just allow them to run willy-nilly.
     if (mode.name == :master)
@@ -299,7 +282,7 @@ class Application
     end
 
 
-    ## TODO: get rid of this whole block, push it to some kind of application-specific hook or something
+    ## TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
 
     if Puppet.respond_to? :settings
       # This is to reduce the amount of confusion in rspec
@@ -316,12 +299,11 @@ class Application
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize")                                   { hook('preinit')       { preinit } }
-    exit_on_fail("parse options")                                { hook('parse_options') { parse_options } }
-    exit_on_fail("parse configuration file")                     { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution")                        { hook('setup')         { setup } }
+    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
+    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
+    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-    exit_on_fail("run")                                          { hook('run_command')   { run_command } }
+    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
   end
 
   def main
@@ -362,6 +344,11 @@ class Application
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
 
+    # TODO cprice: document this better.  We need to include the globals so that the app
+    #  has an opportunity to override them.
+    # Might be able to make this a little more efficient by sharing the Parser object
+    #  betwween the command line class and this one.
+    #
     # Add all global options to it.
     Puppet.settings.optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|
@@ -385,22 +372,11 @@ class Application
     option_parser.parse!(self.command_line.args)
   end
 
-  def handlearg(opt, arg)
-    # rewrite --[no-]option to --no-option if that's what was given
-    if opt =~ /\[no-\]/ and !arg
-      opt = opt.gsub(/\[no-\]/,'no-')
-    end
-    # otherwise remove the [no-] prefix to not confuse everybody
-    opt = opt.gsub(/\[no-\]/, '')
-    unless respond_to?(:handle_unknown) and send(:handle_unknown, opt, arg)
-      # Puppet.settings.handlearg doesn't handle direct true/false :-)
-      if arg.is_a?(FalseClass)
-        arg = "false"
-      elsif arg.is_a?(TrueClass)
-        arg = "true"
-      end
-      Puppet.settings.handlearg(opt, arg)
-    end
+
+
+  def handlearg(opt, val)
+    opt, val = Puppet::Util::CommandLine.clean_opt(opt, val)
+    send(:handle_unknown, opt, val) if respond_to?(:handle_unknown)
   end
 
   # this is used for testing
@@ -416,20 +392,14 @@ class Application
     "No help available for puppet #{name}"
   end
 
-  private
 
-  def exit_on_fail(message, code = 1)
-    yield
-  rescue ArgumentError, RuntimeError, NotImplementedError => detail
-    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
-    exit(code)
-  end
 
-  def hook(step,&block)
+  def plugin_hook(step,&block)
     Puppet::Plugins.send("before_application_#{step}",:application_object => self)
     x = yield
     Puppet::Plugins.send("after_application_#{step}",:application_object => self, :return_value => x)
     x
   end
+  private :plugin_hook
 end
 end

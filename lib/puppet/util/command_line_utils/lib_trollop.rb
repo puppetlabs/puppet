@@ -66,6 +66,15 @@ class Parser
   ## for testing.)
   attr_reader :specs
 
+  # TODO cprice: docs
+  attr_accessor :create_default_short_options
+
+  # TODO cprice: docs
+  attr_accessor :ignore_invalid_options
+
+  # TODO cprice: docs
+  attr_accessor :handle_help_and_version
+
   ## Initializes the parser, and instance-evaluates any block given.
   def initialize *a, &b
     @version = nil
@@ -286,8 +295,10 @@ class Parser
     vals = {}
     required = {}
 
-    opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
-    opt :help, "Show this message" unless @specs[:help] || @long["help"]
+    if handle_help_and_version
+      opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
+      opt :help, "Show this message" unless @specs[:help] || @long["help"]
+    end
 
     @specs.each do |sym, opts|
       required[sym] = true if opts[:required]
@@ -295,7 +306,7 @@ class Parser
       vals[sym] = [] if opts[:multi] && !opts[:default] # multi arguments default to [], not nil
     end
 
-    resolve_default_short_options
+    resolve_default_short_options if create_default_short_options
 
     ## resolve symbols
     given_args = {}
@@ -303,12 +314,18 @@ class Parser
       sym = case arg
       when /^-([^-])$/
         @short[$1]
+      when /^--no-([^-]\S*)$/
+        @long["[no-]#{$1}"]
       when /^--([^-]\S*)$/
-        @long[$1]
+        @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
       else
         raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
-      raise CommandlineError, "unknown argument '#{arg}'" unless sym
+
+      unless sym
+        next 0 if ignore_invalid_options
+        raise CommandlineError, "unknown argument '#{arg}'" unless sym
+      end
 
       if given_args.include?(sym) && !@specs[sym][:multi]
         raise CommandlineError, "option '#{arg}' specified multiple times"
@@ -335,9 +352,11 @@ class Parser
       num_params_taken
     end
 
-    ## check for version and help args
-    raise VersionNeeded if given_args.include? :version
-    raise HelpNeeded if given_args.include? :help
+    if handle_help_and_version
+      ## check for version and help args
+      raise VersionNeeded if given_args.include? :version
+      raise HelpNeeded if given_args.include? :help
+    end
 
     ## check constraint satisfaction
     @constraints.each do |type, syms|
@@ -368,7 +387,11 @@ class Parser
 
       case opts[:type]
       when :flag
-        vals[sym] = !opts[:default]
+        if arg =~ /^--no-/ and sym.to_s =~ /^--\[no-\]/
+          vals[sym] = opts[:default]
+        else
+          vals[sym] = !opts[:default]
+        end
       when :int, :ints
         vals[sym] = params.map { |pg| pg.map { |p| parse_integer_parameter p, arg } }
       when :float, :floats
@@ -391,6 +414,8 @@ class Parser
         vals[sym] = vals[sym][0]  # single option, with multiple parameters
       end
       # else: multiple options, with multiple parameters
+
+      opts[:callback].call(vals[sym]) if opts.has_key?(:callback)
     end
 
     ## modify input in place with only those

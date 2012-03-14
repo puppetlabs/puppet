@@ -19,10 +19,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
     end
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @kick.should_parse_config?.should be_false
-  end
-
   it "should declare a main command" do
     @kick.should respond_to(:main)
   end

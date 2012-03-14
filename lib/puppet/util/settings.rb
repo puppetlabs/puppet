@@ -70,7 +70,7 @@ class Puppet::Util::Settings
       @values.delete(name)
     end
 
-    # TODO: if this condition is really based on the fact that we are reparsing
+    # TODO cprice: if this condition is really based on the fact that we are reparsing
     #  the config file, then our parameters should be named more clearly.
     #  --cprice 2012-03-06
 
@@ -152,6 +152,14 @@ class Puppet::Util::Settings
   # Handle a command-line argument.
   def handlearg(opt, value = nil)
     @cache.clear
+
+    if value.is_a?(FalseClass)
+      value = "false"
+    elsif value.is_a?(TrueClass)
+      value = "true"
+    end
+
+
     value &&= munge_value(value)
     str = opt.sub(/^--/,'')
 
@@ -479,9 +487,9 @@ class Puppet::Util::Settings
   end
 
   def legacy_to_mode(type, param)
-    require 'puppet/util/legacy_command_line'
-    if Puppet::Util::LegacyCommandLine::LEGACY_APPS.has_key?(type)
-      new_type = Puppet::Util::LegacyCommandLine::LEGACY_APPS[type].run_mode
+    require 'puppet/util/command_line_utils/legacy_command_line'
+    if Puppet::Util::CommandLineUtils::LegacyCommandLine::LEGACY_APPS.has_key?(type)
+      new_type = Puppet::Util::CommandLineUtils::LegacyCommandLine::LEGACY_APPS[type].run_mode
       Puppet.deprecation_warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
       return new_type
     end

@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Master < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   option("--debug", "-d")

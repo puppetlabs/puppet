@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Agent < Puppet::Application
 
-  should_parse_config
   run_mode :agent
 
   attr_accessor :args, :agent, :daemon, :host

@@ -57,6 +57,8 @@ describe Puppet::Application do
     end
   end
 
+  # TODO cprice: look into fixing this
+
   it "should sadly and frighteningly allow run_mode to change at runtime" do
     class TestApp < Puppet::Application
       run_mode :master
@@ -85,6 +87,8 @@ describe Puppet::Application do
     Puppet[:run_mode].should == "agent"
   end
 
+  # TODO cprice: look into fixing this
+
   it "it should not allow run mode to be set multiple times" do
     pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
     app = Puppet::Application.new
@@ -95,6 +99,8 @@ describe Puppet::Application do
       $puppet_application_mode.name.should == :agent
     }.should raise_error
   end
+
+  # TODO cprice: look into fixing this
 
   it "should explode when an invalid run mode is set at runtime, for great victory"
   # ...but you can, and while it will explode, that only happens too late for
@@ -280,19 +286,6 @@ describe Puppet::Application do
       @app.parse_options
     end
 
-    it "should get options from Puppet.settings.optparse_addargs" do
-      Puppet.settings.expects(:optparse_addargs).returns([])
-
-      @app.parse_options
-    end
-
-    it "should add Puppet.settings options to OptionParser" do
-      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option"]])
-      Puppet.settings.expects(:handlearg).with("--option", 'true')
-      @app.command_line.stubs(:args).returns(["--option"])
-      @app.parse_options
-    end
-
     it "should ask OptionParser to parse the command-line argument" do
       @app.command_line.stubs(:args).returns(%w{ fake args })
       OptionParser.any_instance.expects(:parse!).with(%w{ fake args })
@@ -329,44 +322,14 @@ describe Puppet::Application do
         @app.parse_options
       end
 
-      it "should pass it to Puppet.settings if handle_unknown says so" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
-
-        @app.stubs(:handle_unknown).with("--topuppet", "value").returns(false)
-
-        Puppet.settings.expects(:handlearg).with("--topuppet", "value")
-        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
-        @app.parse_options
-      end
-
-      it "should pass it to Puppet.settings if there is no handle_unknown method" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
-
-        @app.stubs(:respond_to?).returns(false)
-
-        Puppet.settings.expects(:handlearg).with("--topuppet", "value")
-        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
-        @app.parse_options
-      end
-
-      it "should transform boolean false value to string for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "false")
-        @app.handlearg("--option", false)
-      end
-
-      it "should transform boolean true value to string for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "true")
-        @app.handlearg("--option", true)
-      end
-
       it "should transform boolean option to normal form for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "true")
-        @app.handlearg("--[no-]option", true)
+        @app.expects(:handle_unknown).with("--option", true)
+        @app.send(:handlearg, "--[no-]option", true)
       end
 
       it "should transform boolean option to no- form for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--no-option", "false")
-        @app.handlearg("--[no-]option", false)
+        @app.expects(:handle_unknown).with("--no-option", false)
+        @app.send(:handlearg, "--[no-]option", false)
       end
 
     end
@@ -375,7 +338,6 @@ describe Puppet::Application do
   describe "when calling default setup" do
 
     before :each do
-      @app.stubs(:should_parse_config?).returns(false)
       @app.options.stubs(:[])
     end
 
@@ -478,32 +440,6 @@ describe Puppet::Application do
       @app.run
     end
 
-    it "should parse Puppet configuration if should_parse_config is called" do
-      @app.stubs(:run_command)
-      @app.class.should_parse_config
-
-      Puppet.settings.expects(:parse)
-
-      @app.run
-    end
-
-    it "should not parse_option if should_not_parse_config is called" do
-      @app.stubs(:run_command)
-      @app.class.should_not_parse_config
-
-      Puppet.settings.expects(:parse).never
-
-      @app.run
-    end
-
-    it "should parse Puppet configuration if needed" do
-      @app.stubs(:run_command)
-      @app.stubs(:should_parse_config?).returns(true)
-
-      Puppet.settings.expects(:parse)
-
-      @app.run
-    end
 
     it "should call run_command" do
       @app.expects(:run_command)

@@ -455,6 +455,17 @@ module Util
   end
   module_function :replace_file
 
+
+  #TODO cprice: document
+  def exit_on_fail(message, code = 1)
+    yield
+  rescue ArgumentError, RuntimeError, NotImplementedError => detail
+    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
+    exit(code)
+  end
+  module_function :exit_on_fail
+
+
   #######################################################################################################
   # Deprecated methods relating to process execution; these have been moved to Puppet::Util::Execution
   #######################################################################################################

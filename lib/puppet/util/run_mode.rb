@@ -25,7 +25,7 @@ module Puppet
         name == :user
       end
 
-      # TODO: None of the following three methods seems to do anything that relates to run mode in any way;
+      # TODO cprice: None of the following three methods seems to do anything that relates to run mode in any way;
       #  I wonder if this is the right place for them to be defined?  --cprice 2012-03-06
       def conf_dir
         which_dir(

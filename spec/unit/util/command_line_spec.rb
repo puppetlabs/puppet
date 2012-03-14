@@ -67,73 +67,124 @@ describe Puppet::Util::CommandLine do
     command_line.args.should            == []
   end
 
-  it "should return the executable name if it is not puppet" do
-    command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], @tty )
+  # TODO cprice: document
+  describe "when dealing with settings" do
+    let(:command_line) { Puppet::Util::CommandLine.new( "foo", [], @tty ) }
 
-    command_line.subcommand_name.should == "puppetmasterd"
-  end
+    it "should get options from Puppet.settings.optparse_addargs" do
+      Puppet.settings.expects(:optparse_addargs).returns([])
 
-  it "should translate subcommand names into their legacy equivalent" do
-    command_line = Puppet::Util::CommandLine.new("puppet", ["master"], @tty)
-    command_line.legacy_executable_name.should == :puppetmasterd
-  end
-
-  it "should leave legacy command names alone" do
-    command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], @tty)
-    command_line.legacy_executable_name.should == :puppetmasterd
-  end
-
-  describe "when the subcommand is not implemented" do
-    it "should find and invoke an executable with a hyphenated name" do
-      commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-      Puppet::Util.expects(:which).with('puppet-whatever').returns('/dev/null/puppet-whatever')
-      commandline.expects(:exec).with('/dev/null/puppet-whatever', 'argument')
-
-      commandline.execute
+      command_line.send(:parse_global_options)
     end
 
-    describe "and an external implementation cannot be found" do
-      it "should abort and show the usage message" do
+    it "should add Puppet.settings options to OptionParser" do
+      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
+      Puppet.settings.expects(:handlearg).with("--option", true)
+      command_line.stubs(:args).returns(["--option"])
+      command_line.send(:parse_global_options)
+    end
+
+    it "should not die if it sees an unrecognized option, because the app/face may handle it later" do
+      command_line.stubs(:args).returns(["--topuppet", "value"])
+      expect { command_line.send(:parse_global_options) } .to_not raise_error
+    end
+
+    it "should not pass an unrecognized option to Puppet.settings" do
+      command_line.stubs(:args).returns(["--topuppet", "value"])
+      Puppet.settings.expects(:handlearg).with("--topuppet", "value").never
+      expect { command_line.send(:parse_global_options) } .to_not raise_error
+    end
+
+    it "should pass valid puppet settings options to Puppet.settings even if they appear after an unrecognized option" do
+      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
+      Puppet.settings.expects(:handlearg).with("--option", true)
+      command_line.stubs(:args).returns(["--invalidoption", "--option"])
+      command_line.send(:parse_global_options)
+    end
+
+
+    it "should transform boolean option to normal form for Puppet.settings" do
+      Puppet.settings.expects(:handlearg).with("--option", true)
+      command_line.send(:handlearg, "--[no-]option", true)
+    end
+
+    it "should transform boolean option to no- form for Puppet.settings" do
+      Puppet.settings.expects(:handlearg).with("--no-option", false)
+      command_line.send(:handlearg, "--[no-]option", false)
+    end
+  end
+
+
+  describe "when dealing with puppet commands" do
+
+    it "should return the executable name if it is not puppet" do
+      command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], @tty )
+
+      command_line.subcommand_name.should == "puppetmasterd"
+    end
+
+    it "should translate subcommand names into their legacy equivalent" do
+      command_line = Puppet::Util::CommandLine.new("puppet", ["master"], @tty)
+      command_line.legacy_executable_name.should == :puppetmasterd
+    end
+
+    it "should leave legacy command names alone" do
+      command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], @tty)
+      command_line.legacy_executable_name.should == :puppetmasterd
+    end
+
+    describe "when the subcommand is not implemented" do
+      it "should find and invoke an executable with a hyphenated name" do
         commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-        Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
-        commandline.expects(:exec).never
+        Puppet::Util.expects(:which).with('puppet-whatever').returns('/dev/null/puppet-whatever')
+        commandline.expects(:exec).with('/dev/null/puppet-whatever', 'argument')
 
-        expect {
-          commandline.execute
-        }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
+        commandline.execute
+      end
+
+      describe "and an external implementation cannot be found" do
+        it "should abort and show the usage message" do
+          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
+          Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+          commandline.expects(:exec).never
+
+          expect {
+            commandline.execute
+          }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
+        end
       end
     end
-  end
-  describe 'when loading commands' do
-    before do
-      @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
-      @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
-    end
-    it "should expose available_subcommands as a class method" do
-      @core_apps.each do |command|
-        @command_line.available_subcommands.should include command
-      end
-    end
-    it 'should be able to find all existing commands' do
-      @core_apps.each do |command|
-        @command_line.available_subcommands.should include command
-      end
-    end
-    describe 'when multiple paths have applications' do
+    describe 'when loading commands' do
       before do
-        @dir=tmpdir('command_line_plugin_test')
-        @appdir="#{@dir}/puppet/application"
-        FileUtils.mkdir_p(@appdir)
-        FileUtils.touch("#{@appdir}/foo.rb")
-        $LOAD_PATH.unshift(@dir) # WARNING: MUST MATCH THE AFTER ACTIONS!
+        @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
+        @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
       end
-      it 'should be able to find commands from both paths' do
-        found = @command_line.available_subcommands
-        found.should include 'foo'
-        @core_apps.each { |cmd| found.should include cmd }
+      it "should expose available_subcommands as a class method" do
+        @core_apps.each do |command|
+          @command_line.available_subcommands.should include command
+        end
       end
-      after do
-        $LOAD_PATH.shift        # WARNING: MUST MATCH THE BEFORE ACTIONS!
+      it 'should be able to find all existing commands' do
+        @core_apps.each do |command|
+          @command_line.available_subcommands.should include command
+        end
+      end
+      describe 'when multiple paths have applications' do
+        before do
+          @dir=tmpdir('command_line_plugin_test')
+          @appdir="#{@dir}/puppet/application"
+          FileUtils.mkdir_p(@appdir)
+          FileUtils.touch("#{@appdir}/foo.rb")
+          $LOAD_PATH.unshift(@dir) # WARNING: MUST MATCH THE AFTER ACTIONS!
+        end
+        it 'should be able to find commands from both paths' do
+          found = @command_line.available_subcommands
+          found.should include 'foo'
+          @core_apps.each { |cmd| found.should include cmd }
+        end
+        after do
+          $LOAD_PATH.shift        # WARNING: MUST MATCH THE BEFORE ACTIONS!
+        end
       end
     end
   end

@@ -1,9 +1,13 @@
 require 'puppet'
 require "puppet/util/plugins"
+require 'puppet/util/command_line_utils/puppet_option_parser'
 
 module Puppet
   module Util
     class CommandLine
+
+      # Just aliasing in the class name for brevity
+      PuppetOptionParser = Puppet::Util::CommandLineUtils::PuppetOptionParser
 
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @zero  = zero
@@ -21,7 +25,52 @@ module Puppet
         File.join('puppet', 'application')
       end
 
+      # TODO cprice: document
+      def parse_global_options
+        # Create an option parser
+        #option_parser = OptionParser.new
+        option_parser = PuppetOptionParser.new
+        option_parser.ignore_invalid_options = true
+
+        # Add all global options to it.
+        Puppet.settings.optparse_addargs([]).each do |option|
+          option_parser.on(*option) do |arg|
+            handlearg(option[0], arg)
+
+          end
+        end
+
+        option_parser.parse(args)
+
+      end
+      private :parse_global_options
+
+
+      # TODO cprice: document
+      def handlearg(opt, val)
+        #puts("HANDLE ARG: '#{opt}'")
+        opt, val = self.class.clean_opt(opt, val)
+        Puppet.settings.handlearg(opt, val)
+      end
+      private :handlearg
+
+      # TODO cprice: document
+      def self.clean_opt(opt, val)
+        # rewrite --[no-]option to --no-option if that's what was given
+        if opt =~ /\[no-\]/ and !val
+          opt = opt.gsub(/\[no-\]/,'no-')
+        end
+        # otherwise remove the [no-] prefix to not confuse everybody
+        opt = opt.gsub(/\[no-\]/, '')
+        [opt, val]
+      end
+
+
+
       def self.available_subcommands
+        # TODO cprice: eventually we probably want to replace this with a call to the autoloader.  however, at the moment
+        #  the autoloader considers the module path when loading, and we don't want to allow apps / faces to load
+        #  from there.  Once that is resolved, this should be replaced.  --cprice 2012-03-06
         absolute_appdirs = $LOAD_PATH.collect do |x|
           File.join(x,'puppet','application')
         end.select{ |x| File.directory?(x) }
@@ -42,8 +91,17 @@ module Puppet
       end
 
       def execute
+        # TODO cprice: document, possibly refactor into some kind of setup/init method
+        Puppet::Util.exit_on_fail("parse global options")     { parse_global_options }
+        # NOTE: this is a change in behavior where we are now parsing the config file on every run; before, there
+        #  were several apps that did not do this.
+        Puppet::Util.exit_on_fail("parse configuration file") { Puppet.settings.parse }
+
         if subcommand_name and available_subcommands.include?(subcommand_name) then
           require_application subcommand_name
+          # TODO cprice: replace this.  For the short term, replace it with something that is not so application-specific
+          #  (i.e.. so that we can load faces).  Longer-term, use the autoloader.  See comments in
+          #  #available_subcommands method above.  --cprice 2012-03-06
           app = Puppet::Application.find(subcommand_name).new(self)
           Puppet::Plugins.on_application_initialization(:appliation_object => self)
 
@@ -73,7 +131,7 @@ module Puppet
       end
 
       def legacy_executable_name
-        name = LegacyCommandLine::LEGACY_NAMES[ subcommand_name.intern ]
+        name = CommandLineUtils::LegacyCommandLine::LEGACY_NAMES[ subcommand_name.intern ]
         return name unless name.nil?
         return subcommand_name.intern
       end
@@ -115,6 +173,9 @@ EOM
           [zero, argv]
         end
       end
+
+
+      ## TODO cprice: update this stuff
 
       # So, this is more than a little bit of a horror.  You see, the process
       # of bootstrapping Puppet is ... complex.  This file, like many of our

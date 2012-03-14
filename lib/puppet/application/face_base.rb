@@ -4,7 +4,6 @@ require 'optparse'
 require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
-  should_parse_config
   run_mode :agent
 
   option("--debug", "-d") do |arg|

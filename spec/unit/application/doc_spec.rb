@@ -13,10 +13,6 @@ describe Puppet::Application::Doc do
     Puppet::Util::Log.stubs(:newdestination)
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @doc.should_parse_config?.should be_false
-  end
-
   it "should declare a other command" do
     @doc.should respond_to(:other)
   end

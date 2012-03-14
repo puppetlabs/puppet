@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Resource < Puppet::Application
 
-  should_not_parse_config
-
   attr_accessor :host, :extra_params
 
   def preinit

@@ -8,10 +8,6 @@ describe Puppet::Application::Describe do
     @describe = Puppet::Application[:describe]
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @describe.should_parse_config?.should be_false
-  end
-
   it "should declare a main command" do
     @describe.should respond_to(:main)
   end

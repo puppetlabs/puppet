@@ -25,10 +25,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     @master.class.run_mode.name.should equal(:master)
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @master.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @master.should respond_to(:main)
   end
@@ -103,6 +99,20 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       @master.parse_options
     end
+
+    # TODO cprice: document why this sucks
+    it "should support dns alt names from ARGV" do
+      @master.command_line.stubs(:args).returns(["--dns_alt_names", "foo,bar,baz"])
+
+      @master.command_line.send(:parse_global_options)
+      Puppet.settings.parse
+      @master.preinit
+      @master.parse_options
+
+      Puppet[:dns_alt_names].should == "foo,bar,baz"
+    end
+
+
   end
 
   describe "during setup" do
