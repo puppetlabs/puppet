@@ -263,6 +263,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Host.indirection.terminus_class.should == :file
       end
 
+      it "should set the terminus class for Ocsp request as :ca" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :ca
+      end
+
       it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
         Puppet::SSL::Certificate.indirection.terminus_class.should == :ca
         Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :ca
@@ -283,6 +287,10 @@ describe Puppet::SSL::Host do
 
       it "should set the terminus class for Key as :file" do
         Puppet::SSL::Key.indirection.terminus_class.should == :file
+      end
+
+      it "should set the terminus class for Ocsp requests as :rest" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :rest
       end
 
       it "should set the terminus class for Host, Certificate, CertificateRevocationList, and CertificateRequest as :rest" do
@@ -311,6 +319,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::CertificateRevocationList.indirection.cache_class.should be_nil
       end
 
+      it "should set the terminus class for Ocsp requests as :ca" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :ca
+      end
+
       it "should set the terminus class for Host to :file" do
         Puppet::SSL::Host.indirection.terminus_class.should == :file
       end
@@ -326,6 +338,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Certificate.indirection.terminus_class.should == :file
         Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :file
         Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :file
+      end
+
+      it "should set the terminus class for Ocsp requests to 'none'" do
+        lambda { Puppet::SSL::Ocsp::Request.indirection.terminus_class }.should raise_error(Puppet::DevError)
       end
 
       it "should set the terminus class for Host to 'none'" do
@@ -684,6 +700,7 @@ describe Puppet::SSL::Host do
       OpenSSL::X509::Store.stubs(:new).returns @store
 
       Puppet.settings.stubs(:value).with(:localcacert).returns "ssl_host_testing"
+      Puppet.settings.stubs(:value).with(:ocsp_verification).returns false
 
       Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns(nil)
     end
@@ -720,6 +737,41 @@ describe Puppet::SSL::Host do
         @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
         @host.ssl_store
       end
+
+      it "should not set the CRL when ocsp verification is enabled" do
+        Puppet.settings.stubs(:value).with(:ocsp_verification).returns(true)
+        @store.expects(:add_crl).never
+        @host.ssl_store
+      end
+    end
+  end
+
+  describe "when verifying a certificate with OCSP" do
+    before do
+      @host = Puppet::SSL::Host.new("me")
+      @store = mock 'store'
+      @store.stub_everything
+    end
+
+    it "should delegate to the Puppet::SSL::Ocsp#verify method" do
+      Puppet::SSL::Ocsp::Verifier.expects(:verify).returns([{}])
+      @host.ocsp_verify(true, @store)
+    end
+
+    it "should return true if certificate is verified" do
+      Puppet::SSL::Ocsp::Verifier.stubs(:verify).returns([{:valid => true}])
+      @host.ocsp_verify(true, @store).should be_true
+    end
+
+    it "should return false if certificate has been revoked" do
+      Puppet::SSL::Ocsp::Verifier.stubs(:verify).returns([{:valid => false}])
+      @host.ocsp_verify(true, @store).should be_false
+    end
+
+    it "should return false if an error occured during verification" do
+      @store.stubs(:current_cert).returns(stub 'cert', :subject => "Subject")
+      Puppet::SSL::Ocsp::Verifier.stubs(:verify).raises(Puppet::SSL::Ocsp::Response::VerificationError)
+      @host.ocsp_verify(true, @store).should be_false
     end
   end
 

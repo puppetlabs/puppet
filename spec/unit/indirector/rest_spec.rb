@@ -49,6 +49,7 @@ describe Puppet::Indirector::REST do
     @response = stub('mock response', :body => 'result', :code => "200")
     @response.stubs(:[]).with('content-type').returns "text/plain"
     @response.stubs(:[]).with('content-encoding').returns nil
+    @rest_class.enable_ocsp_verification
 
     @searcher = @rest_class.new
     @searcher.stubs(:model).returns @model
@@ -88,6 +89,19 @@ describe Puppet::Indirector::REST do
     @rest_class.expects(:port_setting).returns nil
     Puppet.settings.expects(:value).with(:masterport).returns "543"
     @rest_class.port.should == 543
+  end
+
+  it "should have a method to not use ocsp_verification" do
+    @rest_class.should respond_to(:disable_ocsp_verification)
+  end
+
+  it "should default to do ocsp verifications" do
+    @rest_class.should be_ocsp_verification_enabled
+  end
+
+  it "should do no ocsp verifications if told so" do
+    @rest_class.disable_ocsp_verification
+    @rest_class.should_not be_ocsp_verification_enabled
   end
 
   describe "when making http requests" do
@@ -134,6 +148,64 @@ describe Puppet::Indirector::REST do
       expect do
         @searcher.http_request(:get, stub('request'))
       end.to raise_error(/some other message/)
+    end
+
+    describe "with OCSP verification" do
+      before do
+        Puppet.settings[:ocsp_verification] = true
+
+        Puppet[:confdir] = tmpdir('conf')
+        cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server').content
+
+        @ssl_context = stub 'X509 Store Context',:current_cert => cert
+        @sslhost = stub 'ssl host'
+        Puppet::SSL::Host.stubs(:localhost).returns @sslhost
+
+        @connection = Net::HTTP.new('my_server', 8140)
+        @searcher.stubs(:network).returns(@connection)
+      end
+
+      it "should check certificate status through OCSP" do
+        @sslhost.expects(:ocsp_verify).with(true, @ssl_context).returns true
+
+        @connection.stubs(:get).with do
+          @connection.verify_callback.call(true, @ssl_context)
+        end
+
+        @searcher.http_request(:get, stub('request'))
+      end
+
+      it "should return the ocsp verification status to the SSL layer" do
+        @sslhost.expects(:ocsp_verify).with(true, @ssl_context).returns false
+
+        @connection.stubs(:get).with do
+          @connection.verify_callback.call(true, @ssl_context).should be_false
+        end
+
+        @searcher.http_request(:get, stub('request'))
+      end
+
+      it "should not check OCSP verification for the ocsp rest terminus" do
+        @rest_class.disable_ocsp_verification
+        @sslhost.expects(:ocsp_verify).never
+
+        @connection.stubs(:get).with do
+          @connection.verify_callback.call(true, @ssl_context)
+        end
+
+        @searcher.http_request(:get, stub('request'))
+      end
+
+      it "should not check OCSP verification if not enabled" do
+        Puppet.settings[:ocsp_verification] = false
+        @sslhost.expects(:ocsp_verify).never
+
+        @connection.stubs(:get).with do
+          @connection.verify_callback.call(true, @ssl_context)
+        end
+
+        @searcher.http_request(:get, stub('request'))
+      end
     end
   end
 

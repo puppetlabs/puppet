@@ -93,6 +93,20 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       end
     end
 
+    describe "and determining peer certificate from request header" do
+      it "should return nothing if no certificate header are present" do
+        req = mk_req('/')
+        @handler.certificate(req).should be_nil
+      end
+
+      it "should return a puppet certificate instance" do
+        req = mk_req('/', "HTTP_X_CLIENT_CERTIFICATE" => "-----BEGIN CERTIFICATE-----\n\tMIICTzCCAbigAwIBAgIBBDANBgkqhkiG9w0BAQUFADAfMR0wGwYDVQQDDBRQdXBw\n\tZXQgQ0E6IGxvY2FsaG9zdDAeFw0xMTExMjQxNTA1MzRaFw0xNjExMjMxNTA1MzRa\n\tMB4xHDAaBgNVBAMME3Rlc3QucHVwcGV0bGFicy5jb20wgZ8wDQYJKoZIhvcNAQEB\n\tBQADgY0AMIGJAoGBAPMA6HwnaWY2xDeMTf1M761HYocrUv+2nI25LYzIqP6WL9x5\n\tCQ6O2+4Q+3mf2b6P+NRb7HnoB3Nyi+jooXwRaLucxDq5Nr/bc2iN46UGKlGpdEUF\n\tcu3E85i24hzce9/y4qhpbQmsxs8ql1GdihaBBukWFCu8M1bV0DPM5nxQpXOrAgMB\n\tAAGjgZswgZgwDAYDVR0TAQH/BAIwADA3BglghkgBhvhCAQ0EKhYoUHVwcGV0IFJ1\n\tYnkvT3BlblNTTCBJbnRlcm5hbCBDZXJ0aWZpY2F0ZTAOBgNVHQ8BAf8EBAMCBaAw\n\tHQYDVR0OBBYEFN1sMM/L9K/li6BudhTm38dZwF5wMCAGA1UdJQEB/wQWMBQGCCsG\n\tAQUFBwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQUFAAOBgQAhem3OXQ4txjrLqveT\n\tiZaPiVxfaf7uhEL0JUfnrtViq3tNbIGGW2nL2nYoKY8a6dxOl8KbgfGJzNI0HUj1\n\tTlqWFTWlXV7CpnoGy7S9ey131yWGjxhr468jZJMbszILYaoL4Lu93f0fWulfRGqQ\n\tO5tae/PkgMvcoZvcmZWTLkEcXw==\n\t-----END CERTIFICATE-----")
+        @handler.certificate(req).should be_a(Puppet::SSL::Certificate)
+        @handler.certificate(req).content.serial.should == 4
+        @handler.certificate(req).content.subject.to_s.should == "/CN=test.puppetlabs.com"
+      end
+    end
+
     describe "and determining the request parameters" do
       it "should include the HTTP request parameters, with the keys as symbols" do
         req = mk_req('/?foo=baz&bar=xyzzy')
