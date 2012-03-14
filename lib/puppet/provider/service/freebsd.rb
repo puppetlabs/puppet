@@ -5,9 +5,9 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   confine :operatingsystem => [:freebsd]
   defaultfor :operatingsystem => [:freebsd]
 
-  @@rcconf = '/etc/rc.conf'
-  @@rcconf_local = '/etc/rc.conf.local'
-  @@rcconf_dir = '/etc/rc.conf.d'
+  class_variable_set(:@@rcconf,       '/etc/rc.conf')
+  class_variable_set(:@@rcconf_local, '/etc/rc.conf.local')
+  class_variable_set(:@@rcconf_dir,   '/etc/rc.conf.d')
 
   def self.defpath
     superclass.defpath
