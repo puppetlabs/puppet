@@ -22,7 +22,7 @@ describe Puppet::Transaction::Report::Yaml do
     Puppet::Transaction::Report::Yaml.name.should == :yaml
   end
 
-  it "should inconditionnally save/load from the --lastrunreport setting" do
+  it "should unconditionally save/load from the --lastrunreport setting" do
     subject.path(:me).should == Puppet[:lastrunreport]
   end
 end
