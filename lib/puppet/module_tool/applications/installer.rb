@@ -94,6 +94,7 @@ module Puppet::Module::Tool
         end
 
         if @ignore_dependencies && @source == :filesystem
+          @urls   = {}
           @remote = { "#{@module_name}@#{@version}" => { } }
           @versions = {
             @module_name => [
