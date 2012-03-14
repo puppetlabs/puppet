@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'stringio'
 
 provider = Puppet::Type.type(:package).provider(:dpkg)
 
@@ -23,7 +24,7 @@ describe provider do
 
     it "should use dpkg-query" do
       provider.expects(:command).with(:dpkgquery).returns "myquery"
-      provider.expects(:execpipe).with("myquery -W --showformat '${Status} ${Package} ${Version}\\n'").returns @fakeresult
+      provider.expects(:execpipe).with("myquery -W --showformat '${Status} ${Package} ${Version}\\n'").yields StringIO.new(@fakeresult)
 
       provider.instances
     end
