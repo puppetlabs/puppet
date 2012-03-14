@@ -10,13 +10,13 @@ module Puppet::Module::Tool
     # Read the +filename+ and eval its Ruby code to set values in the Metadata
     # +metadata+ instance.
     def self.evaluate(metadata, filename)
-      returning(new(metadata)) do |builder|
-        if File.file?(filename)
-          builder.instance_eval(File.read(filename.to_s), filename.to_s, 1)
-        else
-          Puppet.warning "No Modulefile: #{filename}"
-        end
+      builder = new(metadata)
+      if File.file?(filename)
+        builder.instance_eval(File.read(filename.to_s), filename.to_s, 1)
+      else
+        Puppet.warning "No Modulefile: #{filename}"
       end
+      return builder
     end
 
     # Instantiate with the Metadata +metadata+ instance.

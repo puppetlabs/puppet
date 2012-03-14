@@ -117,8 +117,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     lines = ()
     begin
       execpipe("#{command(:semodule)} --list") do |output|
-        lines = output.readlines
-        lines.each_line do |line|
+        output.each_line do |line|
           line.chomp!
           bits = line.split
           if bits[0] == @resource[:name]

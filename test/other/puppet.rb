@@ -8,7 +8,6 @@ require 'puppettest'
 # Test the different features of the main puppet module
 class TestPuppetModule < Test::Unit::TestCase
   include PuppetTest
-  include SignalObserver
 
   def mkfakeclient
     Class.new(Puppet::Network::Client) do
