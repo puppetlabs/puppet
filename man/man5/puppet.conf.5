@@ -257,6 +257,13 @@ The file in which puppet agent stores a list of the classes associated with the 
 .
 .IP "" 0
 .
+.SS "client"
+This will cause the daemon to run without ever checking for its configuration automatically, and only makes sense when puppet agent is being run with listen = true\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: true
+.
+.IP "" 0
 .SS "client_datadir"
 The directory in which serialized data is stored on the client\.
 .
