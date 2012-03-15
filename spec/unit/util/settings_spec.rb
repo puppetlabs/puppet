@@ -411,13 +411,6 @@ describe Puppet::Util::Settings do
       @settings.parse
     end
 
-    it "should set a timer that triggers reparsing, even if the file does not exist" do
-      FileTest.expects(:exist?).returns false
-      @settings.expects(:set_filetimeout_timer)
-
-      @settings.parse
-    end
-
     it "should return values set in the configuration file" do
       text = "[main]
       one = fileval
@@ -558,12 +551,6 @@ describe Puppet::Util::Settings do
         File.expects(:read).with(somefile).returns(text)
         File.expects(:expand_path).with(somefile).returns somefile
         @settings[:config] = somefile
-      end
-
-      it "should not set a timer" do
-        EventLoop::Timer.expects(:new).never
-
-        @settings.parse
       end
     end
   end
@@ -1054,46 +1041,6 @@ describe Puppet::Util::Settings do
           @settings.print_configs.should be_true
         end
       end
-    end
-  end
-
-  describe "when setting a timer to trigger configuration file reparsing" do
-    before do
-      @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :foo, :filetimeout => [5, "eh"]
-    end
-
-    it "should do nothing if no filetimeout setting is available" do
-      @settings.expects(:value).with(:filetimeout).returns nil
-      EventLoop::Timer.expects(:new).never
-      @settings.set_filetimeout_timer
-    end
-
-    it "should always convert the timer interval to an integer" do
-      @settings.expects(:value).with(:filetimeout).returns "10"
-      EventLoop::Timer.expects(:new).with(:interval => 10, :start? => true, :tolerance => 1)
-      @settings.set_filetimeout_timer
-    end
-
-    it "should do nothing if the filetimeout setting is not greater than 0" do
-      @settings.expects(:value).with(:filetimeout).returns -2
-      EventLoop::Timer.expects(:new).never
-      @settings.set_filetimeout_timer
-    end
-
-    it "should create a timer with its interval set to the filetimeout, start? set to true, and a tolerance of 1" do
-      @settings.expects(:value).with(:filetimeout).returns 5
-      EventLoop::Timer.expects(:new).with(:interval => 5, :start? => true, :tolerance => 1)
-
-      @settings.set_filetimeout_timer
-    end
-
-    it "should reparse when the timer goes off" do
-      EventLoop::Timer.expects(:new).with(:interval => 5, :start? => true, :tolerance => 1).yields
-
-      @settings.expects(:reparse)
-
-      @settings.set_filetimeout_timer
     end
   end
 

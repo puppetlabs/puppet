@@ -212,7 +212,7 @@ WRAPPER
 
     if @face.is_a?(Class)
       @face.class_eval do eval wrapper, nil, file, line end
-      @face.define_method(internal_name, &block)
+      @face.send(:define_method, internal_name, &block)
       @when_invoked = @face.instance_method(name)
     else
       @face.instance_eval do eval wrapper, nil, file, line end
