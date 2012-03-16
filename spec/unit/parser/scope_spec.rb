@@ -3,13 +3,12 @@ require 'spec_helper'
 
 describe Puppet::Parser::Scope do
   before :each do
-    @topscope = Puppet::Parser::Scope.new
     # This is necessary so we don't try to use the compiler to discover our parent.
-    @topscope.parent = nil
     @scope = Puppet::Parser::Scope.new
     @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope.source = Puppet::Resource::Type.new(:node, :foo)
+    @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
-    @topscope.compiler = @scope.compiler
   end
 
   it "should be able to store references to class scopes" do
@@ -134,6 +133,7 @@ describe Puppet::Parser::Scope do
       thirdscope = Puppet::Parser::Scope.new
       thirdscope.parent = @scope
       thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
+      @scope.source = Puppet::Resource::Type.new(:hostclass, :bar, :module_name => "bar")
 
       @topscope.setvar("var2","parentval")
       @scope.setvar("var2","childval")

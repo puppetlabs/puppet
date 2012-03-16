@@ -238,7 +238,7 @@ describe Puppet::Resource::Type do
 
   describe "when setting its parameters in the scope" do
     before do
-      @scope = Puppet::Parser::Scope.new(:compiler => stub("compiler", :environment => Puppet::Node::Environment.new), :source => stub("source"))
+      @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
