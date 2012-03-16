@@ -64,6 +64,9 @@ RSpec.configure do |config|
     end
 
 
+    # The process environment is a shared, persistent resource.
+    $old_env = ENV.to_hash
+
     # REVISIT: I think this conceals other bad tests, but I don't have time to
     # fully diagnose those right now.  When you read this, please come tell me
     # I suck for letting this float. --daniel 2011-04-21
@@ -114,6 +117,15 @@ RSpec.configure do |config|
       end
     end
     $saved_indirection_state = {}
+
+    # Restore the global process environment.  Can't just assign because this
+    # is a magic variable, sadly, and doesn't do that™.  It is sufficiently
+    # faster to use the compare-then-set model to avoid excessive work that it
+    # justifies the complexity.  --daniel 2012-03-15
+    unless ENV.to_hash == $old_env
+      ENV.clear
+      $old_env.each {|k, v| ENV[k] = v }
+    end
 
     # Some tests can cause us to connect, in which case the lingering
     # connection is a resource that can cause unexpected failure in later

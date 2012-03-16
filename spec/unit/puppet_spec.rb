@@ -9,4 +9,10 @@ describe Puppet do
       Puppet.should respond_to(level)
     end
   end
+
+  it "should be able to change the path" do
+    newpath = ENV["PATH"] + ":/something/else"
+    Puppet[:path] = newpath
+    ENV["PATH"].should == newpath
+  end
 end
