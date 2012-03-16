@@ -642,11 +642,18 @@ class Puppet::Util::Settings
     value
   end
 
+
+
+
   # TODO cprice: rename this.
+  def setdefaults(section, defs)
+    Puppet.deprecation_warning("'setdefaults' is deprecated and will be removed; please call 'define_settings' instead")
+    define_settings(section, defs)
+  end
 
   # Set a bunch of defaults in a given section.  The sections are actually pretty
   # pointless, but they help break things up a bit, anyway.
-  def setdefaults(section, defs)
+  def define_settings(section, defs)
     section = section.to_sym
     call = []
     defs.each { |name, hash|

@@ -49,8 +49,8 @@ module Puppet
         #  these are not getting set as "defaults" any more.  Best options are probably:
         #   1. special-case this during "initialize_application_defaults" in settings.rb,
         #   2. Allow :application_defaults settings category to carry these hashes with them somehow,
-        #   3. delay the original call to setdefaults/definesettings for the application settings,
-        #   4. make a second (override) call to "setdefaults/definesettings" during initialize_application_defaults
+        #   3. delay the original call to define_settings for the application settings,
+        #   4. make a second (override) call to "define_settings" during initialize_application_defaults
         #if master?
         #  {
         #    :default => "$vardir/log",

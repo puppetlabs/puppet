@@ -5,7 +5,7 @@ module Puppet
 
   # TODO cprice: get rid of all Puppet.run_mode and Puppet.application_name from this file.
 
-  setdefaults(:main,
+  define_settings(:main,
     :confdir  => {
         :default  => nil,
         :type     => :directory,
@@ -35,7 +35,7 @@ module Puppet
     }
   )
 
-  setdefaults(:main,
+  define_settings(:main,
     :logdir => {
         :default  => nil,
         :type     => :directory,
@@ -43,7 +43,7 @@ module Puppet
     }
   )
 
-  setdefaults(:main,
+  define_settings(:main,
     :trace => {
         :default => false,
 			  :type		=> :boolean,
@@ -332,7 +332,7 @@ module Puppet
             "than in the site manifest.",
     }
   )
-  Puppet.setdefaults(:module_tool,
+  Puppet.define_settings(:module_tool,
     :module_repository  => {
 			:default		=> 'http://forge.puppetlabs.com',
 			:desc				=> "The module repository",
@@ -352,7 +352,7 @@ module Puppet
   end
 
 
-    Puppet.setdefaults(
+    Puppet.define_settings(
     :main,
 
     # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
@@ -513,7 +513,7 @@ EOT
     }
   )
 
-    setdefaults(
+    define_settings(
     :ca,
     :ca_name => {
 			:default		=> "Puppet CA: $certname",
@@ -658,7 +658,7 @@ EOT
   # TODO cprice: this may need some revisiting, especially the bit where we are using Puppet[:name] as if it were
   #  already set...
 
-    setdefaults(:application,
+    define_settings(:application,
     #Puppet.settings[:name],
     :config_file_name => {
         :type     => :string,
@@ -691,7 +691,7 @@ EOT
     }
   )
 
-  setdefaults(:master,
+  define_settings(:master,
     :user => {
 			:default		=> "puppet",
 			:desc				=> "The user puppet master should run as.",
@@ -835,7 +835,7 @@ EOT
     }
   )
 
-  setdefaults(:metrics,
+  define_settings(:metrics,
     :rrddir => {
       :type     => :directory,
 			:default  => "$vardir/rrd",
@@ -853,7 +853,7 @@ EOT
     }
   )
 
-  setdefaults(:device,
+  define_settings(:device,
     :devicedir =>  {
 			  :default  => "$vardir/devices",
         :type     => :directory,
@@ -866,7 +866,7 @@ EOT
     }
   )
 
-  setdefaults(:agent,
+  define_settings(:agent,
     :node_name_value => {
 			:default => "$certname",
       :desc => "The explicit value used for the node name for all requests the agent
@@ -1146,7 +1146,7 @@ EOT
     }
   )
 
-  setdefaults(:inspect,
+  define_settings(:inspect,
     :archive_files => {
         :type		    => :boolean,
         :default		=> false,
@@ -1160,7 +1160,7 @@ EOT
 
   # Plugin information.
 
-    setdefaults(
+    define_settings(
     :main,
     :plugindest => {
       :type       => :directory,
@@ -1188,7 +1188,7 @@ EOT
 
   # Central fact information.
 
-    setdefaults(
+    define_settings(
     :main,
     :factpath => {
       :type     => :path,
@@ -1201,7 +1201,7 @@ EOT
   )
 
 
-    setdefaults(
+    define_settings(
     :tagmail,
     :tagmap => {
 			:default		=> "$confdir/tagmail.conf",
@@ -1223,7 +1223,7 @@ EOT
     }
   )
 
-    setdefaults(
+    define_settings(
     :rails,
     :dblocation => {
 			:default  => "$statedir/clientconfigs.sqlite3",
@@ -1294,7 +1294,7 @@ EOT
     }
   )
 
-    setdefaults(
+    define_settings(
     :couchdb,
 
     :couchdb_url => {
@@ -1303,7 +1303,7 @@ EOT
     }
   )
 
-    setdefaults(
+    define_settings(
     :transaction,
     :tags => {
 			:default		=> "",
@@ -1325,7 +1325,7 @@ EOT
     }
   )
 
-    setdefaults(
+    define_settings(
     :main,
     :external_nodes => {
         :default  => "none",
@@ -1340,7 +1340,7 @@ EOT
     }
     )
 
-        setdefaults(
+        define_settings(
         :ldap,
     :ldapnodes => {
 			:default		=> false,
@@ -1415,7 +1415,7 @@ EOT
     }
   )
 
-  setdefaults(:master,
+  define_settings(:master,
     :storeconfigs => {
       :default => false,
 			:type		=> :boolean,
@@ -1452,7 +1452,7 @@ database from within the Puppet Master process."
 
   # This doesn't actually work right now.
 
-    setdefaults(
+    define_settings(
     :parser,
 
     :lexical => {
@@ -1467,7 +1467,7 @@ database from within the Puppet Master process."
       directories.",
     }
   )
-  setdefaults(
+  define_settings(
     :puppetdoc,
     :document_all => {
         :default => false,

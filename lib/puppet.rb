@@ -53,8 +53,8 @@ module Puppet
   require 'puppet/feature/base'
 
   # Store a new default value.
-  def self.setdefaults(section, hash)
-    @@settings.setdefaults(section, hash)
+  def self.define_settings(section, hash)
+    @@settings.define_settings(section, hash)
   end
 
   # configuration parameter access and stuff

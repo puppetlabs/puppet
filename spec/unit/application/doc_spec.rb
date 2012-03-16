@@ -272,7 +272,7 @@ describe Puppet::Application::Doc do
         @doc.options.stubs(:[]).with(:outputdir).returns('doc')
         @doc.options.stubs(:[]).with(:charset).returns(nil)
         Puppet.settings.stubs(:[]=).with(:document_all, false)
-        Puppet.settings.stubs(:setdefaults)
+        Puppet.settings.stubs(:define_settings)
         Puppet::Util::RDoc.stubs(:rdoc)
         File.stubs(:expand_path).with('modules').returns('modules')
         File.stubs(:expand_path).with('manifests').returns('manifests')

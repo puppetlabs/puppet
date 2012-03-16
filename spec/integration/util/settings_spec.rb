@@ -12,7 +12,7 @@ describe Puppet::Util::Settings do
 
   it "should be able to make needed directories" do
     settings = Puppet::Util::Settings.new
-    settings.setdefaults :main, minimal_default_settings.update(
+    settings.define_settings :main, minimal_default_settings.update(
         :maindir => {
             :default => tmpfile("main"),
             :type => :directory,
@@ -26,7 +26,7 @@ describe Puppet::Util::Settings do
 
   it "should make its directories with the correct modes" do
     settings = Puppet::Util::Settings.new
-    settings.setdefaults :main,  minimal_default_settings.update(
+    settings.define_settings :main,  minimal_default_settings.update(
         :maindir => {
             :default => tmpfile("main"),
             :type => :directory,

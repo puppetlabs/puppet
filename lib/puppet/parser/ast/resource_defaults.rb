@@ -17,7 +17,7 @@ class Puppet::Parser::AST
       params = @parameters.safeevaluate(scope)
 
       parsewrap do
-        scope.setdefaults(type, params)
+        scope.define_settings(type, params)
       end
     end
   end

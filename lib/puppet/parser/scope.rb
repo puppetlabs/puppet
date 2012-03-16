@@ -309,7 +309,7 @@ class Puppet::Parser::Scope
   # Set defaults for a type.  The typename should already be downcased,
   # so that the syntax is isolated.  We don't do any kind of type-checking
   # here; instead we let the resource do it when the defaults are used.
-  def setdefaults(type, params)
+  def define_settings(type, params)
     table = @defaults[type]
 
     # if we got a single param, it'll be in its own array
