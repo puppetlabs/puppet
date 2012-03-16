@@ -5,7 +5,7 @@ require 'puppet/defaults'
 require 'puppet/rails'
 
 describe "Puppet defaults" do
-    include Puppet::Util::Execution
+  include Puppet::Util::Execution
   after { Puppet.settings.clear }
 
   describe "when setting the :factpath" do
