@@ -9,6 +9,7 @@ describe Puppet::Parser::Scope do
     @scope = Puppet::Parser::Scope.new
     @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
     @scope.parent = @topscope
+    @topscope.compiler = @scope.compiler
   end
 
   it "should be able to store references to class scopes" do
@@ -128,10 +129,19 @@ describe Puppet::Parser::Scope do
       @scope.lookupvar("var").should == "childval"
     end
 
+    it "should be able to look up intermediary variables in parent scopes (DEPRECATED)" do
+      Puppet.expects(:deprecation_warning)
+      thirdscope = Puppet::Parser::Scope.new
+      thirdscope.parent = @scope
+      thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
+
+      @topscope.setvar("var2","parentval")
+      @scope.setvar("var2","childval")
+      thirdscope.lookupvar("var2").should == "childval"
+    end
+
     describe "and the variable is qualified" do
-      before do
-        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode"))
-        @scope.compiler = @compiler
+      before :each do
         @known_resource_types = @scope.known_resource_types
       end
 
@@ -151,6 +161,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from main" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("")
 
         other_scope.setvar("othervar", "otherval")
@@ -159,6 +170,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other")
 
         other_scope.setvar("var", "otherval")
@@ -167,6 +179,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up deeply qualified variables" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other::deep::klass")
 
         other_scope.setvar("var", "otherval")
@@ -175,28 +188,33 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return ':undefined' for qualified variables that cannot be found in other classes" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other::deep::klass")
 
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
+        Puppet.expects(:deprecation_warning).never
         klass = newclass("other::deep::klass")
-        @scope.expects(:warning)
+        @scope.expects(:warning).at_least_once
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
-        @scope.expects(:warning)
+        Puppet.expects(:deprecation_warning).never
+        @scope.expects(:warning).at_least_once
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
+        Puppet.expects(:deprecation_warning).never
         @scope.stubs(:warning)
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
+        Puppet.expects(:deprecation_warning).never
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
         @scope.lookupvar("other::deep::klass::var").should == :undefined
