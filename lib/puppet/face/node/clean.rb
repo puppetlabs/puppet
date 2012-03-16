@@ -29,10 +29,14 @@ Puppet::Face.define(:node, '0.0.1') do
       options = args.last
       raise "At least one node should be passed" if nodes.empty? || nodes == options
 
-      # TODO: this is a hack and should be removed if faces provide the proper
-      # infrastructure to set the run mode.
-      require 'puppet/util/run_mode'
-      $puppet_application_mode = Puppet::Util::RunMode[:master]
+
+      # TODO cprice: experimenting with getting rid of global run mode stuff.
+
+      ## TODO: this is a hack and should be removed if faces provide the proper
+      ## infrastructure to set the run mode.
+      #require 'puppet/util/run_mode'
+      #$puppet_application_mode = Puppet::Util::RunMode[:master]
+      Puppet.settings.set_value(:run_mode, :master, :application_defaults)
 
       if Puppet::SSL::CertificateAuthority.ca?
         Puppet::SSL::Host.ca_location = :local

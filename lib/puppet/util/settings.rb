@@ -340,9 +340,11 @@ class Puppet::Util::Settings
     end
   end
 
+  # TODO cprice: document this...
   # Figure out the section name for the run_mode.
   def run_mode
-    Puppet.run_mode.name
+    #Puppet.run_mode.name
+    @run_mode || :user
   end
 
   # Return all of the parameters associated with a given section.
@@ -597,6 +599,8 @@ class Puppet::Util::Settings
 
   def set_value(param, value, type, options = {})
     param = param.to_sym
+
+
     unless setting = @config[param]
       if options[:ignore_bad_settings]
         return
@@ -631,6 +635,9 @@ class Puppet::Util::Settings
       # order issues.
       Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
     end
+
+    # TODO cprice: document this, because it's a HACK.
+    @run_mode = value if param == :run_mode
 
     value
   end
@@ -944,8 +951,11 @@ if @config.include?(:run_mode)
   # Yield each search source in turn.
   def each_source(environment)
     searchpath(environment).each do |source|
+      # TODO cprice: experimenting with getting rid of global run_mode
+
       # Modify the source as necessary.
       source = self.run_mode if source == :run_mode
+      #source = Puppet::Util::RunMode[self[:run_mode]] if source == :run_mode and app_defaults_initialized?
       yield source
     end
   end

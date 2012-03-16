@@ -87,7 +87,9 @@ describe Puppet::Face[:node, '0.0.1'] do
 
         it "should run in master mode" do
           subject.clean('hostname')
-          $puppet_application_mode.name.should == :master
+          # TODO cprice: document / cleanup
+          #$puppet_application_mode.name.should == :master
+          Puppet[:run_mode].should == :master
         end
 
         it "should set node cache as yaml" do

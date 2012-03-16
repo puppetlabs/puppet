@@ -87,13 +87,17 @@ module Puppet
     @@settings
   end
 
+
+  # TODO cprice: document; would like to get rid of this but it's just used in too many places right now.
   def self.run_mode
-    $puppet_application_mode || Puppet::Util::RunMode[:user]
+    #$puppet_application_mode || Puppet::Util::RunMode[:user]
+    Puppet::Util::RunMode[@@settings.run_mode]
   end
 
-  def self.application_name
-    $puppet_application_name ||= "apply"
-  end
+  # TODO cprice: experimenting with getting rid of these
+  #def self.application_name
+  #  $puppet_application_name ||= "apply"
+  #end
 
   # Load all of the configuration parameters.
   require 'puppet/defaults'

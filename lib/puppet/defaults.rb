@@ -25,6 +25,10 @@ module Puppet
         :desc     => "The name of the application, if we are running as one.  The\n" +
             "default is essentially $0 without the path or `.rb`.",
     },
+
+    ## TODO cprice: this probably needs to be treated specially, instead of treating it as a normal setting.  There are
+    ##  places where settings.rb tries to use its value to help in resolving other values, and that is no good for
+    ##  no body.
     :run_mode => {
         :default  => nil,
         :desc     => "The effective 'run mode' of the application: master, agent, or user.",

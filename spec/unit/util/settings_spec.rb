@@ -309,7 +309,7 @@ describe Puppet::Util::Settings do
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
       FileTest.stubs(:exist?).returns true
-      Puppet.stubs(:run_mode).returns stub('run_mode', :name => :mymode)
+      @settings.stubs(:run_mode).returns :mymode
     end
 
     it "should return default values if no values have been set" do

@@ -63,9 +63,10 @@ RSpec.configure do |config|
       }
     end
 
-    # these globals are set by Application
-    $puppet_application_mode = nil
-    $puppet_application_name = nil
+    # TODO cprice: document this
+    ## these globals are set by Application
+    #$puppet_application_mode = nil
+    #$puppet_application_name = nil
 
     # REVISIT: I think this conceals other bad tests, but I don't have time to
     # fully diagnose those right now.  When you read this, please come tell me
