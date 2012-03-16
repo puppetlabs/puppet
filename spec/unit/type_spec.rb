@@ -793,4 +793,61 @@ describe Puppet::Type.metaparamclass(:audit) do
       res.uniqueness_key.should == [ nil, 'root', myfile]
     end
   end
+
+  context "type attribute bracket methods" do
+    after :each do Puppet::Type.rmtype(:attributes)     end
+    let   :type do
+      Puppet::Type.newtype(:attributes) do
+        newparam(:name) {}
+      end
+    end
+
+    it "should work with parameters" do
+      type.newparam(:param) {}
+      instance = type.new(:name => 'test')
+
+      expect { instance[:param] = true }.should_not raise_error
+      expect { instance["param"] = true }.should_not raise_error
+      instance[:param].should == true
+      instance["param"].should == true
+    end
+
+    it "should work with meta-parameters" do
+      instance = type.new(:name => 'test')
+
+      expect { instance[:noop] = true }.should_not raise_error
+      expect { instance["noop"] = true }.should_not raise_error
+      instance[:noop].should == true
+      instance["noop"].should == true
+    end
+
+    it "should work with properties" do
+      type.newproperty(:property) {}
+      instance = type.new(:name => 'test')
+
+      expect { instance[:property] = true }.should_not raise_error
+      expect { instance["property"] = true }.should_not raise_error
+      instance.property(:property).must be
+      instance.should(:property).must be_true
+    end
+
+    it "should handle proprieties correctly" do
+      # Order of assignment is significant in this test.
+      props = {}
+      [:one, :two, :three].each {|prop| type.newproperty(prop) {} }
+      instance = type.new(:name => "test")
+
+      instance[:one] = "boo"
+      one = instance.property(:one)
+      instance.properties.must == [one]
+
+      instance[:three] = "rah"
+      three = instance.property(:three)
+      instance.properties.must == [one, three]
+
+      instance[:two] = "whee"
+      two = instance.property(:two)
+      instance.properties.must == [one, two, three]
+    end
+  end
 end
