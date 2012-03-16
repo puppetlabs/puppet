@@ -18,31 +18,31 @@ describe Puppet::Util::CommandLine do
     command_line.args.should            == %w{ --help whatever.pp }
   end
 
-  it "should use 'apply' if the first argument looks like a .pp file" do
+  it "should return nil if the first argument looks like a .pp file" do
     command_line = Puppet::Util::CommandLine.new("puppet", %w{ whatever.pp }, @tty )
 
-    command_line.subcommand_name.should == "apply"
+    command_line.subcommand_name.should == nil
     command_line.args.should            == %w{ whatever.pp }
   end
 
-  it "should use 'apply' if the first argument looks like a .rb file" do
+  it "should return nil if the first argument looks like a .rb file" do
     command_line = Puppet::Util::CommandLine.new("puppet", %w{ whatever.rb }, @tty )
 
-    command_line.subcommand_name.should == "apply"
+    command_line.subcommand_name.should == nil
     command_line.args.should            == %w{ whatever.rb }
   end
 
-  it "should use 'apply' if the first argument looks like a flag" do
+  it "should return nil if the first argument looks like a flag" do
     command_line = Puppet::Util::CommandLine.new("puppet", %w{ --debug }, @tty )
 
-    command_line.subcommand_name.should == "apply"
+    command_line.subcommand_name.should == nil
     command_line.args.should            == %w{ --debug }
   end
 
-  it "should use 'apply' if the first argument is -" do
+  it "should return nil if the first argument is -" do
     command_line = Puppet::Util::CommandLine.new("puppet", %w{ - }, @tty )
 
-    command_line.subcommand_name.should == "apply"
+    command_line.subcommand_name.should == nil
     command_line.args.should            == %w{ - }
   end
 
@@ -60,14 +60,16 @@ describe Puppet::Util::CommandLine do
     command_line.args.should            == []
   end
 
-  it "should use 'apply' if there are no arguments on a pipe" do
+  it "should return nil if there are no arguments on a pipe" do
     command_line = Puppet::Util::CommandLine.new("puppet", [], @pipe )
 
-    command_line.subcommand_name.should == "apply"
+    command_line.subcommand_name.should == nil
     command_line.args.should            == []
   end
 
-  # TODO cprice: document
+  # A lot of settings management stuff has moved into command_line.rb; we need to do a first pass over
+  #  all of the supplied command-line arguments before we attempt to determine what application or
+  #  face we're going to run, because we need to be able to load apps/faces from the libdir
   describe "when dealing with settings" do
     let(:command_line) { Puppet::Util::CommandLine.new( "foo", [], @tty ) }
 

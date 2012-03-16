@@ -87,8 +87,6 @@ describe Puppet::Face[:node, '0.0.1'] do
 
         it "should run in master mode" do
           subject.clean('hostname')
-          # TODO cprice: document / cleanup
-          #$puppet_application_mode.name.should == :master
           Puppet[:run_mode].should == :master
         end
 

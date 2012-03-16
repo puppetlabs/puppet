@@ -16,12 +16,6 @@ describe Puppet::Application do
     # avoid actually trying to parse any settings
     Puppet.settings.stubs(:parse)
 
-    #@app.stubs(:get_app_defaults).returns({
-    #    :run_mode => :user,
-    #    :logdir   => "/dev/null",
-    #    :confdir  => "/dev/null",
-    #    :vardir   => "/dev/null",
-    #})
   end
 
   describe "application defaults" do
@@ -74,54 +68,73 @@ describe Puppet::Application do
     end
   end
 
-  # TODO cprice: look into fixing these
 
-  #it "should sadly and frighteningly allow run_mode to change at runtime" do
-  #  class TestApp < Puppet::Application
-  #    run_mode :master
-  #    def run_command
-  #      # This is equivalent to calling these methods externally to the
-  #      # instance, but since this is what "real world" code is likely to do
-  #      # (and we need the class anyway) we may as well test that. --daniel 2011-02-03
-  #      set_run_mode self.class.run_mode "agent"
-  #    end
-  #  end
-  #
-  #  Puppet.features.stubs(:syslog?).returns(true)
-  #  Puppet[:run_mode].should == "user"
-  #
-  #  expect {
-  #    app = TestApp.new
-  #
-  #    Puppet[:run_mode].should == "master"
-  #
-  #    app.run
-  #
-  #    app.class.run_mode.name.should == :agent
-  #    $puppet_application_mode.name.should == :agent
-  #  }.should_not raise_error
-  #
-  #  Puppet[:run_mode].should == "agent"
-  #end
-  #
-  ## TODO cprice: look into fixing this
-  #
-  #it "it should not allow run mode to be set multiple times" do
-  #  pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
-  #  app = Puppet::Application.new
-  #  expect {
-  #    app.set_run_mode app.class.run_mode "master"
-  #    $puppet_application_mode.name.should == :master
-  #    app.set_run_mode app.class.run_mode "agent"
-  #    $puppet_application_mode.name.should == :agent
-  #  }.should raise_error
-  #end
-  #
-  ## TODO cprice: look into fixing this
-  #
-  #it "should explode when an invalid run mode is set at runtime, for great victory"
-  ## ...but you can, and while it will explode, that only happens too late for
-  ## us to easily test. --daniel 2011-02-03
+
+  # These tests may look a little weird and repetative in its current state;
+  #  it used to illustrate several ways that the run_mode could be changed
+  #  at run time; there are fewer ways now, but it would still be nice to
+  #  get to a point where it was entirely impossible.
+  describe "when dealing with run_mode" do
+
+    class TestApp < Puppet::Application
+      run_mode :master
+      def run_command
+        # no-op
+      end
+    end
+
+    it "should sadly and frighteningly allow run_mode to change at runtime via #initialize_app_defaults" do
+      Puppet.features.stubs(:syslog?).returns(true)
+      Puppet[:run_mode].should == :user
+
+      expect {
+        app = TestApp.new
+        app.initialize_app_defaults
+
+        Puppet[:run_mode].should == :master
+      }.to_not raise_error
+    end
+
+    it "should sadly and frighteningly allow run_mode to change at runtime via #run" do
+      expect {
+        app = TestApp.new
+        app.run
+
+        app.class.run_mode.name.should == :master
+
+        Puppet[:run_mode].should == :master
+
+      }.should_not raise_error
+
+    end
+  end
+
+
+  it "it should not allow initialize_app_defaults to be called multiple times" do
+    app = Puppet::Application.new
+    expect {
+      app.initialize_app_defaults
+    }.to_not raise_error
+
+    expect {
+      app.initialize_app_defaults
+    }.to raise_error
+  end
+
+
+  it "should explode when an invalid run mode is set at runtime, for great victory" do
+    class InvalidRunModeTestApp < Puppet::Application
+      run_mode :abracadabra
+      def run_command
+        # no-op
+      end
+    end
+
+    expect {
+      app = InvalidRunModeTestApp.new
+      app.initialize_app_defaults
+    }.to raise_error
+  end
 
   it "should have a run entry-point" do
     @app.should respond_to(:run)

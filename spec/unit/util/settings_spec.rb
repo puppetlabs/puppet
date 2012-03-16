@@ -5,6 +5,9 @@ require 'ostruct'
 describe Puppet::Util::Settings do
   include PuppetSpec::Files
 
+  MAIN_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::Settings.default_global_config_dir, "puppet.conf")
+  USER_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::Settings.default_user_config_dir, "puppet.conf")
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Util::Settings.new
@@ -38,11 +41,6 @@ describe Puppet::Util::Settings do
       lambda { @settings.define_settings(:section, :myvalue => {:default => "a value"}) }.should raise_error(ArgumentError)
     end
 
-    # We no longer try to guess the type
-    #it "should raise an error if we can't guess the type" do
-    #  lambda { @settings.define_settings(:section, :myvalue => {:default => Object.new, :desc => "An impossible object"}) }.should raise_error(ArgumentError)
-    #end
-
     it "should support specifying owner, group, and mode when specifying files" do
       @settings.define_settings(:section, :myvalue => {:type => :file, :default => "/some/file", :owner => "service", :mode => "boo", :group => "service", :desc => "whatever"})
     end
@@ -66,8 +64,33 @@ describe Puppet::Util::Settings do
     end
   end
 
+
   describe "when initializing application defaults do" do
-    # TODO cprice: write these tests
+    before do
+      @settings = Puppet::Util::Settings.new
+    end
+
+    it "should fail if someone attempts to initialize app defaults more than once" do
+      @settings.expects(:app_defaults_initialized?).returns(true)
+      expect {
+        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULTS)
+      }.to raise_error(Puppet::DevError)
+    end
+
+    it "should fail if the app defaults hash is missing any required values" do
+      expect {
+        @settings.initialize_app_defaults({})
+      }.to raise_error(Puppet::SettingsError)
+    end
+
+    # ultimately I'd like to stop treating "run_mode" as a normal setting, because it has so many special
+    #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
+    #  setter method gets properly called during app initialization.
+    it "should call the hacky run mode setter method until we do a better job of separating run_mode" do
+      @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+      @settings.expects(:run_mode=).with(:user)
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULTS)
+    end
   end
 
   describe "when setting values" do
@@ -376,6 +399,35 @@ describe Puppet::Util::Settings do
     end
   end
 
+
+  describe "when locating config files" do
+    before do
+      @settings = Puppet::Util::Settings.new
+    end
+
+    describe "when root" do
+      it "should look for #{MAIN_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
+        Puppet.features.stubs(:root?).returns(true)
+        FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false)
+        FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).never
+
+        @settings.parse()
+      end
+    end
+
+    describe "when not root" do
+      it "should look for #{MAIN_CONFIG_FILE_DEFAULT_LOCATION} and #{USER_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
+        Puppet.features.stubs(:root?).returns(false)
+
+        seq = sequence "load config files"
+        FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
+        FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
+
+        @settings.parse()
+      end
+    end
+  end
+
   describe "when parsing its configuration" do
     before do
       @settings = Puppet::Util::Settings.new
@@ -417,15 +469,6 @@ describe Puppet::Util::Settings do
 
       @settings.parse
     end
-
-    # TODO cprice: this test needs to be replaced with one that checks to ensure it uses the proper default files if
-    #  no config setting is defined
-    #it "should fail if no configuration setting is defined" do
-    #  @settings = Puppet::Util::Settings.new
-    #  #lambda {
-    #    @settings.parse
-    #  #}.should raise_error(RuntimeError)
-    #end
 
     it "should not try to parse non-existent files" do
       FileTest.expects(:exist?).with("/some/file").returns false
@@ -590,6 +633,37 @@ describe Puppet::Util::Settings do
         @settings.parse
       end
     end
+
+  end
+
+
+  describe "when there are multiple config files" do
+    let(:main_config_text) { "[main]\none = main\ntwo = main2" }
+    let(:user_config_text) { "[main]\none = user\n" }
+    let(:seq) { sequence "config_file_sequence" }
+
+    before do
+      Puppet.features.stubs(:root?).returns(false)
+      @settings = Puppet::Util::Settings.new
+      @settings.define_settings(:section,
+          { :one => { :default => "ONE", :desc => "a" },
+            :two => { :default => "TWO", :desc => "b" }, })
+      FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(true).in_sequence(seq)
+      @settings.expects(:read_file).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(main_config_text).in_sequence(seq)
+      FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(true).in_sequence(seq)
+      @settings.expects(:read_file).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(user_config_text).in_sequence(seq)
+    end
+
+    it "should return values from the config file in the user's home dir before values set in the main configuration file" do
+      @settings.parse
+      @settings[:one].should == "user"
+    end
+
+    it "should return values from the main config file if they aren't overridden in the config file in the user's home dir" do
+      @settings.parse
+      @settings[:two].should == "main2"
+    end
+
   end
 
   describe "when reparsing its configuration" do
@@ -687,7 +761,6 @@ describe Puppet::Util::Settings do
       text = "[main]\ntwo = disk-replace\n"
       @settings.expects(:read_file).returns(text)
       @settings.parse
-      #@settings.reparse
 
       # The originally-overridden value should be replaced with the default
       @settings[:one].should == "ONE"
@@ -700,7 +773,6 @@ describe Puppet::Util::Settings do
       # Init the value
       text = "[main]\none = initial-value\n"
       @settings.expects(:read_file).with("/test/file").returns(text)
-      #@settings.expects(:new).with("/test/userconfigfile").returns
       @settings.parse
       @settings[:one].should == "initial-value"
 

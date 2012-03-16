@@ -63,10 +63,6 @@ RSpec.configure do |config|
       }
     end
 
-    # TODO cprice: document this
-    ## these globals are set by Application
-    #$puppet_application_mode = nil
-    #$puppet_application_name = nil
 
     # REVISIT: I think this conceals other bad tests, but I don't have time to
     # fully diagnose those right now.  When you read this, please come tell me
@@ -84,23 +80,7 @@ RSpec.configure do |config|
     Puppet[:req_bits]  = 512
     Puppet[:keylength] = 512
 
-    # TODO cprice: revisit this; is there an advantage to calling set_value directly as opposed to calling
-    #  "initialize_app_defaults"?  Maybe it would allow us to prevent that method from getting called twice?
-    ### Set the confdir and vardir to gibberish so that tests
-    ### have to be correctly mocked.
-    ##Puppet.settings.initialize_app_defaults({
-    ##    :run_mode => :user,
-    ##    :logdir  => "/dev/null",
-    ##    :confdir => "/dev/null",
-    ##})
-    ###Puppet[:confdir] = "/dev/null"
-    ###Puppet[:vardir] = "/dev/null"
-    #Puppet.settings.set_value(:run_mode, :user, :application_defaults)
-    #Puppet.settings.set_value(:name, :apply, :application_defaults)
-    #Puppet.settings.set_value(:logdir, "/dev/null", :application_defaults)
-    #Puppet.settings.set_value(:confdir, "/dev/null", :application_defaults)
-    #Puppet.settings.set_value(:vardir, "/dev/null", :application_defaults)
-    #Puppet.settings.set_value(:rundir, "/dev/null", :application_defaults)
+    # Initialize "app defaults" settings to a good set of test values
     PuppetSpec::Settings::TEST_APP_DEFAULTS.each do |key, value|
       Puppet.settings.set_value(key, value, :application_defaults)
     end
@@ -121,7 +101,7 @@ RSpec.configure do |config|
   end
 
   config.after :each do
-    Puppet.settings.send(:clear_for_tests)
+    Puppet.settings.send(:clear_everything_for_tests)
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
     Puppet::Util::ExecutionStub.reset

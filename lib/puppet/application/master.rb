@@ -123,12 +123,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
-  # TODO cprice: look for a cleaner pattern here
   def app_defaults()
-    return @master_defaults if @master_defaults
-    @master_defaults = super
-    @master_defaults[:facts_terminus] = 'yaml'
-    @master_defaults
+    super.merge :facts_terminus => 'yaml'
   end
 
   def preinit

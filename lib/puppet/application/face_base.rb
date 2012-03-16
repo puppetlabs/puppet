@@ -18,11 +18,13 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.render_as = format.to_sym
   end
 
+  # This seems like a bad thing; it seems like--in an ideal world--a given app/face should have one constant run mode.
+  #  This isn't currently possible because of issues relating to the certificate authority, but I've left some notes
+  #  about "run_mode" in settings.rb and defaults.rb, and if we are able to tighten up the behavior / implementation
+  #  of that setting, we might want to revisit this.  --cprice 2012-03-16
   option("--mode RUNMODE", "-r") do |arg|
     raise "Invalid run mode #{arg}; supported modes are user, agent, master" unless %w{user agent master}.include?(arg)
     self.class.run_mode(arg.to_sym)
-    # TODO cprice: testing this out--clean up.
-    #set_run_mode self.class.run_mode
   end
 
 

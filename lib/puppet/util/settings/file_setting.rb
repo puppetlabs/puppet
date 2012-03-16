@@ -58,21 +58,9 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::StringSettin
     value
   end
 
-  # TODO cprice: this method is EVIL.  We should get rid of it and replace it with a new subclass called DirectorySetting.
-  #  I am going to do this very soon.  --cprice 2012-03-14
 
-  # Return the appropriate type.
   def type
-    value = @settings.value(self.name)
-    if @name.to_s =~ /dir/
-      return :directory
-    elsif value.to_s =~ /\/$/
-      return :directory
-    elsif value.is_a? String
-      return :file
-    else
-      return nil
-    end
+    :file
   end
 
   # Turn our setting thing into a Puppet::Resource instance.

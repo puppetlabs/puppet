@@ -124,13 +124,13 @@ describe Puppet::Util::Settings::FileSetting do
   describe "when being converted to a resource" do
     before do
       @settings = mock 'settings'
-      @file = Puppet::Util::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :mydir, :section => "mysect")
-      @settings.stubs(:value).with(:mydir).returns @basepath
+      @file = Puppet::Util::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
+      @file.stubs(:create_files?).returns true
+      @settings.stubs(:value).with(:myfile).returns @basepath
     end
 
-    it "should skip files that cannot determine their types" do
-      @file.expects(:type).returns nil
-      @file.to_resource.should be_nil
+    it "should return :file as its type" do
+      @file.type.should == :file
     end
 
     it "should skip non-existent files if 'create_files' is not enabled" do
@@ -149,13 +149,13 @@ describe Puppet::Util::Settings::FileSetting do
 
     describe "on POSIX systems", :if => Puppet.features.posix? do
       it "should skip files in /dev" do
-        @settings.stubs(:value).with(:mydir).returns "/dev/file"
+        @settings.stubs(:value).with(:myfile).returns "/dev/file"
         @file.to_resource.should be_nil
       end
     end
 
     it "should skip files whose paths are not strings" do
-      @settings.stubs(:value).with(:mydir).returns :foo
+      @settings.stubs(:value).with(:myfile).returns :foo
       @file.to_resource.should be_nil
     end
 
@@ -166,7 +166,7 @@ describe Puppet::Util::Settings::FileSetting do
     end
 
     it "should fully qualified returned files if necessary (#795)" do
-      @settings.stubs(:value).with(:mydir).returns "myfile"
+      @settings.stubs(:value).with(:myfile).returns "myfile"
       path = File.join(Dir.getwd, "myfile")
       # Dir.getwd can return windows paths with backslashes, so we normalize them using expand_path
       path = File.expand_path(path) if Puppet.features.microsoft_windows?
@@ -275,7 +275,7 @@ describe Puppet::Util::Settings::FileSetting do
     end
 
     it "should tag the resource with the setting name" do
-      @file.to_resource.should be_tagged("mydir")
+      @file.to_resource.should be_tagged("myfile")
     end
 
     it "should tag the resource with 'settings'" do
@@ -290,7 +290,7 @@ describe Puppet::Util::Settings::FileSetting do
   describe "when munging a filename" do
     it "should preserve trailing slashes" do
       settings = mock 'settings'
-      file = Puppet::Util::Settings::FileSetting.new(:settings => settings, :desc => "eh", :name => :mydir, :section => "mysect")
+      file = Puppet::Util::Settings::FileSetting.new(:settings => settings, :desc => "eh", :name => :myfile, :section => "mysect")
       path = @basepath + '/'
       file.munge(path).should == path
     end

@@ -30,12 +30,11 @@ Puppet::Face.define(:node, '0.0.1') do
       raise "At least one node should be passed" if nodes.empty? || nodes == options
 
 
-      # TODO cprice: experimenting with getting rid of global run mode stuff.
 
-      ## TODO: this is a hack and should be removed if faces provide the proper
-      ## infrastructure to set the run mode.
-      #require 'puppet/util/run_mode'
-      #$puppet_application_mode = Puppet::Util::RunMode[:master]
+      # This seems really bad; run_mode should be set as part of a class definition, and should
+      #  not be modifiable beyond that.  This is one of the only places left in the code that
+      #  tries to manipulate it.  I would like to get rid of it but I'm not entirely familiar
+      #  with what we are trying to do here, so I'm postponing for now... --cprice 2012-03-16
       Puppet.settings.set_value(:run_mode, :master, :application_defaults)
 
       if Puppet::SSL::CertificateAuthority.ca?

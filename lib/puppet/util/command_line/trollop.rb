@@ -66,13 +66,17 @@ class Parser
   ## for testing.)
   attr_reader :specs
 
-  # TODO cprice: docs
+  ## A flag that determines whether or not to attempt to automatically generate "short" options if they are not
+  ##  explicitly specified.
   attr_accessor :create_default_short_options
 
-  # TODO cprice: docs
+  ## A flag that determines whether or not to raise an error if the parser is passed one or more
+  ##  options that were not registered ahead of time.  If 'true', then the parser will simply
+  ##  ignore options that it does not recognize.
   attr_accessor :ignore_invalid_options
 
-  # TODO cprice: docs
+  ## A flag indicating whether or not the parser should attempt to handle "--help" and
+  ##  "--version" specially.  If 'false', it will treat them just like any other option.
   attr_accessor :handle_help_and_version
 
   ## Initializes the parser, and instance-evaluates any block given.

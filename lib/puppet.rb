@@ -88,16 +88,19 @@ module Puppet
   end
 
 
-  # TODO cprice: document; would like to get rid of this but it's just used in too many places right now.
   def self.run_mode
-    #$puppet_application_mode || Puppet::Util::RunMode[:user]
+    # This sucks (the existence of this method); there are a lot of places in our code that branch based the value of
+    # "run mode", but there used to be some really confusing code paths that made it almost impossible to determine
+    # when during the lifecycle of a puppet application run the value would be set properly.  A lot of the lifecycle
+    # stuff has been cleaned up now, but it still seems frightening that we rely so heavily on this value.
+    #
+    # I'd like to see about getting rid of the concept of "run_mode" entirely, but there are just too many places in
+    # the code that call this method at the moment... so I've settled for isolating it inside of the Settings class
+    # (rather than using a global variable, as we did previously...).  Would be good to revisit this at some point.
+    #
+    # --cprice 2012-03-16
     Puppet::Util::RunMode[@@settings.run_mode]
   end
-
-  # TODO cprice: experimenting with getting rid of these
-  #def self.application_name
-  #  $puppet_application_name ||= "apply"
-  #end
 
   # Load all of the configuration parameters.
   require 'puppet/defaults'

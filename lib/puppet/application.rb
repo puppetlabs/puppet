@@ -176,6 +176,23 @@ class Application
       result
     end
 
+    SHOULD_PARSE_CONFIG_DEPRECATION_MSG = "is no longer supported; config file parsing " +
+        "is now controlled by the puppet engine, rather than by individual applications.  This " +
+        "method will be removed in a future version of puppet."
+
+    def should_parse_config
+      Puppet.deprecation_warning("should_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
+    end
+
+    def should_not_parse_config
+      Puppet.deprecation_warning("should_not_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
+    end
+
+    def should_parse_config?
+      Puppet.deprecation_warning("should_parse_config? " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
+      true
+    end
+
     # used to declare code that handle an option
     def option(*options, &block)
       long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).gsub('-','_')
@@ -271,52 +288,17 @@ class Application
 
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    # TODO cprice: cleanup
-    #set_run_mode self.class.run_mode
     @options = {}
 
   end
 
-  ## WARNING: This is a totally scary, frightening, and nasty internal API.  We
-  ## strongly advise that you do not use this, and if you insist, we will
-  ## politely allow you to keep both pieces of your broken code.
-  ##
-  ## We plan to provide a supported, long-term API to deliver this in a way
-  ## that you can use.  Please make sure that you let us know if you do require
-  ## this, and this message is still present in the code. --daniel 2011-02-03
-  #def set_run_mode(mode)
-  #  @run_mode = mode
-  #  $puppet_application_mode = @run_mode
-  #  $puppet_application_name = name
-  #
-  #  ## XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
-  #  ##  the settings that are specific to them; need to decide whether to formally specify the list of such
-  #  ##  settings, or just allow them to run willy-nilly.
-  #  #if (mode.name == :master)
-  #  #  Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
-  #  #end
-  #  #
-  #  #
-  #  ### TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
-  #  #
-  #  #if Puppet.respond_to? :settings
-  #  #  # This is to reduce the amount of confusion in rspec
-  #  #  # because it might have loaded defaults.rb before the globals were set
-  #  #  # and thus have the wrong defaults for the current application
-  #  #  Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
-  #  #  Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
-  #  #  Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
-  #  #  #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
-  #  #  Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-  #  #  Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
-  #  #end
-  #end
-
   # This is the main application entry point
   def run
 
-    # TODO cprice: the names of these lifecycle phases really suck... but I'm not sure we can do anything about them
-    #  because existing apps/faces use them... maybe make some deprecated aliases?
+    # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
+    # names, and make deprecated aliases.  Also, Daniel suggests that we can probably get rid of this "plugin_hook"
+    # pattern, but we need to check with PE and the community first.  --cprice 2012-03-16
+    #
 
     exit_on_fail("get application-specific default settings") do
       plugin_hook('initialize_app_defaults') { initialize_app_defaults }
@@ -371,11 +353,12 @@ class Application
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
 
-    # TODO cprice: document this better.  We need to include the globals so that the app
-    #  has an opportunity to override them.
-    # Might be able to make this a little more efficient by sharing the Parser object
-    #  between the command line class and this one.
-    #
+    # He're we're building up all of the options that the application may need to handle.  The main
+    # puppet settings defined in "defaults.rb" have already been parsed once (in command_line.rb) by
+    # the time we get here; however, our app may wish to handle some of them specially, so we need to
+    # make the parser aware of them again.  We might be able to make this a bit more efficient by
+    # re-using the parser object that gets built up in command_line.rb.  --cprice 2012-03-16
+
     # Add all global options to it.
     Puppet.settings.optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|

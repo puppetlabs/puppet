@@ -1,9 +1,10 @@
-# !!!! TODO cprice: get rid of all run_mode/application_name calls in here...
-
 # The majority of Puppet's configuration settings are set in this file.
 module Puppet
 
-  # TODO cprice: get rid of all Puppet.run_mode and Puppet.application_name from this file.
+  #################################################################################################################
+  # NOTE: For information about the available values for the ":type" property of settings, see the docs for
+  #  Settings.define_settings.
+  #################################################################################################################
 
   define_settings(:main,
     :confdir  => {
@@ -19,16 +20,24 @@ module Puppet
         :type     => :directory,
         :desc     => "Where Puppet stores dynamic and growing data.  The default for this setting is calculated specially, like `confdir`_.",
     },
-    ### TODO cprice: this is usually getting set to a symbol value.  We don't officially have a setting type for that yet...
+
+    ### NOTE: this setting is usually being set to a symbol value.  We don't officially have a setting type for that yet,
+    ###  but we might want to consider creating one.
     :name     => {
         :default  => nil,
         :desc     => "The name of the application, if we are running as one.  The\n" +
             "default is essentially $0 without the path or `.rb`.",
     },
 
-    ## TODO cprice: this probably needs to be treated specially, instead of treating it as a normal setting.  There are
-    ##  places where settings.rb tries to use its value to help in resolving other values, and that is no good for
-    ##  no body.
+    ## This setting needs to go away.  As a first step, we could just make it a first-class property of the Settings
+    ##  class, instead of treating it as a normal setting.  There are places where the Settings class tries to use
+    ##  the value of run_mode to help in resolving other values, and that is no good for nobody.  It would cause
+    ##  infinite recursion and stack overflows without some chicanery... so, it needs to be cleaned up.
+    ##
+    ## As a longer term goal I think we should be looking into getting rid of run_mode altogether, but that is going
+    ##  to be a larger undertaking, as it is being branched on in a lot of places in the current code.
+    ##
+    ## --cprice 2012-03-16
     :run_mode => {
         :default  => nil,
         :desc     => "The effective 'run mode' of the application: master, agent, or user.",
@@ -39,6 +48,7 @@ module Puppet
     :logdir => {
         :default  => nil,
         :type     => :directory,
+        :mode     => 0750,
         :desc     => "The directory in which to store log files",
     }
   )
@@ -222,8 +232,6 @@ module Puppet
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store.",
 		},
     :facts_terminus => {
-      ### TODO cprice: re-wire the master to override this to yaml
-      #:default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
       :default => 'facter',
       :desc => "The node facts terminus.",
       :hook => proc do |value|
@@ -655,40 +663,36 @@ EOT
 
   # Define the config default.
 
-  # TODO cprice: this may need some revisiting, especially the bit where we are using Puppet[:name] as if it were
-  #  already set...
-
     define_settings(:application,
-    #Puppet.settings[:name],
-    :config_file_name => {
-        :type     => :string,
-        :default  => Puppet::Util::Settings.default_config_file_name,
-        :desc     => "The name of the puppet config file.",
-    },
-    :config => {
-        :type => :file,
-        :default		=> "$confdir/${config_file_name}",
-			  :desc				=> "The configuration file for #{Puppet[:name]}.",
-		},
-    :pidfile => {
-        :type => :file,
-        :default		=> "$rundir/$name.pid",
-			  :desc				=> "The pid file",
-		},
-    :bindaddress => {
-			:default		=> "",
-			:desc				=> "The address a listening server should bind to.  Mongrel servers
-      default to 127.0.0.1 and WEBrick defaults to 0.0.0.0.",
-		},
-    :servertype => {
-			:default => "webrick", :desc => "The type of server to use.  Currently supported
-      options are webrick and mongrel.  If you use mongrel, you will need
-      a proxy in front of the process or processes, since Mongrel cannot
-      speak SSL.",
+      :config_file_name => {
+          :type     => :string,
+          :default  => Puppet::Util::Settings.default_config_file_name,
+          :desc     => "The name of the puppet config file.",
+      },
+      :config => {
+          :type => :file,
+          :default		=> "$confdir/${config_file_name}",
+          :desc				=> "The configuration file for the current puppet application",
+      },
+      :pidfile => {
+          :type => :file,
+          :default		=> "$rundir/$name.pid",
+          :desc				=> "The pid file",
+      },
+      :bindaddress => {
+        :default		=> "",
+        :desc				=> "The address a listening server should bind to.  Mongrel servers
+        default to 127.0.0.1 and WEBrick defaults to 0.0.0.0.",
+      },
+      :servertype => {
+        :default => "webrick", :desc => "The type of server to use.  Currently supported
+        options are webrick and mongrel.  If you use mongrel, you will need
+        a proxy in front of the process or processes, since Mongrel cannot
+        speak SSL.",
 
-      :call_on_define => true, # Call our hook with the default value, so we always get the correct bind address set.
-      :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
-    }
+        :call_on_define => true, # Call our hook with the default value, so we always get the correct bind address set.
+        :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
+      }
   )
 
   define_settings(:master,

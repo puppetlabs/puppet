@@ -1,7 +1,7 @@
 require 'spec_helper'
-require 'puppet/util/command_line_utils/puppet_option_parser'
+require 'puppet/util/command_line/puppet_option_parser'
 
-module Puppet::Util::CommandLineUtils
+class Puppet::Util::CommandLine
   describe PuppetOptionParser do
     let(:option_parser) { PuppetOptionParser.new }
 
@@ -61,7 +61,18 @@ module Puppet::Util::CommandLineUtils
 
 
 
-    # TODO cprice: explain this insanity
+    # The ruby stdlib OptionParser has an awesome "feature" that you cannot disable, whereby if
+    #  it sees a short option that you haven't specifically registered with it (e.g., "-r"), it
+    #  will automatically attempt to expand it out to whatever long options that you might have
+    #  registered.  Since we need to do our option parsing in two passes (one pass against only
+    #  the global/puppet-wide settings definitions, and then a second pass that includes the
+    #  application or face settings--because we can't load the app/face until we've determined
+    #  the libdir), it is entirely possible that we intend to define our "short" option as part
+    #  of the second pass.  Therefore, if the option parser attempts to expand it out into a
+    #  long option during the first pass, terrible things will happen.
+    #
+    # A long story short: we need to have the ability to control this kind of behavior in our
+    #  option parser, and this test simply affirms that we do.
     it "should not try to expand short options that weren't explicitly registered" do
 
       [

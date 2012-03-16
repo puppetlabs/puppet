@@ -100,7 +100,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       @master.parse_options
     end
 
-    # TODO cprice: document why this sucks
     it "should support dns alt names from ARGV" do
       @master.command_line.stubs(:args).returns(["--dns_alt_names", "foo,bar,baz"])
 

@@ -13,7 +13,7 @@ class Puppet::Util::Settings
 
   require 'puppet/util/settings/string_setting'
   require 'puppet/util/settings/file_setting'
-  require 'puppet/util/settings/dir_setting'
+  require 'puppet/util/settings/directory_setting'
   require 'puppet/util/settings/boolean_setting'
 
   attr_accessor :files
@@ -21,7 +21,7 @@ class Puppet::Util::Settings
 
   ReadOnly = [:run_mode, :name]
 
-  # TODO cprice: determine which of these are actually useful / meaningful
+  # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
   REQUIRED_APP_SETTINGS = [:name, :run_mode, :logdir, :confdir, :vardir]
 
   def self.default_global_config_dir()
@@ -98,12 +98,9 @@ class Puppet::Util::Settings
       @values.delete(name)
     end
 
-    # TODO cprice: if this condition is really based on the fact that we are reparsing
-    #  the config file, then our parameters should be named more clearly.
-    #  --cprice 2012-03-06
-
-    # Don't clear the 'used' in this case, since it's a config file reparse,
-    # and we want to retain this info.
+    # Only clear the 'used' values if we were explicitly asked to clear out
+    #  :cli values; otherwise, it may be just a config file reparse,
+    #  and we want to retain this cli values.
     @used = [] if clear_cli
 
     @cache.clear
@@ -113,13 +110,13 @@ class Puppet::Util::Settings
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
   #
   # @return nil
-  def clear_for_tests()
+  def clear_everything_for_tests()
     @sync.synchronize do
       unsafe_clear(true, true)
       @app_defaults_initialized = false
     end
   end
-  private :clear_for_tests
+  private :clear_everything_for_tests
 
   # This is mostly just used for testing.
   def clearused
@@ -133,6 +130,7 @@ class Puppet::Util::Settings
   end
 
   def initialize_app_defaults(app_defaults)
+    raise Puppet::DevError, "Attempting to initialize application default settings more than once!" if app_defaults_initialized?
     REQUIRED_APP_SETTINGS.each do |key|
       raise Puppet::SettingsError, "missing required app default setting '#{key}'" unless app_defaults.has_key?(key)
     end
@@ -340,12 +338,18 @@ class Puppet::Util::Settings
     end
   end
 
-  # TODO cprice: document this...
   # Figure out the section name for the run_mode.
   def run_mode
-    #Puppet.run_mode.name
     @run_mode || :user
   end
+
+  # PRIVATE!  This only exists because we need a hook to validate the run mode when it's being set, and
+  #  it should never, ever, ever, ever be called from outside of this file.
+  def run_mode=(mode)
+    raise Puppet::DevError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
+    @run_mode = mode
+  end
+  private :run_mode=
 
   # Return all of the parameters associated with a given section.
   def params(section = nil)
@@ -364,18 +368,15 @@ class Puppet::Util::Settings
   # Parse the configuration file.  Just provides
   # thread safety.
   def parse
-    #config_file_paths =
-    #    begin
-    #      self[:config]
-    #    rescue SettingsError => err
-    #      "/etc/puppet/"
-    #    end
-    #raise "No :config setting defined; cannot parse unknown config file" unless self[:config]
+    # we are now supporting multiple config files; the "main" config file will be the one located in
+    # /etc/puppet (or overridden $confdir)... but we will also look for a config file in the user's home
+    # directory.  This was introduced in an effort to provide maximum backwards compatibility while
+    # de-coupling the process of locating the config file from the "run mode" of the application.
+    files = [main_config_file]
+    files << user_config_file unless Puppet.features.root?
 
-    # TODO cprice: document... precedence et al
     @sync.synchronize do
-      unsafe_parse(main_config_file)
-      unsafe_parse(user_config_file) unless Puppet.features.root?
+      unsafe_parse(files)
     end
 
     # Create a timer so that this file will get checked automatically
@@ -384,11 +385,24 @@ class Puppet::Util::Settings
   end
 
   def main_config_file
+    # the algorithm here is basically this:
+    #  * use the explicit config file location if one has been specified; this can be affected by modifications
+    #    to either the "confdir" or "config" settings (most likely via CLI arguments).
+    #  * if no explicit config location has been specified, we fall back to the default.
+    #
+    # The easiest way to determine whether an explicit one has been specified is to simply attempt to evaluate
+    #  the value of ":config".  This will obviously be successful if they've passed an explicit value for :config,
+    #  but it will also result in successful interpolation if they've only passed an explicit value for :confdir.
+    #
+    # If they've specified neither, then the interpolation will fail and we'll get an exception.
+    #
     begin
       return self[:config] if self[:config]
     rescue Puppet::SettingsError => err
-      # TODO cprice: doc
+      # This means we failed to interpolate, which means that they didn't explicitly specify either :config or
+      # :confdir... so we'll fall out to the default value.
     end
+    # return the default value.
     return File.join(self.class.default_global_config_dir, config_file_name)
   end
   private :main_config_file
@@ -398,30 +412,58 @@ class Puppet::Util::Settings
   end
   private :user_config_file
 
+  # This method is here to get around some life-cycle issues.  We need to be able to determine the config file name
+  # before the settings / defaults are fully loaded.  However, we also need to respect any overrides of this value
+  # that the user may have specified on the command line.
+  #
+  # The easiest way to do this is to attempt to read the setting, and if we catch an error (meaning that it hasn't been
+  #  set yet), we'll fall back to the default value.
   def config_file_name
     begin
       return self[:config_file_name] if self[:config_file_name]
     rescue Puppet::SettingsError => err
-      # TODO cprice: doc
+      # This just means that the setting wasn't explicitly set on the command line, so we will ignore it and
+      #  fall through to the default name.
     end
     return self.class.default_config_file_name
   end
   private :config_file_name
 
   # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
-  def unsafe_parse(file)
-    Puppet.debug("Looking for config file '#{file}'")
-    return unless FileTest.exist?(file)
-    begin
-      data = parse_file(file)
-      Puppet.debug("Parsed config file '#{file}'")
-    rescue => detail
-      Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
-      return
+  def unsafe_parse(files)
+    raise Puppet::DevError unless files.length > 0
+
+    # build up a single data structure that contains the values from all of the parsed files.
+    data = {}
+    files.each do |file|
+      next unless FileTest.exist?(file)
+      begin
+        file_data = parse_file(file)
+
+        # This is a little kludgy; basically we are merging a hash of hashes.  We can't use "merge" at the
+        # outermost level or we risking losing data from the hash we're merging into.
+        file_data.keys.each do |key|
+          if data.has_key?(key)
+            data[key].merge!(file_data[key])
+          else
+            data[key] = file_data[key]
+          end
+        end
+
+      rescue => detail
+        Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
+        return
+      end
     end
 
-    unsafe_clear(false)
+    # If we get here and don't have any data, we just return and don't muck with the current state of the world.
+    return if data.empty?
 
+    # If we get here then we have some data, so we need to clear out any previous settings that may have come from
+    #  config files.
+    unsafe_clear(false, false)
+
+    # And now we can repopulate with the values from our last parsing of the config files.
     metas = {}
     data.each do |area, values|
       metas[area] = values.delete(:_meta)
@@ -463,27 +505,23 @@ class Puppet::Util::Settings
       end
     end
   end
+  private :unsafe_parse
 
-
-  # The following method strikes me as a good example of how dynamic languages
-  #  can be abused; I'd really like to see some stronger typing on this stuff.
-  #  And I will totally try to do that if I get a chance.  :)
-  #  --cprice 2012-03-06
 
   # Create a new setting.  The value is passed in because it's used to determine
   # what kind of setting we're creating, but the value itself might be either
   # a default or a value, so we can't actually assign it.
+  #
+  # See #define_settings for documentation on the legal values for the ":type" option.
   def newsetting(hash)
     klass = nil
     hash[:section] = hash[:section].to_sym if hash[:section]
-
-    # TODO cprice: document these setting types and mention that some are placeholders for the future
 
     if type = hash[:type]
       unless klass = {
           :string     => StringSetting,
           :file       => FileSetting,
-          :directory  => DirSetting,
+          :directory  => DirectorySetting,
           :path       => StringSetting,
           :boolean    => BooleanSetting,
       } [type]
@@ -491,16 +529,9 @@ class Puppet::Util::Settings
       end
       hash.delete(:type)
     else
-      #case hash[:default]
-      #when true, false, "true", "false"
-      #  klass = BooleanSetting
-      #when /^\$\w+\//, /^\//, /^\w:\//
-      #  klass = FileSetting
-      #when String, Integer, Float, nil # nothing
-      #  klass = Setting
-      #else
-      #  raise ArgumentError, "Invalid value '#{hash[:default].inspect}' for #{hash[:name]}"
-      #end
+      # The only implicit typing we still do for settings is to fall back to "String" type if they didn't explicitly
+      # specify a type.  Personally I'd like to get rid of this too, and make the "type" option mandatory... but
+      # there was a little resistance to taking things quite that far for now.  --cprice 2012-03-19
       klass = StringSetting
     end
     hash[:settings] = self
@@ -522,6 +553,17 @@ class Puppet::Util::Settings
     }
   end
 
+  # Reparse our config file, if necessary.
+  def reparse
+    if files
+      if filename = any_files_changed?
+        Puppet.notice "Config file #{filename} changed; triggering re-parse of all config files."
+        parse
+        reuse
+      end
+    end
+  end
+
   def files
     return @files if @files
     @files = []
@@ -532,19 +574,17 @@ class Puppet::Util::Settings
     end
     @files
   end
+  private :files
 
-  # Reparse our config file, if necessary.
-  def reparse
-    if files
-      files.each do |file|
-        if file.changed?
-          Puppet.notice "Reparsing #{file.file}"
-          parse
-          reuse
-        end
-      end
+  # Checks to see if any of the config files have been modified
+  # @return the filename of the first file that is found to have changed, or nil if no files have changed
+  def any_files_changed?
+    files.each do |file|
+      return file.file if file.changed?
     end
+    nil
   end
+  private :any_files_changed?
 
   def reuse
     return unless defined?(@used)
@@ -588,9 +628,9 @@ class Puppet::Util::Settings
   end
 
   def legacy_to_mode(type, param)
-    require 'puppet/util/command_line_utils/legacy_command_line'
-    if Puppet::Util::CommandLineUtils::LegacyCommandLine::LEGACY_APPS.has_key?(type)
-      new_type = Puppet::Util::CommandLineUtils::LegacyCommandLine::LEGACY_APPS[type].run_mode
+    require 'puppet/util/command_line/legacy_command_line'
+    if Puppet::Util::CommandLine::LegacyCommandLine::LEGACY_APPS.has_key?(type)
+      new_type = Puppet::Util::CommandLine::LegacyCommandLine::LEGACY_APPS[type].run_mode
       Puppet.deprecation_warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
       return new_type
     end
@@ -599,7 +639,6 @@ class Puppet::Util::Settings
 
   def set_value(param, value, type, options = {})
     param = param.to_sym
-
 
     unless setting = @config[param]
       if options[:ignore_bad_settings]
@@ -636,8 +675,18 @@ class Puppet::Util::Settings
       Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
     end
 
-    # TODO cprice: document this, because it's a HACK.
-    @run_mode = value if param == :run_mode
+    # This is a hack.  The run_mode should probably not be a "normal" setting, because the places
+    #  it is used tend to create lifecycle issues and cause other weird problems.  In some places
+    #  we need for it to have a default value, in other places it may be preferable to be able to
+    #  determine that it has not yet been set.  There used to be a global variable that some
+    #  code paths would access; as a first step towards cleaning it up, I've gotten rid of the global
+    #  variable and am instead using an instance variable in this class, but that means that if
+    #  someone modifies the value of the setting at a later point during execution, then the
+    #  instance variable needs to be updated as well... so that's what we're doing here.
+    #
+    #  This code should be removed if we get a chance to remove run_mode from the defined settings.
+    #  --cprice 2012-03-19
+    self.run_mode = value if param == :run_mode
 
     value
   end
@@ -645,27 +694,47 @@ class Puppet::Util::Settings
 
 
 
-  # TODO cprice: rename this.
+  # Deprecated; use #define_settings instead
   def setdefaults(section, defs)
     Puppet.deprecation_warning("'setdefaults' is deprecated and will be removed; please call 'define_settings' instead")
     define_settings(section, defs)
   end
 
-  # Set a bunch of defaults in a given section.  The sections are actually pretty
-  # pointless, but they help break things up a bit, anyway.
+  # Define a group of settings.
+  #
+  # @param [Symbol] section a symbol to use for grouping multiple settings together into a conceptual unit.  This value
+  #   (and the conceptual separation) is not used very often; the main place where it will have a potential impact
+  #   is when code calls Settings#use method.  See docs on that method for further details, but basically that method
+  #   just attempts to do any preparation that may be necessary before code attempts to leverage the value of a particular
+  #   setting.  This has the most impact for file/directory settings, where #use will attempt to "ensure" those
+  #   files / directories.
+  # @param [Hash[Hash]] defs the settings to be defined.  This argument is a hash of hashes; each key should be a symbol,
+  #   which is basically the name of the setting that you are defining.  The value should be another hash that specifies
+  #   the parameters for the particular setting.  Legal values include:
+  #    [:default] => required; this is a string value that will be used as a default value for a setting if no other
+  #       value is specified (via cli, config file, etc.)  This string may include "variables", demarcated with $ or ${},
+  #       which will be interpolated with values of other settings.
+  #    [:desc] => required; a description of the setting, used in documentation / help generation
+  #    [:type] => not required, but highly encouraged!  This specifies the data type that the setting represents.  If
+  #       you do not specify it, it will default to "string".  Legal values include:
+  #       :string - A generic string setting
+  #       :boolean - A boolean setting; values are expected to be "true" or "false"
+  #       :file - A (single) file path; puppet may attempt to create this file depending on how the settings are used.  This type
+  #           also supports additional options such as "mode", "owner", "group"
+  #       :directory - A (single) directory path; puppet may attempt to create this file depending on how the settings are used.  This type
+  #           also supports additional options such as "mode", "owner", "group"
+  #       :path - This is intended to be used for settings whose value can contain multiple directory paths, respresented
+  #           as strings separated by the system path separator (e.g. system path, module path, etc.).
+  #     [:mode] => an (optional) octal value to be used as the permissions/mode for :file and :directory settings
+  #     [:owner] => optional owner username/uid for :file and :directory settings
+  #     [:group] => optional group name/gid for :file and :directory settings
+  #
   def define_settings(section, defs)
     section = section.to_sym
     call = []
     defs.each { |name, hash|
       raise ArgumentError, "setting definition for '#{name}' is not a hash!" unless hash.is_a? Hash
-      #if hash.is_a? Array
-      #  unless hash.length == 2
-      #    raise ArgumentError, "Defaults specified as an array must contain only the default value and the decription"
-      #  end
-      #  tmp = hash
-      #  hash = {}
-      #  [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
-      #end
+
       name = name.to_sym
       hash[:name] = name
       hash[:section] = section
@@ -700,15 +769,13 @@ class Puppet::Util::Settings
 
     catalog = Puppet::Resource::Catalog.new("Settings")
 
-    #@config.each.find_all { |key, value| value.is_a?(FileSetting) }.each do |key, file|
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
       next unless (sections.nil? or sections.include?(file.section))
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
 
-      # This can be really useful for debugging...
-      #puts("Using settings: adding file resource '#{key}': '#{resource.inspect}'")
+      Puppet.debug("Using settings: adding file resource '#{key}': '#{resource.inspect}'")
 
       catalog.add_resource(resource)
     end
@@ -767,11 +834,6 @@ if @config.include?(:run_mode)
         catalog = to_catalog(*sections).to_ral
       rescue => detail
         Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
-
-        # TODO cprice: kill
-        ## We need some way to get rid of any resources created during the catalog creation
-        ## but not cleaned up.
-        #return
       end
 
       catalog.host_config = false
@@ -797,27 +859,26 @@ if @config.include?(:run_mode)
     param = param.to_sym
     environment &&= environment.to_sym
 
-    ## do we really need to be using throw here? isn't that a fairly slow operation?
-    ##  I guess if we are caching the values then this shouldn't get called all that
-    ##  often.  --cprice 2012-03-06
-
     # See if we can find it within our searchable list of values
-    val = catch :foundval do
-      each_source(environment) do |source|
-        # Look for the value.  We have to test the hash for whether
-        # it exists, because the value might be false.
-        @sync.synchronize do
-          throw :foundval, @values[source][param] if @values[source].include?(param)
-        end
-      end
-      throw :foundval, nil
-    end
+    val = find_value(environment, param)
 
     # If we didn't get a value, use the default
     val = @config[param].default if val.nil?
 
     val
   end
+
+  def find_value(environment, param)
+      each_source(environment) do |source|
+        # Look for the value.  We have to test the hash for whether
+        # it exists, because the value might be false.
+        @sync.synchronize do
+          return @values[source][param] if @values[source].include?(param)
+        end
+      end
+      return nil
+  end
+  private :find_value
 
   # Find the correct value using our search path.  Optionally accept an environment
   # in which to search before the other configuration sections.
@@ -958,11 +1019,9 @@ if @config.include?(:run_mode)
   # Yield each search source in turn.
   def each_source(environment)
     searchpath(environment).each do |source|
-      # TODO cprice: experimenting with getting rid of global run_mode
 
       # Modify the source as necessary.
       source = self.run_mode if source == :run_mode
-      #source = Puppet::Util::RunMode[self[:run_mode]] if source == :run_mode and app_defaults_initialized?
       yield source
     end
   end

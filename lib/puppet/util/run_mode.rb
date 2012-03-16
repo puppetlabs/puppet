@@ -44,26 +44,6 @@ module Puppet
         "$vardir/run"
       end
 
-      #def logopts
-        # TODO cprice: need to look into how to get this into the catalog during a "use", because
-        #  these are not getting set as "defaults" any more.  Best options are probably:
-        #   1. special-case this during "initialize_application_defaults" in settings.rb,
-        #   2. Allow :application_defaults settings category to carry these hashes with them somehow,
-        #   3. delay the original call to define_settings for the application settings,
-        #   4. make a second (override) call to "define_settings" during initialize_application_defaults
-        #if master?
-        #  {
-        #    :default => "$vardir/log",
-        #    :mode    => 0750,
-        #    :owner   => "service",
-        #    :group   => "service",
-        #    :desc    => "The Puppet log directory."
-        #  }
-        #else
-        #  ["$vardir/log", "The Puppet log directory."]
-        #end
-      #end
-
       def log_dir
         "$vardir/log"
       end

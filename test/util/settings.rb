@@ -486,39 +486,6 @@ class TestSettings < Test::Unit::TestCase
       "Settings got messed up")
   end
 
-  # These tests are all about guessing the setting type, which we're not doing any longer.
-  #def test_correct_type_assumptions
-  #  file = Puppet::Util::Settings::FileSetting
-  #  setting = Puppet::Util::Settings::StringSetting
-  #  bool = Puppet::Util::Settings::BooleanSetting
-  #
-  #  # We have to keep these ordered, unfortunately.
-  #  [
-  #    ["/this/is/a/file", file],
-  #    ["true", bool],
-  #    [true, bool],
-  #    ["false", bool],
-  #    ["server", setting],
-  #    ["http://$server/yay", setting],
-  #    ["$server/yayness", file],
-  #    ["$server/yayness.conf", file]
-  #  ].each do |ary|
-  #    config = mkconfig
-  #    value, type = ary
-  #    name = value.to_s + "_setting"
-  #    assert_nothing_raised {
-  #      config.define_settings(:yayness, name => { :default => value, :desc => name.to_s})
-  #    }
-  #    elem = config.setting(name)
-  #
-  #
-  #      assert_instance_of(
-  #        type, elem,
-  #
-  #        "#{value.inspect} got created as wrong type")
-  #  end
-  #end
-
   def test_parse_removes_quotes
     config = mkconfig
     config.define_settings(:mysection, :singleq => { :type => :string, :default => "single", :desc => "yay" })
