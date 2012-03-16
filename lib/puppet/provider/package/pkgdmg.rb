@@ -50,14 +50,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.instances
     instance_by_name.collect do |name|
-
-      new(
-
-        :name => name,
-        :provider => :pkgdmg,
-
-        :ensure => :installed
-      )
+      new(:name => name, :provider => :pkgdmg, :ensure => :installed)
     end
   end
 
@@ -72,7 +65,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.installpkgdmg(source, name)
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
-      raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
+      raise Puppet::Error.new("Mac OS X PKG DMG's must specify a source string ending in .dmg or flat .pkg file")
     end
     require 'open-uri'
     cached_source = source
@@ -111,10 +104,8 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
             end
           end
         end
-      elsif source =~ /\.pkg$/i
-        installpkg(cached_source, name, source)
       else
-        raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
+        installpkg(cached_source, name, source)
       end
     ensure
       FileUtils.remove_entry_secure(tmpdir, force=true)
