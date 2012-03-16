@@ -67,6 +67,9 @@ RSpec.configure do |config|
     # The process environment is a shared, persistent resource.
     $old_env = ENV.to_hash
 
+    # So is the load_path
+    $old_load_path = $LOAD_PATH.dup
+
     # REVISIT: I think this conceals other bad tests, but I don't have time to
     # fully diagnose those right now.  When you read this, please come tell me
     # I suck for letting this float. --daniel 2011-04-21
@@ -134,6 +137,10 @@ RSpec.configure do |config|
     # may stub Puppet.features.rails? which is how we should normally
     # introspect for this functionality.
     ActiveRecord::Base.remove_connection if defined?(ActiveRecord::Base)
+
+    # Restore the load_path late, to avoid messing with stubs from the test.
+    $LOAD_PATH.clear
+    $old_load_path.each {|x| $LOAD_PATH << x }
 
     # This will perform a GC between tests, but only if actually required.  We
     # experimented with forcing a GC run, and that was less efficient than
