@@ -207,6 +207,19 @@ describe Puppet::Node::Environment do
             @second => [Puppet::Module.new('foo', :environment => env, :path => modpath2)]
           }
         end
+
+        it "should ignore modules with invalid names" do
+          FileUtils.mkdir_p(File.join(@first, 'foo'))
+          FileUtils.mkdir_p(File.join(@first, 'foo2'))
+          FileUtils.mkdir_p(File.join(@first, 'foo-bar'))
+          FileUtils.mkdir_p(File.join(@first, 'foo_bar'))
+          FileUtils.mkdir_p(File.join(@first, 'foo=bar'))
+          FileUtils.mkdir_p(File.join(@first, 'foo bar'))
+          FileUtils.mkdir_p(File.join(@first, 'foo.bar'))
+
+          env.modules_by_path[@first].collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
+        end
+
       end
 
       describe "#module_requirements" do
