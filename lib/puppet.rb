@@ -118,7 +118,9 @@ module Puppet
   end
 end
 
-# TODO cprice: hmmmm....
+# This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
+#  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
+#  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
 require 'puppet/type'
 require 'puppet/parser'

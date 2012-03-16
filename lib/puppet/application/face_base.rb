@@ -21,7 +21,8 @@ class Puppet::Application::FaceBase < Puppet::Application
   option("--mode RUNMODE", "-r") do |arg|
     raise "Invalid run mode #{arg}; supported modes are user, agent, master" unless %w{user agent master}.include?(arg)
     self.class.run_mode(arg.to_sym)
-    set_run_mode self.class.run_mode
+    # TODO cprice: testing this out--clean up.
+    #set_run_mode self.class.run_mode
   end
 
 

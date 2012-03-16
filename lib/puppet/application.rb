@@ -219,8 +219,8 @@ class Application
     end
 
     #
-    # TODO cprice: look into changing this into two methods (getter/setter)
-    #  --cprice 2012-03-06
+    # I think that it would be nice to look into changing this into two methods (getter/setter); however,
+    #  it sounds like this is a desirable feature of our ruby DSL. --cprice 2012-03-06
     #
 
     # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
@@ -251,11 +251,11 @@ class Application
   def app_defaults()
     {
         :name     => name,
-        :run_mode => @run_mode.name,
-        :confdir  => @run_mode.conf_dir,
-        :vardir   => @run_mode.var_dir,
-        :rundir   => @run_mode.run_dir,
-        :logdir   => @run_mode.log_dir,
+        :run_mode => self.class.run_mode.name,
+        :confdir  => self.class.run_mode.conf_dir,
+        :vardir   => self.class.run_mode.var_dir,
+        :rundir   => self.class.run_mode.run_dir,
+        :logdir   => self.class.run_mode.log_dir,
     }
   end
 
@@ -271,45 +271,46 @@ class Application
 
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    set_run_mode self.class.run_mode
+    # TODO cprice: cleanup
+    #set_run_mode self.class.run_mode
     @options = {}
 
   end
 
-  # WARNING: This is a totally scary, frightening, and nasty internal API.  We
-  # strongly advise that you do not use this, and if you insist, we will
-  # politely allow you to keep both pieces of your broken code.
+  ## WARNING: This is a totally scary, frightening, and nasty internal API.  We
+  ## strongly advise that you do not use this, and if you insist, we will
+  ## politely allow you to keep both pieces of your broken code.
+  ##
+  ## We plan to provide a supported, long-term API to deliver this in a way
+  ## that you can use.  Please make sure that you let us know if you do require
+  ## this, and this message is still present in the code. --daniel 2011-02-03
+  #def set_run_mode(mode)
+  #  @run_mode = mode
+  #  $puppet_application_mode = @run_mode
+  #  $puppet_application_name = name
   #
-  # We plan to provide a supported, long-term API to deliver this in a way
-  # that you can use.  Please make sure that you let us know if you do require
-  # this, and this message is still present in the code. --daniel 2011-02-03
-  def set_run_mode(mode)
-    @run_mode = mode
-    $puppet_application_mode = @run_mode
-    $puppet_application_name = name
-
-    ## XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
-    ##  the settings that are specific to them; need to decide whether to formally specify the list of such
-    ##  settings, or just allow them to run willy-nilly.
-    #if (mode.name == :master)
-    #  Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
-    #end
-    #
-    #
-    ### TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
-    #
-    #if Puppet.respond_to? :settings
-    #  # This is to reduce the amount of confusion in rspec
-    #  # because it might have loaded defaults.rb before the globals were set
-    #  # and thus have the wrong defaults for the current application
-    #  Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
-    #  Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
-    #  Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
-    #  #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
-    #  Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-    #  Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
-    #end
-  end
+  #  ## XXXXXXXXXXX TODO cprice: this is crap.  need to refactor this so that applications have a hook to initialize
+  #  ##  the settings that are specific to them; need to decide whether to formally specify the list of such
+  #  ##  settings, or just allow them to run willy-nilly.
+  #  #if (mode.name == :master)
+  #  #  Puppet.settings.set_value(:facts_terminus, "yaml", :mutable_defaults)
+  #  #end
+  #  #
+  #  #
+  #  ### TODO cprice: get rid of this whole block, push it to some kind of application-specific hook or something
+  #  #
+  #  #if Puppet.respond_to? :settings
+  #  #  # This is to reduce the amount of confusion in rspec
+  #  #  # because it might have loaded defaults.rb before the globals were set
+  #  #  # and thus have the wrong defaults for the current application
+  #  #  Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
+  #  #  Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
+  #  #  Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
+  #  #  #Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
+  #  #  Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
+  #  #  Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
+  #  #end
+  #end
 
   # This is the main application entry point
   def run
