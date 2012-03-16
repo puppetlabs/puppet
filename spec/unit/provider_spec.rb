@@ -59,4 +59,46 @@ describe Puppet::Provider do
 
     b.should be_between(a, c)
   end
+
+  context "when confining" do
+    before :each do
+      Puppet::Type.newtype(:test) do
+        newparam(:name) { isnamevar }
+      end
+    end
+
+    after :each do
+      Puppet::Type.rmtype(:test)
+    end
+
+    let :type do Puppet::Type.type(:test) end
+
+    it "should find the default provider" do
+      type.provide(:nondefault) {}
+      default = type.provide(:default) do
+        defaultfor :operatingsystem => Facter["operatingsystem"].value
+      end
+
+      default.name.should == type.defaultprovider.name
+    end
+
+    it "should raise for unknown commands" do
+      provider = type.provide(:unknown) {}
+      expect { provider.command(:something) }.to raise_error Puppet::DevError
+    end
+
+    it "should handle command inheritance" do
+      parent = type.provide("parent")
+      child  = type.provide("child", :parent => parent.name)
+
+      command = Puppet::Util.which('sh') || Puppet::Util.which('cmd.exe')
+      parent.commands :sh => command
+
+      FileTest.should be_exists parent.command(:sh)
+      parent.command(:sh).should =~ /#{command}$/
+
+      FileTest.should be_exists child.command(:sh)
+      child.command(:sh).should =~ /#{command}$/
+    end
+  end
 end
