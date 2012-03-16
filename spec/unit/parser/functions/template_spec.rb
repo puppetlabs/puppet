@@ -59,4 +59,39 @@ describe "the template function" do
     expect { scope.function_template(["1"]) }.should raise_error(Puppet::ParseError)
   end
 
+  def eval_template(content, *rest)
+    File.stubs(:read).with("template").returns(content)
+    Puppet::Parser::Files.stubs(:find_template).returns("template")
+    scope.compiler.stubs(:environment).returns("production")
+    scope.function_template(['template'] + rest)
+  end
+
+  it "should handle legacy template variable access correctly" do
+    expect { eval_template("template <%= deprecated %>") }.
+      to raise_error Puppet::ParseError
+  end
+
+  it "should get values from the scope correctly" do
+    scope["deprecated"] = "deprecated value"
+    eval_template("template <%= deprecated %>").should == "template deprecated value"
+  end
+
+  it "should handle kernel shadows without raising" do
+    expect { eval_template("<%= binding %>") }.should_not raise_error
+  end
+
+  it "should not see scopes" do
+    scope['myvar'] = 'this is yayness'
+    expect { eval_template("<%= lookupvar('myvar') %>") }.
+      to raise_error Puppet::ParseError
+  end
+
+  { "" => "", false => "false", true => "true" }.each do |input, output|
+    it "should support defined variables (#{input.inspect} => #{output.inspect})" do
+      scope['yayness'] = input
+      expect {
+        eval_template("<%= @yayness %>").should == output
+      }.should_not raise_error
+    end
+  end
 end
