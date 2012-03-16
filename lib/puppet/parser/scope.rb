@@ -222,13 +222,48 @@ class Puppet::Parser::Scope
 
   private :qualified_scope
 
-  # Look up a variable.  The simplest value search we do.
+  # Look up a variable with traditional scoping and then with new scoping. If
+  # the answers differ then print a deprecation warning.
   def lookupvar(name, options = {})
+    oldval = oldlookupvar(name,options)
+    newval = newlookupvar(name,options)
+    if oldval and newval and newval != oldval
+      location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+      Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in a later version of Puppet.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
+    end
+    oldval
+  end
+
+  # Look up a variable.  The simplest value search we do.
+  def newlookupvar(name, options = {})
+    # Save the originating scope for the request
+    options[:origin] = self unless options[:origin]
+    table = ephemeral?(name) ? @ephemeral.last : @symtable
+    if name =~ /^(.*)::(.+)$/
+      begin
+        qualified_scope($1).newlookupvar($2,options.merge({:origin => nil}))
+      rescue RuntimeError => e
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
+        :undefined
+      end
+    # If the value is present and either we are top/node scope or originating scope...
+    elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
+      table[name]
+    elsif parent
+      parent.newlookupvar(name,options)
+    else
+      :undefined
+    end
+  end
+
+  # Look up a variable.  The simplest value search we do.
+  def oldlookupvar(name, options = {})
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
     if name =~ /^(.*)::(.+)$/
       begin
-        qualified_scope($1).lookupvar($2,options)
+        qualified_scope($1).oldlookupvar($2,options)
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
         warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
@@ -236,13 +271,9 @@ class Puppet::Parser::Scope
       end
     elsif ephemeral_include?(name) or table.include?(name)
       # We can't use "if table[name]" here because the value might be false
-      if options[:dynamic] and self != compiler.topscope
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
-      end
       table[name]
     elsif parent
-      parent.lookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
+      parent.oldlookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
     else
       :undefined
     end
@@ -374,7 +405,7 @@ class Puppet::Parser::Scope
 
   # check if name exists in one of the ephemeral scope.
   def ephemeral_include?(name)
-    @ephemeral.reverse.each do |eph|
+    @ephemeral.reverse_each do |eph|
       return true if eph.include?(name)
     end
     false
