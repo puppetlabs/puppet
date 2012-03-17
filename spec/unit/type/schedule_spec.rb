@@ -127,13 +127,8 @@ describe Puppet::Type.type(:schedule) do
       @schedule.must be_match
     end
 
-    it "should not match when the start time is after the current time" do
+    it "should not match when the current time is outside the range" do
       @schedule[:range] = "23:30:00 - 21:00:00"
-      @schedule.must_not be_match
-    end
-
-    it "should not match when the end time is before the current time" do
-      @schedule[:range] = "23:00:00 - 01:00:00"
       @schedule.must_not be_match
     end
   end
@@ -492,13 +487,13 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should not match when day-of-week doesn't match even if the range matches (1 day later)" do
-      @schedule[:range] = "23:00:00 - 01:00:00"
+      @schedule[:range] = "22:00:00 - 01:00:00"
       @schedule[:weekday] = "Friday"
       @schedule.must_not be_match
     end
 
     it "should not match when day-of-week doesn't match even if the range matches (1 day earlier)" do
-      @schedule[:range] = "23:00:00 - 01:00:00"
+      @schedule[:range] = "22:00:00 - 01:00:00"
       @schedule[:weekday] = "Wednesday"
       @schedule.must_not be_match
     end
