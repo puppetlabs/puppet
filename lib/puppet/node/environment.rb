@@ -130,7 +130,7 @@ class Puppet::Node::Environment
         module_names = Dir.glob('*').select do |d|
           FileTest.directory?(d) && (File.basename(d) =~ /^[-\w]+$/)
         end
-        modules_by_path[path] = module_names.map do |name|
+        modules_by_path[path] = module_names.sort.map do |name|
           Puppet::Module.new(name, :environment => self, :path => File.join(path, name))
         end
       end
