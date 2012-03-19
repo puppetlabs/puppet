@@ -23,6 +23,7 @@ module ScheduleTesting
 end
 
 describe Puppet::Type.type(:schedule) do
+  include ScheduleTesting
   before :each do
     Puppet[:ignoreschedules] = false
 
@@ -30,8 +31,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule) do
-    include ScheduleTesting
-
     it "should apply to device" do
       @schedule.must be_appliable_to_device
     end
@@ -55,8 +54,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when producing default schedules" do
-    include ScheduleTesting
-
     %w{hourly daily weekly monthly never}.each do |period|
       period = period.to_sym
       it "should produce a #{period} schedule with the period set appropriately" do
@@ -74,8 +71,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching ranges" do
-    include ScheduleTesting
-
     before do
       Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
     end
@@ -112,8 +107,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 1" do
-    include ScheduleTesting
-
     before do
       # Test with the current time at a month's end boundary to ensure we are
       # advancing the day properly when we push the ending limit out a day.
@@ -134,8 +127,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 2" do
-    include ScheduleTesting
-
     before do
       # Test with the current time at a month's end boundary to ensure we are
       # advancing the day properly when we push the ending limit out a day.
@@ -161,8 +152,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching hourly by distance" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :hourly
       @schedule[:periodmatch] = :distance
@@ -184,8 +173,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching daily by distance" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :daily
       @schedule[:periodmatch] = :distance
@@ -207,8 +194,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching weekly by distance" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :weekly
       @schedule[:periodmatch] = :distance
@@ -230,8 +215,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching monthly by distance" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :monthly
       @schedule[:periodmatch] = :distance
@@ -253,8 +236,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching hourly by number" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :hourly
       @schedule[:periodmatch] = :number
@@ -278,8 +259,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching daily by number" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :daily
       @schedule[:periodmatch] = :number
@@ -309,8 +288,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching weekly by number" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :weekly
       @schedule[:periodmatch] = :number
@@ -334,8 +311,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching monthly by number" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :monthly
       @schedule[:periodmatch] = :number
@@ -359,8 +334,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one" do
-    include ScheduleTesting
-
     before do
       @schedule[:period] = :daily
       @schedule[:repeat] = 2
@@ -385,8 +358,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching days of the week" do
-    include ScheduleTesting
-
     before do
       # 2011-05-23 is a Monday
       Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
@@ -467,8 +438,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 1" do
-    include ScheduleTesting
-
     before do
       # Test with ranges and days-of-week both set. 2011-03-31 was a Thursday.
       Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
@@ -500,8 +469,6 @@ describe Puppet::Type.type(:schedule) do
   end
 
   describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 2" do
-    include ScheduleTesting
-
     before do
       # 2011-03-31 was a Thursday. As the end-time of a day spanning match, that means
       # we need to match on Wednesday.
