@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'spec_helper'
 require 'puppet/face'
 require 'puppet/module_tool'

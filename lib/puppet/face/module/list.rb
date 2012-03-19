@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 Puppet::Face.define(:module, '1.0.0') do
   action(:list) do
     summary "List installed modules"
