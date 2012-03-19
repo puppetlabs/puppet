@@ -541,6 +541,14 @@ describe Puppet::Type.type(:exec) do
           @test[:creates] = @exist
           @test.check_all_attributes.should == false
         end
+
+        it "should not run when the item is a broken symlink" do
+          @badlink = tmpfile('test.link')
+          @badtarget = tmpfile('no.file.here')
+          FileUtils.ln_s(@badtarget, @badlink)
+          @test[:creates] = @badlink
+          @test.check_all_attributes.should == false
+        end
       end
 
       context "with an array with one item" do

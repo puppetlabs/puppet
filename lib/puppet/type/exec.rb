@@ -331,7 +331,7 @@ module Puppet
       # If the file exists, return false (i.e., don't run the command),
       # else return true
       def check(value)
-        ! FileTest.exists?(value)
+        ! FileTest.exists?(value) and  ! FileTest.symlink?(value)
       end
     end
 
