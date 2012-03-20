@@ -1,0 +1,272 @@
+---
+:longcommment:
+  :text: "# This is a comment"
+  :record:
+    :line: "# This is a comment"
+    :record_type: :comment
+:special:
+  :text: "@hourly /bin/date"
+  :record:
+    :special: hourly
+    :command: /bin/date
+    :record_type: :freebsd_special
+:long_name:
+  :text: "# Puppet Name: long_name"
+  :record:
+    :line: "# Puppet Name: long_name"
+    :name: long_name
+    :record_type: :comment
+:multiple_minutes:
+  :text: 5,15 * * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    - "15"
+    :command: /bin/date
+    :record_type: :crontab
+:environment:
+  :text: ONE=TWO
+  :record:
+    :line: ONE=TWO
+    :record_type: :environment
+:empty:
+  :text: ""
+  :record:
+    :line: ""
+    :record_type: :blank
+:simple:
+  :text: "* * * * * /bin/date"
+  :record:
+    :command: /bin/date
+    :record_type: :crontab
+:whitespace:
+  :text: "   "
+  :record:
+    :line: "   "
+    :record_type: :blank
+:minute_and_hour:
+  :text: 5 15 * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    :hour:
+    - "15"
+    :command: /bin/date
+    :record_type: :crontab
+:lowercase_environment:
+  :text: a=b
+  :record:
+    :line: a=b
+    :record_type: :environment
+:special_with_spaces:
+  :text: "@daily /bin/echo testing"
+  :record:
+    :special: daily
+    :command: /bin/echo testing
+    :record_type: :freebsd_special
+:tabs:
+  :text: !binary |
+    CQ==
+
+  :record:
+    :line: !binary |
+      CQ==
+
+    :record_type: :blank
+:multiple_minute_and_hour:
+  :text: 5,10 15,20 * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    - "10"
+    :hour:
+    - "15"
+    - "20"
+    :command: /bin/date
+    :record_type: :crontab
+:name:
+  :text: "# Puppet Name: testing"
+  :record:
+    :line: "# Puppet Name: testing"
+    :name: testing
+    :record_type: :comment
+:another_env:
+  :text: Testing=True
+  :record:
+    :line: Testing=True
+    :record_type: :environment
+:shortcomment:
+  :text: "#"
+  :record:
+    :line: "#"
+    :record_type: :comment
+:spaces_in_command:
+  :text: "* * * * * /bin/echo testing"
+  :record:
+    :command: /bin/echo testing
+    :record_type: :crontab
+:fourth_env:
+  :text: True=False
+  :record:
+    :line: True=False
+    :record_type: :environment
+:simple_with_minute:
+  :text: 5 * * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    :command: /bin/date
+    :record_type: :crontab
+:spaces_in_command_with_times:
+  :text: 5,10 15,20 * * * /bin/echo testing
+  :record:
+    :minute:
+    - "5"
+    - "10"
+    :hour:
+    - "15"
+    - "20"
+    :command: /bin/echo testing
+    :record_type: :crontab
+:name_with_spaces:
+  :text: "# Puppet Name: another name"
+  :record:
+    :line: "# Puppet Name: another name"
+    :name: another name
+    :record_type: :comment
+---
+:longcommment:
+  :text: "# This is a comment"
+  :record:
+    :line: "# This is a comment"
+    :record_type: :comment
+:special:
+  :text: "@hourly /bin/date"
+  :record:
+    :special: hourly
+    :command: /bin/date
+    :record_type: :freebsd_special
+:long_name:
+  :text: "# Puppet Name: long_name"
+  :record:
+    :line: "# Puppet Name: long_name"
+    :name: long_name
+    :record_type: :comment
+:multiple_minutes:
+  :text: 5,15 * * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    - "15"
+    :command: /bin/date
+    :record_type: :crontab
+:environment:
+  :text: ONE=TWO
+  :record:
+    :line: ONE=TWO
+    :record_type: :environment
+:empty:
+  :text: ""
+  :record:
+    :line: ""
+    :record_type: :blank
+:simple:
+  :text: "* * * * * /bin/date"
+  :record:
+    :command: /bin/date
+    :record_type: :crontab
+:whitespace:
+  :text: "   "
+  :record:
+    :line: "   "
+    :record_type: :blank
+:minute_and_hour:
+  :text: 5 15 * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    :hour:
+    - "15"
+    :command: /bin/date
+    :record_type: :crontab
+:lowercase_environment:
+  :text: a=b
+  :record:
+    :line: a=b
+    :record_type: :environment
+:special_with_spaces:
+  :text: "@daily /bin/echo testing"
+  :record:
+    :special: daily
+    :command: /bin/echo testing
+    :record_type: :freebsd_special
+:tabs:
+  :text: !binary |
+    CQ==
+
+  :record:
+    :line: !binary |
+      CQ==
+
+    :record_type: :blank
+:multiple_minute_and_hour:
+  :text: 5,10 15,20 * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    - "10"
+    :hour:
+    - "15"
+    - "20"
+    :command: /bin/date
+    :record_type: :crontab
+:name:
+  :text: "# Puppet Name: testing"
+  :record:
+    :line: "# Puppet Name: testing"
+    :name: testing
+    :record_type: :comment
+:another_env:
+  :text: Testing=True
+  :record:
+    :line: Testing=True
+    :record_type: :environment
+:shortcomment:
+  :text: "#"
+  :record:
+    :line: "#"
+    :record_type: :comment
+:spaces_in_command:
+  :text: "* * * * * /bin/echo testing"
+  :record:
+    :command: /bin/echo testing
+    :record_type: :crontab
+:fourth_env:
+  :text: True=False
+  :record:
+    :line: True=False
+    :record_type: :environment
+:simple_with_minute:
+  :text: 5 * * * * /bin/date
+  :record:
+    :minute:
+    - "5"
+    :command: /bin/date
+    :record_type: :crontab
+:spaces_in_command_with_times:
+  :text: 5,10 15,20 * * * /bin/echo testing
+  :record:
+    :minute:
+    - "5"
+    - "10"
+    :hour:
+    - "15"
+    - "20"
+    :command: /bin/echo testing
+    :record_type: :crontab
+:name_with_spaces:
+  :text: "# Puppet Name: another name"
+  :record:
+    :line: "# Puppet Name: another name"
+    :name: another name
+    :record_type: :comment
