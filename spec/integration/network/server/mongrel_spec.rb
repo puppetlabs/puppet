@@ -6,10 +6,16 @@ require 'net/http'
 describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
   describe "when using mongrel", :if => Puppet.features.mongrel? do
 
+    # This reduces the odds of conflicting port numbers between concurrent runs
+    # of the suite on the same machine dramatically.
+    def port
+      20001 + ($$ % 40000)
+    end
+
     before :each do
       Puppet[:servertype] = 'mongrel'
       Puppet[:server] = '127.0.0.1'
-      @params = { :port => 34346, :handlers => [ :node ] }
+      @params = { :port => port, :handlers => [ :node ] }
       @server = Puppet::Network::Server.new(@params)
     end
 
@@ -19,7 +25,7 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
 
     describe "before listening" do
       it "should not be reachable at the specified address and port" do
-        lambda { Net::HTTP.get('127.0.0.1', '/', 34346) }.
+        lambda { Net::HTTP.get('127.0.0.1', '/', port) }.
           should raise_error(Errno::ECONNREFUSED)
       end
     end
@@ -27,7 +33,7 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
     describe "when listening" do
       it "should be reachable on the specified address and port" do
         @server.listen
-        expect { Net::HTTP.get('127.0.0.1', '/', 34346) }.should_not raise_error
+        expect { Net::HTTP.get('127.0.0.1', '/', port) }.should_not raise_error
       end
 
       it "should default to '127.0.0.1' as its bind address" do
@@ -56,7 +62,7 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
       it "should not be reachable on the port and address assigned" do
         @server.listen
         @server.unlisten
-        expect { Net::HTTP.get('127.0.0.1', '/', 34346) }.
+        expect { Net::HTTP.get('127.0.0.1', '/', port) }.
           should raise_error Errno::ECONNREFUSED
       end
     end
