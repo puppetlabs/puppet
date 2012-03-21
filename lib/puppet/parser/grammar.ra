@@ -325,6 +325,9 @@ params:   # nothing
 param:        NAME FARROW expression {
   result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2]
 }
+ | UNLESS FARROW expression {
+  result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2]
+}
 
 addparam:     NAME PARROW expression {
   result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2],
