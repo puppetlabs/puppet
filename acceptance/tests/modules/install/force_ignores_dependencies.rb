@@ -3,7 +3,7 @@ begin test_name "puppet module install (force ignores dependencies)"
 step 'Setup'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
+apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 
 step "Try to install an unsatisfiable module"
 on master, puppet("module install pmtacceptance-php"), :acceptable_exit_codes => [1] do

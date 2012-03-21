@@ -3,7 +3,7 @@ begin test_name "puppet module upgrade (with scattered dependencies)"
 step 'Setup'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
+apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 on master, puppet("module install pmtacceptance-stdlib --version 0.0.2 --dir /usr/share/puppet/modules")
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --dir /etc/puppet/modules --ignore-dependencies")
 on master, puppet("module install pmtacceptance-postgresql --version 0.0.1 --dir /etc/puppet/modules --ignore-dependencies")
@@ -34,5 +34,5 @@ end
 
 ensure step "Teardown"
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
+apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

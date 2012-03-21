@@ -3,7 +3,7 @@ begin test_name "puppet module upgrade (with constraints on it)"
 step 'Setup'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
+apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 on master, puppet("module install pmtacceptance-java --version 1.7.0")
 on master, puppet("module install pmtacceptance-apollo")
 on master, puppet("module list") do
@@ -44,5 +44,5 @@ end
 
 ensure step "Teardown"
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: recurse => true, purge => true, force => true }"
+apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end
