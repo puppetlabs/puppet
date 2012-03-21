@@ -435,7 +435,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :dynamic => true, :namespace => 'foo', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :namespace => 'foo', :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
