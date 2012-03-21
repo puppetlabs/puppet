@@ -21,7 +21,7 @@ class Puppet::Parser::Scope
   attr_accessor :source, :resource
   attr_accessor :base, :keyword
   attr_accessor :top, :translated, :compiler
-  attr_accessor :parent, :dynamic
+  attr_accessor :parent
   attr_reader :namespaces
 
   # thin wrapper around an ephemeral
@@ -273,7 +273,7 @@ class Puppet::Parser::Scope
       # We can't use "if table[name]" here because the value might be false
       table[name]
     elsif parent
-      parent.oldlookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
+      parent.oldlookupvar(name,options)
     else
       :undefined
     end
