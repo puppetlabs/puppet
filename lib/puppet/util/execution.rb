@@ -138,11 +138,13 @@ module Util::Execution
     output
   end
 
-  # get the path to the ruby executable (available via Config object, even if it's not in the PATH... so this
-  # is slightly safer than just using Puppet::Util.which)
+  # get the path to the ruby executable (available via Config object, even if
+  # it's not in the PATH... so this is slightly safer than just using
+  # Puppet::Util.which)
   def self.ruby_path()
-    File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'] + Config::CONFIG['EXEEXT']).
-        sub(/.*\s.*/m, '"\&"')
+    File.join(RbConfig::CONFIG['bindir'],
+              RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT']).
+      sub(/.*\s.*/m, '"\&"')
   end
 
   # Because some modules provide their own version of this method.
