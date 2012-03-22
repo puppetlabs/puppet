@@ -129,7 +129,7 @@ module Puppet::Module::Tool::Shared
         :action           => action,
         :previous_version => @installed[mod].empty? ? nil : @installed[mod].first.version,
         :file             => @urls["#{mod}@#{version[:vstring]}"],
-        :path             => action == :install ? @options[:dir] : (@installed[mod].empty? ? @options[:dir] : @installed[mod].first.modulepath),
+        :path             => action == :install ? @options[:target_dir] : (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath),
         :dependencies     => []
       }
     end.compact

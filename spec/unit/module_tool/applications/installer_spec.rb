@@ -20,7 +20,7 @@ describe Puppet::Module::Tool::Applications::Installer do
   let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
   let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
   let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
-  let(:options)         { Hash[:dir => modpath1] }
+  let(:options)         { Hash[:target_dir => modpath1] }
 
   let(:repository) do
     repository = mock()
@@ -128,7 +128,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       end
 
       it "should install requested module if the '--force' flag is used" do
-        options = { :force => true, :dir => modpath1 }
+        options = { :force => true, :target_dir => modpath1 }
         Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
           .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
         .returns(unpacker)
@@ -137,7 +137,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       end
 
       it "should not install dependencies if the '--force' flag is used" do
-        options = { :force => true, :dir => modpath1 }
+        options = { :force => true, :target_dir => modpath1 }
         Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
           .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
         .returns(unpacker)
@@ -147,7 +147,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       end
 
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
-        options = { :ignore_dependencies => true, :dir => modpath1 }
+        options = { :ignore_dependencies => true, :target_dir => modpath1 }
         Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
           .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
         .returns(unpacker)
@@ -157,7 +157,7 @@ describe Puppet::Module::Tool::Applications::Installer do
       end
 
       it "should set an error if dependencies can't be resolved" do
-        options = { :version => '0.0.1', :dir => modpath1 }
+        options = { :version => '0.0.1', :target_dir => modpath1 }
         oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
         multiline = <<-MSG.strip
 Could not install module 'pmtacceptance-apollo' (v0.0.1)

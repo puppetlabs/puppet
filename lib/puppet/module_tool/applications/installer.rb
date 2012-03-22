@@ -40,14 +40,14 @@ module Puppet::Module::Tool
           results = {
             :module_name    => @module_name,
             :module_version => @version,
-            :install_dir    => options[:dir],
+            :install_dir    => options[:target_dir],
           }
 
-          unless File.directory? options[:dir]
+          unless File.directory? options[:target_dir]
             raise MissingInstallDirectoryError,
               :requested_module  => @module_name,
               :requested_version => @version || 'latest',
-              :directory         => options[:dir]
+              :directory         => options[:target_dir]
           end
 
           cached_paths = get_release_packages
@@ -56,7 +56,7 @@ module Puppet::Module::Tool
             Puppet.notice 'Installing -- do not interrupt ...'
             cached_paths.each do |hash|
               hash.each do |dir, path|
-                Unpacker.new(path, @options.merge(:dir => dir)).run
+                Unpacker.new(path, @options.merge(:target_dir => dir)).run
               end
             end
           end
@@ -127,7 +127,7 @@ module Puppet::Module::Tool
       #
       def resolve_install_conflicts(graph, is_dependency = false)
         graph.each do |release|
-          @environment.modules_by_path[options[:dir]].each do |mod|
+          @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
               metadata = {
                 :name    => mod.forge_name.gsub('/', '-'),

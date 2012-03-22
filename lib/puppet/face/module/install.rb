@@ -6,7 +6,7 @@ Puppet::Face.define(:module, '1.0.0') do
       on-disk, or from a private Forge-like repository.
 
       The specified module will be installed into the directory
-      specified with the --dir option, which defaults to
+      specified with the --target-dir option, which defaults to
       #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}.
     EOT
 
@@ -25,12 +25,12 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Install a module into a specific directory:
 
-      $ puppet module install puppetlabs/vcsrepo --dir=/usr/share/puppet/modules
+      $ puppet module install puppetlabs/vcsrepo --target-dir=/usr/share/puppet/modules
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
 
       Install a module into a specific directory and check for dependencies in other directories:
 
-      $ puppet module install puppetlabs/vcsrepo --dir=/usr/share/puppet/modules --modulepath /etc/puppet/modules
+      $ puppet module install puppetlabs/vcsrepo --target-dir=/usr/share/puppet/modules --modulepath /etc/puppet/modules
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
       Install a module from a release archive:
 
@@ -47,7 +47,7 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--dir DIR", "-i DIR" do
+    option "--target-dir DIR", "-i DIR" do
       summary "The directory into which modules are installed."
       description <<-EOT
         The directory into which modules are installed, defaults to the first
@@ -73,6 +73,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--modulepath MODULEPATH" do
+      default_to { Puppet.settings[:modulepath] }
       summary "Which directories to look for modules in"
       description <<-EOT
         The directory into which modules are installed; defaults to the first
@@ -91,21 +92,16 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |name, options|
       sep = File::PATH_SEPARATOR
-      if options[:dir]
-        if options[:modulepath]
-          options[:modulepath] = "#{options[:dir]}#{sep}#{options[:modulepath]}"
-          Puppet.settings[:modulepath] = options[:modulepath]
-        else
-          Puppet.settings[:modulepath] = options[:dir]
-        end
-      elsif options[:modulepath]
-        Puppet.settings[:modulepath] = options[:modulepath]
+      if options[:target_dir]
+        options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}"
       end
-      options[:dir] = Puppet.settings[:modulepath].split(sep).first
+
+      Puppet.settings[:modulepath] = options[:modulepath]
+      options[:target_dir] = Puppet.settings[:modulepath].split(sep).first
 
       Puppet.settings[:module_repository] = options[:module_repository] if options[:module_repository]
 
-      Puppet.notice "Preparing to install into #{options[:dir]} ..."
+      Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end
 

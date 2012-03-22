@@ -14,7 +14,7 @@ file {
 PP
 
 step "Try to install a module to a non-existent directory"
-on master, puppet("module install pmtacceptance-nginx --dir /tmp/modules"), :acceptable_exit_codes => [1] do
+on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> Preparing to install into /tmp/modules ...
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest)

@@ -65,7 +65,7 @@ module Puppet::Module::Tool
             Puppet.notice 'Upgrading -- do not interrupt ...'
             tarballs.each do |hash|
               hash.each do |dir, path|
-                Unpacker.new(path, @options.merge(:dir => dir)).run
+                Unpacker.new(path, @options.merge(:target_dir => dir)).run
               end
             end
           end

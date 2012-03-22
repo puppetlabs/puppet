@@ -3,6 +3,7 @@ require 'puppet/face'
 require 'puppet/module_tool'
 
 describe "puppet module install" do
+
   subject { Puppet::Face[:module, :current] }
 
   let(:options) do
@@ -10,10 +11,15 @@ describe "puppet module install" do
   end
 
   describe "option validation" do
+    before do
+      Puppet.settings[:modulepath] = fakemodpath
+    end
+
     let(:expected_options) do
       {
-        :dir => File.expand_path("/dev/null/modules"),
+        :target_dir        => fakefirstpath,
         :module_repository => "http://forge.puppetlabs.com",
+        :modulepath        => fakemodpath
       }
     end
 
@@ -42,9 +48,11 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --dir option" do
-      options[:dir] = "/foo/puppet/modules"
+    it "should accept the --target-dir option" do
+      options[:target_dir] = "/foo/puppet/modules"
       expected_options.merge!(options)
+      expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
+
       Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.install("puppetlabs-apache", options)
     end
@@ -74,9 +82,9 @@ describe "puppet module install" do
       let(:expected_options) { { :modulepath => fakemodpath, :module_repository => "http://forge.puppetlabs.com" } }
       let(:options)          { { :modulepath => fakemodpath } }
 
-      describe "when dir option is not passed" do
-        it "should set dir to be first path from modulepath" do
-          expected_options[:dir] = fakefirstpath
+      describe "when target-dir option is not passed" do
+        it "should set target-dir to be first path from modulepath" do
+          expected_options[:target_dir] = fakefirstpath
 
           Puppet::Module::Tool::Applications::Installer.
             expects(:run).
@@ -88,10 +96,10 @@ describe "puppet module install" do
         end
       end
 
-      describe "when dir option is passed" do
-        it "should set dir to be first path of modulepath" do
-          options[:dir] = fakedirpath
-          expected_options[:dir] = fakedirpath
+      describe "when target-dir option is passed" do
+        it "should set target-dir to be first path of modulepath" do
+          options[:target_dir] = fakedirpath
+          expected_options[:target_dir] = fakedirpath
           expected_options[:modulepath] = "#{fakedirpath}#{sep}#{fakemodpath}"
 
           Puppet::Module::Tool::Applications::Installer.
@@ -110,9 +118,10 @@ describe "puppet module install" do
         Puppet.settings[:modulepath] = fakemodpath
       end
 
-      describe "when dir option is not passed" do
-        it "should set dir to be first path of default mod path" do
-          expected_options[:dir] = fakefirstpath
+      describe "when target-dir option is not passed" do
+        it "should set target-dir to be first path of default mod path" do
+          expected_options[:target_dir] = fakefirstpath
+          expected_options[:modulepath] = fakemodpath
 
           Puppet::Module::Tool::Applications::Installer.
             expects(:run).
@@ -122,17 +131,18 @@ describe "puppet module install" do
         end
       end
 
-      describe "when dir option is passed" do
-        it "should set modulepath to dir" do
-          options[:dir] = fakedirpath
-          expected_options[:dir] = fakedirpath
+      describe "when target-dir option is passed" do
+        it "should prepend target-dir to modulepath" do
+          options[:target_dir] = fakedirpath
+          expected_options[:target_dir] = fakedirpath
+          expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
 
           Puppet::Module::Tool::Applications::Installer.
             expects(:run).
             with("puppetlabs-apache", expected_options)
 
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-          Puppet.settings[:modulepath].should == fakedirpath
+          Puppet.settings[:modulepath].should == expected_options[:modulepath]
         end
       end
     end
