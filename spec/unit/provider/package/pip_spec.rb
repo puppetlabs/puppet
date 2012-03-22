@@ -140,6 +140,36 @@ describe provider_class do
       @provider.install
     end
 
+    it "should use the extra-index-url option" do
+      @resource[:ensure] = :installed
+      @extra_index_url = 'http://example.com/pypi/'
+      @resource[:source] = "extra-index-url:#{@extra_index_url}"
+      @provider.expects(:lazy_pip).
+        with("install", '-q', "--extra-index-url='#{@extra_index_url}'",
+             "fake_package")
+      @provider.install
+    end
+
+    it "should use the extra-index-url option with spaces" do
+      @resource[:ensure] = :installed
+      @extra_index_url = ' http://example.com/pypi/ http://example2.com/pypi/ '
+      @resource[:source] = "extra-index-url:#{@extra_index_url}"
+      @provider.expects(:lazy_pip).
+        with("install", '-q',
+             "--extra-index-url='http://example.com/pypi/ http://example2.com/pypi/'",
+             "fake_package")
+      @provider.install
+    end
+
+    it "should use the index-url option" do
+      @resource[:ensure] = :installed
+      @index_url = 'http://example.com/pypi/'
+      @resource[:source] = "index-url: #{@index_url}"
+      @provider.expects(:lazy_pip).
+        with("install", '-q', "--index-url=#{@index_url}", "fake_package")
+      @provider.install
+    end
+
   end
 
   describe "uninstall" do
