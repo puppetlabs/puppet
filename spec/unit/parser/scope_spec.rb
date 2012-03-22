@@ -501,32 +501,32 @@ describe Puppet::Parser::Scope do
   describe "when managing defaults" do
     it "should be able to set and lookup defaults" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
-      @scope.setdefaults(:mytype, param)
+      @scope.define_settings(:mytype, param)
       @scope.lookupdefaults(:mytype).should == {:myparam => param}
     end
 
     it "should fail if a default is already defined and a new default is being defined" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
-      @scope.setdefaults(:mytype, param)
-      lambda { @scope.setdefaults(:mytype, param) }.should raise_error(Puppet::ParseError)
+      @scope.define_settings(:mytype, param)
+      lambda { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
     end
 
     it "should return multiple defaults at once" do
       param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
-      @scope.setdefaults(:mytype, param1)
+      @scope.define_settings(:mytype, param1)
       param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
-      @scope.setdefaults(:mytype, param2)
+      @scope.define_settings(:mytype, param2)
 
       @scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
     end
 
     it "should look up defaults defined in parent scopes" do
       param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
-      @scope.setdefaults(:mytype, param1)
+      @scope.define_settings(:mytype, param1)
 
       child_scope = @scope.newscope
       param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
-      child_scope.setdefaults(:mytype, param2)
+      child_scope.define_settings(:mytype, param2)
 
       child_scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
     end

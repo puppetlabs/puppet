@@ -53,8 +53,8 @@ module Puppet
   require 'puppet/feature/base'
 
   # Store a new default value.
-  def self.setdefaults(section, hash)
-    @@settings.setdefaults(section, hash)
+  def self.define_settings(section, hash)
+    @@settings.define_settings(section, hash)
   end
 
   # configuration parameter access and stuff
@@ -87,12 +87,19 @@ module Puppet
     @@settings
   end
 
-  def self.run_mode
-    $puppet_application_mode || Puppet::Util::RunMode[:user]
-  end
 
-  def self.application_name
-    $puppet_application_name ||= "apply"
+  def self.run_mode
+    # This sucks (the existence of this method); there are a lot of places in our code that branch based the value of
+    # "run mode", but there used to be some really confusing code paths that made it almost impossible to determine
+    # when during the lifecycle of a puppet application run the value would be set properly.  A lot of the lifecycle
+    # stuff has been cleaned up now, but it still seems frightening that we rely so heavily on this value.
+    #
+    # I'd like to see about getting rid of the concept of "run_mode" entirely, but there are just too many places in
+    # the code that call this method at the moment... so I've settled for isolating it inside of the Settings class
+    # (rather than using a global variable, as we did previously...).  Would be good to revisit this at some point.
+    #
+    # --cprice 2012-03-16
+    Puppet::Util::RunMode[@@settings.run_mode]
   end
 
   # Load all of the configuration parameters.
@@ -117,6 +124,10 @@ module Puppet
     Puppet::Type.newtype(name, options, &block)
   end
 end
+
+# This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
+#  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
+#  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
 require 'puppet/type'
 require 'puppet/parser'

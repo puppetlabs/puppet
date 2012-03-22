@@ -19,6 +19,7 @@ require 'tmpdir'
 
 require 'puppet_spec/verbose'
 require 'puppet_spec/files'
+require 'puppet_spec/settings'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
 require 'puppet_spec/database'
@@ -62,9 +63,6 @@ RSpec.configure do |config|
       }
     end
 
-    # these globals are set by Application
-    $puppet_application_mode = nil
-    $puppet_application_name = nil
 
     # REVISIT: I think this conceals other bad tests, but I don't have time to
     # fully diagnose those right now.  When you read this, please come tell me
@@ -82,10 +80,11 @@ RSpec.configure do |config|
     Puppet[:req_bits]  = 512
     Puppet[:keylength] = 512
 
-    # Set the confdir and vardir to gibberish so that tests
-    # have to be correctly mocked.
-    Puppet[:confdir] = "/dev/null"
-    Puppet[:vardir] = "/dev/null"
+    # Initialize "app defaults" settings to a good set of test values
+    PuppetSpec::Settings::TEST_APP_DEFAULTS.each do |key, value|
+      Puppet.settings.set_value(key, value, :application_defaults)
+    end
+
 
     # Avoid opening ports to the outside world
     Puppet.settings[:bindaddress] = "127.0.0.1"
@@ -102,7 +101,7 @@ RSpec.configure do |config|
   end
 
   config.after :each do
-    Puppet.settings.clear
+    Puppet.settings.send(:clear_everything_for_tests)
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
     Puppet::Util::ExecutionStub.reset

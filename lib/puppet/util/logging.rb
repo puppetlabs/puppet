@@ -1,5 +1,6 @@
 # A module to make logging a bit easier.
 require 'puppet/util/log'
+require 'puppet/error'
 
 module Puppet::Util::Logging
 
@@ -22,8 +23,10 @@ module Puppet::Util::Logging
   #    If you pass a String here, your string will be logged instead.  You may also pass nil if you don't
   #    wish to log a message at all; in this case it is likely that you are only calling this method in order
   #    to take advantage of the backtrace logging.
-  def log_exception(exception, message = :default)
-
+  # [options] supported options:
+  #    :force_console => if true, will ensure that the error is written to the console, even if the console is not
+  #       on the configured list of logging destinations
+  def log_exception(exception, message = :default, options = {})
     case message
       when :default
         err(exception.message)
@@ -34,6 +37,12 @@ module Puppet::Util::Logging
     end
 
     err(Puppet::Util.pretty_backtrace(exception.backtrace)) if Puppet[:trace] && exception.backtrace
+  end
+
+
+  def log_and_raise(exception, message)
+    log_exception(exception, message)
+    raise Puppet::Error.new(message + "\n" + exception)
   end
 
   class DeprecationWarning < Exception; end

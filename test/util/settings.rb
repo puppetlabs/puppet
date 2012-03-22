@@ -10,7 +10,7 @@ require 'puppettest/parsertesting'
 class TestSettings < Test::Unit::TestCase
   include PuppetTest
   include PuppetTest::ParserTesting
-  Setting = Puppet::Util::Settings::Setting
+  Setting = Puppet::Util::Settings::StringSetting
   BooleanSetting = Puppet::Util::Settings::BooleanSetting
 
   def setup
@@ -21,23 +21,23 @@ class TestSettings < Test::Unit::TestCase
   def set_configs(config = nil)
     config ||= @config
 
-      config.setdefaults(
+      config.define_settings(
         "main",
-      :one => ["a", "one"],
-      :two => ["a", "two"],
-      :yay => ["/default/path", "boo"],
-      :mkusers => [true, "uh, yeah"],
+      :one => { :type => :string, :default => "a", :desc => "one" },
+      :two => { :type => :string, :default => "a", :desc => "two" },
+      :yay => { :type => :string, :default => "/default/path", :desc => "boo" },
+      :mkusers => { :type => :boolean, :default => true, :desc => "uh, yeah" },
 
-      :name => ["testing", "a"]
+      :name => { :type => :string, :default => "testing", :desc => "a" }
     )
 
 
-      config.setdefaults(
+      config.define_settings(
         "section1",
-      :attr => ["a", "one"],
-      :attrdir => ["/another/dir", "two"],
+      :attr => { :type => :string, :default => "a", :desc => "one" },
+      :attrdir => { :type => :directory, :default => "/another/dir", :desc => "two" },
 
-      :attr3 => ["$attrdir/maybe", "boo"]
+      :attr3 => { :type => :string, :default => "$attrdir/maybe", :desc => "boo" }
     )
   end
 
@@ -72,7 +72,7 @@ class TestSettings < Test::Unit::TestCase
       end
     }
 
-    newc.setdefaults :section, :config => [newfile, "eh"]
+    newc.define_settings :section, :config => { :type => :file, :default => newfile, :desc => "eh" }
 
     assert_nothing_raised("Could not parse generated configuration") {
       newc.parse
@@ -85,20 +85,20 @@ class TestSettings < Test::Unit::TestCase
 
   def mkconfig
     c = Puppet::Util::Settings.new
-    c.setdefaults :main, :noop => [false, "foo"]
+    c.define_settings :main, :noop => { :type => :boolean, :default => false, :desc => "foo" }
     c
   end
 
   def test_addbools
     assert_nothing_raised {
-      @config.setdefaults(:testing, :booltest => [true, "testing"])
+      @config.define_settings(:testing, :booltest => { :type => :boolean, :default => true, :desc => "testing" })
     }
 
     assert(@config[:booltest])
     @config = mkconfig
 
     assert_nothing_raised {
-      @config.setdefaults(:testing, :booltest => ["true", "testing"])
+      @config.define_settings(:testing, :booltest => { :type => :boolean, :default => "true", :desc => "testing" })
     }
 
     assert(@config[:booltest])
@@ -127,14 +127,14 @@ class TestSettings < Test::Unit::TestCase
   def test_strings
     val = "this is a string"
     assert_nothing_raised {
-      @config.setdefaults(:testing, :strtest => [val, "testing"])
+      @config.define_settings(:testing, :strtest => { :type => :string, :default => val, :desc => "testing" })
     }
 
     assert_equal(val, @config[:strtest])
 
     # Verify that variables are interpolated
     assert_nothing_raised {
-      @config.setdefaults(:testing, :another => ["another $strtest", "testing"])
+      @config.define_settings(:testing, :another => { :type => :string, :default => "another $strtest", :desc => "testing" })
     }
 
     assert_equal("another #{val}", @config[:another])
@@ -145,11 +145,11 @@ class TestSettings < Test::Unit::TestCase
 
     parent = "/puppet"
     assert_nothing_raised {
-      @config.setdefaults(:testing, :parentdir => [parent, "booh"])
+      @config.define_settings(:testing, :parentdir => { :type => :directory, :default => parent, :desc => "booh" })
     }
 
     assert_nothing_raised {
-      @config.setdefaults(:testing, :child => ["$parent/child", "rah"])
+      @config.define_settings(:testing, :child => { :type => :file, :default => "$parent/child", :desc => "rah" })
     }
 
     assert_equal(parent, @config[:parentdir])
@@ -164,7 +164,7 @@ class TestSettings < Test::Unit::TestCase
 
     default = "this is a default"
     assert_nothing_raised {
-      @config.setdefaults(:testing, :yayness => [default, "rah"])
+      @config.define_settings(:testing, :yayness => { :type => :string, :default => default, :desc => "rah" })
     }
 
     assert_equal(default, @config[:yayness])
@@ -248,13 +248,13 @@ class TestSettings < Test::Unit::TestCase
 
     assert_nothing_raised {
 
-      @config.setdefaults(
+      @config.define_settings(
         "testing",
-        :onboolean => [true, "An on bool"],
-        :offboolean => [false, "An off bool"],
-        :string => ["a string", "A string arg"],
+        :onboolean => { :type => :boolean, :default => true, :desc => "An on bool" },
+        :offboolean => { :type => :boolean, :default => false, :desc => "An off bool" },
+        :string => { :type => :string, :default => "a string", :desc => "A string arg" },
 
-        :file => ["/path/to/file", "A file arg"]
+        :file => { :type => :file, :default => "/path/to/file", :desc => "A file arg" }
       )
     }
 
@@ -289,13 +289,13 @@ class TestSettings < Test::Unit::TestCase
 
   def test_addargs
 
-    @config.setdefaults(
+    @config.define_settings(
       "testing",
-        :onboolean => [true, "An on bool"],
-        :offboolean => [false, "An off bool"],
-        :string => ["a string", "A string arg"],
+        :onboolean => { :type => :boolean, :default => true, :desc => "An on bool" },
+        :offboolean => { :type => :boolean, :default => false, :desc => "An off bool" },
+        :string => { :type => :string, :default => "a string", :desc => "A string arg" },
 
-        :file => ["/path/to/file", "A file arg"]
+        :file => { :type => :file, :default => "/path/to/file", :desc => "A file arg" }
         )
 
     should = []
@@ -315,11 +315,11 @@ class TestSettings < Test::Unit::TestCase
     @config = Puppet::Util::Settings.new
 
 
-      @config.setdefaults(
+      @config.define_settings(
         "testing",
-          :onboolean => [true, "An on bool"],
+          :onboolean => { :type => :boolean, :default => true, :desc => "An on bool" },
 
-          :string => ["a string", "A string arg"]
+          :string => { :type => :string, :default => "a string", :desc => "A string arg" }
           )
     result = []
     should = []
@@ -349,7 +349,9 @@ class TestSettings < Test::Unit::TestCase
     end
 
     config = mkconfig
-    config.setdefaults(Puppet[:name], :group => ["puppet", "a group"], :config => [cfile, "eh"])
+    config.define_settings(:application,
+        :group => { :type => :string, :default => "puppet", :desc => "a group" },
+        :config => { :type => :file, :default => cfile, :desc => "eh" })
 
     assert_nothing_raised {
       config.parse
@@ -368,7 +370,7 @@ class TestSettings < Test::Unit::TestCase
 
     config = mkconfig
 
-    args = { :default => path, :mode => mode, :desc => "yay" }
+    args = { :type => :file, :default => path, :mode => mode, :desc => "yay" }
 
     user = nonrootuser
     group = nonrootgroup
@@ -378,7 +380,7 @@ class TestSettings < Test::Unit::TestCase
       args[:group] = group.name
     end
 
-    config.setdefaults(:testing, :myfile => args)
+    config.define_settings(:testing, :myfile => args)
 
     assert_nothing_raised {
       config.write(:myfile) do |file|
@@ -408,7 +410,7 @@ class TestSettings < Test::Unit::TestCase
 
     config = mkconfig
 
-    args = { :default => path, :mode => mode, :desc => "a file" }
+    args = { :type => :directory, :default => path, :mode => mode, :desc => "a file" }
 
     user = nonrootuser
     group = nonrootgroup
@@ -418,7 +420,7 @@ class TestSettings < Test::Unit::TestCase
       args[:group] = group.name
     end
 
-    config.setdefaults(:testing, :mydir => args)
+    config.define_settings(:testing, :mydir => args)
 
     assert_nothing_raised {
       config.mkdir(:mydir)
@@ -445,10 +447,10 @@ class TestSettings < Test::Unit::TestCase
     file = tempfile
 
 
-      config.setdefaults(
+      config.define_settings(
         :mysection,
 
-      :mydir => [file, "a file"]
+      :mydir => { :type => :directory, :default => file, :desc => "a file" }
     )
 
     Puppet[:tags] = "yayness"
@@ -469,8 +471,8 @@ class TestSettings < Test::Unit::TestCase
   def test_configs_replace_in_url
     config = mkconfig
 
-    config.setdefaults(:mysection, :host => ["yayness", "yay"])
-    config.setdefaults(:mysection, :url => ["http://$host/rahness", "yay"])
+    config.define_settings(:mysection, :host => { :type => :string, :default => "yayness", :desc => "yay" })
+    config.define_settings(:mysection, :url => { :type => :string, :default => "http://$host/rahness", :desc => "yay" })
 
     val = nil
     assert_nothing_raised {
@@ -484,44 +486,12 @@ class TestSettings < Test::Unit::TestCase
       "Settings got messed up")
   end
 
-  def test_correct_type_assumptions
-    file = Puppet::Util::Settings::FileSetting
-    setting = Puppet::Util::Settings::Setting
-    bool = Puppet::Util::Settings::BooleanSetting
-
-    # We have to keep these ordered, unfortunately.
-    [
-      ["/this/is/a/file", file],
-      ["true", bool],
-      [true, bool],
-      ["false", bool],
-      ["server", setting],
-      ["http://$server/yay", setting],
-      ["$server/yayness", file],
-      ["$server/yayness.conf", file]
-    ].each do |ary|
-      config = mkconfig
-      value, type = ary
-      name = value.to_s + "_setting"
-      assert_nothing_raised {
-        config.setdefaults(:yayness, name => { :default => value, :desc => name.to_s})
-      }
-      elem = config.setting(name)
-
-
-        assert_instance_of(
-          type, elem,
-
-          "#{value.inspect} got created as wrong type")
-    end
-  end
-
   def test_parse_removes_quotes
     config = mkconfig
-    config.setdefaults(:mysection, :singleq => ["single", "yay"])
-    config.setdefaults(:mysection, :doubleq => ["double", "yay"])
-    config.setdefaults(:mysection, :none => ["noquote", "yay"])
-    config.setdefaults(:mysection, :middle => ["midquote", "yay"])
+    config.define_settings(:mysection, :singleq => { :type => :string, :default => "single", :desc => "yay" })
+    config.define_settings(:mysection, :doubleq => { :type => :string, :default => "double", :desc => "yay" })
+    config.define_settings(:mysection, :none => { :type => :string, :default => "noquote", :desc => "yay" })
+    config.define_settings(:mysection, :middle => { :type => :string, :default => "midquote", :desc => "yay" })
 
     file = tempfile
     # Set one parameter in the file
@@ -534,7 +504,7 @@ class TestSettings < Test::Unit::TestCase
 }
   }
 
-  config.setdefaults(:mysection, :config => [file, "eh"])
+  config.define_settings(:mysection, :config => { :type => :file, :default => file, :desc => "eh" })
 
   assert_nothing_raised {
     config.parse
@@ -553,7 +523,7 @@ class TestSettings < Test::Unit::TestCase
 
     testing = nil
     assert_nothing_raised do
-      config.setdefaults :test, :blocktest => {:default => "yay", :desc => "boo", :hook => proc { |value| testing = value }}
+      config.define_settings :test, :blocktest => {:default => "yay", :desc => "boo", :hook => proc { |value| testing = value }}
     end
     elem = config.setting(:blocktest)
 
@@ -581,7 +551,7 @@ class TestSettings < Test::Unit::TestCase
 
     # Now verify it works from setdefault
     assert_nothing_raised do
-      config.setdefaults :test,
+      config.define_settings :test,
         :blocktest2 => {
           :default => "yay",
           :desc => "yay",
@@ -601,16 +571,16 @@ class TestSettings < Test::Unit::TestCase
   def test_no_modify_root
     config = mkconfig
 
-      config.setdefaults(
-        :yay,
-      :mydir => {:default => tempfile,
-
-        :mode => 0644,
-        :owner => "root",
-        :group => "service",
-        :desc => "yay"
-      },
-      :mkusers => [false, "yay"]
+      config.define_settings(:yay,
+          :mydir => {
+              :type => :file,
+              :default => tempfile,
+              :mode => 0644,
+              :owner => "root",
+              :group => "service",
+              :desc => "yay"
+          },
+      :mkusers => { :type => :boolean, :default => false, :desc => "yay" }
     )
 
     assert_nothing_raised do
@@ -646,7 +616,7 @@ class TestSettings < Test::Unit::TestCase
     file = tempfile
     File.open(file, "w") { |f| f.puts "rah = something " }
 
-    config.setdefaults(:yay, :config => [file, "eh"], :rah => ["testing", "a desc"])
+    config.define_settings(:yay, :config => { :type => :file, :default => file, :desc => "eh" }, :rah => { :type => :string, :default => "testing", :desc => "a desc" })
 
     assert_nothing_raised { config.parse }
     assert_equal("something", config[:rah], "did not remove trailing whitespace in parsing")
@@ -664,7 +634,7 @@ class TestSettings < Test::Unit::TestCase
       }
     }
 
-    config.setdefaults(:mysection, :config => [file, "eh"], :one => ["yay", "yay"])
+    config.define_settings(:mysection, :config => { :type => :file, :default => file, :desc => "eh" }, :one => { :type => :string, :default => "yay", :desc => "yay" })
 
     assert_nothing_raised("Unknown parameter threw an exception") do
       config.parse
@@ -673,12 +643,12 @@ class TestSettings < Test::Unit::TestCase
 
   def test_multiple_interpolations
 
-    @config.setdefaults(
+    @config.define_settings(
       :section,
-      :one => ["oneval", "yay"],
-      :two => ["twoval", "yay"],
+      :one => { :type => :string, :default => "oneval", :desc => "yay" },
+      :two => { :type => :string, :default => "twoval", :desc => "yay" },
 
-      :three => ["$one/$two", "yay"]
+      :three => { :type => :string, :default => "$one/$two", :desc => "yay" }
     )
 
 
@@ -691,12 +661,12 @@ class TestSettings < Test::Unit::TestCase
   # Make sure we can replace ${style} var names
   def test_curly_replacements
 
-    @config.setdefaults(
+    @config.define_settings(
       :section,
-      :one => ["oneval", "yay"],
-      :two => ["twoval", "yay"],
+      :one => { :type => :string, :default => "oneval", :desc => "yay" },
+      :two => { :type => :string, :default => "twoval", :desc => "yay" },
 
-      :three => ["$one/${two}/${one}/$two", "yay"]
+      :three => { :type => :string, :default => "$one/${two}/${one}/$two", :desc => "yay" }
     )
 
 
@@ -724,21 +694,21 @@ class TestSettings < Test::Unit::TestCase
     config = mkconfig
     assert_nothing_raised("Could not create celement with short name.") do
 
-      config.setdefaults(
+      config.define_settings(
         :main,
 
           :one => { :default => "blah", :desc => "anything", :short => "o" })
     end
     assert_nothing_raised("Could not create second celement with short name.") do
 
-      config.setdefaults(
+      config.define_settings(
         :main,
 
           :two => { :default => "blah", :desc => "anything", :short => "i" })
     end
     assert_raise(ArgumentError, "Could create second celement with duplicate short name.") do
 
-      config.setdefaults(
+      config.define_settings(
         :main,
 
           :three => { :default => "blah", :desc => "anything", :short => "i" })

@@ -12,10 +12,6 @@ describe Puppet::Application::Cert => true do
     @cert_app.class.run_mode.name.should equal(:master)
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @cert_app.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @cert_app.should respond_to(:main)
   end

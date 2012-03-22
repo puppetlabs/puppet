@@ -18,6 +18,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
 
       Puppet.settings[:confdir] = dir
       Puppet.settings[:vardir] = dir
+      Puppet.settings[:logdir] = dir
       Puppet.settings[:group] = Process.gid
 
       Puppet::SSL::Host.ca_location = :local

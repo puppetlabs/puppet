@@ -1,5 +1,5 @@
 # The base element type.
-class Puppet::Util::Settings::Setting
+class Puppet::Util::Settings::StringSetting
   attr_accessor :name, :section, :default, :setbycli, :call_on_define
   attr_reader :desc, :short
 
@@ -37,7 +37,7 @@ class Puppet::Util::Settings::Setting
 
     args.each do |param, value|
       method = param.to_s + "="
-      raise ArgumentError, "#{self.class} does not accept #{param}" unless self.respond_to? method
+      raise ArgumentError, "#{self.class} (setting '#{args[:name]}') does not accept #{param}" unless self.respond_to? method
 
       self.send(method, value)
     end

@@ -455,6 +455,22 @@ module Util
   end
   module_function :replace_file
 
+
+  # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
+  #  exit if the block throws an exception.
+  #
+  # @param [String] message a message to log if the block fails
+  # @param [Integer] code the exit code that the ruby interpreter should return if the block fails
+  # @yield
+  def exit_on_fail(message, code = 1)
+    yield
+  rescue ArgumentError, RuntimeError, NotImplementedError => detail
+    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
+    exit(code)
+  end
+  module_function :exit_on_fail
+
+
   #######################################################################################################
   # Deprecated methods relating to process execution; these have been moved to Puppet::Util::Execution
   #######################################################################################################

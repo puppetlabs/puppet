@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Master < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   option("--debug", "-d")
@@ -122,6 +121,10 @@ COPYRIGHT
 Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
+  end
+
+  def app_defaults()
+    super.merge :facts_terminus => 'yaml'
   end
 
   def preinit

@@ -58,7 +58,7 @@ class Puppet::Network::HTTP::WEBrick
   # Configure our http log file.
   def setup_logger
     # Make sure the settings are all ready for us.
-    Puppet.settings.use(:main, :ssl, Puppet[:name])
+    Puppet.settings.use(:main, :ssl, :application)
 
     if Puppet.run_mode.master?
       file = Puppet[:masterhttplog]

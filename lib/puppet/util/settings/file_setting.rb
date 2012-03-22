@@ -1,7 +1,7 @@
-require 'puppet/util/settings/setting'
+require 'puppet/util/settings/string_setting'
 
 # A file.
-class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
+class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::StringSetting
   AllowedOwners = %w{root service}
   AllowedGroups = %w{root service}
 
@@ -58,18 +58,9 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     value
   end
 
-  # Return the appropriate type.
+
   def type
-    value = @settings.value(self.name)
-    if @name.to_s =~ /dir/
-      return :directory
-    elsif value.to_s =~ /\/$/
-      return :directory
-    elsif value.is_a? String
-      return :file
-    else
-      return nil
-    end
+    :file
   end
 
   # Turn our setting thing into a Puppet::Resource instance.

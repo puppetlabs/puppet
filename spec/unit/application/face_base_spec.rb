@@ -160,6 +160,7 @@ describe Puppet::Application::FaceBase do
     }.each do |name, args|
       it "should accept global boolean settings #{name} the action" do
         app.command_line.stubs(:args).returns args
+        app.command_line.send(:parse_global_options)
         app.preinit
         app.parse_options
         Puppet[:trace].should be_true
@@ -171,6 +172,7 @@ describe Puppet::Application::FaceBase do
     }.each do |name, args|
       it "should accept global settings with arguments #{name} the action" do
         app.command_line.stubs(:args).returns args
+        app.command_line.send(:parse_global_options)
         app.preinit
         app.parse_options
         Puppet[:syslogfacility].should == "user1"
@@ -179,6 +181,7 @@ describe Puppet::Application::FaceBase do
 
     it "should handle application-level options", :'fails_on_ruby_1.9.2' => true do
       app.command_line.stubs(:args).returns %w{--verbose return_true}
+      app.command_line.send(:parse_global_options)
       app.preinit
       app.parse_options
       app.face.name.should == :basetest
@@ -188,6 +191,7 @@ describe Puppet::Application::FaceBase do
   describe "#setup" do
     it "should remove the action name from the arguments" do
       app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      app.command_line.send(:parse_global_options)
       app.preinit
       app.parse_options
       app.setup
@@ -196,6 +200,7 @@ describe Puppet::Application::FaceBase do
 
     it "should pass positional arguments" do
       app.command_line.stubs(:args).returns %w{--mandatory --bar foo bar baz quux}
+      app.command_line.send(:parse_global_options)
       app.preinit
       app.parse_options
       app.setup
@@ -356,11 +361,13 @@ EOT
 
     it "should fail early if asked to render an invalid format" do
       app.command_line.stubs(:args).returns %w{--render-as interpretive-dance return_true}
+      app.command_line.send(:parse_global_options)
+
       # We shouldn't get here, thanks to the exception, and our expectation on
       # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
       Puppet::Face[:help, :current].expects(:help).never
 
-      Puppet.expects(:err).with("Could not parse options: I don't know how to render 'interpretive-dance'")
+      Puppet.expects(:err).with("Could not parse application options: I don't know how to render 'interpretive-dance'")
 
       expect { app.run }.to exit_with 1
 

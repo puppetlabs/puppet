@@ -36,10 +36,6 @@ describe Puppet::Application::Apply do
     @apply.send("handle_execute".to_sym, 'arg')
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @apply.should_parse_config?.should be_true
-  end
-
   describe "when applying options" do
 
     it "should set the log destination with --logdest" do

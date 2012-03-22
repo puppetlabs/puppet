@@ -1,5 +1,6 @@
 require 'optparse'
 require 'puppet/util/plugins'
+require 'puppet/error'
 
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
@@ -121,6 +122,7 @@ class Application
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
 
+
   class << self
     include Puppet::Util
 
@@ -174,17 +176,21 @@ class Application
       result
     end
 
+    SHOULD_PARSE_CONFIG_DEPRECATION_MSG = "is no longer supported; config file parsing " +
+        "is now controlled by the puppet engine, rather than by individual applications.  This " +
+        "method will be removed in a future version of puppet."
+
     def should_parse_config
-      @parse_config = true
+      Puppet.deprecation_warning("should_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
     end
 
     def should_not_parse_config
-      @parse_config = false
+      Puppet.deprecation_warning("should_not_parse_config " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
     end
 
     def should_parse_config?
-      @parse_config = true if ! defined?(@parse_config)
-      @parse_config
+      Puppet.deprecation_warning("should_parse_config? " + SHOULD_PARSE_CONFIG_DEPRECATION_MSG)
+      true
     end
 
     # used to declare code that handle an option
@@ -229,6 +235,11 @@ class Application
       find(name).new
     end
 
+    #
+    # I think that it would be nice to look into changing this into two methods (getter/setter); however,
+    #  it sounds like this is a desirable feature of our ruby DSL. --cprice 2012-03-06
+    #
+
     # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
     # passed. Otherwise, gets the run_mode or a default run_mode
     #
@@ -254,8 +265,19 @@ class Application
     exit
   end
 
-  def should_parse_config?
-    self.class.should_parse_config?
+  def app_defaults()
+    {
+        :name     => name,
+        :run_mode => self.class.run_mode.name,
+        :confdir  => self.class.run_mode.conf_dir,
+        :vardir   => self.class.run_mode.var_dir,
+        :rundir   => self.class.run_mode.run_dir,
+        :logdir   => self.class.run_mode.log_dir,
+    }
+  end
+
+  def initialize_app_defaults()
+    Puppet.settings.initialize_app_defaults(app_defaults)
   end
 
   # override to execute code before running anything else
@@ -266,47 +288,31 @@ class Application
 
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    set_run_mode self.class.run_mode
     @options = {}
 
-    require 'puppet'
-    require 'puppet/util/instrumentation'
-    Puppet::Util::Instrumentation.init
-  end
-
-  # WARNING: This is a totally scary, frightening, and nasty internal API.  We
-  # strongly advise that you do not use this, and if you insist, we will
-  # politely allow you to keep both pieces of your broken code.
-  #
-  # We plan to provide a supported, long-term API to deliver this in a way
-  # that you can use.  Please make sure that you let us know if you do require
-  # this, and this message is still present in the code. --daniel 2011-02-03
-  def set_run_mode(mode)
-    @run_mode = mode
-    $puppet_application_mode = @run_mode
-    $puppet_application_name = name
-
-    if Puppet.respond_to? :settings
-      # This is to reduce the amount of confusion in rspec
-      # because it might have loaded defaults.rb before the globals were set
-      # and thus have the wrong defaults for the current application
-      Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
-      Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
-      Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
-      Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
-      Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-      Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
-    end
   end
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize")                                   { hook('preinit')       { preinit } }
-    exit_on_fail("parse options")                                { hook('parse_options') { parse_options } }
-    exit_on_fail("parse configuration file")                     { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution")                        { hook('setup')         { setup } }
+
+    # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
+    # names, and make deprecated aliases.  Also, Daniel suggests that we can probably get rid of this "plugin_hook"
+    # pattern, but we need to check with PE and the community first.  --cprice 2012-03-16
+    #
+
+    exit_on_fail("get application-specific default settings") do
+      plugin_hook('initialize_app_defaults') { initialize_app_defaults }
+    end
+
+    require 'puppet'
+    require 'puppet/util/instrumentation'
+    Puppet::Util::Instrumentation.init
+
+    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
+    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
+    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-    exit_on_fail("run")                                          { hook('run_command')   { run_command } }
+    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
   end
 
   def main
@@ -347,6 +353,12 @@ class Application
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
 
+    # He're we're building up all of the options that the application may need to handle.  The main
+    # puppet settings defined in "defaults.rb" have already been parsed once (in command_line.rb) by
+    # the time we get here; however, our app may wish to handle some of them specially, so we need to
+    # make the parser aware of them again.  We might be able to make this a bit more efficient by
+    # re-using the parser object that gets built up in command_line.rb.  --cprice 2012-03-16
+
     # Add all global options to it.
     Puppet.settings.optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|
@@ -370,22 +382,11 @@ class Application
     option_parser.parse!(self.command_line.args)
   end
 
-  def handlearg(opt, arg)
-    # rewrite --[no-]option to --no-option if that's what was given
-    if opt =~ /\[no-\]/ and !arg
-      opt = opt.gsub(/\[no-\]/,'no-')
-    end
-    # otherwise remove the [no-] prefix to not confuse everybody
-    opt = opt.gsub(/\[no-\]/, '')
-    unless respond_to?(:handle_unknown) and send(:handle_unknown, opt, arg)
-      # Puppet.settings.handlearg doesn't handle direct true/false :-)
-      if arg.is_a?(FalseClass)
-        arg = "false"
-      elsif arg.is_a?(TrueClass)
-        arg = "true"
-      end
-      Puppet.settings.handlearg(opt, arg)
-    end
+
+
+  def handlearg(opt, val)
+    opt, val = Puppet::Util::CommandLine.clean_opt(opt, val)
+    send(:handle_unknown, opt, val) if respond_to?(:handle_unknown)
   end
 
   # this is used for testing
@@ -401,20 +402,14 @@ class Application
     "No help available for puppet #{name}"
   end
 
-  private
 
-  def exit_on_fail(message, code = 1)
-    yield
-  rescue ArgumentError, RuntimeError, NotImplementedError => detail
-    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
-    exit(code)
-  end
 
-  def hook(step,&block)
+  def plugin_hook(step,&block)
     Puppet::Plugins.send("before_application_#{step}",:application_object => self)
     x = yield
     Puppet::Plugins.send("after_application_#{step}",:application_object => self, :return_value => x)
     x
   end
+  private :plugin_hook
 end
 end

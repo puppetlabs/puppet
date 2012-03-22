@@ -2,7 +2,6 @@ require 'puppet/application'
 require 'puppet/util'
 
 class Puppet::Application::Queue < Puppet::Application
-  should_parse_config
 
   attr_accessor :daemon
 
