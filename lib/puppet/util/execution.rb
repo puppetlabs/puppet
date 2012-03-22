@@ -55,6 +55,9 @@ module Util::Execution
 
   # Execute the desired command, and return the status and output.
   # def execute(command, options)
+  # [command] an Array or String representing the command to execute. If it is
+  #   an Array the first element should be the executable and the rest of the
+  #   elements should be the individual arguments to that executable.
   # [options] a Hash optionally containing any of the following keys:
   #   :failonfail (default true) -- if this value is set to true, then this method will raise an error if the
   #      command is not executed successfully.
