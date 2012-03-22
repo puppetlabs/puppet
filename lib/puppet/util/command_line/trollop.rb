@@ -2,6 +2,10 @@
 ## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
 ## Copyright:: Copyright 2007 William Morgan
 ## License::   the same terms as ruby itself
+##
+## 2012-03: small changes made by cprice (chris@puppetlabs.com);
+##           patch submitted for upstream consideration:
+##           https://gitorious.org/trollop/mainline/merge_requests/9
 
 require 'date'
 
