@@ -6,7 +6,7 @@ describe Puppet::Configurer do
   before do
     Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
-    @agent.stubs(:dostorage)
+    @agent.stubs(:init_storage)
     Puppet::Util::Storage.stubs(:store)
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
@@ -618,7 +618,7 @@ describe Puppet::Configurer do
 
     it "should initialize the metadata store" do
       @agent.class.stubs(:facts).returns(@facts)
-      @agent.expects(:dostorage)
+      @agent.expects(:init_storage)
       @agent.prepare({})
     end
 

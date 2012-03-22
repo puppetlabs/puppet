@@ -44,7 +44,7 @@ class Puppet::Configurer
   end
 
   # Initialize and load storage
-  def dostorage
+  def init_storage
       Puppet::Util::Storage.load
       @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
@@ -68,7 +68,7 @@ class Puppet::Configurer
 
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
   def prepare(options)
-    dostorage
+    init_storage
     download_plugins unless options[:skip_plugin_download]
   end
 
