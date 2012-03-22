@@ -66,12 +66,6 @@ class Puppet::Configurer
     @splayed = false
   end
 
-  # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare(options)
-    init_storage
-    download_plugins unless options[:skip_plugin_download]
-  end
-
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(fact_options)
     fact_options ||= {}
@@ -100,7 +94,7 @@ class Puppet::Configurer
   end
 
   def prepare_and_retrieve_catalog(options)
-    prepare(options)
+    download_plugins unless options[:skip_plugin_download]
 
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,
@@ -140,6 +134,7 @@ class Puppet::Configurer
   def run(options = {})
     options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
+    init_storage
 
     Puppet::Util::Log.newdestination(report)
     begin

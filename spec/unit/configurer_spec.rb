@@ -74,7 +74,7 @@ describe Puppet::Configurer do
   describe "when executing a catalog run" do
     before do
       Puppet.settings.stubs(:use).returns(true)
-      @agent.stubs(:prepare)
+      @agent.stubs(:download_plugins)
       Puppet::Node::Facts.indirection.terminus_class = :memory
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
@@ -94,9 +94,13 @@ describe Puppet::Configurer do
       Puppet::Resource::Catalog.indirection.reset_terminus_class
     end
 
-    it "should prepare for the run" do
-      @agent.expects(:prepare)
+    it "should initialize storage" do
+      Puppet::Util::Storage.expects(:load)
+      @agent.run
+    end
 
+    it "should download plugins" do
+      @agent.expects(:download_plugins)
       @agent.run
     end
 
@@ -321,7 +325,6 @@ describe Puppet::Configurer do
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
       @catalog.stubs(:environment).returns("second_env")
-      @agent.expects(:prepare).twice
       @agent.expects(:retrieve_catalog).returns(@catalog).twice
 
       @agent.run
@@ -607,25 +610,6 @@ describe Puppet::Configurer do
       @catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(@oldcatalog, 10)
-    end
-  end
-
-  describe "when preparing for a run" do
-    before do
-      Puppet.settings.stubs(:use).returns(true)
-      @facts = {"one" => "two", "three" => "four"}
-    end
-
-    it "should initialize the metadata store" do
-      @agent.class.stubs(:facts).returns(@facts)
-      @agent.expects(:init_storage)
-      @agent.prepare({})
-    end
-
-    it "should download plugins" do
-      @agent.expects(:download_plugins)
-
-      @agent.prepare({})
     end
   end
 end
