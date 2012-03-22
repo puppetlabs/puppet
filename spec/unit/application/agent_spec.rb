@@ -27,10 +27,6 @@ describe Puppet::Application::Agent do
     @puppetd.class.run_mode.name.should == :agent
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @puppetd.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @puppetd.should respond_to(:main)
   end

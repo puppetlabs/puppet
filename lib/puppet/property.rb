@@ -82,7 +82,7 @@ class Puppet::Property < Puppet::Parameter
       rescue Puppet::Error
         raise
       rescue => detail
-        error = Puppet::Error.new("Could not set '#{value} on #{self.class.name}: #{detail}", @resource.line, @resource.file)
+        error = Puppet::Error.new("Could not set '#{value}' on #{self.class.name}: #{detail}", @resource.line, @resource.file)
         error.set_backtrace detail.backtrace
         Puppet.log_exception(detail, error.message)
         raise error

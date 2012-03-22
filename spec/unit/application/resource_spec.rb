@@ -11,10 +11,6 @@ describe Puppet::Application::Resource do
     Puppet::Resource.indirection.stubs(:terminus_class=)
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @resource_app.should_parse_config?.should be_false
-  end
-
   describe "in preinit" do
     it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
       @resource_app.preinit

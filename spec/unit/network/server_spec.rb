@@ -101,9 +101,9 @@ describe Puppet::Network::Server do
       @server = Puppet::Network::Server.new(:port => 31337)
     end
 
-    it "should use the Puppet[:name] setting section" do
-      Puppet.settings.expects(:value).with(:name).returns "me"
-      Puppet.settings.expects(:use).with { |*args| args.include?("me") }
+    it "should use the :application setting section" do
+      #Puppet.settings.expects(:value).with(:name).returns "me"
+      Puppet.settings.expects(:use).with { |*args| args.include?(:application) }
 
       @server = Puppet::Network::Server.new(:port => 31337)
     end

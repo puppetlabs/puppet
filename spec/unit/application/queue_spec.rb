@@ -14,10 +14,6 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @queue.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @queue.should respond_to(:main)
   end

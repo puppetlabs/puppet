@@ -1,13 +1,13 @@
-test_name "the pluginsync functionality should sync feature definitions"
+test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
 
 #
-# This test is intended to ensure that pluginsync syncs feature definitions to the agents.  It checks the feature
-# twice; once to make sure that it gets loaded successfully during the run in which it was synced, and once to
-# ensure that it still gets loaded successfully during the subsequent run (in which it should not be synced because
-# the files haven't changed.)
+# This test is intended to ensure that pluginsync syncs face definitions to the agents.
+# Further, the face should be runnable on the agent after the sync has occurred.
 #
-
-
+# (NOTE: When this test is passing, it should resolve both #7316 re: verifying that apps/faces can
+#  be run on the agent node after a plugin sync, and #6753 re: being able to run a face without
+#  having a placeholder stub file in the "applications" directory.)
+#
 
 ###############################################################################
 # BEGIN UTILITY METHODS - ideally this stuff would live somewhere besides in
@@ -90,7 +90,6 @@ end
 
 
 
-
 # pluck this out of the test case environment; not sure if there is a better way
 cur_test_file = @path
 cur_test_file_shortname = File.basename(cur_test_file, File.extname(cur_test_file))
@@ -117,159 +116,135 @@ all_tests_passed = false
 ###############################################################################
 
 # create some vars to point to the directories that we're going to point the master/agents at
-test_identifier = "pluginsync_should_sync_features"
 master_module_dir = "master_modules"
 agent_lib_dir = "agent_lib"
 
-module_name = "superbogus"
+app_name = "superbogus"
+app_desc = "a simple %1$s for testing %1$s delivery via plugin sync"
+app_output = "Hello from the #{app_name} %s"
 
-# here we create a custom type, which basically doesn't do anything except for test the value of
-# our custom feature and write the result to a file
-agent_module_type_file = "#{agent_lib_dir}/puppet/type/#{module_name}.rb"
-master_module_type_file = "#{master_module_dir}/#{module_name}/lib/puppet/type/#{module_name}.rb"
-master_module_type_content = <<HERE
-module Puppet
-  newtype(:#{module_name}) do
-    newparam(:name) do
-      isnamevar
-    end
+master_module_file_content = {}
 
-    newproperty(:testfeature) do
-      def sync
-        Puppet.info("The value of the #{module_name} feature is: \#{Puppet.features.#{module_name}?}")
-      end
-      def retrieve
-        :absent
-      end
-      def insync?(is)
-        false
-      end
+
+master_module_face_content = <<-HERE
+Puppet::Face.define(:#{app_name}, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
+  summary "#{app_desc % "face"}"
+
+  action(:foo) do
+    summary "a test action defined in the test face in the main puppet lib dir"
+
+    default
+    when_invoked do |*args|
+      puts "#{app_output % "face"}"
     end
   end
+
 end
 HERE
 
-# here is our custom feature... it always returns true
-agent_module_feature_file = "#{agent_lib_dir}/puppet/feature/#{module_name}.rb"
-master_module_feature_file = "#{master_module_dir}/#{module_name}/lib/puppet/feature/#{module_name}.rb"
-master_module_feature_content = <<HERE
-Puppet.features.add(:#{module_name}) do
-  Puppet.info("#{module_name} feature being queried")
-  true
+master_module_app_content = <<-HERE
+require 'puppet/application/face_base'
+
+class Puppet::Application::#{app_name.capitalize} < Puppet::Application::FaceBase
 end
+
 HERE
 
 
-# manifest file for the master, does nothing but instantiate our custom type
-master_manifest_dir = "master_manifest"
-master_manifest_file = "#{master_manifest_dir}/site.pp"
-master_manifest_content = <<HERE
-#{module_name} { "This is the title of the #{module_name} type instance in site.pp":
-    testfeature => "Hi.  I'm setting the testfeature property of #{module_name} here in site.pp",
-}
-HERE
-
-
-# for convenience we build up a list of all of the files we are expecting to deploy on the master
-all_master_files = [
-    [master_module_feature_file, 'feature'],
-    [master_module_type_file, 'type'],
-    [master_manifest_file, 'manifest']
-]
-
-# for convenience we build up a list of all of the files we are expecting to deploy on the agents
-all_agent_files = [
-    [agent_module_feature_file, 'feature'],
-    [agent_module_type_file, 'type']
-]
-
-# the command line args we'll pass to the agent each time we call it
-agent_args = "--trace --libdir=\"%s\" --pluginsync --no-daemonize --verbose " +
-    "--onetime --test --server #{master}"
-# legal exit codes whenever we run the agent
-#  we need to allow exit code 2, which means "changes were applied" on the agent
-agent_exit_codes = [0, 2]
 
 # this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
 # test.
 begin
 
+  # here we create a custom app, which basically doesn't do anything except for print a hello-world message
+  agent_module_face_file = "#{agent_lib_dir}/puppet/face/#{app_name}.rb"
+  master_module_face_file = "#{master_module_dir}/#{app_name}/lib/puppet/face/#{app_name}.rb"
+
+  agent_module_app_file = "#{agent_lib_dir}/puppet/application/#{app_name}.rb"
+  master_module_app_file = "#{master_module_dir}/#{app_name}/lib/puppet/application/#{app_name}.rb"
+
+
   # copy all the files to the master
   step "write our simple module out to the master" do
-    create_test_file(master, master_module_type_file, master_module_type_content, :mkdirs => true)
-    create_test_file(master, master_module_feature_file, master_module_feature_content, :mkdirs => true)
-    create_test_file(master, master_manifest_file, master_manifest_content, :mkdirs => true)
+    create_test_file(master, master_module_app_file, master_module_app_content, :mkdirs => true)
+    create_test_file(master, master_module_face_file, master_module_face_content, :mkdirs => true)
   end
 
-  step "verify that the module and manifest files exist on the master" do
-    all_master_files.each do |file_path, desc|
-      unless test_file_exists?(master, file_path) then
-        fail_test("Failed to create #{desc} file '#{get_test_file_path(master, file_path)}' on master")
-      end
+  step "verify that the app file exists on the master" do
+    unless test_file_exists?(master, master_module_app_file) then
+      fail_test("Failed to create app file '#{get_test_file_path(master, master_module_app_file)}' on master")
+    end
+    unless test_file_exists?(master, master_module_face_file) then
+      fail_test("Failed to create face file '#{get_test_file_path(master, master_module_face_file)}' on master")
     end
   end
 
   step "start the master" do
-
     with_master_running_on(master,
-               "--manifest=\"#{get_test_file_path(master, master_manifest_file)}\" " +
-               "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-               "--autosign true --pluginsync") do
+           "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
+           "--autosign true") do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
         agents.each do |agent|
-          all_agent_files.each do |file_path, desc|
-            if test_file_exists?(agent, file_path) then
-              fail_test("#{desc} file already exists on agent: '#{get_test_file_path(agent, file_path)}'")
+            if test_file_exists?(agent, agent_module_app_file) then
+              fail_test("app file already exists on agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
             end
-          end
-        end
-      end
-
-
-      step "run the agent and verify that it loaded the feature" do
-        agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
-                       :acceptable_exit_codes => agent_exit_codes) do
-            assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
-              "Expected agent stdout to include confirmation that the feature was 'true'")
-          end
-        end
-      end
-
-      step "verify that the module files were synced down to the agent" do
-        agents.each do |agent|
-          all_agent_files.each do |file_path, desc|
-            unless test_file_exists?(agent, file_path) then
-              fail_test("Expected #{desc} file not synced to agent: '#{get_test_file_path(agent, file_path)}'")
+            if test_file_exists?(agent, agent_module_app_file) then
+              fail_test("face file already exists on agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
             end
-          end
         end
       end
 
-      step "run the agent again" do
+      step "run the agent" do
         agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
-                          :acceptable_exit_codes => agent_exit_codes) do
-            assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
-                         "Expected agent stdout to include confirmation that the feature was 'true'")
-          end
+          run_agent_on(agent, "--trace --libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" " +
+                              "--no-daemonize --verbose --onetime --test --server #{master}")
         end
       end
-
-      #TODO: was thinking about putting in a check for the timestamps on the files (maybe add a method for that to
-      # the framework?) to verify that they didn't get re-synced, but it seems like more trouble than it's worth
-      # at the moment.
-      #step "verify that the module files were not re-synced" do
-      #  fail_test("NOT YET IMPLEMENTED: verify that the module files were not re-synced")
-      #end
 
     end
-
-    all_tests_passed = true
-
   end
+
+  step "verify that the module files were synced down to the agent" do
+    agents.each do |agent|
+      unless test_file_exists?(agent, agent_module_app_file) then
+        fail_test("Expected app file not synced to agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
+      end
+      unless test_file_exists?(agent, agent_module_face_file) then
+        fail_test("Expected face file not synced to agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
+      end
+    end
+  end
+
+  step "verify that the application shows up in help" do
+    agents.each do |agent|
+      on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+        assert_match(/^\s+#{app_name}\s+#{app_desc % "face"}$/, result.stdout)
+      end
+    end
+  end
+
+  step "verify that we can run the application" do
+    agents.each do |agent|
+      on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+        assert_match(/^#{app_output % "face"}$/, result.stdout)
+      end
+    end
+  end
+
+  step "clear out the libdir on the agents in preparation for the next test" do
+    agents.each do |agent|
+      on(agent, "rm -rf #{get_test_file_path(agent, agent_module_app_file)}/*")
+      on(agent, "rm -rf #{get_test_file_path(agent, agent_module_face_file)}/*")
+    end
+  end
+
+  all_tests_passed = true
+
 ensure
   ##########################################################################################
   # Clean up all of the temp files created by this test.  It would be nice if this logic
@@ -282,5 +257,3 @@ ensure
     end
   end
 end
-
-

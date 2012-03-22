@@ -11,7 +11,6 @@ require 'puppet'
 require 'puppet/network/http_pool'
 
 class Puppet::Application::UploadFacts < Puppet::Application
-  should_parse_config
   run_mode :master
 
   option('--debug', '-d')

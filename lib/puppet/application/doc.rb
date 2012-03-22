@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
-  should_not_parse_config
   run_mode :master
 
   attr_accessor :unknown_args, :manifest

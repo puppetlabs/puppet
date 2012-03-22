@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Cert < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   attr_accessor :all, :ca, :digest, :signed

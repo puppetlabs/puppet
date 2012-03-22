@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Filebucket < Puppet::Application
 
-  should_not_parse_config
-
   option("--bucket BUCKET","-b")
   option("--debug","-d")
   option("--local","-l")

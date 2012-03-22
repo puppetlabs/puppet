@@ -1,7 +1,7 @@
-require 'puppet/util/settings/setting'
+require 'puppet/util/settings/string_setting'
 
 # A simple boolean.
-class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::Setting
+class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::StringSetting
   # get the arguments in getopt format
   def getopt_args
     if short

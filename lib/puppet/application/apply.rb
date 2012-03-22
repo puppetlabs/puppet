@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Apply < Puppet::Application
 
-  should_parse_config
-
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
     options[:code] = arg

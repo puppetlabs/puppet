@@ -36,12 +36,9 @@ describe Puppet::Util::RunMode do
     @run_mode.run_dir.should == '$vardir/run'
   end
 
-  it "should have logopts return an array with $vardir/log if runmode is not master" do
-    @run_mode.expects(:master?).returns false
-    @run_mode.logopts.should == ["$vardir/log", "The Puppet log directory."]
-  end
 
   it "should have logopts return a hash with $vardir/log and other metadata if runmode is master" do
+    pending("runmode.logopts functionality is being moved")
     @run_mode.expects(:master?).returns true
     @run_mode.logopts.should == {
       :default => "$vardir/log",

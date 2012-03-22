@@ -9,10 +9,6 @@ describe Puppet::Application::Filebucket do
     @filebucket = Puppet::Application[:filebucket]
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @filebucket.should_parse_config?.should be_false
-  end
-
   it "should declare a get command" do
     @filebucket.should respond_to(:get)
   end

@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Inspect < Puppet::Application
 
-  should_parse_config
   run_mode :agent
 
   option("--debug","-d")

@@ -4,7 +4,6 @@ require 'puppet/util/network_device'
 
 class Puppet::Application::Device < Puppet::Application
 
-  should_parse_config
   run_mode :agent
 
   attr_accessor :args, :agent, :host

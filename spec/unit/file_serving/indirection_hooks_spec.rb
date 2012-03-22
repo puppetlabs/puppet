@@ -51,7 +51,7 @@ describe Puppet::FileServing::IndirectionHooks do
 
         @request.expects(:protocol).returns "puppet"
         @request.expects(:server).returns nil
-        Puppet.settings.expects(:value).with(:name).returns "puppet"
+        Puppet.settings.expects(:value).with(:name).returns :puppet
         @object.select_terminus(@request).should == :file_server
       end
     end

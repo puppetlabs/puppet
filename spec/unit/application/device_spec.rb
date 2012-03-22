@@ -23,10 +23,6 @@ describe Puppet::Application::Device do
     @device.class.run_mode.name.should == :agent
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @device.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @device.should respond_to(:main)
   end

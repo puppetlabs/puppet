@@ -1,6 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet/application/doc'
 
 describe Puppet::Application::Doc do
   include PuppetSpec::Files
