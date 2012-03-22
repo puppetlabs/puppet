@@ -28,11 +28,11 @@ describe Puppet::Resource::Catalog::Compiler do
       node1 = stub 'node1', :merge => nil
       node2 = stub 'node2', :merge => nil
       compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with('node1').returns(node1)
-      Puppet::Node.indirection.stubs(:find).with('node2').returns(node2)
+      Puppet::Node.indirection.stubs(:find).with('node1', anything).returns(node1)
+      Puppet::Node.indirection.stubs(:find).with('node2', anything).returns(node2)
 
-      compiler.find(stub('request', :key => 'node1', :node => 'node1', :options => {}))
-      compiler.find(stub('node2request', :key => 'node2', :node => 'node2', :options => {}))
+      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', :node => 'node1'))
+      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', :node => 'node2'))
     end
 
     it "should provide a method for determining if the catalog is networked" do
@@ -50,7 +50,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @node = Puppet::Node.new @name
       @node.stubs(:merge)
       Puppet::Node.indirection.stubs(:find).returns @node
-      @request = stub 'request', :key => @name, :node => @name, :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, :node => @name)
     end
 
     it "should directly use provided nodes" do
@@ -62,7 +62,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should use the authenticated node name if no request key is provided" do
       @request.stubs(:key).returns(nil)
-      Puppet::Node.indirection.expects(:find).with(@name).returns(@node)
+      Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       @compiler.expects(:compile).with(@node)
       @compiler.find(@request)
     end
@@ -70,30 +70,30 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should use the provided node name by default" do
       @request.expects(:key).returns "my_node"
 
-      Puppet::Node.indirection.expects(:find).with("my_node").returns @node
+      Puppet::Node.indirection.expects(:find).with("my_node", anything).returns @node
       @compiler.expects(:compile).with(@node)
       @compiler.find(@request)
     end
 
     it "should fail if no node is passed and none can be found" do
-      Puppet::Node.indirection.stubs(:find).with(@name).returns(nil)
+      Puppet::Node.indirection.stubs(:find).with(@name, anything).returns(nil)
       proc { @compiler.find(@request) }.should raise_error(ArgumentError)
     end
 
     it "should fail intelligently when searching for a node raises an exception" do
-      Puppet::Node.indirection.stubs(:find).with(@name).raises "eh"
+      Puppet::Node.indirection.stubs(:find).with(@name, anything).raises "eh"
       proc { @compiler.find(@request) }.should raise_error(Puppet::Error)
     end
 
     it "should pass the found node to the compiler for compiling" do
-      Puppet::Node.indirection.expects(:find).with(@name).returns(@node)
+      Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       config = mock 'config'
       Puppet::Parser::Compiler.expects(:compile).with(@node)
       @compiler.find(@request)
     end
 
     it "should extract and save any facts from the request" do
-      Puppet::Node.indirection.expects(:find).with(@name).returns @node
+      Puppet::Node.indirection.expects(:find).with(@name, anything).returns @node
       @compiler.expects(:extract_facts_from_request).with(@request)
       Puppet::Parser::Compiler.stubs(:compile)
       @compiler.find(@request)
@@ -184,13 +184,13 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = stub 'request', :key => @name, :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name)
       @compiler.stubs(:compile)
     end
 
     it "should look node information up via the Node class with the provided key" do
       @node.stubs :merge
-      Puppet::Node.indirection.expects(:find).with(@name).returns(@node)
+      Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       @compiler.find(@request)
     end
   end
@@ -203,9 +203,9 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = stub 'request', :key => @name, :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name)
       @compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with(@name).returns(@node)
+      Puppet::Node.indirection.stubs(:find).with(@name, anything).returns(@node)
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do

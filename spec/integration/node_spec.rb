@@ -13,19 +13,6 @@ describe Puppet::Node do
       @node = Puppet::Node.new(@name)
     end
 
-    it "should be able to use the exec terminus" do
-      Puppet::Node.indirection.stubs(:terminus_class).returns :exec
-
-      # Load now so we can stub
-      terminus = Puppet::Node.indirection.terminus(:exec)
-
-      terminus.expects(:query).with(@name).returns "myresults"
-      terminus.expects(:translate).with(@name, "myresults").returns "translated_results"
-      terminus.expects(:create_node).with(@name, "translated_results").returns @node
-
-      Puppet::Node.indirection.find(@name).should equal(@node)
-    end
-
     it "should be able to use the yaml terminus" do
       Puppet::Node.indirection.stubs(:terminus_class).returns :yaml
 
