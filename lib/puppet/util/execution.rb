@@ -54,8 +54,8 @@ module Util::Execution
 
 
   # Execute the desired command, and return the status and output.
-  # def execute(command, arguments)
-  # [arguments] a Hash optionally containing any of the following keys:
+  # def execute(command, options)
+  # [options] a Hash optionally containing any of the following keys:
   #   :failonfail (default true) -- if this value is set to true, then this method will raise an error if the
   #      command is not executed successfully.
   #   :uid (default nil) -- the user id of the user that the process should be run as
@@ -70,11 +70,11 @@ module Util::Execution
   #     Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
   #     of the command
-  def self.execute(command, arguments = {})
+  def self.execute(command, options = {})
 
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
-    default_arguments = {
+    default_options = {
         :failonfail => true,
         :uid => nil,
         :gid => nil,
@@ -85,7 +85,7 @@ module Util::Execution
         :custom_environment => {},
     }
 
-    arguments = default_arguments.merge(arguments)
+    options = default_options.merge(options)
 
     if command.is_a?(Array)
       command = command.flatten.map(&:to_s)
@@ -102,11 +102,11 @@ module Util::Execution
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
-    stdin = File.open(arguments[:stdinfile] || null_file, 'r')
-    stdout = arguments[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
-    stderr = arguments[:combine] ? stdout : File.open(null_file, 'w')
+    stdin = File.open(options[:stdinfile] || null_file, 'r')
+    stdout = options[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
+    stderr = options[:combine] ? stdout : File.open(null_file, 'w')
 
-    exec_args = [command, arguments, stdin, stdout, stderr]
+    exec_args = [command, options, stdin, stdout, stderr]
 
     if execution_stub = Puppet::Util::ExecutionStub.current_value
       return execution_stub.call(*exec_args)
@@ -126,12 +126,12 @@ module Util::Execution
     [stdin, stdout, stderr].each {|io| io.close rescue nil}
 
     # read output in if required
-    unless arguments[:squelch]
+    unless options[:squelch]
       output = wait_for_output(stdout)
       Puppet.warning "Could not get output" unless output
     end
 
-    if arguments[:failonfail] and exit_status != 0
+    if options[:failonfail] and exit_status != 0
       raise ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
     end
 
@@ -152,7 +152,7 @@ module Util::Execution
 
 
   # this is private method, see call to private_class_method after method definition
-  def self.execute_posix(command, arguments, stdin, stdout, stderr)
+  def self.execute_posix(command, options, stdin, stdout, stderr)
     child_pid = Kernel.fork do
       # We can't just call Array(command), and rely on it returning
       # things like ['foo'], when passed ['foo'], because
@@ -172,10 +172,10 @@ module Util::Execution
         # (assumes that there are only 256 file descriptors used)
         3.upto(256){|fd| IO::new(fd).close rescue nil}
 
-        Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
+        Puppet::Util::SUIDManager.change_privileges(options[:uid], options[:gid], true)
 
         # if the caller has requested that we override locale environment variables,
-        if (arguments[:override_locale]) then
+        if (options[:override_locale]) then
           # loop over them and clear them
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
           # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output
@@ -192,8 +192,8 @@ module Util::Execution
         # a forked process.
         Puppet::Util::POSIX::USER_ENV_VARS.each { |name| ENV.delete(name) }
 
-        arguments[:custom_environment] ||= {}
-        Puppet::Util.withenv(arguments[:custom_environment]) do
+        options[:custom_environment] ||= {}
+        Puppet::Util.withenv(options[:custom_environment]) do
           Kernel.exec(*command)
         end
       rescue => detail
@@ -207,14 +207,14 @@ module Util::Execution
 
 
   # this is private method, see call to private_class_method after method definition
-  def self.execute_windows(command, arguments, stdin, stdout, stderr)
+  def self.execute_windows(command, options, stdin, stdout, stderr)
     command = command.map do |part|
       part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
     end.join(" ") if command.is_a?(Array)
 
-    arguments[:custom_environment] ||= {}
-    Puppet::Util.withenv(arguments[:custom_environment]) do
-      Puppet::Util::Windows::Process.execute(command, arguments, stdin, stdout, stderr)
+    options[:custom_environment] ||= {}
+    Puppet::Util.withenv(options[:custom_environment]) do
+      Puppet::Util::Windows::Process.execute(command, options, stdin, stdout, stderr)
     end
   end
   private_class_method :execute_windows

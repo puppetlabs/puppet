@@ -107,7 +107,7 @@ class Puppet::Provider
   end
 
   # Create the methods for a given command.
-  def self.make_command_methods(name)
+  def self.make_command_methods(name, options)
     # Now define a method for that command
     unless singleton_class.method_defined?(name)
       meta_def(name) do |*args|
@@ -119,7 +119,7 @@ class Puppet::Provider
         end
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        return execute(cmd)
+        return execute(cmd, options)
       end
 
       # And then define an instance method that just calls the class method.
@@ -162,14 +162,17 @@ class Puppet::Provider
   # Define one or more binaries we'll be using.  If a block is passed, yield the name
   # and path to the block (really only used by 'commands').
   def self.optional_commands(hash)
-    hash.each do |name, path|
+    hash.each do |name, target|
       name = symbolize(name)
+      path = target.is_a?(Hash) ? target[:path] : target
+      options = target.is_a?(Hash) ? target[:options] : {}
+
       @commands[name] = path
 
       yield(name, path) if block_given?
 
       # Now define the class and instance methods.
-      make_command_methods(name)
+      make_command_methods(name, options)
     end
   end
 
