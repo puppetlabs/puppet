@@ -5,6 +5,8 @@ require 'stringio'
 provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
+  let(:no_extra_options) { {} }
+
   before do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
     @resource = Puppet::Type.type(:package).new(:name => 'package')
@@ -18,36 +20,12 @@ describe provider do
       })
     end
 
-    it "should call pacman" do
+    it "should call pacman to install the right package quietly" do
       provider.
         expects(:execute).
         at_least_once.
-        with { |args|
-          args[0] == "/usr/bin/pacman"
-        }.
+        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]], no_extra_options).
         returns ""
-
-      @provider.install
-    end
-
-    it "should be quiet" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[1,2] == ["--noconfirm", "--noprogressbar"]
-        }.
-        returns("")
-
-      @provider.install
-    end
-
-    it "should install the right package" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[3,4] == ["-Sy", @resource[:name]]
-        }.
-        returns("")
 
       @provider.install
     end
@@ -74,12 +52,12 @@ describe provider do
             @resource[:source] = source
 
             provider.expects(:execute).
-              with(all_of(includes("-Sy"), includes("--noprogressbar"))).
+              with(all_of(includes("-Sy"), includes("--noprogressbar")), no_extra_options).
               in_sequence(@install).
               returns("")
 
             provider.expects(:execute).
-              with(all_of(includes("-U"), includes(source))).
+              with(all_of(includes("-U"), includes(source)), no_extra_options).
               in_sequence(@install).
               returns("")
 
@@ -97,13 +75,15 @@ describe provider do
 
         it "should install from the path segment of the URL" do
           provider.expects(:execute).
-            with(all_of(includes("-Sy"), includes("--noprogressbar"),
-                        includes("--noconfirm"))).
+            with(all_of(includes("-Sy"),
+                        includes("--noprogressbar"),
+                        includes("--noconfirm")),
+                 no_extra_options).
             in_sequence(@install).
             returns("")
 
           provider.expects(:execute).
-            with(all_of(includes("-U"), includes(@actual_file_path))).
+            with(all_of(includes("-U"), includes(@actual_file_path)), no_extra_options).
             in_sequence(@install).
             returns("")
 
@@ -141,35 +121,11 @@ describe provider do
   end
 
   describe "when uninstalling" do
-    it "should call pacman" do
+    it "should call pacman to remove the right package quietly" do
       provider.
         expects(:execute).
-        with { |args|
-          args[0] == "/usr/bin/pacman"
-        }.
+        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", @resource[:name]], no_extra_options).
         returns ""
-
-      @provider.uninstall
-    end
-
-    it "should be quiet" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[1,2] == ["--noconfirm", "--noprogressbar"]
-        }.
-        returns("")
-
-      @provider.uninstall
-    end
-
-    it "should remove the right package" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[3,4] == ["-R", @resource[:name]]
-        }.
-        returns("")
 
       @provider.uninstall
     end
@@ -179,7 +135,7 @@ describe provider do
     it "should query pacman" do
       provider.
         expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", @resource[:name]])
+        with(["/usr/bin/pacman", "-Qi", @resource[:name]], no_extra_options)
       @provider.query
     end
 
@@ -270,7 +226,7 @@ EOF
       provider.
         expects(:execute).
         in_sequence(get_latest_version).
-        with(['/usr/bin/pacman', '-Sy'])
+        with(['/usr/bin/pacman', '-Sy'], no_extra_options)
 
       provider.
         stubs(:execute).
@@ -289,7 +245,7 @@ EOF
       provider.
         expects(:execute).
         in_sequence(get_latest_version).
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]]).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]], no_extra_options).
         returns("")
 
       @provider.latest
