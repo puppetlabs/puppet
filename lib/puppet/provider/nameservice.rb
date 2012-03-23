@@ -133,23 +133,23 @@ class Puppet::Provider::NameService < Puppet::Provider
   def self.autogen_id(field, resource_type)
     # Figure out what sort of value we want to generate.
     case resource_type
-    when :user;   group = :passwd;  method = :uid
-    when :group;  group = :group;   method = :gid
+    when :user;   database = :passwd;  method = :uid
+    when :group;  database = :group;   method = :gid
     else
       raise Puppet::DevError, "Invalid resource name #{resource}"
     end
 
     # Initialize from the data set, if needed.
     unless @prevauto
-      highest = 0
+      # Sadly, Etc doesn't return an enumerator, it just invokes the block
+      # given, or returns the first record from the database.  There is no
+      # other, more convenient enumerator for these, so we fake one with this
+      # loop.  Thanks, Ruby, for your awesome abstractions. --daniel 2012-03-23
+      highest = []
+      Etc.send(database) {|entry| highest << entry.send(method) }
+      highest = highest.reject {|x| x > 65000 }.max
 
-      Etc.send(group) { |obj|
-        if obj.gid > highest
-          highest = obj.send(method) unless obj.send(method) > 65000
-        end
-      }
-
-      @prevauto = highest
+      @prevauto = highest || 1000
     end
 
     # ...and finally increment and return the next value.
