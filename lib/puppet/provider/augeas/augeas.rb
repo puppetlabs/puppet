@@ -299,6 +299,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             root = resource[:root].sub(/^\/$/, "")
             saved_files.each do |key|
               saved_file = @aug.get(key).sub(/^\/files/, root)
+              next unless File.exists?(saved_file + ".augnew")
               if Puppet[:show_diff]
                 notice "\n" + diff(saved_file, saved_file + ".augnew")
               end
