@@ -17,8 +17,9 @@ describe "puppet module install" do
 
     let(:expected_options) do
       {
-        :target_dir        => fakefirstpath,
-        :modulepath        => fakemodpath
+        :target_dir  => fakefirstpath,
+        :modulepath  => fakemodpath,
+        :environment => 'production'
       }
     end
 
@@ -71,7 +72,7 @@ describe "puppet module install" do
     end
 
     describe "when modulepath option is passed" do
-      let(:expected_options) { { :modulepath => fakemodpath } }
+      let(:expected_options) { { :modulepath => fakemodpath, :environment => 'production' } }
       let(:options)          { { :modulepath => fakemodpath } }
 
       describe "when target-dir option is not passed" do

@@ -24,7 +24,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       upgrade an installed module for a specific environment
 
-      $ puppet module upgrade puppetlabs-apache --env test
+      $ puppet module upgrade puppetlabs-apache --environment test
       /usr/share/puppet/environments/test/modules
       └── puppetlabs-apache (v1.0.0 -> v2.4.0)
     EOT
@@ -46,7 +46,7 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--environment=NAME", "--env=NAME" do
+    option "--environment NAME" do
       default_to { "production" }
       summary "The target environment to search for modules."
       description <<-EOT

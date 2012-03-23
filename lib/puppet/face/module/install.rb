@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 Puppet::Face.define(:module, '1.0.0') do
   action(:install) do
     summary "Install a module from a repository or release archive."
@@ -15,27 +17,66 @@ Puppet::Face.define(:module, '1.0.0') do
     examples <<-EOT
       Install a module:
 
-      $ puppet module install puppetlabs/vcsrepo
-      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      $ puppet module install puppetlabs-vcsrepo
+      Preparing to install into /etc/puppet/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /etc/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
+
+      Install a module to a specific environment:
+
+      $ puppet module install puppetlabs-vcsrepo --environment development
+      Preparing to install into /etc/puppet/environments/development/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /etc/puppet/environments/development/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
 
       Install a specific module version:
 
-      $ puppet module install puppetlabs/vcsrepo -v 0.0.4
-      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      $ puppet module install puppetlabs-vcsrepo -v 0.0.4
+      Preparing to install into /etc/puppet/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /etc/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
 
       Install a module into a specific directory:
 
-      $ puppet module install puppetlabs/vcsrepo --target-dir=/usr/share/puppet/modules
-      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
+      $ puppet module install puppetlabs-vcsrepo --target-dir=/usr/share/puppet/modules
+      Preparing to install into /usr/share/puppet/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /usr/share/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
 
       Install a module into a specific directory and check for dependencies in other directories:
 
-      $ puppet module install puppetlabs/vcsrepo --target-dir=/usr/share/puppet/modules --modulepath /etc/puppet/modules
-      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
+      $ puppet module install puppetlabs-vcsrepo --target-dir=/usr/share/puppet/modules --modulepath /etc/puppet/modules
+      Preparing to install into /usr/share/puppet/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /usr/share/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
+
       Install a module from a release archive:
 
       $ puppet module install puppetlabs-vcsrepo-0.0.4.tar.gz
-      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      Preparing to install into /etc/puppet/modules ...
+      Downloading from http://forge.puppetlabs.com ...
+      Installing -- do not interrupt ...
+      /etc/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
+
+      Install a module from a release archive and ignore dependencies:
+
+      $ puppet module install puppetlabs-vcsrepo-0.0.4.tar.gz --ignore-dependencies
+      Preparing to install into /etc/puppet/modules ...
+      Installing -- do not interrupt ...
+      /etc/puppet/modules
+      └── puppetlabs-vcsrepo (v0.0.4)
+
     EOT
 
     arguments "<name>"
@@ -79,6 +120,14 @@ Puppet::Face.define(:module, '1.0.0') do
       description <<-EOT
         Module version to install; can be an exact version or a requirement string,
         eg '>= 1.0.3'. Defaults to latest version.
+      EOT
+    end
+
+    option "--environment NAME" do
+      default_to { "production" }
+      summary "The target environment to install modules into."
+      description <<-EOT
+        The target environment to install modules into.
       EOT
     end
 

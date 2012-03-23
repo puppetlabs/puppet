@@ -13,8 +13,12 @@ Puppet::Face.define(:module, '1.0.0') do
     HEREDOC
     returns "hash of paths to module objects"
 
-    option "--env ENVIRONMENT" do
+    option "--environment NAME" do
+      default_to { "production" }
       summary "Which environments' modules to list"
+      description <<-EOT
+        Which environments' modules to list.
+      EOT
     end
 
     option "--modulepath MODULEPATH" do
@@ -54,7 +58,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       List installed modules from a specified environment:
 
-      $ puppet module list --env 'production'
+      $ puppet module list --environment production
         /etc/puppet/modules
         ├── bodepd-create_resources (v0.0.1)
         ├── puppetlabs-bacula (v0.0.2)
@@ -71,7 +75,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |options|
       Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      environment = Puppet::Node::Environment.new(options[:env])
+      environment = Puppet::Node::Environment.new(options[:environment])
 
       environment.modules_by_path
     end
@@ -80,7 +84,7 @@ Puppet::Face.define(:module, '1.0.0') do
       output = ''
 
       Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      environment = Puppet::Node::Environment.new(options[:env])
+      environment = Puppet::Node::Environment.new(options[:production])
 
       error_types = {
         :non_semantic_version => {

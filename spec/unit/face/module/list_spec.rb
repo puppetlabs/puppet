@@ -51,7 +51,7 @@ describe "puppet module list" do
     usedenv = Puppet::Node::Environment.new('useme')
     usedenv.modulepath = [@modpath1, @modpath2]
 
-    Puppet::Face[:module, :current].list(:env => 'useme').should == {
+    Puppet::Face[:module, :current].list(:environment => 'useme').should == {
       @modpath1 => [
         Puppet::Module.new('bar', :environment => usedenv),
         Puppet::Module.new('foo', :environment => usedenv)
@@ -76,7 +76,7 @@ describe "puppet module list" do
     env = Puppet::Node::Environment.new('myenv')
     env.modulepath = ['/tmp/notused']
 
-    list = Puppet::Face[:module, :current].list(:env => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
+    list = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
 
     # Changing Puppet[:modulepath] causes Puppet::Node::Environment.new('myenv')
     # to have a different object_id than the env above

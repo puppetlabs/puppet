@@ -40,11 +40,11 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--environment=NAME", "--env=NAME" do
+    option "--environment NAME" do
       default_to { "production" }
-      summary "The target environment to search for modules."
+      summary "The target environment to uninstall modules from."
       description <<-EOT
-        The target environment to search for modules.
+        The target environment to uninstall modules from.
       EOT
     end
 
