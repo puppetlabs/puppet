@@ -108,14 +108,16 @@ class Puppet::Provider
   end
 
   # Create the methods for a given command.
-  def self.make_command_methods(name, options)
+  def self.make_command_methods(name)
+    Puppet.deprecation_warning "Provider.make_command_methods is deprecated; use Provider.commands or Provider.optional_commands instead for creating command methods"
+
     # Now define a method for that command
     unless singleton_class.method_defined?(name)
       meta_def(name) do |*args|
         raise Puppet::Error, "Command #{name} is missing" unless command(name)
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        return Puppet::Provider::Command.new(command(name), options).execute(Puppet::Util::Execution, *args)
+        return Puppet::Provider::Command.new(command(name)).execute(Puppet::Util::Execution, *args)
       end
 
       # And then define an instance method that just calls the class method.
@@ -168,9 +170,25 @@ class Puppet::Provider
       yield(name, path) if block_given?
 
       # Now define the class and instance methods.
-      make_command_methods(name, options)
+      create_class_and_instance_method(name) do |*args|
+        raise Puppet::Error, "Command #{name} is missing" unless path
+        return Puppet::Provider::Command.new(command(name), options).execute(Puppet::Util::Execution, *args)
+      end
     end
   end
+
+  def self.create_class_and_instance_method(name, &block)
+    unless singleton_class.method_defined?(name)
+      meta_def(name, &block)
+    end
+
+    unless method_defined?(name)
+      define_method(name) do |*args|
+        self.class.send(name, *args)
+      end
+    end
+  end
+  private_class_method :create_class_and_instance_method
 
   # Retrieve the data source.  Defaults to the provider name.
   def self.source
