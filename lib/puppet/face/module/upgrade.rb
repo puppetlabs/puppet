@@ -62,8 +62,6 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      Puppet.settings[:module_repository] = ENV['PUPPET_FORGE'] if ENV['PUPPET_FORGE']
-
       name = name.gsub('/', '-')
       Puppet.notice "Preparing to upgrade '#{name}' ..."
       Puppet::Module::Tool::Applications::Upgrader.new(name, options).run

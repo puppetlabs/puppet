@@ -18,7 +18,6 @@ describe "puppet module install" do
     let(:expected_options) do
       {
         :target_dir        => fakefirstpath,
-        :module_repository => "http://forge.puppetlabs.com",
         :modulepath        => fakemodpath
       }
     end
@@ -57,13 +56,6 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --module-repository option" do
-      options[:module_repository] = "http://forge.example.com"
-      expected_options.merge!(options)
-      Puppet::Module::Tool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
-      subject.install("puppetlabs-apache", options)
-    end
-
     it "should accept the --version option" do
       options[:version] = "0.0.1"
       expected_options.merge!(options)
@@ -79,7 +71,7 @@ describe "puppet module install" do
     end
 
     describe "when modulepath option is passed" do
-      let(:expected_options) { { :modulepath => fakemodpath, :module_repository => "http://forge.puppetlabs.com" } }
+      let(:expected_options) { { :modulepath => fakemodpath } }
       let(:options)          { { :modulepath => fakemodpath } }
 
       describe "when target-dir option is not passed" do

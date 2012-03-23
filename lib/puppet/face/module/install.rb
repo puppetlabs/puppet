@@ -13,12 +13,12 @@ Puppet::Face.define(:module, '1.0.0') do
     returns "Pathname object representing the path to the installed module."
 
     examples <<-EOT
-      Install a module from the default repository:
+      Install a module:
 
       $ puppet module install puppetlabs/vcsrepo
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
 
-      Install a specific module version from a repository:
+      Install a specific module version:
 
       $ puppet module install puppetlabs/vcsrepo -v 0.0.4
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
@@ -57,14 +57,6 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--module-repository REPO", "-r REPO" do
-      default_to { Puppet.settings[:module_repository] }
-      summary "Module repository to use."
-      description <<-EOT
-        The module repository to use, as a URL. Defaults to http://forge.puppetlabs.com.
-      EOT
-    end
-
     option "--ignore-dependencies" do
       summary "Do not attempt to install dependencies"
       description <<-EOT
@@ -98,8 +90,6 @@ Puppet::Face.define(:module, '1.0.0') do
 
       Puppet.settings[:modulepath] = options[:modulepath]
       options[:target_dir] = Puppet.settings[:modulepath].split(sep).first
-
-      Puppet.settings[:module_repository] = options[:module_repository] if options[:module_repository]
 
       Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
       Puppet::Module::Tool::Applications::Installer.run(name, options)

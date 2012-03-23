@@ -20,17 +20,8 @@ Puppet::Face.define(:module, '1.0.0') do
 
     arguments "<search_term>"
 
-    option "--module-repository=", "-r=" do
-      default_to { Puppet.settings[:module_repository] }
-      summary "The module repository to use."
-      description <<-EOT
-        The module repository to use. Defaults to http://forge.puppetlabs.com.
-      EOT
-    end
-
     when_invoked do |term, options|
-      Puppet.settings[:module_repository] = options[:module_repository]
-      server = options[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
+      server = Puppet.settings[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
       Puppet.notice "Searching #{server} ..."
       Puppet::Module::Tool::Applications::Searcher.run(term, options)
     end
