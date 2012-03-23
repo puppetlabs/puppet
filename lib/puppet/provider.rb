@@ -162,17 +162,15 @@ class Puppet::Provider
   def self.optional_commands(hash)
     hash.each do |name, target|
       name = symbolize(name)
-      path = target.is_a?(Hash) ? target[:path] : target
-      options = target.is_a?(Hash) ? target[:options] : {}
+      command = target.is_a?(String) ? Puppet::Provider::Command.new(target) : target
 
-      @commands[name] = path
+      @commands[name] = command.executable
 
-      yield(name, path) if block_given?
+      yield(name, command.executable) if block_given?
 
       # Now define the class and instance methods.
       create_class_and_instance_method(name) do |*args|
-        raise Puppet::Error, "Command #{name} is missing" unless path
-        return Puppet::Provider::Command.new(command(name), options).execute(Puppet::Util::Execution, *args)
+        return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
       end
     end
   end

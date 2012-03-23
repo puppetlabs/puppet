@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'puppet/provider/command'
 
 Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Package do
   desc "Package management using MacPorts on OS X.
@@ -12,7 +13,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   "
 
   confine :operatingsystem => :darwin
-  commands :port => { :path => "/opt/local/bin/port", :options => { :custom_environment => { :HOME => ENV['HOME'] } } }
+  commands :port => Puppet::Provider::Command.new("/opt/local/bin/port", { :custom_environment => { :HOME => ENV['HOME'] } })
 
   has_feature :installable
   has_feature :uninstallable
