@@ -15,7 +15,7 @@ module Puppet::Module::Tool::Errors
         "#{@installed_version} -> #{@requested_version}"
       end
 
-      super "Could not #{@action} '#{@module_name}' (#{@vstring}); module '#{@dependency_name}' cannot satisfy dependencies"
+      super "Could not #{@action} '#{@requested_name}' (#{@vstring}); module '#{@dependency_name}' cannot satisfy dependencies"
     end
 
     def multiline

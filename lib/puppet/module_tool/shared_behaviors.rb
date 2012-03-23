@@ -118,7 +118,7 @@ module Puppet::Module::Tool::Shared
           :installed_version => @installed[@module_name].empty? ? nil : @installed[@module_name].first.version,
           :dependency_name   => mod,
           :conditions        => @conditions[mod],
-          :action            => action
+          :action            => @action
       end
 
       seen[mod] = version
