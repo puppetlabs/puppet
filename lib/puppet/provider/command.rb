@@ -4,7 +4,7 @@ class Puppet::Provider::Command
     @options = options
   end
 
-  def execute(executor)
-    executor.execute([@executable], @options)
+  def execute(executor, *args)
+    executor.execute([@executable] + args, @options)
   end
 end

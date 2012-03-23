@@ -7,6 +7,7 @@ class Puppet::Provider
   extend Puppet::Util::Warnings
 
   require 'puppet/provider/confiner'
+  require 'puppet/provider/command'
 
   extend Puppet::Provider::Confiner
 
@@ -112,14 +113,9 @@ class Puppet::Provider
     unless singleton_class.method_defined?(name)
       meta_def(name) do |*args|
         raise Puppet::Error, "Command #{name} is missing" unless command(name)
-        if args.empty?
-          cmd = [command(name)]
-        else
-          cmd = [command(name)] + args
-        end
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        return execute(cmd, options)
+        return Puppet::Provider::Command.new(command(name), options).execute(Puppet::Util::Execution, *args)
       end
 
       # And then define an instance method that just calls the class method.
