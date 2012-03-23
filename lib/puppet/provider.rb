@@ -49,8 +49,12 @@ class Puppet::Provider
   end
 
   # Define commands that are not optional.
-  def self.commands(hash)
-    optional_commands(hash) do |name, path|
+  #
+  # @param [Hash{String => String, Puppet::Provider::Command}] command_specs Named commands that the provider will 
+  #   be executing on the system. Each command is specified with a name and the path of the executable or a 
+  #   Puppet::Provider::Command object.
+  def self.commands(command_specs)
+    optional_commands(command_specs) do |name, path|
       confine :exists => path, :for_binary => true
     end
   end
@@ -108,6 +112,8 @@ class Puppet::Provider
   end
 
   # Create the methods for a given command.
+  #
+  # @deprecated Use {#commands} or {#optional_commands} instead. This was not meant to be part of a public API
   def self.make_command_methods(name)
     Puppet.deprecation_warning "Provider.make_command_methods is deprecated; use Provider.commands or Provider.optional_commands instead for creating command methods"
 
@@ -159,6 +165,8 @@ class Puppet::Provider
 
   # Define one or more binaries we'll be using.  If a block is passed, yield the name
   # and path to the block (really only used by 'commands').
+  #
+  # (see #commands)
   def self.optional_commands(hash)
     hash.each do |name, target|
       name = symbolize(name)
