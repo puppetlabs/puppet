@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'puppet/application'
 require 'puppet'
 require 'getoptlong'
+require 'timeout'
 
 describe Puppet::Application do
 
@@ -282,16 +283,27 @@ describe Puppet::Application do
 
     describe 'on POSIX systems', :if => Puppet.features.posix? do
       it 'should signal process with HUP after block if restart requested during block execution' do
-        Puppet::Application.run_status = nil
-        target = mock 'target'
-        target.expects(:some_method).once
-        old_handler = trap('HUP') { target.some_method }
-        begin
-          Puppet::Application.controlled_run do
-            Puppet::Application.run_status = :restart_requested
+        Timeout::timeout(3) do  # if the signal doesn't fire, this causes failure.
+
+          has_run = false
+          old_handler = trap('HUP') { has_run = true }
+
+          begin
+            Puppet::Application.controlled_run do
+              Puppet::Application.run_status = :restart_requested
+            end
+
+            # Ruby 1.9 uses a separate OS level thread to run the signal
+            # handler, so we have to poll - ideally, in a way that will kick
+            # the OS into running other threads - for a while.
+            #
+            # You can't just use the Ruby Thread yield thing either, because
+            # that is just an OS hint, and Linux ... doesn't take that
+            # seriously. --daniel 2012-03-22
+            sleep 0.001 while not has_run
+          ensure
+            trap('HUP', old_handler)
           end
-        ensure
-          trap('HUP', old_handler)
         end
       end
     end
