@@ -51,8 +51,8 @@ Puppet::Face.define(:module, '1.0.0') do
     option "--version=" do
       summary "The version of the module to uninstall"
       description <<-EOT
-        The version of the module to uninstall. When using this option a module
-        that matches the specified version must be installed or an error is raised.
+        The version of the module to uninstall. When using this option, a module
+        matching the specified version must be installed or else an error is raised.
       EOT
     end
 

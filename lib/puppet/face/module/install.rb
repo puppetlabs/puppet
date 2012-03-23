@@ -8,7 +8,7 @@ Puppet::Face.define(:module, '1.0.0') do
       on-disk, or from a private Forge-like repository.
 
       The specified module will be installed into the directory
-      specified with the --target-dir option, which defaults to
+      specified with the `--target-dir` option, which defaults to
       #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}.
     EOT
 
@@ -91,17 +91,20 @@ Puppet::Face.define(:module, '1.0.0') do
     option "--target-dir DIR", "-i DIR" do
       summary "The directory into which modules are installed."
       description <<-EOT
-        The directory into which modules are installed, defaults to the first
-        directory in the modulepath.  Setting just the dir option sets the
-        modulepath as well.  If you want install to check for dependencies in
-        other paths, also give the modulepath option.
+        The directory into which modules are installed; defaults to the first
+        directory in the modulepath.
+
+        Specifying this option will change the installation directory, and
+        will use the existing modulepath when checking for dependencies. If
+        you wish to check a different set of directories for dependencies, you
+        must also use the `--environment` or `--modulepath` options.
       EOT
     end
 
     option "--ignore-dependencies" do
       summary "Do not attempt to install dependencies"
       description <<-EOT
-        Do not attempt to install dependencies
+        Do not attempt to install dependencies.
       EOT
     end
 
@@ -109,9 +112,19 @@ Puppet::Face.define(:module, '1.0.0') do
       default_to { Puppet.settings[:modulepath] }
       summary "Which directories to look for modules in"
       description <<-EOT
-        The directory into which modules are installed; defaults to the first
-        directory in the modulepath.  If the dir option is also given, it is
-        prepended to the modulepath.
+        The list of directories to check for modules. When installing a new
+        module, this setting determines where the module tool will look for
+        its dependencies. If the `--target dir` option is not specified, the
+        first directory in the modulepath will also be used as the install
+        directory.
+
+        When installing a module into an environment whose modulepath is
+        specified in puppet.conf, you can use the `--environment` option
+        instead, and its modulepath will be used automatically.
+
+        This setting should be a list of directories separated by the path
+        separator character. (The path separator is `:` on Unix-like platforms
+        and `;` on Windows.)
       EOT
     end
 
@@ -127,7 +140,9 @@ Puppet::Face.define(:module, '1.0.0') do
       default_to { "production" }
       summary "The target environment to install modules into."
       description <<-EOT
-        The target environment to install modules into.
+        The target environment to install modules into. Only applicable if
+        multiple environments (with different modulepaths) have been
+        configured in puppet.conf.
       EOT
     end
 
