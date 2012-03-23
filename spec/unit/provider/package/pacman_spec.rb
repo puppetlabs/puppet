@@ -5,6 +5,7 @@ provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
   let(:no_extra_options) { {} }
+  let(:executor) { Puppet::Util::Execution }
 
   before do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
@@ -20,7 +21,7 @@ describe provider do
     end
 
     it "should call pacman to install the right package quietly" do
-      provider.
+      executor.
         expects(:execute).
         at_least_once.
         with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]], no_extra_options).
@@ -30,7 +31,7 @@ describe provider do
     end
 
     it "should raise an ExecutionFailure if the installation failed" do
-      provider.stubs(:execute).returns("")
+      executor.stubs(:execute).returns("")
       @provider.expects(:query).returns(nil)
 
       lambda { @provider.install }.should raise_exception(Puppet::ExecutionFailure)
@@ -50,12 +51,12 @@ describe provider do
           it "should install #{source} directly" do
             @resource[:source] = source
 
-            provider.expects(:execute).
+            executor.expects(:execute).
               with(all_of(includes("-Sy"), includes("--noprogressbar")), no_extra_options).
               in_sequence(@install).
               returns("")
 
-            provider.expects(:execute).
+            executor.expects(:execute).
               with(all_of(includes("-U"), includes(source)), no_extra_options).
               in_sequence(@install).
               returns("")
@@ -73,7 +74,7 @@ describe provider do
         end
 
         it "should install from the path segment of the URL" do
-          provider.expects(:execute).
+          executor.expects(:execute).
             with(all_of(includes("-Sy"),
                         includes("--noprogressbar"),
                         includes("--noconfirm")),
@@ -81,7 +82,7 @@ describe provider do
             in_sequence(@install).
             returns("")
 
-          provider.expects(:execute).
+          executor.expects(:execute).
             with(all_of(includes("-U"), includes(@actual_file_path)), no_extra_options).
             in_sequence(@install).
             returns("")
@@ -121,7 +122,7 @@ describe provider do
 
   describe "when uninstalling" do
     it "should call pacman to remove the right package quietly" do
-      provider.
+      executor.
         expects(:execute).
         with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", @resource[:name]], no_extra_options).
         returns ""
@@ -132,7 +133,7 @@ describe provider do
 
   describe "when querying" do
     it "should query pacman" do
-      provider.
+      executor.
         expects(:execute).
         with(["/usr/bin/pacman", "-Qi", @resource[:name]], no_extra_options)
       @provider.query
@@ -162,17 +163,17 @@ Install Script : Yes
 Description    : A library-based package manager with dependency support
 EOF
 
-      provider.expects(:execute).returns(query_output)
+      executor.expects(:execute).returns(query_output)
       @provider.query.should == {:ensure => "1.01.3-2"}
     end
 
     it "should return a nil if the package isn't found" do
-      provider.expects(:execute).returns("")
+      executor.expects(:execute).returns("")
       @provider.query.should be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
-      provider.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
       @provider.query.should == {
         :ensure => :purged,
         :status => 'missing',
@@ -222,12 +223,12 @@ EOF
   describe "when determining the latest version" do
     it "should refresh package list" do
       get_latest_version = sequence("get_latest_version")
-      provider.
+      executor.
         expects(:execute).
         in_sequence(get_latest_version).
         with(['/usr/bin/pacman', '-Sy'], no_extra_options)
 
-      provider.
+      executor.
         stubs(:execute).
         in_sequence(get_latest_version).
         returns("")
@@ -237,11 +238,11 @@ EOF
 
     it "should get query pacman for the latest version" do
       get_latest_version = sequence("get_latest_version")
-      provider.
+      executor.
         stubs(:execute).
         in_sequence(get_latest_version)
 
-      provider.
+      executor.
         expects(:execute).
         in_sequence(get_latest_version).
         with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]], no_extra_options).
@@ -251,7 +252,7 @@ EOF
     end
 
     it "should return the version number from pacman" do
-      provider.
+      executor.
         expects(:execute).
         at_least_once().
         returns("1.00.2-3\n")
