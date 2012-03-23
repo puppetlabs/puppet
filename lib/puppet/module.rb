@@ -119,6 +119,18 @@ class Puppet::Module
           raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
         end
       end
+
+      # NOTICE: The fallback to `versionRequirement` is something we'd like to
+      # not have to support, but we have a reasonable number of releases that
+      # don't use `version_requirement`. When we can deprecate this, we should.
+      if attr == :dependencies
+        value.tap do |dependencies|
+          dependencies.each do |dep|
+            dep['version_requirement'] ||= dep['versionRequirement'] || '>= 0.0.0'
+          end
+        end
+      end
+
       send(attr.to_s + "=", value)
     end
   end

@@ -733,6 +733,44 @@ describe Puppet::Module do
       @module.puppetversion.should == @data[:puppetversion]
     end
 
+    context "when versionRequirement is used for dependency version info" do
+      before do
+        @data = {
+          :license       => "GPL2",
+          :author        => "luke",
+          :version       => "1.0",
+          :source        => "http://foo/",
+          :puppetversion => "0.25",
+          :dependencies  => [
+            {
+              "versionRequirement" => "0.0.1",
+              "name" => "pmtacceptance/stdlib"
+            },
+            {
+              "versionRequirement" => "0.1.0",
+              "name" => "pmtacceptance/apache"
+            }
+          ]
+        }
+        @text = @data.to_pson
+
+        @module = Puppet::Module.new("foo")
+        @module.stubs(:metadata_file).returns "/my/file"
+        File.stubs(:read).with("/my/file").returns @text
+      end
+
+      it "should set the dependency version_requirement key" do
+        @module.load_metadata
+        @module.dependencies[0]['version_requirement'].should == "0.0.1"
+      end
+
+      it "should set the version_requirement key for all dependencies" do
+        @module.load_metadata
+        @module.dependencies[0]['version_requirement'].should == "0.0.1"
+        @module.dependencies[1]['version_requirement'].should == "0.1.0"
+      end
+    end
+
     it "should fail if the discovered name is different than the metadata name"
   end
 
