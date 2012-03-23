@@ -8,6 +8,8 @@ cron = '# Puppet Name: crontest\n* * * * * /bin/true\n1 1 1 1 1 /bin/true\n'
 create_user = "user { '#{tmpuser}': ensure => present, managehome => false }"
 delete_user = "user { '#{tmpuser}': ensure => absent,  managehome => false }"
 
+package_cron = "case $operatingsystem { centos, redhat: {$cron = 'cronie'}\n default: {$cron ='cron'} } package {'cron': name=> $cron, ensure=>present, }"
+
 agents.each do |host|
     if host['platform'].include?('windows')
       skip_test "Test not supported on this platform"
@@ -16,6 +18,7 @@ agents.each do |host|
 
     step "ensure the user exist via puppet"
     apply_manifest_on host, create_user
+    apply_manifest_on host, package_cron
 
     step "create the existing job by hand..."
     run_cron_on(host,:add,tmpuser,"* * * * * /bin/true")
