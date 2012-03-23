@@ -138,7 +138,7 @@ describe Puppet::Module do
       }]
     end
 
-    it "should list modules with unmet version" do
+    it "should list modules with unmet version requirement" do
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -149,6 +149,17 @@ describe Puppet::Module do
           }]
         }
       )
+      mod2 = PuppetSpec::Modules.create(
+        'foobaz',
+        @modpath,
+        :metadata => {
+          :dependencies => [{
+            "version_requirement" => "1.0.0",
+            "name" => "baz/foobar"
+          }]
+        }
+      )
+
       PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -162,6 +173,15 @@ describe Puppet::Module do
         :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
         :mod_details => { :installed_version => "2.0.0" }
       }]
+
+      mod2.unmet_dependencies.should == [{
+        :reason => :version_mismatch,
+        :name   => "baz/foobar",
+        :version_constraint => "v1.0.0",
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobaz" },
+        :mod_details => { :installed_version => "2.0.0" }
+      }]
+
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do

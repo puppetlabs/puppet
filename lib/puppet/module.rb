@@ -234,12 +234,6 @@ class Puppet::Module
       forge_name = dependency['name']
       version_string = dependency['version_requirement'] || '>= 0.0.0'
 
-      if version_string =~ /[<=>][=]*\s[x0-9][.][x0-9]+([.][x0-9])*/
-        equality, dep_version = version_string ? version_string.split("\s") : [nil, nil]
-      else
-        equality, dep_version = ['>=', version_string]
-      end
-
       dep_mod = begin
         environment.module_by_forge_name(forge_name)
       rescue => e
@@ -264,9 +258,9 @@ class Puppet::Module
         next
       end
 
-      if dep_version
+      if version_string
         begin
-          required_version_semver = SemVer[dep_version]
+          required_version_semver_range = SemVer[version_string]
           actual_version_semver = SemVer.new(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
@@ -274,13 +268,7 @@ class Puppet::Module
           next
         end
 
-        if dep_version.include?('x')
-          dep_version_range = dep_version
-        else
-          dep_version_range = equality + dep_version
-        end
-
-        unless SemVer[dep_version_range].include? SemVer.new(dep_mod.version)
+        unless required_version_semver_range.include? actual_version_semver
           error_details[:reason] = :version_mismatch
           unmet_dependencies << error_details
           next
