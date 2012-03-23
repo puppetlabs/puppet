@@ -7,9 +7,11 @@ provider = Puppet::Type.type(:package).provider(:pacman)
 describe provider do
   let(:no_extra_options) { {} }
   let(:executor) { Puppet::Util::Execution }
+  let(:resolver) { Puppet::Util }
 
   before do
-    provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
+    resolver.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
