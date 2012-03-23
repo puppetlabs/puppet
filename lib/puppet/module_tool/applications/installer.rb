@@ -108,6 +108,14 @@ module Puppet::Module::Tool
         @graph = resolve_constraints({ @module_name => @version })
         @graph.first[:tarball] = @filename if @source == :filesystem
         resolve_install_conflicts(@graph) unless @force
+
+        # This clean call means we never "cache" the module we're installing, but this
+        # is desired since module authors can easily rerelease modules different content but the same
+        # version number, meaning someone with the old content cached will be very confused as to why
+        # they can't get new content.
+        # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
+        # but for now this is a quick fix to disable caching
+        Puppet::Forge::Cache.clean
         download_tarballs(@graph, @graph.last[:path])
       end
 

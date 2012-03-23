@@ -6,7 +6,6 @@ class Puppet::Module
       require 'puppet/module_tool/applications/application'
       require 'puppet/module_tool/applications/builder'
       require 'puppet/module_tool/applications/checksummer'
-      require 'puppet/module_tool/applications/cleaner'
       require 'puppet/module_tool/applications/generator'
       require 'puppet/module_tool/applications/installer'
       require 'puppet/module_tool/applications/searcher'
