@@ -98,6 +98,12 @@ class Symbol
   def to_proc
     Proc.new { |*args| args.shift.__send__(self, *args) }
   end unless method_defined? :to_proc
+
+  # Defined in 1.9, absent in 1.8, and used for compatibility in various
+  # places, typically in third party gems.
+  def intern
+    return self
+  end unless method_defined? :intern
 end
 
 class String
