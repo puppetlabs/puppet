@@ -21,7 +21,7 @@ Generally, you need the following things installed:
 
 * The Ruby OpenSSL library.  For some reason, this often isn't included
   in the main ruby distributions.  You can test for it by running
-  'ruby -ropenssl -e "puts :yep"'.  If that errors out, you're missing the
+  ruby -ropenssl -e 'puts ":yep"'.  If that errors out, you're missing the
   library.
 
   If your distribution doesn't come with the necessary library (e.g., on Debian
