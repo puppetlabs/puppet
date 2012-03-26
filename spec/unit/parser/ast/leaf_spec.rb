@@ -263,7 +263,7 @@ end
 
 describe Puppet::Parser::AST::Regex do
   before :each do
-    @scope = stub 'scope'
+    @scope = stub 'scope', :ephemeral_from => true
   end
 
   describe "when initializing" do
@@ -321,6 +321,21 @@ describe Puppet::Parser::AST::Regex do
 
       @regex.evaluate_match("value", @scope)
     end
+  end
+
+  it "should match undef to the empty string" do
+    regex = Puppet::Parser::AST::Regex.new(:value => "^$")
+    regex.evaluate_match(:undef, @scope).should be_true
+  end
+
+  it "should not match undef to a non-empty string" do
+    regex = Puppet::Parser::AST::Regex.new(:value => '\w')
+    regex.evaluate_match(:undef, @scope).should be_false
+  end
+
+  it "should match a string against a string" do
+    regex = Puppet::Parser::AST::Regex.new(:value => '\w')
+    regex.evaluate_match('foo', @scope).should be_true
   end
 
   it "should return the regex source with to_s" do
