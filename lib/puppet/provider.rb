@@ -120,10 +120,10 @@ class Puppet::Provider
     # Now define a method for that command
     unless singleton_class.method_defined?(name)
       meta_def(name) do |*args|
-        raise Puppet::Error, "Command #{name} is missing" unless command(name)
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        return Puppet::Provider::Command.new(command(name)).execute(Puppet::Util::Execution, *args)
+        command = Puppet::Provider::Command.new(command(name))
+        return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
       end
 
       # And then define an instance method that just calls the class method.
