@@ -1,29 +1,73 @@
-#!/usr/bin/env rspec
 require 'spec_helper'
 
 describe Puppet::Provider do
-  it "should have a specifity class method" do
-    Puppet::Provider.should respond_to(:specificity)
+  after do
+    Puppet::Type.rmtype(:dummy)
+  end
+
+  describe "required commands" do
+    it "installs to run executables by path" do
+      echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
+      ls_command = expect_command_executed(:ls, "/bin/ls")
+
+      allow_creation_of(echo_command)
+      allow_creation_of(ls_command)
+
+      provider = provider_of do
+        commands :echo => "/bin/echo", :ls => "/bin/ls"
+      end
+
+      provider.echo("an argument")
+      provider.ls
+    end
+  end
+
+  describe "optional commands" do
+    it "installs to run executables" do
+      echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
+      ls_command = expect_command_executed(:ls, "/bin/ls")
+
+      allow_creation_of(echo_command)
+      allow_creation_of(ls_command)
+
+      provider = provider_of do
+        optional_commands :echo => "/bin/echo", :ls => "/bin/ls"
+      end
+
+      provider.echo("an argument")
+      provider.ls
+    end
+  end
+
+  it "makes command methods on demand (deprecated)" do
+    Puppet::Util.expects(:which).with("/not/a/command").returns("/not/a/command")
+    Puppet::Util::Execution.expects(:execute).with(["/not/a/command"], {})
+
+    provider = provider_of do
+      @commands[:echo] = "/not/a/command"
+    end
+    provider.stubs(:which).with("/not/a/command").returns("/not/a/command")
+
+    provider.make_command_methods(:echo)
+    provider.echo
   end
 
   it "should consider two defaults to be higher specificity than one default" do
-    one = Class.new(Puppet::Provider)
-    one.initvars
-    one.defaultfor :operatingsystem => "solaris"
+    one = provider_of do
+      defaultfor :operatingsystem => "solaris"
+    end
 
-    two = Class.new(Puppet::Provider)
-    two.initvars
-    two.defaultfor :operatingsystem => "solaris", :operatingsystemrelease => "5.10"
+    two = provider_of do
+      defaultfor :operatingsystem => "solaris", :operatingsystemrelease => "5.10"
+    end
 
     two.specificity.should > one.specificity
   end
 
   it "should consider a subclass more specific than its parent class" do
-    one = Class.new(Puppet::Provider)
-    one.initvars
+    one = provider_of {}
 
-    two = Class.new(one)
-    two.initvars
+    two = provider_of({ :parent => one }) {}
 
     two.specificity.should > one.specificity
   end
@@ -58,5 +102,23 @@ describe Puppet::Provider do
     [a, b, c].each {|x| c.should be >= x }
 
     b.should be_between(a, c)
+  end
+
+  def provider_of(options = {}, &block) 
+    type = Puppet::Type.newtype(:dummy) do
+      provide(:dummy, options, &block)
+    end
+
+    type.provider(:dummy)
+  end
+
+  def expect_command_executed(name, path, *args) 
+    command = Puppet::Provider::Command.new(path)
+    command.expects(:execute).with(name, Puppet::Util, Puppet::Util::Execution, *args)
+    command
+  end
+
+  def allow_creation_of(command)
+    Puppet::Provider::Command.stubs(:new).with(command.executable).returns(command)
   end
 end
