@@ -99,6 +99,14 @@ describe Puppet::Parser do
     end
   end
 
+  describe "when parsing parameter names" do
+    Puppet::Parser::Lexer::KEYWORDS.sort_tokens.each do |keyword|
+      it "should allow #{keyword} as a keyword" do
+        lambda { @parser.parse("exec {'/bin/echo foo': #{keyword} => '/usr/bin/false',}") }.should_not raise_error
+      end
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
       Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
