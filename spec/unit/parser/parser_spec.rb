@@ -92,6 +92,19 @@ describe Puppet::Parser do
     it "should not raise an error with empty statements" do
       lambda { @parser.parse("unless false { }") }.should_not raise_error
     end
+    
+    #test for bug #13296
+    it "should not override 'unless' as a parameter inside resources" do
+      lambda { @parser.parse("exec {'/bin/echo foo': unless => '/usr/bin/false',}") }.should_not raise_error
+    end
+  end
+
+  describe "when parsing parameter names" do
+    Puppet::Parser::Lexer::KEYWORDS.sort_tokens.each do |keyword|
+      it "should allow #{keyword} as a keyword" do
+        lambda { @parser.parse("exec {'/bin/echo foo': #{keyword} => '/usr/bin/false',}") }.should_not raise_error
+      end
+    end
   end
 
   describe "when parsing 'if'" do
