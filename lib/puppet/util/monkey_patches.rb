@@ -170,3 +170,48 @@ module Kernel
     self
   end unless method_defined?(:tap)
 end
+
+# The mv method in Ruby 1.8.5 can't mv directories across devices
+# File.rename causes "Invalid cross-device link", which is rescued, but in Ruby
+# 1.8.5 it tries to recover with a copy and unlink, but the unlink causes the
+# error "Is a directory".  In newer Rubies remove_entry is used
+# The implementation below is what's used in Ruby 1.8.7 and Ruby 1.9
+if RUBY_VERSION == '1.8.5'
+  require 'fileutils'
+
+  module FileUtils
+    def mv(src, dest, options = {})
+      fu_check_options options, OPT_TABLE['mv']
+      fu_output_message "mv#{options[:force] ? ' -f' : ''} #{[src,dest].flatten.join ' '}" if options[:verbose]
+      return if options[:noop]
+      fu_each_src_dest(src, dest) do |s, d|
+        destent = Entry_.new(d, nil, true)
+        begin
+          if destent.exist?
+            if destent.directory?
+              raise Errno::EEXIST, dest
+            else
+              destent.remove_file if rename_cannot_overwrite_file?
+            end
+          end
+          begin
+            File.rename s, d
+          rescue Errno::EXDEV
+            copy_entry s, d, true
+            if options[:secure]
+              remove_entry_secure s, options[:force]
+            else
+              remove_entry s, options[:force]
+            end
+          end
+        rescue SystemCallError
+          raise unless options[:force]
+        end
+      end
+    end
+    module_function :mv
+
+    alias move mv
+    module_function :move
+  end
+end
