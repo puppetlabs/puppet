@@ -1,15 +1,17 @@
+# encoding: UTF-8
 # Load standard libraries
 require 'pathname'
 require 'fileutils'
-require 'puppet/module_tool/utils'
+require 'puppet/util/colors'
 
 # Define tool
 module Puppet
   class Module
     module Tool
+      extend Puppet::Util::Colors
 
-      # Directory names that should not be checksummed.
-      ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
+      # Directory and names that should not be checksummed.
+      ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage', 'metadata.json', 'REVISION']
       FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
       REPOSITORY_URL = Puppet.settings[:module_repository]
 
@@ -45,11 +47,49 @@ module Puppet
         end
         raise ArgumentError, "Could not find a valid module at #{path ? path.inspect : 'current directory'}"
       end
+
+      # Builds a formatted tree from a list of node hashes containing +:text+
+      # and +:dependencies+ keys.
+      def self.build_tree(nodes, level = 0)
+        str = ''
+        nodes.each_with_index do |node, i|
+          last_node = nodes.length - 1 == i
+          deps = node[:dependencies] || []
+
+          str << (indent = "  " * level)
+          str << (last_node ? "└" : "├")
+          str << "─"
+          str << (deps.empty? ? "─" : "┬")
+          str << " #{node[:text]}\n"
+
+          branch = build_tree(deps, level + 1)
+          branch.gsub!(/^#{indent} /, indent + '│') unless last_node
+          str << branch
+        end
+
+        return str
+      end
+
+      def self.format_tree(mods, dir)
+        mods.each do |mod|
+          version_string = mod[:version][:vstring].sub(/^(?!v)/, 'v')
+
+          if mod[:action] == :upgrade
+            previous_version = mod[:previous_version].sub(/^(?!v)/, 'v')
+            version_string = "#{previous_version} -> #{version_string}"
+          end
+
+          mod[:text] = "#{mod[:module]} (#{colorize(:cyan, version_string)})"
+          mod[:text] += " [#{mod[:path]}]" unless mod[:path] == dir
+          format_tree(mod[:dependencies], dir)
+        end
+      end
     end
   end
 end
 
 # Load remaining libraries
+require 'puppet/module_tool/errors'
 require 'puppet/module_tool/applications'
 require 'puppet/module_tool/checksums'
 require 'puppet/module_tool/contents_description'

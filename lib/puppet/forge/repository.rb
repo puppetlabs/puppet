@@ -2,26 +2,18 @@ require 'net/http'
 require 'digest/sha1'
 require 'uri'
 
-require 'puppet/module_tool/utils'
-
 module Puppet::Forge
-  # Directory names that should not be checksummed.
-  ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
-  FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
-  REPOSITORY_URL = Puppet.settings[:module_repository]
-
   # = Repository
   #
   # This class is a file for accessing remote repositories with modules.
   class Repository
-    include Puppet::Module::Tool::Utils::Interrogation
 
     attr_reader :uri, :cache
 
     # Instantiate a new repository instance rooted at the optional string
     # +url+, else an instance of the default Puppet modules repository.
     def initialize(url=Puppet[:module_repository])
-      @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
+      @uri = url.is_a?(::URI) ? url : ::URI.parse(url.sub(/^(?!https?:\/\/)/, 'http://'))
       @cache = Cache.new(self)
     end
 
@@ -62,13 +54,7 @@ module Puppet::Forge
     end
 
     # Return a Net::HTTPResponse read for this +request+.
-    #
-    # Options:
-    # * :authenticate => Request authentication on the terminal. Defaults to false.
     def make_http_request(request, options = {})
-      if options[:authenticate]
-        authenticate(request)
-      end
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
@@ -85,17 +71,12 @@ module Puppet::Forge
           http.request(request)
         end
       rescue Errno::ECONNREFUSED, SocketError
-        raise RuntimeError, "Could not reach remote repository"
+        msg = "Error: Could not connect to #{@uri}\n"
+        msg << "  There was a network communications problem\n"
+        msg << "    Check your network connection and try again\n"
+        $stderr << msg
+        exit(1)
       end
-    end
-
-    # Set the HTTP Basic Authentication parameters for the Net::HTTPRequest
-    # +request+ by asking the user for input on the console.
-    def authenticate(request)
-      Puppet.notice "Authenticating for #{@uri}"
-      email = prompt('Email Address')
-      password = prompt('Password', true)
-      request.basic_auth(email, password)
     end
 
     # Return the local file name containing the data downloaded from the
