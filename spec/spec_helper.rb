@@ -69,6 +69,8 @@ RSpec.configure do |config|
     # I suck for letting this float. --daniel 2011-04-21
     Signal.stubs(:trap)
 
+    Puppet.settings.send(:initialize_everything_for_tests)
+
     # Longer keys are secure, but they sure make for some slow testing - both
     # in terms of generating keys, and in terms of anything the next step down
     # the line doing validation or whatever.  Most tests don't care how long
@@ -80,19 +82,6 @@ RSpec.configure do |config|
     Puppet[:req_bits]  = 512
     Puppet[:keylength] = 512
 
-    # Initialize "app defaults" settings to a good set of test values
-    PuppetSpec::Settings::TEST_APP_DEFAULTS.each do |key, value|
-      Puppet.settings.set_value(key, value, :application_defaults)
-    end
-
-
-    # Avoid opening ports to the outside world
-    Puppet.settings[:bindaddress] = "127.0.0.1"
-
-    # We don't want to depend upon the reported domain name of the
-    # machine running the tests, nor upon the DNS setup of that
-    # domain.
-    Puppet.settings[:use_srv_records] = false
 
     @logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
