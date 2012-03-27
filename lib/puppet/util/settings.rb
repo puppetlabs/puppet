@@ -921,4 +921,24 @@ if @config.include?(:run_mode)
       end
     end
   end
+
+  def initialize_everything_for_tests()
+    # these globals are set by Application
+    $puppet_application_mode = nil
+    $puppet_application_name = nil
+    # Set the confdir and vardir to gibberish so that tests
+    # have to be correctly mocked.
+    self[:confdir] = "/dev/null"
+    self[:vardir] = "/dev/null"
+
+    # Avoid opening ports to the outside world
+    self[:bindaddress] = "127.0.0.1"
+  end
+  private :initialize_everything_for_tests
+
+  def clear_everything_for_tests()
+    self.clear
+  end
+  private :clear_everything_for_tests
+
 end
