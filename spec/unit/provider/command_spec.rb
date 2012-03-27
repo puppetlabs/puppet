@@ -25,38 +25,38 @@ describe Puppet::Provider::Command do
   it "executes a simple command" do
     executor.expects(:execute).with([executable], no_options)
 
-    command = Puppet::Provider::Command.new(executable)
-    command.execute(name, path_resolves_to_itself, executor)
+    command = Puppet::Provider::Command.new(name, executable, path_resolves_to_itself, executor)
+    command.execute()
   end
 
   it "executes a command with extra options" do
     executor.expects(:execute).with([executable], the_options)
 
-    command = Puppet::Provider::Command.new(executable, the_options)
-    command.execute(name, path_resolves_to_itself, executor)
+    command = Puppet::Provider::Command.new(name, executable, path_resolves_to_itself, executor, the_options)
+    command.execute()
   end
 
   it "executes a command with arguments" do
     executor.expects(:execute).with([executable, "arg1", "arg2"], no_options)
 
-    command = Puppet::Provider::Command.new(executable)
-    command.execute(name, path_resolves_to_itself, executor, "arg1", "arg2")
+    command = Puppet::Provider::Command.new(name, executable, path_resolves_to_itself, executor)
+    command.execute("arg1", "arg2")
   end
 
   it "resolves to an absolute path for better execution" do
     resolver.expects(:which).with(executable).returns(executable_absolute_path)
     executor.expects(:execute).with([executable_absolute_path], no_options)
 
-    command = Puppet::Provider::Command.new(executable)
-    command.execute(name, resolver, executor)
+    command = Puppet::Provider::Command.new(name, executable, resolver, executor)
+    command.execute()
   end
 
   it "errors when the executable resolves to nothing" do
     resolver.expects(:which).with(executable).returns(nil)
     executor.expects(:execute).never
 
-    command = Puppet::Provider::Command.new(executable)
+    command = Puppet::Provider::Command.new(name, executable, resolver, executor)
 
-    lambda { command.execute(name, resolver, executor) }.should raise_error(Puppet::Error, "Command #{name} is missing")
+    lambda { command.execute() }.should raise_error(Puppet::Error, "Command #{name} is missing")
   end
 end

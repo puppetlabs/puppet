@@ -196,13 +196,13 @@ describe Puppet::Provider do
   end
 
   def expect_command_executed(name, path, *args) 
-    command = Puppet::Provider::Command.new(path)
-    command.expects(:execute).with(name, Puppet::Util, Puppet::Util::Execution, *args)
+    command = Puppet::Provider::Command.new(name, path, Puppet::Util, Puppet::Util::Execution)
+    command.expects(:execute).with(*args)
     command
   end
 
   def allow_creation_of(command, environment = {})
-      Puppet::Provider::Command.stubs(:new).with(command.executable, { :custom_environment => environment }).returns(command)
+      Puppet::Provider::Command.stubs(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :custom_environment => environment }).returns(command)
   end
 
   def file_exists_and_is_executable(path) 

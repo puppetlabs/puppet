@@ -96,25 +96,31 @@ class Puppet::Provider
   def self.has_command(name, path, &block)
     name = symbolize(name)
     configuration = block_given? ? block : Proc.new {}
-    command = CommandDefiner.new(name, path, self, &configuration).command
+    command = CommandDefiner.define(name, path, self, &configuration)
 
     @commands[name] = command.executable
 
     # Now define the class and instance methods.
     create_class_and_instance_method(name) do |*args|
-      return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
+      return command.execute(*args)
     end
   end
 
   class CommandDefiner
-    def initialize(name, path, confiner, &block)
+    private_class_method :new
+
+    def self.define(name, path, confiner, &block)
+      definer = new(name, path, confiner)
+      definer.instance_eval &block
+      definer.command
+    end
+
+    def initialize(name, path, confiner)
       @name = name
       @path = path
       @optional = false
       @confiner = confiner
       @custom_environment = {}
-
-      instance_eval &block
     end
 
     def is_optional
@@ -130,7 +136,7 @@ class Puppet::Provider
         @confiner.confine :exists => @path, :for_binary => true
       end
 
-      Puppet::Provider::Command.new(@path, { :custom_environment => @custom_environment })
+      Puppet::Provider::Command.new(@name, @path, Puppet::Util, Puppet::Util::Execution, { :custom_environment => @custom_environment })
     end
   end
 
@@ -197,8 +203,8 @@ class Puppet::Provider
       meta_def(name) do |*args|
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        command = Puppet::Provider::Command.new(command(name))
-        return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
+        command = Puppet::Provider::Command.new(name, command(name), Puppet::Util, Puppet::Util::Execution)
+        return command.execute(*args)
       end
 
       # And then define an instance method that just calls the class method.
