@@ -73,7 +73,7 @@ describe Puppet::Util::Settings do
     it "should fail if someone attempts to initialize app defaults more than once" do
       @settings.expects(:app_defaults_initialized?).returns(true)
       expect {
-        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULTS)
+        @settings.initialize_app_defaults({})
       }.to raise_error(Puppet::DevError)
     end
 
@@ -89,7 +89,7 @@ describe Puppet::Util::Settings do
     it "should call the hacky run mode setter method until we do a better job of separating run_mode" do
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
       @settings.expects(:run_mode=).with(:user)
-      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULTS)
+      @settings.initialize_app_defaults(@settings.send(:app_defaults_for_tests))
     end
   end
 
