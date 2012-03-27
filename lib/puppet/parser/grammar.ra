@@ -70,6 +70,22 @@ statement_or_declaration:    resource
   | append
   | relationship
 
+keyword: AND
+ | CASE
+ | CLASS
+ | DEFAULT
+ | DEFINE
+ | ELSE
+ | ELSIF
+ | IF
+ | IN
+ | IMPORT
+ | INHERITS
+ | NODE
+ | OR
+ | UNDEF
+ | UNLESS
+
 relationship: relationship_side edge relationship_side {
   result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
 }
@@ -322,7 +338,11 @@ params:   # nothing
     result = val[0]
 }
 
-param:        NAME FARROW expression {
+param_name: NAME 
+  | keyword 
+  | BOOLEAN
+
+param:        param_name FARROW expression {
   result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2]
 }
 
