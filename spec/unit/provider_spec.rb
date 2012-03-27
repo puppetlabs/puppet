@@ -5,8 +5,65 @@ describe Puppet::Provider do
     Puppet::Type.rmtype(:dummy)
   end
 
-  describe "required commands" do
-    it "installs to run executables by path" do
+  describe "has command" do
+    it "installs a method to run the command specified by the path" do
+      echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
+      allow_creation_of(echo_command)
+
+      provider = provider_of do
+        has_command(:echo, "/bin/echo")
+      end
+
+      provider.echo("an argument")
+    end
+
+    it "installs a command that is run with a given environment" do
+      echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
+      allow_creation_of(echo_command, {
+        :EV => "value",
+        :OTHER => "different"
+      })
+
+      provider = provider_of do
+        has_command(:echo, "/bin/echo") do
+          environment :EV => "value", :OTHER => "different"
+        end
+      end
+
+      provider.echo("an argument")
+    end
+
+    it "is required by default" do
+      provider = provider_of do
+        has_command(:does_not_exist, "/does/not/exist")
+      end
+
+      provider.should_not be_suitable
+    end
+
+    it "is required by default" do
+      provider = provider_of do
+        has_command(:does_exist, "/exists/somewhere")
+      end
+
+      file_exists_and_is_executable("/exists/somewhere")
+
+      provider.should be_suitable
+    end
+
+    it "can be specified as optional" do
+      provider = provider_of do
+        has_command(:does_not_exist, "/does/not/exist") do
+          is_optional
+        end
+      end
+
+      provider.should be_suitable
+    end
+  end
+
+  describe "has required commands" do
+    it "installs methods to run executables by path" do
       echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
       ls_command = expect_command_executed(:ls, "/bin/ls")
 
@@ -40,7 +97,7 @@ describe Puppet::Provider do
     end
   end
 
-  describe "optional commands" do
+  describe "has optional commands" do
     it "installs methods to run executables" do
       echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
       ls_command = expect_command_executed(:ls, "/bin/ls")
@@ -144,8 +201,8 @@ describe Puppet::Provider do
     command
   end
 
-  def allow_creation_of(command)
-    Puppet::Provider::Command.stubs(:new).with(command.executable).returns(command)
+  def allow_creation_of(command, environment = {})
+      Puppet::Provider::Command.stubs(:new).with(command.executable, { :custom_environment => environment }).returns(command)
   end
 
   def file_exists_and_is_executable(path) 

@@ -50,12 +50,87 @@ class Puppet::Provider
 
   # Define commands that are not optional.
   #
-  # @param [Hash{String => String, Puppet::Provider::Command}] command_specs Named commands that the provider will 
-  #   be executing on the system. Each command is specified with a name and the path of the executable or a 
-  #   Puppet::Provider::Command object.
+  # @param [Hash{String => String}] command_specs Named commands that the provider will 
+  #   be executing on the system. Each command is specified with a name and the path of the executable.
+  # (@see #has_command)
   def self.commands(command_specs)
-    optional_commands(command_specs) do |name, path|
-      confine :exists => path, :for_binary => true
+    command_specs.each do |name, path|
+      has_command(name, path)
+    end
+  end
+
+  # Define commands that are optional.
+  #
+  # @param [Hash{String => String}] command_specs Named commands that the provider will 
+  #   be executing on the system. Each command is specified with a name and the path of the executable.
+  # (@see #has_command)
+  def self.optional_commands(hash)
+    hash.each do |name, target|
+      has_command(name, target) do
+        is_optional
+      end
+    end
+  end
+
+  # Define a single command
+  #
+  # A method will be generated on the provider that allows easy execution of the command. The generated 
+  # method can take arguments that will be passed through to the executable as the command line arguments 
+  # when it is run.
+  #
+  #     has_command(:echo, "/bin/echo")
+  #     def some_method
+  #       echo("arg 1", "arg 2")
+  #     end
+  #
+  #     # or
+  #
+  #     has_command(:echo, "/bin/echo") do
+  #       is_optional
+  #       environment :HOME => "/var/tmp", :PWD => "/tmp"
+  #     end
+  #
+  # @param [Symbol] name Name of the command (will be the name of the generated method to call the command)
+  # @param [String] path The path to the executable for the command
+  # @yield A block that configures the command (@see Puppet::Provider::Command) 
+  def self.has_command(name, path, &block)
+    name = symbolize(name)
+    configuration = block_given? ? block : Proc.new {}
+    command = CommandDefiner.new(name, path, self, &configuration).command
+
+    @commands[name] = command.executable
+
+    # Now define the class and instance methods.
+    create_class_and_instance_method(name) do |*args|
+      return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
+    end
+  end
+
+  class CommandDefiner
+    def initialize(name, path, confiner, &block)
+      @name = name
+      @path = path
+      @optional = false
+      @confiner = confiner
+      @custom_environment = {}
+
+      instance_eval &block
+    end
+
+    def is_optional
+      @optional = true
+    end
+
+    def environment(env)
+      @custom_environment = @custom_environment.merge(env)
+    end
+
+    def command
+      if not @optional
+        @confiner.confine :exists => @path, :for_binary => true
+      end
+
+      Puppet::Provider::Command.new(@path, { :custom_environment => @custom_environment })
     end
   end
 
@@ -162,26 +237,6 @@ class Puppet::Provider
   end
 
   self.initvars
-
-  # Define one or more binaries we'll be using.  If a block is passed, yield the name
-  # and path to the block (really only used by 'commands').
-  #
-  # (see #commands)
-  def self.optional_commands(hash)
-    hash.each do |name, target|
-      name = symbolize(name)
-      command = target.is_a?(String) ? Puppet::Provider::Command.new(target) : target
-
-      @commands[name] = command.executable
-
-      yield(name, command.executable) if block_given?
-
-      # Now define the class and instance methods.
-      create_class_and_instance_method(name) do |*args|
-        return command.execute(name, Puppet::Util, Puppet::Util::Execution, *args)
-      end
-    end
-  end
 
   def self.create_class_and_instance_method(name, &block)
     unless singleton_class.method_defined?(name)

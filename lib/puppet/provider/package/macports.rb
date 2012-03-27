@@ -13,7 +13,10 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   "
 
   confine :operatingsystem => :darwin
-  commands :port => Puppet::Provider::Command.new("/opt/local/bin/port", { :custom_environment => { :HOME => ENV['HOME'] } })
+
+  has_command(:port, "/opt/local/bin/port") do 
+    environment :HOME => "/opt/local"
+  end
 
   has_feature :installable
   has_feature :uninstallable
