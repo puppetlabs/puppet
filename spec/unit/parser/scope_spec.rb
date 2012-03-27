@@ -214,6 +214,131 @@ describe Puppet::Parser::Scope do
     end
   end
 
+  describe "when mixing inheritence and inclusion" do
+    let(:catalog) { Puppet::Parser::Compiler.compile(Puppet::Node.new 'foonode') }
+
+    it "should find values in its local scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          $var = "local_msg"
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'local_msg'
+    end
+
+    it "should find values in its inherited scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+          $var = "foo_msg"
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
+    end
+
+    it "should find values in its included scope (DEPRECATED)" do
+      Puppet.expects(:deprecation_warning)
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          $var = "baz_msg"
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'baz_msg'
+    end
+
+    it "should find values in its inherited+included scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+          $var = "foo_msg"
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          $var = "baz_msg"
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
+    end
+
+    it "should find values in its node scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          $var = "node_msg"
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'node_msg'
+    end
+
+    it "should find values in its top scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        $var = "top_msg"
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'top_msg'
+    end
+  end
+
   describe "when setvar is called with append=true" do
     it "should raise error if the variable is already defined in this scope" do
       @scope.setvar("var","1", :append => false)
