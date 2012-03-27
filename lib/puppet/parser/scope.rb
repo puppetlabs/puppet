@@ -250,6 +250,8 @@ class Puppet::Parser::Scope
     # If the value is present and either we are top/node scope or originating scope...
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
       table[name]
+    elsif resource and resource.resource_type and resource.resource_type.respond_to?("parent") and parent_type = resource.resource_type.parent
+      class_scope(parent_type).newlookupvar(name,options.merge({:origin => nil}))
     elsif parent
       parent.newlookupvar(name,options)
     else
