@@ -57,7 +57,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     before do
       @daemon.stubs(:create_pidfile)
       @daemon.stubs(:set_signal_traps)
-      EventLoop.current.stubs(:run)
+      @daemon.stubs(:run_event_loop)
     end
 
     it "should fail if it has neither agent nor server" do
@@ -71,31 +71,10 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
       @daemon.start
     end
 
-    it "should start the agent if the agent is configured" do
-      @agent.expects(:start)
-      @daemon.agent = @agent
-
-      @daemon.start
-    end
-
-    it "should start the agent with should_fork at true" do
-      @agent.expects(:should_fork=).with(true)
-      @daemon.agent = @agent
-
-      @daemon.start
-    end
-
     it "should start its server if one is configured" do
       server = mock 'server'
       server.expects(:start)
       @daemon.stubs(:server).returns server
-
-      @daemon.start
-    end
-
-    it "should let the current EventLoop run" do
-      @daemon.agent = @agent
-      EventLoop.current.expects(:run)
 
       @daemon.start
     end

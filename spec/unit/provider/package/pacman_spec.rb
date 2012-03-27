@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'stringio'
 
 provider = Puppet::Type.type(:package).provider(:pacman)
 
@@ -233,7 +234,7 @@ EOF
     end
 
     it "should return installed packages with their versions" do
-      provider.expects(:execpipe).yields("package1 1.23-4\npackage2 2.00\n")
+      provider.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
       packages = provider.instances
 
       packages.length.should == 2
@@ -257,7 +258,7 @@ EOF
     end
 
     it "should warn on invalid input" do
-      provider.expects(:execpipe).yields("blah")
+      provider.expects(:execpipe).yields(StringIO.new("blah"))
       provider.expects(:warning).with("Failed to match line blah")
       provider.instances.should == []
     end

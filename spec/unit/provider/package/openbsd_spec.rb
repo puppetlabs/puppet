@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'stringio'
 
 provider_class = Puppet::Type.type(:package).provider(:openbsd)
 
@@ -26,12 +27,12 @@ describe provider_class do
     end
 
     it "should return the empty set if no packages are listed" do
-      subject.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields('')
+      subject.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(StringIO.new(''))
       subject.instances.should be_empty
     end
 
     it "should return all packages when invoked" do
-      fixture = File.read(my_fixture('pkginfo.list'))
+      fixture = File.new(my_fixture('pkginfo.list'))
       subject.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
       subject.instances.map(&:name).sort.should ==
         %w{bash bzip2 expat gettext libiconv lzo openvpn python vim wget}.sort
@@ -84,7 +85,7 @@ describe provider_class do
     end
 
     it "should return the package version if in the output" do
-      fixture = File.read(my_fixture('pkginfo.list'))
+      fixture = File.new(my_fixture('pkginfo.list'))
       provider = subject.new(package(:name => 'bash'))
       provider.expects(:execpipe).with(%w{/bin/pkg_info -I bash}).yields(fixture)
       provider.get_version.should == '3.1.17'
@@ -92,7 +93,7 @@ describe provider_class do
 
     it "should return the empty string if the package is not present" do
       provider = subject.new(package(:name => 'zsh'))
-      provider.expects(:execpipe).with(%w{/bin/pkg_info -I zsh}).yields('')
+      provider.expects(:execpipe).with(%w{/bin/pkg_info -I zsh}).yields(StringIO.new(''))
       provider.get_version.should == ''
     end
   end
