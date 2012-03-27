@@ -23,9 +23,10 @@ with_master_running_on(master, "--dns_alt_names=\"puppet, $(hostname -s), $(host
     # Run test on Agents
     step "Run agent to upload facts"
     on agent, puppet_agent("--test --server #{master}")
+    fqdn = on(agent, facter("fqdn")).stdout
 
     step "Fetch agent facts from Puppet Master"
-    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/\`hostname -f\`") do
+    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{fqdn}") do
       assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{agent}")
     end
   end

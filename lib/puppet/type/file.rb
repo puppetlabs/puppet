@@ -209,8 +209,12 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:force, :boolean => true) do
-    desc "Force the file operation.  Currently only used when replacing
-      directories with links."
+    desc "Perform the file operation even if it will destroy one or more directories.
+      You must use `force` in order to:
+
+      * `purge` subdirectories
+      * Replace directories with files or links
+      * Remove a directory when `ensure => absent`"
     newvalues(:true, :false)
     defaultto false
   end
@@ -243,14 +247,18 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:purge, :boolean => true) do
-    desc "Whether unmanaged files should be purged.  If you have a filebucket
-      configured the purged files will be uploaded, but if you do not,
-      this will destroy data.  Only use this option for generated
-      files unless you really know what you are doing.  This option only
-      makes sense when recursively managing directories.
+    desc "Whether unmanaged files should be purged. This option only makes
+      sense when managing directories with `recurse => true`.
 
-      Note that when using `purge` with `source`, Puppet will purge any files
-      that are not on the remote system."
+      * When recursively duplicating an entire directory with the `source`
+        attribute, `purge => true` will automatically purge any files
+        that are not in the source directory.
+      * When managing files in a directory as individual resources,
+        setting `purge => true` will purge any files that aren't being
+        specifically managed.
+
+      If you have a filebucket configured, the purged files will be uploaded,
+      but if you do not, this will destroy data."
 
     defaultto :false
 
