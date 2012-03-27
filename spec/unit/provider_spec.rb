@@ -20,10 +20,28 @@ describe Puppet::Provider do
       provider.echo("an argument")
       provider.ls
     end
+
+    it "allows the provider to be suitable if the executable is present" do
+      provider = provider_of do
+        commands :always_exists => "/this/command/exists"
+      end
+
+      file_exists_and_is_executable("/this/command/exists")
+
+      provider.should be_suitable
+    end
+
+    it "does not allow the provider to be suitable if the executable is not present" do
+      provider = provider_of do
+        commands :does_not_exist => "/this/command/does/not/exist"
+      end
+
+      provider.should_not be_suitable
+    end
   end
 
   describe "optional commands" do
-    it "installs to run executables" do
+    it "installs methods to run executables" do
       echo_command = expect_command_executed(:echo, "/bin/echo", "an argument")
       ls_command = expect_command_executed(:ls, "/bin/ls")
 
@@ -36,6 +54,14 @@ describe Puppet::Provider do
 
       provider.echo("an argument")
       provider.ls
+    end
+
+    it "allows the provider to be suitable even if the executable is not present" do
+      provider = provider_of do
+        optional_commands :does_not_exist => "/this/command/does/not/exist"
+      end
+
+      provider.should be_suitable
     end
   end
 
@@ -120,5 +146,10 @@ describe Puppet::Provider do
 
   def allow_creation_of(command)
     Puppet::Provider::Command.stubs(:new).with(command.executable).returns(command)
+  end
+
+  def file_exists_and_is_executable(path) 
+    FileTest.expects(:file?).with(path).returns(true)
+    FileTest.expects(:executable?).with(path).returns(true)
   end
 end
