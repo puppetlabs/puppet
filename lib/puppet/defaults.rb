@@ -639,10 +639,6 @@ EOT
       is set, ca_days is ignored. Examples are '3600' (one hour)
       and '1825d', which is the same as '5y' (5 years) ",
 		},
-    :ca_md => {
-			:default		=> "md5",
-			:desc				=> "The type of hash used in certificates.",
-		},
     :req_bits => {
 			:default		=> 4096,
 			:desc				=> "The bit length of the certificates.",
