@@ -1,7 +1,6 @@
 require 'puppet'
 require 'sync'
 require 'getoptlong'
-require 'puppet/external/event-loop'
 require 'puppet/util/loadedfile'
 
 class Puppet::SettingsError < Puppet::Error
@@ -378,10 +377,6 @@ class Puppet::Util::Settings
     @sync.synchronize do
       unsafe_parse(files)
     end
-
-    # Create a timer so that this file will get checked automatically
-    # and reparsed if necessary.
-    set_filetimeout_timer
   end
 
   def main_config_file
@@ -755,12 +750,6 @@ class Puppet::Util::Settings
     }
 
     call.each { |setting| setting.handle(self.value(setting.name)) }
-  end
-
-  # Create a timer to check whether the file should be reparsed.
-  def set_filetimeout_timer
-    return unless timeout = self[:filetimeout] and timeout = Integer(timeout) and timeout > 0
-    timer = EventLoop::Timer.new(:interval => timeout, :tolerance => 1, :start? => true) { self.reparse }
   end
 
   # Convert the settings we manage into a catalog full of resources that model those settings.

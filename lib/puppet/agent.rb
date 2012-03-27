@@ -1,5 +1,4 @@
 require 'sync'
-require 'puppet/external/event-loop'
 require 'puppet/application'
 
 # A general class for triggering a run of another
@@ -75,18 +74,6 @@ class Puppet::Agent
     Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
-  end
-
-  # Start listening for events.  We're pretty much just listening for
-  # timer events here.
-  def start
-    # Create our timer.  Puppet will handle observing it and such.
-    timer = EventLoop::Timer.new(:interval => Puppet[:runinterval], :tolerance => 1, :start? => true) do
-      run
-    end
-
-    # Run once before we start following the timer
-    timer.sound_alarm
   end
 
   def sync

@@ -28,22 +28,20 @@ describe sshkey do
 
   describe "when validating values" do
 
-    it "should support ssh-dss as a type value" do
-      proc { @class.new(:name => "foo", :type => "ssh-dss") }.should_not raise_error
+    [:'ssh-dss', :'ssh-rsa', :rsa, :dsa, :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'].each do |keytype|
+      it "should support #{keytype} as a type value" do
+        proc { @class.new(:name => "foo", :type => keytype) }.should_not raise_error
+      end
     end
 
-    it "should support ssh-rsa as a type value" do
-      proc { @class.new(:name => "whev", :type => "ssh-rsa") }.should_not raise_error
-    end
-
-    it "should alias :dsa to ssh-dss as a value for type" do
-      key = @class.new(:name => "whev", :type => :dsa)
-      key.should(:type).should == :'ssh-dss'
-    end
-
-    it "should alias :rsa to ssh-rsa as a value for type" do
-      key = @class.new(:name => "whev", :type => :rsa)
+    it "should alias :rsa to :ssh-rsa" do
+      key = @class.new(:name => "foo", :type => :rsa)
       key.should(:type).should == :'ssh-rsa'
+    end
+
+    it "should alias :dsa to :ssh-dss" do
+      key = @class.new(:name => "foo", :type => :dsa)
+      key.should(:type).should == :'ssh-dss'
     end
 
     it "should not support values other than ssh-dss, ssh-rsa, dsa, rsa for type" do
