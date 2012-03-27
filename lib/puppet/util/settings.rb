@@ -106,16 +106,7 @@ class Puppet::Util::Settings
   end
   private :unsafe_clear
 
-  # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
-  #
-  # @return nil
-  def clear_everything_for_tests()
-    @sync.synchronize do
-      unsafe_clear(true, true)
-      @app_defaults_initialized = false
-    end
-  end
-  private :clear_everything_for_tests
+
 
   # This is mostly just used for testing.
   def clearused
@@ -1139,4 +1130,57 @@ if @config.include?(:run_mode)
       end
     end
   end
+
+
+
+
+  # Private method for internal test use only; allows to assign reasonable values to the "app defaults"
+  #  settings for the purpose of test runs.
+  #
+  # @return [Hash] a hash containing the default values to use for application settings during testing.
+  def app_defaults_for_tests()
+    {
+        :run_mode   => :user,
+        :name       => :apply,
+        :logdir     => "/dev/null",
+        :confdir    => "/dev/null",
+        :vardir     => "/dev/null",
+        :rundir     => "/dev/null",
+    }
+  end
+  private :app_defaults_for_tests
+
+
+  # Private method for internal test use only; allows to assign reasonable values to the "app defaults"
+  #  settings for the purpose of test runs.
+  #
+  # @return nil
+  def initialize_everything_for_tests()
+    # Initialize "app defaults" settings to a good set of test values
+    app_defaults_for_tests.each do |key, value|
+      Puppet.settings.set_value(key, value, :application_defaults)
+    end
+
+    # Avoid opening ports to the outside world
+    Puppet.settings[:bindaddress] = "127.0.0.1"
+
+    # We don't want to depend upon the reported domain name of the
+    # machine running the tests, nor upon the DNS setup of that
+    # domain.
+    Puppet.settings[:use_srv_records] = false
+  end
+  private :initialize_everything_for_tests
+
+  # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
+  #
+  # @return nil
+  def clear_everything_for_tests()
+    @sync.synchronize do
+      unsafe_clear(true, true)
+      @app_defaults_initialized = false
+    end
+  end
+  private :clear_everything_for_tests
+
+
 end
