@@ -194,7 +194,7 @@ class Puppet::Provider
 
   # Create the methods for a given command.
   #
-  # @deprecated Use {#commands} or {#optional_commands} instead. This was not meant to be part of a public API
+  # @deprecated Use {#commands}, {#optional_commands}, or {#has_command} instead. This was not meant to be part of a public API
   def self.make_command_methods(name)
     Puppet.deprecation_warning "Provider.make_command_methods is deprecated; use Provider.commands or Provider.optional_commands instead for creating command methods"
 
