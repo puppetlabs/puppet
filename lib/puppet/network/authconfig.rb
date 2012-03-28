@@ -112,12 +112,8 @@ module Puppet
         }
       rescue Errno::EACCES => detail
         Puppet.err "Configuration error: Cannot read #{@file}; cannot serve"
-        #raise Puppet::Error, "Cannot read #{@config}"
       rescue Errno::ENOENT => detail
         Puppet.err "Configuration error: '#{@file}' does not exit; cannot serve"
-        #raise Puppet::Error, "#{@config} does not exit"
-      #rescue FileServerError => detail
-      #    Puppet.err "FileServer error: #{detail}"
       end
 
       # Verify each of the rights are valid.
