@@ -28,14 +28,15 @@ class Puppet::Configurer::Downloader
     files
   end
 
-  def initialize(name, path, source, ignore = nil)
-    @name, @path, @source, @ignore = name, path, source, ignore
+  def initialize(name, path, source, ignore = nil, environment = nil)
+    @name, @path, @source, @ignore, @environment = name, path, source, ignore, environment
   end
 
   def catalog
     catalog = Puppet::Resource::Catalog.new
     catalog.host_config = false
     catalog.add_resource(file)
+    catalog.environment = @environment
     catalog
   end
 

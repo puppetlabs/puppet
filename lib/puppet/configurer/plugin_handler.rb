@@ -13,7 +13,8 @@ module Puppet::Configurer::PluginHandler
       "plugin",
       Puppet[:plugindest],
       Puppet[:pluginsource],
-      Puppet[:pluginsignore]
+      Puppet[:pluginsignore],
+      @environment
     )
 
     plugin_downloader.evaluate
