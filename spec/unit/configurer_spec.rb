@@ -335,7 +335,7 @@ describe Puppet::Configurer do
 
       @agent.run
 
-      Puppet[:environment].should == "second_env"
+      @agent.environment.should == "second_env"
     end
 
     describe "when not using a REST terminus for catalogs" do

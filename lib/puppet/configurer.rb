@@ -16,7 +16,7 @@ class Puppet::Configurer
   # For benchmarking
   include Puppet::Util
 
-  attr_reader :compile_time
+  attr_reader :compile_time, :environment
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
@@ -64,6 +64,7 @@ class Puppet::Configurer
     self.class.instance = self
     @running = false
     @splayed = false
+    @environment = Puppet[:environment]
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -122,7 +123,7 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
-    report.environment = Puppet[:environment]
+    report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -147,9 +148,9 @@ class Puppet::Configurer
       end
 
       if node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-        if node.environment.to_s != Puppet[:environment]
-          Puppet.warning "Local environment: \"#{Puppet[:environment]}\" doesn't match server specified node environment \"#{node.environment}\", changing."
-          Puppet[:environment] = node.environment.to_s
+        if node.environment.to_s != @environment
+          Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", changing."
+          @environment = node.environment.to_s
           fact_options = nil
         end
       end
@@ -165,12 +166,12 @@ class Puppet::Configurer
       # facts may be used to determine which catalog we get, we need to
       # rerun the process if the environment is changed.
       tries = 0
-      while catalog.environment and not catalog.environment.empty? and catalog.environment != Puppet[:environment]
+      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end
-        Puppet.warning "Local environment: \"#{Puppet[:environment]}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
-        Puppet[:environment] = catalog.environment
+        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
+        @environment = catalog.environment
         return nil unless catalog = prepare_and_retrieve_catalog(options, fact_options)
         tries += 1
       end
