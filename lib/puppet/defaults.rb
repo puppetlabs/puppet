@@ -47,11 +47,10 @@ module Puppet
       exits.  Comma-separate multiple values.  For a list of all values,
       specify 'all'."],
     :color => {
-      :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
+      :default => "ansi",
       :type    => :setting,
       :desc    => "Whether to use colors when logging to the console.  Valid values are
-      `ansi` (equivalent to `true`), `html`, and `false`, which produces no color.
-      Defaults to false on Windows, as its console does not support ansi colors.",
+      `ansi` (equivalent to `true`), `html`, and `false`, which produces no color.",
     },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
