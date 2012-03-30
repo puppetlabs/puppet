@@ -589,9 +589,9 @@ describe Puppet::SSL::Host do
     end
 
     it "should return a Host instance created with the name of each found instance" do
-      key = stub 'key', :name => "key"
-      cert = stub 'cert', :name => "cert"
-      csr = stub 'csr', :name => "csr"
+      key  = stub 'key',  :name => "key",  :to_ary => nil
+      cert = stub 'cert', :name => "cert", :to_ary => nil
+      csr  = stub 'csr',  :name => "csr",  :to_ary => nil
 
       Puppet::SSL::Key.indirection.expects(:search).returns [key]
       Puppet::SSL::Certificate.indirection.expects(:search).returns [cert]
