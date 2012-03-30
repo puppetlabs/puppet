@@ -104,7 +104,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     # This always gets the latest version available.
     hash = self.class.gemlist(:justme => resource[:name])
 
-    hash[:ensure]
+    hash[:ensure][0]
   end
 
   def query

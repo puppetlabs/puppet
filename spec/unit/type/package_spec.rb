@@ -270,6 +270,16 @@ describe Puppet::Type.type(:package) do
           @provider.expects(:install).never
           @catalog.apply
         end
+
+        describe "when ensure is set to 'latest'" do
+          it "should not install if the value is in the array" do
+            @provider.expects(:latest).returns("3.0")
+            @package[:ensure] = "latest"
+            @package.property(:ensure).insync?(installed_versions).should be_true
+            @provider.expects(:install).never
+            @catalog.apply
+          end
+        end
       end
     end
   end
