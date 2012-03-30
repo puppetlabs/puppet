@@ -1,13 +1,15 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/resource/type_collection'
-require 'puppet/util/rdoc/parser'
-require 'puppet/util/rdoc/code_objects'
-require 'rdoc/options'
-require 'rdoc/rdoc'
+describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
+  before :all do
+    require 'puppet/resource/type_collection'
+    require 'puppet/util/rdoc/parser'
+    require 'puppet/util/rdoc/code_objects'
+    require 'rdoc/options'
+    require 'rdoc/rdoc'
+  end
 
-describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
   include PuppetSpec::Files
 
   before :each do

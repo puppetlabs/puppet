@@ -1,9 +1,0 @@
-define comp() {
-    file { "/etc/passwd":
-        mode => 644
-    }
-}
-
-comp {
-    fakearg => "yay"
-}

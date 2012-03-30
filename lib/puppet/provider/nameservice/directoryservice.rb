@@ -31,37 +31,36 @@ class DirectoryService < Puppet::Provider::NameService
   # JJM: Note, this is de-coupled from the Puppet::Type, and must
   #     be actively maintained.  There may also be collisions with different
   #     types (Users, Groups, Mounts, Hosts, etc...)
-  @@ds_to_ns_attribute_map = {
-    'RecordName' => :name,
-    'PrimaryGroupID' => :gid,
-    'NFSHomeDirectory' => :home,
-    'UserShell' => :shell,
-    'UniqueID' => :uid,
-    'RealName' => :comment,
-    'Password' => :password,
-    'GeneratedUID' => :guid,
-    'IPAddress'    => :ip_address,
-    'ENetAddress'  => :en_address,
-    'GroupMembership' => :members,
-  }
+  def ds_to_ns_attribute_map; self.class.ds_to_ns_attribute_map; end
+  def self.ds_to_ns_attribute_map
+    {
+      'RecordName' => :name,
+      'PrimaryGroupID' => :gid,
+      'NFSHomeDirectory' => :home,
+      'UserShell' => :shell,
+      'UniqueID' => :uid,
+      'RealName' => :comment,
+      'Password' => :password,
+      'GeneratedUID' => :guid,
+      'IPAddress'    => :ip_address,
+      'ENetAddress'  => :en_address,
+      'GroupMembership' => :members,
+    }
+  end
+
   # JJM The same table as above, inverted.
-  @@ns_to_ds_attribute_map = {
-    :name => 'RecordName',
-    :gid => 'PrimaryGroupID',
-    :home => 'NFSHomeDirectory',
-    :shell => 'UserShell',
-    :uid => 'UniqueID',
-    :comment => 'RealName',
-    :password => 'Password',
-    :guid => 'GeneratedUID',
-    :en_address => 'ENetAddress',
-    :ip_address => 'IPAddress',
-    :members => 'GroupMembership',
-  }
+  def ns_to_ds_attribute_map; self.class.ns_to_ds_attribute_map end
+  def self.ns_to_ds_attribute_map
+    @ns_to_ds_attribute_map ||= ds_to_ns_attribute_map.invert
+  end
 
-  @@password_hash_dir = "/var/db/shadow/hash"
-  @@users_plist_dir    = '/var/db/dslocal/nodes/Default/users'
+  def self.password_hash_dir
+    '/var/db/shadow/hash'
+  end
 
+  def self.users_plist_dir
+    '/var/db/dslocal/nodes/Default/users'
+  end
 
   def self.instances
     # JJM Class method that provides an array of instance objects of this
@@ -131,9 +130,9 @@ class DirectoryService < Puppet::Provider::NameService
     attribute_hash = {}
     input_hash.keys.each do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
-      next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
+      next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
       ds_value = input_hash[key]
-      case @@ds_to_ns_attribute_map[ds_attribute]
+      case ds_to_ns_attribute_map[ds_attribute]
         when :members
           ds_value = ds_value # only members uses arrays so far
         when :gid, :uid
@@ -148,7 +147,7 @@ class DirectoryService < Puppet::Provider::NameService
           end
         else ds_value = ds_value[0]
       end
-      attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value
+      attribute_hash[ds_to_ns_attribute_map[ds_attribute]] = ds_value
     end
 
     # NBK: need to read the existing password here as it's not actually
@@ -222,7 +221,7 @@ class DirectoryService < Puppet::Provider::NameService
     # version '10.10' would be < '10.7' with simple string comparison. This
     # if-statement only executes if the current version is less-than 10.7
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
-      password_hash_file = "#{@@password_hash_dir}/#{guid}"
+      password_hash_file = "#{password_hash_dir}/#{guid}"
       begin
         File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
       rescue Errno::EACCES => detail
@@ -260,13 +259,13 @@ class DirectoryService < Puppet::Provider::NameService
              Please check your password and try again.")
       end
 
-      if File.exists?("#{@@users_plist_dir}/#{resource_name}.plist")
+      if File.exists?("#{users_plist_dir}/#{resource_name}.plist")
         # If a plist already exists in /var/db/dslocal/nodes/Default/users, then
         # we will need to extract the binary plist from the 'ShadowHashData'
         # key, log the new password into the resultant plist's 'SALTED-SHA512'
         # key, and then save the entire structure back.
         users_plist = Plist::parse_xml(plutil( '-convert', 'xml1', '-o', '/dev/stdout', \
-                                       "#{@@users_plist_dir}/#{resource_name}.plist"))
+                                       "#{users_plist_dir}/#{resource_name}.plist"))
 
         # users_plist['ShadowHashData'][0].string is actually a binary plist
         # that's nested INSIDE the user's plist (which itself is a binary
@@ -286,8 +285,8 @@ class DirectoryService < Puppet::Provider::NameService
         # a binary plist.
         changed_plist = convert_xml_to_binary(converted_hash_plist)
         users_plist['ShadowHashData'][0].string = changed_plist
-        Plist::Emit.save_plist(users_plist, "#{@@users_plist_dir}/#{resource_name}.plist")
-        plutil('-convert', 'binary1', "#{@@users_plist_dir}/#{resource_name}.plist")
+        Plist::Emit.save_plist(users_plist, "#{users_plist_dir}/#{resource_name}.plist")
+        plutil('-convert', 'binary1', "#{users_plist_dir}/#{resource_name}.plist")
       end
     end
   end
@@ -298,7 +297,7 @@ class DirectoryService < Puppet::Provider::NameService
     # if-statement only executes if the current version is less-than 10.7 
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
       password_hash = nil
-      password_hash_file = "#{@@password_hash_dir}/#{guid}"
+      password_hash_file = "#{password_hash_dir}/#{guid}"
       if File.exists?(password_hash_file) and File.file?(password_hash_file)
         fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
         f = File.new(password_hash_file)
@@ -307,11 +306,11 @@ class DirectoryService < Puppet::Provider::NameService
       end
       password_hash
     else
-      if File.exists?("#{@@users_plist_dir}/#{username}.plist")
+      if File.exists?("#{users_plist_dir}/#{username}.plist")
         # If a plist exists in /var/db/dslocal/nodes/Default/users, we will
         # extract the binary plist from the 'ShadowHashData' key, decode the
         # salted-SHA512 password hash, and then return it.
-        users_plist = Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{@@users_plist_dir}/#{username}.plist"))
+        users_plist = Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{username}.plist"))
         if users_plist['ShadowHashData']
           # users_plist['ShadowHashData'][0].string is actually a binary plist
           # that's nested INSIDE the user's plist (which itself is a binary
@@ -408,14 +407,14 @@ class DirectoryService < Puppet::Provider::NameService
 
   def password=(passphrase)
     exec_arg_vector = self.class.get_exec_preamble("-read", @resource.name)
-    exec_arg_vector << @@ns_to_ds_attribute_map[:guid]
+    exec_arg_vector << ns_to_ds_attribute_map[:guid]
     begin
       guid_output = execute(exec_arg_vector)
       guid_plist = Plist.parse_xml(guid_output)
       # Although GeneratedUID like all DirectoryService values can be multi-valued
       # according to the schema, in practice user accounts cannot have multiple UUIDs
       # otherwise Bad Things Happen, so we just deal with the first value.
-      guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
+      guid = guid_plist["dsAttrTypeStandard:#{ns_to_ds_attribute_map[:guid]}"][0]
       self.class.set_password(@resource.name, guid, passphrase)
     rescue Puppet::ExecutionFailure => detail
       fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
@@ -441,7 +440,7 @@ class DirectoryService < Puppet::Provider::NameService
       exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
       # JJM: The following line just maps the NS name to the DS name
       #      e.g. { :uid => 'UniqueID' }
-      exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(param)]
+      exec_arg_vector << ns_to_ds_attribute_map[symbolize(param)]
       # JJM: The following line sends the actual value to set the property to
       exec_arg_vector << value.to_s
       begin
@@ -470,7 +469,7 @@ class DirectoryService < Puppet::Provider::NameService
     guid = %x{/usr/bin/uuidgen}.chomp
 
     exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-    exec_arg_vector << @@ns_to_ds_attribute_map[:guid] << guid
+    exec_arg_vector << ns_to_ds_attribute_map[:guid] << guid
     begin
       execute(exec_arg_vector)
     rescue Puppet::ExecutionFailure => detail
@@ -496,7 +495,7 @@ class DirectoryService < Puppet::Provider::NameService
           add_members(nil, value)
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-          exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
+          exec_arg_vector << ns_to_ds_attribute_map[symbolize(property)]
           next if property == :password  # skip setting the password here
           exec_arg_vector << value.to_s
           begin

@@ -1,7 +1,6 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/util/monkey_patches'
 require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
@@ -12,8 +11,8 @@ require 'tempfile'
 require 'pathname'
 
 module Puppet
-
 module Util
+  require 'puppet/util/monkey_patches'
   require 'benchmark'
 
   # These are all for backward compatibility -- these are methods that used
@@ -397,7 +396,6 @@ module Util
   # across.
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
-    raise Puppet::DevError, "replace_file is non-functional on Windows" if Puppet.features.microsoft_windows?
 
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
@@ -407,13 +405,21 @@ module Util
     # If the file exists, use its current mode/owner/group. If it doesn't, use
     # the supplied mode, and default to current user/group.
     if file_exists
-      stat = file.lstat
+      if Puppet.features.microsoft_windows?
+        mode = Puppet::Util::Windows::Security.get_mode(file.to_s)
+        uid = Puppet::Util::Windows::Security.get_owner(file.to_s)
+        gid = Puppet::Util::Windows::Security.get_owner(file.to_s)
+      else
+        stat = file.lstat
+
+        mode = stat.mode
+        uid = stat.uid
+        gid = stat.gid
+      end
 
       # We only care about the four lowest-order octets. Higher octets are
       # filesystem-specific.
-      mode = stat.mode & 07777
-      uid = stat.uid
-      gid = stat.gid
+      mode &= 07777
     else
       mode = default_mode
       uid = Process.euid
@@ -423,8 +429,14 @@ module Util
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
     # that it avoids races around creating the file.
-    tempfile.chmod(mode)
-    tempfile.chown(uid, gid)
+    if Puppet.features.microsoft_windows?
+      Puppet::Util::Windows::Security.set_mode(mode, tempfile.path)
+      Puppet::Util::Windows::Security.set_owner(uid, tempfile.path)
+      Puppet::Util::Windows::Security.set_group(gid, tempfile.path)
+    else
+      tempfile.chmod(mode)
+      tempfile.chown(uid, gid)
+    end
 
     # OK, now allow the caller to write the content of the file.
     yield tempfile

@@ -113,8 +113,9 @@ describe Puppet::Parser::Resource do
       @arguments = {:scope => @scope}
     end
 
-    it "should fail unless #{name.to_s} is specified", :'fails_on_ruby_1.9.2' => true do
-      lambda { Puppet::Parser::Resource.new('file', '/my/file') }.should raise_error(ArgumentError)
+    it "should fail unless #{name.to_s} is specified" do
+      expect { Puppet::Parser::Resource.new('file', '/my/file') }.
+        should raise_error(ArgumentError)
     end
 
     it "should set the reference correctly" do
@@ -163,8 +164,8 @@ describe Puppet::Parser::Resource do
       res.evaluate
     end
 
-    it "should add an edge to any specified stage for class resources", :'fails_on_ruby_1.9.2' => true do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+    it "should add an edge to any specified stage for class resources" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       other_stage = Puppet::Parser::Resource.new(:stage, "other", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, other_stage)
@@ -177,8 +178,8 @@ describe Puppet::Parser::Resource do
       @compiler.catalog.edge?(other_stage, resource).should be_true
     end
 
-    it "should fail if an unknown stage is specified", :'fails_on_ruby_1.9.2' => true do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+    it "should fail if an unknown stage is specified" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'other'
@@ -186,11 +187,11 @@ describe Puppet::Parser::Resource do
       lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
     end
 
-    it "should add edges from the class resources to the parent's stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
+    it "should add edges from the class resources to the parent's stage if no stage is specified" do
       main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'foo_stage'
       @compiler.add_resource(@scope, resource)
@@ -244,9 +245,9 @@ describe Puppet::Parser::Resource do
       edges.should include(["Stage[after]", "Class[Beta]"])
     end
 
-    it "should add edges from top-level class resources to the main stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
+    it "should add edges from top-level class resources to the main stage if no stage is specified" do
       main = @compiler.catalog.resource(:stage, :main)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, resource)
 

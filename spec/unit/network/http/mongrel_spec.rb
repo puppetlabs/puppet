@@ -2,15 +2,15 @@
 require 'spec_helper'
 require 'puppet/network/http'
 
-describe "Puppet::Network::HTTP::Mongrel", "after initializing", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
-  it "should not be listening", :'fails_on_ruby_1.9.2' => true do
+describe "Puppet::Network::HTTP::Mongrel", "after initializing", :if => Puppet.features.mongrel? do
+  it "should not be listening" do
     require 'puppet/network/http/mongrel'
 
     Puppet::Network::HTTP::Mongrel.new.should_not be_listening
   end
 end
 
-describe "Puppet::Network::HTTP::Mongrel", "when turning on listening", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
+describe "Puppet::Network::HTTP::Mongrel", "when turning on listening", :if => Puppet.features.mongrel? do
   before do
     require 'puppet/network/http/mongrel'
 
@@ -62,7 +62,7 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening", :if => P
   end
 end
 
-describe "Puppet::Network::HTTP::Mongrel", "when turning off listening", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
+describe "Puppet::Network::HTTP::Mongrel", "when turning off listening", :if => Puppet.features.mongrel? do
   before do
     @mock_mongrel = mock('mongrel httpserver')
     @mock_mongrel.stubs(:run)

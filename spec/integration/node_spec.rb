@@ -42,7 +42,7 @@ describe Puppet::Node do
       Puppet::Node.indirection.terminus(:ldap).should_not be_nil
     end
 
-    it "should be able to use the plain terminus", :'fails_on_ruby_1.9.2' => true do
+    it "should be able to use the plain terminus" do
       Puppet::Node.indirection.stubs(:terminus_class).returns :plain
 
       # Load now, before we stub the exists? method.

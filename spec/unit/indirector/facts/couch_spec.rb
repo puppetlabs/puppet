@@ -4,14 +4,14 @@ require 'spec_helper'
 require 'puppet/node/facts'
 require 'puppet/indirector/facts/couch'
 
-describe "Puppet::Node::Facts::Couch", :'fails_on_ruby_1.9.2' => true do
+describe "Puppet::Node::Facts::Couch" do
   describe "when couchdb is not available", :unless => Puppet.features.couchdb? do
     it "should fail to initialize" do
       lambda { Puppet::Node::Facts::Couch.new }.should raise_error
     end
   end
 
-  describe "when couchdb is available", :if => Puppet.features.couchdb?, :'fails_on_ruby_1.9.2' => true do
+  describe "when couchdb is available", :if => Puppet.features.couchdb? do
     before do
       @mock_db = mock('couch db')
       mock_document = CouchRest::Document.new(:_id => fake_request.key, :facts => fake_request.values)

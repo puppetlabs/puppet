@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/util/network_device/transport/ssh'
 
-describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh?, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh? do
 
   before(:each) do
     @transport = Puppet::Util::NetworkDevice::Transport::Ssh.new()

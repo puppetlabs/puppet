@@ -86,8 +86,8 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   def canonalize_ifname(interface)
     IF.each do |k,ifnames|
       if found = ifnames.find { |ifname| interface =~ /^#{ifname}\s*\d/i }
-        interface =~ /^#{found}(.+)\b/i
-        return "#{k.to_s}#{$1}".gsub(/\s+/,'')
+        found = /^#{found}(.+)\Z/i.match(interface)
+        return "#{k.to_s}#{found[1]}".gsub(/\s+/,'')
       end
     end
     interface

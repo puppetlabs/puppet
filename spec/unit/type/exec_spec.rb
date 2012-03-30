@@ -720,4 +720,28 @@ describe Puppet::Type.type(:exec) do
       @exec_resource.refresh
     end
   end
+
+  describe "relative and absolute commands vs path" do
+    let :type do Puppet::Type.type(:exec) end
+    let :rel  do 'echo' end
+    let :abs  do make_absolute('/bin/echo') end
+    let :path do make_absolute('/bin') end
+
+    it "should fail with relative command and no path" do
+      expect { type.new(:command => rel) }.
+        to raise_error Puppet::Error, /no path was specified/
+    end
+
+    it "should accept a relative command with a path" do
+      type.new(:command => rel, :path => path).should be
+    end
+
+    it "should accept an absolute command with no path" do
+      type.new(:command => abs).should be
+    end
+
+    it "should accept an absolute command with a path" do
+      type.new(:command => abs, :path => path).should be
+    end
+  end
 end

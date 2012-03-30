@@ -131,7 +131,7 @@ describe Puppet::Util::Autoload do
     before do
       @autoload.class.stubs(:search_directories).returns %w{/a}
       FileTest.stubs(:directory?).returns true
-      Dir.stubs(:glob).returns "/a/foo/file.rb"
+      Dir.stubs(:glob).returns ["/a/foo/file.rb"]
       File.stubs(:exist?).returns true
       @time_a = Time.utc(2010, 'jan', 1, 6, 30)
       File.stubs(:mtime).returns @time_a
@@ -140,14 +140,14 @@ describe Puppet::Util::Autoload do
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
-      it "should die an if a #{error.to_s} exception is thrown", :'fails_on_ruby_1.9.2' => true do
+      it "should die an if a #{error.to_s} exception is thrown" do
         Kernel.expects(:load).raises error
 
         lambda { @autoload.loadall }.should raise_error(Puppet::Error)
       end
     end
 
-    it "should require the full path to the file", :'fails_on_ruby_1.9.2' => true do
+    it "should require the full path to the file" do
       Kernel.expects(:load).with("/a/foo/file.rb", optionally(anything))
 
       @autoload.loadall

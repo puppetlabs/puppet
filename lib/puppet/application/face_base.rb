@@ -10,7 +10,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :debug
   end
 
-  option("--verbose", "-v") do
+  option("--verbose", "-v") do |_|
     Puppet::Util::Log.level = :info
   end
 

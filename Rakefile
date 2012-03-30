@@ -25,7 +25,6 @@ FILES = FileList[
     'examples/**/*',
     'ext/**/*',
     'tasks/**/*',
-    'test/**/*',
     'spec/**/*'
 ]
 
@@ -45,9 +44,4 @@ task :puppetpackages => [:create_gem, :package]
 RSpec::Core::RakeTask.new do |t|
     t.pattern ='spec/{unit,integration}/**/*.rb'
     t.fail_on_error = true
-end
-
-desc "Run the unit tests"
-task :unit do
-  Dir.chdir("test") { sh "rake" }
 end

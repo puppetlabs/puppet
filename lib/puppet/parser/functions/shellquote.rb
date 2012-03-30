@@ -51,9 +51,13 @@ module Puppet::Parser::Functions
         result << ("'" + word + "'")
       else
         r = '"'
+        # We want each byte, because that is how sh will process it in enough
+        # cases; Ruby 1.8.5 ends up making this the way that gets expressed,
+        # because it requires a block to the `each_byte` method.
         word.each_byte do |c|
+          c = c.chr
           r += "\\" if Dangerous.include?(c)
-          r += c.chr
+          r += c
         end
         r += '"'
         result << r

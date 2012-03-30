@@ -46,9 +46,9 @@ describe provider_class do
       results = (@services-exclude).collect {|x| "#{x}_instance"}
       @class.get_services(@class.defpath, exclude).should == results
     end
-    it "should omit a single service from the exclude list", :'fails_on_ruby_1.9.2' => true do
+    it "should omit a single service from the exclude list" do
       exclude = 'two'
-      (@services-exclude.to_a).each do |inst|
+      (@services - [exclude]).each do |inst|
         @class.expects(:new).with{|hash| hash[:name] == inst}.returns("#{inst}_instance")
       end
       results = @services.reject{|x| x==exclude }.collect {|x| "#{x}_instance"}

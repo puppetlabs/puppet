@@ -90,7 +90,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       file = mock 'file'
       path = @store.send(:path, @subject.name)
       FileTest.expects(:exist?).with(File.dirname(path)).returns(true)
-      @store.expects(:writelock).with(path, 0660).yields(file)
+      Puppet::Util.expects(:replace_file).with(path, 0660).yields(file)
       file.expects(:print).with(yaml)
 
       @store.save(@request)
@@ -105,23 +105,20 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       FileTest.expects(:exist?).with(dir).returns(false)
       Dir.expects(:mkdir).with(dir)
 
-      @store.expects(:writelock).yields(file)
+      Puppet::Util.expects(:replace_file).yields(file)
       file.expects(:print).with(yaml)
 
       @store.save(@request)
     end
   end
 
-  describe Puppet::Indirector::Yaml, " when retrieving YAML" do
-    it "should read YAML in from disk using a read lock and convert it to Ruby objects" do
+  describe "when retrieving YAML" do
+    it "should read YAML in from disk and convert it to Ruby objects" do
       path = @store.send(:path, @subject.name)
-
       yaml = @subject.to_yaml
-      FileTest.expects(:exist?).with(path).returns(true)
 
-      fh = mock 'filehandle'
-      @store.expects(:readlock).with(path).yields fh
-      fh.expects(:read).returns yaml
+      FileTest.expects(:exist?).with(path).returns true
+      File.expects(:read).with(path).returns yaml
 
       @store.find(@request).instance_variable_get("@name").should == :me
     end
@@ -131,13 +128,9 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       FileTest.expects(:exist?).with(path).returns(true)
 
       # Something that will fail in yaml
-      yaml = "--- !ruby/object:Hash"
+      File.expects(:read).returns "--- foo:\n  1,2,3\nargh"
 
-      fh = mock 'filehandle'
-      @store.expects(:readlock).yields fh
-      fh.expects(:read).returns yaml
-
-      proc { @store.find(@request) }.should raise_error(Puppet::Error)
+      expect { @store.find(@request) }.should raise_error(Puppet::Error)
     end
   end
 

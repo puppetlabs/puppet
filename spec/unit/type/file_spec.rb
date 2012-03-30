@@ -70,16 +70,16 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "X:/foo/bar/baz"
       end
 
-      it "should leave a drive letter with a slash alone", :'fails_on_ruby_1.9.2' => true do
+      it "should leave a drive letter with a slash alone" do
         file[:path] = "X:/"
         file[:path].should == "X:/"
       end
 
-      it "should not accept a drive letter without a slash", :'fails_on_ruby_1.9.2' => true do
+      it "should not accept a drive letter without a slash" do
         lambda { file[:path] = "X:" }.should raise_error(/File paths must be fully qualified/)
       end
 
-      describe "when using UNC filenames", :if => Puppet.features.microsoft_windows?, :'fails_on_ruby_1.9.2' => true do
+      describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
         before :each do
           pending("UNC file paths not yet supported")
         end

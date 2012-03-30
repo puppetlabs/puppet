@@ -32,4 +32,9 @@ describe "the 'include' function" do
     @compiler.expects(:evaluate_classes).with {|klasses,parser,lazy| lazy == false}.returns("foo")
     @scope.function_include("foo")
   end
+
+  it "should raise if the class is not found" do
+    @scope.stubs(:source).returns(true)
+    expect { @scope.function_include("nosuchclass") }.to raise_error Puppet::Error
+  end
 end
