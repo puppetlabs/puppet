@@ -2,50 +2,57 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:uninstall) do
     summary "Uninstall a puppet module."
     description <<-EOT
-      Uninstall a puppet module from the modulepath or a specific
-      target directory which defaults to
-      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).join(', ')}.
+      Uninstalls a puppet module from the modulepath (or a specific
+      target directory).
     EOT
 
     returns "Hash of module objects representing uninstalled modules and related errors."
 
     examples <<-EOT
-      Uninstall a module from all directories in the modulepath:
+      Uninstall a module:
 
-      $ puppet module uninstall ssh
+      $ puppet module uninstall puppetlabs-ssh
       Removed /etc/puppet/modules/ssh (v1.0.0)
 
       Uninstall a module from a specific directory:
 
-      $ puppet module uninstall --modulepath /usr/share/puppet/modules ssh
+      $ puppet module uninstall puppetlabs-ssh --modulepath /usr/share/puppet/modules
       Removed /usr/share/puppet/modules/ssh (v1.0.0)
 
       Uninstall a module from a specific environment:
 
-      $ puppet module uninstall --environment development 
+      $ puppet module uninstall puppetlabs-ssh --environment development
       Removed /etc/puppet/environments/development/modules/ssh (v1.0.0)
-      
+
       Uninstall a specific version of a module:
 
-      $ puppet module uninstall --version 2.0.0 ssh
+      $ puppet module uninstall puppetlabs-ssh --version 2.0.0
       Removed /etc/puppet/modules/ssh (v2.0.0)
     EOT
 
     arguments "<name>"
 
-    option "--environment=NAME", "--env=NAME" do
-      default_to { "production" }
-      summary "The target environment to search for modules."
+    option "--force", "-f" do
+      summary "Force uninstall of an installed module."
       description <<-EOT
-        The target environment to search for modules.
+        Force the uninstall of an installed module even if there are local
+        changes or the possibility of causing broken dependencies.
       EOT
     end
-    
+
+    option "--environment NAME" do
+      default_to { "production" }
+      summary "The target environment to uninstall modules from."
+      description <<-EOT
+        The target environment to uninstall modules from.
+      EOT
+    end
+
     option "--version=" do
       summary "The version of the module to uninstall"
       description <<-EOT
-        The version of the module to uninstall. When using this option a module
-        that matches the specified version must be installed or an error is raised.
+        The version of the module to uninstall. When using this option, a module
+        matching the specified version must be installed or else an error is raised.
       EOT
     end
 
@@ -57,35 +64,23 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      if options[:modulepath]
-        unless File.directory?(options[:modulepath])
-          raise ArgumentError, "Directory #{options[:modulepath]} does not exist"
-        end
-      end
-
       Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      options[:name] = name
+      name = name.gsub('/', '-')
 
+      Puppet.notice "Preparing to uninstall '#{name}'" << (options[:version] ? " (#{colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))})" : '') << " ..."
       Puppet::Module::Tool::Applications::Uninstaller.run(name, options)
     end
 
     when_rendering :console do |return_value|
-      output = ''
-
-      return_value[:removed_mods].each do |mod| 
-        output << "Removed #{mod.path} (v#{mod.version})\n"
+      if return_value[:result] == :failure
+        Puppet.err(return_value[:error][:multiline])
+        exit 1
+      else
+        mod = return_value[:affected_modules].first
+        "Removed '#{return_value[:module_name]}'" <<
+        (mod.version ? " (#{colorize(:cyan, mod.version.to_s.sub(/^(?=\d)/, 'v'))})" : '') <<
+        " from #{mod.modulepath}"
       end
-
-      return_value[:errors].map do |mod_name, errors|
-        if ! errors.empty?
-          header = "Could not uninstall module #{return_value[:options][:name]}"
-          header << " (v#{return_value[:options][:version]})" if return_value[:options][:version]
-          output << "#{header}:\n"
-          errors.map { |error| output << "  #{error}\n" }
-        end
-      end
-
-      output
     end
   end
 end

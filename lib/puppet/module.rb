@@ -119,6 +119,18 @@ class Puppet::Module
           raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
         end
       end
+
+      # NOTICE: The fallback to `versionRequirement` is something we'd like to
+      # not have to support, but we have a reasonable number of releases that
+      # don't use `version_requirement`. When we can deprecate this, we should.
+      if attr == :dependencies
+        value.tap do |dependencies|
+          dependencies.each do |dep|
+            dep['version_requirement'] ||= dep['versionRequirement'] || '>= 0.0.0'
+          end
+        end
+      end
+
       send(attr.to_s + "=", value)
     end
   end
@@ -142,6 +154,10 @@ class Puppet::Module
   # Find this module in the modulepath.
   def path
     @path ||= environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
+  end
+
+  def modulepath
+    File.dirname(path) if path
   end
 
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
@@ -180,51 +196,86 @@ class Puppet::Module
     !changes.empty?
   end
 
-  def unmet_dependencies
-    return [] unless dependencies
+  def local_changes
+    Puppet::Module::Tool::Applications::Checksummer.run(path)
+  end
 
+  # Identify and mark unmet dependencies.  A dependency will be marked unmet
+  # for the following reasons:
+  #
+  #   * not installed and is thus considered missing
+  #   * installed and does not meet the version requirements for this module
+  #   * installed and doesn't use semantic versioning
+  #
+  # Returns a list of hashes representing the details of an unmet dependency.
+  #
+  # Example:
+  #
+  #   [
+  #     {
+  #       :reason => :missing,
+  #       :name   => 'puppetlabs-mysql',
+  #       :version_constraint => 'v0.0.1',
+  #       :mod_details => {
+  #         :installed_version => '0.0.1'
+  #       }
+  #       :parent => {
+  #         :name    => 'puppetlabs-bacula',
+  #         :version => 'v1.0.0'
+  #       }
+  #     }
+  #   ]
+  #
+  def unmet_dependencies
     unmet_dependencies = []
+    return unmet_dependencies unless dependencies
 
     dependencies.each do |dependency|
       forge_name = dependency['name']
-      author, dep_name = forge_name.split('/')
-      version_string = dependency['version_requirement']
+      version_string = dependency['version_requirement'] || '>= 0.0.0'
 
-      equality, dep_version = version_string ? version_string.split("\s") : [nil, nil]
+      dep_mod = begin
+        environment.module_by_forge_name(forge_name)
+      rescue => e
+        nil
+      end
 
-      unless dep_mod = environment.module(dep_name)
-        msg =  "Missing dependency `#{dep_name}`:\n"
-        msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unmet_dependencies << { :name => forge_name, :error => msg }
+      error_details = {
+        :name => forge_name,
+        :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
+        :parent => {
+          :name => self.forge_name,
+          :version => self.version.gsub(/^(?=\d)/, "v")
+        },
+        :mod_details => {
+          :installed_version => dep_mod.nil? ? nil : dep_mod.version
+        }
+      }
+
+      unless dep_mod
+        error_details[:reason] = :missing
+        unmet_dependencies << error_details
         next
       end
 
-      if dep_version && !dep_mod.version
-        msg =  "Unversioned dependency `#{dep_mod.name}`:\n"
-        msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-        unmet_dependencies << { :name => forge_name, :error => msg }
-        next
-      end
-
-      if dep_version
+      if version_string
         begin
-          required_version_semver = SemVer.new(dep_version)
+          required_version_semver_range = SemVer[version_string]
           actual_version_semver = SemVer.new(dep_mod.version)
         rescue ArgumentError
-          msg =  "Non semantic version dependency `#{dep_mod.name}` (#{dep_mod.version}):\n"
-          msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unmet_dependencies << { :name => forge_name, :error => msg }
+          error_details[:reason] = :non_semantic_version
+          unmet_dependencies << error_details
           next
         end
 
-        if !actual_version_semver.send(equality, required_version_semver)
-          msg =  "Version dependency mismatch `#{dep_mod.name}` (#{dep_mod.version}):\n"
-          msg += "  `#{self.name}` (#{self.version}) requires `#{forge_name}` (#{version_string})\n"
-          unmet_dependencies << { :name => forge_name, :error => msg }
+        unless required_version_semver_range.include? actual_version_semver
+          error_details[:reason] = :version_mismatch
+          unmet_dependencies << error_details
           next
         end
       end
     end
+
     unmet_dependencies
   end
 
@@ -256,8 +307,8 @@ class Puppet::Module
 
   def ==(other)
     self.name == other.name &&
-      self.version == other.version &&
-      self.path == other.path &&
-      self.environment == other.environment
+    self.version == other.version &&
+    self.path == other.path &&
+    self.environment == other.environment
   end
 end
