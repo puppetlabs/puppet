@@ -12,7 +12,10 @@ module Puppet
       attr_reader :source_description, :default_log_level, :time, :resource
       attr_reader :change_count, :out_of_sync_count, :resource_type, :title
 
-      YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count @out_of_sync_count @tags @time @events @out_of_sync @changed @resource_type @title @skipped @failed}
+      YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
+                           @out_of_sync_count @tags @time @events @out_of_sync
+                           @changed @resource_type @title @skipped @failed}.
+        map(&:to_sym)
 
       # Provide a boolean method for each of the states.
       STATES.each do |attr|

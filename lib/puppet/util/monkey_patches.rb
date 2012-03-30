@@ -1,3 +1,6 @@
+require 'puppet/util'
+module Puppet::Util::MonkeyPatches
+end
 
 unless defined? JRUBY_VERSION
   Process.maxgroups = 1024
@@ -23,7 +26,7 @@ class Symbol
   end
   def <=> (other)
     self.to_s <=> other.to_s
-  end
+  end unless method_defined? "<=>"
 end
 
 [Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
@@ -57,23 +60,6 @@ class Object
   # and other strange things like that.
   def daemonize
     raise NotImplementedError, "Kernel.daemonize is too dangerous, please don't try to use it."
-  end
-
-  # The following code allows callers to make assertions that are only
-  # checked when the environment variable PUPPET_ENABLE_ASSERTIONS is
-  # set to a non-empty string.  For example:
-  #
-  #   assert_that { condition }
-  #   assert_that(message) { condition }
-  if ENV["PUPPET_ENABLE_ASSERTIONS"].to_s != ''
-    def assert_that(message = nil)
-      unless yield
-        raise Exception.new("Assertion failure: #{message}")
-      end
-    end
-  else
-    def assert_that(message = nil)
-    end
   end
 end
 
@@ -112,22 +98,26 @@ class Symbol
   def to_proc
     Proc.new { |*args| args.shift.__send__(self, *args) }
   end unless method_defined? :to_proc
+
+  # Defined in 1.9, absent in 1.8, and used for compatibility in various
+  # places, typically in third party gems.
+  def intern
+    return self
+  end unless method_defined? :intern
 end
 
-
 class String
-  def lines(separator = $/)
-    lines = split(separator)
-    block_given? and lines.each {|line| yield line }
-    lines
+  unless method_defined? :lines
+    require 'puppet/util/monkey_patches/lines'
+    include Puppet::Util::MonkeyPatches::Lines
   end
 end
 
+require 'fcntl'
 class IO
-  def lines(separator = $/)
-    lines = split(separator)
-    block_given? and lines.each {|line| yield line }
-    lines
+  unless method_defined? :lines
+    require 'puppet/util/monkey_patches/lines'
+    include Puppet::Util::MonkeyPatches::Lines
   end
 
   def self.binread(name, length = nil, offset = 0)
@@ -137,12 +127,27 @@ class IO
     end
   end unless singleton_methods.include?(:binread)
 
-  def self.binwrite(name, string, offset = 0)
-    File.open(name, 'wb') do |f|
-      f.write(offset > 0 ? string[offset..-1] : string)
+  def self.binwrite(name, string, offset = nil)
+    # Determine if we should truncate or not.  Since the truncate method on a
+    # file handle isn't implemented on all platforms, safer to do this in what
+    # looks like the libc interface - which is usually pretty robust.
+    # --daniel 2012-03-11
+    mode = Fcntl::O_CREAT | Fcntl::O_WRONLY | (offset.nil? ? Fcntl::O_TRUNC : 0)
+    IO.open(IO::sysopen(name, mode)) do |f|
+      # ...seek to our desired offset, then write the bytes.  Don't try to
+      # seek past the start of the file, eh, because who knows what platform
+      # would legitimately blow up if we did that.
+      #
+      # Double-check the positioning, too, since destroying data isn't my idea
+      # of a good time. --daniel 2012-03-11
+      target = [0, offset.to_i].max
+      unless (landed = f.sysseek(target, IO::SEEK_SET)) == target
+        raise "unable to seek to target offset #{target} in #{name}: got to #{landed}"
+      end
+
+      f.syswrite(string)
     end
   end unless singleton_methods.include?(:binwrite)
-
 end
 
 class Range
@@ -169,4 +174,57 @@ module Kernel
     yield(self)
     self
   end unless method_defined?(:tap)
+end
+
+
+########################################################################
+# The return type of `instance_variables` changes between Ruby 1.8 and 1.9
+# releases; it used to return an array of strings in the form "@foo", but
+# now returns an array of symbols in the form :@foo.
+#
+# Nothing else in the stack cares which form you get - you can pass the
+# string or symbol to things like `instance_variable_set` and they will work
+# transparently.
+#
+# Having the same form in all releases of Puppet is a win, though, so we
+# pick a unification and enforce than on all releases.  That way developers
+# who do set math on them (eg: for YAML rendering) don't have to handle the
+# distinction themselves.
+#
+# In the sane tradition, we bring older releases into conformance with newer
+# releases, so we return symbols rather than strings, to be more like the
+# future versions of Ruby are.
+#
+# We also carefully support reloading, by only wrapping when we don't
+# already have the original version of the method aliased away somewhere.
+if RUBY_VERSION[0,3] == '1.8'
+  unless Object.respond_to?(:puppet_original_instance_variables)
+
+    # Add our wrapper to the method.
+    class Object
+      alias :puppet_original_instance_variables :instance_variables
+
+      def instance_variables
+        puppet_original_instance_variables.map(&:to_sym)
+      end
+    end
+
+    # The one place that Ruby 1.8 assumes something about the return format of
+    # the `instance_variables` method is actually kind of odd, because it uses
+    # eval to get at instance variables of another object.
+    #
+    # This takes the original code and applies replaces instance_eval with
+    # instance_variable_get through it.  All other bugs in the original (such
+    # as equality depending on the instance variables having the same order
+    # without any promise from the runtime) are preserved. --daniel 2012-03-11
+    require 'resolv'
+    class Resolv::DNS::Resource
+      def ==(other) # :nodoc:
+        return self.class == other.class &&
+          self.instance_variables == other.instance_variables &&
+          self.instance_variables.collect {|name| self.instance_variable_get name} ==
+          other.instance_variables.collect {|name| other.instance_variable_get name}
+      end
+    end
+  end
 end

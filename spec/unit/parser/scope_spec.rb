@@ -531,4 +531,18 @@ describe Puppet::Parser::Scope do
       child_scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
     end
   end
+
+  context "#true?" do
+    { "a string" => true,
+      "true"     => true,
+      "false"    => true,
+      true       => true,
+      ""         => false,
+      :undef     => false
+    }.each do |input, output|
+      it "should treat #{input.inspect} as #{output}" do
+        Puppet::Parser::Scope.true?(input).should == output
+      end
+    end
+  end
 end

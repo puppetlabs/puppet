@@ -233,6 +233,7 @@ class Puppet::Util::Log
 
   def level=(level)
     raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
+    raise ArgumentError, "Puppet::Util::Log requires a symbol or string" unless level.respond_to? "to_sym"
     @level = level.to_sym
     raise ArgumentError, "Invalid log level #{@level}" unless self.class.validlevel?(@level)
 

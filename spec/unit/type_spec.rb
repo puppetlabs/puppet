@@ -631,21 +631,68 @@ describe Puppet::Type, :fails_on_windows => true do
   end
 
   describe "::instances" do
-    it "should not fail if no suitable providers are found" do
-      fake_type = Puppet::Type.newtype(:type_spec_fake_type) do
+    after :each do Puppet::Type.rmtype(:type_spec_fake_type) end
+    let :type do
+      Puppet::Type.newtype(:type_spec_fake_type) do
         newparam(:name) do
           isnamevar
         end
-        newproperty(:prop1) do
-        end
 
-        provide(:fake1) do
-          confine :exists => '/no/such/file'
+        newproperty(:prop1) {}
+      end
+
+      Puppet::Type.type(:type_spec_fake_type)
+    end
+
+    it "should not fail if no suitable providers are found" do
+      type.provide(:fake1) do
+        confine :exists => '/no/such/file'
+        mk_resource_methods
+      end
+
+      expect { type.instances.should == [] }.should_not raise_error
+    end
+
+    context "with a default provider" do
+      before :each do
+        type.provide(:default) do
+          defaultfor :operatingsystem => Facter.value(:operatingsystem)
           mk_resource_methods
+          class << self
+            attr_accessor :names
+          end
+          def self.instance(name)
+            new(:name => name, :ensure => :present)
+          end
+          def self.instances
+            @instances ||= names.collect { |name| instance(name.to_s) }
+          end
+
+          @names = [:one, :two]
         end
       end
 
-      expect { fake_type.instances }.should_not raise_error
+      it "should return only instances of the type" do
+        type.instances.should be_all {|x| x.is_a? type }
+      end
+
+      it "should return instances from the default provider" do
+        type.instances.map(&:name).should == ["one", "two"]
+      end
+
+      it "should return instances from all providers" do
+        type.provide(:fake1, :parent => :default) { @names = [:three, :four] }
+        type.instances.map(&:name).should == ["one", "two", "three", "four"]
+      end
+
+      it "should not return instances from unsuitable providers" do
+        type.provide(:fake1, :parent => :default) do
+          @names = [:three, :four]
+          confine :exists => "/no/such/file"
+        end
+
+        type.instances.map(&:name).should == ["one", "two"]
+      end
     end
   end
 
@@ -791,6 +838,124 @@ describe Puppet::Type.metaparamclass(:audit) do
       myfile = make_absolute('/my/file')
       res = Puppet::Type.type(:file).new( :title => myfile, :path => myfile, :owner => 'root', :content => 'hello' )
       res.uniqueness_key.should == [ nil, 'root', myfile]
+    end
+  end
+
+  context "type attribute bracket methods" do
+    after :each do Puppet::Type.rmtype(:attributes)     end
+    let   :type do
+      Puppet::Type.newtype(:attributes) do
+        newparam(:name) {}
+      end
+    end
+
+    it "should work with parameters" do
+      type.newparam(:param) {}
+      instance = type.new(:name => 'test')
+
+      expect { instance[:param] = true }.should_not raise_error
+      expect { instance["param"] = true }.should_not raise_error
+      instance[:param].should == true
+      instance["param"].should == true
+    end
+
+    it "should work with meta-parameters" do
+      instance = type.new(:name => 'test')
+
+      expect { instance[:noop] = true }.should_not raise_error
+      expect { instance["noop"] = true }.should_not raise_error
+      instance[:noop].should == true
+      instance["noop"].should == true
+    end
+
+    it "should work with properties" do
+      type.newproperty(:property) {}
+      instance = type.new(:name => 'test')
+
+      expect { instance[:property] = true }.should_not raise_error
+      expect { instance["property"] = true }.should_not raise_error
+      instance.property(:property).must be
+      instance.should(:property).must be_true
+    end
+
+    it "should handle proprieties correctly" do
+      # Order of assignment is significant in this test.
+      props = {}
+      [:one, :two, :three].each {|prop| type.newproperty(prop) {} }
+      instance = type.new(:name => "test")
+
+      instance[:one] = "boo"
+      one = instance.property(:one)
+      instance.properties.must == [one]
+
+      instance[:three] = "rah"
+      three = instance.property(:three)
+      instance.properties.must == [one, three]
+
+      instance[:two] = "whee"
+      two = instance.property(:two)
+      instance.properties.must == [one, two, three]
+    end
+
+    it "should handle parameter aliases correctly" do
+      type.newparam(:one) {}
+      type.newproperty(:two) {}
+
+      type.set_attr_alias :three => :one
+      type.attr_alias(:three).must == :one
+
+      type.set_attr_alias :four => :two
+      type.attr_alias(:four).must == :two
+
+      type.attr_alias(:name).must_not be
+
+      instance = type.new(:name => "my name")
+      instance.must be
+
+      instance[:three]       = "value three"
+      instance.value(:three).must == "value three"
+      instance.value(:one).must   == "value three"
+
+      instance[:four]              = "value four"
+      instance.should(:four).must == "value four"
+      instance.value(:four).must  == "value four"
+      instance.value(:two).must   == "value four"
+    end
+
+    it "newattr should handle required features correctly" do
+      Puppet::Util::Log.level = :debug
+
+      type.feature :feature1, "one"
+      type.feature :feature2, "two"
+
+      none = type.newproperty(:none) {}
+      one  = type.newproperty(:one, :required_features => :feature1) {}
+      two  = type.newproperty(:two, :required_features => [:feature1, :feature2]) {}
+
+      nope  = type.provide(:nope)  {}
+      maybe = type.provide(:maybe) { has_features :feature1 }
+      yep   = type.provide(:yep)   { has_features :feature1, :feature2 }
+
+      [nope, maybe, yep].each_with_index do |provider, i|
+        rsrc = type.new(:provider => provider.name, :name => "test#{i}",
+                        :none => "a", :one => "b", :two => "c")
+
+        rsrc.should(:none).must be
+
+        if provider.declared_feature? :feature1
+          rsrc.should(:one).must be
+        else
+          rsrc.should(:one).must_not be
+          @logs.find {|l| l.message =~ /not managing attribute one/ }.should be
+        end
+
+        if provider.declared_feature? :feature2
+          rsrc.should(:two).must be
+        else
+          rsrc.should(:two).must_not be
+          @logs.find {|l| l.message =~ /not managing attribute two/ }.should be
+        end
+      end
     end
   end
 end

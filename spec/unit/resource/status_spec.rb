@@ -142,13 +142,13 @@ describe Puppet::Resource::Status do
     end
   end
 
-  describe "When converting to YAML", :'fails_on_ruby_1.9.2' => true do
+  describe "When converting to YAML" do
     it "should include only documented attributes" do
       @status.file = "/foo.rb"
       @status.line = 27
       @status.evaluation_time = 2.7
       @status.tags = %w{one two}
-      @status.to_yaml_properties.should == Puppet::Resource::Status::YAML_ATTRIBUTES.sort
+      @status.to_yaml_properties.should =~ Puppet::Resource::Status::YAML_ATTRIBUTES
     end
   end
 end

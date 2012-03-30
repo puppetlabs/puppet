@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'puppet/application'
 require 'puppet'
 require 'getoptlong'
+require 'timeout'
 
 describe Puppet::Application do
 
@@ -38,14 +39,16 @@ describe Puppet::Application do
       @klass.find("Agent").should == @klass::Agent
     end
 
-    it "should not find classes outside the namespace", :'fails_on_ruby_1.9.2' => true do
+    it "should not find classes outside the namespace" do
       expect { @klass.find("String") }.to exit_with 1
     end
 
     it "should exit if it can't find a class" do
-      reg = "Unable to find application 'ThisShallNeverEverEverExist'.  "
-      reg += "no such file to load -- puppet/application/thisshallneverevereverexist"
-      @klass.expects(:puts).with(reg)
+      @klass.expects(:puts).with do |value|
+        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
+          value =~ /puppet\/application\/thisshallneverevereverexist/ and
+          value =~ /no such file to load|cannot load such file/
+      end
 
       expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
     end
@@ -279,17 +282,28 @@ describe Puppet::Application do
     end
 
     describe 'on POSIX systems', :if => Puppet.features.posix? do
-      it 'should signal process with HUP after block if restart requested during block execution', :'fails_on_ruby_1.9.2' => true do
-        Puppet::Application.run_status = nil
-        target = mock 'target'
-        target.expects(:some_method).once
-        old_handler = trap('HUP') { target.some_method }
-        begin
-          Puppet::Application.controlled_run do
-            Puppet::Application.run_status = :restart_requested
+      it 'should signal process with HUP after block if restart requested during block execution' do
+        Timeout::timeout(3) do  # if the signal doesn't fire, this causes failure.
+
+          has_run = false
+          old_handler = trap('HUP') { has_run = true }
+
+          begin
+            Puppet::Application.controlled_run do
+              Puppet::Application.run_status = :restart_requested
+            end
+
+            # Ruby 1.9 uses a separate OS level thread to run the signal
+            # handler, so we have to poll - ideally, in a way that will kick
+            # the OS into running other threads - for a while.
+            #
+            # You can't just use the Ruby Thread yield thing either, because
+            # that is just an OS hint, and Linux ... doesn't take that
+            # seriously. --daniel 2012-03-22
+            sleep 0.001 while not has_run
+          ensure
+            trap('HUP', old_handler)
           end
-        ensure
-          trap('HUP', old_handler)
         end
       end
     end

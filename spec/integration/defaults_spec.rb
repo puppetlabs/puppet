@@ -5,8 +5,6 @@ require 'puppet/defaults'
 require 'puppet/rails'
 
 describe "Puppet defaults" do
-  after { Puppet.settings.clear }
-
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
       Facter.expects(:search).with("/my/fact/path")

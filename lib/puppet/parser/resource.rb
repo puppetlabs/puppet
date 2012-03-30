@@ -120,6 +120,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def initialize(*args)
+    raise ArgumentError, "Resources require a hash as last argument" unless args.last.is_a? Hash
     raise ArgumentError, "Resources require a scope" unless args.last[:scope]
     super
 

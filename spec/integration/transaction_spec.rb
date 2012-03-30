@@ -226,7 +226,7 @@ describe Puppet::Transaction do
     FileTest.should be_exists(newfile)
   end
 
-  it "should still trigger skipped resources", :'fails_on_ruby_1.9.2' => true do
+  it "should still trigger skipped resources" do
     catalog = mk_catalog
     catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 

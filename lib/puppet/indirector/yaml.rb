@@ -1,9 +1,12 @@
 require 'puppet/indirector/terminus'
-require 'puppet/util/file_locking'
 
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
-  include Puppet::Util::FileLocking
+  if defined?(::Psych::SyntaxError)
+    YamlLoadExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError]
+  else
+    YamlLoadExceptions = [::StandardError, ::ArgumentError]
+  end
 
   # Read a given name's file in and convert it from YAML.
   def find(request)
@@ -12,13 +15,14 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     yaml = nil
     begin
-      readlock(file) { |fh| yaml = fh.read }
+      yaml = ::File.read(file)
     rescue => detail
       raise Puppet::Error, "Could not read YAML data for #{indirection.name} #{request.key}: #{detail}"
     end
+
     begin
       return from_yaml(yaml)
-    rescue => detail
+    rescue *YamlLoadExceptions => detail
       raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
     end
   end
@@ -35,7 +39,9 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     Dir.mkdir(basedir) unless FileTest.exist?(basedir)
 
     begin
-      writelock(file, 0660) { |f| f.print to_yaml(request.instance) }
+      Puppet::Util.replace_file(file, 0660) do |f|
+        f.print to_yaml(request.instance)
+      end
     rescue TypeError => detail
       Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
     end

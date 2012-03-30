@@ -12,7 +12,7 @@ describe Puppet::Application::Resource do
   end
 
   describe "in preinit" do
-    it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
+    it "should init extra_params to empty array" do
       @resource_app.preinit
       @resource_app.extra_params.should == []
     end

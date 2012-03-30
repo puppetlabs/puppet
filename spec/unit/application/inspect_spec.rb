@@ -260,7 +260,8 @@ describe Puppet::Application::Inspect do
         event.property.should == "content"
         event.status.should == "failure"
         event.audited.should == true
-        event.instance_variables.should_not include("@previous_value")
+        event.instance_variables.should_not include "@previous_value"
+        event.instance_variables.should_not include :@previous_value
       end
 
       it "should continue to the next resource" do
