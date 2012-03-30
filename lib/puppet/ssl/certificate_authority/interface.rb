@@ -41,7 +41,7 @@ module Puppet
         def initialize(method, options)
           self.method = method
           self.subjects = options.delete(:to)
-          @digest = options.delete(:digest) || :MD5
+          @digest = options.delete(:digest) || :SHA256
           @options = options
         end
 

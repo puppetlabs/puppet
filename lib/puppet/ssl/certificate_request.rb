@@ -68,12 +68,12 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    csr.sign(key, OpenSSL::Digest::SHA256.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 
     @content = csr
-    Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"
+    Puppet.info "Certificate Request fingerprint (sha256): #{fingerprint}"
     @content
   end
 
