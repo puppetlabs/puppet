@@ -1,11 +1,7 @@
 test_name "Be able to execute multi-line commands (#9996)"
+confine :except, :platform => 'windows'
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    skip_test "Test not supported on this platform"
-    next
-  end
-
   temp_file_name = agent.tmpfile('9996-multi-line-commands')
 
   test_manifest = <<HERE
