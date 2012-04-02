@@ -93,16 +93,32 @@ Puppet::Util::Log.newdesttype :console do
   require 'puppet/util/colors'
   include Puppet::Util::Colors
 
-  def initialize
+  def initialize()
+    # This is somewhat of a hack.  There is some code in Logging that will attempt to
+    #  open a logging destination, and if it fails, it will attempt to fall back to
+    #  creating a :console log.  However, if we're in daemon mode we have already
+    #  closed off stdout/stderr by that point in time... so, here we do a check
+    #  to see if it looks like stdout has been closed off:
+    if ($stdout.is_a?(File) && $stdout.path == "/dev/null")
+      # if it has, we are probably in a pretty bad state and most likely just need
+      #  to log some failure message to somewhere where we hope someone has a prayer
+      #  of seeing it, so let's use STDERR.
+      @out = STDERR
+    else
+      # otherwise we are most likely just in normal console mode, so we'll direct
+      #  our output to $stdout as we have always done in the past.
+      @out = $stdout
+    end
+
     # Flush output immediately.
-    $stdout.sync = true
+    @out.sync = true
   end
 
   def handle(msg)
     if msg.source == "Puppet"
-      puts colorize(msg.level, "#{msg.level}: #{msg}")
+      @out.puts colorize(msg.level, "#{msg.level}: #{msg}")
     else
-      puts colorize(msg.level, "#{msg.level}: #{msg.source}: #{msg}")
+      @out.puts colorize(msg.level, "#{msg.level}: #{msg.source}: #{msg}")
     end
   end
 end

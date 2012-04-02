@@ -476,8 +476,20 @@ module Util
   # @yield
   def exit_on_fail(message, code = 1)
     yield
-  rescue ArgumentError, RuntimeError, NotImplementedError => detail
-    Puppet.log_exception(detail, "Could not #{message}: #{detail}")
+  # First, we need to check and see if we are catching a SystemExit error.  These will be raised
+  #  when we daemonize/fork, and they do not necessarily indicate a failure case.
+  rescue SystemExit => err
+    if (err.status != 0)
+      # If we have an unexpected exit code, let's log the exception
+      Puppet.log_exception(err, "Could not #{message}: #{err}")
+    end
+    # Whatever the exit code, we respect it.
+    exit(err.status)
+
+  # Now we need to catch *any* other kind of exception, because we may be calling third-party
+  #  code (e.g. webrick), and we have no idea what they might throw.
+  rescue Exception => err
+    Puppet.log_exception(err, "Could not #{message}: #{err}")
     exit(code)
   end
   module_function :exit_on_fail
