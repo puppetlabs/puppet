@@ -162,49 +162,6 @@ describe "Puppet Network Format" do
 
   end
 
-  it "should include a marshal format" do
-    Puppet::Network::FormatHandler.format(:marshal).should_not be_nil
-  end
-
-  describe "marshal" do
-    before do
-      @marshal = Puppet::Network::FormatHandler.format(:marshal)
-    end
-
-    it "should have its mime type set to text/marshal" do
-      Puppet::Network::FormatHandler.format(:marshal).mime.should == "text/marshal"
-    end
-
-    it "should be supported on Strings" do
-      @marshal.should be_supported(String)
-    end
-
-    it "should render by calling 'Marshal.dump' on the instance" do
-      instance = mock 'instance'
-      Marshal.expects(:dump).with(instance).returns "foo"
-      @marshal.render(instance).should == "foo"
-    end
-
-    it "should render multiple instances by calling 'to_marshal' on the array" do
-      instances = [mock('instance')]
-
-      Marshal.expects(:dump).with(instances).returns "foo"
-      @marshal.render_multiple(instances).should == "foo"
-    end
-
-    it "should intern by calling 'Marshal.load'" do
-      text = "foo"
-      Marshal.expects(:load).with("foo").returns "bar"
-      @marshal.intern(String, text).should == "bar"
-    end
-
-    it "should intern multiples by calling 'Marshal.load'" do
-      text = "foo"
-      Marshal.expects(:load).with("foo").returns "bar"
-      @marshal.intern_multiple(String, text).should == "bar"
-    end
-  end
-
   describe "plaintext" do
     before do
       @text = Puppet::Network::FormatHandler.format(:s)
