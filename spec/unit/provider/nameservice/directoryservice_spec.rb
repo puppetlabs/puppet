@@ -52,7 +52,7 @@ describe 'DirectoryService.single_report' do
       ['root', 'user1', 'user2', 'resource_name']
     )
     Puppet::Provider::NameService::DirectoryService.stubs(:generate_attribute_hash)
-    Puppet::Provider::NameService::DirectoryService.stubs(:execute)
+    Puppet::Util::Execution.expects(:execute)
     Puppet::Provider::NameService::DirectoryService.expects(:parse_dscl_plist_data)
 
     Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
@@ -97,7 +97,7 @@ describe 'DirectoryService password behavior' do
   end
 
   let :shadow_hash_data do
-    {'ShadowHashData' => [StringIO.new(binary_plist)]}
+    {'ShadowHashData' => [binary_plist]}
   end
 
   subject do
@@ -108,12 +108,10 @@ describe 'DirectoryService password behavior' do
     subject.expects(:get_macosx_version_major).returns("10.7")
   end
 
-  it 'should execute convert_binary_to_xml once when getting the password on >= 10.7' do
-    subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
+  it 'should execute read_plist and parse_dscl_plist_data when getting the password on >= 10.7' do
+    subject.expects(:read_plist).with(plist_path).returns(shadow_hash_data)
+    subject.expects(:parse_dscl_plist_data).with(binary_plist).returns({'SALTED-SHA512' => pw_string})
     File.expects(:exists?).with(plist_path).once.returns(true)
-    Plist.expects(:parse_xml).returns(shadow_hash_data)
-    # On Mac OS X 10.7 we first need to convert to xml when reading the password
-    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
     subject.get_password('uid', 'jeff')
   end
 
@@ -123,18 +121,94 @@ describe 'DirectoryService password behavior' do
     }.should raise_error(RuntimeError, /OS X 10.7 requires a Salted SHA512 hash password of 136 characters./)
   end
 
-  it 'should convert xml-to-binary and binary-to-xml when setting the pw on >= 10.7' do
-    subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
-    subject.expects(:convert_xml_to_binary).returns(binary_plist)
+  it 'should execute save_plist when setting the pw on >= 10.7' do
     File.expects(:exists?).with(plist_path).once.returns(true)
-    Plist.expects(:parse_xml).returns(shadow_hash_data)
-    # On Mac OS X 10.7 we first need to convert to xml
-    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
-    # And again back to a binary plist or DirectoryService will complain
-    subject.expects(:plutil).with('-convert', 'binary1', plist_path)
-    Plist::Emit.expects(:save_plist).with(shadow_hash_data, plist_path)
+    subject.expects(:read_plist).with(plist_path).returns(shadow_hash_data)
+    subject.expects(:parse_dscl_plist_data).with(binary_plist).returns({'SALTED-SHA512' => pw_string})
+    subject.expects(:save_plist).with(plist_path, shadow_hash_data, CFPropertyList::List::FORMAT_BINARY)
     subject.set_password('jeff', 'uid', sha512_hash)
   end
+
+end
+
+describe 'DirectoryService Plist Handling' do
+  subject { Puppet::Provider::NameService::DirectoryService }
+
+  let(:badplist) do
+    '<?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC -//Apple Computer//DTD PLIST 1.0//EN http://www.apple.com/DTDs/PropertyList-1.0.dtd>
+    <plist version="1.0">
+      <dict>
+          <key>test</key>
+              <string>file</string>
+                </dict>
+                </plist>'
+  end
+
+  let(:goodplist) do
+    '<?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>test</key>
+        <string>file</string>
+        </dict>
+        </plist>'
+  end
+
+  let(:binary_plist_magic) { 'bplist00' }
+
+  it 'save_plist(): should raise an error when given an invalid path' do
+    expect { subject.save_plist('bad@path/', {'jeff' => 'socks'}, CFPropertyList::List::FORMAT_BINARY) }.should \
+      raise_error(RuntimeError, /Could not save plist to bad@path/)
+  end
+
+  it 'read_plist(): should correct a bad XML doctype string' do
+    stubfile = mock('file')
+    stubfile.expects(:read).returns(badplist)
+    IO.expects(:read).with('plist.file', 8)
+    File.expects(:open).returns(stubfile)
+    Puppet.expects(:debug).with('Had to fix plist with incorrect DOCTYPE declaration: plist.file')
+    subject.read_plist('plist.file')
+  end
+
+  it 'read_plist(): should try to create a plist from a file given a binary plist' do
+    stubfile = mock('file')
+    stubfile.expects(:value)
+    IO.expects(:read).with('plist.file', 8).returns('bplist00')
+    CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
+    Puppet.expects(:debug).never
+    subject.read_plist('plist.file')
+  end
+
+  it 'read_plist(): should fail when trying to read invalid XML' do
+    stubfile = mock('file')
+    stubfile.expects(:read).returns('<bad}|%-->xml<--->')
+    IO.expects(:read).with('plist.file', 8)
+    File.expects(:open).returns(stubfile)
+    # Even though we rescue the expected error, CFPropertyList likes to output
+    # a couple of messages to STDERR. At runtime I'd like those to display,
+    # but in THIS spec test I'm rerouting stderr so it doesn't spam the console
+    $stderr.reopen('/dev/null', 'w')
+    expect { subject.read_plist('plist.file') }.should \
+      raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+  end
+
+  it 'parse_dscl_plist_data(): should correct a bad XML doctype string' do
+    Puppet.expects(:debug).with('Had to fix plist with incorrect DOCTYPE declaration')
+    subject.parse_dscl_plist_data(badplist)
+  end
+
+  it 'parse_dscl_plist_data(): should return a hash given XML data' do
+    test_hash = { 'test' => 'file' }
+    subject.parse_dscl_plist_data(goodplist).should == test_hash
+  end
+
+  it 'parse_dscl_plist_data(): should fail when trying to read invalid XML' do
+    expect { subject.parse_dscl_plist_data('<bad}|%-->xml<--->') }.should \
+      raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+  end
+
 end
 
 describe '(#4855) directoryservice group resource failure' do

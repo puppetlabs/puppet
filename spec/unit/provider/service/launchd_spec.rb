@@ -9,6 +9,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   let (:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
   let(:resource) { Puppet::Type.type(:service).new(:name => joblabel) }
   subject { Puppet::Type.type(:service).provider(:launchd).new(resource) }
+  let(:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
 
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
@@ -188,7 +189,9 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       resource[:enable] = true
       provider.expects(:get_macosx_version_major).returns("10.6")
       provider.expects(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      provider.expects(:save_plist).with(launchd_overrides, \
+                                         {'com.foo.food' => {'Disabled' => false}}, \
+                                         2)
       subject.enable
     end
   end
@@ -197,8 +200,10 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should write to the global launchd overrides file once" do
       resource[:enable] = false
       provider.stubs(:get_macosx_version_major).returns("10.6")
-      provider.stubs(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      provider.expects(:read_plist).with(launchd_overrides).returns({})
+      provider.expects(:save_plist).with(launchd_overrides, \
+                                         {'com.foo.food' => {'Disabled' => false}}, \
+                                         2)
       subject.enable
     end
   end
@@ -217,6 +222,68 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:enabled?).returns :false
       File.expects(:open).returns('')
       subject.enable
+    end
+  end
+
+  describe 'Plist handling behavior in launchd service provider' do
+    let(:badplist) do
+      '<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC -//Apple Computer//DTD PLIST 1.0//EN http://www.apple.com/DTDs/PropertyList-1.0.dtd>
+      <plist version="1.0">
+        <dict>
+            <key>test</key>
+                <string>file</string>
+                  </dict>
+                  </plist>'
+    end
+
+    let(:goodplist) do
+      '<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>test</key>
+          <string>file</string>
+          </dict>
+          </plist>'
+    end
+
+    let(:provider) { subject.class }
+
+    it 'read_plist(): should correct a bad XML doctype string' do
+      stubfile = mock('file')
+      stubfile.expects(:read).returns(badplist)
+      IO.expects(:read).with('plist.file', 8)
+      File.expects(:open).returns(stubfile)
+      Puppet.expects(:debug).with('Had to fix plist with incorrect DOCTYPE declaration: plist.file')
+      provider.read_plist('plist.file')
+    end
+
+    it 'read_plist(): should try to create a plist from a file given a binary plist' do
+      stubfile = mock('file')
+      stubfile.expects(:value)
+      IO.expects(:read).with('plist.file', 8).returns('bplist00')
+      CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
+      Puppet.expects(:debug).never
+      provider.read_plist('plist.file')
+    end
+
+    it 'read_plist(): should fail when trying to read invalid XML' do
+      stubfile = mock('file')
+      stubfile.expects(:read).returns('<bad}|%-->xml<--->')
+      IO.expects(:read).with('plist.file', 8)
+      File.expects(:open).returns(stubfile)
+      # Even though we rescue the expected error, CFPropertyList likes to output
+      # a couple of messages to STDERR. At runtime I'd like those to display,
+      # but in THIS spec test I'm rerouting stderr so it doesn't spam the console
+      $stderr.reopen('/dev/null', 'w')
+      expect { provider.read_plist('plist.file') }.should \
+        raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+    end
+
+    it 'save_plist(): should raise an error when given an invalid path' do
+      expect { provider.save_plist('bad@path/', {'jeff' => 'socks'}, CFPropertyList::List::FORMAT_BINARY) }.should \
+        raise_error(RuntimeError, /Could not save plist to bad@path/)
     end
   end
 end
