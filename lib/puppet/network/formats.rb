@@ -77,33 +77,6 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   end
 end
 
-
-Puppet::Network::FormatHandler.create(:marshal, :mime => "text/marshal") do
-  # Marshal doesn't need the class name; it's serialized.
-  def intern(klass, text)
-    Marshal.load(text)
-  end
-
-  # Marshal doesn't need the class name; it's serialized.
-  def intern_multiple(klass, text)
-    Marshal.load(text)
-  end
-
-  def render(instance)
-    Marshal.dump(instance)
-  end
-
-  # Marshal monkey-patches Array, so this works.
-  def render_multiple(instances)
-    Marshal.dump(instances)
-  end
-
-  # Everything's supported
-  def supported?(klass)
-    true
-  end
-end
-
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
 # A very low-weight format so it'll never get chosen automatically.
