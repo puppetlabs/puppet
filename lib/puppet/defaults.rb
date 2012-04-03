@@ -49,6 +49,8 @@ module Puppet
         :default  => nil,
         :type     => :directory,
         :mode     => 0750,
+        :owner    => "service",
+        :group    => "service",
         :desc     => "The directory in which to store log files",
     }
   )
