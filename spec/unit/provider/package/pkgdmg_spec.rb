@@ -54,6 +54,26 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
       provider.class.expects(:installpkg).with("#{fake_mountpoint}/foo.pkg", resource[:name], "foo.dmg").returns ""
       provider.install
     end
+
+    describe "from a remote source" do
+      let(:tmpdir) { "/tmp/good123" }
+
+      before :each do
+        resource[:source] = "http://fake.puppetlabs.com/foo.dmg"
+      end
+
+      it "should call tmpdir and use the returned directory" do
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args[0] == "-o" and args[1].include? tmpdir
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
+    end
   end
 
   describe "when installing flat pkg file" do
