@@ -223,15 +223,6 @@ describe Puppet::Util do
         Puppet::Util.execute_posix('test command', {}, @stdin, @stdout, @stderr)
       end
 
-      it "should close all open file descriptors except stdin/stdout/stderr" do
-        # This is ugly, but I can't really think of a better way to do it without
-        # letting it actually close fds, which seems risky
-        (0..2).each {|n| IO.expects(:new).with(n).never}
-        (3..256).each {|n| IO.expects(:new).with(n).returns mock('io', :close) }
-
-        Puppet::Util.execute_posix('test command', {}, @stdin, @stdout, @stderr)
-      end
-
       it "should permanently change to the correct user and group if specified" do
         Puppet::Util::SUIDManager.expects(:change_group).with(55, true)
         Puppet::Util::SUIDManager.expects(:change_user).with(50, true)
@@ -485,6 +476,38 @@ describe Puppet::Util do
         expect {
           Puppet::Util.execute('fail command', :failonfail => true)
         }.not_to raise_error
+      end
+    end
+
+    describe "safe_posix_fork" do
+      before :each do
+        # Most of the things this method does are bad to do during specs. :/
+        Kernel.stubs(:fork).returns(pid).yields
+
+        $stdin.stubs(:reopen)
+        $stdout.stubs(:reopen)
+        $stderr.stubs(:reopen)
+      end
+
+      it "should close all open file descriptors except stdin/stdout/stderr" do
+        # This is ugly, but I can't really think of a better way to do it without
+        # letting it actually close fds, which seems risky
+        (0..2).each {|n| IO.expects(:new).with(n).never}
+        (3..256).each {|n| IO.expects(:new).with(n).returns mock('io', :close) }
+
+        Puppet::Util.safe_posix_fork
+      end
+
+      it "should fork a child process to execute the block" do
+        Kernel.expects(:fork).returns(pid).yields
+
+        Puppet::Util.safe_posix_fork do
+          message = "Fork this!"
+        end
+      end
+
+      it "should return the pid of the child process" do
+        Puppet::Util.safe_posix_fork.should == pid
       end
     end
   end

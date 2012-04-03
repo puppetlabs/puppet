@@ -292,7 +292,7 @@ module Util
   end
 
   def execute_posix(command, arguments, stdin, stdout, stderr)
-    child_pid = Kernel.fork do
+    child_pid = safe_posix_fork(stdin, stdout, stderr) do
       # We can't just call Array(command), and rely on it returning
       # things like ['foo'], when passed ['foo'], because
       # Array(command) will call command.to_a internally, which when
@@ -301,12 +301,6 @@ module Util
       command = [command].flatten
       Process.setsid
       begin
-        $stdin.reopen(stdin)
-        $stdout.reopen(stdout)
-        $stderr.reopen(stderr)
-
-        3.upto(256){|fd| IO::new(fd).close rescue nil}
-
         Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
 
         ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
@@ -319,6 +313,20 @@ module Util
     child_pid
   end
   module_function :execute_posix
+
+  def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
+    child_pid = Kernel.fork do
+      $stdin.reopen(stdin)
+      $stdout.reopen(stdout)
+      $stderr.reopen(stderr)
+
+      3.upto(256){|fd| IO::new(fd).close rescue nil}
+
+      block.call if block
+    end
+    child_pid
+  end
+  module_function :safe_posix_fork
 
   def execute_windows(command, arguments, stdin, stdout, stderr)
     command = command.map do |part|

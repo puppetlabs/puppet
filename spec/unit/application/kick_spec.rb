@@ -239,14 +239,14 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.hosts = ['host1', 'host2', 'host3']
         Process.stubs(:wait).returns(1).then.returns(2).then.returns(3).then.raises(Errno::ECHILD)
 
-        @kick.expects(:fork).times(3).returns(1).then.returns(2).then.returns(3)
+        @kick.expects(:safe_posix_fork).times(3).returns(1).then.returns(2).then.returns(3)
 
         expect { @kick.main }.to raise_error SystemExit
       end
 
       it "should delegate to run_for_host per host" do
         @kick.hosts = ['host1', 'host2']
-        @kick.stubs(:fork).returns(1).yields
+        @kick.stubs(:safe_posix_fork).returns(1).yields
         Process.stubs(:wait).returns(1).then.raises(Errno::ECHILD)
 
         @kick.expects(:run_for_host).times(2)
