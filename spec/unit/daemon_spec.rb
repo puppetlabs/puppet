@@ -22,6 +22,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   before do
     @agent = Puppet::Agent.new(TestClient.new)
     @daemon = Puppet::Daemon.new
+    @daemon.stubs(:close_streams).returns nil
   end
 
   it "should be able to manage an agent" do

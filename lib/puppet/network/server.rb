@@ -4,6 +4,10 @@ require 'puppet/util/pidlock'
 class Puppet::Network::Server
   attr_reader :server_type, :address, :port
 
+
+  # TODO: does anything actually call this?  It seems like it's a duplicate of the code in Puppet::Daemon, but that
+  #  it's not actually called anywhere.
+
   # Put the daemon into the background.
   def daemonize
     if pid = fork
@@ -16,17 +20,10 @@ class Puppet::Network::Server
 
     Process.setsid
     Dir.chdir("/")
-    begin
-      $stdin.reopen "/dev/null"
-      $stdout.reopen "/dev/null", "a"
-      $stderr.reopen $stdout
-      Puppet::Util::Log.reopen
-    rescue => detail
-      Puppet::Util.replace_file("/tmp/daemonout", 0644) { |f|
-        f.puts "Could not start #{Puppet[:name]}: #{detail}"
-      }
-      raise "Could not start #{Puppet[:name]}: #{detail}"
-    end
+  end
+
+  def close_streams()
+    Puppet::Daemon.close_streams()
   end
 
   # Create a pidfile for our daemon, so we can be stopped and others
@@ -113,6 +110,7 @@ class Puppet::Network::Server
 
   def start
     create_pidfile
+    close_streams
     listen
   end
 
