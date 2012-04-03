@@ -135,10 +135,10 @@ class Puppet::Util::Log
       flushqueue
       @destinations[dest]
     rescue => detail
-      Puppet.log_exception(detail)
-
       # If this was our only destination, then add the console back in.
       newdestination(:console) if @destinations.empty? and (dest != :console and dest != "console")
+
+      Puppet.log_exception(detail)
     end
   end
 

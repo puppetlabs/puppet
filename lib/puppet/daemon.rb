@@ -26,9 +26,31 @@ class Puppet::Daemon
     Process.setsid
     Dir.chdir("/")
     begin
-      $stdin.reopen "/dev/null"
-      $stdout.reopen "/dev/null", "a"
-      $stderr.reopen $stdout
+      # Here we're closing off stdin/stdout/stderr as we go into daemon mode.
+      #
+      # This is probably not a great way to accomplish it... we are opening them as Files so that
+      # we will be able to easily detect that they are pointing at /dev/null later.  It would be
+      # nice to at least abstract this into the logging mechanism or somewhere similar.
+      #
+      # Some known quirks around this:
+      #
+      # 1. The logging framework sometimes catches errors and tries to fall back to a console log,
+      #    which is well-nigh useless if these are redirected to /dev/null (unless we can detect
+      #    that condition, but that's still a bit of a hack)
+      # 2. It would be preferable to not even attempt to close these until we've gotten far enough
+      #    in our bootstrapping that we know for certain that all of the other log destinations
+      #    are initialized, so it's safe to close these.  I haven't done that yet because there
+      #    are several places where the logs may be initialized, and sometimes there will be
+      #    calls to 'chuser' in between them.
+      # 3. This implementation does *not* reset STDOUT/STDERR constants (which $stdout.reopen, etc.
+      #    *would* do)... so it is possible that some naughty code somewhere could still write
+      #    to those, and that's not entirely desirable for daemon mode.
+      #
+      # This works for now but a lot of this could probably use some thoughtful design work,
+      #  adjustment to the bootstrapping order, etc., when someone has time.  --cprice 2012-04-02
+      $stdin = File.open("/dev/null")
+      $stdout = File.open("/dev/null", "a")
+      $stderr = $stdout
       Puppet::Util::Log.reopen
     rescue => detail
       Puppet.err "Could not start #{Puppet[:name]}: #{detail}"
