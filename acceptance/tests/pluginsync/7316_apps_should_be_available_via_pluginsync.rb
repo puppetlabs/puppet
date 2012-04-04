@@ -215,7 +215,7 @@ begin
 
     step "clear out the libdir on the agents in preparation for the next test" do
       agents.each do |agent|
-        on(agent, "rm -rf #{get_test_file_path(agent, agent_module_app_file)}/*")
+        on(agent, "rm -rf #{get_test_file_path(agent, agent_lib_dir)}/*")
       end
     end
 
