@@ -22,7 +22,7 @@ module PuppetSpec::Files
       fail "Not deleting tmpfile #{path} outside regular tmpdir" unless in_tmp(path)
 
       begin
-        FileUtils.rm_r path, :secure => true
+        FileUtils.rm_rf path, :secure => true
       rescue Errno::ENOENT
         # nothing to do
       end
