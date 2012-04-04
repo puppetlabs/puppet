@@ -15,6 +15,8 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
       fh.stubs(:path).yields "/tmp/foo"
       resource[:source] = "foo.dmg"
       described_class.stubs(:open).yields fh
+      Dir.stubs(:mktmpdir).returns "/tmp/testtmp123"
+      FileUtils.stubs(:remove_entry_secure)
     end
 
     describe "from a remote source" do

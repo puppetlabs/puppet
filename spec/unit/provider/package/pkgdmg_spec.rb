@@ -35,6 +35,8 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
       fh.stubs(:path).yields "/tmp/foo"
       resource[:source] = "foo.dmg"
       File.stubs(:open).yields fh
+      Dir.stubs(:mktmpdir).returns "/tmp/testtmp123"
+      FileUtils.stubs(:remove_entry_secure)
     end
 
     it "should fail when a disk image with no system entities is mounted" do
