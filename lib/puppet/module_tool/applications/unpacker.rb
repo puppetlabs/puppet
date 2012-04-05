@@ -41,7 +41,7 @@ module Puppet::Module::Tool
 
       def delete_existing_installation_or_abort!
         return unless @module_dir.exist?
-        FileUtils.rm_rf @module_dir
+        FileUtils.rm_rf(@module_dir, :secure => true)
       end
     end
   end
