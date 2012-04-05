@@ -5,7 +5,7 @@ require 'puppet/util/colors'
 Puppet::Face.define(:module, '1.0.0') do
   extend Puppet::Util::Colors
 
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Labs", 2012
   license   "Apache 2 license; see COPYING"
 
   summary "Creates, installs and searches for modules on the Puppet Forge."

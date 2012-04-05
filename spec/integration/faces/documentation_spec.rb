@@ -49,7 +49,7 @@ describe "documentation of faces" do
       # REVISIT: This is less that ideal, I think, but right now I am more
       # comfortable watching us ship with some copyright than without any; we
       # can redress that when it becomes appropriate. --daniel 2011-04-27
-      its :copyright do should =~ /2011/ end
+      its :copyright do should =~ /20\d{2}/ end
     end
   end
 end
