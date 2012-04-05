@@ -3,16 +3,7 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:group) do
   before do
-    ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @class = Puppet::Type.type(:group)
-  end
-
-  it "should have a default provider" do
-    @class.defaultprovider.should_not be_nil
-  end
-
-  it "should have a default provider inheriting from Puppet::Provider" do
-    @class.defaultprovider.ancestors.should be_include(Puppet::Provider)
   end
 
   it "should have a system_groups feature" do
