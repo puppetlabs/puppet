@@ -75,9 +75,9 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 0
       else
-        tree = Puppet::Module::Tool.format_tree(return_value[:affected_modules], return_value[:base_dir])
+        tree = Puppet::Module::Tool.build_tree(return_value[:affected_modules], return_value[:base_dir])
         return_value[:base_dir] + "\n" +
-        Puppet::Module::Tool.build_tree(tree)
+        Puppet::Module::Tool.format_tree(tree)
       end
     end
   end

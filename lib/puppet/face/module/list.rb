@@ -171,17 +171,17 @@ Puppet::Face.define(:module, '1.0.0') do
           # since dependencies may be cyclical.
           modules_by_num_requires = modules.sort_by {|m| m.required_by.size}
           @seen = {}
-          tree = list_format_tree(modules_by_num_requires, [], nil,
+          tree = list_build_tree(modules_by_num_requires, [], nil,
             :label_unmet => true, :path => path, :label_invalid => false)
         else
           tree = []
           modules.sort_by { |mod| mod.forge_name or mod.name  }.each do |mod|
-            tree << list_format_node(mod, path, :label_unmet => false,
+            tree << list_build_node(mod, path, :label_unmet => false,
                       :path => path, :label_invalid => true)
           end
         end
 
-        output << Puppet::Module::Tool.build_tree(tree)
+        output << Puppet::Module::Tool.format_tree(tree)
       end
 
       output
@@ -224,10 +224,10 @@ Puppet::Face.define(:module, '1.0.0') do
   #     │ └── bodepd-create_resources (v0.0.1)
   #     └── puppetlabs-sqlite (v0.0.1)
   #
-  def list_format_tree(list, ancestors=[], parent=nil, params={})
+  def list_build_tree(list, ancestors=[], parent=nil, params={})
     list.map do |mod|
       next if @seen[(mod.forge_name or mod.name)]
-      node = list_format_node(mod, parent, params)
+      node = list_build_node(mod, parent, params)
       @seen[(mod.forge_name or mod.name)] = true
 
       unless ancestors.include?(mod)
@@ -240,7 +240,7 @@ Puppet::Face.define(:module, '1.0.0') do
           str << "(#{colorize(:cyan, mis_mod[:version_constraint])})"
           node[:dependencies] << { :text => str }
         end
-        node[:dependencies] += list_format_tree(mod.dependencies_as_modules,
+        node[:dependencies] += list_build_tree(mod.dependencies_as_modules,
           ancestors + [mod], mod, params)
       end
 
@@ -259,7 +259,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #
   # Returns a Hash
   #
-  def list_format_node(mod, parent, params)
+  def list_build_node(mod, parent, params)
     str = ''
     str << (mod.forge_name ? mod.forge_name.gsub('/', '-') : mod.name)
     str << ' (' + colorize(:cyan, mod.version ? "v#{mod.version}" : '???') + ')'
