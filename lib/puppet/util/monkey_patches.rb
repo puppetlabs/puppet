@@ -2,8 +2,12 @@ require 'puppet/util'
 module Puppet::Util::MonkeyPatches
 end
 
-unless defined? JRUBY_VERSION
+begin
   Process.maxgroups = 1024
+rescue Exception
+  # Actually, I just want to ignore it, since various platforms - JRuby,
+  # Windows, and so forth - don't support it, but only because it isn't a
+  # meaningful or implementable concept there.
 end
 
 module RDoc
