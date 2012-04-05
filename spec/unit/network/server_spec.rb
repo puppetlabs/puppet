@@ -13,6 +13,7 @@ describe Puppet::Network::Server do
     Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
     Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
     @server = Puppet::Network::Server.new(:port => 31337)
+    @server.stubs(:close_streams).returns(nil)
   end
 
   describe "when initializing" do
