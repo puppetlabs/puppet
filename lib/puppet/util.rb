@@ -447,15 +447,15 @@ module Util
         newhash[name] = val
       end
     end
+    newhash
   end
 
   def symbolizehash!(hash)
-    hash.each do |name, val|
-      if name.is_a? String
-        hash[name.intern] = val
-        hash.delete(name)
-      end
-    end
+    # this is not the most memory-friendly way to accomplish this, but the
+    #  code re-use and clarity seems worthwhile.
+    newhash = symbolizehash(hash)
+    hash.clear
+    hash.merge!(newhash)
 
     hash
   end
