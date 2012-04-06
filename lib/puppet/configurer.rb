@@ -7,9 +7,14 @@ require 'puppet/util'
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
+  require 'puppet/util/config_timeout'
 
   include Puppet::Configurer::FactHandler
   include Puppet::Configurer::PluginHandler
+
+  class <<self
+    include Puppet::Util::ConfigTimeout
+  end
 
   # For benchmarking
   include Puppet::Util
@@ -200,23 +205,6 @@ class Puppet::Configurer
   end
 
   private
-
-  def self.timeout
-    timeout = Puppet[:configtimeout]
-    case timeout
-    when String
-      if timeout =~ /^\d+$/
-        timeout = Integer(timeout)
-      else
-        raise ArgumentError, "Configuration timeout must be an integer"
-      end
-    when Integer # nothing
-    else
-      raise ArgumentError, "Configuration timeout must be an integer"
-    end
-
-    timeout
-  end
 
   def execute_from_setting(setting)
     return true if (command = Puppet[setting]) == ""
