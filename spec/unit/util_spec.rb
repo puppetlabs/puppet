@@ -637,6 +637,26 @@ describe Puppet::Util do
     end
   end
 
+  describe "hash symbolizing functions" do
+    let (:myhash) { { "foo" => "bar", :baz => "bam" } }
+    let (:resulthash) { { :foo => "bar", :baz => "bam" } }
+
+    describe "#symbolizehash" do
+      it "should return a symbolized hash" do
+        newhash = Puppet::Util.symbolizehash(myhash)
+        newhash.should == resulthash
+      end
+    end
+
+    describe "#symbolizehash!" do
+      it "should symbolize the hash in place" do
+        localhash = myhash
+        Puppet::Util.symbolizehash!(localhash)
+        localhash.should == resulthash
+      end
+    end
+  end
+
   context "#replace_file" do
     describe "on POSIX platforms", :if => Puppet.features.posix? do
       subject { Puppet::Util }
