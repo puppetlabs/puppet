@@ -15,10 +15,6 @@ describe Puppet::Type.type(:user) do
     described_class.stubs(:defaultprovider).returns @provider_class
   end
 
-  it "should have a default provider inheriting from Puppet::Provider" do
-    described_class.defaultprovider.ancestors.should be_include(Puppet::Provider)
-  end
-
   it "should be able to create a instance" do
     described_class.new(:name => "foo").should_not be_nil
   end
@@ -52,10 +48,6 @@ describe Puppet::Type.type(:user) do
   end
 
   describe "instances" do
-    it "should have a valid provider" do
-      described_class.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
-    end
-
     it "should delegate existence questions to its provider" do
       @provider = @provider_class.new(:name => 'foo', :ensure => :absent)
       instance = described_class.new(:name => "foo", :provider => @provider)
