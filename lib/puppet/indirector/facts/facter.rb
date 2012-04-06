@@ -1,7 +1,10 @@
 require 'puppet/node/facts'
 require 'puppet/indirector/code'
+require 'puppet/util/config_timeout'
 
 class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
+  extend Puppet::Util::ConfigTimeout
+
   desc "Retrieve facts from Facter.  This provides a somewhat abstract interface
     between Puppet and Facter.  It's only `somewhat` abstract because it always
     returns the local host's facts, regardless of what you attempt to find."
@@ -44,7 +47,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         fqfile = ::File.join(dir, file)
         begin
           Puppet.info "Loading facts in #{fqfile}"
-          Timeout::timeout(self.timeout) do
+          ::Timeout::timeout(self.timeout_interval) do
             load file
           end
         rescue SystemExit,NoMemoryError
@@ -54,23 +57,6 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         end
       end
     end
-  end
-
-  def self.timeout
-    timeout = Puppet[:configtimeout]
-    case timeout
-    when String
-      if timeout =~ /^\d+$/
-        timeout = Integer(timeout)
-      else
-        raise ArgumentError, "Configuration timeout must be an integer"
-      end
-    when Integer # nothing
-    else
-      raise ArgumentError, "Configuration timeout must be an integer"
-    end
-
-    timeout
   end
 
   def destroy(facts)
