@@ -24,7 +24,7 @@ describe Puppet do
   end
 
   it "should be able to change the path" do
-    newpath = ENV["PATH"] + ":/something/else"
+    newpath = ENV["PATH"] + File::PATH_SEPARATOR + "/something/else"
     Puppet[:path] = newpath
     ENV["PATH"].should == newpath
   end
