@@ -1,5 +1,6 @@
 require 'puppet/indirector/facts/facter'
 
+require 'puppet/configurer'
 require 'puppet/configurer/downloader'
 
 # Break out the code related to facts.  This module is
