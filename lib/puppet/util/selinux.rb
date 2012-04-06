@@ -171,12 +171,6 @@ module Puppet::Util::SELinux
     mntpoint
   end
 
-  def realpath(path)
-    path, rest = Pathname.new(path), []
-    path, rest = path.dirname, [path.basename] + rest while ! path.exist?
-    File.join( path.realpath, *rest )
-  end
-
   def parent_directory(path)
     Pathname.new(path).dirname.to_s
   end
@@ -194,7 +188,6 @@ module Puppet::Util::SELinux
     # Just in case: return something if you're down to "/" or ""
     # Remove the last slash and everything after it,
     #   and repeat with that as the file for the next loop through.
-    path = realpath(path)
     while not path.empty?
       return mnts[path] if mnts.has_key?(path)
       path = parent_directory(path)
