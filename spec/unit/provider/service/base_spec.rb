@@ -19,17 +19,17 @@ describe "base service provider" do
                      RbConfig::CONFIG["RUBY_INSTALL_NAME"] +
                      RbConfig::CONFIG["EXEEXT"])
 
-    Start  = "#{Ruby} -rfileutils -e 'FileUtils.touch(ARGV[0])'"
-    Status = "#{Ruby} -e 'exit File.file?(ARGV[0])'"
-    Stop   = "#{Ruby} -e 'File.exist?(ARGV[0]) and File.unlink(ARGV[0])'"
+    Start  = [Ruby, '-rfileutils', '-e', 'FileUtils.touch(ARGV[0])']
+    Status = [Ruby, '-e' 'exit File.file?(ARGV[0])']
+    Stop   = [Ruby, '-e', 'File.exist?(ARGV[0]) and File.unlink(ARGV[0])']
 
     let :flag do tmpfile('base-service-test') end
 
     subject do
       type.new(:name  => "test", :provider => :base,
-               :start  => "#{Start}  #{flag}",
-               :status => "#{Status} #{flag}",
-               :stop   => "#{Stop}   #{flag}"
+               :start  => Start  + [flag],
+               :status => Status + [flag],
+               :stop   => Stop   + [flag]
       ).provider
     end
 
