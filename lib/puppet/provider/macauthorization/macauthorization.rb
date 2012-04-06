@@ -1,5 +1,5 @@
 require 'facter'
-require 'facter/util/plist'
+require 'puppet/util/cfpropertylist'
 require 'puppet'
 require 'tempfile'
 
@@ -13,6 +13,9 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   commands :sw_vers => "/usr/bin/sw_vers"
 
   confine :operatingsystem => :darwin
+
+  Plist_Xml_Doctype  = '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+  Binary_Plist_Magic = "bplist00" # Magic number for binary Plist, with 00 version number.
 
   # This should be confined based on macosx_productversion
   # but puppet resource doesn't make the facts available and
@@ -61,8 +64,30 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       end
     end
 
+    def read_plist(path)
+      bad_xml_doctype = /^.*<!DOCTYPE plist PUBLIC -\/\/Apple Computer.*$/
+      # We can't really read the file until we know the source encoding in
+      # Ruby 1.9.x, so we use the magic number to detect it.
+      # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
+      if IO.read(path, Binary_Plist_Magic.length) == Binary_Plist_Magic
+        plist_obj = CFPropertyList::List.new(:file => path)
+      else
+        plist_data = File.open(path, "r:UTF-8").read
+        if plist_data =~ bad_xml_doctype
+          plist_data.gsub!( bad_xml_doctype, Plist_Xml_Doctype )
+          Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{path}")
+        end
+        begin
+          plist_obj = CFPropertyList::List.new(:data => plist_data)
+        rescue => e
+          fail("A plist file could not be properly read by CFPropertyList: #{e.inspect}")
+        end
+      end
+      CFPropertyList.native_types(plist_obj.value)
+    end
+
     def populate_rules_rights
-      auth_plist = Plist::parse_xml(AuthDB)
+      auth_plist = read_plist(AuthDB)
       raise Puppet::Error.new("Cannot parse: #{AuthDB}") if not auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
@@ -136,12 +161,14 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   end
 
   def destroy_rule
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = read_plist(AuthDB)
     authdb_rules = authdb["rules"].dup
     if authdb_rules[resource[:name]]
       begin
         authdb["rules"].delete(resource[:name])
-        Plist::Emit.save_plist(authdb, AuthDB)
+        authdb_plist = CFPropertyList::List.new
+        authdb_plist.value = CFPropertyList.guess(authdb)
+        authdb_plist.save(AuthDB, CFPropertyList::List::FORMAT_XML)
       rescue Errno::EACCES => e
         raise Puppet::Error.new("Error saving #{AuthDB}: #{e}")
       end
@@ -155,8 +182,8 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # paranoid given the low cost of quering the db once more.
     cmds = []
     cmds << :security << "authorizationdb" << "read" << resource[:name]
-    output = execute(cmds, :combine => false)
-    current_values = Plist::parse_xml(output)
+    output = Puppet::Util::Execution.execute(cmds, :combine => false)
+    current_values = read_plist(output)
     current_values ||= {}
     specified_values = convert_plist_to_native_attributes(@property_hash)
 
@@ -167,7 +194,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   end
 
   def flush_rule
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = read_plist(AuthDB)
     authdb_rules = authdb["rules"].dup
     current_values = {}
     current_values = authdb_rules[resource[:name]] if authdb_rules[resource[:name]]
@@ -183,11 +210,13 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     values = convert_plist_to_native_attributes(values)
     tmp = Tempfile.new('puppet_macauthorization')
     begin
-      Plist::Emit.save_plist(values, tmp.path)
+      tmp_plist = CFPropertyList::List.new
+      tmp_plist.value = CFPropertyList.guess(values)
+      tmp_plist.save(tmp.path, CFPropertyList::List::FORMAT_XML)
       cmds = []
       cmds << :security << "authorizationdb" << "write" << name
 
-        output = execute(
+        output = Puppet::Util::Execution.execute(
           cmds, :combine => false,
 
             :stdinfile => tmp.path.to_s)
@@ -205,11 +234,13 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # support modifying rules at all so we have to twiddle the whole
     # plist... :( See Apple Bug #6386000
     values = convert_plist_to_native_attributes(values)
-    authdb = Plist::parse_xml(AuthDB)
+    authdb = read_plist(AuthDB)
     authdb["rules"][name] = values
 
     begin
-      Plist::Emit.save_plist(authdb, AuthDB)
+      authdb_plist = CFPropertyList::List.new
+      authdb_plist.value = CFPropertyList.guess(authdb)
+      authdb_plist.save(AuthDB, CFPropertyList::List::FORMAT_XML)
     rescue
       raise Puppet::Error.new("Error writing to: #{AuthDB}")
     end
