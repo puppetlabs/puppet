@@ -5,13 +5,8 @@ user = Puppet::Type.type(:user)
 
 describe user do
   before do
-    ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @provider = stub 'provider'
     @resource = stub 'resource', :resource => nil, :provider => @provider, :line => nil, :file => nil
-  end
-
-  it "should have a default provider inheriting from Puppet::Provider" do
-    user.defaultprovider.ancestors.should be_include(Puppet::Provider)
   end
 
   it "should be able to create a instance" do
@@ -47,10 +42,6 @@ describe user do
   end
 
   describe "instances" do
-    it "should have a valid provider" do
-      user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
-    end
-
     it "should delegate existence questions to its provider" do
       instance = user.new(:name => "foo")
       instance.provider.expects(:exists?).returns "eh"
