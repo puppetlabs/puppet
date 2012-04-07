@@ -235,7 +235,7 @@ describe Puppet::Util::Settings do
   describe "when returning values" do
     before do
       @settings = Puppet::Util::Settings.new
-      @settings.setdefaults :section, :config => ["/my/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"]
+      @settings.setdefaults :section, :config => ["/my/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"], :dbpassword => ["puppet", "e" ]
       FileTest.stubs(:exist?).returns true
     end
 
@@ -275,6 +275,11 @@ describe Puppet::Util::Settings do
       @settings[:two].should == "ONE TWO"
       @settings[:one] = "one"
       @settings[:two].should == "one TWO"
+    end
+
+    it "should not interpolate dbpassword" do
+      @settings[:dbpassword] = "my$one"
+      @settings[:dbpassword].should == "my$one"
     end
 
     it "should not cache values such that information from one environment is returned for another environment" do

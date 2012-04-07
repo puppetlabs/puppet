@@ -687,7 +687,9 @@ if @config.include?(:run_mode)
     end
 
     # Convert it if necessary
-    val = convert(val, environment)
+    unless param == :dbpassword
+      val = convert(val, environment)
+    end
 
     # And cache it
     @cache[environment||"none"][param] = val
