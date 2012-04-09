@@ -90,8 +90,6 @@ module Puppet::Test
       Puppet::Util::Storage.clear
       Puppet::Util::ExecutionStub.reset
 
-      PuppetSpec::Files.cleanup
-
       # Restore the indirector configuration.  See before hook.
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
