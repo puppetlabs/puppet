@@ -67,8 +67,23 @@ describe Puppet::Util::SELinux do
 
     it "should follow symlinks when determining file systems" do
       self.stubs(:realpath).with('/mnt/symlink/testfile').returns('/mnt/nfs/dest/testfile')
+      File.stubs(:symlink?).with('/mnt/symlink/testfile').returns(false)
 
       selinux_label_support?('/mnt/symlink/testfile').should be_false
+    end
+
+    it "should check filesystem capability for the symlink, not the destination, on a capable filesystem" do
+      self.stubs(:realpath).with('/mnt').returns('/mnt')
+      File.stubs(:symlink?).with('/mnt/symlink').returns(true)
+
+      selinux_label_support?('/mnt/symlink').should be_true
+    end
+
+    it "should check filesystem capability for the symlink, not the destination, on a non-capable filesystem" do
+      self.stubs(:realpath).with('/mnt/symlink').returns('/mnt/nfs/dest')
+      File.stubs(:symlink?).with('/mnt/symlink/testsymlink').returns(true)
+
+      selinux_label_support?('/mnt/symlink/testsymlink').should be_false
     end
 
   end

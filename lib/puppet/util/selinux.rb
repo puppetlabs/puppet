@@ -189,6 +189,16 @@ module Puppet::Util::SELinux
     end
 
     # For a given file:
+    # If the file is a symlink, then we start processing with the
+    #   parent directory. If the symlink points to another mount
+    #   point and we call realpath() on it then we end up
+    #   determining if the destination of the symlink can support
+    #   SELinux when what we really want to know is if the
+    #   filesystem where the symlink lives can support it.
+    if File.symlink?(path)
+       path = parent_directory(path)
+    end
+
     # Check if the filename is in the data structure;
     #   return the fstype if it is.
     # Just in case: return something if you're down to "/" or ""
