@@ -1,6 +1,5 @@
 # The container class for implementations.
 class Puppet::Provider
-  include Puppet::Util::Execution
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::Warnings
@@ -33,6 +32,36 @@ class Puppet::Provider
   # LAK 2007-05-09: Keep the model stuff around for backward compatibility
   attr_reader :model
   attr_accessor :resource
+
+  # Provide access to execution of arbitrary commands in providers. Execution methods are
+  # available on both the instance and the class of a provider because it seems that a lot of
+  # providers switch between these contexts fairly freely.
+  #
+  # @see Puppet::Util::Execution for how to use these methods
+  def execute(*args)
+    Puppet::Util::Execution.execute(*args)
+  end
+
+  def self.execute(*args)
+    Puppet::Util::Execution.execute(*args)
+  end
+
+  def execpipe(*args, &block)
+    Puppet::Util::Execution.execpipe(*args, &block)
+  end
+
+  def self.execpipe(*args)
+    Puppet::Util::Execution.execpipe(*args)
+  end
+
+  def execfail(*args)
+    Puppet::Util::Execution.execfail(*args)
+  end
+
+  def self.execfail(*args)
+    Puppet::Util::Execution.execfail(*args)
+  end
+  #########
 
   def self.command(name)
     name = symbolize(name)

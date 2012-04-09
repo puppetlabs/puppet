@@ -3,8 +3,7 @@ require 'puppet/provider/nameservice'
 require 'facter/util/plist'
 require 'fileutils'
 
-class Puppet::Provider::NameService
-class DirectoryService < Puppet::Provider::NameService
+class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameService
   # JJM: Dive into the singleton_class
   class << self
     # JJM: This allows us to pass information when calling
@@ -593,6 +592,5 @@ class DirectoryService < Puppet::Provider::NameService
     end
     @property_value_cache_hash
   end
-end
 end
 
