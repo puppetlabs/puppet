@@ -50,7 +50,7 @@ module Puppet
 
       # Builds a formatted tree from a list of node hashes containing +:text+
       # and +:dependencies+ keys.
-      def self.build_tree(nodes, level = 0)
+      def self.format_tree(nodes, level = 0)
         str = ''
         nodes.each_with_index do |node, i|
           last_node = nodes.length - 1 == i
@@ -62,7 +62,7 @@ module Puppet
           str << (deps.empty? ? "─" : "┬")
           str << " #{node[:text]}\n"
 
-          branch = build_tree(deps, level + 1)
+          branch = format_tree(deps, level + 1)
           branch.gsub!(/^#{indent} /, indent + '│') unless last_node
           str << branch
         end
@@ -70,7 +70,7 @@ module Puppet
         return str
       end
 
-      def self.format_tree(mods, dir)
+      def self.build_tree(mods, dir)
         mods.each do |mod|
           version_string = mod[:version][:vstring].sub(/^(?!v)/, 'v')
 
@@ -81,7 +81,7 @@ module Puppet
 
           mod[:text] = "#{mod[:module]} (#{colorize(:cyan, version_string)})"
           mod[:text] += " [#{mod[:path]}]" unless mod[:path] == dir
-          format_tree(mod[:dependencies], dir)
+          build_tree(mod[:dependencies], dir)
         end
       end
     end
