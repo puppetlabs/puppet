@@ -1,4 +1,4 @@
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Searcher < Application
 

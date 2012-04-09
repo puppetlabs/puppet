@@ -2,7 +2,7 @@ require 'net/http'
 require 'semver'
 require 'puppet/util/colors'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Application
       include Puppet::Util::Colors
@@ -39,14 +39,14 @@ module Puppet::Module::Tool
           unless @path
             raise ArgumentError, "Could not determine module path"
           end
-          @metadata = Puppet::Module::Tool::Metadata.new
+          @metadata = Puppet::ModuleTool::Metadata.new
           contents = ContentsDescription.new(@path)
           contents.annotate(@metadata)
           checksums = Checksums.new(@path)
           checksums.annotate(@metadata)
           modulefile_path = File.join(@path, 'Modulefile')
           if File.file?(modulefile_path)
-            Puppet::Module::Tool::ModulefileReader.evaluate(@metadata, modulefile_path)
+            Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
           elsif require_modulefile
             raise ArgumentError, "No Modulefile found."
           end

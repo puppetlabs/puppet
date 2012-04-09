@@ -6,11 +6,11 @@ require 'puppet/forge'
 require 'puppet/module_tool'
 require 'puppet/module_tool/shared_behaviors'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Installer < Application
 
-      include Puppet::Module::Tool::Errors
+      include Puppet::ModuleTool::Errors
 
       def initialize(name, options = {})
         @action              = :install
@@ -77,7 +77,7 @@ module Puppet::Module::Tool
 
       private
 
-      include Puppet::Module::Tool::Shared
+      include Puppet::ModuleTool::Shared
 
       # Return a Pathname object representing the path to the module
       # release package in the `Puppet.settings[:module_working_dir]`.
