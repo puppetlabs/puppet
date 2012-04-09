@@ -72,9 +72,15 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
-    Puppet::Face.faces.each do |name|
-      it "should have a summary for #{name}" do
-        Puppet::Face[name, :current].should have_a_summary
+    context "face summaries" do
+      # we need to set a bunk module path here, because without doing so,
+      #  the autoloader will try to use it before it is initialized.
+      Puppet[:modulepath] = "/dev/null"
+
+      Puppet::Face.faces.each do |name|
+        it "should have a summary for #{name}" do
+          Puppet::Face[name, :current].should have_a_summary
+        end
       end
     end
 
