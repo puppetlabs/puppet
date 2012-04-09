@@ -71,7 +71,7 @@ ACTIONS
 
 <%     unique_options.sort.each do |name|
          option = action.get_option name
-         text = option.description || option.summary -%>
+         text = (option.description || option.summary).chomp + "\n" -%>
   <%= '<' + option.optparse.join("> | <") + '>' %> -
 <%= text.gsub(/^/, '  ') %>
 <%     end -%>

@@ -269,9 +269,15 @@ class DirectoryService < Puppet::Provider::NameService
 
         # users_plist['ShadowHashData'][0].string is actually a binary plist
         # that's nested INSIDE the user's plist (which itself is a binary
-        # plist).
-        password_hash_plist = users_plist['ShadowHashData'][0].string
-        converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+        # plist). If we encounter a user plist that DOESN'T have a
+        # ShadowHashData field, create one.
+        if users_plist['ShadowHashData']
+          password_hash_plist = users_plist['ShadowHashData'][0].string
+          converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+        else
+          users_plist['ShadowHashData'] = [StringIO.new]
+          converted_hash_plist = {'SALTED-SHA512' => StringIO.new}
+        end
 
         # converted_hash_plist['SALTED-SHA512'].string expects a Base64 encoded
         # string. The password_hash provided as a resource attribute is a
@@ -294,7 +300,7 @@ class DirectoryService < Puppet::Provider::NameService
   def self.get_password(guid, username)
     # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
     # version '10.10' would be < '10.7' with simple string comparison. This
-    # if-statement only executes if the current version is less-than 10.7 
+    # if-statement only executes if the current version is less-than 10.7
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"

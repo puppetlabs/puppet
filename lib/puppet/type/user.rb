@@ -250,6 +250,7 @@ module Puppet
           raise ArgumentError, "Group names must be provided, not GID numbers."
         end
         raise ArgumentError, "Group names must be provided as an array, not a comma-separated list." if value.include?(",")
+        raise ArgumentError, "Group names must not be empty. If you want to specify \"no groups\" pass an empty array" if value.empty?
       end
     end
 

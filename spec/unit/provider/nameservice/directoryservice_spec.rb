@@ -135,6 +135,16 @@ describe 'DirectoryService password behavior' do
     Plist::Emit.expects(:save_plist).with(shadow_hash_data, plist_path)
     subject.set_password('jeff', 'uid', sha512_hash)
   end
+
+  it '[#13686] should handle an empty ShadowHashData field in the users plist' do
+    subject.expects(:convert_xml_to_binary).returns(binary_plist)
+    File.expects(:exists?).with(plist_path).once.returns(true)
+    Plist.expects(:parse_xml).returns({'ShadowHashData' => nil})
+    subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
+    subject.expects(:plutil).with('-convert', 'binary1', plist_path)
+    Plist::Emit.expects(:save_plist)
+    subject.set_password('jeff', 'uid', sha512_hash)
+  end
 end
 
 describe '(#4855) directoryservice group resource failure' do
