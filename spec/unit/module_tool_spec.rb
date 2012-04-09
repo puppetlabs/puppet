@@ -4,14 +4,14 @@ require 'spec_helper'
 require 'puppet/module_tool'
 
 describe Puppet::Module::Tool, :fails_on_windows => true do
-  describe '.build_tree' do
+  describe '.format_tree' do
     it 'should return an empty tree when given an empty list' do
-      subject.build_tree([]).should == ''
+      subject.format_tree([]).should == ''
     end
 
     it 'should return a shallow when given a list without dependencies' do
       list = [ { :text => 'first' }, { :text => 'second' }, { :text => 'third' } ]
-      subject.build_tree(list).should == <<-TREE
+      subject.format_tree(list).should == <<-TREE
 ├── first
 ├── second
 └── third
@@ -32,7 +32,7 @@ TREE
           ]
         },
       ]
-      subject.build_tree(list).should == <<-TREE
+      subject.format_tree(list).should == <<-TREE
 └─┬ first
   └─┬ second
     └── third
@@ -54,7 +54,7 @@ TREE
         },
         { :text => 'fourth' }
       ]
-      subject.build_tree(list).should == <<-TREE
+      subject.format_tree(list).should == <<-TREE
 ├─┬ first
 │ └─┬ second
 │   └── third
@@ -77,7 +77,7 @@ TREE
           ]
         }
       ]
-      subject.build_tree(list).should == <<-TREE
+      subject.format_tree(list).should == <<-TREE
 └─┬ first
   ├─┬ second
   │ └── third
@@ -101,7 +101,7 @@ TREE
         },
         { :text => 'fifth' }
       ]
-      subject.build_tree(list).should == <<-TREE
+      subject.format_tree(list).should == <<-TREE
 ├─┬ first
 │ ├─┬ second
 │ │ └── third
