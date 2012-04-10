@@ -201,7 +201,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       # do, then do the next host.
       if @children.length < options[:parallel] and ! todo.empty?
         host = todo.shift
-        pid = fork do
+        pid = safe_posix_fork do
           run_for_host(host)
         end
         @children[pid] = host
