@@ -3,9 +3,7 @@ Puppet::Face.define(:module, '1.0.0') do
     summary "Build a module release package."
     description <<-EOT
       Prepares a local module for release on the Puppet Forge by building a
-      ready-to-upload archive file. Before using this action, make sure that
-      the module directory's name is in the standard <username>-<module>
-      format.
+      ready-to-upload archive file.
 
       This action uses the Modulefile in the module directory to set metadata
       used by the Forge. See <http://links.puppetlabs.com/modulefile> for more
