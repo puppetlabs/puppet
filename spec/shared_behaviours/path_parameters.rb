@@ -87,26 +87,7 @@ shared_examples_for "all path parameters" do |param, options|
     @param = param
   end
 
-  before :each do
-    @file_separator = File::SEPARATOR
-  end
-  after :each do
-    with_verbose_disabled do
-      verbose, $VERBOSE = $VERBOSE, nil
-      File::SEPARATOR = @file_separator
-      $VERBOSE = verbose
-    end
-  end
-
-  describe "on a Unix-like platform it" do
-    before :each do
-      with_verbose_disabled do
-        File::SEPARATOR = '/'
-      end
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
-      Puppet.features.stubs(:posix?).returns(true)
-    end
-
+  describe "on a Unix-like platform it", :as_platform => :posix do
     if array then
       it_should_behave_like "all pathname parameters with arrays", false
     end
@@ -134,15 +115,7 @@ shared_examples_for "all path parameters" do |param, options|
     end
   end
 
-  describe "on a Windows-like platform it" do
-    before :each do
-      with_verbose_disabled do
-        File::SEPARATOR = '\\'
-      end
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
-      Puppet.features.stubs(:posix?).returns(false)
-    end
-
+  describe "on a Windows-like platform it", :as_platform => :windows do
     if array then
       it_should_behave_like "all pathname parameters with arrays", true
     end
