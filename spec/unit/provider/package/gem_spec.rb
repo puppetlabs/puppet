@@ -87,6 +87,21 @@ describe provider_class do
     end
   end
 
+  describe "#latest" do
+    it "should return a single value for 'latest'" do
+      #gemlist is used for retrieving both local and remote version numbers, and there are cases
+      # (particularly local) where it makes sense for it to return an array.  That doesn't make
+      # sense for '#latest', though.
+      provider.class.expects(:gemlist).with({ :justme => 'myresource'}).returns({
+          :name     => 'myresource',
+          :ensure   => ["3.0"],
+          :provider => :gem,
+          })
+      provider.latest.should == "3.0"
+    end
+  end
+
+
   describe "#instances" do
     before do
       provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"

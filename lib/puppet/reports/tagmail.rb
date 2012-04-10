@@ -130,7 +130,7 @@ Puppet::Reports.register_report(:tagmail) do
 
   # Send the email reports.
   def send(reports)
-    pid = fork do
+    pid = Puppet::Util.safe_posix_fork do
       if Puppet[:smtpserver] != "none"
         begin
           Net::SMTP.start(Puppet[:smtpserver]) do |smtp|

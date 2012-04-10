@@ -141,16 +141,20 @@ module Puppet
               end
             end
 
-            case is
-            when @latest
-              return true
-            when :present
-              # This will only happen on retarded packaging systems
-              # that can't query versions.
-              return true
-            else
-              self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
+            case
+              when is.is_a?(Array) && is.include?(@latest)
+                return true
+              when is == @latest
+                return true
+              when is == :present
+                # This will only happen on retarded packaging systems
+                # that can't query versions.
+                return true
+              else
+                self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
             end
+
+
           when :absent
             return true if is == :absent or is == :purged
           when :purged

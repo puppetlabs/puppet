@@ -22,7 +22,7 @@ module Puppet::Module::Tool
         begin
           find_installed_module
           validate_module
-          FileUtils.rm_rf(@installed.first.path)
+          FileUtils.rm_rf(@installed.first.path, :secure => true)
 
           results[:affected_modules] = @installed
           results[:result] = :success

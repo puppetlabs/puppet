@@ -26,6 +26,8 @@ module Puppet::Forge
   # ]
   #
   def self.search(term)
+    server = Puppet.settings[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
+    Puppet.notice "Searching #{server} ..."
     request = Net::HTTP::Get.new("/modules.json?q=#{URI.escape(term)}")
     response = repository.make_http_request(request)
 

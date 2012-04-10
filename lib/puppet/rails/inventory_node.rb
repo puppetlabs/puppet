@@ -10,14 +10,14 @@ class Puppet::Rails::InventoryNode < ::ActiveRecord::Base
 
   scope :has_fact_with_value, lambda { |name,value|
     {
-      :conditions => ["inventory_facts.name = ? AND inventory_facts.value = ?", name, value],
+      :conditions => ["inventory_facts.name = ? AND inventory_facts.value = ?", name, value.to_s],
       :joins => :facts
     }
   }
 
   scope :has_fact_without_value, lambda { |name,value|
     {
-      :conditions => ["inventory_facts.name = ? AND inventory_facts.value != ?", name, value],
+      :conditions => ["inventory_facts.name = ? AND inventory_facts.value != ?", name, value.to_s],
       :joins => :facts
     }
   }
