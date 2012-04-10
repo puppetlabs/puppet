@@ -1,0 +1,185 @@
+# vim: syntax=ruby
+class Nagios::Parser
+
+token DEFINE NAME STRING PARAM LCURLY RCURLY VALUE RETURN COMMENT INLINECOMMENT
+
+rule
+decls: decl { return val[0] if val[0] }
+    | decls decl {
+        if val[1].nil?
+            result = val[0]
+        else
+            if val[0].nil?
+                result = val[1]
+            else
+                result = [ val[0], val[1] ].flatten
+            end
+        end
+    }
+    ;
+
+decl: object { result = [val[0]] }
+    | RETURN { result = nil }
+    | comment
+    ;
+
+comment: COMMENT RETURN { result = nil }
+    ;
+
+object: DEFINE NAME LCURLY RETURN vars RCURLY {
+        result = Nagios::Base.create(val[1],val[4])
+    }
+    ;
+
+vars: var
+    | vars var {
+        val[1].each {|p,v|
+            val[0][p] = v
+        }
+        result = val[0]
+    }
+    ;
+
+var: PARAM VALUE icomment returns { result = {val[0],val[1]} }
+    ;
+
+returns:      RETURN
+            | returns RETURN
+            ;
+
+icomment: # nothing
+    | INLINECOMMENT
+    ;
+
+end
+
+----inner
+
+class ::Nagios::Parser::SyntaxError < RuntimeError; end
+
+def parse(src)
+    @src = src
+
+    # state variables
+    @invar = false
+    @inobject = false
+    @done = false
+
+    @line = 0
+    @yydebug = true
+
+    do_parse
+end
+
+# The lexer.  Very simple.
+def token
+    @src.sub!(/\A\n/,'')
+    if $&
+        @line += 1
+        return [ :RETURN, "\n" ]
+    end
+
+    if @done
+        return nil
+    end
+    yytext = String.new
+
+
+    # remove comments from this line
+    @src.sub!(/\A[ \t]*;.*\n/,"\n")
+    if $&
+        return [:INLINECOMMENT, ""]
+    end
+
+    @src.sub!(/\A#.*\n/,"\n")
+    if $&
+        return [:COMMENT, ""]
+    end
+
+    @src.sub!(/#.*/,'')
+
+    if @src.length == 0
+        @done = true
+        return [false, '$']
+    end
+
+    if @invar
+        @src.sub!(/\A[ \t]+/,'')
+        @src.sub!(/\A([^;\n]+)(\n|;)/,'\2')
+        if $1
+            yytext += $1
+        end
+        @invar = false
+        return [:VALUE, yytext]
+    else
+        @src.sub!(/\A[\t ]*(\S+)([\t ]*|$)/,'')
+        if $1
+            yytext = $1
+            case yytext
+            when 'define'
+                #puts "got define"
+                return [:DEFINE, yytext]
+            when '{'
+                #puts "got {"
+                @inobject = true
+                return [:LCURLY, yytext]
+            else
+                unless @inobject
+                    #puts "got type: #{yytext}"
+                    if yytext =~ /\W/
+                        giveback = yytext.dup
+                        giveback.sub!(/^\w+/,'')
+                        #puts "giveback " + giveback
+                        #puts "yytext " + yytext
+                        yytext.sub!(/\W.*$/,'')
+                        #puts "yytext " + yytext
+                        #puts "all [#{giveback} #{yytext} #{orig}]"
+                        @src = giveback + @src
+                    end
+                    return [:NAME, yytext]
+                else
+                    if yytext == '}'
+                        #puts "got closure: #{yytext}"
+                        @inobject = false
+                        return [:RCURLY, '}']
+                    end
+
+                    unless @invar
+                        @invar = true
+                        return [:PARAM, $1]
+                    else
+                    end
+                end
+            end
+        end
+    end
+end
+
+def next_token
+    token
+end
+
+def yydebug
+    1
+end
+
+def yywrap
+    0
+end
+
+def on_error(token, value, vstack )
+    msg = ""
+    unless value.nil?
+        msg = "line #{@line}: syntax error at '#{value}'"
+    else
+        msg = "line #{@line}: syntax error at '#{token}'"
+    end
+    unless @src.size > 0
+        msg = "line #{@line}: Unexpected end of file"
+    end
+    if token == '$end'.intern
+        puts "okay, this is silly"
+    else
+        raise ::Nagios::Parser::SyntaxError, msg
+    end
+end
