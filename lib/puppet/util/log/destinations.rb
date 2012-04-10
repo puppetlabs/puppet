@@ -228,3 +228,41 @@ Puppet::Util::Log.newdesttype :array do
   end
 end
 
+Puppet::Util::Log.newdesttype :eventlog do
+  def self.suitable?(obj)
+    Puppet.features.eventlog?
+  end
+
+  def initialize
+    @eventlog = Win32::EventLog.open("Application")
+  end
+
+  def to_native(level)
+    case level
+    when :debug,:info,:notice
+      [Win32::EventLog::INFO, 0x01]
+    when :warning
+      [Win32::EventLog::WARN, 0x02]
+    when :err,:alert,:emerg,:crit
+      [Win32::EventLog::ERROR, 0x03]
+    end
+  end
+
+  def handle(msg)
+    native_type, native_id = to_native(msg.level)
+
+    @eventlog.report_event(
+      :source      => "Puppet",
+      :event_type  => native_type,
+      :event_id    => native_id,
+      :data        => (msg.source and msg.source != 'Puppet' ? "#{msg.source}: " : '') + msg.to_s
+    )
+  end
+
+  def close
+    if @eventlog
+      @eventlog.close
+      @eventlog = nil
+    end
+  end
+end

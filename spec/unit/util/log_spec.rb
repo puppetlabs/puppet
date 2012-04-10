@@ -22,8 +22,17 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.setup_default
     end
 
+    it "should fall back to :eventlog" do
+      Puppet.features.stubs(:syslog?).returns(false)
+      Puppet.features.stubs(:eventlog?).returns(true)
+      Puppet::Util::Log.expects(:newdestination).with(:eventlog)
+
+      Puppet::Util::Log.setup_default
+    end
+
     it "should fall back to :file" do
       Puppet.features.stubs(:syslog?).returns(false)
+      Puppet.features.stubs(:eventlog?).returns(false)
       Puppet::Util::Log.expects(:newdestination).with(Puppet[:puppetdlog])
 
       Puppet::Util::Log.setup_default
@@ -69,6 +78,46 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestSyslog do
     before do
       @syslog = Puppet::Util::Log::DestSyslog.new
+    end
+  end
+
+  describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.microsoft_windows? do
+    require 'win32/eventlog'
+
+    before :each do
+      Win32::EventLog.stubs(:open).returns(mock 'mylog')
+      Win32::EventLog.stubs(:report_event)
+      Win32::EventLog.stubs(:close)
+      Puppet.features.stubs(:eventlog?).returns(true)
+    end
+
+    it "should restrict its suitability" do
+      Puppet.features.expects(:eventlog?).returns(false)
+
+      Puppet::Util::Log::DestEventlog.suitable?('whatever').should == false
+    end
+
+    it "should open the 'Application' event log" do
+      Win32::EventLog.expects(:open).with('Application')
+
+      Puppet::Util::Log.newdestination(:eventlog)
+    end
+
+    it "should close the event log" do
+      log = mock('myeventlog')
+      log.expects(:close)
+      Win32::EventLog.expects(:open).returns(log)
+
+      Puppet::Util::Log.newdestination(:eventlog)
+      Puppet::Util::Log.close(:eventlog)
+    end
+
+    it "should handle each puppet log level" do
+      log = Puppet::Util::Log::DestEventlog.new
+
+      Puppet::Util::Log.eachlevel do |level|
+        log.to_native(level).should be_is_a(Array)
+      end
     end
   end
 
