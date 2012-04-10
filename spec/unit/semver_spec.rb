@@ -22,6 +22,16 @@ describe SemVer do
     end
   end
 
+  describe '::pre' do
+    it 'should append a dash when no dash appears in the string' do
+      SemVer.pre('1.2.3').should == '1.2.3-'
+    end
+
+    it 'should not append a dash when a dash appears in the string' do
+      SemVer.pre('1.2.3-a').should == '1.2.3-a'
+    end
+  end
+
   describe '::find_matching' do
     before :all do
       @versions = %w[

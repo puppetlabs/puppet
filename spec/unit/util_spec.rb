@@ -68,18 +68,18 @@ describe Puppet::Util do
   end
 
   describe "#absolute_path?" do
-    it "should default to the platform of the local system" do
-      Puppet.features.stubs(:posix?).returns(true)
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
+    describe "on posix systems", :as_platform => :posix do
+      it "should default to the platform of the local system" do
+        Puppet::Util.should be_absolute_path('/foo')
+        Puppet::Util.should_not be_absolute_path('C:/foo')
+      end
+    end
 
-      Puppet::Util.should be_absolute_path('/foo')
-      Puppet::Util.should_not be_absolute_path('C:/foo')
-
-      Puppet.features.stubs(:posix?).returns(false)
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
-
-      Puppet::Util.should be_absolute_path('C:/foo')
-      Puppet::Util.should_not be_absolute_path('/foo')
+    describe "on windows", :as_platform => :windows do
+      it "should default to the platform of the local system" do
+        Puppet::Util.should be_absolute_path('C:/foo')
+        Puppet::Util.should_not be_absolute_path('/foo')
+      end
     end
 
     describe "when using platform :posix" do
@@ -210,6 +210,40 @@ describe Puppet::Util do
       it "should accept file scheme with double slashes as a UNC path" do
         Puppet::Util.uri_to_path(URI.parse('file://host/share/file')).should == '//host/share/file'
       end
+    end
+  end
+
+  describe "safe_posix_fork" do
+    let(:pid) { 5501 }
+
+    before :each do
+      # Most of the things this method does are bad to do during specs. :/
+      Kernel.stubs(:fork).returns(pid).yields
+
+      $stdin.stubs(:reopen)
+      $stdout.stubs(:reopen)
+      $stderr.stubs(:reopen)
+    end
+
+    it "should close all open file descriptors except stdin/stdout/stderr" do
+      # This is ugly, but I can't really think of a better way to do it without
+      # letting it actually close fds, which seems risky
+      (0..2).each {|n| IO.expects(:new).with(n).never}
+      (3..256).each {|n| IO.expects(:new).with(n).returns mock('io', :close) }
+
+      Puppet::Util.safe_posix_fork
+    end
+
+    it "should fork a child process to execute the block" do
+      Kernel.expects(:fork).returns(pid).yields
+
+      Puppet::Util.safe_posix_fork do
+        message = "Fork this!"
+      end
+    end
+
+    it "should return the pid of the child process" do
+      Puppet::Util.safe_posix_fork.should == pid
     end
   end
 

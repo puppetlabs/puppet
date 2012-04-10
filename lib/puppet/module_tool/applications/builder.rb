@@ -61,7 +61,7 @@ module Puppet::Module::Tool
       def create_directory
         FileUtils.mkdir(@pkg_path) rescue nil
         if File.directory?(build_path)
-          FileUtils.rm_rf(build_path)
+          FileUtils.rm_rf(build_path, :secure => true)
         end
         FileUtils.mkdir(build_path)
       end

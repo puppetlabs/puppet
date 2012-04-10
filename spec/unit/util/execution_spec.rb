@@ -94,15 +94,6 @@ describe Puppet::Util::Execution do
         call_exec_posix('test command', {}, @stdin, @stdout, @stderr)
       end
 
-      it "should close all open file descriptors except stdin/stdout/stderr" do
-        # This is ugly, but I can't really think of a better way to do it without
-        # letting it actually close fds, which seems risky
-        (0..2).each {|n| IO.expects(:new).with(n).never}
-        (3..256).each {|n| IO.expects(:new).with(n).returns mock('io', :close) }
-
-        call_exec_posix('test command', {}, @stdin, @stdout, @stderr)
-      end
-
       it "should permanently change to the correct user and group if specified" do
         Puppet::Util::SUIDManager.expects(:change_group).with(55, true)
         Puppet::Util::SUIDManager.expects(:change_user).with(50, true)

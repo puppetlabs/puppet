@@ -21,8 +21,6 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<search_term>"
 
     when_invoked do |term, options|
-      server = Puppet.settings[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
-      Puppet.notice "Searching #{server} ..."
       Puppet::Module::Tool::Applications::Searcher.run(term, options)
     end
 

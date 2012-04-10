@@ -155,7 +155,7 @@ module Util::Execution
 
   # this is private method, see call to private_class_method after method definition
   def self.execute_posix(command, arguments, stdin, stdout, stderr)
-    child_pid = Kernel.fork do
+    child_pid = Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
       # We can't just call Array(command), and rely on it returning
       # things like ['foo'], when passed ['foo'], because
       # Array(command) will call command.to_a internally, which when
@@ -164,16 +164,6 @@ module Util::Execution
       command = [command].flatten
       Process.setsid
       begin
-        $stdin.reopen(stdin)
-        $stdout.reopen(stdout)
-        $stderr.reopen(stderr)
-
-        # we are in a forked process, so we currently have access to all of the file descriptors
-        # from the parent process... which, in this case, is bad because we don't want
-        # to allow the user's command to have access to them.  Therefore, we'll close them off.
-        # (assumes that there are only 256 file descriptors used)
-        3.upto(256){|fd| IO::new(fd).close rescue nil}
-
         Puppet::Util::SUIDManager.change_privileges(arguments[:uid], arguments[:gid], true)
 
         # if the caller has requested that we override locale environment variables,

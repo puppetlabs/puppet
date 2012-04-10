@@ -216,6 +216,9 @@ describe Puppet::Node::Environment do
           FileUtils.mkdir_p(File.join(@first, 'foo=bar'))
           FileUtils.mkdir_p(File.join(@first, 'foo bar'))
           FileUtils.mkdir_p(File.join(@first, 'foo.bar'))
+          FileUtils.mkdir_p(File.join(@first, '-foo'))
+          FileUtils.mkdir_p(File.join(@first, 'foo-'))
+          FileUtils.mkdir_p(File.join(@first, 'foo--bar'))
 
           env.modules_by_path[@first].collect{|mod| mod.name}.sort.should == %w{foo foo-bar foo2 foo_bar}
         end

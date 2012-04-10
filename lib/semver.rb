@@ -17,18 +17,21 @@ class SemVer < Numeric
     versions.select { |v| v.matched_by?("#{pattern}") }.sort.last
   end
 
+  def self.pre(vstring)
+    vstring =~ /-/ ? vstring : vstring + '-'
+  end
+
   def self.[](range)
-    pre = proc { |vstring| vstring =~ /-/ ? vstring : vstring + '-' }
     range.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
       case r
       when SemVer::VERSION
-        SemVer.new(pre[r]) .. SemVer.new(r)
+        SemVer.new(pre(r)) .. SemVer.new(r)
       when SemVer::SIMPLE_RANGE
         r += ".0" unless SemVer.valid?(r.gsub(/x/i, '0'))
         SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-')
       when /\s+-\s+/
         a, b = r.split(/\s+-\s+/)
-        SemVer.new(pre[a]) .. SemVer.new(b)
+        SemVer.new(pre(a)) .. SemVer.new(b)
       when /^~/
         ver = r.sub(/~/, '').split('.').map(&:to_i)
         start = (ver + [0] * (3 - ver.length)).join('.')
@@ -37,10 +40,10 @@ class SemVer < Numeric
         ver[-1] = ver.last + 1
 
         finish = (ver + [0] * (3 - ver.length)).join('.')
-        SemVer.new(pre[start]) ... SemVer.new(pre[finish])
+        SemVer.new(pre(start)) ... SemVer.new(pre(finish))
       when /^>=/
         ver = r.sub(/^>=/, '')
-        SemVer.new(pre[ver]) .. SemVer::MAX
+        SemVer.new(pre(ver)) .. SemVer::MAX
       when /^<=/
         ver = r.sub(/^<=/, '')
         SemVer::MIN .. SemVer.new(ver)
@@ -54,7 +57,7 @@ class SemVer < Numeric
         SemVer.new(ver.join('.') + '-') .. SemVer::MAX
       when /^</
         ver = r.sub(/^</, '')
-        SemVer::MIN ... SemVer.new(pre[ver])
+        SemVer::MIN ... SemVer.new(pre(ver))
       else
         (1..1)
       end

@@ -227,8 +227,13 @@ module Util
       :windows => %r!^(([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name}))!i,
       :posix   => %r!^/!,
     }
-    require 'puppet'
-    platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
+
+    # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
+    # library uses that to test what platform it's on.  Normally in Puppet we
+    # would use Puppet.features.microsoft_windows?, but this method needs to
+    # be called during the initialization of features so it can't depend on
+    # that.
+    platform ||= File::ALT_SEPARATOR ? :windows : :posix
 
     !! (path =~ regexes[platform])
   end
@@ -278,6 +283,20 @@ module Util
     path
   end
   module_function :uri_to_path
+
+  def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
+    child_pid = Kernel.fork do
+      $stdin.reopen(stdin)
+      $stdout.reopen(stdout)
+      $stderr.reopen(stderr)
+
+      3.upto(256){|fd| IO::new(fd).close rescue nil}
+
+      block.call if block
+    end
+    child_pid
+  end
+  module_function :safe_posix_fork
 
   # Create an exclusive lock.
   def threadlock(resource, type = Sync::EX)

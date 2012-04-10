@@ -74,7 +74,7 @@ module Puppet::Forge
         msg = "Error: Could not connect to #{@uri}\n"
         msg << "  There was a network communications problem\n"
         msg << "    Check your network connection and try again\n"
-        $stderr << msg
+        Puppet.err msg
         exit(1)
       end
     end
