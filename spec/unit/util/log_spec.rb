@@ -82,7 +82,7 @@ describe Puppet::Util::Log do
   end
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.microsoft_windows? do
-    require 'win32/eventlog'
+    require 'win32/eventlog' if Puppet.features.microsoft_windows?
 
     before :each do
       Win32::EventLog.stubs(:open).returns(mock 'mylog')
