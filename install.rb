@@ -86,7 +86,29 @@ def do_configs(configs, target, strip = 'conf/')
     else
       FileUtils.install(cf, ocf, {:mode => 0644, :verbose => true})
     end
-   end
+  end
+
+  if $operatingsystem == 'windows'
+    src_dll = 'conf/windows/eventlog/puppetres.dll'
+    dst_dll = File.join(InstallOptions.bin_dir, 'puppetres.dll')
+    if $haveftools
+      File.install(src_dll, dst_dll, 0644, true)
+    else
+      FileUtils.install(src_dll, dst_dll, {:mode => 0644, :verbose => true})
+    end
+
+    require 'win32/registry'
+    include Win32::Registry::Constants
+
+    begin
+      Win32::Registry::HKEY_LOCAL_MACHINE.create('SYSTEM\CurrentControlSet\services\eventlog\Application\Puppet', KEY_ALL_ACCESS | 0x0100) do |reg|
+        reg.write_s('EventMessageFile', dst_dll.tr('/', '\\'))
+        reg.write_i('TypesSupported', 0x7)
+      end
+    rescue Win32::Registry::Error => e
+      warn "Failed to create puppet eventlog registry key: #{e}"
+    end
+  end
 end
 
 def do_bins(bins, target, strip = 's?bin/')

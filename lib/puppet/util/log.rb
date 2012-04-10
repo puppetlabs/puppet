@@ -196,7 +196,9 @@ class Puppet::Util::Log
   end
 
   def self.setup_default
-    Log.newdestination(Puppet.features.syslog? ? :syslog : Puppet[:puppetdlog])
+    Log.newdestination(
+      (Puppet.features.syslog?   ? :syslog   :
+      (Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog])))
   end
 
   # Is the passed level a valid log level?
