@@ -75,6 +75,12 @@ describe "the generate function" do
     it "should reject backslashes" do
       lambda { scope.function_generate(['/com\\mand']) }.should raise_error(Puppet::ParseError)
     end
+
+    it "should accept plus and dash" do
+      command = "/var/folders/9z/9zXImgchH8CZJh6SgiqS2U+++TM/-Tmp-/foo"
+      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      scope.function_generate([command]).should == 'yay'
+    end
   end
 
   let :command do

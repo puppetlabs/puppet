@@ -16,7 +16,7 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
       if Puppet.features.microsoft_windows?
         valid = args[0] =~ /^[a-z]:(?:[\/\\][\w.-]+)+$/i
       else
-        valid = args[0] =~ /^[-\/\w.]+$/
+        valid = args[0] =~ /^[-\/\w.+]+$/
       end
 
       unless valid
