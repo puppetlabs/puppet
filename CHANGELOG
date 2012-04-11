@@ -1,3 +1,13 @@
+2.7.13
+===
+1f58ea6 Stub mktmpdir and remove_entry_secure in os x package providers
+b7553a5 (#13260) Spec test to verify that mktmpdir is used
+46e8dc0 (#13260) Use mktmpdir when downloading packages
+b36bda9 Refactor pkgdmg specs
+91e7ce4 Remove telnet Output_log parameter
+0d6d299 Fix for bucket_path security vulnerability
+19bd30a Removed text/marshal support
+
 2.7.12
 ===
 36ca299 Update packaging spec files for 2.7.12

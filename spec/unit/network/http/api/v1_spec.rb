@@ -42,6 +42,14 @@ describe Puppet::Network::HTTP::API::V1 do
       @tester.uri2indirection("GET", "/env/foo/bar", {:environment => "otherenv"})[3][:environment].to_s.should == "env"
     end
 
+    it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
+      @tester.uri2indirection("GET", "/env/foo/bar", { :bucket_path => "/malicious/path" })[3].should_not include({ :bucket_path => "/malicious/path" })
+    end
+
+    it "should pass allowed parameters through" do
+      @tester.uri2indirection("GET", "/env/foo/bar", { :allowed_param => "value" })[3].should include({ :allowed_param => "value" })
+    end
+
     it "should return the environment as a Puppet::Node::Environment" do
       @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should be_a Puppet::Node::Environment
     end
