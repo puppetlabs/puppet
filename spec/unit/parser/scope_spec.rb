@@ -215,127 +215,257 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when mixing inheritence and inclusion" do
-    let(:catalog) { Puppet::Parser::Compiler.compile(Puppet::Node.new 'foonode') }
+    let(:catalog) { Puppet::Parser::Compiler.compile(Puppet::Node.new('foonode')) }
 
-    it "should find values in its local scope" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet[:code]= <<-MANIFEST
-        node default {
-          include baz
-        }
-        class foo {
-        }
-        class bar inherits foo {
-          $var = "local_msg"
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          include bar
-        }
-      MANIFEST
-
-      catalog.resource('Notify', 'something')[:message].should == 'local_msg'
+    def expect_the_message_to_be(message) 
+      Puppet[:code] = yield
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new('foonode'))
+      catalog.resource('Notify', 'something')[:message].should == message
     end
 
-    it "should find values in its inherited scope" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet[:code]= <<-MANIFEST
-        node default {
-          include baz
-        }
-        class foo {
-          $var = "foo_msg"
-        }
-        class bar inherits foo {
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          include bar
-        }
-      MANIFEST
+    context "deprecated scoping" do
+      before :each do
+        Puppet.expects(:deprecation_warning)
+      end
 
-      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
+      it "prefers values in its included scope over those from the node (DEPRECATED)" do
+        expect_the_message_to_be('baz_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include foo
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+            class foo inherits baz {
+            }
+            class bar {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its included scope (DEPRECATED)" do
+        expect_the_message_to_be('baz_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "recognizes a dynamically scoped boolean (DEPRECATED)" do
+        expect_the_message_to_be(true) do <<-MANIFEST
+            node default {
+              $var = false
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = true
+              include bar
+            }
+          MANIFEST
+        end
+      end
     end
 
-    it "should find values in its included scope (DEPRECATED)" do
-      Puppet.expects(:deprecation_warning)
-      Puppet[:code]= <<-MANIFEST
-        node default {
-          include baz
-        }
-        class foo {
-        }
-        class bar inherits foo {
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          $var = "baz_msg"
-          include bar
-        }
-      MANIFEST
+    context "supported scoping" do
+      before :each do
+        Puppet.expects(:deprecation_warning).never
+      end
 
-      catalog.resource('Notify', 'something')[:message].should == 'baz_msg'
-    end
+      it "should find values in its local scope" do
+        expect_the_message_to_be('local_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              $var = "local_msg"
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
 
-    it "should find values in its inherited+included scope" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet[:code]= <<-MANIFEST
-        node default {
-          include baz
-        }
-        class foo {
-          $var = "foo_msg"
-        }
-        class bar inherits foo {
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          $var = "baz_msg"
-          include bar
-        }
-      MANIFEST
+      it "should find values in its inherited scope" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
 
-      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
-    end
+      it "prefers values in its inherited scope over those in the node (with intermediate inclusion)" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
 
-    it "should find values in its node scope" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet[:code]= <<-MANIFEST
-        node default {
-          $var = "node_msg"
-          include baz
-        }
-        class foo {
-        }
-        class bar inherits foo {
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          include bar
-        }
-      MANIFEST
+      it "prefers values in its inherited scope over those in the node (without intermediate inclusion)" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include bar
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
 
-      catalog.resource('Notify', 'something')[:message].should == 'node_msg'
-    end
+      it "prefers values in its inherited scope over those from where it is included" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+          MANIFEST
+        end
+      end
 
-    it "should find values in its top scope" do
-      Puppet.expects(:deprecation_warning).never
-      Puppet[:code]= <<-MANIFEST
-        $var = "top_msg"
-        node default {
-          include baz
-        }
-        class foo {
-        }
-        class bar inherits foo {
-          notify { 'something': message => $var, }
-        }
-        class baz {
-          include bar
-        }
-      MANIFEST
+      it "does not used variables from classes included in the inherited scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include bar
+            }
+            class quux {
+              $var = "quux_msg"
+            }
+            class foo inherits quux {
+            }
+            class baz {
+              include foo
+            }
+            class bar inherits baz {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
 
-      catalog.resource('Notify', 'something')[:message].should == 'top_msg'
+      it "does not use a variable from a scope lexically enclosing it" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include other::bar
+            }
+            class other {
+              $var = "other_msg"
+              class bar {
+                notify { 'something': message => $var, }
+              }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its node scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its top scope" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "prefers variables from the node over those in the top scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              $var = "node_msg"
+              include foo
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
     end
   end
 

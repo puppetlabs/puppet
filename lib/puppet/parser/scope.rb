@@ -227,7 +227,7 @@ class Puppet::Parser::Scope
   def lookupvar(name, options = {})
     dynamic_value = dynamic_lookupvar(name,options)
     twoscope_value = twoscope_lookupvar(name,options)
-    if dynamic_value and twoscope_value and dynamic_value != twoscope_value
+    if dynamic_value != twoscope_value
       location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
       Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in a later version of Puppet.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
     end
