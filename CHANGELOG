@@ -1,3 +1,7 @@
+2.6.16
+===
+65446c9 Revert "(#5246) Puppetd does not remove it's pidfile when it exits"
+
 2.6.15
 ===
 f7829ec Stub mktmpdir and remove_entry_secure in os x package providers
