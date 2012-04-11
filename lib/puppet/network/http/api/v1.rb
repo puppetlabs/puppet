@@ -28,6 +28,7 @@ module Puppet::Network::HTTP::API::V1
     method = indirection_method(http_method, indirection)
 
     params[:environment] = environment
+    params.delete(:bucket_path)
 
     raise ArgumentError, "No request key specified in #{uri}" if key == "" or key.nil?
 

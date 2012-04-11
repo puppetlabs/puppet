@@ -50,14 +50,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.instances
     instance_by_name.collect do |name|
-
-      new(
-
-        :name => name,
-        :provider => :pkgdmg,
-
-        :ensure => :installed
-      )
+      new(:name => name, :provider => :pkgdmg, :ensure => :installed)
     end
   end
 
@@ -72,22 +65,23 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.installpkgdmg(source, name)
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
-      raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
+      raise Puppet::Error.new("Mac OS X PKG DMG's must specify a source string ending in .dmg or flat .pkg file")
     end
     require 'open-uri'
     cached_source = source
-    if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
-      cached_source = "/tmp/#{name}"
-      begin
-        curl "-o", cached_source, "-C", "-", "-k", "-s", "--url", source
-        Puppet.debug "Success: curl transfered [#{name}]"
-      rescue Puppet::ExecutionFailure
-        Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
-        cached_source = source
-      end
-    end
-
+    tmpdir = Dir.mktmpdir
     begin
+      if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
+        cached_source = File.join(tmpdir, name)
+        begin
+          curl "-o", cached_source, "-C", "-", "-k", "-L", "-s", "--url", source
+          Puppet.debug "Success: curl transfered [#{name}]"
+        rescue Puppet::ExecutionFailure
+          Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
+          cached_source = source
+        end
+      end
+
       if source =~ /\.dmg$/i
         File.open(cached_source) do |dmg|
           xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
@@ -110,14 +104,11 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
             end
           end
         end
-      elsif source =~ /\.pkg$/i
-        installpkg(cached_source, name, source)
       else
-        raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
+        installpkg(cached_source, name, source)
       end
     ensure
-      # JJM Remove the file if open-uri didn't already do so.
-      File.unlink(cached_source) if File.exist?(cached_source)
+      FileUtils.remove_entry_secure(tmpdir, force=true)
     end
   end
 

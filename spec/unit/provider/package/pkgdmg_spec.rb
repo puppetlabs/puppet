@@ -2,83 +2,89 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-provider = Puppet::Type.type(:package).provider(:pkgdmg)
+describe Puppet::Type.type(:package).provider(:pkgdmg) do
+  let(:resource) { Puppet::Type.type(:package).new(:name => 'foo', :provider => :pkgdmg) }
+  let(:provider) { described_class.new(resource) }
 
-describe provider do
-  before do
-    @resource = stub 'resource', :[] => "dummypkgdmg"
-    @provider = provider.new(@resource)
-
-    @fakemountpoint   = "/tmp/dmg.foo"
-    @fakepkgfile      = "/tmp/test.pkg"
-    @fakehdiutilinfo  = {"system-entities" => [{"mount-point" => @fakemountpoint}] }
-    @fakehdiutilplist = Plist::Emit.dump(@fakehdiutilinfo)
-
-    @hdiutilmountargs = ["mount", "-plist", "-nobrowse", "-readonly",
-      "-noidme", "-mountrandom", "/tmp"]
-  end
-
-  it "should not be versionable" do
-    provider.versionable?.should be_false
-  end
-
-  it "should not be uninstallable" do
-    provider.uninstallable?.should be_false
-  end
+  it { should_not be_versionable }
+  it { should_not be_uninstallable }
 
   describe "when installing it should fail when" do
-    it "no source is specified" do
-      @resource.stubs(:[]).with(:source).returns nil
-      lambda { @provider.install }.should raise_error(Puppet::Error)
+    before :each do
+      Puppet::Util.expects(:execute).never
     end
 
-    it "no name is specified" do
-      @resource.stubs(:[]).with(:name).returns nil
-      lambda { @provider.install }.should raise_error(Puppet::Error)
+    it "no source is specified" do
+      expect { provider.install }.should raise_error(Puppet::Error, /must specify a package source/)
     end
 
     it "the source does not end in .dmg or .pkg" do
-      @resource.stubs(:[]).with(:source).returns "notendingindotdmgorpkg"
-      lambda { @provider.install }.should raise_error(Puppet::Error)
-    end
-
-    it "a disk image with no system entities is mounted" do
-      @provider.stubs(:[]).with(:hdiutil).returns ""
-      lambda { @provider.install }.should raise_error(Puppet::Error)
+      resource[:source] = "bar"
+      expect { provider.install }.should raise_error(Puppet::Error, /must specify a source string ending in .*dmg.*pkg/)
     end
   end
 
   # These tests shouldn't be this messy. The pkgdmg provider needs work...
   describe "when installing a pkgdmg" do
+    let(:fake_mountpoint) { "/tmp/dmg.foo" }
+    let(:empty_hdiutil_plist) { Plist::Emit.dump({}) }
+    let(:fake_hdiutil_plist) { Plist::Emit.dump({"system-entities" => [{"mount-point" => fake_mountpoint}]}) }
+
     before do
       fh = mock 'filehandle'
       fh.stubs(:path).yields "/tmp/foo"
-      @resource.stubs(:[]).with(:source).returns "foo.dmg"
+      resource[:source] = "foo.dmg"
       File.stubs(:open).yields fh
+      Dir.stubs(:mktmpdir).returns "/tmp/testtmp123"
+      FileUtils.stubs(:remove_entry_secure)
+    end
+
+    it "should fail when a disk image with no system entities is mounted" do
+      described_class.stubs(:hdiutil).returns(empty_hdiutil_plist)
+      expect { provider.install }.should raise_error(Puppet::Error, /No disk entities/)
     end
 
     it "should call hdiutil to mount and eject the disk image" do
       Dir.stubs(:entries).returns []
-      @provider.class.expects(:hdiutil).with("eject", @fakemountpoint).returns 0
-      @provider.class.expects(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", nil).returns @fakehdiutilplist
-      @provider.install
+      provider.class.expects(:hdiutil).with("eject", fake_mountpoint).returns 0
+      provider.class.expects(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", nil).returns fake_hdiutil_plist
+      provider.install
     end
 
     it "should call installpkg if a pkg/mpkg is found on the dmg" do
       Dir.stubs(:entries).returns ["foo.pkg"]
-      @provider.class.stubs(:hdiutil).returns @fakehdiutilplist
-      @provider.class.expects(:installpkg).with("#{@fakemountpoint}/foo.pkg", @resource[:name], "foo.dmg").returns ""
-      @provider.install
+      provider.class.stubs(:hdiutil).returns fake_hdiutil_plist
+      provider.class.expects(:installpkg).with("#{fake_mountpoint}/foo.pkg", resource[:name], "foo.dmg").returns ""
+      provider.install
+    end
+
+    describe "from a remote source" do
+      let(:tmpdir) { "/tmp/good123" }
+
+      before :each do
+        resource[:source] = "http://fake.puppetlabs.com/foo.dmg"
+      end
+
+      it "should call tmpdir and use the returned directory" do
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args[0] == "-o" and args[1].include? tmpdir
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
     end
   end
 
   describe "when installing flat pkg file" do
     it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
-      @resource.stubs(:[]).with(:source).returns "/tmp/test.pkg"
-      @resource.stubs(:[]).with(:name).returns "testpkg"
-        @provider.class.expects(:installpkgdmg).with("#{@fakepkgfile}", "testpkg").returns ""
-        @provider.install
-        end
+      resource[:source] = "/tmp/test.pkg"
+      resource[:name] = "testpkg"
+      provider.class.expects(:installpkgdmg).with("/tmp/test.pkg", "testpkg").returns ""
+      provider.install
+    end
   end
-
 end
