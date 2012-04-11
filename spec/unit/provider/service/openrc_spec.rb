@@ -78,7 +78,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
       end
     end
 
-    ['netmount', 'xdm', 'local'].each do |service|
+    ['netmount', 'xdm', 'local', 'foo_with_very_very_long_servicename_no_still_not_the_end_wait_for_it_almost_there_almost_there_now_finally_the_end'].each do |service|
       it "should consider service #{service} in runlevel default as enabled" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => service))
         provider.enabled?.should == :true
