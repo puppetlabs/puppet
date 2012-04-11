@@ -87,9 +87,14 @@ describe Puppet::Util::Settings do
     #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
     #  setter method gets properly called during app initialization.
     it "should call the hacky run mode setter method until we do a better job of separating run_mode" do
+      app_defaults = {}
+      Puppet::Util::Settings::REQUIRED_APP_SETTINGS.each do |key|
+        app_defaults[key] = "foo"
+      end
+
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-      @settings.expects(:run_mode=).with(:user)
-      @settings.initialize_app_defaults(@settings.send(:app_defaults_for_tests))
+      @settings.expects(:run_mode=).with("foo")
+      @settings.initialize_app_defaults(app_defaults)
     end
   end
 
