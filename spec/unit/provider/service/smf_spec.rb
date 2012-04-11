@@ -8,11 +8,9 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:smf)
 
-describe provider_class do
+describe provider_class, :as_platform => :posix do
 
   before(:each) do
-    Puppet.features.stubs(:posix?).returns(true)
-    Puppet.features.stubs(:microsoft_windows?).returns(false)
     # Create a mock resource
     @resource = Puppet::Type.type(:service).new(
       :name => "/system/myservice", :ensure => :running, :enable => :true)
