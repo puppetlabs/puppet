@@ -44,7 +44,7 @@ describe Puppet::Agent do
       let(:disabled_lockfile_path) { lockfile_path + ".disabled" }
 
       # some regexes to match log messages
-      let(:warning_regex) { /^Found special lockfile '#{disabled_lockfile_path}'.*renaming/ }
+      let(:warning_regex) { /^Found special lockfile '#{Regexp.escape(disabled_lockfile_path)}'.*renaming/ }
       let(:disabled_regex) { /^Skipping run of .*; administratively disabled/ }
 
       before(:each) do
