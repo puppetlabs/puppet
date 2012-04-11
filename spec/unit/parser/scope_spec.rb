@@ -3,11 +3,11 @@ require 'spec_helper'
 
 describe Puppet::Parser::Scope do
   before :each do
-    @topscope = Puppet::Parser::Scope.new
     # This is necessary so we don't try to use the compiler to discover our parent.
-    @topscope.parent = nil
     @scope = Puppet::Parser::Scope.new
     @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope.source = Puppet::Resource::Type.new(:node, :foo)
+    @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
   end
 
@@ -92,14 +92,6 @@ describe Puppet::Parser::Scope do
 
       Puppet::Parser::Scope.new.singleton_class.ancestors.should be_include(mod)
     end
-
-    it "should remember if it is dynamic" do
-      (!!Puppet::Parser::Scope.new(:dynamic => true).dynamic).should == true
-    end
-
-    it "should assume it is not dynamic" do
-      (!Puppet::Parser::Scope.new.dynamic).should == true
-    end
   end
 
   describe "when looking up a variable" do
@@ -128,10 +120,20 @@ describe Puppet::Parser::Scope do
       @scope.lookupvar("var").should == "childval"
     end
 
+    it "should be able to look up intermediary variables in parent scopes (DEPRECATED)" do
+      Puppet.expects(:deprecation_warning)
+      thirdscope = Puppet::Parser::Scope.new
+      thirdscope.parent = @scope
+      thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
+      @scope.source = Puppet::Resource::Type.new(:hostclass, :bar, :module_name => "bar")
+
+      @topscope.setvar("var2","parentval")
+      @scope.setvar("var2","childval")
+      thirdscope.lookupvar("var2").should == "childval"
+    end
+
     describe "and the variable is qualified" do
-      before do
-        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode"))
-        @scope.compiler = @compiler
+      before :each do
         @known_resource_types = @scope.known_resource_types
       end
 
@@ -151,6 +153,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from main" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("")
 
         other_scope.setvar("othervar", "otherval")
@@ -159,6 +162,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other")
 
         other_scope.setvar("var", "otherval")
@@ -167,6 +171,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up deeply qualified variables" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other::deep::klass")
 
         other_scope.setvar("var", "otherval")
@@ -175,32 +180,162 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return ':undefined' for qualified variables that cannot be found in other classes" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other::deep::klass")
 
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
+        Puppet.expects(:deprecation_warning).never
         klass = newclass("other::deep::klass")
-        @scope.expects(:warning)
+        @scope.expects(:warning).at_least_once
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
-        @scope.expects(:warning)
+        Puppet.expects(:deprecation_warning).never
+        @scope.expects(:warning).at_least_once
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
+        Puppet.expects(:deprecation_warning).never
         @scope.stubs(:warning)
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
+        Puppet.expects(:deprecation_warning).never
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
         @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
+    end
+  end
+
+  describe "when mixing inheritence and inclusion" do
+    let(:catalog) { Puppet::Parser::Compiler.compile(Puppet::Node.new 'foonode') }
+
+    it "should find values in its local scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          $var = "local_msg"
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'local_msg'
+    end
+
+    it "should find values in its inherited scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+          $var = "foo_msg"
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
+    end
+
+    it "should find values in its included scope (DEPRECATED)" do
+      Puppet.expects(:deprecation_warning)
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          $var = "baz_msg"
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'baz_msg'
+    end
+
+    it "should find values in its inherited+included scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          include baz
+        }
+        class foo {
+          $var = "foo_msg"
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          $var = "baz_msg"
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'foo_msg'
+    end
+
+    it "should find values in its node scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        node default {
+          $var = "node_msg"
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'node_msg'
+    end
+
+    it "should find values in its top scope" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet[:code]= <<-MANIFEST
+        $var = "top_msg"
+        node default {
+          include baz
+        }
+        class foo {
+        }
+        class bar inherits foo {
+          notify { 'something': message => $var, }
+        }
+        class baz {
+          include bar
+        }
+      MANIFEST
+
+      catalog.resource('Notify', 'something')[:message].should == 'top_msg'
     end
   end
 
