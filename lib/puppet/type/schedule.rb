@@ -139,13 +139,13 @@ module Puppet
             if range[1]
               ary << range[1]
             else
-              ary << now.min
+              ary << 0
             end
 
             if range[2]
               ary << range[2]
             else
-              ary << now.sec
+              ary << 0
             end
 
             time = Time.local(*ary)
