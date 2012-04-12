@@ -1,0 +1,32 @@
+require 'rubygems'
+require 'rake'
+require 'fileutils'
+require 'rbconfig'
+
+BASENAME = "puppetres"
+
+task :default do
+  sh 'rake -T'
+end
+
+desc 'Build puppet eventlog message dll'
+task :dist => ['out', "#{BASENAME}.dll"]
+
+directory 'out'
+
+rule '.rc' => '.mc' do |t|
+  sh "mc -b -r out -h out #{t.source}"
+end
+
+rule '.res' => '.rc' do |t|
+  sh "rc -nologo -r -fo out/#{t.name} out/#{t.source}"
+end
+
+rule '.dll' => '.res' do |t|
+  sh "link -nologo -dll -noentry -machine:x86 -out:out/#{t.name} out/#{t.source}"
+end
+
+desc 'Delete generated files'
+task :clean do
+  FileUtils.rm_rf('out')
+end

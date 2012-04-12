@@ -50,23 +50,24 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
 
   def self.installpkgdmg(source, name)
     unless source =~ /\.dmg$/i
-      self.fail "Mac OS X PKG DMG's must specificy a source string ending in .dmg"
+      self.fail "Mac OS X PKG DMG's must specify a source string ending in .dmg"
     end
     require 'open-uri'
     require 'facter/util/plist'
     cached_source = source
-    if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
-      cached_source = "/tmp/#{name}"
-      begin
-        curl "-o", cached_source, "-C", "-", "-k", "-L", "-s", "--url", source
-        Puppet.debug "Success: curl transfered [#{name}]"
-      rescue Puppet::ExecutionFailure
-        Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
-        cached_source = source
-      end
-    end
-
+    tmpdir = Dir.mktmpdir
     begin
+      if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
+        cached_source = File.join(tmpdir, name)
+        begin
+          curl "-o", cached_source, "-C", "-", "-k", "-L", "-s", "--url", source
+          Puppet.debug "Success: curl transfered [#{name}]"
+        rescue Puppet::ExecutionFailure
+          Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
+          cached_source = source
+        end
+      end
+
       open(cached_source) do |dmg|
         xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
           ptable = Plist::parse_xml xml_str
@@ -87,8 +88,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
           end
       end
     ensure
-      # JJM Remove the file if open-uri didn't already do so.
-      File.unlink(cached_source) if File.exist?(cached_source)
+      FileUtils.remove_entry_secure(tmpdir, force=true)
     end
   end
 
