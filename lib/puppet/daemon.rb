@@ -139,7 +139,7 @@ class Puppet::Daemon
     #  our streams and become a "real" daemon process.  This is in hopes of allowing
     #  errors to have the console available as a fallback for logging for as long as
     #  possible.
-    close_streams
+    close_streams if Puppet[:daemonize]
 
     # Finally, loop forever running events - or, at least, until we exit.
     run_event_loop
