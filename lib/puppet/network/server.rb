@@ -110,7 +110,7 @@ class Puppet::Network::Server
 
   def start
     create_pidfile
-    close_streams
+    close_streams if Puppet[:daemonize]
     listen
   end
 
