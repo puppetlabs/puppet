@@ -53,6 +53,8 @@ PP
 on master, "chown -R root:puppet #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 on master, "chmod -R a+x #{testdir}/enc"
+on master, "touch #{testdir}/log"
+on master, "chown puppet #{testdir}/log"
 
 assert_log_on_master_contains = lambda do |string|
   on master, "grep '#{string}' #{testdir}/log"
