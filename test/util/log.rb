@@ -178,17 +178,17 @@ class TestLog < Test::Unit::TestCase
     Puppet::Util::Log.close(:console)
     Puppet::Util::Log.newdestination(file)
     Puppet.warning "A test"
-    assert(File.read(file) !~ /A test/, "File defualted to autoflush")
-    Puppet::Util::Log.flush
-    assert(File.read(file) =~ /A test/, "File did not flush")
+    assert(File.read(file) =~ /A test/)
     Puppet::Util::Log.close(file)
 
-    # Now try one with autoflush enabled
-    Puppet[:autoflush] = true
+    # Now try one with autoflush disabled
+    Puppet[:autoflush] = false
     file = tempfile
     Puppet::Util::Log.newdestination(file)
     Puppet.warning "A test"
-    assert(File.read(file) =~ /A test/, "File did not autoflush")
+    assert(File.read(file) !~ /A test/)
+    Puppet::Util::Log.flush
+    assert(File.read(file) =~ /A test/)
     Puppet::Util::Log.close(file)
   end
 
