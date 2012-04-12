@@ -170,6 +170,20 @@ class Puppet::Util::Log
     @queued.clear
   end
 
+  # Flush the logging queue.  If there are no destinations available,
+  #  adds in a console logger before flushing the queue.
+  # This is mainly intended to be used as a last-resort attempt
+  #  to ensure that logging messages are not thrown away before
+  #  the program is about to exit--most likely in a horrific
+  #  error scenario.
+  # @return nil
+  def Log.force_flushqueue()
+    if (@destinations.empty? and !(@queued.empty?))
+      newdestination(:console)
+    end
+    flushqueue
+  end
+
   def Log.sendlevel?(level)
     @levels.index(level) >= @loglevel
   end
