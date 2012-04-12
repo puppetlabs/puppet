@@ -64,7 +64,7 @@ RSpec.configure do |config|
     Signal.stubs(:trap)
 
 
-    # TODO: in a saner world, we'd move this logging redirection into our TestHelper class.
+    # TODO: in a more sane world, we'd move this logging redirection into our TestHelper class.
     #  Without doing so, external projects will all have to roll their own solution for
     #  redirecting logging, and for validating expected log messages.  However, because the
     #  current implementation of this involves creating an instance variable "@logs" on
@@ -84,6 +84,9 @@ RSpec.configure do |config|
 
   config.after :each do
     Puppet::Test::TestHelper.after_each_test()
+
+    # TODO: would like to move this into puppetlabs_spec_helper, but there are namespace issues at the moment.
+    PuppetSpec::Files.cleanup
 
     # TODO: this should be abstracted in the future--see comments above the '@logs' block in the
     #  "before" code above.

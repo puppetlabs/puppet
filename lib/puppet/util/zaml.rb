@@ -241,7 +241,9 @@ class String
   end
   def to_zaml(z)
     z.first_time_only(self) {
-      num = '[-+]?(0x)?\d+\.?\d*'
+      hex_num = '0x[a-f\d]+'
+      float = '\d+\.?\d*'
+      num = "[-+]?(?:#{float}|#{hex_num})"
       case
       when self == ''
         z.emit('""')
