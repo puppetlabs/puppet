@@ -127,6 +127,84 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
+  describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 1" do
+    before do
+      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 00, 00))
+    end
+
+    it "should match when the current time is the start of the range using hours" do
+      @schedule[:range] = "11 - 12"
+      @schedule.must be_match
+    end
+
+    it "should match when the current time is the end of the range using hours" do
+      @schedule[:range] = "10 - 11"
+      @schedule.must be_match
+    end
+
+    it "should match when the current time is the start of the range using hours and minutes" do
+      @schedule[:range] = "11:00 - 12:00"
+      @schedule.must be_match
+    end
+
+    it "should match when the current time is the end of the range using hours and minutes" do
+      @schedule[:range] = "10:00 - 11:00"
+      @schedule.must be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 2" do
+    before do
+      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 00, 01))
+    end
+
+    it "should match when the current time is just past the start of the range using hours" do
+      @schedule[:range] = "11 - 12"
+      @schedule.must be_match
+    end
+
+    it "should not match when the current time is just past the end of the range using hours" do
+      @schedule[:range] = "10 - 11"
+      @schedule.must_not be_match
+    end
+
+    it "should match when the current time is just past the start of the range using hours and minutes" do
+      @schedule[:range] = "11:00 - 12:00"
+      @schedule.must be_match
+    end
+
+    it "should not match when the current time is just past the end of the range using hours and minutes" do
+      @schedule[:range] = "10:00 - 11:00"
+      @schedule.must_not be_match
+    end
+  end
+
+  describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 3" do
+    before do
+      Time.stubs(:now).returns(Time.local(2011, "may", 23, 10, 59, 59))
+    end
+
+    it "should not match when the current time is just before the start of the range using hours" do
+      @schedule[:range] = "11 - 12"
+      @schedule.must_not be_match
+    end
+
+    it "should match when the current time is just before the end of the range using hours" do
+      @schedule[:range] = "10 - 11"
+      @schedule.must be_match
+    end
+
+    it "should not match when the current time is just before the start of the range using hours and minutes" do
+      @schedule[:range] = "11:00 - 12:00"
+      @schedule.must_not be_match
+    end
+
+    it "should match when the current time is just before the end of the range using hours and minutes" do
+      @schedule[:range] = "10:00 - 11:00"
+      @schedule.must be_match
+    end
+  end
+
   describe Puppet::Type.type(:schedule), "when matching ranges spanning days, day 1" do
     before do
       # Test with the current time at a month's end boundary to ensure we are
