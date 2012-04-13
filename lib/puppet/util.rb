@@ -504,6 +504,7 @@ module Util
   #  code (e.g. webrick), and we have no idea what they might throw.
   rescue Exception => err
     Puppet.log_exception(err, "Could not #{message}: #{err}")
+    Puppet::Util::Log.force_flushqueue()
     exit(code)
   end
   module_function :exit_on_fail
