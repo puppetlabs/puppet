@@ -75,7 +75,7 @@ describe provider_class do
 
   end
 
-  [:mountpoint, :recordsize, :aclmode, :aclinherit, :primarycache, :secondarycache, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |prop|
+  [:aclinherit, :aclmode, :atime, :canmount, :checksum, :compression, :copies, :dedup, :devices, :exec, :logbias, :mountpoint, :nbmand, :primarycache, :quota, :readonly, :recordsize, :refquota, :refreservation, :reservation, :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb, :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |prop|
     describe "when getting the #{prop} value" do
       it "should call zfs with :get, #{prop} and this zfs" do
         @provider.expects(:zfs).with(:get, "-H", "-o", "value", prop, @resource[:name]).returns("value\n")
