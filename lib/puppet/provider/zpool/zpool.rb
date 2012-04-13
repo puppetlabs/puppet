@@ -1,8 +1,18 @@
-Puppet::Type.type(:zpool).provide(:solaris) do
-  desc "Provider for Solaris zpool."
+Puppet::Type.type(:zpool).provide(:zpool) do
+  desc "Provider for zpool."
 
-  commands :zpool => "/usr/sbin/zpool"
-  defaultfor :operatingsystem => :solaris
+  zpoolpath = case Facter.value(:operatingsystem)
+              when /^(Solaris|SunOS|Darwin)/i
+                '/usr/sbin'
+              else
+                '/sbin'
+              end
+
+  commands :zpool => "#{zpoolpath}/zpool"
+
+  defaultfor :kernel => :linux
+  defaultfor :operatingsystem => [:solaris, :sunos, :darwin, :freebsd, :netbsd, :"gnu/kfreebsd"]
+
 
   def process_zpool_data(pool_array)
     if pool_array == []
