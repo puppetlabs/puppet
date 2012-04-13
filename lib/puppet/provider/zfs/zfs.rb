@@ -1,8 +1,17 @@
-Puppet::Type.type(:zfs).provide(:solaris) do
-  desc "Provider for Solaris zfs."
+Puppet::Type.type(:zfs).provide(:zfs) do
+  desc "Provider for zfs."
 
-  commands :zfs => "/usr/sbin/zfs"
-  defaultfor :operatingsystem => :solaris
+  zfspath = case Facter.value(:operatingsystem)
+            when /^(Solaris|SunOS|Darwin)/i
+              '/usr/sbin'
+            else
+              '/sbin'
+            end
+
+  commands :zfs => "#{zfspath}/zfs"
+
+  defaultfor :kernel => :linux
+  defaultfor :operatingsystem => [:solaris, :sunos, :darwin, :freebsd, :netbsd, :"gnu/kfreebsd"]
 
   def add_properties
     properties = []
