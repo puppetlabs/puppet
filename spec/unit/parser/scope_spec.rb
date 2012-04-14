@@ -3,7 +3,6 @@ require 'spec_helper'
 
 describe Puppet::Parser::Scope do
   before :each do
-    # This is necessary so we don't try to use the compiler to discover our parent.
     @scope = Puppet::Parser::Scope.new
     @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
     @scope.source = Puppet::Resource::Type.new(:node, :foo)
@@ -289,6 +288,55 @@ describe Puppet::Parser::Scope do
       before :each do
         Puppet.expects(:deprecation_warning).never
       end
+
+      it "finds value define in the inherited node" do
+        expect_the_message_to_be('parent_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              $var = "parent_msg"
+            }
+            node default inherits parent {
+              include foo
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds top scope when the class is included before the node defines the var" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              include foo
+            }
+            node default inherits parent {
+              $var = "default_msg"
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds top scope when the class is included before the node defines the var" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              include foo
+            }
+            node default inherits parent {
+              $var = "default_msg"
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
 
       it "should find values in its local scope" do
         expect_the_message_to_be('local_msg') do <<-MANIFEST
