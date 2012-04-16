@@ -187,7 +187,7 @@ describe 'Plist handling behavior in macauthorization' do
     stubfile = mock('file')
     stubfile.expects(:value)
     IO.expects(:read).with('plist.file', 8).returns('bplist00')
-    CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
+    Puppet::Util::CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
     Puppet.expects(:debug).never
     subject.read_plist('plist.file')
   end
@@ -197,11 +197,11 @@ describe 'Plist handling behavior in macauthorization' do
     stubfile.expects(:read).returns('<bad}|%-->xml<--->')
     IO.expects(:read).with('plist.file', 8)
     File.expects(:open).returns(stubfile)
-    # Even though we rescue the expected error, CFPropertyList likes to output
+    # Even though we rescue the expected error, Puppet::Util::CFPropertyList likes to output
     # a couple of messages to STDERR. At runtime I'd like those to display,
     # but in THIS spec test I'm rerouting stderr so it doesn't spam the console
     $stderr.reopen('/dev/null', 'w')
     expect { subject.read_plist('plist.file') }.should \
-      raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+      raise_error(RuntimeError, /A plist file could not be properly read by Puppet::Util::CFPropertyList/)
   end
 end

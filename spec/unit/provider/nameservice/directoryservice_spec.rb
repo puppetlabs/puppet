@@ -125,7 +125,7 @@ describe 'DirectoryService password behavior' do
     File.expects(:exists?).with(plist_path).once.returns(true)
     subject.expects(:read_plist).with(plist_path).returns(shadow_hash_data)
     subject.expects(:parse_dscl_plist_data).with(binary_plist).returns({'SALTED-SHA512' => pw_string})
-    subject.expects(:save_plist).with(plist_path, shadow_hash_data, CFPropertyList::List::FORMAT_BINARY)
+    subject.expects(:save_plist).with(plist_path, shadow_hash_data, Puppet::Util::CFPropertyList::List::FORMAT_BINARY)
     subject.set_password('jeff', 'uid', sha512_hash)
   end
 
@@ -159,7 +159,7 @@ describe 'DirectoryService Plist Handling' do
   let(:binary_plist_magic) { 'bplist00' }
 
   it 'save_plist(): should raise an error when given an invalid path' do
-    expect { subject.save_plist('bad@path/', {'jeff' => 'socks'}, CFPropertyList::List::FORMAT_BINARY) }.should \
+    expect { subject.save_plist('bad@path/', {'jeff' => 'socks'}, Puppet::Util::CFPropertyList::List::FORMAT_BINARY) }.should \
       raise_error(RuntimeError, /Could not save plist to bad@path/)
   end
 
@@ -176,7 +176,7 @@ describe 'DirectoryService Plist Handling' do
     stubfile = mock('file')
     stubfile.expects(:value)
     IO.expects(:read).with('plist.file', 8).returns('bplist00')
-    CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
+    Puppet::Util::CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
     Puppet.expects(:debug).never
     subject.read_plist('plist.file')
   end
@@ -186,12 +186,12 @@ describe 'DirectoryService Plist Handling' do
     stubfile.expects(:read).returns('<bad}|%-->xml<--->')
     IO.expects(:read).with('plist.file', 8)
     File.expects(:open).returns(stubfile)
-    # Even though we rescue the expected error, CFPropertyList likes to output
+    # Even though we rescue the expected error, Puppet::Util::CFPropertyList likes to output
     # a couple of messages to STDERR. At runtime I'd like those to display,
     # but in THIS spec test I'm rerouting stderr so it doesn't spam the console
     $stderr.reopen('/dev/null', 'w')
     expect { subject.read_plist('plist.file') }.should \
-      raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+      raise_error(RuntimeError, /A plist file could not be properly read by Puppet::Util::CFPropertyList/)
   end
 
   it 'parse_dscl_plist_data(): should correct a bad XML doctype string' do
@@ -206,7 +206,7 @@ describe 'DirectoryService Plist Handling' do
 
   it 'parse_dscl_plist_data(): should fail when trying to read invalid XML' do
     expect { subject.parse_dscl_plist_data('<bad}|%-->xml<--->') }.should \
-      raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+      raise_error(RuntimeError, /A plist file could not be properly read by Puppet::Util::CFPropertyList/)
   end
 
 end

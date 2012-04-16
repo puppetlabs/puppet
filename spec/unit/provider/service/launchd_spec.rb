@@ -263,7 +263,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       stubfile = mock('file')
       stubfile.expects(:value)
       IO.expects(:read).with('plist.file', 8).returns('bplist00')
-      CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
+      Puppet::Util::CFPropertyList::List.expects(:new).with(:file => 'plist.file').returns(stubfile)
       Puppet.expects(:debug).never
       provider.read_plist('plist.file')
     end
@@ -273,16 +273,16 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       stubfile.expects(:read).returns('<bad}|%-->xml<--->')
       IO.expects(:read).with('plist.file', 8)
       File.expects(:open).returns(stubfile)
-      # Even though we rescue the expected error, CFPropertyList likes to output
+      # Even though we rescue the expected error, Puppet::Util::CFPropertyList likes to output
       # a couple of messages to STDERR. At runtime I'd like those to display,
       # but in THIS spec test I'm rerouting stderr so it doesn't spam the console
       $stderr.reopen('/dev/null', 'w')
       expect { provider.read_plist('plist.file') }.should \
-        raise_error(RuntimeError, /A plist file could not be properly read by CFPropertyList/)
+        raise_error(RuntimeError, /A plist file could not be properly read by Puppet::Util::CFPropertyList/)
     end
 
     it 'save_plist(): should raise an error when given an invalid path' do
-      expect { provider.save_plist('bad@path/', {'jeff' => 'socks'}, CFPropertyList::List::FORMAT_BINARY) }.should \
+      expect { provider.save_plist('bad@path/', {'jeff' => 'socks'}, Puppet::Util::CFPropertyList::List::FORMAT_BINARY) }.should \
         raise_error(RuntimeError, /Could not save plist to bad@path/)
     end
   end

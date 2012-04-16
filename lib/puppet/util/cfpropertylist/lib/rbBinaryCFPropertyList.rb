@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-module CFPropertyList
+module Puppet::Util::CFPropertyList
   # Binary PList parser class
   class Binary
     # Read a binary plist file
@@ -52,7 +52,7 @@ module CFPropertyList
     end
 
 
-    # Convert CFPropertyList to binary format; since we have to count our objects we simply unique CFDictionary and CFArray
+    # Convert Puppet::Util::CFPropertyList to binary format; since we have to count our objects we simply unique CFDictionary and CFArray
     def to_str(opts={})
       @unique_table = {}
       @count_objects = 0

@@ -134,17 +134,17 @@ class DirectoryService < Puppet::Provider::NameService
       dscl_output.gsub!( bad_xml_doctype, Plist_Xml_Doctype )
       Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration")
     end
-    plist = CFPropertyList::List.new
+    plist = Puppet::Util::CFPropertyList::List.new
     begin
       plist.load_str(dscl_output)
     rescue => e
-      fail("A plist file could not be properly read by CFPropertyList: #{e.inspect}")
+      fail("A plist file could not be properly read by Puppet::Util::CFPropertyList: #{e.inspect}")
     end
-    CFPropertyList.native_types(plist.value)
+    Puppet::Util::CFPropertyList.native_types(plist.value)
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
-  # format. This uses the CFPropertyList library in lib/puppet/util to
+  # format. This uses the Puppet::Util::CFPropertyList library in lib/puppet/util to
   # parse the plist and return it back as a Hash. This method reads a
   # file on disk, versus data passed as a string.
   def self.read_plist(path)
@@ -153,7 +153,7 @@ class DirectoryService < Puppet::Provider::NameService
     # Ruby 1.9.x, so we use the magic number to detect it.
     # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
     if IO.read(path, Binary_Plist_Magic.length) == Binary_Plist_Magic
-      plist_obj = CFPropertyList::List.new(:file => path)
+      plist_obj = Puppet::Util::CFPropertyList::List.new(:file => path)
     else
       plist_data = File.open(path, "r:UTF-8").read
       if plist_data =~ bad_xml_doctype
@@ -161,21 +161,21 @@ class DirectoryService < Puppet::Provider::NameService
         Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{path}")
       end
       begin
-        plist_obj = CFPropertyList::List.new(:data => plist_data)
+        plist_obj = Puppet::Util::CFPropertyList::List.new(:data => plist_data)
       rescue => e
-        fail("A plist file could not be properly read by CFPropertyList: #{e.inspect}")
+        fail("A plist file could not be properly read by Puppet::Util::CFPropertyList: #{e.inspect}")
       end
     end
-    CFPropertyList.native_types(plist_obj.value)
+    Puppet::Util::CFPropertyList.native_types(plist_obj.value)
   end
 
   # Given the path to the plist, a Hash, and the format by which to save the
   # resultant plist, this method will convert the Hash to a plist file and
   # save it at path in either the XML or Binary format. Acceptable formats
-  # are CFPropertyList::List::FORMAT_XML or CFPropertyList::List::FORMAT_BINARY
+  # are Puppet::Util::CFPropertyList::List::FORMAT_XML or Puppet::Util::CFPropertyList::List::FORMAT_BINARY
   def self.save_plist(path, plist_data, format)
-    overrides_plist       = CFPropertyList::List.new
-    overrides_plist.value = CFPropertyList.guess(plist_data)
+    overrides_plist       = Puppet::Util::CFPropertyList::List.new
+    overrides_plist.value = Puppet::Util::CFPropertyList.guess(plist_data)
     begin
       overrides_plist.save(path, format)
     rescue => e
@@ -344,11 +344,11 @@ class DirectoryService < Puppet::Provider::NameService
         # into the user's plist, and convert the resultant plist back to
         # a binary plist. We need to set users_plist['ShadowHashData'][0].blob = true
         # because we're saving binary data to that key.
-        binary_password_hash_plist            = CFPropertyList::List.new
-        binary_password_hash_plist.value      = CFPropertyList.guess(password_hash_plist)
+        binary_password_hash_plist            = Puppet::Util::CFPropertyList::List.new
+        binary_password_hash_plist.value      = Puppet::Util::CFPropertyList.guess(password_hash_plist)
         users_plist['ShadowHashData'][0]      = binary_password_hash_plist.to_str
         users_plist['ShadowHashData'][0].blob = true
-        save_plist(@plist_path, users_plist, CFPropertyList::List::FORMAT_BINARY)
+        save_plist(@plist_path, users_plist, Puppet::Util::CFPropertyList::List::FORMAT_BINARY)
       end
     end
   end
@@ -445,9 +445,9 @@ class DirectoryService < Puppet::Provider::NameService
     exec_arg_vector << ns_to_ds_attribute_map[:guid]
     begin
       guid_output = Puppet::Util::Execution.execute(exec_arg_vector)
-      plist = CFPropertyList::List.new
+      plist = Puppet::Util::CFPropertyList::List.new
       plist.load_str(guid_output)
-      guid_plist = CFPropertyList.native_types(plist.value)
+      guid_plist = Puppet::Util::CFPropertyList.native_types(plist.value)
       # Although GeneratedUID like all DirectoryService values can be multi-valued
       # according to the schema, in practice user accounts cannot have multiple UUIDs
       # otherwise Bad Things Happen, so we just deal with the first value.

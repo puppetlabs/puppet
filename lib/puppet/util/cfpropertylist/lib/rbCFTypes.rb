@@ -9,7 +9,7 @@
 
 require 'base64'
 
-module CFPropertyList
+module Puppet::Util::CFPropertyList
   # This class defines the base class for all CFType classes
   #
   class CFType

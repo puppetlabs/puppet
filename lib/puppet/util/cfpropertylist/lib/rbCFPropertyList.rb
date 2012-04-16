@@ -5,10 +5,10 @@ require 'date'
 require 'time'
 
 #
-# CFPropertyList implementation
+# Puppet::Util::CFPropertyList implementation
 #
 # class to read, manipulate and write both XML and binary property list
-# files (plist(5)) as defined by Apple. Have a look at CFPropertyList::List
+# files (plist(5)) as defined by Apple. Have a look at Puppet::Util::CFPropertyList::List
 # for more documentation.
 #
 # == Example
@@ -25,24 +25,24 @@ require 'time'
 #     }
 #   }
 #
-#   # create CFPropertyList::List object
-#   plist = CFPropertyList::List.new
+#   # create Puppet::Util::CFPropertyList::List object
+#   plist = Puppet::Util::CFPropertyList::List.new
 #
-#   # call CFPropertyList.guess() to create corresponding CFType values
+#   # call Puppet::Util::CFPropertyList.guess() to create corresponding CFType values
 #   # pass in optional :convert_unknown_to_string => true to convert things like symbols into strings.
-#   plist.value = CFPropertyList.guess(data)
+#   plist.value = Puppet::Util::CFPropertyList.guess(data)
 #
 #   # write plist to file
-#   plist.save("example.plist", CFPropertyList::List::FORMAT_BINARY)
+#   plist.save("example.plist", Puppet::Util::CFPropertyList::List::FORMAT_BINARY)
 #
 #   # … later, read it again
-#   plist = CFPropertyList::List.new(:file => "example.plist")
-#   data = CFPropertyList.native_types(plist.value)
+#   plist = Puppet::Util::CFPropertyList::List.new(:file => "example.plist")
+#   data = Puppet::Util::CFPropertyList.native_types(plist.value)
 #
 # Author::    Christian Kruse (mailto:cjk@wwwtech.de)
 # Copyright:: Copyright (c) 2010
 # License::   MIT License
-module CFPropertyList
+module Puppet::Util::CFPropertyList
   # interface class for PList parsers
   class ParserInterface
     # load a plist
@@ -121,19 +121,19 @@ if try_nokogiri then
 end
 
 
-module CFPropertyList
+module Puppet::Util::CFPropertyList
   # Create CFType hierarchy by guessing the correct CFType, e.g.
   #
   #  x = {
   #    'a' => ['b','c','d']
   #  }
-  #  cftypes = CFPropertyList.guess(x)
+  #  cftypes = Puppet::Util::CFPropertyList.guess(x)
   #
   # pass optional options hash. Only possible value actually:
   # +convert_unknown_to_string+::   Convert unknown objects to string calling to_str()
   # +converter_method+::    Convert unknown objects to known objects calling +method_name+
   #
-  #  cftypes = CFPropertyList.guess(x,:convert_unknown_to_string => true,:converter_method => :to_hash, :converter_with_opts => true)
+  #  cftypes = Puppet::Util::CFPropertyList.guess(x,:convert_unknown_to_string => true,:converter_method => :to_hash, :converter_with_opts => true)
   def guess(object, options = {})
     case object
     when Fixnum, Integer       then CFInteger.new(object)
@@ -148,7 +148,7 @@ module CFPropertyList
     when Array, Enumerator, Enumerable::Enumerator
       ary = Array.new
       object.each do |o|
-        ary.push CFPropertyList.guess(o, options)
+        ary.push Puppet::Util::CFPropertyList.guess(o, options)
       end
       CFArray.new(ary)
 
@@ -156,7 +156,7 @@ module CFPropertyList
       hsh = Hash.new
       object.each_pair do |k,v|
         k = k.to_s if k.is_a?(Symbol)
-        hsh[k] = CFPropertyList.guess(v, options)
+        hsh[k] = Puppet::Util::CFPropertyList.guess(v, options)
       end
       CFDictionary.new(hsh)
     else
@@ -167,9 +167,9 @@ module CFPropertyList
         CFData.new(object.read(), CFData::DATA_RAW)
       when options[:converter_method] && object.respond_to?(options[:converter_method])
         if options[:converter_with_opts]
-          CFPropertyList.guess(object.send(options[:converter_method],options),options)
+          Puppet::Util::CFPropertyList.guess(object.send(options[:converter_method],options),options)
         else
-          CFPropertyList.guess(object.send(options[:converter_method]),options)
+          Puppet::Util::CFPropertyList.guess(object.send(options[:converter_method]),options)
         end
       when options[:convert_unknown_to_string]
         CFString.new(object.to_s)
@@ -191,7 +191,7 @@ module CFPropertyList
       ary = []
       object.value.each do
         |v|
-        ary.push CFPropertyList.native_types(v)
+        ary.push Puppet::Util::CFPropertyList.native_types(v)
       end
 
       return ary
@@ -200,7 +200,7 @@ module CFPropertyList
       object.value.each_pair do
         |k,v|
         k = k.to_sym if keys_as_symbols
-        hsh[k] = CFPropertyList.native_types(v)
+        hsh[k] = Puppet::Util::CFPropertyList.native_types(v)
       end
 
       return hsh
@@ -209,7 +209,7 @@ module CFPropertyList
 
   module_function :guess, :native_types
 
-  # Class representing a CFPropertyList. Instanciate with #new
+  # Class representing a Puppet::Util::CFPropertyList. Instanciate with #new
   class List
     # Format constant for binary format
     FORMAT_BINARY = 1
@@ -229,7 +229,7 @@ module CFPropertyList
     # the root value in the plist file
     attr_accessor :value
 
-    # initialize a new CFPropertyList, arguments are:
+    # initialize a new Puppet::Util::CFPropertyList, arguments are:
     #
     # :file:: Parse a file
     # :format:: Format is one of FORMAT_BINARY or FORMAT_XML. Defaults to FORMAT_AUTO
@@ -330,7 +330,7 @@ module CFPropertyList
       end
     end
 
-    # Serialize CFPropertyList object to specified format and write it to file
+    # Serialize Puppet::Util::CFPropertyList object to specified format and write it to file
     # file = nil:: The filename of the file to write to. Uses +filename+ instance variable if nil
     # format = nil:: The format to save in. Uses +format+ instance variable if nil
     def save(file=nil,format=nil,opts={})
@@ -369,10 +369,10 @@ end
 class Array
   # convert an array to plist format
   def to_plist(options={})
-    options[:plist_format] ||= CFPropertyList::List::FORMAT_BINARY
+    options[:plist_format] ||= Puppet::Util::CFPropertyList::List::FORMAT_BINARY
 
-    plist = CFPropertyList::List.new
-    plist.value = CFPropertyList.guess(self, options)
+    plist = Puppet::Util::CFPropertyList::List.new
+    plist.value = Puppet::Util::CFPropertyList.guess(self, options)
     plist.to_str(options[:plist_format])
   end
 end
@@ -380,10 +380,10 @@ end
 class Enumerator
   # convert an array to plist format
   def to_plist(options={})
-    options[:plist_format] ||= CFPropertyList::List::FORMAT_BINARY
+    options[:plist_format] ||= Puppet::Util::CFPropertyList::List::FORMAT_BINARY
 
-    plist = CFPropertyList::List.new
-    plist.value = CFPropertyList.guess(self, options)
+    plist = Puppet::Util::CFPropertyList::List.new
+    plist.value = Puppet::Util::CFPropertyList.guess(self, options)
     plist.to_str(options[:plist_format])
   end
 end
@@ -391,10 +391,10 @@ end
 class Hash
   # convert a hash to plist format
   def to_plist(options={})
-    options[:plist_format] ||= CFPropertyList::List::FORMAT_BINARY
+    options[:plist_format] ||= Puppet::Util::CFPropertyList::List::FORMAT_BINARY
 
-    plist = CFPropertyList::List.new
-    plist.value = CFPropertyList.guess(self, options)
+    plist = Puppet::Util::CFPropertyList::List.new
+    plist.value = Puppet::Util::CFPropertyList.guess(self, options)
     plist.to_str(options[:plist_format])
   end
 end

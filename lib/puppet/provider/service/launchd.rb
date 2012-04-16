@@ -97,7 +97,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
           # Frequently you will encounter improperly parsed XML (such as
           # /System/Library/LaunchDaemons/org.cups.cupsd.plist that uses
           # a double-hyphen inside a comment which is against the spec)
-          # that causes CFPropertyList to error out. This is a scenario
+          # that causes Puppet::Util::CFPropertyList to error out. This is a scenario
           # we cannot repair, and so we output a debug error and skip the
           # file.
           begin
@@ -156,7 +156,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
-  # format. This uses the CFPropertyList library in lib/puppet/util to
+  # format. This uses the Puppet::Util::CFPropertyList library in lib/puppet/util to
   # parse the plist and return it back as a Hash. This method reads a
   # file on disk, versus data passed as a string.
   def self.read_plist(path)
@@ -165,7 +165,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # Ruby 1.9.x, so we use the magic number to detect it.
     # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
     if IO.read(path, Binary_Plist_Magic.length) == Binary_Plist_Magic
-      plist_obj = CFPropertyList::List.new(:file => path)
+      plist_obj = Puppet::Util::CFPropertyList::List.new(:file => path)
     else
       plist_data = File.open(path, "r:UTF-8").read
       if plist_data =~ bad_xml_doctype
@@ -173,21 +173,21 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{path}")
       end
       begin
-        plist_obj = CFPropertyList::List.new(:data => plist_data)
+        plist_obj = Puppet::Util::CFPropertyList::List.new(:data => plist_data)
       rescue => e
-        fail("A plist file could not be properly read by CFPropertyList: #{e.inspect}")
+        fail("A plist file could not be properly read by Puppet::Util::CFPropertyList: #{e.inspect}")
       end
     end
-    plist_data = CFPropertyList.native_types(plist_obj.value)
+    plist_data = Puppet::Util::CFPropertyList.native_types(plist_obj.value)
   end
 
   # Given the path to the plist, a Hash, and the format by which to save the
   # resultant plist, this method will convert the Hash to a plist file and
   # save it at path in either the XML or Binary format. Acceptable formats
-  # are CFPropertyList::List::FORMAT_XML or CFPropertyList::List::FORMAT_BINARY
+  # are Puppet::Util::CFPropertyList::List::FORMAT_XML or Puppet::Util::CFPropertyList::List::FORMAT_BINARY
   def self.save_plist(path, plist_data, format)
-    overrides_plist       = CFPropertyList::List.new
-    overrides_plist.value = CFPropertyList.guess(plist_data)
+    overrides_plist       = Puppet::Util::CFPropertyList::List.new
+    overrides_plist.value = Puppet::Util::CFPropertyList.guess(plist_data)
     begin
       overrides_plist.save(path, format)
     rescue => e
@@ -327,12 +327,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
-      self.class.save_plist(Launchd_Overrides, overrides, CFPropertyList::List::FORMAT_XML)
+      self.class.save_plist(Launchd_Overrides, overrides, Puppet::Util::CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        self.class.save_plist(job_path, job_plist, CFPropertyList::List::FORMAT_XML)
+        self.class.save_plist(job_path, job_plist, Puppet::Util::CFPropertyList::List::FORMAT_XML)
       end
     end
   end
@@ -342,15 +342,15 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
-      overrides_plist       = CFPropertyList::List.new
-      overrides_plist.value = CFPropertyList.guess(overrides)
-      overrides_plist.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
+      overrides_plist       = Puppet::Util::CFPropertyList::List.new
+      overrides_plist.value = Puppet::Util::CFPropertyList.guess(overrides)
+      overrides_plist.save(Launchd_Overrides, Puppet::Util::CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
-      job_plist_file       = CFPropertyList::List.new
-      job_plist_file.value = CFPropertyList.guess(job_plist)
-      job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
+      job_plist_file       = Puppet::Util::CFPropertyList::List.new
+      job_plist_file.value = Puppet::Util::CFPropertyList.guess(job_plist)
+      job_plist_file.save(job_path, Puppet::Util::CFPropertyList::List::FORMAT_XML)
     end
   end
 

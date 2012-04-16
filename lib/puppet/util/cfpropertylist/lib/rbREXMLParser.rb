@@ -2,7 +2,7 @@
 
 require 'rexml/document'
 
-module CFPropertyList
+module Puppet::Util::CFPropertyList
   # XML parser
   class XML < ParserInterface
     # read a XML file
@@ -20,7 +20,7 @@ module CFPropertyList
       return import_xml(root)
     end
 
-    # serialize CFPropertyList object to XML
+    # serialize Puppet::Util::CFPropertyList object to XML
     # opts = {}:: Specify options: :formatted - Use indention and line breaks
     def to_str(opts={})
       doc = REXML::Document.new
