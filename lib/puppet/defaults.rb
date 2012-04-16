@@ -62,7 +62,7 @@ module Puppet
         :desc     => "Whether to print stack traces on some errors",
     },
     :autoflush => {
-      :default    => false,
+      :default => true,
       :type       => :boolean,
       :desc       => "Whether log files should always flush to disk.",
       :hook       => proc { |value| Log.autoflush = value }

@@ -167,6 +167,13 @@ class Puppet::Daemon
     loop do
       now = Time.now.to_i
 
+      # We set a default wakeup of "one hour from now", which will
+      # recheck everything at a minimum every hour.  Just in case something in
+      # the math messes up or something; it should be inexpensive enough to
+      # wake once an hour, then go back to sleep after doing nothing, if
+      # someone only wants listen mode.
+      next_event = now + 60 * 60
+
       # Handle reparsing of configuration files, if desired and required.
       # `reparse` will just check if the action is required, and would be
       # better named `reparse_if_changed` instead.
@@ -176,7 +183,12 @@ class Puppet::Daemon
         # The time to the next reparse might have changed, so recalculate
         # now.  That way we react dynamically to reconfiguration.
         reparse_interval = Puppet[:filetimeout].to_i
-        next_reparse     = now + reparse_interval
+
+        # Set up the next reparse check based on the new reparse_interval.
+        if reparse_interval > 0
+          next_reparse = now + reparse_interval
+          next_event > next_reparse and next_event = next_reparse
+        end
 
         # We should also recalculate the agent run interval, and adjust the
         # next time it is scheduled to run, just in case.  In the event that
@@ -191,21 +203,14 @@ class Puppet::Daemon
       # behaviour.  You should not change that. --daniel 2012-02-21
       if agent and now >= next_agent_run
         agent.run
+
+        # Set up the next agent run time
         next_agent_run = now + agent_run_interval
+        next_event > next_agent_run and next_event = next_agent_run
       end
 
       # Finally, an interruptable able sleep until the next scheduled event.
-      # We also set a default wakeup of "one hour from now", which will
-      # recheck everything at a minimum every hour.  Just in case something in
-      # the math messes up or something; it should be inexpensive enough to
-      # wake once an hour, then go back to sleep after doing nothing, if
-      # someone only wants listen mode.
-      next_event = now + 60 * 60
-      next_event > next_reparse    and next_event = next_reparse
-      next_event > next_agent_run  and next_event = next_agent_run
-
       how_long = next_event - now
-
       how_long > 0 and select([], [], [], how_long)
     end
   end

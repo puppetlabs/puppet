@@ -330,7 +330,6 @@ describe provider_class do
       it "should call diff when a file is shown to have been changed" do
         file = "/etc/hosts"
         File.stubs(:delete)
-        File.stubs(:exists?).returns(true)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
@@ -348,7 +347,6 @@ describe provider_class do
         file1 = "/etc/hosts"
         file2 = "/etc/resolv.conf"
         File.stubs(:delete)
-        File.stubs(:exists?).returns(true)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
@@ -369,7 +367,6 @@ describe provider_class do
           root = "/tmp/foo"
           file = "/etc/hosts"
           File.stubs(:delete)
-          File.stubs(:exists?).returns(true)
 
           @resource[:context] = "/files"
           @resource[:changes] = ["set #{file}/foo bar"]
@@ -402,7 +399,6 @@ describe provider_class do
 
       it "should cleanup the .augnew file" do
         file = "/etc/hosts"
-        File.stubs(:exists?).returns(true)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
@@ -422,11 +418,6 @@ describe provider_class do
       it "should handle duplicate /augeas/events/saved filenames" do
         file = "/etc/hosts"
 
-        augnew = states("augnew").starts_as("present")
-
-        File.stubs(:exists?).returns(true).when(augnew.is("present"))
-        File.stubs(:exists?).returns(false).when(augnew.is("absent"))
-
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
@@ -436,9 +427,9 @@ describe provider_class do
         @augeas.expects(:set).with("/augeas/save", "newfile")
         @augeas.expects(:close)
 
-        File.expects(:delete).with(file + ".augnew").when(augnew.is("present")).then(augnew.is("absent"))
+        File.expects(:delete).with(file + ".augnew").once()
 
-        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("").when(augnew.is("present"))
+        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("").once()
         @provider.should be_need_to_run
       end
 
