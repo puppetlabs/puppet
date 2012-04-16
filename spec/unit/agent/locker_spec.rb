@@ -29,18 +29,6 @@ describe Puppet::Agent::Locker do
     @locker.lockfile.should equal(@locker.lockfile)
   end
 
-  it "should use the lock file to anonymously lock the process when disabled" do
-    @locker.lockfile.expects(:lock).with(:anonymous => true)
-
-    @locker.disable
-  end
-
-  it "should use the lock file to anonymously unlock the process when enabled" do
-    @locker.lockfile.expects(:unlock).with(:anonymous => true)
-
-    @locker.enable
-  end
-
   it "should have a method that yields when a lock is attained" do
     @locker.lockfile.expects(:lock).returns true
 
