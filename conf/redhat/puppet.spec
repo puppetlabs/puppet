@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.13
+Version:        2.7.12
 #Release:        0.1rc1%{?dist}
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
@@ -21,11 +21,13 @@ Group:          System Environment/Base
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  facter >= 1.5
-BuildRequires:  ruby >= 1.8.5
+BuildRequires:  ruby >= 1.8.1
 
+%if 0%{?fedora} || 0%{?rhel} >= 5
 BuildArch:      noarch
 Requires:       ruby(abi) >= 1.8
 Requires:       ruby-shadow
+%endif
 
 # Pull in ruby selinux bindings where available
 %if 0%{?fedora} || 0%{?rhel} >= 6
@@ -37,7 +39,7 @@ Requires:       ruby-shadow
 %endif
 
 Requires:       facter >= 1.5
-Requires:       ruby >= 1.8.5
+Requires:       ruby >= 1.8.1
 %{!?_without_augeas:Requires: ruby-augeas}
 
 Requires(pre):  shadow-utils
@@ -285,9 +287,6 @@ fi
 rm -rf %{buildroot}
 
 %changelog
-* Tue Apr 10 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.13-1
-- Update for 2.7.13
-
 * Mon Mar 12 2012 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.12-1
 - Update for 2.7.12
 

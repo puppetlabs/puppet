@@ -32,7 +32,7 @@ class Puppet::Agent
       return
     end
     if disabled?
-      Puppet.notice "Skipping run of #{client_class}; administratively disabled; use 'puppet agent --enable' to re-enable."
+      Puppet.notice "Skipping run of #{client_class}; administratively disabled; use 'puppet #{client_class} --enable' to re-enable."
       return
     end
 
