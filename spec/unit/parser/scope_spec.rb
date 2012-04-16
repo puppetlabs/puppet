@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 describe Puppet::Parser::Scope do
   before :each do
@@ -214,11 +215,10 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when mixing inheritence and inclusion" do
-    let(:catalog) { Puppet::Parser::Compiler.compile(Puppet::Node.new('foonode')) }
+    include PuppetSpec::Compiler
 
     def expect_the_message_to_be(message) 
-      Puppet[:code] = yield
-      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new('foonode'))
+      catalog = compile_to_catalog(yield)
       catalog.resource('Notify', 'something')[:message].should == message
     end
 

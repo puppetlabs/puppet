@@ -1,11 +1,9 @@
 require 'puppet'
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 describe 'function for dynamically creating resources' do
-  def compile_to_catalog(string)
-    Puppet[:code] = string
-    Puppet::Parser::Compiler.compile(Puppet::Node.new('foonode'))
-  end
+  include PuppetSpec::Compiler
 
   before :each do
     @scope = Puppet::Parser::Scope.new
