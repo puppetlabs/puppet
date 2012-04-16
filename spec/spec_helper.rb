@@ -16,6 +16,15 @@ require 'rspec/expectations'
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
   FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
+
+  # This is basically just a singleton holder where we can accumulate a list of all of the spec files that
+  #  we've run.
+  class TestFileList
+    @files = []
+    def self.files()
+      @files
+    end
+  end
 end
 
 require 'pathname'
@@ -45,6 +54,9 @@ RSpec.configure do |config|
   config.mock_with :mocha
 
   config.before :all do
+    # Add the current batch of spec files to the list that we're maintaining.
+    PuppetSpec::TestFileList.files << config.instance_variable_get(:@files_to_run)
+
     Puppet::Test::TestHelper.before_all_tests()
   end
 
@@ -100,5 +112,16 @@ RSpec.configure do |config|
     # experimented with forcing a GC run, and that was less efficient than
     # just letting it run all the time.
     GC.enable
+  end
+
+  config.after :suite do
+    # Log the spec order to a file, but only if the LOG_SPEC_ORDER environment variable is
+    #  set.  This should be enabled on Jenkins runs, as it can be used with Nick L.'s bisect
+    #  script to help identify and debug order-dependent spec failures.
+    if ENV['LOG_SPEC_ORDER']
+      File.open("./spec_order.txt", "w") do |logfile|
+        PuppetSpec::TestFileList.files.each { |f| logfile.puts f }
+      end
+    end
   end
 end
