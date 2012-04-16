@@ -241,7 +241,7 @@ class Puppet::Parser::Scope
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     if name =~ /^(.*)::(.+)$/
       begin
-        qualified_scope($1).twoscope_lookupvar($2,options.merge({:origin => nil}))
+        qualified_scope($1).twoscope_lookupvar($2, options.merge({:origin => nil}))
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
         warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
@@ -250,10 +250,10 @@ class Puppet::Parser::Scope
     # If the value is present and either we are top/node scope or originating scope...
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
       table[name]
-    elsif resource and resource.resource_type and resource.resource_type.respond_to?("parent") and parent_type = resource.resource_type.parent
+    elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
       class_scope(parent_type).twoscope_lookupvar(name,options.merge({:origin => nil}))
     elsif parent
-      parent.twoscope_lookupvar(name,options)
+      parent.twoscope_lookupvar(name, options)
     else
       :undefined
     end
