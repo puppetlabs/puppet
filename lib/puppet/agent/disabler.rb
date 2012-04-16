@@ -12,7 +12,7 @@ module Puppet::Agent::Disabler
   end
 
   def disable_lockfile
-    @disable_lockfile ||= Puppet::Util::AnonymousFilelock.new(lockfile_path+".disabled")
+    @disable_lockfile ||= Puppet::Util::AnonymousFilelock.new(disabled_lockfile_path+".disabled")
 
     @disable_lockfile
   end

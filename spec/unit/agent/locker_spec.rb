@@ -10,7 +10,7 @@ end
 describe Puppet::Agent::Locker do
   before do
     @locker = LockerTester.new
-    @locker.stubs(:lockfile_path).returns "/my/lock"
+    @locker.stubs(:running_lockfile_path).returns "/my/lock"
   end
 
   it "should use a Pidlock instance as its lockfile" do
@@ -18,7 +18,7 @@ describe Puppet::Agent::Locker do
   end
 
   it "should use 'lockfile_path' to determine its lockfile path" do
-    @locker.expects(:lockfile_path).returns "/my/lock"
+    @locker.expects(:running_lockfile_path).returns "/my/lock"
     lock = Puppet::Util::Pidlock.new("/my/lock")
     Puppet::Util::Pidlock.expects(:new).with("/my/lock").returns lock
 

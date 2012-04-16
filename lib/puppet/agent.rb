@@ -20,8 +20,12 @@ class Puppet::Agent
     @client_class = client_class
   end
 
-  def lockfile_path
-    client_class.lockfile_path
+  def running_lockfile_path
+    #client_class.lockfile_path
+    Puppet[:agent_running_lockfile]
+  end
+  def disabled_lockfile_path
+    Puppet[:agent_disabled_lockfile]
   end
 
   def needing_restart?

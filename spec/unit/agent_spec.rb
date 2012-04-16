@@ -61,11 +61,6 @@ describe Puppet::Agent do
     @agent.run
   end
 
-  it "should determine its lock file path by asking the client class" do
-    AgentTestClient.expects(:lockfile_path).returns "/my/lock"
-    @agent.lockfile_path.should == "/my/lock"
-  end
-
   it "should be considered running if the lock file is locked and not anonymous" do
     lockfile = mock 'lockfile'
 

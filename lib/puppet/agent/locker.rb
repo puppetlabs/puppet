@@ -16,7 +16,7 @@ module Puppet::Agent::Locker
   end
 
   def lockfile
-    @lockfile ||= Puppet::Util::Pidlock.new(lockfile_path)
+    @lockfile ||= Puppet::Util::Pidlock.new(running_lockfile_path)
 
     @lockfile
   end
