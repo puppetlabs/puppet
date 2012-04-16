@@ -122,7 +122,8 @@ describe Puppet::Agent do
 
     it "should display an informative message if the agent is administratively disabled" do
       @agent.expects(:disabled?).returns true
-      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled/))
+      @agent.expects(:disable_message).returns "foo"
+      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled.*\(Reason: 'foo'\)/))
       @agent.run
     end
 
