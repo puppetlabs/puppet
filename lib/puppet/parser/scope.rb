@@ -349,31 +349,31 @@ class Puppet::Parser::Scope
   def setvar(name, value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
     if table.include?(name)
-      unless options[:append]
-        error = Puppet::ParseError.new("Cannot reassign variable #{name}")
-      else
+      if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
+      else
+        error = Puppet::ParseError.new("Cannot reassign variable #{name}")
       end
       error.file = options[:file] if options[:file]
       error.line = options[:line] if options[:line]
       raise error
     end
 
-    unless options[:append]
-      table[name] = value
-    else # append case
+    if options[:append]
       # lookup the value in the scope if it exists and insert the var
-      table[name] = undef_as('',self[name])
+      table[name] = undef_as('', self[name])
       # concatenate if string, append if array, nothing for other types
       case value
       when Array
         table[name] += value
       when Hash
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" unless value.is_a?(Hash)
         table[name].merge!(value)
       else
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" if table[name].is_a?(Hash)
         table[name] << value
       end
+    else 
+      table[name] = value
     end
   end
 

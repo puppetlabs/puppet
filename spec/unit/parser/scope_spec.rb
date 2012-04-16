@@ -11,10 +11,6 @@ describe Puppet::Parser::Scope do
     @scope.parent = @topscope
   end
 
-  it "should be able to store references to class scopes" do
-    lambda { @scope.class_set "myname", "myscope" }.should_not raise_error
-  end
-
   it "should be able to retrieve class scopes by name" do
     @scope.class_set "myname", "myscope"
     @scope.class_scope("myname").should == "myscope"
@@ -128,6 +124,11 @@ describe Puppet::Parser::Scope do
     it "should be able to detect when variables are set" do
       @scope["var"] = "childval"
       @scope.should be_include("var")
+    end
+
+    it "does not allow changing a set value" do
+      @scope["var"] = "childval"
+      expect { @scope["var"] = "change" }.should raise_error(Puppet::Error, "Cannot reassign variable var")
     end
 
     it "should be able to detect when variables are not set" do
@@ -540,36 +541,36 @@ describe Puppet::Parser::Scope do
 
   describe "when variables are set with append=true" do
     it "should raise error if the variable is already defined in this scope" do
-      @scope.setvar("var","1", :append => false)
-      lambda { @scope.setvar("var","1", :append => true) }.should raise_error(Puppet::ParseError)
+      @scope.setvar("var", "1", :append => false)
+      expect { @scope.setvar("var", "1", :append => true) }.should raise_error(Puppet::ParseError, "Cannot append, variable var is defined in this scope")
     end
 
     it "should lookup current variable value" do
       @scope.expects(:[]).with("var").returns("2")
-      @scope.setvar("var","1", :append => true)
+      @scope.setvar("var", "1", :append => true)
     end
 
     it "should store the concatenated string '42'" do
-      @topscope.setvar("var","4", :append => false)
-      @scope.setvar("var","2", :append => true)
+      @topscope.setvar("var", "4", :append => false)
+      @scope.setvar("var", "2", :append => true)
       @scope["var"].should == "42"
     end
 
     it "should store the concatenated array [4,2]" do
-      @topscope.setvar("var",[4], :append => false)
-      @scope.setvar("var",[2], :append => true)
+      @topscope.setvar("var", [4], :append => false)
+      @scope.setvar("var", [2], :append => true)
       @scope["var"].should == [4,2]
     end
 
     it "should store the merged hash {a => b, c => d}" do
-      @topscope.setvar("var",{"a" => "b"}, :append => false)
-      @scope.setvar("var",{"c" => "d"}, :append => true)
+      @topscope.setvar("var", {"a" => "b"}, :append => false)
+      @scope.setvar("var", {"c" => "d"}, :append => true)
       @scope["var"].should == {"a" => "b", "c" => "d"}
     end
 
     it "should raise an error when appending a hash with something other than another hash" do
-      @topscope.setvar("var",{"a" => "b"}, :append => false)
-      lambda { @scope.setvar("var","not a hash", :append => true) }.should raise_error
+      @topscope.setvar("var", {"a" => "b"}, :append => false)
+      expect { @scope.setvar("var", "not a hash", :append => true) }.should raise_error(ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported")
     end
   end
 
@@ -663,7 +664,7 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when setting it again" do
       @scope.setvar("1", :value2, :ephemeral => true)
-      lambda { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
+      expect { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
     end
 
     it "should declare ephemeral number only variable names" do
@@ -750,7 +751,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should accept only MatchData" do
-      lambda { @scope.ephemeral_from("match") }.should raise_error
+      expect { @scope.ephemeral_from("match") }.should raise_error
     end
 
     it "should set $0 with the full match" do
@@ -795,7 +796,7 @@ describe Puppet::Parser::Scope do
     it "should fail if a default is already defined and a new default is being defined" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param)
-      lambda { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
+      expect { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
     end
 
     it "should return multiple defaults at once" do
