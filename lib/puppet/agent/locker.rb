@@ -1,8 +1,11 @@
 require 'puppet/util/pidlock'
 
-# Break out the code related to locking the agent.  This module is just
-# included into the agent, but having it here makes it easier to test.
+# This module is responsible for encapsulating the logic for
+#  "locking" the puppet agent during a run; in other words,
+#  keeping track of enough state to answer the question
+#  "is there a puppet agent currently running?"
 module Puppet::Agent::Locker
+
   # Yield if we get a lock, else do nothing.  Return
   # true/false depending on whether we get the lock.
   def lock
@@ -15,14 +18,16 @@ module Puppet::Agent::Locker
     end
   end
 
-  def lockfile
-    @lockfile ||= Puppet::Util::Pidlock.new(running_lockfile_path)
-
-    @lockfile
-  end
-
   def running?
     lockfile.locked? and !lockfile.anonymous?
   end
+
+  def lockfile
+    @lockfile ||= Puppet::Util::Pidlock.new(Puppet[:agent_running_lockfile])
+
+    @lockfile
+  end
+  private :lockfile
+
 
 end
