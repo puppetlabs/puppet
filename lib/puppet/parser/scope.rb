@@ -48,28 +48,7 @@ class Puppet::Parser::Scope
   end
 
   def [](name, options = {})
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
-    # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /^(.*)::(.+)$/
-      begin
-        qualified_scope($1)[$2,options]
-      rescue RuntimeError => e
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        nil
-      end
-    elsif ephemeral_include?(name) or table.include?(name)
-      # We can't use "if table[name]" here because the value might be false
-      if options[:dynamic] and self != compiler.topscope
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
-      end
-      table[name]
-    elsif parent
-      parent[name,options.merge(:dynamic => (dynamic || options[:dynamic]))]
-    else
-      nil
-    end
+    lookupvar(name, options)
   end
 
   def []=(var, value)
@@ -280,8 +259,7 @@ class Puppet::Parser::Scope
         qualified_scope($1).twoscope_lookupvar($2, options.merge({:origin => nil}))
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        :undefined
+        nil
       end
     # If the value is present and either we are top/node scope or originating scope...
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
@@ -291,7 +269,7 @@ class Puppet::Parser::Scope
     elsif parent
       parent.twoscope_lookupvar(name, options)
     else
-      :undefined
+      nil
     end
   end
 
@@ -305,7 +283,7 @@ class Puppet::Parser::Scope
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
         warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        :undefined
+        nil
       end
     elsif ephemeral_include?(name) or table.include?(name)
       # We can't use "if table[name]" here because the value might be false
@@ -313,7 +291,7 @@ class Puppet::Parser::Scope
     elsif parent
       parent.dynamic_lookupvar(name,options)
     else
-      :undefined
+      nil
     end
   end
 

@@ -245,7 +245,7 @@ describe Puppet::Parser::Scope do
 
     context "deprecated scoping" do
       before :each do
-        Puppet.expects(:deprecation_warning)
+        Puppet.expects(:deprecation_warning).at_least(1)
       end
 
       it "prefers values in its included scope over those from the node (DEPRECATED)" do
