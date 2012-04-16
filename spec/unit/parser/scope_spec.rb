@@ -1,13 +1,13 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 describe Puppet::Parser::Scope do
   before :each do
-    @topscope = Puppet::Parser::Scope.new
-    # This is necessary so we don't try to use the compiler to discover our parent.
-    @topscope.parent = nil
     @scope = Puppet::Parser::Scope.new
     @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope.source = Puppet::Resource::Type.new(:node, :foo)
+    @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
   end
 
@@ -92,14 +92,6 @@ describe Puppet::Parser::Scope do
       scope = Puppet::Parser::Scope.new
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
-
-    it "should remember if it is dynamic" do
-      (!!Puppet::Parser::Scope.new(:dynamic => true).dynamic).should == true
-    end
-
-    it "should assume it is not dynamic" do
-      (!Puppet::Parser::Scope.new.dynamic).should == true
-    end
   end
 
   describe "when looking up a variable" do
@@ -154,10 +146,20 @@ describe Puppet::Parser::Scope do
       @scope.singleton_class.ancestors.should be_include(Enumerable)
     end
 
+    it "should be able to look up intermediary variables in parent scopes (DEPRECATED)" do
+      Puppet.expects(:deprecation_warning)
+      thirdscope = Puppet::Parser::Scope.new
+      thirdscope.parent = @scope
+      thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
+      @scope.source = Puppet::Resource::Type.new(:hostclass, :bar, :module_name => "bar")
+
+      @topscope.setvar("var2","parentval")
+      @scope.setvar("var2","childval")
+      thirdscope.lookupvar("var2").should == "childval"
+    end
+
     describe "and the variable is qualified" do
-      before do
-        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode"))
-        @scope.compiler = @compiler
+      before :each do
         @known_resource_types = @scope.known_resource_types
       end
 
@@ -177,6 +179,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from main" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("")
 
         other_scope["othervar"] = "otherval"
@@ -185,6 +188,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other")
 
         other_scope["var"] = "otherval"
@@ -193,6 +197,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up deeply qualified variables" do
+        Puppet.expects(:deprecation_warning).never
         other_scope = create_class_scope("other::deep::klass")
 
         other_scope["var"] = "otherval"
@@ -230,8 +235,311 @@ describe Puppet::Parser::Scope do
     end
   end
 
+  describe "when mixing inheritence and inclusion" do
+    include PuppetSpec::Compiler
+
+    def expect_the_message_to_be(message) 
+      catalog = compile_to_catalog(yield)
+      catalog.resource('Notify', 'something')[:message].should == message
+    end
+
+    context "deprecated scoping" do
+      before :each do
+        Puppet.expects(:deprecation_warning)
+      end
+
+      it "prefers values in its included scope over those from the node (DEPRECATED)" do
+        expect_the_message_to_be('baz_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include foo
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+            class foo inherits baz {
+            }
+            class bar {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its included scope (DEPRECATED)" do
+        expect_the_message_to_be('baz_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "recognizes a dynamically scoped boolean (DEPRECATED)" do
+        expect_the_message_to_be(true) do <<-MANIFEST
+            node default {
+              $var = false
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = true
+              include bar
+            }
+          MANIFEST
+        end
+      end
+    end
+
+    context "supported scoping" do
+      before :each do
+        Puppet.expects(:deprecation_warning).never
+      end
+
+      it "finds value define in the inherited node" do
+        expect_the_message_to_be('parent_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              $var = "parent_msg"
+            }
+            node default inherits parent {
+              include foo
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds top scope when the class is included before the node defines the var" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              include foo
+            }
+            node default inherits parent {
+              $var = "default_msg"
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds top scope when the class is included before the node defines the var" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node parent {
+              include foo
+            }
+            node default inherits parent {
+              $var = "default_msg"
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+
+      it "should find values in its local scope" do
+        expect_the_message_to_be('local_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              $var = "local_msg"
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "should find values in its inherited scope" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "prefers values in its inherited scope over those in the node (with intermediate inclusion)" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "prefers values in its inherited scope over those in the node (without intermediate inclusion)" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include bar
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "prefers values in its inherited scope over those from where it is included" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              $var = "baz_msg"
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "does not used variables from classes included in the inherited scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include bar
+            }
+            class quux {
+              $var = "quux_msg"
+            }
+            class foo inherits quux {
+            }
+            class baz {
+              include foo
+            }
+            class bar inherits baz {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "does not use a variable from a scope lexically enclosing it" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include other::bar
+            }
+            class other {
+              $var = "other_msg"
+              class bar {
+                notify { 'something': message => $var, }
+              }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its node scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its top scope" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              include baz
+            }
+            class foo {
+            }
+            class bar inherits foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "prefers variables from the node over those in the top scope" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              $var = "node_msg"
+              include foo
+            }
+            class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+    end
+  end
+
   describe "when variables are set with append=true" do
-    it "should raise an error if the variable is already defined in this scope" do
+    it "should raise error if the variable is already defined in this scope" do
       @scope.setvar("var","1", :append => false)
       lambda { @scope.setvar("var","1", :append => true) }.should raise_error(Puppet::ParseError)
     end

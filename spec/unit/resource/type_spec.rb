@@ -238,7 +238,7 @@ describe Puppet::Resource::Type do
 
   describe "when setting its parameters in the scope" do
     before do
-      @scope = Puppet::Parser::Scope.new
+      @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
@@ -433,7 +433,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :dynamic => true, :namespace => 'foo', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :namespace => 'foo', :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
