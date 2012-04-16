@@ -147,7 +147,7 @@ class Puppet::Configurer
         fact_options = get_facts(options)
       end
 
-      if node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+      if node = Puppet::Node.indirection.find(Puppet[:node_name_value], :environment => @environment, :ignore_cache => true)
         if node.environment.to_s != @environment
           Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", changing."
           @environment = node.environment.to_s
@@ -197,7 +197,7 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
+    Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
   rescue => detail
     Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
