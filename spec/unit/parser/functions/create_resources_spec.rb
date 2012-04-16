@@ -42,8 +42,9 @@ describe 'function for dynamically creating resources' do
 
   describe 'when creating native types' do
     it 'empty hash should not cause resources to be added' do
-      catalog = compile_to_catalog("create_resources('file', {})")
-      catalog.resources.size.should == 3
+      noop_catalog = compile_to_catalog("create_resources('file', {})")
+      empty_catalog = compile_to_catalog("")
+      noop_catalog.resources.size.should == empty_catalog.resources.size
     end
 
     it 'should be able to add' do
