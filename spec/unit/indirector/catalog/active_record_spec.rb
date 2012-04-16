@@ -41,7 +41,7 @@ describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_datab
 
   describe "when saving an instance" do
     let :catalog do Puppet::Resource::Catalog.new("foo") end
-    let :request do Puppet::Indirector::Request.new(:active_record, :save, catalog) end
+    let :request do Puppet::Indirector::Request.new(:active_record, :save, nil, catalog) end
     let :node do Puppet::Node.new("foo", :environment => "environment") end
 
     before :each do

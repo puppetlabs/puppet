@@ -95,7 +95,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
 
   describe "#search" do
     def search_request(conditions)
-      Puppet::Indirector::Request.new(:facts, :search, nil, conditions)
+      Puppet::Indirector::Request.new(:facts, :search, nil, nil, conditions)
     end
 
     before :each do

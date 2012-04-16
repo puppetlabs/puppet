@@ -320,13 +320,12 @@ ERROR_STRING
   end
 
   def state
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
     if certificate_request
       return 'requested'
     end
 
     begin
-      Puppet::SSL::CertificateAuthority.new.verify(my_cert)
+      Puppet::SSL::CertificateAuthority.new.verify(name)
       return 'signed'
     rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
       return 'revoked'

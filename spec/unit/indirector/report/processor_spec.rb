@@ -29,7 +29,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     Puppet::Reports.expects(:report).never
     Puppet[:reports] = 'none'
 
-    request = Puppet::Indirector::Request.new(:indirection_name, :head, "key")
+    request = Puppet::Indirector::Request.new(:indirection_name, :head, "key", nil)
     report = Puppet::Transaction::Report.new('apply')
     request.instance = report
 

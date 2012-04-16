@@ -393,14 +393,14 @@ describe Puppet::Configurer do
     it "should save the report if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report)
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash))
       @configurer.send_report(@report)
     end
 
     it "should not save the report if reporting is disabled" do
       Puppet.settings[:report] = false
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report).never
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash)).never
       @configurer.send_report(@report)
     end
 

@@ -31,8 +31,8 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.stubs(:find).with('node1', anything).returns(node1)
       Puppet::Node.indirection.stubs(:find).with('node2', anything).returns(node2)
 
-      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', :node => 'node1'))
-      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', :node => 'node2'))
+      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
+      compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
     end
 
     it "should provide a method for determining if the catalog is networked" do
@@ -50,7 +50,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @node = Puppet::Node.new @name
       @node.stubs(:merge)
       Puppet::Node.indirection.stubs(:find).returns @node
-      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, :node => @name)
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil, :node => @name)
     end
 
     it "should directly use provided nodes" do
@@ -184,7 +184,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = Puppet::Indirector::Request.new(:catalog, :find, @name)
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil)
       @compiler.stubs(:compile)
     end
 
@@ -203,7 +203,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = Puppet::Indirector::Request.new(:catalog, :find, @name)
+      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil)
       @compiler.stubs(:compile)
       Puppet::Node.indirection.stubs(:find).with(@name, anything).returns(@node)
     end

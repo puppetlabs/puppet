@@ -36,7 +36,7 @@ describe Puppet::Node::Exec do
         return YAML.dump(result)
       end
 
-      @request = Puppet::Indirector::Request.new(:node, :find, @name)
+      @request = Puppet::Indirector::Request.new(:node, :find, @name, nil)
     end
 
     it "should translate the YAML into a Node instance" do
