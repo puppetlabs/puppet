@@ -110,7 +110,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Remove this when rebasing
   def environment
     compiler ? compiler.environment : Puppet::Node::Environment.new
   end
@@ -211,8 +210,6 @@ class Puppet::Parser::Scope
       }
     end
 
-    #Puppet.debug "Got defaults for %s: %s" %
-    #    [type,values.inspect]
     values
   end
 
@@ -327,16 +324,6 @@ class Puppet::Parser::Scope
     @parent.source.module_name
   end
 
-  # Return the list of scopes up to the top scope, ordered with our own first.
-  # This is used for looking up variables and defaults.
-  def scope_path
-    if parent
-      [self, parent.scope_path].flatten.compact
-    else
-      [self]
-    end
-  end
-
   # Set defaults for a type.  The typename should already be downcased,
   # so that the syntax is isolated.  We don't do any kind of type-checking
   # here; instead we let the resource do it when the defaults are used.
@@ -347,8 +334,6 @@ class Puppet::Parser::Scope
     params = [params] unless params.is_a?(Array)
 
     params.each { |param|
-      #Puppet.debug "Default for %s is %s => %s" %
-      #    [type,ary[0].inspect,ary[1].inspect]
       if table.include?(param.name)
         raise Puppet::ParseError.new("Default already defined for #{type} { #{param.name} }; cannot redefine", param.line, param.file)
       end
@@ -361,7 +346,7 @@ class Puppet::Parser::Scope
   # to be reassigned.
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
-  def setvar(name,value, options = {})
+  def setvar(name, value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
     if table.include?(name)
       unless options[:append]
@@ -392,9 +377,7 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Return the tags associated with this scope.  It's basically
-  # just our parents' tags, plus our type.  We don't cache this value
-  # because our parent tags might change between calls.
+  # Return the tags associated with this scope.
   def tags
     resource.tags
   end
@@ -402,12 +385,6 @@ class Puppet::Parser::Scope
   # Used mainly for logging
   def to_s
     "Scope(#{@resource})"
-  end
-
-  # Undefine a variable; only used for testing.
-  def unsetvar(var)
-    table = ephemeral?(var) ? @ephemeral.last : @symtable
-    table.delete(var) if table.include?(var)
   end
 
   # remove ephemeral scope up to level

@@ -773,27 +773,6 @@ describe Puppet::Parser::Scope do
     end
   end
 
-  describe "when unsetting variables" do
-    it "should be able to unset normal variables" do
-      @scope["foo"] = "bar"
-      @scope.unsetvar("foo")
-      @scope["foo"].should be_nil
-    end
-
-    it "should be able to unset ephemeral variables" do
-      @scope.setvar("0", "bar", :ephemeral => true)
-      @scope.unsetvar("0")
-      @scope["0"].should be_nil
-    end
-
-    it "should not unset ephemeral variables in previous ephemeral scope" do
-      @scope.setvar("0", "bar", :ephemeral => true)
-      @scope.new_ephemeral
-      @scope.unsetvar("0")
-      @scope["0"].should == "bar"
-    end
-  end
-
   it "should use its namespaces to find hostclasses" do
     klass = @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "a::b::c")
     @scope.add_namespace "a::b"
