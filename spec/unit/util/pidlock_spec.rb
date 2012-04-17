@@ -45,21 +45,10 @@ describe Puppet::Util::Pidlock do
       @lock.lock.should be_true
     end
 
-    it "should return false if locked by someone else" do
-      Process.stubs(:kill)
-      File.open(@lockfile, "w") { |fd| fd.print('0') }
-
-      @lock.lock.should be_false
-    end
 
     it "should create a lock file" do
       @lock.lock
       File.should be_exists(@lockfile)
-    end
-
-    it "should create a lock file containing our pid" do
-      @lock.lock
-      File.read(@lockfile).to_i.should == Process.pid.to_i
     end
   end
 
@@ -95,10 +84,16 @@ describe Puppet::Util::Pidlock do
 
   describe "with a stale lock" do
     before(:each) do
+      # fake our pid to be 1234
+      Process.stubs(:pid).returns(1234)
+      # lock the file
+      @lock.lock
+      # fake our pid to be a different pid, to simulate someone else
+      #  holding the lock
+      Process.stubs(:pid).returns(6789)
+
       Process.stubs(:kill).with(0, 6789)
       Process.stubs(:kill).with(0, 1234).raises(Errno::ESRCH)
-      Process.stubs(:pid).returns(6789)
-      File.open(@lockfile, 'w') { |fd| fd.write("1234") }
     end
 
     it "should not be locked" do
@@ -134,10 +129,16 @@ describe Puppet::Util::Pidlock do
 
   describe "with another process lock" do
     before(:each) do
+      # fake our pid to be 1234
+      Process.stubs(:pid).returns(1234)
+      # lock the file
+      @lock.lock
+      # fake our pid to be a different pid, to simulate someone else
+      #  holding the lock
+      Process.stubs(:pid).returns(6789)
+
       Process.stubs(:kill).with(0, 6789)
       Process.stubs(:kill).with(0, 1234)
-      Process.stubs(:pid).returns(6789)
-      File.open(@lockfile, 'w') { |fd| fd.write("1234") }
     end
 
     it "should be locked" do

@@ -10,7 +10,6 @@ end
 describe Puppet::Agent::Disabler do
   before do
     @disabler = DisablerTester.new
-    @disabler.stubs(:disabled_lockfile_path).returns "/my/lock"
   end
 
 
@@ -44,12 +43,6 @@ describe Puppet::Agent::Disabler do
     @disabler.disable
   end
 
-  it "should disable with a message" do
-    @disabler.send(:disable_lockfile).expects(:lock).with("disabled because")
-
-    @disabler.disable("disabled because")
-  end
-
   it "should unlock the file when enabled" do
     @disabler.send(:disable_lockfile).expects(:unlock)
 
@@ -63,7 +56,13 @@ describe Puppet::Agent::Disabler do
   end
 
   it "should report the disable message when disabled" do
-    @disabler.send(:disable_lockfile).expects(:message).returns("message")
-    @disabler.disable_message.should == "message"
+    lockfile = PuppetSpec::Files.tmpfile("lock")
+    lock = Puppet::Util::JsonFilelock.new(lockfile)
+    Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
+    Puppet::Util::JsonFilelock.expects(:new).with("/my/lock.disabled").returns lock
+
+    msg = "I'm busy, go away"
+    @disabler.disable(msg)
+    @disabler.disable_message.should == msg
   end
 end

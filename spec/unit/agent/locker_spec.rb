@@ -10,7 +10,6 @@ end
 describe Puppet::Agent::Locker do
   before do    
     @locker = LockerTester.new
-    @locker.stubs(:running_lockfile_path).returns "/my/lock"
   end
 
   ## These tests are currently very implementation-specific, and they rely heavily on

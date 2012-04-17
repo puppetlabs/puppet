@@ -11,8 +11,12 @@ module Puppet::Agent::Disabler
   end
 
   # Stop the daemon from making any catalog runs.
-  def disable(msg='')
-    disable_lockfile.lock(msg)
+  def disable(msg=nil)
+    data = {}
+    if (! msg.nil?)
+      data["disabled_message"] = msg
+    end
+    disable_lockfile.lock(data)
   end
 
   def disabled?
@@ -20,7 +24,12 @@ module Puppet::Agent::Disabler
   end
 
   def disable_message
-    disable_lockfile.message
+    data = disable_lockfile.lock_data
+    return nil if data.nil?
+    if data.has_key?("disabled_message")
+      return data["disabled_message"]
+    end
+    nil
   end
 
 

@@ -1,11 +1,15 @@
 require 'fileutils'
-require 'puppet/util/json_filelock'
+require 'puppet/util/lockfile'
 
-class Puppet::Util::Pidlock < Puppet::Util::JsonFilelock
+class Puppet::Util::Pidlock
+
+  def initialize(lockfile)
+    @lockfile = Puppet::Util::Lockfile.new(lockfile)
+  end
 
   def locked?
     clear_if_stale
-    File.exists? @lockfile
+    @lockfile.locked?
   end
 
   def mine?
@@ -15,28 +19,22 @@ class Puppet::Util::Pidlock < Puppet::Util::JsonFilelock
   def lock
     return mine? if locked?
 
-    File.open(@lockfile, "w") { |fd| fd.write(Process.pid) }
-    true
+    @lockfile.lock(Process.pid)
   end
 
   def unlock()
     if mine?
-      File.unlink(@lockfile)
-      true
+      return @lockfile.unlock
     else
       false
     end
   end
 
   def lock_pid
-    if File.exists? @lockfile
-      File.read(@lockfile).to_i
-    else
-      nil
-    end
+    @lockfile.lock_data.to_i
   end
 
-  private
+
   def clear_if_stale
     return if lock_pid.nil?
 
@@ -47,8 +45,9 @@ class Puppet::Util::Pidlock < Puppet::Util::JsonFilelock
     begin
       Process.kill(0, lock_pid)
     rescue *errors
-      File.unlink(@lockfile)
+      @lockfile.unlock
     end
   end
+  private :clear_if_stale
 
 end
