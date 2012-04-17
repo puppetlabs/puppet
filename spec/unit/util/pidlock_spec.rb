@@ -12,10 +12,6 @@ describe Puppet::Util::Pidlock do
     @lock = Puppet::Util::Pidlock.new(@lockfile)
   end
 
-  it "should not be anonymous" do
-    @lock.should_not be_anonymous
-  end
-
   describe "#lock" do
     it "should not be locked at start" do
       @lock.should_not be_locked

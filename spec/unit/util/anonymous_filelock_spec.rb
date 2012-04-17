@@ -12,10 +12,6 @@ describe Puppet::Util::AnonymousFilelock do
     @lock = Puppet::Util::AnonymousFilelock.new(@lockfile)
   end
 
-  it "should be anonymous" do
-    @lock.should be_anonymous
-  end
-
   describe "#lock" do
     it "should return false if already locked" do
       @lock.stubs(:locked?).returns(true)

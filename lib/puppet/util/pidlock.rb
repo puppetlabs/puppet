@@ -12,10 +12,6 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
     Process.pid == lock_pid
   end
 
-  def anonymous?
-    false
-  end
-
   def lock
     return mine? if locked?
 
@@ -23,10 +19,8 @@ class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
     true
   end
 
-  def unlock(opts = {})
-    opts = {:anonymous => false}.merge(opts)
-
-    if mine? or (opts[:anonymous] and anonymous?)
+  def unlock()
+    if mine?
       File.unlink(@lockfile)
       true
     else

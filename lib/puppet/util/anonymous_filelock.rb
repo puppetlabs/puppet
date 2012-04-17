@@ -6,10 +6,6 @@ class Puppet::Util::AnonymousFilelock
     @lockfile = lockfile
   end
 
-  def anonymous?
-    true
-  end
-
   def lock(msg = '')
     return false if locked?
 

@@ -64,9 +64,8 @@ describe Puppet::Agent do
   it "should be considered running if the lock file is locked and not anonymous" do
     lockfile = mock 'lockfile'
 
-    @agent.expects(:lockfile).returns(lockfile).twice
+    @agent.expects(:lockfile).returns(lockfile)
     lockfile.expects(:locked?).returns true
-    lockfile.expects(:anonymous?).returns false
 
     @agent.should be_running
   end
