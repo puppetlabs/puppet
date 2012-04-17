@@ -9,7 +9,8 @@ describe content do
   include PuppetSpec::Files
   before do
     @filename = tmpfile('testfile')
-    @resource = Puppet::Type.type(:file).new :path => @filename
+    @catalog = Puppet::Resource::Catalog.new
+    @resource = Puppet::Type.type(:file).new :path => @filename, :catalog => @catalog
     File.open(@filename, 'w') {|f| f.write "initial file content"}
     content.stubs(:standalone?).returns(false)
   end
@@ -305,7 +306,7 @@ describe content do
     describe "from local source" do
       before(:each) do
         @sourcename = tmpfile('source')
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename, :catalog => @catalog
 
         @source_content = "source file content\r\n"*10000
         @sourcefile = File.open(@sourcename, 'wb') {|f| f.write @source_content}
@@ -328,7 +329,7 @@ describe content do
 
     describe "from remote source" do
       before(:each) do
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :catalog => @catalog
         @response = stub_everything 'response', :code => "200"
         @source_content = "source file content\n"*10000
         @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
