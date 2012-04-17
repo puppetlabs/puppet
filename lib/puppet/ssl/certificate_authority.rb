@@ -229,10 +229,16 @@ class Puppet::SSL::CertificateAuthority
   def revoke(name)
     raise ArgumentError, "Cannot revoke certificates when the CRL is disabled" unless crl
 
-    if cert = Puppet::SSL::Certificate.indirection.find(name)
-      serial = cert.content.serial
-    elsif ! serial = inventory.serial(name)
-      raise ArgumentError, "Could not find a serial number for #{name}"
+    if name =~ /^(0x[0-9a-f]+)$/
+      serial = $1.to_i(16)
+    elsif name =~ /^(\d+)$/
+      serial = $1.to_i(10)
+    else
+      if cert = Puppet::SSL::Certificate.indirection.find(name)
+        serial = cert.content.serial
+      elsif ! serial = inventory.serial(name)
+        raise ArgumentError, "Could not find a serial number for #{name}"
+      end
     end
     crl.revoke(serial, host.key.content)
   end
