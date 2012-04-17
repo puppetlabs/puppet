@@ -1,7 +1,7 @@
 require 'fileutils'
-require 'puppet/util/anonymous_filelock'
+require 'puppet/util/json_filelock'
 
-class Puppet::Util::Pidlock < Puppet::Util::AnonymousFilelock
+class Puppet::Util::Pidlock < Puppet::Util::JsonFilelock
 
   def locked?
     clear_if_stale

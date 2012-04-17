@@ -21,15 +21,15 @@ describe Puppet::Agent::Disabler do
   ##  but for the moment I wanted to make sure not to lose any of the functionality of
   ##  the tests. --cprice 2012-04-16
 
-  it "should use an AnonymousFilelock instance as its disable_lockfile" do
-    @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::AnonymousFilelock)
+  it "should use an JsonFilelock instance as its disable_lockfile" do
+    @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::JsonFilelock)
   end
 
 
   it "should use puppet's :agent_disabled_lockfile' setting to determine its lockfile path" do
     Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
-    lock = Puppet::Util::AnonymousFilelock.new("/my/lock.disabled")
-    Puppet::Util::AnonymousFilelock.expects(:new).with("/my/lock.disabled").returns lock
+    lock = Puppet::Util::JsonFilelock.new("/my/lock.disabled")
+    Puppet::Util::JsonFilelock.expects(:new).with("/my/lock.disabled").returns lock
 
     @disabler.send(:disable_lockfile)
   end
@@ -38,7 +38,7 @@ describe Puppet::Agent::Disabler do
     @disabler.send(:disable_lockfile).should equal(@disabler.send(:disable_lockfile))
   end
 
-  it "should lock the anonymous lock when disabled" do
+  it "should lock the file when disabled" do
     @disabler.send(:disable_lockfile).expects(:lock)
 
     @disabler.disable
@@ -50,7 +50,7 @@ describe Puppet::Agent::Disabler do
     @disabler.disable("disabled because")
   end
 
-  it "should unlock the anonymous lock when enabled" do
+  it "should unlock the file when enabled" do
     @disabler.send(:disable_lockfile).expects(:unlock)
 
     @disabler.enable

@@ -1,5 +1,5 @@
 
-class Puppet::Util::AnonymousFilelock
+class Puppet::Util::JsonFilelock
   attr_reader :lockfile
 
   def initialize(lockfile)

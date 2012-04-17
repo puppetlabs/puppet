@@ -1,15 +1,15 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/util/anonymous_filelock'
+require 'puppet/util/json_filelock'
 
-describe Puppet::Util::AnonymousFilelock do
+describe Puppet::Util::JsonFilelock do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 
   before(:each) do
     @lockfile = tmpfile("lock")
-    @lock = Puppet::Util::AnonymousFilelock.new(@lockfile)
+    @lock = Puppet::Util::JsonFilelock.new(@lockfile)
   end
 
   describe "#lock" do

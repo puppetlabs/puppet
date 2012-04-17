@@ -1,4 +1,4 @@
-require 'puppet/util/anonymous_filelock'
+require 'puppet/util/json_filelock'
 
 # This module is responsible for encapsulating the logic for
 #  "disabling" the puppet agent during a run; in other words,
@@ -25,7 +25,7 @@ module Puppet::Agent::Disabler
 
 
   def disable_lockfile
-    @disable_lockfile ||= Puppet::Util::AnonymousFilelock.new(Puppet[:agent_disabled_lockfile])
+    @disable_lockfile ||= Puppet::Util::JsonFilelock.new(Puppet[:agent_disabled_lockfile])
 
     @disable_lockfile
   end
