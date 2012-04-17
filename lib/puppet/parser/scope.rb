@@ -325,22 +325,26 @@ class Puppet::Parser::Scope
     end
 
     if options[:append]
-      # lookup the value in the scope if it exists and insert the var
-      table[name] = undef_as('', self[name])
-      # concatenate if string, append if array, nothing for other types
-      case value
-      when Array
-        table[name] += value
-      when Hash
-        table[name].merge!(value)
-      else
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" if table[name].is_a?(Hash)
-        table[name] << value
-      end
+      table[name] = append_value(undef_as('', self[name]), value)
     else 
       table[name] = value
     end
   end
+
+  def append_value(bound_value, new_value)
+    case new_value
+    when Array
+      bound_value + new_value
+    when Hash
+      bound_value.merge(new_value)
+    else
+      if bound_value.is_a?(Hash)
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" 
+      end
+      bound_value + new_value
+    end
+  end
+  private :append_value
 
   # Return the tags associated with this scope.
   def tags
