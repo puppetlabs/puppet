@@ -1019,15 +1019,15 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
-    :agent_running_lockfile => {
-      :default    => "$statedir/agent_running.lock",
+    :agent_pidfile => {
+      :default    => "$statedir/agent.pid",
     :type         => :file,
-      :desc       => "A lock file to indicate that a puppet agent run is currently in progress.",
+      :desc       => "A lock file to indicate that a puppet agent run is currently in progress.  File contains the pid of the running process.",
     },
     :agent_disabled_lockfile => {
         :default    => "$statedir/agent_disabled.lock",
         :type         => :file,
-        :desc       => "A lock file to indicate that puppet agent runs have been administratively disabled.",
+        :desc       => "A lock file to indicate that puppet agent runs have been administratively disabled.  File contains a JSON object with state information.",
     },
     :usecacheonfailure => {
       :default    => true,

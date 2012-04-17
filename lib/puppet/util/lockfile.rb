@@ -1,4 +1,11 @@
-
+# This class provides a simple API for managing a lock file
+# whose contents are an (optional) String.  In addition
+# to querying the basic state (#locked?) of the lock, managing
+# the lock (#lock, #unlock), the contents can be retrieved at
+# any time while the lock is held (#lock_data).  This can be
+# used to store pids, messages, etc.
+#
+# @see Puppet::Util::JsonLockfile
 class Puppet::Util::Lockfile
   attr_reader :file_path
 

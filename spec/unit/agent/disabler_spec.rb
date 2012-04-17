@@ -20,15 +20,15 @@ describe Puppet::Agent::Disabler do
   ##  but for the moment I wanted to make sure not to lose any of the functionality of
   ##  the tests. --cprice 2012-04-16
 
-  it "should use an JsonFilelock instance as its disable_lockfile" do
-    @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::JsonFilelock)
+  it "should use an JsonLockfile instance as its disable_lockfile" do
+    @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::JsonLockfile)
   end
 
 
   it "should use puppet's :agent_disabled_lockfile' setting to determine its lockfile path" do
     Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
-    lock = Puppet::Util::JsonFilelock.new("/my/lock.disabled")
-    Puppet::Util::JsonFilelock.expects(:new).with("/my/lock.disabled").returns lock
+    lock = Puppet::Util::JsonLockfile.new("/my/lock.disabled")
+    Puppet::Util::JsonLockfile.expects(:new).with("/my/lock.disabled").returns lock
 
     @disabler.send(:disable_lockfile)
   end
@@ -57,9 +57,9 @@ describe Puppet::Agent::Disabler do
 
   it "should report the disable message when disabled" do
     lockfile = PuppetSpec::Files.tmpfile("lock")
-    lock = Puppet::Util::JsonFilelock.new(lockfile)
+    lock = Puppet::Util::JsonLockfile.new(lockfile)
     Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
-    Puppet::Util::JsonFilelock.expects(:new).with("/my/lock.disabled").returns lock
+    Puppet::Util::JsonLockfile.expects(:new).with("/my/lock.disabled").returns lock
 
     msg = "I'm busy, go away"
     @disabler.disable(msg)

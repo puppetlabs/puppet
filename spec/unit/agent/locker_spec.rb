@@ -23,8 +23,8 @@ describe Puppet::Agent::Locker do
     @locker.send(:lockfile).should be_instance_of(Puppet::Util::Pidlock)
   end
 
-  it "should use puppet's :agent_running_lockfile' setting to determine its lockfile path" do
-    Puppet.expects(:[]).with(:agent_running_lockfile).returns("/my/lock")
+  it "should use puppet's :agent_pidfile' setting to determine its lockfile path" do
+    Puppet.expects(:[]).with(:agent_pidfile).returns("/my/lock")
     lock = Puppet::Util::Pidlock.new("/my/lock")
     Puppet::Util::Pidlock.expects(:new).with("/my/lock").returns lock
 

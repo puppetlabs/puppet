@@ -1,6 +1,15 @@
 require 'puppet/util/lockfile'
 
-class Puppet::Util::JsonFilelock < Puppet::Util::Lockfile
+# This class provides a simple API for managing a lock file
+# whose contents are a serialized JSON object.  In addition
+# to querying the basic state (#locked?) of the lock, managing
+# the lock (#lock, #unlock), the contents can be retrieved at
+# any time while the lock is held (#lock_data).  This can be
+# used to store structured data (state messages, etc.) about
+# the lock.
+#
+# @see Puppet::Util::Lockfile
+class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
   # Lock the lockfile.  You may optionally pass a data object, which will be
   # retrievable for the duration of time during which the file is locked.
   #
