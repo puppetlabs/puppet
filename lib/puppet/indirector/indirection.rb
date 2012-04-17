@@ -264,8 +264,8 @@ class Puppet::Indirector::Indirection
 
   # Save the instance in the appropriate terminus.  This method is
   # normally an instance method on the indirected class.
-  def save(instance, key = nil)
-    request = request(:save, key, instance)
+  def save(instance, key = nil, *args)
+    request = request(:save, key, instance, *args)
     terminus = prepare(request)
 
     result = terminus.save(request)

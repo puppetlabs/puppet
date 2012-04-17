@@ -12,7 +12,7 @@ module Puppet::Configurer::FactHandler
     # finding facts and the 'rest' terminus for caching them.  Thus, we'll
     # compile them and then "cache" them on the server.
     begin
-      facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+      facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value], :environment => @environment)
       unless Puppet[:node_name_fact].empty?
         Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
         facts.name = Puppet[:node_name_value]

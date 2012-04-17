@@ -228,7 +228,7 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true, :environment => @environment))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -240,7 +240,7 @@ class Puppet::Configurer
   def retrieve_new_catalog(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true, :environment => @environment))
     end
     result
   rescue SystemExit,NoMemoryError
