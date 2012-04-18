@@ -1,4 +1,4 @@
-Puppet::Type.type(:service).provide :upstart, :parent => :init do
+Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   desc "Ubuntu service management with `upstart`.
 
   This provider manages `upstart` jobs, which have replaced `initd` services
@@ -6,6 +6,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   "
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
+  
+  defaultfor :operatingsystem => :ubuntu
 
   commands :start   => "/sbin/start",
            :stop    => "/sbin/stop",
@@ -39,33 +41,43 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   end
 
   def startcmd
-    [command(:start), @resource[:name]]
+    if is_upstart?
+      [command(:start), @resource[:name]]
+    else
+      super
+    end
   end
 
   def stopcmd
-    [command(:stop), @resource[:name]]
+    if is_upstart? then
+      [command(:stop), @resource[:name]]
+    else
+      super
+    end
   end
 
   def restartcmd
-    (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]]
-  end
-
-  def status
-    # allows user override of status command
-    if @resource[:status]
-      ucommand(:status, false)
-      if $?.exitstatus == 0
-        return :running
-      else
-        return :stopped
-      end
+    if is_upstart? then
+      (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]]
     else
-      output = status_exec(@resource[:name].split)
-      if (! $?.nil?) && (output =~ /start\//)
-        return :running
+      super
+    end
+  end
+  
+  def statuscmd
+    if @resource[:hasstatus] == :true then 
+      # Workaround the fact that initctl status command doesn't return
+      # proper exit codes. Can be removed once LP: #552786 is fixed.
+      if is_upstart? then
+        ['sh', '-c', "LANG=C invoke-rc.d #{File::basename(initscript)} status | grep -q '^#{File::basename(initscript)}.*running'" ]
       else
-        return :stopped
+        super
       end
     end
   end
+  
+  def is_upstart?
+    File.symlink?(initscript) && File.readlink(initscript) == "/lib/init/upstart-job"
+  end
+
 end
