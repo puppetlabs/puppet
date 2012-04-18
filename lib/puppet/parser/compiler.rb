@@ -127,7 +127,7 @@ class Puppet::Parser::Compiler
 
   # Evaluate all of the classes specified by the node.
   def evaluate_node_classes
-    evaluate_classes(@node.classes, topscope)
+    evaluate_classes(@node.classes, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
@@ -222,6 +222,8 @@ class Puppet::Parser::Compiler
     resource = astnode.ensure_in_catalog(topscope)
 
     resource.evaluate
+
+    @node_scope = topscope.class_scope(astnode)
   end
 
   # Evaluate our collections and return true if anything returned an object.
