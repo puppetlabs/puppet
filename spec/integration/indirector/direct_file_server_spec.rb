@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/indirector/file_content/file'
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model", :fails_on_windows => true do
+describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model" do
   include PuppetSpec::Files
 
   before do
@@ -14,19 +14,23 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 
   it "should return an instance of the model" do
-    FileTest.expects(:exists?).with(@filepath).returns(true)
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      FileTest.expects(:exists?).with(@filepath).returns(true)
 
-    @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}")).should be_instance_of(Puppet::FileServing::Content)
+      @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}")).should be_instance_of(Puppet::FileServing::Content)
+    end
   end
 
   it "should return an instance capable of returning its content" do
-    FileTest.expects(:exists?).with(@filepath).returns(true)
-    File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
-    IO.expects(:binread).with(@filepath).returns("my content")
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      FileTest.expects(:exists?).with(@filepath).returns(true)
+      File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
+      IO.expects(:binread).with(@filepath).returns("my content")
 
-    instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}"))
+      instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}"))
 
-    instance.content.should == "my content"
+      instance.content.should == "my content"
+    end
   end
 end
 

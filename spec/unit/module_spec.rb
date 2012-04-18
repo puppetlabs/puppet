@@ -785,29 +785,31 @@ describe Puppet::Module do
     it "should fail if the discovered name is different than the metadata name"
   end
 
-  it "should be able to tell if there are local changes", :fails_on_windows => true do
-    modpath = tmpdir('modpath')
-    foo_checksum = 'acbd18db4cc2f85cedef654fccc4a4d8'
-    checksummed_module = PuppetSpec::Modules.create(
-      'changed',
-      modpath,
-      :metadata => {
-        :checksums => {
-          "foo" => foo_checksum,
+  it "should be able to tell if there are local changes" do
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      modpath = tmpdir('modpath')
+      foo_checksum = 'acbd18db4cc2f85cedef654fccc4a4d8'
+      checksummed_module = PuppetSpec::Modules.create(
+        'changed',
+        modpath,
+        :metadata => {
+          :checksums => {
+            "foo" => foo_checksum,
+          }
         }
-      }
-    )
+      )
 
-    foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
+      foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
 
-    IO.binwrite(foo_path, 'notfoo')
-    Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
-    checksummed_module.has_local_changes?.should be_true
+      IO.binwrite(foo_path, 'notfoo')
+      Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
+      checksummed_module.has_local_changes?.should be_true
 
-    IO.binwrite(foo_path, 'foo')
+      IO.binwrite(foo_path, 'foo')
 
-    Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
-    checksummed_module.has_local_changes?.should be_false
+      Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
+      checksummed_module.has_local_changes?.should be_false
+    end
   end
 
   it "should know what other modules require it" do

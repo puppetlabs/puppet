@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Type, :fails_on_windows => true do
+describe Puppet::Type do
   include PuppetSpec::Files
 
   it "should be Comparable" do
@@ -738,7 +738,7 @@ describe Puppet::Type::RelationshipMetaparam do
     Puppet::Type::RelationshipMetaparam.should respond_to(:subclasses)
   end
 
-  describe "when munging relationships", :fails_on_windows => true do
+  describe "when munging relationships" do
     before do
       @path = make_absolute('/foo')
       @resource = Puppet::Type.type(:mount).new :name => @path
