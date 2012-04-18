@@ -19,6 +19,10 @@ class Puppet::Util::Settings::StringSetting
     @settings.set_value(name, @settings[name], :cli) if value
     raise ArgumentError, "Cannot unset setbycli" unless value
   end
+  
+  def type
+    :string
+  end
 
   # get the arguments in getopt format
   def getopt_args
