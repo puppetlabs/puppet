@@ -41,43 +41,47 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def startcmd
-    if is_upstart?
-      [command(:start), @resource[:name]]
-    else
-      super
-    end
+    is_upstart? ? [command(:start), @resource[:name]] : super
   end
 
   def stopcmd
-    if is_upstart? then
-      [command(:stop), @resource[:name]]
-    else
-      super
-    end
+    is_upstart? ? [command(:stop),  @resource[:name]] : super
   end
 
   def restartcmd
-    if is_upstart? then
-      (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]]
+    is_upstart? ? (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]] : super
+  end
+
+  def statuscmd
+    is_upstart? ? nil : super #this is because upstart is broken with its return codes
+  end
+  
+  def status
+    if @resource[:status]
+      is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
+    elsif is_upstart?
+      upstart_status
     else
       super
     end
   end
   
-  def statuscmd
-    if @resource[:hasstatus] == :true then 
-      # Workaround the fact that initctl status command doesn't return
-      # proper exit codes. Can be removed once LP: #552786 is fixed.
-      if is_upstart? then
-        ['sh', '-c', "LANG=C invoke-rc.d #{File::basename(initscript)} status | grep -q '^#{File::basename(initscript)}.*running'" ]
-      else
-        super
-      end
+  def normal_status
+    ucommand(:status, false)
+    ($?.exitstatus == 0) ? :running : :stopped
+  end
+  
+  def upstart_status(exec = @resource[:name])
+    output = status_exec(@resource[:name].split)
+    if (! $?.nil?) && (output =~ /start\//)
+      return :running
+    else
+      return :stopped
     end
   end
   
-  def is_upstart?
-    File.symlink?(initscript) && File.readlink(initscript) == "/lib/init/upstart-job"
+  def is_upstart?(script = initscript)
+    File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job"
   end
 
 end
