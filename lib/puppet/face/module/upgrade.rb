@@ -46,14 +46,6 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-#    option "--environment NAME" do
-#      default_to { "production" }
-#      summary "The target environment to search for modules."
-#      description <<-EOT
-#        The target environment to search for modules.
-#      EOT
-#    end
-
     option "--version=" do
       summary "The version of the module to upgrade to."
       description <<-EOT

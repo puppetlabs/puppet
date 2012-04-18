@@ -40,14 +40,6 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-#    option "--environment NAME" do
-#      default_to { "production" }
-#      summary "The target environment to uninstall modules from."
-#      description <<-EOT
-#        The target environment to uninstall modules from.
-#      EOT
-#    end
-
     option "--version=" do
       summary "The version of the module to uninstall"
       description <<-EOT
@@ -55,13 +47,6 @@ Puppet::Face.define(:module, '1.0.0') do
         matching the specified version must be installed or else an error is raised.
       EOT
     end
-
-#    option "--modulepath=" do
-#      summary "The target directory to search for modules."
-#      description <<-EOT
-#        The target directory to search for modules.
-#      EOT
-#    end
 
     when_invoked do |name, options|
       name = name.gsub('/', '-')
