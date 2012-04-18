@@ -162,14 +162,38 @@ describe Puppet::Util::Settings do
       @settings[:myval].should == ""
     end
 
-    it "should flag settings from the CLI" do
-      @settings.handlearg("--myval")
-      @settings.setting(:myval).setbycli.should be_true
+    it "should flag string settings from the CLI" do
+      @settings.handlearg("--myval", "12")
+      @settings.set_by_cli?(:myval).should be_true
     end
 
-    it "should not flag settings memory" do
+    it "should flag bool settings from the CLI" do
+      @settings[:bool] = false
+      @settings.handlearg("--bool")
+      @settings.set_by_cli?(:bool).should be_true
+    end
+
+    it "should not flag settings memory as from CLI" do
       @settings[:myval] = "12"
-      @settings.setting(:myval).setbycli.should be_false
+      @settings.set_by_cli?(:myval).should be_false
+    end
+    
+    describe "setbycli" do
+      it "should generate a deprecation warning" do
+        Puppet.expects(:deprecation_warning)
+        @settings.setting(:myval).setbycli = true
+      end
+      it "should set the value" do
+        @settings[:myval] = "blah"
+        @settings.setting(:myval).setbycli = true
+        @settings.set_by_cli?(:myval).should be_true
+      end
+      it "should raise error if trying to unset value" do
+        @settings.handlearg("--myval", "blah")
+        expect do
+          @settings.setting(:myval).setbycli = nil
+        end.to raise_error ArgumentError, /unset/
+      end
     end
 
     it "should clear the cache when setting getopt-specific values" do
@@ -326,6 +350,17 @@ describe Puppet::Util::Settings do
 
     it "should have a run_mode that defaults to user" do
       @settings.run_mode.should == :user
+    end
+    describe "setbycli" do
+      it "should generate a deprecation warning" do
+        @settings.handlearg("--one", "blah")
+        Puppet.expects(:deprecation_warning)
+        @settings.setting(:one).setbycli
+      end
+      it "should be true" do
+        @settings.handlearg("--one", "blah")
+        @settings.setting(:one).setbycli.should be_true
+      end
     end
   end
 

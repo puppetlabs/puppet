@@ -32,6 +32,7 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     when_invoked do |name, options|
+      Puppet::Module::Tool.set_option_defaults options
       Puppet::Module::Tool::Applications::Generator.run(name, options)
     end
 
