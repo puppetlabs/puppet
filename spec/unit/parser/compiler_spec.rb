@@ -761,23 +761,6 @@ describe Puppet::Parser::Compiler do
 
       @compiler.send(:evaluate_ast_node)
     end
-
-    it "should set the node's scope as the top scope" do
-      node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-      node_class = stub 'node', :name => "c", :ensure_in_catalog => node_resource
-
-      @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
-
-      # The #evaluate method normally does this.
-      scope = stub 'scope', :source => "mysource"
-      @compiler.topscope.expects(:class_scope).with(node_class).returns(scope)
-      node_resource.stubs(:evaluate)
-      @compiler.stubs :create_settings_scope
-
-      @compiler.compile
-
-      @compiler.topscope.should equal(scope)
-    end
   end
 
   describe "when managing resource overrides" do

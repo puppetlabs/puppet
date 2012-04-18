@@ -28,7 +28,7 @@ class Puppet::Parser::Compiler
     raise Puppet::Error, message
  end
 
-  attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
+  attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
 
   # Add a collection to the global list.
   def add_collection(coll)
@@ -204,12 +204,6 @@ class Puppet::Parser::Compiler
     @resource_overrides[resource.ref]
   end
 
-  # The top scope is usually the top-level scope, but if we're using AST nodes,
-  # then it is instead the node's scope.
-  def topscope
-    node_scope || @topscope
-  end
-
   private
 
   # If ast nodes are enabled, then see if we can find and evaluate one.
@@ -231,10 +225,6 @@ class Puppet::Parser::Compiler
     resource = astnode.ensure_in_catalog(topscope)
 
     resource.evaluate
-
-    # Now set the node scope appropriately, so that :topscope can
-    # behave differently.
-    @node_scope = topscope.class_scope(astnode)
   end
 
   # Evaluate our collections and return true if anything returned an object.
