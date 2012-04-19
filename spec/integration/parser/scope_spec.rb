@@ -241,6 +241,45 @@ describe "Two step scoping for variables" do
     end
   end
 
+  describe "in situations that used to have dynamic lookup" do
+    it "ignores the dynamic value of the var" do
+      expect_the_message_to_be('node_msg') do <<-MANIFEST
+          node default {
+            $var = "node_msg"
+            include foo
+          }
+          class baz {
+            $var = "baz_msg"
+            include bar
+          }
+          class foo inherits baz {
+          }
+          class bar {
+            notify { 'something': message => $var, }
+          }
+        MANIFEST
+      end
+    end
+
+    it "finds nil when the only set variable is in the dynamic scope" do
+      expect_the_message_to_be(nil) do <<-MANIFEST
+          node default {
+            include baz
+          }
+          class foo {
+          }
+          class bar inherits foo {
+            notify { 'something': message => $var, }
+          }
+          class baz {
+            $var = "baz_msg"
+            include bar
+          }
+        MANIFEST
+      end
+    end
+  end
+
   describe "using plussignment to change in a new scope" do
     it "does not change a string in the parent scope" do
       expect_the_message_to_be('top_msg') do <<-MANIFEST
