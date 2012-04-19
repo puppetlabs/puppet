@@ -22,7 +22,7 @@ describe "Package provider" do
         lambda { pkg.provider.install }.should raise_error
       end
 
-      it "should be able to get a list of existing packages", :fails_on_windows => true do
+      it "should be able to get a list of existing packages" do
         if provider.name == :msi
           Puppet[:vardir] = tmpdir('msi_package_var_dir')
         end

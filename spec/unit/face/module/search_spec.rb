@@ -3,7 +3,7 @@ require 'puppet/face'
 require 'puppet/application/module'
 require 'puppet/module_tool'
 
-describe "puppet module search", :fails_on_windows => true do
+describe "puppet module search" do
   subject { Puppet::Face[:module, :current] }
 
   let(:options) do

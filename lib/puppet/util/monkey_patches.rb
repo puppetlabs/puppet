@@ -2,8 +2,12 @@ require 'puppet/util'
 module Puppet::Util::MonkeyPatches
 end
 
-unless defined? JRUBY_VERSION
+begin
   Process.maxgroups = 1024
+rescue Exception
+  # Actually, I just want to ignore it, since various platforms - JRuby,
+  # Windows, and so forth - don't support it, but only because it isn't a
+  # meaningful or implementable concept there.
 end
 
 module RDoc
@@ -130,10 +134,15 @@ class IO
   def self.binwrite(name, string, offset = nil)
     # Determine if we should truncate or not.  Since the truncate method on a
     # file handle isn't implemented on all platforms, safer to do this in what
-    # looks like the libc interface - which is usually pretty robust.
+    # looks like the libc / POSIX flag - which is usually pretty robust.
     # --daniel 2012-03-11
     mode = Fcntl::O_CREAT | Fcntl::O_WRONLY | (offset.nil? ? Fcntl::O_TRUNC : 0)
-    IO.open(IO::sysopen(name, mode)) do |f|
+
+    # We have to duplicate the mode because Ruby on Windows is a bit precious,
+    # and doesn't actually carry over the mode.  It won't work to just use
+    # open, either, because that doesn't like our system modes and the default
+    # open bits don't do what we need, which is awesome. --daniel 2012-03-30
+    IO.open(IO::sysopen(name, mode), mode) do |f|
       # ...seek to our desired offset, then write the bytes.  Don't try to
       # seek past the start of the file, eh, because who knows what platform
       # would legitimately blow up if we did that.

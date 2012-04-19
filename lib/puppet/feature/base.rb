@@ -16,6 +16,8 @@ end
 # We can use Microsoft Windows functions
 Puppet.features.add(:microsoft_windows) do
   begin
+    require 'Win32API'          # case matters in this require!
+    require 'win32ole'
     require 'sys/admin'
     require 'win32/process'
     require 'win32/dir'

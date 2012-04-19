@@ -40,7 +40,7 @@ describe "the 'file' function" do
   it "should not fail when some files are absent" do
     expect {
       with_file_content('one') do |one|
-        scope.function_file(["/this-should-not-exist", one]).should == 'one'
+        scope.function_file([make_absolute("/should-not-exist"), one]).should == 'one'
       end
     }.should_not raise_error
   end

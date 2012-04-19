@@ -74,7 +74,6 @@ module Util::Execution
   #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
   #     of the command
   def self.execute(command, options = {})
-
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
