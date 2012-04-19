@@ -274,7 +274,7 @@ class Puppet::SSL::CertificateAuthority
     cert = Puppet::SSL::Certificate.new(hostname)
     cert.content = Puppet::SSL::CertificateFactory.
       build(cert_type, csr, issuer, next_serial)
-    cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
+    cert.content.sign(host.key.content, OpenSSL::Digest::SHA256.new)
 
     Puppet.notice "Signed certificate request for #{hostname}"
 
@@ -348,7 +348,7 @@ class Puppet::SSL::CertificateAuthority
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
 
-  def fingerprint(name, md = :MD5)
+  def fingerprint(name, md = :SHA256)
     unless cert = Puppet::SSL::Certificate.indirection.find(name) || Puppet::SSL::CertificateRequest.indirection.find(name)
       raise ArgumentError, "Could not find a certificate or csr for #{name}"
     end
