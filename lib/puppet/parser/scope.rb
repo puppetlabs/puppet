@@ -226,71 +226,36 @@ class Puppet::Parser::Scope
     end
   end
 
-  def qualified_scope(classname)
-    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
-    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
-    kscope
-  end
-
-  private :qualified_scope
-
-  # Look up a variable with traditional scoping and then with new scoping. If
-  # the answers differ then print a deprecation warning.
   def lookupvar(name, options = {})
-    dynamic_value = dynamic_lookupvar(name,options)
-    twoscope_value = twoscope_lookupvar(name,options)
-    if dynamic_value != twoscope_value
-      location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-      Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in a later version of Puppet.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
-    end
-    dynamic_value
-  end
-
-  # Look up a variable.  The simplest value search we do.
-  def twoscope_lookupvar(name, options = {})
     # Save the originating scope for the request
     options[:origin] = self unless options[:origin]
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     if name =~ /^(.*)::(.+)$/
       begin
-        qualified_scope($1).twoscope_lookupvar($2, options.merge({:origin => nil}))
+        qualified_scope($1).lookupvar($2, options.merge({:origin => nil}))
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
         nil
       end
     # If the value is present and either we are top/node scope or originating scope...
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
       table[name]
     elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
-      class_scope(parent_type).twoscope_lookupvar(name,options.merge({:origin => nil}))
+      class_scope(parent_type).lookupvar(name,options.merge({:origin => nil}))
     elsif parent
-      parent.twoscope_lookupvar(name, options)
+      parent.lookupvar(name, options)
     else
       nil
     end
   end
 
-  # Look up a variable.  The simplest value search we do.
-  def dynamic_lookupvar(name, options = {})
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
-    # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /^(.*)::(.+)$/
-      begin
-        qualified_scope($1).dynamic_lookupvar($2,options)
-      rescue RuntimeError => e
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        nil
-      end
-    elsif ephemeral_include?(name) or table.include?(name)
-      # We can't use "if table[name]" here because the value might be false
-      table[name]
-    elsif parent
-      parent.dynamic_lookupvar(name,options)
-    else
-      nil
-    end
+  def qualified_scope(classname)
+    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
+    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
+    kscope
   end
+  private :qualified_scope
 
   # Return a hash containing our variables and their values, optionally (and
   # by default) including the values defined in our parent.  Local values
