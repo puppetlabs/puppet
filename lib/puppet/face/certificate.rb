@@ -60,6 +60,18 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
+      
+      # We have a weird case where we have --dns_alt_names from Puppet, but
+      # this option is --dns-alt-names. Until we can get rid of --dns-alt-names
+      # or do a global tr('-', '_'), we have to support both.
+      # In supporting both, we'll use Puppet[:dns_alt_names] if specified on 
+      # command line. We'll use options[:dns_alt_names] if specified on
+      # command line. If both specified, we'll fail.
+      # jeffweiss 17 april 2012
+      
+      global_setting_from_cli = Puppet.settings.set_by_cli?(:dns_alt_names) == true
+      raise ArgumentError, "Can't specify both --dns_alt_names and --dns-alt-names" if options[:dns_alt_names] and global_setting_from_cli
+      options[:dns_alt_names] = Puppet[:dns_alt_names] if global_setting_from_cli
 
       # If dns_alt_names are specified via the command line, we will always add
       # them. Otherwise, they will default to the config file setting iff this

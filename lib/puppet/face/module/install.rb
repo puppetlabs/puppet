@@ -108,26 +108,6 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--modulepath MODULEPATH" do
-      default_to { Puppet.settings[:modulepath] }
-      summary "Which directories to look for modules in"
-      description <<-EOT
-        The list of directories to check for modules. When installing a new
-        module, this setting determines where the module tool will look for
-        its dependencies. If the `--target dir` option is not specified, the
-        first directory in the modulepath will also be used as the install
-        directory.
-
-        When installing a module into an environment whose modulepath is
-        specified in puppet.conf, you can use the `--environment` option
-        instead, and its modulepath will be used automatically.
-
-        This setting should be a list of directories separated by the path
-        separator character. (The path separator is `:` on Unix-like platforms
-        and `;` on Windows.)
-      EOT
-    end
-
     option "--version VER", "-v VER" do
       summary "Module version to install."
       description <<-EOT
@@ -136,25 +116,8 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option "--environment NAME" do
-      default_to { "production" }
-      summary "The target environment to install modules into."
-      description <<-EOT
-        The target environment to install modules into. Only applicable if
-        multiple environments (with different modulepaths) have been
-        configured in puppet.conf.
-      EOT
-    end
-
     when_invoked do |name, options|
-      sep = File::PATH_SEPARATOR
-      if options[:target_dir]
-        options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}"
-      end
-
-      Puppet.settings[:modulepath] = options[:modulepath]
-      options[:target_dir] = Puppet.settings[:modulepath].split(sep).first
-
+      Puppet::Module::Tool.set_option_defaults options
       Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
       Puppet::Module::Tool::Applications::Installer.run(name, options)
     end

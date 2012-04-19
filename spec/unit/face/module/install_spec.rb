@@ -72,7 +72,7 @@ describe "puppet module install" do
     end
 
     describe "when modulepath option is passed" do
-      let(:expected_options) { { :modulepath => fakemodpath, :environment => 'production' } }
+      let(:expected_options) { { :modulepath => fakemodpath, :environment => Puppet[:environment] } }
       let(:options)          { { :modulepath => fakemodpath } }
 
       describe "when target-dir option is not passed" do
@@ -94,7 +94,7 @@ describe "puppet module install" do
           options[:target_dir] = fakedirpath
           expected_options[:target_dir] = fakedirpath
           expected_options[:modulepath] = "#{fakedirpath}#{sep}#{fakemodpath}"
-
+          
           Puppet::Module::Tool::Applications::Installer.
             expects(:run).
             with("puppetlabs-apache", expected_options)

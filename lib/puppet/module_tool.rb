@@ -84,6 +84,20 @@ module Puppet
           build_tree(mod[:dependencies], dir)
         end
       end
+      
+      def self.set_option_defaults(options)
+        sep = File::PATH_SEPARATOR
+
+        prepend_target_dir = !! options[:target_dir]
+
+        options[:modulepath] ||= Puppet.settings[:modulepath]
+        options[:environment] ||= Puppet.settings[:environment]
+        options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}" if prepend_target_dir
+        Puppet[:modulepath] = options[:modulepath]
+        Puppet[:environment] = options[:environment]
+
+        options[:target_dir] = options[:modulepath].split(sep).first
+      end
     end
   end
 end

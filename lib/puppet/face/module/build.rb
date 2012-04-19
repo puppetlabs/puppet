@@ -26,6 +26,7 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<path>"
 
     when_invoked do |path, options|
+      Puppet::Module::Tool.set_option_defaults options
       Puppet::Module::Tool::Applications::Builder.run(path, options)
     end
 

@@ -622,6 +622,14 @@ class Puppet::Util::Settings
     end
     type
   end
+  
+  # Allow later inspection to determine if the setting was set on the
+  # command line, or through some other code path.  Used for the
+  # `dns_alt_names` option during cert generate. --daniel 2011-10-18
+  def set_by_cli?(param)
+    param = param.to_sym
+    !@values[:cli][param].nil?
+  end
 
   def set_value(param, value, type, options = {})
     param = param.to_sym
@@ -643,10 +651,6 @@ class Puppet::Util::Settings
     end
     type = legacy_to_mode(type, param)
     @sync.synchronize do # yay, thread-safe
-      # Allow later inspection to determine if the setting was set on the
-      # command line, or through some other code path.  Used for the
-      # `dns_alt_names` option during cert generate. --daniel 2011-10-18
-      setting.setbycli = true if type == :cli
 
       @values[type][param] = value
       @cache.clear
