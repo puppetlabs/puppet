@@ -34,6 +34,7 @@ describe provider_class do
     it "should use the default status command if none is specified" do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
       provider = provider_class.new(resource)
+      provider.stubs(:is_upstart?).returns(true)
 
       provider.expects(:status_exec).with(["foo"]).returns("foo start/running, process 1000")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
@@ -43,10 +44,47 @@ describe provider_class do
     it "should properly handle services with 'start' in their name" do
       resource = Puppet::Type.type(:service).new(:name => "foostartbar", :provider => :upstart)
       provider = provider_class.new(resource)
+      provider.stubs(:is_upstart?).returns(true)
 
       provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
       provider.status.should == :stopped
+    end    
+  end
+  describe "inheritance" do
+    let :resource do
+      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
+    
+    let :provider do
+      provider = provider_class.new(resource)
+    end
+    
+    describe "when upstart job" do
+      before(:each) do
+        provider.stubs(:is_upstart?).returns(true)
+      end
+      ["start", "stop"].each do |command|
+        it "should return the #{command}cmd of its parent provider" do
+          provider.send("#{command}cmd".to_sym).should == [provider.command(command.to_sym), resource.name]
+        end
+      end
+      it "should return nil for the statuscmd" do
+        provider.statuscmd.should be_nil
+      end
+    end
+    
+    describe "when init script" do
+      before(:each) do
+        provider.stubs(:is_upstart?).returns(false)
+      end
+      ["start", "stop", "status"].each do |command|
+        it "should return the #{command}cmd of its parent provider" do
+          provider.expects(:search).with('foo').returns("/etc/init.d/foo")
+          provider.send("#{command}cmd".to_sym).should == ["/etc/init.d/foo", command.to_sym]
+        end
+      end
+    end
+
   end
 end

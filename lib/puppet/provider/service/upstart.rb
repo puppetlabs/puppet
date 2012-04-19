@@ -1,4 +1,4 @@
-Puppet::Type.type(:service).provide :upstart, :parent => :init do
+Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   desc "Ubuntu service management with `upstart`.
 
   This provider manages `upstart` jobs, which have replaced `initd` services
@@ -6,6 +6,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   "
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
+  
+  defaultfor :operatingsystem => :ubuntu
 
   commands :start   => "/sbin/start",
            :stop    => "/sbin/stop",
@@ -39,33 +41,47 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   end
 
   def startcmd
-    [command(:start), @resource[:name]]
+    is_upstart? ? [command(:start), @resource[:name]] : super
   end
 
   def stopcmd
-    [command(:stop), @resource[:name]]
+    is_upstart? ? [command(:stop),  @resource[:name]] : super
   end
 
   def restartcmd
-    (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]]
+    is_upstart? ? (@resource[:hasrestart] == :true) && [command(:restart), @resource[:name]] : super
   end
 
+  def statuscmd
+    is_upstart? ? nil : super #this is because upstart is broken with its return codes
+  end
+  
   def status
-    # allows user override of status command
     if @resource[:status]
-      ucommand(:status, false)
-      if $?.exitstatus == 0
-        return :running
-      else
-        return :stopped
-      end
+      is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
+    elsif is_upstart?
+      upstart_status
     else
-      output = status_exec(@resource[:name].split)
-      if (! $?.nil?) && (output =~ /start\//)
-        return :running
-      else
-        return :stopped
-      end
+      super
     end
   end
+  
+  def normal_status
+    ucommand(:status, false)
+    ($?.exitstatus == 0) ? :running : :stopped
+  end
+  
+  def upstart_status(exec = @resource[:name])
+    output = status_exec(@resource[:name].split)
+    if (! $?.nil?) && (output =~ /start\//)
+      return :running
+    else
+      return :stopped
+    end
+  end
+  
+  def is_upstart?(script = initscript)
+    File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job"
+  end
+
 end
