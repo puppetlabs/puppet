@@ -7,6 +7,7 @@ class Puppet::Provider
   extend Puppet::Util::Warnings
 
   require 'puppet/provider/confiner'
+  require 'puppet/provider/command'
 
   extend Puppet::Provider::Confiner
 
@@ -48,9 +49,94 @@ class Puppet::Provider
   end
 
   # Define commands that are not optional.
-  def self.commands(hash)
-    optional_commands(hash) do |name, path|
-      confine :exists => path, :for_binary => true
+  #
+  # @param [Hash{String => String}] command_specs Named commands that the provider will 
+  #   be executing on the system. Each command is specified with a name and the path of the executable.
+  # (@see #has_command)
+  def self.commands(command_specs)
+    command_specs.each do |name, path|
+      has_command(name, path)
+    end
+  end
+
+  # Define commands that are optional.
+  #
+  # @param [Hash{String => String}] command_specs Named commands that the provider will 
+  #   be executing on the system. Each command is specified with a name and the path of the executable.
+  # (@see #has_command)
+  def self.optional_commands(hash)
+    hash.each do |name, target|
+      has_command(name, target) do
+        is_optional
+      end
+    end
+  end
+
+  # Define a single command
+  #
+  # A method will be generated on the provider that allows easy execution of the command. The generated 
+  # method can take arguments that will be passed through to the executable as the command line arguments 
+  # when it is run.
+  #
+  #     has_command(:echo, "/bin/echo")
+  #     def some_method
+  #       echo("arg 1", "arg 2")
+  #     end
+  #
+  #     # or
+  #
+  #     has_command(:echo, "/bin/echo") do
+  #       is_optional
+  #       environment :HOME => "/var/tmp", :PWD => "/tmp"
+  #     end
+  #
+  # @param [Symbol] name Name of the command (will be the name of the generated method to call the command)
+  # @param [String] path The path to the executable for the command
+  # @yield A block that configures the command (@see Puppet::Provider::Command) 
+  def self.has_command(name, path, &block)
+    name = symbolize(name)
+    configuration = block_given? ? block : Proc.new {}
+    command = CommandDefiner.define(name, path, self, &configuration)
+
+    @commands[name] = command.executable
+
+    # Now define the class and instance methods.
+    create_class_and_instance_method(name) do |*args|
+      return command.execute(*args)
+    end
+  end
+
+  class CommandDefiner
+    private_class_method :new
+
+    def self.define(name, path, confiner, &block)
+      definer = new(name, path, confiner)
+      definer.instance_eval &block
+      definer.command
+    end
+
+    def initialize(name, path, confiner)
+      @name = name
+      @path = path
+      @optional = false
+      @confiner = confiner
+      @custom_environment = {}
+    end
+
+    def is_optional
+      @optional = true
+    end
+
+    def environment(env)
+      @custom_environment = @custom_environment.merge(env)
+    end
+
+    def command
+      if not @optional
+        @confiner.confine :exists => @path, :for_binary => true
+      end
+
+      Puppet::Provider::Command.new(@name, @path, Puppet::Util, Puppet::Util::Execution, { :custom_environment => @custom_environment })
     end
   end
 
@@ -107,19 +193,18 @@ class Puppet::Provider
   end
 
   # Create the methods for a given command.
+  #
+  # @deprecated Use {#commands}, {#optional_commands}, or {#has_command} instead. This was not meant to be part of a public API
   def self.make_command_methods(name)
+    Puppet.deprecation_warning "Provider.make_command_methods is deprecated; use Provider.commands or Provider.optional_commands instead for creating command methods"
+
     # Now define a method for that command
     unless singleton_class.method_defined?(name)
       meta_def(name) do |*args|
-        raise Puppet::Error, "Command #{name} is missing" unless command(name)
-        if args.empty?
-          cmd = [command(name)]
-        else
-          cmd = [command(name)] + args
-        end
         # This might throw an ExecutionFailure, but the system above
         # will catch it, if so.
-        return execute(cmd)
+        command = Puppet::Provider::Command.new(name, command(name), Puppet::Util, Puppet::Util::Execution)
+        return command.execute(*args)
       end
 
       # And then define an instance method that just calls the class method.
@@ -159,19 +244,18 @@ class Puppet::Provider
 
   self.initvars
 
-  # Define one or more binaries we'll be using.  If a block is passed, yield the name
-  # and path to the block (really only used by 'commands').
-  def self.optional_commands(hash)
-    hash.each do |name, path|
-      name = symbolize(name)
-      @commands[name] = path
+  def self.create_class_and_instance_method(name, &block)
+    unless singleton_class.method_defined?(name)
+      meta_def(name, &block)
+    end
 
-      yield(name, path) if block_given?
-
-      # Now define the class and instance methods.
-      make_command_methods(name)
+    unless method_defined?(name)
+      define_method(name) do |*args|
+        self.class.send(name, *args)
+      end
     end
   end
+  private_class_method :create_class_and_instance_method
 
   # Retrieve the data source.  Defaults to the provider name.
   def self.source
