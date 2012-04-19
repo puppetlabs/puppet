@@ -22,6 +22,6 @@ exec { "third":
 MANIFEST
 
   apply_manifest_on agent, test_manifest do
-    assert_match(/Exec\[third\].*the final command/, "#{stdout}")
+    assert_match(/Exec\[third\].*the final command/, stdout)
   end
 end

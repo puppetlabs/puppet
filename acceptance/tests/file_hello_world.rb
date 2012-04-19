@@ -12,7 +12,7 @@ agents.each do |agent|
   step "run the manifest itself"
   apply_manifest_on(agent, manifest) do
     fail_test "the expected notice of action was missing" unless
-      stdout.index "File[#{filename}]/ensure: defined content as"
+      stderr.index "File[#{filename}]/ensure: defined content as"
   end
 
   step "verify the content of the generated files."

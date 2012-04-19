@@ -10,6 +10,6 @@ end
 step "verify that we don't remove the group when it doesn't exist"
 on(agents, puppet_resource('group', name, 'ensure=absent')) do
   fail_test "it looks like we tried to remove the group" if
-    stdout.include? "notice: /Group[#{name}]/ensure: removed"
+    stdout.include? "/Group[#{name}]/ensure: removed"
 end
 
