@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 def existing_command
-  Facter.value(:operatingsystem) =~ /windows/ ? "cmd" : "echo"
+  Puppet.features.microsoft_windows? ? "cmd" : "echo"
 end
 
 describe Puppet::Provider do
