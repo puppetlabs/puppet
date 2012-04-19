@@ -32,25 +32,60 @@ describe "yaml deserialization" do
 end
 
 # In Ruby > 1.8.7 this is a builtin, otherwise we monkey patch the method in
-describe "Array#combination" do
-  it "should fail if wrong number of arguments given" do
-    lambda { [1,2,3].combination() }.should raise_error(ArgumentError, /wrong number/)
-    lambda { [1,2,3].combination(1,2) }.should raise_error(ArgumentError, /wrong number/)
+describe Array do
+  describe "#combination" do
+    it "should fail if wrong number of arguments given" do
+      expect { [1,2,3].combination() }.to raise_error(ArgumentError, /wrong number/)
+      expect { [1,2,3].combination(1,2) }.to raise_error(ArgumentError, /wrong number/)
+    end
+
+    it "should return an empty array if combo size than array size or negative" do
+      [1,2,3].combination(4).to_a.should == []
+      [1,2,3].combination(-1).to_a.should == []
+    end
+
+    it "should return an empty array with an empty array if combo size == 0" do
+      [1,2,3].combination(0).to_a.should == [[]]
+    end
+
+    it "should all provide all combinations of size passed in" do
+      [1,2,3,4].combination(1).to_a.should == [[1], [2], [3], [4]]
+      [1,2,3,4].combination(2).to_a.should == [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+      [1,2,3,4].combination(3).to_a.should == [[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]
+    end
   end
 
-  it "should return an empty array if combo size than array size or negative" do
-    [1,2,3].combination(4).to_a.should == []
-    [1,2,3].combination(-1).to_a.should == []
+  describe "#count" do
+    it "should equal length" do
+      [].count.should == [].length
+      [1].count.should == [1].length
+    end
   end
 
-  it "should return an empty array with an empty array if combo size == 0" do
-    [1,2,3].combination(0).to_a.should == [[]]
-  end
+  describe "#drop" do
+    it "should raise if asked to drop less than zero items" do
+      expect { [].drop(-1) }.to raise_error ArgumentError
+    end
 
-  it "should all provide all combinations of size passed in" do
-    [1,2,3,4].combination(1).to_a.should == [[1], [2], [3], [4]]
-    [1,2,3,4].combination(2).to_a.should == [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
-    [1,2,3,4].combination(3).to_a.should == [[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]
+    it "should return the array when drop 0" do
+      [].drop(0).should == []
+      [1].drop(0).should == [1]
+      [1,2].drop(0).should == [1,2]
+    end
+
+    it "should return an empty array when dropping more items than the array" do
+      (1..10).each do |n|
+        [].drop(n).should == []
+        [1].drop(n).should == []
+      end
+    end
+
+    it "should drop the right number of items" do
+      [1,2,3].drop(0).should == [1,2,3]
+      [1,2,3].drop(1).should == [2,3]
+      [1,2,3].drop(2).should == [3]
+      [1,2,3].drop(3).should == []
+    end
   end
 end
 
