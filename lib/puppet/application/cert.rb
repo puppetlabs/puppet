@@ -209,7 +209,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # the data.  This will do the right thing for non-local certificates, in
     # that the command line but *NOT* the config file option will apply.
     if subcommand == :generate
-      if Puppet.settings.setting(:dns_alt_names).setbycli
+      if Puppet.settings.set_by_cli?(:dns_alt_names)
         options[:dns_alt_names] = Puppet[:dns_alt_names]
       end
     end

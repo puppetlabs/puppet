@@ -1,10 +1,23 @@
 # The base element type.
 class Puppet::Util::Settings::StringSetting
-  attr_accessor :name, :section, :default, :setbycli, :call_on_define
+  attr_accessor :name, :section, :default, :call_on_define
   attr_reader :desc, :short
 
   def desc=(value)
     @desc = value.gsub(/^\s*/, '')
+  end
+  
+  #added as a proper method, only to generate a deprecation warning
+  #and return value from 
+  def setbycli
+    Puppet.deprecation_warning "Puppet.settings.setting(#{name}).setbycli is deprecated. Use Puppet.settings.set_by_cli?(#{name}) instead."
+    @settings.set_by_cli?(name)
+  end
+  
+  def setbycli=(value)
+    Puppet.deprecation_warning "Puppet.settings.setting(#{name}).setbycli= is deprecated. You should not manually set that values were specified on the command line."
+    @settings.set_value(name, @settings[name], :cli) if value
+    raise ArgumentError, "Cannot unset setbycli" unless value
   end
 
   # get the arguments in getopt format

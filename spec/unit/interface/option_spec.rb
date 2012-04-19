@@ -59,6 +59,14 @@ describe Puppet::Interface::Option do
     Puppet::Interface::Option.new(face, "--foo").
       should be_instance_of Puppet::Interface::Option
   end
+  
+  Puppet.settings.each do |name, value|
+    it "should fail when option #{name.inspect} already exists in puppet core" do
+      expect do
+        Puppet::Interface::Option.new(face, "--#{name}")
+      end.should raise_error ArgumentError, /already defined/
+    end
+  end
 
   describe "#to_s" do
     it "should transform a symbol into a string" do
