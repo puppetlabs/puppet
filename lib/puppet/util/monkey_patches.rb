@@ -95,6 +95,14 @@ class Array
   end unless method_defined? :combination
 
   alias :count :length unless method_defined? :count
+
+  # Ruby 1.8.5 lacks `drop`, which we don't want to lose.
+  def drop(n)
+    n = n.to_int
+    raise ArgumentError, "attempt to drop negative size" if n < 0
+
+    slice(n, length - n) or []
+  end unless method_defined? :drop
 end
 
 
