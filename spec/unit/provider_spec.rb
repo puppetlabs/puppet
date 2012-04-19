@@ -1,6 +1,10 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
+def existing_command
+  Puppet.features.microsoft_windows? ? "cmd" : "echo"
+end
+
 describe Puppet::Provider do
   before :each do
     Puppet::Type.newtype(:test) do
@@ -247,14 +251,14 @@ describe Puppet::Provider do
       { :operatingsystem => Facter.value(:operatingsystem) } => true,
       { :operatingsystem => :yayness } => false,
       { :nothing => :yayness } => false,
-      { :exists => Puppet::Util.which("echo") } => true,
+      { :exists => Puppet::Util.which(existing_command) } => true,
       { :exists => "/this/file/does/not/exist" } => false,
-      { :true => true, :exists => Puppet::Util.which("echo") } => true,
+      { :true => true, :exists => Puppet::Util.which(existing_command) } => true,
       { :true => true, :exists => "/this/file/does/not/exist" } => false,
       { :operatingsystem => Facter.value(:operatingsystem),
-        :exists => Puppet::Util.which("echo") } => true,
+        :exists => Puppet::Util.which(existing_command) } => true,
       { :operatingsystem => :yayness,
-        :exists => Puppet::Util.which("echo") } => false,
+        :exists => Puppet::Util.which(existing_command) } => false,
       { :operatingsystem => Facter.value(:operatingsystem),
         :exists => "/this/file/does/not/exist" } => false,
       { :operatingsystem => :yayness,
