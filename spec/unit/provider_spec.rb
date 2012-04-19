@@ -55,10 +55,10 @@ describe Puppet::Provider do
 
     it "is required by default" do
       provider = provider_of do
-        has_command(:does_exist, "/exists/somewhere")
+        has_command(:does_exist, File.expand_path("/exists/somewhere"))
       end
 
-      file_exists_and_is_executable("/exists/somewhere")
+      file_exists_and_is_executable(File.expand_path("/exists/somewhere"))
 
       provider.should be_suitable
     end
@@ -92,10 +92,10 @@ describe Puppet::Provider do
 
     it "allows the provider to be suitable if the executable is present" do
       provider = provider_of do
-        commands :always_exists => "/this/command/exists"
+        commands :always_exists => File.expand_path("/this/command/exists")
       end
 
-      file_exists_and_is_executable("/this/command/exists")
+      file_exists_and_is_executable(File.expand_path("/this/command/exists"))
 
       provider.should be_suitable
     end
