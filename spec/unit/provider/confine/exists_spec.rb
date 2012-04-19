@@ -12,6 +12,13 @@ describe Puppet::Provider::Confine::Exists do
   it "should be named :exists" do
     Puppet::Provider::Confine::Exists.name.should == :exists
   end
+  
+  it "should not pass if exists is nil" do
+    confine = Puppet::Provider::Confine::Exists.new(nil)
+    confine.label = ":exists => nil"
+    confine.expects(:pass?).with(nil)
+    confine.should_not be_valid
+  end
 
   it "should use the 'pass?' method to test validity" do
     @confine.expects(:pass?).with("/my/file")
