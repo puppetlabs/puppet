@@ -335,7 +335,7 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce "#{param} is a metaparam; this value will inherit to all contained resources"
+      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
     else
       raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
     end
