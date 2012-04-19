@@ -76,13 +76,18 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
 
   describe "the behavior of .is_module_package?" do
     it "should return true when file is a module package" do
-      installer = installer_class.new("foo", options)
-      installer.send(:is_module_package?, stdlib_pkg).should be_true
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        installer = installer_class.new("foo", options)
+        installer.send(:is_module_package?, stdlib_pkg).should be_true
+      end
     end
 
     it "should return false when file is not a module package" do
-      installer = installer_class.new("foo", options)
-      installer.send(:is_module_package?, "pmtacceptance-apollo-0.0.2.tar").should be_false
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        installer = installer_class.new("foo", options)
+        installer.send(:is_module_package?, "pmtacceptance-apollo-0.0.2.tar").
+          should be_false
+      end
     end
   end
 
@@ -93,73 +98,84 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
     end
 
     it "should install the requested module" do
-      Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-        .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)\
-        .returns(unpacker)
-      results = installer_class.run('pmtacceptance-stdlib', options)
-      results[:installed_modules].length == 1
-      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-      results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
+          returns(unpacker)
+        results = installer_class.run('pmtacceptance-stdlib', options)
+        results[:installed_modules].length == 1
+        results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+        results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+      end
     end
 
     context "when the requested module has dependencies" do
       it "should install dependencies" do
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options)\
-        .returns(unpacker)
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
-        .returns(unpacker)
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options)\
-        .returns(unpacker)
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
+            returns(unpacker)
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+            returns(unpacker)
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
+            returns(unpacker)
 
-        results = installer_class.run('pmtacceptance-apollo', options)
-        installed_dependencies = results[:installed_modules][0][:dependencies]
+          results = installer_class.run('pmtacceptance-apollo', options)
+          installed_dependencies = results[:installed_modules][0][:dependencies]
 
-        dependencies = installed_dependencies.inject({}) do |result, dep|
-          result[dep[:module]] = dep[:version][:vstring]
-          result
+          dependencies = installed_dependencies.inject({}) do |result, dep|
+            result[dep[:module]] = dep[:version][:vstring]
+            result
+          end
+
+          dependencies.length.should == 2
+          dependencies['pmtacceptance-java'].should   == '1.7.1'
+          dependencies['pmtacceptance-stdlib'].should == '1.0.0'
         end
-
-        dependencies.length.should == 2
-        dependencies['pmtacceptance-java'].should   == '1.7.1'
-        dependencies['pmtacceptance-stdlib'].should == '1.0.0'
       end
 
       it "should install requested module if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
-        .returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', options)
-        results[:installed_modules][0][:module].should == "pmtacceptance-apollo"
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          options = { :force => true, :target_dir => modpath1 }
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+            returns(unpacker)
+          results = installer_class.run('pmtacceptance-apollo', options)
+          results[:installed_modules][0][:module].should == "pmtacceptance-apollo"
+        end
       end
 
       it "should not install dependencies if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
-        .returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', options)
-        dependencies = results[:installed_modules][0][:dependencies]
-        dependencies.should == []
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          options = { :force => true, :target_dir => modpath1 }
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+            returns(unpacker)
+          results = installer_class.run('pmtacceptance-apollo', options)
+          dependencies = results[:installed_modules][0][:dependencies]
+          dependencies.should == []
+        end
       end
 
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
-        options = { :ignore_dependencies => true, :target_dir => modpath1 }
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new)\
-          .with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options)\
-        .returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', options)
-        dependencies = results[:installed_modules][0][:dependencies]
-        dependencies.should == []
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          options = { :ignore_dependencies => true, :target_dir => modpath1 }
+          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+            with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+            returns(unpacker)
+          results = installer_class.run('pmtacceptance-apollo', options)
+          dependencies = results[:installed_modules][0][:dependencies]
+          dependencies.should == []
+        end
       end
 
       it "should set an error if dependencies can't be resolved" do
-        options = { :version => '0.0.1', :target_dir => modpath1 }
-        oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
-        multiline = <<-MSG.strip
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          options = { :version => '0.0.1', :target_dir => modpath1 }
+          oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
+          multiline = <<-MSG.strip
 Could not install module 'pmtacceptance-apollo' (v0.0.1)
   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     You specified 'pmtacceptance-apollo' (v0.0.1),
@@ -168,10 +184,11 @@ Could not install module 'pmtacceptance-apollo' (v0.0.1)
     Use `puppet module install --force` to install this module anyway
 MSG
 
-        results = installer_class.run('pmtacceptance-apollo', options)
-        results[:result].should == :failure
-        results[:error][:oneline].should == oneline
-        results[:error][:multiline].should == multiline
+          results = installer_class.run('pmtacceptance-apollo', options)
+          results[:result].should == :failure
+          results[:error][:oneline].should == oneline
+          results[:error][:multiline].should == multiline
+        end
       end
     end
 

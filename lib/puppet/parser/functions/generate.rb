@@ -14,7 +14,7 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
       raise Puppet::ParseError, "Generators must be fully qualified" unless Puppet::Util.absolute_path?(args[0])
 
       if Puppet.features.microsoft_windows?
-        valid = args[0] =~ /^[a-z]:(?:[\/\\][\w.-]+)+$/i
+        valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i
       else
         valid = args[0] =~ /^[-\/\w.+]+$/
       end

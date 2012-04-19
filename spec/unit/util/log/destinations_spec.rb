@@ -24,13 +24,15 @@ end
 
 
 describe Puppet::Util::Log.desttypes[:file] do
+  include PuppetSpec::Files
+
   before do
     File.stubs(:open)           # prevent actually creating the file
     @class = Puppet::Util::Log.desttypes[:file]
   end
 
-  it "should default to automatically flush log output" do
-    @class.new('/tmp/log').autoflush.should == true
+  it "should default to autoflush false" do
+    @class.new(tmpfile('log')).autoflush.should == true
   end
 
   describe "when matching" do

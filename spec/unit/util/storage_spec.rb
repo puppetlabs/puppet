@@ -174,13 +174,12 @@ describe Puppet::Util::Storage do
 
   describe "when storing to the state file" do
     before(:each) do
-      @state_file = Tempfile.new('storage_test')
+      @state_file = tmpfile('storage_test')
       @saved_statefile = Puppet[:statefile]
-      Puppet[:statefile] = @state_file.path
+      Puppet[:statefile] = @state_file
     end
 
     it "should create the state file if it does not exist" do
-      @state_file.close!()
       FileTest.exists?(Puppet[:statefile]).should be_false
       Puppet::Util::Storage.cache(:yayness)
 
@@ -189,7 +188,6 @@ describe Puppet::Util::Storage do
     end
 
     it "should raise an exception if the state file is not a regular file" do
-      @state_file.close!()
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
@@ -207,11 +205,6 @@ describe Puppet::Util::Storage do
       Puppet::Util::Storage.state.should == {}
       proc { Puppet::Util::Storage.load }.should_not raise_error
       Puppet::Util::Storage.state.should == {:yayness=>{}}
-    end
-
-    after(:each) do
-      @state_file.close!()
-      Puppet[:statefile] = @saved_statefile
     end
   end
 end

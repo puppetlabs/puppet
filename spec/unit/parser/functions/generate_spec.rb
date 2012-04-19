@@ -44,6 +44,12 @@ describe "the generate function" do
   end
 
   describe "on Windows", :as_platform => :windows do
+    it "should accept the tilde in the path" do
+      command = "C:/DOCUME~1/ADMINI~1/foo.bat"
+      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      scope.function_generate([command]).should == 'yay'
+    end
+
     it "should accept lower-case drive letters" do
       command = 'd:/command/foo'
       Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
