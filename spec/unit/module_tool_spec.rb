@@ -172,7 +172,9 @@ TREE
         end
         it "should leave the remainder of options[:modulepath] untouched" do
           subject.set_option_defaults options
-          options[:modulepath].split(sep).drop(1).join(sep).should == my_fake_path
+          modpath = options[:modulepath].split(sep)
+          modpath.shift
+          modpath.join(sep).should == my_fake_path
         end
       end
     end
