@@ -18,6 +18,6 @@ PP
 
 agents.each do |host|
   apply_manifest_on(host, manifest) do
-    assert_match(/notice.*?Foo::Do_notify.*?a_message_for_you/, stdout, "the notification didn't show up in stdout on #{host}")
+    assert_match(/.*?Foo::Do_notify.*?a_message_for_you/, stdout, "the notification didn't show up in stdout on #{host}")
   end
 end

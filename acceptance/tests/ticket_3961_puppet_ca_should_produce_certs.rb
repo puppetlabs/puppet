@@ -2,11 +2,11 @@ test_name "#3961: puppet ca should produce certs spec"
 
 target  = "working3961.example.org"
 
-expect = ['notice: Signed certificate request for ca',
-          'notice: Rebuilding inventory file',
-          'notice: working3961.example.org has a waiting certificate request',
-          'notice: Signed certificate request for working3961.example.org',
-          'notice: Removing file Puppet::SSL::CertificateRequest working3961.example.org']
+expect = ['Signed certificate request for ca',
+          'Rebuilding inventory file',
+          'working3961.example.org has a waiting certificate request',
+          'Signed certificate request for working3961.example.org',
+          'Removing file Puppet::SSL::CertificateRequest working3961.example.org']
 
 agents.each do |agent|
   if agent['platform'].include?('windows')
@@ -23,7 +23,7 @@ agents.each do |agent|
   step "generate a certificate in #{scratch}"
   on(agent,puppet_cert('--trace', '--generate', target, options)) do
     expect.each do |line|
-      stdout.index(line) or fail_test("missing line in output: #{line}")
+      stderr.index(line) or fail_test("missing line in output: #{line}")
     end
   end
 
