@@ -346,10 +346,10 @@ describe Puppet::Provider do
       parent.commands :sh => command
 
       FileTest.should be_exists parent.command(:sh)
-      parent.command(:sh).should =~ /#{command}$/
+      parent.command(:sh).should =~ /#{Regexp.escape(command)}$/
 
       FileTest.should be_exists child.command(:sh)
-      child.command(:sh).should =~ /#{command}$/
+      child.command(:sh).should =~ /#{Regexp.escape(command)}$/
     end
 
     it "#1197: should find commands added in the same run" do
