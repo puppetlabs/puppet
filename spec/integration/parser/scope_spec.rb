@@ -4,8 +4,8 @@ require 'puppet_spec/compiler'
 describe "Two step scoping for variables" do
   include PuppetSpec::Compiler
 
-  def expect_the_message_to_be(message) 
-    catalog = compile_to_catalog(yield)
+  def expect_the_message_to_be(message, node = Puppet::Node.new('the node')) 
+    catalog = compile_to_catalog(yield, node)
     catalog.resource('Notify', 'something')[:message].should == message
   end
 
@@ -364,6 +364,53 @@ describe "Two step scoping for variables" do
           }
 
           include override
+        MANIFEST
+      end
+    end
+  end
+
+  describe "when using an enc" do
+    it "places enc parameters in top scope" do
+      enc_node = Puppet::Node.new("the node", { :parameters => { "var" => 'from_enc' } })
+
+      expect_the_message_to_be('from_enc', enc_node) do <<-MANIFEST
+          notify { 'something': message => $var, }
+        MANIFEST
+      end
+    end
+
+    it "does not allow the enc to specify an existing top scope var" do
+      enc_node = Puppet::Node.new("the_node", { :parameters => { "var" => 'from_enc' } })
+
+      expect { compile_to_catalog("$var = 'top scope'", enc_node) }.should raise_error(Puppet::Error, "Cannot reassign variable var at line 1 on node the_node")
+    end
+
+    it "evaluates enc classes in top scope when there is no node" do
+      enc_node = Puppet::Node.new("the node", { :classes => ['foo'], :parameters => { "var" => 'from_enc' } })
+
+      expect_the_message_to_be('from_enc', enc_node) do <<-MANIFEST
+          class foo {
+            notify { 'something': message => $var, }
+          }
+        MANIFEST
+      end
+    end
+
+    it "evaluates enc classes in the node scope when there is a matching node" do
+      enc_node = Puppet::Node.new("the_node", { :classes => ['foo'] })
+
+      expect_the_message_to_be('from matching node', enc_node) do <<-MANIFEST
+          node inherited {
+            $var = "from inherited"
+          }
+
+          node the_node inherits inherited {
+            $var = "from matching node"
+          }
+
+          class foo {
+            notify { 'something': message => $var, }
+          }
         MANIFEST
       end
     end
