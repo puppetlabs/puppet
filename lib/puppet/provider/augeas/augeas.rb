@@ -348,8 +348,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         end
       end
     ensure
-      if not return_value or resource.noop? or not save_result
-        close_augeas
+      unless force
+        if not return_value or resource.noop? or not save_result
+          close_augeas
+        end
       end
     end
     return_value
