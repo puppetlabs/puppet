@@ -121,15 +121,31 @@ describe Puppet::Parser::Scope do
     end
 
     it "should be able to look up intermediary variables in parent scopes (DEPRECATED)" do
-      Puppet.expects(:deprecation_warning)
-      thirdscope = Puppet::Parser::Scope.new
-      thirdscope.parent = @scope
-      thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
-      @scope.source = Puppet::Resource::Type.new(:hostclass, :bar, :module_name => "bar")
+      topscope_value = "parentval"
+      dynamic_value = "childval"
 
-      @topscope.setvar("var2","parentval")
-      @scope.setvar("var2","childval")
-      thirdscope.lookupvar("var2").should == "childval"
+      Puppet.expects(:deprecation_warning).with("Dynamic lookup of $var2 is deprecated. For more information, see http://docs.puppetlabs.com/guides/scope_and_puppet.html. To see the change in behavior, use the --debug flag.")
+      Puppet.expects(:debug).with("Currently $var2 is #{dynamic_value.inspect}")
+      Puppet.expects(:debug).with("In the future $var2 will be #{topscope_value.inspect}")
+
+      thirdscope = Puppet::Parser::Scope.new(:parent => @scope, :source => Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo"))
+
+      @topscope.setvar("var2", topscope_value)
+      @scope.setvar("var2", dynamic_value)
+      thirdscope.lookupvar("var2").should == dynamic_value
+    end
+
+    it "should call out when the new variable lookup will not find a value (DEPRECATED)" do
+      dynamic_value = "childval"
+
+      Puppet.expects(:deprecation_warning).with("Dynamic lookup of $var2 is deprecated. For more information, see http://docs.puppetlabs.com/guides/scope_and_puppet.html. To see the change in behavior, use the --debug flag.")
+      Puppet.expects(:debug).with("Currently $var2 is #{dynamic_value.inspect}")
+      Puppet.expects(:debug).with("In the future $var2 will be undefined")
+
+      thirdscope = Puppet::Parser::Scope.new(:parent => @scope, :source => Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo"))
+
+      @scope.setvar("var2", dynamic_value)
+      thirdscope.lookupvar("var2").should == dynamic_value
     end
 
     describe "and the variable is qualified" do
