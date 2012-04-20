@@ -11,10 +11,6 @@ describe Puppet::Parser::Scope do
     @scope.parent = @topscope
   end
 
-  it "should be able to store references to class scopes" do
-    lambda { @scope.class_set "myname", "myscope" }.should_not raise_error
-  end
-
   it "should be able to retrieve class scopes by name" do
     @scope.class_set "myname", "myscope"
     @scope.class_scope("myname").should == "myscope"
@@ -130,6 +126,11 @@ describe Puppet::Parser::Scope do
       @scope.should be_include("var")
     end
 
+    it "does not allow changing a set value" do
+      @scope["var"] = "childval"
+      expect { @scope["var"] = "change" }.should raise_error(Puppet::Error, "Cannot reassign variable var")
+    end
+
     it "should be able to detect when variables are not set" do
       @scope.should_not be_include("var")
     end
@@ -144,18 +145,6 @@ describe Puppet::Parser::Scope do
 
     it "should include Enumerable" do
       @scope.singleton_class.ancestors.should be_include(Enumerable)
-    end
-
-    it "should be able to look up intermediary variables in parent scopes (DEPRECATED)" do
-      Puppet.expects(:deprecation_warning)
-      thirdscope = Puppet::Parser::Scope.new
-      thirdscope.parent = @scope
-      thirdscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
-      @scope.source = Puppet::Resource::Type.new(:hostclass, :bar, :module_name => "bar")
-
-      @topscope.setvar("var2","parentval")
-      @scope.setvar("var2","childval")
-      thirdscope.lookupvar("var2").should == "childval"
     end
 
     describe "and the variable is qualified" do
@@ -235,341 +224,38 @@ describe Puppet::Parser::Scope do
     end
   end
 
-  describe "when mixing inheritence and inclusion" do
-    include PuppetSpec::Compiler
-
-    def expect_the_message_to_be(message) 
-      catalog = compile_to_catalog(yield)
-      catalog.resource('Notify', 'something')[:message].should == message
-    end
-
-    context "deprecated scoping" do
-      before :each do
-        Puppet.expects(:deprecation_warning).at_least(1)
-      end
-
-      it "prefers values in its included scope over those from the node (DEPRECATED)" do
-        expect_the_message_to_be('baz_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include foo
-            }
-            class baz {
-              $var = "baz_msg"
-              include bar
-            }
-            class foo inherits baz {
-            }
-            class bar {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-      it "finds values in its included scope (DEPRECATED)" do
-        expect_the_message_to_be('baz_msg') do <<-MANIFEST
-            node default {
-              include baz
-            }
-            class foo {
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              $var = "baz_msg"
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "recognizes a dynamically scoped boolean (DEPRECATED)" do
-        expect_the_message_to_be(true) do <<-MANIFEST
-            node default {
-              $var = false
-              include baz
-            }
-            class foo {
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              $var = true
-              include bar
-            }
-          MANIFEST
-        end
-      end
-    end
-
-    context "supported scoping" do
-      before :each do
-        Puppet.expects(:deprecation_warning).never
-      end
-
-      it "finds value define in the inherited node" do
-        expect_the_message_to_be('parent_msg') do <<-MANIFEST
-            $var = "top_msg"
-            node parent {
-              $var = "parent_msg"
-            }
-            node default inherits parent {
-              include foo
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-      it "finds top scope when the class is included before the node defines the var" do
-        expect_the_message_to_be('top_msg') do <<-MANIFEST
-            $var = "top_msg"
-            node parent {
-              include foo
-            }
-            node default inherits parent {
-              $var = "default_msg"
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-      it "finds top scope when the class is included before the node defines the var" do
-        expect_the_message_to_be('top_msg') do <<-MANIFEST
-            $var = "top_msg"
-            node parent {
-              include foo
-            }
-            node default inherits parent {
-              $var = "default_msg"
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-
-      it "should find values in its local scope" do
-        expect_the_message_to_be('local_msg') do <<-MANIFEST
-            node default {
-              include baz
-            }
-            class foo {
-            }
-            class bar inherits foo {
-              $var = "local_msg"
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "should find values in its inherited scope" do
-        expect_the_message_to_be('foo_msg') do <<-MANIFEST
-            node default {
-              include baz
-            }
-            class foo {
-              $var = "foo_msg"
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "prefers values in its inherited scope over those in the node (with intermediate inclusion)" do
-        expect_the_message_to_be('foo_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include baz
-            }
-            class foo {
-              $var = "foo_msg"
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "prefers values in its inherited scope over those in the node (without intermediate inclusion)" do
-        expect_the_message_to_be('foo_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include bar
-            }
-            class foo {
-              $var = "foo_msg"
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-      it "prefers values in its inherited scope over those from where it is included" do
-        expect_the_message_to_be('foo_msg') do <<-MANIFEST
-            node default {
-              include baz
-            }
-            class foo {
-              $var = "foo_msg"
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              $var = "baz_msg"
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "does not used variables from classes included in the inherited scope" do
-        expect_the_message_to_be('node_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include bar
-            }
-            class quux {
-              $var = "quux_msg"
-            }
-            class foo inherits quux {
-            }
-            class baz {
-              include foo
-            }
-            class bar inherits baz {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-
-      it "does not use a variable from a scope lexically enclosing it" do
-        expect_the_message_to_be('node_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include other::bar
-            }
-            class other {
-              $var = "other_msg"
-              class bar {
-                notify { 'something': message => $var, }
-              }
-            }
-          MANIFEST
-        end
-      end
-
-      it "finds values in its node scope" do
-        expect_the_message_to_be('node_msg') do <<-MANIFEST
-            node default {
-              $var = "node_msg"
-              include baz
-            }
-            class foo {
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "finds values in its top scope" do
-        expect_the_message_to_be('top_msg') do <<-MANIFEST
-            $var = "top_msg"
-            node default {
-              include baz
-            }
-            class foo {
-            }
-            class bar inherits foo {
-              notify { 'something': message => $var, }
-            }
-            class baz {
-              include bar
-            }
-          MANIFEST
-        end
-      end
-
-      it "prefers variables from the node over those in the top scope" do
-        expect_the_message_to_be('node_msg') do <<-MANIFEST
-            $var = "top_msg"
-            node default {
-              $var = "node_msg"
-              include foo
-            }
-            class foo {
-              notify { 'something': message => $var, }
-            }
-          MANIFEST
-        end
-      end
-    end
-  end
-
   describe "when variables are set with append=true" do
     it "should raise error if the variable is already defined in this scope" do
-      @scope.setvar("var","1", :append => false)
-      lambda { @scope.setvar("var","1", :append => true) }.should raise_error(Puppet::ParseError)
+      @scope.setvar("var", "1", :append => false)
+      expect { @scope.setvar("var", "1", :append => true) }.should raise_error(Puppet::ParseError, "Cannot append, variable var is defined in this scope")
     end
 
     it "should lookup current variable value" do
       @scope.expects(:[]).with("var").returns("2")
-      @scope.setvar("var","1", :append => true)
+      @scope.setvar("var", "1", :append => true)
     end
 
     it "should store the concatenated string '42'" do
-      @topscope.setvar("var","4", :append => false)
-      @scope.setvar("var","2", :append => true)
+      @topscope.setvar("var", "4", :append => false)
+      @scope.setvar("var", "2", :append => true)
       @scope["var"].should == "42"
     end
 
     it "should store the concatenated array [4,2]" do
-      @topscope.setvar("var",[4], :append => false)
-      @scope.setvar("var",[2], :append => true)
+      @topscope.setvar("var", [4], :append => false)
+      @scope.setvar("var", [2], :append => true)
       @scope["var"].should == [4,2]
     end
 
     it "should store the merged hash {a => b, c => d}" do
-      @topscope.setvar("var",{"a" => "b"}, :append => false)
-      @scope.setvar("var",{"c" => "d"}, :append => true)
+      @topscope.setvar("var", {"a" => "b"}, :append => false)
+      @scope.setvar("var", {"c" => "d"}, :append => true)
       @scope["var"].should == {"a" => "b", "c" => "d"}
     end
 
     it "should raise an error when appending a hash with something other than another hash" do
-      @topscope.setvar("var",{"a" => "b"}, :append => false)
-      lambda { @scope.setvar("var","not a hash", :append => true) }.should raise_error
+      @topscope.setvar("var", {"a" => "b"}, :append => false)
+      expect { @scope.setvar("var", "not a hash", :append => true) }.should raise_error(ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported")
     end
   end
 
@@ -663,7 +349,7 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when setting it again" do
       @scope.setvar("1", :value2, :ephemeral => true)
-      lambda { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
+      expect { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
     end
 
     it "should declare ephemeral number only variable names" do
@@ -750,7 +436,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should accept only MatchData" do
-      lambda { @scope.ephemeral_from("match") }.should raise_error
+      expect { @scope.ephemeral_from("match") }.should raise_error
     end
 
     it "should set $0 with the full match" do
@@ -770,27 +456,6 @@ describe Puppet::Parser::Scope do
     it "should create a new ephemeral level" do
       @scope.expects(:new_ephemeral)
       @scope.ephemeral_from(@match)
-    end
-  end
-
-  describe "when unsetting variables" do
-    it "should be able to unset normal variables" do
-      @scope["foo"] = "bar"
-      @scope.unsetvar("foo")
-      @scope["foo"].should be_nil
-    end
-
-    it "should be able to unset ephemeral variables" do
-      @scope.setvar("0", "bar", :ephemeral => true)
-      @scope.unsetvar("0")
-      @scope["0"].should be_nil
-    end
-
-    it "should not unset ephemeral variables in previous ephemeral scope" do
-      @scope.setvar("0", "bar", :ephemeral => true)
-      @scope.new_ephemeral
-      @scope.unsetvar("0")
-      @scope["0"].should == "bar"
     end
   end
 
@@ -816,7 +481,7 @@ describe Puppet::Parser::Scope do
     it "should fail if a default is already defined and a new default is being defined" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param)
-      lambda { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
+      expect { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
     end
 
     it "should return multiple defaults at once" do
