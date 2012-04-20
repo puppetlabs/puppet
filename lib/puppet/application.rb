@@ -267,7 +267,6 @@ class Application
 
   def app_defaults()
     {
-        :name     => name,
         :run_mode => self.class.run_mode.name,
         :confdir  => self.class.run_mode.conf_dir,
         :vardir   => self.class.run_mode.var_dir,
