@@ -36,6 +36,13 @@ describe Puppet::Type.type(:exec).provider(:shell), :unless => Puppet.features.m
       status.exitstatus.should == 0
       output.should == "bar\n"
     end
+
+    it "#14060: should interpolate inside the subshell, not outside it" do
+      resource[:environment] = "foo=outer"
+      output, status = provider.run("foo=inner; echo \"foo is $foo\"")
+      status.exitstatus.should == 0
+      output.should == "foo is inner\n"
+    end
   end
 
   describe "#validatecmd" do

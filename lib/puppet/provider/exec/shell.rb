@@ -16,8 +16,7 @@ Puppet::Type.type(:exec).provide :shell, :parent => :posix do
   EOT
 
   def run(command, check = false)
-    command = %Q{/bin/sh -c "#{command.gsub(/"/,'\"')}"}
-    super(command, check)
+    super(['/bin/sh', '-c', command], check)
   end
 
   def validatecmd(command)
