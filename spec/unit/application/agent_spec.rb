@@ -7,6 +7,8 @@ require 'puppet/network/server'
 require 'puppet/daemon'
 
 describe Puppet::Application::Agent do
+  include PuppetSpec::Files
+
   before :each do
     @puppetd = Puppet::Application[:agent]
     @puppetd.stubs(:puts)
@@ -277,9 +279,10 @@ describe Puppet::Application::Agent do
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet[:modulepath] = '/my/path'
+      path = make_absolute('/my/path')
+      Puppet[:modulepath] = path
       Puppet[:configprint] = "modulepath"
-      Puppet::Util::Settings.any_instance.expects(:puts).with('/my/path')
+      Puppet::Util::Settings.any_instance.expects(:puts).with(path)
       expect { @puppetd.setup }.to exit_with 0
     end
 

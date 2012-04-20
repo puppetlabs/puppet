@@ -14,6 +14,7 @@ class Puppet::Util::Settings
   require 'puppet/util/settings/string_setting'
   require 'puppet/util/settings/file_setting'
   require 'puppet/util/settings/directory_setting'
+  require 'puppet/util/settings/path_setting'
   require 'puppet/util/settings/boolean_setting'
 
   # local reference for convenience
@@ -632,7 +633,7 @@ class Puppet::Util::Settings
           :string     => StringSetting,
           :file       => FileSetting,
           :directory  => DirectorySetting,
-          :path       => StringSetting,
+          :path       => PathSetting,
           :boolean    => BooleanSetting,
       } [type]
         raise ArgumentError, "Invalid setting type '#{type}'"
