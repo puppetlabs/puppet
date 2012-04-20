@@ -446,6 +446,17 @@ describe provider_class do
         @provider.expects(:diff).never()
         lambda { @provider.need_to_run? }.should raise_error
       end
+
+      # Ticket: 14105
+      it "should never close augeas when forcing the changes" do
+        @resource[:context] = "/files/etc/hosts"
+        @resource[:changes] = "set foo bar"
+        @resource[:force] = true
+        
+        @provider.need_to_run?.should == true
+        @provider.expects(:close_augeas).never()
+      end
+      
     end
   end
 
