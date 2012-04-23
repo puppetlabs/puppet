@@ -32,8 +32,18 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
     [
       "ssh-rsa #{sample_rsa_keys[1]} root@someotherhost",
       "ssh-dss #{sample_dsa_keys[0]} root@anywhere",
-      "ssh-rsa #{sample_rsa_keys[2]} paul"
+      "ssh-rsa #{sample_rsa_keys[2]} paul",
+      "ssh-rsa #{sample_rsa_keys[2]} dummy"
     ]
+  end
+
+  let :dummy do
+    Puppet::Type.type(:ssh_authorized_key).new(
+      :name   => 'dummy',
+      :target => fake_userfile,
+      :user   => 'nobody',
+      :ensure => :absent
+    )
   end
 
   before :each do
@@ -70,6 +80,20 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
       catalog.add_resource(resource)
     end
     catalog.apply
+  end
+
+  it "should not complain about empty lines and comments" do
+    described_class.expects(:flush).never
+    sample = ['',sample_lines[0],'   ',sample_lines[1],'# just a comment','#and another']
+    create_fake_key(:user,sample)
+    run_in_catalog(dummy)
+    check_fake_key(:user, sample)
+  end
+
+  it "should keep empty lines and comments when modifying a file" do
+    create_fake_key(:user, ['',sample_lines[0],'   ',sample_lines[3],'# just a comment','#and another'])
+    run_in_catalog(dummy)
+    check_fake_key(:user, ['',sample_lines[0],'   ','# just a comment','#and another'])
   end
 
   describe "when managing one resource" do
@@ -113,14 +137,6 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
 
       # just a dummy so the parsedfile provider is aware
       # of the user's authorized_keys file
-      let :dummy do
-        Puppet::Type.type(:ssh_authorized_key).new(
-          :name   => 'dummy',
-          :target => fake_userfile,
-          :user   => 'nobody',
-          :ensure => :absent
-        )
-      end
 
       it "should add the key if it is not present" do
         create_fake_key(:root, sample_lines)
