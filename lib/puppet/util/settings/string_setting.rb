@@ -1,12 +1,48 @@
 # The base element type.
 class Puppet::Util::Settings::StringSetting
-  attr_accessor :name, :section, :default, :call_on_define
+  attr_accessor :name, :section, :default, :call_on_define, :call_hook
   attr_reader :desc, :short
+
+  def self.available_call_hook_values
+    [:on_define_and_write, :on_initialize_and_write, :on_write_only]
+  end
 
   def desc=(value)
     @desc = value.gsub(/^\s*/, '')
   end
   
+  def call_on_define
+    Puppet.deprecation_warning "call_on_define has been deprecated.  Please use call_hook_on_define?"
+    call_hook_on_define?
+  end
+
+  def call_on_define=(value)
+    if value
+      Puppet.deprecation_warning ":call_on_define has been changed to :call_hook => :on_define_and_write. Please change #{name}."
+      @call_hook = :on_define_and_write
+    else
+      Puppet.deprecation_warning ":call_on_define => :false has been changed to :call_hook => :on_write_only. Please change #{name}." 
+      @call_hook = :on_write_only
+    end
+  end
+
+  def call_hook=(value)
+    if value.nil?
+      Puppet.warning "Setting :#{name} :call_hook is nil, defaulting to :on_write_only"
+      value ||= :on_write_only
+    end
+    raise ArgumentError, "Invalid option #{value} for call_hook" unless self.class.available_call_hook_values.include? value
+    @call_hook = value
+  end
+
+  def call_hook_on_define?
+    call_hook == :on_define_and_write
+  end
+
+  def call_hook_on_initialize?
+    call_hook == :on_initialize_and_write
+  end
+
   #added as a proper method, only to generate a deprecation warning
   #and return value from 
   def setbycli
@@ -38,6 +74,10 @@ class Puppet::Util::Settings::StringSetting
     end
   end
 
+  def has_hook?
+    respond_to? :handle
+  end
+
   def hook=(block)
     meta_def :handle, &block
   end
@@ -47,6 +87,15 @@ class Puppet::Util::Settings::StringSetting
     unless @settings = args.delete(:settings)
       raise ArgumentError.new("You must refer to a settings object")
     end
+
+    # explicitly set name prior to calling other param= methods to provide meaningful feedback during
+    # other warnings
+    @name = args[:name] if args.include? :name
+
+    #set the default value for call_hook
+    @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
+
+    raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] and not args[:hook]
 
     args.each do |param, value|
       method = param.to_s + "="

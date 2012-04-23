@@ -136,7 +136,7 @@ module Puppet
         :default          => "none",
         :desc             => "The shell search path.  Defaults to whatever is inherited\n" +
             "from the parent process.",
-        :call_on_define   => true, # Call our hook with the default value, so we always get the libdir set.
+        :call_hook => :on_define_and_write,
         :hook             => proc do |value|
           ENV["PATH"] = "" if ENV["PATH"].nil?
           ENV["PATH"] = value unless value == "none"
@@ -155,7 +155,7 @@ module Puppet
             "guaranteed to work for those cases.  In fact, the autoload\n" +
             "mechanism is responsible for making sure this directory\n" +
             "is in Ruby's search path\n",
-      #:call_on_define   => true, # Call our hook with the default value, so we always get the libdir set.
+      :call_hook => :on_initialize_and_write,
       :hook             => proc do |value|
         $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) and $LOAD_PATH.include?(@oldlibdir)
         @oldlibdir = value
@@ -370,7 +370,7 @@ module Puppet
     :certname => {
       :default => fqdn.downcase, :desc => "The name to use when handling certificates.  Defaults
       to the fully qualified domain name.",
-      :call_on_define => true, # Call our hook with the default value, so we're always downcased
+      :call_hook => :on_define_and_write, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
     :certdnsnames => {
       :default => '',
@@ -692,7 +692,7 @@ EOT
         a proxy in front of the process or processes, since Mongrel cannot
         speak SSL.",
 
-        :call_on_define => true, # Call our hook with the default value, so we always get the correct bind address set.
+        :call_hook => :on_define_and_write, # Call our hook with the default value, so we always get the correct bind address set.
         :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
       }
   )
@@ -1083,7 +1083,7 @@ EOT
     },
     :reportserver => {
       :default => "$server",
-      :call_on_define => false,
+      :call_hook => :on_write_only,
       :desc => "(Deprecated for 'report_server') The server to which to send transaction reports.",
       :hook => proc do |value|
         Puppet.settings[:report_server] = value if value
@@ -1202,7 +1202,7 @@ EOT
       :desc     => "Where Puppet should look for facts.  Multiple directories should
         be separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",
 
-      #:call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
+      :call_hook => :on_initialize_and_write, # Call our hook with the default value, so we always get the value added to facter.
       :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }}
   )
 
@@ -1434,7 +1434,7 @@ the data; this, in turn, will depend on Rails being available.
 
 You can adjust the backend using the storeconfigs_backend setting.",
       # Call our hook with the default value, so we always get the libdir set.
-      #:call_on_define => true,
+      :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
         require 'puppet/node'
         require 'puppet/node/facts'

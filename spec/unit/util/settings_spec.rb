@@ -98,6 +98,67 @@ describe Puppet::Util::Settings do
     end
   end
 
+  describe "#call_hooks_deferred_to_application_initialization" do
+    let (:good_default) { "yay" }
+    let (:bad_default) { "$doesntexist" }
+    before(:each) do
+      @settings = Puppet::Util::Settings.new
+    end
+
+    describe "when ignoring dependency interpolation errors" do
+      let(:options) { {:ignore_interpolation_dependency_errors => true} }
+
+      describe "if interpolation error" do
+        it "should not raise an error" do
+          hook_values = []
+          @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+          expect do
+            @settings.send(:call_hooks_deferred_to_application_initialization, options)
+          end.to_not raise_error
+        end
+      end
+      describe "if no interpolation error" do
+        it "should not raise an error" do
+          hook_values = []
+          @settings.define_settings(:section, :goodhook => {:default => good_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+          expect do
+            @settings.send(:call_hooks_deferred_to_application_initialization, options)
+          end.to_not raise_error
+        end
+      end
+    end
+
+    describe "when not ignoring dependency interpolation errors" do
+      [ {}, {:ignore_interpolation_dependency_errors => false}].each do |options|
+        describe "if interpolation error" do
+          it "should raise an error" do
+            hook_values = []
+            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            expect do
+              @settings.send(:call_hooks_deferred_to_application_initialization, options)
+            end.to raise_error
+          end
+          it "should contain the setting name in error message" do
+            hook_values = []
+            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            expect do
+              @settings.send(:call_hooks_deferred_to_application_initialization, options)
+            end.to raise_error Puppet::SettingsError, /badhook/
+          end
+        end
+        describe "if no interpolation error" do
+          it "should not raise an error" do
+            hook_values = []
+            @settings.define_settings(:section, :goodhook => {:default => good_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            expect do
+              @settings.send(:call_hooks_deferred_to_application_initialization, options)
+            end.to_not raise_error
+          end
+        end
+      end
+    end
+  end
+
   describe "when setting values" do
     before do
       @settings = Puppet::Util::Settings.new
@@ -216,6 +277,115 @@ describe Puppet::Util::Settings do
       @settings[:myval] = "yay"
     end
 
+    describe "call_hook" do
+      Puppet::Util::Settings::StringSetting.available_call_hook_values.each do |val|
+        describe "when :#{val}" do
+          describe "and definition invalid" do
+            it "should raise error if no hook defined" do
+              expect do
+                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
+              end.to raise_error ArgumentError, /no :hook/
+            end
+            it "should include the setting name in the error message" do
+              expect do
+                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
+              end.to raise_error ArgumentError, /for :hooker/
+            end
+          end
+          describe "and definition valid" do
+            before(:each) do
+              hook_values = []
+              @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
+            end
+
+            it "should call the hook when value written" do
+              @settings.setting(:hooker).expects(:handle).with("something").once
+              @settings[:hooker] = "something"
+            end
+          end
+        end
+      end
+
+      it "should have a default value of :on_write_only" do
+        @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+        @settings.setting(:hooker).call_hook.should == :on_write_only
+      end
+
+      describe "when nil" do
+        it "should generate a warning" do
+          Puppet.expects(:warning)
+          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+        end
+        it "should use default" do
+          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+          @settings.setting(:hooker).call_hook.should == :on_write_only
+        end
+      end
+
+      describe "when invalid" do
+        it "should raise an error" do
+          expect do
+            @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
+          end.to raise_error ArgumentError, /invalid.*call_hook/i
+        end
+      end
+
+      describe "when :on_define_and_write" do
+        it "should call the hook at definition" do
+          hook_values = []
+          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.setting(:hooker).call_hook.should == :on_define_and_write
+          hook_values.should == %w{yay}
+        end
+      end
+
+      describe "when :on_initialize_and_write" do
+        before(:each) do
+          @hook_values = []
+          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| @hook_values << v  }})
+        end
+
+        it "should not call the hook at definition" do
+          @hook_values.should == []
+          @hook_values.should_not == %w{yay}
+        end
+
+        it "should call the hook at initialization" do
+          app_defaults = {}
+          Puppet::Util::Settings::REQUIRED_APP_SETTINGS.each do |key|
+            app_defaults[key] = "foo"
+          end
+          app_defaults[:run_mode] = :user
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+
+          @settings.setting(:hooker).expects(:handle).with("yay").once
+
+          @settings.initialize_app_defaults app_defaults
+        end
+      end
+    end
+
+    describe "call_on_define" do
+      [true, false].each do |val|
+        describe "to #{val}" do
+          it "should generate a deprecation warning" do
+            Puppet.expects(:deprecation_warning)
+            values = []
+            @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_on_define => val, :hook => lambda { |v| values << v }})
+          end
+
+          it "should should set call_hook" do
+            values = []
+            name = "hooker_#{val}".to_sym
+            @settings.define_settings(:section, name => {:default => "yay", :desc => "boo", :call_on_define => val, :hook => lambda { |v| values << v }})
+
+            @settings.setting(name).call_hook.should == :on_define_and_write if val
+            @settings.setting(name).call_hook.should == :on_write_only unless val
+          end
+        end
+      end
+    end
+
     it "should call passed blocks when values are set" do
       values = []
       @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
@@ -237,14 +407,14 @@ describe Puppet::Util::Settings do
 
     it "should provide an option to call passed blocks during definition" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_on_define => true, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       values.should == %w{yay}
     end
 
     it "should pass the fully interpolated value to the hook when called on definition" do
       values = []
       @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
-      @settings.define_settings(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_on_define => true, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       values.should == %w{test/yay}
     end
 
@@ -299,6 +469,22 @@ describe Puppet::Util::Settings do
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"}
       FileTest.stubs(:exist?).returns true
+    end
+
+    describe "call_on_define" do
+      it "should generate a deprecation warning" do
+        Puppet.expects(:deprecation_warning)
+        @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+        @settings.setting(:hooker).call_on_define
+      end
+
+      Puppet::Util::Settings::StringSetting.available_call_hook_values.each do |val|
+        it "should match value for call_hook => :#{val}" do
+          hook_values = []
+          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
+          @settings.setting(:hooker).call_on_define.should == @settings.setting(:hooker).call_hook_on_define?
+        end
+      end
     end
 
     it "should provide a mechanism for returning set values" do
