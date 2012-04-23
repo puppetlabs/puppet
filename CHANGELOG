@@ -1,3 +1,9 @@
+2.7.14rc2
+===
+74e462f (#14060) Fix quoting of commands to interpolate inside the shell.
+796a072 Modernize the style of the shell exec provider tests.
+934ec89 Improve deprecation warning for dynamic lookup
+
 2.7.14rc1
 ===
 0d9e852 Removed duplication of compiling a catalog
