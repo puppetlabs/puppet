@@ -3,7 +3,17 @@ begin test_name "puppet module upgrade (with constraints on its dependencies)"
 step 'Setup'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+apply_manifest_on master, <<-'MANIFEST1'
+file { '/usr/share/puppet':
+  ensure  => directory,
+}
+file { ['/etc/puppet/modules', '/usr/share/puppet/modules']:
+  ensure  => directory,
+  recurse => true,
+  purge   => true,
+  force   => true,
+}
+MANIFEST1
 apply_manifest_on master, <<-PP
   file {
     [
