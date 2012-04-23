@@ -2,7 +2,7 @@ require 'pathname'
 require 'fileutils'
 require 'erb'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Generator < Application
 

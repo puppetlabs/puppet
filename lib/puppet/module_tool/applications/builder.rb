@@ -1,11 +1,11 @@
 require 'fileutils'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(Puppet::Module::Tool.find_module_root(path))
+        @path = File.expand_path(Puppet::ModuleTool.find_module_root(path))
         @pkg_path = File.join(@path, 'pkg')
         super(options)
       end
@@ -69,7 +69,7 @@ module Puppet::Module::Tool
       def copy_contents
         Dir[File.join(@path, '*')].each do |path|
           case File.basename(path)
-          when *Puppet::Module::Tool::ARTIFACTS
+          when *Puppet::ModuleTool::ARTIFACTS
             next
           else
             FileUtils.cp_r path, build_path

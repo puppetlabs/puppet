@@ -64,7 +64,7 @@ Puppet::Face.define(:module, '1.0.0') do
     when_invoked do |name, options|
       name = name.gsub('/', '-')
       Puppet.notice "Preparing to upgrade '#{name}' ..."
-      Puppet::Module::Tool::Applications::Upgrader.new(name, options).run
+      Puppet::ModuleTool::Applications::Upgrader.new(name, options).run
     end
 
     when_rendering :console do |return_value|
@@ -75,9 +75,9 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 0
       else
-        tree = Puppet::Module::Tool.build_tree(return_value[:affected_modules], return_value[:base_dir])
+        tree = Puppet::ModuleTool.build_tree(return_value[:affected_modules], return_value[:base_dir])
         return_value[:base_dir] + "\n" +
-        Puppet::Module::Tool.format_tree(tree)
+        Puppet::ModuleTool.format_tree(tree)
       end
     end
   end

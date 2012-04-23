@@ -1,8 +1,8 @@
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Upgrader < Application
 
-      include Puppet::Module::Tool::Errors
+      include Puppet::ModuleTool::Errors
 
       def initialize(name, options)
         @action              = :upgrade
@@ -103,7 +103,7 @@ module Puppet::Module::Tool
       end
 
       private
-      include Puppet::Module::Tool::Shared
+      include Puppet::ModuleTool::Shared
     end
   end
 end

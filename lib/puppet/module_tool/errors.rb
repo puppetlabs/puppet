@@ -1,4 +1,4 @@
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Errors
     require 'puppet/module_tool/errors/base'
     require 'puppet/module_tool/errors/installer'

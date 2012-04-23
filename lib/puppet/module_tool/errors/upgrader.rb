@@ -1,4 +1,4 @@
-module Puppet::Module::Tool::Errors
+module Puppet::ModuleTool::Errors
 
   class UpgradeError < ModuleToolError
     def initialize(msg)

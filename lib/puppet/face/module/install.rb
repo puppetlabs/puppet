@@ -156,7 +156,7 @@ Puppet::Face.define(:module, '1.0.0') do
       options[:target_dir] = Puppet.settings[:modulepath].split(sep).first
 
       Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
-      Puppet::Module::Tool::Applications::Installer.run(name, options)
+      Puppet::ModuleTool::Applications::Installer.run(name, options)
     end
 
     when_rendering :console do |return_value, name, options|
@@ -164,9 +164,9 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 1
       else
-        tree = Puppet::Module::Tool.build_tree(return_value[:installed_modules], return_value[:install_dir])
+        tree = Puppet::ModuleTool.build_tree(return_value[:installed_modules], return_value[:install_dir])
         return_value[:install_dir] + "\n" +
-        Puppet::Module::Tool.format_tree(tree)
+        Puppet::ModuleTool.format_tree(tree)
       end
     end
   end

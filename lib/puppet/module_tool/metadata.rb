@@ -1,4 +1,4 @@
-module Puppet::Module::Tool
+module Puppet::ModuleTool
 
   # = Metadata
   #
@@ -31,7 +31,7 @@ module Puppet::Module::Tool
     # module +name+.
     def full_module_name=(full_module_name)
       @full_module_name = full_module_name
-      @username, @name = Puppet::Module::Tool::username_and_modname_from(full_module_name)
+      @username, @name = Puppet::ModuleTool::username_and_modname_from(full_module_name)
     end
 
     # Return an array of the module's Dependency objects.
