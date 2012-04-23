@@ -21,7 +21,7 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<search_term>"
 
     when_invoked do |term, options|
-      Puppet::Module::Tool::Applications::Searcher.run(term, options)
+      Puppet::ModuleTool::Applications::Searcher.run(term, options)
     end
 
     when_rendering :console do |results, term, options|

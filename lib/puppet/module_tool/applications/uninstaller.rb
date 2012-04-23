@@ -1,7 +1,7 @@
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Uninstaller < Application
-      include Puppet::Module::Tool::Errors
+      include Puppet::ModuleTool::Errors
 
       def initialize(name, options)
         @name        = name

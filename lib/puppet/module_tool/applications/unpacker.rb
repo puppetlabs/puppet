@@ -1,7 +1,7 @@
 require 'pathname'
 require 'tmpdir'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Unpacker < Application
 
