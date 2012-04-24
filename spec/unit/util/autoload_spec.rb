@@ -4,10 +4,11 @@ require 'spec_helper'
 require 'puppet/util/autoload'
 
 describe Puppet::Util::Autoload do
+  include PuppetSpec::Files
   before do
     @autoload = Puppet::Util::Autoload.new("foo", "tmp")
 
-    @autoload.stubs(:eachdir).yields "/my/dir"
+    @autoload.stubs(:eachdir).yields make_absolute("/my/dir")
     @loaded = {}
     @autoload.class.stubs(:loaded).returns(@loaded)
   end
@@ -61,7 +62,7 @@ describe Puppet::Util::Autoload do
 
   describe "when loading a file" do
     before do
-      @autoload.class.stubs(:search_directories).returns %w{/a}
+      @autoload.class.stubs(:search_directories).returns [make_absolute("/a")]
       FileTest.stubs(:directory?).returns true
       @time_a = Time.utc(2010, 'jan', 1, 6, 30)
       File.stubs(:mtime).returns @time_a
@@ -103,10 +104,10 @@ describe Puppet::Util::Autoload do
     end
 
     it "should load the first file in the searchpath" do
-      @autoload.stubs(:search_directories).returns %w{/a /b}
+      @autoload.stubs(:search_directories).returns [make_absolute("/a"), make_absolute("/b")]
       FileTest.stubs(:directory?).returns true
       File.stubs(:exist?).returns true
-      Kernel.expects(:load).with("/a/tmp/myfile.rb", optionally(anything))
+      Kernel.expects(:load).with(make_absolute("/a/tmp/myfile.rb"), optionally(anything))
 
       @autoload.load("myfile")
 
@@ -129,9 +130,9 @@ describe Puppet::Util::Autoload do
 
   describe "when loading all files" do
     before do
-      @autoload.class.stubs(:search_directories).returns %w{/a}
+      @autoload.class.stubs(:search_directories).returns [make_absolute("/a")]
       FileTest.stubs(:directory?).returns true
-      Dir.stubs(:glob).returns ["/a/foo/file.rb"]
+      Dir.stubs(:glob).returns [make_absolute("/a/foo/file.rb")]
       File.stubs(:exist?).returns true
       @time_a = Time.utc(2010, 'jan', 1, 6, 30)
       File.stubs(:mtime).returns @time_a
@@ -148,7 +149,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should require the full path to the file" do
-      Kernel.expects(:load).with("/a/foo/file.rb", optionally(anything))
+      Kernel.expects(:load).with(make_absolute("/a/foo/file.rb"), optionally(anything))
 
       @autoload.loadall
     end
@@ -156,8 +157,8 @@ describe Puppet::Util::Autoload do
 
   describe "when reloading files" do
     before :each do
-      @file_a = "/a/file.rb"
-      @file_b = "/b/file.rb"
+      @file_a = make_absolute("/a/file.rb")
+      @file_b = make_absolute("/b/file.rb")
       @first_time = Time.utc(2010, 'jan', 1, 6, 30)
       @second_time = @first_time + 60
     end
@@ -169,7 +170,7 @@ describe Puppet::Util::Autoload do
 
     describe "in one directory" do
       before :each do
-        @autoload.class.stubs(:search_directories).returns %w{/a}
+        @autoload.class.stubs(:search_directories).returns [make_absolute("/a")]
         File.expects(:mtime).with(@file_a).returns(@first_time)
         @autoload.class.mark_loaded("file", @file_a)
       end
@@ -191,7 +192,7 @@ describe Puppet::Util::Autoload do
 
     describe "in two directories" do
       before :each do
-        @autoload.class.stubs(:search_directories).returns %w{/a /b}
+        @autoload.class.stubs(:search_directories).returns [make_absolute("/a"), make_absolute("/b")]
       end
 
       it "should load b/file when a/file is deleted" do
@@ -216,6 +217,19 @@ describe Puppet::Util::Autoload do
         Kernel.expects(:load).with(@file_a, optionally(anything))
         @autoload.class.reload_changed
         @autoload.class.send(:loaded)["file"].should == [@file_a, @first_time]
+      end
+    end
+  end
+
+  describe "#cleanpath" do
+    it "should leave relative paths relative" do
+      path = "hello/there"
+      Puppet::Util::Autoload.cleanpath(path).should == path
+    end
+
+    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+      it "should convert c:\ to c:/" do
+        Puppet::Util::Autoload.cleanpath('c:\\').should == 'c:/'
       end
     end
   end
