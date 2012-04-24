@@ -51,9 +51,9 @@ Puppet::Face.define(:module, '1.0.0') do
     when_invoked do |name, options|
       name = name.gsub('/', '-')
       
-      Puppet::Module::Tool.set_option_defaults options
+      Puppet::ModuleTool.set_option_defaults options
       Puppet.notice "Preparing to uninstall '#{name}'" << (options[:version] ? " (#{colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))})" : '') << " ..."
-      Puppet::Module::Tool::Applications::Uninstaller.run(name, options)
+      Puppet::ModuleTool::Applications::Uninstaller.run(name, options)
     end
 
     when_rendering :console do |return_value|

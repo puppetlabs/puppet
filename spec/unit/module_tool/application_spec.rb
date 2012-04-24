@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet/module_tool'
 
-describe Puppet::Module::Tool::Applications::Application do
+describe Puppet::ModuleTool::Applications::Application do
   describe 'app' do
 
     good_versions = %w{ 1.2.4 0.0.1 0.0.0 0.0.2-git-8-g3d316d1 0.0.3-b1 10.100.10000

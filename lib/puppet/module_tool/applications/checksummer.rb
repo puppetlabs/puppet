@@ -1,6 +1,6 @@
 require 'puppet/module_tool/checksums'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Checksummer < Application
 
@@ -12,7 +12,7 @@ module Puppet::Module::Tool
       def run
         changes = []
         if metadata_file.exist?
-          sums = Puppet::Module::Tool::Checksums.new(@path)
+          sums = Puppet::ModuleTool::Checksums.new(@path)
           (metadata['checksums'] || {}).each do |child_path, canonical_checksum|
 
             # Work around an issue where modules built with an older version

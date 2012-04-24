@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'puppet/module_tool'
 
-describe Puppet::Module::Tool do
+describe Puppet::ModuleTool do
   describe '.format_tree' do
     it 'should return an empty tree when given an empty list' do
       subject.format_tree([]).should == ''

@@ -1,6 +1,6 @@
-module Puppet::Module::Tool::Shared
+module Puppet::ModuleTool::Shared
 
-  include Puppet::Module::Tool::Errors
+  include Puppet::ModuleTool::Errors
 
   def get_local_constraints
     @local      = Hash.new { |h,k| h[k] = { } }
@@ -30,7 +30,7 @@ module Puppet::Module::Tool::Shared
     @versions = Hash.new { |h,k| h[k] = [] }
 
     Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
-    author, modname = Puppet::Module::Tool.username_and_modname_from(@module_name)
+    author, modname = Puppet::ModuleTool.username_and_modname_from(@module_name)
     info = Puppet::Forge.remote_dependency_info(author, modname, @options[:version])
     info.each do |pair|
       mod_name, releases = pair

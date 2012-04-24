@@ -802,12 +802,12 @@ describe Puppet::Module do
       foo_path = Pathname.new(File.join(checksummed_module.path, 'foo'))
 
       IO.binwrite(foo_path, 'notfoo')
-      Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
+      Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should_not == foo_checksum
       checksummed_module.has_local_changes?.should be_true
 
       IO.binwrite(foo_path, 'foo')
 
-      Puppet::Module::Tool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
+      Puppet::ModuleTool::Checksums.new(foo_path).checksum(foo_path).should == foo_checksum
       checksummed_module.has_local_changes?.should be_false
     end
   end

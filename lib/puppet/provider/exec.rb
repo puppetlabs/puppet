@@ -1,3 +1,6 @@
+require 'puppet/provider'
+require 'puppet/util/execution'
+
 class Puppet::Provider::Exec < Puppet::Provider
   include Puppet::Util::Execution
 
@@ -68,9 +71,11 @@ class Puppet::Provider::Exec < Puppet::Provider
   end
 
   def extractexe(command)
-    # easy case: command was quoted
-    if command =~ /^"([^"]+)"/
-      $1
+    if command.is_a? Array
+      command.first
+    elsif match = /^"([^"]+)"|^'([^']+)'/.match(command)
+      # extract whichever of the two sides matched the content.
+      match[1] or match[2]
     else
       command.split(/ /)[0]
     end

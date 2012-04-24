@@ -17,7 +17,7 @@ describe "puppet module uninstall" do
       end
 
       it "should not require any options" do
-        Puppet::Module::Tool::Applications::Uninstaller.expects(:run).once
+        Puppet::ModuleTool::Applications::Uninstaller.expects(:run).once
         subject.uninstall("puppetlabs-apache")
       end
     end
@@ -25,7 +25,7 @@ describe "puppet module uninstall" do
     it "should accept the --environment option" do
       options[:environment] = "development"
       expected_options = { :environment => 'development' }
-      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
+      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end
 
@@ -35,7 +35,7 @@ describe "puppet module uninstall" do
         :modulepath => '/foo/puppet/modules',
         :environment => 'production',
       }
-      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
+      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end
 
@@ -45,7 +45,7 @@ describe "puppet module uninstall" do
         :version => '1.0.0',
         :environment => 'production',
       }
-      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
+      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end
 
@@ -55,7 +55,7 @@ describe "puppet module uninstall" do
         :environment => 'production',
         :force => true,
       }
-      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
+      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end
   end

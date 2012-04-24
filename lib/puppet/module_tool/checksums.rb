@@ -1,6 +1,6 @@
 require 'digest/md5'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
 
   # = Checksums
   #
@@ -25,7 +25,7 @@ module Puppet::Module::Tool
       unless @data
         @data = {}
         @path.find do |descendant|
-          if Puppet::Module::Tool.artifact?(descendant)
+          if Puppet::ModuleTool.artifact?(descendant)
             Find.prune
           elsif descendant.file?
             path = descendant.relative_path_from(@path)

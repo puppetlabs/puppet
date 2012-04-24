@@ -164,7 +164,7 @@ Puppet::Face.define(:module, '1.0.0') do
           end
         end
 
-        output << Puppet::Module::Tool.format_tree(tree)
+        output << Puppet::ModuleTool.format_tree(tree)
       end
 
       output
@@ -197,7 +197,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #     }
   #   ]
   #
-  # When the above data structure is passed to Puppet::Module::Tool.build_tree
+  # When the above data structure is passed to Puppet::ModuleTool.build_tree
   # you end up with something like this:
   #
   #   /etc/puppet/modules

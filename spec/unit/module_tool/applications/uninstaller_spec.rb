@@ -3,7 +3,7 @@ require 'puppet/module_tool'
 require 'tmpdir'
 require 'puppet_spec/modules'
 
-describe Puppet::Module::Tool::Applications::Uninstaller do
+describe Puppet::ModuleTool::Applications::Uninstaller do
   include PuppetSpec::Files
 
   def mkmod(name, path, metadata=nil)
@@ -22,7 +22,7 @@ describe Puppet::Module::Tool::Applications::Uninstaller do
   describe "the behavior of the instances" do
 
     before do
-      @uninstaller = Puppet::Module::Tool::Applications::Uninstaller
+      @uninstaller = Puppet::ModuleTool::Applications::Uninstaller
       FileUtils.mkdir_p(modpath1)
       FileUtils.mkdir_p(modpath2)
       fake_env.modulepath = [modpath1, modpath2]

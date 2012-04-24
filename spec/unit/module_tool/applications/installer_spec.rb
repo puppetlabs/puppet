@@ -3,7 +3,7 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => true do
+describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true do
   include PuppetSpec::Files
 
   before do
@@ -16,7 +16,7 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
   end
 
   let(:unpacker)        { stub(:run) }
-  let(:installer_class) { Puppet::Module::Tool::Applications::Installer }
+  let(:installer_class) { Puppet::ModuleTool::Applications::Installer }
   let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
   let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
   let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
@@ -99,7 +99,7 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
 
     it "should install the requested module" do
       pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
           returns(unpacker)
         results = installer_class.run('pmtacceptance-stdlib', options)
@@ -112,13 +112,13 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
     context "when the requested module has dependencies" do
       it "should install dependencies" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
             returns(unpacker)
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
             returns(unpacker)
 
@@ -139,7 +139,7 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
       it "should install requested module if the '--force' flag is used" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
           options = { :force => true, :target_dir => modpath1 }
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
           results = installer_class.run('pmtacceptance-apollo', options)
@@ -150,7 +150,7 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
       it "should not install dependencies if the '--force' flag is used" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
           options = { :force => true, :target_dir => modpath1 }
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
           results = installer_class.run('pmtacceptance-apollo', options)
@@ -162,7 +162,7 @@ describe Puppet::Module::Tool::Applications::Installer, :fails_on_windows => tru
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
           options = { :ignore_dependencies => true, :target_dir => modpath1 }
-          Puppet::Module::Tool::Applications::Unpacker.expects(:new).
+          Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
           results = installer_class.run('pmtacceptance-apollo', options)

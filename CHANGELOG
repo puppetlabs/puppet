@@ -1,3 +1,134 @@
+2.7.14rc3
+===
+42b20be (#13682) Fix acceptance test failures
+dce3c32 (#13682) Rename Puppet::Module::Tool to Puppet::ModuleTool
+5117e12 (maint) Ensure every file has a trailing newlines
+c255414 (#14036) Add upstart tests
+dc3bb9f (#14036) Handle upstart better
+
+2.7.14rc2
+===
+74e462f (#14060) Fix quoting of commands to interpolate inside the shell.
+796a072 Modernize the style of the shell exec provider tests.
+934ec89 Improve deprecation warning for dynamic lookup
+
+2.7.14rc1
+===
+0d9e852 Removed duplication of compiling a catalog
+d67711d Cleaner test for create_resources doing nothing
+2d3cc63 Fixing problem caused by activerecord
+f1331ba Put back require 'puppet' in Puppet::Util
+79bf4fa (#13299) Fix error message when agent is disabled
+5178adc Update puppet.spec for rpm packaging
+fb96747 Fixed old log test to match new autoflush behavior
+878127f Make sure the log file writable
+72d3b56 Default autoflushing of log files to true
+9711d50 Created test that shows enc warning problem
+d54100d (Maint) Fix order-dependent test failure
+f531400 (Maint) Don't assume eventlog gem is installed on Windows
+2957ffe Fix tempfile cleanup in specs
+e2d6915 Fix communication_error acceptance test
+27a5eb7 options[:ca_location] is a string not a symbol. Safer to pull Puppet::SSL::Host.ca_location since it is already set correctly.
+c01cac9 (#13204) Don't ignore missing PATH.augnew files
+7d27cd2 Use :as_platform in the smf service spec
+876785a Use :as_platform in the redhat service spec
+a7181c8 (#13640) Only agents should use next_agent_run
+9aa302f Increased test coverage of scoping rules
+163ab8c Use more descriptive terms for the differing scopes
+2ddb3d6 Make new scoping look through inherited scopes
+b519e24 Add tests for mixed inheritence/inclusion
+48bce6b Remove dynamic option for lookupvar
+2e78aad Implement newlookupvar() to replace dynamic scope
+9c94586 Tests for deprecation warnings for dynamic scoping
+2ff6fe4 (#13690) add comments to spec_helper
+100f42c (#12392) Don't require eventlog gem on non-Windows platforms
+b6ee08a (#13690) Update 2.7.x for spec_helper compatibility with external projects
+1306611 (maint) Remove unnecessary step from puppet module build help
+7afcb04 (#9167) Do not send email when nothing changes
+a26ff16 [#13686] Fix directoryservices ShadowHashData code
+b85cdc9 Fixup tests to work on CentOS 5
+7e78094 (#13659) Convert fact values to string when searching database
+fc2964f fix bug in Util#symbolizehash!
+46d8973 (#13567) Fix create_resources name parameter bug
+8d2ff89 (#12392) Add eventlog destination and log to it by default on Windows
+bca4849 (#13636) Update Module Face copyright date
+e7d3911 (#13649) Restrict module name matching
+9cbda49 (#13643) Make the use of FileUtils.rm_rf secure
+6819cf3 (#13642) Move search notice message
+28531f8 (#13639) Don't send errors directly to stderr
+45f8009 (#13638) Add SemVer#pre function
+a2990a8 (#13737) Swap build_tree and format_tree method names
+f0625ef (#12392) Created Windows eventlog message resource dll
+245c6b7 (#9167) Do not send email when nothing changes
+1b810b1 (#3581) Stop forking around: Add fork helper method
+1de8bd7 Add Module Tool
+e24755d (#13397) fix gem provider ensure=>latest bug
+271c7f2 Make core changes needed for the puppet module tool
+7994400 (#13367) Patch SemVer to permit ranges including pre-release components.
+1342558 Monkey patch FileUtils.mv in Ruby 1.8.5
+3f28268 (#12101) Make Puppet::Util::absolute_path? usable in autoloader
+772f756 (#12101) Add shared context for specs to imitate windows or posix
+8f84207 (#12466) unset X-Forwarded-For header
+49eabd4 Quote strings containing hex numbers when generating ZAML
+f5487bd (#13439) refactor spec helper for spec compatibility between 2.7 and master
+db17d7c (#13380) Cron acceptance tests don't ensure cron actually installed
+0498d55 (#13204) Workaround duplicate Augeas save events
+7048e88 (#3022) File type's force attribute's description is incomplete
+43003f5 (Maint) Consistently use the same agent fqdn
+95c2b90 Stub execpipe using StringIO
+ca32364 (#13117) Fix selmodule error on each_lines
+bdb5922 (Maint) Don't change permissions on /etc/hosts
+40ee256 Finally, stop using the `foo` name in the type_spec test.
+245f1b9 Clean up the "foo" name in create_resources_spec.
+eb2c71b Clean up "foo" name in global resource state.
+ec5c4bf Document the problem with the `apply_to_device` and related methods.
+d6da1b7 Fix hash comparison under RSpec with 1.8.5
+0b7841a (#12960) Fix puppet resource <type> if type has no providers
+6a31287 (#12981) Fix external subcommand exit status
+a2208d0 (#10722) Add spec to verify that an error is logged on bad http
+7207b68 (#10722) Refactor http_spec to use expectations
+54e5d18 (#7986) Modify pkg provider to handle publisher
+2e32924 (#7986) Cleanup pkg provider #2
+113fc54 (#7986) Cleanup pkg provider #1
+452e2c4 (#7592) Remove redundant call to String#to_s
+ee554eb (#10722) Display errors on HTTP report submission failures
+2973d5c (#11988) Work around Augeas reload bug when changing save modes
+dfefc23 (#11988) Don't overwrite symlinks in augeas provider
+d27af92 Stubbing time is risky, better an approximate compare.
+01c8623 Don't stub the database in Puppet::Rails tests.
+c4b3c84 (#9491) Preserve trailing slashes in FileSettings
+27bd6bc (#8312) Fix zypper provider so ensure => 'latest' now works
+c6d656a (#1076) Show warning if an empty group is specified
+e1f9957 Maint: Remove unused mock objects in user spec
+bc64d9b Maint: Use real objects in user spec
+7eb4f5b Maint: Add a real provider class to user spec
+d28c62a Maint: Remove unused variable in user spec
+dba27c9 (#4862) Finally remove the event-loop library.
+8e11766 (#4862) define_method is not a public method in Ruby.
+11501a7 (#4862) `returning` is not a standard Ruby method.
+30a23ac (#4862) Stop using EventLoop in the Puppet daemon.
+a61c785 Updating CHANGELOG and lib/puppet.rb for 2.6.14
+60b7aa5 Prior to this commit we hard coded paths in two tests that depended on our CI system directory structure. This made it hard to use our acceptance suite without also includin
+600a6e7 Clean up and unify scratch database setup logic.
+17a5302 Make PuppetSpec::Files methods available at module level.
+3857e2b Fix stubbing of ActiveRecord that doesn't work in AR 3.2.*
+dd6d36c Fix Rails compatibility code to be less stupid.
+ade5965 Remove unnecessary fallbacks in change_{user,group}
+0a09a64 Document uid/gid-related methods in Puppet::Util
+2599d56 Copy owner/group in replace_file
+ead36ff (#12463) eliminate `secure_open` in favour of `replace_file`
+1469538 (#12460) use `replace_file` for the .k5login file
+8461203 (#12462) user_role_add: use `replace_file` for /etc/shadow
+0ad532a (#12463) add secure `replace_file` to Puppet::Util
+76d0749 (#12459) drop supplementary groups when permanently dropping UID
+50909b9 (#12458) default to users primary group, not root, in `asuser`
+d00c5cc (#12457) add users primary group, not Process.gid, in initgroups
+2732f25 (#12479) Don't make undef regexp match as the string undef.
+a62f711 (#8193) Add support for new ssh keytypes in authorized_key provider
+0efc65d (#8193) Add unit tests for new ssh keytypes
+5dfc436 (#8193) Support new keytypes for sshkey
+36e6642 (#8193) Support new keytypes for ssh_authorized_key
+
 2.7.13
 ===
 1f58ea6 Stub mktmpdir and remove_entry_secure in os x package providers
@@ -1949,6 +2080,19 @@ a1d216c Fixed the return types were valid, and removed the copy paste error with
 d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
+
+2.6.16
+===
+65446c9 Revert "(#5246) Puppetd does not remove it's pidfile when it exits"
+
+2.6.15
+===
+f7829ec Stub mktmpdir and remove_entry_secure in os x package providers
+7ac1ec8 (#13260) Spec test to verify that mktmpdir is used
+0180200 Refactor pkgdmg specs
+c51447d (#13260) Use mktmpdir when downloading packages
+568ded5 Fix for bucket_path security vulnerability
+6bef2e6 Removed text/marshal support
 
 2.6.14
 ===

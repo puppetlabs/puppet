@@ -141,7 +141,7 @@ describe "puppet module search" do
 
     it "should accept the --module-repository option" do
       options[:module_repository] = "http://forge.example.com"
-      Puppet::Module::Tool::Applications::Searcher.expects(:run).with("puppetlabs-apache", has_entries(options)).once
+      Puppet::ModuleTool::Applications::Searcher.expects(:run).with("puppetlabs-apache", has_entries(options)).once
       subject.search("puppetlabs-apache", options)
     end
   end

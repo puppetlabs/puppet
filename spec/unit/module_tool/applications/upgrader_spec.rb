@@ -3,7 +3,7 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::Module::Tool::Applications::Upgrader do
+describe Puppet::ModuleTool::Applications::Upgrader do
   include PuppetSpec::Files
 
   before do
