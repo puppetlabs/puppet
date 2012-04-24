@@ -179,7 +179,6 @@ describe Puppet::Application::Doc do
 
       before :each do
         @doc.options.stubs(:[]).returns(false)
-        Puppet.stubs(:parse_config)
         Puppet::Util::Log.stubs(:newdestination)
       end
 
@@ -213,12 +212,6 @@ describe Puppet::Application::Doc do
 
       it "should operate in master run_mode" do
         @doc.class.run_mode.name.should == :master
-
-        @doc.setup_rdoc
-      end
-
-      it "should parse puppet configuration" do
-        Puppet.expects(:parse_config)
 
         @doc.setup_rdoc
       end

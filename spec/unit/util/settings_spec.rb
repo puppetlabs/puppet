@@ -535,7 +535,7 @@ describe Puppet::Util::Settings do
     it "should not cache values such that information from one environment is returned for another environment" do
       text = "[env1]\none = oneval\n[env2]\none = twoval\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       @settings.value(:one, "env1").should == "oneval"
       @settings.value(:one, "env2").should == "twoval"
@@ -576,7 +576,7 @@ describe Puppet::Util::Settings do
       text = "[main]\none = fileval\n"
       @settings.stubs(:read_file).returns(text)
       @settings.handlearg("--one", "clival")
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       @settings[:one].should == "clival"
     end
@@ -590,7 +590,7 @@ describe Puppet::Util::Settings do
     it "should return values set in the mode-specific section before values set in the main section" do
       text = "[main]\none = mainval\n[mymode]\none = modeval\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       @settings[:one].should == "modeval"
     end
@@ -599,14 +599,14 @@ describe Puppet::Util::Settings do
       text = "[other]\none = oval\n"
       file = "/some/file"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == "ONE"
     end
 
     it "should return values in a specified environment" do
       text = "[env]\none = envval\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings.value(:one, "env").should == "envval"
     end
 
@@ -619,7 +619,7 @@ describe Puppet::Util::Settings do
     it "should interpolate found values using the current environment" do
       text = "[main]\none = mainval\n[myname]\none = nameval\ntwo = $one/two\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       @settings.value(:two, "myname").should == "nameval/two"
     end
@@ -627,7 +627,7 @@ describe Puppet::Util::Settings do
     it "should return values in a specified environment before values in the main or name sections" do
       text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings.value(:one, "env").should == "envval"
     end
   end
@@ -644,7 +644,7 @@ describe Puppet::Util::Settings do
         FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false)
         FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).never
 
-        @settings.parse()
+        @settings.send(:parse_config_files)
       end
     end
 
@@ -656,7 +656,7 @@ describe Puppet::Util::Settings do
         FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
         FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
 
-        @settings.parse()
+        @settings.send(:parse_config_files)
       end
     end
   end
@@ -688,7 +688,7 @@ describe Puppet::Util::Settings do
       CONF
       FileTest.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:report].should be_true
     end
 
@@ -700,7 +700,7 @@ describe Puppet::Util::Settings do
 
       File.expects(:read).with(myfile).returns "[main]"
 
-      @settings.parse
+      @settings.send(:parse_config_files)
     end
 
     it "should not try to parse non-existent files" do
@@ -708,7 +708,7 @@ describe Puppet::Util::Settings do
 
       File.expects(:read).with("/some/file").never
 
-      @settings.parse
+      @settings.send(:parse_config_files)
     end
 
     it "should return values set in the configuration file" do
@@ -716,7 +716,7 @@ describe Puppet::Util::Settings do
       one = fileval
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == "fileval"
     end
 
@@ -724,7 +724,7 @@ describe Puppet::Util::Settings do
     it "should not throw an exception on unknown parameters" do
       text = "[main]\nnosuchparam = mval\n"
       @settings.expects(:read_file).returns(text)
-      lambda { @settings.parse }.should_not raise_error
+      lambda { @settings.send(:parse_config_files) }.should_not raise_error
     end
 
     it "should convert booleans in the configuration file into Ruby booleans" do
@@ -733,7 +733,7 @@ describe Puppet::Util::Settings do
       two = false
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == true
       @settings[:two].should == false
     end
@@ -743,7 +743,7 @@ describe Puppet::Util::Settings do
       one = 65
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == 65
     end
 
@@ -755,7 +755,7 @@ describe Puppet::Util::Settings do
       myfile = #{otherfile} {owner = service, group = service, mode = 644}
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
@@ -769,7 +769,7 @@ describe Puppet::Util::Settings do
       "
       file = "/some/file"
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
     end
@@ -782,7 +782,7 @@ describe Puppet::Util::Settings do
       mysetting = setval
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       values.should == ["setval"]
     end
 
@@ -796,7 +796,7 @@ describe Puppet::Util::Settings do
       mysetting = other
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       values.should == ["setval"]
     end
 
@@ -812,7 +812,7 @@ describe Puppet::Util::Settings do
       mysetting = other
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       values.should == ["other"]
     end
 
@@ -825,7 +825,7 @@ describe Puppet::Util::Settings do
       mysetting = $base/setval
       "
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       values.should == ["yay/setval"]
     end
 
@@ -836,7 +836,7 @@ describe Puppet::Util::Settings do
       myarg =
       "
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:myarg].should == ""
     end
 
@@ -875,12 +875,12 @@ describe Puppet::Util::Settings do
     end
 
     it "should return values from the config file in the user's home dir before values set in the main configuration file" do
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == "user"
     end
 
     it "should return values from the main config file if they aren't overridden in the config file in the user's home dir" do
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:two].should == "main2"
     end
 
@@ -906,16 +906,16 @@ describe Puppet::Util::Settings do
       file.expects(:changed?)
 
       @settings.stubs(:parse)
-      @settings.reparse
+      @settings.reparse_config_files
     end
 
     it "should not create the LoadedFile instance and should not parse if the file does not exist" do
       FileTest.expects(:exist?).with("/test/file").returns false
       Puppet::Util::LoadedFile.expects(:new).never
 
-      @settings.expects(:parse).never
+      @settings.expects(:parse_config_files).never
 
-      @settings.reparse
+      @settings.reparse_config_files
     end
 
     it "should not reparse if the file has not changed" do
@@ -924,9 +924,9 @@ describe Puppet::Util::Settings do
 
       file.expects(:changed?).returns false
 
-      @settings.expects(:parse).never
+      @settings.expects(:parse_config_files).never
 
-      @settings.reparse
+      @settings.reparse_config_files
     end
 
     it "should reparse if the file has changed" do
@@ -935,9 +935,9 @@ describe Puppet::Util::Settings do
 
       file.expects(:changed?).returns true
 
-      @settings.expects(:parse)
+      @settings.expects(:parse_config_files)
 
-      @settings.reparse
+      @settings.reparse_config_files
     end
 
     it "should replace in-memory values with on-file values" do
@@ -956,7 +956,7 @@ describe Puppet::Util::Settings do
       # it goes to parse again when we ask for the value, because the
       # mock always says it should get reparsed.
       @settings.stubs(:read_file).returns(text)
-      @settings.reparse
+      @settings.reparse_config_files
       @settings[:one].should == "disk-replace"
     end
 
@@ -965,7 +965,7 @@ describe Puppet::Util::Settings do
 
       text = "[main]\none = on-disk\n"
       @settings.stubs(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       @settings[:one].should == "clival"
     end
@@ -974,13 +974,13 @@ describe Puppet::Util::Settings do
       # Init the value
       text = "[main]\none = disk-init\n"
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == "disk-init"
 
       # Now replace the value
       text = "[main]\ntwo = disk-replace\n"
       @settings.expects(:read_file).returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       # The originally-overridden value should be replaced with the default
       @settings[:one].should == "ONE"
@@ -993,13 +993,13 @@ describe Puppet::Util::Settings do
       # Init the value
       text = "[main]\none = initial-value\n"
       @settings.expects(:read_file).with("/test/file").returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
       @settings[:one].should == "initial-value"
 
       # Now replace the value with something bogus
       text = "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n"
       @settings.expects(:read_file).with("/test/file").returns(text)
-      @settings.parse
+      @settings.send(:parse_config_files)
 
       # The originally-overridden value should not be replaced with the default
       @settings[:one].should == "initial-value"
@@ -1435,4 +1435,46 @@ describe Puppet::Util::Settings do
       settings.writesub(:privatekeydir, "/path/to/keydir")
     end
   end
+
+
+  describe "when dealing with command-line options" do
+    let(:settings) { Puppet::Util::Settings.new }
+
+    it "should get options from Puppet.settings.optparse_addargs" do
+      settings.expects(:optparse_addargs).returns([])
+
+      settings.send(:parse_global_options, [])
+    end
+
+    it "should add options to OptionParser" do
+      settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
+      settings.expects(:handlearg).with("--option", true)
+      settings.send(:parse_global_options, ["--option"])
+    end
+
+    it "should not die if it sees an unrecognized option, because the app/face may handle it later" do
+      expect { settings.send(:parse_global_options, ["--topuppet", "value"]) } .to_not raise_error
+    end
+
+    it "should not pass an unrecognized option to handleargs" do
+      settings.expects(:handlearg).with("--topuppet", "value").never
+      expect { settings.send(:parse_global_options, ["--topuppet", "value"]) } .to_not raise_error
+    end
+
+    it "should pass valid puppet settings options to handlearg even if they appear after an unrecognized option" do
+      settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
+      settings.expects(:handlearg).with("--option", true)
+      settings.send(:parse_global_options, ["--invalidoption", "--option"])
+    end
+
+    it "should transform boolean option to normal form" do
+      Puppet::Util::Settings.clean_opt("--[no-]option", true).should == ["--option", true]
+    end
+
+    it "should transform boolean option to no- form" do
+      Puppet::Util::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
+    end
+  end
+
+
 end

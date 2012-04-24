@@ -113,9 +113,35 @@ module Puppet
   end
 
   # Parse the config file for this process.
-  def self.parse_config
-    Puppet.settings.parse
+  def self.parse_config()
+    Puppet.deprecation_warning("Puppet.parse_config is deprecated; please use Faces API (which will handle settings and state management for you), or (less desirable) call Puppet.initialize_settings")
+    Puppet.initialize_settings
   end
+
+  # Initialize puppet's settings.  This is intended only for use by external tools that are not
+  #  built off of the Faces API or the Puppet::Util::Application class.  It may also be used
+  #  to initialize state so that a Face may be used programatically, rather than as a stand-alone
+  #  command-line tool.
+  #
+  # Note that this API may be subject to change in the future.
+  def self.initialize_settings()
+    do_initialize_settings_for_run_mode(:user)
+  end
+
+  # Initialize puppet's settings for a specified run_mode.  This
+  def self.initialize_settings_for_run_mode(run_mode)
+    Puppet.deprecation_warning("initialize_settings_for_run_mode may be removed in a future release, as may run_mode itself")
+    do_initialize_settings_for_run_mode(run_mode)
+  end
+
+  # private helper method to provide the implementation details of initializing for a run mode,
+  #  but allowing us to control where the deprecation warning is issued
+  def self.do_initialize_settings_for_run_mode(run_mode)
+    Puppet.settings.initialize_global_settings
+    run_mode = Puppet::Util::RunMode[run_mode]
+    Puppet.settings.initialize_app_defaults(Puppet::Util::Settings.app_defaults_for_run_mode(run_mode))
+  end
+  private_class_method :do_initialize_settings_for_run_mode
 
   # Create a new type.  Just proxy to the Type class.  The mirroring query
   # code was deprecated in 2008, but this is still in heavy use.  I suppose

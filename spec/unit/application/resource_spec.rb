@@ -68,7 +68,6 @@ describe Puppet::Application::Resource do
   describe "during setup" do
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:parse_config)
     end
 
     it "should set console as the log destination" do
@@ -90,11 +89,6 @@ describe Puppet::Application::Resource do
       Puppet::Log.level.should == :info
     end
 
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @resource_app.setup
-    end
   end
 
   describe "when running" do

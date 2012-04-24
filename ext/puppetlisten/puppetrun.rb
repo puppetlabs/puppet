@@ -16,8 +16,7 @@ require 'puppet/sslcertificates/support'
 require 'socket'
 
 # load puppet configuration, needed to find ssl certificates
-Puppet[:config] = "/etc/puppet/puppet.conf"
-Puppet.parse_config
+Puppet.initialize_settings
 
 # establish the certificate
 ctx = OpenSSL::SSL::SSLContext.new

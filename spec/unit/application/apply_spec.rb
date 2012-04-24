@@ -65,7 +65,6 @@ describe Puppet::Application::Apply do
   describe "during setup" do
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)

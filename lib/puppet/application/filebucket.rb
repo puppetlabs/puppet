@@ -165,9 +165,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Log.level = :info
     end
 
-    # Now parse the config
-    Puppet.parse_config
-
       exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/file_bucket/dipper'
