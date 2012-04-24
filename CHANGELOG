@@ -1,3 +1,11 @@
+2.7.14rc3
+===
+42b20be (#13682) Fix acceptance test failures
+dce3c32 (#13682) Rename Puppet::Module::Tool to Puppet::ModuleTool
+5117e12 (maint) Ensure every file has a trailing newlines
+c255414 (#14036) Add upstart tests
+dc3bb9f (#14036) Handle upstart better
+
 2.7.14rc2
 ===
 74e462f (#14060) Fix quoting of commands to interpolate inside the shell.
