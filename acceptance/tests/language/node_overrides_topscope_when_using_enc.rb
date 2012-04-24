@@ -1,5 +1,7 @@
 test_name "ENC still allows a node to override a topscope var"
 
+confine :except, :platform => 'windows'
+
 testdir = master.tmpdir('scoping_deprecation')
 
 create_remote_file(master, "#{testdir}/puppet.conf", <<END)

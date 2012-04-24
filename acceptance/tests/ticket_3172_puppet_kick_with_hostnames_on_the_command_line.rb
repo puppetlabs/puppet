@@ -5,7 +5,7 @@ target = 'working.example.org'
 agents.each do |host|
   if host['platform'].include?('windows')
     on(host, puppet_kick(target), :acceptable_exit_codes => [1]) {
-      assert_match(/Puppet kick is not supported/, stderr)
+      assert_match(/Puppet kick is not supported/, stdout)
     }
   else
     on(host, puppet_kick(target), :acceptable_exit_codes => [3]) {
