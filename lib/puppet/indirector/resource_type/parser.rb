@@ -30,31 +30,28 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   #   2. request.key : A String that will be treated as a regular expression to
   #         be matched against the names of the available types.  You may also
   #         pass a "*", which will match all available types.
-  #   3. request.options[:type] : a String that can be used to filter the output
-  #         to only return the desired types.  The current supported values are
+  #   3. request.options[:kind] : a String that can be used to filter the output
+  #         to only return the desired kinds.  The current supported values are
   #         'class', 'defined_type', and 'node'.
   def search(request)
     krt = request.environment.known_resource_types
     # Make sure we've got all of the types loaded.
     krt.loader.import_all
 
-    result_candidates = []
-    if request.options.has_key?(:type)
-      case request.options[:type]
+    result_candidates = case request.options[:kind]
         when "class"
-          result_candidates = krt.hostclasses.values
+          krt.hostclasses.values
         when "defined_type"
-          result_candidates = krt.definitions.values
+          krt.definitions.values
         when "node"
-          result_candidates = krt.nodes.values
+          krt.nodes.values
+        when nil
+          result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.nodes.values]
         else
-          raise ArgumentError, "Unrecognized type filter: " +
-                    "'#{request.options[:type]}', expected one " +
+          raise ArgumentError, "Unrecognized kind filter: " +
+                    "'#{request.options[:kind]}', expected one " +
                     " of 'class', 'defined_type', or 'node'."
       end
-    else
-      result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.nodes.values]
-    end
 
     result = result_candidates.flatten.reject { |t| t.name == "" }
     return nil if result.empty?

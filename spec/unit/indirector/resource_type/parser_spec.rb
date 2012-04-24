@@ -126,23 +126,23 @@ describe Puppet::Indirector::ResourceType::Parser do
         result.find { |t| t.name == "two::twoklass" }.should be_instance_of(Puppet::Resource::Type)
       end
 
-      context "when specifying a 'type' parameter" do
+      context "when specifying a 'kind' parameter" do
         before :each do
           @klass = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
           @node = @krt.add(Puppet::Resource::Type.new(:node, "bar"))
           @define = @krt.add(Puppet::Resource::Type.new(:definition, "baz"))
         end
 
-        it "should raise an error if you pass an invalid type filter" do
-          @request.options[:type] = "i bet you don't have a type called this"
+        it "should raise an error if you pass an invalid kind filter" do
+          @request.options[:kind] = "i bet you don't have a kind called this"
           expect {
             @terminus.search(@request)
-          }.to raise_error(ArgumentError, /Unrecognized type filter/)
+          }.to raise_error(ArgumentError, /Unrecognized kind filter/)
 
         end
 
         it "should support filtering for only hostclass results" do
-          @request.options[:type] = "class"
+          @request.options[:kind] = "class"
 
           result = @terminus.search(@request)
           result.should be_include(@klass)
@@ -151,7 +151,7 @@ describe Puppet::Indirector::ResourceType::Parser do
         end
 
         it "should support filtering for only node results" do
-          @request.options[:type] = "node"
+          @request.options[:kind] = "node"
 
           result = @terminus.search(@request)
           result.should_not be_include(@klass)
@@ -160,7 +160,7 @@ describe Puppet::Indirector::ResourceType::Parser do
         end
 
         it "should support filtering for only definition results" do
-          @request.options[:type] = "defined_type"
+          @request.options[:kind] = "defined_type"
 
           result = @terminus.search(@request)
           result.should_not be_include(@klass)
@@ -184,9 +184,9 @@ describe Puppet::Indirector::ResourceType::Parser do
         result.should_not be_include(foo)
       end
 
-      it "should support type filtering with a regex" do
+      it "should support kind filtering with a regex" do
         @request.key = "foo"
-        @request.options[:type] = "class"
+        @request.options[:kind] = "class"
 
         foobar = @krt.add(Puppet::Resource::Type.new(:hostclass, "foobar"))
         foobaz = @krt.add(Puppet::Resource::Type.new(:hostclass, "foobaz"))
