@@ -358,6 +358,11 @@ Puppet::Type.newtype(:cron) do
     }
   end
 
+  # Autorequire the owner of the crontab entry.
+  autorequire(:user) do
+    self[:user]
+  end
+
   newproperty(:target) do
     desc "Where the cron job should be stored.  For crontab-style
       entries this is the same as the user and defaults that way.
