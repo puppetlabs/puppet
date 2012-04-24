@@ -2081,6 +2081,19 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
 
+2.6.16
+===
+65446c9 Revert "(#5246) Puppetd does not remove it's pidfile when it exits"
+
+2.6.15
+===
+f7829ec Stub mktmpdir and remove_entry_secure in os x package providers
+7ac1ec8 (#13260) Spec test to verify that mktmpdir is used
+0180200 Refactor pkgdmg specs
+c51447d (#13260) Use mktmpdir when downloading packages
+568ded5 Fix for bucket_path security vulnerability
+6bef2e6 Removed text/marshal support
+
 2.6.14
 ===
 ade5965 Remove unnecessary fallbacks in change_{user,group}
