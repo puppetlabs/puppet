@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/util/classgen'
+require 'puppet/node/environment'
 
 # Methods dealing with Type management.  This module gets included into the
 # Puppet::Type class, it's just split out here for clarity.
@@ -113,7 +114,7 @@ module Manager
     if t = @types[name]
       return t
     else
-      if typeloader.load(name)
+      if typeloader.load(name, env = Puppet::Node::Environment.current)
         Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
       end
 
