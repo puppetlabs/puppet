@@ -346,47 +346,52 @@ describe Puppet::Application::Apply do
     end
 
     describe "the 'apply' command" do
+      # We want this memoized, and to be able to adjust the content, so we
+      # have to do it ourselves.
+      def temporary_catalog(content = '"something"')
+        @tempfile = Tempfile.new('catalog.pson')
+        @tempfile.write(content)
+        @tempfile.close
+        @tempfile.path
+      end
+
       it "should read the catalog in from disk if a file name is provided" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.expects(:read).with("/my/catalog.pson").returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
+        @apply.options[:catalog] = temporary_catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).
+          with(:pson,'"something"').returns(Puppet::Resource::Catalog.new)
         @apply.apply
       end
 
       it "should read the catalog in from stdin if '-' is provided" do
         @apply.options[:catalog] = "-"
-        $stdin.expects(:read).returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
+        $stdin.expects(:read).returns '"something"'
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns Puppet::Resource::Catalog.new
         @apply.apply
       end
 
       it "should deserialize the catalog from the default format" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
+        @apply.options[:catalog] = temporary_catalog
         Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'something').returns Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'"something"').returns Puppet::Resource::Catalog.new
         @apply.apply
       end
 
       it "should fail helpfully if deserializing fails" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something syntacically invalid"
+        @apply.options[:catalog] = temporary_catalog('something syntactically invalid')
         lambda { @apply.apply }.should raise_error(Puppet::Error)
       end
 
       it "should convert plain data structures into a catalog if deserialization does not do so" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,"something").returns({:foo => "bar"})
+        @apply.options[:catalog] = temporary_catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns({:foo => "bar"})
         Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
         @apply.apply
       end
 
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
+        @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns catalog
         catalog.expects(:to_ral).returns "mycatalog"
 
         configurer = stub 'configurer'
