@@ -125,7 +125,7 @@ Puppet::Reports.register_report(:tagmail) do
     # Now find any appropriately tagged messages.
     reports = match(taglists)
 
-    send(reports)
+    send(reports) unless reports.empty?
   end
 
   # Send the email reports.
