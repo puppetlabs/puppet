@@ -211,9 +211,11 @@ describe Puppet::Application::Apply do
         @apply.command_line.stubs(:args).returns([manifest, 'starwarsI', 'starwarsII'])
 
         Puppet.expects(:[]=).with(:manifest,manifest)
-        Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
-
         expect { @apply.main }.to exit_with 0
+
+        msg = @logs.find {|m| m.message =~ /Only one file can be applied per run/ }
+        msg.message.should == 'Only one file can be applied per run.  Skipping starwarsI, starwarsII'
+        msg.level.should == :warning
       end
 
       it "should raise an error if we can't find the node" do
@@ -391,7 +393,8 @@ describe Puppet::Application::Apply do
 
         configurer = stub 'configurer'
         Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:run).with(:catalog => "mycatalog")
+        configurer.expects(:run).
+          with(:catalog => "mycatalog", :skip_plugin_download => true)
 
         @apply.apply
       end
@@ -401,7 +404,8 @@ describe Puppet::Application::Apply do
   describe "apply_catalog" do
     it "should call the configurer with the catalog" do
       catalog = "I am a catalog"
-      Puppet::Configurer.any_instance.expects(:run).with(:catalog => catalog)
+      Puppet::Configurer.any_instance.expects(:run).
+        with(:catalog => catalog, :skip_plugin_download => true)
       @apply.send(:apply_catalog, catalog)
     end
   end
