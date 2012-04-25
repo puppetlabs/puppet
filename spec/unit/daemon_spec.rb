@@ -128,7 +128,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when creating its pidfile" do
     it "should use an exclusive mutex" do
-      Puppet.settings.expects(:value).with(:name).returns "me"
+      Puppet.run_mode.expects(:name).returns "me"
       Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @daemon.create_pidfile
     end
@@ -136,7 +136,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "should lock the pidfile using the Pidlock class" do
       pidfile = mock 'pidfile'
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
+      Puppet.run_mode.expects(:name).returns "eh"
       Puppet.settings.expects(:value).with(:pidfile).returns make_absolute("/my/file")
 
       Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
@@ -148,7 +148,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "should fail if it cannot lock" do
       pidfile = mock 'pidfile'
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
+      Puppet.run_mode.expects(:name).returns "eh"
       Puppet.settings.stubs(:value).with(:pidfile).returns make_absolute("/my/file")
 
       Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
@@ -161,7 +161,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when removing its pidfile" do
     it "should use an exclusive mutex" do
-      Puppet.settings.expects(:value).with(:name).returns "me"
+      Puppet.run_mode.expects(:name).returns "me"
 
       Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
 

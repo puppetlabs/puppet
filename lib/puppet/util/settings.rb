@@ -18,10 +18,10 @@ class Puppet::Util::Settings
   attr_accessor :files
   attr_reader :timer
 
-  ReadOnly = [:run_mode, :name]
+  ReadOnly = [:run_mode]
 
   # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
-  REQUIRED_APP_SETTINGS = [:name, :run_mode, :logdir, :confdir, :vardir]
+  REQUIRED_APP_SETTINGS = [:run_mode, :logdir, :confdir, :vardir]
 
   def self.default_global_config_dir()
     Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
@@ -102,6 +102,8 @@ class Puppet::Util::Settings
     #  and we want to retain this cli values.
     @used = [] if clear_cli
 
+    @app_defaults_initialized = false if clear_application_defaults
+
     @cache.clear
   end
   private :unsafe_clear
@@ -127,7 +129,6 @@ class Puppet::Util::Settings
     app_defaults.each do |key, value|
       set_value(key, value, :application_defaults)
     end
-
 
     @app_defaults_initialized = true
   end
@@ -771,7 +772,7 @@ class Puppet::Util::Settings
 
   # Convert our list of config settings into a configuration file.
   def to_config
-    str = %{The configuration file for #{Puppet[:name]}.  Note that this file
+    str = %{The configuration file for #{Puppet.run_mode.name}.  Note that this file
 is likely to have unused configuration parameters in it; any parameter that's
 valid anywhere in Puppet can be in any config file, even if it's not used.
 
@@ -866,7 +867,7 @@ if @config.include?(:run_mode)
 
   # Find the correct value using our search path.  Optionally accept an environment
   # in which to search before the other configuration sections.
-  def value(param, environment = nil)
+  def value(param, environment = nil, bypass_interpolation = false)
     param = param.to_sym
     environment &&= environment.to_sym
 
@@ -885,6 +886,7 @@ if @config.include?(:run_mode)
 
     val = uninterpolated_value(param, environment)
 
+    return val if bypass_interpolation
     if param == :code
       # if we interpolate code, all hell breaks loose.
       return val

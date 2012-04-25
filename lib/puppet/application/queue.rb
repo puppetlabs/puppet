@@ -4,6 +4,10 @@ require 'puppet/util'
 class Puppet::Application::Queue < Puppet::Application
 
   attr_accessor :daemon
+  
+  def app_defaults()
+    super.merge( :pidfile => "$rundir/queue.pid" )
+  end
 
   def preinit
     require 'puppet/daemon'

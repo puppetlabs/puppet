@@ -75,13 +75,18 @@ class Puppet::Util::Settings::StringSetting
     raise ArgumentError, "Short names can only be one character." if value.to_s.length != 1
     @short = value.to_s
   end
+  
+  def default(check_application_defaults_first = false)
+    return @default unless check_application_defaults_first
+    return @settings.value(name, :application_defaults, true) || @default
+  end
 
   # Convert the object to a config statement.
   def to_config
     str = @desc.gsub(/^/, "# ") + "\n"
 
     # Add in a statement about the default.
-    str += "# The default value is '#{@default}'.\n" if @default
+    str += "# The default value is '#{default(true)}'.\n" if default(true)
 
     # If the value has not been overridden, then print it out commented
     # and unconverted, so it's clear that that's the default and how it

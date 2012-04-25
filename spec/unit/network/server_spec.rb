@@ -6,7 +6,7 @@ describe Puppet::Network::Server do
   before do
     @mock_http_server_class = mock('http server class')
     Puppet.settings.stubs(:use)
-    Puppet.settings.stubs(:value).with(:name).returns("me")
+    Puppet.run_mode.stubs(:name).returns "me"
     Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
     Puppet.settings.stubs(:value).with(:bindaddress).returns("")
     Puppet.settings.stubs(:value).with(:masterport).returns(8140)
@@ -152,7 +152,7 @@ describe Puppet::Network::Server do
 
   describe "when creating its pidfile" do
     it "should use an exclusive mutex" do
-      Puppet.settings.expects(:value).with(:name).returns "me"
+      Puppet.run_mode.expects(:name).returns "me"
       Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @server.create_pidfile
     end
@@ -160,7 +160,7 @@ describe Puppet::Network::Server do
     it "should lock the pidfile using the Pidlock class" do
       pidfile = mock 'pidfile'
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
+      Puppet.run_mode.expects(:name).returns "eh"
       Puppet.settings.expects(:value).with(:pidfile).returns "/my/file"
 
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
@@ -172,7 +172,7 @@ describe Puppet::Network::Server do
     it "should fail if it cannot lock" do
       pidfile = mock 'pidfile'
 
-      Puppet.settings.stubs(:value).with(:name).returns "eh"
+      Puppet.run_mode.stubs(:name).returns "eh"
       Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
 
       Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
@@ -185,7 +185,7 @@ describe Puppet::Network::Server do
 
   describe "when removing its pidfile" do
     it "should use an exclusive mutex" do
-      Puppet.settings.expects(:value).with(:name).returns "me"
+      Puppet.run_mode.expects(:name).returns "me"
       Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @server.remove_pidfile
     end
