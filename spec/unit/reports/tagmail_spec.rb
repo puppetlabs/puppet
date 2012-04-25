@@ -163,6 +163,56 @@ describe tagmail do
         processor.process
       end
     end
+
+    context "when no message match a positive tag" do
+      before do
+        processor << log_entry
+      end
+
+      let(:log_entry) do
+        Puppet::Util::Log.new(
+          :level   => :notice,
+          :message => 'Unnotices change',
+          :tags    => %w{not_present_in_tagmail.conf}
+        )
+      end
+
+      it "should send no email if there are changes" do
+        processor.expects(:send).never
+        processor.expects(:raw_summary).returns({
+          "resources" => { "changed" => 1, "out_of_sync" => 0 }
+        })
+        processor.process
+      end
+
+      it "should send no email if there are resources out of sync" do
+        processor.expects(:send).never
+        processor.expects(:raw_summary).returns({
+          "resources" => { "changed" => 0, "out_of_sync" => 1 }
+        })
+        processor.process
+      end
+
+      it "should send no email if no changes or resources out of sync" do
+        processor.expects(:send).never
+        processor.expects(:raw_summary).returns({
+          "resources" => { "changed" => 0, "out_of_sync" => 0 }
+        })
+        processor.process
+      end
+
+      it "should send no email if raw_summary is not defined" do
+        processor.expects(:send).never
+        processor.expects(:raw_summary).returns(nil)
+        processor.process
+      end
+
+      it "should send no email if there are no resource metrics" do
+        processor.expects(:send).never
+        processor.expects(:raw_summary).returns({'resources' => nil})
+        processor.process
+      end
+    end
   end
 end
 
