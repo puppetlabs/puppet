@@ -272,6 +272,15 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def apply_catalog(catalog)
     require 'puppet/configurer'
     configurer = Puppet::Configurer.new
-    configurer.run(:catalog => catalog)
+    options = {:catalog => catalog}
+
+    # If we run pluginsync without a valid modulepath it causes confusing
+    # errors, better to complain clearly now and skip it
+    if Puppet::Node::Environment.new.modulepath.empty?
+      Puppet.warning "No valid modulepath found, skipping pluginsync"
+      options.merge!(:skip_plugin_download => true)
+    end
+
+    configurer.run(options)
   end
 end
