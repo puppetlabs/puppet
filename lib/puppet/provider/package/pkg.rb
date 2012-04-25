@@ -22,8 +22,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     packages
   end
 
-  self::REGEX = /^(\S+)(?:\s+\(.*?\))?\s+(\S+)\s+(\S+)\s+\S+$/
-  self::FIELDS = [:name, :version, :status]
+  self::REGEX = /^(\S+)(?:\s+\(.*?\))?\s+(\S+)\s+(\S+)?\s+(\S+)$/
+  self::FIELDS = [:name, :version, :status, :flags]
 
   def self.parse_line(line)
     hash = {}
@@ -34,6 +34,22 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       }
 
       hash[:provider] = self.name
+
+      # on solaris 11 we do not have a status field because the status
+      # seems to be merged in the flags field. Simulate old behaviour on
+      # solaris 11
+      flags = hash.delete(:flags)
+      unless hash[:status]
+        hash[:status] = case flags
+          when /^i/
+            'installed'
+          when /^-/
+            'known'
+          else
+            warning "unknown package state for #{hash[:name]}: #{flags}"
+            'unknown'
+        end
+      end
 
       if hash[:status] == "installed"
         hash[:ensure] = :present
