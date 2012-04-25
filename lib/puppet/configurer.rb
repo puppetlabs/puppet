@@ -30,11 +30,6 @@ class Puppet::Configurer
     include Puppet::Util
   end
 
-  # How to lock instances of this class.
-  def self.lockfile_path
-    Puppet[:puppetdlockfile]
-  end
-
   def execute_postrun_command
     execute_from_setting(:postrun_command)
   end

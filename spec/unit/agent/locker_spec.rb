@@ -8,41 +8,35 @@ class LockerTester
 end
 
 describe Puppet::Agent::Locker do
-  before do
+  before do    
     @locker = LockerTester.new
-    @locker.stubs(:lockfile_path).returns "/my/lock"
   end
+
+  ## These tests are currently very implementation-specific, and they rely heavily on
+  ##  having access to the lockfile object.  However, I've made this method private
+  ##  because it really shouldn't be exposed outside of our implementation... therefore
+  ##  these tests have to use a lot of ".send" calls.  They should probably be cleaned up
+  ##  but for the moment I wanted to make sure not to lose any of the functionality of
+  ##  the tests.   --cprice 2012-04-16
 
   it "should use a Pidlock instance as its lockfile" do
-    @locker.lockfile.should be_instance_of(Puppet::Util::Pidlock)
+    @locker.send(:lockfile).should be_instance_of(Puppet::Util::Pidlock)
   end
 
-  it "should use 'lockfile_path' to determine its lockfile path" do
-    @locker.expects(:lockfile_path).returns "/my/lock"
+  it "should use puppet's :agent_pidfile' setting to determine its lockfile path" do
+    Puppet.expects(:[]).with(:agent_pidfile).returns("/my/lock")
     lock = Puppet::Util::Pidlock.new("/my/lock")
     Puppet::Util::Pidlock.expects(:new).with("/my/lock").returns lock
 
-    @locker.lockfile
+    @locker.send(:lockfile)
   end
 
   it "should reuse the same lock file each time" do
-    @locker.lockfile.should equal(@locker.lockfile)
-  end
-
-  it "should use the lock file to anonymously lock the process when disabled" do
-    @locker.lockfile.expects(:lock).with(:anonymous => true)
-
-    @locker.disable
-  end
-
-  it "should use the lock file to anonymously unlock the process when enabled" do
-    @locker.lockfile.expects(:unlock).with(:anonymous => true)
-
-    @locker.enable
+    @locker.send(:lockfile).should equal(@locker.send(:lockfile))
   end
 
   it "should have a method that yields when a lock is attained" do
-    @locker.lockfile.expects(:lock).returns true
+    @locker.send(:lockfile).expects(:lock).returns true
 
     yielded = false
     @locker.lock do
@@ -52,19 +46,19 @@ describe Puppet::Agent::Locker do
   end
 
   it "should return the block result when the lock method successfully locked" do
-    @locker.lockfile.expects(:lock).returns true
+    @locker.send(:lockfile).expects(:lock).returns true
 
     @locker.lock { :result }.should == :result
   end
 
   it "should return nil when the lock method does not receive the lock" do
-    @locker.lockfile.expects(:lock).returns false
+    @locker.send(:lockfile).expects(:lock).returns false
 
     @locker.lock {}.should be_nil
   end
 
   it "should not yield when the lock method does not receive the lock" do
-    @locker.lockfile.expects(:lock).returns false
+    @locker.send(:lockfile).expects(:lock).returns false
 
     yielded = false
     @locker.lock { yielded = true }
@@ -72,28 +66,28 @@ describe Puppet::Agent::Locker do
   end
 
   it "should not unlock when a lock was not received" do
-    @locker.lockfile.expects(:lock).returns false
-    @locker.lockfile.expects(:unlock).never
+    @locker.send(:lockfile).expects(:lock).returns false
+    @locker.send(:lockfile).expects(:unlock).never
 
     @locker.lock {}
   end
 
   it "should unlock after yielding upon obtaining a lock" do
-    @locker.lockfile.stubs(:lock).returns true
-    @locker.lockfile.expects(:unlock)
+    @locker.send(:lockfile).stubs(:lock).returns true
+    @locker.send(:lockfile).expects(:unlock)
 
     @locker.lock {}
   end
 
   it "should unlock after yielding upon obtaining a lock, even if the block throws an exception" do
-    @locker.lockfile.stubs(:lock).returns true
-    @locker.lockfile.expects(:unlock)
+    @locker.send(:lockfile).stubs(:lock).returns true
+    @locker.send(:lockfile).expects(:unlock)
 
     lambda { @locker.lock { raise "foo" } }.should raise_error(RuntimeError)
   end
 
   it "should be considered running if the lockfile is locked" do
-    @locker.lockfile.expects(:locked?).returns true
+    @locker.send(:lockfile).expects(:locked?).returns true
     @locker.should be_running
   end
 end

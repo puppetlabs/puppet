@@ -61,33 +61,18 @@ describe Puppet::Agent do
     @agent.run
   end
 
-  it "should determine its lock file path by asking the client class" do
-    AgentTestClient.expects(:lockfile_path).returns "/my/lock"
-    @agent.lockfile_path.should == "/my/lock"
-  end
-
-  it "should be considered running if the lock file is locked and not anonymous" do
+  it "should be considered running if the lock file is locked" do
     lockfile = mock 'lockfile'
 
-    @agent.expects(:lockfile).returns(lockfile).twice
+    @agent.expects(:lockfile).returns(lockfile)
     lockfile.expects(:locked?).returns true
-    lockfile.expects(:anonymous?).returns false
 
     @agent.should be_running
   end
 
-  it "should be considered disabled if the lock file is locked and anonymous" do
-    lockfile = mock 'lockfile'
-
-    @agent.expects(:lockfile).returns(lockfile).at_least_once
-    lockfile.expects(:locked?).returns(true).at_least_once
-    lockfile.expects(:anonymous?).returns(true).at_least_once
-
-    @agent.should be_disabled
-  end
-
   describe "when being run" do
     before do
+      AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
     end
@@ -104,6 +89,12 @@ describe Puppet::Agent do
       @agent.run
     end
 
+    it "should do nothing if disabled" do
+      @agent.expects(:disabled?).returns(true)
+      AgentTestClient.expects(:new).never
+      @agent.run
+    end
+
     it "(#11057) should notify the user about why a run is skipped" do
       Puppet::Application.stubs(:controlled_run).returns(false)
       Puppet::Application.stubs(:run_status).returns('MOCK_RUN_STATUS')
@@ -116,7 +107,8 @@ describe Puppet::Agent do
 
     it "should display an informative message if the agent is administratively disabled" do
       @agent.expects(:disabled?).returns true
-      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled/))
+      @agent.expects(:disable_message).returns "foo"
+      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled.*\(Reason: 'foo'\)/))
       @agent.run
     end
 

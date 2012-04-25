@@ -20,11 +20,6 @@ describe Puppet::Configurer do
     Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::FactHandler)
   end
 
-  it "should use the puppetdlockfile as its lockfile path" do
-    Puppet.settings.expects(:value).with(:puppetdlockfile).returns("/my/lock")
-    Puppet::Configurer.lockfile_path.should == "/my/lock"
-  end
-
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
       Puppet.settings[:prerun_command] = ""
