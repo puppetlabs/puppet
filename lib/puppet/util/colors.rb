@@ -77,7 +77,11 @@ module Puppet::Util::Colors
   def colorize(color, str)
     case Puppet[:color]
     when true, :ansi, "ansi", "yes"
-      console_color(color, str)
+      if Puppet.features.ansicolor?
+        console_color(color, str)
+      else
+        str
+      end
     when :html, "html"
       html_color(color, str)
     else
