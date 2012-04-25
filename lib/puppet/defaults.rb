@@ -678,7 +678,7 @@ EOT
       },
       :pidfile => {
           :type => :file,
-          :default  => "$rundir/#{Puppet.run_mode.name}.pid",
+          :default  => "$rundir/${run_mode}.pid",
           :desc     => "The pid file",
       },
       :bindaddress => {
