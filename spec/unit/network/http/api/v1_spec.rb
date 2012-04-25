@@ -164,7 +164,7 @@ describe Puppet::Network::HTTP::API::V1 do
 
   describe "when converting a request into a URI" do
     before do
-      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", :foo => :bar, :environment => "myenv")
+      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => "myenv")
     end
 
     it "should use the environment as the first field of the URI" do
@@ -193,7 +193,7 @@ describe Puppet::Network::HTTP::API::V1 do
 
   describe "when converting a request into a URI with body" do
     before :each do
-      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", :foo => :bar, :environment => "myenv")
+      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => "myenv")
     end
 
     it "should use the environment as the first field of the URI" do

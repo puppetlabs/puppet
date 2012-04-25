@@ -225,9 +225,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.use :main, :master, :ssl, :metrics
 
-    # Cache our nodes in yaml.  Currently not configurable.
-    Puppet::Node.indirection.cache_class = :yaml
-
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local

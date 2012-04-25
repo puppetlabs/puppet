@@ -445,6 +445,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Override the default; puppetd needs this, usually.
     # You can still override this on the command-line with, e.g., :compiler.
     Puppet[:catalog_terminus] = :rest
+    Puppet[:node_terminus] = :rest
 
     # Override the default.
     Puppet[:facts_terminus] = :facter

@@ -12,7 +12,7 @@ describe Puppet::Run::Local do
     runner  = Puppet::Run.new
     runner.stubs(:run).returns(runner)
 
-    request = Puppet::Indirector::Request.new(:indirection, :save, "anything")
+    request = Puppet::Indirector::Request.new(:indirection, :save, "anything", nil)
     request.instance = runner = Puppet::Run.new
     Puppet::Run::Local.new.save(request).should == runner
   end

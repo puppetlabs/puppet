@@ -24,7 +24,7 @@ class Puppet::Indirector::Request
     raise ArgumentError, "No method name provided in json data" unless method = json['method']
     raise ArgumentError, "No key provided in json data" unless key = json['key']
 
-    request = new(indirection_name, method, key, json['attributes'])
+    request = new(indirection_name, method, key, nil, json['attributes'])
 
     if instance = json['instance']
       klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
@@ -99,14 +99,9 @@ class Puppet::Indirector::Request
     ignore_terminus
   end
 
-  def initialize(indirection_name, method, key_or_instance, options_or_instance = {})
-    if options_or_instance.is_a? Hash
-      options = options_or_instance
-      @instance = nil
-    else
-      options  = {}
-      @instance = options_or_instance
-    end
+  def initialize(indirection_name, method, key, instance, options = {})
+    @instance = instance
+    options ||= {}
 
     self.indirection_name = indirection_name
     self.method = method
@@ -116,12 +111,6 @@ class Puppet::Indirector::Request
     set_attributes(options)
 
     @options = options
-
-    if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
-      key = key_or_instance
-    else
-      @instance ||= key_or_instance
-    end
 
     if key
       # If the request key is a URI, then we need to treat it specially,

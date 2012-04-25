@@ -7,6 +7,10 @@ create_remote_file master, authfile, <<AUTHCONF
 path /catalog/specified_node_name
 auth yes
 allow *
+
+path /node/specified_node_name
+auth yes
+allow *
 AUTHCONF
 
 manifest_file = "/tmp/node_name_value-test-#{$$}.pp"

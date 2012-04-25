@@ -16,7 +16,7 @@ class Puppet::Configurer
   # For benchmarking
   include Puppet::Util
 
-  attr_reader :compile_time
+  attr_reader :compile_time, :environment
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
@@ -44,7 +44,7 @@ class Puppet::Configurer
   end
 
   # Initialize and load storage
-  def dostorage
+  def init_storage
       Puppet::Util::Storage.load
       @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
@@ -64,12 +64,7 @@ class Puppet::Configurer
     self.class.instance = self
     @running = false
     @splayed = false
-  end
-
-  # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare(options)
-    dostorage
-    download_plugins unless options[:skip_plugin_download]
+    @environment = Puppet[:environment]
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -99,16 +94,20 @@ class Puppet::Configurer
     catalog
   end
 
-  def prepare_and_retrieve_catalog(options)
-    prepare(options)
+  def get_facts(options)
+    download_plugins unless options[:skip_plugin_download]
 
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,
       # and we need to know which format they're encoded in.  Thus, we
       # get a hash with both of these pieces of information.
-      fact_options = facts_for_uploading
+      #
+      # facts_for_uploading may set Puppet[:node_name_value] as a side effect
+      return facts_for_uploading
     end
+  end
 
+  def prepare_and_retrieve_catalog(options, fact_options)
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
 
@@ -124,7 +123,7 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
-    report.environment = Puppet[:environment]
+    report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -140,46 +139,57 @@ class Puppet::Configurer
   def run(options = {})
     options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
+    init_storage
 
     Puppet::Util::Log.newdestination(report)
     begin
-      begin
-        unless catalog = prepare_and_retrieve_catalog(options)
-          return nil
-        end
-
-        # Here we set the local environment based on what we get from the
-        # catalog. Since a change in environment means a change in facts, and
-        # facts may be used to determine which catalog we get, we need to
-        # rerun the process if the environment is changed.
-        tries = 0
-        while catalog.environment and not catalog.environment.empty? and catalog.environment != Puppet[:environment]
-          if tries > 3
-            raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
-          end
-          Puppet.warning "Local environment: \"#{Puppet[:environment]}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
-          Puppet[:environment] = catalog.environment
-          return nil unless catalog = prepare_and_retrieve_catalog(options)
-          tries += 1
-        end
-
-        execute_prerun_command or return nil
-        apply_catalog(catalog, options)
-        report.exit_status
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue => detail
-        Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
-        return nil
-      ensure
-        execute_postrun_command or return nil
+      unless Puppet[:node_name_fact].empty?
+        fact_options = get_facts(options)
       end
+
+      if node = Puppet::Node.indirection.find(Puppet[:node_name_value], :environment => @environment, :ignore_cache => true)
+        if node.environment.to_s != @environment
+          Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", changing."
+          @environment = node.environment.to_s
+          fact_options = nil
+        end
+      end
+
+      fact_options = get_facts(options) unless fact_options
+
+      unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+        return nil
+      end
+
+      # Here we set the local environment based on what we get from the
+      # catalog. Since a change in environment means a change in facts, and
+      # facts may be used to determine which catalog we get, we need to
+      # rerun the process if the environment is changed.
+      tries = 0
+      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
+        if tries > 3
+          raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
+        end
+        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
+        @environment = catalog.environment
+        return nil unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+        tries += 1
+      end
+
+      execute_prerun_command or return nil
+      apply_catalog(catalog, options)
+      report.exit_status
+    rescue => detail
+      Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
+      return nil
     ensure
-      # Make sure we forget the retained module_directories of any autoload
-      # we might have used.
-      Thread.current[:env_module_directories] = nil
+      execute_postrun_command or return nil
     end
   ensure
+    # Make sure we forget the retained module_directories of any autoload
+    # we might have used.
+    Thread.current[:env_module_directories] = nil
+
     Puppet::Util::Log.close(report)
     send_report(report)
   end
@@ -187,7 +197,7 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
+    Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
   rescue => detail
     Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
@@ -218,7 +228,7 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true, :environment => @environment))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -230,7 +240,7 @@ class Puppet::Configurer
   def retrieve_new_catalog(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true, :environment => @environment))
     end
     result
   rescue SystemExit,NoMemoryError

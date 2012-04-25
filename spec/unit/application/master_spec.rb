@@ -182,12 +182,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       @master.setup
     end
 
-    it "should cache class in yaml" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
-
-      @master.setup
-    end
-
     describe "with no ca" do
 
       it "should set the ca_location to none" do
