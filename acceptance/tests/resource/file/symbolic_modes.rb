@@ -1,15 +1,11 @@
 test_name "file resource: symbolic modes"
+confine :except, :platform => 'windows'
 
 def validate(path, mode)
   "ruby -e 'exit (File::Stat.new(#{path.inspect}).mode & 0777 == #{mode})'"
 end
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    Log.warn("Pending: this does not currently work on Windows")
-    next
-  end
-
   user = agent['user']
   group = agent['group'] || user
   file = agent.tmpfile('symbolic-mode-file')

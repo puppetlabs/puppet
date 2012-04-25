@@ -1,12 +1,10 @@
 test_name "verifies that puppet resource creates a user and assigns the correct group"
+confine :except, :platform => 'windows'
 
 user = "pl#{rand(999999).to_i}"
 group = "gp#{rand(999999).to_i}"
 
 agents.each do |host|
-  if host['platform'].include?('windows')
-    skip_test "Test not supported on this platform"
-  else
     step "user should not exist"
     on host, "if getent passwd #{user}; then userdel #{user}; fi"
 
