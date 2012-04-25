@@ -285,13 +285,8 @@ describe "Puppet defaults" do
   end
 
   describe "when configuring color" do
-    it "should default to ansi", :unless => Puppet.features.microsoft_windows? do
-      Puppet.settings[:color].should == 'ansi'
-    end
-
-    it "should default to false", :if => Puppet.features.microsoft_windows? do
-      Puppet.settings[:color].should == 'false'
-    end
+    subject { Puppet.settings[:color] }
+    it { should == "ansi" }
   end
 
   describe "daemonize" do
