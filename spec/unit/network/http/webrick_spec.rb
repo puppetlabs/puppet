@@ -125,9 +125,7 @@ describe Puppet::Network::HTTP::WEBrick do
       File.stubs(:open).returns @filehandle
     end
 
-    it "should use the settings for :main, :ssl, and the process name" do
-      #Puppet.settings.stubs(:value).with(:name).returns "myname"
-      #Puppet.settings.expects(:use).with(:main, :ssl, "myname")
+    it "should use the settings for :main, :ssl, and :application" do
       Puppet.settings.expects(:use).with(:main, :ssl, :application)
 
       @server.setup_logger

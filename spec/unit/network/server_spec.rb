@@ -104,7 +104,6 @@ describe Puppet::Network::Server do
     end
 
     it "should use the :application setting section" do
-      #Puppet.settings.expects(:value).with(:name).returns "me"
       Puppet.settings.expects(:use).with { |*args| args.include?(:application) }
 
       @server = Puppet::Network::Server.new(:port => 31337)
