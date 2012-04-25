@@ -108,23 +108,23 @@ end
 describe Puppet::Util::Log.desttypes[:console] do
   describe "when color is available" do
     it "should support color output" do
-      Puppet.stubs(:[]).with(:color).returns(true)
+      Puppet[:color] = true
       subject.colorize(:red, 'version').should == "\e[0;31mversion\e[0m"
     end
 
     it "should withhold color output when not appropriate" do
-      Puppet.stubs(:[]).with(:color).returns(false)
+      Puppet[:color] = false
       subject.colorize(:red, 'version').should == "version"
     end
 
     it "should handle multiple overlapping colors in a stack-like way" do
-      Puppet.stubs(:[]).with(:color).returns(true)
+      Puppet[:color] = true
       vstring = subject.colorize(:red, 'version')
       subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m"
     end
 
     it "should handle resets in a stack-like way" do
-      Puppet.stubs(:[]).with(:color).returns(true)
+      Puppet[:color] = true
       vstring = subject.colorize(:reset, 'version')
       subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[mversion\e[0;32m)\e[0m"
     end
