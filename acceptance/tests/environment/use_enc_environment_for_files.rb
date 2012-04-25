@@ -1,4 +1,4 @@
-test_name "Agent should environment given by ENC for pluginsync"
+test_name "Agent should use environment given by ENC for fetching remote files"
 
 testdir = master.tmpdir('respect_enc_test')
 
@@ -35,7 +35,7 @@ with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dn
     atmp = agent.tmpdir('respect_enc_test')
     create_remote_file master, "#{testdir}/different.pp", <<END
 file { "#{atmp}/special_testy":
-  source => "puppet:///amod/testy",
+  source => "puppet:///modules/amod/testy",
 }
 
 notify { "mytemp is ${::mytemp}": }

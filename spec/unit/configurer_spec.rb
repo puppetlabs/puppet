@@ -6,7 +6,7 @@ describe Puppet::Configurer do
   before do
     Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
-    @agent.stubs(:dostorage)
+    @agent.stubs(:init_storage)
     Puppet::Util::Storage.stubs(:store)
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
@@ -74,7 +74,7 @@ describe Puppet::Configurer do
   describe "when executing a catalog run" do
     before do
       Puppet.settings.stubs(:use).returns(true)
-      @agent.stubs(:prepare)
+      @agent.stubs(:download_plugins)
       Puppet::Node::Facts.indirection.terminus_class = :memory
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
@@ -94,9 +94,13 @@ describe Puppet::Configurer do
       Puppet::Resource::Catalog.indirection.reset_terminus_class
     end
 
-    it "should prepare for the run" do
-      @agent.expects(:prepare)
+    it "should initialize storage" do
+      Puppet::Util::Storage.expects(:load)
+      @agent.run
+    end
 
+    it "should download plugins" do
+      @agent.expects(:download_plugins)
       @agent.run
     end
 
@@ -321,7 +325,6 @@ describe Puppet::Configurer do
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
       @catalog.stubs(:environment).returns("second_env")
-      @agent.expects(:prepare).twice
       @agent.expects(:retrieve_catalog).returns(@catalog).twice
 
       @agent.run
@@ -332,7 +335,7 @@ describe Puppet::Configurer do
 
       @agent.run
 
-      Puppet[:environment].should == "second_env"
+      @agent.environment.should == "second_env"
     end
 
     describe "when not using a REST terminus for catalogs" do
@@ -390,14 +393,14 @@ describe Puppet::Configurer do
     it "should save the report if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report)
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash))
       @configurer.send_report(@report)
     end
 
     it "should not save the report if reporting is disabled" do
       Puppet.settings[:report] = false
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report).never
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash)).never
       @configurer.send_report(@report)
     end
 
@@ -607,25 +610,6 @@ describe Puppet::Configurer do
       @catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(@oldcatalog, 10)
-    end
-  end
-
-  describe "when preparing for a run" do
-    before do
-      Puppet.settings.stubs(:use).returns(true)
-      @facts = {"one" => "two", "three" => "four"}
-    end
-
-    it "should initialize the metadata store" do
-      @agent.class.stubs(:facts).returns(@facts)
-      @agent.expects(:dostorage)
-      @agent.prepare({})
-    end
-
-    it "should download plugins" do
-      @agent.expects(:download_plugins)
-
-      @agent.prepare({})
     end
   end
 end

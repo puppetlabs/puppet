@@ -9,7 +9,7 @@ describe Puppet::Indirector::ResourceType::Parser do
 
   before do
     @terminus = Puppet::Indirector::ResourceType::Parser.new
-    @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo")
+    @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo", nil)
     @krt = @request.environment.known_resource_types
   end
 
@@ -31,7 +31,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       Puppet[:modulepath] = dir
 
       # Make a new request, since we've reset the env
-      @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo::bar")
+      @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo::bar", nil)
 
       manifest_path = File.join(dir, "foo", "manifests")
       FileUtils.mkdir_p(manifest_path)
@@ -131,7 +131,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
 
       # Make a new request, since we've reset the env
-      @request = Puppet::Indirector::Request.new(:resource_type, :search, "*")
+      @request = Puppet::Indirector::Request.new(:resource_type, :search, "*", nil)
 
       onepath = File.join(first, "one", "manifests")
       FileUtils.mkdir_p(onepath)

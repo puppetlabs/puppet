@@ -274,7 +274,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       # Use a key with spaces, so we can test escaping
-      @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", :environment => "myenv")
+      @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", nil, :environment => "myenv")
     end
 
     describe "with a large body" do
@@ -289,7 +289,7 @@ describe Puppet::Indirector::REST do
         # to avoid a failure.
         params.delete('ip')
 
-        @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", params.merge(:environment => "myenv"))
+        @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", nil, params.merge(:environment => "myenv"))
 
         @connection.expects(:post).with do |uri, body|
           uri == "/myenv/foo/foo%20bar" and body.split("&").sort == params.map {|key,value| "#{key}=#{value}"}.sort
@@ -368,7 +368,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)
 
       # Use a key with spaces, so we can test escaping
-      @request = Puppet::Indirector::Request.new(:foo, :head, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :head, "foo bar", nil)
     end
 
     it "should call the HEAD http method on a network connection" do
@@ -405,7 +405,7 @@ describe Puppet::Indirector::REST do
 
       @model.stubs(:convert_from_multiple)
 
-      @request = Puppet::Indirector::Request.new(:foo, :search, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :search, "foo bar", nil)
     end
 
     it "should call the GET http method on a network connection" do
@@ -451,7 +451,7 @@ describe Puppet::Indirector::REST do
       @connection = stub('mock http connection', :delete => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-      @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar", nil)
     end
 
     it "should call the DELETE http method on a network connection" do
@@ -508,7 +508,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @instance = stub 'instance', :render => "mydata", :mime => "mime"
-      @request = Puppet::Indirector::Request.new(:foo, :save, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :save, "foo bar", nil)
       @request.instance = @instance
     end
 
@@ -578,7 +578,7 @@ describe Puppet::Indirector::REST do
       :search
     ].each do |method|
       it "##{method} passes the SRV service, and fall-back server & port to the request's do_request method" do
-        request = Puppet::Indirector::Request.new(:indirection, method, 'key')
+        request = Puppet::Indirector::Request.new(:indirection, method, 'key', nil)
         stub_response = stub 'response'
         stub_response.stubs(:code).returns('200')
         @searcher.stubs(:deserialize)

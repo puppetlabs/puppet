@@ -31,7 +31,7 @@ describe "Puppet::Node::ActiveRecord", :if => Puppet.features.rails? && Puppet.f
 
     node.expects(:fact_merge)
 
-    request = Puppet::Indirector::Request.new(:node, :find, "what.ever")
+    request = Puppet::Indirector::Request.new(:node, :find, "what.ever", nil)
     ar.find(request)
   end
 end

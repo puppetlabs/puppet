@@ -27,7 +27,7 @@ shared_examples_for "Puppet::Indirector::FileServerTerminus" do
     # Stub out the modules terminus
     @modules = mock 'modules terminus'
 
-    @request = Puppet::Indirector::Request.new(:indirection, :method, "puppet://myhost/one/myfile")
+    @request = Puppet::Indirector::Request.new(:indirection, :method, "puppet://myhost/one/myfile", nil)
   end
 
   it "should use the file server configuration to find files" do

@@ -16,6 +16,10 @@ authconf = node_names.map do |node_name|
 path /catalog/#{node_name}
 auth yes
 allow *
+
+path /node/#{node_name}
+auth yes
+allow *
 ]
 end.join("\n")
 

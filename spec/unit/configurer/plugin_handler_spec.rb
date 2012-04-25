@@ -5,6 +5,7 @@ require 'puppet/configurer/plugin_handler'
 
 class PluginHandlerTester
   include Puppet::Configurer::PluginHandler
+  attr_accessor :environment
 end
 
 describe Puppet::Configurer::PluginHandler do
@@ -40,7 +41,7 @@ describe Puppet::Configurer::PluginHandler do
     @pluginhandler.download_plugins
   end
 
-  it "should use an Agent Downloader, with the name, source, destination, and ignore set correctly, to download plugins when downloading is enabled" do
+  it "should use an Agent Downloader, with the name, source, destination, ignore, and environment set correctly, to download plugins when downloading is enabled" do
     downloader = mock 'downloader'
 
     # This is needed in order to make sure we pass on windows
@@ -50,10 +51,11 @@ describe Puppet::Configurer::PluginHandler do
     Puppet[:plugindest] = plugindest
     Puppet[:pluginsignore] = "pignore"
 
-    Puppet::Configurer::Downloader.expects(:new).with("plugin", plugindest, "psource", "pignore").returns downloader
+    Puppet::Configurer::Downloader.expects(:new).with("plugin", plugindest, "psource", "pignore", "myenv").returns downloader
 
     downloader.expects(:evaluate).returns []
 
+    @pluginhandler.environment = "myenv"
     @pluginhandler.expects(:download_plugins?).returns true
     @pluginhandler.download_plugins
   end
