@@ -8,7 +8,7 @@ class Puppet::Daemon
   attr_accessor :agent, :server, :argv
 
   def daemonname
-    Puppet[:name]
+    Puppet.run_mode.name
   end
 
   # Put the daemon into the background.
@@ -38,9 +38,9 @@ class Puppet::Daemon
       Puppet::Util::Log.reopen
       Puppet.debug("Finished closing streams for daemon mode")
     rescue => detail
-      Puppet.err "Could not start #{Puppet[:name]}: #{detail}"
+      Puppet.err "Could not start #{Puppet.run_mode.name}: #{detail}"
       Puppet::Util::replace_file("/tmp/daemonout", 0644) do |f|
-        f.puts "Could not start #{Puppet[:name]}: #{detail}"
+        f.puts "Could not start #{Puppet.run_mode.name}: #{detail}"
       end
       exit(12)
     end
@@ -54,7 +54,7 @@ class Puppet::Daemon
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
       raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
     end
   end
@@ -84,7 +84,7 @@ class Puppet::Daemon
 
   # Remove the pid file for our daemon.
   def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
       Puppet::Util::Pidlock.new(pidfile).unlock
     end
   end
