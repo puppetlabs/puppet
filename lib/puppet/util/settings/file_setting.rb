@@ -45,19 +45,12 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::StringSettin
     @settings[:mkusers] or @settings.service_user_available?
   end
 
-  # Set the type appropriately.  Yep, a hack.  This supports either naming
-  # the variable 'dir', or adding a slash at the end.
   def munge(value)
-    # If it's not a fully qualified path...
-    if value.is_a?(String) and value !~ /^\$/ and value != 'false'
-      # Preserve trailing slash (stripped by expand_path)
-      isdir = value =~ /\/$/
+    if value.is_a?(String)
       value = File.expand_path(value)
-      value += '/' if isdir
     end
     value
   end
-
 
   def type
     :file
