@@ -18,7 +18,7 @@ class Puppet::Util::Settings
   attr_accessor :files
   attr_reader :timer
 
-  ReadOnly = [:run_mode]
+  READ_ONLY_SETTINGS = [:run_mode]
 
   # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
   REQUIRED_APP_SETTINGS = [:run_mode, :logdir, :confdir, :vardir]
@@ -646,7 +646,7 @@ class Puppet::Util::Settings
 
     value = setting.munge(value) if setting.respond_to?(:munge)
     setting.handle(value) if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
-    if ReadOnly.include? param and type != :application_defaults
+    if read_only_settings.include? param and type != :application_defaults
       raise ArgumentError,
         "You're attempting to set configuration parameter $#{param}, which is read-only."
     end
@@ -791,7 +791,7 @@ if @config.include?(:run_mode)
     end
     eachsection do |section|
       persection(section) do |obj|
-        str += obj.to_config + "\n" unless ReadOnly.include? obj.name or obj.name == :genconfig
+        str += obj.to_config + "\n" unless read_only_settings.include? obj.name or obj.name == :genconfig
       end
     end
 
@@ -970,6 +970,11 @@ if @config.include?(:run_mode)
   end
 
   private
+
+  # This is just here to simplify testing.  This method can be stubbed easily.  Constants can't.
+  def read_only_settings()
+    READ_ONLY_SETTINGS
+  end
 
   def get_config_file_default(default)
     obj = nil
