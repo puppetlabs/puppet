@@ -91,6 +91,33 @@ describe Puppet::Parser::Compiler do
       notify_resource[:require].title.should == "Experiment::Baz"
     end
   end
+  describe "(ticket #13349) when explicitly specifying top scope" do
+    ["class {'::bar::baz':}", "include ::bar::baz"].each do |include|
+      describe "with #{include}" do
+        it "should find the top level class" do
+          Puppet[:code] = <<-MANIFEST
+            class { 'foo::test': }
+            class foo::test {
+            	#{include}
+            }
+            class bar::baz {
+            	notify { 'good!': }
+            }
+            class foo::bar::baz {
+            	notify { 'bad!': }
+            }
+          MANIFEST
+
+          catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
+
+          catalog.resource("Class[Bar::Baz]").should_not be_nil
+          catalog.resource("Notify[good!]").should_not be_nil
+          catalog.resource("Class[Foo::Bar::Baz]").should be_nil
+          catalog.resource("Notify[bad!]").should be_nil
+        end
+      end
+    end
+  end
 
   it "should recompute the version after input files are re-parsed" do
     Puppet[:code] = 'class foo { }'
