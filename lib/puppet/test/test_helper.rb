@@ -131,7 +131,6 @@ module Puppet::Test
     def self.app_defaults_for_tests()
       {
           :run_mode   => :user,
-          :name       => :apply,
           :logdir     => "/dev/null",
           :confdir    => "/dev/null",
           :vardir     => "/dev/null",

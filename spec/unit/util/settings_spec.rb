@@ -264,10 +264,6 @@ describe Puppet::Util::Settings do
       @settings[:myval] = "memarg"
     end
 
-    it "should raise an error if we try to set 'name'" do
-      lambda{ @settings[:name] = "foo" }.should raise_error(ArgumentError)
-    end
-
     it "should raise an error if we try to set 'run_mode'" do
       lambda{ @settings[:run_mode] = "foo" }.should raise_error(ArgumentError)
     end
