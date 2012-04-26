@@ -145,6 +145,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  def app_defaults
+    super.merge({
+      :default_file_terminus => "file_server",
+      :pluginsource => "puppet:///plugins"
+    })
+  end
+
   def run_command
     if options[:catalog]
       apply
@@ -251,9 +258,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     elsif options[:verbose]
       Puppet::Util::Log.level = :info
     end
-
-    # Make pluginsync local
-    Puppet[:pluginsource] = 'puppet:///plugins'
   end
 
   private

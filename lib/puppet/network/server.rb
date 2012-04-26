@@ -61,7 +61,6 @@ class Puppet::Network::Server
     self.register(args[:handlers]) if args[:handlers]
 
     # Make sure we have all of the directories we need to function.
-    #Puppet.settings.use(:main, :ssl, Puppet[:name])
     Puppet.settings.use(:main, :ssl, :application)
   end
 

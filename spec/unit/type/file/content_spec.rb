@@ -416,7 +416,7 @@ describe content do
       end
 
       it "when running as puppet apply" do
-        @content.class.expects(:standalone?).returns true
+        Puppet[:default_file_terminus] = "file_server"
         source_or_content = stubs('source_or_content')
         source_or_content.expects(:content).once.returns :whoo
         @content.each_chunk_from(source_or_content) { |chunk| chunk.should == :whoo }
