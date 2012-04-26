@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     packages
   end
 
-  self::REGEX = /^(\S+)(?:\s+\(.*?\))?\s+(\S+)\s+(\S+)?\s+(\S+)$/
+  self::REGEX = /^(\S+)(?:\s+\(.*?\))?\s+(\S+)(?:\s+(\S+))?\s+(\S+)$/
   self::FIELDS = [:name, :version, :status, :flags]
 
   def self.parse_line(line)
