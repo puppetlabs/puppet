@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -107,6 +107,9 @@ end
 
 describe Puppet::Util::Log.desttypes[:console] do
   describe "when color is available" do
+    before :each do
+      Puppet.features.stubs(:ansicolor?).returns(true)
+    end
     it "should support color output" do
       Puppet[:color] = true
       subject.colorize(:red, 'version').should == "\e[0;31mversion\e[0m"
@@ -133,6 +136,9 @@ end
 
 describe Puppet::Util::Log.desttypes[:telly_prototype_console] do
   describe "when color is available" do
+    before :each do
+      Puppet.features.stubs(:ansicolor?).returns(true)
+    end
     it "should support color output" do
       Puppet.stubs(:[]).with(:color).returns(true)
       subject.colorize(:red, 'version').should == "\e[0;31mversion\e[0m"
