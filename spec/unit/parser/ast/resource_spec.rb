@@ -135,7 +135,7 @@ describe Puppet::Parser::AST::Resource do
 
       it "should evaluate parameterized classes when they are instantiated" do
         @scope.known_resource_types.add_hostclass Puppet::Resource::Type.new(:hostclass, "Myresource", {})
-        @scope.compiler.expects(:evaluate_classes).with(['myresource'],@twoscope,false)
+        @scope.compiler.expects(:evaluate_classes).with(['myresource'],@twoscope,false,true)
         resource("class").evaluate(@twoscope)[0]
       end
 

@@ -108,8 +108,8 @@ class Puppet::Resource::TypeCollection
     @nodes[munge_name(name)]
   end
 
-  def find_hostclass(namespaces, name)
-    find_or_load(namespaces, name, :hostclass)
+  def find_hostclass(namespaces, name, options = {})
+    find_or_load(namespaces, name, :hostclass, options)
   end
 
   def find_definition(namespaces, name)
@@ -191,8 +191,9 @@ class Puppet::Resource::TypeCollection
 
   # Resolve namespaces and find the given object.  Autoload it if
   # necessary.
-  def find_or_load(namespaces, name, type)
-    resolve_namespaces(namespaces, name).each do |fqname|
+  def find_or_load(namespaces, name, type, options = {})
+    searchspace = options[:assume_fqname] ? [name].flatten : resolve_namespaces(namespaces, name)
+    searchspace.each do |fqname|
       if result = send(type, fqname) || loader.try_load_fqname(type, fqname)
         return result
       end

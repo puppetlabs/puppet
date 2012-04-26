@@ -376,7 +376,7 @@ describe Puppet::Parser do
 
   describe "when looking up hostclasses" do
     it "should use the known resource types to check for them by name" do
-      @parser.known_resource_types.stubs(:find_or_load).with("namespace","name",:hostclass).returns(:this_value)
+      @parser.known_resource_types.stubs(:find_or_load).with("namespace","name",:hostclass,{}).returns(:this_value)
       @parser.find_hostclass("namespace","name").should == :this_value
     end
   end

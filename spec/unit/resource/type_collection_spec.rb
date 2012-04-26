@@ -309,7 +309,10 @@ describe Puppet::Resource::TypeCollection do
       it "should only look in the topclass, if the name is qualified" do
         @loader.find_hostclass("foo", "::bar").name.should == 'bar'
       end
-
+      
+      it "should only look in the topclass, if we assume the name is fully qualified" do
+        @loader.find_hostclass("foo", "bar", :assume_fqname => true).name.should == 'bar'
+      end
     end
     
     it "should not look in the local scope for classes when the name is qualified" do
@@ -330,7 +333,7 @@ describe Puppet::Resource::TypeCollection do
 
   it "should use the 'find_or_load' method to find hostclasses" do
     loader = Puppet::Resource::TypeCollection.new("env")
-    loader.expects(:find_or_load).with("foo", "bar", :hostclass)
+    loader.expects(:find_or_load).with("foo", "bar", :hostclass, {})
     loader.find_hostclass("foo", "bar")
   end
 
