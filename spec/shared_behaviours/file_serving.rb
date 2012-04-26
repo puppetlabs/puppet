@@ -11,36 +11,18 @@ shared_examples_for "Puppet::FileServing::Files" do
     @indirection.find(uri)
   end
 
-  it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is not 'puppet' or 'apply'" do
+  it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and default_file_terminus is rest" do
     uri = "puppet:///fakemod/my/file"
-    Puppet.settings.stubs(:value).returns "foo"
-    Puppet.settings.stubs(:value).with(:name).returns("puppetd")
-    Puppet.settings.stubs(:value).with(:modulepath).returns("")
+    Puppet[:default_file_terminus] = "rest"
     @indirection.terminus(:rest).expects(:find)
     @indirection.find(uri)
   end
 
-
-  # TODO: This test may no longer be relevant.  It's testing for scenarios when settings[:name] is set to "puppet",
-  #  and I am not aware of any code path where the Puppet.settings[:name] could still end up having that as a value.
-  #  --cprice 2012-03-14
-  it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
+  it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and default_file_terminus is file_server" do
     uri = "puppet:///fakemod/my/file"
     Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil, :modulepath => []))
-    Puppet.settings.stubs(:value).returns ""
-    Puppet.settings.stubs(:value).with(:name).returns(:puppet)
-    Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
-    @indirection.terminus(:file_server).expects(:find)
-    @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
-    @indirection.find(uri)
-  end
-
-  it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'apply'" do
-    uri = "puppet:///fakemod/my/file"
-    Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil, :modulepath => []))
-    Puppet.settings.stubs(:value).returns ""
-    Puppet.settings.stubs(:value).with(:name).returns(:apply)
-    Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
+    Puppet[:default_file_terminus] = "file_server"
+    Puppet[:fileserverconfig] = "/whatever"
     @indirection.terminus(:file_server).expects(:find)
     @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
     @indirection.find(uri)

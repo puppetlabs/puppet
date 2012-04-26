@@ -248,6 +248,13 @@ module Puppet
       :default    => "$facts_terminus",
       :desc       => "Should usually be the same as the facts terminus",
     },
+    :default_file_terminus => {
+      :default    => "rest",
+      :desc       => "The default source for files if no server is given in a
+      uri, e.g. puppet:///file. The default of `rest` causes the file to be
+      retrieved using the `server` setting. When running `apply` the default
+      is `file_server`, causing requests to be filled locally."
+    },
     :httplog => {
         :default  => "$logdir/http.log",
         :type     => :file,

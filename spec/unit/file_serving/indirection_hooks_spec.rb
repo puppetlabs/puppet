@@ -39,19 +39,18 @@ describe Puppet::FileServing::IndirectionHooks do
       end
 
       # This is so a given file location works when bootstrapping with no server.
-      it "should choose :rest when the Settings name isn't 'puppet'" do
+      it "should choose :rest when default_file_terminus is rest" do
         @request.stubs(:protocol).returns "puppet"
-        @request.stubs(:server).returns "foo"
-        Puppet.settings.stubs(:value).with(:name).returns "foo"
+        Puppet[:server] = 'localhost'
         @object.select_terminus(@request).should == :rest
       end
 
-      it "should choose :file_server when the settings name is 'puppet' and no server is specified" do
+      it "should choose :file_server when default_file_terminus is file_server and no server is specified on the request" do
         modules = mock 'modules'
 
         @request.expects(:protocol).returns "puppet"
         @request.expects(:server).returns nil
-        Puppet.settings.expects(:value).with(:name).returns :puppet
+        Puppet[:default_file_terminus] = 'file_server'
         @object.select_terminus(@request).should == :file_server
       end
     end
