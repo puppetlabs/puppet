@@ -67,3 +67,6 @@ Puppet.features.add(:couchdb, :libs => ["couchrest"])
 
 # We have sqlite
 Puppet.features.add(:sqlite, :libs => ["sqlite3"])
+
+# We have Hiera
+Puppet.features.add(:hiera, :libs => ["hiera"])
