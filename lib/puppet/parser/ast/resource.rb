@@ -57,7 +57,7 @@ class Resource < AST::Branch
             resource.resource_type.instantiate_resource(scope, resource)
           end
           scope.compiler.add_resource(scope, resource)
-          scope.compiler.evaluate_classes([resource_title],scope,false) if fully_qualified_type == 'class'
+          scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
           resource
         end
       }

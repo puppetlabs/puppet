@@ -115,8 +115,8 @@ class Puppet::Parser::Scope
     compiler ? compiler.environment : Puppet::Node::Environment.new
   end
 
-  def find_hostclass(name)
-    known_resource_types.find_hostclass(namespaces, name)
+  def find_hostclass(name, options = {})
+    known_resource_types.find_hostclass(namespaces, name, options)
   end
 
   def find_definition(name)

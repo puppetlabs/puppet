@@ -135,7 +135,14 @@ class Puppet::Parser::Compiler
   # find, raise an error.  This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
   # evaluated later in the process.
-  def evaluate_classes(classes, scope, lazy_evaluate = true)
+  #
+  # Sometimes we evaluate classes with a fully qualified name already, in which
+  # case, we tell scope.find_hostclass we've pre-qualified the name so it
+  # doesn't need to search it's namespaces again.  This gets around a weird
+  # edge case of duplicate class names, one at top scope and one nested in our
+  # namespace and the wrong one (or both!) getting selected. See ticket #13349
+  # for more detail.  --jeffweiss 26 apr 2012
+  def evaluate_classes(classes, scope, lazy_evaluate = true, fqname = false)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
     class_parameters = nil
     # if we are a param class, save the classes hash
@@ -146,7 +153,8 @@ class Puppet::Parser::Compiler
     end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
-      if klass = scope.find_hostclass(name)
+      
+      if klass = scope.find_hostclass(name, :assume_fqname => fqname)
 
         # If parameters are passed, then attempt to create a duplicate resource
         # so the appropriate error is thrown.
