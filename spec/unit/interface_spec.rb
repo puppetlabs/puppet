@@ -136,6 +136,44 @@ describe Puppet::Interface do
       subject.new(:with_options, '0.0.1', &block)
     end
   end
+  
+  describe "with face-level display_global_options" do
+    it "should not return any action level display_global_options" do
+      face = subject.new(:with_display_global_options, '0.0.1') do
+        display_global_options "environment"
+        action :baz do
+          when_invoked {|_| true }
+          display_global_options "modulepath"
+        end
+      end
+      face.display_global_options =~ ["environment"]
+    end
+        
+    it "should not fail when a face d_g_o duplicates an action d_g_o" do
+      expect {
+        subject.new(:action_level_display_global_options, '0.0.1') do
+          action :bar do
+            when_invoked {|_| true }
+            display_global_options "environment"
+          end
+          display_global_options "environment"
+        end
+      }.should_not raise_error
+    end
+    
+    it "should work when two actions have the same d_g_o" do
+      face = subject.new(:with_display_global_options, '0.0.1') do
+        action :foo do when_invoked {|_| true} ; display_global_options "environment" end
+        action :bar do when_invoked {|_| true} ; display_global_options "environment" end
+      end
+      face.get_action(:foo).display_global_options =~ ["environment"]
+      face.get_action(:bar).display_global_options =~ ["environment"]
+    end
+      
+  end
+  
+  describe "with inherited display_global_options" do
+  end
 
   describe "with face-level options" do
     it "should not return any action-level options" do

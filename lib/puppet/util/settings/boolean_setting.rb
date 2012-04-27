@@ -27,4 +27,7 @@ class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::StringSet
       raise ArgumentError, "Invalid value '#{value.inspect}' for #{@name}"
     end
   end
+  def type
+    :boolean
+  end
 end

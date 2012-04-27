@@ -85,6 +85,18 @@ class Puppet::Interface
 
           s.breakable
         end
+        
+        display_global_options.sort.each do |option|
+          wrap = %w{ [ ] }
+          s.group(0, *wrap) do
+        		desc = Puppet.settings.setting(option).desc
+        		type = Puppet.settings.setting(option).default
+        		type ||= Puppet.settings.setting(option).type.to_s.upcase
+            s.text "--#{option} #{type}"
+            s.breakable
+          end
+          s.breakable
+        end
 
         if arguments then
           s.text arguments.to_s

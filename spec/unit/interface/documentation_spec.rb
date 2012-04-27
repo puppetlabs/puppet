@@ -6,10 +6,11 @@ require 'puppet/interface/documentation'
 
 class Puppet::Interface::TinyDocs::Test
   include Puppet::Interface::TinyDocs
-  attr_accessor :name, :options
+  attr_accessor :name, :options, :display_global_options
   def initialize
     self.name    = "tinydoc-test"
     self.options = []
+    self.display_global_options = []
   end
 
   def get_option(name)
