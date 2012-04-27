@@ -129,9 +129,23 @@ class Puppet::Util::Settings
     app_defaults.each do |key, value|
       set_value(key, value, :application_defaults)
     end
+    call_hooks_deferred_to_application_initialization
 
     @app_defaults_initialized = true
   end
+
+  def call_hooks_deferred_to_application_initialization(options = {})
+    @hooks_to_call_on_application_initialization.each do |setting| 
+      begin
+        setting.handle(self.value(setting.name))
+      rescue Puppet::SettingsError => err
+        raise err unless options[:ignore_interpolation_dependency_errors]
+        #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
+        #we'll get another chance after application defaults are initialized
+      end
+    end
+  end
+  private :call_hooks_deferred_to_application_initialization
 
   # Do variable interpolation on the value.
   def convert(value, environment = nil)
@@ -245,6 +259,8 @@ class Puppet::Util::Settings
 
     # The list of sections we've used.
     @used = []
+
+    @hooks_to_call_on_application_initialization = []
   end
 
   # NOTE: ACS ahh the util classes. . .sigh
@@ -369,6 +385,11 @@ class Puppet::Util::Settings
     @sync.synchronize do
       unsafe_parse(files)
     end
+    
+    # talking with cprice, Settings.parse will not be the final location for this. He's working on ticket
+    # that, as a side effect, will create a more appropriate place for this. At that time, this will be
+    # moved to the new location. --jeffweiss 24 apr 2012
+    call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
   end
 
   def main_config_file
@@ -645,7 +666,7 @@ class Puppet::Util::Settings
     end
 
     value = setting.munge(value) if setting.respond_to?(:munge)
-    setting.handle(value) if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
+    setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
     if ReadOnly.include? param and type != :application_defaults
       raise ArgumentError,
         "You're attempting to set configuration parameter $#{param}, which is read-only."
@@ -742,7 +763,8 @@ class Puppet::Util::Settings
       # Collect the settings that need to have their hooks called immediately.
       # We have to collect them so that we can be sure we're fully initialized before
       # the hook is called.
-      call << tryconfig if tryconfig.call_on_define
+      call << tryconfig if tryconfig.call_hook_on_define?
+      @hooks_to_call_on_application_initialization << tryconfig if tryconfig.call_hook_on_initialize?
     }
 
     call.each { |setting| setting.handle(self.value(setting.name)) }
@@ -1015,7 +1037,7 @@ if @config.include?(:run_mode)
   # Return all settings that have associated hooks; this is so
   # we can call them after parsing the configuration file.
   def settings_with_hooks
-    @config.values.find_all { |setting| setting.respond_to?(:handle) }
+    @config.values.find_all { |setting| setting.has_hook? }
   end
 
   # Extract extra setting information for files.
