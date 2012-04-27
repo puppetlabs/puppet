@@ -264,8 +264,19 @@ describe Puppet::Util::Settings do
       @settings[:myval] = "memarg"
     end
 
-    it "should raise an error if we try to set 'run_mode'" do
-      lambda{ @settings[:run_mode] = "foo" }.should raise_error(ArgumentError)
+    it "should raise an error if we try to set a setting that hasn't been defined'" do
+      lambda{
+        @settings[:why_so_serious] = "foo"
+      }.should raise_error(ArgumentError, /unknown configuration parameter/)
+    end
+
+    it "should raise an error if we try to set a setting that is read-only (which, really, all of our settings probably should be)" do
+      @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
+      @settings.expects(:read_only_settings).returns([:one])
+
+      lambda{
+        @settings[:one] = "foo"
+      }.should raise_error(ArgumentError, /read-only/)
     end
 
     it "should warn and use [master] if we ask for [puppetmasterd]" do
