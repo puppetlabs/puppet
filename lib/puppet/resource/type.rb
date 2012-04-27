@@ -11,12 +11,31 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
+  RESOURCE_KINDS = [:hostclass, :node, :definition]
+
+  # We have reached a point where we've established some naming conventions
+  #  in our documentation that don't entirely match up with our internal names
+  #  for things.  Ideally we'd change the internal representation to match the
+  #  conventions expressed in our docs, but that would be a fairly far-reaching
+  #  and risky change.  For the time being, we're settling for mapping the
+  #  internal names to the external ones (and vice-versa) during serialization
+  #  and deserialization.  These two hashes is here to help with that mapping.
+  RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
+      :hostclass => "class",
+      :node => "node",
+      :definition => "defined_type",
+  }
+  RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
   attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
-  attr_reader :type, :namespace, :arguments, :behaves_like, :module_name
+  attr_reader :namespace, :arguments, :behaves_like, :module_name
 
-  RESOURCE_SUPERTYPES.each do |t|
+  # This should probably be renamed to 'kind' eventually, in accordance with the changes
+  #  made for serialization and API usability (#14137).  At the moment that seems like
+  #  it would touch a whole lot of places in the code, though.  --cprice 2012-04-23
+  attr_reader :type
+
+  RESOURCE_KINDS.each do |t|
     define_method("#{t}?") { self.type == t }
   end
 
@@ -26,12 +45,33 @@ class Puppet::Resource::Type
 
   def self.from_pson(data)
     name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
-    type = data.delete('type') || "definition"
+    kind = data.delete('kind') || "definition"
+
+    unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
+      raise ArgumentError, "Unsupported resource kind '#{kind}'"
+    end
 
     data = data.inject({}) { |result, ary| result[ary[0].intern] = ary[1]; result }
 
+    # This is a bit of a hack; when we serialize, we use the term "parameters" because that
+    #  is the terminology that we use in our documentation.  However, internally to this
+    #  class we use the term "arguments".  Ideally we'd change the implementation to be consistent
+    #  with the documentation, but that would be challenging right now because it could potentially
+    #  touch a lot of places in the code, not to mention that we already have another meaning for
+    #  "parameters" internally.  So, for now, we will simply transform the internal "arguments"
+    #  value to "parameters" when serializing, and the opposite when deserializing.
+    #     --cprice 2012-04-23
+    data[:arguments] = data.delete(:parameters)
+
     new(type, name, data)
   end
+
+  # This method doesn't seem like it has anything to do with PSON in particular, and it shouldn't.
+  #  It's just transforming to a simple object that can be serialized and de-serialized via
+  #  any transport format.  Should probably be renamed if we get a chance to clean up our
+  #  serialization / deserialization, and there are probably many other similar methods in
+  #  other classes.
+  #  --cprice 2012-04-23
 
   def to_pson_data_hash
     data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
@@ -40,13 +80,33 @@ class Puppet::Resource::Type
       hash
     end
 
-    data['arguments'] = arguments.dup unless arguments.empty?
+    # This is a bit of a hack; when we serialize, we use the term "parameters" because that
+    #  is the terminology that we use in our documentation.  However, internally to this
+    #  class we use the term "arguments".  Ideally we'd change the implementation to be consistent
+    #  with the documentation, but that would be challenging right now because it could potentially
+    #  touch a lot of places in the code, not to mention that we already have another meaning for
+    #  "parameters" internally.  So, for now, we will simply transform the internal "arguments"
+    #  value to "parameters" when serializing, and the opposite when deserializing.
+    #     --cprice 2012-04-23
+    data['parameters'] = arguments.dup unless arguments.empty?
 
     data['name'] = name
-    data['type'] = type
 
+    unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
+      raise ArgumentError, "Unsupported resource kind '#{type}'"
+    end
+    data['kind'] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
     data
   end
+
+  # It seems wrong that we have a 'to_pson' method on this class, but not a 'to_yaml'.
+  #  As a result, if you use the REST API to retrieve one or more objects of this type,
+  #  you will receive different data if you use 'Accept: yaml' vs 'Accept: pson'.  That
+  #  seems really, really wrong.  The "Accept" header should never affect what data is
+  #  being returned--only the format of the data.  If the data itself is going to differ,
+  #  then there should be a different request URL.  Documenting the REST API becomes
+  #  a much more complex problem when the "Accept" header can change the semantics
+  #  of the response.  --cprice 2012-04-23
 
   def to_pson(*args)
     to_pson_data_hash.to_pson(*args)
@@ -80,7 +140,7 @@ class Puppet::Resource::Type
 
   def initialize(type, name, options = {})
     @type = type.to_s.downcase.to_sym
-    raise ArgumentError, "Invalid resource supertype '#{type}'" unless RESOURCE_SUPERTYPES.include?(@type)
+    raise ArgumentError, "Invalid resource supertype '#{type}'" unless RESOURCE_KINDS.include?(@type)
 
     name = convert_from_ast(name) if name.is_a?(Puppet::Parser::AST::HostName)
 
