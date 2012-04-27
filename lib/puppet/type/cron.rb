@@ -164,7 +164,12 @@ Puppet::Type.newtype(:cron) do
       if value =~ /^[0-9]+-[0-9]+\/[0-9]+$/
         return value
       end
-
+      
+      # Allow the 1/2 syntax
+      if value =~ /^[0-9]+\/[0-9]+$/
+        return value
+      end
+      
       if value == "*"
         return :absent
       end
