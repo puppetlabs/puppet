@@ -3,19 +3,16 @@ require 'sync'
 require 'getoptlong'
 require 'puppet/util/loadedfile'
 require 'puppet/util/command_line/puppet_option_parser'
-
-class Puppet::SettingsError < Puppet::Error
-end
+require 'puppet/util/settings/errors'
+require 'puppet/util/settings/string_setting'
+require 'puppet/util/settings/file_setting'
+require 'puppet/util/settings/directory_setting'
+require 'puppet/util/settings/path_setting'
+require 'puppet/util/settings/boolean_setting'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings
   include Enumerable
-
-  require 'puppet/util/settings/string_setting'
-  require 'puppet/util/settings/file_setting'
-  require 'puppet/util/settings/directory_setting'
-  require 'puppet/util/settings/path_setting'
-  require 'puppet/util/settings/boolean_setting'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -41,26 +38,25 @@ class Puppet::Util::Settings
     }
   end
 
-  def self.default_global_config_dir()
+  def self.default_global_config_dir
     Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
   end
 
-  def self.default_user_config_dir()
+  def self.default_user_config_dir
     "~/.puppet"
   end
 
-  def self.default_global_var_dir()
+  def self.default_global_var_dir
     Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"
   end
 
-  def self.default_user_var_dir()
+  def self.default_user_var_dir
     "~/.puppet/var"
   end
 
-  def self.default_config_file_name()
+  def self.default_config_file_name
     "puppet.conf"
   end
-
 
   # Retrieve a config value
   def [](param)
@@ -97,7 +93,7 @@ class Puppet::Util::Settings
   # Is our parameter a boolean parameter?
   def boolean?(param)
     param = param.to_sym
-    !!(@config.include?(param) and @config[param].kind_of? BooleanSetting)
+    @config.include?(param) and @config[param].kind_of?(BooleanSetting)
   end
 
   # Remove all set values, potentially skipping cli values.
@@ -125,8 +121,6 @@ class Puppet::Util::Settings
     @cache.clear
   end
   private :unsafe_clear
-
-
 
   # This is mostly just used for testing.
   def clearused
@@ -219,15 +213,16 @@ class Puppet::Util::Settings
   end
 
 
-  def app_defaults_initialized?()
+  def app_defaults_initialized?
     @app_defaults_initialized
   end
 
   def initialize_app_defaults(app_defaults)
     raise Puppet::DevError, "Attempting to initialize application default settings more than once!" if app_defaults_initialized?
     REQUIRED_APP_SETTINGS.each do |key|
-      raise Puppet::SettingsError, "missing required app default setting '#{key}'" unless app_defaults.has_key?(key)
+      raise SettingsError, "missing required app default setting '#{key}'" unless app_defaults.has_key?(key)
     end
+
     app_defaults.each do |key, value|
       set_value(key, value, :application_defaults)
     end
@@ -237,10 +232,10 @@ class Puppet::Util::Settings
   end
 
   def call_hooks_deferred_to_application_initialization(options = {})
-    @hooks_to_call_on_application_initialization.each do |setting| 
+    @hooks_to_call_on_application_initialization.each do |setting|
       begin
         setting.handle(self.value(setting.name))
-      rescue Puppet::SettingsError => err
+      rescue InterpolationError => err
         raise err unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
         #we'll get another chance after application defaults are initialized
@@ -260,7 +255,7 @@ class Puppet::Util::Settings
       elsif pval = self.value(varname, environment)
         pval
       else
-        raise Puppet::SettingsError, "Could not find value for #{value}"
+        raise InterpolationError, "Could not find value for #{value}"
       end
     end
 
@@ -309,7 +304,6 @@ class Puppet::Util::Settings
     elsif value.is_a?(TrueClass)
       value = "true"
     end
-
 
     value &&= munge_value(value)
     str = opt.sub(/^--/,'')
@@ -364,11 +358,6 @@ class Puppet::Util::Settings
 
     @hooks_to_call_on_application_initialization = []
   end
-
-  # NOTE: ACS ahh the util classes. . .sigh
-  # as part of a fix for 1183, I pulled the logic for the following 5 methods out of the executables and puppet.rb
-  # They probably deserve their own class, but I don't want to do that until I can refactor environments
-  # its a little better than where they were
 
   # Prints the contents of a config file with the available config settings, or it
   # prints a single value of a config setting.
@@ -455,7 +444,7 @@ class Puppet::Util::Settings
   # PRIVATE!  This only exists because we need a hook to validate the run mode when it's being set, and
   #  it should never, ever, ever, ever be called from outside of this file.
   def run_mode=(mode)
-    raise Puppet::DevError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
+    raise ValidationError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
     @run_mode = mode
   end
   private :run_mode=
@@ -474,8 +463,7 @@ class Puppet::Util::Settings
     end
   end
 
-  # Parse the configuration file.  Just provides
-  # thread safety.
+  # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
     # we are now supporting multiple config files; the "main" config file will be the one located in
     # /etc/puppet (or overridden $confdir)... but we will also look for a config file in the user's home
@@ -487,7 +475,7 @@ class Puppet::Util::Settings
     @sync.synchronize do
       unsafe_parse(files)
     end
-    
+
     # talking with cprice, Settings.parse will not be the final location for this. He's working on ticket
     # that, as a side effect, will create a more appropriate place for this. At that time, this will be
     # moved to the new location. --jeffweiss 24 apr 2012
@@ -509,7 +497,7 @@ class Puppet::Util::Settings
     #
     begin
       return self[:config] if self[:config]
-    rescue Puppet::SettingsError => err
+    rescue InterpolationError => err
       # This means we failed to interpolate, which means that they didn't explicitly specify either :config or
       # :confdir... so we'll fall out to the default value.
     end
@@ -532,7 +520,7 @@ class Puppet::Util::Settings
   def config_file_name
     begin
       return self[:config_file_name] if self[:config_file_name]
-    rescue Puppet::SettingsError => err
+    rescue SettingsError => err
       # This just means that the setting wasn't explicitly set on the command line, so we will ignore it and
       #  fall through to the default name.
     end
@@ -1011,8 +999,10 @@ if @config.include?(:run_mode)
     # Convert it if necessary
     begin
       val = convert(val, environment)
-    rescue Puppet::SettingsError => err
-      raise Puppet::SettingsError.new("Error converting value for param '#{param}': #{err}")
+    rescue InterpolationError => err
+      # This happens because we don't have access to the param name when the
+      # exception is originally raised, but we want it in the message
+      raise InterpolationError, "Error converting value for param '#{param}': #{err}", err.backtrace
     end
 
     val = setting.munge(val) if setting.respond_to?(:munge)

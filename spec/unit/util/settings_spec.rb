@@ -1,6 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'ostruct'
+require 'puppet/util/settings/errors'
 
 describe Puppet::Util::Settings do
   include PuppetSpec::Files
@@ -80,7 +81,7 @@ describe Puppet::Util::Settings do
     it "should fail if the app defaults hash is missing any required values" do
       expect {
         @settings.initialize_app_defaults({})
-      }.to raise_error(Puppet::SettingsError)
+      }.to raise_error(Puppet::Util::Settings::SettingsError)
     end
 
     # ultimately I'd like to stop treating "run_mode" as a normal setting, because it has so many special
@@ -133,23 +134,47 @@ describe Puppet::Util::Settings do
         describe "if interpolation error" do
           it "should raise an error" do
             hook_values = []
-            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :badhook => {
+                :default => bad_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error
+            end.to raise_error Puppet::Util::Settings::InterpolationError
           end
           it "should contain the setting name in error message" do
             hook_values = []
-            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :badhook => {
+                :default => bad_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error Puppet::SettingsError, /badhook/
+            end.to raise_error Puppet::Util::Settings::InterpolationError, /badhook/
           end
         end
         describe "if no interpolation error" do
           it "should not raise an error" do
             hook_values = []
-            @settings.define_settings(:section, :goodhook => {:default => good_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :goodhook => {
+                :default => good_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
             end.to_not raise_error
