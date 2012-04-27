@@ -110,7 +110,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Remove this when rebasing
   def environment
     compiler ? compiler.environment : Puppet::Node::Environment.new
   end
@@ -211,8 +210,6 @@ class Puppet::Parser::Scope
       }
     end
 
-    #Puppet.debug "Got defaults for %s: %s" %
-    #    [type,values.inspect]
     values
   end
 
@@ -229,73 +226,36 @@ class Puppet::Parser::Scope
     end
   end
 
-  def qualified_scope(classname)
-    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
-    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
-    kscope
-  end
-
-  private :qualified_scope
-
-  # Look up a variable with traditional scoping and then with new scoping. If
-  # the answers differ then print a deprecation warning.
   def lookupvar(name, options = {})
-    dynamic_value = dynamic_lookupvar(name,options)
-    twoscope_value = twoscope_lookupvar(name,options)
-    if dynamic_value != twoscope_value
-      location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-      Puppet.deprecation_warning("Dynamic lookup of $#{name}#{location} is deprecated. For more information, see http://docs.puppetlabs.com/guides/scope_and_puppet.html. To see the change in behavior, use the --debug flag.")
-      Puppet.debug("Currently $#{name} is #{dynamic_value.inspect}")
-      Puppet.debug("In the future $#{name} will be #{twoscope_value.nil? ? "undefined" : twoscope_value.inspect}")
-    end
-    dynamic_value
-  end
-
-  # Look up a variable.  The simplest value search we do.
-  def twoscope_lookupvar(name, options = {})
     # Save the originating scope for the request
     options[:origin] = self unless options[:origin]
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     if name =~ /^(.*)::(.+)$/
       begin
-        qualified_scope($1).twoscope_lookupvar($2, options.merge({:origin => nil}))
+        qualified_scope($1).lookupvar($2, options.merge({:origin => nil}))
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
         nil
       end
     # If the value is present and either we are top/node scope or originating scope...
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
       table[name]
     elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
-      class_scope(parent_type).twoscope_lookupvar(name,options.merge({:origin => nil}))
+      class_scope(parent_type).lookupvar(name,options.merge({:origin => nil}))
     elsif parent
-      parent.twoscope_lookupvar(name, options)
+      parent.lookupvar(name, options)
     else
       nil
     end
   end
 
-  # Look up a variable.  The simplest value search we do.
-  def dynamic_lookupvar(name, options = {})
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
-    # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /^(.*)::(.+)$/
-      begin
-        qualified_scope($1).dynamic_lookupvar($2,options)
-      rescue RuntimeError => e
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        nil
-      end
-    elsif ephemeral_include?(name) or table.include?(name)
-      # We can't use "if table[name]" here because the value might be false
-      table[name]
-    elsif parent
-      parent.dynamic_lookupvar(name,options)
-    else
-      nil
-    end
+  def qualified_scope(classname)
+    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
+    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
+    kscope
   end
+  private :qualified_scope
 
   # Return a hash containing our variables and their values, optionally (and
   # by default) including the values defined in our parent.  Local values
@@ -329,16 +289,6 @@ class Puppet::Parser::Scope
     @parent.source.module_name
   end
 
-  # Return the list of scopes up to the top scope, ordered with our own first.
-  # This is used for looking up variables and defaults.
-  def scope_path
-    if parent
-      [self, parent.scope_path].flatten.compact
-    else
-      [self]
-    end
-  end
-
   # Set defaults for a type.  The typename should already be downcased,
   # so that the syntax is isolated.  We don't do any kind of type-checking
   # here; instead we let the resource do it when the defaults are used.
@@ -349,8 +299,6 @@ class Puppet::Parser::Scope
     params = [params] unless params.is_a?(Array)
 
     params.each { |param|
-      #Puppet.debug "Default for %s is %s => %s" %
-      #    [type,ary[0].inspect,ary[1].inspect]
       if table.include?(param.name)
         raise Puppet::ParseError.new("Default already defined for #{type} { #{param.name} }; cannot redefine", param.line, param.file)
       end
@@ -363,40 +311,42 @@ class Puppet::Parser::Scope
   # to be reassigned.
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
-  def setvar(name,value, options = {})
+  def setvar(name, value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
     if table.include?(name)
-      unless options[:append]
-        error = Puppet::ParseError.new("Cannot reassign variable #{name}")
-      else
+      if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
+      else
+        error = Puppet::ParseError.new("Cannot reassign variable #{name}")
       end
       error.file = options[:file] if options[:file]
       error.line = options[:line] if options[:line]
       raise error
     end
 
-    unless options[:append]
+    if options[:append]
+      table[name] = append_value(undef_as('', self[name]), value)
+    else 
       table[name] = value
-    else # append case
-      # lookup the value in the scope if it exists and insert the var
-      table[name] = undef_as('',self[name])
-      # concatenate if string, append if array, nothing for other types
-      case value
-      when Array
-        table[name] += value
-      when Hash
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" unless value.is_a?(Hash)
-        table[name].merge!(value)
-      else
-        table[name] << value
-      end
     end
   end
 
-  # Return the tags associated with this scope.  It's basically
-  # just our parents' tags, plus our type.  We don't cache this value
-  # because our parent tags might change between calls.
+  def append_value(bound_value, new_value)
+    case new_value
+    when Array
+      bound_value + new_value
+    when Hash
+      bound_value.merge(new_value)
+    else
+      if bound_value.is_a?(Hash)
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" 
+      end
+      bound_value + new_value
+    end
+  end
+  private :append_value
+
+  # Return the tags associated with this scope.
   def tags
     resource.tags
   end
@@ -404,12 +354,6 @@ class Puppet::Parser::Scope
   # Used mainly for logging
   def to_s
     "Scope(#{@resource})"
-  end
-
-  # Undefine a variable; only used for testing.
-  def unsetvar(var)
-    table = ephemeral?(var) ? @ephemeral.last : @symtable
-    table.delete(var) if table.include?(var)
   end
 
   # remove ephemeral scope up to level
