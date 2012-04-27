@@ -34,6 +34,11 @@ class Puppet::Interface::ActionBuilder
   def default(value = true)
     @action.default = !!value
   end
+  
+  def display_global_options(*args)
+    @action.add_display_global_options args
+  end
+  alias :display_global_option :display_global_options
 
   def render_as(value = nil)
     value.nil? and raise ArgumentError, "You must give a rendering format to render_as"

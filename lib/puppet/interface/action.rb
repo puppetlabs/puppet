@@ -22,6 +22,7 @@ class Puppet::Interface::Action
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.
     @options        = []
+    @display_global_options = []
     @options_hash   = {}
     @when_rendering = {}
   end
@@ -246,7 +247,22 @@ WRAPPER
   def options
     @face.options + @options
   end
-
+  
+  def add_display_global_options(*args)
+    @display_global_options ||= []
+    [args].flatten.each do |refopt|
+      raise ArgumentError, "Global option #{refopt} does not exist in Puppet.settings" unless Puppet.settings.include? refopt
+      @display_global_options << refopt
+    end
+    @display_global_options.uniq!
+    @display_global_options
+  end
+  
+  def display_global_options(*args)
+    args ? add_display_global_options(args) : @display_global_options + @face.display_global_options 
+  end
+  alias :display_global_option :display_global_options
+  
   def get_option(name, with_inherited_options = true)
     option = @options_hash[name.to_sym]
     if option.nil? and with_inherited_options
