@@ -37,7 +37,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
     end
@@ -65,12 +64,6 @@ describe Puppet::Application::Filebucket do
       @filebucket.options.stubs(:[]).with(:verbose).returns(true)
       @filebucket.setup
       Puppet::Log.level.should == :info
-    end
-
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @filebucket.setup
     end
 
     it "should print puppet config if asked to in Puppet config" do
@@ -127,7 +120,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
 

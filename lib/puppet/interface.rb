@@ -62,6 +62,7 @@ class Puppet::Interface
           raise Puppet::Error, "Could not find Puppet Face #{name.inspect}"
         end
       end
+
       face
     end
 

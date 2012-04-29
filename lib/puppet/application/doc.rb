@@ -262,9 +262,6 @@ HELP
       end
     end
 
-    # Now parse the config
-    Puppet.parse_config
-
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
       if options[:debug]

@@ -101,10 +101,8 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     end
 
     it "should support dns alt names from ARGV" do
-      @master.command_line.stubs(:args).returns(["--dns_alt_names", "foo,bar,baz"])
+      Puppet.settings.initialize_global_settings(["--dns_alt_names", "foo,bar,baz"])
 
-      @master.command_line.send(:parse_global_options)
-      Puppet.settings.parse
       @master.preinit
       @master.parse_options
 

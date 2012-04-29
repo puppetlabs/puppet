@@ -11,8 +11,7 @@ require 'socket'
 require 'facter'
 
 # load puppet configuration, needed to find SSL certificates
-Puppet[:config] = "/etc/puppet/puppet.conf"
-Puppet.parse_config
+Puppet.initialize_settings
 
 # set the SSL environment
 ctx = OpenSSL::SSL::SSLContext.new

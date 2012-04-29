@@ -67,56 +67,6 @@ describe Puppet::Util::CommandLine do
     command_line.args.should            == []
   end
 
-  # A lot of settings management stuff has moved into command_line.rb; we need to do a first pass over
-  #  all of the supplied command-line arguments before we attempt to determine what application or
-  #  face we're going to run, because we need to be able to load apps/faces from the libdir
-  describe "when dealing with settings" do
-    let(:command_line) { Puppet::Util::CommandLine.new( "foo", [], @tty ) }
-
-    it "should get options from Puppet.settings.optparse_addargs" do
-      Puppet.settings.expects(:optparse_addargs).returns([])
-
-      command_line.send(:parse_global_options)
-    end
-
-    it "should add Puppet.settings options to OptionParser" do
-      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
-      Puppet.settings.expects(:handlearg).with("--option", true)
-      command_line.stubs(:args).returns(["--option"])
-      command_line.send(:parse_global_options)
-    end
-
-    it "should not die if it sees an unrecognized option, because the app/face may handle it later" do
-      command_line.stubs(:args).returns(["--topuppet", "value"])
-      expect { command_line.send(:parse_global_options) } .to_not raise_error
-    end
-
-    it "should not pass an unrecognized option to Puppet.settings" do
-      command_line.stubs(:args).returns(["--topuppet", "value"])
-      Puppet.settings.expects(:handlearg).with("--topuppet", "value").never
-      expect { command_line.send(:parse_global_options) } .to_not raise_error
-    end
-
-    it "should pass valid puppet settings options to Puppet.settings even if they appear after an unrecognized option" do
-      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option", :NONE]])
-      Puppet.settings.expects(:handlearg).with("--option", true)
-      command_line.stubs(:args).returns(["--invalidoption", "--option"])
-      command_line.send(:parse_global_options)
-    end
-
-
-    it "should transform boolean option to normal form for Puppet.settings" do
-      Puppet.settings.expects(:handlearg).with("--option", true)
-      command_line.send(:handlearg, "--[no-]option", true)
-    end
-
-    it "should transform boolean option to no- form for Puppet.settings" do
-      Puppet.settings.expects(:handlearg).with("--no-option", false)
-      command_line.send(:handlearg, "--[no-]option", false)
-    end
-  end
-
-
   describe "when dealing with puppet commands" do
 
     it "should return the executable name if it is not puppet" do

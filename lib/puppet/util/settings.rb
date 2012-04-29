@@ -2,6 +2,7 @@ require 'puppet'
 require 'sync'
 require 'getoptlong'
 require 'puppet/util/loadedfile'
+require 'puppet/util/command_line/puppet_option_parser'
 
 class Puppet::SettingsError < Puppet::Error
 end
@@ -15,6 +16,9 @@ class Puppet::Util::Settings
   require 'puppet/util/settings/directory_setting'
   require 'puppet/util/settings/boolean_setting'
 
+  # local reference for convenience
+  PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
+
   attr_accessor :files
   attr_reader :timer
 
@@ -22,6 +26,19 @@ class Puppet::Util::Settings
 
   # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
   REQUIRED_APP_SETTINGS = [:run_mode, :logdir, :confdir, :vardir]
+
+  # This method is intended for puppet internal use only; it is a convenience method that
+  #  returns reasonable application default settings values for a given run_mode.
+  def self.app_defaults_for_run_mode(run_mode)
+    {
+        :name     => run_mode.to_s,
+        :run_mode => run_mode.name,
+        :confdir  => run_mode.conf_dir,
+        :vardir   => run_mode.var_dir,
+        :rundir   => run_mode.run_dir,
+        :logdir   => run_mode.log_dir,
+    }
+  end
 
   def self.default_global_config_dir()
     Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
@@ -114,6 +131,90 @@ class Puppet::Util::Settings
   def clearused
     @cache.clear
     @used = []
+  end
+
+  def global_defaults_initialized?()
+    @global_defaults_initialized
+  end
+
+  def initialize_global_settings(args = [])
+    raise Puppet::DevError, "Attempting to initialize global default settings more than once!" if global_defaults_initialized?
+
+    # The first two phases of the lifecycle of a puppet application are:
+    #  1) To parse the command line options and handle any of them that are registered, defined "global" puppet
+    #     settings (mostly from defaults.rb).)
+    #  2) To parse the puppet config file(s).
+    #
+    # These 2 steps are being handled explicitly here.  If there ever arises a situation where they need to be
+    # triggered from outside of this class, without triggering the rest of the lifecycle--we might want to move them
+    # out into a separate method that we call from here.  However, this seems to be sufficient for now.
+    #  --cprice 2012-03-16
+
+    # Here's step 1.
+    parse_global_options(args)
+
+    # Here's step 2.  NOTE: this is a change in behavior where we are now parsing the config file on every run;
+    # before, there were several apps that specifically registered themselves as not requiring anything from
+    # the config file.  The fact that we're always parsing it now might be a small performance hit, but it was
+    # necessary in order to make sure that we can resolve the libdir before we look for the available applications.
+    parse_config_files
+
+    @global_defaults_initialized = true
+  end
+
+  # This method is called during application bootstrapping.  It is responsible for parsing all of the
+  # command line options and initializing the settings accordingly.
+  #
+  # It will ignore options that are not defined in the global puppet settings list, because they may
+  # be valid options for the specific application that we are about to launch... however, at this point
+  # in the bootstrapping lifecycle, we don't yet know what that application is.
+  def parse_global_options(args)
+    # Create an option parser
+    option_parser = PuppetOptionParser.new
+    option_parser.ignore_invalid_options = true
+
+    # Add all global options to it.
+    self.optparse_addargs([]).each do |option|
+      option_parser.on(*option) do |arg|
+        opt, val = Puppet::Util::Settings.clean_opt(option[0], arg)
+        handlearg(opt, val)
+      end
+    end
+
+    option_parser.parse(args)
+
+  end
+  private :parse_global_options
+
+
+  ## Private utility method; this is the callback that the OptionParser will use when it finds
+  ## an option that was defined in Puppet.settings.  All that this method does is a little bit
+  ## of clanup to get the option into the exact format that Puppet.settings expects it to be in,
+  ## and then passes it along to Puppet.settings.
+  ##
+  ## @param [String] opt the command-line option that was matched
+  ## @param [String, TrueClass, FalseClass] the value for the setting (as determined by the OptionParser)
+  #def handlearg(opt, val)
+  #  opt, val = self.class.clean_opt(opt, val)
+  #  Puppet.settings.handlearg(opt, val)
+  #end
+  #private :handlearg
+
+
+  # A utility method (public, is used by application.rb and perhaps elsewhere) that munges a command-line
+  # option string into the format that Puppet.settings expects.  (This mostly has to deal with handling the
+  # "no-" prefix on flag/boolean options).
+  #
+  # @param [String] opt the command line option that we are munging
+  # @param [String, TrueClass, FalseClass] the value for the setting (as determined by the OptionParser)
+  def self.clean_opt(opt, val)
+    # rewrite --[no-]option to --no-option if that's what was given
+    if opt =~ /\[no-\]/ and !val
+      opt = opt.gsub(/\[no-\]/,'no-')
+    end
+    # otherwise remove the [no-] prefix to not confuse everybody
+    opt = opt.gsub(/\[no-\]/, '')
+    [opt, val]
   end
 
 
@@ -374,7 +475,7 @@ class Puppet::Util::Settings
 
   # Parse the configuration file.  Just provides
   # thread safety.
-  def parse
+  def parse_config_files
     # we are now supporting multiple config files; the "main" config file will be the one located in
     # /etc/puppet (or overridden $confdir)... but we will also look for a config file in the user's home
     # directory.  This was introduced in an effort to provide maximum backwards compatibility while
@@ -391,6 +492,7 @@ class Puppet::Util::Settings
     # moved to the new location. --jeffweiss 24 apr 2012
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
   end
+  private :parse_config_files
 
   def main_config_file
     # the algorithm here is basically this:
@@ -562,11 +664,11 @@ class Puppet::Util::Settings
   end
 
   # Reparse our config file, if necessary.
-  def reparse
+  def reparse_config_files
     if files
       if filename = any_files_changed?
         Puppet.notice "Config file #{filename} changed; triggering re-parse of all config files."
-        parse
+        parse_config_files
         reuse
       end
     end
@@ -1170,6 +1272,7 @@ if @config.include?(:run_mode)
   def clear_everything_for_tests()
     @sync.synchronize do
       unsafe_clear(true, true)
+      @global_defaults_initialized = false
       @app_defaults_initialized = false
     end
   end
