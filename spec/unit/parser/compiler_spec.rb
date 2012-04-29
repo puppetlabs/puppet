@@ -543,14 +543,14 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should raise an error if a class is not found" do
-      @scope.expects(:find_hostclass).with("notfound").returns(nil)
+      @scope.expects(:find_hostclass).with("notfound", {:assume_fqname => false}).returns(nil)
       lambda{ @compiler.evaluate_classes(%w{notfound}, @scope) }.should raise_error(Puppet::Error, /Could not find class/)
     end
 
     it "should raise an error when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
-      @compiler.topscope.stubs(:find_hostclass).with('foo').returns(nil)
+      @compiler.topscope.stubs(:find_hostclass).with('foo', {:assume_fqname => false}).returns(nil)
       lambda{ @compiler.compile }.should raise_error(Puppet::Error, /Could not find class foo for testnode/)
     end
   end
@@ -559,7 +559,7 @@ describe Puppet::Parser::Compiler do
 
     before do
       @class = stub 'class', :name => "my::class"
-      @scope.stubs(:find_hostclass).with("myclass").returns(@class)
+      @scope.stubs(:find_hostclass).with("myclass", {:assume_fqname => false}).returns(@class)
 
       @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
     end
@@ -691,7 +691,7 @@ describe Puppet::Parser::Compiler do
 
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
-      @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
+      @scope.stubs(:find_hostclass).with("MyClass",{:assume_fqname => false}).returns(@class)
       @scope.stubs(:class_scope).with(@class).returns("something")
       @compiler.expects(:add_resource).never
       @resource.expects(:evaluate).never
