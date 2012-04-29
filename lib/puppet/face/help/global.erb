@@ -1,18 +1,14 @@
 Usage: puppet <subcommand> [options] <action> [options]
 
-Available subcommands, from Puppet Faces:
-<% Puppet::Face.faces.sort.each do |name|
-     face = Puppet::Face[name, :current] -%>
-  <%= face.name.to_s.ljust(16) %>  <%= face.summary %>
-<% end -%>
-
-<% unless legacy_applications.empty? then # great victory when this is true! -%>
-Available applications, soon to be ported to Faces:
-<%   legacy_applications.each do |appname|
-       summary = horribly_extract_summary_from appname -%>
+Available subcommands:
+    <%# NOTE: this is probably not a good long-term solution for this.  We're only iterating over
+        applications to find the list of things we need to show help for... this works for now
+        because faces can't be run without an application stub.  However, when #6753 is resolved,
+        all of the application stubs for faces will go away, and this will need to be updated
+        to reflect that.  --cprice 2012-04-26 %>
+<% all_application_summaries.each do |appname, summary| -%>
   <%= appname.to_s.ljust(16) %>  <%= summary %>
-<%   end
-   end -%>
+<% end -%>
 
 See 'puppet help <subcommand> <action>' for help on a specific subcommand action.
 See 'puppet help <subcommand>' for help on a specific subcommand.

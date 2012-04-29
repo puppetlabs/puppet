@@ -1,5 +1,6 @@
 require 'optparse'
 require 'puppet/util/plugins'
+require 'puppet/util/constant_inflector'
 require 'puppet/error'
 
 # This class handles all the aspects of a Puppet application/executable
@@ -219,7 +220,7 @@ class Application
     end
 
     def find(name)
-      klass = name.to_s.capitalize
+      klass = Puppet::Util::ConstantInflector.file2constant(name.to_s)
 
       begin
         require ::File.join('puppet', 'application', name.to_s.downcase)
