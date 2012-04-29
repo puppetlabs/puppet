@@ -10,4 +10,3 @@ x11/library/toolkit/libxt                         1.0.9-0.175.0.0.0.0.1215   i--
 shell/bash                                        4.1.9-0.175.0.0.0.2.537    i--
 shell/zsh                                         4.3.12-0.175.0.0.0.2.537   i--
 security/sudo                                     1.8.1.2-0.175.0.0.0.2.537  i--
-service/network/ntp                               4.2.5.200-0.175.0.0.0.2.537 i--
