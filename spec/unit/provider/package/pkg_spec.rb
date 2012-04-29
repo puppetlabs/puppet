@@ -49,7 +49,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       described_class.expects(:pkg).with(:list, '-H').returns File.read(my_fixture('solaris11'))
       described_class.expects(:warning).never
       @instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure) }}
-      @instances.size.should == 13
+      @instances.size.should == 12
       @instances[0].should == {:name => 'compress/zip', :ensure => :present}
       @instances[1].should == {:name => 'archiver/gnu-tar', :ensure => :present}
       @instances[2].should == {:name => 'compress/bzip2', :ensure => :present}
@@ -62,7 +62,6 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       @instances[9].should == {:name => 'shell/bash', :ensure => :present}
       @instances[10].should == {:name => 'shell/zsh', :ensure => :present}
       @instances[11].should == {:name => 'security/sudo', :ensure => :present}
-      @instances[12].should == {:name => 'service/network/ntp', :ensure => :present}
     end
 
     it "should warn about incorrect lines" do
