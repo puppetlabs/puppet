@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -42,6 +42,7 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new
+      Puppet.features.stubs(:ansicolor?).returns(true)
     end
 
     it "should colorize if Puppet[:color] is :ansi" do

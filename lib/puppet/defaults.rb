@@ -109,7 +109,7 @@ module Puppet
             "specify 'all'.",
     },
     :color => {
-      :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
+      :default => "ansi",
       :type    => :string,
       :desc    => "Whether to use colors when logging to the console.  Valid values are\n" +
           "`ansi` (equivalent to `true`), `html`, and `false`, which produces no color.\n" +
