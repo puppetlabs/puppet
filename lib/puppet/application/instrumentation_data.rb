@@ -1,4 +1,4 @@
 require 'puppet/application/indirection_base'
 
-class Puppet::Application::Instrumentation_data < Puppet::Application::IndirectionBase
+class Puppet::Application::InstrumentationData < Puppet::Application::IndirectionBase
 end

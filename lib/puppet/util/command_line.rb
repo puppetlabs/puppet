@@ -65,7 +65,7 @@ module Puppet
           #  (i.e.. so that we can load faces).  Longer-term, use the autoloader.  See comments in
           #  #available_subcommands method above.  --cprice 2012-03-06
           app = Puppet::Application.find(subcommand_name).new(self)
-          Puppet::Plugins.on_application_initialization(:appliation_object => self)
+          Puppet::Plugins.on_application_initialization(:application_object => self)
 
           app.run
         elsif ! execute_external_subcommand then

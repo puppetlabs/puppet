@@ -12,7 +12,9 @@ describe Puppet::Face[:help, '0.0.1'] do
   end
 
   it "should accept a call with no arguments" do
-    expect { subject.help() }.should_not raise_error
+    expect {
+      subject.help()
+    }.should_not raise_error
   end
 
   it "should accept a face name" do
@@ -62,8 +64,16 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
-    it "should list all faces" do
-      Puppet::Face.faces.each do |name|
+    it "should list all faces which are runnable from the command line" do
+      help_face = Puppet::Face[:help, :current]
+      # The main purpose of the help face is to provide documentation for
+      #  command line users.  It shouldn't show documentation for faces
+      #  that can't be run from the command line, so, rather than iterating
+      #  over all available faces, we need to iterate over the subcommands
+      #  that are available from the command line.
+      Puppet::Util::CommandLine.available_subcommands.each do |name|
+        next unless help_face.is_face_app?(name)
+        next if help_face.exclude_from_docs?(name)
         face = Puppet::Face[name, :current]
         summary = face.summary
 
