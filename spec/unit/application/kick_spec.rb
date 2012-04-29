@@ -117,7 +117,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.hosts = []
       @kick.stubs(:trap)
       @kick.stubs(:puts)
-      Puppet.stubs(:parse_config)
 
       @kick.options.stubs(:[]).with(any_parameters)
     end
@@ -138,12 +137,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.options.stubs(:[]).with(:verbose).returns(true)
       @kick.setup
       Puppet::Log.level.should == :info
-    end
-
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @kick.setup
     end
 
     describe "when using the ldap node terminus" do

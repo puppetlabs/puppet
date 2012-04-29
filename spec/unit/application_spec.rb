@@ -8,14 +8,12 @@ require 'timeout'
 
 describe Puppet::Application do
 
-  before do
+  before(:each) do
     Puppet::Util::Instrumentation.stubs(:init)
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
 
     @app.stubs(:name).returns("test_app")
-    # avoid actually trying to parse any settings
-    Puppet.settings.stubs(:parse)
 
   end
 
@@ -165,6 +163,13 @@ describe Puppet::Application do
   end
 
   it "should initialize the Puppet Instrumentation layer early in the life cycle" do
+    # Not proud of this, but the fact that we are stubbing init_app_defaults
+    #  below means that we will get errors if anyone tries to access any
+    #  settings that depend on app_defaults.  In general this whole test
+    #  seems to be testing too many implementation details rather than
+    #  functionality, but, hey.
+    Puppet[:route_file] = "/dev/null"
+
     startup_sequence = sequence('startup')
     @app.expects(:initialize_app_defaults).in_sequence(startup_sequence)
     Puppet::Util::Instrumentation.expects(:init).in_sequence(startup_sequence)

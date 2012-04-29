@@ -530,6 +530,9 @@ module Util
   # Now we need to catch *any* other kind of exception, because we may be calling third-party
   #  code (e.g. webrick), and we have no idea what they might throw.
   rescue Exception => err
+    ## NOTE: when debugging spec failures, these two lines can be very useful
+    #puts err.inspect
+    #puts Puppet::Util.pretty_backtrace(err.backtrace)
     Puppet.log_exception(err, "Could not #{message}: #{err}")
     Puppet::Util::Log.force_flushqueue()
     exit(code)

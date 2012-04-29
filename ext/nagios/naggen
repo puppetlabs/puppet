@@ -277,7 +277,7 @@ result.each { |opt,arg|
 }
 
 # Read in Puppet settings, so we know how Puppet's configured.
-Puppet.parse_config
+Puppet.initialize_settings
 
 Puppet::Util::Log.newdestination(:console)
 

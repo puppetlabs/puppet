@@ -266,13 +266,9 @@ class Application
   end
 
   def app_defaults()
-    {
-        :run_mode => self.class.run_mode.name,
-        :confdir  => self.class.run_mode.conf_dir,
-        :vardir   => self.class.run_mode.var_dir,
-        :rundir   => self.class.run_mode.run_dir,
-        :logdir   => self.class.run_mode.log_dir,
-    }
+    Puppet::Util::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
+        :name => name
+    )
   end
 
   def initialize_app_defaults()
@@ -384,7 +380,7 @@ class Application
 
 
   def handlearg(opt, val)
-    opt, val = Puppet::Util::CommandLine.clean_opt(opt, val)
+    opt, val = Puppet::Util::Settings.clean_opt(opt, val)
     send(:handle_unknown, opt, val) if respond_to?(:handle_unknown)
   end
 

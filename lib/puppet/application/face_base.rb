@@ -70,6 +70,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+
     @face = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
@@ -118,17 +119,12 @@ class Puppet::Application::FaceBase < Puppet::Application
       if @action = @face.get_default_action() then
         @is_default_action = true
       else
-        # REVISIT: ...and this horror thanks to our log setup, which doesn't
-        # initialize destinations until the setup method, which we will never
-        # reach.  We could also just print here, but that is actually a little
-        # uglier and nastier in the long term, in which we should do log setup
-        # earlier if at all possible. --daniel 2011-05-31
-        Puppet::Util::Log.newdestination(:console)
-
         face   = @face.name
         action = action_name.nil? ? 'default' : "'#{action_name}'"
         msg = "'#{face}' has no #{action} action.  See `puppet help #{face}`."
+
         Puppet.err(msg)
+        Puppet::Util::Log.force_flushqueue()
 
         exit false
       end
