@@ -23,7 +23,13 @@ describe Puppet::Interface::FaceCollection do
   end
 
   after :each do
-    subject.instance_variable_set(:@faces, @original_faces)
+    # Just pushing the duplicate back into place doesn't work as reliably as
+    # this method to restore the state.  Honestly, I need to make this horror
+    # go away entirely. --daniel 2012-04-28
+    faces = subject.instance_variable_get("@faces")
+    faces.clear
+    @original_faces.each {|k,v| faces[k] = v }
+
     @original_required.each {|f| $".push f unless $".include? f }
   end
 
