@@ -577,7 +577,7 @@ describe Puppet::Util do
       # behave consistently.  If they ever implement it correctly (eg: to do
       # the lookup for real) it should just work transparently.
       baduser = 'if_this_user_exists_I_will_eat_my_hat'
-      Puppet::Util::Execution.withenv("PATH" => "~#{baduser}:#{base}") do
+      Puppet::Util::Execution.withenv("PATH" => "~#{baduser}#{File::PATH_SEPARATOR}#{base}") do
         Puppet::Util.which('foo').should == path
       end
     end
