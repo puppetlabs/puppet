@@ -170,16 +170,21 @@ module Util
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-        dest = File.expand_path(File.join(dir, bin))
-        if Puppet.features.microsoft_windows? && File.extname(dest).empty?
-          exts = ENV['PATHEXT']
-          exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-          exts.each do |ext|
-            destext = File.expand_path(dest + ext)
-            return destext if FileTest.file? destext and FileTest.executable? destext
+        begin
+          dest = File.expand_path(File.join(dir, bin))
+          if Puppet.features.microsoft_windows? && File.extname(dest).empty?
+            exts = ENV['PATHEXT']
+            exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
+            exts.each do |ext|
+              destext = File.expand_path(dest + ext)
+              return destext if FileTest.file? destext and FileTest.executable? destext
+            end
           end
+          return dest if FileTest.file? dest and FileTest.executable? dest
+        rescue ArgumentError => e
+          raise unless e.to_s =~ /doesn't exist/
+          # ...otherwise, we just skip the non-existent entry, and do nothing.
         end
-        return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end
     nil

@@ -571,6 +571,17 @@ describe Puppet::Util do
       Puppet::Util.which(base).should be_nil
     end
 
+    it "should ignore ~user directories if the user doesn't exist" do
+      # Windows treats *any* user as a "user that doesn't exist", which means
+      # that this will work correctly across all our platforms, and should
+      # behave consistently.  If they ever implement it correctly (eg: to do
+      # the lookup for real) it should just work transparently.
+      baduser = 'if_this_user_exists_I_will_eat_my_hat'
+      Puppet::Util::Execution.withenv("PATH" => "~#{baduser}:#{base}") do
+        Puppet::Util.which('foo').should == path
+      end
+    end
+
     describe "on POSIX systems" do
       before :each do
         Puppet.features.stubs(:posix?).returns true
