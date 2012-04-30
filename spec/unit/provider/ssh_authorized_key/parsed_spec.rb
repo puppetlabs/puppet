@@ -63,6 +63,30 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
   end
 
+  it "should parse comments" do
+    result = [{ :record_type => :comment, :line => "# hello" }]
+    @provider_class.parse("# hello\n").should == result
+  end
+
+  it "should parse comments with leading whitespace" do
+    result = [{ :record_type => :comment, :line => "  # hello" }]
+    @provider_class.parse("  # hello\n").should == result
+  end
+
+  it "should skip over lines with only whitespace" do
+    result = [{ :record_type => :comment, :line => "#before" },
+              { :record_type => :blank,   :line => "  " },
+              { :record_type => :comment, :line => "#after" }]
+    @provider_class.parse("#before\n  \n#after\n").should == result
+  end
+
+  it "should skip over completely empty lines" do
+    result = [{ :record_type => :comment, :line => "#before"},
+              { :record_type => :blank,   :line => ""},
+              { :record_type => :comment, :line => "#after"}]
+    @provider_class.parse("#before\n\n#after\n").should == result
+  end
+
   it "should be able to parse name if it includes whitespace" do
     @provider_class.parse_line('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
     @provider_class.parse_line('from="host1.reductlivelabs.com,host.reductivelabs.com",command="/usr/local/bin/run",ssh-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC7pHZ1XRj3tXbFpPFhMGU1bVwz7jr13zt/wuE+pVIJA8GlmHYuYtIxHPfDHlkixdwLachCpSQUL9NbYkkRFRn9m6PZ7125ohE4E4m96QS6SGSQowTiRn4Lzd9LV38g93EMHjPmEkdSq7MY4uJEd6DUYsLvaDYdIgBiLBIWPA3OrQ== fancy user')[:name].should == 'fancy user'
