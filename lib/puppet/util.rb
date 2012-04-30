@@ -182,7 +182,7 @@ module Util
           end
           return dest if FileTest.file? dest and FileTest.executable? dest
         rescue ArgumentError => e
-          raise unless e.to_s =~ /doesn't exist/
+          raise unless e.to_s =~ /doesn't exist|can't find user/
           # ...otherwise, we just skip the non-existent entry, and do nothing.
         end
       end
