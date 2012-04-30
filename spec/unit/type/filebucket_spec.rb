@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:filebucket) do
+  include PuppetSpec::Files
+
   describe "when validating attributes" do
     %w{name server port path}.each do |attr|
       it "should have a '#{attr}' parameter" do
@@ -36,8 +38,6 @@ describe Puppet::Type.type(:filebucket) do
   end
 
   describe "path" do
-    include PuppetSpec::Files
-
     def bucket(hash)
       Puppet::Type.type(:filebucket).new({:name => 'main'}.merge(hash))
     end
@@ -71,7 +71,7 @@ describe Puppet::Type.type(:filebucket) do
     end
 
     it "be local if both a path and a server are specified" do
-      bucket(:server => "puppet", :path => "/my/path").bucket.should be_local
+      bucket(:server => "puppet", :path => make_absolute("/my/path")).bucket.should be_local
     end
   end
 
@@ -81,10 +81,12 @@ describe Puppet::Type.type(:filebucket) do
     end
 
     it "should use any provided path" do
-      bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => "/foo/bar"
-      Puppet::FileBucket::Dipper.expects(:new).with(:Path => "/foo/bar").returns @bucket
+      path = make_absolute("/foo/bar")
+      bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => path
+      Puppet::FileBucket::Dipper.expects(:new).with(:Path => path).returns @bucket
       bucket.bucket
     end
+
     it "should use any provided server and port" do
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :server => "myserv", :port => "myport", :path => false
       Puppet::FileBucket::Dipper.expects(:new).with(:Server => "myserv", :Port => "myport").returns @bucket
