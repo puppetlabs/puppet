@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/parser/ast'
@@ -102,9 +102,9 @@ describe 'AST Generic Child' do
       @evaluateable.evaluate_match(parameter, @scope)
     end
 
-    it "should not match '' if value is undef" do
+    it "should match '' if value is undef" do
       @evaluateable.value = :undef
-      @evaluateable.evaluate_match('', @scope).should be_false
+      @evaluateable.evaluate_match('', @scope).should be_true
     end
   end
 end

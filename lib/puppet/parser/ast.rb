@@ -103,7 +103,7 @@ class Puppet::Parser::AST
     value = Puppet::Parser::Scope.number?(value) || value
 
     # "" == undef for case/selector/if
-    obj == value or (obj == "" and value == :undef)
+    obj == value or (obj == "" and value == :undef) or (obj == :undef and value == "")
   end
 end
 
