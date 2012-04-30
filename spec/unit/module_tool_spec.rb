@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: UTF-8
 
 require 'spec_helper'
@@ -111,11 +112,14 @@ TREE
     end
   end
   describe '.set_option_defaults' do
+    include PuppetSpec::Files
+    let (:setting) { {:environment => "foo", :modulepath => make_absolute("foo")} }
+
     [:environment, :modulepath].each do |value|
       describe "if #{value} is part of options" do
         let (:options) { {} }
         before(:each) do
-          options[value] = "foo"
+          options[value] = setting[value]
           Puppet[value] = "bar"
         end
         it "should set Puppet[#{value}] to the options[#{value}]" do
@@ -124,13 +128,13 @@ TREE
         end
         it "should not override options[#{value}]" do
           subject.set_option_defaults options
-          options[value].should == "foo"
+          options[value].should == setting[value]
         end
       end
       describe "if #{value} is not part of options" do
         let (:options) { {} }
         before(:each) do
-          Puppet[value] = "bar"
+          Puppet[value] = setting[value]
         end
         it "should populate options[#{value}] with the value of Puppet[#{value}]" do
           subject.set_option_defaults options
@@ -138,7 +142,7 @@ TREE
         end
         it "should not override Puppet[#{value}]" do
           subject.set_option_defaults options
-          Puppet[value].should == "bar"
+          Puppet[value].should == setting[value]
         end
       end
     end
