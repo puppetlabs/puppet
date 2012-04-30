@@ -178,7 +178,7 @@ class Puppet::Daemon
       # `reparse` will just check if the action is required, and would be
       # better named `reparse_if_changed` instead.
       if reparse_interval > 0 and now >= next_reparse
-        Puppet.settings.reparse
+        Puppet.settings.reparse_config_files
 
         # The time to the next reparse might have changed, so recalculate
         # now.  That way we react dynamically to reconfiguration.
