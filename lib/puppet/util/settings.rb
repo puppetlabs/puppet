@@ -14,6 +14,7 @@ class Puppet::Util::Settings
   require 'puppet/util/settings/string_setting'
   require 'puppet/util/settings/file_setting'
   require 'puppet/util/settings/directory_setting'
+  require 'puppet/util/settings/path_setting'
   require 'puppet/util/settings/boolean_setting'
 
   # local reference for convenience
@@ -632,7 +633,7 @@ class Puppet::Util::Settings
           :string     => StringSetting,
           :file       => FileSetting,
           :directory  => DirectorySetting,
-          :path       => StringSetting,
+          :path       => PathSetting,
           :boolean    => BooleanSetting,
       } [type]
         raise ArgumentError, "Invalid setting type '#{type}'"
@@ -767,7 +768,6 @@ class Puppet::Util::Settings
       end
     end
 
-    value = setting.munge(value) if setting.respond_to?(:munge)
     setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
     if read_only_settings.include? param and type != :application_defaults
       raise ArgumentError,
@@ -995,6 +995,8 @@ if @config.include?(:run_mode)
     param = param.to_sym
     environment &&= environment.to_sym
 
+    setting = @config[param]
+
     # Short circuit to nil for undefined parameters.
     return nil unless @config.include?(param)
 
@@ -1023,7 +1025,7 @@ if @config.include?(:run_mode)
       raise Puppet::SettingsError.new("Error converting value for param '#{param}': #{err}")
     end
 
-
+    val = setting.munge(val) if setting.respond_to?(:munge)
     # And cache it
     @cache[environment||"none"][param] = val
     val

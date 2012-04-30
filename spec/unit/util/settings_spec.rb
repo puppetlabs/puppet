@@ -665,22 +665,23 @@ describe Puppet::Util::Settings do
     before do
       @settings = Puppet::Util::Settings.new
       @settings.stubs(:service_user_available?).returns true
-      @file = "/some/file"
+      @file = make_absolute("/some/file")
+      @userconfig = make_absolute("/test/userconfigfile")
       @settings.define_settings :section, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
       @settings.define_settings :section,
-          :config => { :type => :file, :default => "/some/file", :desc => "eh" },
+          :config => { :type => :file, :default => @file, :desc => "eh" },
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      @settings.stubs(:user_config_file).returns("/test/userconfigfile")
-      FileTest.stubs(:exist?).with("/some/file").returns true
-      FileTest.stubs(:exist?).with("/test/userconfigfile").returns false
+      @settings.stubs(:user_config_file).returns(@userconfig)
+      FileTest.stubs(:exist?).with(@file).returns true
+      FileTest.stubs(:exist?).with(@userconfig).returns false
     end
 
     it "should not ignore the report setting" do
       @settings.define_settings :section, :report => { :default => "false", :desc => "a" }
       # This is needed in order to make sure we pass on windows
-      myfile = File.expand_path("/my/file")
+      myfile = File.expand_path(@file)
       @settings[:config] = myfile
       text = <<-CONF
         [puppetd]
@@ -704,9 +705,9 @@ describe Puppet::Util::Settings do
     end
 
     it "should not try to parse non-existent files" do
-      FileTest.expects(:exist?).with("/some/file").returns false
+      FileTest.expects(:exist?).with(@file).returns false
 
-      File.expects(:read).with("/some/file").never
+      File.expects(:read).with(@file).never
 
       @settings.send(:parse_config_files)
     end
@@ -748,7 +749,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
-      @settings.define_settings :section, :myfile => { :type => :file, :default => "/myfile", :desc => "a" }
+      @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
       text = "[main]
@@ -761,13 +762,12 @@ describe Puppet::Util::Settings do
     end
 
     it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
-      @settings.define_settings :section, :myfile => { :type => :file, :default => "/myfile", :desc => "a" }
+      @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
       text = "[main]
       myfile = #{otherfile} {owner = service}
       "
-      file = "/some/file"
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:myfile].should == otherfile
@@ -888,20 +888,22 @@ describe Puppet::Util::Settings do
 
   describe "when reparsing its configuration" do
     before do
+      @file = make_absolute("/test/file")
+      @userconfig = make_absolute("/test/userconfigfile")
       @settings = Puppet::Util::Settings.new
       @settings.define_settings :section,
-          :config => { :type => :file, :default => "/test/file", :desc => "a" },
+          :config => { :type => :file, :default => @file, :desc => "a" },
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      FileTest.stubs(:exist?).with("/test/file").returns true
-      FileTest.stubs(:exist?).with("/test/userconfigfile").returns false
-      @settings.stubs(:user_config_file).returns("/test/userconfigfile")
+      FileTest.stubs(:exist?).with(@file).returns true
+      FileTest.stubs(:exist?).with(@userconfig).returns false
+      @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
     it "should use a LoadedFile instance to determine if the file has changed" do
       file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?)
 
@@ -910,7 +912,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should not create the LoadedFile instance and should not parse if the file does not exist" do
-      FileTest.expects(:exist?).with("/test/file").returns false
+      FileTest.expects(:exist?).with(@file).returns false
       Puppet::Util::LoadedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never
@@ -920,7 +922,7 @@ describe Puppet::Util::Settings do
 
     it "should not reparse if the file has not changed" do
       file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?).returns false
 
@@ -930,8 +932,8 @@ describe Puppet::Util::Settings do
     end
 
     it "should reparse if the file has changed" do
-      file = stub 'file', :file => "/test/file"
-      Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+      file = stub 'file', :file => @file
+      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?).returns true
 
@@ -945,7 +947,7 @@ describe Puppet::Util::Settings do
       text = "[main]\none = disk-init\n"
       file = mock 'file'
       file.stubs(:changed?).returns(true)
-      file.stubs(:file).returns("/test/file")
+      file.stubs(:file).returns(@file)
       @settings[:one] = "init"
       @settings.files = [file]
 
@@ -992,13 +994,13 @@ describe Puppet::Util::Settings do
     it "should retain in-memory values if the file has a syntax error" do
       # Init the value
       text = "[main]\none = initial-value\n"
-      @settings.expects(:read_file).with("/test/file").returns(text)
+      @settings.expects(:read_file).with(@file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:one].should == "initial-value"
 
       # Now replace the value with something bogus
       text = "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n"
-      @settings.expects(:read_file).with("/test/file").returns(text)
+      @settings.expects(:read_file).with(@file).returns(text)
       @settings.send(:parse_config_files)
 
       # The originally-overridden value should not be replaced with the default
@@ -1182,12 +1184,12 @@ describe Puppet::Util::Settings do
       @settings.stubs(:service_user_available?).returns true
       @settings.define_settings :main, :noop => { :default => false, :desc => "", :type => :boolean }
       @settings.define_settings :main,
-          :maindir => { :type => :directory, :default => "/maindir", :desc => "a" },
-          :seconddir => { :type => :directory, :default => "/seconddir", :desc => "a"}
+          :maindir => { :type => :directory, :default => make_absolute("/maindir"), :desc => "a" },
+          :seconddir => { :type => :directory, :default => make_absolute("/seconddir"), :desc => "a"}
       @settings.define_settings :main, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
-      @settings.define_settings :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service", :mode => 0755}
-      @settings.define_settings :third, :thirddir => { :type => :directory, :default => "/thirddir", :desc => "b"}
-      @settings.define_settings :files, :myfile => {:type => :file, :default => "/myfile", :desc => "a", :mode => 0755}
+      @settings.define_settings :other, :otherdir => {:type => :directory, :default => make_absolute("/otherdir"), :desc => "a", :owner => "service", :group => "service", :mode => 0755}
+      @settings.define_settings :third, :thirddir => { :type => :directory, :default => make_absolute("/thirddir"), :desc => "b"}
+      @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => 0755}
     end
 
     it "should provide a method that writes files with the correct modes" do
@@ -1196,7 +1198,7 @@ describe Puppet::Util::Settings do
 
     it "should provide a method that creates directories with the correct modes" do
       Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
-      Dir.expects(:mkdir).with("/otherdir", 0755)
+      Dir.expects(:mkdir).with(make_absolute("/otherdir"), 0755)
       @settings.mkdir(:otherdir)
     end
 
