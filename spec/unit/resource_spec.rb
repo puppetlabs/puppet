@@ -303,6 +303,74 @@ describe Puppet::Resource do
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new)
       resource.set_default_parameters(@scope).should == [:a]
     end
+
+    describe "when the resource type is :hostclass" do
+      before do
+        @scope.stubs(:host).returns('foo')
+        Puppet::Node::Environment.new.known_resource_types.add(apache)
+      end
+
+      let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
+      let(:apache) do
+        Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port })
+      end
+
+      context "when no value is provided" do
+        let(:resource) do
+          Puppet::Parser::Resource.new("class", "apache", :scope => @scope)
+        end
+
+        it "should query the data_binding terminus using a namespaced key" do
+          Puppet::DataBinding.indirection.expects(:find).with(
+            'apache::port', :host => 'foo')
+          resource.set_default_parameters(@scope)
+        end
+
+        it "should query the data_binding terminus using the host attribute from the scope" do
+          Puppet::DataBinding.indirection.expects(:find).with(
+            'apache::port', :host => 'foo')
+          resource.set_default_parameters(@scope)
+        end
+
+        it "should use the value from the data_binding terminus" do
+          Puppet::DataBinding.indirection.expects(:find).with(
+            'apache::port', :host => 'foo').returns('443')
+          resource.set_default_parameters(@scope).should == [:port]
+          resource[:port].should == '443'
+        end
+
+        it "should use the default value if the data_binding terminus returns nil" do
+          Puppet::DataBinding.indirection.expects(:find).with(
+            'apache::port', :host => 'foo').returns(nil)
+          resource.set_default_parameters(@scope).should == [:port]
+          resource[:port].should == '80'
+        end
+      end
+
+      context "when a value is provided" do
+        let(:port_parameter) do
+          Puppet::Parser::Resource::Param.new(
+            { :name => 'port', :value => '8080' }
+          )
+        end
+
+        let(:resource) do
+          Puppet::Parser::Resource.new("class", "apache", :scope => @scope,
+            :parameters => [port_parameter])
+        end
+
+        it "should not query the data_binding terminus" do
+          Puppet::DataBinding.indirection.expects(:find).never
+          resource.set_default_parameters(@scope)
+        end
+
+        it "should use the value provided" do
+          Puppet::DataBinding.indirection.expects(:find).never
+          resource.set_default_parameters(@scope).should == []
+          resource[:port].should == '8080'
+        end
+      end
+    end
   end
 
   describe "when validating all required parameters are present" do

@@ -305,4 +305,20 @@ describe "Puppet defaults" do
       Puppet.settings[:diff].should == ''
     end
   end
+
+  describe "when configuring hiera" do
+    it "should have a hiera_config setting" do
+      Puppet.settings[:hiera_config].should_not be_nil
+    end
+  end
+
+  describe "when configuring the data_binding terminus" do
+    it "should have a data_binding_terminus setting" do
+      Puppet.settings[:data_binding_terminus].should_not be_nil
+    end
+
+    it "should be set to none by default" do
+      Puppet.settings[:data_binding_terminus].should == 'none'
+    end
+  end
 end
