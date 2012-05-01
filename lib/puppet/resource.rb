@@ -304,9 +304,30 @@ class Puppet::Resource
         fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
       end
 
-      next if default.nil?
+      # Consult external data bindings for class parameter values which must be
+      # namespaced in the backend.
+      #
+      # Example:
+      #
+      #   class foo($port){ ... }
+      #
+      # We make a request to the backend for the key 'foo::port' not 'foo'
+      #
+      external_value = nil
+      if resource_type.type == :hostclass
+        namespaced_param = "#{resource_type.name}::#{param}"
+        external_value = Puppet::DataBinding.indirection.find(
+          namespaced_param, :host => scope.host)
+      end
 
-      self[param] = default.safeevaluate(scope)
+      if external_value.nil?
+        next if default.nil?
+        value = default.safeevaluate(scope)
+      else
+        value = external_value
+      end
+
+      self[param] = value
       result << param
     end
     result

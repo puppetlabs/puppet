@@ -228,6 +228,15 @@ module Puppet
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
     },
+    :data_binding_terminus => {
+      :default => "none",
+      :desc    => "Where to retrive information about data.",
+    },
+    :hiera_config => {
+      :default => "$confdir/hiera.yaml",
+      :desc    => "The hiera configuration file",
+      :type    => :file,
+    },
     :catalog_terminus => {
       :default    => "compiler",
       :desc       => "Where to get node catalogs.  This is useful to change if, for instance,
