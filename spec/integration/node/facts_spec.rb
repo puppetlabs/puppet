@@ -10,10 +10,9 @@ describe Puppet::Node::Facts do
       terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
       terminus.stubs :save
 
+      Puppet::Node.indirection.expects(:expire).with("me")
+
       facts = Puppet::Node::Facts.new("me")
-
-      Puppet::Node.indirection.expects(:expire).with(nil, facts)
-
       Puppet::Node::Facts.indirection.save(facts)
     end
 
