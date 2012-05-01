@@ -115,7 +115,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     existing_names = catalog.resources.collect { |r| r.to_s }
 
     both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
-    
+
     both.each { |name| children.delete(name) }
   end
 
@@ -130,8 +130,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       Puppet.info "Content for '#{resource[:source]}' already exists"
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"
-      content = Puppet::FileServing::Content.find(resource[:source])
-      Puppet::FileBucket::File.new(content.content).save
+      content = Puppet::FileServing::Content.indirection.find(resource[:source])
+      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(content.content))
     end
   end
 end
