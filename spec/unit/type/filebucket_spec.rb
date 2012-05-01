@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:filebucket) do
+  include PuppetSpec::Files
+
   describe "when validating attributes" do
     %w{name server port path}.each do |attr|
       it "should have a '#{attr}' parameter" do
@@ -35,16 +37,42 @@ describe Puppet::Type.type(:filebucket) do
     bucket.bucket.should be_local
   end
 
-  it "not be local if path is false" do
-    bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => false
+  describe "path" do
+    def bucket(hash)
+      Puppet::Type.type(:filebucket).new({:name => 'main'}.merge(hash))
+    end
 
-    bucket.bucket.should_not be_local
-  end
+    it "should accept false as a value" do
+      expect { bucket(:path => false) }.not_to raise_error
+    end
 
-  it "be local if both a path and a server are specified" do
-    bucket = Puppet::Type.type(:filebucket).new :name => "main", :server => "puppet", :path => "/my/path"
+    it "should accept true as a value" do
+      expect { bucket(:path => true) }.not_to raise_error
+    end
 
-    bucket.bucket.should be_local
+    it "should fail when given an array of values" do
+      expect { bucket(:path => ['one', 'two']) }.
+        to raise_error Puppet::Error, /only have one filebucket path/
+    end
+
+    %w{one ../one one/two}.each do |path|
+      it "should fail if given a relative path of #{path.inspect}" do
+        expect { bucket(:path => path) }.
+          to raise_error Puppet::Error, /Filebucket paths must be absolute/
+      end
+    end
+
+    it "should succeed if given an absolute path" do
+      expect { bucket(:path => make_absolute('/tmp/bucket')) }.not_to raise_error
+    end
+
+    it "not be local if path is false" do
+      bucket(:path => false).bucket.should_not be_local
+    end
+
+    it "be local if both a path and a server are specified" do
+      bucket(:server => "puppet", :path => make_absolute("/my/path")).bucket.should be_local
+    end
   end
 
   describe "when creating the filebucket" do
@@ -53,10 +81,12 @@ describe Puppet::Type.type(:filebucket) do
     end
 
     it "should use any provided path" do
-      bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => "/foo/bar"
-      Puppet::FileBucket::Dipper.expects(:new).with(:Path => "/foo/bar").returns @bucket
+      path = make_absolute("/foo/bar")
+      bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => path
+      Puppet::FileBucket::Dipper.expects(:new).with(:Path => path).returns @bucket
       bucket.bucket
     end
+
     it "should use any provided server and port" do
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :server => "myserv", :port => "myport", :path => false
       Puppet::FileBucket::Dipper.expects(:new).with(:Server => "myserv", :Port => "myport").returns @bucket

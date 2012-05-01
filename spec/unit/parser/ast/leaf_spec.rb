@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Parser::AST::Leaf do
@@ -95,7 +95,7 @@ describe Puppet::Parser::AST::Undef do
   end
 
   it "should not match undef with an empty string" do
-    @undef.evaluate_match("", @scope).should be_false
+    @undef.evaluate_match("", @scope).should be_true
   end
 end
 

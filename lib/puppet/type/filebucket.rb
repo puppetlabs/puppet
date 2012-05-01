@@ -61,6 +61,18 @@ module Puppet
         can be specified to set the remote server."
 
       defaultto { Puppet[:clientbucketdir] }
+
+      validate do |value|
+        if value.is_a? Array
+          raise ArgumentError, "You can only have one filebucket path"
+        end
+
+        if value.is_a? String and not Puppet::Util.absolute_path?(value)
+          raise ArgumentError, "Filebucket paths must be absolute"
+        end
+
+        true
+      end
     end
 
     # Create a default filebucket.

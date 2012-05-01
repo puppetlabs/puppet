@@ -195,23 +195,27 @@ module Util
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          raise e unless ((dir =~ /~/) && ((ENV['HOME'].nil? || ENV['HOME'] == "")))
-
-          # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
-          # ignore this path element and carry on with our lives.
-          Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
-          next
-        end
-        if Puppet.features.microsoft_windows? && File.extname(dest).empty?
-          exts = ENV['PATHEXT']
-          exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-          exts.each do |ext|
-            destext = File.expand_path(dest + ext)
-
-            return destext if FileTest.file? destext and FileTest.executable? destext
+          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
+            # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
+            # ignore this path element and carry on with our lives.
+            Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
+          elsif e.to_s =~ /doesn't exist|can't find user/
+            # ...otherwise, we just skip the non-existent entry, and do nothing.
+            Puppet::Util::Warnings.warnonce("Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'.")
+          else
+            raise
           end
+        else
+          if Puppet.features.microsoft_windows? && File.extname(dest).empty?
+            exts = ENV['PATHEXT']
+            exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
+            exts.each do |ext|
+              destext = File.expand_path(dest + ext)
+              return destext if FileTest.file? destext and FileTest.executable? destext
+            end
+          end
+          return dest if FileTest.file? dest and FileTest.executable? dest
         end
-        return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end
     nil
