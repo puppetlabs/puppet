@@ -10,7 +10,7 @@ require 'facter'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'
-require 'puppet/util/settings'
+require 'puppet/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
@@ -37,7 +37,7 @@ module Puppet
   end
 
   # the hash that determines how our system behaves
-  @@settings = Puppet::Util::Settings.new
+  @@settings = Puppet::Settings.new
 
   # The services running in this process.
   @services ||= []
@@ -139,7 +139,7 @@ module Puppet
   def self.do_initialize_settings_for_run_mode(run_mode)
     Puppet.settings.initialize_global_settings
     run_mode = Puppet::Util::RunMode[run_mode]
-    Puppet.settings.initialize_app_defaults(Puppet::Util::Settings.app_defaults_for_run_mode(run_mode))
+    Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
   end
   private_class_method :do_initialize_settings_for_run_mode
 

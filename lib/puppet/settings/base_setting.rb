@@ -1,7 +1,7 @@
-require 'puppet/util/settings/errors'
+require 'puppet/settings/errors'
 
 # The base setting type
-class Puppet::Util::Settings::BaseSetting
+class Puppet::Settings::BaseSetting
   attr_accessor :name, :section, :default, :call_on_define, :call_hook
   attr_reader :desc, :short
 

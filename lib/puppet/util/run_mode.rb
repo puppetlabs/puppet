@@ -28,15 +28,15 @@ module Puppet
 
       def conf_dir
         which_dir(
-            Puppet::Util::Settings.default_global_config_dir,
-            Puppet::Util::Settings.default_user_config_dir
+            Puppet::Settings.default_global_config_dir,
+            Puppet::Settings.default_user_config_dir
         )
       end
 
       def var_dir
         which_dir(
-            Puppet::Util::Settings.default_global_var_dir,
-            Puppet::Util::Settings.default_user_var_dir
+            Puppet::Settings.default_global_var_dir,
+            Puppet::Settings.default_user_var_dir
         )
       end
 

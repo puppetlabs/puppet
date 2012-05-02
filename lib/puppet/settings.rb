@@ -3,15 +3,15 @@ require 'sync'
 require 'getoptlong'
 require 'puppet/util/loadedfile'
 require 'puppet/util/command_line/puppet_option_parser'
-require 'puppet/util/settings/errors'
-require 'puppet/util/settings/string_setting'
-require 'puppet/util/settings/file_setting'
-require 'puppet/util/settings/directory_setting'
-require 'puppet/util/settings/path_setting'
-require 'puppet/util/settings/boolean_setting'
+require 'puppet/settings/errors'
+require 'puppet/settings/string_setting'
+require 'puppet/settings/file_setting'
+require 'puppet/settings/directory_setting'
+require 'puppet/settings/path_setting'
+require 'puppet/settings/boolean_setting'
 
 # The class for handling configuration files.
-class Puppet::Util::Settings
+class Puppet::Settings
   include Enumerable
 
   # local reference for convenience
@@ -171,7 +171,7 @@ class Puppet::Util::Settings
     # Add all global options to it.
     self.optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|
-        opt, val = Puppet::Util::Settings.clean_opt(option[0], arg)
+        opt, val = Puppet::Settings.clean_opt(option[0], arg)
         handlearg(opt, val)
       end
     end
@@ -316,7 +316,7 @@ class Puppet::Util::Settings
     end
     str = str.intern
 
-    if @config[str].is_a?(Puppet::Util::Settings::BooleanSetting)
+    if @config[str].is_a?(Puppet::Settings::BooleanSetting)
       if value == "" or value.nil?
         value = bool
       end

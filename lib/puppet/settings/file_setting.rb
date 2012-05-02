@@ -1,7 +1,7 @@
-require 'puppet/util/settings/string_setting'
+require 'puppet/settings/string_setting'
 
 # A file.
-class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::StringSetting
+class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   AllowedOwners = %w{root service}
   AllowedGroups = %w{root service}
 

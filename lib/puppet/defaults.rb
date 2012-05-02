@@ -684,7 +684,7 @@ EOT
     define_settings(:application,
       :config_file_name => {
           :type     => :string,
-          :default  => Puppet::Util::Settings.default_config_file_name,
+          :default  => Puppet::Settings.default_config_file_name,
           :desc     => "The name of the puppet config file.",
       },
       :config => {
