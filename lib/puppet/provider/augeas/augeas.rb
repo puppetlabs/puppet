@@ -161,9 +161,11 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
       glob_avail = !aug.match("/augeas/version/pathx/functions/glob").empty?
 
+      restricted = false
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
+        restricted = true
       elsif glob_avail and resource[:context] and resource[:context].match("^/files/")
         # Optimize loading if the context is given, requires the glob function
         # from Augeas 0.8.2 or up
@@ -172,12 +174,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         if aug.match(load_path).size < aug.match("/augeas/load/*").size
           aug.rm(load_path)
+          restricted = true
         else
           # This will occur if the context is less specific than any glob
           debug("Unable to optimize files loaded by context path, no glob matches")
         end
       end
       aug.load
+      print_load_errors(:warning => restricted)
     end
     @aug
   end
@@ -281,14 +285,29 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     @aug.set("/augeas/save", mode)
   end
 
+  def print_load_errors(args={})
+    errors = @aug.match("/augeas//error")
+    unless errors.empty?
+      if args[:warning]
+        warning("Loading failed for one or more files, see debug for /augeas//error output")
+      else
+        debug("Loading failed for one or more files, output from /augeas//error:")
+      end
+    end
+    print_errors(errors)
+  end
+
   def print_put_errors
     errors = @aug.match("/augeas//error[. = 'put_failed']")
     debug("Put failed on one or more files, output from /augeas//error:") unless errors.empty?
+    print_errors(errors)
+  end
+
+  def print_errors(errors)
     errors.each do |errnode|
       @aug.match("#{errnode}/*").each do |subnode|
-        sublabel = subnode.split("/")[-1]
         subvalue = @aug.get(subnode)
-        debug("#{sublabel} = #{subvalue}")
+        debug("#{subnode} = #{subvalue}")
       end
     end
   end
