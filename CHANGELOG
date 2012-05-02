@@ -1,19 +1,13 @@
-2.7.14rc3
+2.7.14
 ===
 42b20be (#13682) Fix acceptance test failures
 dce3c32 (#13682) Rename Puppet::Module::Tool to Puppet::ModuleTool
 5117e12 (maint) Ensure every file has a trailing newlines
 c255414 (#14036) Add upstart tests
 dc3bb9f (#14036) Handle upstart better
-
-2.7.14rc2
-===
 74e462f (#14060) Fix quoting of commands to interpolate inside the shell.
 796a072 Modernize the style of the shell exec provider tests.
 934ec89 Improve deprecation warning for dynamic lookup
-
-2.7.14rc1
-===
 0d9e852 Removed duplication of compiling a catalog
 d67711d Cleaner test for create_resources doing nothing
 2d3cc63 Fixing problem caused by activerecord
