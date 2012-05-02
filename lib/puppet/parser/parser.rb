@@ -12,7 +12,6 @@ require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 
 module Puppet
-  class ParseError < Puppet::Error; end
   class ImportError < Racc::ParseError; end
   class AlreadyImportedError < ImportError; end
 end

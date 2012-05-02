@@ -74,12 +74,11 @@ class Rights
       msg = "#{(args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})")} access to #{name} [#{args[:method]}]"
 
       msg += " authenticated " if args[:authenticated]
+      if right
+        msg += " at #{right.file}:#{right.line}"
+      end
 
       error = AuthorizationError.new("Forbidden request: #{msg}")
-      if right
-        error.file = right.file
-        error.line = right.line
-      end
     else
       # there were no rights allowing/denying name
       # if name is not a path, let's throw

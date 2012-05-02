@@ -151,31 +151,12 @@ class Puppet::Parser::Parser
       begin
         @yydebug = false
         main = yyparse(@lexer,:scan)
-      rescue Racc::ParseError => except
-        error = Puppet::ParseError.new(except)
-        error.line = @lexer.line
-        error.file = @lexer.file
-        error.set_backtrace except.backtrace
-        raise error
       rescue Puppet::ParseError => except
         except.line ||= @lexer.line
         except.file ||= @lexer.file
         raise except
-      rescue Puppet::Error => except
-        # and this is a framework error
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-      rescue Puppet::DevError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
       rescue => except
-        error = Puppet::DevError.new(except.message)
-        error.line = @lexer.line
-        error.file = @lexer.file
-        error.set_backtrace except.backtrace
-        raise error
+        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
       end
     end
     # Store the results as the top-level class.
