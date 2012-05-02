@@ -2,6 +2,8 @@ require 'spec_helper'
 require 'puppet/indirector/hiera'
 
 describe Puppet::Indirector::Hiera do
+  include PuppetSpec::Files
+
   before do
     Puppet.settings[:hiera_config] = {}
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
@@ -15,7 +17,23 @@ describe Puppet::Indirector::Hiera do
 
   let(:model)   { mock('model') }
   let(:options) { {:host => 'foo' } }
-  let(:request) { stub('request', :key => "port", :options => options) }
+
+  let(:request_integer) do
+    stub('request', :key => "integer", :options => options)
+  end
+
+  let(:request_string) do
+    stub('request', :key => "string", :options => options)
+  end
+
+  let(:request_array) do
+    stub('request', :key => "array", :options => options)
+  end
+
+  let(:request_hash) do
+    stub('request', :key => "hash", :options => options)
+  end
+
   let(:indirection) do
     stub('indirection', :name => :none, :register_terminus_type => nil,
       :model => model)
@@ -36,13 +54,41 @@ describe Puppet::Indirector::Hiera do
       "Hiera terminus not supported without hiera gem"
   end
 
-  describe "the behavior of the find method" do
-    it "should lookup the requested key in hiera", :if => Puppet.features.hiera? do
-      Hiera.any_instance.expects(:lookup).with("port", nil, facts, nil, nil).returns('3000')
-      Puppet::Node::Facts.indirection.expects(:find).with('foo').returns(facter_obj)
+  describe "the behavior of the find method", :if => Puppet.features.hiera? do
+    before do
+      Puppet.settings[:hiera_config] = {
+        :yaml      => { :datadir => datadir },
+        :hierarchy => ['global'],
+        :logger    => 'noop'
+      }
+      Puppet::Node::Facts.indirection.expects(:find).with('foo').
+        returns(facter_obj)
+    end
 
-      data_binder = @hiera_class.new
-      data_binder.find(request).should == '3000'
+    let(:datadir)     { my_fixture_dir }
+    let(:data_binder) { @hiera_class.new }
+
+    it "support looking up an integer" do
+      data_binder.find(request_integer).should == 3000
+    end
+
+    it "should support looking up a string" do
+      data_binder.find(request_string).should == 'apache'
+    end
+
+    it "should support looking up an array" do
+      data_binder.find(request_array).should == [
+        '0.ntp.puppetlabs.com',
+        '1.ntp.puppetlabs.com',
+      ]
+    end
+
+    it "should support looking up a hash" do
+      data_binder.find(request_hash).should == {
+        'user'  => 'Hightower',
+        'group' => 'admin',
+        'mode'  => '0644'
+      }
     end
   end
 end
