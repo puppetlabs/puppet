@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.13
+Version:        2.7.14
 #Release:        0.1rc1%{?dist}
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
@@ -283,6 +283,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed May 02 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.14-1
+- Update for 2.7.14
+
 * Tue Apr 10 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.13-1
 - Update for 2.7.13
 
