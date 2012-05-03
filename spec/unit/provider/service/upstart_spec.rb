@@ -49,17 +49,17 @@ describe provider_class do
       provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
       provider.status.should == :stopped
-    end    
+    end
   end
   describe "inheritance" do
     let :resource do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
-    
+
     let :provider do
       provider = provider_class.new(resource)
     end
-    
+
     describe "when upstart job" do
       before(:each) do
         provider.stubs(:is_upstart?).returns(true)
@@ -73,7 +73,7 @@ describe provider_class do
         provider.statuscmd.should be_nil
       end
     end
-    
+
     describe "when init script" do
       before(:each) do
         provider.stubs(:is_upstart?).returns(false)
@@ -85,6 +85,102 @@ describe provider_class do
         end
       end
     end
+  end
 
+  describe "should be enableable" do
+    let :resource do
+      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+    end
+
+    let :provider do
+      provider = provider_class.new(resource)
+    end
+
+    before(:each) do
+      provider.stubs(:is_upstart?).returns(true)
+    end
+
+    [:enabled?,:enable,:disable].each do |enableable|
+      it "should respond to #{enableable}" do
+        provider.should respond_to(enableable)
+      end
+    end
+
+    describe "when enabling" do
+      it "should open and uncomment the '#start on' line" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:open).returns file
+        file.stubs(:read).returns "#start on bar"
+        file.expects(:write).with("start on bar")
+        file.expects(:close)
+        provider.enable
+      end
+
+      it "should add a 'start on' line if none exists" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:open).returns file
+        file.stubs(:read).returns "a line without leading start on"
+        file.expects(:write).with("a line without leading start on\nstart on runlevel [2,3,4,5]")
+        file.expects(:close)
+        provider.enable
+      end
+
+      it "should do nothing if already enabled" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:open).returns file
+        file.stubs(:read).returns "start on bar"
+        file.expects(:write).with("start on bar")
+        file.expects(:close)
+        provider.enable
+      end
+    end
+
+    describe "when disabling" do
+      it "should open and comment the 'start on' line" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:open).returns file
+        file.stubs(:read).returns "start on bar"
+        file.expects(:write).with("#start on bar")
+        file.expects(:close)
+        provider.disable
+      end
+
+      it "should do nothing if already disabled" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:open).returns file
+        file.stubs(:read).returns "#start on bar"
+        file.expects(:write).with("#start on bar")
+        file.expects(:close)
+        provider.disable
+      end
+    end
+
+    describe "when checking whether it is enabled" do
+      it "should consider 'start on ...' to be enabled" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:read).returns "start on bar"
+        provider.enabled?.should == :true
+      end
+
+      it "should consider '#start on ...' to be disabled" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:read).returns "#start on bar"
+        provider.enabled?.should == :false
+      end
+
+      it "should consider no start on line to be disabled" do
+        file = stub 'file'
+        File.expects(:join).with("/etc/init", "foo.conf")
+        File.stubs(:read).returns "just a line with some text"
+        provider.enabled?.should == :false
+      end
+    end
   end
 end
