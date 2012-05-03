@@ -394,6 +394,50 @@ describe Puppet::Provider do
     end
   end
 
+  context "execution" do
+    before :each do
+      Puppet.expects(:deprecation_warning).never
+    end
+
+    it "delegates instance execute to Puppet::Util::Execution" do
+      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+
+      provider.new.send(:execute, "a_command", { :option => "value" })
+    end
+
+    it "delegates class execute to Puppet::Util::Execution" do
+      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+
+      provider.send(:execute, "a_command", { :option => "value" })
+    end
+
+    it "delegates instance execpipe to Puppet::Util::Execution" do
+      block = Proc.new { }
+      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+
+      provider.new.send(:execpipe, "a_command", true, block)
+    end
+
+    it "delegates class execpipe to Puppet::Util::Execution" do
+      block = Proc.new { }
+      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+
+      provider.send(:execpipe, "a_command", true, block)
+    end
+
+    it "delegates instance execfail to Puppet::Util::Execution" do
+      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+
+      provider.new.send(:execfail, "a_command", "an exception to raise")
+    end
+
+    it "delegates class execfail to Puppet::Util::Execution" do
+      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+
+      provider.send(:execfail, "a_command", "an exception to raise")
+    end
+  end
+
   context "mk_resource_methods" do
     before :each do
       type.newproperty(:prop1)
