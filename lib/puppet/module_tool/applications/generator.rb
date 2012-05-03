@@ -33,6 +33,7 @@ module Puppet::ModuleTool
           if path == skeleton
             destination.mkpath
           else
+            next if (path.fnmatch?('*/spec*') && @options[:exclude_spec])
             node = Node.on(path, self)
             if node
               node.install!

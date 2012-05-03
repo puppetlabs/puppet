@@ -31,6 +31,15 @@ Puppet::Face.define(:module, '1.0.0') do
 
     arguments "<name>"
 
+    option "--exclude_spec", "-x" do
+      summary "Exclude RSpec test boilerplate."
+      description <<-EOT
+        Exclude the RSpec boilerplate code. This is handy if you are writing your
+        own tests or if you want to generate the boilerplate with the rspec-puppet
+        tool itself.
+      EOT
+    end
+
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Generator.run(name, options)
