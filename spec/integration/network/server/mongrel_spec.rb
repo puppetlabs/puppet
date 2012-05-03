@@ -15,12 +15,6 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
 
     after { Puppet.settings.clear }
 
-    describe "before listening" do
-      it "should not be reachable at the specified address and port" do
-        lambda { TCPSocket.new('127.0.0.1', 34346) }.should raise_error(Errno::ECONNREFUSED)
-      end
-    end
-
     describe "when listening" do
       it "should be reachable on the specified address and port" do
         @server.listen
