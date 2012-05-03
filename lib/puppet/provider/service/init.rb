@@ -15,7 +15,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   when "Archlinux"
     @defpath = "/etc/rc.d"
   else
-    @defpath = "/etc/init.d"
+    @defpath = ["/etc/init.d", "/etc/init"]
   end
 
   # We can't confine this here, because the init path can be overridden.
@@ -81,33 +81,22 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def search(name)
-    paths.each { |path|
-      fqname = File.join(path,name)
-      begin
-        stat = File.stat(fqname)
-      rescue
-        # should probably rescue specific errors...
-        self.debug("Could not find #{name} in #{path}")
-        next
-      end
+    ["", ".sh", ".conf"].each do |suffix|
+      paths.each { |path|
+        fqname = File.join(path,name+suffix)
+        begin
+          stat = File.stat(fqname)
+        rescue
+          # should probably rescue specific errors...
+          self.debug("Could not find #{name}#{suffix} in #{path}")
+          next
+        end
 
-      # if we've gotten this far, we found a valid script
-      return fqname
-    }
+        # if we've gotten this far, we found a valid script
+        return fqname
+      }
+    end
 
-    paths.each { |path|
-      fqname_sh = File.join(path,"#{name}.sh")
-      begin
-        stat = File.stat(fqname_sh)
-      rescue
-        # should probably rescue specific errors...
-        self.debug("Could not find #{name}.sh in #{path}")
-        next
-      end
-
-      # if we've gotten this far, we found a valid script
-      return fqname_sh
-    }
     raise Puppet::Error, "Could not find init script for '#{name}'"
   end
 
