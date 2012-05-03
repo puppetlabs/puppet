@@ -23,13 +23,6 @@ describe Puppet::Network::Server do
       @server.unlisten if @server.listening?
     end
 
-    describe "before listening" do
-      it "should not be reachable at the specified address and port" do
-        lambda { Net::HTTP.get('127.0.0.1', '/', port) }.
-          should raise_error(Errno::ECONNREFUSED)
-      end
-    end
-
     describe "when listening" do
       it "should be reachable on the specified address and port" do
         @server.listen
