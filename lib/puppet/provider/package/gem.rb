@@ -26,7 +26,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute(gem_list_command).lines.map {|set| gemsplit(set) }
+      list = execute(gem_list_command).lines.
+        map {|set| gemsplit(set) }.
+        reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not list gems: #{detail}"
     end

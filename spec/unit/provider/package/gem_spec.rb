@@ -101,7 +101,6 @@ describe provider_class do
     end
   end
 
-
   describe "#instances" do
     before do
       provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
@@ -122,6 +121,23 @@ describe provider_class do
         {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
         {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
       ]
+    end
+
+    it "should not fail when an unmatched line is returned" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).
+        returns(File.read(my_fixture('line-with-1.8.5-warning')))
+
+      provider_class.instances.map {|p| p.properties}.
+        should == [{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
+                   {:provider=>:gem, :ensure=>["1.1.3"], :name=>"diff-lcs"},
+                   {:provider=>:gem, :ensure=>["0.0.1"], :name=>"metaclass"},
+                   {:provider=>:gem, :ensure=>["0.10.5"], :name=>"mocha"},
+                   {:provider=>:gem, :ensure=>["0.8.7"], :name=>"rake"},
+                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-core"},
+                   {:provider=>:gem, :ensure=>["2.9.1"], :name=>"rspec-expectations"},
+                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-mocks"},
+                   {:provider=>:gem, :ensure=>["0.9.0"], :name=>"rubygems-bundler"},
+                   {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}]
     end
   end
 end
