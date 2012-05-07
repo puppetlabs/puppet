@@ -21,8 +21,8 @@ describe Puppet::Indirector::None do
       :model => model)
   end
 
-  it "should be the default data_binding_terminus" do
-    Puppet.settings[:data_binding_terminus].should == 'none'
+  it "should not be the default data_binding_terminus" do
+    Puppet.settings[:data_binding_terminus].should_not == 'none'
   end
 
   describe "the behavior of the find method" do

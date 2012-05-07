@@ -317,8 +317,8 @@ describe "Puppet defaults" do
       Puppet.settings[:data_binding_terminus].should_not be_nil
     end
 
-    it "should be set to none by default" do
-      Puppet.settings[:data_binding_terminus].should == 'none'
+    it "should be set to hiera by default" do
+      Puppet.settings[:data_binding_terminus].should == 'hiera'
     end
   end
 end
