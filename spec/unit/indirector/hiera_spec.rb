@@ -44,8 +44,8 @@ describe Puppet::Indirector::Hiera do
   end
   let(:facter_obj) { stub(:values => facts) }
 
-  it "should not be the default data_binding terminus" do
-    Puppet.settings[:data_binding_terminus].should_not == 'hiera'
+  it "should be the default data_binding terminus" do
+    Puppet.settings[:data_binding_terminus].should == 'hiera'
   end
 
   it "should raise an error if we don't have the hiera feature" do

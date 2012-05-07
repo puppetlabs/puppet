@@ -229,7 +229,7 @@ module Puppet
       :desc       => "Where to find information about nodes.",
     },
     :data_binding_terminus => {
-      :default => "none",
+      :default => "hiera",
       :desc    => "Where to retrive information about data.",
     },
     :hiera_config => {

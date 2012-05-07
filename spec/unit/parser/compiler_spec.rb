@@ -558,6 +558,7 @@ describe Puppet::Parser::Compiler do
   describe "when evaluating found classes" do
 
     before do
+      Puppet.settings[:data_binding_terminus] = "none"
       @class = stub 'class', :name => "my::class"
       @scope.stubs(:find_hostclass).with("myclass", {:assume_fqname => false}).returns(@class)
 
