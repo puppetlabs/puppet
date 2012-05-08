@@ -87,15 +87,17 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         # Two cases, either there is a start on line already or we need to add one
         if script_text.to_s.match(/^\s*#*\s*start\s+on/)
           script_text.map do |line|
+            # t_line is used for paren counting and chops off any trailing comments before counting parens
+            t_line = line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
             if line.match(/^\s*#+\s*start\s+on/)
               # If there are more opening parens than closing parens, we need to uncomment a multiline 'start on' stanzas.
-              if (line.count('(') > line.count(')') )
-                parens = line.count('(') - line.count(')')
+              if (t_line.count('(') > t_line.count(')') )
+                parens = t_line.count('(') - t_line.count(')')
               end
               line.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
             elsif parens > 0
               # If there are still more opening than closing parens we need to continue uncommenting lines
-              parens += (line.count('(') - line.count(')') )
+              parens += (t_line.count('(') - t_line.count(')') )
               line.gsub(/^(\s*)#+/, '\1')
             else
               line
@@ -122,15 +124,16 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       script_text = File.open(initscript).read
 
       disabled_script = script_text.map do |line|
+        t_line = line.gsub(/^([^#]*).*/, '\1')
         if line.match(/^\s*start\s+on/)
           # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
-          if (line.count('(') > line.count(')') )
-            parens = line.count('(') - line.count(')')
+          if (t_line.count('(') > t_line.count(')') )
+            parens = t_line.count('(') - t_line.count(')')
           end
           line.gsub(/^(\s*start\s+on)/, '#\1')
         elsif parens > 0
           # If there are still more opening than closing parens we need to continue uncommenting lines
-          parens += (line.count('(') - line.count(')') )
+          parens += (t_line.count('(') - t_line.count(')') )
           "#" << line
         else
           line
