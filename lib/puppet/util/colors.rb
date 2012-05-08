@@ -74,10 +74,33 @@ module Puppet::Util::Colors
     :reset       => { :console => "\e[m", :html => "" }
   }
 
+  # This is how you test for windows without pulling in Puppet.features, which
+  # we want to avoid for now since this module is used in logging and may be
+  # needed before feature are initialized
+  if File::ALT_SEPARATOR
+    # We're on windows, need win32console for color to work
+    begin
+      require 'win32console'
+    rescue LoadError
+      def console_has_color?
+        false
+      end
+    else
+      def console_has_color?
+        true
+      end
+    end
+  else
+    # On a posix system we can just enable it
+    def console_has_color?
+      true
+    end
+  end
+
   def colorize(color, str)
     case Puppet[:color]
     when true, :ansi, "ansi", "yes"
-      if Puppet.features.ansicolor?
+      if console_has_color?
         console_color(color, str)
       else
         str
