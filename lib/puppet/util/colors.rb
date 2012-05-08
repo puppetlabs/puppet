@@ -1,3 +1,5 @@
+require 'puppet/util/platform'
+
 module Puppet::Util::Colors
   BLACK       = {:console => "\e[0;30m", :html => "color: #FFA0A0"     }
   RED         = {:console => "\e[0;31m", :html => "color: #FFA0A0"     }
@@ -74,10 +76,10 @@ module Puppet::Util::Colors
     :reset       => { :console => "\e[m", :html => "" }
   }
 
-  # This is how you test for windows without pulling in Puppet.features, which
-  # we want to avoid for now since this module is used in logging and may be
-  # needed before feature are initialized
-  if File::ALT_SEPARATOR
+  # We define console_has_color? at load time since it's checking the
+  # underlying platform which will not change, and we don't want to perform
+  # the check every time we use logging
+  if Puppet::Util::Platform.windows?
     # We're on windows, need win32console for color to work
     begin
       require 'win32console'
