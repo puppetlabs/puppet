@@ -106,7 +106,7 @@ describe provider_class do
 
     let :multiline_disabled do
       "# \t  start on other file stuff (\n" +
-       "#   more stuff (\n" +
+       "#   more stuff ( # )))))inline comment\n" +
        "#   finishing up )\n" +
        "#   and done )\n" +
        "this line shouldn't be touched\n"
@@ -114,7 +114,7 @@ describe provider_class do
 
     let :multiline_enabled do
       " \t  start on other file stuff (\n" +
-       "   more stuff (\n" +
+       "   more stuff ( # )))))inline comment\n" +
        "   finishing up )\n" +
        "   and done )\n" +
        "this line shouldn't be touched\n"
