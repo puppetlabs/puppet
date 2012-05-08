@@ -42,7 +42,7 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new
-      Puppet.features.stubs(:ansicolor?).returns(true)
+      @console.stubs(:console_has_color?).returns(true)
     end
 
     it "should colorize if Puppet[:color] is :ansi" do
