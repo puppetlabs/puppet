@@ -29,7 +29,7 @@ describe Puppet::Util::Colors do
 
     context "ansicolor supported" do
       before :each do
-        Puppet.features.stubs(:ansicolor?).returns(true)
+        subject.stubs(:console_has_color?).returns(true)
       end
 
       it "should colorize console output" do
@@ -48,7 +48,7 @@ describe Puppet::Util::Colors do
 
     context "ansicolor not supported" do
       before :each do
-        Puppet.features.stubs(:ansicolor?).returns(false)
+        subject.stubs(:console_has_color?).returns(false)
       end
 
       it "should not colorize console output" do
