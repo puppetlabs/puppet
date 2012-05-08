@@ -41,7 +41,28 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def self.defpath
-    superclass.defpath
+    ["/etc/init.d", "/etc/init"]
+  end
+
+  def search(name)
+    # Search prefers .conf as that is what upstart uses
+    [".conf", "", ".sh"].each do |suffix|
+      paths.each { |path|
+        fqname = File.join(path,name+suffix)
+        begin
+          stat = File.stat(fqname)
+        rescue
+          # should probably rescue specific errors...
+          self.debug("Could not find #{name}#{suffix} in #{path}")
+          next
+        end
+
+        # if we've gotten this far, we found a valid script
+        return fqname
+      }
+    end
+
+    raise Puppet::Error, "Could not find init script or upstart conf file for '#{name}'"
   end
 
   def enabled?

@@ -15,7 +15,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   when "Archlinux"
     @defpath = "/etc/rc.d"
   else
-    @defpath = ["/etc/init.d", "/etc/init"]
+    @defpath = "/etc/init.d"
   end
 
   # We can't confine this here, because the init path can be overridden.
@@ -81,7 +81,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def search(name)
-    ["", ".sh", ".conf"].each do |suffix|
+    ["", ".sh"].each do |suffix|
       paths.each { |path|
         fqname = File.join(path,name+suffix)
         begin
