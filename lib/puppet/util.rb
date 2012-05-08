@@ -10,6 +10,7 @@ require 'monitor'
 require 'tempfile'
 require 'pathname'
 require 'ostruct'
+require 'puppet/util/platform'
 
 module Puppet
 module Util
@@ -242,7 +243,7 @@ module Util
     # would use Puppet.features.microsoft_windows?, but this method needs to
     # be called during the initialization of features so it can't depend on
     # that.
-    platform ||= File::ALT_SEPARATOR ? :windows : :posix
+    platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
 
     !! (path =~ regexes[platform])
   end
