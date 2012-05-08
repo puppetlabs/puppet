@@ -13,7 +13,7 @@ agents.each do |agent|
   on(agent, puppet_resource('host', 'test', "target=#{file}",
               "host_aliases=alias")) do
     fail_test "puppet didn't complain about the missing attribute" unless
-      stdout.include? 'ip is a required attribute for hosts'
+      stderr.include? 'ip is a required attribute for hosts'
   end
 
   step "verify that the host was not added to the file"

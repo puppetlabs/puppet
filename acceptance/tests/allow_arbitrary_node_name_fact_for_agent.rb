@@ -33,7 +33,7 @@ manifest = %Q[
 manifest << node_names.map do |node_name|
   %Q[
     node "#{node_name}" {
-      exec { "echo #{success_message}": }
+      exec { "echo #{success_message}": logoutput => true }
     }
   ]
 end.join("\n")
