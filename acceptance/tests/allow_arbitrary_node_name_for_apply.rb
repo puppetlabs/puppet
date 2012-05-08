@@ -8,7 +8,7 @@ manifest = %Q[
     exec { "false": }
   }
   node a_different_node_name {
-    exec { "echo #{success_message}": }
+    exec { "echo #{success_message}": logoutput => true }
   }
 ]
 
