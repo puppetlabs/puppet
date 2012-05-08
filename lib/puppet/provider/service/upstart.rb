@@ -79,9 +79,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def enable
     if is_upstart?
-      script = File.join("/etc/init", @resource[:name]+".conf")
-
-      script_text = File.open(script).read
+      script_text = File.open(initscript).read
 
       # If there is no "start on" it isn't enabled and needs that line added
       if script_text.grep(/^\s*#*\s*start\s+on/).empty?
@@ -90,9 +88,9 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         enabled_script = script_text.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
       end
 
-      fh = File.open(script, 'w')
-      fh.write(enabled_script)
-      fh.close
+      Puppet::Util.replace_file(initscript, 0644) do |file|
+        file.write(enabled_script)
+      end
 
     else
       super
@@ -101,11 +99,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def disable
     if is_upstart?
-      script = File.join("/etc/init", @resource[:name]+".conf")
       disabled_script = File.open(initscript).read.gsub(/^(\s*start\s+on)/, '#\1')
-      fh = File.open(script, 'w')
-      fh.write(disabled_script)
-      fh.close
+      Puppet::Util.replace_file(initscript, 0644) do |file|
+        file.write(disabled_script)
+      end
     else
       super
     end
@@ -152,7 +149,9 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def is_upstart?(script = initscript)
-    (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job") || (File.file?(script) && (not script.include?("init.d")))
+    return true if (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job")
+    return true if (File.file?(script) && (not script.include?("init.d")))
+    return false
   end
 
 end
