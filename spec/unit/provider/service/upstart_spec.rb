@@ -104,6 +104,22 @@ describe provider_class do
       "\t #  \t start on\nother file stuff"
     end
 
+    let :multiline_disabled do
+      "# \t  start on other file stuff (\n" +
+       "#   more stuff (\n" +
+       "#   finishing up )\n" +
+       "#   and done )\n" +
+       "this line shouldn't be touched\n"
+    end
+
+    let :multiline_enabled do
+      " \t  start on other file stuff (\n" +
+       "   more stuff (\n" +
+       "   finishing up )\n" +
+       "   and done )\n" +
+       "this line shouldn't be touched\n"
+    end
+
     let :enabled_content do
       "\t   \t start on\nother file stuff"
     end
@@ -147,6 +163,14 @@ describe provider_class do
         provider.enable
         File.open(init_script).read.should == enabled_content
       end
+
+      it "should handle multiline 'start on' stanzas" do
+        file = File.open(init_script, 'w')
+        file.write(multiline_disabled)
+        file.close
+        provider.enable
+        File.open(init_script).read.should == multiline_enabled
+      end
     end
 
     describe "when disabling" do
@@ -164,6 +188,14 @@ describe provider_class do
         file.close
         provider.disable
         File.open(init_script).read.should == disabled_content
+      end
+
+      it "should handle multiline 'start on' stanzas" do
+        file = File.open(init_script, 'w')
+        file.write(multiline_enabled)
+        file.close
+        provider.disable
+        File.open(init_script).read.should == multiline_disabled
       end
     end
 
