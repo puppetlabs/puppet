@@ -89,15 +89,32 @@ describe provider_class do
 
   describe "should be enableable" do
     let :resource do
-      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+      Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
 
     let :provider do
-      provider = provider_class.new(resource)
+      provider_class.new(resource)
+    end
+
+    let :init_script do
+      PuppetSpec::Files.tmpfile("foo.conf")
+    end
+
+    let :disabled_content do
+      "\t #  \t start on\nother file stuff"
+    end
+
+    let :enabled_content do
+      "\t   \t start on\nother file stuff"
+    end
+
+    let :content do
+      "just some text"
     end
 
     before(:each) do
       provider.stubs(:is_upstart?).returns(true)
+      provider.stubs(:search).returns(init_script)
     end
 
     [:enabled?,:enable,:disable].each do |enableable|
@@ -108,77 +125,67 @@ describe provider_class do
 
     describe "when enabling" do
       it "should open and uncomment the '#start on' line" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:open).returns file
-        file.stubs(:read).returns "#start on bar"
-        file.expects(:write).with("start on bar")
-        file.expects(:close)
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
         provider.enable
+        File.open(init_script).read.should == enabled_content
       end
 
       it "should add a 'start on' line if none exists" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:open).returns file
-        file.stubs(:read).returns "a line without leading start on"
-        file.expects(:write).with("a line without leading start on\nstart on runlevel [2,3,4,5]")
-        file.expects(:close)
+        file = File.open(init_script, 'w')
+        file.write("this is a file")
+        file.close
         provider.enable
+        File.open(init_script).read.should == "this is a file\nstart on runlevel [2,3,4,5]"
       end
 
       it "should do nothing if already enabled" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:open).returns file
-        file.stubs(:read).returns "start on bar"
-        file.expects(:write).with("start on bar")
-        file.expects(:close)
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
         provider.enable
+        File.open(init_script).read.should == enabled_content
       end
     end
 
     describe "when disabling" do
       it "should open and comment the 'start on' line" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:open).returns file
-        file.stubs(:read).returns "start on bar"
-        file.expects(:write).with("#start on bar")
-        file.expects(:close)
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
         provider.disable
+        File.open(init_script).read.should == "#" + enabled_content
       end
 
       it "should do nothing if already disabled" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:open).returns file
-        file.stubs(:read).returns "#start on bar"
-        file.expects(:write).with("#start on bar")
-        file.expects(:close)
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
         provider.disable
+        File.open(init_script).read.should == disabled_content
       end
     end
 
     describe "when checking whether it is enabled" do
       it "should consider 'start on ...' to be enabled" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:read).returns "start on bar"
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
         provider.enabled?.should == :true
       end
 
       it "should consider '#start on ...' to be disabled" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:read).returns "#start on bar"
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
         provider.enabled?.should == :false
       end
 
       it "should consider no start on line to be disabled" do
-        file = stub 'file'
-        File.expects(:join).with("/etc/init", "foo.conf")
-        File.stubs(:read).returns "just a line with some text"
+        file = File.open(init_script, 'w')
+        file.write(content)
+        file.close
         provider.enabled?.should == :false
       end
     end
