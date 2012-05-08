@@ -67,7 +67,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def enabled?
     if is_upstart?
-      unless File.open(initscript).read.grep(/^\s*start\s+on/).empty?
+      if File.open(initscript).read.match(/^\s*start\s+on/)
         return :true
       else
         return :false
@@ -79,14 +79,32 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def enable
     if is_upstart?
-      script_text = File.open(initscript).read
+      # Parens is needed to match parens in a multiline upstart start on stanza
+      parens = 0
 
-      # If there is no "start on" it isn't enabled and needs that line added
-      if script_text.grep(/^\s*#*\s*start\s+on/).empty?
-        enabled_script = script_text + "\nstart on runlevel [2,3,4,5]"
-      else
-        enabled_script = script_text.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
-      end
+      script_text = File.open(initscript).read
+      enabled_script =
+        # Two cases, either there is a start on line already or we need to add one
+        if script_text.to_s.match(/^\s*#*\s*start\s+on/)
+          script_text.map do |line|
+            if line.match(/^\s*#+\s*start\s+on/)
+              # If there are more opening parens than closing parens, we need to uncomment a multiline 'start on' stanzas.
+              if (line.count('(') > line.count(')') )
+                parens = line.count('(') - line.count(')')
+              end
+              line.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
+            elsif parens > 0
+              # If there are still more opening than closing parens we need to continue uncommenting lines
+              parens += (line.count('(') - line.count(')') )
+              line.gsub(/^(\s*)#+/, '\1')
+            else
+              line
+            end
+          end
+        else
+          # If there is no "start on" it isn't enabled and needs that line added
+          script_text.to_s + "\nstart on runlevel [2,3,4,5]"
+        end
 
       Puppet::Util.replace_file(initscript, 0644) do |file|
         file.write(enabled_script)
@@ -99,7 +117,26 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def disable
     if is_upstart?
-      disabled_script = File.open(initscript).read.gsub(/^(\s*start\s+on)/, '#\1')
+      # Parens is needed to match parens in a multiline upstart start on stanza
+      parens = 0
+      script_text = File.open(initscript).read
+
+      disabled_script = script_text.map do |line|
+        if line.match(/^\s*start\s+on/)
+          # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
+          if (line.count('(') > line.count(')') )
+            parens = line.count('(') - line.count(')')
+          end
+          line.gsub(/^(\s*start\s+on)/, '#\1')
+        elsif parens > 0
+          # If there are still more opening than closing parens we need to continue uncommenting lines
+          parens += (line.count('(') - line.count(')') )
+          "#" << line
+        else
+          line
+        end
+      end
+
       Puppet::Util.replace_file(initscript, 0644) do |file|
         file.write(disabled_script)
       end
