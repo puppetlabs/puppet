@@ -67,7 +67,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def enabled?
     if is_upstart?
-      unless File.read(File.join("/etc/init",@resource[:name]+".conf")).grep(/^\s*start\s*on/).empty?
+      unless File.open(initscript).read.grep(/^\s*start\s+on/).empty?
         return :true
       else
         return :false
@@ -84,10 +84,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       script_text = File.open(script).read
 
       # If there is no "start on" it isn't enabled and needs that line added
-      if script_text.grep(/^\s*#?\s*start\s* on/).empty?
+      if script_text.grep(/^\s*#*\s*start\s+on/).empty?
         enabled_script = script_text + "\nstart on runlevel [2,3,4,5]"
       else
-        enabled_script = script_text.gsub(/^#start on/, "start on")
+        enabled_script = script_text.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
       end
 
       fh = File.open(script, 'w')
@@ -102,7 +102,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def disable
     if is_upstart?
       script = File.join("/etc/init", @resource[:name]+".conf")
-      disabled_script = File.open(script).read.gsub(/^\s*start\s*on/, "#start on")
+      disabled_script = File.open(initscript).read.gsub(/^(\s*start\s+on)/, '#\1')
       fh = File.open(script, 'w')
       fh.write(disabled_script)
       fh.close
