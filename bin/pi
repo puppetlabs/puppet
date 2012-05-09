@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'puppet/application/describe'
-
-Puppet::Application[:describe].run

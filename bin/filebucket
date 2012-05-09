@@ -1,7 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'puppet/application'
-require 'puppet/application/filebucket'
-
-# launch the filebucket
-Puppet::Application[:filebucket].run
