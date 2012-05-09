@@ -1207,7 +1207,7 @@ if @config.include?(:run_mode)
         section = $1.intern # Section names
         #disallow application_defaults in config file
         if section == :application_defaults
-          raise Puppet::Error.new("Illegal section 'application_defaults' in config file", file, line)
+          raise Puppet::Error, "Illegal section 'application_defaults' in config file #{file} at line #{line}"
         end
         # Add a meta section
         result[section][:_meta] ||= {}
