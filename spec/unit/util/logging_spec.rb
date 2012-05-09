@@ -122,4 +122,30 @@ describe Puppet::Util::Logging do
       @logger.deprecation_warning 101
     end
   end
+
+  describe "when formatting exceptions" do
+    it "should be able to format a chain of exceptions" do
+      exc3 = Puppet::Error.new("original")
+      exc3.set_backtrace(["1.rb:4:in `a'","2.rb:2:in `b'","3.rb:1"])
+      exc2 = Puppet::Error.new("second", exc3)
+      exc2.set_backtrace(["4.rb:8:in `c'","5.rb:1:in `d'","6.rb:3"])
+      exc1 = Puppet::Error.new("third", exc2)
+      exc1.set_backtrace(["7.rb:31:in `e'","8.rb:22:in `f'","9.rb:9"])
+      # whoa ugly
+      @logger.format_exception(exc1).should =~ /third
+.*7\.rb:31
+.*8\.rb:22
+.*9\.rb:9
+Wrapped exception:
+second
+.*4\.rb:8
+.*5\.rb:1
+.*6\.rb:3
+Wrapped exception:
+original
+.*1\.rb:4
+.*2\.rb:2
+.*3\.rb:1/
+    end
+  end
 end

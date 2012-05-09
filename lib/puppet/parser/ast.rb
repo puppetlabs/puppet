@@ -77,7 +77,7 @@ class Puppet::Parser::AST
     rescue Puppet::Error => detail
       raise adderrorcontext(detail)
     rescue => detail
-      error = Puppet::Error.new(detail.to_s)
+      error = Puppet::ParseError.new(detail.to_s, nil, nil, detail)
       # We can't use self.fail here because it always expects strings,
       # not exceptions.
       raise adderrorcontext(error, detail)
