@@ -1,5 +1,6 @@
 test_name "The source attribute"
 
+
 agents.each do |agent|
   target = agent.tmpfile('source_file_test')
 
@@ -12,25 +13,65 @@ on master, puppet_master('--configprint modulepath') do
   modulepath = stdout.split(':')[0].chomp
 end
 
-result_file = "/tmp/#{$$}-result-file"
-source_file = File.join(modulepath, 'source_test_module', 'files', 'source_file')
-manifest = "/tmp/#{$$}-source-test.pp"
+# This is unpleasant.  Because the manifest file must specify an absolute
+# path for the source property of the file resource, and because that
+# absolute path can't be the same on Windows as it is on unix, we are
+# basically forced to have two separate manifest files.  This might be
+# cleaner if it were separated into two tests, but since the actual
+# functionality that we are testing is the same I decided to keep it here
+# even though it's ugly.
+windows_source_file = File.join(modulepath, 'source_test_module', 'files', 'windows_source_file')
+windows_manifest = "/tmp/#{$$}-windows-source-test.pp"
+windows_result_file = "C:/windows/temp/#{$$}-windows-result-file"
+
+posix_source_file = File.join(modulepath, 'source_test_module', 'files', 'posix_source_file')
+posix_manifest = "/tmp/#{$$}-posix-source-test.pp"
+posix_result_file = "/tmp/#{$$}-posix-result-file"
 
 # Remove the SSL dir so we don't have cert issues
 on master, "rm -rf `puppet master --configprint ssldir`"
 on agents, "rm -rf `puppet agent --configprint ssldir`"
 
-on master, "mkdir -p #{File.dirname(source_file)}"
-on master, "echo 'the content is present' > #{source_file}"
-on master, %Q[echo "file { '#{result_file}': source => 'puppet:///modules/source_test_module/source_file', ensure => present }" > #{manifest}]
+on master, "mkdir -p #{File.dirname(windows_source_file)}"
+on master, "echo 'the content is present' > #{windows_source_file}"
+on master, "mkdir -p #{File.dirname(posix_source_file)}"
+on master, "echo 'the content is present' > #{posix_source_file}"
 
-with_master_running_on master, "--autosign true --manifest #{manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
-  run_agent_on agents, "--test --server #{master}", :acceptable_exit_codes => [2] do
-    on agents, "cat #{result_file}" do
-      assert_match(/the content is present/, stdout, "Result file not created")
+on master, %Q[echo "file { '#{windows_result_file}': source => 'puppet:///modules/source_test_module/windows_source_file', ensure => present }" > #{windows_manifest}]
+on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/source_test_module/posix_source_file', ensure => present }" > #{posix_manifest}]
+
+# See disgusted comments above... running master once with the windows manifest
+# and then once with the posix manifest.  Could potentially get around this by
+# creating a manifest with nodes or by moving the windows bits into a separate
+# test.
+  with_master_running_on master, "--autosign true --manifest #{windows_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+    agents.each do |agent|
+      next unless agent['platform'].include?('windows')
+      run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
+        on agent, "cat #{windows_result_file}" do
+          assert_match(/the content is present/, stdout, "Result file not created")
+        end
+      end
     end
   end
-end
+
+  #run_agent_on agents, "--test --server #{master}", :acceptable_exit_codes => [2] do
+  #  on agents, "cat #{result_file}" do
+  #    assert_match(/the content is present/, stdout, "Result file not created")
+  #  end
+  #end
+
+  with_master_running_on master, "--autosign true --manifest #{posix_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+    agents.each do |agent|
+      next if agent['platform'].include?('windows')
+      run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
+        on agent, "cat #{posix_result_file}" do
+          assert_match(/the content is present/, stdout, "Result file not created")
+        end
+      end
+    end
+  end
+
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
 # step "when using a puppet://$server/ URI with a master/agent setup"

@@ -128,8 +128,6 @@ all_tests_passed = false
 # test.
 begin
 
-  agent_disabled_lockfile = "/var/lib/puppet/state/agent_disabled.lock"
-
   tuples = [
       ["reason not specified", false],
       ["I'm busy; go away.'", true]
@@ -148,6 +146,7 @@ begin
               run_agent_on(agent, "--disable")
             end
 
+            agent_disabled_lockfile = "#{agent['puppetvardir']}/state/agent_disabled.lock"
             unless file_exists?(agent, agent_disabled_lockfile) then
               fail_test("Failed to create disabled lock file '#{agent_disabled_lockfile}' on agent '#{agent}'")
             end
@@ -175,6 +174,8 @@ begin
 
         step "enable the agent (message: '#{expected_message}')" do
           agents.each do |agent|
+
+            agent_disabled_lockfile = "#{agent['puppetvardir']}/state/agent_disabled.lock"
             run_agent_on(agent, "--enable")
             if file_exists?(agent, agent_disabled_lockfile) then
               fail_test("Failed to remove disabled lock file '#{agent_disabled_lockfile}' on agent '#{agent}'")
