@@ -376,6 +376,7 @@ module Puppet
   else
     fqdn = hostname
   end
+  fqdn.gsub(/\.$/, '')
 
 
     Puppet.define_settings(
