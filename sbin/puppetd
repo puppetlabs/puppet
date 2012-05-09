@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'puppet/application/agent'
-Puppet::Application[:agent].run
