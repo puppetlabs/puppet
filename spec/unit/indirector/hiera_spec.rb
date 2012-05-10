@@ -51,7 +51,7 @@ describe Puppet::Indirector::Hiera do
   it "should raise an error if we don't have the hiera feature" do
     Puppet.features.expects(:hiera?).returns(false)
     lambda { @hiera_class.new }.should raise_error RuntimeError,
-      "Hiera terminus not supported without hiera gem"
+      "Hiera terminus not supported without hiera library"
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
