@@ -38,17 +38,17 @@ describe Puppet::Application do
     end
 
     it "should not find classes outside the namespace" do
-      expect { @klass.find("String") }.to exit_with 1
+      expect { @klass.find("String") }.to raise_error(LoadError)
     end
 
-    it "should exit if it can't find a class" do
-      @klass.expects(:puts).with do |value|
+    it "should error if it can't find a class" do
+      Puppet.expects(:err).with do |value|
         value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
           value =~ /puppet\/application\/thisshallneverevereverexist/ and
           value =~ /no such file to load|cannot load such file/
       end
 
-      expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
+      expect { @klass.find("ThisShallNeverEverEverExist") }.to raise_error(LoadError)
     end
 
     it "#12114: should prevent File namespace collisions" do

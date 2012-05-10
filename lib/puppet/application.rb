@@ -219,18 +219,47 @@ class Application
       @option_parser_commands
     end
 
-    def find(name)
-      klass = Puppet::Util::ConstantInflector.file2constant(name.to_s)
-
+    def find(file_name)
+      # This should probably be using the autoloader, but due to concerns about the fact that
+      #  the autoloader currently considers the modulepath when looking for things to load,
+      #  we're delaying that for now.
       begin
-        require ::File.join('puppet', 'application', name.to_s.downcase)
+        require ::File.join('puppet', 'application', file_name.to_s.downcase)
       rescue LoadError => e
-        puts "Unable to find application '#{name}'.  #{e}"
-        Kernel::exit(1)
+        Puppet.log_and_raise(e, "Unable to find application '#{file_name}'.  #{e}")
       end
 
-      self.const_get(klass)
+      class_name = Puppet::Util::ConstantInflector.file2constant(file_name.to_s)
+
+      clazz = try_load_class(class_name)
+
+      ################################################################
+      #### Begin 2.7.x backward compatibility hack;
+      ####  eventually we need to issue a deprecation warning here,
+      ####  and then get rid of this stanza in a subsequent release.
+      ################################################################
+      if (clazz.nil?)
+        class_name = file_name.capitalize
+        clazz = try_load_class(class_name)
+      end
+      ################################################################
+      #### End 2.7.x backward compatibility hack
+      ################################################################
+
+      if clazz.nil?
+        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{file_name}.rb'")
+      end
+
+      return clazz
     end
+
+    # Given the fully qualified name of a class, attempt to get the class instance.
+    # @param [String] class_name the fully qualified name of the class to try to load
+    # @return [Class] the Class instance, or nil? if it could not be loaded.
+    def try_load_class(class_name)
+        return self.const_defined?(class_name) ? const_get(class_name) : nil
+    end
+    private :try_load_class
 
     def [](name)
       find(name).new
