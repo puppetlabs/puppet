@@ -53,8 +53,9 @@ module Puppet::Forge
       return Puppet.settings[:http_proxy_port]
     end
 
-    # Return a Net::HTTPResponse read for this +request+.
-    def make_http_request(request, options = {})
+    # Return a Net::HTTPResponse read for this +request_path+.
+    def make_http_request(request_path)
+      request = Net::HTTP::Get.new(request_path)
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end

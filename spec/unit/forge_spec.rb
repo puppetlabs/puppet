@@ -4,8 +4,6 @@ require 'net/http'
 require 'puppet/module_tool'
 
 describe Puppet::Forge do
-  include PuppetSpec::Files
-
   let(:response_body) do
   <<-EOF
     [
@@ -22,35 +20,29 @@ describe Puppet::Forge do
     ]
   EOF
   end
-  let(:response) { stub(:body => response_body, :code => '200') }
 
-  before do
+  def repository_responds_with(response)
     Puppet::Forge::Repository.any_instance.stubs(:make_http_request).returns(response)
-    Puppet::Forge::Repository.any_instance.stubs(:retrieve).returns("/tmp/foo")
   end
 
-  describe "the behavior of the search method" do
-    context "when there are matches for the search term" do
-      before do
-        Puppet::Forge::Repository.any_instance.stubs(:make_http_request).returns(response)
-      end
+  it "returns a list of matches from the forge when there are matches for the search term" do
+    response = stub(:body => response_body, :code => '200')
+    repository_responds_with(response)
 
-      it "should return a list of matches from the forge" do
-        Puppet::Forge.search('bacula').should == PSON.load(response_body)
-      end
-    end
-
-    context "when the connection to the forge fails" do
-      let(:response)  { stub(:body => '{}', :code => '404') }
-
-      it "should raise an error for search" do
-        lambda { Puppet::Forge.search('bacula') }.should raise_error RuntimeError
-      end
-
-      it "should raise an error for remote_dependency_info" do
-        lambda { Puppet::Forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
-      end
-    end
+    Puppet::Forge.search('bacula').should == PSON.load(response_body)
   end
 
+  context "when the connection to the forge fails" do
+    before :each do
+      repository_responds_with(stub(:body => '{}', :code => '404'))
+    end
+
+    it "raises an error for search" do
+      expect { Puppet::Forge.search('bacula') }.should raise_error RuntimeError
+    end
+
+    it "raises an error for remote_dependency_info" do
+      expect { Puppet::Forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
+    end
+  end
 end

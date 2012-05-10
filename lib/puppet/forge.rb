@@ -28,15 +28,13 @@ module Puppet::Forge
   def self.search(term)
     server = Puppet.settings[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
     Puppet.notice "Searching #{server} ..."
-    request = Net::HTTP::Get.new("/modules.json?q=#{URI.escape(term)}")
-    response = repository.make_http_request(request)
+    response = repository.make_http_request("/modules.json?q=#{URI.escape(term)}")
 
     case response.code
     when "200"
       matches = PSON.parse(response.body)
     else
       raise RuntimeError, "Could not execute search (HTTP #{response.code})"
-      matches = []
     end
 
     matches
@@ -44,8 +42,7 @@ module Puppet::Forge
 
   def self.remote_dependency_info(author, mod_name, version)
     version_string = version ? "&version=#{version}" : ''
-    request = Net::HTTP::Get.new("/api/v1/releases.json?module=#{author}/#{mod_name}" + version_string)
-    response = repository.make_http_request(request)
+    response = repository.make_http_request("/api/v1/releases.json?module=#{author}/#{mod_name}#{version_string}")
     json = PSON.parse(response.body) rescue {}
     case response.code
     when "200"
