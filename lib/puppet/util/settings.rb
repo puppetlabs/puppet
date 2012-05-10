@@ -738,16 +738,6 @@ class Puppet::Util::Settings
     @service_user_available = user.exists?
   end
 
-  def legacy_to_mode(type, param)
-    require 'puppet/util/command_line/legacy_command_line'
-    if Puppet::Util::CommandLine::LegacyCommandLine::LEGACY_APPS.has_key?(type)
-      new_type = Puppet::Util::CommandLine::LegacyCommandLine::LEGACY_APPS[type].run_mode
-      Puppet.deprecation_warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
-      return new_type
-    end
-    type
-  end
-  
   # Allow later inspection to determine if the setting was set on the
   # command line, or through some other code path.  Used for the
   # `dns_alt_names` option during cert generate. --daniel 2011-10-18
@@ -773,7 +763,7 @@ class Puppet::Util::Settings
       raise ArgumentError,
         "You're attempting to set configuration parameter $#{param}, which is read-only."
     end
-    type = legacy_to_mode(type, param)
+
     @sync.synchronize do # yay, thread-safe
 
       @values[type][param] = value

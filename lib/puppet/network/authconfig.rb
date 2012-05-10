@@ -33,7 +33,7 @@ module Puppet
       false
     end
 
-    # Does the file exist?  Puppetmasterd does not require it, but
+    # Does the file exist?  Puppet master does not require it, but
     # puppet agent does.
     def exists?
       FileTest.exists?(@file)

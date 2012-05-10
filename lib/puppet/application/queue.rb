@@ -122,7 +122,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
-    Puppet.notice "Starting puppetqd #{Puppet.version}"
+    Puppet.notice "Starting puppet queue #{Puppet.version}"
     Puppet::Resource::Catalog::Queue.subscribe do |catalog|
       # Once you have a Puppet::Resource::Catalog instance, passing it to save should suffice
       # to put it through to the database via its active_record indirector (which is determined

@@ -3,7 +3,7 @@ require 'puppet/configurer'
 require 'puppet/indirector'
 
 # A basic class for running the agent.  Used by
-# puppetrun to kick off agents remotely.
+# `puppet kick` to kick off agents remotely.
 class Puppet::Run
   extend Puppet::Indirector
   indirects :run, :terminus_class => :local

@@ -303,7 +303,7 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppetqd` be running and that 'PSON' support for ruby be installed.",
+      Requires that `puppet queue` be running and that 'PSON' support for ruby be installed.",
         :hook     => proc do |value|
           if value
             # This reconfigures the terminii for Node, Facts, and Catalog
