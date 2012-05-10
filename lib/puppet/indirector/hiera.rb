@@ -3,7 +3,7 @@ require 'puppet/indirector/terminus'
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
     if ! Puppet.features.hiera?
-      raise "Hiera terminus not supported without hiera gem"
+      raise "Hiera terminus not supported without hiera library"
     end
     super
   end
