@@ -49,9 +49,7 @@ task :gen_manpages do
   # Create face man pages
   faces.each do |face|
     File.open("./man/man8/puppet-#{face}.8.ronn", 'w') do |fh|
-      # For some reason no one understands at the moment, it duplicates termini,
-      # so we have to remove the dupes with a gsub.
-      fh.write manface.man("#{face}", {:render_as => :s}).gsub(/^(\* `[^`]+`)\n\1/, '\1')
+      fh.write manface.man("#{face}")
     end
 
     %x{#{ronn} #{ronn_args} ./man/man8/puppet-#{face}.8.ronn}
