@@ -8,6 +8,11 @@ $LOAD_PATH.unshift File.join(dir, 'lib')
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
 
+begin
+  require 'rubygems'
+rescue LoadError
+end
+
 require 'puppet'
 require 'mocha'
 gem 'rspec', '>=2.0.0'
