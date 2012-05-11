@@ -1,5 +1,7 @@
-# The base element type.
-class Puppet::Util::Settings::StringSetting
+require 'puppet/settings/errors'
+
+# The base setting type
+class Puppet::Settings::BaseSetting
   attr_accessor :name, :section, :default, :call_on_define, :call_hook
   attr_reader :desc, :short
 
@@ -10,7 +12,7 @@ class Puppet::Util::Settings::StringSetting
   def desc=(value)
     @desc = value.gsub(/^\s*/, '')
   end
-  
+
   def call_on_define
     Puppet.deprecation_warning "call_on_define has been deprecated.  Please use call_hook_on_define?"
     call_hook_on_define?
@@ -44,20 +46,16 @@ class Puppet::Util::Settings::StringSetting
   end
 
   #added as a proper method, only to generate a deprecation warning
-  #and return value from 
+  #and return value from
   def setbycli
     Puppet.deprecation_warning "Puppet.settings.setting(#{name}).setbycli is deprecated. Use Puppet.settings.set_by_cli?(#{name}) instead."
     @settings.set_by_cli?(name)
   end
-  
+
   def setbycli=(value)
     Puppet.deprecation_warning "Puppet.settings.setting(#{name}).setbycli= is deprecated. You should not manually set that values were specified on the command line."
     @settings.set_value(name, @settings[name], :cli) if value
     raise ArgumentError, "Cannot unset setbycli" unless value
-  end
-  
-  def type
-    :string
   end
 
   # get the arguments in getopt format
@@ -119,16 +117,12 @@ class Puppet::Util::Settings::StringSetting
     @iscreated
   end
 
-  def set?
-    !!(!@value.nil?)
-  end
-
   # short name for the celement
   def short=(value)
     raise ArgumentError, "Short names can only be one character." if value.to_s.length != 1
     @short = value.to_s
   end
-  
+
   def default(check_application_defaults_first = false)
     return @default unless check_application_defaults_first
     return @settings.value(name, :application_defaults, true) || @default
@@ -161,5 +155,9 @@ class Puppet::Util::Settings::StringSetting
   def value
     @settings.value(self.name)
   end
-end
 
+  # Modify the value when it is first evaluated
+  def munge(value)
+    value
+  end
+end

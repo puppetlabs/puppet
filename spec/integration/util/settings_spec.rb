@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet_spec/files'
 
-describe Puppet::Util::Settings do
+describe Puppet::Settings do
   include PuppetSpec::Files
 
   def minimal_default_settings
@@ -11,7 +11,7 @@ describe Puppet::Util::Settings do
   end
 
   it "should be able to make needed directories" do
-    settings = Puppet::Util::Settings.new
+    settings = Puppet::Settings.new
     settings.define_settings :main, minimal_default_settings.update(
         :maindir => {
             :default => tmpfile("main"),
@@ -25,7 +25,7 @@ describe Puppet::Util::Settings do
   end
 
   it "should make its directories with the correct modes" do
-    settings = Puppet::Util::Settings.new
+    settings = Puppet::Settings.new
     settings.define_settings :main,  minimal_default_settings.update(
         :maindir => {
             :default => tmpfile("main"),

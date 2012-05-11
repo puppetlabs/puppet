@@ -282,7 +282,7 @@ describe Puppet::Application::Agent do
       path = make_absolute('/my/path')
       Puppet[:modulepath] = path
       Puppet[:configprint] = "modulepath"
-      Puppet::Util::Settings.any_instance.expects(:puts).with(path)
+      Puppet::Settings.any_instance.expects(:puts).with(path)
       expect { @puppetd.setup }.to exit_with 0
     end
 

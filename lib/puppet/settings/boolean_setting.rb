@@ -1,7 +1,7 @@
-require 'puppet/util/settings/string_setting'
+require 'puppet/settings/base_setting'
 
 # A simple boolean.
-class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::StringSetting
+class Puppet::Settings::BooleanSetting < Puppet::Settings::BaseSetting
   # get the arguments in getopt format
   def getopt_args
     if short
@@ -24,9 +24,10 @@ class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::StringSet
     when true, "true"; return true
     when false, "false"; return false
     else
-      raise ArgumentError, "Invalid value '#{value.inspect}' for #{@name}"
+      raise Puppet::Settings::ValidationError, "Invalid value '#{value.inspect}' for boolean parameter: #{@name}"
     end
   end
+
   def type
     :boolean
   end
