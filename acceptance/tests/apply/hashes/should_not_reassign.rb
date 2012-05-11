@@ -6,5 +6,5 @@ $my_hash['one']='1.5'
 
 apply_manifest_on(agents, manifest, :acceptable_exit_codes => [1]) do
     fail_test "didn't find the failure" unless
-        stdout.include? "Assigning to the hash 'my_hash' with an existing key 'one'"
+        stderr.include? "Assigning to the hash 'my_hash' with an existing key 'one'"
 end

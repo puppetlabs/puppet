@@ -12,6 +12,6 @@ test_name "#4233: resource with a newline"
 agents.each do |host|
   resource = host.echo('-e "\nHello World\n"')
   apply_manifest_on(host, "exec { '#{resource}': }") do
-    assert_match(/notice:.*Hello World.*success/, stdout)
+    assert_match(/Hello World.*success/, stdout)
   end
 end
