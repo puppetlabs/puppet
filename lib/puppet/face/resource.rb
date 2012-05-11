@@ -7,7 +7,7 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   summary "API only: interact directly with resources via the RAL."
   description <<-'EOT'
     API only: this face provides a Ruby API with functionality similar to the
-    puppet resource (or ralsh) subcommand.
+    puppet resource subcommand.
   EOT
 
   get_action(:destroy).summary "Invalid for this subcommand."

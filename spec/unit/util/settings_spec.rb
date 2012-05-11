@@ -448,22 +448,6 @@ describe Puppet::Util::Settings do
         @settings[:one] = "foo"
       }.should raise_error(ArgumentError, /read-only/)
     end
-
-    it "should warn and use [master] if we ask for [puppetmasterd]" do
-      Puppet.expects(:deprecation_warning)
-      @settings.set_value(:myval, "foo", :puppetmasterd)
-
-      @settings.stubs(:run_mode).returns(:master)
-      @settings.value(:myval).should == "foo"
-    end
-
-    it "should warn and use [agent] if we ask for [puppetd]" do
-      Puppet.expects(:deprecation_warning)
-      @settings.set_value(:myval, "foo", :puppetd)
-
-      @settings.stubs(:run_mode).returns(:agent)
-      @settings.value(:myval).should == "foo"
-    end
   end
 
   describe "when returning values" do

@@ -1,6 +1,5 @@
-# This class is basically a hidden class that knows how to act
-# on the CA.  It's only used by the 'puppetca' executable, and its
-# job is to provide a CLI-like interface to the CA class.
+# This class is basically a hidden class that knows how to act on the
+# CA.  Its job is to provide a CLI-like interface to the CA class.
 module Puppet
   module SSL
     class CertificateAuthority

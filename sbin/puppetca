@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'puppet/application/cert'
-Puppet::Application[:cert].run

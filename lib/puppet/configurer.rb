@@ -24,8 +24,8 @@ class Puppet::Configurer
   end
 
   class << self
-    # Puppetd should only have one instance running, and we need a way
-    # to retrieve it.
+    # Puppet agent should only have one instance running, and we need a
+    # way to retrieve it.
     attr_accessor :instance
     include Puppet::Util
   end

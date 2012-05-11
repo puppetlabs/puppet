@@ -86,12 +86,6 @@ module Puppet
         exec(path_to_subcommand, *args)
       end
 
-      def legacy_executable_name
-        name = CommandLine::LegacyCommandLine::LEGACY_NAMES[ subcommand_name.intern ]
-        return name unless name.nil?
-        return subcommand_name.intern
-      end
-
       private
 
       def subcommand_and_args(zero, argv, stdin)
