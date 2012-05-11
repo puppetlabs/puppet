@@ -72,7 +72,7 @@ class Puppet::Indirector::Face < Puppet::Face
 
   action :save do
     summary "API only: create or overwrite an object."
-    arguments "<object>"
+    arguments "<key>"
     description <<-EOT
       API only: create or overwrite an object. As the Faces framework does not
       currently accept data from STDIN, save actions cannot currently be invoked
