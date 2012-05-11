@@ -37,7 +37,8 @@ describe "puppet module install" do
       end
 
       it "should not require any options" do
-        Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+        expects_installer_run_with("puppetlabs-apache", expected_options)
+
         subject.install("puppetlabs-apache")
       end
     end
@@ -45,7 +46,9 @@ describe "puppet module install" do
     it "should accept the --force option" do
       options[:force] = true
       expected_options.merge!(options)
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+
+      expects_installer_run_with("puppetlabs-apache", expected_options)
+
       subject.install("puppetlabs-apache", options)
     end
 
@@ -54,21 +57,26 @@ describe "puppet module install" do
       expected_options.merge!(options)
       expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
 
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+      expects_installer_run_with("puppetlabs-apache", expected_options)
+
       subject.install("puppetlabs-apache", options)
     end
 
     it "should accept the --version option" do
       options[:version] = "0.0.1"
       expected_options.merge!(options)
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+
+      expects_installer_run_with("puppetlabs-apache", expected_options)
+
       subject.install("puppetlabs-apache", options)
     end
 
     it "should accept the --ignore-dependencies option" do
       options[:ignore_dependencies] = true
       expected_options.merge!(options)
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+
+      expects_installer_run_with("puppetlabs-apache", expected_options)
+
       subject.install("puppetlabs-apache", options)
     end
 
@@ -80,9 +88,7 @@ describe "puppet module install" do
         it "should set target-dir to be first path from modulepath" do
           expected_options[:target_dir] = fakefirstpath
 
-          Puppet::ModuleTool::Applications::Installer.
-            expects(:run).
-            with("puppetlabs-apache", expected_options)
+          expects_installer_run_with("puppetlabs-apache", expected_options)
 
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
 
@@ -96,9 +102,7 @@ describe "puppet module install" do
           expected_options[:target_dir] = fakedirpath
           expected_options[:modulepath] = "#{fakedirpath}#{sep}#{fakemodpath}"
 
-          Puppet::ModuleTool::Applications::Installer.
-            expects(:run).
-            with("puppetlabs-apache", expected_options)
+          expects_installer_run_with("puppetlabs-apache", expected_options)
 
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
 
@@ -117,9 +121,7 @@ describe "puppet module install" do
           expected_options[:target_dir] = fakefirstpath
           expected_options[:modulepath] = fakemodpath
 
-          Puppet::ModuleTool::Applications::Installer.
-            expects(:run).
-            with("puppetlabs-apache", expected_options)
+          expects_installer_run_with("puppetlabs-apache", expected_options)
 
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
         end
@@ -131,9 +133,7 @@ describe "puppet module install" do
           expected_options[:target_dir] = fakedirpath
           expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
 
-          Puppet::ModuleTool::Applications::Installer.
-            expects(:run).
-            with("puppetlabs-apache", expected_options)
+          expects_installer_run_with("puppetlabs-apache", expected_options)
 
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
           Puppet.settings[:modulepath].should == expected_options[:modulepath]
@@ -155,5 +155,14 @@ describe "puppet module install" do
         its(doc.to_sym) { should_not =~ /(FIXME|REVISIT|TODO)/ }
       end
     end
+  end
+
+  def expects_installer_run_with(name, options)
+    installer = mock("Installer")
+    forge = mock("Forge")
+
+    Puppet::Forge.expects(:new).with("PMT", subject.version).returns(forge)
+    Puppet::ModuleTool::Applications::Installer.expects(:new).with("puppetlabs-apache", forge, expected_options).returns(installer)
+    installer.expects(:run)
   end
 end

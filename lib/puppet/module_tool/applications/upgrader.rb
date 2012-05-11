@@ -4,7 +4,7 @@ module Puppet::ModuleTool
 
       include Puppet::ModuleTool::Errors
 
-      def initialize(name, options)
+      def initialize(name, forge, options)
         @action              = :upgrade
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @module_name         = name
@@ -12,6 +12,7 @@ module Puppet::ModuleTool
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @version             = options[:version]
+        @forge               = forge
       end
 
       def run
@@ -46,11 +47,11 @@ module Puppet::ModuleTool
           end
 
           begin
-            get_remote_constraints
+            get_remote_constraints(@forge)
           rescue => e
-            raise UnknownModuleError, results.merge(:repository => Puppet::Forge.repository.uri)
+            raise UnknownModuleError, results.merge(:repository => @forge.uri)
           else
-            raise UnknownVersionError, results.merge(:repository => Puppet::Forge.repository.uri) if @remote.empty?
+            raise UnknownVersionError, results.merge(:repository => @forge.uri) if @remote.empty?
           end
 
           if !@options[:force] && @versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
@@ -70,7 +71,7 @@ module Puppet::ModuleTool
           # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
           # but for now this is a quick fix to disable caching
           Puppet::Forge::Cache.clean
-          tarballs = download_tarballs(@graph, @graph.last[:path])
+          tarballs = download_tarballs(@graph, @graph.last[:path], @forge)
 
           unless @graph.empty?
             Puppet.notice 'Upgrading -- do not interrupt ...'

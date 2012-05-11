@@ -6,9 +6,6 @@ require 'semver'
 describe Puppet::ModuleTool::Applications::Upgrader do
   include PuppetSpec::Files
 
-  before do
-  end
-
   it "should update the requested module"
   it "should not update dependencies"
   it "should fail when updating a dependency to an unsupported version"

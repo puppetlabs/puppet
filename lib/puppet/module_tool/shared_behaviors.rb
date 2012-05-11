@@ -24,14 +24,14 @@ module Puppet::ModuleTool::Shared
     end
   end
 
-  def get_remote_constraints
+  def get_remote_constraints(forge)
     @remote   = Hash.new { |h,k| h[k] = { } }
     @urls     = {}
     @versions = Hash.new { |h,k| h[k] = [] }
 
-    Puppet.notice "Downloading from #{Puppet::Forge.repository.uri} ..."
+    Puppet.notice "Downloading from #{forge.uri} ..."
     author, modname = Puppet::ModuleTool.username_and_modname_from(@module_name)
-    info = Puppet::Forge.remote_dependency_info(author, modname, @options[:version])
+    info = forge.remote_dependency_info(author, modname, @options[:version])
     info.each do |pair|
       mod_name, releases = pair
       mod_name = mod_name.gsub('/', '-')
@@ -140,13 +140,13 @@ module Puppet::ModuleTool::Shared
     return dependencies
   end
 
-  def download_tarballs(graph, default_path)
+  def download_tarballs(graph, default_path, forge)
     graph.map do |release|
       begin
         if release[:tarball]
           cache_path = Pathname(release[:tarball])
         else
-          cache_path = Puppet::Forge.repository.retrieve(release[:file])
+          cache_path = forge.retrieve(release[:file])
         end
       rescue OpenURI::HTTPError => e
         raise RuntimeError, "Could not download module: #{e.message}"
@@ -154,7 +154,7 @@ module Puppet::ModuleTool::Shared
 
       [
         { (release[:path] ||= default_path) => cache_path},
-        *download_tarballs(release[:dependencies], default_path)
+        *download_tarballs(release[:dependencies], default_path, forge)
       ]
     end.flatten
   end

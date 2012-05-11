@@ -12,12 +12,13 @@ module Puppet::ModuleTool
 
       include Puppet::ModuleTool::Errors
 
-      def initialize(name, options = {})
+      def initialize(name, forge, options = {})
         @action              = :install
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name
+        @forge               = forge
         super(options)
       end
 
@@ -102,7 +103,7 @@ module Puppet::ModuleTool
             ]
           }
         else
-          get_remote_constraints
+          get_remote_constraints(@forge)
         end
 
         @graph = resolve_constraints({ @module_name => @version })
@@ -116,7 +117,7 @@ module Puppet::ModuleTool
         # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
         # but for now this is a quick fix to disable caching
         Puppet::Forge::Cache.clean
-        download_tarballs(@graph, @graph.last[:path])
+        download_tarballs(@graph, @graph.last[:path], @forge)
       end
 
       #
