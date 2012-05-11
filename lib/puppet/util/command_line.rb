@@ -48,21 +48,33 @@ module Puppet
         require File.join(appdir, application)
       end
 
-      # This is the main entry point for all puppet applications / faces; it is basically where the bootstrapping
-      # process / lifecycle of an app begins.
+      # This is the main entry point for all puppet applications / faces; it
+      # is basically where the bootstrapping process / lifecycle of an app
+      # begins.
       def execute
+        # We support printing the global version very early, unconditionally.
+        # This doesn't replace declaring the option later, even if it means
+        # that particular bit will never trigger.
+        if @argv.include? "--version" or @argv.include? "-V"
+          puts Puppet.version
+          exit 0
+        end
+
+        # Build up our settings - we don't need that until after version check.
         Puppet::Util.exit_on_fail("intialize global default settings") do
           Puppet.settings.initialize_global_settings(args)
         end
 
-        # OK, now that we've processed the command line options and the config files, we should be able to say that
-        # we definitively know where the libdir is... which means that we can now look for our available
+        # OK, now that we've processed the command line options and the config
+        # files, we should be able to say that we definitively know where the
+        # libdir is... which means that we can now look for our available
         # applications / subcommands / faces.
 
         if subcommand_name and available_subcommands.include?(subcommand_name) then
           require_application subcommand_name
-          # This will need to be cleaned up to do something that is not so application-specific
-          #  (i.e.. so that we can load faces).  Longer-term, use the autoloader.  See comments in
+          # This will need to be cleaned up to do something that is not so
+          #  application-specific (i.e.. so that we can load faces).
+          #  Longer-term, use the autoloader.  See comments in
           #  #available_subcommands method above.  --cprice 2012-03-06
           app = Puppet::Application.find(subcommand_name).new(self)
           Puppet::Plugins.on_application_initialization(:application_object => self)
@@ -93,8 +105,9 @@ module Puppet
 
         if zero == 'puppet'
           case argv.first
-            # if they didn't pass a command, or passed a help flag, we will fall back to showing a usage message.
-            #  we no longer default to 'apply'
+            # if they didn't pass a command, or passed a help flag, we will
+            # fall back to showing a usage message.  we no longer default to
+            # 'apply'
             when nil, "--help", "-h", /^-|\.pp$|\.rb$/
               [nil, argv]
             else
