@@ -240,11 +240,11 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
-  TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?([-\w]+::)*[-\w]+} do |lexer, value|
+  TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?(\w+::)*\w+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
 
-  TOKENS.add_token :VARIABLE, %r{(::)?([-\w]+::)*[-\w]+}
+  TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
   #:stopdoc: # Issue #4161
   def (TOKENS[:VARIABLE]).acceptable?(context={})
     [:DQPRE,:DQMID].include? context[:after]
