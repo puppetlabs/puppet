@@ -52,14 +52,6 @@ module Puppet
       # is basically where the bootstrapping process / lifecycle of an app
       # begins.
       def execute
-        # We support printing the global version very early, unconditionally.
-        # This doesn't replace declaring the option later, even if it means
-        # that particular bit will never trigger.
-        if @argv.include? "--version" or @argv.include? "-V"
-          puts Puppet.version
-          exit 0
-        end
-
         # Build up our settings - we don't need that until after version check.
         Puppet::Util.exit_on_fail("intialize global default settings") do
           Puppet.settings.initialize_global_settings(args)
@@ -84,7 +76,13 @@ module Puppet
           unless subcommand_name.nil? then
             puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
           end
-          puts "See 'puppet help' for help on available puppet subcommands"
+
+          # If the user is just checking the version, print that and exit
+          if @argv.include? "--version" or @argv.include? "-V"
+            puts Puppet.version
+          else
+            puts "See 'puppet help' for help on available puppet subcommands"
+          end
         end
       end
 
