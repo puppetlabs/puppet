@@ -21,6 +21,8 @@ describe Puppet::Forge do
   EOF
   end
 
+  let(:forge) { Puppet::Forge.new("test_agent", SemVer.new("v1.0.0")) }
+
   def repository_responds_with(response)
     Puppet::Forge::Repository.any_instance.stubs(:make_http_request).returns(response)
   end
@@ -29,7 +31,7 @@ describe Puppet::Forge do
     response = stub(:body => response_body, :code => '200')
     repository_responds_with(response)
 
-    Puppet::Forge.search('bacula').should == PSON.load(response_body)
+    forge.search('bacula').should == PSON.load(response_body)
   end
 
   context "when the connection to the forge fails" do
@@ -38,11 +40,11 @@ describe Puppet::Forge do
     end
 
     it "raises an error for search" do
-      expect { Puppet::Forge.search('bacula') }.should raise_error RuntimeError
+      expect { forge.search('bacula') }.should raise_error RuntimeError
     end
 
     it "raises an error for remote_dependency_info" do
-      expect { Puppet::Forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
+      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
     end
   end
 end

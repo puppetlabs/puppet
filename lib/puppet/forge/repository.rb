@@ -2,19 +2,20 @@ require 'net/http'
 require 'digest/sha1'
 require 'uri'
 
-module Puppet::Forge
+class Puppet::Forge
   # = Repository
   #
   # This class is a file for accessing remote repositories with modules.
   class Repository
-
     attr_reader :uri, :cache
 
-    # Instantiate a new repository instance rooted at the optional string
-    # +url+, else an instance of the default Puppet modules repository.
-    def initialize(url=Puppet[:module_repository])
+    # Instantiate a new repository instance rooted at the +url+.
+    # The agent will report +consumer_version+ in the User-Agent to
+    # the repository.
+    def initialize(url, consumer_version)
       @uri = url.is_a?(::URI) ? url : ::URI.parse(url.sub(/^(?!https?:\/\/)/, 'http://'))
       @cache = Cache.new(self)
+      @consumer_version = consumer_version
     end
 
     # Read HTTP proxy configurationm from Puppet's config file, or the
@@ -55,7 +56,7 @@ module Puppet::Forge
 
     # Return a Net::HTTPResponse read for this +request_path+.
     def make_http_request(request_path)
-      request = Net::HTTP::Get.new(request_path)
+      request = Net::HTTP::Get.new(request_path, { "User-Agent" => user_agent })
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
@@ -99,5 +100,10 @@ module Puppet::Forge
         Digest::SHA1.hexdigest(@uri.to_s)
       ].join('-')
     end
+
+    def user_agent
+      "#{@consumer_version} Puppet/#{Puppet.version} (#{Facter.value(:operatingsystem)} #{Facter.value(:operatingsystemrelease)}) Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_RELEASE_DATE}; #{RUBY_PLATFORM})"
+    end
+    private :user_agent
   end
 end
