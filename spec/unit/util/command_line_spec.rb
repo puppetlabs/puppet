@@ -67,6 +67,18 @@ describe Puppet::Util::CommandLine do
     end
   end
 
+  context "#execute" do
+    %w{--version -V}.each do |arg|
+      it "should print the version and exit if #{arg} is given" do
+        expect do
+          expect do
+            described_class.new("puppet", [arg], tty).execute
+          end.to exit_with 0
+        end.to have_printed(Puppet.version.to_s)
+      end
+    end
+  end
+
   describe "when dealing with puppet commands" do
     it "should return the executable name if it is not puppet" do
       command_line = Puppet::Util::CommandLine.new("puppetmasterd", [], tty)

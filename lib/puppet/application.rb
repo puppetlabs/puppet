@@ -255,6 +255,8 @@ class Application
   attr_reader :options, :command_line
 
   # Every app responds to --version
+  # See also `lib/puppet/util/command_line.rb` for some special case early
+  # handling of this.
   option("--version", "-V") do |arg|
     puts "#{Puppet.version}"
     exit
