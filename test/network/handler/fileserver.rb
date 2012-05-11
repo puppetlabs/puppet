@@ -1100,14 +1100,20 @@ allow *
     mounts = {}
     Puppet[:modulepath] = moddir
 
-    mods = %w{green red}.collect do |name|
+    %w{green red}.each do |name|
       path = File::join(moddir, name, Puppet::Module::FILES)
       FileUtils::mkdir_p(path)
       if name == "green"
         file = File::join(path, "test.txt")
         File::open(file, "w") { |f| f.print name }
       end
+    end
 
+    # We changed modulepath, so we have to clear the environment cache to
+    # refresh it
+    Puppet::Node::Environment.current.modules = nil
+
+    mods = %w{green red}.map do |name|
       Puppet::Module::find(name)
     end
 
