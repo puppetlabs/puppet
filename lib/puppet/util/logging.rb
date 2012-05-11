@@ -50,7 +50,7 @@ module Puppet::Util::Logging
 
   def log_and_raise(exception, message)
     log_exception(exception, message)
-    raise exception, message + "\n" + exception, exception.backtrace
+    raise exception, message + "\n" + exception.to_s, exception.backtrace
   end
 
   class DeprecationWarning < Exception; end

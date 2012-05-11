@@ -129,11 +129,6 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def horribly_extract_summary_from(appname)
     begin
-      # it sucks that this 'require' is necessary, and it sucks even more that we are
-      #  doing it in two different places in this class (#horribly_extract_summary_from,
-      #  #is_face_app?).  However, we can take some solace in the fact that ruby will
-      #  at least recognize that it's already done a 'require' for any individual app
-      #  and basically treat it as a no-op if we try to 'require' it twice.
       require "puppet/application/#{appname}"
       help = Puppet::Application[appname].help.split("\n")
       # Now we find the line with our summary, extract it, and return it.  This
@@ -165,15 +160,8 @@ Puppet::Face.define(:help, '0.0.1') do
   #private :exclude_from_docs?
 
   def is_face_app?(appname)
-    # it sucks that this 'require' is necessary, and it sucks even more that we are
-    #  doing it in two different places in this class (#horribly_extract_summary_from,
-    #  #is_face_app?).  However, we can take some solace in the fact that ruby will
-    #  at least recognize that it's already done a 'require' for any individual app
-    #  and basically treat it as a no-op if we try to 'require' it twice.
-    require "puppet/application/#{appname}"
-    # Would much rather use "const_get" than "eval" here, but for some reason it is not available.
-    #  See #14205.
-    clazz = eval("Puppet::Application::#{Puppet::Util::ConstantInflector.file2constant(appname)}")
+    clazz = Puppet::Application.find(appname)
+
     clazz.ancestors.include?(Puppet::Application::FaceBase)
   end
   # This should probably be a private method, but for some reason it appears
