@@ -1,11 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/util/settings'
-require 'puppet/util/settings/file_setting'
+require 'puppet/settings'
+require 'puppet/settings/file_setting'
 
-describe Puppet::Util::Settings::FileSetting do
-  FileSetting = Puppet::Util::Settings::FileSetting
+describe Puppet::Settings::FileSetting do
+  FileSetting = Puppet::Settings::FileSetting
 
   include PuppetSpec::Files
 
@@ -124,7 +124,7 @@ describe Puppet::Util::Settings::FileSetting do
   describe "when being converted to a resource" do
     before do
       @settings = mock 'settings'
-      @file = Puppet::Util::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
+      @file = Puppet::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
       @file.stubs(:create_files?).returns true
       @settings.stubs(:value).with(:myfile).returns @basepath
     end

@@ -1,11 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/util/settings'
-require 'puppet/util/settings/directory_setting'
+require 'puppet/settings'
+require 'puppet/settings/directory_setting'
 
-describe Puppet::Util::Settings::DirectorySetting do
-  DirectorySetting = Puppet::Util::Settings::DirectorySetting
+describe Puppet::Settings::DirectorySetting do
+  DirectorySetting = Puppet::Settings::DirectorySetting
 
   include PuppetSpec::Files
 
@@ -16,7 +16,7 @@ describe Puppet::Util::Settings::DirectorySetting do
   describe "when being converted to a resource" do
     before do
       @settings = mock 'settings'
-      @dir = Puppet::Util::Settings::DirectorySetting.new(
+      @dir = Puppet::Settings::DirectorySetting.new(
           :settings => @settings, :desc => "eh", :name => :mydir, :section => "mysect")
       @settings.stubs(:value).with(:mydir).returns @basepath
     end

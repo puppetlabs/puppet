@@ -1,16 +1,17 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'ostruct'
+require 'puppet/settings/errors'
 
-describe Puppet::Util::Settings do
+describe Puppet::Settings do
   include PuppetSpec::Files
 
-  MAIN_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::Settings.default_global_config_dir, "puppet.conf")
-  USER_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::Settings.default_user_config_dir, "puppet.conf")
+  MAIN_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Settings.default_global_config_dir, "puppet.conf")
+  USER_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Settings.default_user_config_dir, "puppet.conf")
 
   describe "when specifying defaults" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
     end
 
     it "should start with no defined parameters" do
@@ -51,7 +52,7 @@ describe Puppet::Util::Settings do
 
     it "should support specifying the setting type" do
       @settings.define_settings(:section, :myvalue => {:default => "/w", :desc => "b", :type => :string})
-      @settings.setting(:myvalue).should be_instance_of(Puppet::Util::Settings::StringSetting)
+      @settings.setting(:myvalue).should be_instance_of(Puppet::Settings::StringSetting)
     end
 
     it "should fail if an invalid setting type is specified" do
@@ -67,7 +68,7 @@ describe Puppet::Util::Settings do
 
   describe "when initializing application defaults do" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
     end
 
     it "should fail if someone attempts to initialize app defaults more than once" do
@@ -80,7 +81,7 @@ describe Puppet::Util::Settings do
     it "should fail if the app defaults hash is missing any required values" do
       expect {
         @settings.initialize_app_defaults({})
-      }.to raise_error(Puppet::SettingsError)
+      }.to raise_error(Puppet::Settings::SettingsError)
     end
 
     # ultimately I'd like to stop treating "run_mode" as a normal setting, because it has so many special
@@ -88,7 +89,7 @@ describe Puppet::Util::Settings do
     #  setter method gets properly called during app initialization.
     it "should call the hacky run mode setter method until we do a better job of separating run_mode" do
       app_defaults = {}
-      Puppet::Util::Settings::REQUIRED_APP_SETTINGS.each do |key|
+      Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
         app_defaults[key] = "foo"
       end
 
@@ -102,7 +103,7 @@ describe Puppet::Util::Settings do
     let (:good_default) { "yay" }
     let (:bad_default) { "$doesntexist" }
     before(:each) do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
     end
 
     describe "when ignoring dependency interpolation errors" do
@@ -133,23 +134,47 @@ describe Puppet::Util::Settings do
         describe "if interpolation error" do
           it "should raise an error" do
             hook_values = []
-            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :badhook => {
+                :default => bad_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error
+            end.to raise_error Puppet::Settings::InterpolationError
           end
           it "should contain the setting name in error message" do
             hook_values = []
-            @settings.define_settings(:section, :badhook => {:default => bad_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :badhook => {
+                :default => bad_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error Puppet::SettingsError, /badhook/
+            end.to raise_error Puppet::Settings::InterpolationError, /badhook/
           end
         end
         describe "if no interpolation error" do
           it "should not raise an error" do
             hook_values = []
-            @settings.define_settings(:section, :goodhook => {:default => good_default, :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(
+              :section,
+              :goodhook => {
+                :default => good_default,
+                :desc => "boo",
+                :call_hook => :on_initialize_and_write,
+                :hook => lambda { |v| hook_values << v }
+              }
+            )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
             end.to_not raise_error
@@ -161,7 +186,7 @@ describe Puppet::Util::Settings do
 
   describe "when setting values" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings :main, :myval => { :default => "val", :desc => "desc" }
       @settings.define_settings :main, :bool => { :type => :boolean, :default => true, :desc => "desc" }
     end
@@ -278,7 +303,7 @@ describe Puppet::Util::Settings do
     end
 
     describe "call_hook" do
-      Puppet::Util::Settings::StringSetting.available_call_hook_values.each do |val|
+      Puppet::Settings::StringSetting.available_call_hook_values.each do |val|
         describe "when :#{val}" do
           describe "and definition invalid" do
             it "should raise error if no hook defined" do
@@ -352,7 +377,7 @@ describe Puppet::Util::Settings do
 
         it "should call the hook at initialization" do
           app_defaults = {}
-          Puppet::Util::Settings::REQUIRED_APP_SETTINGS.each do |key|
+          Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
             app_defaults[key] = "foo"
           end
           app_defaults[:run_mode] = :user
@@ -452,7 +477,7 @@ describe Puppet::Util::Settings do
 
   describe "when returning values" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings :section,
           :config => { :type => :file, :default => "/my/file", :desc => "eh" },
           :one    => { :default => "ONE", :desc => "a" },
@@ -469,7 +494,7 @@ describe Puppet::Util::Settings do
         @settings.setting(:hooker).call_on_define
       end
 
-      Puppet::Util::Settings::StringSetting.available_call_hook_values.each do |val|
+      Puppet::Settings::StringSetting.available_call_hook_values.each do |val|
         it "should match value for call_hook => :#{val}" do
           hook_values = []
           @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
@@ -543,7 +568,7 @@ describe Puppet::Util::Settings do
 
   describe "when choosing which value to return" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings :section,
         :config => { :type => :file, :default => "/my/file", :desc => "a" },
         :one => { :default => "ONE", :desc => "a" },
@@ -619,7 +644,7 @@ describe Puppet::Util::Settings do
 
   describe "when locating config files" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
     end
 
     describe "when root" do
@@ -647,7 +672,7 @@ describe Puppet::Util::Settings do
 
   describe "when parsing its configuration" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
       @file = make_absolute("/some/file")
       @userconfig = make_absolute("/test/userconfigfile")
@@ -848,7 +873,7 @@ describe Puppet::Util::Settings do
 
     before do
       Puppet.features.stubs(:root?).returns(false)
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings(:section,
           { :one => { :default => "ONE", :desc => "a" },
             :two => { :default => "TWO", :desc => "b" }, })
@@ -874,7 +899,7 @@ describe Puppet::Util::Settings do
     before do
       @file = make_absolute("/test/file")
       @userconfig = make_absolute("/test/userconfigfile")
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings :section,
           :config => { :type => :file, :default => @file, :desc => "a" },
           :one => { :default => "ONE", :desc => "a" },
@@ -996,12 +1021,12 @@ describe Puppet::Util::Settings do
   end
 
   it "should provide a method for creating a catalog of resources from its configuration" do
-    Puppet::Util::Settings.new.should respond_to(:to_catalog)
+    Puppet::Settings.new.should respond_to(:to_catalog)
   end
 
   describe "when creating a catalog" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
       @prefix = Puppet.features.posix? ? "" : "C:"
     end
@@ -1099,7 +1124,7 @@ describe Puppet::Util::Settings do
 
       it "should not add users or groups to the catalog if :mkusers is not a valid setting" do
         Puppet.features.stubs(:root?).returns true
-        settings = Puppet::Util::Settings.new
+        settings = Puppet::Settings.new
         settings.define_settings :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
         catalog = settings.to_catalog
@@ -1141,12 +1166,12 @@ describe Puppet::Util::Settings do
   end
 
   it "should be able to be converted to a manifest" do
-    Puppet::Util::Settings.new.should respond_to(:to_manifest)
+    Puppet::Settings.new.should respond_to(:to_manifest)
   end
 
   describe "when being converted to a manifest" do
     it "should produce a string with the code for each resource joined by two carriage returns" do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.define_settings :main,
           :maindir => { :type => :directory, :default => "/maindir", :desc => "a"},
           :seconddir => { :type => :directory, :default => "/seconddir", :desc => "a"}
@@ -1164,7 +1189,7 @@ describe Puppet::Util::Settings do
 
   describe "when using sections of the configuration to manage the local host" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
       @settings.define_settings :main, :noop => { :default => false, :desc => "", :type => :boolean }
       @settings.define_settings :main,
@@ -1259,7 +1284,7 @@ describe Puppet::Util::Settings do
 
   describe "when dealing with printing configs" do
     before do
-      @settings = Puppet::Util::Settings.new
+      @settings = Puppet::Settings.new
       #these are the magic default values
       @settings.stubs(:value).with(:configprint).returns("")
       @settings.stubs(:value).with(:genconfig).returns(false)
@@ -1382,11 +1407,11 @@ describe Puppet::Util::Settings do
 
   describe "when determining if the service user is available" do
     it "should return false if there is no user setting" do
-      Puppet::Util::Settings.new.should_not be_service_user_available
+      Puppet::Settings.new.should_not be_service_user_available
     end
 
     it "should return false if the user provider says the user is missing" do
-      settings = Puppet::Util::Settings.new
+      settings = Puppet::Settings.new
       settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
 
       user = mock 'user'
@@ -1398,7 +1423,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should return true if the user provider says the user is present" do
-      settings = Puppet::Util::Settings.new
+      settings = Puppet::Settings.new
       settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
 
       user = mock 'user'
@@ -1414,7 +1439,7 @@ describe Puppet::Util::Settings do
 
   describe "#writesub" do
     it "should only pass valid arguments to File.open" do
-      settings = Puppet::Util::Settings.new
+      settings = Puppet::Settings.new
       settings.stubs(:get_config_file_default).with(:privatekeydir).returns(OpenStruct.new(:mode => "750"))
 
       File.expects(:open).with("/path/to/keydir", "w", 750).returns true
@@ -1424,7 +1449,7 @@ describe Puppet::Util::Settings do
 
 
   describe "when dealing with command-line options" do
-    let(:settings) { Puppet::Util::Settings.new }
+    let(:settings) { Puppet::Settings.new }
 
     it "should get options from Puppet.settings.optparse_addargs" do
       settings.expects(:optparse_addargs).returns([])
@@ -1454,11 +1479,11 @@ describe Puppet::Util::Settings do
     end
 
     it "should transform boolean option to normal form" do
-      Puppet::Util::Settings.clean_opt("--[no-]option", true).should == ["--option", true]
+      Puppet::Settings.clean_opt("--[no-]option", true).should == ["--option", true]
     end
 
     it "should transform boolean option to no- form" do
-      Puppet::Util::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
+      Puppet::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
     end
   end
 

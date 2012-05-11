@@ -1,22 +1,22 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/util/settings'
-require 'puppet/util/settings/string_setting'
+require 'puppet/settings'
+require 'puppet/settings/string_setting'
 
-describe Puppet::Util::Settings::StringSetting do
-  StringSetting = Puppet::Util::Settings::StringSetting
+describe Puppet::Settings::StringSetting do
+  StringSetting = Puppet::Settings::StringSetting
 
   before(:each) do
     @test_setting_name = :test_setting 
     @test_setting_default = "my_crazy_default/$var"
     @application_setting = "application/$var"
     @application_defaults = { } 
-    Puppet::Util::Settings::REQUIRED_APP_SETTINGS.each do |key|
+    Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
       @application_defaults[key] = "foo"
     end
     @application_defaults[:run_mode] = :user
-    @settings = Puppet::Util::Settings.new
+    @settings = Puppet::Settings.new
     @application_defaults.each { |k,v| @settings.define_settings :main, k => {:default=>"", :desc => "blah"} }
     @settings.define_settings :main, :var               => {  :default => "interpolate!", 
                                                               :type => :string, 

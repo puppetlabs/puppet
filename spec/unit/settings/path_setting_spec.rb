@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Util::Settings::PathSetting do
+describe Puppet::Settings::PathSetting do
   subject { described_class.new(:settings => mock('settings'), :desc => "test") }
 
   context "#munge" do
