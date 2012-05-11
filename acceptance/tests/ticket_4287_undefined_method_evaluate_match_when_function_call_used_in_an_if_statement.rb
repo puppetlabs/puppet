@@ -9,6 +9,6 @@ manifest = %q{
 
 agents.each do |host|
   apply_manifest_on(host, manifest) do
-    assert_match(/notice: No issue here.../, stdout, "didn't get the expected notice on #{host}")
+    assert_match(/No issue here.../, stdout, "didn't get the expected notice on #{host}")
   end
 end

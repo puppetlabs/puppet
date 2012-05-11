@@ -94,24 +94,6 @@ Puppet::Util::Log.newdesttype :console do
 
   def initialize
     # Flush output immediately.
-    $stdout.sync = true
-  end
-
-  def handle(msg)
-    if msg.source == "Puppet"
-      puts colorize(msg.level, "#{msg.level}: #{msg}")
-    else
-      puts colorize(msg.level, "#{msg.level}: #{msg.source}: #{msg}")
-    end
-  end
-end
-
-Puppet::Util::Log.newdesttype :telly_prototype_console do
-  require 'puppet/util/colors'
-  include Puppet::Util::Colors
-
-  def initialize
-    # Flush output immediately.
     $stderr.sync = true
     $stdout.sync = true
   end
@@ -126,6 +108,7 @@ Puppet::Util::Log.newdesttype :telly_prototype_console do
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
+    str = msg.source == "Puppet" ? str : "#{msg.source}: #{str}"
 
     case msg.level
     when *error_levels.keys

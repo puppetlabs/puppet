@@ -16,7 +16,7 @@ agents.each do |agent|
 
   step "query for all files, which should return nothing"
   on(agent, puppet_resource('file'), :acceptable_exit_codes => [1]) do
-    assert_match(%r{Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc}, stdout)
+    assert_match(%r{Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc}, stderr)
   end
 
   ["/", "/etc"].each do |file|
