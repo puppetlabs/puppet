@@ -1,4 +1,5 @@
 # encoding: UTF-8
+require 'puppet/forge'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:install) do
@@ -119,7 +120,7 @@ Puppet::Face.define(:module, '1.0.0') do
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
       Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
-      Puppet::ModuleTool::Applications::Installer.run(name, options)
+      Puppet::ModuleTool::Applications::Installer.new(name, Puppet::Forge.new("PMT", self.version), options).run
     end
 
     when_rendering :console do |return_value, name, options|
