@@ -26,7 +26,7 @@ agents.each do |host|
     step "Remove cron resource"
     on(host, puppet_resource("cron", "bogus", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=absent")) do
-      assert_match(/bogus\D+ensure: removed/, stderr, "Removing cron entry failed for #{tmpuser} on #{host}")
+      assert_match(/bogus\D+ensure: removed/, stdout, "Removing cron entry failed for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"

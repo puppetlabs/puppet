@@ -108,6 +108,7 @@ Puppet::Util::Log.newdesttype :console do
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
+    str = msg.source == "Puppet" ? str : "#{msg.source}: #{str}"
 
     case msg.level
     when *error_levels.keys

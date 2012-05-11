@@ -108,6 +108,8 @@ describe Puppet::Util::Log.desttypes[:syslog] do
 end
 
 describe Puppet::Util::Log.desttypes[:console] do
+  let (:klass) { Puppet::Util::Log.desttypes[:console] }
+
   describe "when color is available" do
     before :each do
       subject.stubs(:console_has_color?).returns(true)
@@ -133,6 +135,15 @@ describe Puppet::Util::Log.desttypes[:console] do
       Puppet[:color] = true
       vstring = subject.colorize(:reset, 'version')
       subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[mversion\e[0;32m)\e[0m"
+    end
+
+    it "should include the log message's source/context in the output when available" do
+      Puppet[:color] = false
+      $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
+
+      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
+      dest = klass.new
+      dest.handle(msg)
     end
   end
 end
