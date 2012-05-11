@@ -228,7 +228,7 @@ Licensed under the Apache 2.0 License
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
 
-    # Override the default; puppetd needs this, usually.
+    # Override the default; the agent needs this, usually.
     # You can still override this on the command-line with, e.g., :compiler.
     Puppet[:catalog_terminus] = :rest
 
