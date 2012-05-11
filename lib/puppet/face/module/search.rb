@@ -2,16 +2,16 @@ require 'puppet/util/terminal'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
-    summary "Search a repository for a module."
+    summary "Search the Puppet Forge for a module."
     description <<-EOT
-      Searches a repository for modules whose names, descriptions, or keywords
+      Searches the Puppet Forge for modules whose names, descriptions, or keywords
       match the provided search term.
     EOT
 
     returns "Array of module metadata hashes"
 
     examples <<-EOT
-      Search the default repository for a module:
+      Search the Puppet Forge for a module:
 
       $ puppet module search puppetlabs
       NAME          DESCRIPTION                          AUTHOR             KEYWORDS
