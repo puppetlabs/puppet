@@ -57,6 +57,7 @@ class Puppet::Node::Environment
 
   def self.clear
     @seen.clear
+    self.current = nil
   end
 
   attr_reader :name
