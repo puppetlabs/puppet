@@ -161,12 +161,17 @@ describe Puppet::Node::Environment do
     end
 
     it "should be able to return an individual module that exists in its module path" do
+      env.stubs(:modules).returns [Puppet::Module.new('one'), Puppet::Module.new('two'), Puppet::Module.new('three')]
 
-      mod = mock 'module'
-      Puppet::Module.expects(:new).with("one", :environment => env).returns mod
-      mod.expects(:exist?).returns true
+      mod = env.module('one')
+      mod.should be_a(Puppet::Module)
+      mod.name.should == 'one'
+    end
 
-      env.module("one").should equal(mod)
+    it "should not return a module if the module doesn't exist" do
+      env.stubs(:modules).returns [Puppet::Module.new('one'), Puppet::Module.new('two'), Puppet::Module.new('three')]
+
+      env.module('four').should be_nil
     end
 
     it "should return nil if asked for a module that does not exist in its path" do

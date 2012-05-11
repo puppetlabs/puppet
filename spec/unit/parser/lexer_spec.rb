@@ -407,6 +407,44 @@ describe Puppet::Parser::Lexer::TOKENS[:RETURN] do
   end
 end
 
+shared_examples_for "variable names in the lexer" do |prefix|
+  # Watch out - a regex might match a *prefix* on these, not just the whole
+  # word, so make sure you don't have false positive or negative results based
+  # on that.
+  legal   = %w{f foo f::b foo::b f::bar foo::bar 3 foo3 3foo}
+  illegal = %w{f- f-o -f f::-o f::o- f::o-o}
+
+  ["", "::"].each do |global_scope|
+    legal.each do |name|
+      var = prefix + global_scope + name
+      it "should accept #{var.inspect} as a valid variable name" do
+        (subject.regex.match(var) || [])[0].should == var
+      end
+    end
+
+    illegal.each do |name|
+      var = prefix + global_scope + name
+      it "should NOT accept #{var.inspect} as a valid variable name" do
+        (subject.regex.match(var) || [])[0].should_not == var
+      end
+    end
+  end
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:DOLLAR_VAR] do
+  its(:skip_text) { should be_false }
+  its(:incr_line) { should be_false }
+
+  it_should_behave_like "variable names in the lexer", '$'
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:VARIABLE] do
+  its(:skip_text) { should be_false }
+  its(:incr_line) { should be_false }
+
+  it_should_behave_like "variable names in the lexer", ''
+end
+
 def tokens_scanned_from(s)
   lexer = Puppet::Parser::Lexer.new
   lexer.string = s
@@ -664,9 +702,14 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly lex variables" do
-    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable", "$hyphenated-variable", "$-variable-with-leading-dash"].each do |string|
+    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
       tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
     end
+  end
+
+  it "should end variables at `-`" do
+    tokens_scanned_from('$hyphenated-variable').
+      should be_like [:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable']
   end
 
   it "should not include whitespace in a variable" do
@@ -682,7 +725,7 @@ describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file
-      lambda { lexer.fullscan }.should_not raise_error
+      expect { lexer.fullscan }.should_not raise_error
     end
   end
 end

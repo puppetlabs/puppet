@@ -7,6 +7,16 @@ task :gen_manpages do
 
   helpface = Puppet::Face[:help, '0.0.1']
   manface  = Puppet::Face[:man, '0.0.1']
+
+  # TODO: This line is terrible.  The reason we need this here is because we
+  #  handle state initialization differently when we run via command line
+  #  (application.rb) than we do when we try to use Faces as library code.
+  #  This is bad, we need to come up with an official stance on what our
+  #  API is and what the entry points, so that we can make sure that
+  #  state initialization is consistent.  See:
+  # http://projects.puppetlabs.com/issues/14441
+  Puppet::Util::Instrumentation.init()
+
   sbins = Dir.glob(%w{sbin/*})
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
@@ -49,9 +59,7 @@ task :gen_manpages do
   # Create face man pages
   faces.each do |face|
     File.open("./man/man8/puppet-#{face}.8.ronn", 'w') do |fh|
-      # For some reason no one understands at the moment, it duplicates termini,
-      # so we have to remove the dupes with a gsub.
-      fh.write manface.man("#{face}", {:render_as => :s}).gsub(/^(\* `[^`]+`)\n\1/, '\1')
+      fh.write manface.man("#{face}")
     end
 
     %x{#{ronn} #{ronn_args} ./man/man8/puppet-#{face}.8.ronn}

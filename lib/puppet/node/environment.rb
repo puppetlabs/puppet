@@ -88,9 +88,7 @@ class Puppet::Node::Environment
   end
 
   def module(name)
-    mod = Puppet::Module.new(name, :environment => self)
-    return nil unless mod.exist?
-    mod
+    modules.find {|mod| mod.name == name}
   end
 
   def module_by_forge_name(forge_name)
