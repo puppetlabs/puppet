@@ -148,6 +148,7 @@ Puppet::Face.define(:module, '1.0.0') do
     when_invoked do |name, options|
       sep = File::PATH_SEPARATOR
       if options[:target_dir]
+        options[:target_dir] = File.expand_path(options[:target_dir])
         options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}"
       end
 
