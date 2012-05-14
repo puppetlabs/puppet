@@ -8,6 +8,14 @@ class Puppet::Application::Device < Puppet::Application
 
   attr_accessor :args, :agent, :host
 
+  def app_defaults
+    super.merge({
+      :catalog_terminus => :rest,
+      :node_terminus => :rest,
+      :facts_terminus => :network_device,
+    })
+  end
+
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
     Signal.trap(:INT) do
@@ -227,12 +235,6 @@ Licensed under the Apache 2.0 License
     Puppet::SSL::Host.ca_location = :remote
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
-
-    # Override the default; the agent needs this, usually.
-    # You can still override this on the command-line with, e.g., :compiler.
-    Puppet[:catalog_terminus] = :rest
-
-    Puppet[:facts_terminus] = :network_device
 
     Puppet::Resource::Catalog.indirection.cache_class = :yaml
   end
