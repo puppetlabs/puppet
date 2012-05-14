@@ -223,7 +223,7 @@ module Puppet::Util::FileParsing
       if val = parse_line(line)
         val
       else
-        error = Puppet::Error.new("Could not parse line #{line.inspect}")
+        error = Puppet::ResourceError.new("Could not parse line #{line.inspect}")
         error.line = count
         raise error
       end
