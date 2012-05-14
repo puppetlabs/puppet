@@ -17,10 +17,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value.is_a? Integer
   end
 
-  verify :groups, "Groups must be comma-separated" do |value|
-    value !~ /\s/
-  end
-
   has_features :manages_homedir, :allows_duplicates, :manages_expiry, :system_users
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
