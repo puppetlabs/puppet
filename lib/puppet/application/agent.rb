@@ -458,7 +458,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Override the default.
     Puppet[:facts_terminus] = :facter
 
-    Puppet::Resource::Catalog.indirection.cache_class = :yaml
+    Puppet::Resource::Catalog.indirection.cache_class = Puppet[:preferred_cache_format]
 
     unless options[:fingerprint]
       setup_agent
