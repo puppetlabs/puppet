@@ -76,6 +76,9 @@ Puppet::Util::Log.newdesttype :file do
     # create the log file, if it doesn't already exist
     file = File.open(path, File::WRONLY|File::CREAT|File::APPEND)
 
+    # Give ownership to the user and group puppet will run as
+    FileUtils.chown(Puppet[:user], Puppet[:group], path)
+
     @file = file
 
     @autoflush = Puppet[:autoflush]
