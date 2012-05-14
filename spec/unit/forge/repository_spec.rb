@@ -62,7 +62,7 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with() do |request|
           puppet_version = /Puppet\/\d+\..*/
           os_info = /\(.*\)/
-          ruby_version = /Ruby\/\d+\.\d+\.\d+-p\d+ \(\d{4}-\d{2}-\d{2}; .*\)/
+          ruby_version = /Ruby\/\d+\.\d+\.\d+(-p\d+)? \(\d{4}-\d{2}-\d{2}; .*\)/
 
           request["User-Agent"] =~ /^#{consumer_version} #{puppet_version} #{os_info} #{ruby_version}/
         end
