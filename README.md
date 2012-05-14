@@ -6,9 +6,6 @@ scope for data.  The data structure and approach is heavily
 based on work by Nigel Kersten but made more configurable and
 with full hierarchy.
 
-It also includes a Puppet function that works like extlookup()
-but uses the Hiera backends.
-
 Usage?
 ======
 
@@ -129,12 +126,4 @@ $ extlookup2hiera --in common.csv --out common.json --json
 Installation?
 =============
 
-It's not 100% ready for prime time, shortly a simple _gem install hiera-puppet_ on your master will do it.
-
-For the moment the Gem install will place the Puppet Parser Function where Puppet cannot find it, you should
-copy it out and distribute it to your master using Pluginsync or something similar
-
-Who?
-====
-
-R.I.Pienaar / rip@devco.net / @ripienaar / www.devco.net
+Shortly a simple _gem install hiera-puppet_ on your master will do it.
