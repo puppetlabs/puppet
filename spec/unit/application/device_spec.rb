@@ -209,10 +209,14 @@ describe Puppet::Application::Device do
       @device.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet[:catalog_terminus] = :foo
-      @device.setup
+    it "should default the catalog_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
       Puppet[:catalog_terminus].should ==  :rest
+    end
+
+    it "should default the node_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
+      Puppet[:node_terminus].should ==  :rest
     end
 
     it "should tell the catalog handler to use cache" do
@@ -221,10 +225,8 @@ describe Puppet::Application::Device do
       @device.setup
     end
 
-    it "should change the facts_terminus setting to 'network_device'" do
-      Puppet[:facts_terminus] = :foo
-
-      @device.setup
+    it "should default the facts_terminus setting to 'network_device'" do
+      @device.initialize_app_defaults
       Puppet[:facts_terminus].should == :network_device
     end
   end
