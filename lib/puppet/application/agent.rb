@@ -6,6 +6,14 @@ class Puppet::Application::Agent < Puppet::Application
 
   attr_accessor :args, :agent, :daemon, :host
 
+  def app_defaults
+    super.merge({
+      :catalog_terminus => :rest,
+      :node_terminus => :rest,
+      :facts_terminus => :facter,
+    })
+  end
+
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
     Signal.trap(:INT) do
@@ -449,14 +457,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
-
-    # Override the default; puppet agent needs this, usually.
-    # You can still override this on the command-line with, e.g., :compiler.
-    Puppet[:catalog_terminus] = :rest
-    Puppet[:node_terminus] = :rest
-
-    # Override the default.
-    Puppet[:facts_terminus] = :facter
 
     Puppet::Resource::Catalog.indirection.cache_class = :yaml
 

@@ -327,10 +327,14 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet[:catalog_terminus] = :foo
-      @puppetd.setup
+    it "should default catalog_terminus setting to 'rest'" do
+      @puppetd.initialize_app_defaults
       Puppet[:catalog_terminus].should ==  :rest
+    end
+
+    it "should default node_terminus setting to 'rest'" do
+      @puppetd.initialize_app_defaults
+      Puppet[:node_terminus].should ==  :rest
     end
 
     it "should tell the catalog handler to use cache" do
@@ -339,10 +343,8 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should change the facts_terminus setting to 'facter'" do
-      Puppet[:facts_terminus] = :foo
-
-      @puppetd.setup
+    it "should default facts_terminus setting to 'facter'" do
+      @puppetd.initialize_app_defaults
       Puppet[:facts_terminus].should == :facter
     end
 
