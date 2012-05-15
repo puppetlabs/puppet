@@ -1,7 +1,7 @@
 begin test_name 'puppet module search output should be well structured'
 
 step 'Stub http://forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
+require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 
 step 'Search results should line up by column'
