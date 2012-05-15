@@ -1213,15 +1213,10 @@ if @config.include?(:run_mode)
           end
           result[section][var] = value
         rescue Puppet::Error => detail
-          detail.file = file
-          detail.line = line
-          raise
+          raise ParseError.new(detail.message, file, line, detail)
         end
       else
-        error = Puppet::Error.new("Could not match line #{line}")
-        error.file = file
-        error.line = line
-        raise error
+        raise ParseError.new("Could not match line #{line}", file, line)
       end
     end
 
