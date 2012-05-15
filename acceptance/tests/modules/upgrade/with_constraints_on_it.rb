@@ -1,7 +1,7 @@
 begin test_name "puppet module upgrade (with constraints on it)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
+require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 apply_manifest_on master, <<-'MANIFEST1'
 file { '/usr/share/puppet':
