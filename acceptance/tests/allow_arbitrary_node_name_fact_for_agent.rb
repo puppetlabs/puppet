@@ -3,10 +3,22 @@ test_name "node_name_fact should be used to determine the node name for puppet a
 success_message = "node_name_fact setting was correctly used to determine the node name"
 
 node_names = []
+echo_commands = {}
 
-on agents, facter('kernel') do
-  node_names << stdout.chomp
+agents.each do |agent|
+  on agent, facter('kernel') do
+    node_name = stdout.chomp
+    echo_command = agent.echo(success_message)
+    if (echo_commands.has_key?(node_name))
+      assert_equal(echo_command, echo_commands[node_name], "Found multiple echo commands for the same node name!")
+    else
+      echo_commands[node_name] = echo_command
+    end
+    node_names << node_name
+  end
 end
+#on agents, facter('kernel') do
+#end
 
 node_names.uniq!
 
@@ -33,7 +45,7 @@ manifest = %Q[
 manifest << node_names.map do |node_name|
   %Q[
     node "#{node_name}" {
-      exec { "echo #{success_message}": logoutput => true }
+      exec { "#{echo_commands[node_name]}": logoutput => true }
     }
   ]
 end.join("\n")
