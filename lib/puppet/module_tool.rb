@@ -86,6 +86,9 @@ module Puppet
 
     def self.set_option_defaults(options)
       sep = File::PATH_SEPARATOR
+      if options[:target_dir]
+        options[:target_dir] = File.expand_path(options[:target_dir])
+      end
 
       prepend_target_dir = !! options[:target_dir]
 

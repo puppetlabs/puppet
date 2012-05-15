@@ -138,6 +138,17 @@ describe "puppet module install" do
           Puppet::Face[:module, :current].install("puppetlabs-apache", options)
           Puppet.settings[:modulepath].should == expected_options[:modulepath]
         end
+
+        it "should expand the target directory" do
+          options[:target_dir] = "modules"
+          expanded_path = File.expand_path("modules")
+          expected_options.merge!(options)
+          expected_options[:target_dir] = expanded_path
+          expected_options[:modulepath] = "#{expanded_path}#{sep}#{fakemodpath}"
+
+          expects_installer_run_with("puppetlabs-apache", expected_options)
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+        end
       end
     end
   end
