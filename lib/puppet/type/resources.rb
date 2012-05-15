@@ -80,7 +80,7 @@ Puppet::Type.newtype(:resources) do
        when Array
          value
        when /^\[\d+/
-         values.split(',').collect{|x| x.include?('..') ? Integer(x.split('..')[0])..Integer(x.split('..')[1]) : Integer(x) }
+         value.split(',').collect{|x| x.include?('..') ? Integer(x.split('..')[0])..Integer(x.split('..')[1]) : Integer(x) }
        else
          raise ArgumentError, "Invalid value #{value.inspect}"
        end
