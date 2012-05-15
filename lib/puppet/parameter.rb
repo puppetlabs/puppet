@@ -153,7 +153,7 @@ class Puppet::Parameter
     if args[0].is_a?(Class)
       type = args.shift
     else
-      type = Puppet::Error
+      type = Puppet::ResourceError
     end
 
     error = type.new(args.join(" "))
