@@ -1,7 +1,7 @@
 begin test_name 'puppet module search should do substring matches on module name'
 
 step 'Stub http://forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.com')
+require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 
 step 'Search for modules by partial name'
