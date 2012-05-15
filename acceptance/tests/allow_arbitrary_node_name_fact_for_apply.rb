@@ -20,11 +20,14 @@ manifest = %Q[
 node_names.each do |node_name|
   manifest << %Q[
     node "#{node_name}" {
-      exec { "echo #{success_message}": }
+      exec { "%s": }
     }
   ]
 end
 
-on agents, puppet_apply("--verbose --node_name_fact kernel"), :stdin => manifest do
-  assert_match(success_message, stdout)
+agents.each do |agent|
+  echo_cmd = agent.echo(success_message)
+  on agent, puppet_apply("--verbose --node_name_fact kernel"), :stdin => manifest % echo_cmd do
+    assert_match(/#{success_message}.*executed successfully/, stdout)
+  end
 end
