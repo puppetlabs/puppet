@@ -966,7 +966,7 @@ EOT
       :desc => "The server to which the puppet agent should connect"
     },
     :use_srv_records => {
-      :default    => true,
+      :default    => false,
       :type       => :boolean,
       :desc       => "Whether the server will search for SRV records in DNS for the current domain.",
     },
