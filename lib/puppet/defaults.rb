@@ -369,23 +369,13 @@ module Puppet
     }
   )
 
-  hostname = Facter["hostname"].value
-  domain = Facter["domain"].value
-  if domain and domain != ""
-    fqdn = [hostname, domain].join(".")
-  else
-    fqdn = hostname
-  end
-  fqdn.gsub(/\.$/, '')
-
-
     Puppet.define_settings(
     :main,
 
     # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
-      :default => fqdn.downcase, :desc => "The name to use when handling certificates.  Defaults
+      :default => Puppet::Settings.default_certname.downcase, :desc => "The name to use when handling certificates.  Defaults
       to the fully qualified domain name.",
       :call_hook => :on_define_and_write, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
@@ -972,7 +962,7 @@ EOT
       :desc       => "Whether the server will search for SRV records in DNS for the current domain.",
     },
     :srv_domain => {
-      :default    => "#{domain}",
+      :default    => "#{Puppet::Settings.domain_fact}",
       :desc       => "The domain which will be queried to find the SRV records of servers to use.",
     },
     :ignoreschedules => {
