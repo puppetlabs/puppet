@@ -3,7 +3,7 @@ require 'puppet/forge'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
-    summary "Search a repository for a module."
+    summary "Search the Puppet Forge for a module."
     description <<-EOT
       Searches a repository for modules whose names, descriptions, or keywords
       match the provided search term.
@@ -12,7 +12,7 @@ Puppet::Face.define(:module, '1.0.0') do
     returns "Array of module metadata hashes"
 
     examples <<-EOT
-      Search the default repository for a module:
+      Search the Puppet Forge for a module:
 
       $ puppet module search puppetlabs
       NAME          DESCRIPTION                          AUTHOR             KEYWORDS
