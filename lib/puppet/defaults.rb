@@ -1035,6 +1035,7 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
+    :preferred_cache_format => ["yaml", "The preferred format for writing catalog on agent"],
     :agent_pidfile => {
       :default    => "$statedir/agent.pid",
     :type         => :file,
