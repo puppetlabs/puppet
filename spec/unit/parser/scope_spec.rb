@@ -280,6 +280,22 @@ describe Puppet::Parser::Scope do
         end
       end
 
+      it "finds values in its included scope for a defined type (DEPRECATED)" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include foo
+            }
+            class foo {
+              $var = "foo_msg"
+              bar { "testing": }
+            }
+            define bar() {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
       it "recognizes a dynamically scoped boolean (DEPRECATED)" do
         expect_the_message_to_be(true) do <<-MANIFEST
             node default {
@@ -525,6 +541,33 @@ describe Puppet::Parser::Scope do
               include foo
             }
             class foo {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds top scope variables referenced inside a defined type" do
+        expect_the_message_to_be('top_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              foo { "testing": }
+            }
+            define foo() {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds node scope variables referenced inside a defined type" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            $var = "top_msg"
+            node default {
+              $var = "node_msg"
+              foo { "testing": }
+            }
+            define foo() {
               notify { 'something': message => $var, }
             }
           MANIFEST
