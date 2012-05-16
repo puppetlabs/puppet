@@ -99,7 +99,7 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
   end
 
   manifest = "file { '#{target}': source => 'puppet:///modules/test_module/test_file.txt', ensure => present }"
-  apply_manifest_on agent, manifest
+  apply_manifest_on agent, manifest, :trace => true
 
   on agent, "cat #{target}" do
     assert_match(/Yay, this is the puppetfile./, stdout, "SECOND: File contents not matched on #{agent}")
