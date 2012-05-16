@@ -1,11 +1,12 @@
 test_name "The source attribute"
 
+targets = {}
 
 agents.each do |agent|
-  target = agent.tmpfile('source_file_test')
+  targets[agent] = agent.tmpfile('source_file_test')
 
   step "Ensure the test environment is clean"
-  on agent, "rm -f #{target}"
+  on agent, "rm -f #{targets[agent]}"
 
 step "when using a puppet:/// URI with a master/agent setup"
 modulepath = nil
@@ -80,14 +81,14 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
   source = agent.tmpfile('local_source_file_test')
   on agent, "echo 'Yay, this is the local file.' > #{source}"
 
-  manifest = "file { '#{target}': source => '#{source}', ensure => present }"
+  manifest = "file { '#{targets[agent]}': source => '#{source}', ensure => present }"
   apply_manifest_on agent, manifest, :trace => true
-  on agent, "cat #{target}" do
+  on agent, "cat #{targets[agent]}" do
     assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
   end
 
   step "Ensure the test environment is clean"
-  on agent, "rm -f #{target}"
+  on agent, "rm -f #{targets[agent]}"
 
   step "Using a puppet:/// URI with puppet apply"
   on agent, puppet_agent("--configprint modulepath") do
@@ -98,15 +99,15 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
     on agent, "echo 'Yay, this is the puppetfile.' > '#{modulepath}/test_module/files/test_file.txt'"
   end
 
-  manifest = "file { '#{target}': source => 'puppet:///modules/test_module/test_file.txt', ensure => present }"
+  manifest = "file { '#{targets[agent]}': source => 'puppet:///modules/test_module/test_file.txt', ensure => present }"
   apply_manifest_on agent, manifest, :trace => true
 
-  on agent, "cat #{target}" do
+  on agent, "cat #{targets[agent]}" do
     assert_match(/Yay, this is the puppetfile./, stdout, "SECOND: File contents not matched on #{agent}")
   end
 
   step "Cleanup"
-  on agent, "rm -f #{target}; rm -rf #{source}"
+  on agent, "rm -f #{targets[agent]}; rm -rf #{source}"
 end
 
 # Oops. We (Jesse & Jacob) ended up writing this before realizing that you
