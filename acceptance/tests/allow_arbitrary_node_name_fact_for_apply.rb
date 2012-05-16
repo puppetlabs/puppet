@@ -13,21 +13,18 @@ node_names.uniq!
 manifest = %Q[
   Exec { path => "/usr/bin:/bin" }
   node default {
-    exec { "false": }
+    notify { "false": }
   }
 ]
 
 node_names.each do |node_name|
   manifest << %Q[
     node "#{node_name}" {
-      exec { "%s": }
+      notify { "echo #{success_message}": }
     }
   ]
 end
 
-agents.each do |agent|
-  echo_cmd = agent.echo(success_message)
-  on agent, puppet_apply("--verbose --node_name_fact kernel"), :stdin => manifest % echo_cmd do
-    assert_match(/#{success_message}.*executed successfully/, stdout)
-  end
+on agents, puppet_apply("--verbose --node_name_fact kernel"), :stdin => manifest do
+  assert_match(/defined 'message'.*#{success_message}/, stdout)
 end
