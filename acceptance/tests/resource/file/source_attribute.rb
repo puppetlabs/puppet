@@ -7,6 +7,7 @@ agents.each do |agent|
 
   step "Ensure the test environment is clean"
   on agent, "rm -f #{targets[agent]}"
+end
 
 step "when using a puppet:/// URI with a master/agent setup"
 modulepath = nil
@@ -45,16 +46,16 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
 # and then once with the posix manifest.  Could potentially get around this by
 # creating a manifest with nodes or by moving the windows bits into a separate
 # test.
-  with_master_running_on master, "--autosign true --manifest #{windows_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
-    agents.each do |agent|
-      next unless agent['platform'].include?('windows')
-      run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
-        on agent, "cat #{windows_result_file}" do
-          assert_match(/the content is present/, stdout, "Result file not created")
-        end
+with_master_running_on master, "--autosign true --manifest #{windows_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+  agents.each do |agent|
+    next unless agent['platform'].include?('windows')
+    run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
+      on agent, "cat #{windows_result_file}" do
+        assert_match(/the content is present/, stdout, "Result file not created")
       end
     end
   end
+end
 
   #run_agent_on agents, "--test --server #{master}", :acceptable_exit_codes => [2] do
   #  on agents, "cat #{result_file}" do
@@ -62,21 +63,22 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
   #  end
   #end
 
-  with_master_running_on master, "--autosign true --manifest #{posix_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
-    agents.each do |agent|
-      next if agent['platform'].include?('windows')
-      run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
-        on agent, "cat #{posix_result_file}" do
-          assert_match(/the content is present/, stdout, "Result file not created")
-        end
+with_master_running_on master, "--autosign true --manifest #{posix_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+  agents.each do |agent|
+    next if agent['platform'].include?('windows')
+    run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
+      on agent, "cat #{posix_result_file}" do
+        assert_match(/the content is present/, stdout, "Result file not created")
       end
     end
   end
+end
 
 
 # TODO: Add tests for puppet:// URIs with multi-master/agent setups.
 # step "when using a puppet://$server/ URI with a master/agent setup"
 
+agents.each do |agent|
   step "Using a local file path"
   source = agent.tmpfile('local_source_file_test')
   on agent, "echo 'Yay, this is the local file.' > #{source}"
