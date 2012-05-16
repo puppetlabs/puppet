@@ -81,7 +81,7 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
   on agent, "echo 'Yay, this is the local file.' > #{source}"
 
   manifest = "file { '#{target}': source => '#{source}', ensure => present }"
-  apply_manifest_on agent, manifest
+  apply_manifest_on agent, manifest, :trace => true
   on agent, "cat #{target}" do
     assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
   end
