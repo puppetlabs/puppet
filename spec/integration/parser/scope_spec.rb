@@ -239,6 +239,33 @@ describe "Two step scoping for variables" do
         MANIFEST
       end
     end
+
+    it "finds top scope variables referenced inside a defined type" do
+      expect_the_message_to_be('top_msg') do <<-MANIFEST
+          $var = "top_msg"
+          node default {
+            foo { "testing": }
+          }
+          define foo() {
+            notify { 'something': message => $var, }
+          }
+        MANIFEST
+      end
+    end
+
+    it "finds node scope variables referenced inside a defined type" do
+      expect_the_message_to_be('node_msg') do <<-MANIFEST
+          $var = "top_msg"
+          node default {
+            $var = "node_msg"
+            foo { "testing": }
+          }
+          define foo() {
+            notify { 'something': message => $var, }
+          }
+        MANIFEST
+      end
+    end
   end
 
   describe "in situations that used to have dynamic lookup" do
@@ -274,6 +301,23 @@ describe "Two step scoping for variables" do
           class baz {
             $var = "baz_msg"
             include bar
+          }
+        MANIFEST
+      end
+    end
+
+    it "ignores the value in the dynamic scope for a defined type" do
+      expect_the_message_to_be('node_msg') do <<-MANIFEST
+          node default {
+            $var = "node_msg"
+            include foo
+          }
+          class foo {
+            $var = "foo_msg"
+            bar { "testing": }
+          }
+          define bar() {
+            notify { 'something': message => $var, }
           }
         MANIFEST
       end

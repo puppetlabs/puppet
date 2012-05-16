@@ -5,16 +5,16 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.14
-#Release:        0.1rc1%{?dist}
-Release:        1%{?dist}
+Version:        2.7.15
+Release:        0.1rc1%{?dist}
+#Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
+#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
+#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -36,7 +36,7 @@ Requires:       ruby-shadow
 %endif
 %endif
 
-Requires:       facter >= 1.5
+Requires:       facter >= 1.5, facter <= 2.0
 Requires:       ruby >= 1.8.5
 %{!?_without_augeas:Requires: ruby-augeas}
 
@@ -66,7 +66,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}
+#%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -285,6 +286,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue May 15 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc1
+- Update for 2.7.15rc1
+
 * Wed May 02 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.14-1
 - Update for 2.7.14
 

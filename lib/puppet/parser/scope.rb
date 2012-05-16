@@ -230,6 +230,7 @@ class Puppet::Parser::Scope
     # Save the originating scope for the request
     options[:origin] = self unless options[:origin]
     table = ephemeral?(name) ? @ephemeral.last : @symtable
+
     if name =~ /^(.*)::(.+)$/
       begin
         qualified_scope($1).lookupvar($2, options.merge({:origin => nil}))
@@ -239,7 +240,7 @@ class Puppet::Parser::Scope
         nil
       end
     # If the value is present and either we are top/node scope or originating scope...
-    elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (self.resource and self.resource.type == "Node") or self == options[:origin])
+    elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (resource and resource.type == "Node") or self == options[:origin])
       table[name]
     elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
       class_scope(parent_type).lookupvar(name,options.merge({:origin => nil}))
