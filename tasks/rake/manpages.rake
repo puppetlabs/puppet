@@ -5,6 +5,13 @@ task :gen_manpages do
   require 'puppet/face'
   require 'fileutils'
 
+  # TODO: this line is unfortunate.  In an ideal world, faces would serve
+  #  as a clear, well-defined entry-point into the code and could be
+  #  responsible for state management all on their own; this really should
+  #  not be necessary.  When we can, we should get rid of it.
+  #  --cprice 2012-05-16
+  Puppet.initialize_settings()
+
   helpface = Puppet::Face[:help, '0.0.1']
   manface  = Puppet::Face[:man, '0.0.1']
 
