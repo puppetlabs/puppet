@@ -29,9 +29,8 @@ create_remote_file(master, "#{testdir}/special/amod/files/testy", "special_envir
 on master, "chown -R root:puppet #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --autosign true") do
-
-  agents.each do |agent|
+agents.each do |agent|
+  with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --autosign true") do
     atmp = agent.tmpdir('respect_enc_test')
     puts "agent: #{agent} \tagent.tmpdir => #{atmp}"
     create_remote_file master, "#{testdir}/different.pp", <<END
