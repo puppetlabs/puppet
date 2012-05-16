@@ -42,7 +42,7 @@ notify { "mytemp is ${::mytemp}": }
 END
     on master, "chmod 644 #{testdir}/different.pp"
 
-    run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose")
+    run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --trace")
     on agent, "cat #{atmp}/special_testy"
     assert_match(/special_environment/, stdout, "The file from environment 'special' was not found")
     on agent, "rm -rf #{atmp}"
