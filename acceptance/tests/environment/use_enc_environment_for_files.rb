@@ -33,6 +33,7 @@ with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dn
 
   agents.each do |agent|
     atmp = agent.tmpdir('respect_enc_test')
+    puts "agent: #{agent} \tagent.tmpdir => #{atmp}"
     create_remote_file master, "#{testdir}/different.pp", <<END
 file { "#{atmp}/special_testy":
   source => "puppet:///modules/amod/testy",
