@@ -144,27 +144,6 @@ class Puppet::Parameter
     end
   end
 
-  def devfail(msg)
-    self.fail(Puppet::DevError, msg)
-  end
-
-  def fail(*args)
-    type = nil
-    if args[0].is_a?(Class)
-      type = args.shift
-    else
-      type = Puppet::ResourceError
-    end
-
-    error = type.new(args.join(" "))
-
-    error.line = @resource.line if @resource and @resource.line
-
-    error.file = @resource.file if @resource and @resource.file
-
-    raise error
-  end
-
   # Basic parameter initialization.
   def initialize(options = {})
     options = symbolize_options(options)
