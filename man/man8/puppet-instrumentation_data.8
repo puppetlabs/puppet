@@ -1,13 +1,16 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-STATUS" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-INSTRUMENTATION_DATA" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
-\fBpuppet\-status\fR \- View puppet server status\.
+\fBpuppet\-instrumentation_data\fR \- Manage instrumentation listener accumulated data\.
 .
 .SH "SYNOPSIS"
-puppet status \fIaction\fR [\-\-terminus TERMINUS] [\-\-extra HASH]
+puppet instrumentation_data \fIaction\fR [\-\-terminus TERMINUS] [\-\-extra HASH]
+.
+.SH "DESCRIPTION"
+This subcommand allows to retrieve the various listener data\.
 .
 .SH "OPTIONS"
 Note that any configuration parameter that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR is a valid configuration parameter, so you can specify \fB\-\-server <servername>\fR as an argument\.
@@ -52,7 +55,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet instrumentation_data destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -61,42 +64,30 @@ puppet status destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 Invalid for this subcommand\.
 .
 .TP
-\fBfind\fR \- Check status of puppet master server\.
+\fBfind\fR \- Retrieve listener data\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status [\-\-terminus TERMINUS] [\-\-extra HASH] \fIdummy_text\fR
+puppet instrumentation_data find [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Checks whether a Puppet server is properly receiving and processing HTTP requests\. This action is only useful when used with \'\-\-terminus rest\'; when invoked with the \fBlocal\fR terminus, \fBfind\fR will always return true\.
-.
-.IP
-Over REST, this action will query the configured puppet master by default\. To query other servers, including puppet agent nodes started with the \fI\-\-listen\fR option, you can set set the global \fI\-\-server\fR and \fI\-\-masterport\fR options on the command line; note that agent nodes listen on port 8139\.
+Retrieve listener data\.
 .
 .IP
 \fBRETURNS\fR
 .
 .IP
-A "true" response or a low\-level connection error\. When used from the Ruby API: returns a Puppet::Status object\.
-.
-.IP
-\fBNOTES\fR
-.
-.IP
-This action requires that the server\'s \fBauth\.conf\fR file allow find access to the \fBstatus\fR REST terminus\. Puppet agent does not use this facility, and it is turned off by default\. See \fIhttp://docs\.puppetlabs\.com/guides/rest_auth_conf\.html\fR for more details\.
-.
-.IP
-Although this action always returns an unnamed status object, it requires a dummy argument\. This is a known bug\.
+The data of an instrumentation listener
 .
 .TP
 \fBinfo\fR \- Print the default terminus class for this face\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status info [\-\-terminus TERMINUS] [\-\-extra HASH]
+puppet instrumentation_data info [\-\-terminus TERMINUS] [\-\-extra HASH]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -109,20 +100,20 @@ Prints the default terminus class for this subcommand\. Note that different run 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet instrumentation_data save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Invalid for this subcommand\.
+API only: create or overwrite an object\. As the Faces framework does not currently accept data from STDIN, save actions cannot currently be invoked from the command line\.
 .
 .TP
 \fBsearch\fR \- Invalid for this subcommand\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status search [\-\-terminus TERMINUS] [\-\-extra HASH] \fIquery\fR
+puppet instrumentation_data search [\-\-terminus TERMINUS] [\-\-extra HASH] \fIquery\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -134,10 +125,10 @@ Invalid for this subcommand\.
 \fBfind\fR
 .
 .P
-Check the status of the configured puppet master:
+Retrieve listener data:
 .
 .P
-$ puppet status find x \-\-terminus rest
+$ puppet instrumentation_data find performance \-\-terminus rest
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:

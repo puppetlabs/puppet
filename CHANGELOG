@@ -1,3 +1,80 @@
+3.0.0rc1
+===
+a731e15 Update CHANGELOG lib/puppet.rb puppet.spec for 2.7.15rc1
+53e0057 Use internal domain name for module tool tests
+f4ba59e Use absolute_path in module install spec
+ead9d25 (Maint) Color console output when the win32console gem is installed
+a76d873 (#14424) Expand path of the target directory
+95b75e1 Fix unit test failure in fileserver due to modules
+da5361d Maint: De-genericize Puppet Forge references in module face
+3b144bf Revert "maint: use relative paths to fixtures."
+dae5539 (#14440) Hack to allow help faces to be used as API
+e862cad Fix broken man page rake task
+b26699a (#10146) `-` is not legal in variable names.
+7ce9e17 maint: use relative paths to fixtures.
+a7a532c Significantly improve compilation performance when using modules
+12c5bda Fix a stub of ansicolor that I missed
+ea740f6 Add Puppet::Util::Platform to abstract platform checks
+91a4a7d Don't use features to check for color in logging
+80fe59d Remove a bad test that can lead to random hangs...
+0efb4c2 (#14296) Improve template function error message.
+d5e0cdd (#14288) gem provider should tolerate bad lines.
+574e4c8 Update CHANGELOG, spec files for 2.7.14
+d2b3ba0 Revert "Fix incorrect argument handling for expire in NodeExpirer"
+7c7d4b6 Fix #14123 for Windows
+1c9bec0 Fix incorrect argument handling for expire in NodeExpirer
+7e92a7c Fix filebucket specs on Windows
+a713f07 (#8778) Make '' == undef commutative in the DSL
+24d4bb5 Revert "(#11004) Fix regex for pkg provider line matching"
+34da6f7 (#13651) Use magenta, not purple in Facter::Util::Colors
+e37b536 (#11004) Fix regex for pkg provider line matching
+9b47110 (#13956) Fix failing spec tests
+7e92dcb Just change Puppet settings in tests, rather than stubbing.
+ca313dc (maint) Fix destinations_spec failure on windows
+cde3bee Just change Puppet settings in tests, rather than stubbing.
+6aa8441 (#11004) Support Solaris 11 output in pkg package provider
+61e7d3c maint: Fix pkg_spec test
+603b368 (#14173) Enforce that filebucket paths must be absolute
+b7828ed (#3452) Autorequire user for cron
+a47c42d Update CHANGELOG for 2.7.14rc3
+402a425 (#14127) Add integration tests for ssh_authorized_key
+85ee441 maint: refactor integration specs for ssh_authorized_key
+42b20be (#13682) Fix acceptance test failures
+dce3c32 (#13682) Rename Puppet::Module::Tool to Puppet::ModuleTool
+5117e12 (maint) Ensure every file has a trailing newlines
+b4d1c65 (#14127) ssh_authorized_keys grammer fails on blank lines.
+25ad6d7 Updating CHANGELOG for Puppet 2.7.14rc2
+74e462f (#14060) Fix quoting of commands to interpolate inside the shell.
+796a072 Modernize the style of the shell exec provider tests.
+9e526c9 (#14060) Fix quoting of commands to interpolate inside the shell.
+36d959a (#14123) Puppet shouldn't explode if PATH contains ~nonexistent_user
+a009c54 Modernize the style of the shell exec provider tests.
+934ec89 Improve deprecation warning for dynamic lookup
+c255414 (#14036) Add upstart tests
+dc3bb9f (#14036) Handle upstart better
+a281c48 (#13645) Add test cases to tagmail_spec
+3a4ac60 Updating CHANGELOG, lib/puppet.rb for 2.7.14rc1
+f6ac1bb (#13645) Do not open a smtp connection if nothing to report
+f40cc71 (#12392): Colorize console output on Windows
+0d9e852 Removed duplication of compiling a catalog
+d67711d Cleaner test for create_resources doing nothing
+2d3cc63 Fixing problem caused by activerecord
+f1331ba Put back require 'puppet' in Puppet::Util
+79bf4fa (#13299) Fix error message when agent is disabled
+5178adc Update puppet.spec for rpm packaging
+fb96747 Fixed old log test to match new autoflush behavior
+878127f Make sure the log file writable
+72d3b56 Default autoflushing of log files to true
+9711d50 Created test that shows enc warning problem
+d54100d (Maint) Fix order-dependent test failure
+f531400 (Maint) Don't assume eventlog gem is installed on Windows
+2957ffe Fix tempfile cleanup in specs
+e2d6915 Fix communication_error acceptance test
+27a5eb7 options[:ca_location] is a string not a symbol. Safer to pull Puppet::SSL::Host.ca_location since it is already set correctly.
+c01cac9 (#13204) Don't ignore missing PATH.augnew files
+7d27cd2 Use :as_platform in the smf service spec
+876785a Use :as_platform in the redhat service spec
+
 2.7.15rc1
 ===
 53e0057 Use internal domain name for module tool tests
