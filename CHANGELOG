@@ -1,3 +1,9 @@
+2.7.15rc2
+===
+c6e006e (#8174) Allow defines to reference topscope
+e27adf4 Evaluate node classes either in top or node scope
+a3d51b2 Removed topscope being overridden by node
+
 2.7.15rc1
 ===
 53e0057 Use internal domain name for module tool tests
