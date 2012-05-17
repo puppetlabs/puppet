@@ -42,7 +42,7 @@ task :gen_manpages do
 #   IO.popen("#{ronn} #{ronn_args} > ./man/man5/puppet.conf.5", 'w') do |fh|
 #     fh.write %x{RUBYLIB=./lib:$RUBYLIB bin/puppetdoc --reference configuration}
 #   end
-  %x{RUBYLIB=./lib:$RUBYLIB bin/puppetdoc --reference configuration > ./man/man5/puppetconf.5.ronn}
+  %x{RUBYLIB=./lib:$RUBYLIB bin/puppet doc --reference configuration > ./man/man5/puppetconf.5.ronn}
   %x{#{ronn} #{ronn_args} ./man/man5/puppetconf.5.ronn}
   FileUtils.mv("./man/man5/puppetconf.5", "./man/man5/puppet.conf.5")
   FileUtils.rm("./man/man5/puppetconf.5.ronn")
