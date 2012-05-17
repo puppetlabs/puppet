@@ -63,6 +63,15 @@ RSpec.configure do |config|
       $tmpfiles.clear
     end
 
+
+    # Some tests can cause us to connect, in which case the lingering
+    # connection is a resource that can cause unexpected failure in later
+    # tests, as well as sharing state accidentally.
+    # We're testing if ActiveRecord::Base is defined because some test cases
+    # may stub Puppet.features.rails? which is how we should normally
+    # introspect for this functionality.
+    ActiveRecord::Base.remove_connection if defined?(ActiveRecord::Base)
+
     @logs.clear
     Puppet::Util::Log.close_all
   end
