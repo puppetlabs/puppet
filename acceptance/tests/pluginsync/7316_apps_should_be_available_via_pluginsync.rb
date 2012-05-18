@@ -7,11 +7,11 @@ test_name "the pluginsync functionality should sync app definitions, and they sh
 
 require 'puppet/acceptance/temp_file_utils'
 
-class << self
-  include Puppet::Acceptance::TempFileUtils
-end
+extend Puppet::Acceptance::TempFileUtils
 
 initialize_temp_dirs()
+
+all_tests_passed = false
 
 ###############################################################################
 # BEGIN TEST LOGIC

@@ -50,9 +50,19 @@ module Puppet
       # tests to be written using only a relative path to specify file locations, while still taking advantage
       # of automatic temp file cleanup at test completion.
       def test_file_exists?(host, file_rel_path)
-        host.execute("test -f \"#{get_test_file_path(host, file_rel_path)}\"",
+        file_exists?(host, get_test_file_path(host, file_rel_path))
+      end
+
+      def file_exists?(host, file_path)
+        host.execute("test -f \"#{file_path}\"",
                      :acceptable_exit_codes => [0, 1])  do |result|
           return result.exit_code == 0
+        end
+      end
+
+      def file_contents(host, file_path)
+        host.execute("cat \"#{file_path}\"") do |result|
+          return result.stdout
         end
       end
 
