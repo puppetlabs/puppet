@@ -360,7 +360,7 @@ module Puppet
   )
   Puppet.define_settings(:module_tool,
     :module_repository  => {
-      :default  => 'http://forge.puppetlabs.com',
+      :default  => 'https://forge.puppetlabs.com',
       :desc     => "The module repository",
     },
     :module_working_dir => {
