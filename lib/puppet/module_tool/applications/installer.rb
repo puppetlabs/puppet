@@ -11,6 +11,7 @@ module Puppet::ModuleTool
     class Installer < Application
 
       include Puppet::ModuleTool::Errors
+      include Puppet::Forge::Errors
 
       def initialize(name, forge, options = {})
         @action              = :install
@@ -61,7 +62,7 @@ module Puppet::ModuleTool
               end
             end
           end
-        rescue ModuleToolError => err
+        rescue ModuleToolError, ForgeError => err
           results[:error] = {
             :oneline   => err.message,
             :multiline => err.multiline,
