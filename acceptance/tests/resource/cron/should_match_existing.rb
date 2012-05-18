@@ -1,4 +1,5 @@
 test_name "puppet should match existing job"
+confine :except, :platform => 'windows'
 
 tmpuser = "pl#{rand(999999).to_i}"
 tmpfile = "/tmp/cron-test-#{Time.new.to_i}"
@@ -9,11 +10,6 @@ delete_user = "user { '#{tmpuser}': ensure => absent,  managehome => false }"
 package_cron = "case $operatingsystem { centos, redhat: {$cron = 'cronie'}\n default: {$cron ='cron'} } package {'cron': name=> $cron, ensure=>present, }"
 
 agents.each do |host|
-    if host['platform'].include?('windows')
-      skip_test "Test not supported on this platform"
-      next
-    end
-
     step "ensure the user exist via puppet"
     apply_manifest_on host, create_user
     apply_manifest_on host, package_cron
