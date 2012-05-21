@@ -9,7 +9,7 @@
 ;;	Russ Allbery <rra@stanford.edu>
 ;; Maintainer: Russ Allbery <rra@stanford.edu>
 ;; Created: 2006-02-07
-;; Version: 1.1
+;; Version: 1.2
 ;; Keywords: languages
 
 ;; This file is part of Puppet.
@@ -28,7 +28,7 @@
 
 ;;; Code:
 
-(defconst puppet-mode-version "1.1")
+(defconst puppet-mode-version "1.2")
 
 (defvar puppet-mode-abbrev-table nil
   "Abbrev table in use in puppet-mode buffers.")
@@ -165,16 +165,22 @@ we should use, or nil if we can't determine one."
    ((puppet-comment-line-p)
     (if (bobp) 0 nil))
 
-   ;; Brace or paren on a line by itself will already be indented to the right
-   ;; level, so we can cheat and stop there.
+   ;; Closing brace or paren on a line by itself will already be indented to
+   ;; the right level, so we can cheat and stop there.
    ((looking-at "^\\s-*[\)}]\\s-*$")
     (current-indentation))
 
-   ;; Brace (possibly followed by a comma) or paren not on a line by itself
-   ;; will be indented one level too much, but don't catch cases where the
-   ;; block is started and closed on the same line.
-   ((looking-at "^[^\n\({]*[\)}],?\\s-*$")
+   ;; Closing brace or paren not on a line by itself will be indented one
+   ;; level too much, but don't catch cases where the block is started and
+   ;; closed on the same line.
+   ((looking-at "^[^\n\({]*[\)}]\\s-*$")
     (- (current-indentation) puppet-indent-level))
+
+   ;; Closing brace followed by a comma ends a selector within a resource and
+   ;; will be indented just the right amount.  Take similar precautions about
+   ;; blocks started and closed on the same line.
+   ((looking-at "^[^\n\({]*},\\s-*$")
+    (current-indentation))
 
    ;; Indent by one level more than the start of our block.  We lose if there
    ;; is more than one block opened and closed on the same line but it's still
@@ -183,7 +189,7 @@ we should use, or nil if we can't determine one."
     (+ (current-indentation) puppet-indent-level))
 
    ;; Indent by one level if the line ends with an open paren.
-   ((looking-at "^.*\(\\s-*$")
+   ((looking-at "^.*(\\s-*$")
     (+ (current-indentation) puppet-indent-level))
 
    ;; Semicolon ends a block for a resource when multiple resources are
@@ -191,6 +197,17 @@ we should use, or nil if we can't determine one."
    ;; resource on a single line wrong.
    ((looking-at "^\\([^'\":\n]\\|\"[^\n\"]*\"\\|'[^\n']*'\\)*;\\s-*$")
     (- (current-indentation) puppet-indent-level))
+
+   ;; The line following the end of an array and a : should be indented one
+   ;; level more than the indentation of the start of the array.
+   ((looking-at "^.*\\]\\s-*:\\s-*$")
+      (let ((array-start (puppet-in-array)))
+        (if array-start
+          (save-excursion
+            (beginning-of-line)
+            (goto-char array-start)
+            (+ (current-indentation) puppet-indent-level))
+        (+ (current-indentation) puppet-indent-level))))
 
    ;; Indent an extra level after : since it introduces a resource.
    ((looking-at "^.*:\\s-*$")
@@ -264,9 +281,10 @@ worrying about saving the excursion."
                      (forward-line -1)
                      (setq cur-indent (puppet-analyze-indent))))))
 
-        ;; If this line contains only a closing paren, we should lose one
-        ;; level of indentation.
-        (if (looking-at "^\\s-*\)\\s-*$")
+        ;; If this line contains only a closing paren or a closing paren
+        ;; followed by an opening brace, we added one too many levels of
+        ;; indentation and should lose one level.
+        (if (looking-at "^\\s-*)\\s-*\\({\\s-*\\)?$")
             (setq cur-indent (- cur-indent puppet-indent-level)))))
 
       ;; We've figured out the indentation, so do it.
@@ -291,8 +309,9 @@ worrying about saving the excursion."
     tbl))
 
 ;; Stupid hack required to allow me to assign a default face to something.
-;; WTF, font-lock mode?
-(defvar puppet-font-lock-default-face 'default)
+;; WTF, font-lock mode?  Not required on XEmacs (and breaks XEmacs).
+(if (not (string-match "XEmacs" emacs-version))
+    (defvar puppet-font-lock-default-face 'default))
 
 (defvar puppet-font-lock-keywords
   (list
@@ -310,9 +329,9 @@ worrying about saving the excursion."
    ;; usage of types
    '("^\\s *\\([a-z][a-zA-Z0-9_:-]*\\)\\s +{"
      1 font-lock-type-face)
-   ;; overrides and type references
-   '("\\s +\\([A-Z][a-zA-Z0-9_:-]*\\)\\["
-     1 font-lock-type-face)
+   ;; overrides, type references, and defaults
+   '("\\(\\s \\|[\\[]\\)\\([A-Z][a-zA-Z0-9_:-]*\\)\\s *[\\[{]"
+     2 font-lock-type-face)
    ;; general delimited string
    '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"
      2 font-lock-string-face)
