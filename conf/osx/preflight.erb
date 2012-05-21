@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Make sure that old <%=@package_name%> cruft is removed
+# This also allows us to downgrade facter as
+# it's more likely that installing old versions
+# over new will cause issues.
+#
+# ${3} is the destination volume so that this works correctly
+# when being installed to volumes other than the current OS.
+
+<% begin %>
+<%  require 'rubygems' %>
+<% rescue LoadError %>
+<% end %>
+<% require 'rake' %>
+
+# remove libdir
+<% Dir.chdir("lib") %>
+<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
+/bin/rm -Rf "${3}{SITELIBDIR}/<%=file%>"
+<% end %>
+# remove bin files
+<% Dir.chdir("../bin") %>
+<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
+/bin/rm -Rf "${3}{BINDIR}/<%=file%>"
+<% end %>
+<% Dir.chdir("..") %>
+
+# remove old doc files
+/bin/rm -Rf "${3}/usr/share/doc/<%=@package_name%>"
