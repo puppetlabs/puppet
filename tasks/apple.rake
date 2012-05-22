@@ -57,7 +57,7 @@ def make_directory_tree
     f.write(ERB.new(File.read('tasks/templates/prototype.plist.erb')).result())
   end
   File.open("#{@working_tree["scripts"]}/preflight", "w+") do |f|
-    f.write(ERB.new(File.read('conf/osx/preflight.erb')).result())
+    f.write(ERB.new(File.read('ext/osx/preflight.erb')).result())
   end
 end
 
