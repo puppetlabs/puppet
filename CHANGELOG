@@ -1,0 +1,48 @@
+1.0.0rc1
+===
+5adc454 Add package task to tasks
+470c5c8 Add Redhat packaging to hiera-puppet
+4101d02 Add debian packaging for hiera-puppet
+64b7375 Move conf to ext directory
+cb721c5 Add mac packaging to hiera-puppet
+a042de4 Revert "(#14461) Remove Puppet parser functions"
+48bfccb (#14461) Remove Puppet parser functions
+632457e Rubygems is not required to use hiera
+2df319a (#14124) Load rake tasks directly to fix tests for Ruby 1.9.x
+eb800e4 (#12037) hiera-puppet should support hash values.
+927de1f Add test coverage for hiera_hash()
+894a7a4 Fail if a lookup key isn't passed
+
+0.3.0
+===
+97e6c3b Ready repository for release process
+5abdb9e Add tests to scope for calling_class and calling_module handling
+a735052 added volcanes patch to allow calling_module and calling_class to be evaluated in scope
+30b7294 false vs. nil - supporting false as default value
+15cd26d Adding hiera_hash for CHANGES.txt
+bd1d1be Adding hiera_hash() Puppet function
+4b68af3 (minor) tweaks to modules README
+
+0.2.0
+===
+4e9e880 Release 0.2.0
+27f3b10 Update changes
+ea3ca2d Add a hiera_array() function and fix args parsing
+c4adfac Add a hiera_include() function and update example
+3d082e4 Fix spec failure
+c3dd67f Add array search support
+459ed6f Add apache 2 lic
+
+0.1.0
+===
+59ae8a3 Improve example
+583f24c Fix formating and make clearer
+bfef859 Add a example setup Fix some unfriendly behavior wrt class names that don't resolve using scope
+1b6866e Improve sample config and mention installation pains
+759fd06 Rename tests dir to unit dir for consistancy with other projects
+4a00e43 Add more tests, fix more bugs
+f4cd24d Add tests and fix bugs found with tests
+b92ac2c Add a debug statement
+ffda5bb Add README
+3df4007 Add a puppet backend that impliments Nigels design
+ae5b084 Add a hash like wrapper around puppet scope
