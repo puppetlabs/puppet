@@ -68,6 +68,22 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
+    if Puppet[:allow_csr_attributes]
+      @csrattributes = Puppet[:csr_attributes_file]
+      unless FileTest.exists?(@csrattributes)
+        fail "CSR attributes are enabled but #{@csrattributes} is missing"
+      else
+        extensions = YAML.load_file(@csrattributes).to_a
+      end
+      attributes = []
+      extensions.each { |e|
+          oid = e[0]
+          value = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence(e[1])])
+          attributes << OpenSSL::X509::Attribute.new(oid, value)
+      }
+      attributes.each{ |attr| csr.add_attribute(attr) }
+    end
+
     csr.sign(key, OpenSSL::Digest::SHA256.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
