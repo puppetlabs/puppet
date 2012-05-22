@@ -18,7 +18,7 @@ RUBYLIB=$(BUILD_ROOT)/$(LIBDIR)
 BIN_DIR=$(BUILD_ROOT)/usr/bin
 DOC_DIR=$(BUILD_ROOT)/usr/share/doc/hiera-puppet/
 
-install/hiera::
+install/hiera-puppet::
 	mkdir -p  $(RUBYLIB)
 	mkdir -p  $(BIN_DIR)
 	mkdir -p  $(DOC_DIR)
