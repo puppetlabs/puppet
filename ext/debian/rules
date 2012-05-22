@@ -1,0 +1,30 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
+
+BUILD_ROOT=$(DESTDIR)/$(CURDIR)/debian/$(cdbs_curpkg)
+LIBDIR=$(shell /usr/bin/ruby -rrbconfig -e 'puts Config::CONFIG["rubylibdir"]')
+RUBYLIB=$(BUILD_ROOT)/$(LIBDIR)
+BIN_DIR=$(BUILD_ROOT)/usr/bin
+DOC_DIR=$(BUILD_ROOT)/usr/share/doc/hiera-puppet/
+
+install/hiera::
+	mkdir -p  $(RUBYLIB)
+	mkdir -p  $(BIN_DIR)
+	mkdir -p  $(DOC_DIR)
+	cp -pr    lib/hiera $(RUBYLIB)
+	cp -pr    lib/puppet $(RUBYLIB)
+	cp -p     bin/extlookup2hiera $(BIN_DIR)
+	cp -p     CHANGELOG COPYING README.md $(DOC_DIR)
+
+clean::

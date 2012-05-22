@@ -1,0 +1,13 @@
+Source: hiera-puppet
+Section: utils
+Priority: extra
+Maintainer: Puppet Labs <info@puppetlabs.com>
+Build-Depends: debhelper (>= 8.0.0), cdbs, quilt, ruby (>= 1.8.5)
+Standards-Version: 3.9.2
+Homepage: http://projects.puppetlabs.com/projects/hiera
+
+Package: hiera-puppet
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby (>= 1.8.5), hiera (>= 1.0.0), puppet
+Description: A simple pluggable Hierarchical Database.
+	Hiera is a simple pluggable Hierarchical Database.
