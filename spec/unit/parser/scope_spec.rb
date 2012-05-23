@@ -406,6 +406,83 @@ describe Puppet::Parser::Scope do
         end
       end
 
+      it "finds values in its inherited scope when the inherited class is qualified to the top" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include baz
+            }
+            class foo {
+              $var = "foo_msg"
+            }
+            class bar inherits ::foo {
+              notify { 'something': message => $var, }
+            }
+            class baz {
+              include bar
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its inherited scope when the inherited class is a nested class that shadows another class at the top" do
+        expect_the_message_to_be('inner baz') do <<-MANIFEST
+            node default {
+              include foo::bar
+            }
+            class baz {
+              $var = "top baz"
+            }
+            class foo {
+              class baz {
+                $var = "inner baz"
+              }
+
+              class bar inherits baz {
+                notify { 'something': message => $var, }
+              }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its inherited scope when the inherited class is qualified to a nested class and qualified to the top" do
+        expect_the_message_to_be('top baz') do <<-MANIFEST
+            node default {
+              include foo::bar
+            }
+            class baz {
+              $var = "top baz"
+            }
+            class foo {
+              class baz {
+                $var = "inner baz"
+              }
+
+              class bar inherits ::baz {
+                notify { 'something': message => $var, }
+              }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in its inherited scope when the inherited class is qualified" do
+        expect_the_message_to_be('foo_msg') do <<-MANIFEST
+            node default {
+              include bar
+            }
+            class foo {
+              class baz {
+                $var = "foo_msg"
+              }
+            }
+            class bar inherits foo::baz {
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
       it "prefers values in its inherited scope over those in the node (with intermediate inclusion)" do
         expect_the_message_to_be('foo_msg') do <<-MANIFEST
             node default {
