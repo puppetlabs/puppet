@@ -92,7 +92,7 @@ describe provider_class do
       #gemlist is used for retrieving both local and remote version numbers, and there are cases
       # (particularly local) where it makes sense for it to return an array.  That doesn't make
       # sense for '#latest', though.
-      provider.class.expects(:gemlist).with({ :justme => 'myresource'}).returns({
+      provider.class.expects(:gemlist).with({ :source => nil, :justme => 'myresource'}).returns({
           :name     => 'myresource',
           :ensure   => ["3.0"],
           :provider => :gem,
