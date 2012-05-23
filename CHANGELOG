@@ -1,3 +1,9 @@
+3.0.0rc2
+===
+0cea47e (#14609) Fix master initialization when running under Passenger
+b6c5e9d (#14514) Check for the presence of hiera config
+ca5271f (maint) Add data binding Hiera tests
+
 3.0.0rc1
 ===
 a731e15 Update CHANGELOG lib/puppet.rb puppet.spec for 2.7.15rc1
