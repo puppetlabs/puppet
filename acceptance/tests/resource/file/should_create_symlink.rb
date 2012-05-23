@@ -1,15 +1,11 @@
 test_name "should create symlink"
+confine :except, :platform => 'windows'
 
 message = 'hello world'
 target  = "/tmp/test-#{Time.new.to_i}"
 source  = "/tmp/test-#{Time.new.to_i}-source"
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    skip_test "Test not supported on this platform"
-    next
-  end
-
   step "clean up the system before we begin"
   on agent, "rm -rf #{target}"
   on agent, "echo '#{message}' > #{source}"
