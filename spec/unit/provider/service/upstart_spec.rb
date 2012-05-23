@@ -49,17 +49,17 @@ describe provider_class do
       provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
       Process::Status.any_instance.stubs(:exitstatus).returns(0)
       provider.status.should == :stopped
-    end    
+    end
   end
   describe "inheritance" do
     let :resource do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
-    
+
     let :provider do
       provider = provider_class.new(resource)
     end
-    
+
     describe "when upstart job" do
       before(:each) do
         provider.stubs(:is_upstart?).returns(true)
@@ -73,7 +73,7 @@ describe provider_class do
         provider.statuscmd.should be_nil
       end
     end
-    
+
     describe "when init script" do
       before(:each) do
         provider.stubs(:is_upstart?).returns(false)
@@ -85,6 +85,141 @@ describe provider_class do
         end
       end
     end
+  end
 
+  describe "should be enableable" do
+    let :resource do
+      Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+    end
+
+    let :provider do
+      provider_class.new(resource)
+    end
+
+    let :init_script do
+      PuppetSpec::Files.tmpfile("foo.conf")
+    end
+
+    let :disabled_content do
+      "\t #  \t start on\nother file stuff"
+    end
+
+    let :multiline_disabled do
+      "# \t  start on other file stuff (\n" +
+       "#   more stuff ( # )))))inline comment\n" +
+       "#   finishing up )\n" +
+       "#   and done )\n" +
+       "this line shouldn't be touched\n"
+    end
+
+    let :multiline_enabled do
+      " \t  start on other file stuff (\n" +
+       "   more stuff ( # )))))inline comment\n" +
+       "   finishing up )\n" +
+       "   and done )\n" +
+       "this line shouldn't be touched\n"
+    end
+
+    let :enabled_content do
+      "\t   \t start on\nother file stuff"
+    end
+
+    let :content do
+      "just some text"
+    end
+
+    before(:each) do
+      provider.stubs(:is_upstart?).returns(true)
+      provider.stubs(:search).returns(init_script)
+    end
+
+    [:enabled?,:enable,:disable].each do |enableable|
+      it "should respond to #{enableable}" do
+        provider.should respond_to(enableable)
+      end
+    end
+
+    describe "when enabling" do
+      it "should open and uncomment the '#start on' line" do
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
+        provider.enable
+        File.open(init_script).read.should == enabled_content
+      end
+
+      it "should add a 'start on' line if none exists" do
+        file = File.open(init_script, 'w')
+        file.write("this is a file")
+        file.close
+        provider.enable
+        File.open(init_script).read.should == "this is a file\nstart on runlevel [2,3,4,5]"
+      end
+
+      it "should do nothing if already enabled" do
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
+        provider.enable
+        File.open(init_script).read.should == enabled_content
+      end
+
+      it "should handle multiline 'start on' stanzas" do
+        file = File.open(init_script, 'w')
+        file.write(multiline_disabled)
+        file.close
+        provider.enable
+        File.open(init_script).read.should == multiline_enabled
+      end
+    end
+
+    describe "when disabling" do
+      it "should open and comment the 'start on' line" do
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
+        provider.disable
+        File.open(init_script).read.should == "#" + enabled_content
+      end
+
+      it "should do nothing if already disabled" do
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
+        provider.disable
+        File.open(init_script).read.should == disabled_content
+      end
+
+      it "should handle multiline 'start on' stanzas" do
+        file = File.open(init_script, 'w')
+        file.write(multiline_enabled)
+        file.close
+        provider.disable
+        File.open(init_script).read.should == multiline_disabled
+      end
+    end
+
+    describe "when checking whether it is enabled" do
+      it "should consider 'start on ...' to be enabled" do
+        file = File.open(init_script, 'w')
+        file.write(enabled_content)
+        file.close
+        provider.enabled?.should == :true
+      end
+
+      it "should consider '#start on ...' to be disabled" do
+        file = File.open(init_script, 'w')
+        file.write(disabled_content)
+        file.close
+        provider.enabled?.should == :false
+      end
+
+      it "should consider no start on line to be disabled" do
+        file = File.open(init_script, 'w')
+        file.write(content)
+        file.close
+        provider.enabled?.should == :false
+      end
+    end
   end
 end

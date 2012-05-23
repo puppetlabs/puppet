@@ -6,7 +6,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   "
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
-  
+
   defaultfor :operatingsystem => :ubuntu
 
   commands :start   => "/sbin/start",
@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
-  # has_feature :enableable
+  has_feature :enableable
 
   def self.instances
     instances = []
@@ -40,6 +40,114 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     instances
   end
 
+  def self.defpath
+    ["/etc/init.d", "/etc/init"]
+  end
+
+  def search(name)
+    # Search prefers .conf as that is what upstart uses
+    [".conf", "", ".sh"].each do |suffix|
+      paths.each { |path|
+        fqname = File.join(path,name+suffix)
+        begin
+          stat = File.stat(fqname)
+        rescue
+          # should probably rescue specific errors...
+          self.debug("Could not find #{name}#{suffix} in #{path}")
+          next
+        end
+
+        # if we've gotten this far, we found a valid script
+        return fqname
+      }
+    end
+
+    raise Puppet::Error, "Could not find init script or upstart conf file for '#{name}'"
+  end
+
+  def enabled?
+    if is_upstart?
+      if File.open(initscript).read.match(/^\s*start\s+on/)
+        return :true
+      else
+        return :false
+      end
+    else
+      super
+    end
+  end
+
+  def enable
+    if is_upstart?
+      # Parens is needed to match parens in a multiline upstart start on stanza
+      parens = 0
+
+      script_text = File.open(initscript).read
+      enabled_script =
+        # Two cases, either there is a start on line already or we need to add one
+        if script_text.to_s.match(/^\s*#*\s*start\s+on/)
+          script_text.map do |line|
+            # t_line is used for paren counting and chops off any trailing comments before counting parens
+            t_line = line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
+            if line.match(/^\s*#+\s*start\s+on/)
+              # If there are more opening parens than closing parens, we need to uncomment a multiline 'start on' stanzas.
+              if (t_line.count('(') > t_line.count(')') )
+                parens = t_line.count('(') - t_line.count(')')
+              end
+              line.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
+            elsif parens > 0
+              # If there are still more opening than closing parens we need to continue uncommenting lines
+              parens += (t_line.count('(') - t_line.count(')') )
+              line.gsub(/^(\s*)#+/, '\1')
+            else
+              line
+            end
+          end
+        else
+          # If there is no "start on" it isn't enabled and needs that line added
+          script_text.to_s + "\nstart on runlevel [2,3,4,5]"
+        end
+
+      Puppet::Util.replace_file(initscript, 0644) do |file|
+        file.write(enabled_script)
+      end
+
+    else
+      super
+    end
+  end
+
+  def disable
+    if is_upstart?
+      # Parens is needed to match parens in a multiline upstart start on stanza
+      parens = 0
+      script_text = File.open(initscript).read
+
+      disabled_script = script_text.map do |line|
+        t_line = line.gsub(/^([^#]*).*/, '\1')
+        if line.match(/^\s*start\s+on/)
+          # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
+          if (t_line.count('(') > t_line.count(')') )
+            parens = t_line.count('(') - t_line.count(')')
+          end
+          line.gsub(/^(\s*start\s+on)/, '#\1')
+        elsif parens > 0
+          # If there are still more opening than closing parens we need to continue uncommenting lines
+          parens += (t_line.count('(') - t_line.count(')') )
+          "#" << line
+        else
+          line
+        end
+      end
+
+      Puppet::Util.replace_file(initscript, 0644) do |file|
+        file.write(disabled_script)
+      end
+    else
+      super
+    end
+  end
+
   def startcmd
     is_upstart? ? [command(:start), @resource[:name]] : super
   end
@@ -55,7 +163,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def statuscmd
     is_upstart? ? nil : super #this is because upstart is broken with its return codes
   end
-  
+
   def status
     if @resource[:status]
       is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
@@ -65,12 +173,12 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       super
     end
   end
-  
+
   def normal_status
     ucommand(:status, false)
     ($?.exitstatus == 0) ? :running : :stopped
   end
-  
+
   def upstart_status(exec = @resource[:name])
     output = status_exec(@resource[:name].split)
     if (! $?.nil?) && (output =~ /start\//)
@@ -79,9 +187,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       return :stopped
     end
   end
-  
+
   def is_upstart?(script = initscript)
-    File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job"
+    return true if (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job")
+    return true if (File.file?(script) && (not script.include?("init.d")))
+    return false
   end
 
 end
