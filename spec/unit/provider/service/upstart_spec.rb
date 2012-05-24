@@ -4,6 +4,19 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:service).provider(:upstart)
 
 describe provider_class do
+  let(:manual) { "\nmanual" }
+  let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
+
+  def given_contents_of(file, content)
+    File.open(file, 'w') do |file|
+      file.write(content)
+    end
+  end
+
+  def then_contents_of(file)
+    File.open(file).read
+  end
+
   describe "#instances" do
     it "should be able to find all instances" do
       processes = ["rc stop/waiting", "ssh start/running, process 712"].join("\n")
@@ -51,6 +64,7 @@ describe provider_class do
       provider.status.should == :stopped
     end
   end
+
   describe "inheritance" do
     let :resource do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
@@ -116,6 +130,24 @@ describe provider_class do
        "this line shouldn't be touched\n"
     end
 
+    let :multiline_disabled_bad do
+      "# \t  start on other file stuff (\n" +
+       "#   more stuff ( # )))))inline comment\n" +
+       "#   finishing up )\n" +
+       "#   and done )\n" +
+       "#   this is a comment i want to be a comment\n" +
+       "this line shouldn't be touched\n"
+    end
+
+    let :multiline_enabled_bad do
+      " \t  start on other file stuff (\n" +
+       "   more stuff ( # )))))inline comment\n" +
+       "   finishing up )\n" +
+       "   and done )\n" +
+       "#   this is a comment i want to be a comment\n" +
+       "this line shouldn't be touched\n"
+    end
+
     let :multiline_enabled do
       " \t  start on other file stuff (\n" +
        "   more stuff ( # )))))inline comment\n" +
@@ -154,67 +186,72 @@ describe provider_class do
 
       describe "when enabling" do
         it "should open and uncomment the '#start on' line" do
-          file = File.open(init_script, 'w')
-          file.write(disabled_content)
-          file.close
+          given_contents_of(init_script, disabled_content)
+
           provider.enable
-          File.open(init_script).read.should == enabled_content
+
+          then_contents_of(init_script).should == enabled_content
         end
 
         it "should add a 'start on' line if none exists" do
-          file = File.open(init_script, 'w')
-          file.write("this is a file")
-          file.close
+          given_contents_of(init_script, "this is a file")
+
           provider.enable
-          File.open(init_script).read.should == "this is a file\nstart on runlevel [2,3,4,5]"
+
+          then_contents_of(init_script).should == "this is a file" + start_on_default_runlevels
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_disabled)
-          file.close
+          given_contents_of(init_script, multiline_disabled)
+
           provider.enable
-          File.open(init_script).read.should == multiline_enabled
+
+          then_contents_of(init_script).should == multiline_enabled
+        end
+
+        it "should leave not 'start on' comments alone" do
+          given_contents_of(init_script, multiline_disabled_bad)
+
+          provider.enable
+
+          then_contents_of(init_script).should == multiline_enabled_bad
         end
       end
 
       describe "when disabling" do
         it "should open and comment the 'start on' line" do
-          file = File.open(init_script, 'w')
-          file.write(enabled_content)
-          file.close
+          given_contents_of(init_script, enabled_content)
+
           provider.disable
-          File.open(init_script).read.should == "#" + enabled_content
+
+          then_contents_of(init_script).should == "#" + enabled_content
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled)
-          file.close
+          given_contents_of(init_script, multiline_enabled)
+
           provider.disable
-          File.open(init_script).read.should == multiline_disabled
+
+          then_contents_of(init_script).should == multiline_disabled
         end
       end
 
       describe "when checking whether it is enabled" do
         it "should consider 'start on ...' to be enabled" do
-          file = File.open(init_script, 'w')
-          file.write(enabled_content)
-          file.close
+          given_contents_of(init_script, enabled_content)
+
           provider.enabled?.should == :true
         end
 
         it "should consider '#start on ...' to be disabled" do
-          file = File.open(init_script, 'w')
-          file.write(disabled_content)
-          file.close
+          given_contents_of(init_script, disabled_content)
+
           provider.enabled?.should == :false
         end
 
         it "should consider no start on line to be disabled" do
-          file = File.open(init_script, 'w')
-          file.write(content)
-          file.close
+          given_contents_of(init_script, content)
+
           provider.enabled?.should == :false
         end
       end
@@ -235,102 +272,105 @@ describe provider_class do
 
       describe "when enabling" do
         it "should open and uncomment the '#start on' line" do
-          file = File.open(init_script, 'w')
-          file.write(disabled_content)
-          file.close
+          given_contents_of(init_script, disabled_content)
+
           provider.enable
-          File.open(init_script).read.should == enabled_content
+
+          then_contents_of(init_script).should == enabled_content
         end
 
         it "should add a 'start on' line if none exists" do
-          file = File.open(init_script, 'w')
-          file.write("this is a file")
-          file.close
+          given_contents_of(init_script, "this is a file")
+
           provider.enable
-          File.open(init_script).read.should == "this is a file\nstart on runlevel [2,3,4,5]"
+
+          then_contents_of(init_script).should == "this is a file" + start_on_default_runlevels
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_disabled)
-          file.close
+          given_contents_of(init_script, multiline_disabled)
+
           provider.enable
-          File.open(init_script).read.should == multiline_enabled
+
+          then_contents_of(init_script).should == multiline_enabled
         end
 
         it "should remove manual stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled + "\nmanual")
-          file.close
+          given_contents_of(init_script, multiline_enabled + manual)
+
           provider.enable
-          File.open(init_script).read.should == multiline_enabled + "\n"
+
+          then_contents_of(init_script).should == multiline_enabled
+        end
+
+        it "should leave not 'start on' comments alone" do
+          given_contents_of(init_script, multiline_disabled_bad)
+
+          provider.enable
+
+          then_contents_of(init_script).should == multiline_enabled_bad
         end
       end
 
       describe "when disabling" do
         it "should add a manual stanza" do
-          file = File.open(init_script, 'w')
-          file.write(enabled_content)
-          file.close
+          given_contents_of(init_script, enabled_content)
+
           provider.disable
-          File.open(init_script).read.should == enabled_content + "\nmanual"
+
+          then_contents_of(init_script).should == enabled_content + manual
         end
 
         it "should remove manual stanzas before adding new ones" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled + "\nmanual\n" + multiline_enabled)
-          file.close
+          given_contents_of(init_script, multiline_enabled + manual + "\n" + multiline_enabled)
+
           provider.disable
-          File.open(init_script).read.should == multiline_enabled + "\n" + multiline_enabled + "\nmanual"
+
+          then_contents_of(init_script).should == multiline_enabled + "\n" + multiline_enabled + manual
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled)
-          file.close
+          given_contents_of(init_script, multiline_enabled)
+
           provider.disable
-          File.open(init_script).read.should == multiline_enabled + "\nmanual"
+
+          then_contents_of(init_script).should == multiline_enabled + manual
         end
       end
 
       describe "when checking whether it is enabled" do
         describe "with no manual stanza" do
           it "should consider 'start on ...' to be enabled" do
-            file = File.open(init_script, 'w')
-            file.write(enabled_content)
-            file.close
+            given_contents_of(init_script, enabled_content)
+
             provider.enabled?.should == :true
           end
 
           it "should consider '#start on ...' to be disabled" do
-            file = File.open(init_script, 'w')
-            file.write(disabled_content)
-            file.close
+            given_contents_of(init_script, disabled_content)
+
             provider.enabled?.should == :false
           end
 
           it "should consider no start on line to be disabled" do
-            file = File.open(init_script, 'w')
-            file.write(content)
-            file.close
+            given_contents_of(init_script, content)
+
             provider.enabled?.should == :false
           end
         end
 
         describe "with manual stanza" do
           it "should consider 'start on ...' to be disabled if there is a trailing manual stanza" do
-            file = File.open(init_script, 'w')
-            file.write(enabled_content + "\nmanual\nother stuff")
-            file.close
+            given_contents_of(init_script, enabled_content + manual + "\nother stuff")
+
             provider.enabled?.should == :false
           end
 
           it "should consider two start on lines with a manual in the middle to be enabled" do
-            file = File.open(init_script, 'w')
-            file.write(enabled_content + "\nmanual\n" + enabled_content)
-            file.close
+            given_contents_of(init_script, enabled_content + manual + "\n" + enabled_content)
+
             provider.enabled?.should == :true
-          end 
+          end
         end
       end
     end
@@ -351,106 +391,105 @@ describe provider_class do
 
       describe "when enabling" do
         it "should add a 'start on' line if none exists" do
-          file = File.open(init_script, 'w')
-          file.write("this is a file")
-          file.close
+          given_contents_of(init_script, "this is a file")
+
           provider.enable
-          File.open(init_script).read.should == "this is a file"
-          File.open(over_script).read.should == "\nstart on runlevel [2,3,4,5]"
+
+          then_contents_of(init_script).should == "this is a file"
+          then_contents_of(over_script).should == start_on_default_runlevels
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_disabled)
-          file.close
+          given_contents_of(init_script, multiline_disabled)
+
           provider.enable
-          File.open(init_script).read.should == multiline_disabled
-          File.open(over_script).read.should == "\nstart on runlevel [2,3,4,5]"
+
+          then_contents_of(init_script).should == multiline_disabled
+          then_contents_of(over_script).should == start_on_default_runlevels
         end
 
         it "should remove any manual stanzas from the override file" do
-          file = File.open(over_script, 'w')
-          file.write("\nmanual")
-          file.close
-          file = File.open(init_script, 'w')
-          file.write(enabled_content)
-          file.close
+          given_contents_of(over_script, manual)
+          given_contents_of(init_script, enabled_content)
+
           provider.enable
-          File.open(init_script).read.should == enabled_content
-          File.open(over_script).read.should == ""
+
+          then_contents_of(init_script).should == enabled_content
+          then_contents_of(over_script).should == ""
         end
 
         it "should copy existing start on from conf file if conf file is disabled" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled_standalone + "\nmanual")
-          file.close
+          given_contents_of(init_script, multiline_enabled_standalone + manual)
+
           provider.enable
-          File.open(init_script).read.should == multiline_enabled_standalone + "\nmanual"
-          File.open(over_script).read.should == multiline_enabled_standalone
+
+          then_contents_of(init_script).should == multiline_enabled_standalone + manual
+          then_contents_of(over_script).should == multiline_enabled_standalone
+        end
+
+        it "should leave not 'start on' comments alone" do
+          given_contents_of(init_script, multiline_disabled_bad)
+          given_contents_of(over_script, "")
+
+          provider.enable
+
+          then_contents_of(init_script).should == multiline_disabled_bad
+          then_contents_of(over_script).should == start_on_default_runlevels
         end
       end
 
       describe "when disabling" do
         it "should add a manual stanza to the override file" do
-          file = File.open(init_script, 'w')
-          file.write(enabled_content)
-          file.close
+          given_contents_of(init_script, enabled_content)
+
           provider.disable
-          File.open(init_script).read.should == enabled_content
-          File.open(over_script).read.should == "\nmanual"
+
+          then_contents_of(init_script).should == enabled_content
+          then_contents_of(over_script).should == manual
         end
 
         it "should handle multiline 'start on' stanzas" do
-          file = File.open(init_script, 'w')
-          file.write(multiline_enabled)
-          file.close
+          given_contents_of(init_script, multiline_enabled)
+
           provider.disable
-          File.open(init_script).read.should == multiline_enabled
-          File.open(over_script).read.should == "\nmanual"
+
+          then_contents_of(init_script).should == multiline_enabled
+          then_contents_of(over_script).should == manual
         end
       end
 
       describe "when checking whether it is enabled" do
         describe "with no override file" do
           it "should consider 'start on ...' to be enabled" do
-            file = File.open(init_script, 'w')
-            file.write(enabled_content)
-            file.close
+            given_contents_of(init_script, enabled_content)
+
             provider.enabled?.should == :true
           end
 
           it "should consider '#start on ...' to be disabled" do
-            file = File.open(init_script, 'w')
-            file.write(disabled_content)
-            file.close
+            given_contents_of(init_script, disabled_content)
+
             provider.enabled?.should == :false
           end
 
           it "should consider no start on line to be disabled" do
-            file = File.open(init_script, 'w')
-            file.write(content)
-            file.close
+            given_contents_of(init_script, content)
+
             provider.enabled?.should == :false
           end
         end
         describe "with override file" do
           it "should consider 'start on ...' to be disabled if there is manual in override file" do
-            file = File.open(init_script, 'w')
-            file.write(enabled_content)
-            file.close
-            file = File.open(over_script, 'w')
-            file.write("\nmanual\nother stuff")
-            file.close
+            given_contents_of(init_script, enabled_content)
+            given_contents_of(over_script, manual + "\nother stuff")
+
             provider.enabled?.should == :false
           end
 
           it "should consider '#start on ...' to be enabled if there is a start on in the override file" do
-            file = File.open(init_script, 'w')
-            file.write(disabled_content)
-            file.close
-            file = File.open(over_script, 'w')
-            file.write("start on stuff")
-            file.close
+            given_contents_of(init_script, disabled_content)
+            given_contents_of(over_script, "start on stuff")
+
             provider.enabled?.should == :true
           end
         end

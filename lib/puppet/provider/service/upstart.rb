@@ -1,4 +1,10 @@
+require 'semver'
+
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
+  START_ON = /^\s*start\s+on/
+  COMMENTED_START_ON = /^\s*#+\s*start\s+on/
+  MANUAL   = /^\s*manual\s*$/
+
   desc "Ubuntu service management with `upstart`.
 
   This provider manages `upstart` jobs, which have replaced `initd` services
@@ -41,11 +47,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def self.defpath
-    ["/etc/init.d", "/etc/init"]
+    ["/etc/init", "/etc/init.d"]
   end
 
   def upstart_version
-    @@upstart_version ||= Puppet::Util.execute(command(:initctl) + " --version", {true, true}).match(/initctl \(upstart (\d\.\d[\.\d]?)\)/)[1]
+    @@upstart_version ||= SemVer.new(initctl(" --version").match(/initctl \(upstart (\d\.\d[\.\d]?)\)/)[1])
   end
 
   # Where is our override script?
@@ -56,242 +62,53 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def search(name)
     # Search prefers .conf as that is what upstart uses
     [".conf", "", ".sh"].each do |suffix|
-      paths.each { |path|
+      paths.each do |path|
         fqname = File.join(path,name+suffix)
-        begin
-          stat = File.stat(fqname)
-        rescue
-          # should probably rescue specific errors...
-          self.debug("Could not find #{name}#{suffix} in #{path}")
-          next
+        if File.exists?(fqname)
+          return fqname
         end
 
-        # if we've gotten this far, we found a valid script
-        return fqname
-      }
+        self.debug("Could not find #{name}#{suffix} in #{path}")
+      end
     end
 
     raise Puppet::Error, "Could not find init script or upstart conf file for '#{name}'"
   end
 
   def enabled?
-    if is_upstart?
-      if Puppet::Util::Package.versioncmp(upstart_version, "0.6.7") == -1
-        # Upstart version < 0.6.7 means no manual stanza.
-        if File.open(initscript).read.match(/^\s*start\s+on/)
-          return :true
-        else
-          return :false
-        end
-      elsif upstart_version < "0.9.0"
-        # Upstart version < 0.9.0 means no override files
-        # So we check to see if an uncommented start on or manual stanza is the last one in the file
-        # The last one in the file wins.
-        enabled = :false
-        File.open(initscript).read.each do |line|
-          if line.match(/^\s*start\s+on/)
-            enabled = :true
-          elsif line.match(/^\s*manual\s*$/)
-            enabled = :false
-          end
-        end
-        enabled
-      else
-        # This version has manual stanzas and override files
-        # So we check to see if an uncommented start on or manual stanza is the last one in the
-        # conf file and any override files. The last one in the file wins.
-        enabled = :false
-        @conf_enabled = false
-        script_text = File.open(initscript).read
-        begin
-          over_text = File.open(overscript).read
-        rescue
-          over_text = nil
-        end
+    return super if not is_upstart?
 
-        script_text.each do |line|
-          if line.match(/^\s*start\s+on/)
-            enabled = :true
-            @conf_enabled = true
-          elsif line.match(/^\s*manual\s*$/)
-            enabled = :false
-            @conf_enabled = false
-          end
-        end
-        over_text.each do |line|
-          if line.match(/^\s*start\s+on/)
-            enabled = :true
-          elsif line.match(/^\s*manual\s*$/)
-            enabled = :false
-          end
-        end if over_text
-        enabled
-      end
-    else
-      super
+    script_contents = File.open(initscript).read
+    if upstart_version < "0.6.7"
+      enabled_pre_0_6_7?(script_contents)
+    elsif upstart_version < "0.9.0"
+      enabled_pre_0_9_0?(script_contents)
+    elsif upstart_version >= "0.9.0"
+      enabled_post_0_9_0?(script_contents, read_override_file)
     end
   end
 
   def enable
-    if is_upstart?
-      script_text = File.open(initscript).read
-      # Parens is needed to match parens in a multiline upstart start on stanza
-      parens = 0
-      if Puppet::Util::Package.versioncmp(upstart_version, "0.9.0") == -1
-        enabled_script =
-          # Two cases, either there is a start on line already or we need to add one
-          if script_text.to_s.match(/^\s*#*\s*start\s+on/)
-            script_text.map do |line|
-              # t_line is used for paren counting and chops off any trailing comments before counting parens
-              t_line = line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
-              if line.match(/^\s*#+\s*start\s+on/)
-                # If there are more opening parens than closing parens, we need to uncomment a multiline 'start on' stanzas.
-                if (t_line.count('(') > t_line.count(')') )
-                  parens = t_line.count('(') - t_line.count(')')
-                end
-                line.gsub(/^(\s*)#+(\s*start\s+on)/, '\1\2')
-              elsif parens > 0
-                # If there are still more opening than closing parens we need to continue uncommenting lines
-                parens += (t_line.count('(') - t_line.count(')') )
-                line.gsub(/^(\s*)#+/, '\1')
-              else
-                line
-              end
-            end
-          else
-            # If there is no "start on" it isn't enabled and needs that line added
-            script_text.to_s + "\nstart on runlevel [2,3,4,5]"
-          end
+    return super if not is_upstart?
 
-        unless Puppet::Util::Package.versioncmp(upstart_version, "0.6.7") == -1
-          # We also need to remove any manual stanzas to ensure that it is enabled
-          enabled_script.each do |line|
-            line.gsub!(/^\s*manual\s*$/, "")
-          end
-        end
-
-        Puppet::Util.replace_file(initscript, 0644) do |file|
-          file.write(enabled_script)
-        end
-
-      else
-        # We have override files in this case. So this breaks down to the following cases...
-        # 1.) conf has 'start on' and no 'manual', override has 'manual' => remove 'manual' from override
-        # 2.) conf has 'start on' and 'manual', override may or may not have 'manual' =>
-        #                              remove 'manual' from override if present, copy 'start on' from conf to override
-        # 3.) conf has no 'start on', override has 'manual' or no 'start on' => remove manual if present, add 'start on'
-        # 4.) conf has no 'start on', override has 'manual' and has 'start on' => remove manual
-        begin
-          over_text = File.open(overscript).read
-        rescue
-          over_text = nil
-        end
-
-        if script_text.match(/^\s*start\s+on/) and not script_text.match(/^\s*manual\s*$/)
-          # Case #1 from above - override has manual
-          over_text.gsub!(/^\s*manual\s*$/,"") if over_text
-        elsif script_text.match(/^\s*start\s+on/) and script_text.match(/^\s*manual\s*$/)
-          # Case #2 from above
-          # If the conf file was already enabled, all we need to do is remove the manual stanza from the override file
-          if @conf_enabled
-            # Remove any manual stanzas from the override file
-            over_text.gsub!(/^\s*manual\s*$/,"") if over_text
-          else
-            # If the override has no start stanza, copy it from the conf file
-            # First, copy the start on lines from the conf file
-            start_on = script_text.map do |line|
-              t_line = line.gsub(/^([^#]*).*/, '\1')
-
-              if line.match(/^\s*start\s+on/)
-                if (t_line.count('(') > t_line.count(')') )
-                  parens = t_line.count('(') - t_line.count(')')
-                end
-                line
-              elsif parens > 0
-                parens += (t_line.count('(') - t_line.count(')') )
-                line
-              end
-            end
-
-            # Remove any manual stanzas from the override file
-            over_text.gsub!(/^\s*manual\s*$/,"") if over_text
-
-            # Add the copied 'start on' stanza if needed
-            over_text << start_on.to_s if over_text and not over_text.match(/^\s*start\s+on/)
-            over_text = start_on.to_s unless over_text
-          end
-        elsif not script_text.match(/^\s*start\s+on/)
-          # Case #3 and #4 from above
-          over_text.gsub!(/^\s*manual\s*$/,"") if over_text
-          over_text << "\nstart on runlevel [2,3,4,5]" if over_text and not over_text.match(/^\s*start\s+on/)
-          over_text = "\nstart on runlevel [2,3,4,5]" unless over_text
-        end
-
-        Puppet::Util.replace_file(overscript, 0644) do |file|
-          file.write(over_text)
-        end
-      end
+    script_text = File.open(initscript).read
+    if upstart_version < "0.9.0"
+      enable_pre_0_9_0(script_text)
     else
-      super
+      enable_post_0_9_0(script_text, read_override_file)
     end
   end
 
   def disable
-    if is_upstart?
-      # Parens is needed to match parens in a multiline upstart start on stanza
-      parens = 0
-      script_text = File.open(initscript).read
+    return super if not is_upstart?
 
-      if Puppet::Util::Package.versioncmp(upstart_version, "0.6.7") == -1
-        disabled_script = script_text.map do |line|
-          t_line = line.gsub(/^([^#]*).*/, '\1')
-          if line.match(/^\s*start\s+on/)
-            # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
-            if (t_line.count('(') > t_line.count(')') )
-              parens = t_line.count('(') - t_line.count(')')
-            end
-            line.gsub(/^(\s*start\s+on)/, '#\1')
-          elsif parens > 0
-            # If there are still more opening than closing parens we need to continue uncommenting lines
-            parens += (t_line.count('(') - t_line.count(')') )
-            "#" << line
-          else
-            line
-          end
-        end
-
-        Puppet::Util.replace_file(initscript, 0644) do |file|
-          file.write(disabled_script)
-        end
-      elsif Puppet::Util::Package.versioncmp(upstart_version, "0.9.0") == -1
-        disabled_script = script_text.gsub(/^\s*manual\s*$/,"")
-        disabled_script << "\nmanual"
-
-        Puppet::Util.replace_file(initscript, 0644) do |file|
-          file.write(disabled_script)
-        end
-      else
-        # We have override files in this case.
-        # So we remove any existing manual stanzas and add one at the end
-        begin
-          over_text = File.open(overscript).read
-        rescue
-          over_text = nil
-        end
-
-        # First, remove any manual stanzas
-        over_text.gsub!(/^\s*manual\s*$/,"") if over_text
-
-        # Then add a manual stanza at the end.
-        over_text << "\nmanual" if over_text
-        over_text = "manual" unless over_text
-
-        Puppet::Util.replace_file(overscript, 0644) do |file|
-          file.write(over_text)
-        end
-      end
-    else
-      super
+    script_text = File.open(initscript).read
+    if upstart_version < "0.6.7"
+      disable_pre_0_6_7(script_text)
+    elsif upstart_version < "0.9.0"
+      disable_pre_0_9_0(script_text)
+    elsif upstart_version >= "0.9.0"
+      disable_post_0_9_0(read_override_file)
     end
   end
 
@@ -341,4 +158,174 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     return false
   end
 
+private
+
+  def enabled_pre_0_6_7?(script_text)
+    # Upstart version < 0.6.7 means no manual stanza.
+    if script_text.match(START_ON)
+      return :true
+    else
+      return :false
+    end
+  end
+
+  def enabled_pre_0_9_0?(script_text)
+    # Upstart version < 0.9.0 means no override files
+    # So we check to see if an uncommented start on or manual stanza is the last one in the file
+    # The last one in the file wins.
+    enabled = :false
+    script_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end
+    enabled
+  end
+
+  def enabled_post_0_9_0?(script_text, over_text)
+    # This version has manual stanzas and override files
+    # So we check to see if an uncommented start on or manual stanza is the last one in the
+    # conf file and any override files. The last one in the file wins.
+    enabled = :false
+
+    script_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end
+    over_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end if over_text
+    enabled
+  end
+
+  def enable_pre_0_9_0(text)
+    # We also need to remove any manual stanzas to ensure that it is enabled
+    text = remove_manual_from(text)
+
+    if enabled_pre_0_9_0?(text) == :false
+      enabled_script =
+        if text.match(COMMENTED_START_ON)
+          uncomment_start_block_in(text)
+        else
+          add_default_start_to(text)
+        end
+    else
+      enabled_script = text
+    end
+
+    write_script_to(initscript, enabled_script)
+  end
+
+  def enable_post_0_9_0(script_text, over_text)
+    over_text = remove_manual_from(over_text)
+
+    if enabled_post_0_9_0?(script_text, over_text) == :false
+      if script_text.match(START_ON)
+        over_text << extract_start_on_block_from(script_text)
+      else
+        over_text << "\nstart on runlevel [2,3,4,5]"
+      end
+    end
+
+    write_script_to(overscript, over_text)
+  end
+
+  def disable_pre_0_6_7(script_text)
+    disabled_script = comment_start_block_in(script_text)
+    write_script_to(initscript, disabled_script)
+  end
+
+  def disable_pre_0_9_0(script_text)
+    write_script_to(initscript, ensure_disabled_with_manual(script_text))
+  end
+
+  def disable_post_0_9_0(over_text)
+    write_script_to(overscript, ensure_disabled_with_manual(over_text))
+  end
+
+  def read_override_file
+    if File.exists?(overscript)
+      File.open(overscript).read
+    else
+      ""
+    end
+  end
+
+  def uncomment(line)
+    line.gsub(/^(\s*)#+/, '\1')
+  end
+
+  def remove_trailing_comments_from_commented_line_of(line)
+    line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
+  end
+
+  def remove_trailing_comments_from(line)
+    line.gsub(/^(\s*[^#]*).*/, '\1')
+  end
+
+  def unbalanced_parens_on(line)
+    line.count('(') - line.count(')')
+  end
+
+  def remove_manual_from(text)
+    text.gsub(MANUAL, "")
+  end
+
+  def comment_start_block_in(text)
+    parens = 0
+    text.map do |line|
+      if line.match(START_ON) || parens > 0
+        # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
+        parens += unbalanced_parens_on(remove_trailing_comments_from(line))
+        "#" + line
+      else
+        line
+      end
+    end.join('')
+  end
+
+  def uncomment_start_block_in(text)
+    parens = 0
+    text.map do |line|
+      if line.match(COMMENTED_START_ON) || parens > 0
+        parens += unbalanced_parens_on(remove_trailing_comments_from_commented_line_of(line))
+        uncomment(line)
+      else
+        line
+      end
+    end.join('')
+  end
+
+  def extract_start_on_block_from(text)
+    parens = 0
+    text.map do |line|
+      if line.match(START_ON) || parens > 0
+        parens += unbalanced_parens_on(remove_trailing_comments_from(line))
+        line
+      end
+    end.join('')
+  end
+
+  def add_default_start_to(text)
+    text + "\nstart on runlevel [2,3,4,5]"
+  end
+
+  def ensure_disabled_with_manual(text)
+    remove_manual_from(text) + "\nmanual"
+  end
+
+  def write_script_to(file, text)
+    Puppet::Util.replace_file(file, 0644) do |file|
+      file.write(text)
+    end
+  end
 end
