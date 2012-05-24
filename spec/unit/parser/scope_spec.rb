@@ -389,6 +389,22 @@ describe Puppet::Parser::Scope do
         end
       end
 
+      it "prefers values in its local scope over values in the inherited scope" do
+        expect_the_message_to_be('local_msg') do <<-MANIFEST
+            include bar
+
+            class foo {
+              $var = "inherited"
+            }
+
+            class bar inherits foo {
+              $var = "local_msg"
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
       it "finds a qualified variable by following parent scopes of the specified scope" do
         expect_the_message_to_be("from node") do <<-MANIFEST
             class c {
@@ -420,6 +436,37 @@ describe Puppet::Parser::Scope do
             class baz {
               include bar
             }
+          MANIFEST
+        end
+      end
+
+      it "prefers values in its local scope over values in the inherited scope when the inherited class is fully qualified" do
+        expect_the_message_to_be('local_msg') do <<-MANIFEST
+            include bar
+
+            class foo {
+              $var = "inherited"
+            }
+
+            class bar inherits ::foo {
+              $var = "local_msg"
+              notify { 'something': message => $var, }
+            }
+          MANIFEST
+        end
+      end
+
+      it "finds values in top scope when the inherited class is qualified to the top" do
+        expect_the_message_to_be('top msg') do <<-MANIFEST
+            $var = "top msg"
+            class foo {
+            }
+
+            class bar inherits ::foo {
+              notify { 'something': message => $var, }
+            }
+
+            include bar
           MANIFEST
         end
       end
