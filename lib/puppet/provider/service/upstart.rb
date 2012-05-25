@@ -4,9 +4,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   This provider manages `upstart` jobs, which have replaced `initd` services
   on Ubuntu. For `upstart` documentation, see <http://upstart.ubuntu.com/>.
   "
-  # confine to :ubuntu for now because I haven't tested on other platforms
-  confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
-  
+  confine :osfamily => [ :debian, :redhat ]
+
   defaultfor :operatingsystem => :ubuntu
 
   commands :start   => "/sbin/start",
