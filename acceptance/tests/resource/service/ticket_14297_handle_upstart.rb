@@ -18,29 +18,31 @@ def check_service_for(pkg, type, agent)
   end
 end
 
+begin
 # in Precise these packages provide a mix of upstart with no linked init
-# script (tty1), upstart linked to an init script (rsyslog), and no upstart
+# script (tty2), upstart linked to an init script (rsyslog), and no upstart
 # script - only an init script (apache2)
-%w(tty1 rsyslog apache2).each do |pkg|
-  on agent, puppet_resource("package #{pkg} ensure=present")
+  %w(tty2 rsyslog apache2).each do |pkg|
+    on agent, puppet_resource("package #{pkg} ensure=present")
 
-  step "Ensure #{pkg} has started"
-  on agent, "service #{pkg} start", :acceptable_exit_codes => [0,1]
+    step "Ensure #{pkg} has started"
+    on agent, "service #{pkg} start", :acceptable_exit_codes => [0,1]
 
-  step "Check that status for running #{pkg}"
-  check_service_for(pkg, "start", agent)
+    step "Check that status for running #{pkg}"
+    check_service_for(pkg, "start", agent)
 
-  step "Stop #{pkg} with `puppet resource'"
-  on agent, puppet_resource("service #{pkg} ensure=stopped")
+    step "Stop #{pkg} with `puppet resource'"
+    on agent, puppet_resource("service #{pkg} ensure=stopped")
 
-  step "Check that status for stopped #{pkg}"
-  check_service_for(pkg, "stop", agent)
+    step "Check that status for stopped #{pkg}"
+    check_service_for(pkg, "stop", agent)
 
-  step "Start #{pkg} with `puppet resource'"
-  on agent, puppet_resource("service #{pkg} ensure=running")
+    step "Start #{pkg} with `puppet resource'"
+    on agent, puppet_resource("service #{pkg} ensure=running")
 
-  step "Check that status for started #{pkg}"
-  check_service_for(pkg, "start", agent)
-
-  on agent, puppet_resource("package #{pkg} ensure=absent")
+    step "Check that status for started #{pkg}"
+    check_service_for(pkg, "start", agent)
+  end
+ensure
+  on agent, puppet_resource("package apache2 ensure=absent")
 end
