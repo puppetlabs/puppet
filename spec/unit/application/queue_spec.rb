@@ -8,7 +8,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
   before :each do
     @queue = Puppet::Application[:queue]
     @queue.stubs(:puts)
-    @daemon = stub_everything 'daemon', :daemonize => nil
+    @daemon = stub_everything 'daemon'
     Puppet::Util::Log.stubs(:newdestination)
 
     Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
@@ -66,6 +66,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
 
   describe "during setup" do
     before :each do
+      @queue.preinit
       @queue.options.stubs(:[])
       @queue.daemon.stubs(:daemonize)
       Puppet.stubs(:info)
