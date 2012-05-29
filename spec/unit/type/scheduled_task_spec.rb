@@ -15,6 +15,20 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
       described_class.new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe')[:command].should == 'C:\Windows\System32\notepad.exe'
     end
 
+    it 'should convert forward slashes to backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:/Windows/System32/notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
+    it 'should normalize backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:\Windows\\System32\\\\notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
     it 'should fail if the path to the command is not absolute' do
       expect {
         described_class.new(:name => 'Test Task', :command => 'notepad.exe')

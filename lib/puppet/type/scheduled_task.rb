@@ -33,6 +33,12 @@ Puppet::Type.newtype(:scheduled_task) do
     validate do |value|
       raise Puppet::Error.new('Must be specified using an absolute path.') unless absolute_path?(value)
     end
+    munge do |value|
+      # windows converts slashes to backslashes, so the *is* value
+      # has backslashes. Do the same for the *should* value, so that
+      # we are slash-insensitive. See #13009
+      File.expand_path(value).gsub(/\//, '\\')
+    end
   end
 
   newproperty(:working_dir) do
