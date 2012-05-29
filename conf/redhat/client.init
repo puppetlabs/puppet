@@ -16,14 +16,14 @@ export PATH
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=${LOCKFILE-/var/lock/subsys/puppet}
 pidfile=${PIDFILE-/var/run/puppet/agent.pid}
-puppetd=${PUPPETD-/usr/sbin/puppetd}
+puppetd=${PUPPETD-/usr/bin/puppet}
 RETVAL=0
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-PUPPET_OPTS=""
-[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
+PUPPET_OPTS="agent "
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --masterport=${PUPPET_PORT}"
 
@@ -40,7 +40,7 @@ fi
 ##[ -n "$INIT_VERSION" ] && PUPPET_OPTS="${PUPPET_OPTS} --fullrun"
 
 start() {
-    echo -n $"Starting puppet: "
+    echo -n $"Starting puppet agent: "
     daemon $daemonopts $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
     RETVAL=$?
     echo
@@ -49,7 +49,7 @@ start() {
 }
 
 stop() {
-    echo -n $"Stopping puppet: "
+    echo -n $"Stopping puppet agent: "
     killproc $pidopts $puppetd
     RETVAL=$?
     echo
@@ -57,7 +57,7 @@ stop() {
 }
 
 reload() {
-    echo -n $"Restarting puppet: "
+    echo -n $"Restarting puppet agent: "
     killproc $pidopts $puppetd -HUP
     RETVAL=$?
     echo
@@ -80,7 +80,7 @@ rh_status_q() {
 }
 
 genconfig() {
-    echo -n $"Generate configuration puppet: "
+    echo -n $"Generate puppet agent configuration: "
     $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --genconfig
 }
 
@@ -106,7 +106,7 @@ case "$1" in
     ;;
     once)
         shift
-        $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} $@
+        $puppetd ${PUPPET_OPTS} --onetime ${PUPPET_EXTRA_OPTS} $@
         ;;
     genconfig)
         genconfig

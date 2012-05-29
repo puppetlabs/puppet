@@ -13,11 +13,14 @@ export PATH
 [ -f /etc/sysconfig/puppetqueue ] && . /etc/sysconfig/puppetqueue
 lockfile=${LOCKFILE-/var/lock/subsys/puppetqd}
 pidfile=${PIDFILE-/var/run/puppet/queue.pid}
-puppetqd=${PUPPETQD-/usr/sbin/puppetqd}
+puppetqd=${PUPPETQD-/usr/bin/puppet}
 RETVAL=0
 
 # Source function library.
 . /etc/rc.d/init.d/functions
+
+PUPPET_OPTS="queue "
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
 
 # Determine if we can use the -p option to daemon, killproc, and status.
 # RHEL < 5 can't.
@@ -27,8 +30,8 @@ if status | grep -q -- '-p' 2>/dev/null; then
 fi
 
 start() {
-    echo -n $"Starting puppetqd: "
-    daemon $daemonopts $puppetqd
+    echo -n $"Starting puppet queue: "
+    daemon $daemonopts $puppetqd ${PUPPET_OPTS}
     RETVAL=$?
     echo
         [ $RETVAL = 0 ] && touch ${lockfile}
@@ -36,7 +39,7 @@ start() {
 }
 
 stop() {
-    echo -n $"Stopping puppetqd: "
+    echo -n $"Stopping puppet queue: "
     killproc $pidopts $puppetqd
     RETVAL=$?
     echo
@@ -44,7 +47,7 @@ stop() {
 }
 
 reload() {
-    echo -n $"Restarting puppetqd: "
+    echo -n $"Restarting puppet queue: "
     killproc $pidopts $puppetqd -HUP
     RETVAL=$?
     echo
@@ -67,8 +70,8 @@ rh_status_q() {
 }
 
 genconfig() {
-    echo -n $"Generate configuration puppetqd: "
-    $puppetqd --genconfig
+    echo -n $"Generate puppet queue configuration: "
+    $puppetqd ${PUPPET_OPTS} --genconfig
 }
 
 case "$1" in
