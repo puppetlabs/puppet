@@ -271,6 +271,9 @@ rm -rf %{buildroot}
 * Thu May 17 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc1
 * Puppet 3.0.0rc1 Release
 
+* Wed May 16 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc2
+- Update for 2.7.15rc2
+
 * Tue May 15 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc1
 - Update for 2.7.15rc1
 

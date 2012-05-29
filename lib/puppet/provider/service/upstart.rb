@@ -1,4 +1,10 @@
+require 'semver'
+
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
+  START_ON = /^\s*start\s+on/
+  COMMENTED_START_ON = /^\s*#+\s*start\s+on/
+  MANUAL   = /^\s*manual\s*$/
+
   desc "Ubuntu service management with `upstart`.
 
   This provider manages `upstart` jobs, which have replaced `initd` services
@@ -6,7 +12,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   "
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
-  
+
   defaultfor :operatingsystem => :ubuntu
 
   commands :start   => "/sbin/start",
@@ -17,7 +23,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
-  # has_feature :enableable
+  has_feature :enableable
 
   def self.instances
     instances = []
@@ -40,6 +46,72 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     instances
   end
 
+  def self.defpath
+    ["/etc/init", "/etc/init.d"]
+  end
+
+  def upstart_version
+    @@upstart_version ||= SemVer.new(initctl(" --version").match(/initctl \(upstart (\d\.\d[\.\d]?)\)/)[1])
+  end
+
+  # Where is our override script?
+  def overscript
+    @overscript ||= initscript.gsub(/\.conf$/,".override")
+  end
+
+  def search(name)
+    # Search prefers .conf as that is what upstart uses
+    [".conf", "", ".sh"].each do |suffix|
+      paths.each do |path|
+        fqname = File.join(path,name+suffix)
+        if File.exists?(fqname)
+          return fqname
+        end
+
+        self.debug("Could not find #{name}#{suffix} in #{path}")
+      end
+    end
+
+    raise Puppet::Error, "Could not find init script or upstart conf file for '#{name}'"
+  end
+
+  def enabled?
+    return super if not is_upstart?
+
+    script_contents = File.open(initscript).read
+    if upstart_version < "0.6.7"
+      enabled_pre_0_6_7?(script_contents)
+    elsif upstart_version < "0.9.0"
+      enabled_pre_0_9_0?(script_contents)
+    elsif upstart_version >= "0.9.0"
+      enabled_post_0_9_0?(script_contents, read_override_file)
+    end
+  end
+
+  def enable
+    return super if not is_upstart?
+
+    script_text = File.open(initscript).read
+    if upstart_version < "0.9.0"
+      enable_pre_0_9_0(script_text)
+    else
+      enable_post_0_9_0(script_text, read_override_file)
+    end
+  end
+
+  def disable
+    return super if not is_upstart?
+
+    script_text = File.open(initscript).read
+    if upstart_version < "0.6.7"
+      disable_pre_0_6_7(script_text)
+    elsif upstart_version < "0.9.0"
+      disable_pre_0_9_0(script_text)
+    elsif upstart_version >= "0.9.0"
+      disable_post_0_9_0(read_override_file)
+    end
+  end
+
   def startcmd
     is_upstart? ? [command(:start), @resource[:name]] : super
   end
@@ -55,7 +127,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def statuscmd
     is_upstart? ? nil : super #this is because upstart is broken with its return codes
   end
-  
+
   def status
     if @resource[:status]
       is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
@@ -65,12 +137,12 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       super
     end
   end
-  
+
   def normal_status
     ucommand(:status, false)
     ($?.exitstatus == 0) ? :running : :stopped
   end
-  
+
   def upstart_status(exec = @resource[:name])
     output = status_exec(@resource[:name].split)
     if (! $?.nil?) && (output =~ /start\//)
@@ -79,9 +151,181 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       return :stopped
     end
   end
-  
+
   def is_upstart?(script = initscript)
-    File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job"
+    return true if (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job")
+    return true if (File.file?(script) && (not script.include?("init.d")))
+    return false
   end
 
+private
+
+  def enabled_pre_0_6_7?(script_text)
+    # Upstart version < 0.6.7 means no manual stanza.
+    if script_text.match(START_ON)
+      return :true
+    else
+      return :false
+    end
+  end
+
+  def enabled_pre_0_9_0?(script_text)
+    # Upstart version < 0.9.0 means no override files
+    # So we check to see if an uncommented start on or manual stanza is the last one in the file
+    # The last one in the file wins.
+    enabled = :false
+    script_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end
+    enabled
+  end
+
+  def enabled_post_0_9_0?(script_text, over_text)
+    # This version has manual stanzas and override files
+    # So we check to see if an uncommented start on or manual stanza is the last one in the
+    # conf file and any override files. The last one in the file wins.
+    enabled = :false
+
+    script_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end
+    over_text.each do |line|
+      if line.match(START_ON)
+        enabled = :true
+      elsif line.match(MANUAL)
+        enabled = :false
+      end
+    end if over_text
+    enabled
+  end
+
+  def enable_pre_0_9_0(text)
+    # We also need to remove any manual stanzas to ensure that it is enabled
+    text = remove_manual_from(text)
+
+    if enabled_pre_0_9_0?(text) == :false
+      enabled_script =
+        if text.match(COMMENTED_START_ON)
+          uncomment_start_block_in(text)
+        else
+          add_default_start_to(text)
+        end
+    else
+      enabled_script = text
+    end
+
+    write_script_to(initscript, enabled_script)
+  end
+
+  def enable_post_0_9_0(script_text, over_text)
+    over_text = remove_manual_from(over_text)
+
+    if enabled_post_0_9_0?(script_text, over_text) == :false
+      if script_text.match(START_ON)
+        over_text << extract_start_on_block_from(script_text)
+      else
+        over_text << "\nstart on runlevel [2,3,4,5]"
+      end
+    end
+
+    write_script_to(overscript, over_text)
+  end
+
+  def disable_pre_0_6_7(script_text)
+    disabled_script = comment_start_block_in(script_text)
+    write_script_to(initscript, disabled_script)
+  end
+
+  def disable_pre_0_9_0(script_text)
+    write_script_to(initscript, ensure_disabled_with_manual(script_text))
+  end
+
+  def disable_post_0_9_0(over_text)
+    write_script_to(overscript, ensure_disabled_with_manual(over_text))
+  end
+
+  def read_override_file
+    if File.exists?(overscript)
+      File.open(overscript).read
+    else
+      ""
+    end
+  end
+
+  def uncomment(line)
+    line.gsub(/^(\s*)#+/, '\1')
+  end
+
+  def remove_trailing_comments_from_commented_line_of(line)
+    line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
+  end
+
+  def remove_trailing_comments_from(line)
+    line.gsub(/^(\s*[^#]*).*/, '\1')
+  end
+
+  def unbalanced_parens_on(line)
+    line.count('(') - line.count(')')
+  end
+
+  def remove_manual_from(text)
+    text.gsub(MANUAL, "")
+  end
+
+  def comment_start_block_in(text)
+    parens = 0
+    text.map do |line|
+      if line.match(START_ON) || parens > 0
+        # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
+        parens += unbalanced_parens_on(remove_trailing_comments_from(line))
+        "#" + line
+      else
+        line
+      end
+    end.join('')
+  end
+
+  def uncomment_start_block_in(text)
+    parens = 0
+    text.map do |line|
+      if line.match(COMMENTED_START_ON) || parens > 0
+        parens += unbalanced_parens_on(remove_trailing_comments_from_commented_line_of(line))
+        uncomment(line)
+      else
+        line
+      end
+    end.join('')
+  end
+
+  def extract_start_on_block_from(text)
+    parens = 0
+    text.map do |line|
+      if line.match(START_ON) || parens > 0
+        parens += unbalanced_parens_on(remove_trailing_comments_from(line))
+        line
+      end
+    end.join('')
+  end
+
+  def add_default_start_to(text)
+    text + "\nstart on runlevel [2,3,4,5]"
+  end
+
+  def ensure_disabled_with_manual(text)
+    remove_manual_from(text) + "\nmanual"
+  end
+
+  def write_script_to(file, text)
+    Puppet::Util.replace_file(file, 0644) do |file|
+      file.write(text)
+    end
+  end
 end
