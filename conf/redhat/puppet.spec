@@ -39,6 +39,7 @@ Requires:       ruby-shadow
 Requires:       facter >= 2.0.0
 Requires:       ruby >= 1.8.5
 Requires:       hiera >= 1.0.0
+Requires:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
 
 Requires(pre):  shadow-utils
