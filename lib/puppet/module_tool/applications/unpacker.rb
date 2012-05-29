@@ -21,16 +21,39 @@ module Puppet::ModuleTool
         @module_dir
       end
 
+      # Obtain a suitable temporary path for building and unpacking tarballs
+      #
+      # @return [Pathname] path to temporary build location
+      def build_dir
+        Puppet::Forge::Cache.base_path + "tmp-unpacker-#{Digest::SHA1.hexdigest(@filename.basename.to_s)}"
+      end
+
       private
       def extract_module_to_install_dir
         delete_existing_installation_or_abort!
 
-        build_dir = Puppet::Forge::Cache.base_path + "tmp-unpacker-#{Digest::SHA1.hexdigest(@filename.basename.to_s)}"
         build_dir.mkpath
         begin
-          unless system "tar xzf #{@filename} -C #{build_dir}"
-            raise RuntimeError, "Could not extract contents of module archive."
+          begin
+            if Facter.value('operatingsystem') == "Solaris"
+              # Solaris tar is not as safe and works differently, so we prefer
+              # gnutar instead.
+              if Puppet::Util.which('gtar')
+                Puppet::Util.execute("gtar xzf #{@filename} -C #{build_dir}")
+              elsif Puppet::Util.which('tar') and Puppet::Util.which('gzip')
+                Dir.chdir(build_dir) do
+                  Puppet::Util.execute("gzip -cd #{@filename} | tar xf -")
+                end
+              else
+                raise RuntimeError, "Unable to find a suitable tar and/or gzip implementation"
+              end
+            else
+              Puppet::Util.execute("tar xzf #{@filename} -C #{build_dir}")
+            end
+          rescue Puppet::ExecutionFailure => e
+            raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end
+
           # grab the first directory
           extracted = build_dir.children.detect { |c| c.directory? }
           FileUtils.mv extracted, @module_dir
