@@ -22,10 +22,10 @@ if [ -f /etc/sysconfig/puppetmaster ]; then
     . /etc/sysconfig/puppetmaster
 fi
 
-PUPPETMASTER_OPTS=""
-[ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="--manifest=${PUPPETMASTER_MANIFEST}"
+PUPPETMASTER_OPTS="master "
+[ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --manifest=${PUPPETMASTER_MANIFEST}"
 if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-    PUPPETMASTER_OPTS="$PUPPETMASTER_OPTS --servertype=mongrel"
+    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --servertype=mongrel"
 elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
     PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
 fi
@@ -43,7 +43,7 @@ fi
 RETVAL=0
 
 prog=puppetmasterd
-PUPPETMASTER=/usr/sbin/$prog
+PUPPETMASTER=/usr/bin/puppet
 
 start() {
     echo -n $"Starting puppetmaster: "
