@@ -8,7 +8,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   case Facter["operatingsystem"].value
-  when "FreeBSD"
+  when "FreeBSD", "DragonFly"
     @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
   when "HP-UX"
     @defpath = "/sbin/init.d"

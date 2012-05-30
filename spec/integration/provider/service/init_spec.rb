@@ -4,7 +4,7 @@ require 'spec_helper'
 provider = Puppet::Type.type(:service).provider(:init)
 
 describe provider do
-  describe "when running on FreeBSD", :if => (Facter.value(:operatingsystem) == "FreeBSD") do
+  describe "when running on FreeBSD", :if => (%w{FreeBSD DragonFly}.include?(Facter.value(:operatingsystem))) do
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
       provider.defpath.should == ["/etc/rc.d", "/usr/local/etc/rc.d"]
     end
