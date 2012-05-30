@@ -135,6 +135,7 @@ module Puppet::Test
           :confdir    => "/dev/null",
           :vardir     => "/dev/null",
           :rundir     => "/dev/null",
+          :hiera_config => "/dev/null",
       }
     end
     private_class_method :app_defaults_for_tests
