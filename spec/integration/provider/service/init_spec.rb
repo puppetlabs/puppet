@@ -4,25 +4,41 @@ require 'spec_helper'
 provider = Puppet::Type.type(:service).provider(:init)
 
 describe provider, :'fails_on_ruby_1.9.2' => true do
-  describe "when running on FreeBSD", :if => (Facter.value(:operatingsystem) == "FreeBSD") do
+  describe "when running on FreeBSD" do
+    before :each do
+      Facter.stubs(:value).with(:operatingsystem).returns 'FreeBSD'
+    end
+
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
       provider.defpath.should == ["/etc/rc.d", "/usr/local/etc/rc.d"]
     end
   end
 
-  describe "when running on HP-UX", :if => (Facter.value(:operatingsystem) == "HP-UX") do
+  describe "when running on HP-UX" do
+    before :each do
+      Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
+    end
+
     it "should set its default path to include /sbin/init.d" do
       provider.defpath.should == "/sbin/init.d"
     end
   end
 
-  describe "when running on Archlinux", :if => (Facter.value(:operatingsystem) == "Archlinux") do
+  describe "when running on Archlinux" do
+    before :each do
+      Facter.stubs(:value).with(:operatingsystem).returns 'Archlinux'
+    end
+
     it "should set its default path to include /etc/rc.d" do
       provider.defpath.should == "/etc/rc.d"
     end
   end
 
-  describe "when not running on FreeBSD, HP-UX or Archlinux", :if => (! %w{HP-UX FreeBSD Archlinux}.include?(Facter.value(:operatingsystem))) do
+  describe "when not running on FreeBSD, HP-UX or Archlinux" do
+    before :each do
+      Facter.stubs(:value).with(:operatingsystem).returns 'RedHat'
+    end
+
     it "should set its default path to include /etc/init.d" do
       provider.defpath.should == "/etc/init.d"
     end
