@@ -78,7 +78,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def enabled?
     return super if not is_upstart?
 
-    script_contents = File.open(initscript).read
+    script_contents = read_script_from(initscript)
     if upstart_version < "0.6.7"
       enabled_pre_0_6_7?(script_contents)
     elsif upstart_version < "0.9.0"
@@ -91,7 +91,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def enable
     return super if not is_upstart?
 
-    script_text = File.open(initscript).read
+    script_text = read_script_from(initscript)
     if upstart_version < "0.9.0"
       enable_pre_0_9_0(script_text)
     else
@@ -102,7 +102,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def disable
     return super if not is_upstart?
 
-    script_text = File.open(initscript).read
+    script_text = read_script_from(initscript)
     if upstart_version < "0.6.7"
       disable_pre_0_6_7(script_text)
     elsif upstart_version < "0.9.0"
@@ -254,7 +254,7 @@ private
 
   def read_override_file
     if File.exists?(overscript)
-      File.open(overscript).read
+      read_script_from(overscript)
     else
       ""
     end
@@ -321,6 +321,12 @@ private
 
   def ensure_disabled_with_manual(text)
     remove_manual_from(text) + "\nmanual"
+  end
+
+  def read_script_from(filename)
+    File.open(filename) do |file|
+      file.read
+    end
   end
 
   def write_script_to(file, text)
