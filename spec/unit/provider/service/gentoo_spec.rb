@@ -8,6 +8,12 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     FileTest.stubs(:file?).with('/sbin/rc-update').returns true
     FileTest.stubs(:executable?).with('/sbin/rc-update').returns true
+    Facter.stubs(:value).with(:operatingsystem).returns 'Gentoo'
+
+    # The initprovider (parent of the gentoo provider) does a stat call
+    # before it even tries to execute an initscript. We use sshd in all the
+    # tests so make sure it is considered present.
+    File.stubs(:stat).with('/etc/init.d/sshd')
   end
 
   let :initscripts do
