@@ -3,7 +3,7 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:upstart)
 
-describe provider_class do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
 
