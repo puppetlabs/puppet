@@ -24,8 +24,8 @@ describe provider_class, :as_platform => :posix do
   # test self.instances
   describe "when getting all service instances" do
     before :each do
-      @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf']
-      @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf']
+      @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf', 'boot', 'reboot']
+      @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot']
       Dir.stubs(:entries).returns @services
       FileTest.stubs(:directory?).returns(true)
       FileTest.stubs(:executable?).returns(true)
