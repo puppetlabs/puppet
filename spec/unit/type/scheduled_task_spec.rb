@@ -40,25 +40,12 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
   end
 
   describe 'when setting the command arguments' do
-    it 'should fail if provided an array' do
-      expect {
-        described_class.new(
-          :name      => 'Test Task',
-          :command   => 'C:\Windows\System32\notepad.exe',
-          :arguments => ['/a', '/b', '/c']
-        )
-      }.to raise_error(
-        Puppet::Error,
-        /Parameter arguments failed: Must be specified as a single string/
-      )
-    end
-
     it 'should accept a string' do
       described_class.new(
         :name      => 'Test Task',
         :command   => 'C:\Windows\System32\notepad.exe',
         :arguments => '/a /b /c'
-      )[:arguments].should == ['/a /b /c']
+      )[:arguments].should == '/a /b /c'
     end
 
     it 'should allow not specifying any command arguments' do

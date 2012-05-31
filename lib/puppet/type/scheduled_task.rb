@@ -49,9 +49,9 @@ Puppet::Type.newtype(:scheduled_task) do
     end
   end
 
-  newproperty(:arguments, :array_matching => :all) do
+  newproperty(:arguments) do
     desc "Any arguments or flags that should be passed to the command. Multiple arguments
-      can be specified as an array or as a space-separated string."
+      should be specified as a space-separated string."
   end
 
   newproperty(:user) do
@@ -161,14 +161,6 @@ Puppet::Type.newtype(:scheduled_task) do
 
     def is_to_s(current_value=@is)
       self.class.format_value_for_display(current_value)
-    end
-  end
-
-  validate do
-    return true if self[:ensure] == :absent
-
-    if self[:arguments] and !(self[:arguments].is_a?(Array) and self[:arguments].length == 1)
-      self.fail('Parameter arguments failed: Must be specified as a single string')
     end
   end
 end
