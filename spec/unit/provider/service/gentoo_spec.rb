@@ -47,6 +47,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     end
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
+      FileTest.expects(:directory?).with('/etc/init.d').returns true
       Dir.expects(:entries).with('/etc/init.d').returns initscripts
       (initscripts - helperscripts).each do |script|
         FileTest.expects(:executable?).with("/etc/init.d/#{script}").returns true
@@ -76,6 +77,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     it "should start the service with <initscript> start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :squelch => true)
+      provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.start
     end
   end
@@ -89,6 +91,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     it "should stop the service with <initscript> stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :squelch => true)
+      provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.stop
     end
   end
@@ -190,6 +193,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     describe "when hasstatus is true" do
       it "should return running if <initscript> status exits with a zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
+        provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.status.should == :running
@@ -197,6 +201,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
 
       it "should return stopped if <initscript> status exits with a non-zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
+        provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
         provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
         provider.status.should == :stopped
@@ -214,12 +219,14 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
 
     it "should restart the service with <initscript> restart if hasrestart is true" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
+      provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :squelch => true)
       provider.restart
     end
 
     it "should restart the service with <initscript> stop/start if hasrestart is false" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
+      provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :squelch => true).never
       provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :squelch => true)
       provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :squelch => true)
