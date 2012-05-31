@@ -142,11 +142,23 @@ class Puppet::Parser::Parser
     raise except
   end
 
+  # dsl type detection based of file extension
+  def detect_file(file)
+    # for override in tests
+    return Puppet[:dsl] if Puppet[:dsl]
+
+    case file
+    when /\.rb$/ then :ruby
+    else :puppet
+    end
+  end
+
   # how should I do error handling here?
   def parse(string = nil)
-    if self.file =~ /\.rb$/
+    case detect_file self.file
+    when :ruby
       main = parse_ruby_file
-    else
+    when :puppet
       self.string = string if string
       begin
         @yydebug = false
@@ -169,7 +181,12 @@ class Puppet::Parser::Parser
     # Execute the contents of the file inside its own "main" object so
     # that it can call methods in the resource type API.
     main_object = Puppet::DSL::ResourceTypeAPI.new
-    main_object.instance_eval(File.read(self.file))
+
+    if Puppet[:dsl] && Puppet[:code]
+      main_object.instance_eval Puppet[:code]
+    else
+      main_object.instance_eval(File.read(self.file))
+    end
 
     # Then extract any types that were created.
     Puppet::Parser::AST::ASTArray.new :children => main_object.instance_eval { @__created_ast_objects__ }

@@ -3,4 +3,19 @@ module PuppetSpec::Compiler
     Puppet[:code] = string
     Puppet::Parser::Compiler.compile(node)
   end
+
+  def compile_ruby_to_catalog(string = nil, node = Puppet::Node.new('foonode'))
+    Puppet[:dsl] = :ruby
+    Puppet[:code] = string
+    Puppet::Parser::Compiler.compile(node)
+  end
+
+  def prepare_compiler
+    @scope = Puppet::Parser::Scope.new
+    @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production'))
+    @topscope = @scope.compiler.topscope
+    @compiler = @scope.compiler
+    @scope.parent = @topscope
+  end
+
 end
