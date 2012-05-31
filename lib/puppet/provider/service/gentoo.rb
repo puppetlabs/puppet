@@ -18,6 +18,11 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
     superclass.defpath
   end
 
+  def self.instances
+    # this exclude list was found with grep -L '\/sbin\/runscript' /etc/init.d/*
+    self.get_services(self.defpath, ['functions.sh', 'reboot.sh', 'shutdown.sh'])
+  end
+
   def disable
       output = update :del, @resource[:name], :default
   rescue Puppet::ExecutionFailure
