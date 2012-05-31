@@ -81,6 +81,19 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
+2.7.15rc3
+===
+a45942b (#14297) Don't remove tty1 or rsyslog during upstart acceptance
+466ab49 (#14297) Define agent in upstart acceptance test
+f5d1f74 (#14297) Update upstart provider acceptance tests
+3c5ef40 (#14297) Clean up upstart provider and tests
+36c41e1 (#14343) Test cases for more forms of variable lookup
+6cca061 (#14297) Add acceptance test for upstart provider
+b9ed026 (#14297) Update spec tests for upstart provider
+91827e8 (#14297) Handle upstart services better
+3541db6 (#14343) Lookup in correct inherited scope
+2d83e22 (Maint) Added test for fully qualified variable
+
 2.7.15rc2
 ===
 c6e006e (#8174) Allow defines to reference topscope
