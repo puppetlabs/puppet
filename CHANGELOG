@@ -1,3 +1,31 @@
+3.0.0rc3
+===
+e619304 (#14761) Add boot, reboot to excludes list for redhat provider
+7c1d8c2 (maint) Disable upstart spec test on windows
+37df5c4 (#14615) Final stub fixes for the tests.
+f11dfd6 (#14615) Fix provider spec tests to work on non gentoo systems
+060810e maint: Make it easier to test the service provider
+c0cb0fa (Maint) Close filehandles after read in upstart
+55505db (Maint) Fix upstart provider to work on Ruby 1.9.3
+b0f1d58 Update redhat.spec dependency to include hiera-puppet
+6e2f23d Update puppet gem dependencies
+d19f93f Update redhat init scripts to use `puppet (agent|queue|master)`
+a45942b (#14297) Don't remove tty1 or rsyslog during upstart acceptance
+466ab49 (#14297) Define agent in upstart acceptance test
+f5d1f74 (#14297) Update upstart provider acceptance tests
+3c5ef40 (#14297) Clean up upstart provider and tests
+36c41e1 (#14343) Test cases for more forms of variable lookup
+6cca061 (#14297) Add acceptance test for upstart provider
+b9ed026 (#14297) Update spec tests for upstart provider
+91827e8 (#14297) Handle upstart services better
+3541db6 (#14343) Lookup in correct inherited scope
+2d83e22 (Maint) Added test for fully qualified variables
+0788ea2 (#14615) Exclude helperscripts in gentoo service provider
+2864d86 (maint) Change Facter dep from exit to raise
+2ec9b74 (maint) Make Puppet have hard dependency on Facter 2.0
+6c37538 (#3909) Move default certname logic to Puppet::Settings
+6be09f0 (#3909) Strip trailing dot from default FQDN
+
 3.0.0rc2
 ===
 0cea47e (#14609) Fix master initialization when running under Passenger

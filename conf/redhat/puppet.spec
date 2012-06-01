@@ -6,7 +6,7 @@
 
 Name:           puppet
 Version:        3.0.0
-Release:        0.1rc2%{?dist}
+Release:        0.1rc3%{?dist}
 #Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
@@ -266,6 +266,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Jun 01 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc3
+* Puppet 3.0.0rc3 Release
+
 * Tue May 22 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc2
 * Puppet 3.0.0rc2 Release
 
