@@ -81,9 +81,9 @@ describe Puppet::DSL do
           file '/tmp/test', :mode => 644, :ensure => :present
         end
 
-        node "child.example.com" inherits "base.example.com" {
+        node "child.example.com", :inherits => "base.example.com" do
           Resource::File['/tmp/test'].override :mode => 755
-        }
+        end
       MANIFEST
 
       r.should == p
