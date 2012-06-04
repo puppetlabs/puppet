@@ -11,14 +11,23 @@ module Puppet::Network::HttpPool
 
   # Use cert information from a Puppet client to set up the http object.
   def self.cert_setup(http)
-    # Just no-op if we don't have certs.
-    return false unless FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(Puppet[:localcacert])
+    if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(Puppet[:localcacert])
+      http.cert_store  = ssl_host.ssl_store
+      http.ca_file     = Puppet[:localcacert]
+      http.cert        = ssl_host.certificate.content
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      http.key         = ssl_host.key.content
+    else
+      # We don't have the local certificates, so we don't do any verification
+      # or setup at this early stage.  REVISIT: Shouldn't we supply the local
+      # certificate details if we have them?  The original code didn't.
+      # --daniel 2012-06-03
 
-    http.cert_store = ssl_host.ssl_store
-    http.ca_file = Puppet[:localcacert]
-    http.cert = ssl_host.certificate.content
-    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    http.key = ssl_host.key.content
+      # Ruby 1.8 defaulted to this, but 1.9 defaults to peer verify, and we
+      # almost always talk to a dedicated, not-standard CA that isn't trusted
+      # out of the box.  This forces the expected state.
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
   end
 
   # Retrieve a cached http instance if caching is enabled, else return

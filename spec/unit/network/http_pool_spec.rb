@@ -74,62 +74,68 @@ describe Puppet::Network::HttpPool do
       Puppet::Network::HttpPool.stubs(:ssl_host).returns(host)
     end
 
-    it "should do nothing if no host certificate is on disk" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns false
-      http.expects(:cert=).never
-      Puppet::Network::HttpPool.cert_setup(http)
+    shared_examples "HTTPS setup without all certificates" do
+      subject { Puppet::Network::HttpPool.cert_setup(http); http }
+
+      it                { should be_use_ssl }
+      its(:cert)        { should be_nil }
+      its(:cert_store)  { should be_nil }
+      its(:ca_file)     { should be_nil }
+      its(:key)         { should be_nil }
+      its(:verify_mode) { should == OpenSSL::SSL::VERIFY_NONE }
     end
 
-    it "should do nothing if no local certificate is on disk" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns true
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns false
-      http.expects(:cert=).never
-      Puppet::Network::HttpPool.cert_setup(http)
+    context "with neither a host cert or a local CA cert" do
+      before :each do
+        FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
+        FileTest.stubs(:exist?).with(Puppet[:localcacert]).returns(false)
+      end
+
+      include_examples "HTTPS setup without all certificates"
     end
 
-    it "should add a certificate store from the ssl host" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns true
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns true
-      http.expects(:cert_store=).with(store)
+    context "with there is no host certificate" do
+      before :each do
+        FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
+        FileTest.stubs(:exist?).with(Puppet[:localcacert]).returns(true)
+      end
 
-      Puppet::Network::HttpPool.cert_setup(http)
+      include_examples "HTTPS setup without all certificates"
     end
 
-    it "should add the client certificate" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns true
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns true
-      http.expects(:cert=).with("real_cert")
+    context "with there is no local CA certificate" do
+      before :each do
+        FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
+        FileTest.stubs(:exist?).with(Puppet[:localcacert]).returns(false)
+      end
 
-      Puppet::Network::HttpPool.cert_setup(http)
+      include_examples "HTTPS setup without all certificates"
     end
 
-    it "should add the client key" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns true
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns true
-      http.expects(:key=).with("real_key")
+    context "with both the host and CA cert" do
+      subject { Puppet::Network::HttpPool.cert_setup(http); http }
 
-      Puppet::Network::HttpPool.cert_setup(http)
-    end
+      before :each do
+        FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
+        FileTest.expects(:exist?).with(Puppet[:localcacert]).returns(true)
+      end
 
-    it "should set the verify mode to OpenSSL::SSL::VERIFY_PEER" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns true
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns true
-      http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-
-      Puppet::Network::HttpPool.cert_setup(http)
-    end
-
-    it "should set the ca file" do
-      FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
-      FileTest.expects(:exist?).with(Puppet[:localcacert]).returns(true)
-
-      Puppet::Network::HttpPool.cert_setup(http)
-      http.ca_file.should == Puppet[:localcacert]
+      it                { should be_use_ssl }
+      its(:cert_store)  { should equal store }
+      its(:cert)        { should == "real_cert" }
+      its(:key)         { should == "real_key" }
+      its(:verify_mode) { should == OpenSSL::SSL::VERIFY_PEER }
+      its(:ca_file)     { should == Puppet[:localcacert] }
     end
 
     it "should set up certificate information when creating http instances" do
-      Puppet::Network::HttpPool.expects(:cert_setup).with { |i| i.is_a?(Net::HTTP) }
-      Puppet::Network::HttpPool.http_instance("one", "two")
+      Puppet::Network::HttpPool.expects(:cert_setup).with do |http|
+        http.should be_an_instance_of Net::HTTP
+        http.address.should == "one"
+        http.port.should == 2
+      end
+
+      Puppet::Network::HttpPool.http_instance("one", 2)
     end
   end
 end
