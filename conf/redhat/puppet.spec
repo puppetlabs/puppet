@@ -12,9 +12,9 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 #Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz
 #Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -69,7 +69,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 #%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc3
+%setup -q -n %{name}-%{version}rc4
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -274,6 +274,9 @@ rm -rf %{buildroot}
 
 * Thu May 17 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc1
 * Puppet 3.0.0rc1 Release
+
+* Fri Jun 1 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.15-0.1rc4
+- Update for 2.7.15rc4
 
 * Tue May 29 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc3
 - Update for 2.7.15rc3

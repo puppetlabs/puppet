@@ -109,6 +109,11 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
+2.7.15rc4
+===
+0788ea2 (#14615) Exclude helperscripts in gentoo service provider
+be6062c Apply commit from master that varies ports during tests
+
 2.7.15rc3
 ===
 a45942b (#14297) Don't remove tty1 or rsyslog during upstart acceptance
