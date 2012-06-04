@@ -15,8 +15,18 @@ module Puppet::ModuleTool
         super(options)
       end
 
-      def skeleton
-        @skeleton ||= Skeleton.new
+      def skeletons
+        skeletons = []
+
+        if !@options[:without_default_skeleton]
+          skeletons.push(Pathname(__FILE__).dirname + '../skeleton/templates/generator')
+        end
+
+        if @options[:with_custom_skeleton]
+          skeletons.push(Pathname(Puppet.settings[:module_working_dir]) + 'skeleton')
+        end
+
+        return skeletons
       end
 
       def get_binding
@@ -29,17 +39,24 @@ module Puppet::ModuleTool
         end
         Puppet.notice "Generating module at #{Dir.pwd}/#{@metadata.dashed_name}"
         files_created = []
-        skeleton.path.find do |path|
-          if path == skeleton
-            destination.mkpath
-          else
-            node = Node.on(path, self)
-            if node
-              node.install!
-              files_created << node.target
-            else
-              Puppet.notice "Could not generate from #{path}"
+
+        skeletons.each do |skeleton|
+          if skeleton.directory?
+            skeleton.find do |path|
+              if path == skeleton
+                destination.mkpath
+              else
+                node = Node.on(path, skeleton, self)
+                if node
+                  node.install!
+                  files_created << node.target
+                else
+                  Puppet.notice "Could not generate from #{path}"
+                end
+              end
             end
+          else
+            Puppet.warning "Skeleton path #{skeleton} is not a directory. Please check your puppet.conf"
           end
         end
 
@@ -77,21 +94,22 @@ module Puppet::ModuleTool
         def self.inherited(klass)
           types << klass
         end
-        def self.on(path, generator)
+        def self.on(path, skeleton, generator)
           klass = types.detect { |t| t.matches?(path) }
           if klass
-            klass.new(path, generator)
+            klass.new(path, skeleton, generator)
           end
         end
-        def initialize(source, generator)
+        def initialize(source, skeleton, generator)
           @generator = generator
           @source = source
+          @skeleton = skeleton
         end
         def read
           @source.read
         end
         def target
-          target = @generator.destination + @source.relative_path_from(@generator.skeleton.path)
+          target = @generator.destination + @source.relative_path_from(@skeleton)
           components = target.to_s.split(File::SEPARATOR).map do |part|
             if part[0] == '_'
               part[0] = '.'

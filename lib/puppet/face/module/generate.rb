@@ -31,6 +31,16 @@ Puppet::Face.define(:module, '1.0.0') do
 
     arguments "<name>"
 
+    option "--without-default-skeleton" do
+      summary "Skip default skeleton? Requires a custom skeletom through --with-custom-skeleton"
+      description "This enables you to skip the default skeleton files for your module."
+    end
+
+    option "--with-custom-skeleton" do
+      summary "Use custom skeleton from #{Puppet.settings[:module_working_dir]}/skeleton."
+      description "If true, files and directories from #{Puppet.settings[:module_working_dir]}/skeleton are taken to generate the base module directory. Files from the default sekeleton will be oberridden."
+    end
+
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Generator.run(name, options)
