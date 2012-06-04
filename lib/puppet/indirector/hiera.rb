@@ -15,8 +15,22 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
 
   private
 
+  def self.hiera_config
+    hiera_config = Puppet.settings[:hiera_config]
+    config = {}
+
+    if File.exist?(hiera_config)
+      config = Hiera::Config.load(hiera_config)
+    else
+      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+    end
+
+    config[:logger] = 'puppet'
+    config
+  end
+
   def self.hiera
-    @hiera || Hiera.new(:config => Puppet.settings[:hiera_config])
+    @hiera ||= Hiera.new(:config => hiera_config)
   end
 
   def hiera

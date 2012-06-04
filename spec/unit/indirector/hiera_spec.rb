@@ -4,8 +4,22 @@ require 'puppet/indirector/hiera'
 describe Puppet::Indirector::Hiera do
   include PuppetSpec::Files
 
+  def write_hiera_config(config_file, datadir)
+    File.open(config_file, 'w') do |f|
+      f.write("---
+        :yaml:
+          :datadir: #{datadir}
+        :hierarchy: ['global']
+        :logger: 'noop'
+        :backends: ['yaml']
+      ")
+    end
+  end
+
   before do
-    Puppet.settings[:hiera_config] = {}
+    Puppet.settings[:hiera_config] = hiera_config_file
+    write_hiera_config(hiera_config_file, datadir)
+
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     Puppet::Indirector::Indirection.stubs(:instance).returns(indirection)
 
@@ -44,6 +58,12 @@ describe Puppet::Indirector::Hiera do
   end
   let(:facter_obj) { stub(:values => facts) }
 
+  let(:hiera_config_file) do
+    tmpfile("hiera.yaml")
+  end
+
+  let(:datadir) { my_fixture_dir }
+
   it "should be the default data_binding terminus" do
     Puppet.settings[:data_binding_terminus].should == 'hiera'
   end
@@ -54,18 +74,56 @@ describe Puppet::Indirector::Hiera do
       "Hiera terminus not supported without hiera library"
   end
 
+  describe "the behavior of the hiera_config method", :if => Puppet.features.hiera? do
+    let(:default_hiera_config) do
+      {
+        :logger    => "puppet",
+        :backends  => ["yaml"],
+        :yaml      => { :datadir => datadir },
+        :hierarchy => ["global"]
+      }
+    end
+
+    it "should load the hiera config file by delegating to Hiera" do
+      Hiera::Config.expects(:load).with(hiera_config_file).returns({})
+      @hiera_class.hiera_config
+    end
+
+    it "should override the logger and set it to puppet" do
+      @hiera_class.hiera_config[:logger].should == "puppet"
+    end
+
+    it "should return a hiera configuration hash" do
+      results = @hiera_class.hiera_config
+      results.should == default_hiera_config
+      results.should be_a_kind_of Hash
+    end
+
+    context "when the Hiera configuration file does not exist" do
+      before do
+        Puppet.settings[:hiera_config] = '/doesnotexists'
+      end
+
+      it "should log a warning" do
+        Puppet.expects(:warning).with(
+          "Config file /doesnotexists not found, using Hiera defaults")
+        @hiera_class.hiera_config
+      end
+
+      it "should only configure the logger and set it to puppet" do
+        Puppet.expects(:warning).with(
+          "Config file /doesnotexists not found, using Hiera defaults")
+        @hiera_class.hiera_config.should == { :logger => 'puppet' }
+      end
+    end
+  end
+
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
     before do
-      Puppet.settings[:hiera_config] = {
-        :yaml      => { :datadir => datadir },
-        :hierarchy => ['global'],
-        :logger    => 'noop'
-      }
       Puppet::Node::Facts.indirection.expects(:find).with('foo').
         returns(facter_obj)
     end
 
-    let(:datadir)     { my_fixture_dir }
     let(:data_binder) { @hiera_class.new }
 
     it "support looking up an integer" do
@@ -92,3 +150,4 @@ describe Puppet::Indirector::Hiera do
     end
   end
 end
+
