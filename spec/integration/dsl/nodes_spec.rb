@@ -68,7 +68,6 @@ describe Puppet::DSL do
             mode   => 0644,
             ensure => present
           }
-
         }
 
         node "child.example.com" inherits "base.example.com" {
