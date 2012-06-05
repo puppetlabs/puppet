@@ -32,7 +32,7 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     option "--without-default-skeleton" do
-      summary "Skip default skeleton? Requires a custom skeletom through --with-custom-skeleton"
+      summary "Skip default skeleton? Requires a custom skeleton through --with-custom-skeleton"
       description "This enables you to skip the default skeleton files for your module."
     end
 
