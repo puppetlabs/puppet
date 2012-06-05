@@ -11,9 +11,9 @@ describe Puppet::DSL do
     prepare_compiler
   end
 
-  describe "defaults" do
+  describe "relationships" do
 
-    it "should be able to update defaults for a resource"
+
 
   end
 end

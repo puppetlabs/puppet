@@ -116,8 +116,6 @@ describe Puppet::DSL do
     end
 
     # TODO: add inheritance
-
-    # it "
   end
 end
 
