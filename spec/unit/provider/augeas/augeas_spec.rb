@@ -690,6 +690,15 @@ describe provider_class do
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
         aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
       end
+
+      it "should not optimise if the context is a complex path" do
+        @resource[:context] = "/files/*[label()='etc']"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      end
     end
   end
 end
