@@ -159,14 +159,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
       debug("Augeas version #{get_augeas_version} is installed") if versioncmp(get_augeas_version, "0.3.6") >= 0
 
+      # Optimize loading if the context is given and it's a simple path,
+      # requires the glob function from Augeas 0.8.2 or up
       glob_avail = !aug.match("/augeas/version/pathx/functions/glob").empty?
+      opt_ctx = resource[:context].match("^/files/[^'\"\\[\\]]+$") if resource[:context]
 
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
-      elsif glob_avail and resource[:context] and resource[:context].match("^/files/")
-        # Optimize loading if the context is given, requires the glob function
-        # from Augeas 0.8.2 or up
+      elsif glob_avail and opt_ctx
         ctx_path = resource[:context].sub(/^\/files(.*?)\/?$/, '\1/')
         load_path = "/augeas/load/*['%s' !~ glob(incl) + regexp('/.*')]" % ctx_path
 
