@@ -32,8 +32,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#verify" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:verify) end
-
     it "should not explode if there is no certificate" do
       expect {
         subject.verify('random-host').should == {
@@ -84,12 +82,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#fingerprint" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:fingerprint) end
-
-    it "should have a 'digest' option" do
-      action.should be_option :digest
-    end
-
     it "should not explode if there is no certificate" do
       expect {
         subject.fingerprint('random-host').should be_nil
@@ -123,8 +115,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#print" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:print) end
-
     it "should not explode if there is no certificate" do
       expect {
         subject.print('random-host').should be_nil
@@ -149,8 +139,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#sign" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:sign) end
-
     it "should not explode if there is no CSR" do
       expect {
         subject.sign('random-host').
@@ -200,8 +188,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#generate" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:generate) end
-
     it "should generate a certificate if requested" do
       subject.list(:all => true).should == []
 
@@ -239,8 +225,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#revoke" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:revoke) end
-
     it "should not explode when asked to revoke something that doesn't exist" do
       expect { subject.revoke('nonesuch') }.should_not raise_error
     end
@@ -264,8 +248,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#destroy" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:destroy) end
-
     it "should not explode when asked to delete something that doesn't exist" do
       expect { subject.destroy('nonesuch') }.should_not raise_error
     end
@@ -301,16 +283,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#list" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:list) end
-
-    context "options" do
-      subject { Puppet::Face[:ca, '0.1.0'].get_action(:list) }
-      it { should be_option :pending }
-      it { should be_option :signed  }
-      it { should be_option :all     }
-      it { should be_option :subject }
-    end
-
     context "with no hosts in CA" do
       [
         {},
@@ -330,7 +302,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
 
         context "when_rendering :console" do
           it "should return nothing for #{type.inspect}" do
-            action.when_rendering(:console).call(subject.list(type)).should == ""
+            subject.get_action(:list).when_rendering(:console).call(subject.list(type)).should == ""
           end
         end
       end
@@ -372,7 +344,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         }.each do |input, pattern|
           it "should render #{input.inspect} to match #{pattern.inspect}" do
             make_certs(*input)
-            text = action.when_rendering(:console).call(subject.list(:all => true))
+            text = subject.get_action(:list).when_rendering(:console).call(subject.list(:all => true))
             Array(pattern).each do |item|
               text.should =~ Regexp.new(item)
             end
