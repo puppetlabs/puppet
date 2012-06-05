@@ -38,7 +38,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     option "--with-custom-skeleton" do
       summary "Use custom skeleton from #{Puppet.settings[:module_working_dir]}/skeleton."
-      description "If true, files and directories from #{Puppet.settings[:module_working_dir]}/skeleton are taken to generate the base module directory. Files from the default sekeleton will be oberridden."
+      description "If true, files and directories from #{Puppet.settings[:module_working_dir]}/skeleton are taken to generate the base module directory. Files from the default skeleton will be overridden."
     end
 
     when_invoked do |name, options|
