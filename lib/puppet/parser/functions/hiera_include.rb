@@ -4,6 +4,8 @@ module Puppet::Parser::Functions
             args = args[0]
         end
 
+        raise(Puppet::ParseError, "Please supply a parameter to perform a Hiera lookup") if args.empty?
+
         key = args[0]
         default = args[1]
         override = args[2]
