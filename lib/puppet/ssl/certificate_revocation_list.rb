@@ -3,6 +3,8 @@ require 'puppet/indirector'
 
 # Manage the CRL.
 class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
+  FIVE_YEARS = 5 * 365*24*60*60
+
   wraps OpenSSL::X509::CRL
 
   extend Puppet::Indirector
@@ -10,10 +12,9 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
 
   # Convert a string into an instance.
   def self.from_s(string)
-    instance = wrapped_class.new(string)
-    result = new('foo') # The name doesn't matter
-    result.content = instance
-    result
+    crl = new('foo') # The name doesn't matter
+    crl.content = wrapped_class.new(string)
+    crl
   end
 
   # Because of how the format handler class is included, this
@@ -25,20 +26,11 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
   # Knows how to create a CRL with our system defaults.
   def generate(cert, cakey)
     Puppet.info "Creating a new certificate revocation list"
-    @content = wrapped_class.new
-    @content.issuer = cert.subject
-    @content.version = 1
 
-    # Init the CRL number.
-    crlNum = OpenSSL::ASN1::Integer(0)
-    @content.extensions = [OpenSSL::X509::Extension.new("crlNumber", crlNum)]
-
-    # Set last/next update
-    @content.last_update = Time.now
-    # Keep CRL valid for 5 years
-    @content.next_update = Time.now + 5 * 365*24*60*60
-
-    @content.sign(cakey, OpenSSL::Digest::SHA256.new)
+    create_crl_issued_by(cert)
+    start_at_initial_crl_number
+    update_valid_time_range_to_start_at(Time.now)
+    sign_with(cakey)
 
     @content
   end
@@ -56,7 +48,27 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     Puppet.notice "Revoked certificate with serial #{serial}"
     time = Time.now
 
-    # Add our revocation to the CRL.
+    add_certitificate_revocation_for(serial, reason, time)
+    update_to_next_crl_number
+    update_valid_time_range_to_start_at(time)
+    sign_with(cakey)
+
+    Puppet::SSL::CertificateRevocationList.indirection.save(self)
+  end
+
+private
+
+  def create_crl_issued_by(cert)
+    @content = wrapped_class.new
+    @content.issuer = cert.subject
+    @content.version = 1
+  end
+
+  def start_at_initial_crl_number
+    @content.extensions = [crl_number_of(0)]
+  end
+
+  def add_certitificate_revocation_for(serial, reason, time)
     revoked = OpenSSL::X509::Revoked.new
     revoked.serial = serial
     revoked.time = time
@@ -64,21 +76,32 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     ext = OpenSSL::X509::Extension.new("CRLReason", enum)
     revoked.add_extension(ext)
     @content.add_revoked(revoked)
+  end
 
-    # Increment the crlNumber
-    e = @content.extensions.find { |e| e.oid == 'crlNumber' }
-    ext = @content.extensions.reject { |e| e.oid == 'crlNumber' }
-    crlNum = OpenSSL::ASN1::Integer(e ? e.value.to_i + 1 : 0)
-    ext << OpenSSL::X509::Extension.new("crlNumber", crlNum)
-    @content.extensions = ext
+  def update_valid_time_range_to_start_at(time)
+    # The CRL is not valid if the time of checking == the time of last_update.
+    # So to have it valid right now we need to say that it was updated one second ago.
+    @content.last_update = time - 1
+    @content.next_update = time + FIVE_YEARS
+  end
 
-    # Set last/next update
-    @content.last_update = time
-    # Keep CRL valid for 5 years
-    @content.next_update = time + 5 * 365*24*60*60
+  def update_to_next_crl_number
+    @content.extensions = with_next_crl_number_from(@content.extensions)
+  end
 
+  def with_next_crl_number_from(existing_extensions)
+    existing_crl_num = existing_extensions.find { |e| e.oid == 'crlNumber' }
+    new_crl_num = existing_crl_num ? existing_crl_num.value.to_i + 1 : 0
+
+    extensions_without_crl_num = existing_extensions.reject { |e| e.oid == 'crlNumber' }
+    extensions_without_crl_num + [crl_number_of(new_crl_num)]
+  end
+
+  def crl_number_of(number)
+    OpenSSL::X509::Extension.new('crlNumber', OpenSSL::ASN1::Integer(number))
+  end
+
+  def sign_with(cakey)
     @content.sign(cakey, OpenSSL::Digest::SHA1.new)
-
-    Puppet::SSL::CertificateRevocationList.indirection.save(self)
   end
 end
