@@ -1,11 +1,5 @@
 3.0.0rc3
 ===
-e619304 (#14761) Add boot, reboot to excludes list for redhat provider
-7c1d8c2 (maint) Disable upstart spec test on windows
-37df5c4 (#14615) Final stub fixes for the tests.
-f11dfd6 (#14615) Fix provider spec tests to work on non gentoo systems
-060810e maint: Make it easier to test the service provider
-c0cb0fa (Maint) Close filehandles after read in upstart
 55505db (Maint) Fix upstart provider to work on Ruby 1.9.3
 b0f1d58 Update redhat.spec dependency to include hiera-puppet
 6e2f23d Update puppet gem dependencies
@@ -108,6 +102,17 @@ e2d6915 Fix communication_error acceptance test
 c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
+
+2.7.15rc4
+===
+e619304 (#14761) Add boot, reboot to excludes list for redhat provider
+7c1d8c2 (maint) Disable upstart spec test on windows
+37df5c4 (#14615) Final stub fixes for the tests.
+f11dfd6 (#14615) Fix provider spec tests to work on non gentoo systems
+060810e maint: Make it easier to test the service provider
+c0cb0fa (Maint) Close filehandles after read in upstart
+0788ea2 (#14615) Exclude helperscripts in gentoo service provider
+be6062c Apply commit from master that varies ports during tests
 
 2.7.15rc3
 ===
