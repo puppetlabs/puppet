@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/network/handler'
 require 'puppet/network/http/rack' if Puppet.features.rack?
@@ -108,6 +108,14 @@ describe "Puppet::Network::HTTP::RackXMLRPC", :if => Puppet.features.rack? do
         Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
         Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| node == "host.domain.com" }
         req = mk_req "myheader" => "/CN=host.domain.com"
+        @handler.process(req, @response)
+      end
+
+      it "should allow attributes following the CN in the DN (#14852)" do
+        Puppet.settings.stubs(:value).returns "eh"
+        Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
+        Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| node == "mir.example.net" }
+        req = mk_req "myheader" => "/C=UK/ST=Greater London/O=example/CN=mir.example.net/emailAddress=systems@example.net"
         @handler.process(req, @response)
       end
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/network/http'
@@ -222,6 +222,13 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel?, 
         Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
         @params["myheader"] = "/CN=host.domain.com"
         @handler.params(@request)[:node].should == "host.domain.com"
+      end
+
+      it "should allow attributes following the CN in the DN (#14852)" do
+        Puppet.settings.stubs(:value).returns "eh"
+        Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
+        @params["myheader"] = "/C=UK/ST=Greater London/O=example/CN=mir.example.net/emailAddress=systems@example.net"
+        @handler.params(@request)[:node].should == "mir.example.net"
       end
 
       it "should use the :ssl_client_header to determine the parameter for checking whether the host certificate is valid" do

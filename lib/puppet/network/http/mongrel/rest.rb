@@ -86,7 +86,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     # JJM #906 The following dn.match regular expression is forgiving
     # enough to match the two Distinguished Name string contents
     # coming from Apache, Pound or other reverse SSL proxies.
-    if dn = params[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
+    if dn = params[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*([^\/]*)/)
       result[:node] = dn_matchdata[1].to_str
       result[:authenticated] = (params[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
     else
