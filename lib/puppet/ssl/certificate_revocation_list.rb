@@ -79,7 +79,9 @@ private
   end
 
   def update_valid_time_range_to_start_at(time)
-    @content.last_update = time
+    # The CRL is not valid if the time of checking == the time of last_update.
+    # So to have it valid right now we need to say that it was updated one second ago.
+    @content.last_update = time - 1
     @content.next_update = time + FIVE_YEARS
   end
 
