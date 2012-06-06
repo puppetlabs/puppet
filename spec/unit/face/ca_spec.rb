@@ -21,12 +21,14 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     )
   end
 
-  def make_certs(csr_names, crt_names)
-    Array(csr_names).map do |name|
+  def given_certificate_requests_for(*names)
+    names.each do |name|
       Puppet::SSL::Host.new(name).generate_certificate_request
     end
+  end
 
-    Array(crt_names).map do |name|
+  def given_certificates_for(*names)
+    names.each do |name|
       Puppet::SSL::Host.new(name).generate
     end
   end
@@ -40,7 +42,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should report that it cannot find a certificate when there is only a request" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
 
       subject.verify('random-host').should == {
         :host => 'random-host', :valid => false,
@@ -49,14 +51,15 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should verify a signed certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.verify('random-host').should == {
         :host => 'random-host', :valid => true
       }
     end
 
     it "should not verify a revoked certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
 
       subject.revoke('random-host')
 
@@ -67,7 +70,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should verify a revoked certificate if CRL use was turned off" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
       subject.revoke('random-host')
 
       Puppet[:certificate_revocation] = false
@@ -84,24 +87,27 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should fingerprint a CSR" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
 
       subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
     end
 
     it "should fingerprint a certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
     end
 
     %w{md5 MD5 sha1 ShA1 SHA1 RIPEMD160 sha256 sha512}.each do |digest|
       it "should fingerprint with #{digest.inspect}" do
-        make_certs([], 'random-host')
+        given_certificates_for('random-host')
+
         subject.fingerprint('random-host', :digest => digest).should =~ /^[0-9A-F:]+$/
       end
 
       it "should fingerprint with #{digest.to_sym} as a symbol" do
-        make_certs([], 'random-host')
+        given_certificates_for('random-host')
+
         subject.fingerprint('random-host', :digest => digest.to_sym).
           should =~ /^[0-9A-F:]+$/
       end
@@ -114,14 +120,16 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should return nothing if there is only a CSR" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
 
       subject.print('random-host').should be_nil
     end
 
     it "should return the certificate content if there is a cert" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       text = subject.print('random-host')
+
       text.should be_an_instance_of String
       text.should =~ /^Certificate:/
       text.should =~ /Issuer: CN=Puppet CA: /
@@ -135,13 +143,14 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should report that there is no CSR when even when there is a certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
 
       subject.sign('random-host').should == 'Could not find certificate request for random-host'
     end
 
     it "should sign a CSR if one exists" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
+
       subject.sign('random-host').should be_an_instance_of Puppet::SSL::Certificate
 
       list = subject.list(:signed => true)
@@ -185,13 +194,13 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should report if a CSR with that name already exists" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
 
       subject.generate('random-host').should =~ /already has a certificate request/
     end
 
     it "should report if the certificate with that name already exists" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
 
       subject.generate('random-host').should =~ /already has a certificate/
     end
@@ -214,7 +223,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should revoke a certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
 
       subject.revoke('random-host')
 
@@ -230,8 +239,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should destroy a CSR, if we have one" do
-      make_certs('random-host', [])
-      subject.list(:pending => true, :subject => 'random-host').should_not == []
+      given_certificate_requests_for('random-host')
 
       subject.destroy('random-host')
 
@@ -239,8 +247,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should destroy a certificate, if we have one" do
-      make_certs([], 'random-host')
-      subject.list(:signed => true, :subject => 'random-host').should_not == []
+      given_certificates_for('random-host')
 
       subject.destroy('random-host')
 
@@ -248,8 +255,10 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should tell the user something was deleted" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.list(:signed => true, :subject => 'random-host').should_not == []
+
       subject.destroy('random-host').
         should == "Deleted for random-host: Puppet::SSL::Certificate, Puppet::SSL::Key"
     end
@@ -294,7 +303,9 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         { :pending => true, :signed => true } => all_names,
       }.each do |input, expect|
         it "should map #{input.inspect} to #{expect.inspect}" do
-          make_certs(csr_names, crt_names)
+          given_certificate_requests_for(*csr_names)
+          given_certificates_for(*crt_names)
+
           subject.list(input).map(&:name).should =~ expect
         end
 
@@ -302,22 +313,27 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           filtered = expect.select {|x| Regexp.new(pattern).match(x) }
 
           it "should filter all hosts matching #{pattern.inspect} to #{filtered.inspect}" do
-            make_certs(csr_names, crt_names)
+            given_certificate_requests_for(*csr_names)
+            given_certificates_for(*crt_names)
+
             subject.list(input.merge :subject => pattern).map(&:name).should =~ filtered
           end
         end
       end
 
       context "when_rendering :console" do
-        { [["csr1.local"], []] => '^  csr1.local ',
-          [[], ["crt1.local"]] => '^\+ crt1.local ',
-          [["csr2"], ["crt2"]] => ['^  csr2 ', '^\+ crt2 ']
+        { [["csr1.local"], []] => [/^  csr1.local /],
+          [[], ["crt1.local"]] => [/^\+ crt1.local /],
+          [["csr2"], ["crt2"]] => [/^  csr2 /, /^\+ crt2 /]
         }.each do |input, pattern|
           it "should render #{input.inspect} to match #{pattern.inspect}" do
-            make_certs(*input)
+            given_certificate_requests_for(*input[0])
+            given_certificates_for(*input[1])
+
             text = subject.get_action(:list).when_rendering(:console).call(subject.list(:all => true))
-            Array(pattern).each do |item|
-              text.should =~ Regexp.new(item)
+
+            pattern.each do |item|
+              text.should =~ item
             end
           end
         end
