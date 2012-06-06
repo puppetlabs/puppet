@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-APPLY" "8" "June 2011" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-APPLY" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-apply\fR \- Apply Puppet manifests locally
@@ -10,7 +10,7 @@
 Applies a standalone Puppet manifest to the local system\.
 .
 .SH "USAGE"
-puppet apply [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose] [\-e|\-\-execute] [\-\-detailed\-exitcodes] [\-l|\-\-logdest \fIfile\fR] [\-\-apply \fIcatalog\fR] \fIfile\fR
+puppet apply [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose] [\-e|\-\-execute] [\-\-detailed\-exitcodes] [\-l|\-\-logdest \fIfile\fR] [\-\-apply \fIcatalog\fR] [\-\-catalog \fIcatalog\fR] \fIfile\fR
 .
 .SH "DESCRIPTION"
 This is the standalone puppet execution tool; use it to apply individual manifests\.
@@ -33,7 +33,7 @@ Enable full debugging\.
 .
 .TP
 \-\-detailed\-exitcodes
-Provide transaction information via exit codes\. If this is enabled, an exit code of \'2\' means there were changes, and an exit code of \'4\' means that there were failures during the transaction\.
+Provide transaction information via exit codes\. If this is enabled, an exit code of \'2\' means there were changes, an exit code of \'4\' means there were failures during the transaction, and an exit code of \'6\' means there were both changes and failures\.
 .
 .TP
 \-\-help
@@ -57,6 +57,10 @@ Print extra information\.
 .
 .TP
 \-\-apply
+Apply a JSON catalog (such as one generated with \'puppet master \-\-compile\')\. You can either specify a JSON file or pipe in JSON from standard input\. Deprecated, please use \-\-catalog instead\.
+.
+.TP
+\-\-catalog
 Apply a JSON catalog (such as one generated with \'puppet master \-\-compile\')\. You can either specify a JSON file or pipe in JSON from standard input\.
 .
 .SH "EXAMPLE"
@@ -65,6 +69,7 @@ Apply a JSON catalog (such as one generated with \'puppet master \-\-compile\')\
 
 $ puppet apply \-l /tmp/manifest\.log manifest\.pp
 $ puppet apply \-\-modulepath=/root/dev/modules \-e "include ntpd::server"
+$ puppet apply \-\-catalog catalog\.json
 .
 .fi
 .

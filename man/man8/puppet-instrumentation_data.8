@@ -1,16 +1,16 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CERTIFICATE_REQUEST" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-INSTRUMENTATION_DATA" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
-\fBpuppet\-certificate_request\fR \- Manage certificate requests\.
+\fBpuppet\-instrumentation_data\fR \- Manage instrumentation listener accumulated data\.
 .
 .SH "SYNOPSIS"
-puppet certificate_request \fIaction\fR [\-\-terminus TERMINUS] [\-\-extra HASH]
+puppet instrumentation_data \fIaction\fR [\-\-terminus TERMINUS] [\-\-extra HASH]
 .
 .SH "DESCRIPTION"
-This subcommand retrieves and submits certificate signing requests (CSRs)\.
+This subcommand allows to retrieve the various listener data\.
 .
 .SH "OPTIONS"
 Note that any configuration parameter that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR is a valid configuration parameter, so you can specify \fB\-\-server <servername>\fR as an argument\.
@@ -55,7 +55,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet instrumentation_data destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -64,30 +64,30 @@ puppet certificate_request destroy [\-\-terminus TERMINUS] [\-\-extra HASH] \fIk
 Invalid for this subcommand\.
 .
 .TP
-\fBfind\fR \- Retrieve a single CSR\.
+\fBfind\fR \- Retrieve listener data\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request find [\-\-terminus TERMINUS] [\-\-extra HASH] \fIhost\fR
+puppet instrumentation_data find [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Retrieve a single CSR\.
+Retrieve listener data\.
 .
 .IP
 \fBRETURNS\fR
 .
 .IP
-A single certificate request\. When used from the Ruby API, returns a Puppet::SSL::CertificateRequest object\.
+The data of an instrumentation listener
 .
 .TP
 \fBinfo\fR \- Print the default terminus class for this face\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request info [\-\-terminus TERMINUS] [\-\-extra HASH]
+puppet instrumentation_data info [\-\-terminus TERMINUS] [\-\-extra HASH]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -96,11 +96,11 @@ puppet certificate_request info [\-\-terminus TERMINUS] [\-\-extra HASH]
 Prints the default terminus class for this subcommand\. Note that different run modes may have different default termini; when in doubt, specify the run mode with the \'\-\-mode\' option\.
 .
 .TP
-\fBsave\fR \- API only: submit a certificate signing request\.
+\fBsave\fR \- Invalid for this subcommand\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIx509_CSR\fR
+puppet instrumentation_data save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -109,56 +109,32 @@ puppet certificate_request save [\-\-terminus TERMINUS] [\-\-extra HASH] \fIx509
 API only: create or overwrite an object\. As the Faces framework does not currently accept data from STDIN, save actions cannot currently be invoked from the command line\.
 .
 .TP
-\fBsearch\fR \- Retrieve all outstanding CSRs\.
+\fBsearch\fR \- Invalid for this subcommand\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet certificate_request search [\-\-terminus TERMINUS] [\-\-extra HASH] \fIdummy_text\fR
+puppet instrumentation_data search [\-\-terminus TERMINUS] [\-\-extra HASH] \fIquery\fR
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Retrieve all outstanding CSRs\.
-.
-.IP
-\fBRETURNS\fR
-.
-.IP
-A list of certificate requests\. When used from the Ruby API, returns an array of Puppet::SSL::CertificateRequest objects\.
-.
-.IP
-\fBNOTES\fR
-.
-.IP
-Although this action always returns all CSRs, it requires a dummy search key; this is a known bug\.
+Invalid for this subcommand\.
 .
 .SH "EXAMPLES"
 \fBfind\fR
 .
 .P
-Retrieve a single CSR from the puppet master\'s CA:
+Retrieve listener data:
 .
 .P
-$ puppet certificate_request find somenode\.puppetlabs\.lan \-\-terminus rest
-.
-.P
-\fBsearch\fR
-.
-.P
-Retrieve all CSRs from the local CA (similar to \'puppet cert list\'):
-.
-.P
-$ puppet certificate_request search x \-\-terminus ca
+$ puppet instrumentation_data find performance \-\-terminus rest
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:
 .
 .IP "\(bu" 4
-\fBca\fR
-.
-.IP "\(bu" 4
-\fBfile\fR
+\fBlocal\fR
 .
 .IP "\(bu" 4
 \fBrest\fR

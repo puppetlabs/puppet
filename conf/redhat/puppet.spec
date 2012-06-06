@@ -5,22 +5,22 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.15
-Release:        0.1rc4%{?dist}
+Version:        2.7.16
+Release:        0.1rc1%{?dist}
 #Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 #Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
 #Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  facter >= 1.5
+BuildRequires:  facter >= 1.5, facter < 2.0
 BuildRequires:  ruby >= 1.8.5
 
 BuildArch:      noarch
@@ -36,7 +36,7 @@ Requires:       ruby-shadow
 %endif
 %endif
 
-Requires:       facter >= 1.5, facter <= 2.0
+Requires:       facter >= 1.5, facter < 2.0
 Requires:       ruby >= 1.8.5
 %{!?_without_augeas:Requires: ruby-augeas}
 
@@ -67,7 +67,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 #%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc4
+%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -178,6 +178,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{_mandir}/man8/puppet-apply.8.gz
 %{_mandir}/man8/puppet-catalog.8.gz
 %{_mandir}/man8/puppet-describe.8.gz
+%{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-cert.8.gz
 %{_mandir}/man8/puppet-certificate.8.gz
 %{_mandir}/man8/puppet-certificate_request.8.gz
@@ -190,9 +191,13 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{_mandir}/man8/puppet-filebucket.8.gz
 %{_mandir}/man8/puppet-help.8.gz
 %{_mandir}/man8/puppet-inspect.8.gz
+%{_mandir}/man8/puppet-instrumentation_data.8.gz
+%{_mandir}/man8/puppet-instrumentation_listener.8.gz
+%{_mandir}/man8/puppet-instrumentation_probe.8.gz
 %{_mandir}/man8/puppet-key.8.gz
 %{_mandir}/man8/puppet-kick.8.gz
 %{_mandir}/man8/puppet-man.8.gz
+%{_mandir}/man8/puppet-module.8.gz
 %{_mandir}/man8/puppet-node.8.gz
 %{_mandir}/man8/puppet-parser.8.gz
 %{_mandir}/man8/puppet-plugin.8.gz
@@ -284,7 +289,10 @@ fi
 rm -rf %{buildroot}
 
 %changelog
-* Fri Jun 1 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.15-0.1rc4
+* Wed Jun 06 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-0.1rc1
+- Update for 2.7.16rc1, added generated manpages
+
+* Fri Jun 01 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.15-0.1rc4
 - Update for 2.7.15rc4
 
 * Tue May 29 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc3

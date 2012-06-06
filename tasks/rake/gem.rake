@@ -27,7 +27,7 @@ spec = Gem::Specification.new do |spec|
     spec.files = GEM_FILES.to_a
     spec.executables = EXECUTABLES.gsub(/sbin\/|bin\//, '').to_a
     spec.version = Puppet::PUPPETVERSION
-    spec.add_dependency('facter', '>= 1.5.1')
+    spec.add_dependency('facter', '~> 1.5')
     spec.summary = 'Puppet, an automated configuration management tool'
     spec.description = 'Puppet, an automated configuration management tool'
     spec.author = 'Puppet Labs'
