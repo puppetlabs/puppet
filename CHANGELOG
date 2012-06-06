@@ -109,13 +109,17 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
-2.7.15rc4
+2.7.16rc1
 ===
+3a06246 (#8858) Explicitly set SSL peer verification mode.
+cd4bee8 Test SSL setup code, not our stubbing of it.
+ff052b8 (maint) Add mailmap to identify contributors
+8dda6c2 (#14723) Fix http report description
+ebf5386 Remove EL-related test changes from this commit.
+2aea708 Revert changes to symbolic_modes.rb -- this test should indeed be pending (it should eventually work on Windows).
+b601bb4 Update acceptance tests to use confine instead of skip_test loops
 0788ea2 (#14615) Exclude helperscripts in gentoo service provider
 be6062c Apply commit from master that varies ports during tests
-
-2.7.15rc3
-===
 a45942b (#14297) Don't remove tty1 or rsyslog during upstart acceptance
 466ab49 (#14297) Define agent in upstart acceptance test
 f5d1f74 (#14297) Update upstart provider acceptance tests
@@ -126,15 +130,9 @@ b9ed026 (#14297) Update spec tests for upstart provider
 91827e8 (#14297) Handle upstart services better
 3541db6 (#14343) Lookup in correct inherited scope
 2d83e22 (Maint) Added test for fully qualified variable
-
-2.7.15rc2
-===
 c6e006e (#8174) Allow defines to reference topscope
 e27adf4 Evaluate node classes either in top or node scope
 a3d51b2 Removed topscope being overridden by node
-
-2.7.15rc1
-===
 53e0057 Use internal domain name for module tool tests
 f4ba59e Use absolute_path in module install spec
 ead9d25 (Maint) Color console output when the win32console gem is installed
