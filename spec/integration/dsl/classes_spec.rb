@@ -59,7 +59,7 @@ describe Puppet::DSL do
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        hostclass :foo, :params => {:param => "value"} do
+        hostclass :foo, :arguments => {:param => "value"} do
           notice params[:param]
         end
       MANIFEST
@@ -79,7 +79,7 @@ describe Puppet::DSL do
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        hostclass :foo, :params => {:param => nil} do
+        hostclass :foo, :arguments => {:param => nil} do
           notice params[:param]
         end
 
@@ -103,7 +103,7 @@ describe Puppet::DSL do
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        hostclass :foo, :params => {:param => "value"} do
+        hostclass :foo, :arguments => {:param => "value"} do
           notice params[:param]
         end
 
