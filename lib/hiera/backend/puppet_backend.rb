@@ -34,7 +34,7 @@ class Hiera
             end
 
             def lookup(key, scope, order_override, resolution_type)
-                answer = Backend.empty_answer(resolution_type)
+                answer = nil
 
                 Hiera.debug("Looking up #{key} in Puppet backend")
 
@@ -73,8 +73,10 @@ class Hiera
                         # for priority searches we break after the first found data item
                         case resolution_type
                         when :array
+                            answer ||= []
                             answer << Backend.parse_answer(temp_answer, scope)
                         when :hash
+                            answer ||= {}
                             answer = Backend.parse_answer(temp_answer, scope).merge answer
                         else
                             answer = Backend.parse_answer(temp_answer, scope)
