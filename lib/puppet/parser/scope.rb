@@ -243,7 +243,7 @@ class Puppet::Parser::Scope
     elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (resource and resource.type == "Node") or self == options[:origin])
       table[name]
     elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
-      class_scope(parent_type).lookupvar(name,options.merge({:origin => nil}))
+      qualified_scope(parent_type).lookupvar(name, options.merge({:origin => nil}))
     elsif parent
       parent.lookupvar(name, options)
     else

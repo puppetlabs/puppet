@@ -1,13 +1,9 @@
 test_name "#8740: should not enumerate root directory"
+confine :except, :platform => 'windows'
 
 target = "/test-socket-#{$$}"
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    skip_test "Test not supported on this platform"
-    next
-  end
-
   step "clean up the system before we begin"
   on(agent, "rm -f #{target}")
 

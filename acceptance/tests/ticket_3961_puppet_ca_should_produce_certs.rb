@@ -1,4 +1,5 @@
 test_name "#3961: puppet ca should produce certs spec"
+confine :except, :platform => 'windows'
 
 target  = "working3961.example.org"
 
@@ -9,11 +10,6 @@ expect = ['Signed certificate request for ca',
           'Removing file Puppet::SSL::CertificateRequest working3961.example.org']
 
 agents.each do |agent|
-  if agent['platform'].include?('windows')
-    skip_test "Test not supported on this platform"
-    next
-  end
-
   scratch = agent.tmpdir('puppet-ssl-3961')
   options = { :confdir => scratch, :vardir => scratch }
 

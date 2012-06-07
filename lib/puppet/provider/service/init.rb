@@ -3,23 +3,21 @@
 Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard `init`-style service management."
 
-  class << self
-    attr_accessor :defpath
-  end
-
-  case Facter["operatingsystem"].value
-  when "FreeBSD"
-    @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
-  when "HP-UX"
-    @defpath = "/sbin/init.d"
-  when "Archlinux"
-    @defpath = "/etc/rc.d"
-  else
-    @defpath = "/etc/init.d"
+  def self.defpath
+    case Facter.value(:operatingsystem)
+    when "FreeBSD"
+      ["/etc/rc.d", "/usr/local/etc/rc.d"]
+    when "HP-UX"
+      "/sbin/init.d"
+    when "Archlinux"
+      "/etc/rc.d"
+    else
+      "/etc/init.d"
+    end
   end
 
   # We can't confine this here, because the init path can be overridden.
-  #confine :exists => @defpath
+  #confine :exists => defpath
 
   # List all services of this type.
   def self.instances

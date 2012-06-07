@@ -37,6 +37,26 @@ class Puppet::Settings
         :logdir   => run_mode.log_dir,
     }
   end
+  
+  def self.default_certname() 
+    hostname = hostname_fact
+    domain = domain_fact
+    if domain and domain != ""
+      fqdn = [hostname, domain].join(".")
+    else
+      fqdn = hostname
+    end
+    fqdn.gsub(/\.$/, '')
+  end 
+
+  def self.hostname_fact()
+    Facter["hostname"].value 
+  end 
+
+  def self.domain_fact()
+    Facter["domain"].value
+  end 
+
 
   def self.default_global_config_dir
     Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
