@@ -30,7 +30,7 @@ module Puppet::Parser::Functions
 
         answer = hiera.lookup(key, default, hiera_scope, override, :hash)
 
-        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") if answer.empty?
+        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") if answer.nil?
 
         answer
     end

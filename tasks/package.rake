@@ -109,6 +109,7 @@ namespace :package do
         begin
           sh dsc_cmd
           deb_cmd = "sudo cowbuilder --build #{latest_file(File.join(temp, '*.dsc'))} --basepath /var/cache/pbuilder/#{@cow}/"
+	        sh deb_cmd
           result_dir = "/var/cache/pbuilder/result"
           dest_dir = File.join(@build_root, 'pkg', 'deb')
           mkdir_p dest_dir
