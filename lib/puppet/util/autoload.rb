@@ -32,13 +32,13 @@ class Puppet::Util::Autoload
     # we can load downloaded plugins if they've already been loaded
     # into memory.
     def mark_loaded(name, file)
-      name = cleanpath(name)
+      name = cleanpath(name).chomp('.rb')
       $LOADED_FEATURES << name + ".rb" unless $LOADED_FEATURES.include?(name)
       loaded[name] = [file, File.mtime(file)]
     end
 
     def changed?(name)
-      name = cleanpath(name)
+      name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
       return true unless file == get_file(name)
@@ -198,6 +198,14 @@ class Puppet::Util::Autoload
   # so that already-loaded files don't get reloaded unnecessarily.
   def loadall
     self.class.loadall(@path)
+  end
+
+  def loaded?(name)
+    self.class.loaded?(File.join(@path, name.to_s))
+  end
+
+  def changed?(name)
+    self.class.changed?(File.join(@path, name.to_s))
   end
 
   def files_to_load
