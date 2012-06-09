@@ -9,8 +9,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    facts = Puppet::Node::Facts.indirection.find(request.options[:host]).values
-    hiera.lookup(request.key, nil, facts, nil, nil)
+    hiera.lookup(request.key, nil, request.options[:scope], nil, nil)
   end
 
   private
