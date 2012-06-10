@@ -1,3 +1,3 @@
 class users::common {
-    notify{"Adding users::common": }
+  notify{"Adding users::common": }
 }
