@@ -35,7 +35,10 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     names.each do |name|
       next unless info = name2hash(name)
 
-      break if node = info2node(request.key, info)
+      merge_parent(info) if info[:parent]
+      info[:environment] ||= request.environment.to_s
+      node = info2node(request.key, info)
+      break
     end
 
     node
@@ -56,6 +59,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     ldapsearch(filter) { |entry| infos << entry2hash(entry, request.options[:fqdn]) }
 
     return infos.collect do |info|
+      merge_parent(info) if info[:parent]
+      info[:environment] ||= request.environment.to_s
       info2node(info[:name], info)
     end
   end
@@ -183,8 +188,6 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # Take a name and a hash, and return a node instance.
   def info2node(name, info)
-    merge_parent(info) if info[:parent]
-
     node = Puppet::Node.new(name)
 
     add_to_node(node, info)

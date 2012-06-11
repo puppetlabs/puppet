@@ -6,6 +6,13 @@ require 'puppet/node'
 describe "Puppet::Node::ActiveRecord", :if => Puppet.features.rails? && Puppet.features.sqlite? do
   include PuppetSpec::Files
 
+  let(:nodename) { "mynode" }
+  let(:fact_values) { {:afact => "a value"} }
+  let(:facts) { Puppet::Node::Facts.new(nodename, fact_values) }
+  let(:environment) { Puppet::Node::Environment.new("myenv") }
+  let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, :environment => environment) }
+  let(:node_indirection) { Puppet::Node::ActiveRecord.new }
+
   before do
     require 'puppet/indirector/node/active_record'
   end
@@ -22,16 +29,13 @@ describe "Puppet::Node::ActiveRecord", :if => Puppet.features.rails? && Puppet.f
     db_instance = stub 'db_instance'
     Puppet::Node::ActiveRecord.ar_model.expects(:find_by_name).returns db_instance
 
-    node = Puppet::Node.new("foo")
+    node = Puppet::Node.new(nodename)
     db_instance.expects(:to_puppet).returns node
 
     Puppet[:statedir] = tmpdir('active_record_tmp')
     Puppet[:railslog] = '$statedir/rails.log'
-    ar = Puppet::Node::ActiveRecord.new
+    Puppet::Node::Facts.indirection.expects(:find).with(nodename, :environment => environment).returns(facts)
 
-    node.expects(:fact_merge)
-
-    request = Puppet::Indirector::Request.new(:node, :find, "what.ever", nil)
-    ar.find(request)
+    node_indirection.find(request).parameters.should include(fact_values)
   end
 end
