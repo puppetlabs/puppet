@@ -20,3 +20,4 @@ describe 'Puppet::Parser::Functions#hiera_include' do
     expect { @scope.function_hiera_include("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
 end
+
