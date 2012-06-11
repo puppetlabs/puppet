@@ -50,8 +50,8 @@ class Puppet::Provider
     Puppet::Util::Execution.execpipe(*args, &block)
   end
 
-  def self.execpipe(*args)
-    Puppet::Util::Execution.execpipe(*args)
+  def self.execpipe(*args, &block)
+    Puppet::Util::Execution.execpipe(*args, &block)
   end
 
   def execfail(*args)
