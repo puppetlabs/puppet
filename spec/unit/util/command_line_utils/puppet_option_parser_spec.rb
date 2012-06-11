@@ -98,7 +98,7 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
       option_parser.on(*option) {}
     end
 
-    expect { option_parser.parse(["-r"]) }.to raise_error(Puppet::Util::CommandLine::PuppetUnrecognizedOptionError)
+    expect { option_parser.parse(["-r"]) }.to raise_error(Puppet::Util::CommandLine::PuppetOptionError)
   end
 
   it "respects :ignore_invalid_options" do
