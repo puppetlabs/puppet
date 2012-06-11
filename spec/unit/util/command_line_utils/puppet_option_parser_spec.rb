@@ -4,44 +4,64 @@ require 'puppet/util/command_line/puppet_option_parser'
 describe Puppet::Util::CommandLine::PuppetOptionParser do
   let(:option_parser) { described_class.new }
 
-  it "parses a 'long' option with a value" do
-    parses(
-      :option => ["--angry", "Angry", :REQUIRED],
-      :from_arguments => ["--angry", "foo"],
-      :expects => "foo"
-    )
+  describe "an option with a value" do
+    it "parses a 'long' option with a value" do
+      parses(
+        :option => ["--angry", "Angry", :REQUIRED],
+        :from_arguments => ["--angry", "foo"],
+        :expects => "foo"
+      )
+    end
+
+    it "parses a 'short' option with a value" do
+      parses(
+        :option => ["--angry", "-a", "Angry", :REQUIRED],
+        :from_arguments => ["-a", "foo"],
+        :expects => "foo"
+      )
+    end
+
+    it "overrides a previous argument with a later one" do
+      parses(
+        :option => ["--later", "Later", :REQUIRED],
+        :from_arguments => ["--later", "tomorrow", "--later", "morgen"],
+        :expects => "morgen"
+      )
+    end
   end
 
-  it "parses a 'short' option with a value" do
-    parses(
-      :option => ["--angry", "-a", "Angry", :REQUIRED],
-      :from_arguments => ["-a", "foo"],
-      :expects => "foo"
-    )
-  end
+  describe "an option without a value" do
+    it "parses a 'long' option" do
+      parses(
+        :option => ["--angry", "Angry", :NONE],
+        :from_arguments => ["--angry"],
+        :expects => true
+      )
+    end
 
-  it "parses a 'long' option without a value" do
-    parses(
-      :option => ["--angry", "Angry", :NONE],
-      :from_arguments => ["--angry"],
-      :expects => true
-    )
-  end
+    it "parses a 'short' option" do
+      parses(
+        :option => ["--angry", "-a", "Angry", :NONE],
+        :from_arguments => ["-a"],
+        :expects => true
+      )
+    end
 
-  it "parses a 'short' option without a value" do
-    parses(
-      :option => ["--angry", "-a", "Angry", :NONE],
-      :from_arguments => ["-a"],
-      :expects => true
-    )
-  end
+    it "supports the '--no-blah' syntax" do
+      parses(
+        :option => ["--[no-]rage", "Rage", :NONE],
+        :from_arguments => ["--no-rage"],
+        :expects => false
+      )
+    end
 
-  it "supports the '--no-blah' syntax" do
-    parses(
-      :option => ["--[no-]rage", "Rage", :NONE],
-      :from_arguments => ["--no-rage"],
-      :expects => false
-    )
+    it "overrides a previous argument with a later one" do
+      parses(
+        :option => ["--[no-]rage", "Rage", :NONE],
+        :from_arguments => ["--rage", "--no-rage"],
+        :expects => false
+      )
+    end
   end
 
   it "does not modify the original argument array" do

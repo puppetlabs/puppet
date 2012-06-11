@@ -63,7 +63,8 @@ module Puppet
               :long => long,
               :short => short,
               :required => false,
-              :callback => block,
+              :callback => pass_only_last_value_on_to(block),
+              :multi => true,
           }
 
           case type
@@ -87,9 +88,11 @@ module Puppet
             raise PuppetUnrecognizedOptionError.new(err) if err.message =~ /^unknown argument/
           end
         end
+
+        def pass_only_last_value_on_to(block)
+          lambda { |values| block.call(values.is_a?(Array) ? values.last : values) }
+        end
       end
-
-
     end
   end
 end
