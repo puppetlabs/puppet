@@ -322,26 +322,26 @@ describe Puppet::Resource do
 
         it "should query the data_binding terminus using a namespaced key" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo')
+            'apache::port', :scope => @scope)
           resource.set_default_parameters(@scope)
         end
 
-        it "should query the data_binding terminus using the host attribute from the scope" do
+        it "should query the data_binding terminus using the scope object" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo')
+            'apache::port', :scope => @scope)
           resource.set_default_parameters(@scope)
         end
 
         it "should use the value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo').returns('443')
+            'apache::port', :scope => @scope).returns('443')
           resource.set_default_parameters(@scope).should == [:port]
           resource[:port].should == '443'
         end
 
         it "should use the default value if the data_binding terminus returns nil" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo').returns(nil)
+            'apache::port', :scope => @scope).returns(nil)
           resource.set_default_parameters(@scope).should == [:port]
           resource[:port].should == '80'
         end

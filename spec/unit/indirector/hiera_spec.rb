@@ -119,10 +119,6 @@ describe Puppet::Indirector::Hiera do
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
-    before do
-      Puppet::Node::Facts.indirection.expects(:find).with('foo').
-        returns(facter_obj)
-    end
 
     let(:data_binder) { @hiera_class.new }
 
