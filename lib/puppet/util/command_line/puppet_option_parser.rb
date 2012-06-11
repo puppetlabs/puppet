@@ -41,23 +41,15 @@ module Puppet
 
 
         def on(*args, &block)
-          # This is ugly and I apologize :)
-          # I wanted to keep the API for this class compatible with how we were previously
-          #  interacting with the ruby stdlib OptionParser.  Unfortunately, that means that
-          #  you can specify options as an array, with three or four elements.  The 2nd element
-          #  is an optional "short" representation.  This series of shift/pop operations seemed
-          #  the easiest way to avoid breaking compatibility with that syntax.
-
-          # The first argument is always the "--long" representation...
-          long = args.shift
-
-          # The last argument is always the "type"
-          type = args.pop
-          # The second-to-last argument is always the "description"
-          desc = args.pop
-
-          # if there is anything left, it's the "short" representation.
-          short = args.shift
+          # The 2nd element is an optional
+          # "short" representation.
+          if args.length == 3
+            long, desc, type = args
+          elsif args.length == 4
+            long, short, desc, type = args
+          else
+            raise ArgumentError, "this method only takes 3 or 4 arguments. Given: #{args.inspect}"
+          end
 
           options = {
               :long => long,

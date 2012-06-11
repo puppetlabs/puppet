@@ -64,6 +64,10 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
     end
   end
 
+  it "does not accept an unknown option specification" do
+    expect { option_parser.on("not", "enough") }.should raise_error(ArgumentError)
+  end
+
   it "does not modify the original argument array" do
     option_parser.on("--foo", "Foo", :NONE) { |val| }
     args = ["--foo"]
