@@ -155,41 +155,44 @@ class Puppet::Parser::Parser
 
   # how should I do error handling here?
   def parse(string = nil)
-    case detect_file self.file
+    self.string = string if string
+
+    ast = case detect_file self.file
     when :ruby
-      main = parse_ruby_file
+      parse_ruby_file(self.file)
     when :puppet
-      self.string = string if string
-      begin
-        @yydebug = false
-        main = yyparse(@lexer,:scan)
-      rescue Puppet::ParseError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-      rescue => except
-        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
-      end
+      parse_puppet_file(self.file)
     end
-    # Store the results as the top-level class.
-    return Puppet::Parser::AST::Hostclass.new('', :code => main)
+    require 'pry'
+    binding.pry
+    ast
   ensure
     @lexer.clear
   end
 
-  def parse_ruby_file
-    # Execute the contents of the file inside its own "main" object so
-    # that it can call methods in the resource type API.
-    main_object = Puppet::DSL::ResourceTypeAPI.new
-
-    if Puppet[:dsl] && Puppet[:code]
-      main_object.instance_eval Puppet[:code]
-    else
-      main_object.instance_eval(File.read(self.file))
+  def parse_puppet_file(file)
+    begin
+      @yydebug = false
+      code = yyparse(@lexer, :scan)
+      Puppet::Parser::AST::Hostclass.new('', :code => code)
+    rescue Puppet::ParseError => except
+      except.line ||= @lexer.line
+      except.file ||= @lexer.file
+      raise except
+    rescue => except
+      raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
     end
+  end
 
-    # Then extract any types that were created.
-    Puppet::Parser::AST::ASTArray.new :children => main_object.instance_eval { @__created_ast_objects__ }
+  def parse_ruby_file(filename)
+    # Puppet[:dsl] default will be removed. For testing purposes only
+    code = if Puppet[:dsl] and Puppet[:code]
+             Puppet[:code]
+           else
+             File.read filename
+           end
+
+    Puppet::DSL::Parser.new(code).parse!
   end
 
   def string=(string)
