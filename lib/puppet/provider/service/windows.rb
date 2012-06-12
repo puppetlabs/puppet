@@ -18,6 +18,12 @@ Puppet::Type.type(:service).provide :windows do
 
   has_feature :refreshable
 
+  commands :sc => 'sc.exe'
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms681383(v=vs.85).aspx
+  ERROR_SERVICE_ALREADY_RUNNING = 1056
+  ERROR_SERVICE_NOT_ACTIVE      = 1062
+
   def enable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START )
     raise Puppet::Error.new("Win32 service enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
@@ -60,28 +66,42 @@ Puppet::Type.type(:service).provide :windows do
   end
 
   def start
-    if enabled? == :false
-      # If disabled and not managing enable, respect disabled and fail.
-      if @resource[:enable].nil?
-        raise Puppet::Error, "Will not start disabled service #{@resource[:name]} without managing enable. Specify 'enable => false' to override."
-      # Otherwise start. If enable => false, we will later sync enable and
-      # disable the service again.
-      elsif @resource[:enable] == :true
-        enable
-      else
-        manual_start
+    begin
+      if enabled? == :false
+        # If disabled and not managing enable, respect disabled and fail.
+        if @resource[:enable].nil?
+          raise Puppet::Error, "Will not start disabled service #{@resource[:name]} without managing enable. Specify 'enable => false' to override."
+          # Otherwise start. If enable => false, we will later sync enable and
+          # disable the service again.
+        elsif @resource[:enable] == :true
+          enable
+        else
+          manual_start
+        end
       end
+    rescue Win32::Service::Error => detail
+      raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
     end
 
-    Win32::Service.start( @resource[:name] )
-  rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
+    begin
+      sc(:start, @resource[:name])
+    rescue Puppet::ExecutionFailure => detail
+      unless exitstatus == ERROR_SERVICE_ALREADY_RUNNING
+        raise Puppet::Util::Windows::Error.new("Cannot start #{@resource[:name]}", exitstatus)
+      end
+    end
   end
 
   def stop
-    Win32::Service.stop( @resource[:name] )
-  rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}" )
+    sc(:stop, @resource[:name])
+  rescue Puppet::ExecutionFailure => detail
+    unless exitstatus == ERROR_SERVICE_NOT_ACTIVE
+      raise Puppet::Util::Windows::Error.new("Cannot stop #{@resource[:name]}", exitstatus)
+    end
+  end
+
+  def exitstatus
+    $CHILD_STATUS.exitstatus
   end
 
   def restart
