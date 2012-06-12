@@ -40,7 +40,7 @@ task :default do
 end
 
 desc "Create the tarball and the gem - use when releasing"
-task :puppetpackages => [:create_gem, :package]
+task :puppetpackages => [:gem, :package]
 
 RSpec::Core::RakeTask.new do |t|
     t.pattern ='spec/{unit,integration}/**/*.rb'

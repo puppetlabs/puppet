@@ -49,7 +49,7 @@ task :prepare_gem do
 end
 
 desc "Create the gem"
-task :create_gem => :prepare_gem do
+task :gem => :prepare_gem do
     Dir.mkdir("pkg") rescue nil
     Gem::Builder.new(spec).build
     FileUtils.move("puppet-#{Puppet::PUPPETVERSION}.gem", "pkg")
