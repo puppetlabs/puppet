@@ -8,9 +8,9 @@ require 'spec_helper'
 require 'win32/service' if Puppet.features.microsoft_windows?
 
 describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.microsoft_windows? do
-
   before :each do
-    @resource = Puppet::Type.type(:service).new(:name => 'snmptrap', :provider => :windows)
+    @resource = Puppet::Type.type(:service).new(:name => 'nonexistentservice', :provider => :windows)
+    @resource.provider.class.expects(:execute).never
 
     @config = Struct::ServiceConfigInfo.new
 
@@ -30,31 +30,35 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
   end
 
   describe "#start" do
-    it "should call out to the Win32::Service API to start the service" do
+    before :each do
       @config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_AUTO_START)
+    end
 
-      Win32::Service.expects(:start).with( @resource[:name] )
+    it "should start the service" do
+      @resource.provider.expects(:sc).with(:start, @resource[:name])
+      @resource.provider.start
+    end
+
+    it "should not raise an exception if the service is already running" do
+      @resource.provider.expects(:sc).with(:start, @resource[:name]).raises(Puppet::ExecutionFailure, 'Failed')
+      @resource.provider.stubs(:exitstatus).returns(1056) # ERROR_SERVICE_ALREADY_RUNNING
 
       @resource.provider.start
     end
 
-    it "should handle when Win32::Service.start raises a Win32::Service::Error" do
-      @config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_AUTO_START)
-
-      Win32::Service.expects(:start).with( @resource[:name] ).raises(
-        Win32::Service::Error.new("The service cannot be started, either because it is disabled or because it has no enabled devices associated with it.")
-      )
+    it "should raise an error otherwise" do
+      @resource.provider.expects(:sc).with(:start, @resource[:name]).raises(Puppet::ExecutionFailure, 'Failed')
+      @resource.provider.stubs(:exitstatus).returns(1053) # ERROR_SERVICE_REQUEST_TIMEOUT
 
       expect { @resource.provider.start }.to raise_error(
         Puppet::Error,
-        /Cannot start .*, error was: The service cannot be started, either/
+        /Cannot start .*:  The service did not respond to the start or control request in a timely fashion./
       )
     end
 
     describe "when the service is disabled" do
       before :each do
         @config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
-        Win32::Service.stubs(:start).with(@resource[:name])
       end
 
       it "should refuse to start if not managing enable" do
@@ -64,6 +68,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       it "should enable if managing enable and enable is true" do
         @resource[:enable] = :true
 
+        @resource.provider.expects(:sc).with(:start, @resource[:name])
         Win32::Service.expects(:configure).with('service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START).returns(Win32::Service)
 
         @resource.provider.start
@@ -72,6 +77,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       it "should manual start if managing enable and enable is false" do
         @resource[:enable] = :false
 
+        @resource.provider.expects(:sc).with(:start, @resource[:name])
         Win32::Service.expects(:configure).with('service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DEMAND_START).returns(Win32::Service)
 
         @resource.provider.start
@@ -80,19 +86,26 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
   end
 
   describe "#stop" do
-    it "should call out to the Win32::Service API to stop the service" do
-      Win32::Service.expects(:stop).with( @resource[:name] )
-      @resource.provider.stop
-      end
+    it "should stop a running service" do
+      @resource.provider.expects(:sc).with(:stop, @resource[:name])
 
-    it "should handle when Win32::Service.stop raises a Win32::Service::Error" do
-      Win32::Service.expects(:stop).with( @resource[:name] ).raises(
-        Win32::Service::Error.new("should not try to stop an already stopped service.")
-      )
+      @resource.provider.stop
+    end
+
+    it "should not raise an exception if the service is already stopped" do
+      @resource.provider.expects(:sc).with(:stop, @resource[:name]).raises(Puppet::ExecutionFailure, 'Failed')
+      @resource.provider.stubs(:exitstatus).returns(1062) # ERROR_SERVICE_NOT_ACTIVE
+
+      @resource.provider.stop
+    end
+
+    it "raise an exception otherwise" do
+      @resource.provider.expects(:sc).with(:stop, @resource[:name]).raises(Puppet::ExecutionFailure, 'Failed')
+      @resource.provider.stubs(:exitstatus).returns(1051) # ERROR_DEPENDENT_SERVICES_RUNNING
 
       expect { @resource.provider.stop }.to raise_error(
         Puppet::Error,
-        /Cannot stop .*, error was: should not try to stop an already stopped service/
+        /Cannot stop .*:  A stop control has been sent to a service that other running services are dependent on./
       )
     end
   end
@@ -162,5 +175,4 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       @resource.provider.manual_start
     end
   end
-
 end
