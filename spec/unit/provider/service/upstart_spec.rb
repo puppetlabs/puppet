@@ -1,11 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:upstart)
 
-describe provider_class do
+describe Puppet::Type.type(:service).provider(:upstart) do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
+  let(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
   def given_contents_of(file, content)
     File.open(file, 'w') do |file|
@@ -17,16 +17,21 @@ describe provider_class do
     File.open(file).read
   end
 
+  def lists_processes_as(output)
+    Puppet::Util::Execution.stubs(:execpipe).with("/sbin/initctl list").yields(output)
+    provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
+  end
+
   describe "#instances" do
     it "should be able to find all instances" do
-      processes = ["rc stop/waiting", "ssh start/running, process 712"].join("\n")
-      provider_class.stubs(:execpipe).yields(processes)
+      lists_processes_as("rc stop/waiting\nssh start/running, process 712")
+
       provider_class.instances.map {|provider| provider.name}.should =~ ["rc","ssh"]
     end
 
     it "should attach the interface name for network interfaces" do
-      processes = ["network-interface (eth0)"].join("\n")
-      provider_class.stubs(:execpipe).yields(processes)
+      lists_processes_as("network-interface (eth0)")
+
       provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
     end
   end
