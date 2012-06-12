@@ -119,6 +119,11 @@ module Util::Execution
       process_info = execute_windows(*exec_args)
       begin
         exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
+        # normalize success codes
+        #    0 ERROR_SUCCESS
+        # 1641 ERROR_SUCCESS_REBOOT_INITIATED
+        # 3010 ERROR_SUCCESS_REBOOT_REQUIRED
+        exit_status = 0 if [0,1641,3010].include?(exit_status)
       ensure
         Process.CloseHandle(process_info.process_handle)
         Process.CloseHandle(process_info.thread_handle)
