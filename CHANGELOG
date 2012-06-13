@@ -1,5 +1,6 @@
-2.7.16rc1
+2.7.16
 ===
+99fecc3 Update facter dep to reflect epoch 1
 3a06246 (#8858) Explicitly set SSL peer verification mode.
 cd4bee8 Test SSL setup code, not our stubbing of it.
 ff052b8 (maint) Add mailmap to identify contributors
