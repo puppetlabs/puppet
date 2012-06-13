@@ -178,6 +178,7 @@ describe Puppet::Util::Execution do
         it "should not actually execute anything" do
           Puppet::Util::Execution.expects(:execute_posix).never
           Puppet::Util::Execution.expects(:execute_windows).never
+          Puppet::Util::Execution.expects(:execute_jruby).never
 
           Puppet::Util::Execution.execute("/usr/bin/run_my_execute_stub")
         end
@@ -185,8 +186,26 @@ describe Puppet::Util::Execution do
 
       describe "when setting up input and output files" do
         include PuppetSpec::Files
-        let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
-        let(:rval) { Puppet.features.microsoft_windows? ? proc_info_stub : pid }
+
+        let :executor do
+          if Puppet.features.microsoft_windows?
+            'execute_windows'
+          elsif Puppet.features.jruby?
+            'execute_jruby'
+          else
+            'execute_posix'
+          end
+        end
+
+        let :rval do
+          if Puppet.features.microsoft_windows?
+            proc_info_stub
+          elsif Puppet.features.jruby?
+            0
+          else
+            pid
+          end
+        end
 
         before :each do
           Puppet::Util::Execution.stubs(:wait_for_output)
@@ -427,6 +446,8 @@ describe Puppet::Util::Execution do
 
         if Puppet.features.microsoft_windows?
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
+        elsif Puppet.features.jruby?
+          Puppet::Util::Execution.stubs(:execute_jruby).returns(0)
         else
           Puppet::Util::Execution.stubs(:execute_posix).returns(pid)
         end
@@ -444,10 +465,10 @@ describe Puppet::Util::Execution do
         stderr = mock 'file', :close
 
         File.expects(:open).
-            times(3).
-            returns(stdin).
-            then.returns(stdout).
-            then.returns(stderr)
+          times(3).
+          returns(stdin).
+          then.returns(stdout).
+          then.returns(stderr)
 
         Puppet::Util::Execution.execute('test command', {:squelch => true, :combine => false})
       end
@@ -479,7 +500,11 @@ describe Puppet::Util::Execution do
       end
 
       it "should raise an error if failonfail is true and the child failed" do
-        stub_process_wait(1)
+        if Puppet.features.jruby?
+          Puppet::Util::Execution.stubs(:execute_jruby).returns(1)
+        else
+          stub_process_wait(1)
+        end
 
         expect {
           Puppet::Util::Execution.execute('fail command', :failonfail => true)
@@ -487,7 +512,12 @@ describe Puppet::Util::Execution do
       end
 
       it "should not raise an error if failonfail is false and the child failed" do
-        stub_process_wait(1)
+        if Puppet.features.jruby?
+          Puppet::Util::Execution.stubs(:execute_jruby).returns(1)
+        else
+          stub_process_wait(1)
+        end
+
 
         expect {
           Puppet::Util::Execution.execute('fail command', :failonfail => false)
@@ -501,7 +531,12 @@ describe Puppet::Util::Execution do
       end
 
       it "should respect default values for args that aren't overridden if a partial arg list is passed in" do
-        stub_process_wait(1)
+        if Puppet.features.jruby?
+          Puppet::Util::Execution.stubs(:execute_jruby).returns(1)
+        else
+          stub_process_wait(1)
+        end
+
         expect {
           # here we are passing in a non-nil value for "arguments", but we aren't specifying a value for
           # :failonfail.  We expect it to be set to its normal default value (true).
