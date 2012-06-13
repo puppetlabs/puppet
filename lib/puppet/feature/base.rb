@@ -10,7 +10,7 @@ Puppet.features.add(:syslog, :libs => ["syslog"])
 # We can use POSIX user functions
 Puppet.features.add(:posix) do
   require 'etc'
-  Etc.getpwuid(0) != nil && Puppet.features.syslog?
+  Etc.getpwuid(0) and Puppet.features.syslog?
 end
 
 # We can use Microsoft Windows functions
