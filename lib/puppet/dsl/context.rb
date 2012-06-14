@@ -48,11 +48,14 @@ module Puppet
       end
 
       def method_missing(name, *args, &block)
+        raise "MethodMissing loop when searching for #{name}" if @searching_for_method
+        @searching_for_method = true
+
         if Puppet::Type.type(name)
           options = if block.nil?
                       args.last.is_a?(Hash) ? args.pop : {}
                     else
-                      Container.new.to_hash
+                      Container.new(block).to_hash
                     end
 
           create_resource name, args, options
@@ -62,12 +65,26 @@ module Puppet
         else
           super
         end
+      ensure
+        @searching_for_method = false
       end
 
       def create_resource(type, names, args)
         param = AST::ASTArray.new :children => args.map { |k, v|
-          AST::ResourceParam.new :param => k.to_s,
-                                 :value => AST::Name.new(:value => v.to_s)
+          if v.is_a? Array
+            if v.count == 1
+              AST::ResourceParam.new :param => k.to_s,
+                                     :value => AST::Name.new(:value => v.first.to_s)
+            else
+              AST::ResourceParam.new :param => k.to_s,
+                                     :value => AST::ASTArray.new(:children => v.map { |val|
+                AST::Name.new(:value => v.first.to_s)
+              })
+            end
+          else
+            AST::ResourceParam.new :param => k.to_s,
+                                   :value => AST::Name.new(:value => v.to_s)
+          end
         }
 
         instances = names.map do |name|
