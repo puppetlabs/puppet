@@ -163,10 +163,9 @@ class Puppet::Parser::Parser
     when :puppet
       parse_puppet_file(self.file)
     end
+  ensure
     require 'pry'
     binding.pry
-    ast
-  ensure
     @lexer.clear
   end
 

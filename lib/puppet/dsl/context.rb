@@ -1,8 +1,10 @@
 require 'puppet/dsl/blank_slate'
+require 'puppet/dsl/container'
 
 module Puppet
   module DSL
-    class Context
+    class Context < BlankSlate
+      AST = Puppet::Parser::AST
 
       def initialize(scope, &code)
         @scope = scope
@@ -20,9 +22,9 @@ module Puppet
         puts "node: #{name}, #{options.inspect}"
 
         children = Context.new(:no_scope_set, &block).evaluate
-        code = Puppet::Parser::AST::ASTArray.new :children => children
+        code = AST::ASTArray.new :children => children
         name = Array(name)
-        @objects << Puppet::Parser::AST::Node.new(name, options.merge(:code => code))
+        @objects << AST::Node.new(name, options.merge(:code => code))
       end
 
       def hostclass(name, options = {}, &block)
@@ -30,9 +32,9 @@ module Puppet
         puts "hostclass: #{options.inspect}"
 
         children = Context.new(:no_scope_set, &block).evaluate
-        code = Puppet::Parser::AST::ASTArray.new :children => children
+        code = AST::ASTArray.new :children => children
         name = Array(name)
-        @objects << Puppet::Parser::AST::Hostclass.new(name, options.merge(:code => code))
+        @objects << AST::Hostclass.new(name, options.merge(:code => code))
       end
 
       def define(name, options = {}, &block)
@@ -40,13 +42,64 @@ module Puppet
         puts "definition: #{options.inspect}"
 
         children = Context.new(:no_scope_set, &block).evaluate
-        code = Puppet::Parser::AST::ASTArray.new :children => children
+        code = AST::ASTArray.new :children => children
         name = Array(name)
-        @objects << Puppet::Parser::AST::Definition.new(name, options.merge(:code => code))
+        @objects << AST::Definition.new(name, options.merge(:code => code))
       end
 
-      def method_missing(*args, &block)
-        puts "#{args.shift}: #{args.inspect}"
+      def method_missing(name, *args, &block)
+        if Puppet::Type.type(name)
+          options = if block.nil?
+                      args.last.is_a?(Hash) ? args.pop : {}
+                    else
+                      Container.new.to_hash
+                    end
+
+          create_resource name, args, options
+
+        elsif Puppet::Parser::Functions.function(name)
+          call_function name, args
+        else
+          super
+        end
+      end
+
+      def create_resource(type, names, args)
+        param = AST::ASTArray.new :children => args.map { |k, v|
+          AST::ResourceParam.new :param => k.to_s,
+                                 :value => AST::Name.new(:value => v.to_s)
+        }
+
+        instances = names.map do |name|
+          title = Puppet::Parser::AST::String.new :value => name.to_s
+          AST::ResourceInstance.new :title => title, :parameters => param
+        end
+
+        resource = AST::Resource.new :type => type.to_s,
+                      :instances => AST::ASTArray.new(:children => instances)
+        @objects << resource
+      end
+
+      # Calls a puppet function
+      def call_function(name, args)
+        raise NoMethodError unless Puppet::Parser::Functions.function name
+
+        args.map! do |a|
+          AST::String.new :value => a
+        end
+
+        type = if Puppet::Parser::Functions.rvalue? name
+                 :rvalue
+               else
+                 :statement
+               end
+
+        array = AST::ASTArray.new :children => args
+        @objects << AST::Function.new(
+          :name => name,
+          :ftype => type,
+          :arguments => array
+        )
       end
 
     end
