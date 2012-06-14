@@ -128,7 +128,7 @@ begin
 
     on agent, puppet_apply("--modulepath=#{get_test_file_path(agent, "#{basedir}/1")}:#{get_test_file_path(agent, "#{basedir}/2")} --pluginsync -e 'notify { \"hello\": }'")
 
-    agent.exec("cat #{agent['puppetvardir']}/lib/foo.rb", {}) do
+    agent.execute("cat #{agent['puppetvardir']}/lib/foo.rb", {}) do
       assert_match(/#1a/, stdout, "The synced plugin was not found or the wrong version was synced")
     end
   end
