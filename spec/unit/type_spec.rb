@@ -2,10 +2,9 @@
 require 'spec_helper'
 
 
-describe Puppet::Type do
+describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
-  pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
   it "should be Comparable" do
     a = Puppet::Type.type(:notify).new(:name => "a")
     b = Puppet::Type.type(:notify).new(:name => "b")
@@ -727,7 +726,6 @@ describe Puppet::Type do
       TestEnsurableType.should_not be_ensurable
     end
   end
-  end
 end
 
 describe Puppet::Type::RelationshipMetaparam do
@@ -742,10 +740,9 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 
   describe "when munging relationships" do
-  pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
     before do
-      @path = make_absolute('/foo')
-      @resource = Puppet::Type.type(:mount).new :name => @path
+      @path = File.expand_path('/foo')
+      @resource = Puppet::Type.type(:file).new :name => @path
       @metaparam = Puppet::Type.metaparamclass(:require).new :resource => @resource
     end
 
@@ -757,7 +754,6 @@ describe Puppet::Type::RelationshipMetaparam do
     it "should turn any string into a Puppet::Resource" do
       @metaparam.munge("File[/ref]")[0].should be_instance_of(Puppet::Resource)
     end
-  end
   end
 
   it "should be able to validate relationships" do
