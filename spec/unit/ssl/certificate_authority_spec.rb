@@ -25,7 +25,10 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when finding an existing instance" do
     describe "and the host is a CA host and the run_mode is master" do
       before do
-        Puppet[:ca] = true
+        pending("JRuby working as a CA", :if => Puppet.features.jruby?) do
+          Puppet[:ca] = true
+        end
+
         Puppet.run_mode.stubs(:master?).returns true
 
         @ca = mock('ca')

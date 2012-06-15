@@ -80,17 +80,19 @@ describe Puppet::SSL::Host do
   end
 
   it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
-    Puppet[:autosign] = true
-    Puppet[:confdir] = tmpdir('conf')
-    Puppet[:dns_alt_names] = "foo,bar,baz"
-    ca = Puppet::SSL::CertificateAuthority.new
-    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+    pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+      Puppet[:autosign] = true
+      Puppet[:confdir] = tmpdir('conf')
+      Puppet[:dns_alt_names] = "foo,bar,baz"
+      ca = Puppet::SSL::CertificateAuthority.new
+      Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
 
-    localhost = Puppet::SSL::Host.localhost
-    cert = localhost.certificate
+      localhost = Puppet::SSL::Host.localhost
+      cert = localhost.certificate
 
-    cert.should be_a(Puppet::SSL::Certificate)
-    cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
+      cert.should be_a(Puppet::SSL::Certificate)
+      cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
+    end
   end
 
   context "with dns_alt_names" do
@@ -832,7 +834,9 @@ describe Puppet::SSL::Host do
         host = Puppet::SSL::Host.new("bazinga")
         host.generate_certificate_request
         @ca.sign(host.name)
-        @ca.revoke(host.name)
+        pending("JRuby CRL generation bug adding extension 2.5.29.20", :if => Puppet.features.jruby?) do
+          @ca.revoke(host.name)
+        end
         pson_hash = {
           "fingerprint"          => Puppet::SSL::Certificate.indirection.find(host.name).fingerprint,
           "desired_state"        => 'revoked',

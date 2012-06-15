@@ -3,7 +3,9 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? do
+unsupported_platform = (Puppet.features.microsoft_windows? or Puppet.features.jruby?)
+
+describe Puppet::SSL::CertificateAuthority, :unless => unsupported_platform do
   include PuppetSpec::Files
 
   before do

@@ -105,24 +105,26 @@ describe Puppet::Indirector::REST do
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
-      Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
+      pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+        Puppet[:confdir] = tmpdir('conf')
+        cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
 
-      connection = Net::HTTP.new('my_server', 8140)
-      @searcher.stubs(:network).returns(connection)
-      ssl_context = OpenSSL::SSL::SSLContext.new
-      ssl_context.stubs(:current_cert).returns(cert)
-      connection.stubs(:get).with do
-        connection.verify_callback.call(true, ssl_context)
-      end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
+        connection = Net::HTTP.new('my_server', 8140)
+        @searcher.stubs(:network).returns(connection)
+        ssl_context = OpenSSL::SSL::SSLContext.new
+        ssl_context.stubs(:current_cert).returns(cert)
+        connection.stubs(:get).with do
+          connection.verify_callback.call(true, ssl_context)
+        end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
 
-      msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-      expect { @searcher.http_request(:get, stub('request')) }.to(
-        raise_error(Puppet::Error, msg) do |error|
-          error.message =~ msg
-          $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
-        end
-      )
+        msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+        expect { @searcher.http_request(:get, stub('request')) }.to(
+          raise_error(Puppet::Error, msg) do |error|
+            error.message =~ msg
+            $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
+          end
+          )
+      end
     end
 
     it "should pass along the error message otherwise" do

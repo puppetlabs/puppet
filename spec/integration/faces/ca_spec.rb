@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_windows? do
+unsuitable_platform = (Puppet.features.microsoft_windows? or Puppet.features.jruby?)
+
+describe Puppet::Face[:ca, '0.1.0'], :unless => unsuitable_platform do
   include PuppetSpec::Files
 
   before :each do

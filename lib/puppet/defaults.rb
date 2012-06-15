@@ -775,9 +775,15 @@ EOT
       authorization system for `puppet master`.",
     },
     :ca => {
-      :default    => true,
+      :default    => Puppet::features::jruby? ? false : true,
       :type       => :boolean,
       :desc       => "Whether the master should function as a certificate authority.",
+      :call_hook  => :on_define_and_write,
+      :hook       => proc do |value|
+        if Puppet.features.jruby? and value
+          raise Puppet::Error, "Puppet cannot act as the CA on JRuby"
+        end
+      end
     },
     :modulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
