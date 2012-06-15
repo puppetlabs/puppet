@@ -46,10 +46,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           else
             line.split.first
           end
-        instances << new(:name => name) unless exclude.include? name
+        instances << new(:name => name)
       }
     }
-    instances
+    instances.reject { |instance| exclude.include?(instance.name) }
   end
 
   def self.defpath
@@ -69,11 +69,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     # Search prefers .conf as that is what upstart uses
     [".conf", "", ".sh"].each do |suffix|
       paths.each do |path|
-        if matcher = name.match(/^(network-interface|network-interface-security)/)
-          fqname = File.join(path, matcher[1] + suffix)
-        else
-          fqname = File.join(path, name + suffix)
-        end
+        service_name = name.match(/^(\S+)/)[1]
+        fqname = File.join(path, service_name + suffix)
         if File.exists?(fqname)
           return fqname
         end
@@ -139,36 +136,20 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def status
-    if @resource[:status]
-      is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
-    elsif is_upstart?
-      upstart_status
-    else
-      super
-    end
-  end
+    return super if not is_upstart?
 
-  def normal_status
-    ucommand(:status, false)
-    ($?.exitstatus == 0) ? :running : :stopped
-  end
-
-  def upstart_status(exec = @resource[:name])
     output = status_exec(@resource[:name].split)
-    if (! $?.nil?) && (output =~ /start\//)
+    if output =~ /start\//
       return :running
     else
       return :stopped
     end
   end
 
-  def is_upstart?(script = initscript)
-    return true if (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job")
-    return true if (File.file?(script) && (not script.include?("init.d")))
-    return false
-  end
-
 private
+  def is_upstart?(script = initscript)
+    File.exists?(script) && script.match(/\/etc\/init\/\S+\.conf/)
+  end
 
   def version_is_pre_0_6_7
     Puppet::Util::Package.versioncmp(upstart_version, "0.6.7") == -1
