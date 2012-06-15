@@ -26,6 +26,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   has_feature :enableable
 
   def self.instances
+    self.get_services(['wait-for-state'])
+  end
+
+  def self.get_services(exclude=[])
     instances = []
     execpipe("#{command(:initctl)} list") { |process|
       process.each_line { |line|
@@ -40,7 +44,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           else
             line.split.first
           end
-        instances << new(:name => name)
+        instances << new(:name => name) unless exclude.include? name
       }
     }
     instances
