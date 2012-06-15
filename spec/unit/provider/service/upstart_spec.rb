@@ -29,6 +29,12 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
     end
+
+    it "should attach the job name for network interface security" do
+      processes = ["network-interface-security (network-interface/eth0)"].join("\n")
+      provider_class.stubs(:execpipe).yields(processes)
+      provider_class.instances.first.name.should == "network-interface-security JOB=network-interface/eth0"
+    end
   end
 
   describe "#status" do
