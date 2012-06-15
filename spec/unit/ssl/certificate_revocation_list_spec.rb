@@ -127,7 +127,7 @@ describe Puppet::SSL::CertificateRevocationList do
       lambda { @crl.revoke }.should raise_error(ArgumentError)
     end
 
-    it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the revocation reason" do
+    it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the revocation reason", :if => defined?(OpenSSL::OSCP) do
       # This makes it a bit more of an integration test than we'd normally like, but that's life
       # with openssl.
       reason = OpenSSL::ASN1::Enumerated(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)

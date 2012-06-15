@@ -43,8 +43,14 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
 
   # Revoke the certificate with serial number SERIAL issued by this
   # CA, then write the CRL back to disk. The REASON must be one of the
-  # OpenSSL::OCSP::REVOKED_* reasons
-  def revoke(serial, cakey, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+  # X.509 standard codes: http://tools.ietf.org/html/rfc3280#section-5.3.1
+  #
+  # In this case we use a numeric value (1 == Key Compromised) rather than the
+  # OSCP constant because not all our Ruby VMs have those constants defined.
+  # Because this is a standard, we can use our own magic number, yay.
+  #
+  # Previously we set reason to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE
+  def revoke(serial, cakey, reason = 1)
     Puppet.notice "Revoked certificate with serial #{serial}"
     time = Time.now
 
