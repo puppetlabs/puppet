@@ -41,6 +41,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         name = \
           if matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
             "#{matcher[1]} INTERFACE=#{matcher[2]}"
+          elsif matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
+            "#{matcher[1]} JOB=#{matcher[2]}"
           else
             line.split.first
           end
@@ -67,7 +69,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     # Search prefers .conf as that is what upstart uses
     [".conf", "", ".sh"].each do |suffix|
       paths.each do |path|
-        fqname = File.join(path,name+suffix)
+        if matcher = name.match(/^(network-interface|network-interface-security)/)
+          fqname = File.join(path, matcher[1] + suffix)
+        else
+          fqname = File.join(path, name + suffix)
+        end
         if File.exists?(fqname)
           return fqname
         end
