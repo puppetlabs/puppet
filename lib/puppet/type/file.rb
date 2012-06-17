@@ -437,7 +437,7 @@ Puppet::Type.newtype(:file) do
     # from it.
     unless self[:ensure]
       if self[:target]
-        self[:ensure] = :symlink
+        self[:ensure] = :link
       elsif self[:content]
         self[:ensure] = :file
       end
