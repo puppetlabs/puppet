@@ -88,15 +88,26 @@ describe "puppet module install" do
 
           Puppet.settings[:modulepath].should == fakemodpath
         end
+
+        it "should expand the target directory derived from the modulepath" do
+          options[:modulepath] = "modules"
+          expanded_path = File.expand_path("modules")
+          expected_options.merge!(options)
+          expected_options[:target_dir] = expanded_path
+          expected_options[:modulepath] = "modules"
+
+          Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
+          subject.install("puppetlabs-apache", options)
+        end
       end
 
       describe "when target-dir option is passed" do
-        it "should expand the target directory" do
+        it "should expand the target directory when target_dir is set" do
           options[:target_dir] = "modules"
           expanded_path = File.expand_path("modules")
           expected_options.merge!(options)
           expected_options[:target_dir] = expanded_path
-          expected_options[:modulepath] = "#{expanded_path}#{sep}#{fakemodpath}"
+          expected_options[:modulepath] = "modules#{sep}#{fakemodpath}"
 
           Puppet::ModuleTool::Applications::Installer.expects(:run).with("puppetlabs-apache", expected_options).once
           subject.install("puppetlabs-apache", options)
