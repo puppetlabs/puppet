@@ -3,8 +3,7 @@ require 'puppet/dsl/resource_decorator'
 
 module Puppet
   module DSL
-    class Context #< BlankSlate
-      AST = Puppet::Parser::AST
+    class Context < BlankSlate
 
       def initialize(scope, &code)
         @scope = scope
@@ -18,9 +17,9 @@ module Puppet
       end
 
       def node(name, options = {}, &block)
-        raise ArgumentError if block.nil? or not valid_nesting? :node
+        raise ::ArgumentError if block.nil? or not valid_nesting? :node
 
-        node = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+        node = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :node,
           name#,
           # :parent => @parent
@@ -29,13 +28,13 @@ module Puppet
         resource = node.ensure_in_catalog @scope
         resource.evaluate
 
-        Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
       end
 
       def hostclass(name, options = {}, &block)
-        raise ArgumentError if block.nil? or not valid_nesting? :hostclass
+        raise ::ArgumentError if block.nil? or not valid_nesting? :hostclass
 
-        hostclass = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+        hostclass = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :hostclass,
           name#,
           #:parent => parent
@@ -44,14 +43,14 @@ module Puppet
         resource = hostclass.ensure_in_catalog @scope
         resource.evaluate
 
-        Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
       end
 
       def define(name, options = {}, &block)
         puts "definition: #{options.inspect}"
         raise ArgumentError if block.nil? or not valid_nesting? :definition
 
-        definition = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+        definition = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :definition,
           name#,
           #:parent => parent
@@ -60,17 +59,17 @@ module Puppet
         resource = definition.ensure_in_catalog @scope
         resource.evaluate
 
-        Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
       end
 
       def valid_type?(name)
         !!([:node, :class].include? name or
-           Puppet::Type.type name or
+           ::Puppet::Type.type name or
            @compiler.known_resource_types.definition name)
       end
 
       def valid_function?(name)
-        !!Puppet::Parser::Functions.function(name)
+        !!::Puppet::Parser::Functions.function(name)
       end
 
       def valid_nesting?(type)
@@ -98,16 +97,16 @@ module Puppet
       end
 
       def create_resource(type, *args, &block)
-        raise NoMethodError unless valid_type? type
+        raise ::NoMethodError unless valid_type? type
         options = args.last.is_a?(Hash) ? args.pop : {}
 
         Array(args).map do |name|
-          resource = Puppet::Parser::Resource.new type, name, :scope => @scope
+          resource = ::Puppet::Parser::Resource.new type, name, :scope => @scope
           options.each do |key, val|
             resource[key] = val
           end
 
-          ResourceDecorator.new(resource, block) if block
+          ::Puppet::DSL::ResourceDecorator.new(resource, block) if block
 
           @compiler.add_resource @scope, resource
           resource
@@ -116,7 +115,7 @@ module Puppet
 
       # Calls a puppet function
       def call_function(name, *args)
-        raise NoMethodError unless valid_function? name
+        raise ::NoMethodError unless valid_function? name
         @scope.send name, args
       end
 
