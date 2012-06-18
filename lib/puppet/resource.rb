@@ -403,6 +403,7 @@ class Puppet::Resource
   end
 
   def extract_type_and_title(argtype, argtitle)
+
     if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
     elsif argtitle                                         then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
@@ -411,6 +412,9 @@ class Puppet::Resource
         "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
     else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
     end
+  rescue
+    require 'pry'
+    binding.pry
   end
 
   def munge_type_name(value)

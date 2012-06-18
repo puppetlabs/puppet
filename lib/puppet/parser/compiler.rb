@@ -3,6 +3,8 @@ require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
+require 'puppet/dsl/helper'
+require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -10,6 +12,7 @@ class Puppet::Parser::Compiler
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Resource::TypeCollectionHelper
+  include Puppet::DSL::Helper
 
   def self.compile(node)
     # We get these from the environment and only cache them in a thread
@@ -23,6 +26,8 @@ class Puppet::Parser::Compiler
     # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
   rescue => detail
+    require 'pry'
+    binding.pry
     message = "#{detail} on node #{node.name}"
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
@@ -94,10 +99,13 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
+
     set_node_parameters
     create_settings_scope
 
     evaluate_main
+
+    evaluate_ruby_code if use_ruby_dsl? environment.name
 
     evaluate_ast_node
 
@@ -110,6 +118,10 @@ class Puppet::Parser::Compiler
     fail_on_unevaluated
 
     @catalog
+  end
+
+  def evaluate_ruby_code
+    Puppet::DSL::Parser.new(topscope, ruby_code(@environment.name)).parse!
   end
 
   # LAK:FIXME There are no tests for this.
@@ -153,7 +165,7 @@ class Puppet::Parser::Compiler
     end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
-      
+
       if klass = scope.find_hostclass(name, :assume_fqname => fqname)
 
         # If parameters are passed, then attempt to create a duplicate resource
@@ -235,6 +247,8 @@ class Puppet::Parser::Compiler
     resource.evaluate
 
     @node_scope = topscope.class_scope(astnode)
+    @node_scope.resource = resource
+    @node_scope.compiler = self
   end
 
   # Evaluate our collections and return true if anything returned an object.

@@ -164,8 +164,6 @@ class Puppet::Parser::Parser
       parse_puppet_file(self.file)
     end
   ensure
-    require 'pry'
-    binding.pry
     @lexer.clear
   end
 

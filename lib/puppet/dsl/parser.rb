@@ -3,16 +3,18 @@ module Puppet
   module DSL
     class Parser
 
-      def initialize(code)
+      def initialize(scope, code)
+        @scope = scope
         @code = proc do
           instance_eval code
         end
       end
 
       def parse!
-        main = Context.new(:how_to_set_scope_from_here?, &@code).evaluate
-        nodes = Puppet::Parser::AST::ASTArray.new :children => main
-        Puppet::Parser::AST::Hostclass.new '', :code => nodes
+        Context.new(@scope, &@code).evaluate
+      rescue
+        require 'pry'
+        binding.pry
       end
 
     end

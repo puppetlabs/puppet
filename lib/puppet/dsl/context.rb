@@ -1,67 +1,91 @@
 require 'puppet/dsl/blank_slate'
-require 'puppet/dsl/container'
+require 'puppet/dsl/resource_decorator'
 
 module Puppet
   module DSL
-    class Context < BlankSlate
+    class Context #< BlankSlate
       AST = Puppet::Parser::AST
 
       def initialize(scope, &code)
         @scope = scope
-        @objects = []
+        @compiler = scope.compiler
+        @parent = scope.resource
         @code = code
       end
 
       def evaluate
         instance_eval &@code
-        @objects
       end
 
       def node(name, options = {}, &block)
-        raise if block.nil?
-        puts "node: #{name}, #{options.inspect}"
+        raise ArgumentError if block.nil? or not valid_nesting? :node
 
-        children = Context.new(:no_scope_set, &block).evaluate
-        code = AST::ASTArray.new :children => children
-        name = Array(name)
-        @objects << AST::Node.new(name, options.merge(:code => code))
+        node = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+          :node,
+          name#,
+          # :parent => @parent
+        )
+
+        resource = node.ensure_in_catalog @scope
+        resource.evaluate
+
+        Context.new(@scope.newscope(:resource => resource), &block).evaluate
       end
 
       def hostclass(name, options = {}, &block)
-        raise if block.nil?
-        puts "hostclass: #{options.inspect}"
+        raise ArgumentError if block.nil? or not valid_nesting? :hostclass
 
-        children = Context.new(:no_scope_set, &block).evaluate
-        code = AST::ASTArray.new :children => children
-        name = Array(name)
-        @objects << AST::Hostclass.new(name, options.merge(:code => code))
+        hostclass = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+          :hostclass,
+          name#,
+          #:parent => parent
+        )
+
+        resource = hostclass.ensure_in_catalog @scope
+        resource.evaluate
+
+        Context.new(@scope.newscope(:resource => resource), &block).evaluate
       end
 
       def define(name, options = {}, &block)
-        raise if block.nil?
         puts "definition: #{options.inspect}"
+        raise ArgumentError if block.nil? or not valid_nesting? :definition
 
-        children = Context.new(:no_scope_set, &block).evaluate
-        code = AST::ASTArray.new :children => children
-        name = Array(name)
-        @objects << AST::Definition.new(name, options.merge(:code => code))
+        definition = @compiler.known_resource_types.add Puppet::Resource::Type.new(
+          :definition,
+          name#,
+          #:parent => parent
+        )
+
+        resource = definition.ensure_in_catalog @scope
+        resource.evaluate
+
+        Context.new(@scope.newscope(:resource => resource), &block).evaluate
+      end
+
+      def valid_type?(name)
+        !!([:node, :class].include? name or
+           Puppet::Type.type name or
+           @compiler.known_resource_types.definition name)
+      end
+
+      def valid_function?(name)
+        !!Puppet::Parser::Functions.function(name)
+      end
+
+      def valid_nesting?(type)
+        # MLEN:TODO: implement nesting validation
+        true
       end
 
       def method_missing(name, *args, &block)
         raise "MethodMissing loop when searching for #{name}" if @searching_for_method
         @searching_for_method = true
 
-        if Puppet::Type.type(name)
-          options = if block.nil?
-                      args.last.is_a?(Hash) ? args.pop : {}
-                    else
-                      Container.new(block).to_hash
-                    end
-
-          create_resource name, args, options
-
-        elsif Puppet::Parser::Functions.function(name)
-          call_function name, args
+        if valid_type? name
+          create_resource name, *args, &block
+        elsif valid_function? name
+          call_function name, *args
         else
           super
         end
@@ -69,54 +93,31 @@ module Puppet
         @searching_for_method = false
       end
 
-      def create_resource(type, names, args)
-        param = AST::ASTArray.new :children => args.map { |k, v|
-          if v.is_a? Array
-            if v.count == 1
-              AST::ResourceParam.new :param => k.to_s,
-                                     :value => AST::Name.new(:value => v.first.to_s)
-            else
-              AST::ResourceParam.new :param => k.to_s,
-                                     :value => AST::ASTArray.new(:children => v.map { |val|
-                AST::Name.new(:value => v.first.to_s)
-              })
-            end
-          else
-            AST::ResourceParam.new :param => k.to_s,
-                                   :value => AST::Name.new(:value => v.to_s)
+      def params
+        @scope
+      end
+
+      def create_resource(type, *args, &block)
+        raise NoMethodError unless valid_type? type
+        options = args.last.is_a?(Hash) ? args.pop : {}
+
+        Array(args).map do |name|
+          resource = Puppet::Parser::Resource.new type, name, :scope => @scope
+          options.each do |key, val|
+            resource[key] = val
           end
-        }
 
-        instances = names.map do |name|
-          title = Puppet::Parser::AST::String.new :value => name.to_s
-          AST::ResourceInstance.new :title => title, :parameters => param
+          ResourceDecorator.new(resource, block) if block
+
+          @compiler.add_resource @scope, resource
+          resource
         end
-
-        resource = AST::Resource.new :type => type.to_s,
-                      :instances => AST::ASTArray.new(:children => instances)
-        @objects << resource
       end
 
       # Calls a puppet function
-      def call_function(name, args)
-        raise NoMethodError unless Puppet::Parser::Functions.function name
-
-        args.map! do |a|
-          AST::String.new :value => a
-        end
-
-        type = if Puppet::Parser::Functions.rvalue? name
-                 :rvalue
-               else
-                 :statement
-               end
-
-        array = AST::ASTArray.new :children => args
-        @objects << AST::Function.new(
-          :name => name,
-          :ftype => type,
-          :arguments => array
-        )
+      def call_function(name, *args)
+        raise NoMethodError unless valid_function? name
+        @scope.send name, args
       end
 
     end
