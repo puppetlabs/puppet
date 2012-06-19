@@ -141,16 +141,19 @@ class IO
 
   def self.binwrite(name, string, offset = nil)
     # Determine if we should truncate or not.  Since the truncate method on a
-    # file handle isn't implemented on all platforms, safer to do this in what
-    # looks like the libc / POSIX flag - which is usually pretty robust.
+    # file handle isn't implemented on all platforms, and we can't use the
+    # POSIX sysopen layer everywhere, we end up having this complexity.
+    #
+    # Thankfully 'w' truncates and 'r+' doesn't, giving us the desired
+    # behaviour across the board.  Sadly, r+ can't automatically create a file
+    # that doesn't exist - but we can use touch to make sure it does, and
+    # everything works OK.
+    #
     # --daniel 2012-03-11
-    mode = Fcntl::O_CREAT | Fcntl::O_WRONLY | (offset.nil? ? Fcntl::O_TRUNC : 0)
+    FileUtils.touch(name)
+    File.open(name, offset.nil? ? 'w' : 'r+') do |f|
+      f.binmode if f.respond_to? :binmode
 
-    # We have to duplicate the mode because Ruby on Windows is a bit precious,
-    # and doesn't actually carry over the mode.  It won't work to just use
-    # open, either, because that doesn't like our system modes and the default
-    # open bits don't do what we need, which is awesome. --daniel 2012-03-30
-    IO.open(IO::sysopen(name, mode), mode) do |f|
       # ...seek to our desired offset, then write the bytes.  Don't try to
       # seek past the start of the file, eh, because who knows what platform
       # would legitimately blow up if we did that.
@@ -158,11 +161,12 @@ class IO
       # Double-check the positioning, too, since destroying data isn't my idea
       # of a good time. --daniel 2012-03-11
       target = [0, offset.to_i].max
-      unless (landed = f.sysseek(target, IO::SEEK_SET)) == target
-        raise "unable to seek to target offset #{target} in #{name}: got to #{landed}"
+      f.seek(target, IO::SEEK_SET)
+      unless f.tell == target
+        raise "unable to seek to target offset #{target} in #{name}: got to #{f.tell}"
       end
 
-      f.syswrite(string)
+      f.write(string)
     end
   end unless singleton_methods.include?(:binwrite)
 end
