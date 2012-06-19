@@ -251,6 +251,7 @@ describe content do
   describe "when writing" do
     before do
       @content = content.new(:resource => @resource)
+      @fh      = mock('file handle')
     end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
