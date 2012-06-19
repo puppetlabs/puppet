@@ -267,7 +267,10 @@ describe Puppet::Util do
       Puppet::Util.which('doesnotexist').should be_nil
     end
 
-    it "should warn if the user's HOME is not set but their PATH contains a ~" do
+    # This test only applies on MRI, not JRuby.  JRuby actually goes out and
+    # does a lookup in NSS to discover the applicable home directory.  That is
+    # much nicer behaviour - if only everyone were so pleasant.
+    it "should warn if the user's HOME is not set but their PATH contains a ~", :unless => Puppet.features.jruby? do
       env_path = %w[~/bin /usr/bin /bin].join(File::PATH_SEPARATOR)
 
       Puppet::Util.withenv({:HOME => nil, :PATH => env_path}) do
