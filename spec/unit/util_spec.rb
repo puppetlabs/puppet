@@ -213,7 +213,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "safe_posix_fork" do
+  describe "safe_posix_fork", :unless => Puppet.features.jruby? do
     let(:pid) { 5501 }
 
     before :each do
