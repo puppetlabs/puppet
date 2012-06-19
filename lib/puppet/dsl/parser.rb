@@ -11,7 +11,7 @@ module Puppet
       end
 
       def parse!
-        Context.new(@scope, &@code).evaluate
+        Context.new(@scope, @code).evaluate
       rescue
         require 'pry'
         binding.pry

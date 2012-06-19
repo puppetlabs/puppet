@@ -3,12 +3,11 @@ require 'puppet/dsl/resource_decorator'
 
 module Puppet
   module DSL
-    class Context < BlankSlate
+    class Context #< BasicObject
 
-      def initialize(scope, &code)
+      def initialize(scope, code)
         @scope = scope
         @compiler = scope.compiler
-        @parent = scope.resource
         @code = code
       end
 
@@ -19,47 +18,48 @@ module Puppet
       def node(name, options = {}, &block)
         raise ::ArgumentError if block.nil? or not valid_nesting? :node
 
-        node = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
+        params = {}
+        params.merge! :arguments => options[:arguments] if options[:arguments]
+        params.merge! :parent => options[:inherits] if options[:inherits]
+        node = @compiler.known_resource_types.find_node nil, name
+        node ||= @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :node,
-          name#,
-          # :parent => @parent
+          name,
+          params
         )
 
         resource = node.ensure_in_catalog @scope
         resource.evaluate
 
-        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), block).evaluate
       end
 
       def hostclass(name, options = {}, &block)
-        raise ::ArgumentError if block.nil? or not valid_nesting? :hostclass
+        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting? :hostclass
 
+        args = options[:arguments] || {}
         hostclass = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :hostclass,
-          name#,
-          #:parent => parent
+          name,
+          :arguments => args
         )
-
-        resource = hostclass.ensure_in_catalog @scope
-        resource.evaluate
-
-        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        hostclass.ruby_code = ::Puppet::DSL::Context.new(@scope.compiler.newscope(nil), block)
       end
 
       def define(name, options = {}, &block)
-        puts "definition: #{options.inspect}"
-        raise ArgumentError if block.nil? or not valid_nesting? :definition
+        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting? :definition
 
+        args = options[:arguments] || {}
         definition = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
           :definition,
-          name#,
-          #:parent => parent
+          name,
+          :arguments => args
         )
 
         resource = definition.ensure_in_catalog @scope
         resource.evaluate
 
-        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), &block).evaluate
+        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), block).evaluate
       end
 
       def valid_type?(name)
@@ -73,12 +73,12 @@ module Puppet
       end
 
       def valid_nesting?(type)
-        # MLEN:TODO: implement nesting validation
+        # MLEN:TODO implement nesting validation
         true
       end
 
       def method_missing(name, *args, &block)
-        raise "MethodMissing loop when searching for #{name}" if @searching_for_method
+        ::Kernel.raise "MethodMissing loop when searching for #{name}" if @searching_for_method
         @searching_for_method = true
 
         if valid_type? name
@@ -97,10 +97,10 @@ module Puppet
       end
 
       def create_resource(type, *args, &block)
-        raise ::NoMethodError unless valid_type? type
-        options = args.last.is_a?(Hash) ? args.pop : {}
+        ::Kernel.raise ::NoMethodError unless valid_type? type
+        options = args.last.is_a?(::Hash) ? args.pop : {}
 
-        Array(args).map do |name|
+        ::Kernel::Array(args).map do |name|
           resource = ::Puppet::Parser::Resource.new type, name, :scope => @scope
           options.each do |key, val|
             resource[key] = val
@@ -115,7 +115,7 @@ module Puppet
 
       # Calls a puppet function
       def call_function(name, *args)
-        raise ::NoMethodError unless valid_function? name
+        ::Kernel.raise ::NoMethodError unless valid_function? name
         @scope.send name, args
       end
 

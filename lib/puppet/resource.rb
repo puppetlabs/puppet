@@ -412,9 +412,6 @@ class Puppet::Resource
         "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
     else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
     end
-  rescue
-    require 'pry'
-    binding.pry
   end
 
   def munge_type_name(value)
