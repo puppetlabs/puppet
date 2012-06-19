@@ -1,3 +1,15 @@
+2.7.17
+===
+30d89d3 (maint) Add symlink stub to gentoo service provider spec
+ff1b37a Add comment to upstart provider explaining exclusion of 'wait-for-state'
+6b854f7 Upstart code cleanup, init provider improvement
+0f81d9a Add spec test for network-interface-security
+a2c1e23 Add basic service resource test to upstart acceptance
+2c85d4d Handle network-interface-security in upstart
+ed00e74 Add exclude list to upstart provider
+17cc177 (#15027, #15028, #15029) Fix upstart version parsing
+b0ee6ad (maint) Add --test to puppet run
+
 2.7.16
 ===
 99fecc3 Update facter dep to reflect epoch 1
