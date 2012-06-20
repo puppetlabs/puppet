@@ -26,8 +26,6 @@ class Puppet::Parser::Compiler
     # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
   rescue => detail
-    require 'pry'
-    binding.pry
     message = "#{detail} on node #{node.name}"
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
@@ -105,8 +103,6 @@ class Puppet::Parser::Compiler
 
     evaluate_main
 
-    evaluate_ruby_code if use_ruby_dsl? environment.name
-
     evaluate_ast_node
 
     evaluate_node_classes
@@ -118,10 +114,13 @@ class Puppet::Parser::Compiler
     fail_on_unevaluated
 
     @catalog
+  ensure
+    require 'pry'
+    binding.pry
   end
 
   def evaluate_ruby_code
-    Puppet::DSL::Parser.new(topscope, ruby_code(@environment.name)).parse!
+    Puppet::DSL::Parser.new(@main, ruby_code(@environment.name)).parse!
   end
 
   # LAK:FIXME There are no tests for this.
@@ -308,6 +307,8 @@ class Puppet::Parser::Compiler
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
+
+    evaluate_ruby_code if use_ruby_dsl? environment.name
 
     @main_resource.evaluate
   end

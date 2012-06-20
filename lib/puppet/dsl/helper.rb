@@ -13,16 +13,16 @@ module Puppet
 
       # dsl type detection is based on file extension
       def dsl_type_for(env)
-        type = if Puppet.settings.value(:manifest, env.to_s) =~ /\.rb\z/
-                 :ruby
-               else
-                 :puppet
-               end
-
-        # MLEN:FIXME: For testing purposes only, will be removed in future
-        Puppet[:dsl] || type
+        if Puppet.settings.value(:manifest, env.to_s) =~ /\.rb\z/
+          :ruby
+        else
+          :puppet
+        end
       end
 
+      # TODO: document the behaviour:
+      # setting manifest to ruby file and setting code to ruby code will
+      # execute the code as a ruby DSL
       def ruby_code(env)
         file = Puppet.settings.value :manifest, env.to_s
         code = Puppet.settings.uninterpolated_value :code, env.to_s

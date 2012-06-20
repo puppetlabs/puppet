@@ -3,18 +3,15 @@ module Puppet
   module DSL
     class Parser
 
-      def initialize(scope, code)
-        @scope = scope
+      def initialize(main, code)
+        @main = main
         @code = proc do
           instance_eval code
         end
       end
 
       def parse!
-        Context.new(@scope, @code).evaluate
-      rescue
-        require 'pry'
-        binding.pry
+        @main.ruby_code = Context.new(@code)
       end
 
     end

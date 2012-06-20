@@ -3,63 +3,50 @@ require 'puppet/dsl/resource_decorator'
 
 module Puppet
   module DSL
-    class Context #< BasicObject
+    class Context < BlankSlate
 
-      def initialize(scope, code)
-        @scope = scope
-        @compiler = scope.compiler
+      def initialize(code, nesting = 0)
         @code = code
+        @nesting = nesting
       end
 
-      def evaluate
+      def evaluate(scope)
+        @scope = scope
+        @compiler = scope.compiler
         instance_eval &@code
       end
 
       def node(name, options = {}, &block)
-        raise ::ArgumentError if block.nil? or not valid_nesting? :node
+        raise ::ArgumentError if block.nil? or not valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
-        node = @compiler.known_resource_types.find_node nil, name
-        node ||= @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
-          :node,
-          name,
-          params
-        )
-
-        resource = node.ensure_in_catalog @scope
-        resource.evaluate
-
-        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), block).evaluate
+        node = ::Puppet::Resource::Type.new :node, name, params
+        node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+        @compiler.known_resource_types.add node
       end
 
       def hostclass(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting? :hostclass
+        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting?
 
-        args = options[:arguments] || {}
-        hostclass = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
-          :hostclass,
-          name,
-          :arguments => args
-        )
-        hostclass.ruby_code = ::Puppet::DSL::Context.new(@scope.compiler.newscope(nil), block)
+        params = {}
+        params.merge! :arguments => options[:arguments] if options[:arguments]
+        params.merge! :parent => options[:inherits] if options[:inherits]
+
+        hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
+        hostclass.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+        @compiler.known_resource_types.add hostclass
       end
 
       def define(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting? :definition
+        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting?
 
-        args = options[:arguments] || {}
-        definition = @compiler.known_resource_types.add ::Puppet::Resource::Type.new(
-          :definition,
-          name,
-          :arguments => args
-        )
-
-        resource = definition.ensure_in_catalog @scope
-        resource.evaluate
-
-        ::Puppet::DSL::Context.new(@scope.newscope(:resource => resource), block).evaluate
+        params = {}
+        params.merge! :arguments => options[:arguments] if options[:arguments]
+        definition = ::Puppet::Resource::Type.new :definition, name, params
+        definition = ::Puppet::DSL::Context.new block, @nesting + 1
+        @compiler.known_resource_types.add definition
       end
 
       def valid_type?(name)
@@ -72,9 +59,8 @@ module Puppet
         !!::Puppet::Parser::Functions.function(name)
       end
 
-      def valid_nesting?(type)
-        # MLEN:TODO implement nesting validation
-        true
+      def valid_nesting?
+        @nesting == 0
       end
 
       def method_missing(name, *args, &block)

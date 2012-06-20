@@ -182,6 +182,8 @@ class Puppet::Resource::Type
       self.doc += other.doc
     end
 
+    # MLEN:TODO merge classes with ruby code
+
     # This might just be an empty, stub class.
     return unless other.code
 
@@ -362,7 +364,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(resource, scope)
-    ruby_code.evaluate
+    ruby_code.evaluate(scope)
   end
 
   # Split an fq name into a namespace and name
