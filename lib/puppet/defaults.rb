@@ -45,13 +45,6 @@ module Puppet
   )
 
   define_settings(:main,
-    :dsl => {
-      :default => nil,
-      :desc    => "The DSL type"
-    }
-  )
-
-  define_settings(:main,
     :logdir => {
         :default  => nil,
         :type     => :directory,
