@@ -64,6 +64,49 @@ describe Puppet::Type do
     end
   end
 
+  it "should have a method for retrieving all independent properties" do
+    Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:independent_properties)
+  end
+
+
+  describe "when retrieving independent properties" do
+    before do
+      @test_type = Puppet::Type.newtype(:independent_test_type) do
+        newproperty(:ensure)
+        newproperty(:foo, :independent => :true)
+        newproperty(:bar, :independent => :true)
+        newproperty(:dependent)
+        newproperty(:also_dependent)
+        newparam(:name) { isnamevar }
+      end
+    end
+
+    it "should be able to retrieve all the properties with independent set to :true" do
+      props = @test_type.independent_properties
+      props.should_not be_include(nil)
+      props.should have(2).items
+      props.should be_include(@test_type.propertybyname(:foo))
+      props.should be_include(@test_type.propertybyname(:bar))
+    end
+
+    it "should not include properties without independent set to :true and also no :ensure property" do
+      props = @test_type.independent_properties
+      props.should_not be_include(nil)
+      props.should have(2).items
+      props.should_not be_include(@test_type.propertybyname(:dependent))
+      props.should_not be_include(@test_type.propertybyname(:also_dependent))
+      props.should_not be_include(@test_type.propertybyname(:ensure))
+    end
+  end
+
+  it "should raise an error if property option :independent is not given the value :true" do
+    expect {
+      test_type = Puppet::Type.newtype(:independent_test_type) do
+        newproperty(:foo, :independent => :bar)
+      end
+    }.to raise_error(Puppet::DevError, /The only valid value for the 'independent' property option is true/)
+  end
+
   it "should have a method for setting default values for resources" do
     Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:set_default)
   end

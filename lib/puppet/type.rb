@@ -40,6 +40,7 @@ class Type
     include Puppet::Util::ClassGen
     include Puppet::Util::Warnings
     attr_reader :properties
+    attr_reader :independent_properties
   end
 
   def self.states
@@ -273,6 +274,8 @@ class Type
   # * <tt>:parent</tt>: The parent class for the property.  Defaults to Puppet::Property.
   # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
   #   the provider is not set) to retrieve the current value.
+  # * <tt>:independent</tt>: If set to true, this will cause the property name to be
+  #   added to the independent_properties list. Only valid value is true.
   def self.newproperty(name, options = {}, &block)
     name = symbolize(name)
 
@@ -291,6 +294,13 @@ class Type
       parent = Puppet::Property
     end
 
+    # This option will allow us to have properties that will still be brought
+    # in sync even when the ensure property is out of sync. 
+    if independent = options[:independent] 
+      raise Puppet::DevError, "The only valid value for the 'independent' property option is true" if independent != true
+      options.delete(:independent)
+    end
+
     # We have to create our own, new block here because we want to define
     # an initial :retrieve method, if told to, and then eval the passed
     # block if available.
@@ -306,11 +316,13 @@ class Type
       class_eval(&block) if block
     end
 
-    # If it's the 'ensure' property, always put it first.
+    # If it's the 'ensure' property, always put it first. Also, it never gets 
+    # included in the independent list.
     if name == :ensure
       @properties.unshift prop
     else
       @properties << prop
+      @independent_properties << prop if independent
     end
 
     prop
@@ -582,6 +594,12 @@ class Type
   # class.
   def properties
     self.class.properties.collect { |prop| @parameters[prop.name] }.compact
+  end
+
+  # Return all of the property objects with the independent option set, 
+  # in the order specified in the class.
+  def independent_properties
+    self.class.independent_properties.collect { |prop| @parameters[prop.name] }.compact
   end
 
   # Is this type's name isomorphic with the object?  That is, if the
@@ -1705,6 +1723,7 @@ class Type
     @parameters ||= []
 
     @validproperties = {}
+    @independent_properties = []
     @properties = []
     @parameters = []
     @paramhash = {}
