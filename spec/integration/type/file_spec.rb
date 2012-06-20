@@ -14,7 +14,12 @@ describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }
-  let(:path) { tmpfile('file_testing') }
+  let(:path) do
+    # we create a directory first so backups of :path that are stored in
+    # the same directory will also be removed after the tests
+    parent = tmpdir('file_spec')
+    File.join(parent, 'file_testing')
+  end
 
   if Puppet.features.posix?
     def set_mode(mode, file)
@@ -381,8 +386,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if no backup can be performed" do
-      dir = tmpfile("backups")
-      Dir.mkdir(dir)
+      dir = tmpdir("backups")
 
       file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
       catalog.add_resource file
