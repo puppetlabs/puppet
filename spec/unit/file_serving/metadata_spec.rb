@@ -6,16 +6,12 @@ require 'puppet/file_serving/metadata'
 describe Puppet::FileServing::Metadata do
   let(:foobar) { File.expand_path('/foo/bar') }
 
-  it "should should be a subclass of Base" do
+  it "should be a subclass of Base" do
     Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::Base)
   end
 
   it "should indirect file_metadata" do
     Puppet::FileServing::Metadata.indirection.name.should == :file_metadata
-  end
-
-  it "should should include the IndirectionHooks module in its indirection" do
-    Puppet::FileServing::Metadata.indirection.singleton_class.included_modules.should include(Puppet::FileServing::IndirectionHooks)
   end
 
   it "should have a method that triggers attribute collection" do
