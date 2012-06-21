@@ -309,8 +309,7 @@ class Puppet::SSL::CertificateAuthority
       raise CertificateSigningError.new(hostname), "CSR subject common name #{cn.inspect} does not match expected certname #{hostname.inspect}"
     end
 
-    # Only allow printing ascii characters, excluding /
-    if hostname !~ /\A[ -.0-~]+\Z/
+    if hostname !~ Puppet::SSL::Base::VALID_CERTNAME
       raise CertificateSigningError.new(hostname), "CSR #{hostname.inspect} subject contains unprintable or non-ASCII characters"
     end
 
