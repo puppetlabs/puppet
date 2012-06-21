@@ -5,14 +5,13 @@
 require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/file_serving/base'
-require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically
 # asked for.
 class Puppet::FileServing::Content < Puppet::FileServing::Base
   extend Puppet::Indirector
-  indirects :file_content, :extend => Puppet::FileServing::IndirectionHooks
+  indirects :file_content, :terminus_class => :selector
 
   attr_writer :content
 

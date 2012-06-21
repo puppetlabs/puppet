@@ -141,6 +141,9 @@ class Puppet::Application::Master < Puppet::Application
     # Cache our nodes in yaml.  Currently not configurable.
     Puppet::Node.cache_class = :yaml
 
+    Puppet::FileServing::Content.indirection.terminus_class = :file_server
+    Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
+
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local

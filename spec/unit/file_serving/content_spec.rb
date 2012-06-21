@@ -13,10 +13,6 @@ describe Puppet::FileServing::Content do
     Puppet::FileServing::Content.indirection.name.should == :file_content
   end
 
-  it "should should include the IndirectionHooks module in its indirection" do
-    Puppet::FileServing::Content.indirection.singleton_class.included_modules.should include(Puppet::FileServing::IndirectionHooks)
-  end
-
   it "should only support the raw format" do
     Puppet::FileServing::Content.supported_formats.should == [:raw]
   end
