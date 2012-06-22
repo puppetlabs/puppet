@@ -13,7 +13,7 @@ class Puppet::FileBucket::File
   attr :contents
   attr :bucket_path
 
-  def initialize( contents, options = {} )
+  def initialize(contents, options = {})
     raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
     @contents = contents
 
@@ -41,15 +41,15 @@ class Puppet::FileBucket::File
     "#{checksum_type}/#{checksum_data}"
   end
 
-  def self.from_s( contents )
-    self.new( contents )
+  def self.from_s(contents)
+    self.new(contents)
   end
 
   def to_pson
     { "contents" => contents }.to_pson
   end
 
-  def self.from_pson( pson )
-    self.new( pson["contents"] )
+  def self.from_pson(pson)
+    self.new(pson["contents"])
   end
 end
