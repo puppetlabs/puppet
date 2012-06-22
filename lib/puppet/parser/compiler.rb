@@ -24,6 +24,7 @@ class Puppet::Parser::Compiler
     # stick until the next entry to this function.
     Thread.current[:known_resource_types] = nil
     Thread.current[:env_module_directories] = nil
+    Thread.current[:gem_directories] = nil
 
     # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
