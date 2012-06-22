@@ -65,6 +65,7 @@ class Puppet::FileServing::Configuration
     mount_name, path = request.key.split(File::Separator, 2)
 
     raise(ArgumentError, "Cannot find file: Invalid mount '#{mount_name}'") unless mount_name =~ %r{^[-\w]+$}
+    raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path and path.split('/').include?('..')
 
     return nil unless mount = find_mount(mount_name, request.environment)
     if mount.name == "modules" and mount_name != "modules"
