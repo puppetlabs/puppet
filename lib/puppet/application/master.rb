@@ -234,6 +234,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::FileServing::Content.indirection.terminus_class = :file_server
     Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
 
+    Puppet::FileBucket::File.indirection.terminus_class = :file
+
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local
