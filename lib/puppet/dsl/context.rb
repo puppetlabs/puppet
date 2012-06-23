@@ -63,6 +63,10 @@ module Puppet
         @nesting == 0
       end
 
+      def respond_to?(name)
+        valid_type? name or valid_function? name
+      end
+
       def method_missing(name, *args, &block)
         ::Kernel.raise "MethodMissing loop when searching for #{name}" if @searching_for_method
         @searching_for_method = true
@@ -92,7 +96,7 @@ module Puppet
             resource[key] = val
           end
 
-          ::Puppet::DSL::ResourceDecorator.new(resource, block) if block
+          ::Puppet::DSL::ResourceDecorator.new(resource, &block) if block
 
           @compiler.add_resource @scope, resource
           resource
