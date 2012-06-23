@@ -19,5 +19,12 @@ describe 'Puppet::Parser::Functions#hiera_include' do
     Hiera.any_instance.expects(:lookup).returns(nil)
     expect { @scope.function_hiera_include("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
+
+  it 'should use the array resolution_type' do
+    scope = hacked_scope
+    scope.stubs(:send)
+    Hiera.any_instance.expects(:lookup).with('key', nil, scope, nil, :array).returns([])
+    scope.function_hiera_include(['key'])
+  end
 end
 
