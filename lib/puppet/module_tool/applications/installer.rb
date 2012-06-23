@@ -45,6 +45,10 @@ module Puppet::ModuleTool
           }
 
           unless File.directory? options[:target_dir]
+            FileUtils.mkdir_p(options[:target_dir])
+          end
+
+          unless File.directory? options[:target_dir]
             raise MissingInstallDirectoryError,
               :requested_module  => @module_name,
               :requested_version => @version || 'latest',
