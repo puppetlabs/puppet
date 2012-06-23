@@ -1,13 +1,31 @@
 begin test_name "Lookup data using the hiera parser function"
 
 step 'Setup'
+testdir = master.tmpdir('hiera')
+
+create_remote_file(master, "#{testdir}/puppet.conf", <<END)
+[main]
+  data_binding_terminus = 'hiera'
+  manifest   = "#{testdir}/site.pp"
+  modulepath = "#{testdir}/modules"
+END
+
+on master, "mkdir -p #{testdir}/modules/apache/manifests"
 on master, "mkdir -p /var/lib/hiera"
 
 apply_manifest_on master, <<-PP
+file { '/var/lib/hiera/global.yaml':
+  ensure  => present,
+  content => "---
+    apache::port: 8080
+  "
+}
+
 file { '/etc/puppet/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
+      - "puppet"
       - "yaml"
     :logger: "console"
     :hierarchy:
@@ -19,33 +37,7 @@ file { '/etc/puppet/hiera.yaml':
       :datadir: "/var/lib/hiera"
   '
 }
-
-file { '/var/lib/hiera':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
-}
 PP
-
-apply_manifest_on master, <<-PP
-file { '/var/lib/hiera/global.yaml':
-  ensure  => present,
-  content => "---
-    port: 8080
-  "
-}
-PP
-
-testdir = master.tmpdir('hiera')
-
-create_remote_file(master, "#{testdir}/puppet.conf", <<END)
-[main]
-  manifest   = "#{testdir}/site.pp"
-  modulepath = "#{testdir}/modules"
-END
-
-on master, "mkdir -p #{testdir}/modules/apache/manifests"
 
 agent_names = agents.map { |agent| "'#{agent.to_s}'" }.join(', ')
 create_remote_file(master, "#{testdir}/site.pp", <<-PP)
@@ -55,9 +47,7 @@ node default {
 PP
 
 create_remote_file(master, "#{testdir}/modules/apache/manifests/init.pp", <<-PP)
-class apache {
-  $port = hiera('port')
-
+class apache($port) {
   notify { "port from hiera":
     message => "apache server port: ${port}"
   }
