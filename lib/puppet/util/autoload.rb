@@ -52,18 +52,29 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load_file(name, env=nil)
-      file = get_file(name.to_s, env)
-      return false unless file
+      orig_load_path = $LOAD_PATH.clone()
       begin
-        mark_loaded(name, file)
-        Kernel.load file, @wrap
-        return true
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue Exception => detail
-        message = "Could not autoload #{name}: #{detail}"
-        Puppet.log_exception(detail, message)
-        raise Puppet::Error, message
+        module_directories(env).each do |dir|
+          $LOAD_PATH << dir
+        end
+        file = get_file(name.to_s, env)
+        return false unless file
+        begin
+          mark_loaded(name, file)
+          Kernel.load file, @wrap
+          return true
+        rescue SystemExit,NoMemoryError
+          raise
+        rescue Exception => detail
+          message = "Could not autoload #{name}: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
+        end
+      ensure
+        $LOAD_PATH.clear()
+        orig_load_path.each do |dir|
+          $LOAD_PATH << dir
+        end
       end
     end
 
