@@ -63,7 +63,7 @@ class Puppet::Settings
   end
 
   def self.default_user_config_dir
-    "~/.puppet"
+    File.expand_path("~/.puppet")
   end
 
   def self.default_global_var_dir
@@ -71,7 +71,7 @@ class Puppet::Settings
   end
 
   def self.default_user_var_dir
-    "~/.puppet/var"
+    File.expand_path("~/.puppet/var")
   end
 
   def self.default_config_file_name
@@ -505,21 +505,27 @@ class Puppet::Settings
 
   def main_config_file
     # the algorithm here is basically this:
-    #  * use the explicit config file location if one has been specified; this can be affected by modifications
-    #    to either the "confdir" or "config" settings (most likely via CLI arguments).
-    #  * if no explicit config location has been specified, we fall back to the default.
+    #  * use the explicit config file location if one has been specified; this
+    #    can be affected by modifications to either the "confdir" or "config"
+    #    settings (most likely via CLI arguments).
+    #  * if no explicit config location has been specified, we fall back to
+    #    the default.
     #
-    # The easiest way to determine whether an explicit one has been specified is to simply attempt to evaluate
-    #  the value of ":config".  This will obviously be successful if they've passed an explicit value for :config,
-    #  but it will also result in successful interpolation if they've only passed an explicit value for :confdir.
+    # The easiest way to determine whether an explicit one has been specified
+    #  is to simply attempt to evaluate the value of ":config".  This will
+    #  obviously be successful if they've passed an explicit value for :config,
+    #  but it will also result in successful interpolation if they've only
+    #  passed an explicit value for :confdir.
     #
-    # If they've specified neither, then the interpolation will fail and we'll get an exception.
+    # If they've specified neither, then the interpolation will fail and we'll
+    #  get an exception.
     #
     begin
       return self[:config] if self[:config]
     rescue InterpolationError => err
-      # This means we failed to interpolate, which means that they didn't explicitly specify either :config or
-      # :confdir... so we'll fall out to the default value.
+      # This means we failed to interpolate, which means that they didn't
+      #  explicitly specify either :config or :confdir... so we'll fall out to
+      #  the default value.
     end
     # return the default value.
     return File.join(self.class.default_global_config_dir, config_file_name)
