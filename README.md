@@ -106,12 +106,16 @@ To achieve this setup the module user needs to configure Hiera in _/etc/puppet/h
 
 <pre>
 ---
-:backends: - json
-           - puppet
-:hierarchy: - %{location}
-            - common
+:backends:
+  - json
+  - puppet
+
+:hierarchy:
+  - "%{location}"
+  - common
+
 :json:
-        :datadir: /var/lib/hiera
+  :datadir: /var/lib/hiera
 
 :puppet:
 	:datasource: data
