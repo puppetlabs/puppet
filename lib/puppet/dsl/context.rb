@@ -92,6 +92,8 @@ module Puppet
 
         ::Kernel::Array(args).map do |name|
           resource = ::Puppet::Parser::Resource.new type, name, :scope => @scope
+          options[:virtual] = true if virtualizing?
+          options[:exported] = true if exporting?
           options.each do |key, val|
             resource[key] = val
           end
@@ -107,6 +109,40 @@ module Puppet
       def call_function(name, *args)
         ::Kernel.raise ::NoMethodError unless valid_function? name
         @scope.send name, args
+      end
+
+      def exporting?
+        @exporting
+      end
+
+      def virtualizing?
+        @virtualizing
+      end
+
+      def export(*args, &block)
+        unless block
+          begin
+            @exporting = true
+            instance_eval &block
+          ensure
+            @exporting = false
+          end
+        else
+          args.each { |r| r[:exported] = true }
+        end
+      end
+
+      def virtualize(*args, &block)
+        unless block
+          begin
+            @virtualizing = true
+            instance_eval &block
+          ensure
+            @virtualizing = false
+          end
+        else
+          args.each { |r| r[:virtual] = true }
+        end
       end
 
     end

@@ -7,7 +7,7 @@ module Puppet
 
       def initialize(resource, &block)
         @resource = resource
-        block.call(self)
+        block[self]
       end
 
       def method_missing(name, *args)
