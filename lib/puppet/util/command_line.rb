@@ -26,10 +26,7 @@ module Puppet
 
 
       def self.available_subcommands
-        # Eventually we probably want to replace this with a call to the autoloader.  however, at the moment
-        #  the autoloader considers the module path when loading, and we don't want to allow apps / faces to load
-        #  from there.  Once that is resolved, this should be replaced.  --cprice 2012-03-06
-        absolute_appdirs = $LOAD_PATH.collect do |x|
+        absolute_appdirs = Puppet::Util::Autoload.search_directories(Puppet[:environment]).collect do |x|
           File.join(x,'puppet','application')
         end.select{ |x| File.directory?(x) }
         absolute_appdirs.inject([]) do |commands, dir|
@@ -44,8 +41,13 @@ module Puppet
         self.class.available_subcommands
       end
 
+
+      def autoloader
+        @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/application")
+      end
+
       def require_application(application)
-        require File.join(appdir, application)
+        autoloader.load(application) unless autoloader.loaded?(application)
       end
 
       # This is the main entry point for all puppet applications / faces; it
