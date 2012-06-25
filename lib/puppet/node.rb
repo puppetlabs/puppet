@@ -17,7 +17,7 @@ class Puppet::Node
     A node is composed of its name, its facts, and its environment."
 
   attr_accessor :name, :classes, :source, :ipaddress, :parameters
-  attr_reader :time
+  attr_reader :time, :facts
   #
   # Load json before trying to register.
   Puppet.features.pson? and ::PSON.register_document_type('Node',self)
@@ -73,6 +73,8 @@ class Puppet::Node
 
     @parameters = options[:parameters] || {}
 
+    @facts = options[:facts]
+
     if env = options[:environment]
       self.environment = env
     end
@@ -82,8 +84,8 @@ class Puppet::Node
 
   # Merge the node facts with parameters from the node source.
   def fact_merge
-    if facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
-      merge(facts.values)
+    if @facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
+      merge(@facts.values)
     end
   rescue => detail
     error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
