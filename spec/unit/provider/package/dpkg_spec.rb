@@ -167,7 +167,7 @@ describe provider do
     before do
       @tempfile = stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file"
       @tempfile.stubs(:write)
-      Tempfile.stubs(:new).returns @tempfile
+      Tempfile.stubs(:open).yields(@tempfile)
     end
 
     it "should install first if holding" do
