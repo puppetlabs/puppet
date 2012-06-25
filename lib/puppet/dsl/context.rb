@@ -11,26 +11,27 @@ module Puppet
       end
 
       def evaluate(scope)
-        raise if scope == nil or scope.compiler == nil
         @scope = scope
         @compiler = scope.compiler
         instance_eval &@code
+        self
       end
 
       def node(name, options = {}, &block)
-        raise ::ArgumentError if block.nil? or not valid_nesting?
+        ::Kernel.raise ::ArgumentError if block.nil?
+        ::Kernel.raise ::NoMethodError unless valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
         node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
-
         @compiler.known_resource_types.add node
       end
 
       def hostclass(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting?
+        ::Kernel.raise ::ArgumentError if block.nil?
+        ::Kernel.raise ::NoMethodError unless valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
@@ -42,12 +43,13 @@ module Puppet
       end
 
       def define(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil? or not valid_nesting?
+        ::Kernel.raise ::ArgumentError if block.nil?
+        ::Kernel.raise ::NoMethodError unless valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name, params
-        definition = ::Puppet::DSL::Context.new block, @nesting + 1
+        definition.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
         @compiler.known_resource_types.add definition
       end
 
