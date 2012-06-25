@@ -1,12 +1,13 @@
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
 
-  # This is a list of environment variables that we will set when we want to override the POSIX locale
+  # This is a list of environment variables that we will set when we want to
+  # override the POSIX locale
   LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
-                           'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
+    'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
 
-  # This is a list of user-related environment variables that we will unset when we want to provide a pristine
-  # environment for "exec" runs
+  # This is a list of user-related environment variables that we will unset
+  # when we want to provide a pristine environment for "exec" runs
   USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
 
 
@@ -30,8 +31,10 @@ module Puppet::Util::POSIX
     end
 
     begin
-      return Etc.send(method, id).send(field)
-    rescue ArgumentError => detail
+      if record = Etc.send(method, id)
+        record.send(field)
+      end
+    rescue ArgumentError
       # ignore it; we couldn't find the object
       return nil
     end
@@ -52,7 +55,9 @@ module Puppet::Util::POSIX
     end
 
     Etc.send(type) do |object|
-      if integer and object.send(idmethod) == id
+      if object.nil?
+        return nil
+      elsif integer and object.send(idmethod) == id
         return object.send(field)
       elsif object.name == id
         return object.send(field)
@@ -144,4 +149,3 @@ module Puppet::Util::POSIX
     end
   end
 end
-
