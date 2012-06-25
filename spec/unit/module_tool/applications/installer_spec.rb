@@ -13,7 +13,11 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
     Puppet.settings[:modulepath] = modpath1
   end
 
-  let(:unpacker)        { stub(:run) }
+  let(:unpacker)        {
+    unpacker = mock "unpacker"
+    unpacker.stubs(:run).returns("foo")
+    unpacker
+  }
   let(:installer_class) { Puppet::ModuleTool::Applications::Installer }
   let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
   let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }

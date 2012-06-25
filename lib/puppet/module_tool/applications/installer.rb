@@ -61,7 +61,9 @@ module Puppet::ModuleTool
             Puppet.notice 'Installing -- do not interrupt ...'
             cached_paths.each do |hash|
               hash.each do |dir, path|
-                Unpacker.new(path, @options.merge(:target_dir => dir)).run
+                extracted_dir = Unpacker.new(path, @options.merge(:target_dir => dir)).run
+                modulefile = File.join(extracted_dir, "Modulefile")
+                check_gem_dependencies(modulefile) if File.exists?(modulefile)
               end
             end
           end
@@ -182,6 +184,33 @@ module Puppet::ModuleTool
       def is_module_package?(name)
         filename = File.expand_path(name)
         filename =~ /.tar.gz$/
+      end
+
+      def check_gem_dependencies(modulefile)
+        if (File.exists?(modulefile))
+          metadata = Puppet::ModuleTool::Metadata.new
+          Puppet::ModuleTool::ModulefileReader.evaluate(metadata, modulefile)
+
+          # TODO: need error handling here
+          metadata.gems.each do |gem|
+            handle_gem_dependency(gem)
+          end
+        end
+      end
+
+      def handle_gem_dependency(gem)
+        provider = Puppet::Type.type(:package).provider(:gem).new
+        resource = Puppet::Type.type(:package).new(
+            :name   => gem[:name],
+            :ensure => gem[:version]
+        )
+        provider.resource = resource
+        if (provider.query)
+          Puppet.notice "Gem '#{gem[:name]}' (#{gem[:version]}) dependency met."
+        else
+          Puppet.notice "Installing gem '#{gem[:name]}' (#{gem[:version]})."
+          provider.install
+        end
       end
     end
   end
