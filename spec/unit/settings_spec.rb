@@ -22,6 +22,41 @@ describe Puppet::Settings do
     end
   end
 
+  describe "#initialize_default_dir_settings" do
+    before :each do
+      subject.define_settings(:section, :confdir => {:default => nil, :desc => 'blah'})
+      subject.define_settings(:section, :vardir => {:default => nil, :desc => 'blah'})
+    end
+
+    it "should have confdir /etc/puppet when run as root" do
+      Puppet.features.stubs(:root?).returns(true)
+      etcdir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : '/etc/puppet'
+      # REMIND: issue with windows backslashes
+      subject.initialize_default_dir_settings
+      subject[:confdir].should == File.expand_path(etcdir)
+    end
+
+    it "should have confdir ~/.puppet when run as non-root" do
+      Puppet.features.stubs(:root?).returns(false)
+      subject.initialize_default_dir_settings
+      subject[:confdir].should == File.expand_path("~/.puppet")
+    end
+
+    it "should have vardir /var/lib/puppet when run as root" do
+      Puppet.features.stubs(:root?).returns(true)
+      vardir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : '/var/lib/puppet'
+      # REMIND: issue with windows backslashes
+      subject.initialize_default_dir_settings
+      subject[:vardir].should == File.expand_path(vardir)
+    end
+
+    it "should have vardir ~/.puppet/var when run as non-root" do
+      Puppet.features.stubs(:root?).returns(false)
+      subject.initialize_default_dir_settings
+      subject[:vardir].should == File.expand_path("~/.puppet/var")
+    end
+  end
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Settings.new

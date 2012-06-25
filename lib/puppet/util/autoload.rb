@@ -124,7 +124,7 @@ class Puppet::Util::Autoload
       # we at least need a way to prevent the autoloader from attempting to access the module path before it is
       # initialized.  For now we are accomplishing that by calling the "app_defaults_initialized?" method on the
       # main puppet Settings object.  --cprice 2012-03-16
-      if Puppet.settings.app_defaults_initialized?
+      if (Puppet.settings.global_defaults_initialized?)
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
@@ -142,7 +142,7 @@ class Puppet::Util::Autoload
     def libdirs()
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
-      if (Puppet.settings.app_defaults_initialized?)
+      if (Puppet.settings.global_defaults_initialized?)
         Puppet[:libdir].split(File::PATH_SEPARATOR)
       else
         []
