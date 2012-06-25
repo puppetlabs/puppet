@@ -349,9 +349,7 @@ class Application
   end
 
   def app_defaults()
-    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
-        :name => name
-    )
+    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode)
   end
 
   def initialize_app_defaults()
