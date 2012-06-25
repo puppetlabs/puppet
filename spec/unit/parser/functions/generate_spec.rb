@@ -33,7 +33,8 @@ describe "the generate function" do
   end
 
   it "should not accept a command containing '..'" do
-    command = File.expand_path("/command/../")
+    command = "/command/../"
+    command = make_absolute(command) if Puppet.features.microsoft_windows?
     lambda { scope.function_generate([command]) }.should raise_error(Puppet::ParseError)
   end
 
