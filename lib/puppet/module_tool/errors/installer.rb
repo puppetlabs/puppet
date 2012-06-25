@@ -72,18 +72,38 @@ Could not install package #{@requested_package}
     end
   end
 
-  class MissingInstallDirectoryError < InstallError
+  class InstallPathExistsNotDirectoryError < InstallError
     def initialize(options)
       @requested_module  = options[:requested_module]
       @requested_version = options[:requested_version]
       @directory         = options[:directory]
-      super "'#{@requested_module}' (#{@requested_version}) requested; Directory #{@directory} does not exist"
+      super "'#{@requested_module}' (#{@requested_version}) requested; Path #{@directory} is not a directory."
     end
 
     def multiline
       <<-MSG.strip
 Could not install module '#{@requested_module}' (#{@requested_version})
-  Directory #{@directory} does not exist
+  Path '#{@directory}' exists but is not a directory.
+  A potential solution is to rename the path and then
+  mkdir -p '#{@directory}'
+      MSG
+    end
+  end
+
+  class PermissionDeniedCreateInstallDirectoryError < InstallError
+    def initialize(options)
+      @requested_module  = options[:requested_module]
+      @requested_version = options[:requested_version]
+      @directory         = options[:directory]
+      super "'#{@requested_module}' (#{@requested_version}) requested; Permission is denied to create #{@directory}."
+    end
+
+    def multiline
+      <<-MSG.strip
+Could not install module '#{@requested_module}' (#{@requested_version})
+  Permission is denied when trying to create directory '#{@directory}'.
+  A potential solution is to check the ownership and permissions of
+  parent directories.
       MSG
     end
   end
