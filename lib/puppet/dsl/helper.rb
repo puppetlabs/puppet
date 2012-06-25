@@ -4,11 +4,11 @@ module Puppet
     module Helper
 
       def use_ruby_dsl?(env)
-        dsl_type_for(env) == :ruby
+        dsl_type_for(env).equal? :ruby
       end
 
       def use_puppet_dsl?(env)
-        dsl_type_for(env) == :puppet
+        dsl_type_for(env).equal? :puppet
       end
 
       # dsl type detection is based on file extension
@@ -23,7 +23,8 @@ module Puppet
       # TODO: document the behaviour:
       # setting manifest to ruby file and setting code to ruby code will
       # execute the code as a ruby DSL
-      def ruby_code(env)
+      def get_ruby_code(env)
+        raise "Called when not using Ruby DSL" unless use_ruby_dsl? env
         file = Puppet.settings.value :manifest, env.to_s
         code = Puppet.settings.uninterpolated_value :code, env.to_s
         code = File.read file if code == nil or code == ""

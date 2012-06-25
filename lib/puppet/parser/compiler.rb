@@ -120,7 +120,7 @@ class Puppet::Parser::Compiler
   end
 
   def evaluate_ruby_code
-    Puppet::DSL::Parser.new(@main, ruby_code(@environment.name)).parse!
+    Puppet::DSL::Parser.new(@main, get_ruby_code(@environment.name)).parse!
   end
 
   # LAK:FIXME There are no tests for this.
