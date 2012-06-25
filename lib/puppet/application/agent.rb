@@ -293,6 +293,8 @@ Puppet agent accepts the following signals:
   Shut down the puppet agent daemon.
 * SIGUSR1:
   Immediately retrieve and apply configurations from the puppet master.
+* SIGUSR2:
+  Close file descriptors for log files and reopen them. Used with logrotate.
 
 AUTHOR
 ------
