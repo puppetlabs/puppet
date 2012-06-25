@@ -1,3 +1,4 @@
+require 'puppet/file_serving/metadata'
 require 'puppet/indirector/file_metadata'
 require 'puppet/indirector/code'
 require 'puppet/file_serving/terminus_selector'

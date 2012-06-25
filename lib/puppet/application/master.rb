@@ -163,8 +163,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'etc'
-    require 'puppet/file_serving/content'
-    require 'puppet/file_serving/metadata'
 
     xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
 
@@ -205,9 +203,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
-  def setup
-    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
-
+  def setup_logs
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
       if options[:debug]
@@ -223,10 +219,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+  end
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
-
-    Puppet.settings.use :main, :master, :ssl, :metrics
+  def setup_terminuses
+    require 'puppet/file_serving/content'
+    require 'puppet/file_serving/metadata'
 
     # Cache our nodes in yaml.  Currently not configurable.
     Puppet::Node.indirection.cache_class = :yaml
@@ -235,7 +232,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
 
     Puppet::FileBucket::File.indirection.terminus_class = :file
+  end
 
+  def setup_ssl
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local
@@ -244,5 +243,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::SSL::Host.ca_location = :none
     end
+  end
+
+  def setup
+    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+
+    setup_logs
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    Puppet.settings.use :main, :master, :ssl, :metrics
+
+    setup_terminuses
+
+    setup_ssl
   end
 end
