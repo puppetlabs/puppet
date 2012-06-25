@@ -107,6 +107,57 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
       end
     end
 
+    context "should check the target directory" do
+      let(:installer) do
+        installer_class.new('pmtacceptance-stdlib', forge, options)
+      end
+      let(:fake_target_dir) do
+        target_dir = Pathname.new(modpath1)
+        target_dir.stubs(:directory?).returns(false)
+        target_dir.stubs(:exist?).returns(false)
+        target_dir
+      end
+
+      # This method is meant to avoid copy / paste
+      def expect_normal_unpacker
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
+          returns(unpacker)
+      end
+      def expect_normal_results
+        results = installer.run
+        results[:installed_modules].length.should eq 1
+        results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+        results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+        results
+      end
+
+      it "(#15202) should prepare the target directory" do
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          expect_normal_unpacker
+          installer.expects(:prepare_target_directory).returns(fake_target_dir)
+          expect_normal_results
+        end
+      end
+      it "(#15202) should create the install directory" do
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          expect_normal_unpacker
+          installer.stubs(:get_target_dir).returns(fake_target_dir)
+          fake_target_dir.expects(:mkpath).returns(modpath1)
+          expect_normal_results
+        end
+      end
+      it "(#15202) should provide a helpful permission error" do
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          installer.stubs(:get_target_dir).returns(fake_target_dir)
+          fake_target_dir.expects(:mkpath).raises(Errno::EACCES)
+          results = installer.run
+          results[:result].should eq :failure
+          results[:error][:oneline].should =~ /Permission is denied/
+        end
+      end
+    end
+
     context "when the requested module has dependencies" do
       it "should install dependencies" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do

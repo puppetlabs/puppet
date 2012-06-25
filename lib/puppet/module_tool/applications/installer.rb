@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'pathname'
+require 'fileutils'
 require 'tmpdir'
 require 'semver'
 require 'puppet/forge'
@@ -44,12 +45,7 @@ module Puppet::ModuleTool
             :install_dir    => options[:target_dir],
           }
 
-          unless File.directory? options[:target_dir]
-            raise MissingInstallDirectoryError,
-              :requested_module  => @module_name,
-              :requested_version => @version || 'latest',
-              :directory         => options[:target_dir]
-          end
+          prepare_target_directory
 
           cached_paths = get_release_packages
 
@@ -79,6 +75,41 @@ module Puppet::ModuleTool
       private
 
       include Puppet::ModuleTool::Shared
+
+      # Return a Pathname object for the install directory.
+      # This is a private method to easily mock the spec tests.
+      def get_target_dir
+        Pathname.new options[:target_dir]
+      end
+
+      def prepare_target_directory
+        target_dir = get_target_dir
+
+        if not target_dir.directory?
+          # If the target path exists, don't try to remove it.
+          if target_dir.exist?
+            raise InstallPathExistsNotDirectoryError,
+              :requested_module  => @module_name,
+              :requested_version => @version || 'latest',
+              :directory         => options[:target_dir]
+          else
+            begin
+              # Try and create it for the user
+              target_dir.mkpath
+              Puppet.notice "Created target directory #{target_dir}"
+            rescue Errno::EACCES => orig_error
+              friendly_error = PermissionDeniedCreateInstallDirectoryError.new(
+                :requested_module  => @module_name,
+                :requested_version => @version || 'latest',
+                :directory         => options[:target_dir]
+              )
+              friendly_error.set_backtrace orig_error.backtrace
+              raise friendly_error
+            end
+          end
+        end
+        target_dir
+      end
 
       # Return a Pathname object representing the path to the module
       # release package in the `Puppet.settings[:module_working_dir]`.
