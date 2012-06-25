@@ -38,7 +38,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute_posix (stubs)", :unless => Puppet.features.microsoft_windows? do
+    describe "#execute_posix (stubs)", :unless => (Puppet.features.microsoft_windows? or Puppet.features.jruby?) do
       before :each do
         # Most of the things this method does are bad to do during specs. :/
         Kernel.stubs(:fork).returns(pid).yields
