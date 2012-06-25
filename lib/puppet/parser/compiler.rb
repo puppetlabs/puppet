@@ -114,9 +114,6 @@ class Puppet::Parser::Compiler
     fail_on_unevaluated
 
     @catalog
-  ensure
-    require 'pry'
-    binding.pry
   end
 
   def evaluate_ruby_code

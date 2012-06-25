@@ -11,6 +11,7 @@ module Puppet
       end
 
       def evaluate(scope)
+        raise if scope == nil or scope.compiler == nil
         @scope = scope
         @compiler = scope.compiler
         instance_eval &@code
@@ -24,6 +25,7 @@ module Puppet
         params.merge! :parent => options[:inherits] if options[:inherits]
         node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+
         @compiler.known_resource_types.add node
       end
 
