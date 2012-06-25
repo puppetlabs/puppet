@@ -65,6 +65,15 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+
+    # Restore the terminuses to the defaults in case they were changed
+    indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
+    indirections.each do |indirector|
+      $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
+        indirector.instance_variable_set(variable, value)
+      end
+    end
+    $saved_indirection_state = nil
   end
 
   config.before :each do
@@ -72,6 +81,17 @@ RSpec.configure do |config|
     $puppet_application_mode = nil
     $puppet_application_name = nil
     Signal.stubs(:trap)
+
+    # Save off the current terminuses so we can restore them afterward
+    $saved_indirection_state = {}
+    indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
+    indirections.each do |indirector|
+      $saved_indirection_state[indirector.name] = {
+          :@terminus_class => indirector.instance_variable_get(:@terminus_class),
+          :@cache_class    => indirector.instance_variable_get(:@cache_class)
+      }
+    end
+
 
     # Set the confdir and vardir to gibberish so that tests
     # have to be correctly mocked.

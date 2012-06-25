@@ -1,3 +1,4 @@
+require 'puppet/file_serving/content'
 require 'puppet/indirector/file_content'
 require 'puppet/indirector/code'
 require 'puppet/file_serving/terminus_selector'
