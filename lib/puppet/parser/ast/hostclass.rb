@@ -6,12 +6,10 @@ class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
   def initialize(name, context = {}, &ruby_code)
     @context = context
     @name = name
-    @ruby_code = ruby_code
   end
 
   def instantiate(modname)
     new_class = Puppet::Resource::Type.new(:hostclass, @name, @context.merge(:module_name => modname))
-    new_class.ruby_code = @ruby_code if @ruby_code
     all_types = [new_class]
     if code
       code.each do |nested_ast_node|
@@ -20,6 +18,7 @@ class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
         end
       end
     end
+
     return all_types
   end
 

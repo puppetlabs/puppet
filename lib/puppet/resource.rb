@@ -16,6 +16,9 @@ class Puppet::Resource
   require 'puppet/resource/type_collection_helper'
   include Puppet::Resource::TypeCollectionHelper
 
+  require 'puppet/dsl/helper'
+  include Puppet::DSL::Helper
+
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
@@ -322,7 +325,11 @@ class Puppet::Resource
 
       if external_value.nil?
         next if default.nil?
-        value = default.safeevaluate(scope)
+        value = unless use_ruby_dsl? environment.to_s
+                 default.safeevaluate(scope)
+                else
+                  default
+                end
       else
         value = external_value
       end

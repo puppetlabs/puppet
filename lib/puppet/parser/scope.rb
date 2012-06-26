@@ -48,11 +48,11 @@ class Puppet::Parser::Scope
   end
 
   def [](name, options = {})
-    lookupvar(name, options)
+    lookupvar(name.to_s, options)
   end
 
   def []=(var, value)
-    setvar(var, value)
+    setvar(var.to_s, value)
   end
 
   # A demeterific shortcut to the catalog.

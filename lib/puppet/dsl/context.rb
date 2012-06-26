@@ -5,66 +5,69 @@ module Puppet
   module DSL
     class Context < BlankSlate
 
-      def initialize(code, nesting = 0)
+      Parser = ::Puppet::DSL::Parser
+
+      def initialize(code)
         @code = code
-        @nesting = nesting
       end
 
       def evaluate(scope)
-        @scope = scope
-        @compiler = scope.compiler
+        Parser.add_scope scope
         instance_eval &@code
+        Parser.remove_scope
         self
       end
 
       def node(name, options = {}, &block)
         ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless valid_nesting?
+        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
 
         params = {}
-        params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
         node = ::Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
-        @compiler.known_resource_types.add node
+        node.ruby_code = ::Puppet::DSL::Context.new block
+        Parser.current_scope.compiler.known_resource_types.add node
       end
 
       def hostclass(name, options = {}, &block)
         ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless valid_nesting?
+        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
 
+        ::Kernel.puts params
+
         hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
-        hostclass.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
-        @compiler.known_resource_types.add hostclass
+        hostclass.ruby_code = ::Puppet::DSL::Context.new block
+
+        Parser.current_scope.compiler.known_resource_types.add hostclass
       end
 
       def define(name, options = {}, &block)
         ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless valid_nesting?
+        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name, params
-        definition.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
-        @compiler.known_resource_types.add definition
+        definition.ruby_code = ::Puppet::DSL::Context.new block
+        Parser.current_scope.compiler.known_resource_types.add definition
+      end
+
+      def use(*args)
+        create_resource :class, *args
       end
 
       def valid_type?(name)
         !!([:node, :class].include? name or
            ::Puppet::Type.type name or
-           @compiler.known_resource_types.definition name)
+           Parser.current_scope.compiler.known_resource_types.definition name)
       end
 
       def valid_function?(name)
         !!::Puppet::Parser::Functions.function(name)
-      end
-
-      def valid_nesting?
-        @nesting == 0
       end
 
       def respond_to?(name)
@@ -72,9 +75,6 @@ module Puppet
       end
 
       def method_missing(name, *args, &block)
-        ::Kernel.raise "MethodMissing loop when searching for #{name}" if @searching_for_method
-        @searching_for_method = true
-
         if valid_type? name
           create_resource name, *args, &block
         elsif valid_function? name
@@ -82,20 +82,19 @@ module Puppet
         else
           super
         end
-      ensure
-        @searching_for_method = false
       end
 
       def params
-        @scope
+        Parser.current_scope
       end
 
       def create_resource(type, *args, &block)
         ::Kernel.raise ::NoMethodError unless valid_type? type
         options = args.last.is_a?(::Hash) ? args.pop : {}
+        scope = Parser.current_scope
 
         ::Kernel::Array(args).map do |name|
-          resource = ::Puppet::Parser::Resource.new type, name, :scope => @scope
+          resource = ::Puppet::Parser::Resource.new type, name, :scope => scope, :source => scope.source
           options[:virtual] = true if virtualizing?
           options[:exported] = true if exporting?
           options.each do |key, val|
@@ -104,7 +103,7 @@ module Puppet
 
           ::Puppet::DSL::ResourceDecorator.new(resource, &block) if block
 
-          @compiler.add_resource @scope, resource
+          scope.compiler.add_resource scope, resource
           resource
         end
       end
@@ -112,7 +111,7 @@ module Puppet
       # Calls a puppet function
       def call_function(name, *args)
         ::Kernel.raise ::NoMethodError unless valid_function? name
-        @scope.send name, args
+        Parser.current_scope.send name, args
       end
 
       def exporting?
