@@ -12,9 +12,9 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 #Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
 #Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc4.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -69,7 +69,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 #%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc4
+%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -162,6 +162,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{_mandir}/man8/puppet-apply.8.gz
 %{_mandir}/man8/puppet-catalog.8.gz
 %{_mandir}/man8/puppet-describe.8.gz
+%{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-cert.8.gz
 %{_mandir}/man8/puppet-certificate.8.gz
 %{_mandir}/man8/puppet-certificate_request.8.gz
@@ -266,6 +267,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Jun 06 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-0.1rc1
+- Update for 2.7.16rc1, added generated manpages
+
 * Fri Jun 01 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc3
 - Puppet 3.0.0rc3 Release
 
