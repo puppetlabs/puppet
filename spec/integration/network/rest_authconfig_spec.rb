@@ -44,10 +44,29 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   def request(args = {})
-    { :ip => '10.1.1.1', :node => 'host.domain.com', :key => 'key', :authenticated => true }.each do |k,v|
-      args[k] ||= v
-    end
+    args = {
+      :key => 'key',
+      :node => 'host.domain.com',
+      :ip => '10.1.1.1',
+      :authenticated => true
+    }.merge(args)
     ['test', :find, args[:key], args]
+  end
+
+  it "should warn when matching against IP addresses" do
+    add_rule("allow 10.1.1.1")
+
+    @auth.should allow(request)
+
+    @logs.should be_any {|log| log.level == :warning and log.message =~ /Authentication based on IP address is deprecated/}
+  end
+
+  it "should not warn when matches against IP addresses fail" do
+    add_rule("allow 10.1.1.2")
+
+    @auth.should_not allow(request)
+
+    @logs.should_not be_any {|log| log.level == :warning and log.message =~ /Authentication based on IP address is deprecated/}
   end
 
   it "should support IPv4 address" do
