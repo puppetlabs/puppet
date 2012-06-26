@@ -599,14 +599,14 @@ EOT
     :client_datadir => {:default => "$vardir/client_data", :mode => "750", :desc => "The directory in which serialized data is stored on the client."},
     :classfile => { :default => "$statedir/classes.txt",
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
         option."},
     :resourcefile => { :default => "$statedir/resources.txt",
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the resources
         associated with the retrieved configuration."  },
     :puppetdlog => { :default => "$logdir/puppetd.log",
@@ -713,11 +713,11 @@ EOT
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => [false, "Whether to create dot graph files for the different
