@@ -37,8 +37,6 @@ module Puppet
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
 
-        ::Kernel.puts params
-
         hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
         hostclass.ruby_code = ::Puppet::DSL::Context.new block
 
