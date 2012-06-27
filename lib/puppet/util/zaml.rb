@@ -31,7 +31,9 @@ class ZAML
   def self.dump(stuff, where='')
     z = new
     stuff.to_zaml(z)
-    where << z.to_s
+    text = z.to_s
+    text.force_encoding('UTF-8') if text.respond_to? "force_encoding"
+    where << text
   end
   #
   # Instance Methods
