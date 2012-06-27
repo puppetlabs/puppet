@@ -8,7 +8,16 @@ require 'hiera/scope'
 require 'rspec/mocks'
 require 'mocha'
 
+module ScopeSpecHelpers
+  def hacked_scope
+    scope = Puppet::Parser::Scope.new
+    def scope.[](key); end
+    scope
+  end
+end
+
 RSpec.configure do |config|
-    config.mock_with :mocha
+  config.mock_with :mocha
+  config.include ScopeSpecHelpers
 end
 

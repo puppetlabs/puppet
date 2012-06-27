@@ -1,2 +1,3 @@
-classes: - users::common
-         - ntp::config
+classes:
+  - users::common
+  - ntp::config

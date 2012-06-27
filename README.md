@@ -106,12 +106,16 @@ To achieve this setup the module user needs to configure Hiera in _/etc/puppet/h
 
 <pre>
 ---
-:backends: - json
-           - puppet
-:hierarchy: - %{location}
-            - common
+:backends:
+  - json
+  - puppet
+
+:hierarchy:
+  - "%{location}"
+  - common
+
 :json:
-        :datadir: /var/lib/hiera
+  :datadir: /var/lib/hiera
 
 :puppet:
 	:datasource: data
@@ -134,7 +138,11 @@ It's not 100% ready for prime time, shortly a simple _gem install hiera-puppet_ 
 For the moment the Gem install will place the Puppet Parser Function where Puppet cannot find it, you should
 copy it out and distribute it to your master using Pluginsync or something similar
 
-Who?
-====
+License
+=======
 
-R.I.Pienaar / rip@devco.net / @ripienaar / www.devco.net
+See LICENSE file.
+
+Support
+=======
+Please log tickets and issues at our [Projects site](http://projects.puppetlabs.com)

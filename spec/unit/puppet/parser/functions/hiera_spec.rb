@@ -1,5 +1,6 @@
 require 'puppet'
 require 'hiera'
+require 'hiera/scope'
 require 'spec_helper'
 
 describe 'Puppet::Parser::Functions#hiera' do
@@ -19,4 +20,11 @@ describe 'Puppet::Parser::Functions#hiera' do
     Hiera.any_instance.expects(:lookup).returns(nil)
     expect { @scope.function_hiera("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
+
+  it 'should use the priority resolution_type' do
+    scope = hacked_scope
+    Hiera.any_instance.expects(:lookup).with('key', nil, scope, nil, :priority).returns('foo')
+    scope.function_hiera(['key'])
+  end
 end
+
