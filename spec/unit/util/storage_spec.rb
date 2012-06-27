@@ -187,10 +187,14 @@ describe Puppet::Util::Storage do
       FileTest.exists?(Puppet[:statefile]).should be_true
     end
 
-    it "should raise an exception if the state file is not a regular file" do
+    # JRuby actually *will* replace a target directory, etc, with a regular
+    # file.  It doesn't have the same exploding problem that MRI rubies do, so
+    # we can just skip this test.  The outcome is reasonable enough.
+    it "should raise an exception if the state file is not a regular file", :unless => Puppet.features.jruby? do
       Dir.mkdir(Puppet[:statefile])
-      Puppet::Util::Storage.cache(:yayness)
+      FileTest.should be_directory Puppet[:statefile]
 
+      Puppet::Util::Storage.cache(:yayness)
       proc { Puppet::Util::Storage.store }.should raise_error
 
       Dir.rmdir(Puppet[:statefile])
