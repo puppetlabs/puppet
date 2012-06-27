@@ -60,102 +60,100 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
-    file = described_class.new :path => path, :mode => 0755
-    catalog.add_resource file
+    source = tmpfile('source')
 
-    file.parameter(:mode).expects(:retrieve).never
+    catalog.add_resource described_class.new :path => source, :mode => 0755
 
     report = catalog.apply.report
-    report.resource_statuses["File[#{path}]"].should_not be_failed
-    File.should_not be_exist(path)
+
+    report.resource_statuses["File[#{source}]"].should_not be_failed
+    File.should_not be_exist(source)
   end
 
   describe "when setting permissions" do
     it "should set the owner" do
-      FileUtils.touch(path)
-      owner = get_owner(path)
+      target = tmpfile_with_contents('target', '')
+      owner = get_owner(target)
 
-      file = described_class.new(
-        :name    => path,
+      catalog.add_resource described_class.new(
+        :name    => target,
         :owner   => owner
       )
 
-      catalog.add_resource file
       catalog.apply
 
-      get_owner(path).should == owner
+      get_owner(target).should == owner
     end
 
     it "should set the group" do
-      FileUtils.touch(path)
-      group = get_group(path)
+      target = tmpfile_with_contents('target', '')
+      group = get_group(target)
 
-      file = described_class.new(
-        :name    => path,
+      catalog.add_resource described_class.new(
+        :name    => target,
         :group   => group
       )
 
-      catalog.add_resource file
       catalog.apply
 
-      get_group(path).should == group
+      get_group(target).should == group
     end
 
     describe "when setting mode" do
       describe "for directories" do
-        let(:path) { tmpdir('dir_mode') }
+        let(:target) { tmpdir('dir_mode') }
 
         it "should set executable bits for newly created directories" do
-          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0600)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0600)
+
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0700
+          (get_mode(target) & 07777).should == 0700
         end
 
         it "should set executable bits for existing readable directories" do
-          File.should be_directory(path)
-          set_mode(0600, path)
+          set_mode(0600, target)
 
-          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0644)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0644)
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0755
+          (get_mode(target) & 07777).should == 0755
         end
 
         it "should not set executable bits for unreadable directories" do
           begin
-            catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0300)
+            catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0300)
+
             catalog.apply
 
-            (get_mode(path) & 07777).should == 0300
+            (get_mode(target) & 07777).should == 0300
           ensure
             # so we can cleanup
-            set_mode(0700, path)
+            set_mode(0700, target)
           end
         end
 
         it "should set user, group, and other executable bits" do
-          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0664)
+          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0664)
+
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0775
+          (get_mode(target) & 07777).should == 0775
         end
 
         it "should set executable bits when overwriting a non-executable file" do
-          FileUtils.rmdir(path)
-          FileUtils.touch(path)
-          set_mode(0444, path)
+          target_path = tmpfile_with_contents('executable', '')
+          set_mode(0444, target_path)
 
-          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0666, :backup => false)
+          catalog.add_resource described_class.new(:path => target_path, :ensure => :directory, :mode => 0666, :backup => false)
           catalog.apply
 
-          (get_mode(path) & 07777).should == 0777
+          (get_mode(target_path) & 07777).should == 0777
+          File.should be_directory(target_path)
         end
       end
 
       describe "for files" do
-        let(:path) { tmpfile('file_mode') }
-
         it "should not set executable bits" do
           catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666)
           catalog.apply
@@ -180,27 +178,28 @@ describe Puppet::Type.type(:file) do
         let(:link) { tmpfile('link_mode') }
 
         describe "when managing links" do
-          let(:target) { tmpfile('target') }
+          let(:link_target) { tmpfile('target') }
 
           before :each do
-            FileUtils.touch(target)
-            File.chmod(0444, target)
+            FileUtils.touch(link_target)
+            File.chmod(0444, link_target)
 
-            File.symlink(target, link)
+            File.symlink(link_target, link)
           end
 
           it "should not set the executable bit on the link nor the target" do
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
+
             catalog.apply
 
             (File.stat(link).mode & 07777) == 0666
-            (File.lstat(target).mode & 07777) == 0444
+            (File.lstat(link_target).mode & 07777) == 0444
           end
 
           it "should ignore dangling symlinks (#6856)" do
-            File.delete(target)
+            File.delete(link_target)
 
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
             catalog.apply
 
             File.should_not be_exist(link)
@@ -220,16 +219,16 @@ describe Puppet::Type.type(:file) do
           end
 
           describe "to a directory" do
-            let(:target) { tmpdir('dir_target') }
+            let(:link_target) { tmpdir('dir_target') }
 
             before :each do
-              File.chmod(0600, target)
+              File.chmod(0600, link_target)
 
-              File.symlink(target, link)
+              File.symlink(link_target, link)
             end
 
             after :each do
-              File.chmod(0750, target)
+              File.chmod(0750, link_target)
             end
 
             describe "that is readable" do
@@ -256,12 +255,12 @@ describe Puppet::Type.type(:file) do
 
             describe "that is not readable" do
               before :each do
-                set_mode(0300, target)
+                set_mode(0300, link_target)
               end
 
               # so we can cleanup
               after :each do
-                set_mode(0700, target)
+                set_mode(0700, link_target)
               end
 
               it "should not set executable bits when creating the destination (#10315)" do
@@ -635,7 +634,7 @@ describe Puppet::Type.type(:file) do
             FileUtils.mkdir_p(File.join(two, 'three'))
             FileUtils.touch(File.join(two, 'three', 'four'))
 
-            obj = Puppet::Type.newfile(
+            catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
                                :ensure  => :directory,
                                :backup  => false,
@@ -644,7 +643,6 @@ describe Puppet::Type.type(:file) do
                                :source => [one, two]
                                )
 
-            catalog.add_resource obj
             catalog.apply
 
             File.should be_directory(path)
@@ -656,12 +654,9 @@ describe Puppet::Type.type(:file) do
             one = File.expand_path('thisdoesnotexist')
             two = tmpdir('two')
             three = tmpdir('three')
+            file_in_dir_with_contents(three, 'a', '')
 
-            FileUtils.mkdir_p(two)
-            FileUtils.mkdir_p(three)
-            FileUtils.touch(File.join(three, 'a'))
-
-            obj = Puppet::Type.newfile(
+            catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
                                :ensure  => :directory,
                                :backup  => false,
@@ -670,7 +665,6 @@ describe Puppet::Type.type(:file) do
                                :source => [one, two, three]
                                )
 
-            catalog.add_resource obj
             catalog.apply
 
             File.should be_directory(path)
@@ -686,7 +680,7 @@ describe Puppet::Type.type(:file) do
             FileUtils.mkdir_p(File.join(two, 'z'))
             FileUtils.touch(File.join(two, 'z', 'y'))
 
-            obj = Puppet::Type.newfile(
+            catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
                                :ensure  => :directory,
                                :backup  => false,
@@ -696,7 +690,6 @@ describe Puppet::Type.type(:file) do
                                :source => [one, two]
                                )
 
-            catalog.add_resource obj
             catalog.apply
 
             File.should be_exist(File.join(path, 'a'))
@@ -708,12 +701,10 @@ describe Puppet::Type.type(:file) do
         describe "for a file" do
           it "should copy the first file that exists" do
             one = File.expand_path('thisdoesnotexist')
-            two = tmpfile('two')
-            File.open(two, "w") { |f| f.print 'yay' }
-            three = tmpfile('three')
-            File.open(three, "w") { |f| f.print 'no' }
+            two = tmpfile_with_contents('two', 'yay')
+            three = tmpfile_with_contents('three', 'no')
 
-            obj = Puppet::Type.newfile(
+            catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
                                :ensure  => :file,
                                :backup  => false,
@@ -721,7 +712,6 @@ describe Puppet::Type.type(:file) do
                                :source => [one, two, three]
                                )
 
-            catalog.add_resource obj
             catalog.apply
 
             File.read(path).should == 'yay'
@@ -729,12 +719,10 @@ describe Puppet::Type.type(:file) do
 
           it "should copy an empty file" do
             one = File.expand_path('thisdoesnotexist')
-            two = tmpfile('two')
-            FileUtils.touch(two)
-            three = tmpfile('three')
-            File.open(three, "w") { |f| f.print 'no' }
+            two = tmpfile_with_contents('two', '')
+            three = tmpfile_with_contents('three', 'no')
 
-            obj = Puppet::Type.newfile(
+            catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
                                :ensure  => :file,
                                :backup  => false,
@@ -742,7 +730,6 @@ describe Puppet::Type.type(:file) do
                                :source => [one, two, three]
                                )
 
-            catalog.add_resource obj
             catalog.apply
 
             File.read(path).should == ''
@@ -753,21 +740,20 @@ describe Puppet::Type.type(:file) do
       describe "when sourceselect all" do
         describe "for a directory" do
           it "should recursively copy all sources from the first valid source" do
+            dest = tmpdir('dest')
             one = tmpdir('one')
             two = tmpdir('two')
             three = tmpdir('three')
             four = tmpdir('four')
 
-            [one, two, three, four].each {|dir| FileUtils.mkdir_p(dir)}
-
-            File.open(File.join(one, 'a'), "w") { |f| f.print one }
-            File.open(File.join(two, 'a'), "w") { |f| f.print two }
-            File.open(File.join(two, 'b'), "w") { |f| f.print two }
-            File.open(File.join(three, 'a'), "w") { |f| f.print three }
-            File.open(File.join(three, 'c'), "w") { |f| f.print three }
+            file_in_dir_with_contents(one, 'a', one)
+            file_in_dir_with_contents(two, 'a', two)
+            file_in_dir_with_contents(two, 'b', two)
+            file_in_dir_with_contents(three, 'a', three)
+            file_in_dir_with_contents(three, 'c', three)
 
             obj = Puppet::Type.newfile(
-                               :path    => path,
+                               :path    => dest,
                                :ensure  => :directory,
                                :backup  => false,
                                :recurse => true,
@@ -778,9 +764,9 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource obj
             catalog.apply
 
-            File.read(File.join(path, 'a')).should == one
-            File.read(File.join(path, 'b')).should == two
-            File.read(File.join(path, 'c')).should == three
+            File.read(File.join(dest, 'a')).should == one
+            File.read(File.join(dest, 'b')).should == two
+            File.read(File.join(dest, 'c')).should == three
           end
 
           it "should only recurse one level from each valid source" do
@@ -817,15 +803,10 @@ describe Puppet::Type.type(:file) do
 
   describe "when generating resources" do
     before do
-      source = tmpfile("generating_in_catalog_source")
+      source = tmpdir("generating_in_catalog_source")
 
-      Dir.mkdir(source)
-
-      s1 = File.join(source, "one")
-      s2 = File.join(source, "two")
-
-      File.open(s1, "w") { |f| f.puts "uno" }
-      File.open(s2, "w") { |f| f.puts "dos" }
+      s1 = file_in_dir_with_contents(source, "one", "uno")
+      s2 = file_in_dir_with_contents(source, "two", "dos")
 
       @file = described_class.new(
         :name => path,
@@ -856,17 +837,10 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when copying files" do
-    # Ticket #285.
-    it "should be able to copy files with pound signs in their names" do
-      source = tmpfile("filewith#signs")
-
+    it "should be able to copy files with pound signs in their names (#285)" do
+      source = tmpfile_with_contents("filewith#signs", "foo")
       dest = tmpfile("destwith#signs")
-
-      File.open(source, "w") { |f| f.print "foo" }
-
-      file = described_class.new(:name => dest, :source => source)
-
-      catalog.add_resource file
+      catalog.add_resource described_class.new(:name => dest, :source => source)
 
       catalog.apply
 
@@ -874,16 +848,11 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be able to copy files with spaces in their names" do
-      source = tmpfile("filewith spaces")
-
       dest = tmpfile("destwith spaces")
-
-      File.open(source, "w") { |f| f.print "foo" }
+      source = tmpfile_with_contents("filewith spaces", "foo")
       File.chmod(0755, source)
 
-      file = described_class.new(:path => dest, :source => source)
-
-      catalog.add_resource file
+      catalog.add_resource described_class.new(:path => dest, :source => source)
 
       catalog.apply
 
@@ -893,14 +862,10 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
-      source = tmpfile("source")
+      source = tmpfile_with_contents("source", "foo")
       dest = tmpfile("dest")
+      catalog.add_resource described_class.new(:name => dest, :source => source, :recurse => true)
 
-      File.open(source, "w") { |f| f.print "foo" }
-
-      file = described_class.new(:name => dest, :source => source, :recurse => true)
-
-      catalog.add_resource file
       catalog.apply
 
       File.read(dest).should == "foo"
@@ -908,12 +873,11 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should create a file with content if ensure is omitted" do
-    file = described_class.new(
+    catalog.add_resource described_class.new(
       :path => path,
       :content => "this is some content, yo"
     )
 
-    catalog.add_resource file
     catalog.apply
 
     File.read(path).should == "this is some content, yo"
@@ -933,14 +897,11 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should delete files with sources but that are set for deletion" do
-    source = tmpfile("source_source_with_ensure")
-
-    File.open(source, "w") { |f| f.puts "yay" }
-    File.open(path, "w") { |f| f.puts "boo" }
-
+    source = tmpfile_with_contents("source_source_with_ensure", "yay")
+    dest = tmpfile_with_contents("source_source_with_ensure", "boo")
 
     file = described_class.new(
-      :path   => path,
+      :path   => dest,
       :ensure => :absent,
       :source => source,
       :backup => false
@@ -949,15 +910,11 @@ describe Puppet::Type.type(:file) do
     catalog.add_resource file
     catalog.apply
 
-    File.should_not be_exist(path)
+    File.should_not be_exist(dest)
   end
 
   describe "when sourcing" do
-    let(:source) {
-      source = tmpfile("source_default_values")
-      File.open(source, "w") { |f| f.puts "yay" }
-      source
-    }
+    let(:source) { tmpfile_with_contents("source_default_values", "yay") }
 
     it "should apply the source metadata values" do
       set_mode(0770, source)
@@ -1017,10 +974,8 @@ describe Puppet::Type.type(:file) do
 
   describe "when purging files" do
     before do
-      sourcedir = tmpfile("purge_source")
-      destdir = tmpfile("purge_dest")
-      Dir.mkdir(sourcedir)
-      Dir.mkdir(destdir)
+      sourcedir = tmpdir("purge_source")
+      destdir = tmpdir("purge_dest")
       sourcefile = File.join(sourcedir, "sourcefile")
 
       @copiedfile = File.join(destdir, "sourcefile")
@@ -1064,5 +1019,17 @@ describe Puppet::Type.type(:file) do
     it "should purge files that are neither remote nor otherwise managed" do
       FileTest.should_not be_exist(@purgee)
     end
+  end
+
+  def tmpfile_with_contents(name, contents)
+    file = tmpfile(name)
+    File.open(file, "w") { |f| f.write contents }
+    file
+  end
+
+  def file_in_dir_with_contents(dir, name, contents)
+    full_name = File.join(dir, name)
+    File.open(full_name, "w") { |f| f.write contents }
+    full_name
   end
 end
