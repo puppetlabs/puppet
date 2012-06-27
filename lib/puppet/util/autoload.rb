@@ -1,4 +1,5 @@
 require 'pathname'
+require 'puppet/util/rubygems'
 require 'puppet/util/warnings'
 
 # Autoload paths, either based on names or all at once.
@@ -149,8 +150,18 @@ class Puppet::Util::Autoload
       end
     end
 
+    # We have to cache this locally to the thread as the heavy use of the the
+    # autoloader by puppet means that without caching it would have a big negative
+    # impact on performance.
+    #
+    # This cache is being cleared before compiles and runs in puppet/configurer.rb and
+    # puppet/parser/compiler.rb
+    def gem_directories
+      Thread.current[:gem_directories] ||= Puppet::Util::RubyGems.directories
+    end
+
     def search_directories(env=nil)
-        [module_directories(env), libdirs(), $LOAD_PATH].flatten
+      [gem_directories, module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
