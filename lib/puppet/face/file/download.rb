@@ -35,7 +35,7 @@ Puppet::Face.define(:file, '0.0.1') do
         key = "#{type}/#{sumdata}"
 
         Puppet::FileBucket::File.indirection.terminus_class = :file
-        if Puppet::FileBucket::File.indirection.find(key)
+        if Puppet::FileBucket::File.indirection.head(key)
           Puppet.info "Content for '#{sum}' already exists"
           return
         end
