@@ -29,6 +29,7 @@ module Puppet
       end
 
       def self.remove_scope
+        raise if @@frames.first.nil?
         @@frames.pop
       end
 

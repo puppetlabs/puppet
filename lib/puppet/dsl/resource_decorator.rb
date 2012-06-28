@@ -13,7 +13,7 @@ module Puppet
       def method_missing(name, *args)
         super unless respond_to? name
         if name =~ /\A(.*)=\z/
-          @resource[$1.to_sym] = args.first
+          @resource[$1.to_sym] = args.first.to_s
         else
           @resource[name]
         end

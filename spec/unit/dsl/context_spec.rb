@@ -1,28 +1,34 @@
 require 'spec_helper'
+require 'puppet_spec/dsl'
 
+require 'puppet/dsl/parser'
 require 'puppet/dsl/context'
+
+include PuppetSpec::DSL
 
 describe Puppet::DSL::Context do
 
   before :each do
     @compiler = Puppet::Parser::Compiler.new Puppet::Node.new("test")
     @scope = Puppet::Parser::Scope.new :compiler => @compiler, :source => "test"
-    @context = Puppet::DSL::Context.new(proc {}).evaluate @scope
   end
 
   describe "when creating resources" do
 
-    # MLEN:TODO: find a way to assert method call when using method_missing
-    it "should check whether the resources have valid types"
-
     it "should raise a NoMethodError when trying to create a resoruce with invalid type" do
       lambda do
-        @context.create_resource :foobar, "test"
+        evaluate_in_context do
+          create_resource :foobar, "test"
+        end
       end.should raise_error NoMethodError
     end
 
     it "should return an array of created resources" do
-      resources = @context.create_resource :file, "/tmp/test", "/tmp/foobar", :ensure => :present
+      resources = nil
+      evaluate_in_context do
+        resources = create_resource :file, "/tmp/test", "/tmp/foobar", :ensure => :present
+      end
+
       resources.should be_an Array
       resources.each do |r|
         r.should be_a Puppet::Parser::Resource
@@ -33,11 +39,23 @@ describe Puppet::DSL::Context do
 
   describe "when calling a function" do
 
-    it "should check whether the function is valid"
+    it "should check whether the function is valid" do
+      Puppet::Parser::Functions.expects(:function).
+                                at_least_once.
+                                with(:notice).
+                                returns true
+
+      evaluate_in_context do
+        notice "foo"
+      end
+
+    end
 
     it "should raise NoMethodError if the function is invalid" do
       lambda do
-        @context.call_function :foobar
+        evaluate_in_context do
+          call_function :foobar
+        end
       end.should raise_error NoMethodError
     end
 
@@ -45,13 +63,47 @@ describe Puppet::DSL::Context do
 
   describe "with method missing" do
 
-    it "should create a resource"
+    it "should create a resource" do
+      resources = nil
+      evaluate_in_context do
+        resources = file "/tmp/test", :ensure => :present
+      end
 
-    it "should call a function"
+      resources.should be_an Array
+      resources.each do |r|
+        r.should be_a Puppet::Parser::Resource
+        r[:ensure].should == "present"
+      end
+    end
+
+    it "should allow to use block syntax to create a resource" do
+      resources = nil
+      evaluate_in_context do
+        resources = file "/tmp/test" do |f|
+          f.ensure = :present
+        end
+      end
+
+      resources.should be_an Array
+      resources.each do |r|
+        r.should be_a Puppet::Parser::Resource
+        r[:ensure].should == "present"
+      end
+    end
+
+    it "should call a function" do
+      @scope.expects(:send).with(:notice, ["foo"])
+      evaluate_in_context do
+        notice "foo"
+      end
+    end
+
 
     it "should raise NoMethodError when neither function nor resource type exists" do
       lambda do
-        @context.foobar
+        evaluate_in_context do
+          self.foobar
+        end
       end.should raise_error NoMethodError
     end
 
@@ -60,27 +112,33 @@ describe Puppet::DSL::Context do
   describe "when creating definition" do
 
     it "should add a new type" do
-      result = @context.define(:foo) {}
+      result = nil
+      evaluate_in_context do
+        result = define(:foo) {}
+      end
 
       result.should be_a Puppet::Resource::Type
       result.type.should be_equal :definition
       result.name.should == "foo"
 
-      @compiler.known_resource_types.definition(:foo).should == result
+      known_resource_types.definition(:foo).should == result
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
-      # new context with invalid nesting = 1
-      context = Puppet::DSL::Context.new(proc {}, 1).evaluate @scope
+      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do
-        context.define(:foo) {}
+        evaluate_in_context do
+          define(:foo) {}
+        end
       end.should raise_error NoMethodError
     end
 
     it "should raise ArgumentError when no block is given" do
       lambda do
-        @context.define :foo
+        evaluate_in_context do
+          define :foo
+        end
       end.should raise_error ArgumentError
     end
 
@@ -91,25 +149,34 @@ describe Puppet::DSL::Context do
   describe "when creating a node" do
 
     it "should add a new type" do
-      node = @context.node(:foo) {}
-      node.should be_a Puppet::Resource::Type
-      node.type.should be_equal :node
-      node.name.should == "foo"
+      n = nil
+      evaluate_in_context do
+        n = node(:foo) {}
 
-      @compiler.known_resource_types.node(:foo).should == node
+      end
+
+      n.should be_a Puppet::Resource::Type
+      n.type.should be_equal :node
+      n.name.should == "foo"
+
+      known_resource_types.node(:foo).should == n
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
-      context = Puppet::DSL::Context.new(proc {}, 1).evaluate @scope
+      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do
-        context.node(:foo) {}
+        evaluate_in_context do
+          node(:foo) {}
+        end
       end.should raise_error NoMethodError
     end
 
     it "should raise ArgumentError when there is no block given" do
       lambda do
-        @context.node :foo
+        evaluate_in_context do
+          node :foo
+        end
       end.should raise_error ArgumentError
     end
 
@@ -120,26 +187,33 @@ describe Puppet::DSL::Context do
   describe "when creating a class" do
 
     it "should add a new type" do
-      hostclass = @context.hostclass(:foo) {}
+      h = nil
+      evaluate_in_context do
+        h = hostclass(:foo) {}
+      end
 
-      hostclass.should be_a Puppet::Resource::Type
-      hostclass.type.should be_equal :hostclass
-      hostclass.name.should == "foo"
+      h.should be_a Puppet::Resource::Type
+      h.type.should be_equal :hostclass
+      h.name.should == "foo"
 
-      @compiler.known_resource_types.hostclass(:foo).should == hostclass
+      known_resource_types.hostclass(:foo).should == h
     end
 
     it "should raise NoMethodError when called in invalid nesting" do
-      context = Puppet::DSL::Context.new(proc {}, 1).evaluate @scope
+      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do
-        context.hostclass(:foo) {}
+        evaluate_in_context do
+          hostclass(:foo) {}
+        end
       end.should raise_error NoMethodError
     end
 
     it "should raise ArgumentError when no block is given" do
       lambda do
-        @context.hostclass :foo
+        evaluate_in_context do
+          hostclass :foo
+        end
       end.should raise_error ArgumentError
     end
 

@@ -5,53 +5,52 @@ module Puppet
   module DSL
     class Context < BlankSlate
 
-      Parser = ::Puppet::DSL::Parser
-
       def initialize(code)
         @code = code
       end
 
       def evaluate(scope)
-        Parser.add_scope scope
+        Puppet::DSL::Parser.add_scope scope
         instance_eval &@code
-        Parser.remove_scope
         self
+      ensure
+        Puppet::DSL::Parser.remove_scope
       end
 
       def node(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
+        Kernel.raise ArgumentError if block.nil?
+        Kernel.raise NoMethodError unless Puppet::DSL::Parser.valid_nesting?
 
         params = {}
         params.merge! :parent => options[:inherits] if options[:inherits]
-        node = ::Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = ::Puppet::DSL::Context.new block
-        Parser.current_scope.compiler.known_resource_types.add node
+        node = Puppet::Resource::Type.new :node, name, params
+        node.ruby_code = Puppet::DSL::Context.new block
+        Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add node
       end
 
       def hostclass(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
+        Kernel.raise ArgumentError if block.nil?
+        Kernel.raise NoMethodError unless Puppet::DSL::Parser.valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
 
-        hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
-        hostclass.ruby_code = ::Puppet::DSL::Context.new block
+        hostclass = Puppet::Resource::Type.new :hostclass, name, params
+        hostclass.ruby_code = Puppet::DSL::Context.new block
 
-        Parser.current_scope.compiler.known_resource_types.add hostclass
+        Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add hostclass
       end
 
       def define(name, options = {}, &block)
-        ::Kernel.raise ::ArgumentError if block.nil?
-        ::Kernel.raise ::NoMethodError unless Parser.valid_nesting?
+        Kernel.raise ArgumentError if block.nil?
+        Kernel.raise NoMethodError unless Puppet::DSL::Parser.valid_nesting?
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
-        definition = ::Puppet::Resource::Type.new :definition, name, params
-        definition.ruby_code = ::Puppet::DSL::Context.new block
-        Parser.current_scope.compiler.known_resource_types.add definition
+        definition = Puppet::Resource::Type.new :definition, name, params
+        definition.ruby_code = Puppet::DSL::Context.new block
+        Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add definition
       end
 
       def use(*args)
@@ -60,12 +59,12 @@ module Puppet
 
       def valid_type?(name)
         !!([:node, :class].include? name or
-           ::Puppet::Type.type name or
-           Parser.current_scope.compiler.known_resource_types.definition name)
+           Puppet::Type.type name or
+           Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition name)
       end
 
       def valid_function?(name)
-        !!::Puppet::Parser::Functions.function(name)
+        !!Puppet::Parser::Functions.function(name)
       end
 
       def respond_to?(name)
@@ -96,7 +95,7 @@ module Puppet
           options[:virtual] = true if virtualizing?
           options[:exported] = true if exporting?
           options.each do |key, val|
-            resource[key] = val
+            resource[key] = val.to_s
           end
 
           ::Puppet::DSL::ResourceDecorator.new(resource, &block) if block
