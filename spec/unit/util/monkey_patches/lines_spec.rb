@@ -24,13 +24,17 @@ describe Puppet::Util::MonkeyPatches::Lines::TestHelper do
           subject { described_class.new("foo" + sep) }
 
           it "should yield the string" do
-            got = []
-            subject.lines(sep) do |x| got << x end
-            got.should == ["foo#{sep}"]
+            pending("JRuby bug https://github.com/jruby/jruby/issues/218", :if => (Puppet.features.jruby? and sep.length > 1)) do
+              got = []
+              subject.lines(sep) do |x| got << x end
+              got.should == ["foo#{sep}"]
+            end
           end
 
           it "should return the string" do
-            subject.lines(sep).to_a.should == ["foo#{sep}"]
+            pending("JRuby bug https://github.com/jruby/jruby/issues/218", :if => (Puppet.features.jruby? and sep.length > 1)) do
+              subject.lines(sep).to_a.should == ["foo#{sep}"]
+            end
           end
         end
 
