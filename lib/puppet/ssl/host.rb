@@ -206,6 +206,7 @@ class Puppet::SSL::Host
 
   def initialize(name = nil)
     @name = (name || Puppet[:certname]).downcase
+    Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
     @ca = (name == self.class.ca_name)
   end
