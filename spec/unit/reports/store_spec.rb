@@ -27,5 +27,19 @@ describe processor do
 
       File.read(File.join(Puppet[:reportdir], @report.host, "201101061200.yaml")).should == @report.to_yaml
     end
+
+    ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
+      it "rejects #{node.inspect}" do
+        @report.host = node
+        expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
+      end
+    end
+
+    ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
+      it "accepts #{node.inspect}" do
+        @report.host = node
+        @report.process
+      end
+    end
   end
 end

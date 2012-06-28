@@ -1,5 +1,7 @@
 require 'puppet'
 
+SEPARATOR = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
+
 Puppet::Reports.register_report(:store) do
   desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
     and this just stores the file on disk, in the `reportdir` directory.
@@ -11,9 +13,11 @@ Puppet::Reports.register_report(:store) do
   def process
     # We don't want any tracking back in the fs.  Unlikely, but there
     # you go.
-    client = self.host.gsub("..",".")
+    if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
+      raise ArgumentError, "Invalid node name #{host.inspect}"
+    end
 
-    dir = File.join(Puppet[:reportdir], client)
+    dir = File.join(Puppet[:reportdir], host)
 
     if ! FileTest.exists?(dir)
       FileUtils.mkdir_p(dir)
@@ -35,7 +39,7 @@ Puppet::Reports.register_report(:store) do
       end
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
-      Puppet.warning "Could not write report for #{client} at #{file}: #{detail}"
+      Puppet.warning "Could not write report for #{host} at #{file}: #{detail}"
     end
 
     # Only testing cares about the return value
