@@ -8,11 +8,10 @@ require 'puppet/file_serving'
 # This module is used to pick the appropriate terminus
 # in file-serving indirections.  This is necessary because
 # the terminus varies based on the URI asked for.
-module Puppet::FileServing::IndirectionHooks
+module Puppet::FileServing::TerminusSelector
   PROTOCOL_MAP = {"puppet" => :rest, "file" => :file}
 
-  # Pick an appropriate terminus based on the protocol.
-  def select_terminus(request)
+  def select(request)
     # We rely on the request's parsing of the URI.
 
     # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.

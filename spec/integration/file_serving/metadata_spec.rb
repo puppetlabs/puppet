@@ -10,12 +10,5 @@ require 'shared_behaviours/file_serving'
 require 'puppet/indirector/file_metadata/file_server'
 
 describe Puppet::FileServing::Metadata, " when finding files" do
-  it_should_behave_like "Puppet::FileServing::Files"
-
-  before do
-    @test_class = Puppet::FileServing::Metadata
-    @indirection = Puppet::FileServing::Metadata.indirection
-  end
-
-  after { Puppet::Util::Cacher.expire }
+  it_should_behave_like "a file_serving model"
 end
