@@ -11,7 +11,7 @@ module Puppet::Util::Diff
       command << args
     end
     command << old << new
-    execute(command, :failonfail => false)
+    Puppet::Util::Execution.execute(command, :failonfail => false)
   end
 
   module_function :diff
