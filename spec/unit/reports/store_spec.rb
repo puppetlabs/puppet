@@ -44,5 +44,33 @@ describe processor do
       FileUtils.expects(:mv).in_sequence(writeseq).with(File.join(Dir.tmpdir, "foo123"), File.join(Puppet[:reportdir], @report.host, "201101061200.yaml"))
       @report.process
     end
+
+    ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
+      it "rejects #{node.inspect}" do
+        @report.host = node
+        expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
+      end
+    end
+
+    ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
+      it "accepts #{node.inspect}" do
+        @report.host = node
+        @report.process
+      end
+    end
+  end
+
+  describe "::destroy" do
+    ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
+      it "rejects #{node.inspect}" do
+        expect { processor.destroy(node) }.to raise_error(ArgumentError, /Invalid node/)
+      end
+    end
+
+    ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
+      it "accepts #{node.inspect}" do
+        processor.destroy(node)
+      end
+    end
   end
 end
