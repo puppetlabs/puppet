@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'puppet/dsl/blank_slate'
 
 describe Puppet::DSL::BlankSlate do

@@ -35,7 +35,7 @@ describe Puppet::DSL::ResourceDecorator do
     end
 
     it "should proxy get messages to a resource "do
-      @resource.expects(:[]=).once.with(:param, 42)
+      @resource.expects(:[]=).once.with(:param, "42")
 
       Puppet::DSL::ResourceDecorator.new @resource do |r|
         r.param = 42
