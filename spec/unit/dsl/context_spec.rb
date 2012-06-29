@@ -9,8 +9,7 @@ include PuppetSpec::DSL
 describe Puppet::DSL::Context do
 
   before :each do
-    @compiler = Puppet::Parser::Compiler.new Puppet::Node.new("test")
-    @scope = Puppet::Parser::Scope.new :compiler => @compiler, :source => "test"
+    prepare_compiler_and_scope
   end
 
   describe "when creating resources" do
