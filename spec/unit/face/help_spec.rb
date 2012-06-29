@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/face'
 
@@ -35,9 +35,14 @@ describe Puppet::Face[:help, '0.0.1'] do
       subject.help(:help, :version => 'current')
   end
 
-  it "should complain when the request version of a face is missing" do
+  it "should not raise an error when the face is unavailable" do
     expect { subject.help(:huzzah, :bar, :version => '17.0.0') }.
-      should raise_error Puppet::Error
+      should_not raise_error
+  end
+
+  it "should indicate the face did not load in the output" do
+    subject.help(:huzzah, :bar, :version => '17.0.0').
+      should =~ /Could not load help for the face huzzah/
   end
 
   it "should find a face by version" do

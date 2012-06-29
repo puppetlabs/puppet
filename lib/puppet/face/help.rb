@@ -70,7 +70,16 @@ Puppet::Face.define(:help, '0.0.1') do
           actionname and raise ArgumentError, "Legacy subcommands don't take actions"
           return Puppet::Application[facename].help
         else
-          face = Puppet::Face[facename.to_sym, version]
+          begin
+            face = Puppet::Face[facename.to_sym, version]
+          rescue Puppet::Error => detail
+            return <<-MSG
+Could not load help for the face #{facename}.
+Please check the error logs for more information.
+
+Detail: "#{detail.message}"
+            MSG
+          end
           actionname and action = face.get_action(actionname.to_sym)
         end
       end
@@ -119,8 +128,12 @@ Puppet::Face.define(:help, '0.0.1') do
       next result if exclude_from_docs?(appname)
 
       if (is_face_app?(appname))
-        face = Puppet::Face[appname, :current]
-        result << [appname, face.summary]
+        begin
+          face = Puppet::Face[appname, :current]
+          result << [appname, face.summary]
+        rescue Puppet::Error => detail
+          result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
+        end
       else
         result << [appname, horribly_extract_summary_from(appname)]
       end
