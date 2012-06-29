@@ -73,11 +73,11 @@ Could not install package #{@requested_package}
   end
 
   class InstallPathExistsNotDirectoryError < InstallError
-    def initialize(options)
+    def initialize(original, options)
       @requested_module  = options[:requested_module]
       @requested_version = options[:requested_version]
       @directory         = options[:directory]
-      super "'#{@requested_module}' (#{@requested_version}) requested; Path #{@directory} is not a directory."
+      super("'#{@requested_module}' (#{@requested_version}) requested; Path #{@directory} is not a directory.", original)
     end
 
     def multiline
@@ -91,11 +91,11 @@ Could not install module '#{@requested_module}' (#{@requested_version})
   end
 
   class PermissionDeniedCreateInstallDirectoryError < InstallError
-    def initialize(options)
+    def initialize(original, options)
       @requested_module  = options[:requested_module]
       @requested_version = options[:requested_version]
       @directory         = options[:directory]
-      super "'#{@requested_module}' (#{@requested_version}) requested; Permission is denied to create #{@directory}."
+      super("'#{@requested_module}' (#{@requested_version}) requested; Permission is denied to create #{@directory}.", original)
     end
 
     def multiline

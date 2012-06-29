@@ -6,6 +6,7 @@ require 'semver'
 require 'puppet/forge'
 require 'puppet/module_tool'
 require 'puppet/module_tool/shared_behaviors'
+require 'puppet/module_tool/install_directory'
 
 module Puppet::ModuleTool
   module Applications
@@ -13,14 +14,15 @@ module Puppet::ModuleTool
 
       include Puppet::ModuleTool::Errors
 
-      def initialize(name, forge, options = {})
+      def initialize(name, forge, install_dir, options = {})
+        super(options)
         @action              = :install
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name
         @forge               = forge
-        super(options)
+        @install_dir         = install_dir
       end
 
       def run
@@ -45,7 +47,7 @@ module Puppet::ModuleTool
             :install_dir    => options[:target_dir],
           }
 
-          prepare_target_directory
+          @install_dir.prepare(@module_name, @version || 'latest')
 
           cached_paths = get_release_packages
 
@@ -75,41 +77,6 @@ module Puppet::ModuleTool
       private
 
       include Puppet::ModuleTool::Shared
-
-      # Return a Pathname object for the install directory.
-      # This is a private method to easily mock the spec tests.
-      def get_target_dir
-        Pathname.new options[:target_dir]
-      end
-
-      def prepare_target_directory
-        target_dir = get_target_dir
-
-        if not target_dir.directory?
-          # If the target path exists, don't try to remove it.
-          if target_dir.exist?
-            raise InstallPathExistsNotDirectoryError,
-              :requested_module  => @module_name,
-              :requested_version => @version || 'latest',
-              :directory         => options[:target_dir]
-          else
-            begin
-              # Try and create it for the user
-              target_dir.mkpath
-              Puppet.notice "Created target directory #{target_dir}"
-            rescue Errno::EACCES => orig_error
-              friendly_error = PermissionDeniedCreateInstallDirectoryError.new(
-                :requested_module  => @module_name,
-                :requested_version => @version || 'latest',
-                :directory         => options[:target_dir]
-              )
-              friendly_error.set_backtrace orig_error.backtrace
-              raise friendly_error
-            end
-          end
-        end
-        target_dir
-      end
 
       # Return a Pathname object representing the path to the module
       # release package in the `Puppet.settings[:module_working_dir]`.

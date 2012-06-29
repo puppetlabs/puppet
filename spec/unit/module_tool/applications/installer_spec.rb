@@ -18,9 +18,9 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
   let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
   let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
   let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
-  let(:options)         { Hash[:target_dir => modpath1] }
+  let(:options)         { { :target_dir => modpath1 } }
 
-  let(:forge)           do 
+  let(:forge) do
     forge = mock("Puppet::Forge")
 
     forge.stubs(:remote_dependency_info).returns(remote_dependency_info)
@@ -32,6 +32,12 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
     end
 
     forge
+  end
+
+  let(:install_dir) do
+    install_dir = mock("Puppet::ModuleTool::InstallDirectory")
+    install_dir.stubs(:prepare)
+    install_dir
   end
 
   let(:remote_dependency_info) do
@@ -75,14 +81,14 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
   describe "the behavior of .is_module_package?" do
     it "should return true when file is a module package" do
       pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        installer = installer_class.new("foo", forge, options)
+        installer = installer_class.new("foo", forge, install_dir, options)
         installer.send(:is_module_package?, stdlib_pkg).should be_true
       end
     end
 
     it "should return false when file is not a module package" do
       pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        installer = installer_class.new("foo", forge, options)
+        installer = installer_class.new("foo", forge, install_dir, options)
         installer.send(:is_module_package?, "pmtacceptance-apollo-0.0.2.tar").
           should be_false
       end
@@ -91,7 +97,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
 
   context "when the source is a repository" do
     it "should require a valid name" do
-      lambda { installer_class.run('puppet', params) }.should
+      lambda { installer_class.run('puppet', install_dir, params) }.should
         raise_error(ArgumentError, "Could not install module with invalid name: puppet")
     end
 
@@ -100,7 +106,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
           returns(unpacker)
-        results = installer_class.run('pmtacceptance-stdlib', forge, options)
+        results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options)
         results[:installed_modules].length == 1
         results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
         results[:installed_modules][0][:version][:vstring].should == "1.0.0"
@@ -109,50 +115,40 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
 
     context "should check the target directory" do
       let(:installer) do
-        installer_class.new('pmtacceptance-stdlib', forge, options)
-      end
-      let(:fake_target_dir) do
-        target_dir = Pathname.new(modpath1)
-        target_dir.stubs(:directory?).returns(false)
-        target_dir.stubs(:exist?).returns(false)
-        target_dir
+        installer_class.new('pmtacceptance-stdlib', forge, install_dir, options)
       end
 
-      # This method is meant to avoid copy / paste
       def expect_normal_unpacker
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
           returns(unpacker)
       end
+
       def expect_normal_results
-        results = installer.run
-        results[:installed_modules].length.should eq 1
-        results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-        results[:installed_modules][0][:version][:vstring].should == "1.0.0"
         results
       end
 
-      it "(#15202) should prepare the target directory" do
+      it "(#15202) prepares the install directory" do
         pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
           expect_normal_unpacker
-          installer.expects(:prepare_target_directory).returns(fake_target_dir)
-          expect_normal_results
-        end
-      end
-      it "(#15202) should create the install directory" do
-        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-          expect_normal_unpacker
-          installer.stubs(:get_target_dir).returns(fake_target_dir)
-          fake_target_dir.expects(:mkpath).returns(modpath1)
-          expect_normal_results
-        end
-      end
-      it "(#15202) should provide a helpful permission error" do
-        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-          installer.stubs(:get_target_dir).returns(fake_target_dir)
-          fake_target_dir.expects(:mkpath).raises(Errno::EACCES)
+          install_dir.expects(:prepare).with("pmtacceptance-stdlib", "latest")
+
           results = installer.run
-          results[:result].should eq :failure
+
+          results[:installed_modules].length.should eq 1
+          results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+          results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+        end
+      end
+
+      it "(#15202) reports an error when the install directory cannot be prepared" do
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          install_dir.expects(:prepare).with("pmtacceptance-stdlib", "latest").
+            raises(Puppet::ModuleTool::Errors::PermissionDeniedCreateInstallDirectoryError.new("original", :module => "pmtacceptance-stdlib"))
+
+          results = installer.run
+
+          results[:result].should == :failure
           results[:error][:oneline].should =~ /Permission is denied/
         end
       end
@@ -171,7 +167,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
             with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
             returns(unpacker)
 
-          results = installer_class.run('pmtacceptance-apollo', forge, options)
+          results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
           installed_dependencies = results[:installed_modules][0][:dependencies]
 
           dependencies = installed_dependencies.inject({}) do |result, dep|
@@ -191,7 +187,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
           Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
-          results = installer_class.run('pmtacceptance-apollo', forge, options)
+          results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
           results[:installed_modules][0][:module].should == "pmtacceptance-apollo"
         end
       end
@@ -202,7 +198,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
           Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
-          results = installer_class.run('pmtacceptance-apollo', forge, options)
+          results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
           dependencies = results[:installed_modules][0][:dependencies]
           dependencies.should == []
         end
@@ -214,7 +210,7 @@ describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true 
           Puppet::ModuleTool::Applications::Unpacker.expects(:new).
             with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
             returns(unpacker)
-          results = installer_class.run('pmtacceptance-apollo', forge, options)
+          results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
           dependencies = results[:installed_modules][0][:dependencies]
           dependencies.should == []
         end
@@ -233,7 +229,7 @@ Could not install module 'pmtacceptance-apollo' (v0.0.1)
     Use `puppet module install --force` to install this module anyway
 MSG
 
-          results = installer_class.run('pmtacceptance-apollo', forge, options)
+          results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
           results[:result].should == :failure
           results[:error][:oneline].should == oneline
           results[:error][:multiline].should == multiline
