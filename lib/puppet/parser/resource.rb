@@ -63,7 +63,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # is drawn from  the class to the stage.   The stage for containment
   # defaults to main, if none is specified.
   def add_edge_to_stage
-    return unless self.type.to_s.downcase == "class"
+    return unless self.class?
 
     unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
       raise ArgumentError, "Could not find stage #{self[:stage] || :main} specified by #{self}"

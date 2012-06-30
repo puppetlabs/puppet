@@ -30,6 +30,14 @@ class CompilerTestResource
     @virtual
   end
 
+  def class?
+    false
+  end
+
+  def stage?
+    false
+  end
+
   def evaluate
   end
 
@@ -416,8 +424,8 @@ describe Puppet::Parser::Compiler do
 
     it "should fail to add resources that conflict with existing resources" do
       path = make_absolute("/foo")
-      file1 = Puppet::Type.type(:file).new :path => path
-      file2 = Puppet::Type.type(:file).new :path => path
+      file1 = resource(:file, path)
+      file2 = resource(:file, path)
 
       @compiler.add_resource(@scope, file1)
       lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)

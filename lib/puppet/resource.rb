@@ -176,6 +176,9 @@ class Puppet::Resource
     end
   end
 
+  def class?; @is_class;   end
+  def stage?; @is_stage;   end
+
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
@@ -194,6 +197,9 @@ class Puppet::Resource
       @title = :main if @title == ""
       @title = munge_type_name(@title)
     end
+
+    @is_class = @type == "Class"
+    @is_stage = @type.to_s.downcase == "stage"
 
     if params = attributes[:parameters]
       extract_parameters(params)
@@ -226,7 +232,7 @@ class Puppet::Resource
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else
-      Puppet::Type.type(type.to_s.downcase.to_sym) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || known_resource_types.definition(type)
     end
   end
 
