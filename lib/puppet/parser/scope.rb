@@ -244,7 +244,7 @@ class Puppet::Parser::Scope
       begin
         qualified_scope($1).lookupvar($2, options.merge({:origin => nil}))
       rescue RuntimeError => e
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        location = (options[:file] && (options[:line] || options[:lineproc])) ? " at #{options[:file]}:#{options[:line]|| options[:lineproc].call}" : ''
         warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
         nil
       end
