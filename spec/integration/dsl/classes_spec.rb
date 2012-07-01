@@ -83,7 +83,7 @@ describe Puppet::DSL do
           notice params[:param]
         end
 
-        node "default do
+        node "default" do
           use :foo, :param => "bar"
         end
       MANIFEST
@@ -107,7 +107,7 @@ describe Puppet::DSL do
           notice params[:param]
         end
 
-        node "default do
+        node "default" do
           use :foo, :param => "bar"
         end
       MANIFEST

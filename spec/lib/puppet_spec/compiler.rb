@@ -5,7 +5,7 @@ module PuppetSpec::Compiler
   end
 
   def compile_ruby_to_catalog(string = nil, node = Puppet::Node.new('foonode'))
-    Puppet[:dsl] = :ruby
+    Puppet[:manifest] = "test.rb"
     Puppet[:code] = string
     Puppet::Parser::Compiler.compile(node)
   end
