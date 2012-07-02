@@ -219,14 +219,14 @@ class Application
       @option_parser_commands
     end
 
+    def autoloader
+      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/application")
+    end
+
     def find(file_name)
-      # This should probably be using the autoloader, but due to concerns about the fact that
-      #  the autoloader currently considers the modulepath when looking for things to load,
-      #  we're delaying that for now.
-      begin
-        require ::File.join('puppet', 'application', file_name.to_s.downcase)
-      rescue LoadError => e
-        Puppet.log_and_raise(e, "Unable to find application '#{file_name}'.  #{e}")
+      unless autoloader.load(file_name.to_s.downcase)
+        e = LoadError.new("puppet/application/" + file_name.to_s.downcase)
+        Puppet.log_and_raise(e, "Unable to find application '#{file_name}': #{e}")
       end
 
       class_name = Puppet::Util::ConstantInflector.file2constant(file_name.to_s)
@@ -298,9 +298,7 @@ class Application
   end
 
   def app_defaults()
-    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
-        :name => name
-    )
+    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode)
   end
 
   def initialize_app_defaults()

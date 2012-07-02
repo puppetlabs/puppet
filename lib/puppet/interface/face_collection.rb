@@ -98,20 +98,23 @@ module Puppet::Interface::FaceCollection
     return get_face(name, version)
   end
 
-  def self.safely_require(name, version = nil)
-    path = File.join 'puppet' ,'face', version.to_s, name.to_s
-    require path
-    true
 
-  rescue LoadError => e
-    raise unless e.message =~ %r{-- #{path}$}
-    # ...guess we didn't find the file; return a much better problem.
-    nil
-  rescue SyntaxError => e
-    raise unless e.message =~ %r{#{path}\.rb:\d+: }
-    Puppet.err "Failed to load face #{name}:\n#{e}"
-    # ...but we just carry on after complaining.
-    nil
+  def self.autoloader
+    @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/face")
+  end
+
+
+  def self.safely_require(name, version = nil)
+    path = version ? File.join(version.to_s, name.to_s) : name.to_s
+    return true if autoloader.loaded?(path)
+    begin
+      return true if autoloader.load(path)
+    rescue Puppet::Error => e
+      raise e unless e.message =~ /Could not autoload/
+      Puppet.err "Failed to load face #{name}:\n"
+      # ...but we just carry on after complaining.
+      nil
+    end
   end
 
   def self.register(face)

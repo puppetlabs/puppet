@@ -42,49 +42,56 @@ describe Puppet::Interface::FaceCollection do
       subject["foo", '0.0.1'].should == 10
     end
 
-    it "should attempt to load the face if it isn't found" do
-      subject.expects(:require).once.with('puppet/face/bar')
-      subject.expects(:require).once.with('puppet/face/0.0.1/bar')
-      subject["bar", '0.0.1']
-    end
-
-    it "should attempt to load the default face for the specified version :current" do
-      subject.expects(:require).with('puppet/face/fozzie')
-      subject['fozzie', :current]
-    end
-
-    it "should return true if the face specified is registered" do
-      subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
-      subject["foo", '0.0.1'].should == 10
-    end
-
-    it "should attempt to require the face if it is not registered" do
-      subject.expects(:require).with do |file|
-        subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
-        file == 'puppet/face/bar'
+    context "without something on disk" do
+      before :each do
+        @autoloader = mock 'autoloader'
+        @autoloader.stubs(:loaded?).returns(false)
+        subject.stubs(:autoloader).returns(@autoloader)
       end
-      subject["bar", '0.0.1'].should be_true
-    end
 
-    it "should return false if the face is not registered" do
-      subject.stubs(:require).returns(true)
-      subject["bar", '0.0.1'].should be_false
-    end
-
-    it "should return false if the face file itself is missing" do
-      subject.stubs(:require).
-        raises(LoadError, 'no such file to load -- puppet/face/bar').then.
-        raises(LoadError, 'no such file to load -- puppet/face/0.0.1/bar')
-      subject["bar", '0.0.1'].should be_false
-    end
-
-    it "should register the version loaded by `:current` as `:current`" do
-      subject.expects(:require).with do |file|
-        subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_face
-        file == 'puppet/face/huzzah'
+      it "should attempt to load the face if it isn't found" do
+        @autoloader.expects(:load).once.with('bar')
+        @autoloader.expects(:load).once.with('0.0.1/bar')
+        subject["bar", '0.0.1']
       end
-      subject["huzzah", :current]
-      subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_face
+
+      it "should attempt to load the default face for the specified version :current" do
+        @autoloader.expects(:load).with('fozzie')
+        subject['fozzie', :current]
+      end
+
+      it "should return true if the face specified is registered" do
+        subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
+        subject["foo", '0.0.1'].should == 10
+      end
+
+      it "should attempt to require the face if it is not registered" do
+        @autoloader.expects(:load).with do |file|
+          subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
+          file == 'bar'
+        end
+        subject["bar", '0.0.1'].should be_true
+      end
+
+      it "should return false if the face is not registered" do
+        @autoloader.stubs(:load).returns(true)
+        subject["bar", '0.0.1'].should be_false
+      end
+
+      it "should return false if the face file itself is missing" do
+        @autoloader.stubs(:load).returns(false)
+        subject["bar", '0.0.1'].should be_false
+      end
+
+      it "should register the version loaded by `:current` as `:current`" do
+        @autoloader.expects(:load).with do |file|
+          subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_face
+          file == 'huzzah'
+        end.returns(true)
+        subject["huzzah", :current]
+        subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_face
+      end
+
     end
 
     context "with something on disk" do
@@ -96,7 +103,6 @@ describe Puppet::Interface::FaceCollection do
 
       it "should index :current when the code was pre-required" do
         subject.instance_variable_get("@faces")[:huzzah].should_not be_key :current
-        require 'puppet/face/huzzah'
         subject[:huzzah, :current].should be_true
       end
     end

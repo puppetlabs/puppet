@@ -70,6 +70,11 @@ module Puppet::ModuleTool
    # Set the project page
    def project_page(project_page)
       @metadata.project_page = project_page
-    end
+   end
+
+   def gems(gems)
+     @metadata.gems = gems
+   end
+
   end
 end

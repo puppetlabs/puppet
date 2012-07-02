@@ -52,18 +52,29 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load_file(name, env=nil)
-      file = get_file(name.to_s, env)
-      return false unless file
+      orig_load_path = $LOAD_PATH.clone()
       begin
-        mark_loaded(name, file)
-        Kernel.load file, @wrap
-        return true
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue Exception => detail
-        message = "Could not autoload #{name}: #{detail}"
-        Puppet.log_exception(detail, message)
-        raise Puppet::Error, message
+        module_directories(env).each do |dir|
+          $LOAD_PATH << dir
+        end
+        file = get_file(name.to_s, env)
+        return false unless file
+        begin
+          mark_loaded(name, file)
+          Kernel.load file, @wrap
+          return true
+        rescue SystemExit,NoMemoryError
+          raise
+        rescue Exception => detail
+          message = "Could not autoload #{name}: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
+        end
+      ensure
+        $LOAD_PATH.clear()
+        orig_load_path.each do |dir|
+          $LOAD_PATH << dir
+        end
       end
     end
 
@@ -124,7 +135,7 @@ class Puppet::Util::Autoload
       # we at least need a way to prevent the autoloader from attempting to access the module path before it is
       # initialized.  For now we are accomplishing that by calling the "app_defaults_initialized?" method on the
       # main puppet Settings object.  --cprice 2012-03-16
-      if Puppet.settings.app_defaults_initialized?
+      if (Puppet.settings.global_defaults_initialized?)
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
@@ -142,7 +153,7 @@ class Puppet::Util::Autoload
     def libdirs()
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
-      if (Puppet.settings.app_defaults_initialized?)
+      if (Puppet.settings.global_defaults_initialized?)
         Puppet[:libdir].split(File::PATH_SEPARATOR)
       else
         []

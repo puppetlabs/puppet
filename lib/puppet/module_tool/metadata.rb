@@ -87,6 +87,20 @@ module Puppet::ModuleTool
       @project_page = project_page
     end
 
+    def gems
+      @gems || []
+    end
+
+    def gems=(gems_str)
+      @gems = []
+      # TODO: add validation here
+      gem_strs = gems_str.split('|')
+      gem_strs.each do |gem_str|
+        gem_name, gem_version = gem_str.split(':')
+        @gems << { :name => gem_name, :version => gem_version }
+      end
+    end
+
     # Return an array of the module's Puppet types, each one is a hash
     # containing :name and :doc.
     def types

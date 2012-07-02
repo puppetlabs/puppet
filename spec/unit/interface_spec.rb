@@ -15,6 +15,11 @@ describe Puppet::Interface do
 
   after :each do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
+    # This is a bit scary, but unless we clear out the 'loaded' stuff
+    #  from the autoloader, these tests will fail due to the
+    #  autoloader being out of sync with the FaceCollection and
+    #  $" magic hoo-ha that these tests are doing.
+    Puppet::Util::Autoload.instance_variable_set("@loaded", {})
     $".clear ; @dq.each do |item| $" << item end
   end
 

@@ -42,10 +42,9 @@ describe Puppet::Application do
     end
 
     it "should error if it can't find a class" do
-      Puppet.expects(:err).with do |value|
+      Puppet.expects(:err) .with do |value|
         value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
-          value =~ /puppet\/application\/thisshallneverevereverexist/ and
-          value =~ /no such file to load|cannot load such file/
+        value =~ /puppet\/application\/thisshallneverevereverexist/
       end
 
       expect { @klass.find("ThisShallNeverEverEverExist") }.to raise_error(LoadError)

@@ -23,7 +23,7 @@ class Puppet::Settings
   READ_ONLY_SETTINGS = [:run_mode]
 
   # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
-  REQUIRED_APP_SETTINGS = [:run_mode, :logdir, :confdir, :vardir]
+  REQUIRED_APP_SETTINGS = [:run_mode, :logdir]
 
   # This method is intended for puppet internal use only; it is a convenience method that
   #  returns reasonable application default settings values for a given run_mode.
@@ -31,8 +31,6 @@ class Puppet::Settings
     {
         :name     => run_mode.to_s,
         :run_mode => run_mode.name,
-        :confdir  => run_mode.conf_dir,
-        :vardir   => run_mode.var_dir,
         :rundir   => run_mode.run_dir,
         :logdir   => run_mode.log_dir,
     }
@@ -126,7 +124,7 @@ class Puppet::Settings
   # Remove all set values, potentially skipping cli values.
   def unsafe_clear(clear_cli = true, clear_application_defaults = false)
     @values.each do |name, values|
-      next if ((name == :application_defaults) and !clear_application_defaults)
+      next if (([:application_defaults, :global_defaults].include?(name)) and !clear_application_defaults)
       next if ((name == :cli) and !clear_cli)
       @values.delete(name)
     end
@@ -148,6 +146,7 @@ class Puppet::Settings
     @used = []
   end
 
+
   def global_defaults_initialized?()
     @global_defaults_initialized
   end
@@ -156,23 +155,30 @@ class Puppet::Settings
     raise Puppet::DevError, "Attempting to initialize global default settings more than once!" if global_defaults_initialized?
 
     # The first two phases of the lifecycle of a puppet application are:
-    #  1) To parse the command line options and handle any of them that are registered, defined "global" puppet
-    #     settings (mostly from defaults.rb).)
+    #  1) To parse the command line options and handle any of them that are
+    #     registered, defined "global" puppet settings (mostly from
+    #     defaults.rb).)
     #  2) To parse the puppet config file(s).
     #
-    # These 2 steps are being handled explicitly here.  If there ever arises a situation where they need to be
-    # triggered from outside of this class, without triggering the rest of the lifecycle--we might want to move them
-    # out into a separate method that we call from here.  However, this seems to be sufficient for now.
+    # These 2 steps are being handled explicitly here.  If there ever arises a
+    #  situation where they need to be triggered from outside of this class,
+    #  without triggering the rest of the lifecycle--we might want to move them
+    #  out into a separate method that we call from here.  However, this seems
+    #  to be sufficient for now.
     #  --cprice 2012-03-16
 
     # Here's step 1.
     parse_global_options(args)
 
-    # Here's step 2.  NOTE: this is a change in behavior where we are now parsing the config file on every run;
-    # before, there were several apps that specifically registered themselves as not requiring anything from
-    # the config file.  The fact that we're always parsing it now might be a small performance hit, but it was
-    # necessary in order to make sure that we can resolve the libdir before we look for the available applications.
+    # Here's step 2.  NOTE: this is a change in behavior where we are now
+    #  parsing the config file on every run; before, there were several apps
+    #  that specifically registered themselves as not requiring anything from
+    #  the config file.  The fact that we're always parsing it now might be a
+    #  small performance hit, but it was necessary in order to make sure that
+    #  we can resolve the libdir before we look for the available applications.
     parse_config_files
+
+    initialize_default_dir_settings
 
     @global_defaults_initialized = true
   end
@@ -200,6 +206,18 @@ class Puppet::Settings
 
   end
   private :parse_global_options
+
+
+  def initialize_default_dir_settings()
+    if (Puppet.features.root?)
+      set_value(:confdir, Puppet::Settings.default_global_config_dir, :global_defaults)
+      set_value(:vardir, Puppet::Settings.default_global_var_dir, :global_defaults)
+    else
+      set_value(:confdir, Puppet::Settings.default_user_config_dir, :global_defaults)
+      set_value(:vardir, Puppet::Settings.default_user_var_dir, :global_defaults)
+    end
+  end
+
 
 
   ## Private utility method; this is the callback that the OptionParser will use when it finds
@@ -723,9 +741,9 @@ class Puppet::Settings
   # The order in which to search for values.
   def searchpath(environment = nil)
     if environment
-      [:cli, :memory, environment, :run_mode, :main, :application_defaults]
+      [:cli, :memory, environment, :run_mode, :main, :application_defaults, :global_defaults]
     else
-      [:cli, :memory, :run_mode, :main, :application_defaults]
+      [:cli, :memory, :run_mode, :main, :application_defaults, :global_defaults]
     end
   end
 
@@ -773,7 +791,8 @@ class Puppet::Settings
     end
 
     setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
-    if read_only_settings.include? param and type != :application_defaults
+    if (read_only_settings.include? param and
+        !([:application_defaults, :global_defaults].include?(type)))
       raise ArgumentError,
         "You're attempting to set configuration parameter $#{param}, which is read-only."
     end
@@ -1211,9 +1230,9 @@ if @config.include?(:run_mode)
       case line
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
-        #disallow application_defaults in config file
-        if section == :application_defaults
-          raise Puppet::Error, "Illegal section 'application_defaults' in config file #{file} at line #{line}"
+        #disallow application_defaults and global_defaults in config file
+        if [:application_defaults, :global_defaults].include?(section)
+          raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
         end
         # Add a meta section
         result[section][:_meta] ||= {}
