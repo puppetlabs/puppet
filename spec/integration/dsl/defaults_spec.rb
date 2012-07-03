@@ -20,8 +20,7 @@ describe Puppet::DSL do
 
     it "should be able to update defaults for a resource" do
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        Resource::Notify.defaults :message => "foo"
-        end
+        Notify.defaults :message => "foo"
       MANIFEST
 
       @catalog.should == r
@@ -29,7 +28,9 @@ describe Puppet::DSL do
 
     it "should be able to update defaults for a resource passing a block" do
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        Resource::Notify.defaults :message => "foo"
+        Notify.defaults do |n|
+          n.message = "foo"
+        end
       MANIFEST
 
       @catalog.should == r

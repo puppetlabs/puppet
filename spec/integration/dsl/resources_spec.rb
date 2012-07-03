@@ -136,7 +136,7 @@ describe Puppet::DSL do
             foo "foobar"
           end
 
-          Resource::Foo.collect
+          Foo.collect
         end
       MANIFEST
 
@@ -166,7 +166,7 @@ describe Puppet::DSL do
             foo "foobar"
           end
 
-          Resource::Foo.realise
+          Foo.realise
         end
       MANIFEST
 
@@ -186,7 +186,7 @@ describe Puppet::DSL do
         compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
           file "redis.conf", :owner => "root"
 
-          service "redis", :require => Resource::File["redis.conf"]
+          service "redis", :require => File["redis.conf"]
         MANIFEST
       end
 
@@ -194,8 +194,8 @@ describe Puppet::DSL do
         compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
           file "redis.conf", :owner => "root"
 
-          service "redis" do
-            require = Resource::File["redis.conf"]
+          service "redis" do |s|
+            s.require = File["redis.conf"]
           end
         MANIFEST
       end

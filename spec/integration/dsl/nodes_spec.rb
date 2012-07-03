@@ -31,13 +31,13 @@ describe Puppet::DSL do
 
     it "should be able to create named node" do
       p = compile_to_catalog(<<-MANIFEST)
-        node "example.com" {
+        node "foonode" {
           notice("foo")
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        node "example.com" do
+        node "foonode" do
           notice "foo"
         end
       MANIFEST
@@ -47,13 +47,13 @@ describe Puppet::DSL do
 
     it "should be able to create node with regexp" do
       p = compile_to_catalog(<<-MANIFEST)
-        node /^www\./ {
+        node /^foo/ {
           notice("foo")
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        node /^www\./" do
+        node /^foo/ do
           notice "foo"
         end
       MANIFEST
@@ -70,7 +70,7 @@ describe Puppet::DSL do
           }
         }
 
-        node "child.example.com" inherits "base.example.com" {
+        node "foonode" inherits "base.example.com" {
           File['/tmp/test'] { mode => 0755 }
         }
       MANIFEST
@@ -80,8 +80,8 @@ describe Puppet::DSL do
           file '/tmp/test', :mode => 644, :ensure => :present
         end
 
-        node "child.example.com", :inherits => "base.example.com" do
-          Resource::File['/tmp/test'].override :mode => 755
+        node "foonode", :inherits => "base.example.com" do
+          File['/tmp/test'].override :mode => 755
         end
       MANIFEST
 

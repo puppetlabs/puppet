@@ -61,12 +61,12 @@ describe Puppet::DSL do
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        define :foo, :msg => nil do
+        define :foo, :arguments => {:msg => nil} do
           notice params[:msg]
         end
 
         node "default" do
-          foo :bar, :msg => "asdf"
+          foo :foo, :msg => "asdf"
         end
       MANIFEST
 

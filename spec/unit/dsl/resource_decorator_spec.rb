@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/resource'
 require 'puppet/dsl/resource_decorator'
 
 describe Puppet::DSL::ResourceDecorator do
@@ -13,6 +14,7 @@ describe Puppet::DSL::ResourceDecorator do
 
   it "should raise an exception when passing invalid parameter" do
     resource = mock
+    resource.expects(:is_a?).at_least_once.with(Puppet::Resource).returns true
     resource.expects(:valid_parameter?).with(:param).returns false
 
     lambda do
@@ -23,6 +25,7 @@ describe Puppet::DSL::ResourceDecorator do
   context "when accessing" do
     before :each do
       @resource = mock
+      @resource.expects(:is_a?).at_least_once.with(Puppet::Resource).returns true
       @resource.expects(:valid_parameter?).with(:param).returns true
     end
 
