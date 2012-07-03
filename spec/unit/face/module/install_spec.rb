@@ -170,10 +170,16 @@ describe "puppet module install" do
 
   def expects_installer_run_with(name, options)
     installer = mock("Installer")
+    install_dir = mock("InstallDir")
     forge = mock("Forge")
 
     Puppet::Forge.expects(:new).with("PMT", subject.version).returns(forge)
-    Puppet::ModuleTool::Applications::Installer.expects(:new).with("puppetlabs-apache", forge, expected_options).returns(installer)
+    Puppet::ModuleTool::InstallDirectory.expects(:new).
+      with(Pathname.new(expected_options[:target_dir])).
+      returns(install_dir)
+    Puppet::ModuleTool::Applications::Installer.expects(:new).
+      with("puppetlabs-apache", forge, install_dir, expected_options).
+      returns(installer)
     installer.expects(:run)
   end
 end
