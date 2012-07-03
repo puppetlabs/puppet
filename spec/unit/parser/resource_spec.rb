@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 # LAK: FIXME This is just new tests for resources; I have

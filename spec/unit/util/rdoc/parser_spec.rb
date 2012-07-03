@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
