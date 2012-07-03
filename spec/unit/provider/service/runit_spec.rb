@@ -69,6 +69,7 @@ describe provider_class do
 
       @provider.expects(:enabled?).returns :false
       @provider.expects(:enable)
+      @provider.stubs(:sleep)
 
       @provider.start
     end
