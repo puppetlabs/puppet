@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 checksum = Puppet::Type.type(:file).attrclass(:checksum)
