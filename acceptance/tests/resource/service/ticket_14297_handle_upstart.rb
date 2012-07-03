@@ -43,6 +43,10 @@ begin
     step "Check that status for started #{pkg}"
     check_service_for(pkg, "start", agent)
   end
+
+  on agent, puppet_resource("service") do
+    assert_match(/service \{ 'ssh':\n.*  ensure => 'running',/, stdout, "SSH isn't running, something is wrong with upstart.")
+  end
 ensure
   on agent, puppet_resource("package apache2 ensure=absent")
 end

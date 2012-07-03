@@ -34,21 +34,43 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
       provider_class.instances.first.name.should == "network-interface INTERFACE=eth0"
     end
+
+    it "should attach the job name for network interface security" do
+      processes = "network-interface-security (network-interface/eth0)"
+      provider_class.stubs(:execpipe).yields(processes)
+      provider_class.instances.first.name.should == "network-interface-security JOB=network-interface/eth0"
+    end
+
+    it "should not find excluded services" do
+      processes = "wait-for-state stop/waiting"
+      provider_class.stubs(:execpipe).yields(processes)
+      provider_class.instances.should be_empty
+    end
+  end
+
+  describe "#search" do
+    it "searches through paths to find a matching conf file" do
+      File.stubs(:directory?).returns(true)
+      File.stubs(:exists?).returns(false)
+      File.expects(:exists?).with("/etc/init/foo-bar.conf").returns(true)
+      resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
+      provider = provider_class.new(resource)
+
+      provider.initscript.should == "/etc/init/foo-bar.conf"
+    end
+
+    it "searches for just the name of a compound named service" do
+      File.stubs(:directory?).returns(true)
+      File.stubs(:exists?).returns(false)
+      File.expects(:exists?).with("/etc/init/network-interface.conf").returns(true)
+      resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
+      provider = provider_class.new(resource)
+
+      provider.initscript.should == "/etc/init/network-interface.conf"
+    end
   end
 
   describe "#status" do
-    it "should allow the user to override the status command" do
-      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart, :status => "/bin/foo")
-      provider = provider_class.new(resource)
-
-      # Because we stub execution, we also need to stub the result of it, or a
-      # previously failing command execution will cause this test to do the
-      # wrong thing.
-      provider.expects(:ucommand)
-      $?.stubs(:exitstatus).returns(0)
-      provider.status.should == :running
-    end
-
     it "should use the default status command if none is specified" do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
       provider = provider_class.new(resource)
@@ -90,18 +112,6 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       end
       it "should return nil for the statuscmd" do
         provider.statuscmd.should be_nil
-      end
-    end
-
-    describe "when init script" do
-      before(:each) do
-        provider.stubs(:is_upstart?).returns(false)
-      end
-      ["start", "stop", "status"].each do |command|
-        it "should return the #{command}cmd of its parent provider" do
-          provider.expects(:search).with('foo').returns("/etc/init.d/foo")
-          provider.send("#{command}cmd".to_sym).should == ["/etc/init.d/foo", command.to_sym]
-        end
       end
     end
   end

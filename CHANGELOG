@@ -103,8 +103,28 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
-2.7.15rc4
+2.7.17
 ===
+30d89d3 (maint) Add symlink stub to gentoo service provider spec
+ff1b37a Add comment to upstart provider explaining exclusion of 'wait-for-state'
+6b854f7 Upstart code cleanup, init provider improvement
+0f81d9a Add spec test for network-interface-security
+a2c1e23 Add basic service resource test to upstart acceptance
+2c85d4d Handle network-interface-security in upstart
+ed00e74 Add exclude list to upstart provider
+17cc177 (#15027, #15028, #15029) Fix upstart version parsing
+b0ee6ad (maint) Add --test to puppet run
+
+2.7.16
+===
+99fecc3 Update facter dep to reflect epoch 1
+3a06246 (#8858) Explicitly set SSL peer verification mode.
+cd4bee8 Test SSL setup code, not our stubbing of it.
+ff052b8 (maint) Add mailmap to identify contributors
+8dda6c2 (#14723) Fix http report description
+ebf5386 Remove EL-related test changes from this commit.
+2aea708 Revert changes to symbolic_modes.rb -- this test should indeed be pending (it should eventually work on Windows).
+b601bb4 Update acceptance tests to use confine instead of skip_test loops
 e619304 (#14761) Add boot, reboot to excludes list for redhat provider
 7c1d8c2 (maint) Disable upstart spec test on windows
 37df5c4 (#14615) Final stub fixes for the tests.

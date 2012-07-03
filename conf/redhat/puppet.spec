@@ -11,10 +11,10 @@ Release:        0.1rc3%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
-#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -68,8 +68,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-#%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc1
+%setup -q -n %{name}-%{version}
+#%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -267,6 +267,15 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Jun 19 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.17-1
+- Update for 2.7.17
+
+* Wed Jun 13 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-1
+- Update for 2.7.16
+
+* Fri Jun 08 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.16-0.1rc1.2
+- Updated facter 2.0 dep to include epoch 1
+
 * Wed Jun 06 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-0.1rc1
 - Update for 2.7.16rc1, added generated manpages
 

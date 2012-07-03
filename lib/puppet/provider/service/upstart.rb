@@ -25,7 +25,18 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
   has_feature :enableable
 
+  # 'wait-for-state' is excluded from instances here because it takes
+  # parameters that have unclear meaning. It looks like 'wait-for-state' is
+  # mainly used internally for other upstart services as a 'sleep until something happens'
+  # (http://lists.debian.org/debian-devel/2012/02/msg01139.html). There is an open launchpad bug
+  # (https://bugs.launchpad.net/ubuntu/+source/upstart/+bug/962047) that may
+  # eventually explain how to use this service or perhaps why it should remain
+  # excluded. When that bug is adddressed this should be reexamined.
   def self.instances
+    self.get_services(['wait-for-state'])
+  end
+
+  def self.get_services(exclude=[])
     instances = []
     execpipe("#{command(:initctl)} list") { |process|
       process.each_line { |line|
@@ -37,13 +48,15 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         name = \
           if matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
             "#{matcher[1]} INTERFACE=#{matcher[2]}"
+          elsif matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
+            "#{matcher[1]} JOB=#{matcher[2]}"
           else
             line.split.first
           end
         instances << new(:name => name)
       }
     }
-    instances
+    instances.reject { |instance| exclude.include?(instance.name) }
   end
 
   def self.defpath
@@ -51,7 +64,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def upstart_version
-    @@upstart_version ||= SemVer.new(initctl(" --version").match(/initctl \(upstart (\d\.\d[\.\d]?)\)/)[1])
+    @@upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
   end
 
   # Where is our override script?
@@ -63,7 +76,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     # Search prefers .conf as that is what upstart uses
     [".conf", "", ".sh"].each do |suffix|
       paths.each do |path|
-        fqname = File.join(path,name+suffix)
+        service_name = name.match(/^(\S+)/)[1]
+        fqname = File.join(path, service_name + suffix)
         if File.exists?(fqname)
           return fqname
         end
@@ -79,11 +93,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     return super if not is_upstart?
 
     script_contents = read_script_from(initscript)
-    if upstart_version < "0.6.7"
+    if version_is_pre_0_6_7
       enabled_pre_0_6_7?(script_contents)
-    elsif upstart_version < "0.9.0"
+    elsif version_is_pre_0_9_0
       enabled_pre_0_9_0?(script_contents)
-    elsif upstart_version >= "0.9.0"
+    elsif version_is_post_0_9_0
       enabled_post_0_9_0?(script_contents, read_override_file)
     end
   end
@@ -92,7 +106,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     return super if not is_upstart?
 
     script_text = read_script_from(initscript)
-    if upstart_version < "0.9.0"
+    if version_is_pre_0_9_0
       enable_pre_0_9_0(script_text)
     else
       enable_post_0_9_0(script_text, read_override_file)
@@ -103,11 +117,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     return super if not is_upstart?
 
     script_text = read_script_from(initscript)
-    if upstart_version < "0.6.7"
+    if version_is_pre_0_6_7
       disable_pre_0_6_7(script_text)
-    elsif upstart_version < "0.9.0"
+    elsif version_is_pre_0_9_0
       disable_pre_0_9_0(script_text)
-    elsif upstart_version >= "0.9.0"
+    elsif version_is_post_0_9_0
       disable_post_0_9_0(read_override_file)
     end
   end
@@ -129,36 +143,32 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def status
-    if @resource[:status]
-      is_upstart?(@resource[:status]) ? upstart_status(@resource[:status]) : normal_status
-    elsif is_upstart?
-      upstart_status
-    else
-      super
-    end
-  end
+    return super if not is_upstart?
 
-  def normal_status
-    ucommand(:status, false)
-    ($?.exitstatus == 0) ? :running : :stopped
-  end
-
-  def upstart_status(exec = @resource[:name])
     output = status_exec(@resource[:name].split)
-    if (! $?.nil?) && (output =~ /start\//)
+    if output =~ /start\//
       return :running
     else
       return :stopped
     end
   end
 
+private
   def is_upstart?(script = initscript)
-    return true if (File.symlink?(script) && File.readlink(script) == "/lib/init/upstart-job")
-    return true if (File.file?(script) && (not script.include?("init.d")))
-    return false
+    File.exists?(script) && script.match(/\/etc\/init\/\S+\.conf/)
   end
 
-private
+  def version_is_pre_0_6_7
+    Puppet::Util::Package.versioncmp(upstart_version, "0.6.7") == -1
+  end
+
+  def version_is_pre_0_9_0
+    Puppet::Util::Package.versioncmp(upstart_version, "0.9.0") == -1
+  end
+
+  def version_is_post_0_9_0
+    Puppet::Util::Package.versioncmp(upstart_version, "0.9.0") >= 0
+  end
 
   def enabled_pre_0_6_7?(script_text)
     # Upstart version < 0.6.7 means no manual stanza.
