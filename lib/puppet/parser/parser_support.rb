@@ -142,54 +142,21 @@ class Puppet::Parser::Parser
     raise except
   end
 
-  # dsl type detection based of file extension
-  def detect_file(file)
-    # for override in tests
-    return Puppet[:dsl] if Puppet[:dsl]
-
-    case file
-    when /\.rb$/ then :ruby
-    else :puppet
-    end
-  end
-
   # how should I do error handling here?
   def parse(string = nil)
     self.string = string if string
 
-    ast = case detect_file self.file
-    when :ruby
-      parse_ruby_file(self.file)
-    when :puppet
-      parse_puppet_file(self.file)
-    end
+    @yydebug = false
+    code = yyparse(@lexer, :scan)
+    Puppet::Parser::AST::Hostclass.new('', :code => code)
+  rescue Puppet::ParseError => except
+    except.line ||= @lexer.line
+    except.file ||= @lexer.file
+    raise except
+  rescue => except
+    raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
   ensure
     @lexer.clear
-  end
-
-  def parse_puppet_file(file)
-    begin
-      @yydebug = false
-      code = yyparse(@lexer, :scan)
-      Puppet::Parser::AST::Hostclass.new('', :code => code)
-    rescue Puppet::ParseError => except
-      except.line ||= @lexer.line
-      except.file ||= @lexer.file
-      raise except
-    rescue => except
-      raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
-    end
-  end
-
-  def parse_ruby_file(filename)
-    # Puppet[:dsl] default will be removed. For testing purposes only
-    code = if Puppet[:dsl] and Puppet[:code]
-             Puppet[:code]
-           else
-             File.read filename
-           end
-
-    Puppet::DSL::Parser.new(code).parse!
   end
 
   def string=(string)

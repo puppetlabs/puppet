@@ -18,7 +18,7 @@ module Puppet
     # Context is evaluated when the corresponding resource is evaluated during
     # compilation.
     ##
-    class Context < BlankSlate
+    class Context #< BlankSlate
 
       ##
       # Provides syntactic sugar for resource references.
@@ -218,6 +218,7 @@ module Puppet
       #
       ##
       def method_missing(name, *args, &block)
+        raise if name == :virtual
         if valid_type? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a, &b|
@@ -283,9 +284,9 @@ module Puppet
             resource = ::Puppet::Parser::Resource.new type, name,
               :scope => scope,
               :source => scope.source
-            options[:virtual] = true if virtualizing?
-            options[:exported] = true if exporting?
             ::Puppet::Util.symbolizehash! options
+            resource.virtual = true if virtualizing? or options[:virtual] == true
+            resource.exported = true if exporting? or options[:export] == true
             options.each do |key, val|
               resource[key] = val.to_s
             end
@@ -356,7 +357,7 @@ module Puppet
       #
       ##
       def export(*args, &block)
-        unless block
+        if block
           begin
             @exporting = true
             instance_eval &block
@@ -364,12 +365,9 @@ module Puppet
             @exporting = false
           end
         else
-          args.each do |r|
-            unless r.is_a? ::Puppet::Resource
-              scope = ::Puppet::DSL::Parser.current_scope
-              r = scope.findresource r.to_s
-            end
-            r[:exported] = true
+          args.flatten.each do |r|
+            r = r.resource if r.is_a? ::Puppet::DSL::ResourceReference
+            r.exported = true
           end
         end
       end
@@ -397,7 +395,7 @@ module Puppet
       #
       ##
       def virtual(*args, &block)
-        unless block
+        if block
           begin
             @virtualizing = true
             instance_eval &block
@@ -405,12 +403,9 @@ module Puppet
             @virtualizing = false
           end
         else
-          args.each do |r|
-            unless r.is_a? ::Puppet::Resource
-              scope = ::Puppet::DSL::Parser.current_scope
-              r = scope.findresource r.to_s
-            end
-            r[:virtual] = true
+          args.flatten.each do |r|
+            r = r.resource if r.is_a? ::Puppet::DSL::ResourceReference
+            r.virtual = true
           end
         end
       end
