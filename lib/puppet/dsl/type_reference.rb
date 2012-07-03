@@ -39,7 +39,7 @@ module Puppet
       ##
       def collect
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type.upcase, nil, nil, :exported
+        c = Puppet::Parser::Collector.new scope, @type.capitalize, nil, nil, :exported
         scope.compiler.add_collection c
       end
 
@@ -48,7 +48,7 @@ module Puppet
       ##
       def realise
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type.upcase, nil, nil, :virtual
+        c = Puppet::Parser::Collector.new scope, @type.capitalize, nil, nil, :virtual
         scope.compiler.add_collection c
       end
 

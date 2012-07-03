@@ -18,7 +18,7 @@ module Puppet
     # Context is evaluated when the corresponding resource is evaluated during
     # compilation.
     ##
-    class Context #< BlankSlate
+    class Context < BlankSlate
 
       ##
       # Provides syntactic sugar for resource references.
