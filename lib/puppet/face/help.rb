@@ -67,40 +67,58 @@ Puppet::Face.define(:help, '0.0.1') do
 
       if facename then
         if legacy_applications.include? facename then
-          actionname and raise ArgumentError, "Legacy subcommands don't take actions"
-          return Puppet::Application[facename].help
-        else
-          begin
-            face = Puppet::Face[facename.to_sym, version]
-          rescue Puppet::Error => detail
-            return <<-MSG
-Could not load help for the face #{facename}.
-Please check the error logs for more information.
-
-Detail: "#{detail.message}"
-            MSG
+          if actionname then
+            raise ArgumentError, "Legacy subcommands don't take actions"
           end
-          actionname and action = face.get_action(actionname.to_sym)
+          return load_application_help(facename)
+        else
+          face, action = load_face_help(facename, actionname, version)
         end
       end
 
-      case args.length
-      when 0 then
-        template = erb 'global.erb'
-      when 1 then
-        face or fail ArgumentError, "Unable to load face #{facename}"
-        template = erb 'face.erb'
-      when 2 then
-        face or fail ArgumentError, "Unable to load face #{facename}"
-        action or fail ArgumentError, "Unable to load action #{actionname} from #{face}"
-        template = erb 'action.erb'
-      else
-        fail ArgumentError, "Too many arguments to help action"
-      end
+      template = template_for(args.length)
 
       # Run the ERB template in our current binding, including all the local
       # variables we established just above. --daniel 2011-04-11
       return template.result(binding)
+    end
+  end
+
+  def load_application_help(applicationname)
+    return Puppet::Application[applicationname].help
+  end
+
+  def load_face_help(facename, actionname, version)
+    begin
+      face = Puppet::Face[facename.to_sym, version]
+    rescue Puppet::Error => detail
+      fail ArgumentError, <<-MSG
+Could not load help for the face #{facename}.
+Please check the error logs for more information.
+
+Detail: "#{detail.message}"
+      MSG
+    end
+    if actionname
+      action = face.get_action(actionname.to_sym)
+      if not action
+        fail ArgumentError, "Unable to load action #{actionname} from #{face}"
+      end
+    end
+
+    [face, action]
+  end
+
+  def template_for(number_of_args)
+    case number_of_args
+    when 0 then
+      erb 'global.erb'
+    when 1 then
+      erb 'face.erb'
+    when 2 then
+      erb 'action.erb'
+    else
+      fail ArgumentError, "Too many arguments to help action"
     end
   end
 
