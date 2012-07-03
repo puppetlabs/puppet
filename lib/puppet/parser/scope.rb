@@ -69,6 +69,10 @@ class Puppet::Parser::Scope
     @compiler.node.name
   end
 
+  def facts
+    @compiler.node.facts
+  end
+
   def include?(name)
     ! self[name].nil?
   end

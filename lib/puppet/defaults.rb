@@ -452,7 +452,6 @@ EOT
     },
     :requestdir => {
       :default => "$ssldir/certificate_requests",
-      :type   => :directory,
       :type => :directory,
       :owner => "service",
       :desc => "Where host certificate requests are stored."

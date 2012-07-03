@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/util/package'
 
@@ -608,14 +608,34 @@ describe provider_class do
     end
   end
 
-  describe "save failure reporting" do
+  describe "load/save failure reporting" do
     before do
       @augeas = stub("augeas")
       @augeas.stubs("close")
       @provider.aug = @augeas
     end
 
-    it "should find errors and output to debug" do
+    describe "should find load errors" do
+      before do
+        @augeas.expects(:match).with("/augeas//error").returns(["/augeas/files/foo/error"])
+        @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+        @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
+        @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
+      end
+
+      it "and output to debug" do
+        @provider.expects(:debug).times(4)
+        @provider.print_load_errors
+      end
+
+      it "and output a warning and to debug" do
+        @provider.expects(:warning).once()
+        @provider.expects(:debug).times(3)
+        @provider.print_load_errors(:warning => true)
+      end
+    end
+
+    it "should find save errors and output to debug" do
       @augeas.expects(:match).with("/augeas//error[. = 'put_failed']").returns(["/augeas/files/foo/error"])
       @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
       @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
@@ -638,11 +658,18 @@ describe provider_class do
       aug.match("/files/etc/test").should == []
     end
 
+    it "should report load errors to debug only" do
+      @provider.expects(:print_load_errors).with(:warning => false)
+      aug = @provider.open_augeas
+      aug.should_not == nil
+    end
+
     # Only the file specified should be loaded
     it "should load one file if incl/lens used" do
       @resource[:incl] = "/etc/hosts"
       @resource[:lens] = "Hosts.lns"
 
+      @provider.expects(:print_load_errors).with(:warning => true)
       aug = @provider.open_augeas
       aug.should_not == nil
       aug.match("/files/etc/fstab").should == []
@@ -665,6 +692,7 @@ describe provider_class do
       it "should only load one file if relevant context given" do
         @resource[:context] = "/files/etc/fstab"
 
+        @provider.expects(:print_load_errors).with(:warning => true)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]

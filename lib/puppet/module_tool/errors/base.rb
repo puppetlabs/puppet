@@ -1,5 +1,5 @@
 module Puppet::ModuleTool::Errors
-  class ModuleToolError < StandardError
+  class ModuleToolError < Puppet::Error
     def v(version)
       (version || '???').to_s.sub(/^(?=\d)/, 'v')
     end
