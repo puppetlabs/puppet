@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 shared_examples_for "Puppet::FileServing::Files" do
   it "should use the rest terminus when the 'puppet' URI scheme is used and a host name is present" do
     uri = "puppet://myhost/fakemod/my/file"

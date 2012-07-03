@@ -13,6 +13,7 @@ class Puppet::Node::Plain < Puppet::Indirector::Plain
   # Just return an empty node.
   def find(request)
     node = super
+    node.environment = request.environment
     node.fact_merge
     node
   end

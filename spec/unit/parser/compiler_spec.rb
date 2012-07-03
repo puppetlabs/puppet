@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 class CompilerTestResource
@@ -57,7 +57,7 @@ describe Puppet::Parser::Compiler do
     now = Time.now
     Time.stubs(:now).returns(now)
 
-    @node = Puppet::Node.new "testnode"
+    @node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
     @known_resource_types = Puppet::Resource::TypeCollection.new "development"
     @compiler = Puppet::Parser::Compiler.new(@node)
     @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => stub('source'))

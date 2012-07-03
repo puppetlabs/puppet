@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'ostruct'
 require 'puppet/settings/errors'
@@ -8,6 +8,19 @@ describe Puppet::Settings do
 
   MAIN_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Settings.default_global_config_dir, "puppet.conf")
   USER_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Settings.default_user_config_dir, "puppet.conf")
+
+  describe "when dealing with user default directories" do
+    context "user config dir" do
+      it "should expand the value to an absolute path" do
+        Pathname.new(Puppet::Settings.default_user_config_dir).absolute?.should be_true
+      end
+    end
+    context "user var dir" do
+      it "should expand the value to an absolute path" do
+        Pathname.new(Puppet::Settings.default_user_var_dir).absolute?.should be_true
+      end
+    end
+  end
 
   describe "when specifying defaults" do
     before do

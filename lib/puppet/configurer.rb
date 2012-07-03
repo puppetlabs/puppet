@@ -144,7 +144,7 @@ class Puppet::Configurer
 
       if node = Puppet::Node.indirection.find(Puppet[:node_name_value], :environment => @environment, :ignore_cache => true)
         if node.environment.to_s != @environment
-          Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", changing."
+          Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
           @environment = node.environment.to_s
           fact_options = nil
         end
@@ -165,7 +165,7 @@ class Puppet::Configurer
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end
-        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with new environment"
+        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
         return nil unless catalog = prepare_and_retrieve_catalog(options, fact_options)
         tries += 1

@@ -14,24 +14,30 @@ file {
 PP
 
 step "Try to install a module to a non-existent directory"
-on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules"), :acceptable_exit_codes => [1] do
+on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules") do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /tmp/modules ...
-    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest)
-    STDERR>   Directory /tmp/modules does not exist\e[0m
+    Preparing to install into /tmp/modules ...
+    Created target directory /tmp/modules
+    Downloading from http://forge.puppetlabs.com ...
+    Installing -- do not interrupt ...
+    /tmp/modules
+    └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ -d /tmp/modules/nginx ]'
 
 step "Try to install a module to a non-existent implicit directory"
-on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
+on master, puppet("module install pmtacceptance-nginx") do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest)
-    STDERR>   Directory /etc/puppet/modules does not exist\e[0m
+    Preparing to install into /etc/puppet/modules ...
+    Created target directory /etc/puppet/modules
+    Downloading from http://forge.puppetlabs.com ...
+    Installing -- do not interrupt ...
+    /etc/puppet/modules
+    └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ -d /etc/puppet/modules/nginx ]'
 
 ensure step "Teardown"
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
