@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
