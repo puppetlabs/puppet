@@ -17,7 +17,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
 
     Puppet::Util.replace_file(filename, 0660) {|f| f.print to_json(request.instance) }
   rescue TypeError => detail
-    Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+    Puppet.log_exception "Could not save #{self.name} #{request.key}: #{detail}"
   end
 
   def destroy(request)
