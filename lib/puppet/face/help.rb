@@ -62,30 +62,27 @@ Puppet::Face.define(:help, '0.0.1') do
         end
       end
 
-      # Name those parameters...
+      return erb('global.erb').result(binding) if args.empty?
+
       facename, actionname = args
-
-      if facename then
-        if legacy_applications.include? facename then
-          if actionname then
-            raise ArgumentError, "Legacy subcommands don't take actions"
-          end
-          return load_application_help(facename)
-        else
-          face, action = load_face_help(facename, actionname, version)
+      if legacy_applications.include? facename then
+        if actionname then
+          raise ArgumentError, "Legacy subcommands don't take actions"
         end
+        return render_application_help(facename)
+      else
+        return render_face_help(facename, actionname, version)
       end
-
-      template = template_for(args.length)
-
-      # Run the ERB template in our current binding, including all the local
-      # variables we established just above. --daniel 2011-04-11
-      return template.result(binding)
     end
   end
 
-  def load_application_help(applicationname)
+  def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
+  end
+
+  def render_face_help(facename, actionname, version)
+    face, action = load_face_help(facename, actionname, version)
+    return template_for(face, action).result(binding)
   end
 
   def load_face_help(facename, actionname, version)
@@ -109,16 +106,11 @@ Detail: "#{detail.message}"
     [face, action]
   end
 
-  def template_for(number_of_args)
-    case number_of_args
-    when 0 then
-      erb 'global.erb'
-    when 1 then
-      erb 'face.erb'
-    when 2 then
-      erb 'action.erb'
+  def template_for(face, action)
+    if action.nil?
+      erb('face.erb')
     else
-      fail ArgumentError, "Too many arguments to help action"
+      erb('action.erb')
     end
   end
 
