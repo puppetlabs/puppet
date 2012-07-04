@@ -18,7 +18,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     FileUtils.mkdir_p(File.dirname(filename))
     writelock(filename, 0660) {|f| f.print to_json(request.instance) }
   rescue TypeError => detail
-    Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+    Puppet.log_exception "Could not save #{self.name} #{request.key}: #{detail}"
   end
 
   def destroy(request)
