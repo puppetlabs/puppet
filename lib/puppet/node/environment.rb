@@ -113,9 +113,11 @@ class Puppet::Node::Environment
     module_names =
         modulepath.collect do |path|
           module_names = Dir.entries(path)
-          Puppet.debug("Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless " +
-              "you are expecting to load a module named 'lib', your module path may be set " +
-               "incorrectly.") if module_names.include?("lib")
+          if module_names.include?("lib")
+            Puppet.debug("Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless " +
+                "you are expecting to load a module named 'lib', your module path may be set " +
+                "incorrectly.")
+          end
           module_names
         end .flatten.uniq
 
@@ -134,7 +136,7 @@ class Puppet::Node::Environment
     modulepath.each do |path|
       Dir.chdir(path) do
         module_names = Dir.glob('*').select do |d|
-          FileTest.directory?(d) && (File.basename(d) =~ /^[\w]+([-]{1}[\w]+)*$/)
+          FileTest.directory?(d) && (File.basename(d) =~ /\A\w+(-\w+)*\Z/)
         end
         modules_by_path[path] = module_names.sort.map do |name|
           Puppet::Module.new(name, :environment => self, :path => File.join(path, name))
@@ -182,13 +184,9 @@ class Puppet::Node::Environment
 
   def validate_dirs(dirs)
     dirs.collect do |dir|
-      unless Puppet::Util.absolute_path?(dir)
-        File.expand_path(File.join(Dir.getwd, dir))
-      else
-        dir
-      end
+      File.expand_path(dir)
     end.find_all do |p|
-      Puppet::Util.absolute_path?(p) && FileTest.directory?(p)
+      FileTest.directory?(p)
     end
   end
 
