@@ -114,7 +114,7 @@ module Manager
     if t = @types[name]
       return t
     else
-      if typeloader.load(name, env = Puppet::Node::Environment.current)
+      if typeloader.load(name, Puppet::Node::Environment.current)
         Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
       end
 
