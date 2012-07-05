@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/indirector/rest'
 
@@ -104,25 +104,65 @@ describe Puppet::Indirector::REST do
       end.to raise_error(/This is often because the time is out of sync on the server or client/)
     end
 
-    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
-      Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
+    describe "when verification fails with a CA chain" do
+      before :each do
+        Puppet[:confdir] = tmpdir('conf')
+      end
 
-      connection = Net::HTTP.new('my_server', 8140)
-      @searcher.stubs(:network).returns(connection)
-      ssl_context = OpenSSL::SSL::SSLContext.new
-      ssl_context.stubs(:current_cert).returns(cert)
-      connection.stubs(:get).with do
-        connection.verify_callback.call(true, ssl_context)
-      end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
-
-      msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-      expect { @searcher.http_request(:get, stub('request')) }.to(
-        raise_error(Puppet::Error, msg) do |error|
-          error.message =~ msg
-          $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
+      my_fixtures("peer_cert_*.pem").each do |cert_chain_file|
+        describe "Certificate Chain: #{File.basename(cert_chain_file)}" do
+          let :peer_cert_pem_chain do
+            File.read(cert_chain_file).split("\n---\n")
+          end
+          it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
+            expect_helpful_error
+          end
         end
-      )
+      end
+
+      # This method is the actual expectation
+      def expect_helpful_error
+        @searcher.stubs(:network).returns(connection)
+
+        msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+        expect { @searcher.http_request(:get, stub('request')) }.to(
+          raise_error(Puppet::Error, msg) do |error|
+            error.message =~ msg
+            $1.split(', ').should =~ [cert.name, *cert.subject_alt_names].uniq
+          end
+        )
+      end
+
+      # OpenSSL certificate objects
+      let :peer_cert_chain do
+        peer_cert_pem_chain.collect { |pem| OpenSSL::X509::Certificate.new pem }
+      end
+      # Puppet certificate objects
+      let :peer_cert_puppet_chain do
+        peer_cert_pem_chain.collect { |pem| Puppet::SSL::Certificate.from_s pem }
+      end
+      let :cert do
+        peer_cert_puppet_chain.last
+      end
+      let :connection do
+        connection = Net::HTTP.new('my_server', 8140)
+        connection.stubs(:get).with do
+          # Simulate the verify callback from OpenSSL.  One callback for each
+          # cert in the chain.  This callback needs to match up with the
+          # OpenSSL::SSL::SSLContext#current_cert stateful stub in the
+          # ssl_context memo
+          1.upto(peer_cert_chain.length) do
+            connection.verify_callback.call(true, ssl_context)
+          end
+        end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
+        connection
+      end
+      let :ssl_context do
+        ssl_context = OpenSSL::SSL::SSLContext.new
+        # This stub returns one certificate from the chain for every method call
+        ssl_context.stubs(:current_cert).returns(*peer_cert_chain)
+        ssl_context
+      end
     end
 
     it "should pass along the error message otherwise" do
