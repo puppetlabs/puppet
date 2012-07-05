@@ -280,7 +280,7 @@ describe Puppet::Util::Log do
 
     describe "when setting the source as a non-RAL object" do
       it "should not try to copy over file, version, line, or tag information" do
-        source = Puppet::Module.new("foo")
+        source = mock
         source.expects(:file).never
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end

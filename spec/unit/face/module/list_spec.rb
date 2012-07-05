@@ -37,36 +37,36 @@ describe "puppet module list" do
 
     Puppet::Face[:module, :current].list.should == {
       @modpath1 => [
-        Puppet::Module.new('bar', :environment => env, :path => barmod1.path),
-        Puppet::Module.new('foo', :environment => env, :path => foomod1.path)
+        Puppet::Module.new('bar', barmod1.path, env),
+        Puppet::Module.new('foo', foomod1.path, env)
       ],
-      @modpath2 => [Puppet::Module.new('foo', :environment => env, :path => foomod2.path)]
+      @modpath2 => [Puppet::Module.new('foo', foomod2.path, env)]
     }
   end
 
   it "should use the specified environment" do
-    PuppetSpec::Modules.create('foo', @modpath1)
-    PuppetSpec::Modules.create('bar', @modpath1)
+    foomod = PuppetSpec::Modules.create('foo', @modpath1)
+    barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
     usedenv = Puppet::Node::Environment.new('useme')
     usedenv.modulepath = [@modpath1, @modpath2]
 
     Puppet::Face[:module, :current].list(:environment => 'useme').should == {
       @modpath1 => [
-        Puppet::Module.new('bar', :environment => usedenv),
-        Puppet::Module.new('foo', :environment => usedenv)
+        Puppet::Module.new('bar', barmod.path, usedenv),
+        Puppet::Module.new('foo', foomod.path, usedenv)
       ],
       @modpath2 => []
     }
   end
 
   it "should use the specified modulepath" do
-    PuppetSpec::Modules.create('foo', @modpath1)
-    PuppetSpec::Modules.create('bar', @modpath2)
+    foomod = PuppetSpec::Modules.create('foo', @modpath1)
+    barmod = PuppetSpec::Modules.create('bar', @modpath2)
 
     Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}").should == {
-      @modpath1 => [ Puppet::Module.new('foo') ],
-      @modpath2 => [ Puppet::Module.new('bar') ]
+      @modpath1 => [ Puppet::Module.new('foo', foomod.path, Puppet::Node::Environment.new) ],
+      @modpath2 => [ Puppet::Module.new('bar', barmod.path, Puppet::Node::Environment.new) ]
     }
   end
 
@@ -82,8 +82,8 @@ describe "puppet module list" do
     # to have a different object_id than the env above
     env = Puppet::Node::Environment.new('myenv')
     list.should == {
-      @modpath1 => [ Puppet::Module.new('foo', :environment => env, :path => foomod1.path) ],
-      @modpath2 => [ Puppet::Module.new('bar', :environment => env, :path => barmod2.path) ]
+      @modpath1 => [ Puppet::Module.new('foo', foomod1.path, env) ],
+      @modpath2 => [ Puppet::Module.new('bar', barmod2.path, env) ]
     }
   end
 

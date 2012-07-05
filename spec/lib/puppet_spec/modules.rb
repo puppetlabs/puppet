@@ -20,7 +20,7 @@ module PuppetSpec::Modules
         end
       end
 
-      Puppet::Module.new(name, :environment => environment, :path => module_dir)
+      Puppet::Module.new(name, module_dir, environment)
     end
   end
 end
