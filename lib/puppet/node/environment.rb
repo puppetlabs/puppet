@@ -110,24 +110,30 @@ class Puppet::Node::Environment
   # Return all modules from this environment.
   # Cache the list, because it can be expensive to create.
   cached_attr(:modules, Puppet[:filetimeout]) do
-    module_names =
-        modulepath.collect do |path|
-          module_names = Dir.entries(path)
-          if module_names.include?("lib")
-            Puppet.debug("Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless " +
-                "you are expecting to load a module named 'lib', your module path may be set " +
-                "incorrectly.")
-          end
-          module_names
-        end .flatten.uniq
+    module_references = {}
+    modulepath.each do |path|
+      Dir.entries(path).each do |name|
+        warn_about_mistaken_path(path, name)
+        next if module_references.include?(name)
+        module_references[name] = File.join(path, name)
+      end
+    end
 
-    module_names.collect do |path|
+    module_references.collect do |name, path|
       begin
-        Puppet::Module.new(path, :environment => self)
+        Puppet::Module.new(name, path, self)
       rescue Puppet::Module::Error => e
         nil
       end
     end.compact
+  end
+
+  def warn_about_mistaken_path(path, name)
+    if name == "lib"
+      Puppet.debug("Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless " +
+          "you are expecting to load a module named 'lib', your module path may be set " +
+          "incorrectly.")
+    end
   end
 
   # Modules broken out by directory in the modulepath
@@ -139,7 +145,7 @@ class Puppet::Node::Environment
           FileTest.directory?(d) && (File.basename(d) =~ /\A\w+(-\w+)*\Z/)
         end
         modules_by_path[path] = module_names.sort.map do |name|
-          Puppet::Module.new(name, :environment => self, :path => File.join(path, name))
+          Puppet::Module.new(name, File.join(path, name), self)
         end
       end
     end

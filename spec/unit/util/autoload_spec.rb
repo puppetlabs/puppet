@@ -23,7 +23,7 @@ describe Puppet::Util::Autoload do
       @dirc = File.expand_path('/c')
     end
 
-    it "should collect all of the plugins and lib directories that exist in the current environment's module path" do
+    it "should collect all of the lib directories that exist in the current environment's module path" do
       Puppet.settings.expects(:value).with(:environment).returns "foo"
       Puppet.settings.expects(:value).with(:modulepath, :foo).returns "#{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}"
       Dir.expects(:entries).with(@dira).returns %w{one two}
@@ -32,11 +32,11 @@ describe Puppet::Util::Autoload do
       FileTest.stubs(:directory?).returns false
       FileTest.expects(:directory?).with(@dira).returns true
       FileTest.expects(:directory?).with(@dirb).returns true
-      ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"].each do |d|
+      ["#{@dira}/two/lib", "#{@dirb}/two/lib"].each do |d|
         FileTest.expects(:directory?).with(d).returns true
       end
 
-      @autoload.class.module_directories.should == ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"]
+      @autoload.class.module_directories.should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
     end
 
     it "should not look for lib directories in directories starting with '.'" do
