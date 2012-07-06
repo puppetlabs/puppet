@@ -2,10 +2,12 @@ require 'spec_helper'
 require 'net/http'
 require 'puppet/forge/repository'
 require 'puppet/forge/cache'
+require 'puppet/forge/errors'
 
 describe Puppet::Forge::Repository do
   let(:consumer_version) { "Test/1.0" }
   let(:repository) { Puppet::Forge::Repository.new('http://fake.com', consumer_version) }
+  let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', consumer_version) }
 
   it "retrieve accesses the cache" do
     uri = URI.parse('http://some.url.com')
@@ -49,12 +51,37 @@ describe Puppet::Forge::Repository do
     end
 
     it "returns the result object from the request" do
-      result = "the http response" 
+      result = "the http response"
       performs_an_http_request result do |http|
         http.expects(:request).with(responds_with(:path, "the_path"))
       end
 
       repository.make_http_request("the_path").should == result
+    end
+
+    it 'returns the result object from a request with ssl' do
+      result = "the http response"
+      performs_an_https_request result do |http|
+        http.expects(:request).with(responds_with(:path, "the_path"))
+      end
+
+      ssl_repository.make_http_request("the_path").should == result
+    end
+
+    it 'return a valid exception when there is an SSL verification problem' do
+      performs_an_https_request "the http response" do |http|
+        http.expects(:request).with(responds_with(:path, "the_path")).raises OpenSSL::SSL::SSLError.new("certificate verify failed")
+      end
+
+      expect { ssl_repository.make_http_request("the_path") }.to raise_error Puppet::Forge::Errors::SSLVerifyError, 'Unable to verify the SSL certificate at https://fake.com'
+    end
+
+    it 'return a valid exception when there is a communication problem' do
+      performs_an_http_request "the http response" do |http|
+        http.expects(:request).with(responds_with(:path, "the_path")).raises SocketError
+      end
+
+      expect { repository.make_http_request("the_path") }.to raise_error Puppet::Forge::Errors::CommunicationError, 'Unable to connect to the server at http://fake.com'
     end
 
     it "sets the user agent for the request" do
@@ -75,9 +102,25 @@ describe Puppet::Forge::Repository do
       http = mock("http client")
       yield http
 
+      proxy_class = mock("http proxy class")
       proxy = mock("http proxy")
-      proxy.expects(:start).with("fake.com", 80).yields(http).returns(result)
-      Net::HTTP.expects(:Proxy).with("proxy", 1234).returns(proxy)
+      proxy_class.expects(:new).with("fake.com", 80).returns(proxy)
+      proxy.expects(:start).yields(http).returns(result)
+      Net::HTTP.expects(:Proxy).with("proxy", 1234).returns(proxy_class)
+    end
+
+    def performs_an_https_request(result = nil, &block)
+      http = mock("http client")
+      yield http
+
+      proxy_class = mock("http proxy class")
+      proxy = mock("http proxy")
+      proxy_class.expects(:new).with("fake.com", 443).returns(proxy)
+      proxy.expects(:start).yields(http).returns(result)
+      proxy.expects(:use_ssl=).with(true)
+      proxy.expects(:cert_store=)
+      proxy.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      Net::HTTP.expects(:Proxy).with("proxy", 1234).returns(proxy_class)
     end
   end
 
