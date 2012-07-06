@@ -62,36 +62,55 @@ Puppet::Face.define(:help, '0.0.1') do
         end
       end
 
-      # Name those parameters...
+      return erb('global.erb').result(binding) if args.empty?
+
       facename, actionname = args
-
-      if facename then
-        if legacy_applications.include? facename then
-          actionname and raise ArgumentError, "Legacy subcommands don't take actions"
-          return Puppet::Application[facename].help
-        else
-          face = Puppet::Face[facename.to_sym, version]
-          actionname and action = face.get_action(actionname.to_sym)
+      if legacy_applications.include? facename then
+        if actionname then
+          raise ArgumentError, "Legacy subcommands don't take actions"
         end
-      end
-
-      case args.length
-      when 0 then
-        template = erb 'global.erb'
-      when 1 then
-        face or fail ArgumentError, "Unable to load face #{facename}"
-        template = erb 'face.erb'
-      when 2 then
-        face or fail ArgumentError, "Unable to load face #{facename}"
-        action or fail ArgumentError, "Unable to load action #{actionname} from #{face}"
-        template = erb 'action.erb'
+        return render_application_help(facename)
       else
-        fail ArgumentError, "Too many arguments to help action"
+        return render_face_help(facename, actionname, version)
       end
+    end
+  end
 
-      # Run the ERB template in our current binding, including all the local
-      # variables we established just above. --daniel 2011-04-11
-      return template.result(binding)
+  def render_application_help(applicationname)
+    return Puppet::Application[applicationname].help
+  end
+
+  def render_face_help(facename, actionname, version)
+    face, action = load_face_help(facename, actionname, version)
+    return template_for(face, action).result(binding)
+  end
+
+  def load_face_help(facename, actionname, version)
+    begin
+      face = Puppet::Face[facename.to_sym, version]
+    rescue Puppet::Error => detail
+      fail ArgumentError, <<-MSG
+Could not load help for the face #{facename}.
+Please check the error logs for more information.
+
+Detail: "#{detail.message}"
+      MSG
+    end
+    if actionname
+      action = face.get_action(actionname.to_sym)
+      if not action
+        fail ArgumentError, "Unable to load action #{actionname} from #{face}"
+      end
+    end
+
+    [face, action]
+  end
+
+  def template_for(face, action)
+    if action.nil?
+      erb('face.erb')
+    else
+      erb('action.erb')
     end
   end
 
@@ -119,8 +138,12 @@ Puppet::Face.define(:help, '0.0.1') do
       next result if exclude_from_docs?(appname)
 
       if (is_face_app?(appname))
-        face = Puppet::Face[appname, :current]
-        result << [appname, face.summary]
+        begin
+          face = Puppet::Face[appname, :current]
+          result << [appname, face.summary]
+        rescue Puppet::Error => detail
+          result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
+        end
       else
         result << [appname, horribly_extract_summary_from(appname)]
       end
