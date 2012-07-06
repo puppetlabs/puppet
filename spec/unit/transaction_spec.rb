@@ -216,14 +216,14 @@ describe Puppet::Transaction do
       @transaction.eval_generate(resource)
 
       @filenames.each do |file|
-        @transaction.catalog.resource(:file, file).should be_a(Puppet::Type.type(:file))
+        @transaction.catalog.resource(:file, file).must be_a(Puppet::Type.type(:file))
       end
     end
 
     it "should add a sentinel whit for the resource" do
       @transaction.eval_generate(resource)
 
-      find_vertex(:whit, "completed_#{path}").should be_a(Puppet::Type.type(:whit))
+      find_vertex(:whit, "completed_#{path}").must be_a(Puppet::Type.type(:whit))
     end
 
     it "should replace dependencies on the resource with dependencies on the sentinel" do
@@ -558,7 +558,7 @@ describe Puppet::Transaction do
       transaction.add_dynamically_generated_resources
 
       generated.each do |res|
-        res.should be_tagged(generator.tags)
+        res.must be_tagged(generator.tags)
       end
     end
   end
