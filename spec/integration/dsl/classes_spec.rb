@@ -115,7 +115,54 @@ describe Puppet::DSL do
       r.should == p
     end
 
-    # TODO: add inheritance
+    it "should allow inheritance" do
+      p = compile_to_catalog(<<-MANIFEST)
+        class foo {
+          notice("foo")
+        }
+
+        class bar inherits foo {
+          notice("bar")
+        }
+      MANIFEST
+
+      r = compile_ruby_to_catalog(<<-MANIFEST)
+        hostclass :foo do
+          notice "foo"
+        end
+
+        hostclass :bar, :inherits => :foo do
+          notice "bar"
+        end
+      MANIFEST
+
+      r.should == p
+    end
+
+    it "should allow inheritance with arguments" do
+      p = compile_to_catalog(<<-MANIFEST)
+        class foo {
+          notice("foo")
+        }
+
+        class bar($msg) inherits foo {
+          notice("bar", $msg)
+        }
+      MANIFEST
+
+      r = compile_ruby_to_catalog(<<-MANIFEST)
+        hostclass :foo do
+          notice "foo"
+        end
+
+        hostclass :bar, :inherits => :foo, :arguments => {:msg => nil} do
+          notice "bar", params[:msg]
+        end
+      MANIFEST
+
+      r.should == p
+    end
+
   end
 end
 

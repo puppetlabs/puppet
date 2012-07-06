@@ -52,6 +52,18 @@ module Puppet
       end
 
       ##
+      # Returns type reference. A fallback method for obtaining type references
+      # for Ruby 1.8 users.
+      ##
+      def type(name)
+        if ::Puppet::DSL::Context.const_defined? name
+          ::Puppet::DSL::TypeReference.new name.downcase
+        else
+          raise ::NameError, "resource type `#{name}' not found"
+        end
+      end
+      
+      ##
       # Initializes new context.
       #
       # +code+ should be a +Proc+ that will be evaluated during evaluation of a
@@ -97,6 +109,12 @@ module Puppet
         raise ::ArgumentError if block.nil?
         raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
+        options.each do |k, _|
+          unless :inherits == k
+            raise ::ArgumentError, "unrecognized option #{k} in node #{name}"
+          end
+        end
+
         params = {}
         params.merge! :parent => options[:inherits] if options[:inherits]
         node = ::Puppet::Resource::Type.new :node, name.to_s, params
@@ -127,6 +145,12 @@ module Puppet
       def hostclass(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
         raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
+
+        options.each do |k, _|
+          unless [:arguments, :inherits].include? k
+            raise ::ArgumentError, "unrecognized option #{k} in hostclass #{name}"
+          end
+        end
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
@@ -159,6 +183,12 @@ module Puppet
       def define(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
         raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
+
+        options.each do |k, _|
+          unless :arguments == k
+            raise ::ArgumentError, "unrecognized option #{k} in definition #{name}"
+          end
+        end
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]

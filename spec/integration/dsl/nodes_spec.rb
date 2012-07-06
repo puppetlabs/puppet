@@ -64,24 +64,21 @@ describe Puppet::DSL do
     it "should be able to create node inheriting from another node" do
       p = compile_to_catalog(<<-MANIFEST)
         node "base.example.com" {
-          file { '/tmp/test':
-            mode   => 0644,
-            ensure => present
-          }
+          notice("base")
         }
 
         node "foonode" inherits "base.example.com" {
-          File['/tmp/test'] { mode => 0755 }
+          notice "foonode"
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         node "base.example.com" do
-          file '/tmp/test', :mode => 644, :ensure => :present
+          notice("base")
         end
 
         node "foonode", :inherits => "base.example.com" do
-          File['/tmp/test'].override :mode => 755
+          notice "foonode"
         end
       MANIFEST
 

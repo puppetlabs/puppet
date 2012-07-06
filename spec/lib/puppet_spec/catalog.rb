@@ -4,7 +4,7 @@ module PuppetSpec::Catalog
 
     # compares compiled catalogs
     def ==(other)
-      [:name, :version, :environment, :tags,
+      [:name, :environment, :tags,
        :resources, :edges, :classes].map do |m|
         self.send(m) == other.send(m)
       end.all?
