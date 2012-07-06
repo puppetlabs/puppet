@@ -141,7 +141,7 @@ class Puppet::Util::Autoload
         end
       else
         # if we get here, the app defaults have not been initialized, so we basically use an empty module path.
-        Thread.current[:env_module_directories][real_env] = []
+        []
       end
     end
 
@@ -156,7 +156,7 @@ class Puppet::Util::Autoload
     end
 
     def search_directories(env=nil)
-        [module_directories(env), libdirs(), $LOAD_PATH].flatten
+      [module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
