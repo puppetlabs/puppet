@@ -1,6 +1,6 @@
 begin test_name 'puppet module search output should be well structured'
 
-step 'Stub http://forge.puppetlabs.com'
+step 'Stub forge.puppetlabs.com'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 
@@ -8,7 +8,7 @@ step 'Search results should line up by column'
 on master, puppet("module search apache") do
   assert_equal('', stderr)
 
-  assert_equal "Searching http://forge.puppetlabs.com ...\n", stdout.lines.first
+  assert_equal "Searching https://forge.puppetlabs.com ...\n", stdout.lines.first
   columns = stdout.lines.to_a[1].split(/\s{2}(?=\S)/)
   pattern = /^#{ columns.map { |c| c.chomp.gsub(/./, '.') }.join('  ') }$/
 
@@ -17,6 +17,6 @@ on master, puppet("module search apache") do
   end
 end
 
-ensure step 'Unstub http://forge.puppetlabs.com'
+ensure step 'Unstub forge.puppetlabs.com'
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end

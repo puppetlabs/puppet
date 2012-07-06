@@ -1,6 +1,6 @@
 begin test_name 'puppet module search should handle multiple search terms sensibly'
 
-step 'Stub http://forge.puppetlabs.com'
+step 'Stub forge.puppetlabs.com'
 require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 
@@ -20,6 +20,6 @@ apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 #   assert stdout !~ /'star trek'/
 # end
 
-ensure step 'Unstub http://forge.puppetlabs.com'
+ensure step 'Unstub forge.puppetlabs.com'
 apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end
