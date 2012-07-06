@@ -13,6 +13,18 @@ describe processor do
     subject.process
   end
 
+  it "should use the report timeout for posting http reports" do
+    timeout = Puppet[:reporturl_timeout] = 40
+    uri = URI.parse(Puppet[:reporturl])
+    ssl = (uri.scheme == 'https')
+    Net::HTTP.expects(:new).with(uri.host, uri.port).returns(stub_everything('http')) { |http|
+        http.read_timeout == timeout
+        http.open_timeout == timeout
+    }
+    subject.process
+  end
+
+
   describe "when making a request" do
     let(:http) { mock "http" }
     let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
@@ -22,6 +34,8 @@ describe processor do
     end
 
     it "should use the path specified by the 'reporturl' setting" do
+      http.expects(:open_timeout=)
+      http.expects(:read_timeout=)
       http.expects(:request).with {|req|
         req.path.should == URI.parse(Puppet[:reporturl]).path
       }.returns(httpok)
@@ -30,6 +44,8 @@ describe processor do
     end
 
     it "should give the body as the report as YAML" do
+      http.expects(:open_timeout=)
+      http.expects(:read_timeout=)
       http.expects(:request).with {|req|
         req.body.should == subject.to_yaml
       }.returns(httpok)
@@ -38,6 +54,8 @@ describe processor do
     end
 
     it "should set content-type to 'application/x-yaml'" do
+      http.expects(:open_timeout=)
+      http.expects(:read_timeout=)
       http.expects(:request).with {|req|
         req.content_type.should == "application/x-yaml"
       }.returns(httpok)
@@ -49,6 +67,8 @@ describe processor do
       if code.to_i >= 200 and code.to_i < 300
         it "should succeed on http code #{code}" do
           response = klass.new('1.1', code, '')
+          http.expects(:open_timeout=)
+          http.expects(:read_timeout=)
           http.expects(:request).returns(response)
 
           Puppet.expects(:err).never
@@ -59,6 +79,8 @@ describe processor do
       if code.to_i >= 300
         it "should log error on http code #{code}" do
           response = klass.new('1.1', code, '')
+          http.expects(:open_timeout=)
+          http.expects(:read_timeout=)
           http.expects(:request).returns(response)
 
           Puppet.expects(:err)

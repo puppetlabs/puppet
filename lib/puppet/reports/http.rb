@@ -12,14 +12,19 @@ Puppet::Reports.register_report(:http) do
 
   def process
     url = URI.parse(Puppet[:reporturl])
+    timeout = Puppet[:reporturl_timeout]
     req = Net::HTTP::Post.new(url.path)
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
     Net::HTTP.new(url.host, url.port).start {|http|
+      http.read_timeout = timeout
+      http.open_timeout = timeout
       response = http.request(req)
       unless response.kind_of?(Net::HTTPSuccess)
         Puppet.err "Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}"
       end
     }
+  rescue Timeout::Error
+      Puppet.err "Timeout when submitting report to #{Puppet[:reporturl].to_s}"
   end
 end
