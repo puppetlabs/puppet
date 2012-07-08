@@ -57,6 +57,13 @@ module Puppet
         code
       end
 
+      ##
+      # Returns canonical name of a type given as an argument.
+      ##
+      def canonize_type(type)
+        Puppet::Resource.new(type, "whatever").type
+      end
+
     end
   end
 end
