@@ -1,3 +1,8 @@
+require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/parser'
+require 'puppet/parser/resource/param'
+require 'puppet/parser/resource'
+
 module Puppet
   module DSL
     ##
@@ -27,11 +32,20 @@ module Puppet
 
       ##
       # Method allows to create overrides for a resource.
-      #
-      # MLEN:FIXME: Not yet implemented.
       ##
       def override(options = {}, &block)
-        raise NotImplementedError
+        Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
+
+        # for compatibility with Puppet parser
+        params = options.map do |k, v|
+          Puppet::Parser::Resource::Param.new :name => k, :value => v
+        end
+
+        scope = Puppet::DSL::Parser.current_scope
+        resource = Puppet::Parser::Resource.new @resource.type, @resource.name,
+                                                :parameters => params, :scope => scope
+
+        scope.compiler.add_override resource
       end
     end
   end

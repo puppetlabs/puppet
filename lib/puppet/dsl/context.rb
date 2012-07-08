@@ -80,7 +80,6 @@ module Puppet
       def evaluate(scope)
         ::Puppet::DSL::Parser.add_scope scope
         instance_eval &@code
-        self
       ensure
         ::Puppet::DSL::Parser.remove_scope
       end
