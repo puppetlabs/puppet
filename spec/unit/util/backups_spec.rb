@@ -7,7 +7,7 @@ describe Puppet::Util::Backups do
   include PuppetSpec::Files
 
   let(:bucket) { stub('bucket', :name => "foo") }
-  let(:file) do
+  let!(:file) do
     f = Puppet::Type.type(:file).new(:name => path, :backup => 'foo')
     f.stubs(:bucket).returns(bucket)
     f
