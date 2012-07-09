@@ -82,5 +82,15 @@ describe Puppet::DSL::Helper do
 
   end
 
+  describe "#canonize_type" do
+    it "should return canonical type name" do
+      ["FiLe", "fIlE", "fILE", "File", "file", "FILE"].each do |f|
+        @helper.canonize_type(f).should == "File"
+      end
+    end
+
+  end
+
+
 end
 

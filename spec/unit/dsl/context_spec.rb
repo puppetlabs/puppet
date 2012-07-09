@@ -150,7 +150,7 @@ describe Puppet::DSL::Context do
     it "should add a new type" do
       n = nil
       evaluate_in_context do
-        n = node(:foo) {}
+        n = node("foo") {}
 
       end
 
@@ -166,7 +166,7 @@ describe Puppet::DSL::Context do
 
       lambda do
         evaluate_in_context do
-          node(:foo) {}
+          node("foo") {}
         end
       end.should raise_error NoMethodError
     end

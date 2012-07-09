@@ -17,10 +17,16 @@ module Puppet
 
       ##
       # Creates new TypeReference.
+      # Raises NameError when resource type is not found
       ##
       def initialize(typename)
-        @type = canonize_type typename
-        @cache = {}
+        name = canonize_type typename
+        if Puppet::DSL::Context.const_defined? name
+          @type = name
+          @cache = {}
+        else
+          raise NameError, "resource type `#{name}' not found"
+        end
       end
 
       ##

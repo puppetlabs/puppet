@@ -34,23 +34,19 @@ module Puppet
 
     # :nodoc: Needs to be required here to avoid circular dependencies
     require 'puppet/dsl/type_reference'
+    require 'puppet/dsl/helper'
 
     ##
     # Reopening class to add methods.
     ##
     class BlankSlate
+      include ::Puppet::DSL::Helper
+
       ##
       # Proxy method for Kernel#raise
       ##
       def raise(*args)
-        ::Kernel.raise *args
-      end
-
-      ##
-      # Proxy method for Kernel#require
-      ##
-      def require(*args)
-        ::Kernel.require *args
+        ::Object.send :raise, *args
       end
 
       ##
@@ -89,7 +85,7 @@ module Puppet
       # for Ruby 1.8 users.
       ##
       def type(name)
-        if ::Puppet::DSL::Context.const_defined? name
+        if ::Puppet::DSL::Context.const_defined? canonize_type(name)
           ::Puppet::DSL::TypeReference.new name.downcase
         else
           raise ::NameError, "resource type `#{name}' not found"

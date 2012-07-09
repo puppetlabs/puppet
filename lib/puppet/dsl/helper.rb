@@ -64,6 +64,23 @@ module Puppet
         Puppet::Resource.new(type, "whatever").type
       end
 
+      ##
+      # Checks whether resource type exists
+      ##
+      def is_resource_type?(name)
+        type = canonize_type(name)
+        !!!!([:node, :class].include? type or
+           ::Puppet::Type.type type or
+           ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition type)
+      end
+
+      ##
+      # Checks whether function exists
+      ##
+      def is_function?(name)
+        !!::Puppet::Parser::Functions.function(name)
+      end
+
     end
   end
 end
