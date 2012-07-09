@@ -1,3 +1,19 @@
+2.7.18
+===
+d804782 Reject directory traversal in store report processor
+fd44bf5 Tighten permissions on classfile, resourcefile, lastrunfile, and lastrunreport.
+4d7c9fd Use "inspect" when listing certificates
+bd2820e Don't allow the creation of SSL objects with invalid certnames
+f341962 Validate CSR CN and provided certname before signing
+38c5a4e Add specs for selector terminuses of file_{content,metadata}
+9e920a8 Fix whitespace inside parentheses
+2d01c2b Use head method to determine if file is in file bucket
+40ee670 Always use the local file_bucket on master
+d881b4b Fail more gracefully when finding module files if no file is specified
+20ab0e9 Reject file requests containing ..
+10f6cb8 Add Selector terminus for file_content/file_metadata
+ab9150b Deprecate IP-based authentication
+
 2.7.17
 ===
 30d89d3 (maint) Add symlink stub to gentoo service provider spec
