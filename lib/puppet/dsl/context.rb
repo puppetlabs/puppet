@@ -1,6 +1,5 @@
 require 'puppet/dsl/blank_slate'
 require 'puppet/dsl/resource_decorator'
-require 'puppet/dsl/type_reference'
 
 module Puppet
   module DSL
@@ -19,49 +18,6 @@ module Puppet
     # compilation.
     ##
     class Context < BlankSlate
-
-      ##
-      # Provides syntactic sugar for resource references.
-      # It checks whether a constant exists and returns TypeReference
-      # corresponding to that constant. Otherwise it raises NameError.
-      # A cached version of TypeReference is created on the first call.
-      #
-      # For further information look at lib/puppet/dsl/type_reference.rb
-      ##
-      def self.const_missing(name)
-        if self.const_defined? name
-          ref = ::Puppet::DSL::TypeReference.new name.downcase
-          self.const_set name, ref
-          ref
-        else
-          raise ::NameError, "resource type `#{name}' not found"
-        end
-      end
-
-      ##
-      # Returns whether a constant is defined.
-      # It essentially checks if the type exists.
-      # The algorithm is identical to one used in +respond_to?+ method.
-      ##
-      def self.const_defined?(name)
-        type = name.downcase
-        super || !!([:node, :class].include? type or
-           ::Puppet::Type.type type or
-           ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition type
-          )
-      end
-
-      ##
-      # Returns type reference. A fallback method for obtaining type references
-      # for Ruby 1.8 users.
-      ##
-      def type(name)
-        if ::Puppet::DSL::Context.const_defined? name
-          ::Puppet::DSL::TypeReference.new name.downcase
-        else
-          raise ::NameError, "resource type `#{name}' not found"
-        end
-      end
       
       ##
       # Initializes new context.
@@ -106,6 +62,7 @@ module Puppet
       ##
       def node(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
+        raise ::ArgumentError unless name.is_a? ::Regexp or name.is_a? ::String
         raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
         options.each do |k, _|
@@ -116,7 +73,7 @@ module Puppet
 
         params = {}
         params.merge! :parent => options[:inherits] if options[:inherits]
-        node = ::Puppet::Resource::Type.new :node, name.to_s, params
+        node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block
         ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_node node
       end

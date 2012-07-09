@@ -14,13 +14,5 @@ describe Puppet::DSL::BlankSlate do
      end
   end
 
-
-  it "should allow to refer to global constants without prefixing" do
-    ANSWER = 42
-    Puppet::DSL::BlankSlate.new.instance_eval do
-      ::ANSWER.should == ANSWER
-    end
-  end
-
 end
 
