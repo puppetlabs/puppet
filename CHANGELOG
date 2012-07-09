@@ -1,3 +1,16 @@
+2.6.17
+===
+554eefc Reject directory traversal in store report processor
+9607bd7 Use "inspect" when listing certificates
+0144e68 Don't allow the creation of SSL objects with invalid certnames
+dfedaa5 Validate CSR CN and provided certname before signing
+8eb0cd8 Add specs for selector terminuses of file_{content,metadata}
+828c16a Fix whitespace inside parentheses
+e7ef153 Always use the local file_bucket on master
+29ae87d Fail more gracefully when finding module files if no file is specified
+c872619 Reject file requests containing ..
+c3c7462 Add Selector terminus for file_content/file_metadata
+
 2.6.16
 ===
 65446c9 Revert "(#5246) Puppetd does not remove it's pidfile when it exits"
