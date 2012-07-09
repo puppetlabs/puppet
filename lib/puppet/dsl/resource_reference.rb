@@ -35,16 +35,16 @@ module Puppet
       ##
       def override(options = {}, &block)
         Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
+        scope = Puppet::DSL::Parser.current_scope
 
         # for compatibility with Puppet parser
         params = options.map do |k, v|
-          Puppet::Parser::Resource::Param.new :name => k, :value => v
+          Puppet::Parser::Resource::Param.new :name => k, :value => v, :source => scope.source
         end
 
-        scope = Puppet::DSL::Parser.current_scope
         resource = Puppet::Parser::Resource.new @resource.type, @resource.name,
-                                                :parameters => params, :scope => scope
-
+                                                :parameters => params, :scope => scope,
+                                                :source => scope.source
         scope.compiler.add_override resource
       end
     end
