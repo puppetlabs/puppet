@@ -7,7 +7,7 @@
 Name:           puppet
 Version:        2.7.18
 #Release:        0.1rc1.2%{?dist}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
@@ -136,6 +136,9 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
     %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
 
+# Create puppet modules directory for puppet module tool
+mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
+
 %files
 %defattr(-, root, root, 0755)
 %doc CHANGELOG LICENSE README.md examples
@@ -149,6 +152,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
+%dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
@@ -289,6 +293,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Jul 11 2012 William Hopper <whopper@puppetlabs.com> - 2.7.18-2
+- (#15221) Create /etc/puppet/modules for puppet module tool
+
 * Mon Jul 9 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.18-1
 - Update for 2.7.18
 
