@@ -309,7 +309,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should add all resources as RAL instances" do
-      @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Type) }
+      @resources.each do |resource|
+        # Warning: a failure here will result in "global resource iteration is
+        # deprecated" being raised, because the rspec rendering to get the
+        # result tries to call `each` on the resource, and that raises.
+        @catalog.resource(resource.ref).must be_a_kind_of(Puppet::Type)
+      end
     end
 
     it "should copy the tag list to the new catalog" do
