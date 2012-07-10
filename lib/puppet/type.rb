@@ -56,14 +56,16 @@ class Type
 
   # Retrieve an attribute alias, if there is one.
   def self.attr_alias(param)
-    @attr_aliases[symbolize(param)]
+    # Intern again, because this might be called by someone who doesn't
+    # understand the calling convention and all.
+    @attr_aliases[param.intern]
   end
 
   # Create an alias to an existing attribute.  This will cause the aliased
   # attribute to be valid when setting and retrieving values on the instance.
   def self.set_attr_alias(hash)
     hash.each do |new, old|
-      @attr_aliases[symbolize(new)] = symbolize(old)
+      @attr_aliases[new.intern] = old.intern
     end
   end
 
@@ -337,7 +339,7 @@ class Type
   end
 
   def self.validattr?(name)
-    name = symbolize(name)
+    name = name.intern
     return true if name == :name
     @validattrs ||= {}
 
@@ -374,7 +376,7 @@ class Type
 
   # Return either the attribute alias or the attribute.
   def attr_alias(name)
-    name = symbolize(name)
+    name = name.intern
     if synonym = self.class.attr_alias(name)
       return synonym
     else
