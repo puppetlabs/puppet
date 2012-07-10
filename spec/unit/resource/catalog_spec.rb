@@ -514,11 +514,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should have a mechanism for removing resources" do
-      @catalog.add_resource @one
-      @one.expects :remove
+      @catalog.add_resource(@one)
+      @catalog.resource(@one.ref).must be
+      @catalog.vertex?(@one).must be_true
+
       @catalog.remove_resource(@one)
-      @catalog.resource(@one.ref).should be_nil
-      @catalog.vertex?(@one).should be_false
+      @catalog.resource(@one.ref).must be_nil
+      @catalog.vertex?(@one).must be_false
     end
 
     it "should have a method for creating aliases for resources" do
