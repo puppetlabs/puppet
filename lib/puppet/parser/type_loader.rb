@@ -1,3 +1,4 @@
+require 'find'
 require 'puppet/node/environment'
 
 class Puppet::Parser::TypeLoader
@@ -93,8 +94,6 @@ class Puppet::Parser::TypeLoader
   end
 
   def import_all
-    require 'find'
-
     module_names = []
     # Collect the list of all known modules
     environment.modulepath.each do |path|
