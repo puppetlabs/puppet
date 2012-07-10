@@ -4,6 +4,13 @@ require 'spec_helper'
 require 'puppet/util/monkey_patches'
 
 
+describe Symbol do
+  it "should return self from #intern" do
+    symbol = :foo
+    symbol.should equal symbol.intern
+  end
+end
+
 
 describe "yaml deserialization" do
   it "should call yaml_initialize when deserializing objects that have that method defined" do
