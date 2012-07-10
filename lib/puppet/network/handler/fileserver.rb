@@ -645,9 +645,9 @@ class Puppet::Network::Handler
         nil
       end
 
+      require 'puppet/file_serving'
+      require 'puppet/file_serving/fileset'
       def reclist(abspath, recurse, ignore)
-        require 'puppet/file_serving'
-        require 'puppet/file_serving/fileset'
         if recurse.is_a?(Fixnum)
           args = { :recurse => true, :recurselimit => recurse, :links => :follow }
         else

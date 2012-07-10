@@ -2,6 +2,7 @@
 # to see here.
 
 require 'puppet/util/selinux'
+require 'tempfile'
 require 'fileutils'
 
 class Puppet::Util::FileType
@@ -103,7 +104,6 @@ class Puppet::Util::FileType
 
     # Overwrite the file.
     def write(text)
-      require "tempfile"
       tf = Tempfile.new("puppet")
       tf.print text; tf.flush
       FileUtils.cp(tf.path, @path)
@@ -223,7 +223,6 @@ class Puppet::Util::FileType
     # and the text with which to create the cron tab.
     def write(text)
       puts text
-      require "tempfile"
       output_file = Tempfile.new("puppet")
       fh = output_file.open
       fh.print text
@@ -262,7 +261,6 @@ class Puppet::Util::FileType
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
     def write(text)
-      require "tempfile"
       output_file = Tempfile.new("puppet")
       fh = output_file.open
       fh.print text
