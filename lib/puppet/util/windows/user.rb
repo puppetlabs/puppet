@@ -1,14 +1,13 @@
 require 'puppet/util/windows'
 
 require 'win32/security'
+require 'facter'
 
 module Puppet::Util::Windows::User
   include Windows::Security
   extend Windows::Security
 
   def admin?
-    require 'facter'
-
     majversion = Facter.value(:kernelmajversion)
     return false unless majversion
 

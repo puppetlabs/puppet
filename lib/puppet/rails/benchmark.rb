@@ -1,4 +1,6 @@
 require 'benchmark'
+require 'yaml'
+
 module Puppet::Rails::Benchmark
   $benchmarks = {:accumulated => {}}
 
@@ -49,8 +51,6 @@ module Puppet::Rails::Benchmark
     branch = %x{git branch}.split("\n").find { |l| l =~ /^\*/ }.sub("* ", '')
 
     file = "/tmp/time_debugging.yaml"
-
-    require 'yaml'
 
     if FileTest.exist?(file)
       data = YAML.load_file(file)
