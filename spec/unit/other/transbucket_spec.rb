@@ -111,12 +111,9 @@ describe Puppet::TransBucket, " when generating a catalog" do
 
   it "should add all resources to the graph's resource table" do
     @catalog = @top.to_catalog
-    @catalog.resource("fake[top]").should equal(@top)
-  end
-
-  it "should finalize all resources" do
-    @catalog = @top.to_catalog
-    @catalog.vertices.each do |vertex| vertex.should be_finalized end
+    @fakes.each do |name|
+      @catalog.resource(name).must be
+    end
   end
 
   it "should only call to_ral on each resource once" do
