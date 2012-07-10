@@ -12,7 +12,7 @@ describe Puppet::TransBucket do
 
     resource = nil
     proc { resource = @bucket.to_ral }.should_not raise_error
-    resource.should be_instance_of(Puppet::Type::Component)
+    resource.must be_instance_of(Puppet::Type::Component)
     resource.title.should == "Foo[luke]"
   end
 
@@ -93,7 +93,7 @@ describe Puppet::TransBucket, " when generating a catalog" do
   it "should convert all transportable objects to RAL resources" do
     @catalog = @top.to_catalog
     @users.each do |name|
-      @catalog.vertices.find { |r| r.class.name == :notify and r.title == name }.should be_instance_of(Puppet::Type.type(:notify))
+      @catalog.vertices.find { |r| r.class.name == :notify and r.title == name }.must be_instance_of(Puppet::Type.type(:notify))
     end
   end
 
@@ -105,18 +105,15 @@ describe Puppet::TransBucket, " when generating a catalog" do
   it "should convert all transportable buckets to RAL components" do
     @catalog = @top.to_catalog
     @fakes.each do |name|
-      @catalog.vertices.find { |r| r.class.name == :component and r.title == name }.should be_instance_of(Puppet::Type.type(:component))
+      @catalog.vertices.find { |r| r.class.name == :component and r.title == name }.must be_instance_of(Puppet::Type.type(:component))
     end
   end
 
   it "should add all resources to the graph's resource table" do
     @catalog = @top.to_catalog
-    @catalog.resource("fake[top]").should equal(@top)
-  end
-
-  it "should finalize all resources" do
-    @catalog = @top.to_catalog
-    @catalog.vertices.each do |vertex| vertex.should be_finalized end
+    @fakes.each do |name|
+      @catalog.resource(name).must be
+    end
   end
 
   it "should only call to_ral on each resource once" do
