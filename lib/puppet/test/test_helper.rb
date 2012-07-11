@@ -79,6 +79,7 @@ module Puppet::Test
       Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
 
+      Puppet.clear_deprecation_warnings
     end
 
     # Call this method once per test, after execution of each individual test.
