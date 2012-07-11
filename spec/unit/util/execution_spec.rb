@@ -478,6 +478,21 @@ describe Puppet::Util::Execution do
         File.should_not be_exist(path)
       end
 
+      it "should handle when unlink fails" do
+        stdout = Tempfile.new('test')
+        stdout.stubs(:close)
+        stdout.expects(:close).with(true).raises(Errno::EACCES, stdout.path)
+        Tempfile.stubs(:new).returns(stdout)
+
+        if Puppet.features.microsoft_windows?
+          Puppet::Util.execute('test command')
+        else
+          expect {
+            Puppet::Util.execute('test command')
+          }.to raise_error(Errno::EACCES, /Permission denied/)
+        end
+      end
+
       it "should raise an error if failonfail is true and the child failed" do
         stub_process_wait(1)
 

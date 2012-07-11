@@ -110,6 +110,8 @@ following signals:
   Restart the puppet master server.
 * SIGINT and SIGTERM:
   Shut down the puppet master server.
+* SIGUSR2:
+  Close file descriptors for log files and reopen them. Used with logrotate.
 
 AUTHOR
 ------

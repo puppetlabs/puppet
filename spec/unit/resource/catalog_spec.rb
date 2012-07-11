@@ -150,7 +150,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should add all resources as RAL instances" do
-      @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Type) }
+      @resources.each do |resource|
+        # Warning: a failure here will result in "global resource iteration is
+        # deprecated" being raised, because the rspec rendering to get the
+        # result tries to call `each` on the resource, and that raises.
+        @catalog.resource(resource.ref).must be_a_kind_of(Puppet::Type)
+      end
     end
 
     it "should copy the tag list to the new catalog" do
@@ -182,8 +187,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       config.add_edge(@top, changer)
 
       catalog = config.to_ral
-      catalog.resource("File[#{@basepath}/test/]").should equal(changer)
-      catalog.resource("File[#{@basepath}/test]").should equal(changer)
+      catalog.resource("File[#{@basepath}/test/]").must equal(catalog.resource("File[#{@basepath}/test]"))
     end
 
     after do
@@ -250,8 +254,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should provide a method to add one or more resources" do
       @catalog.add_resource @one, @two
-      @catalog.resource(@one.ref).should equal(@one)
-      @catalog.resource(@two.ref).should equal(@two)
+      @catalog.resource(@one.ref).must equal(@one)
+      @catalog.resource(@two.ref).must equal(@two)
     end
 
     it "should add resources to the relationship graph if it exists" do
@@ -267,20 +271,18 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should make all vertices available by resource reference" do
       @catalog.add_resource(@one)
-      @catalog.resource(@one.ref).should equal(@one)
-      @catalog.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
+      @catalog.resource(@one.ref).must equal(@one)
+      @catalog.vertices.find { |r| r.ref == @one.ref }.must equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
       @catalog.add_resource(@one)
-
-      @catalog.resource("notify", "one").should equal(@one)
+      @catalog.resource("notify", "one").must equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
       @catalog.add_resource(@one)
-
-      @catalog.resource("notify[one]", nil).should equal(@one)
+      @catalog.resource("notify[one]", nil).must equal(@one)
     end
 
     it "should not allow two resources with the same resource reference" do
@@ -336,26 +338,28 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should be able to find resources by reference" do
       @catalog.add_resource @one
-      @catalog.resource(@one.ref).should equal(@one)
+      @catalog.resource(@one.ref).must equal(@one)
     end
 
     it "should be able to find resources by reference or by type/title tuple" do
       @catalog.add_resource @one
-      @catalog.resource("notify", "one").should equal(@one)
+      @catalog.resource("notify", "one").must equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
-      @catalog.add_resource @one
-      @one.expects :remove
+      @catalog.add_resource(@one)
+      @catalog.resource(@one.ref).must be
+      @catalog.vertex?(@one).must be_true
+
       @catalog.remove_resource(@one)
-      @catalog.resource(@one.ref).should be_nil
-      @catalog.vertex?(@one).should be_false
+      @catalog.resource(@one.ref).must be_nil
+      @catalog.vertex?(@one).must be_false
     end
 
     it "should have a method for creating aliases for resources" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").should equal(@one)
+      @catalog.resource("notify", "other").must equal(@one)
     end
 
     it "should ignore conflicting aliases that point to the aliased resource" do
@@ -368,7 +372,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.add_resource(resource)
 
-      @catalog.resource(:file, @basepath+"/something").should equal(resource)
+      @catalog.resource(:file, @basepath+"/something").must equal(resource)
     end
 
     it "should not create aliases for non-isomorphic resources whose names do not match their titles" do
@@ -384,7 +388,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should alias using the class name from the resource reference, not the resource class name" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").should equal(@one)
+      @catalog.resource("notify", "other").must equal(@one)
     end
 
     it "should fail to add an alias if the aliased name already exists" do
@@ -399,13 +403,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not create aliases that point back to the resource" do
       @catalog.alias(@one, "one")
-      @catalog.resource(:notify, "one").should be_nil
+      @catalog.resource(:notify, "one").must be_nil
     end
 
     it "should be able to look resources up by their aliases" do
       @catalog.add_resource @one
       @catalog.alias @one, "two"
-      @catalog.resource(:notify, "two").should equal(@one)
+      @catalog.resource(:notify, "two").must equal(@one)
     end
 
     it "should remove resource aliases when the target resource is removed" do
@@ -413,14 +417,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.alias(@one, "other")
       @one.expects :remove
       @catalog.remove_resource(@one)
-      @catalog.resource("notify", "other").should be_nil
+      @catalog.resource("notify", "other").must be_nil
     end
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(true)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, "other").should equal(resource)
+      @catalog.resource(:file, "other").must equal(resource)
       @catalog.resource(:file, @basepath+"/something").ref.should == resource.ref
     end
 
@@ -428,7 +432,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(false)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, resource.title).should equal(resource)
+      @catalog.resource(:file, resource.title).must equal(resource)
       # We can't use .should here, because the resources respond to that method.
       raise "Aliased non-isomorphic resource" if @catalog.resource(:file, resource.name)
     end
@@ -438,7 +442,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
-      @catalog.resource("File[/yay]").should equal(resource)
+      @catalog.resource("File[/yay]").must equal(resource)
     end
 
     describe "when adding resources with multiple namevars" do

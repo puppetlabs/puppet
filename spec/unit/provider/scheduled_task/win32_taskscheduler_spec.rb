@@ -1539,7 +1539,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     it 'should set the arguments' do
-      resource.provider.expects(:arguments=).with([@arguments])
+      resource.provider.expects(:arguments=).with(@arguments)
 
       resource.provider.create
     end
