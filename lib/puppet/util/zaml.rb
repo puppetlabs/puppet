@@ -283,13 +283,18 @@ class String
   # method for other methods that perform regular expressions against byte
   # sequences deliberately rather than dealing with characters.
   # The method may or may not return a new instance.
-  def to_ascii8bit
-    if self.respond_to?(:encoding) and self.encoding.name != "ASCII-8BIT" then
-      str = self.dup
-      str.force_encoding("ASCII-8BIT")
-      return str
-    else
-      return self
+  if String.method_defined?(:encoding)
+    ASCII = Encoding.find("ASCII-8BIT")
+    def to_ascii8bit
+      if self.encoding.name == "ASCII-8BIT"
+        self
+      else
+        self.dup.force_encoding("ASCII-8BIT")
+      end
+    end
+  else
+    def to_ascii8bit
+      self
     end
   end
 end
