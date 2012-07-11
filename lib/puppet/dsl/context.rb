@@ -27,6 +27,7 @@ module Puppet
       ##
       def initialize(code)
         @code = code
+        @object = ::Object.new
       end
 
       ##
@@ -38,6 +39,15 @@ module Puppet
         instance_eval &@code
       ensure
         ::Puppet::DSL::Parser.remove_scope
+      end
+
+      ##
+      # The contents of the block passed to this method will be evaluated in
+      # the context of Object instead of BasicObject. This adds access to
+      # methods defined in global scope (like +require+).
+      ##
+      def my(&block)
+        @object.instance_eval &block
       end
 
       ##
