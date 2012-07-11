@@ -20,6 +20,9 @@ GEM
     metaclass (0.0.1)
     mocha (0.10.5)
       metaclass (~> 0.0.1)
+    parallel (0.5.17)
+    parallel_tests (0.8.4)
+      parallel
     rack (1.2.2)
     rake (0.9.2.2)
     rspec (2.9.0)
@@ -40,6 +43,7 @@ DEPENDENCIES
   cucumber
   facter!
   mocha (~> 0.10.5)
+  parallel_tests (~> 0.8.4)
   rack (= 1.2.2)
   rake
   rspec (~> 2.9.0)

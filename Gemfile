@@ -9,6 +9,7 @@ group :development do
   gem 'rspec', '~> 2.9.0'
   gem 'mocha', '~> 0.10.5'
   gem 'sqlite3', '~> 1.3.3'
+  gem 'parallel_tests', '~> 0.8.4'
   # This is the /known/ version of RDoc which the "allfeatures" gemset on CI
   # runs, should be safe to pin it here
   #gem 'rdoc', '3.6.1'
