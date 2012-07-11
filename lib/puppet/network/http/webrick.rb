@@ -5,6 +5,7 @@ require 'thread'
 
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_revocation_list'
+require 'puppet/ssl/configuration'
 
 class Puppet::Network::HTTP::WEBrick
   def initialize(args = {})
@@ -99,11 +100,20 @@ class Puppet::Network::HTTP::WEBrick
 
     raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
 
-    results[:SSLCACertificateFile] = Puppet[:localcacert]
+    results[:SSLCACertificateFile] = ssl_configuration.ca_auth_file
     results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
     results[:SSLCertificateStore] = host.ssl_store
 
     results
+  end
+
+  private
+
+  def ssl_configuration
+    @ssl_configuration ||= Puppet::SSL::Configuration.new(
+      Puppet[:localcacert],
+      :ca_chain_file => Puppet[:ssl_server_ca_chain],
+      :ca_auth_file  => Puppet[:ssl_server_ca_auth])
   end
 end
