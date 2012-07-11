@@ -6,6 +6,9 @@ class Puppet::SSL::Base
   # For now, use the YAML separator.
   SEPARATOR = "\n---\n"
 
+  # Only allow printing ascii characters, excluding /
+  VALID_CERTNAME = /\A[ -.0-~]+\Z/
+
   def self.from_multiple_s(text)
     text.split(SEPARATOR).collect { |inst| from_s(inst) }
   end
@@ -23,6 +26,10 @@ class Puppet::SSL::Base
     @wrapped_class
   end
 
+  def self.validate_certname(name)
+    raise "Certname #{name.inspect} must not contain unprintable or non-ASCII characters" unless name =~ VALID_CERTNAME
+  end
+
   attr_accessor :name, :content
 
   # Is this file for the CA?
@@ -36,6 +43,7 @@ class Puppet::SSL::Base
 
   def initialize(name)
     @name = name.to_s.downcase
+    self.class.validate_certname(@name)
   end
 
   # Read content from disk appropriately.

@@ -31,6 +31,7 @@ describe Puppet::Network::Handler::CA, :unless => Puppet.features.microsoft_wind
       Puppet::SSL::CertificateAuthority.stubs(:ca?).returns false
 
       csr = OpenSSL::X509::Request.new
+      csr.subject = OpenSSL::X509::Name.new([["CN", "anything"]])
       subject.getcert(csr.to_pem).should == ''
     end
 
