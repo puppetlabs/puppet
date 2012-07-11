@@ -93,7 +93,28 @@ describe Puppet::Indirector::REST do
   describe "when making http requests" do
     include PuppetSpec::Files
 
-    it "should provide a suggestive error message when certificate verify failed" do
+    it "should provide a useful error message when one is available and certificate validation fails" do
+      Puppet[:confdir] = tmpdir('conf')
+      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
+
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+      ssl_context = OpenSSL::SSL::SSLContext.new
+      ssl_context.stubs(:current_cert).returns(cert)
+      ssl_context.stubs(:error).returns("shady looking signature")
+      connection.stubs(:get).with do
+        # give verify_callback a chance to find the error
+        connection.verify_callback.call(false, ssl_context)
+        # then raise the SSLError
+        raise OpenSSL::SSL::SSLError.new('certificate verify failed')
+      end
+
+      expect do
+        @searcher.http_request(:get, stub('request'))
+      end.to raise_error(/shady looking signature/)
+    end
+
+    it "should provide a suggestive error message when certificate verify failed without a better message" do
       connection = Net::HTTP.new('my_server', 8140)
       @searcher.stubs(:network).returns(connection)
 

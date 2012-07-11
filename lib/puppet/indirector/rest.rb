@@ -89,21 +89,30 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def http_request(method, request, *args)
     http_connection = network(request)
     peer_certs = []
+    verify_errors = []
 
-    # We add the callback to collect the certificates for use in constructing
-    # the error message if the verification failed.  This is necessary since we
-    # don't have direct access to the cert that we expected the connection to
-    # use otherwise.
-    #
     http_connection.verify_callback = proc do |preverify_ok, ssl_context|
+      # We use the callback to collect the certificates for use in constructing
+      # the error message if the verification failed.  This is necessary since we
+      # don't have direct access to the cert that we expected the connection to
+      # use otherwise.
       peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
+      # And also keep the detailed verification error if such an error occurs
+      verify_errors << "verify error #{ssl_context.error} for #{ssl_context.current_cert.subject}" unless preverify_ok
       preverify_ok
     end
 
     http_connection.send(method, *args)
   rescue OpenSSL::SSL::SSLError => error
     if error.message.include? "certificate verify failed"
-      raise Puppet::Error, "#{error.message}.  This is often because the time is out of sync on the server or client"
+      msg = error.message
+      if verify_errors.empty?
+        msg << ".  This is often because the time is out of sync on the server or client"
+      else
+        msg << ".  "
+        msg << verify_errors.join('; ')
+      end
+      raise Puppet::Error, msg
     elsif error.message =~ /hostname (was )?not match/
       raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
 
