@@ -520,16 +520,17 @@ EOT
     #   :type  => :file,
     #   :mode  => 0644,
     #   :owner => "service",
-    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates\n" <<
+    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
     #             "listed in the ssl_client_ca_auth file."
     # },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
-      :desc  => "Certificate Authorities who issue server certificates.  SSL Servers will not be" <<
-                "considered authentic unless they posses a certificate issued by an authority" <<
-                "listed in this file."
+      :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be \n" <<
+                "considered authentic unless they posses a certificate issued by an authority \n" <<
+                "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
+                "certificate (localcacert) will be used."
     },
     ## JJM - The ssl_server_ca_chain setting is commented out because it is
     # intended for (#3143) and is not expected to be used until CA chaining is
@@ -538,16 +539,17 @@ EOT
     #   :type  => :file,
     #   :mode  => 0644,
     #   :owner => "service",
-    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates" <<
+    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
     #             "listed in the ssl_server_ca_auth file."
     # },
     :ssl_server_ca_auth => {
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
-      :desc  => "Certificate authorities who issue server certificates.  SSL client will not be" <<
-                "considered authentic unless they posses a certificate issued by an authority" <<
-                "listed in this file."
+      :desc  => "Certificate authorities who issue client certificates.  SSL clients will not be \n" <<
+                "considered authentic unless they posses a certificate issued by an authority \n" <<
+                "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
+                "certificate (localcacert) will be used."
     },
     :hostcrl => {
       :default => "$ssldir/crl.pem",
