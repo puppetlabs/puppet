@@ -39,12 +39,12 @@ module Puppet::ModuleTool
               # Solaris tar is not as safe and works differently, so we prefer
               # gnutar instead.
               if Puppet::Util.which('gtar')
-                Puppet::Util.execute("gtar xzf #{@filename} -C #{build_dir}")
+                Puppet::Util::Execution.execute("gtar xzf #{@filename} -C #{build_dir}")
               else
                 raise RuntimeError, "Cannot find the command 'gtar'. Make sure GNU tar is installed, and is in your PATH."
               end
             else
-              Puppet::Util.execute("tar xzf #{@filename} -C #{build_dir}")
+              Puppet::Util::Execution.execute("tar xzf #{@filename} -C #{build_dir}")
             end
           rescue Puppet::ExecutionFailure => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
