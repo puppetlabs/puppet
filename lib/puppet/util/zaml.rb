@@ -116,9 +116,9 @@ class ZAML
     @recent_nl = false unless s.kind_of?(Label)
   end
 
-  def nl(s='')
+  def nl(s = nil)
     emit(@indent || "\n") unless @recent_nl
-    emit(s)
+    emit(s) if s
     @recent_nl = true
   end
 
