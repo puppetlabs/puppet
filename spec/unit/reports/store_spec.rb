@@ -45,31 +45,31 @@ describe processor do
       @report.process
     end
 
-    ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
-      it "rejects #{node.inspect}" do
-        @report.host = node
-        expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
-      end
-    end
-
-    ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
-      it "accepts #{node.inspect}" do
-        @report.host = node
-        @report.process
-      end
+    it "rejects invalid hostnames" do
+      @report.host = ".."
+      FileTest.expects(:exists?).never
+      Tempfile.expects(:new).never
+      expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
     end
   end
 
   describe "::destroy" do
+    it "rejects invalid hostnames" do
+      File.expects(:unlink).never
+      expect { processor.destroy("..") }.to raise_error(ArgumentError, /Invalid node/)
+    end
+  end
+
+  describe "::validate_host" do
     ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
       it "rejects #{node.inspect}" do
-        expect { processor.destroy(node) }.to raise_error(ArgumentError, /Invalid node/)
+        expect { processor.validate_host(node) }.to raise_error(ArgumentError, /Invalid node/)
       end
     end
 
     ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
       it "accepts #{node.inspect}" do
-        processor.destroy(node)
+        processor.validate_host(node)
       end
     end
   end
