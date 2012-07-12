@@ -55,6 +55,7 @@ class ZAML
     stuff.to_zaml(z)
     where << z.to_s
   end
+
   #
   # Instance Methods
   #
@@ -66,12 +67,14 @@ class ZAML
     @next_free_label_number = 0
     emit('--- ')
   end
+
   def nested(tail='  ')
     old_indent = @indent
     @indent = "#{@indent || "\n"}#{tail}"
     yield
     @indent = old_indent
   end
+
   class Label
     #
     # YAML only wants objects in the datastream once; if the same object
@@ -90,26 +93,32 @@ class ZAML
     #    it can be handled).
     #
     attr_accessor :this_label_number
+
     def initialize(obj,indent)
       @indent = indent
       @this_label_number = nil
       @obj = obj # prevent garbage collection so that object id isn't reused
     end
+
     def to_s
       @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
     end
+
     def reference
       @reference         ||= '*id%03d' % @this_label_number
     end
   end
+
   def label_for(obj)
     @previously_emitted_object[obj.object_id]
   end
+
   def new_label_for(obj)
     label = Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
     @previously_emitted_object[obj.object_id] = label
     label
   end
+
   def first_time_only(obj)
     if label = label_for(obj)
       label.this_label_number ||= (@next_free_label_number += 1)
@@ -123,18 +132,22 @@ class ZAML
       yield
     end
   end
+
   def emit(s)
     @result << s
     @recent_nl = false unless s.kind_of?(Label)
   end
+
   def nl(s='')
     emit(@indent || "\n") unless @recent_nl
     emit(s)
     @recent_nl = true
   end
+
   def to_s
     @result.join
   end
+
   def prefix_structured_keys(x)
     @structured_key_prefix = x
     yield
