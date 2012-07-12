@@ -227,23 +227,12 @@ class Exception
 end
 
 class String
-  ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
-  def escaped_for_zaml
-    # JJM (Note the trailing dots to construct a multi-line method chain.) This
-    # code is meant to escape all bytes which are not ASCII-8BIT printable
-    # characters.  Multi-byte unicode characters are handled just fine because
-    # each byte of the character results in an escaped string emitted to the
-    # YAML stream.  When the YAML is de-serialized back into a String the bytes
-    # will be reconstructed properly into the unicode character.
-    self.to_ascii8bit.gsub( /\x5C/n, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
-    gsub( /"/n, "\\\"" ).
-    gsub( /([\x00-\x1F])/n ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
-  end
+  ZAML_ESCAPES = {
+    "\\" => "\\\\", "\n" => "\\n", "\r" => "\\r", "\t" => "\\t", "\e" => "\\e"
+  }
+
   def to_zaml(z)
-    z.first_time_only(self) {
-      hex_num = '0x[a-f\d]+'
-      float = '\d+\.?\d*'
-      num = "[-+]?(?:#{float}|#{hex_num})"
+    z.first_time_only(self) do
       case
       when self == ''
         z.emit('""')
@@ -257,26 +246,32 @@ class String
                | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
                |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
                )*\z/mnx
-
+        # Emit the binary tag, then recurse. Ruby splits BASE64 output at the 60
+        # character mark when packing strings, and we can wind up a multi-line
+        # string here.  We could reimplement the multi-line string logic,
+        # but why would we - this does just as well for producing solid output.
         z.emit("!binary ")
-        z.emit([self].pack("m*"))
-      when (
-            (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
-            (self =~ /\A\n* /) or
-            (self =~ /[\s:]$/) or
-            (self =~ /^[>|][-+\d]*\s/i) or
-            (self[-1..-1] =~ /\s/) or
-            (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
-            (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
-            )
-        z.emit("\"#{escaped_for_zaml}\"")
+        [self].pack("m*").to_zaml(z)
+
+      # Only legal UTF-8 characters can make it this far, so we are safe
+      # against emitting something dubious. That means we don't need to mess
+      # about, just emit them directly. --daniel 2012-07-14
       when self =~ /\n/
+        # embedded newline, split line-wise in quoted string block form.
         if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
         z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-      else
+      when ((self =~ /^[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*$/) and
+          (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
+        # simple string literal, safe to emit unquoted.
         z.emit(self)
+      else
+        # ...though we still have to escape unsafe characters.
+        escaped = gsub(/[\\"\x00-\x1F]/) do |c|
+          ZAML_ESCAPES[c] || "\\x#{c[0].ord.to_s(16)}"
+        end
+        z.emit("\"#{escaped}\"")
       end
-    }
+    end
   end
 
   # Return a guranteed ASCII-8BIT encoding for Ruby 1.9 This is a helper
@@ -284,12 +279,12 @@ class String
   # sequences deliberately rather than dealing with characters.
   # The method may or may not return a new instance.
   if String.method_defined?(:encoding)
-    ASCII = Encoding.find("ASCII-8BIT")
+    ASCII_ENCODING = Encoding.find("ASCII-8BIT")
     def to_ascii8bit
-      if self.encoding.name == "ASCII-8BIT"
+      if self.encoding == ASCII_ENCODING
         self
       else
-        self.dup.force_encoding("ASCII-8BIT")
+        self.dup.force_encoding(ASCII_ENCODING)
       end
     end
   else
