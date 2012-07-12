@@ -10,6 +10,9 @@ class Puppet::Indirector::Indirection
   include Puppet::Util::Docs
   extend Puppet::Util::Instrumentation::Instrumentable
 
+  attr_accessor :name, :model
+  attr_reader :termini
+
   probe :find, :label => Proc.new { |parent, key, *args| "find_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
   probe :save, :label => Proc.new { |parent, key, *args| "save_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
   probe :search, :label => Proc.new { |parent, key, *args| "search_#{parent.name}_#{parent.terminus_class}" }, :data => Proc.new { |parent, key, *args| { :key => key }}
@@ -35,10 +38,6 @@ class Puppet::Indirector::Indirection
     return nil unless match = @@indirections.find { |i| i.name == name }
     match.model
   end
-
-  attr_accessor :name, :model
-
-  attr_reader :termini
 
   # Create and return our cache terminus.
   def cache

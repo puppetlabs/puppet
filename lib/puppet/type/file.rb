@@ -201,7 +201,7 @@ Puppet::Type.newtype(:file) do
       whose content doesn't match what the `source` or `content` attribute
       specifies.  Setting this to false allows file resources to initialize files
       without overwriting future changes.  Note that this only affects content;
-      Puppet will still manage ownership and permissions."
+      Puppet will still manage ownership and permissions. Defaults to `true`."
     newvalues(:true, :false)
     aliasvalue(:yes, :true)
     aliasvalue(:no, :false)

@@ -464,7 +464,7 @@ describe Puppet::Type.type(:file) do
     it "should create a new resource relative to the parent" do
       child = file.newchild('bar')
 
-      child.should be_a(described_class)
+      child.must be_a(described_class)
       child[:path].should == File.join(file[:path], 'bar')
     end
 

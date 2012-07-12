@@ -153,7 +153,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
 
       root = resource[:root]
-      load_path = resource[:load_path]
+      load_path = get_load_path(resource)
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
@@ -278,6 +278,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
     end
     !!return_value
+  end
+
+  # Generate lens load paths from user given paths and local pluginsync dir
+  def get_load_path(resource)
+    load_path = []
+
+    # Permits colon separated strings or arrays
+    if resource[:load_path]
+      load_path = [resource[:load_path]].flatten
+      load_path.map! { |path| path.split(/:/) }
+      load_path.flatten!
+    end
+
+    if File.exists?("#{Puppet[:libdir]}/augeas/lenses")
+      load_path << "#{Puppet[:libdir]}/augeas/lenses"
+    end
+
+    load_path.join(":")
   end
 
   def get_augeas_version

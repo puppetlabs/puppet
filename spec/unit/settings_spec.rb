@@ -1499,34 +1499,34 @@ describe Puppet::Settings do
       Puppet::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
     end
   end
-  
+
   describe "default_certname" do
     describe "using hostname and domainname" do
-      before :each do 
+      before :each do
         Puppet::Settings.stubs(:hostname_fact).returns("testhostname")
         Puppet::Settings.stubs(:domain_fact).returns("domain.test.")
-        end 
-      it "should use both to generate fqdn" do 
+      end
+
+      it "should use both to generate fqdn" do
         Puppet::Settings.default_certname.should =~ /testhostname\.domain\.test/
       end
-      
-      it "should remove trailing dots from fqdn" do 
+      it "should remove trailing dots from fqdn" do
         Puppet::Settings.default_certname.should == 'testhostname.domain.test'
-      end 
+      end
     end
-    
+
     describe "using just hostname" do
       before :each do
-        Puppet::Settings.stubs(:hostname_fact).returns("testhostname") 
+        Puppet::Settings.stubs(:hostname_fact).returns("testhostname")
         Puppet::Settings.stubs(:domain_fact).returns("")
-        end 
-      it "should use only hostname to generate fqdn" do 
-        Puppet::Settings.default_certname.should == "testhostname" 
-      end 
-      
-      it "should removing trailing dots from fqdn" do 
-        Puppet::Settings.default_certname.should == "testhostname" 
-      end 
-    end 
-  end 
+      end
+
+      it "should use only hostname to generate fqdn" do
+        Puppet::Settings.default_certname.should == "testhostname"
+      end
+      it "should removing trailing dots from fqdn" do
+        Puppet::Settings.default_certname.should == "testhostname"
+      end
+    end
+  end
 end

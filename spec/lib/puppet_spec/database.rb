@@ -22,9 +22,11 @@ end
 # ready to roll with a serious database and all.  Cleanup is handled
 # automatically for you.  Nothing to do there.
 def setup_scratch_database
-  dir = PuppetSpec::Files.tmpdir('puppet-sqlite')
-  Puppet[:dbadapter]  = 'sqlite3'
-  Puppet[:dblocation] = (dir + 'storeconfigs.sqlite').to_s
-  Puppet[:railslog]   = (dir + 'storeconfigs.log').to_s
+  Puppet::Rails.stubs(:database_arguments).returns(
+    :adapter => 'sqlite3',
+    :log_level => Puppet[:rails_loglevel],
+    :database => ':memory:'
+  )
+  Puppet[:railslog] = PuppetSpec::Files.tmpfile('storeconfigs.log')
   Puppet::Rails.init
 end

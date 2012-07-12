@@ -14,12 +14,12 @@ class Puppet::Module
 
   include Puppet::Util::Logging
 
-  TEMPLATES = "templates"
-  FILES = "files"
-  MANIFESTS = "manifests"
-  PLUGINS = "plugins"
-
-  FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
+  FILETYPES = {
+    "manifests" => "manifests",
+    "files" => "files",
+    "templates" => "templates",
+    "plugins" => "lib",
+  }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
   # absolute, or if there is no module whose name is the first component
@@ -29,11 +29,23 @@ class Puppet::Module
     Puppet::Node::Environment.new(environment).module(modname)
   end
 
-  attr_reader :name, :environment
+  attr_reader :name, :environment, :path
   attr_writer :environment
 
   attr_accessor :dependencies, :forge_name
   attr_accessor :source, :author, :version, :license, :puppetversion, :summary, :description, :project_page
+
+  def initialize(name, path, environment)
+    @name = name
+    @path = path
+    @environment = environment
+
+    assert_validity
+
+    load_metadata if has_metadata?
+
+    validate_puppet_version
+  end
 
   def has_metadata?
     return false unless metadata_file
@@ -46,33 +58,11 @@ class Puppet::Module
     return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
 
-  def initialize(name, options = {})
-    @name = name
-    @path = options[:path]
-
-    assert_validity
-
-    if options[:environment].is_a?(Puppet::Node::Environment)
-      @environment = options[:environment]
-    else
-      @environment = Puppet::Node::Environment.new(options[:environment])
-    end
-
-    load_metadata if has_metadata?
-
-    validate_puppet_version
-  end
-
-  FILETYPES.each do |type|
+  FILETYPES.each do |type, location|
     # A boolean method to let external callers determine if
     # we have files of a given type.
     define_method(type +'?') do
-      unless path
-        Puppet.debug("No #{type} found; path not specified")
-        return false
-      end
-
-      type_subpath = subpath(type)
+      type_subpath = subpath(location)
       unless FileTest.exist?(type_subpath)
         Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
                          "(file / directory does not exist)")
@@ -87,24 +77,23 @@ class Puppet::Module
     #
     # If the file name is nil, then the base directory for the
     # file type is passed; this is used for fileserving.
-    define_method(type.to_s.sub(/s$/, '')) do |file|
-      return nil unless path
-
+    define_method(type.sub(/s$/, '')) do |file|
       # If 'file' is nil then they're asking for the base path.
       # This is used for things like fileserving.
       if file
-        full_path = File.join(subpath(type), file)
+        full_path = File.join(subpath(location), file)
       else
-        full_path = subpath(type)
+        full_path = subpath(location)
       end
 
       return nil unless FileTest.exist?(full_path)
       return full_path
     end
-  end
 
-  def exist?
-    ! path.nil?
+    # Return the base directory for the given type
+    define_method(type) do
+      subpath(location)
+    end
   end
 
   def license_file
@@ -143,7 +132,7 @@ class Puppet::Module
   # Return the list of manifests matching the given glob pattern,
   # defaulting to 'init.{pp,rb}' for empty modules.
   def match_manifests(rest)
-    pat = File.join(path, MANIFESTS, rest || 'init')
+    pat = File.join(path, "manifests", rest || 'init')
     [manifest("init.pp"),manifest("init.rb")].compact + Dir.
       glob(pat + (File.extname(pat).empty? ? '.{pp,rb}' : '')).
       reject { |f| FileTest.directory?(f) }
@@ -156,18 +145,13 @@ class Puppet::Module
     @metadata_file = File.join(path, "metadata.json")
   end
 
-  # Find this module in the modulepath.
-  def path
-    @path ||= environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
-  end
-
   def modulepath
     File.dirname(path) if path
   end
 
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
   def plugin_directory
-    subpath("plugins")
+    subpath("lib")
   end
 
   def supports(name, version = nil)
@@ -292,18 +276,7 @@ class Puppet::Module
   private
 
   def subpath(type)
-    return File.join(path, type) unless type.to_s == "plugins"
-
-    backward_compatible_plugins_dir
-  end
-
-  def backward_compatible_plugins_dir
-    if dir = File.join(path, "plugins") and FileTest.exist?(dir)
-      Puppet.deprecation_warning "using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'"
-      return dir
-    else
-      return File.join(path, "lib")
-    end
+    File.join(path, type)
   end
 
   def assert_validity

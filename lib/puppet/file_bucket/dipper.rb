@@ -1,3 +1,4 @@
+require 'pathname'
 require 'puppet/file_bucket'
 require 'puppet/file_bucket/file'
 require 'puppet/indirector/request'
@@ -100,7 +101,6 @@ class Puppet::FileBucket::Dipper
 
   private
   def absolutize_path( path )
-    require 'pathname'
     Pathname.new(path).realpath
   end
 
