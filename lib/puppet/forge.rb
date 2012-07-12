@@ -4,6 +4,7 @@ require 'pathname'
 require 'uri'
 require 'puppet/forge/cache'
 require 'puppet/forge/repository'
+require 'puppet/forge/errors'
 
 class Puppet::Forge
   # +consumer_name+ is a name to be used for identifying the consumer of the
@@ -34,7 +35,7 @@ class Puppet::Forge
   # ]
   #
   def search(term)
-    server = Puppet.settings[:module_repository].sub(/^(?!https?:\/\/)/, 'http://')
+    server = Puppet.settings[:module_repository]
     Puppet.notice "Searching #{server} ..."
     response = repository.make_http_request("/modules.json?q=#{URI.escape(term)}")
 

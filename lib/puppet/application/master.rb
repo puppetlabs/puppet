@@ -110,6 +110,8 @@ following signals:
   Restart the puppet master server.
 * SIGINT and SIGTERM:
   Shut down the puppet master server.
+* SIGUSR2:
+  Close file descriptors for log files and reopen them. Used with logrotate.
 
 AUTHOR
 ------
@@ -165,8 +167,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'etc'
-    require 'puppet/file_serving/content'
-    require 'puppet/file_serving/metadata'
 
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
@@ -202,9 +202,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
-  def setup
-    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
-
+  def setup_logs
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
       if options[:debug]
@@ -220,11 +218,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+  end
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+  def setup_terminuses
+    require 'puppet/file_serving/content'
+    require 'puppet/file_serving/metadata'
 
-    Puppet.settings.use :main, :master, :ssl, :metrics
+    Puppet::FileServing::Content.indirection.terminus_class = :file_server
+    Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
 
+    Puppet::FileBucket::File.indirection.terminus_class = :file
+  end
+
+  def setup_ssl
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local
@@ -233,5 +239,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::SSL::Host.ca_location = :none
     end
+  end
+
+  def setup
+    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+
+    setup_logs
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    Puppet.settings.use :main, :master, :ssl, :metrics
+
+    setup_terminuses
+
+    setup_ssl
   end
 end

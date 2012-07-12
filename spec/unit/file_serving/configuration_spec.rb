@@ -158,80 +158,88 @@ describe Puppet::FileServing::Configuration do
     end
   end
 
-  describe "when finding the mount name and relative path in a request key" do
-    before do
-      @config = Puppet::FileServing::Configuration.configuration
-      @config.stubs(:find_mount)
+  describe "#split_path" do
+    let(:config) { Puppet::FileServing::Configuration.configuration }
+    let(:request) { stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil, :environment => mock("env") }
 
-      @request = stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil, :environment => mock("env")
+    before do
+      config.stubs(:find_mount)
     end
 
     it "should reread the configuration" do
-      @config.expects(:readconfig)
+      config.expects(:readconfig)
 
-      @config.split_path(@request)
+      config.split_path(request)
     end
 
     it "should treat the first field of the URI path as the mount name" do
-      @config.expects(:find_mount).with { |name, node| name == "foo" }
+      config.expects(:find_mount).with { |name, node| name == "foo" }
 
-      @config.split_path(@request)
+      config.split_path(request)
     end
 
     it "should fail if the mount name is not alpha-numeric" do
-      @request.expects(:key).returns "foo&bar/asdf"
+      request.expects(:key).returns "foo&bar/asdf"
 
-      lambda { @config.split_path(@request) }.should raise_error(ArgumentError)
+      lambda { config.split_path(request) }.should raise_error(ArgumentError)
     end
 
     it "should support dashes in the mount name" do
-      @request.expects(:key).returns "foo-bar/asdf"
+      request.expects(:key).returns "foo-bar/asdf"
 
-      lambda { @config.split_path(@request) }.should_not raise_error(ArgumentError)
+      lambda { config.split_path(request) }.should_not raise_error(ArgumentError)
     end
 
     it "should use the mount name and environment to find the mount" do
-      @config.expects(:find_mount).with { |name, env| name == "foo" and env == @request.environment }
-      @request.stubs(:node).returns("mynode")
+      config.expects(:find_mount).with { |name, env| name == "foo" and env == request.environment }
+      request.stubs(:node).returns("mynode")
 
-      @config.split_path(@request)
+      config.split_path(request)
     end
 
     it "should return nil if the mount cannot be found" do
-      @config.expects(:find_mount).returns nil
+      config.expects(:find_mount).returns nil
 
-      @config.split_path(@request).should be_nil
+      config.split_path(request).should be_nil
     end
 
     it "should return the mount and the relative path if the mount is found" do
       mount = stub 'mount', :name => "foo"
-      @config.expects(:find_mount).returns mount
+      config.expects(:find_mount).returns mount
 
-      @config.split_path(@request).should == [mount, "bar/baz"]
+      config.split_path(request).should == [mount, "bar/baz"]
     end
 
     it "should remove any double slashes" do
-      @request.stubs(:key).returns "foo/bar//baz"
+      request.stubs(:key).returns "foo/bar//baz"
       mount = stub 'mount', :name => "foo"
-      @config.expects(:find_mount).returns mount
+      config.expects(:find_mount).returns mount
 
-      @config.split_path(@request).should == [mount, "bar/baz"]
+      config.split_path(request).should == [mount, "bar/baz"]
+    end
+
+    it "should fail if the path contains .." do
+      request.stubs(:key).returns 'module/foo/../../bar'
+
+      expect do
+        config.split_path(request)
+      end.to raise_error(ArgumentError, /Invalid relative path/)
     end
 
     it "should return the relative path as nil if it is an empty string" do
-      @request.expects(:key).returns "foo"
+      request.expects(:key).returns "foo"
       mount = stub 'mount', :name => "foo"
-      @config.expects(:find_mount).returns mount
+      config.expects(:find_mount).returns mount
 
-      @config.split_path(@request).should == [mount, nil]
+      config.split_path(request).should == [mount, nil]
     end
 
     it "should add 'modules/' to the relative path if the modules mount is used but not specified, for backward compatibility" do
-      @request.expects(:key).returns "foo/bar"
+      request.expects(:key).returns "foo/bar"
       mount = stub 'mount', :name => "modules"
-      @config.expects(:find_mount).returns mount
+      config.expects(:find_mount).returns mount
 
-      @config.split_path(@request).should == [mount, "foo/bar"]
+      config.split_path(request).should == [mount, "foo/bar"]
     end
   end
 end

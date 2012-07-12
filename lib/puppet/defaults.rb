@@ -320,9 +320,10 @@ module Puppet
       :default  => false,
       :type     => :boolean,
       :desc     =>
-    "Boolean; whether storeconfigs store in the database only the facts and exported resources.
-    If true, then storeconfigs performance will be higher and still allow exported/collected
-    resources, but other usage external to Puppet might not work",
+    "Boolean; whether Puppet should store only facts and exported resources in the storeconfigs
+    database. This will improve the performance of exported resources with the older
+    `active_record` backend, but will disable external tools that search the storeconfigs database.
+    Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
       :hook     => proc do |value|
         Puppet.settings[:storeconfigs] = true if value
         end
@@ -360,7 +361,7 @@ module Puppet
   )
   Puppet.define_settings(:module_tool,
     :module_repository  => {
-      :default  => 'http://forge.puppetlabs.com',
+      :default  => 'https://forge.puppetlabs.com',
       :desc     => "The module repository",
     },
     :module_working_dir => {
@@ -512,6 +513,44 @@ EOT
       :mode => 0644,
       :owner => "service",
       :desc => "Where each client stores the CA certificate."
+    },
+    ## JJM - The ssl_client_ca_chain setting is commented out because it is
+    # intended for (#3143) and is not expected to be used until CA chaining is
+    # supported.
+    # :ssl_client_ca_chain => {
+    #   :type  => :file,
+    #   :mode  => 0644,
+    #   :owner => "service",
+    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
+    #             "listed in the ssl_client_ca_auth file."
+    # },
+    :ssl_client_ca_auth => {
+      :type  => :file,
+      :mode  => 0644,
+      :owner => "service",
+      :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be \n" <<
+                "considered authentic unless they posses a certificate issued by an authority \n" <<
+                "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
+                "certificate (localcacert) will be used."
+    },
+    ## JJM - The ssl_server_ca_chain setting is commented out because it is
+    # intended for (#3143) and is not expected to be used until CA chaining is
+    # supported.
+    # :ssl_server_ca_chain => {
+    #   :type  => :file,
+    #   :mode  => 0644,
+    #   :owner => "service",
+    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
+    #             "listed in the ssl_server_ca_auth file."
+    # },
+    :ssl_server_ca_auth => {
+      :type  => :file,
+      :mode  => 0644,
+      :owner => "service",
+      :desc  => "Certificate authorities who issue client certificates.  SSL clients will not be \n" <<
+                "considered authentic unless they posses a certificate issued by an authority \n" <<
+                "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
+                "certificate (localcacert) will be used."
     },
     :hostcrl => {
       :default => "$ssldir/crl.pem",
@@ -932,7 +971,7 @@ EOT
       :default => "$statedir/classes.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
@@ -941,7 +980,7 @@ EOT
       :default => "$statedir/resources.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the resources
         associated with the retrieved configuration."  },
     :puppetdlog => {
@@ -1124,13 +1163,13 @@ EOT
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",
       :type     => :file,
-      :mode     => 0644,
+      :mode     => 0640,
       :desc     => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  {
       :default  => "$statedir/last_run_report.yaml",
       :type     => :file,
-      :mode     => 0644,
+      :mode     => 0640,
       :desc     => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => {

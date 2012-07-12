@@ -227,7 +227,14 @@ module Util::Execution
       if File.exists?(stdout.path)
         output = stdout.open.read
 
-        stdout.close(true)
+        begin
+          stdout.close(true)
+        rescue Errno::EACCES => e
+          # try to unlink, though it will fail on Windows if the child process,
+          # e.g. start.exe, executed another process asynchronously, as the
+          # grandchild still has a handle to the tempfile
+          raise e unless Puppet.features.microsoft_windows?
+        end
 
         return output
       else

@@ -86,6 +86,8 @@ module Puppet
           names = certs.values.map(&:keys).flatten
 
           name_width = names.sort_by(&:length).last.length rescue 0
+          # We quote these names, so account for those characters
+          name_width += 2
 
           output = [:request, :signed, :invalid].map do |type|
             next if certs[type].empty?
@@ -111,11 +113,11 @@ module Puppet
 
           alt_names.delete(host)
 
-          alt_str = "(alt names: #{alt_names.join(', ')})" unless alt_names.empty?
+          alt_str = "(alt names: #{alt_names.map(&:inspect).join(', ')})" unless alt_names.empty?
 
           glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
 
-          name = host.ljust(width)
+          name = host.inspect.ljust(width)
           fingerprint = "(#{ca.fingerprint(host, @digest)})"
 
           explanation = "(#{verify_error})" if verify_error

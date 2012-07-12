@@ -53,6 +53,7 @@ function install_puppet() {
   "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sbindir="${SBINDIR}" --sitelibdir="${SITELIBDIR}"
   mkdir -p ${pkgroot}/var/lib/puppet
   chown -R root:admin "${pkgroot}"
+  chmod -R go-w "${pkgroot}"
 }
 
 function install_docs() {
@@ -107,7 +108,8 @@ function create_package() {
   rm -fr "$(pwd)/puppet-${puppet_version}.pkg"
   echo "Building package"
   echo "Note that packagemaker is reknowned for spurious errors. Don't panic."
-  "${PACKAGEMAKER}" --root "${pkgroot}" \
+  "${PACKAGEMAKER}" --verbose --no-recommend --no-relocate \
+                    --root "${pkgroot}" \
                     --info "${pkgtemp}/${PROTO_PLIST}" \
                     --scripts ${pkgtemp}/scripts \
                     --out "$(pwd)/puppet-${puppet_version}.pkg"

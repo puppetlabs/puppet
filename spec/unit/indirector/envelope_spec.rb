@@ -8,19 +8,6 @@ describe Puppet::Indirector::Envelope do
     @instance.extend(Puppet::Indirector::Envelope)
   end
 
-  it "should have an expiration accessor" do
-    @instance.expiration = "testing"
-    @instance.expiration.should == "testing"
-  end
-
-  it "should have an expiration setter" do
-    @instance.should respond_to(:expiration=)
-  end
-
-  it "should have a means of testing whether it is expired" do
-    @instance.should respond_to(:expired?)
-  end
-
   describe "when testing if it is expired" do
     it "should return false if there is no expiration set" do
       @instance.should_not be_expired
