@@ -320,9 +320,10 @@ module Puppet
       :default  => false,
       :type     => :boolean,
       :desc     =>
-    "Boolean; whether storeconfigs store in the database only the facts and exported resources.
-    If true, then storeconfigs performance will be higher and still allow exported/collected
-    resources, but other usage external to Puppet might not work",
+    "Boolean; whether Puppet should store only facts and exported resources in the storeconfigs
+    database. This will improve the performance of exported resources with the older
+    `active_record` backend, but will disable external tools that search the storeconfigs database.
+    Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
       :hook     => proc do |value|
         Puppet.settings[:storeconfigs] = true if value
         end
@@ -970,7 +971,7 @@ EOT
       :default => "$statedir/classes.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
@@ -979,7 +980,7 @@ EOT
       :default => "$statedir/resources.txt",
       :type => :file,
       :owner => "root",
-      :mode => 0644,
+      :mode => 0640,
       :desc => "The file in which puppet agent stores a list of the resources
         associated with the retrieved configuration."  },
     :puppetdlog => {
@@ -1162,13 +1163,13 @@ EOT
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",
       :type     => :file,
-      :mode     => 0644,
+      :mode     => 0640,
       :desc     => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  {
       :default  => "$statedir/last_run_report.yaml",
       :type     => :file,
-      :mode     => 0644,
+      :mode     => 0640,
       :desc     => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => {

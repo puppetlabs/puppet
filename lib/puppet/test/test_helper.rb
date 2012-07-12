@@ -73,6 +73,8 @@ module Puppet::Test
       $old_load_path = $LOAD_PATH.dup
 
       initialize_settings_before_each()
+
+      Puppet.clear_deprecation_warnings
     end
 
     # Call this method once per test, after execution of each individual test.

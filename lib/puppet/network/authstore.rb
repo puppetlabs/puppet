@@ -150,7 +150,16 @@ module Puppet
 
       # Does this declaration match the name/ip combo?
       def match?(name, ip)
-        ip? ? pattern.include?(IPAddr.new(ip)) : matchname?(name)
+        if ip?
+          if pattern.include?(IPAddr.new(ip))
+            Puppet.deprecation_warning "Authentication based on IP address is deprecated; please use certname-based rules instead"
+            true
+          else
+            false
+          end
+        else
+          matchname?(name)
+        end
       end
 
       # Set the pattern appropriately.  Also sets the name and length.
@@ -212,7 +221,6 @@ module Puppet
 
       # Convert the name to a common pattern.
       def munge_name(name)
-        # LAK:NOTE http://snurl.com/21zf8  [groups_google_com]
         # Change to name.downcase.split(".",-1).reverse for FQDN support
         name.downcase.split(".").reverse
       end
