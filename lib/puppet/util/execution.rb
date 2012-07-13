@@ -225,18 +225,13 @@ module Util::Execution
     #  meaning that the processes responsible for writing the file have completed before we get here.)
     2.times do |try|
       if File.exists?(stdout.path)
-        output = stdout.open.read
-
+        stdout.open
         begin
-          stdout.close(true)
-        rescue Errno::EACCES => e
-          # try to unlink, though it will fail on Windows if the child process,
-          # e.g. start.exe, executed another process asynchronously, as the
-          # grandchild still has a handle to the tempfile
-          raise e unless Puppet.features.microsoft_windows?
+          return stdout.read
+        ensure
+          stdout.close
+          stdout.unlink
         end
-
-        return output
       else
         time_to_sleep = try / 2.0
         Puppet.warning "Waiting for output; will sleep #{time_to_sleep} seconds"
@@ -246,9 +241,5 @@ module Util::Execution
     nil
   end
   private_class_method :wait_for_output
-
-
-
-
 end
 end
