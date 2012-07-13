@@ -411,7 +411,7 @@ describe Puppet::Util do
       end
 
       it "should wait for the child process to exit" do
-        Puppet::Util.stubs(:wait_for_output)
+        Puppet::Util.expects(:wait_for_output)
 
         Puppet::Util.execute('test command')
       end
