@@ -499,7 +499,7 @@ describe Puppet::SSL::CertificateAuthority do
          "not\neven\tkind\rof",
          "ding\adong\a",
          "hidden\b\b\b\b\b\bmessage",
-         "☃ :("
+         "\xE2\x98\x83 :("
         ].each do |name|
           it "should reject #{name.inspect}" do
             # We aren't even allowed to make objects with these names, so let's
