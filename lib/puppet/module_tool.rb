@@ -99,6 +99,7 @@ module Puppet
       Puppet[:environment] = options[:environment]
 
       options[:target_dir] = options[:modulepath].split(sep).first
+      options[:target_dir] = File.expand_path(options[:target_dir])
     end
   end
 end

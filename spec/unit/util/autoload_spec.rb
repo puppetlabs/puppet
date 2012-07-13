@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/util/autoload'
@@ -23,7 +23,7 @@ describe Puppet::Util::Autoload do
       @dirc = File.expand_path('/c')
     end
 
-    it "should collect all of the plugins and lib directories that exist in the current environment's module path" do
+    it "should collect all of the lib directories that exist in the current environment's module path" do
       Puppet.settings.expects(:value).with(:environment).returns "foo"
       Puppet.settings.expects(:value).with(:modulepath, :foo).returns "#{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}"
       Dir.expects(:entries).with(@dira).returns %w{one two}
@@ -32,11 +32,11 @@ describe Puppet::Util::Autoload do
       FileTest.stubs(:directory?).returns false
       FileTest.expects(:directory?).with(@dira).returns true
       FileTest.expects(:directory?).with(@dirb).returns true
-      ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"].each do |d|
+      ["#{@dira}/two/lib", "#{@dirb}/two/lib"].each do |d|
         FileTest.expects(:directory?).with(d).returns true
       end
 
-      @autoload.class.module_directories.should == ["#{@dira}/one/plugins", "#{@dira}/two/lib", "#{@dirb}/one/plugins", "#{@dirb}/two/lib"]
+      @autoload.class.module_directories.should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
     end
 
     it "should not look for lib directories in directories starting with '.'" do
@@ -88,6 +88,16 @@ describe Puppet::Util::Autoload do
       @autoload.load("myfile")
 
       @autoload.class.loaded?("tmp/myfile.rb").should be
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
+    end
+
+    it "should be seen by loaded? on the instance using the short name" do
+      File.stubs(:exist?).returns true
+      Kernel.stubs(:load)
+      @autoload.load("myfile")
+
+      @autoload.loaded?("myfile.rb").should be
 
       $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
@@ -166,6 +176,24 @@ describe Puppet::Util::Autoload do
     after :each do
       $LOADED_FEATURES.delete("a/file.rb")
       $LOADED_FEATURES.delete("b/file.rb")
+    end
+
+    it "#changed? should return true for a file that was not loaded" do
+      @autoload.class.changed?(@file_a).should be
+    end
+
+    it "changes should be seen by changed? on the instance using the short name" do
+      File.stubs(:mtime).returns(@first_time)
+      File.stubs(:exist?).returns true
+      Kernel.stubs(:load)
+      @autoload.load("myfile")
+      @autoload.loaded?("myfile").should be
+      @autoload.changed?("myfile").should_not be
+
+      File.stubs(:mtime).returns(@second_time)
+      @autoload.changed?("myfile").should be
+
+      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
 
     describe "in one directory" do

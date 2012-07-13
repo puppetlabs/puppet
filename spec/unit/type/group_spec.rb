@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:group) do
@@ -33,11 +33,11 @@ describe Puppet::Type.type(:group) do
   end
 
   it "should have a boolean method for determining if duplicates are allowed" do
-    @class.new(:name => "foo").should respond_to "allowdupe?"
+    @class.new(:name => "foo").must respond_to "allowdupe?"
   end
 
   it "should have a boolean method for determining if system groups are allowed" do
-    @class.new(:name => "foo").should respond_to "system?"
+    @class.new(:name => "foo").must respond_to "system?"
   end
 
   it "should call 'create' to create the group" do

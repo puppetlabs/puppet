@@ -11,10 +11,10 @@ Release:        0.1rc3%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
-#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -68,8 +68,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-#%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc1
+%setup -q -n %{name}-%{version}
+#%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -133,6 +133,9 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
     %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
 
+# Create puppet modules directory for puppet module tool
+mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
+
 %files
 %defattr(-, root, root, 0755)
 %doc CHANGELOG LICENSE README.md examples
@@ -140,6 +143,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
+%dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
@@ -267,23 +271,38 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Jul 11 2012 William Hopper <whopper@puppetlabs.com> - 2.7.18-2
+- (#15221) Create /etc/puppet/modules for puppet module tool
+
+* Mon Jul 9 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.18-1
+- Update for 2.7.18
+
+* Tue Jun 19 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.17-1
+- Update for 2.7.17
+
+* Wed Jun 13 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-1
+- Update for 2.7.16
+
+* Fri Jun 08 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.16-0.1rc1.2
+- Updated facter 2.0 dep to include epoch 1
+
 * Wed Jun 06 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.16-0.1rc1
 - Update for 2.7.16rc1, added generated manpages
 
 * Fri Jun 01 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc3
-* Puppet 3.0.0rc3 Release
+- Puppet 3.0.0rc3 Release
 
-* Tue May 22 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc2
-* Puppet 3.0.0rc2 Release
-
-* Thu May 17 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc1
-* Puppet 3.0.0rc1 Release
-
-* Fri Jun 1 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.15-0.1rc4
+* Fri Jun 01 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 2.7.15-0.1rc4
 - Update for 2.7.15rc4
 
 * Tue May 29 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc3
 - Update for 2.7.15rc3
+
+* Tue May 22 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc2
+- Puppet 3.0.0rc2 Release
+
+* Thu May 17 2012 Matthaus Litteken <matthaus@puppetlabs.com> - 3.0.0-0.1rc1
+- Puppet 3.0.0rc1 Release
 
 * Wed May 16 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.15-0.1rc2
 - Update for 2.7.15rc2

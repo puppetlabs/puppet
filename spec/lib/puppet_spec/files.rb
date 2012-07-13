@@ -29,7 +29,8 @@ module PuppetSpec::Files
     end
   end
 
-  def make_absolute(path)
+  def make_absolute(path) PuppetSpec::Files.make_absolute(path) end
+  def self.make_absolute(path)
     path = File.expand_path(path)
     path[0] = 'c' if Puppet.features.microsoft_windows?
     path

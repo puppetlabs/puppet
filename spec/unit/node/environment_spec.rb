@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'tmpdir'
@@ -161,7 +161,7 @@ describe Puppet::Node::Environment do
     end
 
     it "should be able to return an individual module that exists in its module path" do
-      env.stubs(:modules).returns [Puppet::Module.new('one'), Puppet::Module.new('two'), Puppet::Module.new('three')]
+      env.stubs(:modules).returns [Puppet::Module.new('one', "/one", mock("env"))]
 
       mod = env.module('one')
       mod.should be_a(Puppet::Module)
@@ -169,9 +169,9 @@ describe Puppet::Node::Environment do
     end
 
     it "should not return a module if the module doesn't exist" do
-      env.stubs(:modules).returns [Puppet::Module.new('one'), Puppet::Module.new('two'), Puppet::Module.new('three')]
+      env.stubs(:modules).returns [Puppet::Module.new('one', "/one", mock("env"))]
 
-      env.module('four').should be_nil
+      env.module('two').should be_nil
     end
 
     it "should return nil if asked for a module that does not exist in its path" do
@@ -208,8 +208,8 @@ describe Puppet::Node::Environment do
           FileUtils.mkdir_p(modpath2)
 
           env.modules_by_path.should == {
-            @first  => [Puppet::Module.new('foo', :environment => env, :path => modpath1)],
-            @second => [Puppet::Module.new('foo', :environment => env, :path => modpath2)]
+            @first  => [Puppet::Module.new('foo', modpath1, env)],
+            @second => [Puppet::Module.new('foo', modpath2, env)]
           }
         end
 

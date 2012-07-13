@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_windows? do
@@ -15,6 +15,20 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
       described_class.new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe')[:command].should == 'C:\Windows\System32\notepad.exe'
     end
 
+    it 'should convert forward slashes to backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:/Windows/System32/notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
+    it 'should normalize backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:\Windows\\System32\\\\notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
     it 'should fail if the path to the command is not absolute' do
       expect {
         described_class.new(:name => 'Test Task', :command => 'notepad.exe')
@@ -26,25 +40,12 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
   end
 
   describe 'when setting the command arguments' do
-    it 'should fail if provided an array' do
-      expect {
-        described_class.new(
-          :name      => 'Test Task',
-          :command   => 'C:\Windows\System32\notepad.exe',
-          :arguments => ['/a', '/b', '/c']
-        )
-      }.to raise_error(
-        Puppet::Error,
-        /Parameter arguments failed: Must be specified as a single string/
-      )
-    end
-
     it 'should accept a string' do
       described_class.new(
         :name      => 'Test Task',
         :command   => 'C:\Windows\System32\notepad.exe',
         :arguments => '/a /b /c'
-      )[:arguments].should == ['/a /b /c']
+      )[:arguments].should == '/a /b /c'
     end
 
     it 'should allow not specifying any command arguments' do

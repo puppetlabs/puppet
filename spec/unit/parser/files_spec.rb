@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/parser/files'
@@ -184,20 +184,30 @@ describe Puppet::Parser::Files do
   end
 
   describe "when searching for manifests in a found module" do
+    def a_module_in_environment(env, name)
+      mod = Puppet::Module.new(name, "/one/#{name}", env)
+      env.stubs(:module).with(name).returns mod
+      mod.stubs(:match_manifests).with("init.pp").returns(["/one/#{name}/manifests/init.pp"])
+    end
+
     it "should return the name of the module and the manifests from the first found module" do
-      mod = Puppet::Module.new("mymod")
-      Puppet::Node::Environment.new.expects(:module).with("mymod").returns mod
-      mod.expects(:match_manifests).with("init.pp").returns(%w{/one/mymod/manifests/init.pp})
-      Puppet::Parser::Files.find_manifests("mymod/init.pp").should == ["mymod", ["/one/mymod/manifests/init.pp"]]
+      a_module_in_environment(Puppet::Node::Environment.new, "mymod")
+
+      Puppet::Parser::Files.find_manifests("mymod/init.pp").should ==
+        ["mymod", ["/one/mymod/manifests/init.pp"]]
     end
 
     it "should use the node environment if specified" do
-      mod = Puppet::Module.new("mymod")
-      Puppet::Node::Environment.new("myenv").expects(:module).with("mymod").returns mod
-      mod.expects(:match_manifests).with("init.pp").returns(%w{/one/mymod/manifests/init.pp})
-      Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "myenv")[1].should == ["/one/mymod/manifests/init.pp"]
+      a_module_in_environment(Puppet::Node::Environment.new("myenv"), "mymod")
+
+      Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "myenv").should ==
+        ["mymod", ["/one/mymod/manifests/init.pp"]]
     end
 
-    after { Puppet.settings.clear }
+    it "does not find the module when it is a different environment" do
+      a_module_in_environment(Puppet::Node::Environment.new("myenv"), "mymod")
+
+      Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "different").should_not include("mymod")
+    end
   end
 end

@@ -7,6 +7,7 @@ class Puppet::Node::ActiveRecord < Puppet::Indirector::ActiveRecord
 
   def find(request)
     node = super
+    node.environment = request.environment
     node.fact_merge
     node
   end

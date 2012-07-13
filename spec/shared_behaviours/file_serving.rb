@@ -1,54 +1,75 @@
-#!/usr/bin/env rspec
-shared_examples_for "Puppet::FileServing::Files" do
-  it "should use the rest terminus when the 'puppet' URI scheme is used and a host name is present" do
-    uri = "puppet://myhost/fakemod/my/file"
+#! /usr/bin/env ruby -S rspec
 
-    # It appears that the mocking somehow interferes with the caching subsystem.
-    # This mock somehow causes another terminus to get generated.
-    term = @indirection.terminus(:rest)
-    @indirection.stubs(:terminus).with(:rest).returns term
-    term.expects(:find)
-    @indirection.find(uri)
-  end
+shared_examples_for "Puppet::FileServing::Files" do |indirection|
+  %w[find search].each do |method|
+    let(:request) { Puppet::Indirector::Request.new(indirection, method, 'foo', nil) }
 
-  it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and default_file_terminus is rest" do
-    uri = "puppet:///fakemod/my/file"
-    Puppet[:default_file_terminus] = "rest"
-    @indirection.terminus(:rest).expects(:find)
-    @indirection.find(uri)
-  end
+    describe "##{method}" do
+      it "should proxy to file terminus if the path is absolute" do
+        request.key = make_absolute('/tmp/foo')
 
-  it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and default_file_terminus is file_server" do
-    uri = "puppet:///fakemod/my/file"
-    Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil, :modulepath => []))
-    Puppet[:default_file_terminus] = "file_server"
-    Puppet[:fileserverconfig] = "/whatever"
-    @indirection.terminus(:file_server).expects(:find)
-    @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
-    @indirection.find(uri)
-  end
+        described_class.indirection.terminus(:file).class.any_instance.expects(method).with(request)
 
-  it "should use the file terminus when the 'file' URI scheme is used" do
-    uri = Puppet::Util.path_to_uri(File.expand_path('/fakemod/my/other file'))
-    uri.scheme.should == 'file'
-    @indirection.terminus(:file).expects(:find)
-    @indirection.find(uri.to_s)
-  end
+        subject.send(method, request)
+      end
 
-  it "should use the file terminus when a fully qualified path is provided" do
-    uri = File.expand_path("/fakemod/my/file")
-    @indirection.terminus(:file).expects(:find)
-    @indirection.find(uri)
-  end
+      it "should proxy to file terminus if the protocol is file" do
+        request.protocol = 'file'
 
-  it "should use the configuration to test whether the request is allowed" do
-    uri = "fakemod/my/file"
-    mount = mock 'mount'
-    config = stub 'configuration', :split_path => [mount, "eh"]
-    @indirection.terminus(:file_server).stubs(:configuration).returns config
+        described_class.indirection.terminus(:file).class.any_instance.expects(method).with(request)
 
-    @indirection.terminus(:file_server).expects(:find)
-    mount.expects(:allowed?).returns(true)
-    @indirection.find(uri, :node => "foo", :ip => "bar")
+        subject.send(method, request)
+      end
+
+      describe "when the protocol is puppet" do
+        before :each do
+          request.protocol = 'puppet'
+        end
+
+        describe "and a server is specified" do
+          before :each do
+            request.server = 'puppet_server'
+          end
+
+          it "should proxy to rest terminus if default_file_terminus is rest" do
+            Puppet[:default_file_terminus] = "rest"
+
+            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+
+            subject.send(method, request)
+          end
+
+          it "should proxy to rest terminus if default_file_terminus is not rest" do
+            Puppet[:default_file_terminus] = 'file_server'
+
+            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+
+            subject.send(method, request)
+          end
+        end
+
+        describe "and no server is specified" do
+          before :each do
+            request.server = nil
+          end
+
+          it "should proxy to file_server if default_file_terminus is 'file_server'" do
+            Puppet[:default_file_terminus] = 'file_server'
+
+            described_class.indirection.terminus(:file_server).class.any_instance.expects(method).with(request)
+
+            subject.send(method, request)
+          end
+
+          it "should proxy to rest if default_file_terminus is 'rest'" do
+            Puppet[:default_file_terminus] = "rest"
+
+            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+
+            subject.send(method, request)
+          end
+        end
+      end
+    end
   end
 end

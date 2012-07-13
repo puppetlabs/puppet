@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Util::RunMode do
@@ -15,8 +15,7 @@ describe Puppet::Util::RunMode do
 
   it "should have confdir ~/.puppet when run as non-root" do
     Puppet.features.stubs(:root?).returns(false)
-    @run_mode.expects(:expand_path).with("~/.puppet").returns("~/.puppet")
-    @run_mode.conf_dir.should == "~/.puppet"
+    @run_mode.conf_dir.should == File.expand_path("~/.puppet")
   end
 
   it "should have vardir /var/lib/puppet when run as root" do
@@ -28,8 +27,7 @@ describe Puppet::Util::RunMode do
 
   it "should have vardir ~/.puppet/var when run as non-root" do
     Puppet.features.stubs(:root?).returns(false)
-    @run_mode.expects(:expand_path).with("~/.puppet/var").returns("~/.puppet/var")
-    @run_mode.var_dir.should == "~/.puppet/var"
+    @run_mode.var_dir.should == File.expand_path("~/.puppet/var")
   end
 
   it "should have rundir depend on vardir" do

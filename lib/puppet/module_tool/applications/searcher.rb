@@ -1,6 +1,7 @@
 module Puppet::ModuleTool
   module Applications
     class Searcher < Application
+      include Puppet::Forge::Errors
 
       def initialize(term, forge, options = {})
         @term = term
@@ -9,7 +10,18 @@ module Puppet::ModuleTool
       end
 
       def run
-        @forge.search(@term)
+        results = {}
+        begin
+          results[:answers] = @forge.search(@term)
+          results[:result] = :success
+        rescue ForgeError => e
+          results[:result] = :failure
+          results[:error] = {
+            :oneline   => e.message,
+            :multiline => e.multiline,
+          }
+        end
+        results
       end
     end
   end

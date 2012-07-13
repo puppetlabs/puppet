@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/file_serving/mount/modules'
 
@@ -11,6 +11,10 @@ describe Puppet::FileServing::Mount::Modules do
   end
 
   describe "when finding files" do
+    it "should fail if no module is specified" do
+      expect { @mount.find("", @request) }.to raise_error(/No module specified/)
+    end
+
     it "should use the provided environment to find the module" do
       @environment.expects(:module)
 
@@ -36,6 +40,10 @@ describe Puppet::FileServing::Mount::Modules do
   end
 
   describe "when searching for files" do
+    it "should fail if no module is specified" do
+      expect { @mount.find("", @request) }.to raise_error(/No module specified/)
+    end
+
     it "should use the node's environment to search the module" do
       @environment.expects(:module)
 

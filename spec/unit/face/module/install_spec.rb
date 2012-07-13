@@ -94,6 +94,17 @@ describe "puppet module install" do
 
           Puppet.settings[:modulepath].should == fakemodpath
         end
+
+        it "should expand the target directory derived from the modulepath" do
+          options[:modulepath] = "modules"
+          expanded_path = File.expand_path("modules")
+          expected_options.merge!(options)
+          expected_options[:target_dir] = expanded_path
+          expected_options[:modulepath] = "modules"
+
+          expects_installer_run_with("puppetlabs-apache", expected_options)
+          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
+        end
       end
 
       describe "when target-dir option is passed" do
@@ -139,7 +150,7 @@ describe "puppet module install" do
           Puppet.settings[:modulepath].should == expected_options[:modulepath]
         end
 
-        it "should expand the target directory" do
+        it "should expand the target directory when target_dir is set" do
           options[:target_dir] = "modules"
           expanded_path = File.expand_path("modules")
           expected_options.merge!(options)
@@ -170,10 +181,16 @@ describe "puppet module install" do
 
   def expects_installer_run_with(name, options)
     installer = mock("Installer")
+    install_dir = mock("InstallDir")
     forge = mock("Forge")
 
     Puppet::Forge.expects(:new).with("PMT", subject.version).returns(forge)
-    Puppet::ModuleTool::Applications::Installer.expects(:new).with("puppetlabs-apache", forge, expected_options).returns(installer)
+    Puppet::ModuleTool::InstallDirectory.expects(:new).
+      with(Pathname.new(expected_options[:target_dir])).
+      returns(install_dir)
+    Puppet::ModuleTool::Applications::Installer.expects(:new).
+      with("puppetlabs-apache", forge, install_dir, expected_options).
+      returns(installer)
     installer.expects(:run)
   end
 end

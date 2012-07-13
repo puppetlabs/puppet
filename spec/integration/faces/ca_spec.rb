@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/face'
 
@@ -21,62 +21,60 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     )
   end
 
-  def make_certs(csr_names, crt_names)
-    Array(csr_names).map do |name|
+  def given_certificate_requests_for(*names)
+    names.each do |name|
       Puppet::SSL::Host.new(name).generate_certificate_request
     end
+  end
 
-    Array(crt_names).map do |name|
+  def given_certificates_for(*names)
+    names.each do |name|
       Puppet::SSL::Host.new(name).generate
     end
   end
 
   context "#verify" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:verify) end
-
-    it "should not explode if there is no certificate" do
-      expect {
-        subject.verify('random-host').should == {
-          :host => 'random-host', :valid => false,
-          :error => 'Could not find a certificate for random-host'
-        }
-      }.should_not raise_error
+    it "should report if there is no certificate" do
+      subject.verify('random-host').should == {
+        :host => 'random-host', :valid => false,
+        :error => 'Could not find a certificate for random-host'
+      }
     end
 
-    it "should not explode if there is only a CSR" do
-      make_certs('random-host', [])
-      expect {
-        subject.verify('random-host').should == {
-          :host => 'random-host', :valid => false,
-          :error => 'Could not find a certificate for random-host'
-        }
-      }.should_not raise_error
+    it "should report that it cannot find a certificate when there is only a request" do
+      given_certificate_requests_for('random-host')
+
+      subject.verify('random-host').should == {
+        :host => 'random-host', :valid => false,
+        :error => 'Could not find a certificate for random-host'
+      }
     end
 
     it "should verify a signed certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.verify('random-host').should == {
         :host => 'random-host', :valid => true
       }
     end
 
     it "should not verify a revoked certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.revoke('random-host')
 
-      expect {
-        subject.verify('random-host').should == {
-          :host => 'random-host', :valid => false,
-          :error => 'certificate revoked'
-        }
-      }.should_not raise_error
+      subject.verify('random-host').should == {
+        :host => 'random-host', :valid => false,
+        :error => 'certificate revoked'
+      }
     end
 
     it "should verify a revoked certificate if CRL use was turned off" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
       subject.revoke('random-host')
 
       Puppet[:certificate_revocation] = false
+
       subject.verify('random-host').should == {
         :host => 'random-host', :valid => true
       }
@@ -84,38 +82,32 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#fingerprint" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:fingerprint) end
-
-    it "should have a 'digest' option" do
-      action.should be_option :digest
-    end
-
-    it "should not explode if there is no certificate" do
-      expect {
-        subject.fingerprint('random-host').should be_nil
-      }.should_not raise_error
+    it "should be nil if there is no certificate" do
+      subject.fingerprint('random-host').should be_nil
     end
 
     it "should fingerprint a CSR" do
-      make_certs('random-host', [])
-      expect {
-        subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
-      }.should_not raise_error
+      given_certificate_requests_for('random-host')
+
+      subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
     end
 
     it "should fingerprint a certificate" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
     end
 
     %w{md5 MD5 sha1 ShA1 SHA1 RIPEMD160 sha256 sha512}.each do |digest|
       it "should fingerprint with #{digest.inspect}" do
-        make_certs([], 'random-host')
+        given_certificates_for('random-host')
+
         subject.fingerprint('random-host', :digest => digest).should =~ /^[0-9A-F:]+$/
       end
 
       it "should fingerprint with #{digest.to_sym} as a symbol" do
-        make_certs([], 'random-host')
+        given_certificates_for('random-host')
+
         subject.fingerprint('random-host', :digest => digest.to_sym).
           should =~ /^[0-9A-F:]+$/
       end
@@ -123,24 +115,21 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#print" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:print) end
-
-    it "should not explode if there is no certificate" do
-      expect {
-        subject.print('random-host').should be_nil
-      }.should_not raise_error
+    it "should be nil if there is no certificate" do
+      subject.print('random-host').should be_nil
     end
 
     it "should return nothing if there is only a CSR" do
-      make_certs('random-host', [])
-      expect {
-        subject.print('random-host').should be_nil
-      }.should_not raise_error
+      given_certificate_requests_for('random-host')
+
+      subject.print('random-host').should be_nil
     end
 
     it "should return the certificate content if there is a cert" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       text = subject.print('random-host')
+
       text.should be_an_instance_of String
       text.should =~ /^Certificate:/
       text.should =~ /Issuer: CN=Puppet CA: /
@@ -149,25 +138,19 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#sign" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:sign) end
-
-    it "should not explode if there is no CSR" do
-      expect {
-        subject.sign('random-host').
-          should == 'Could not find certificate request for random-host'
-      }.should_not raise_error
+    it "should report that there is no CSR" do
+      subject.sign('random-host').should == 'Could not find certificate request for random-host'
     end
 
-    it "should not explode if there is a signed cert" do
-      make_certs([], 'random-host')
-      expect {
-        subject.sign('random-host').
-          should == 'Could not find certificate request for random-host'
-      }.should_not raise_error
+    it "should report that there is no CSR when even when there is a certificate" do
+      given_certificates_for('random-host')
+
+      subject.sign('random-host').should == 'Could not find certificate request for random-host'
     end
 
     it "should sign a CSR if one exists" do
-      make_certs('random-host', [])
+      given_certificate_requests_for('random-host')
+
       subject.sign('random-host').should be_an_instance_of Puppet::SSL::Certificate
 
       list = subject.list(:signed => true)
@@ -200,8 +183,6 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#generate" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:generate) end
-
     it "should generate a certificate if requested" do
       subject.list(:all => true).should == []
 
@@ -212,18 +193,16 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       list.first.name.should == 'random-host'
     end
 
-    it "should not explode if a CSR with that name already exists" do
-      make_certs('random-host', [])
-      expect {
-        subject.generate('random-host').should =~ /already has a certificate request/
-      }.should_not raise_error
+    it "should report if a CSR with that name already exists" do
+      given_certificate_requests_for('random-host')
+
+      subject.generate('random-host').should =~ /already has a certificate request/
     end
 
-    it "should not explode if the certificate with that name already exists" do
-      make_certs([], 'random-host')
-      expect {
-        subject.generate('random-host').should =~ /already has a certificate/
-      }.should_not raise_error
+    it "should report if the certificate with that name already exists" do
+      given_certificates_for('random-host')
+
+      subject.generate('random-host').should =~ /already has a certificate/
     end
 
     it "should include the specified DNS alt names" do
@@ -239,21 +218,12 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#revoke" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:revoke) end
-
-    it "should not explode when asked to revoke something that doesn't exist" do
-      expect { subject.revoke('nonesuch') }.should_not raise_error
-    end
-
-    it "should let the user know what went wrong" do
+    it "should let the user know what went wrong when there is nothing to revoke" do
       subject.revoke('nonesuch').should == 'Nothing was revoked'
     end
 
     it "should revoke a certificate" do
-      make_certs([], 'random-host')
-      found = subject.list(:all => true, :subject => 'random-host')
-      subject.get_action(:list).when_rendering(:console).call(found).
-        should =~ /^\+ random-host/
+      given_certificates_for('random-host')
 
       subject.revoke('random-host')
 
@@ -264,19 +234,12 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#destroy" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:destroy) end
-
-    it "should not explode when asked to delete something that doesn't exist" do
-      expect { subject.destroy('nonesuch') }.should_not raise_error
-    end
-
     it "should let the user know if nothing was deleted" do
       subject.destroy('nonesuch').should == "Nothing was deleted"
     end
 
     it "should destroy a CSR, if we have one" do
-      make_certs('random-host', [])
-      subject.list(:pending => true, :subject => 'random-host').should_not == []
+      given_certificate_requests_for('random-host')
 
       subject.destroy('random-host')
 
@@ -284,8 +247,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should destroy a certificate, if we have one" do
-      make_certs([], 'random-host')
-      subject.list(:signed => true, :subject => 'random-host').should_not == []
+      given_certificates_for('random-host')
 
       subject.destroy('random-host')
 
@@ -293,24 +255,16 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     it "should tell the user something was deleted" do
-      make_certs([], 'random-host')
+      given_certificates_for('random-host')
+
       subject.list(:signed => true, :subject => 'random-host').should_not == []
+
       subject.destroy('random-host').
         should == "Deleted for random-host: Puppet::SSL::Certificate, Puppet::SSL::Key"
     end
   end
 
   context "#list" do
-    let :action do Puppet::Face[:ca, '0.1.0'].get_action(:list) end
-
-    context "options" do
-      subject { Puppet::Face[:ca, '0.1.0'].get_action(:list) }
-      it { should be_option :pending }
-      it { should be_option :signed  }
-      it { should be_option :all     }
-      it { should be_option :subject }
-    end
-
     context "with no hosts in CA" do
       [
         {},
@@ -322,15 +276,13 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           subject.list(type).should == []
         end
 
-        it "should not fail when a matcher is passed" do
-          expect {
-            subject.list(type.merge :subject => '.').should == []
-          }.should_not raise_error
+        it "should return nothing when a matcher is passed" do
+          subject.list(type.merge :subject => '.').should == []
         end
 
         context "when_rendering :console" do
           it "should return nothing for #{type.inspect}" do
-            action.when_rendering(:console).call(subject.list(type)).should == ""
+            subject.get_action(:list).when_rendering(:console).call(subject.list(type)).should == ""
           end
         end
       end
@@ -351,7 +303,9 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         { :pending => true, :signed => true } => all_names,
       }.each do |input, expect|
         it "should map #{input.inspect} to #{expect.inspect}" do
-          make_certs(csr_names, crt_names)
+          given_certificate_requests_for(*csr_names)
+          given_certificates_for(*crt_names)
+
           subject.list(input).map(&:name).should =~ expect
         end
 
@@ -359,22 +313,27 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           filtered = expect.select {|x| Regexp.new(pattern).match(x) }
 
           it "should filter all hosts matching #{pattern.inspect} to #{filtered.inspect}" do
-            make_certs(csr_names, crt_names)
+            given_certificate_requests_for(*csr_names)
+            given_certificates_for(*crt_names)
+
             subject.list(input.merge :subject => pattern).map(&:name).should =~ filtered
           end
         end
       end
 
       context "when_rendering :console" do
-        { [["csr1.local"], []] => '^  csr1.local ',
-          [[], ["crt1.local"]] => '^\+ crt1.local ',
-          [["csr2"], ["crt2"]] => ['^  csr2 ', '^\+ crt2 ']
+        { [["csr1.local"], []] => [/^  csr1.local /],
+          [[], ["crt1.local"]] => [/^\+ crt1.local /],
+          [["csr2"], ["crt2"]] => [/^  csr2 /, /^\+ crt2 /]
         }.each do |input, pattern|
           it "should render #{input.inspect} to match #{pattern.inspect}" do
-            make_certs(*input)
-            text = action.when_rendering(:console).call(subject.list(:all => true))
-            Array(pattern).each do |item|
-              text.should =~ Regexp.new(item)
+            given_certificate_requests_for(*input[0])
+            given_certificates_for(*input[1])
+
+            text = subject.get_action(:list).when_rendering(:console).call(subject.list(:all => true))
+
+            pattern.each do |item|
+              text.should =~ item
             end
           end
         end

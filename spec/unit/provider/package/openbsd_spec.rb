@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'stringio'
 
@@ -71,6 +71,7 @@ describe provider_class do
 
         name == provider.resource[:name]
       end
+      provider.expects(:execpipe).with(%w{/bin/pkg_info -I bash}).yields('')
 
       provider.install
       ENV.should_not be_key 'PKG_PATH'

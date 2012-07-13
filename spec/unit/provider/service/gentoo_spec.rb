@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 
 require 'spec_helper'
 
@@ -48,6 +48,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
       FileTest.expects(:directory?).with('/etc/init.d').returns true
+      File.stubs(:symlink?).returns(false)
       Dir.expects(:entries).with('/etc/init.d').returns initscripts
       (initscripts - helperscripts).each do |script|
         FileTest.expects(:executable?).with("/etc/init.d/#{script}").returns true

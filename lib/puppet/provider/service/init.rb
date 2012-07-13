@@ -42,6 +42,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         next if name =~ /^\./
         next if exclude.include? name
         next if not FileTest.executable?(fullpath)
+        next if not is_init?(fullpath)
         instances << new(:name => name, :path => path, :hasstatus => true)
       end
     end
@@ -130,5 +131,10 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     (@resource[:hasstatus] == :true) && [initscript, :status]
   end
 
+private
+
+  def self.is_init?(script = initscript)
+    !File.symlink?(script) || File.readlink(script) != "/lib/init/upstart-job"
+  end
 end
 

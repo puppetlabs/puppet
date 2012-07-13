@@ -1,3 +1,5 @@
+require 'digest/md5'
+
 Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc =>
   "Generates random numbers based on the node's fqdn. Generated random values
   will be a range from 0 up to and excluding n, where n is the first parameter.
@@ -5,7 +7,6 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc =>
 
       $random_number = fqdn_rand(30)
       $random_number_seed = fqdn_rand(30,30)") do |args|
-    require 'digest/md5'
     max = args.shift.to_i
     srand(Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex)
     rand(max).to_s

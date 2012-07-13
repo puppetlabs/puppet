@@ -18,6 +18,8 @@ Puppet::Type.type(:service).provide :windows do
 
   has_feature :refreshable
 
+  commands :net => 'net.exe'
+
   def enable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START )
     raise Puppet::Error.new("Win32 service enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
@@ -73,14 +75,14 @@ Puppet::Type.type(:service).provide :windows do
       end
     end
 
-    Win32::Service.start( @resource[:name] )
-  rescue Win32::Service::Error => detail
+    net(:start, @resource[:name])
+  rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
   end
 
   def stop
-    Win32::Service.stop( @resource[:name] )
-  rescue Win32::Service::Error => detail
+    net(:stop, @resource[:name])
+  rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}" )
   end
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
@@ -228,11 +228,18 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should specify the path to the CA certificate" do
-      Puppet.settings.stubs(:value).returns "whatever"
-      Puppet.settings.stubs(:value).with(:hostcrl).returns 'false'
-      Puppet.settings.stubs(:value).with(:localcacert).returns '/ca/crt'
+      Puppet.settings[:hostcrl] = 'false'
+      Puppet.settings[:localcacert] = '/ca/crt'
 
       @server.setup_ssl[:SSLCACertificateFile].should == "/ca/crt"
+    end
+
+    it "should specify the path to the CA certificate" do
+      Puppet.settings[:hostcrl] = 'false'
+      Puppet.settings[:localcacert] = '/ca/crt'
+      Puppet.settings[:ssl_server_ca_auth] = '/ca/ssl_server_auth_file'
+
+      @server.setup_ssl[:SSLCACertificateFile].should == "/ca/ssl_server_auth_file"
     end
 
     it "should start ssl immediately" do

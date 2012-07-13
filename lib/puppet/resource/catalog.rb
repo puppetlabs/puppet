@@ -348,7 +348,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # references to the resource instances.
   def remove_resource(*resources)
     resources.each do |resource|
-      @resource_table.delete(resource.ref)
+      title_key = title_key_for_ref(resource.ref)
+      @resource_table.delete(title_key)
       if aliases = @aliases[resource.ref]
         aliases.each { |res_alias| @resource_table.delete(res_alias) }
         @aliases.delete(resource.ref)

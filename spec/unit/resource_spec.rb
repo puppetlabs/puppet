@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/resource'
 
@@ -268,7 +268,8 @@ describe Puppet::Resource do
 
   describe "when setting default parameters" do
     before do
-      @scope = Puppet::Parser::Scope.new
+      @scope = mock "Scope"
+      @scope.stubs(:source).returns(nil)
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
@@ -305,14 +306,18 @@ describe Puppet::Resource do
     end
 
     describe "when the resource type is :hostclass" do
-      before do
-        @scope.stubs(:host).returns('foo')
-        Puppet::Node::Environment.new.known_resource_types.add(apache)
-      end
-
+      let(:environmnet_name) { "testing env" }
+      let(:fact_values) { { :a => 1 } }
       let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
-      let(:apache) do
-        Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port })
+      let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
+
+      before do
+        environment = Puppet::Node::Environment.new(environmnet_name)
+        environment.known_resource_types.add(apache)
+
+        @scope.stubs(:host).returns('host')
+        @scope.stubs(:environment).returns(Puppet::Node::Environment.new(environmnet_name))
+        @scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
       end
 
       context "when no value is provided" do
@@ -322,26 +327,18 @@ describe Puppet::Resource do
 
         it "should query the data_binding terminus using a namespaced key" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo')
-          resource.set_default_parameters(@scope)
-        end
-
-        it "should query the data_binding terminus using the host attribute from the scope" do
-          Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo')
+            'apache::port', :host => 'host', :environment => environmnet_name, :facts => fact_values)
           resource.set_default_parameters(@scope)
         end
 
         it "should use the value from the data_binding terminus" do
-          Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo').returns('443')
+          Puppet::DataBinding.indirection.expects(:find).returns('443')
           resource.set_default_parameters(@scope).should == [:port]
           resource[:port].should == '443'
         end
 
         it "should use the default value if the data_binding terminus returns nil" do
-          Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'foo').returns(nil)
+          Puppet::DataBinding.indirection.expects(:find).returns(nil)
           resource.set_default_parameters(@scope).should == [:port]
           resource[:port].should == '80'
         end
@@ -611,7 +608,7 @@ type: File
     it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
       resource = Puppet::Resource.new("file", basepath+"/my/file")
       result = resource.to_ral
-      result.should be_instance_of(Puppet::Type.type(:file))
+      result.must be_instance_of(Puppet::Type.type(:file))
       result[:path].should == basepath+"/my/file"
     end
 
@@ -619,7 +616,7 @@ type: File
       resource = Puppet::Resource.new("foobar", "somename")
       result = resource.to_ral
 
-      result.should be_instance_of(Puppet::Type.type(:component))
+      result.must be_instance_of(Puppet::Type.type(:component))
       result.title.should == "Foobar[somename]"
     end
   end

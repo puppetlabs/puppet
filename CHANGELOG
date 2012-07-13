@@ -1,11 +1,5 @@
 3.0.0rc3
 ===
-e619304 (#14761) Add boot, reboot to excludes list for redhat provider
-7c1d8c2 (maint) Disable upstart spec test on windows
-37df5c4 (#14615) Final stub fixes for the tests.
-f11dfd6 (#14615) Fix provider spec tests to work on non gentoo systems
-060810e maint: Make it easier to test the service provider
-c0cb0fa (Maint) Close filehandles after read in upstart
 55505db (Maint) Fix upstart provider to work on Ruby 1.9.3
 b0f1d58 Update redhat.spec dependency to include hiera-puppet
 6e2f23d Update puppet gem dependencies
@@ -109,8 +103,37 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
-2.7.16rc1
+2.7.18
 ===
+d804782 Reject directory traversal in store report processor
+fd44bf5 Tighten permissions on classfile, resourcefile, lastrunfile, and lastrunreport.
+4d7c9fd Use "inspect" when listing certificates
+bd2820e Don't allow the creation of SSL objects with invalid certnames
+f341962 Validate CSR CN and provided certname before signing
+38c5a4e Add specs for selector terminuses of file_{content,metadata}
+9e920a8 Fix whitespace inside parentheses
+2d01c2b Use head method to determine if file is in file bucket
+40ee670 Always use the local file_bucket on master
+d881b4b Fail more gracefully when finding module files if no file is specified
+20ab0e9 Reject file requests containing ..
+10f6cb8 Add Selector terminus for file_content/file_metadata
+ab9150b Deprecate IP-based authentication
+
+2.7.17
+===
+30d89d3 (maint) Add symlink stub to gentoo service provider spec
+ff1b37a Add comment to upstart provider explaining exclusion of 'wait-for-state'
+6b854f7 Upstart code cleanup, init provider improvement
+0f81d9a Add spec test for network-interface-security
+a2c1e23 Add basic service resource test to upstart acceptance
+2c85d4d Handle network-interface-security in upstart
+ed00e74 Add exclude list to upstart provider
+17cc177 (#15027, #15028, #15029) Fix upstart version parsing
+b0ee6ad (maint) Add --test to puppet run
+
+2.7.16
+===
+99fecc3 Update facter dep to reflect epoch 1
 3a06246 (#8858) Explicitly set SSL peer verification mode.
 cd4bee8 Test SSL setup code, not our stubbing of it.
 ff052b8 (maint) Add mailmap to identify contributors
@@ -118,8 +141,17 @@ ff052b8 (maint) Add mailmap to identify contributors
 ebf5386 Remove EL-related test changes from this commit.
 2aea708 Revert changes to symbolic_modes.rb -- this test should indeed be pending (it should eventually work on Windows).
 b601bb4 Update acceptance tests to use confine instead of skip_test loops
+e619304 (#14761) Add boot, reboot to excludes list for redhat provider
+7c1d8c2 (maint) Disable upstart spec test on windows
+37df5c4 (#14615) Final stub fixes for the tests.
+f11dfd6 (#14615) Fix provider spec tests to work on non gentoo systems
+060810e maint: Make it easier to test the service provider
+c0cb0fa (Maint) Close filehandles after read in upstart
 0788ea2 (#14615) Exclude helperscripts in gentoo service provider
 be6062c Apply commit from master that varies ports during tests
+
+2.7.15rc3
+===
 a45942b (#14297) Don't remove tty1 or rsyslog during upstart acceptance
 466ab49 (#14297) Define agent in upstart acceptance test
 f5d1f74 (#14297) Update upstart provider acceptance tests
@@ -130,9 +162,15 @@ b9ed026 (#14297) Update spec tests for upstart provider
 91827e8 (#14297) Handle upstart services better
 3541db6 (#14343) Lookup in correct inherited scope
 2d83e22 (Maint) Added test for fully qualified variable
+
+2.7.15rc2
+===
 c6e006e (#8174) Allow defines to reference topscope
 e27adf4 Evaluate node classes either in top or node scope
 a3d51b2 Removed topscope being overridden by node
+
+2.7.15rc1
+===
 53e0057 Use internal domain name for module tool tests
 f4ba59e Use absolute_path in module install spec
 ead9d25 (Maint) Color console output when the win32console gem is installed

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Util::Execution do
@@ -476,6 +476,16 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.execute('test command')
 
         File.should_not be_exist(path)
+      end
+
+      it "should not raise an error if the file is open" do
+        stdout = Tempfile.new('test')
+        Tempfile.stubs(:new).returns(stdout)
+        file = File.new(stdout.path, 'r')
+
+        expect {
+          Puppet::Util.execute('test command')
+        }.to_not raise_error
       end
 
       it "should raise an error if failonfail is true and the child failed" do

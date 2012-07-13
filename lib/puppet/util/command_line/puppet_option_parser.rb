@@ -5,9 +5,6 @@ module Puppet
       class PuppetOptionError < Puppet::Error
       end
 
-      class PuppetUnrecognizedOptionError < PuppetOptionError
-      end
-
       # This is a command line option parser.  It is intended to have an API that is very similar to
       #  the ruby stdlib 'OptionParser' API, for ease of integration into our existing code... however,
       #  However, we've removed the OptionParser-based implementation and are only maintaining the
@@ -20,7 +17,7 @@ module Puppet
 
           @create_default_short_options = false
 
-          @wrapped_parser = ::Trollop::Parser.new do
+          @parser = ::Trollop::Parser.new do
             banner usage_msg
             create_default_short_options = false
             handle_help_and_version = false
@@ -36,34 +33,25 @@ module Puppet
         attr_reader :ignore_invalid_options
 
         def ignore_invalid_options=(value)
-          @wrapped_parser.ignore_invalid_options = value
+          @parser.ignore_invalid_options = value
         end
 
-
         def on(*args, &block)
-          # This is ugly and I apologize :)
-          # I wanted to keep the API for this class compatible with how we were previously
-          #  interacting with the ruby stdlib OptionParser.  Unfortunately, that means that
-          #  you can specify options as an array, with three or four elements.  The 2nd element
-          #  is an optional "short" representation.  This series of shift/pop operations seemed
-          #  the easiest way to avoid breaking compatibility with that syntax.
-
-          # The first argument is always the "--long" representation...
-          long = args.shift
-
-          # The last argument is always the "type"
-          type = args.pop
-          # The second-to-last argument is always the "description"
-          desc = args.pop
-
-          # if there is anything left, it's the "short" representation.
-          short = args.shift
+          # The 2nd element is an optional "short" representation.
+          if args.length == 3
+            long, desc, type = args
+          elsif args.length == 4
+            long, short, desc, type = args
+          else
+            raise ArgumentError, "this method only takes 3 or 4 arguments. Given: #{args.inspect}"
+          end
 
           options = {
               :long => long,
               :short => short,
               :required => false,
-              :callback => block,
+              :callback => pass_only_last_value_on_to(block),
+              :multi => true,
           }
 
           case type
@@ -75,21 +63,24 @@ module Puppet
               raise PuppetOptionError.new("Unsupported type: '#{type}'")
           end
 
-          @wrapped_parser.opt long.sub("^--", "").intern, desc, options
+          @parser.opt long.sub("^--", "").intern, desc, options
         end
 
         def parse(*args)
           args = args[0] if args.size == 1 and Array === args[0]
           args_copy = args.dup
           begin
-            @wrapped_parser.parse args_copy
+            @parser.parse args_copy
           rescue ::Trollop::CommandlineError => err
-            raise PuppetUnrecognizedOptionError.new(err) if err.message =~ /^unknown argument/
+            raise PuppetOptionError.new("Error parsing arguments", err)
           end
         end
+
+        def pass_only_last_value_on_to(block)
+          lambda { |values| block.call(values.is_a?(Array) ? values.last : values) }
+        end
+        private :pass_only_last_value_on_to
       end
-
-
     end
   end
 end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec) do
@@ -726,15 +726,15 @@ describe Puppet::Type.type(:exec) do
     end
 
     it "should accept a relative command with a path" do
-      type.new(:command => rel, :path => path).should be
+      type.new(:command => rel, :path => path).must be
     end
 
     it "should accept an absolute command with no path" do
-      type.new(:command => abs).should be
+      type.new(:command => abs).must be
     end
 
     it "should accept an absolute command with a path" do
-      type.new(:command => abs, :path => path).should be
+      type.new(:command => abs, :path => path).must be
     end
   end
 end

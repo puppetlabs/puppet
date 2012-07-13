@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:interface) do
@@ -16,7 +16,7 @@ describe Puppet::Type.type(:interface) do
   end
 
   it "should be applied on device" do
-    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1").should be_appliable_to_device
+    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1").must be_appliable_to_device
   end
 
   [:description, :speed, :duplex, :native_vlan, :encapsulation, :mode, :allowed_trunk_vlans, :etherchannel, :ipaddress].each do |p|

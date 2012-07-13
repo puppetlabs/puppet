@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/reports'
@@ -43,6 +43,34 @@ describe processor do
       file.stubs(:path).returns(File.join(Dir.tmpdir, "foo123"))
       FileUtils.expects(:mv).in_sequence(writeseq).with(File.join(Dir.tmpdir, "foo123"), File.join(Puppet[:reportdir], @report.host, "201101061200.yaml"))
       @report.process
+    end
+
+    it "rejects invalid hostnames" do
+      @report.host = ".."
+      FileTest.expects(:exists?).never
+      Tempfile.expects(:new).never
+      expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
+    end
+  end
+
+  describe "::destroy" do
+    it "rejects invalid hostnames" do
+      File.expects(:unlink).never
+      expect { processor.destroy("..") }.to raise_error(ArgumentError, /Invalid node/)
+    end
+  end
+
+  describe "::validate_host" do
+    ['..', 'hello/', '/hello', 'he/llo', 'hello/..', '.'].each do |node|
+      it "rejects #{node.inspect}" do
+        expect { processor.validate_host(node) }.to raise_error(ArgumentError, /Invalid node/)
+      end
+    end
+
+    ['.hello', 'hello.', '..hi', 'hi..'].each do |node|
+      it "accepts #{node.inspect}" do
+        processor.validate_host(node)
+      end
     end
   end
 end
