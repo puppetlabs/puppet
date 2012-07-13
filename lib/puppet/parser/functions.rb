@@ -45,7 +45,7 @@ module Puppet::Parser::Functions
 
   # Create a new function type.
   def self.newfunction(name, options = {}, &block)
-    name = symbolize(name)
+    name = name.intern
 
     raise Puppet::DevError, "Function #{name} already defined" if get_function(name)
 
@@ -70,7 +70,7 @@ module Puppet::Parser::Functions
   # Remove a function added by newfunction
   def self.rmfunction(name)
     Puppet.deprecation_warning "Puppet::Parser::Functions.rmfunction is deprecated and will be removed in 3.0"
-    name = symbolize(name)
+    name = name.intern
 
     raise Puppet::DevError, "Function #{name} is not defined" unless get_function(name)
 
@@ -89,7 +89,7 @@ module Puppet::Parser::Functions
 
   # Determine if a given name is a function
   def self.function(name)
-    name = symbolize(name)
+    name = name.intern
 
     func = nil
     @functions.synchronize do
@@ -149,12 +149,12 @@ module Puppet::Parser::Functions
     end
 
     def get_function(name)
-      name = symbolize(name)
+      name = name.intern
       merged_functions[name]
     end
 
     def add_function(name, func)
-      name = symbolize(name)
+      name = name.intern
       @functions.synchronize {
         @functions[Environment.current][name] = func
       }

@@ -462,36 +462,15 @@ module Util
     end
   end
 
-  def symbolize(value)
-    if value.respond_to? :intern
-      value.intern
-    else
-      value
-    end
-  end
-
   def symbolizehash(hash)
     newhash = {}
     hash.each do |name, val|
-      if name.is_a? String
-        newhash[name.intern] = val
-      else
-        newhash[name] = val
-      end
+      name = name.intern if name.respond_to? :intern
+      newhash[name] = val
     end
     newhash
   end
-
-  def symbolizehash!(hash)
-    # this is not the most memory-friendly way to accomplish this, but the
-    #  code re-use and clarity seems worthwhile.
-    newhash = symbolizehash(hash)
-    hash.clear
-    hash.merge!(newhash)
-
-    hash
-  end
-  module_function :symbolize, :symbolizehash, :symbolizehash!
+  module_function :symbolizehash
 
   # Just benchmark, with no logging.
   def thinmark

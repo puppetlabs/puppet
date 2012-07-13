@@ -500,7 +500,7 @@ class DirectoryService < Puppet::Provider::NameService
       exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
       # JJM: The following line just maps the NS name to the DS name
       #      e.g. { :uid => 'UniqueID' }
-      exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(param)]
+      exec_arg_vector << @@ns_to_ds_attribute_map[param.intern]
       # JJM: The following line sends the actual value to set the property to
       exec_arg_vector << value.to_s
       begin
@@ -555,7 +555,7 @@ class DirectoryService < Puppet::Provider::NameService
           add_members(nil, value)
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-          exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
+          exec_arg_vector << @@ns_to_ds_attribute_map[property.intern]
           next if property == :password  # skip setting the password here
           exec_arg_vector << value.to_s
           begin

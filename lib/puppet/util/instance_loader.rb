@@ -8,14 +8,14 @@ module Puppet::Util::InstanceLoader
 
   # Are we instance-loading this type?
   def instance_loading?(type)
-    defined?(@autoloaders) and @autoloaders.include?(symbolize(type))
+    defined?(@autoloaders) and @autoloaders.include?(type.intern)
   end
 
   # Define a new type of autoloading.
   def instance_load(type, path, options = {})
     @autoloaders ||= {}
     @instances ||= {}
-    type = symbolize(type)
+    type = type.intern
     @instances[type] = {}
     @autoloaders[type] = Puppet::Util::Autoload.new(self, path, options)
 
@@ -52,17 +52,17 @@ module Puppet::Util::InstanceLoader
 
   # Return the instance hash for our type.
   def instance_hash(type)
-    @instances[symbolize(type)]
+    @instances[type.intern]
   end
 
   # Return the Autoload object for a given type.
   def instance_loader(type)
-    @autoloaders[symbolize(type)]
+    @autoloaders[type.intern]
   end
 
   # Retrieve an alread-loaded instance, or attempt to load our instance.
   def loaded_instance(type, name)
-    name = symbolize(name)
+    name = name.intern
     return nil unless instances = instance_hash(type)
     unless instances.include? name
       if instance_loader(type).load(name)

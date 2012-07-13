@@ -75,7 +75,7 @@ class Puppet::Util::Autoload
       next unless file_exist?(file)
       begin
         Kernel.load file, @wrap
-        name = symbolize(name)
+        name = name.intern
         loaded name, file
         return true
       rescue SystemExit,NoMemoryError
