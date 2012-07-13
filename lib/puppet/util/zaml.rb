@@ -268,11 +268,10 @@ class String
   }
 
   def to_zaml(z)
-    z.first_time_only(self) do
-      case
-      when self == ''
-        z.emit('""')
-      when self.to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
+    case
+    when self == ''
+      z.emit('""')
+    when self.to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
                  [\x09\x0A\x0D\x20-\x7E]            # ASCII
                | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
                |  \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
@@ -282,31 +281,30 @@ class String
                | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
                |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
                )*\z/mnx
-        # Emit the binary tag, then recurse. Ruby splits BASE64 output at the 60
-        # character mark when packing strings, and we can wind up a multi-line
-        # string here.  We could reimplement the multi-line string logic,
-        # but why would we - this does just as well for producing solid output.
-        z.emit("!binary ")
-        [self].pack("m*").to_zaml(z)
+      # Emit the binary tag, then recurse. Ruby splits BASE64 output at the 60
+      # character mark when packing strings, and we can wind up a multi-line
+      # string here.  We could reimplement the multi-line string logic,
+      # but why would we - this does just as well for producing solid output.
+      z.emit("!binary ")
+      [self].pack("m*").to_zaml(z)
 
-      # Only legal UTF-8 characters can make it this far, so we are safe
-      # against emitting something dubious. That means we don't need to mess
-      # about, just emit them directly. --daniel 2012-07-14
-      when self =~ /\n/
-        # embedded newline, split line-wise in quoted string block form.
-        if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
-        z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-      when ((self =~ /^[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*$/) and
-          (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
-        # simple string literal, safe to emit unquoted.
-        z.emit(self)
-      else
-        # ...though we still have to escape unsafe characters.
-        escaped = gsub(/[\\"\x00-\x1F]/) do |c|
-          ZAML_ESCAPES[c] || "\\x#{c[0].ord.to_s(16)}"
-        end
-        z.emit("\"#{escaped}\"")
+    # Only legal UTF-8 characters can make it this far, so we are safe
+    # against emitting something dubious. That means we don't need to mess
+    # about, just emit them directly. --daniel 2012-07-14
+    when self =~ /\n/
+      # embedded newline, split line-wise in quoted string block form.
+      if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
+      z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
+    when ((self =~ /^[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*$/) and
+        (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
+      # simple string literal, safe to emit unquoted.
+      z.emit(self)
+    else
+      # ...though we still have to escape unsafe characters.
+      escaped = gsub(/[\\"\x00-\x1F]/) do |c|
+        ZAML_ESCAPES[c] || "\\x#{c[0].ord.to_s(16)}"
       end
+      z.emit("\"#{escaped}\"")
     end
   end
 
