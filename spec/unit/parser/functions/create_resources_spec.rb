@@ -65,8 +65,8 @@ describe 'function for dynamically creating resources' do
       rg = catalog.to_ral.relationship_graph
       test  = rg.vertices.find { |v| v.title == 'test' }
       foo   = rg.vertices.find { |v| v.title == 'foo' }
-      test.should be
-      foo.should be
+      test.must be
+      foo.must be
       rg.path_between(test,foo).should be
     end
 
@@ -127,8 +127,8 @@ describe 'function for dynamically creating resources' do
       rg = catalog.to_ral.relationship_graph
       test = rg.vertices.find { |v| v.title == 'test' }
       blah = rg.vertices.find { |v| v.title == 'blah' }
-      test.should be
-      blah.should be
+      test.must be
+      blah.must be
       rg.path_between(test,blah).should be
       catalog.resource(:notify, "blah")['message'].should == 'two'
     end
@@ -182,8 +182,8 @@ describe 'function for dynamically creating resources' do
       rg = catalog.to_ral.relationship_graph
       test   = rg.vertices.find { |v| v.title == 'test' }
       tester = rg.vertices.find { |v| v.title == 'tester' }
-      test.should be
-      tester.should be
+      test.must be
+      tester.must be
       rg.path_between(tester,test).should be
     end
 

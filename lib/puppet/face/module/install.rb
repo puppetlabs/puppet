@@ -147,13 +147,14 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |name, options|
       sep = File::PATH_SEPARATOR
+
       if options[:target_dir]
-        options[:target_dir] = File.expand_path(options[:target_dir])
         options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}"
       end
 
       Puppet.settings[:modulepath] = options[:modulepath]
       options[:target_dir] = Puppet.settings[:modulepath].split(sep).first
+      options[:target_dir] = File.expand_path(options[:target_dir])
 
       Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
       Puppet::ModuleTool::Applications::Installer.run(name, options)

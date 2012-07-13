@@ -1,3 +1,4 @@
+require 'facter'
 require 'puppet/util/warnings'
 require 'forwardable'
 require 'etc'
@@ -17,7 +18,6 @@ module Puppet::Util::SUIDManager
 
   def osx_maj_ver
     return @osx_maj_ver unless @osx_maj_ver.nil?
-    require 'facter'
     # 'kernel' is available without explicitly loading all facts
     if Facter.value('kernel') != 'Darwin'
       @osx_maj_ver = false

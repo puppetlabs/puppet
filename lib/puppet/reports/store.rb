@@ -13,11 +13,7 @@ Puppet::Reports.register_report(:store) do
     default report)."
 
   def process
-    # We don't want any tracking back in the fs.  Unlikely, but there
-    # you go.
-    if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
-      raise ArgumentError, "Invalid node name #{host.inspect}"
-    end
+    validate_host(host)
 
     dir = File.join(Puppet[:reportdir], host)
 
@@ -55,9 +51,7 @@ Puppet::Reports.register_report(:store) do
 
   # removes all reports for a given host?
   def self.destroy(host)
-    if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
-      raise ArgumentError, "Invalid node name #{host.inspect}"
-    end
+    validate_host(host)
 
     dir = File.join(Puppet[:reportdir], host)
 
@@ -70,5 +64,11 @@ Puppet::Reports.register_report(:store) do
       Dir.rmdir(dir)
     end
   end
-end
 
+  def validate_host(host)
+    if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
+      raise ArgumentError, "Invalid node name #{host.inspect}"
+    end
+  end
+  module_function :validate_host
+end

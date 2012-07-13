@@ -1,11 +1,10 @@
 require 'puppet/interface/action'
+require 'puppet/interface/action_builder'
 
 module Puppet::Interface::ActionManager
   # Declare that this app can take a specific action, and provide
   # the code to do so.
   def action(name, &block)
-    require 'puppet/interface/action_builder'
-
     @actions ||= {}
     raise "Action #{name} already defined for #{self}" if action?(name)
 

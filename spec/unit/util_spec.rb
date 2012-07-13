@@ -411,7 +411,7 @@ describe Puppet::Util do
       end
 
       it "should wait for the child process to exit" do
-        Puppet::Util.stubs(:wait_for_output)
+        Puppet::Util.expects(:wait_for_output)
 
         Puppet::Util.execute('test command')
       end
@@ -454,6 +454,16 @@ describe Puppet::Util do
         Puppet::Util.execute('test command')
 
         File.should_not be_exist(path)
+      end
+
+      it "should not raise an error if the file is open" do
+        stdout = Tempfile.new('test')
+        Tempfile.stubs(:new).returns(stdout)
+        file = File.new(stdout.path, 'r')
+
+        expect {
+          Puppet::Util.execute('test command')
+        }.to_not raise_error
       end
 
       it "should raise an error if failonfail is true and the child failed" do

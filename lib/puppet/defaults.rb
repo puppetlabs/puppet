@@ -180,9 +180,10 @@ module Puppet
       end
     },
     :thin_storeconfigs => {:default => false, :desc =>
-      "Boolean; wether storeconfigs store in the database only the facts and exported resources.
-      If true, then storeconfigs performance will be higher and still allow exported/collected
-      resources, but other usage external to Puppet might not work",
+      "Boolean; whether Puppet should store only facts and exported resources in the storeconfigs
+      database. This will improve the performance of exported resources with the older
+      `active_record` backend, but will disable external tools that search the storeconfigs database.
+      Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
       :hook => proc do |value|
         Puppet.settings[:storeconfigs] = true if value
         end
@@ -505,7 +506,7 @@ EOT
       rest indirections.  This can be used as a fine-grained
       authorization system for `puppet master`."
     ],
-    :ca => [true, "Wether the master should function as a certificate authority."],
+    :ca => [true, "Whether the master should function as a certificate authority."],
     :modulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
       :desc => "The search path for modules, as a list of directories separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)",

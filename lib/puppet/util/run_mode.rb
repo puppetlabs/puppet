@@ -1,3 +1,5 @@
+require 'etc'
+
 module Puppet
   module Util
     class RunMode
@@ -71,7 +73,6 @@ module Puppet
       end
 
       def expand_path( dir )
-        require 'etc'
         ENV["HOME"] ||= Etc.getpwuid(Process.uid).dir
         File.expand_path(dir)
       end

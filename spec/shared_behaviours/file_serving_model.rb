@@ -4,6 +4,9 @@ shared_examples_for "a file_serving model" do
   include PuppetSpec::Files
 
   describe "#indirection" do
+    localpath = PuppetSpec::Files.make_absolute("/etc/sudoers")
+    localurl = "file://" + localpath
+
     before :each do
       # Never connect to the network, no matter what
       described_class.indirection.terminus(:rest).class.any_instance.stubs(:find)
@@ -15,8 +18,8 @@ shared_examples_for "a file_serving model" do
       end
 
       {
-       "/etc/sudoers"                    => :file_server,
-       "file:///etc/sudoers"             => :file_server,
+       localpath     => :file_server,
+       localurl => :file_server,
        "puppet:///modules/foo/bar"       => :file_server,
        "puppet://server/modules/foo/bar" => :file_server,
       }.each do |key, terminus|
@@ -36,8 +39,8 @@ shared_examples_for "a file_serving model" do
       end
 
       {
-       "/etc/sudoers"                    => :file,
-       "file:///etc/sudoers"             => :file,
+       localpath => :file,
+       localurl => :file,
        "puppet:///modules/foo/bar"       => :file_server,
        "puppet://server/modules/foo/bar" => :rest,
       }.each do |key, terminus|
@@ -57,8 +60,8 @@ shared_examples_for "a file_serving model" do
       end
 
       {
-       "/etc/sudoers"                    => :file,
-       "file:///etc/sudoers"             => :file,
+       localpath => :file,
+       localurl => :file,
        "puppet:///modules/foo/bar"       => :rest,
        "puppet://server/modules/foo/bar" => :rest,
       }.each do |key, terminus|
