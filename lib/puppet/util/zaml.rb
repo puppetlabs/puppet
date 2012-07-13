@@ -248,35 +248,33 @@ class String
   }
 
   def to_zaml(z)
-    z.first_time_only(self) do
-      case
-      when self == ''
-        z.emit('""')
-      when self =~ /\n/
-        # embedded newline, more complex output.
-        if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
-        z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-      when ((self =~ /^[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*$/) and
-          (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
-        # simple string, just emit.
-        z.emit(self)
-      else
-        # JJM (Note the trailing dots to construct a multi-line method chain.) This
-        # code is meant to escape all bytes which are not ASCII-8BIT printable
-        # characters.  Multi-byte unicode characters are handled just fine because
-        # each byte of the character results in an escaped string emitted to the
-        # YAML stream.  When the YAML is de-serialized back into a String the bytes
-        # will be reconstructed properly into the unicode character.
-        #
-        # Using gsub is as efficient as any other approach. --daniel 2012-07-12
-        escaped = to_ascii8bit.
-          gsub("\\", "\\\\\\" ).
-          gsub('"', '\"').
-          gsub(/([\x00-\x1F])/n) {|x| ZAML_ESCAPES[ x[0].ord ] }.
-          gsub(/([\x80-\xFF])/n) {|x| "\\x#{x[0].ord.to_s(16)}" }
+    case
+    when self == ''
+      z.emit('""')
+    when self =~ /\n/
+      # embedded newline, more complex output.
+      if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
+      z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
+    when ((self =~ /^[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*$/) and
+        (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
+      # simple string, just emit.
+      z.emit(self)
+    else
+      # JJM (Note the trailing dots to construct a multi-line method chain.) This
+      # code is meant to escape all bytes which are not ASCII-8BIT printable
+      # characters.  Multi-byte unicode characters are handled just fine because
+      # each byte of the character results in an escaped string emitted to the
+      # YAML stream.  When the YAML is de-serialized back into a String the bytes
+      # will be reconstructed properly into the unicode character.
+      #
+      # Using gsub is as efficient as any other approach. --daniel 2012-07-12
+      escaped = to_ascii8bit.
+        gsub("\\", "\\\\\\" ).
+        gsub('"', '\"').
+        gsub(/([\x00-\x1F])/n) {|x| ZAML_ESCAPES[ x[0].ord ] }.
+        gsub(/([\x80-\xFF])/n) {|x| "\\x#{x[0].ord.to_s(16)}" }
 
-        z.emit("\"#{escaped}\"")
-      end
+      z.emit("\"#{escaped}\"")
     end
   end
 
