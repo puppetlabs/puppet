@@ -313,7 +313,6 @@ module Util
     Puppet::Util.synchronize_on(resource,type) { yield }
   end
 
-
   module_function :benchmark
 
   def memory
