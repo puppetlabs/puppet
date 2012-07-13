@@ -37,6 +37,7 @@ module Puppet
       def [](reference)
         return @cache[reference] if @cache[reference]
 
+        # MLEN:TODO refactor this into ResourceReference#initialize
         unless Puppet::DSL::Parser.current_scope.findresource @type, reference
           raise ArgumentError, "resource `#{@type.capitalize}[#{reference}]' not found"
         else
@@ -49,8 +50,9 @@ module Puppet
       ##
       def collect
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type.capitalize, nil, nil, :exported
+        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :exported
         scope.compiler.add_collection c
+        c
       end
 
       ##
@@ -58,21 +60,32 @@ module Puppet
       ##
       def realise
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type.capitalize, nil, nil, :virtual
+        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :virtual
         scope.compiler.add_collection c
+        c
       end
+
+      alias ralize realise
 
       ##
       # Method allows to set defaults for a resource type.
       ##
       def defaults(options = {}, &block)
-        Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
+        unless options == {} and block.nil?
+          Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
 
-        # for compatibility with Puppet parser
-        options = options.map do |k, v|
-          Puppet::Parser::Resource::Param.new :name => k, :value => v
+          # for compatibility with Puppet parser
+          options = options.map do |k, v|
+            Puppet::Parser::Resource::Param.new :name => k, :value => v
+          end
+          Puppet::DSL::Parser.current_scope.define_settings @type, options
         end
-        Puppet::DSL::Parser.current_scope.define_settings @type, options
+
+        result = {}
+        Puppet::DSL::Parser.current_scope.lookupdefaults(@type).map do |_, v|
+          result.merge! v.name => v.value
+        end
+        result
       end
 
     end
