@@ -1,4 +1,5 @@
 require 'puppet/dsl/blank_slate'
+require 'puppet/dsl/resource_reference'
 
 module Puppet
   module DSL
@@ -41,15 +42,16 @@ module Puppet
       #
       ##
       def method_missing(name, *args)
-        raise "loop for #{name}" if @searching
-        @searching = true
-        super unless respond_to? name
         if name =~ SETTER_REGEX
           define_singleton_method name do |*a|
-            @resource[$1.to_sym] = a.first.to_s
+            value = a.first
+            value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
+            @resource[$1.to_sym] = value
           end
 
-          @resource[$1.to_sym] = args.first.to_s
+          value = args.first
+          value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
+          @resource[$1.to_sym] = value
         else
           define_singleton_method name do
             @resource[name]
@@ -57,23 +59,8 @@ module Puppet
 
           @resource[name]
         end
-      ensure
-        @searching = false
       end
 
-      ##
-      # Checks whether it can respond to a method call.
-      # It validates parameter names for a Puppet::Resource.
-      # For other classes it always returns true.
-      ##
-      def respond_to?(name)
-        if @resource.is_a? ::Puppet::Resource
-          name = $1.to_sym if name =~ SETTER_REGEX
-          @resource.valid_parameter? name
-        else
-          true
-        end
-      end
     end
   end
 end

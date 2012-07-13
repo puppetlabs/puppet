@@ -16,6 +16,12 @@ module Puppet
       include Puppet::DSL::Helper
 
       ##
+      # Returns Puppet type represented by this reference
+      ##
+      attr_reader :type
+      alias to_s type
+
+      ##
       # Creates new TypeReference.
       # Raises NameError when resource type is not found
       ##
@@ -35,14 +41,7 @@ module Puppet
       # Method caches references for future use.
       ##
       def [](reference)
-        return @cache[reference] if @cache[reference]
-
-        # MLEN:TODO refactor this into ResourceReference#initialize
-        unless Puppet::DSL::Parser.current_scope.findresource @type, reference
-          raise ArgumentError, "resource `#{@type.capitalize}[#{reference}]' not found"
-        else
-          @cache[reference] = Puppet::DSL::ResourceReference.new @type, reference
-        end
+        @cache[reference] ||= Puppet::DSL::ResourceReference.new self, reference
       end
 
       ##

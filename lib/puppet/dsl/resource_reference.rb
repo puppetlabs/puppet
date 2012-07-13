@@ -19,21 +19,25 @@ module Puppet
       # Creates new ResourceReference.
       # +type+ is the name of resource type and +name+ is a name of a resource.
       ##
-      def initialize(type, name)
-        @resource = Puppet::DSL::Parser.current_scope.compiler.findresource type, name
+      def initialize(typeref, name)
+        @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type, name
+        raise ArgumentError, "resource `#{typeref.type}[#{name}]' not found" unless @resource
       end
 
       ##
       # This method is used by ResourceDecorator for stringifying references.
       ##
-      def to_s
+      def reference
         @resource.to_s
       end
+      alias to_s reference 
 
       ##
       # Method allows to create overrides for a resource.
       ##
       def override(options = {}, &block)
+        raise ArgumentError if options == {} and block.nil?
+
         Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
         scope = Puppet::DSL::Parser.current_scope
 
@@ -45,7 +49,14 @@ module Puppet
         resource = Puppet::Parser::Resource.new @resource.type, @resource.name,
                                                 :parameters => params, :scope => scope,
                                                 :source => scope.source
-        scope.compiler.add_override resource
+
+        override = scope.compiler.add_override resource
+
+        result = {}
+        override.each do |_, v|
+          result.merge! v.name => v.value
+        end
+        result
       end
     end
   end

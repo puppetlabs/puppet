@@ -1,5 +1,7 @@
 require 'puppet/dsl/blank_slate'
 require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/type_reference'
+require 'puppet/dsl/helper'
 
 module Puppet
   module DSL
@@ -18,6 +20,51 @@ module Puppet
     # compilation.
     ##
     class Context < BlankSlate
+      include ::Puppet::DSL::Helper
+
+
+      ##
+      # Provides syntactic sugar for resource references.
+      # It checks whether a constant exists and returns TypeReference
+      # corresponding to that constant. Otherwise it raises NameError.
+      # A cached version of TypeReference is created on the first call.
+      #
+      # For further information look at lib/puppet/dsl/type_reference.rb
+      ##
+      def self.const_missing(name)
+        if self.const_defined? name
+          ref = ::Puppet::DSL::TypeReference.new name.downcase
+          self.const_set name, ref
+          ref
+        else
+          raise ::NameError, "resource type `#{name}' not found"
+        end
+      end
+
+      ##
+      # Returns whether a constant is defined.
+      # It essentially checks if the type exists.
+      # The algorithm is identical to one used in +respond_to?+ method.
+      ##
+      def self.const_defined?(name)
+        type = name.downcase
+        super || !!([:node, :class].include? type or
+           ::Puppet::Type.type type or
+           ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition type
+          )
+      end
+
+      ##
+      # Returns type reference. A fallback method for obtaining type references
+      # for Ruby 1.8 users.
+      ##
+      def type(name)
+        if ::Puppet::DSL::Context.const_defined? canonize_type(name)
+          ::Puppet::DSL::TypeReference.new name.downcase
+        else
+          raise ::NameError, "resource type `#{name}' not found"
+        end
+      end
       
       ##
       # Initializes new context.
@@ -284,7 +331,8 @@ module Puppet
             resource.virtual = true if virtualizing? or options[:virtual] == true
             resource.exported = true if exporting? or options[:export] == true
             options.each do |key, val|
-              resource[key] = val.to_s
+              val = val.resource if val.is_a? ::Puppet::DSL::ResourceReference
+              resource[key] = val
             end
 
             ::Puppet::DSL::ResourceDecorator.new(resource, &block) if block
