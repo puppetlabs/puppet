@@ -25,12 +25,12 @@ describe "Pure ruby yaml implementation" do
   "-0x123abc"  => '--- "-0x123abc"',
   "-0x123"     => '--- "-0x123"',
   "+0x123"     => '--- "+0x123"',
-  "0x123.456"  => "--- 0x123.456",
+  "0x123.456"  => '--- "0x123.456"',
   'test'       => "--- test",
   []           => "--- []",
   :symbol      => "--- !ruby/sym symbol",
   {:a => "A"}  => "--- \n  !ruby/sym a: A",
-  {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y" 
+  {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y"
   }.each { |o,y|
     it "should convert the #{o.class} #{o.inspect} to yaml" do
       o.to_yaml.should == y
