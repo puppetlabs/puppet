@@ -51,8 +51,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
   # iterate through the resources to create
   defaults = args[2] || {}
   args[1].each do |title, params|
-    params = defaults.merge(params)
-    Puppet::Util.symbolizehash!(params)
+    params = Puppet::Util.symbolizehash(defaults.merge(params))
     raise ArgumentError, 'params should not contain title' if(params[:title])
     case type_of_resource
     # JJM The only difference between a type and a define is the call to instantiate_resource

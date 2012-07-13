@@ -127,7 +127,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # Override the default method with a lot more functionality.
   def self.mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
-      attr = symbolize(attr)
+      attr = attr.intern
       define_method(attr) do
 #                if @property_hash.empty?
 #                    # Note that this swaps the provider out from under us.
