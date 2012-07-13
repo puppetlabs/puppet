@@ -14,7 +14,7 @@ module PuppetSpec
       @compiler.known_resource_types
     end
 
-    def evaluate_in_scope(scope)
+    def evaluate_in_scope(scope = @scope)
       Puppet::DSL::Parser.add_scope scope
       yield
     ensure

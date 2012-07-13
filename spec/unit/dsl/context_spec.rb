@@ -71,7 +71,7 @@ describe Puppet::DSL::Context do
       resources.should be_an Array
       resources.each do |r|
         r.should be_a Puppet::Parser::Resource
-        r[:ensure].should == "present"
+        r[:ensure].should == :present
       end
     end
 
@@ -86,7 +86,7 @@ describe Puppet::DSL::Context do
       resources.should be_an Array
       resources.each do |r|
         r.should be_a Puppet::Parser::Resource
-        r[:ensure].should == "present"
+        r[:ensure].should == :present
       end
     end
 
@@ -218,6 +218,31 @@ describe Puppet::DSL::Context do
 
     # MLEN:TODO: add tests for arguments and inheritance
   end
+
+  describe "when referencing type" do
+
+    it "should return a type reference when accessing constant" do
+      evaluate_in_context do
+        Puppet::DSL::Context::Notify # Full name needs to be used to trigger const_missing
+      end.should be_a Puppet::DSL::TypeReference
+    end
+
+    it "should return a type reference using `type' method" do
+      evaluate_in_context do
+        type("notify")
+      end.should be_a Puppet::DSL::TypeReference
+    end
+
+    it "should raise NameError when there is no valid type" do
+      lambda do
+        evaluate_in_context do
+          Puppet::DSL::Context::Foobar
+        end
+      end.should raise_error NameError
+    end
+
+  end
+  
 
 end
 

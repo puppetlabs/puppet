@@ -3,9 +3,6 @@ require 'puppet/dsl/blank_slate'
 require 'puppet/dsl/type_reference'
 
 describe Puppet::DSL::BlankSlate do
-  def evaluate(&block)
-    Puppet::DSL::BlankSlate.new.instance_eval &block
-  end
 
   it "should have only few methods defined" do
     # List of methods implemented in BasicObject in Ruby 1.9
@@ -18,31 +15,10 @@ describe Puppet::DSL::BlankSlate do
       end
   end
 
-  it "should return a type reference when accessing constant" do
-    evaluate do
-      Puppet::DSL::BlankSlate::Notify # Full name needs to be used to trigger const_missing
-    end.should be_a Puppet::DSL::TypeReference
-  end
-
-  it "should return a type reference using `type' method" do
-    evaluate do
-      type("notify")
-    end.should be_a Puppet::DSL::TypeReference
-  end
-
-  it "should raise NameError when there is no valid type" do
-    lambda do
-      evaluate do
-        Puppet::DSL::BlankSlate::Foobar
-      end
-    end.should raise_error NameError
-  end
-
-
   it "should proxy `raise' calls to Object" do
     Object.expects :raise
-    evaluate do
-      raise 
+    Puppet::DSL::BlankSlate.new.instance_eval do
+      raise
     end
   end
 

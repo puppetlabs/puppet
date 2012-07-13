@@ -12,37 +12,42 @@ describe Puppet::DSL::ResourceDecorator do
     end
   end
 
-  it "should raise an exception when passing invalid parameter" do
-    resource = mock
-    resource.expects(:is_a?).at_least_once.with(Puppet::Resource).returns true
-    resource.expects(:valid_parameter?).with(:param).returns false
-
-    lambda do
-      Puppet::DSL::ResourceDecorator.new(resource) { |r| r.param }
-    end.should raise_error
-  end
-
   context "when accessing" do
     before :each do
       @resource = mock
-      @resource.expects(:is_a?).at_least_once.with(Puppet::Resource).returns true
-      @resource.expects(:valid_parameter?).with(:param).returns true
     end
 
-    it "should proxy set messages to a resource" do
-      @resource.expects(:[]).once.with(:param).returns 42
+    describe "getting" do
+      it "should proxy messages to a resource" do
+        @resource.expects(:[]).once.with(:param).returns 42
 
-      Puppet::DSL::ResourceDecorator.new @resource do |r|
-        r.param.should == 42
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.param.should == 42
+        end
       end
+
     end
 
-    it "should proxy get messages to a resource "do
-      @resource.expects(:[]=).once.with(:param, "42")
+    describe "setting" do
+      it "should proxy get messages to a resource "do
+        @resource.expects(:[]=).once.with(:param, 42)
 
-      Puppet::DSL::ResourceDecorator.new @resource do |r|
-        r.param = 42
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.param = 42
+        end
       end
+
+      it "should call `reference' on resource references" do
+        prepare_compiler_and_scope
+        evaluate_in_context { notify "bar" }
+
+        @resource.expects(:[]=).with :param, "Notify[bar]"
+        ref = evaluate_in_context { Puppet::DSL::Context::Notify["bar"] }
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.param = ref
+        end
+      end
+
     end
   end
 
