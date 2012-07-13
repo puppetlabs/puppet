@@ -54,6 +54,7 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
     @vquery = mock 'vquery'
     @equery = mock 'equery'
 
+    @compiler = mock 'compiler'
     @collector = Puppet::Parser::Collector.new(@scope, "resource_type", @equery, @vquery, :virtual)
   end
 

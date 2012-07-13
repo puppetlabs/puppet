@@ -173,7 +173,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should set itself as the catalog for each converted resource" do
-      @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
+      @catalog.vertices.each { |v| v.catalog.object_id == @catalog.object_id }
     end
 
     # This tests #931.

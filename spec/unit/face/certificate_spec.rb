@@ -65,30 +65,36 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       let(:hostname) { Puppet[:certname] }
 
       it "should generate a CSR for this host" do
-        subject.generate(hostname, options)
+        pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+          subject.generate(hostname, options)
 
-        csr.content.subject.to_s.should == "/CN=#{Puppet[:certname]}"
-        csr.name.should == Puppet[:certname]
+          csr.content.subject.to_s.should == "/CN=#{Puppet[:certname]}"
+          csr.name.should == Puppet[:certname]
+        end
       end
 
       it "should add dns_alt_names from the global config if not otherwise specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+        pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+          Puppet[:dns_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options)
+          subject.generate(hostname, options)
 
-        expected = %W[DNS:from DNS:the DNS:config DNS:#{hostname}]
+          expected = %W[DNS:from DNS:the DNS:config DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+          csr.subject_alt_names.should =~ expected
+        end
       end
 
       it "should add the provided dns_alt_names if they are specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+        pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+          Puppet[:dns_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+          subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
 
-        expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
+          expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+          csr.subject_alt_names.should =~ expected
+        end
       end
     end
 
@@ -119,30 +125,36 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       end
 
       it "should add the provided dns_alt_names if they are specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+        pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+          Puppet[:dns_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+          subject.generate(
+            hostname,
+            options.merge(:dns_alt_names => 'explicit,alt,names'))
 
-        expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
+          expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
-        csr.subject_alt_names.should =~ expected
+          csr.subject_alt_names.should =~ expected
+        end
       end
-      
+
       it "should use the global setting if set by CLI" do
-        Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
-        
-        subject.generate(hostname, options)
-        
-        expected = %W[DNS:from DNS:the DNS:cli DNS:#{hostname}]
-        
-        csr.subject_alt_names.should =~ expected
+        pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+          Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
+
+          subject.generate(hostname, options)
+
+          expected = %W[DNS:from DNS:the DNS:cli DNS:#{hostname}]
+
+          csr.subject_alt_names.should =~ expected
+        end
       end
-      
+
       it "should generate an error if both set on CLI" do
         Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
         expect do
           subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
-        end.to raise_error ArgumentError, /Can't specify both/ 
+        end.to raise_error ArgumentError, /Can't specify both/
       end
     end
   end
@@ -175,20 +187,24 @@ describe Puppet::Face[:certificate, '0.0.1'] do
         end
 
         it "should refuse to sign the request if allow_dns_alt_names is not set" do
-          expect do
-            subject.sign(hostname, options)
-          end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError,
-                             /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{hostname}` to sign this request./i)
+          pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+            expect do
+              subject.sign(hostname, options)
+            end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError,
+              /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{hostname}` to sign this request./i)
 
-          host.state.should == 'requested'
+            host.state.should == 'requested'
+          end
         end
 
         it "should sign the request if allow_dns_alt_names is set" do
-          expect do
-            subject.sign(hostname, options.merge(:allow_dns_alt_names => true))
-          end.not_to raise_error
+          pending("JRuby CSR parsing bug: https://github.com/jruby/jruby/pull/213", :if => Puppet.features.jruby?) do
+            expect do
+              subject.sign(hostname, options.merge(:allow_dns_alt_names => true))
+            end.not_to raise_error
 
-          host.state.should == 'signed'
+            host.state.should == 'signed'
+          end
         end
       end
 

@@ -30,7 +30,7 @@ describe "Pure ruby yaml implementation" do
   []           => "--- []",
   :symbol      => "--- !ruby/sym symbol",
   {:a => "A"}  => "--- \n  !ruby/sym a: A",
-  {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y" 
+  {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y"
   }.each { |o,y|
     it "should convert the #{o.class} #{o.inspect} to yaml" do
       o.to_yaml.should == y
@@ -92,6 +92,10 @@ describe "UTF-8 encoded String#to_yaml (Bug #11246)" do
 
   describe "UTF-8 String Literal" do
     subject { snowman }
+
+    it "should have UTF-8 encoding output", :if => String.new.respond_to?(:encoding) do
+      subject.to_yaml.encoding.should == Encoding.find("UTF-8")
+    end
 
     it "should serialize to YAML" do
       subject.to_yaml

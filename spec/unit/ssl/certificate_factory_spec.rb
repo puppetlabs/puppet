@@ -15,7 +15,8 @@ describe Puppet::SSL::CertificateFactory do
   end
   let :issuer do
     cert = OpenSSL::X509::Certificate.new
-    cert.subject = OpenSSL::X509::Name.new([["CN", 'issuer.local']])
+    cert.subject    = OpenSSL::X509::Name.new([["CN", 'issuer.local']])
+    cert.public_key = OpenSSL::PKey::RSA.new(512)
     cert
   end
 

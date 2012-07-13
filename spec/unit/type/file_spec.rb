@@ -36,7 +36,7 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "/"
       end
 
-      it "should accept a double-slash at the start of the path" do
+      it "should accept a double-slash at the start of the path", :unless => Puppet.features.jruby? do
         expect {
           file[:path] = "//tmp/xxx"
           # REVISIT: This should be wrong, later.  See the next test.

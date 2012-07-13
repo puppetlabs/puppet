@@ -896,21 +896,29 @@ describe Puppet::SimpleGraph do
         end
       end
 
-      it "should be able to serialize a graph where the vertices contain backreferences to the graph (#{which_format} format)" do
-        reference_graph = Puppet::SimpleGraph.new
-        vertex = Object.new
-        vertex.instance_eval { @graph = reference_graph }
-        reference_graph.add_edge(vertex, :other_vertex)
-        yaml_form = graph_to_yaml(reference_graph, which_format)
-        recovered_graph = YAML.load(yaml_form)
+      def bad_jruby
+        return false unless defined?(::JRUBY_VERSION)
+        return false if ::JRUBY_VERSION.to_f > 1.6
+        return true
+      end
 
-        recovered_graph.vertices.length.should == 2
-        recovered_vertex = recovered_graph.vertices.reject { |x| x.is_a?(Symbol) }[0]
-        recovered_vertex.instance_eval { @graph }.should equal(recovered_graph)
-        recovered_graph.edges.length.should == 1
-        recovered_edge = recovered_graph.edges[0]
-        recovered_edge.source.should equal(recovered_vertex)
-        recovered_edge.target.should == :other_vertex
+      it "should be able to serialize a graph where the vertices contain backreferences to the graph (#{which_format} format)" do
+        pending("JRuby before 1.7 fails on recursive YAML", :if => bad_jruby) do
+          reference_graph = Puppet::SimpleGraph.new
+          vertex = Object.new
+          vertex.instance_eval { @graph = reference_graph }
+          reference_graph.add_edge(vertex, :other_vertex)
+          yaml_form = graph_to_yaml(reference_graph, which_format)
+          recovered_graph = YAML.load(yaml_form)
+
+          recovered_graph.vertices.length.should == 2
+          recovered_vertex = recovered_graph.vertices.reject { |x| x.is_a?(Symbol) }[0]
+          recovered_vertex.instance_eval { @graph }.should equal(recovered_graph)
+          recovered_graph.edges.length.should == 1
+          recovered_edge = recovered_graph.edges[0]
+          recovered_edge.source.should equal(recovered_vertex)
+          recovered_edge.target.should == :other_vertex
+        end
       end
     end
 

@@ -506,7 +506,7 @@ module Util
         retry
       end
     else
-      File.rename(tempfile.path, file)
+      File.rename(tempfile.path, file.to_s)
     end
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't

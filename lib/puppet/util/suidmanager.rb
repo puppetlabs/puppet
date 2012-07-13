@@ -192,7 +192,7 @@ module Puppet::Util::SUIDManager
                                   :uid => new_uid, :gid => new_gid,
                                   :override_locale => options[:override_locale],
                                   :custom_environment => options[:custom_environment])
-    [output, $CHILD_STATUS.dup]
+    [output, $CHILD_STATUS]
   end
   module_function :run_and_capture
 end

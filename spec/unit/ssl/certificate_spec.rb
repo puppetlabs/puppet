@@ -99,9 +99,10 @@ describe Puppet::SSL::Certificate do
 
         raw_csr = csr.content
 
-        cert = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
-        certificate = @class.from_s(cert.to_pem)
-        certificate.subject_alt_names.
+        cert = @class.new('quux')
+        cert.content = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
+
+        cert.subject_alt_names.
           should =~ ['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux']
       end
 
@@ -114,9 +115,9 @@ describe Puppet::SSL::Certificate do
 
         raw_csr = csr.content
 
-        cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
-        certificate = @class.from_s(cert.to_pem)
-        certificate.subject_alt_names.should be_empty
+        cert = @class.new('quux')
+        cert.content = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
+        cert.subject_alt_names.should be_empty
       end
     end
 

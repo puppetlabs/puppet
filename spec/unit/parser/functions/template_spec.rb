@@ -62,7 +62,7 @@ describe "the template function" do
   def eval_template(content, *rest)
     File.stubs(:read).with("template").returns(content)
     Puppet::Parser::Files.stubs(:find_template).returns("template")
-    scope.compiler.stubs(:environment).returns("production")
+    scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('localhost'))
     scope.function_template(['template'] + rest)
   end
 

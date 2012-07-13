@@ -112,6 +112,8 @@ module Util::Execution
 
     if execution_stub = Puppet::Util::ExecutionStub.current_value
       return execution_stub.call(*exec_args)
+    elsif Puppet.features.jruby?
+      exit_status = execute_jruby(*exec_args)
     elsif Puppet.features.posix?
       child_pid = execute_posix(*exec_args)
       exit_status = Process.waitpid2(child_pid).last.exitstatus
@@ -154,6 +156,117 @@ module Util::Execution
     alias util_execute execute
   end
 
+  def self.execute_jruby(command, option, stdin, stdout, stderr)
+    [:uid, :gid].each do |name|
+      if option[name]
+        raise "execute_jruby: unsupported option #{name} => #{option[name].inspect}"
+      end
+    end
+
+    # JRuby 1.6.7, I hate your awesomely limited support for child process
+    # execution.  So many things that would be good, and so few that actually
+    # work in a sane fashion.  Makes my life harder than it would otherwise
+    # be, which annoys me.
+    #
+    # In this case, Open3 is incomplete, and doesn't support environment
+    # magic, so we are forced to open-code the damn thing ourselves.
+    #
+    # So is Process.spawn.  So, in fact, is every possible path I could follow
+    # to get this working.  Which is bloody awesome.  Time to get back to Java
+    # and do this the native way, I suppose.
+
+    # Reprocess the command, emulate some horrific API along the way.  Various
+    # code (like the code that obtains the catalog version from an external
+    # command) depends on this being true: if you submit a single string in an
+    # array containing a command and argument, we split it up and execute the
+    # command as expected. --daniel 2012-06-15
+    if command.is_a?(Array) and command.length == 1
+      command = command.first
+    end
+
+    if command.is_a?(String)
+      # We end up needing to emulate the Kernel.exec method here, which treats
+      # a single string as an invitation to run it through the shell.
+      command = ['/bin/sh', '-c', command]
+    end
+
+    pb = java.lang.ProcessBuilder.new(command)
+
+    # The Java ProcessBuilder doesn't see changes to the Ruby ENV hash, so we
+    # have to manually sync the two of them. Fun times.
+    env = pb.environment
+    env.clear
+    ENV.each {|name, value| env.put(name, value) }
+
+    Puppet::Util::POSIX::USER_ENV_VARS.each {|name| env.remove(name) }
+
+    if option[:override_locale]
+      Puppet::Util::POSIX::LOCALE_ENV_VARS.each {|name| env.remove(name.to_s) }
+      env.put('LANG', 'C')
+      env.put('LC_ALL', 'C')
+    end
+
+    if option[:custom_environment]
+      option[:custom_environment].each do |k, v|
+        if v.nil?
+          env.remove(k.to_s)
+        else
+          env.put(k.to_s, v.to_s)
+        end
+      end
+    end
+
+    begin
+      child    = pb.start
+      childin  = child.getOutputStream.to_io
+      childout = child.getInputStream.to_io
+      childerr = child.getErrorStream.to_io
+
+      # Fire up the threads that copy stderr and stdout
+      io_threads = { childout => stdout, childerr => stderr }.map do |from, to|
+        Thread.new do
+          begin
+            while data = from.readpartial(8192)
+              to.write data
+            end
+          rescue EOFError
+            # normal termination, actually
+          end
+        end
+      end
+
+      # Copy the input stream to the child
+      childin.sync = true           # force flushing, eh.
+      while data = stdin.read(8192)
+        childin.write data
+      end
+
+      # ...and signal that we are done.
+      childin.close
+
+      # Finally, wait for everything to terminate.
+      io_threads.each(&:join)
+      child.waitFor
+    rescue NativeException => e
+      # MRI, thanks to the shell, returns 127 if execution fails because the
+      # command is not found. We should emulate this, I suppose, because other
+      # parts of the system will fail if we don't.
+      return 127 if e.message.include? 'java.io.IOException'
+      raise
+    end
+
+    # I watched a snail crawl along the edge of a straight razor. That's my
+    # dream; that's my nightmare. Crawling, slithering, along the edge of a
+    # straight razor... and surviving.
+    #
+    # What makes me sad is that we only depend on this in, like, one place in
+    # the code, and that isn't really used.  So, this is almost entirely to
+    # satisfy the dictate of the tests.
+    system("/bin/sh -c 'exit #{child.exitValue}'")
+
+    # return the exit status.
+    return child.exitValue
+  end
 
   # this is private method, see call to private_class_method after method definition
   def self.execute_posix(command, options, stdin, stdout, stderr)

@@ -216,7 +216,10 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match when the start time is before current time and the end time is the following day" do
       @schedule[:range] = "22:00:00 - 02:00:00"
-      @schedule.must be_match
+      # See https://github.com/jruby/jruby/issues/215
+      pending("JRuby mishandles TZ in Time.local", :if => Puppet.features.jruby?) do
+        @schedule.must be_match
+      end
     end
 
     it "should not match when the current time is outside the range" do
@@ -545,7 +548,10 @@ describe Puppet::Type.type(:schedule) do
     it "should match when the range and day of week matches" do
       @schedule[:range] = "22:00:00 - 02:00:00"
       @schedule[:weekday] = "Thursday"
-      @schedule.must be_match
+      # See https://github.com/jruby/jruby/issues/215
+      pending("JRuby mishandles TZ in Time.local", :if => Puppet.features.jruby?) do
+        @schedule.must be_match
+      end
     end
 
     it "should not match when the range doesn't match even if the day-of-week matches" do

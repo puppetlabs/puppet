@@ -410,6 +410,8 @@ describe Puppet::Type.type(:file) do
       File.open(dest1, "w") { |f| f.puts "whatever" }
       File.symlink(dest1, link)
 
+      File.open(dest2, 'w') { |f| f.puts "banana" }
+
       md5 = Digest::MD5.hexdigest(File.read(file[:path]))
 
       catalog.apply
