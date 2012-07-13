@@ -389,7 +389,7 @@ Puppet::Type.newtype(:cron) do
   attr_accessor :uid
 
   def value(name)
-    name = symbolize(name)
+    name = name.intern
     ret = nil
     if obj = @parameters[name]
       ret = obj.should

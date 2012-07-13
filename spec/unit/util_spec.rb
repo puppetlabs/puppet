@@ -390,14 +390,6 @@ describe Puppet::Util do
         newhash.should == resulthash
       end
     end
-
-    describe "#symbolizehash!" do
-      it "should symbolize the hash in place" do
-        localhash = myhash
-        Puppet::Util.symbolizehash!(localhash)
-        localhash.should == resulthash
-      end
-    end
   end
 
   context "#replace_file" do

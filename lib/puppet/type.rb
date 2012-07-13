@@ -167,12 +167,14 @@ class Type
 
   # Is the parameter in question a meta-parameter?
   def self.metaparam?(param)
-    @@metaparamhash.include?(symbolize(param))
+    @@metaparamhash.include?(param.intern)
   end
 
   # Find the metaparameter class associated with a given metaparameter name.
+  # Must accept a `nil` name, and return nil.
   def self.metaparamclass(name)
-    @@metaparamhash[symbolize(name)]
+    return nil if name.nil?
+    @@metaparamhash[name.intern]
   end
 
   def self.metaparams
@@ -188,17 +190,15 @@ class Type
   def self.newmetaparam(name, options = {}, &block)
     @@metaparams ||= []
     @@metaparamhash ||= {}
-    name = symbolize(name)
+    name = name.intern
 
-
-      param = genclass(
-        name,
+    param = genclass(
+      name,
       :parent => options[:parent] || Puppet::Parameter,
       :prefix => "MetaParam",
       :hash => @@metaparamhash,
       :array => @@metaparams,
       :attributes => options[:attributes],
-
       &block
     )
 
@@ -276,7 +276,7 @@ class Type
   # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
   #   the provider is not set) to retrieve the current value.
   def self.newproperty(name, options = {}, &block)
-    name = symbolize(name)
+    name = name.intern
 
     # This is here for types that might still have the old method of defining
     # a parent class.
@@ -352,7 +352,7 @@ class Type
 
   # does the name reflect a valid property?
   def self.validproperty?(name)
-    name = symbolize(name)
+    name = name.intern
     @validproperties.include?(name) && @validproperties[name]
   end
 
@@ -462,7 +462,7 @@ class Type
   # remove a property from the object; useful in testing or in cleanup
   # when an error has been encountered
   def delete(attr)
-    attr = symbolize(attr)
+    attr = attr.intern
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
@@ -533,7 +533,7 @@ class Type
   # LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
   # this one should probably go away at some point.
   def property(name)
-    (obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)) ? obj : nil
+    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
   end
 
   # For any parameters or properties that have defaults and have not yet been
@@ -1431,7 +1431,7 @@ class Type
 
   # Retrieve a provider by name.
   def self.provider(name)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     # If we don't have it yet, try loading it.
     @providerloader.load(name) unless provider_hash.has_key?(name)
@@ -1444,7 +1444,7 @@ class Type
   end
 
   def self.validprovider?(name)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     (provider_hash.has_key?(name) && provider_hash[name].suitable?)
   end
@@ -1452,7 +1452,7 @@ class Type
   # Create a new provider of a type.  This method must be called
   # directly on the type that it's implementing.
   def self.provide(name, options = {}, &block)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"

@@ -14,7 +14,7 @@ class Puppet::Parser::Resource::Param
   def initialize(hash)
     set_options(hash)
     requiredopts(:name, :value)
-    @name = symbolize(@name)
+    @name = @name.intern
   end
 
   def line_to_i

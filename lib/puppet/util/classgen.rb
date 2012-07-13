@@ -83,7 +83,7 @@ module Puppet::Util::ClassGen
   def genthing(name, type, options, block)
     options = symbolize_options(options)
 
-    name = symbolize(name.to_s.downcase)
+    name = name.to_s.downcase.intern
 
     if type == Module
       #evalmethod = :module_eval

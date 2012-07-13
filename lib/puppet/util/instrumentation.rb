@@ -96,7 +96,7 @@ class Puppet::Util::Instrumentation
   # If no pattern is provided, then the listener will be called for every events
   def self.new_listener(name, options = {}, &block)
     Puppet.debug "new listener called #{name}"
-    name = symbolize(name)
+    name = name.intern
     listener = genclass(name, :hash => instance_hash(:listener), :block => block)
     listener.send(:define_method, :name) do
       name
@@ -144,15 +144,13 @@ class Puppet::Util::Instrumentation
 
   def self.[](key)
     synchronize {
-      key = symbolize(key)
-      @listeners[key]
+      @listeners[key.intern]
     }
   end
 
   def self.[]=(key, value)
     synchronize {
-      key = symbolize(key)
-      @listeners[key] = value
+      @listeners[key.intern] = value
       rehash
     }
   end
