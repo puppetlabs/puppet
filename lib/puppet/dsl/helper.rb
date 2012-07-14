@@ -69,7 +69,7 @@ module Puppet
       ##
       def is_resource_type?(name)
         type = canonize_type(name)
-        !!!!([:node, :class].include? type or
+        !!(["Node", "Class"].include? type or
            ::Puppet::Type.type type or
            ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition type)
       end

@@ -19,18 +19,27 @@ describe Puppet::DSL::ResourceDecorator do
 
     describe "getting" do
       it "should proxy messages to a resource" do
-        @resource.expects(:[]).once.with(:param).returns 42
+        @resource.expects(:[]).with(:param).returns 42
 
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.param.should == 42
         end
       end
 
+
+      it "should cache methods for future use" do
+        @resource.expects(:[]).twice.with(:foobar).returns 42
+
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.foobar.should == 42
+          r.foobar.should == 42
+        end
+      end
     end
 
     describe "setting" do
       it "should proxy get messages to a resource "do
-        @resource.expects(:[]=).once.with(:param, 42)
+        @resource.expects(:[]=).with(:param, 42)
 
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.param = 42
@@ -45,6 +54,15 @@ describe Puppet::DSL::ResourceDecorator do
         ref = evaluate_in_context { Puppet::DSL::Context::Notify["bar"] }
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.param = ref
+        end
+      end
+
+      it "should cache methods for future use" do
+        @resource.expects(:[]=).twice.with :foobar, 42
+
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.foobar = 42
+          r.foobar = 42
         end
       end
 
