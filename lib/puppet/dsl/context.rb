@@ -22,7 +22,6 @@ module Puppet
     class Context < BlankSlate
       include ::Puppet::DSL::Helper
 
-
       ##
       # Provides syntactic sugar for resource references.
       # It checks whether a constant exists and returns TypeReference
@@ -59,11 +58,7 @@ module Puppet
       # for Ruby 1.8 users.
       ##
       def type(name)
-        if ::Puppet::DSL::Context.const_defined? canonize_type(name)
-          ::Puppet::DSL::TypeReference.new name.downcase
-        else
-          raise ::NameError, "resource type `#{name}' not found"
-        end
+        ::Puppet::DSL::Context.const_missing canonize_type name
       end
       
       ##
@@ -89,6 +84,20 @@ module Puppet
       end
 
       ##
+      # Proxy method for Object#raise
+      ##
+      def raise(*args)
+        ::Object.send :raise, *args
+      end
+      
+      ##
+      # Proxy method for Object#raise
+      ##
+      def require(*args)
+        ::Object.send :require, *args
+      end
+
+      ##
       # The contents of the block passed to this method will be evaluated in
       # the context of Object instead of BasicObject. This adds access to
       # methods defined in global scope (like +require+).
@@ -104,7 +113,7 @@ module Puppet
       # when called in other scope than toplevel.
       #
       # The block is called when node is evaluated.
-      # Node name can be a string or a regex (MLEN:FIXME: not yet implemented).
+      # Node name can be a string or a regex
       #
       # Implemented options:
       #   :inherits - specify parent node
@@ -145,7 +154,7 @@ module Puppet
       # Block is called when the hostclass is evaluated.
       #
       # Implemented options:
-      #   :inherits - specify parent hostclass (MLEN:FIXME: doesn't work yet)
+      #   :inherits - specify parent hostclass
       #   :arguments - hostclass arguments
       #
       # Example:
@@ -169,7 +178,7 @@ module Puppet
         params.merge! :arguments => options[:arguments] if options[:arguments]
         params.merge! :parent => options[:inherits] if options[:inherits]
 
-        hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
+        hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
         hostclass.ruby_code = ::Puppet::DSL::Context.new block
 
         ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_hostclass hostclass
@@ -224,16 +233,14 @@ module Puppet
       # - is it a defined type?
       ##
       def valid_type?(name)
-        !!([:node, :class].include? name or
-           ::Puppet::Type.type name or
-           ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition name)
+        is_resource_type? name
       end
 
       ##
       # Checks whether Puppet function exists.
       ##
       def valid_function?(name)
-        !!::Puppet::Parser::Functions.function(name)
+        is_function? name
       end
 
       ##
@@ -368,14 +375,14 @@ module Puppet
       # Returns the current value of exporting flag
       ##
       def exporting?
-        @exporting
+        !!@exporting
       end
 
       ##
       # Returns the current value of virtualizing flag
       ##
       def virtualizing?
-        @virtualizing
+        !!@virtualizing
       end
 
       ##

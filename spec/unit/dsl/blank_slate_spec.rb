@@ -15,13 +15,6 @@ describe Puppet::DSL::BlankSlate do
       end
   end
 
-  it "should proxy `raise' calls to Object" do
-    Object.expects :raise
-    Puppet::DSL::BlankSlate.new.instance_eval do
-      raise
-    end
-  end
-
   describe "private methods" do
 
     it "should be able to define singleton methods" do

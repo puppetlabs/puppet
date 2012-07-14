@@ -38,13 +38,6 @@ module Puppet
     class BlankSlate
 
       ##
-      # Proxy method for Kernel#raise
-      ##
-      def raise(*args)
-        ::Object.send :raise, *args
-      end
-
-      ##
       # Redefine method from Object, as BasicObject doesn't include it.
       # It is used to define a singleton method on Context to cache
       # +method_missing+ calls.
