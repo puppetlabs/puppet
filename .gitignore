@@ -4,3 +4,4 @@ tags
 .*.sw[op]
 doc
 build
+coverage
