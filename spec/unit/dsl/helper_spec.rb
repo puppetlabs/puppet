@@ -13,6 +13,15 @@ describe Puppet::DSL::Helper do
     @helper.extend Puppet::DSL::Helper
   end
 
+  it "should define class methods too" do
+    class A
+      include Puppet::DSL::Helper
+    end
+
+    A.new.should respond_to :dsl_type_for
+    A.should respond_to :dsl_type_for
+  end
+
   describe "#dsl_type_for" do
 
     it "should return :ruby when the manifest name ends with .rb" do
@@ -138,6 +147,33 @@ describe Puppet::DSL::Helper do
     it "should return false otherwise" do
       @helper.is_function?("asdfasdf").should be false
     end
+  end
+
+  describe "#get_resource" do
+    it "should return the reference if it's already a resource" do
+      ref = Puppet::Resource.new "foo", "bar"
+      @helper.get_resource(ref).should == ref
+    end
+
+    it "should get a resource from Puppet::DSL::ResourceReference" do
+      prepare_compiler_and_scope
+      res = evaluate_in_context { file "foo" }.first
+      ref = evaluate_in_context { type("file")["foo"] }
+      @helper.get_resource(ref).should == res
+    end
+
+    it "should get a resource from a string" do
+      prepare_compiler_and_scope
+      res = evaluate_in_context { file "foo" }.first
+      evaluate_in_scope { @helper.get_resource("File[foo]").should == res }
+    end
+
+    it "should fail otherwise" do
+      lambda do
+      @helper.get_resource 3
+      end.should raise_error ArgumentError
+    end
+
   end
 end
 

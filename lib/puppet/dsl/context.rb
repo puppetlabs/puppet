@@ -11,8 +11,8 @@ module Puppet
     #
     # Context is based on BlankSlate class and the number of available method
     # is reduced to the bare minimum. Available methods are:
-    # - Kernel.raise,
-    # - Kernel.require,
+    # - Object.raise,
+    # - Object.require,
     # - all methods in this file,
     # - all methods defined by method_missing.
     #
@@ -31,13 +31,9 @@ module Puppet
       # For further information look at lib/puppet/dsl/type_reference.rb
       ##
       def self.const_missing(name)
-        if self.const_defined? name
-          ref = ::Puppet::DSL::TypeReference.new name.downcase
-          self.const_set name, ref
-          ref
-        else
-          raise ::NameError, "resource type `#{name}' not found"
-        end
+        ref = ::Puppet::DSL::TypeReference.new name
+        const_set name, ref unless is_resource_type? name
+        ref
       end
 
       ##
@@ -46,11 +42,7 @@ module Puppet
       # The algorithm is identical to one used in +respond_to?+ method.
       ##
       def self.const_defined?(name)
-        type = name.downcase
-        super || !!([:node, :class].include? type or
-           ::Puppet::Type.type type or
-           ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.definition type
-          )
+        is_resource_type? name
       end
 
       ##
@@ -58,7 +50,7 @@ module Puppet
       # for Ruby 1.8 users.
       ##
       def type(name)
-        ::Puppet::DSL::Context.const_missing canonize_type name
+        ::Puppet::DSL::TypeReference.new name
       end
       
       ##
@@ -316,8 +308,11 @@ module Puppet
       def create_resource(type, *args, &block)
         raise ::NoMethodError unless valid_type? type
         options = args.last.is_a?(::Hash) ? args.pop : {}
-        scope = ::Puppet::DSL::Parser.current_scope
 
+        ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
+        ::Puppet::Util.symbolizehash! options
+
+        scope = ::Puppet::DSL::Parser.current_scope
         ::Kernel::Array(args).map do |name|
           ##
           # Implementation based on
@@ -325,24 +320,19 @@ module Puppet
           ##
           case type
           when :class
-            ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
-
-            ::Puppet::Util.symbolizehash! options
             klass = scope.find_hostclass name
             klass.ensure_in_catalog scope, options
           else
             resource = ::Puppet::Parser::Resource.new type, name,
               :scope => scope,
               :source => scope.source
-            ::Puppet::Util.symbolizehash! options
-            resource.virtual = true if virtualizing? or options[:virtual] == true
-            resource.exported = true if exporting? or options[:export] == true
             options.each do |key, val|
               val = val.resource if val.is_a? ::Puppet::DSL::ResourceReference
               resource[key] = val
             end
 
-            ::Puppet::DSL::ResourceDecorator.new(resource, &block) if block
+            resource.virtual = true if virtualizing? or options[:virtual] == true
+            resource.exported = true if exporting? or options[:export] == true
 
             definition = scope.find_definition name.to_s
             if definition
@@ -417,8 +407,7 @@ module Puppet
           end
         else
           args.flatten.each do |r|
-            r = r.resource if r.is_a? ::Puppet::DSL::ResourceReference
-            r.exported = true
+            get_resource(r).exported = true
           end
         end
       end
@@ -455,8 +444,7 @@ module Puppet
           end
         else
           args.flatten.each do |r|
-            r = r.resource if r.is_a? ::Puppet::DSL::ResourceReference
-            r.virtual = true
+            get_resource(r).virtual = true
           end
         end
       end

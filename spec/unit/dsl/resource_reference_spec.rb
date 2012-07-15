@@ -3,6 +3,8 @@ require 'puppet_spec/dsl'
 require 'puppet/dsl/resource_reference'
 
 describe Puppet::DSL::ResourceReference do
+  include PuppetSpec::DSL
+
   before :each do
     prepare_compiler_and_scope
     @typeref = Puppet::DSL::TypeReference.new "notify"

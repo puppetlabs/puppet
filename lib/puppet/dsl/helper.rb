@@ -6,6 +6,13 @@ module Puppet
     module Helper
 
       ##
+      # This allows to access helper methods from class methods.
+      ##
+      def self.included(base)
+        base.extend Helper
+      end
+
+      ##
       # Tests whether to use ruby dsl.
       ##
       def use_ruby_dsl?(env)
@@ -79,6 +86,22 @@ module Puppet
       ##
       def is_function?(name)
         !!::Puppet::Parser::Functions.function(name)
+      end
+
+      ##
+      # Returns a resource for the passed reference
+      ##
+      def get_resource(reference)
+        case reference
+        when ::Puppet::Resource
+          reference
+        when ::Puppet::DSL::ResourceReference
+          reference.resource
+        when ::String
+          ::Puppet::DSL::Parser.current_scope.findresource reference
+        else
+          fail ::ArgumentError, "couldn't find resource for #{reference}"
+        end
       end
 
     end

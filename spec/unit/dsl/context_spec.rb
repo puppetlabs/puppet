@@ -22,6 +22,13 @@ describe Puppet::DSL::Context do
       end.should raise_error NoMethodError
     end
 
+    it "should create a resource" do
+      evaluate_in_context do 
+        create_resource :file, "/tmp/test"
+      end
+      @compiler.resources.map {|r| r.name}.should include "/tmp/test"
+    end
+
     it "should return an array of created resources" do
       evaluate_in_context do
         create_resource :file, "/tmp/test"
@@ -68,12 +75,6 @@ describe Puppet::DSL::Context do
       end.first[:mode].should == "0666"
     end
 
-    it "should work with method_missing" do
-      evaluate_in_context do
-        file("/tmp/test")
-      end
-    end
-
     it "should mark resource as virtual when virtualizing? is set" do
       evaluate_in_context do
         virtual do
@@ -96,6 +97,27 @@ describe Puppet::DSL::Context do
       end.first.exported.should be true
     end
 
+    context "with method_missing" do
+      it "should work" do
+        evaluate_in_context do
+          file "/tmp/test"
+        end
+      end
+
+      it "should create cached method for future use" do
+        evaluate_in_context do
+          file "/tmp/foo"
+          file "/tmp/bar"
+        end
+      end
+
+      it "should fail with NoMethodError when resource type doesn't exist" do
+        lambda do; evaluate_it_context do
+          self.foobarbaz "/tmp/test"
+        end; end.should raise_error NoMethodError
+      end
+
+    end
   end
 
   context "when calling a function" do
@@ -126,60 +148,28 @@ describe Puppet::DSL::Context do
       end
     end
 
-    it "should work with method_missing" do
-      @scope.expects :notice
-      evaluate_in_context do
-        notice
-      end
-    end
-
-  end
-
-  context "with method missing" do
-
-    it "should create a resource" do
-      resources = nil
-      evaluate_in_context do
-        resources = file "/tmp/test", :ensure => :present
-      end
-
-      resources.should be_an Array
-      resources.each do |r|
-        r.should be_a Puppet::Parser::Resource
-        r[:ensure].should == :present
-      end
-    end
-
-    it "should allow to use block syntax to create a resource" do
-      resources = nil
-      evaluate_in_context do
-        resources = file "/tmp/test" do |f|
-          f.ensure = :present
-        end
-      end
-
-      resources.should be_an Array
-      resources.each do |r|
-        r.should be_a Puppet::Parser::Resource
-        r[:ensure].should == :present
-      end
-    end
-
-    it "should call a function" do
-      @scope.expects(:send).with(:notice, ["foo"])
-      evaluate_in_context do
-        notice "foo"
-      end
-    end
-
-    it "should raise NoMethodError when neither function nor resource type exists" do
-      lambda do
+    context "with method_missing" do
+      it "should work" do
+        @scope.expects :notice
         evaluate_in_context do
-          self.foobar
+          notice
         end
-      end.should raise_error NoMethodError
-    end
+      end
 
+      it "should create cached version of the method" do
+        evaluate_in_context do
+          notice "foo"
+          notice "bar"
+        end
+      end
+
+      it "should fail with NoMethodError when the function doesn't exist" do
+        lambda do; evaluate_in_context do
+          self.foobar
+        end; end.should raise_error NoMethodError
+      end
+
+    end
   end
 
   context "when creating definition" do
@@ -190,7 +180,16 @@ describe Puppet::DSL::Context do
       end.should == known_resource_types.definition(:foo)
     end
 
-    it "should evaluate the block"
+    it "should call the block when evaluating type" do
+      expected = nil
+      evaluate_in_context do
+        define :foo do
+          expected = true
+        end
+      end.ruby_code.evaluate @scope
+
+      expected.should be true
+    end
 
     it "should return Puppet::Resource::Type" do
       evaluate_in_context do
@@ -228,9 +227,28 @@ describe Puppet::DSL::Context do
       end.should raise_error ArgumentError
     end
 
-    it "should assign arguments"
+    it "should assign arguments" do
+      args = {"myparam" => "myvalue"} 
+      evaluate_in_context do
+        define :foo, :arguments => args do
+        end
+      end.arguments.should == args
+    end
 
-    it "should fail when passing invalid options"
+    it "should fail when passing invalid options" do
+      lambda do; evaluate_in_context do
+        define(:foo, :bar => "asdf") {}
+      end; end.should raise_error ArgumentError
+    end
+
+    it "should be able to use created definition" do
+      evaluate_in_context do
+        define(:foo) { notify params[:name] }
+        foo "bar"
+      end
+      @compiler.findresource("Foo[bar]").should_not be nil
+    end
+
 
   end
 
@@ -242,11 +260,28 @@ describe Puppet::DSL::Context do
       end.should == known_resource_types.node(:foo)
     end
 
-    it "should set proper title"
+    it "should set proper name" do
+      evaluate_in_context do
+        node("foo") {}
+      end.name.should == "foo"
+    end
 
-    it "should return Puppet::Resource::Type"
+    it "should return Puppet::Resource::Type" do
+      evaluate_in_context do
+        node("foo") {}
+      end.should be_a Puppet::Resource::Type
+    end
 
-    it "should evaluate the block"
+    it "should call the block when evaluating type" do
+      expected = nil
+      evaluate_in_context do
+        node "foo" do
+          expected = true
+        end
+      end.ruby_code.evaluate @scope
+
+      expected.should be true
+    end
 
     it "should raise NoMethodError when the nesting is invalid" do
       Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
@@ -261,22 +296,49 @@ describe Puppet::DSL::Context do
     it "should raise ArgumentError when there is no block given" do
       lambda do
         evaluate_in_context do
-          node :foo
+          node "foo"
         end
       end.should raise_error ArgumentError
     end
 
-    it "should assign a parent"
+    it "should assign a parent" do
+      evaluate_in_context do
+        node "foo", :inherits => "bar" do
+        end
+      end.parent.should == "bar"
+    end
 
-    it "should fail when passing invalid options"
+    it "should support passing a name as regex" do
+      evaluate_in_context do
+        node(/mac/) {}
+      end.name_is_regex?.should be true
+    end
+
+    it "should fail when passing invalid options" do
+      lambda do; evaluate_in_context do
+        node("foo", :bar => :baz) {}
+      end; end.should raise_error ArgumentError
+    end
+
   end
 
-  describe "when creating a class" do
+  describe "when defining a class" do
 
     it "should add a new type" do
       evaluate_in_context do
         hostclass(:foo) {}
       end.should == known_resource_types.hostclass(:foo)
+    end
+
+    it "should call the block when evaluating type" do
+      expected = nil
+      evaluate_in_context do
+        hostclass :foo do
+          expected = true
+        end
+      end.ruby_code.evaluate @scope
+
+      expected.should be true
     end
  
     it "should return Puppet::Resource::Type object" do
@@ -329,7 +391,20 @@ describe Puppet::DSL::Context do
       end.parent.should == parent
     end
 
-    it "should fail when passing invalid options"
+    it "should fail when passing invalid options" do
+      lambda do; evaluate_in_context do
+        hostclass(:foo, :bar => :baz) {}
+      end; end.should raise_error ArgumentError
+    end
+
+    it "should be able to use created class" do
+      evaluate_in_context do
+        hostclass(:foo) { notify params[:name] }
+        use :foo
+      end
+      @compiler.findresource("Class[foo]").should_not be nil
+    end
+
   end
 
   context "when referencing type" do
@@ -421,19 +496,98 @@ describe Puppet::DSL::Context do
       end
     end
 
-    describe "#export"
+    describe "#export" do
+      it "should mark resources created in block as exported" do
+        evaluate_in_context do
+          export do
+            file "foo"
+          end
+        end.first.exported.should be true
+      end
 
-    describe "#virtual"
+      it "should mark resources as exported" do
+        evaluate_in_context do
+          export file "foo"
+        end.first.exported.should be true
+      end
 
-    describe "#respond_to?"
+      it "should mark referenced resources as exported" do
+        evaluate_in_context do
+          file "foo"
+          export type("file")["foo"]
+        end.first.resource.exported.should be true
+      end
 
-    describe "#valid_function?"
+      it "should mark string references of resources as exported" do
+        evaluate_in_context do
+          resource = file "foo"
+          export "File[foo]"
+          resource
+        end.first.exported.should be true
+      end
+    end
 
-    describe "#valid_type?"
+    describe "#virtual" do
+      it "should mark resources created in block as virtual" do
+        evaluate_in_context do
+          virtual do
+            file "foo"
+          end
+        end.first.virtual.should be true
+      end
 
-    describe "#use"
+      it "should mark resources as virtual" do
+        evaluate_in_context do
+          virtual file "foo"
+        end.first.virtual.should be true
+      end
 
-    describe "#my"
+      it "should mark referenced resources as virtual" do
+        evaluate_in_context do
+          file "foo"
+          virtual type("file")["foo"]
+        end.first.resource.virtual.should be true
+      end
+
+      it "should mark string references of resources as virtual" do
+        evaluate_in_context do
+          resource = file "foo"
+          virtual "File[foo]"
+          resource
+        end.first.virtual.should be true
+      end
+    end
+
+    describe "#respond_to?" do
+      it "should return true when function is defined"
+      it "should return true when resource type is defined"
+      it "should return true when a method is defined"
+      it "should fail otherwise"
+    end
+
+    describe "#valid_function?" do
+      it "should proxy calls to is_function?"
+    end
+
+    describe "#valid_type?" do
+      it "should proxy calls to is_resource_type?"
+    end
+
+    describe "#my" do
+      it "should fail when called without block" do
+        lambda do; evaluate_in_context do
+          my
+        end; end.should raise_error
+      end
+
+      it "should be able to call methods from Object in the block" do
+        Object.any_instance.expects(:puts).with "hello world"
+        evaluate_in_context do
+          my { puts "hello world" }
+        end
+      end
+
+    end
 
   end
 
