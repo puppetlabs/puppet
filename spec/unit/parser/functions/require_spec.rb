@@ -8,11 +8,12 @@ describe "the require function" do
 
   before :each do
     @catalog = stub 'catalog'
-    @compiler = stub 'compiler', :catalog => @catalog, :environment => nil
 
-    @scope = Puppet::Parser::Scope.new
+    node      = Puppet::Node.new('localhost')
+    compiler  = Puppet::Parser::Compiler.new(node)
+    @scope = Puppet::Parser::Scope.new(:compiler => compiler)
+
     @scope.stubs(:findresource)
-    @scope.stubs(:compiler).returns(@compiler)
     @klass = stub 'class', :name => "myclass"
     @scope.stubs(:find_hostclass).returns(@klass)
 

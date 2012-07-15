@@ -3,7 +3,9 @@ require 'spec_helper'
 
 describe Puppet::Parser::AST::MatchOperator do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
 
     @lval = stub 'lval'
     @lval.stubs(:safeevaluate).with(@scope).returns("this is a string")

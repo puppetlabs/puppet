@@ -6,7 +6,9 @@ describe Puppet::Parser::AST::ArithmeticOperator do
   ast = Puppet::Parser::AST
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
     @one = stub 'lval', :safeevaluate => 1
     @two = stub 'rval', :safeevaluate => 2
   end

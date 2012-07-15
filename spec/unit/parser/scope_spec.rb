@@ -4,8 +4,9 @@ require 'puppet_spec/compiler'
 
 describe Puppet::Parser::Scope do
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope = Puppet::Parser::Scope.new(
+      :compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    )
     @scope.source = Puppet::Resource::Type.new(:node, :foo)
     @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
@@ -44,8 +45,8 @@ describe Puppet::Parser::Scope do
     scope.environment.should equal(env)
   end
 
-  it "should use the default environment if none is available" do
-    Puppet::Parser::Scope.new.environment.should equal(Puppet::Node::Environment.new)
+  it "should fail if no compiler is supplied" do
+    expect { Puppet::Parser::Scope.new }.to raise_error Puppet::DevError
   end
 
   it "should use the resource type collection helper to find its known resource types" do
@@ -84,8 +85,10 @@ describe Puppet::Parser::Scope do
     end
 
     it "should extend itself with the default Functions module if its environment is the default" do
-      root = Puppet::Node::Environment.root
-      scope = Puppet::Parser::Scope.new
+      root     = Puppet::Node::Environment.root
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(:compiler => compiler)
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
   end
@@ -150,6 +153,9 @@ describe Puppet::Parser::Scope do
     describe "and the variable is qualified" do
       before :each do
         @known_resource_types = @scope.known_resource_types
+
+        node      = Puppet::Node.new('localhost')
+        @compiler = Puppet::Parser::Compiler.new(node)
       end
 
       def newclass(name)
@@ -160,7 +166,7 @@ describe Puppet::Parser::Scope do
         klass = newclass(name)
 
         catalog = Puppet::Resource::Catalog.new
-        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new))
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(:compiler => @compiler)))
 
         Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 

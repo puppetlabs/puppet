@@ -8,10 +8,10 @@ describe "the realize function" do
 
   before :each do
     @collector = stub_everything 'collector'
-    @scope = Puppet::Parser::Scope.new
-    @compiler = stub 'compiler'
+    node      = Puppet::Node.new('localhost')
+    @compiler = Puppet::Parser::Compiler.new(node)
+    @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
     @compiler.stubs(:add_collection).with(@collector)
-    @scope.stubs(:compiler).returns(@compiler)
   end
 
   it "should exist" do

@@ -66,11 +66,11 @@ class Puppet::Parser::Scope
 
   # Proxy accessors
   def host
-    @compiler.node.name
+    compiler.node.name
   end
 
   def facts
-    @compiler.node.facts
+    compiler.node.facts
   end
 
   def include?(name)
@@ -115,7 +115,7 @@ class Puppet::Parser::Scope
   end
 
   def environment
-    compiler ? compiler.environment : Puppet::Node::Environment.new
+    compiler.environment
   end
 
   def find_hostclass(name, options = {})
@@ -132,6 +132,10 @@ class Puppet::Parser::Scope
 
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(hash = {})
+    unless hash[:compiler]
+      raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
+    end
+
     if hash.include?(:namespace)
       if n = hash[:namespace]
         @namespaces = [n]

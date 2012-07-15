@@ -7,8 +7,9 @@ describe "the 'tag' function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.stubs(:environment).returns(nil)
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
   end
 
   it "should exist" do

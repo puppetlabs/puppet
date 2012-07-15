@@ -204,8 +204,7 @@ class Puppet::Parser::Compiler
   # using the top scope.
   def newscope(parent, options = {})
     parent ||= topscope
-    options[:compiler] = self
-    scope = Puppet::Parser::Scope.new(options)
+    scope = Puppet::Parser::Scope.new(options.merge(:compiler => self))
     scope.parent = parent
     scope
   end

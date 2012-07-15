@@ -3,7 +3,10 @@ require 'spec_helper'
 
 describe Puppet::Parser::AST::ComparisonOperator do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+
     @one = Puppet::Parser::AST::Leaf.new(:value => "1")
     @two = Puppet::Parser::AST::Leaf.new(:value => "2")
 

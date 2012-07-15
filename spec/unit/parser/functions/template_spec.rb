@@ -6,7 +6,9 @@ describe "the template function" do
     Puppet::Parser::Functions.autoloader.loadall
   end
 
-  let :scope do Puppet::Parser::Scope.new end
+  let :node     do Puppet::Node.new('localhost') end
+  let :compiler do Puppet::Parser::Compiler.new(node) end
+  let :scope    do Puppet::Parser::Scope.new(:compiler => compiler) end
 
   it "should exist" do
     Puppet::Parser::Functions.function("template").should == "function_template"
@@ -62,7 +64,6 @@ describe "the template function" do
   def eval_template(content, *rest)
     File.stubs(:read).with("template").returns(content)
     Puppet::Parser::Files.stubs(:find_template).returns("template")
-    scope.compiler.stubs(:environment).returns("production")
     scope.function_template(['template'] + rest)
   end
 

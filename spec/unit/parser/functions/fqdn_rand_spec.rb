@@ -7,7 +7,9 @@ describe "the fqdn_rand function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
     @scope[:fqdn] = "127.0.0.1"
   end
 

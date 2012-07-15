@@ -351,7 +351,7 @@ describe Puppet::Resource::Type do
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
       @krt.add @child
 
-      @scope = Puppet::Parser::Scope.new
+      @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
     end
 
     it "should be able to define a parent" do
