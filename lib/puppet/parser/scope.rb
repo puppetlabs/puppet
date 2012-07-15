@@ -132,15 +132,13 @@ class Puppet::Parser::Scope
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
     end
 
-    if options.include?(:namespace)
-      if n = options[:namespace]
-        @namespaces = [n]
-      end
-      options.delete(:namespace)
+    if n = options.delete(:namespace)
+      @namespaces = [n]
     else
       @namespaces = [""]
     end
-    options.each { |name, val|
+
+    options.each do |name, val|
       raise Puppet::DevError, "compiler passed in options" if name.to_s == "compiler"
 
       method = name.to_s + "="
@@ -149,7 +147,7 @@ class Puppet::Parser::Scope
       else
         raise Puppet::DevError, "Invalid scope argument #{name}"
       end
-    }
+    end
 
     extend_with_functions_module
 
