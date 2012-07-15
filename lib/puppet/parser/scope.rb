@@ -1,9 +1,7 @@
 # The scope class, which handles storing and retrieving variables and types and
 # such.
-
 require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
-require 'strscan'
 
 require 'puppet/resource/type_collection_helper'
 
