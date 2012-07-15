@@ -81,25 +81,22 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Is the value a number?, return the correct object or nil if not a number
+  # Coerce value to a number, or return `nil` if it isn't one.
   def self.number?(value)
-    return nil unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
-
-    if value.is_a?(String)
-      if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
-        return value.to_f
-      elsif value =~ /^0x[0-9a-f]+$/i
-        return value.to_i(16)
-      elsif value =~ /^0[0-7]+$/
-        return value.to_i(8)
-      elsif value =~ /^-?\d+$/
-        return value.to_i
-      else
-        return nil
-      end
+    case value
+    when Numeric
+      value
+    when /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
+      value.to_f
+    when /^0x[0-9a-f]+$/i
+      value.to_i(16)
+    when /^0[0-7]+$/
+      value.to_i(8)
+    when /^-?\d+$/
+      value.to_i
+    else
+      nil
     end
-    # it is one of Fixnum,Bignum or Float
-    value
   end
 
   # Add to our list of namespaces.
