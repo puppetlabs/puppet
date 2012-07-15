@@ -1,11 +1,15 @@
 # The scope class, which handles storing and retrieving variables and types and
 # such.
+require 'forwardable'
+
 require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
 
 require 'puppet/resource/type_collection_helper'
 
 class Puppet::Parser::Scope
+  extend Forwardable
+
   include Puppet::Resource::TypeCollectionHelper
   require 'puppet/parser/resource'
 
@@ -21,20 +25,22 @@ class Puppet::Parser::Scope
   attr_accessor :parent
   attr_reader :namespaces
 
+  # Add some alias methods that forward to the compiler, since we reference
+  # them frequently enough to justify the extra method call.
+  def_delegators :compiler, :catalog, :environment
+
   # thin wrapper around an ephemeral
   # symbol table.
   # when a symbol
   class Ephemeral
+    extend Forwardable
+
     def initialize(parent=nil)
       @symbols = {}
       @parent = parent
     end
 
-    [:include?, :delete, :[]=].each do |m|
-      define_method(m) do |*args|
-        @symbols.send(m, *args)
-      end
-    end
+    def_delegators :@symbols, :include?, :delete, :[]=
 
     def [](name)
       unless @symbols.include?(name) or @parent.nil?
@@ -51,11 +57,6 @@ class Puppet::Parser::Scope
 
   def []=(var, value)
     setvar(var, value)
-  end
-
-  # A demeterific shortcut to the catalog.
-  def catalog
-    compiler.catalog
   end
 
   def each
@@ -112,10 +113,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  def environment
-    compiler.environment
-  end
-
   def find_hostclass(name, options = {})
     known_resource_types.find_hostclass(namespaces, name, options)
   end
@@ -124,9 +121,8 @@ class Puppet::Parser::Scope
     known_resource_types.find_definition(namespaces, name)
   end
 
-  def findresource(string, name = nil)
-    compiler.findresource(string, name)
-  end
+  # This just delegates directly.
+  def_delegator :compiler, :findresource
 
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(compiler, options = {})
@@ -358,9 +354,7 @@ class Puppet::Parser::Scope
   private :append_value
 
   # Return the tags associated with this scope.
-  def tags
-    resource.tags
-  end
+  def_delegator :resource, :tags
 
   # Used mainly for logging
   def to_s
