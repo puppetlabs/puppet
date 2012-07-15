@@ -263,16 +263,20 @@ class Puppet::Parser::Scope
   # by default) including the values defined in our parent.  Local values
   # shadow parent values.
   def to_hash(recursive = true)
-    target = parent.to_hash(recursive) if recursive and parent
-    target ||= Hash.new
-    @symtable.keys.each { |name|
-      value = @symtable[name]
+    if recursive and parent
+      target = parent.to_hash(recursive)
+    else
+      target = Hash.new
+    end
+
+    @symtable.each do |name, value|
       if value == :undef
         target.delete(name)
       else
         target[name] = value
       end
-    }
+    end
+
     target
   end
 
