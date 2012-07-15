@@ -522,7 +522,8 @@ describe Puppet::Parser::Scope do
       "false"    => true,
       true       => true,
       ""         => false,
-      :undef     => false
+      :undef     => false,
+      nil        => false
     }.each do |input, output|
       it "should treat #{input.inspect} as #{output}" do
         Puppet::Parser::Scope.true?(input).should == output

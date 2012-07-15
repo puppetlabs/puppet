@@ -71,7 +71,14 @@ class Puppet::Parser::Scope
   # Is the value true?  This allows us to control the definition of truth
   # in one place.
   def self.true?(value)
-    (value != false and value != "" and value != :undef)
+    case value
+    when ''
+      false
+    when :undef
+      false
+    else
+      !!value
+    end
   end
 
   # Is the value a number?, return the correct object or nil if not a number
