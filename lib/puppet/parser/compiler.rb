@@ -120,7 +120,10 @@ class Puppet::Parser::Compiler
   # Return the node's environment.
   def environment
     unless defined?(@environment)
-      @environment = (node.environment and node.environment != "") ? node.environment : nil
+      unless node.environment.is_a? Puppet::Node::Environment
+        raise Puppet::DevError, "node #{node} has an invalid environment!"
+      end
+      @environment = node.environment
     end
     Puppet::Node::Environment.current = @environment
     @environment
