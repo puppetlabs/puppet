@@ -51,14 +51,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  def [](name, options = {})
-    lookupvar(name, options)
-  end
-
-  def []=(var, value)
-    setvar(var, value)
-  end
-
   def each
     to_hash.each { |name, value| yield(name, value) }
   end
@@ -254,6 +246,7 @@ class Puppet::Parser::Scope
       nil
     end
   end
+  alias [] lookupvar
 
   def qualified_scope(classname)
     raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
@@ -335,6 +328,7 @@ class Puppet::Parser::Scope
       table[name] = value
     end
   end
+  alias []= setvar
 
   def append_value(bound_value, new_value)
     case new_value
