@@ -5,7 +5,7 @@ describe Puppet::Parser::AST::Leaf do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @value = stub 'value'
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
@@ -60,7 +60,7 @@ describe Puppet::Parser::AST::Concat do
     before :each do
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+      @scope   = Puppet::Parser::Scope.new(compiler)
     end
 
     it "should interpolate variables and concatenate their values" do
@@ -93,7 +93,7 @@ describe Puppet::Parser::AST::Undef do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @undef   = Puppet::Parser::AST::Undef.new(:value => :undef)
   end
 
@@ -110,7 +110,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
@@ -234,7 +234,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     it "should add a new key and value" do
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      scope    = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope    = Puppet::Parser::Scope.new(compiler)
 
       scope['a'] = { 'a' => 'b' }
 
@@ -255,7 +255,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     it "should be able to return an array member when index is a stringified number" do
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      scope    = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope    = Puppet::Parser::Scope.new(compiler)
 
       scope['a'] = []
 
@@ -278,7 +278,7 @@ describe Puppet::Parser::AST::Regex do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when initializing" do
@@ -378,7 +378,7 @@ describe Puppet::Parser::AST::Variable do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope = Puppet::Parser::Scope.new(compiler)
     @var = Puppet::Parser::AST::Variable.new(:value => "myvar", :file => 'my.pp', :line => 222)
   end
 
@@ -408,7 +408,7 @@ describe Puppet::Parser::AST::HostName do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @value = stub 'value', :=~ => false
     @value.stubs(:to_s).returns(@value)
     @value.stubs(:downcase).returns(@value)

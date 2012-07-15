@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::InOperator do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
 
     @lval = stub 'lval'
     @lval.stubs(:safeevaluate).with(@scope).returns("left")

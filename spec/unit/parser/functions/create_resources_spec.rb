@@ -8,7 +8,7 @@ describe 'function for dynamically creating resources' do
   before :each do
     node      = Puppet::Node.new("floppy", :environment => 'production')
     @compiler = Puppet::Parser::Compiler.new(node)
-    @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope    = Puppet::Parser::Scope.new(@compiler)
     @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
     Puppet::Parser::Functions.function(:create_resources)

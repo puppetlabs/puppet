@@ -11,7 +11,7 @@ describe "the require function" do
 
     node      = Puppet::Node.new('localhost')
     compiler  = Puppet::Parser::Compiler.new(node)
-    @scope = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope = Puppet::Parser::Scope.new(compiler)
 
     @scope.stubs(:findresource)
     @klass = stub 'class', :name => "myclass"

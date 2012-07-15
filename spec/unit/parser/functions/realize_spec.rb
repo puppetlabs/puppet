@@ -10,7 +10,7 @@ describe "the realize function" do
     @collector = stub_everything 'collector'
     node      = Puppet::Node.new('localhost')
     @compiler = Puppet::Parser::Compiler.new(node)
-    @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope    = Puppet::Parser::Scope.new(@compiler)
     @compiler.stubs(:add_collection).with(@collector)
   end
 

@@ -5,7 +5,7 @@ require 'puppet_spec/compiler'
 describe Puppet::Parser::Scope do
   before :each do
     @scope = Puppet::Parser::Scope.new(
-      :compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
     )
     @scope.source = Puppet::Resource::Type.new(:node, :foo)
     @topscope = @scope.compiler.topscope
@@ -40,13 +40,18 @@ describe Puppet::Parser::Scope do
 
   it "should get its environment from its compiler" do
     env = Puppet::Node::Environment.new
-    compiler = stub 'compiler', :environment => env
-    scope = Puppet::Parser::Scope.new :compiler => compiler
+    compiler = stub 'compiler', :environment => env, :is_a? => true
+    scope = Puppet::Parser::Scope.new(compiler)
     scope.environment.should equal(env)
   end
 
   it "should fail if no compiler is supplied" do
-    expect { Puppet::Parser::Scope.new }.to raise_error Puppet::DevError
+    expect { Puppet::Parser::Scope.new }.to raise_error ArgumentError
+  end
+
+  it "should fail if something that isn't a compiler is supplied" do
+    expect { Puppet::Parser::Scope.new(:compiler => true) }.
+      to raise_error Puppet::DevError
   end
 
   it "should use the resource type collection helper to find its known resource types" do
@@ -57,7 +62,7 @@ describe Puppet::Parser::Scope do
     before :each do
       @env      = Puppet::Node::Environment.new('testing')
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => @env))
-      @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope    = Puppet::Parser::Scope.new(@compiler)
     end
 
     it "should load and call the method if it looks like a function and it exists" do
@@ -77,9 +82,9 @@ describe Puppet::Parser::Scope do
     it "should extend itself with its environment's Functions module as well as the default" do
       env = Puppet::Node::Environment.new("myenv")
       root = Puppet::Node::Environment.root
-      compiler = stub 'compiler', :environment => env
+      compiler = stub 'compiler', :environment => env, :is_a? => true
 
-      scope = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope = Puppet::Parser::Scope.new(compiler)
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(env))
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
@@ -88,7 +93,7 @@ describe Puppet::Parser::Scope do
       root     = Puppet::Node::Environment.root
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      scope    = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope    = Puppet::Parser::Scope.new(compiler)
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
   end
@@ -166,7 +171,7 @@ describe Puppet::Parser::Scope do
         klass = newclass(name)
 
         catalog = Puppet::Resource::Catalog.new
-        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(:compiler => @compiler)))
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(@compiler)))
 
         Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 

@@ -131,20 +131,24 @@ class Puppet::Parser::Scope
   end
 
   # Initialize our new scope.  Defaults to having no parent.
-  def initialize(hash = {})
-    unless hash[:compiler]
+  def initialize(compiler, options = {})
+    if compiler.is_a? Puppet::Parser::Compiler
+      self.compiler = compiler
+    else
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
     end
 
-    if hash.include?(:namespace)
-      if n = hash[:namespace]
+    if options.include?(:namespace)
+      if n = options[:namespace]
         @namespaces = [n]
       end
-      hash.delete(:namespace)
+      options.delete(:namespace)
     else
       @namespaces = [""]
     end
-    hash.each { |name, val|
+    options.each { |name, val|
+      raise Puppet::DevError, "compiler passed in options" if name.to_s == "compiler"
+
       method = name.to_s + "="
       if self.respond_to? method
         self.send(method, val)

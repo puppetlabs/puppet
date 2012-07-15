@@ -11,7 +11,7 @@ describe "the 'file' function" do
 
   let :node     do Puppet::Node.new('localhost') end
   let :compiler do Puppet::Parser::Compiler.new(node) end
-  let :scope    do Puppet::Parser::Scope.new(:compiler => compiler) end
+  let :scope    do Puppet::Parser::Scope.new(compiler) end
 
   it "should exist" do
     Puppet::Parser::Functions.function("file").should == "function_file"

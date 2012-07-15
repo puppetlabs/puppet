@@ -5,7 +5,7 @@ describe Puppet::Parser::AST::VarDef do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do

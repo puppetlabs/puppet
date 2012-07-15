@@ -204,7 +204,7 @@ class Puppet::Parser::Compiler
   # using the top scope.
   def newscope(parent, options = {})
     parent ||= topscope
-    scope = Puppet::Parser::Scope.new(options.merge(:compiler => self))
+    scope = Puppet::Parser::Scope.new(self, options)
     scope.parent = parent
     scope
   end
@@ -435,7 +435,7 @@ class Puppet::Parser::Compiler
     @catalog.environment = @node.environment.to_s
 
     # Create our initial scope and a resource that will evaluate main.
-    @topscope = Puppet::Parser::Scope.new(:compiler => self)
+    @topscope = Puppet::Parser::Scope.new(self)
 
     @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
     @catalog.add_resource(@main_stage_resource)

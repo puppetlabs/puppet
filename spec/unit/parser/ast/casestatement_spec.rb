@@ -5,7 +5,7 @@ describe Puppet::Parser::AST::CaseStatement do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
@@ -157,7 +157,7 @@ describe Puppet::Parser::AST::CaseStatement do
       values.each do |value|
         node     = Puppet::Node.new('localhost')
         compiler = Puppet::Parser::Compiler.new(node)
-        scope    = Puppet::Parser::Scope.new(:compiler => compiler)
+        scope    = Puppet::Parser::Scope.new(compiler)
         scope['testparam'] = value
         result = ast.evaluate(scope)
 

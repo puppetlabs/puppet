@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Puppet::Parser::AST::Selector do
   let :node     do Puppet::Node.new('localhost') end
   let :compiler do Puppet::Parser::Compiler.new(node) end
-  let :scope    do Puppet::Parser::Scope.new(:compiler => compiler) end
+  let :scope    do Puppet::Parser::Scope.new(compiler) end
 
   # Take a code expression containing a selector, and return that portion of
   # the AST.  This does the magic required to make that legal and all.

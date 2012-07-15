@@ -5,7 +5,7 @@ describe Puppet::Parser::AST::Not do
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(:compiler => compiler)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @true_ast = Puppet::Parser::AST::Boolean.new( :value => true)
     @false_ast = Puppet::Parser::AST::Boolean.new( :value => false)
   end

@@ -266,7 +266,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   before do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-    @scope = Puppet::Parser::Scope.new :compiler => @compiler
+    @scope = Puppet::Parser::Scope.new @compiler
     @resource_type = "notify"
     @equery = ["title", "!=", ""]
     @vquery = proc { |r| true }
