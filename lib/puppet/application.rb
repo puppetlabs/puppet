@@ -354,8 +354,8 @@ class Application
     setup_logs
   end
 
-  def setup_logs
-    if options[:debug] or options[:verbose]
+  def setup_logs(is_daemon = false)
+    if options[:debug] or options[:verbose] or is_daemon
       Puppet::Util::Log.newdestination(:console)
       if options[:debug]
         Puppet::Util::Log.level = :debug
