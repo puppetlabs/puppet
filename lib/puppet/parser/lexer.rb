@@ -3,6 +3,7 @@
 require 'forwardable'
 require 'strscan'
 require 'puppet'
+require 'puppet/util/methodhelper'
 
 
 module Puppet
@@ -21,17 +22,21 @@ class Puppet::Parser::Lexer
   end
 
   class Token
+    include Puppet::Util::MethodHelper
+
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
     alias skip? skip
     alias accumulate? accumulate
 
-    def initialize(string_or_regex, name)
+    def initialize(string_or_regex, name, options = {})
       if string_or_regex.is_a?(String)
         @name, @string = name, string_or_regex
         @regex = Regexp.new(Regexp.escape(string_or_regex))
       else
         @name, @regex = name, string_or_regex
       end
+
+      set_options(options)
     end
 
     def to_s
@@ -54,17 +59,13 @@ class Puppet::Parser::Lexer
     # Create a new token.
     def add_token(name, regex, options = {}, &block)
       raise(ArgumentError, "Token #{name} already exists") if @tokens.include?(name)
-      token = Token.new(regex, name)
+      token = Token.new(regex, name, options)
       @tokens[token.name] = token
       if token.string
         @string_tokens << token
         @tokens_by_string[token.string] = token
       else
         @regex_tokens << token
-      end
-
-      options.each do |name, option|
-        token.send(name.to_s + "=", option)
       end
 
       token.meta_def(:convert, &block) if block_given?
