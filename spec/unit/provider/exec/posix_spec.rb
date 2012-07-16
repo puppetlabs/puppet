@@ -145,11 +145,11 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       end
 
       it "should respect locale overrides in user's 'environment' configuration" do
-        provider.resource[:environment] = ['LANG=foo', 'LC_ALL=bar']
+        provider.resource[:environment] = ['LANG=C', 'LC_ALL=C']
         output, status = provider.run(command % 'LANG')
-        output.strip.should == 'foo'
+        output.strip.should == 'C'
         output, status = provider.run(command % 'LC_ALL')
-        output.strip.should == 'bar'
+        output.strip.should == 'C'
       end
     end
 
