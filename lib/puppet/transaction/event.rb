@@ -1,9 +1,11 @@
 require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/util/logging'
+require 'puppet/util/methodhelper'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event
+  include Puppet::Util::MethodHelper
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
 
@@ -18,8 +20,7 @@ class Puppet::Transaction::Event
 
   def initialize(options = {})
     @audited = false
-    options.each { |attr, value| send(attr.to_s + "=", value) }
-
+    set_options(options)
     @time = Time.now
   end
 

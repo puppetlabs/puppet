@@ -8,7 +8,7 @@ describe Puppet::Parser::AST::Resource do
     before :each do
       @title = Puppet::Parser::AST::String.new(:value => "mytitle")
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
       @scope.stubs(:resource).returns(stub_everything)
       @instance = ast::ResourceInstance.new(:title => @title, :parameters => ast::ASTArray.new(:children => []))
       @resource = ast::Resource.new(:type => "file", :instances => ast::ASTArray.new(:children => [@instance]))
@@ -96,7 +96,7 @@ describe Puppet::Parser::AST::Resource do
     # Related to #806, make sure resources always look up the full path to the resource.
     describe "when generating qualified resources" do
       before do
-        @scope = Puppet::Parser::Scope.new :compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
+        @scope = Puppet::Parser::Scope.new Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
         ["one", "one::two", "three"].each do |name|
           @parser.environment.known_resource_types.add(Puppet::Resource::Type.new(:definition, name, {}))
@@ -149,7 +149,7 @@ describe Puppet::Parser::AST::Resource do
     before do
       @title = Puppet::Parser::AST::String.new(:value => "classname")
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
       @scope.stubs(:resource).returns(stub_everything)
       @instance = ast::ResourceInstance.new(:title => @title, :parameters => ast::ASTArray.new(:children => []))
       @resource = ast::Resource.new(:type => "Class", :instances => ast::ASTArray.new(:children => [@instance]))

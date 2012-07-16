@@ -57,9 +57,8 @@ module Puppet
         @skipped = false
         @failed = false
 
-        [:file, :line].each do |attr|
-          send(attr.to_s + "=", resource.send(attr))
-        end
+        @file = resource.file
+        @line = resource.line
 
         tag(*resource.tags)
         @time = Time.now

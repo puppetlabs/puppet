@@ -6,10 +6,10 @@ describe 'function for dynamically creating resources' do
   include PuppetSpec::Compiler
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production'))
+    node      = Puppet::Node.new("floppy", :environment => 'production')
+    @compiler = Puppet::Parser::Compiler.new(node)
+    @scope    = Puppet::Parser::Scope.new(@compiler)
     @topscope = @scope.compiler.topscope
-    @compiler = @scope.compiler
     @scope.parent = @topscope
     Puppet::Parser::Functions.function(:create_resources)
   end

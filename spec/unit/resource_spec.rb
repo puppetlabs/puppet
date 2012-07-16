@@ -284,7 +284,7 @@ describe Puppet::Resource do
       Puppet::Node::Environment.new.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new)
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
       resource.set_default_parameters(@scope)
       resource["a"].should == "a_default_value"
     end
@@ -293,7 +293,7 @@ describe Puppet::Resource do
       Puppet::Node::Environment.new.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => Puppet::Parser::Scope.new)
+      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
       lambda { resource.set_default_parameters(@scope) }.should_not raise_error
     end
 
@@ -301,7 +301,7 @@ describe Puppet::Resource do
       Puppet::Node::Environment.new.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new)
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
       resource.set_default_parameters(@scope).should == [:a]
     end
 

@@ -1,7 +1,9 @@
 require 'find'
+require 'forwardable'
 require 'puppet/node/environment'
 
 class Puppet::Parser::TypeLoader
+  extend  Forwardable
   include Puppet::Node::Environment::Helper
 
   # Helper class that makes sure we don't try to import the same file
@@ -106,9 +108,7 @@ class Puppet::Parser::TypeLoader
     end
   end
 
-  def known_resource_types
-    environment.known_resource_types
-  end
+  def_delegator :environment, :known_resource_types
 
   def initialize(env)
     self.environment = env
