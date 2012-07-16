@@ -363,6 +363,9 @@ class Puppet::Parser::Scope
     if level == :all
       @ephemeral = [ Ephemeral.new ]
     else
+      # If we ever drop 1.8.6 and lower, this should be replaced by a single
+      # pop-with-a-count - or if someone more ambitious wants to monkey-patch
+      # that feature into older rubies. --daniel 2012-07-16
       (@ephemeral.size - level).times do
         @ephemeral.pop
       end
