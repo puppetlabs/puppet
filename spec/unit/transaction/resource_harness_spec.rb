@@ -360,6 +360,56 @@ describe Puppet::Transaction::ResourceHarness do
       end; end
     end; end
 
+    it "should apply changes on independent properties when ensure is out of sync" do
+      test_type = Puppet::Type.newtype(:independent_test_type) {
+        newproperty(:ensure) do
+          def retrieve; :old; end
+          def insync?(val); false; end
+          def sync; end
+        end
+        newproperty(:foo, :independent => true) do
+          def retrieve; :bar; end
+          def insync?(val); false; end
+          def sync; end
+        end
+        newparam(:bar){ isnamevar }
+        newproperty(:baz)
+      }.new :bar => :test, :ensure => :new, :foo => "baz"
+      status = @harness.evaluate(test_type)
+      status.out_of_sync_count.should == 2
+      events = status.events
+
+      # Because of the old behavior of ensure, the ensure property always finished first.
+      events[0].property.should == "ensure"
+      events[0].message.should ==  "ensure changed 'old' to 'new'"
+
+      events[1].property.should == "foo"
+      events[1].message.should == "foo changed 'bar' to 'baz'"
+    end
+
+    it "should apply changes on independent properties when ensure is in sync but :absent" do
+      test_type = Puppet::Type.newtype(:independent_test_type) {
+        newproperty(:ensure) do
+          def retrieve; :absent; end
+          def insync?(val); true; end
+          def sync; end
+        end
+        newproperty(:foo, :independent => true) do
+          def retrieve; :bar; end
+          def insync?(val); false; end
+          def sync; end
+        end
+        newparam(:bar){ isnamevar }
+        newproperty(:baz)
+      }.new :bar => :test, :ensure => :absent, :foo => "baz"
+      status = @harness.evaluate(test_type)
+      status.out_of_sync_count.should == 1
+      events = status.events
+
+      events[0].property.should == "foo"
+      events[0].message.should == "defined 'foo' as 'baz'"
+    end
+
     it "should not apply changes if allow_changes?() returns false" do
       test_file = tmpfile('foo')
       resource = Puppet::Type.type(:file).new :path => test_file, :backup => false, :ensure => :file
