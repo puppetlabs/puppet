@@ -6,9 +6,11 @@ require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
 
 require 'puppet/resource/type_collection_helper'
+require 'puppet/util/methodhelper'
 
 class Puppet::Parser::Scope
   extend Forwardable
+  include Puppet::Util::MethodHelper
 
   include Puppet::Resource::TypeCollectionHelper
   require 'puppet/parser/resource'
@@ -134,16 +136,8 @@ class Puppet::Parser::Scope
       @namespaces = [""]
     end
 
-    options.each do |name, val|
-      raise Puppet::DevError, "compiler passed in options" if name.to_s == "compiler"
-
-      method = name.to_s + "="
-      if self.respond_to? method
-        self.send(method, val)
-      else
-        raise Puppet::DevError, "Invalid scope argument #{name}"
-      end
-    end
+    raise Puppet::DevError, "compiler passed in options" if options.include? :compiler
+    set_options(options)
 
     extend_with_functions_module
 
