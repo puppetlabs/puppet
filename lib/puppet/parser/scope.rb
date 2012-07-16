@@ -419,14 +419,13 @@ class Puppet::Parser::Scope
     method.to_s =~ /^function_(.*)$/
     super unless $1
     super unless Puppet::Parser::Functions.function($1)
-
-    # Calling .function(name) adds "function_#{name}" as a callable method on
-    # self if it's found, so now we can just send it
-    # NOTE: I have watched this method end up in an infinite recursion / stack overflow.  It seems
-    #  to me that we ought to be checkign with "respond_to?" before calling send, and throwing an
-    #  exception if we get a "false" back.  However, I tried this, and it broke 1 test in scope_spec...
-    #  and I don't have time to debug it further right now.  --cprice 2012-03-15
-    send(method, *args)
+    # In odd circumstances, this might not end up defined by the previous
+    # method, so we might as well be certain.
+    if respond_to? method
+      send(method, *args)
+    else
+      raise Puppet::DevError, "Function #{$1} not defined despite being loaded!"
+    end
   end
 
   def resolve_type_and_titles(type, titles)
