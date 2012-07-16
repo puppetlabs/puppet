@@ -1,4 +1,5 @@
 require 'puppet/indirector/face'
+require 'puppet/util/instrumentation/data'
 
 Puppet::Indirector::Face.define(:instrumentation_data, '0.0.1') do
   copyright "Puppet Labs", 2011
