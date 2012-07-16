@@ -16,6 +16,7 @@ class Puppet::Parser::Lexer
   attr_reader :last, :file, :lexing_context, :token_queue
 
   attr_accessor :line, :indefine
+  alias :indefine? :indefine
 
   def lex_error msg
     raise Puppet::LexError.new(msg)
@@ -342,14 +343,6 @@ class Puppet::Parser::Lexer
   def find_token
     @find += 1
     shift_token || find_regex_token || find_string_token
-  end
-
-  def indefine?
-    if defined?(@indefine)
-      @indefine
-    else
-      false
-    end
   end
 
   def initialize
