@@ -28,6 +28,11 @@ module Puppet::Rails
 
     ActiveRecord::Base.verify_active_connections!
 
+     # Ensure that Active Record uses UTC to store datetime
+    Time.zone = "UTC"
+    ActiveRecord::Base.time_zone_aware_attributes = true
+    ActiveRecord::Base.default_timezone = "UTC"
+
     begin
       args = database_arguments
       Puppet.info "Connecting to #{args[:adapter]} database: #{args[:database]}"
