@@ -1,9 +1,12 @@
+require 'forwardable'
 require 'puppet/resource'
 
 # The primary difference between this class and its
 # parent is that this class has rules on who can set
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
+  extend Forwardable
+
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/file_collection/lookup'
@@ -48,19 +51,13 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  def []=(param, value)
-    set_parameter(param, value)
-  end
-
   def eachparam
     @parameters.each do |name, param|
       yield param
     end
   end
 
-  def environment
-    scope.environment
-  end
+  def_delegator :scope, :environment
 
   # Process the  stage metaparameter for a class.   A containment edge
   # is drawn from  the class to the stage.   The stage for containment
@@ -160,9 +157,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.
-  def path
-    to_s
-  end
+  alias path to_s
 
   # Define a parameter in our resource.
   # if we ever receive a parameter named 'tag', set
@@ -181,6 +176,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # And store it in our parameter hash.
     @parameters[param.name] = param
   end
+  alias []= set_parameter
 
   def to_hash
     @parameters.inject({}) do |hash, ary|
@@ -231,9 +227,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # Convert this resource to a RAL resource.
-  def to_ral
-    to_resource.to_ral
-  end
+  def_delegator :to_resource, :to_ral
 
   private
 
