@@ -1,7 +1,10 @@
 require 'puppet/indirector/code'
 require 'puppet/file_bucket/file'
 require 'puppet/util/checksums'
+require 'puppet/util/diff'
 require 'fileutils'
+require 'pathname'
+require 'time'
 
 module Puppet::FileBucketFile
   class File < Puppet::Indirector::Code
@@ -14,6 +17,41 @@ module Puppet::FileBucketFile
     end
 
     def find( request )
+      if not request.options[:bucket_path]
+       request.options[:bucket_path] = Puppet[:bucketdir]
+      end
+      if request.options[:list_all]
+        return '' unless ::File.exists?(request.options[:bucket_path])
+        fromdate = request.options[:fromdate] || "1-1-1970"
+        todate = request.options[:todate] || Time.now.httpdate.to_s
+        buck = {}
+        msg = ""
+        Pathname.new(request.options[:bucket_path]).find { |d|
+          if d.file?
+            if d.basename.to_s == "paths"
+              filename = d.read.strip
+              filestat = Time.parse(d.stat.mtime.to_s)
+              from = Time.parse(fromdate)
+              to = Time.parse(todate)
+              if Time.parse(fromdate) <= filestat and filestat <= Time.parse(todate.to_s)
+                if buck[filename]
+                  buck[filename] += [[ d.stat.mtime , d.parent.basename ]]
+                else
+                  buck[filename] = [[ d.stat.mtime , d.parent.basename ]]
+                end
+              end
+            end
+          end
+        }
+        buck.sort.each { |f, contents|
+          contents.sort.each { |d, chksum|
+            date = DateTime.parse(d.to_s).strftime("%F %T")
+            msg += "#{chksum} #{date} #{f}\n"
+          }
+        }
+        return model.new(msg)
+      end
+
       checksum, files_original_path = request_to_checksum_and_path( request )
       dir_path = path_for(request.options[:bucket_path], checksum)
       file_path = ::File.join(dir_path, 'contents')
@@ -23,9 +61,13 @@ module Puppet::FileBucketFile
 
       if request.options[:diff_with]
         hash_protocol = sumtype(checksum)
-        file2_path = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
+        if request.options[:diff_with] != ''
+           file2_path = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
+        else
+           file2_path = filename(request.options[:bucket_path],checksum)
+        end
         raise "could not find diff_with #{request.options[:diff_with]}" unless ::File.exists?(file2_path)
-        return `diff #{file_path.inspect} #{file2_path.inspect}`
+        return model.new(diff(file_path, file2_path))
       else
         contents = IO.binread(file_path)
         Puppet.info "FileBucket read #{checksum}"
@@ -103,10 +145,17 @@ module Puppet::FileBucketFile
       checksum_type, checksum, path = request.key.split(/\//, 3)
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
+      else
+        path &&= "/#{path}" # Add '/' to the filepath: split removed it
       end
       raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
       raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
       [checksum, path]
+    end
+
+    def filename(bucket_path, digest)
+      paths_path = path_for(bucket_path, digest, 'paths')
+      filepath = ::File.new(paths_path).read.strip
     end
 
     def path_for(bucket_path, digest, subfile = nil)

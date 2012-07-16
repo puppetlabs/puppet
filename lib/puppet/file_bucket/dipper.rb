@@ -53,6 +53,26 @@ class Puppet::FileBucket::Dipper
     end
   end
 
+  # List filebucket content.
+  def list(fromdate, todate)
+    source_path = "#{@rest_path}md5/"
+    fromdate ||= '1-1-1970'
+    todate ||= Time.now.httpdate.to_s
+    file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path, :list_all => true, :fromdate => fromdate, :todate => todate)
+    raise Puppet::Error, "File not found" unless file_bucket_file
+    file_bucket_file.to_s
+  end
+
+  # Diff two filebucket files identified by their sum.
+  def diff(suma, sumb)
+    source_path = "#{@rest_path}md5/#{suma}"
+    file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path, :diff_with => sumb)
+
+    raise Puppet::Error, "File not found" unless file_bucket_file
+    file_bucket_file.to_s
+  end
+
+
   # Retrieve a file by sum.
   def getfile(sum)
     source_path = "#{@rest_path}md5/#{sum}"
