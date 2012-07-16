@@ -1,5 +1,6 @@
 # the scanner/lexer
 
+require 'forwardable'
 require 'strscan'
 require 'puppet'
 
@@ -45,11 +46,10 @@ class Puppet::Parser::Lexer
 
   # Maintain a list of tokens.
   class TokenList
-    attr_reader :regex_tokens, :string_tokens
+    extend Forwardable
 
-    def [](name)
-      @tokens[name]
-    end
+    attr_reader :regex_tokens, :string_tokens
+    def_delegator :@tokens, :[]
 
     # Create a new token.
     def add_token(name, regex, options = {}, &block)
