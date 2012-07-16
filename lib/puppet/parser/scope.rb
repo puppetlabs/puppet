@@ -374,10 +374,7 @@ class Puppet::Parser::Scope
 
   # check if name exists in one of the ephemeral scope.
   def ephemeral_include?(name)
-    @ephemeral.reverse_each do |eph|
-      return true if eph.include?(name)
-    end
-    false
+    @ephemeral.any? {|eph| eph.include?(name) }
   end
 
   # is name an ephemeral variable?
