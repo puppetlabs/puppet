@@ -21,6 +21,8 @@ class Puppet::Parser::Lexer
 
   class Token
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
+    alias skip? skip
+    alias accumulate? accumulate
 
     def initialize(string_or_regex, name)
       if string_or_regex.is_a?(String)
@@ -28,13 +30,6 @@ class Puppet::Parser::Lexer
         @regex = Regexp.new(Regexp.escape(string_or_regex))
       else
         @name, @regex = name, string_or_regex
-      end
-    end
-
-    # MQR: Why not just alias?
-    %w{skip accumulate}.each do |method|
-      define_method(method+"?") do
-        self.send(method)
       end
     end
 
