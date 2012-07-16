@@ -6,7 +6,9 @@ describe Puppet::Parser::AST::CollExpr do
   ast = Puppet::Parser::AST
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating with two operands" do

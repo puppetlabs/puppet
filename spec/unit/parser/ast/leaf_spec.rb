@@ -3,7 +3,9 @@ require 'spec_helper'
 
 describe Puppet::Parser::AST::Leaf do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @value = stub 'value'
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
@@ -34,8 +36,12 @@ end
 describe Puppet::Parser::AST::FlatString do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::FlatString.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::FlatString.new(:value => 'ab').to_s.should == "\"ab\""
+    end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::FlatString.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
     end
   end
 end
@@ -43,9 +49,14 @@ end
 describe Puppet::Parser::AST::String do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::String.new(:value => 'ab').to_s.should == "\"ab\""
     end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::String.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
+    end
+
     it "should return a dup of its value" do
       value = ""
       Puppet::Parser::AST::String.new( :value => value ).evaluate(stub('scope')).should_not be_equal(value)
@@ -56,8 +67,11 @@ end
 describe Puppet::Parser::AST::Concat do
   describe "when evaluating" do
     before :each do
-      @scope = Puppet::Parser::Scope.new
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      @scope   = Puppet::Parser::Scope.new(compiler)
     end
+
     it "should interpolate variables and concatenate their values" do
       one = Puppet::Parser::AST::String.new(:value => "one")
       one.stubs(:evaluate).returns("one ")
@@ -86,8 +100,10 @@ end
 
 describe Puppet::Parser::AST::Undef do
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @undef = Puppet::Parser::AST::Undef.new(:value => :undef)
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
+    @undef   = Puppet::Parser::AST::Undef.new(:value => :undef)
   end
 
   it "should match undef with undef" do
@@ -101,7 +117,9 @@ end
 
 describe Puppet::Parser::AST::HashOrArrayAccess do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
@@ -223,7 +241,10 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
 
   describe "when assigning" do
     it "should add a new key and value" do
-      scope = Puppet::Parser::Scope.new
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(compiler)
+
       scope['a'] = { 'a' => 'b' }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "b")
@@ -241,7 +262,10 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an array member when index is a stringified number" do
-      scope = Puppet::Parser::Scope.new
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(compiler)
+
       scope['a'] = []
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "0" )
@@ -261,7 +285,9 @@ end
 
 describe Puppet::Parser::AST::Regex do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when initializing" do
@@ -359,7 +385,9 @@ end
 
 describe Puppet::Parser::AST::Variable do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope = Puppet::Parser::Scope.new(compiler)
     @var = Puppet::Parser::AST::Variable.new(:value => "myvar", :file => 'my.pp', :line => 222)
   end
 
@@ -387,11 +415,13 @@ end
 
 describe Puppet::Parser::AST::HostName do
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @value = stub 'value', :=~ => false
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
+    @value   = 'value'
     @value.stubs(:to_s).returns(@value)
     @value.stubs(:downcase).returns(@value)
-    @host = Puppet::Parser::AST::HostName.new( :value => @value)
+    @host = Puppet::Parser::AST::HostName.new(:value => @value)
   end
 
   it "should raise an error if hostname is not valid" do

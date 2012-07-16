@@ -1,9 +1,11 @@
 require 'puppet/interface'
 require 'puppet/interface/documentation'
+require 'puppet/util/methodhelper'
 require 'prettyprint'
 
 class Puppet::Interface::Action
-  extend Puppet::Interface::DocGen
+  include Puppet::Util::MethodHelper
+  extend  Puppet::Interface::DocGen
   include Puppet::Interface::FullDocs
 
   def initialize(face, name, attrs = {})
@@ -17,7 +19,7 @@ class Puppet::Interface::Action
     @authors = []
     @license  = 'All Rights Reserved'
 
-    attrs.each do |k, v| send("#{k}=", v) end
+    set_options(attrs)
 
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.

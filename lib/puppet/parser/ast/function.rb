@@ -8,8 +8,6 @@ class Puppet::Parser::AST
 
     attr_accessor :name, :arguments
 
-    @settor = true
-
     def evaluate(scope)
       # Make sure it's a defined function
       raise Puppet::ParseError, "Unknown function #{@name}" unless Puppet::Parser::Functions.function(@name)

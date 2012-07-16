@@ -238,7 +238,7 @@ describe Puppet::Resource::Type do
 
   describe "when setting its parameters in the scope" do
     before do
-      @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
+      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
@@ -351,7 +351,7 @@ describe Puppet::Resource::Type do
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
       @krt.add @child
 
-      @scope = Puppet::Parser::Scope.new
+      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
     end
 
     it "should be able to define a parent" do
@@ -404,7 +404,7 @@ describe Puppet::Resource::Type do
   describe "when evaluating its code" do
     before do
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new :compiler => @compiler
+      @scope = Puppet::Parser::Scope.new @compiler
       @resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope)
 
       # This is so the internal resource lookup works, yo.
@@ -569,7 +569,7 @@ describe Puppet::Resource::Type do
     before do
       @node = Puppet::Node.new("foo", :environment => 'env')
       @compiler = Puppet::Parser::Compiler.new(@node)
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
 
       @top = Puppet::Resource::Type.new :hostclass, "top"
       @middle = Puppet::Resource::Type.new :hostclass, "middle", :parent => "top"

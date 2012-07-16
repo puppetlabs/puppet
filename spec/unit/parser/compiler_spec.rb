@@ -60,7 +60,7 @@ describe Puppet::Parser::Compiler do
     @node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
     @known_resource_types = Puppet::Resource::TypeCollection.new "development"
     @compiler = Puppet::Parser::Compiler.new(@node)
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => stub('source'))
+    @scope = Puppet::Parser::Scope.new(@compiler, :source => stub('source'))
     @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
     @scope.resource = @scope_resource
     @compiler.environment.stubs(:known_resource_types).returns @known_resource_types

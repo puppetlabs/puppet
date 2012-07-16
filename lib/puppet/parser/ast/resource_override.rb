@@ -36,13 +36,12 @@ class Puppet::Parser::AST
 
       resource = resource.collect do |r|
 
-              res = Puppet::Parser::Resource.new(
+        res = Puppet::Parser::Resource.new(
         r.type, r.title,
           :parameters => params,
           :file => file,
           :line => line,
           :source => scope.source,
-        
           :scope => scope
         )
 
@@ -60,8 +59,6 @@ class Puppet::Parser::AST
     def initialize(hash)
       @checked = false
       super
-
-      #self.typecheck(@type.value)
     end
   end
 end
