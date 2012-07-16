@@ -36,8 +36,12 @@ end
 describe Puppet::Parser::AST::FlatString do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::FlatString.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::FlatString.new(:value => 'ab').to_s.should == "\"ab\""
+    end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::FlatString.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
     end
   end
 end
@@ -45,9 +49,14 @@ end
 describe Puppet::Parser::AST::String do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::String.new(:value => 'ab').to_s.should == "\"ab\""
     end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::String.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
+    end
+
     it "should return a dup of its value" do
       value = ""
       Puppet::Parser::AST::String.new( :value => value ).evaluate(stub('scope')).should_not be_equal(value)

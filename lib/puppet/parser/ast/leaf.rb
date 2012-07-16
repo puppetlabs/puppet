@@ -39,7 +39,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      "\"#{@value}\""
+      @value.inspect
     end
   end
 
@@ -50,7 +50,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      "\"#{@value}\""
+      @value.inspect
     end
   end
 
