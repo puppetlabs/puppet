@@ -22,20 +22,13 @@ class Puppet::Parser::AST
   # The boolean class.  True or false.  Converts the string it receives
   # to a Ruby boolean.
   class Boolean < AST::Leaf
-
-    # Use the parent method, but then convert to a real boolean.
     def initialize(hash)
       super
 
       unless @value == true or @value == false
-        raise Puppet::DevError,
-          "'#{@value}' is not a boolean"
+        raise Puppet::DevError, "'#{@value}' is not a boolean"
       end
       @value
-    end
-
-    def to_s
-      @value ? "true" : "false"
     end
   end
 
