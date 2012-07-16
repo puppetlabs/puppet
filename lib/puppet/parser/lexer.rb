@@ -100,57 +100,54 @@ class Puppet::Parser::Lexer
   end
 
   TOKENS = TokenList.new
-
-    TOKENS.add_tokens(
-
-      '[' => :LBRACK,
-      ']' => :RBRACK,
-      '{' => :LBRACE,
-      '}' => :RBRACE,
-      '(' => :LPAREN,
-
-      ')' => :RPAREN,
-      '=' => :EQUALS,
-      '+=' => :APPENDS,
-      '==' => :ISEQUAL,
-      '>=' => :GREATEREQUAL,
-      '>' => :GREATERTHAN,
-      '<' => :LESSTHAN,
-      '<=' => :LESSEQUAL,
-      '!=' => :NOTEQUAL,
-      '!' => :NOT,
-      ',' => :COMMA,
-      '.' => :DOT,
-      ':' => :COLON,
-      '@' => :AT,
-      '<<|' => :LLCOLLECT,
-      '->' => :IN_EDGE,
-      '<-' => :OUT_EDGE,
-      '~>' => :IN_EDGE_SUB,
-      '<~' => :OUT_EDGE_SUB,
-      '|>>' => :RRCOLLECT,
-      '<|' => :LCOLLECT,
-      '|>' => :RCOLLECT,
-      ';' => :SEMIC,
-      '?' => :QMARK,
-      '\\' => :BACKSLASH,
-      '=>' => :FARROW,
-      '+>' => :PARROW,
-      '+' => :PLUS,
-      '-' => :MINUS,
-      '/' => :DIV,
-      '*' => :TIMES,
-      '<<' => :LSHIFT,
-      '>>' => :RSHIFT,
-      '=~' => :MATCH,
-      '!~' => :NOMATCH,
-      %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
-      "<string>" => :STRING,
-      "<dqstring up to first interpolation>" => :DQPRE,
-      "<dqstring between two interpolations>" => :DQMID,
-      "<dqstring after final interpolation>" => :DQPOST,
-      "<boolean>" => :BOOLEAN
-      )
+  TOKENS.add_tokens(
+    '['   => :LBRACK,
+    ']'   => :RBRACK,
+    '{'   => :LBRACE,
+    '}'   => :RBRACE,
+    '('   => :LPAREN,
+    ')'   => :RPAREN,
+    '='   => :EQUALS,
+    '+='  => :APPENDS,
+    '=='  => :ISEQUAL,
+    '>='  => :GREATEREQUAL,
+    '>'   => :GREATERTHAN,
+    '<'   => :LESSTHAN,
+    '<='  => :LESSEQUAL,
+    '!='  => :NOTEQUAL,
+    '!'   => :NOT,
+    ','   => :COMMA,
+    '.'   => :DOT,
+    ':'   => :COLON,
+    '@'   => :AT,
+    '<<|' => :LLCOLLECT,
+    '|>>' => :RRCOLLECT,
+    '->'  => :IN_EDGE,
+    '<-'  => :OUT_EDGE,
+    '~>'  => :IN_EDGE_SUB,
+    '<~'  => :OUT_EDGE_SUB,
+    '<|'  => :LCOLLECT,
+    '|>'  => :RCOLLECT,
+    ';'   => :SEMIC,
+    '?'   => :QMARK,
+    '\\'  => :BACKSLASH,
+    '=>'  => :FARROW,
+    '+>'  => :PARROW,
+    '+'   => :PLUS,
+    '-'   => :MINUS,
+    '/'   => :DIV,
+    '*'   => :TIMES,
+    '<<'  => :LSHIFT,
+    '>>'  => :RSHIFT,
+    '=~'  => :MATCH,
+    '!~'  => :NOMATCH,
+    %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
+    "<string>" => :STRING,
+    "<dqstring up to first interpolation>" => :DQPRE,
+    "<dqstring between two interpolations>" => :DQMID,
+    "<dqstring after final interpolation>" => :DQPOST,
+    "<boolean>" => :BOOLEAN
+  )
 
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
@@ -247,36 +244,32 @@ class Puppet::Parser::Lexer
   TOKENS.sort_tokens
 
   @@pairs = {
-    "{" => "}",
-    "(" => ")",
-    "[" => "]",
-    "<|" => "|>",
+    "{"   => "}",
+    "("   => ")",
+    "["   => "]",
+    "<|"  => "|>",
     "<<|" => "|>>"
   }
 
   KEYWORDS = TokenList.new
-
-
-    KEYWORDS.add_tokens(
-
-      "case" => :CASE,
-      "class" => :CLASS,
-      "default" => :DEFAULT,
-      "define" => :DEFINE,
-      "import" => :IMPORT,
-      "if" => :IF,
-      "elsif" => :ELSIF,
-      "else" => :ELSE,
-      "inherits" => :INHERITS,
-      "node" => :NODE,
-      "and"  => :AND,
-      "or"   => :OR,
-      "undef"   => :UNDEF,
-      "false" => :FALSE,
-      "true" => :TRUE,
-
-      "in" => :IN,
-      "unless" => :UNLESS
+  KEYWORDS.add_tokens(
+    "case"     => :CASE,
+    "class"    => :CLASS,
+    "default"  => :DEFAULT,
+    "define"   => :DEFINE,
+    "import"   => :IMPORT,
+    "if"       => :IF,
+    "elsif"    => :ELSIF,
+    "else"     => :ELSE,
+    "inherits" => :INHERITS,
+    "node"     => :NODE,
+    "and"      => :AND,
+    "or"       => :OR,
+    "undef"    => :UNDEF,
+    "false"    => :FALSE,
+    "true"     => :TRUE,
+    "in"       => :IN,
+    "unless"   => :UNLESS
   )
 
   def clear
