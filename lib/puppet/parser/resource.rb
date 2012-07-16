@@ -211,10 +211,10 @@ class Puppet::Parser::Resource < Puppet::Resource
       # the database interaction doesn't have to worry about
       # whether it returns an array or a string.
       result[p] = if v.is_a?(Array) and v.length == 1
-        v[0]
-          else
-            v
-              end
+                    v[0]
+                  else
+                    v
+                  end
     end
 
     result.file = self.file
@@ -316,8 +316,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   rescue => detail
     fail Puppet::ParseError, detail.to_s
   end
-
-  private
 
   def extract_parameters(params)
     params.each do |param|
