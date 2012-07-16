@@ -34,11 +34,7 @@ class Puppet::Parser::Lexer
     end
 
     def to_s
-      if self.string
-        @string
-      else
-        @name.to_s
-      end
+      string or @name.to_s
     end
 
     def acceptable?(context={})
