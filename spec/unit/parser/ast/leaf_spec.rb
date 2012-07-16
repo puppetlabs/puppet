@@ -418,10 +418,10 @@ describe Puppet::Parser::AST::HostName do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     @scope   = Puppet::Parser::Scope.new(compiler)
-    @value = stub 'value', :=~ => false
+    @value   = 'value'
     @value.stubs(:to_s).returns(@value)
     @value.stubs(:downcase).returns(@value)
-    @host = Puppet::Parser::AST::HostName.new( :value => @value)
+    @host = Puppet::Parser::AST::HostName.new(:value => @value)
   end
 
   it "should raise an error if hostname is not valid" do

@@ -87,9 +87,10 @@ class Puppet::Parser::AST
       super
 
       # Note that this is an AST::Regex, not a Regexp
-      @value = @value.to_s.downcase unless @value.is_a?(Regex)
-      if @value =~ /[^-\w.]/
-        raise Puppet::DevError, "'#{@value}' is not a valid hostname"
+      unless @value.is_a?(Regex)
+        @value = @value.to_s.downcase
+        @value =~ /[^-\w.]/ and
+          raise Puppet::DevError, "'#{@value}' is not a valid hostname"
       end
     end
 
@@ -102,10 +103,6 @@ class Puppet::Parser::AST
 
     def hash
       @value.hash
-    end
-
-    def to_s
-      @value.to_s
     end
   end
 
