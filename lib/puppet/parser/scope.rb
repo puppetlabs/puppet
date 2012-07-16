@@ -458,10 +458,13 @@ class Puppet::Parser::Scope
     method.to_s =~ /^function_(.*)$/
     super unless $1
     super unless Puppet::Parser::Functions.function($1)
-
-    # Calling .function(name) adds "function_#{name}" as a callable method on
-    # self if it's found, so now we can just send it
-    send(method, *args)
+    # In odd circumstances, this might not end up defined by the previous
+    # method, so we might as well be certain.
+    if respond_to? method
+      send(method, *args)
+    else
+      raise Puppet::DevError, "Function #{$1} not defined despite being loaded!"
+    end
   end
 
   def resolve_type_and_titles(type, titles)
