@@ -13,6 +13,8 @@ end
 module Puppet::Parser; end
 
 class Puppet::Parser::Lexer
+  extend Forwardable
+
   attr_reader :last, :file, :lexing_context, :token_queue
 
   attr_accessor :line, :indefine
@@ -303,9 +305,7 @@ class Puppet::Parser::Lexer
     @scanner = StringScanner.new(contents)
   end
 
-  def shift_token
-    @token_queue.shift
-  end
+  def_delegator :@token_queue, :shift, :shift_token
 
   def find_string_token
     # We know our longest string token is three chars, so try each size in turn
@@ -395,26 +395,19 @@ class Puppet::Parser::Lexer
     return token, { :value => value, :line => @line }
   end
 
-  # Go up one in the namespace.
-  def namepop
-    @namestack.pop
-  end
+  # Handling the namespace stack
+  def_delegator :@namestack, :pop, :namepop
+  # This value might have :: in it, but we don't care -- it'll be handled
+  # normally when joining, and when popping we want to pop this full value,
+  # however long the namespace is.
+  def_delegator :@namestack, :<<, :namestack
 
   # Collect the current namespace.
   def namespace
     @namestack.join("::")
   end
 
-  # This value might have :: in it, but we don't care -- it'll be
-  # handled normally when joining, and when popping we want to pop
-  # this full value, however long the namespace is.
-  def namestack(value)
-    @namestack << value
-  end
-
-  def rest
-    @scanner.rest
-  end
+  def_delegator :@scanner, :rest
 
   # this is the heart of the lexer
   def scan
@@ -494,9 +487,7 @@ class Puppet::Parser::Lexer
 
   # Provide some limited access to the scanner, for those
   # tokens that need it.
-  def scan_until(regex)
-    @scanner.scan_until(regex)
-  end
+  def_delegator :@scanner, :scan_until
 
   # we've encountered the start of a string...
   # slurp in the rest of the string and return it
