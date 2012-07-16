@@ -53,8 +53,8 @@ class Puppet::Parser::Lexer
 
     # Create a new token.
     def add_token(name, regex, options = {}, &block)
-      token = Token.new(regex, name)
       raise(ArgumentError, "Token #{name} already exists") if @tokens.include?(name)
+      token = Token.new(regex, name)
       @tokens[token.name] = token
       if token.string
         @string_tokens << token
