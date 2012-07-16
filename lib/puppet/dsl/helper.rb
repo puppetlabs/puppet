@@ -100,7 +100,7 @@ module Puppet
         when ::String
           ::Puppet::DSL::Parser.current_scope.findresource reference
         else
-          fail ::ArgumentError, "couldn't find resource for #{reference}"
+          nil
         end
       end
 

@@ -97,7 +97,20 @@ describe Puppet::DSL::Context do
       end.first.exported.should be true
     end
 
-    it "should create a Puppet::Relationship when options contain :require key"
+    it "should assign resource as a parameter if one exists" do
+      evaluate_in_context do
+        create_resource :file, "asdf"
+        create_resource :file, "test", :require => type("file")["asdf"]
+      end.last.parameters.map {|_, v| v.value.class }.should include(Puppet::Parser::Resource)
+    end
+
+    it "should assign value as a parameter if given resource doesn't exist" do
+      ["foobar", :asdf, 3, 3.14].each do |i|
+        evaluate_in_context do
+          create_resource :notify, "test-#{i}", :message => i
+        end.last.parameters.map {|_, v| v.value }.should include(i)
+      end
+    end
 
     context "with method_missing" do
       it "should work" do

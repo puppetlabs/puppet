@@ -328,8 +328,7 @@ module Puppet
               :scope => scope,
               :source => scope.source
             options.each do |key, val|
-              val = val.resource if val.is_a? ::Puppet::DSL::ResourceReference
-              resource[key] = val
+              resource[key] = get_resource(val) || val
             end
 
             resource.virtual = true if virtualizing? or options[:virtual] == true

@@ -168,10 +168,13 @@ describe Puppet::DSL::Helper do
       evaluate_in_scope { @helper.get_resource("File[foo]").should == res }
     end
 
-    it "should fail otherwise" do
-      lambda do
-      @helper.get_resource 3
-      end.should raise_error ArgumentError
+    it "should return nil when the string reference doesn't exist" do
+      prepare_compiler_and_scope
+      evaluate_in_scope { @helper.get_resource("File[foo]").should == nil }
+    end
+
+    it "should return nil otherwise" do
+      @helper.get_resource(3).should == nil
     end
 
   end
