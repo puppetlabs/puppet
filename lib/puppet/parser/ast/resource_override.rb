@@ -59,8 +59,6 @@ class Puppet::Parser::AST
     def initialize(hash)
       @checked = false
       super
-
-      #self.typecheck(@type.value)
     end
   end
 end
