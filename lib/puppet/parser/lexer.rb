@@ -22,12 +22,12 @@ class Puppet::Parser::Lexer
   class Token
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
 
-    def initialize(regex, name)
-      if regex.is_a?(String)
-        @name, @string = name, regex
-        @regex = Regexp.new(Regexp.escape(@string))
+    def initialize(string_or_regex, name)
+      if string_or_regex.is_a?(String)
+        @name, @string = name, string_or_regex
+        @regex = Regexp.new(Regexp.escape(string_or_regex))
       else
-        @name, @regex = name, regex
+        @name, @regex = name, string_or_regex
       end
     end
 
