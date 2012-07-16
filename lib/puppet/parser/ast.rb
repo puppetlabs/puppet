@@ -32,23 +32,12 @@ class Puppet::Parser::AST
   class << self
     attr_accessor :use_docs
     def associates_doc
-    self.use_docs = true
-    end
-  end
-
-  # Does this ast object set something?  If so, it gets evaluated first.
-  def self.settor?
-    if defined?(@settor)
-      @settor
-    else
-      false
+      self.use_docs = true
     end
   end
 
   # Evaluate the current object.  Just a stub method, since the subclass
   # should override this method.
-  # of the contained children and evaluates them in turn, returning a
-  # list of all of the collected values, rejecting nil values
   def evaluate(*options)
     raise Puppet::DevError, "Did not override #evaluate in #{self.class}"
   end

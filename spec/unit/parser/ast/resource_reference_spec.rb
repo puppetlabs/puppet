@@ -6,7 +6,9 @@ describe Puppet::Parser::AST::ResourceReference do
   ast = Puppet::Parser::AST
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   def ast_name(value)

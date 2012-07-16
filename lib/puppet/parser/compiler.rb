@@ -1,3 +1,5 @@
+require 'forwardable'
+
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
@@ -7,8 +9,11 @@ require 'puppet/resource/type_collection_helper'
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
 class Puppet::Parser::Compiler
+  extend Forwardable
+
   include Puppet::Util
   include Puppet::Util::Errors
+  include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
@@ -31,13 +36,8 @@ class Puppet::Parser::Compiler
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
 
   # Add a collection to the global list.
-  def add_collection(coll)
-    @collections << coll
-  end
-
-  def add_relationship(dep)
-    @relationships << dep
-  end
+  def_delegator :@collections,   :<<, :add_collection
+  def_delegator :@relationships, :<<, :add_relationship
 
   # Store a resource override.
   def add_override(override)
@@ -75,9 +75,7 @@ class Puppet::Parser::Compiler
   end
 
   # Do we use nodes found in the code, vs. the external node sources?
-  def ast_nodes?
-    known_resource_types.nodes?
-  end
+  def_delegator :known_resource_types, :nodes?, :ast_nodes?
 
   # Store the fact that we've evaluated a class
   def add_class(name)
@@ -86,9 +84,7 @@ class Puppet::Parser::Compiler
 
 
   # Return a list of all of the defined classes.
-  def classlist
-    @catalog.classes
-  end
+  def_delegator :@catalog, :classes, :classlist
 
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
@@ -112,15 +108,15 @@ class Puppet::Parser::Compiler
     @catalog
   end
 
-  # LAK:FIXME There are no tests for this.
-  def delete_collection(coll)
-    @collections.delete(coll) if @collections.include?(coll)
-  end
+  def_delegator :@collections, :delete, :delete_collection
 
   # Return the node's environment.
   def environment
     unless defined?(@environment)
-      @environment = (node.environment and node.environment != "") ? node.environment : nil
+      unless node.environment.is_a? Puppet::Node::Environment
+        raise Puppet::DevError, "node #{node} has an invalid environment!"
+      end
+      @environment = node.environment
     end
     Puppet::Node::Environment.current = @environment
     @environment
@@ -153,7 +149,6 @@ class Puppet::Parser::Compiler
     end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
-      
       if klass = scope.find_hostclass(name, :assume_fqname => fqname)
 
         # If parameters are passed, then attempt to create a duplicate resource
@@ -179,21 +174,11 @@ class Puppet::Parser::Compiler
   end
 
   # Return a resource by either its ref or its type and title.
-  def findresource(*args)
-    @catalog.resource(*args)
-  end
+  def_delegator :@catalog, :resource, :findresource
 
   def initialize(node, options = {})
     @node = node
-
-    options.each do |param, value|
-      begin
-        send(param.to_s + "=", value)
-      rescue NoMethodError
-        raise ArgumentError, "Compiler objects do not accept #{param}"
-      end
-    end
-
+    set_options(options)
     initvars
   end
 
@@ -201,8 +186,7 @@ class Puppet::Parser::Compiler
   # using the top scope.
   def newscope(parent, options = {})
     parent ||= topscope
-    options[:compiler] = self
-    scope = Puppet::Parser::Scope.new(options)
+    scope = Puppet::Parser::Scope.new(self, options)
     scope.parent = parent
     scope
   end
@@ -433,7 +417,7 @@ class Puppet::Parser::Compiler
     @catalog.environment = @node.environment.to_s
 
     # Create our initial scope and a resource that will evaluate main.
-    @topscope = Puppet::Parser::Scope.new(:compiler => self)
+    @topscope = Puppet::Parser::Scope.new(self)
 
     @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
     @catalog.add_resource(@main_stage_resource)

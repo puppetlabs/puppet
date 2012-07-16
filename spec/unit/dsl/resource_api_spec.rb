@@ -6,7 +6,7 @@ require 'puppet/dsl/resource_api'
 describe Puppet::DSL::ResourceAPI do
   before do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => "foo")
+    @scope = Puppet::Parser::Scope.new(@compiler, :source => "foo")
     @resource = Puppet::Parser::Resource.new(:mytype, "myresource", :scope => @scope)
     @api = Puppet::DSL::ResourceAPI.new(@resource, @scope, proc { })
   end
