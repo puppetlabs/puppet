@@ -32,7 +32,7 @@ class Puppet::Parser::AST
   class << self
     attr_accessor :use_docs
     def associates_doc
-    self.use_docs = true
+      self.use_docs = true
     end
   end
 
