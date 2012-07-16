@@ -239,7 +239,7 @@ module Puppet
       # Method will return true when a function or type exists.
       ##
       def respond_to?(name)
-        super or valid_type? name or valid_function? name
+        valid_type? name or valid_function? name
       end
 
       ##
@@ -260,7 +260,6 @@ module Puppet
       #
       ##
       def method_missing(name, *args, &block)
-        raise if name == :virtual
         if valid_type? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a, &b|
@@ -318,6 +317,8 @@ module Puppet
           # Implementation based on
           # lib/puppet/parser/functions/create_resources.rb
           ##
+          name = name.to_s
+
           case type
           when :class
             klass = scope.find_hostclass name

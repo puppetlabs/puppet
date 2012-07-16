@@ -15,6 +15,7 @@ module PuppetSpec::Catalog
 
     # compares relationships
     def ==(other)
+      return true if other.is_a? String 
       [:source, :target, :event, :callback].map do |m|
         self.send(m) == other.send(m)
       end.all?

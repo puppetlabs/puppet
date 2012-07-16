@@ -1,4 +1,3 @@
-require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/catalog'
 require 'puppet_spec/compiler'
@@ -191,7 +190,7 @@ describe Puppet::DSL do
       end
 
       it "should be able to reference other resources using a block" do
-        compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
+        r = compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
           file "redis.conf", :owner => "root"
 
           service "redis" do |s|

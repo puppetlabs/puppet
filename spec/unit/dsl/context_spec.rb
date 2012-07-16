@@ -97,6 +97,8 @@ describe Puppet::DSL::Context do
       end.first.exported.should be true
     end
 
+    it "should create a Puppet::Relationship when options contain :require key"
+
     context "with method_missing" do
       it "should work" do
         evaluate_in_context do
@@ -559,18 +561,23 @@ describe Puppet::DSL::Context do
     end
 
     describe "#respond_to?" do
-      it "should return true when function is defined"
-      it "should return true when resource type is defined"
-      it "should return true when a method is defined"
-      it "should fail otherwise"
-    end
+      it "should return true when function is defined" do 
+        evaluate_in_context do
+          respond_to?(:notice).should == true
+        end
+      end
 
-    describe "#valid_function?" do
-      it "should proxy calls to is_function?"
-    end
+      it "should return true when resource type is defined" do
+        evaluate_in_context do
+          respond_to?(:file).should == true
+        end
+      end
 
-    describe "#valid_type?" do
-      it "should proxy calls to is_resource_type?"
+      it "should fail otherwise" do
+        evaluate_in_context do
+          respond_to?(:asdf).should == false
+        end
+      end
     end
 
     describe "#my" do
