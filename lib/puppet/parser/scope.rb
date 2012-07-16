@@ -88,7 +88,7 @@ class Puppet::Parser::Scope
     return nil unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
 
     if value.is_a?(String)
-      if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
+      if value =~ /^-?\d+(?:\.\d+|(?:\.\d+)?e\d+)$/
         return value.to_f
       elsif value =~ /^0x[0-9a-f]+$/i
         return value.to_i(16)

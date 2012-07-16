@@ -272,6 +272,11 @@ describe Puppet::Parser::Scope do
       Puppet::Parser::Scope.number?(2.34).should be_an_instance_of(Float)
     end
 
+    it "should not accept some invalid floats of ticket #15398" do
+      Puppet::Parser::Scope.number?('2:.34').should be_nil
+      Puppet::Parser::Scope.number?('2:.34e23').should be_nil
+    end
+
     it "should return 234 for '234'" do
       Puppet::Parser::Scope.number?("234").should == 234
     end
