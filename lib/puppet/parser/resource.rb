@@ -106,7 +106,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     return if finished?
     @finished = true
     add_defaults
-    add_metaparams
     add_scope_tags
     validate
   end
@@ -147,9 +146,12 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  # Unless we're running >= 0.25, we're in compat mode.
+  # This only mattered for clients < 0.25, which we don't support any longer.
+  # ...but, since this hasn't been deprecated, and at least some functions
+  # used it, deprecate now rather than just eliminate. --daniel 2012-07-15
   def metaparam_compatibility_mode?
-    ! (catalog and ver = (catalog.client_version||'0.0.0').split(".") and (ver[0] > "0" or ver[1].to_i >= 25))
+    Puppet.deprecation_warning "metaparam_compatibility_mode? is obsolete since < 0.25 clients are really, really not supported any more"
+    false
   end
 
   def name
@@ -239,29 +241,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
         @parameters[name] = param.dup
       end
-    end
-  end
-
-  def add_backward_compatible_relationship_param(name)
-    # Skip metaparams for which we get no value.
-    return unless scope.include?(name.to_s)
-    val = scope[name.to_s]
-
-    # The default case: just set the value
-    set_parameter(name, val) and return unless @parameters[name]
-
-    # For relationship params, though, join the values (a la #446).
-    @parameters[name].value = [@parameters[name].value, val].flatten
-  end
-
-  # Add any metaparams defined in our scope. This actually adds any metaparams
-  # from any parent scope, and there's currently no way to turn that off.
-  def add_metaparams
-    compat_mode = metaparam_compatibility_mode?
-
-    Puppet::Type.eachmetaparam do |name|
-      next unless self.class.relationship_parameter?(name)
-      add_backward_compatible_relationship_param(name) if compat_mode
     end
   end
 

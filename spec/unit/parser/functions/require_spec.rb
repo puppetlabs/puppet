@@ -18,7 +18,6 @@ describe "the require function" do
     @scope.stubs(:find_hostclass).returns(@klass)
 
     @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
-    @resource.stubs(:metaparam_compatibility_mode?).returns false
     @scope.stubs(:resource).returns @resource
   end
 
@@ -43,15 +42,6 @@ describe "the require function" do
   it "should verify the 'include' function is loaded" do
     Puppet::Parser::Functions.expects(:function).with(:include).returns(:function_include)
     @scope.stubs(:function_include)
-    @scope.function_require("myclass")
-  end
-
-  it "should include the class but not add a dependency if used on a client not at least version 0.25" do
-    @resource.expects(:metaparam_compatibility_mode?).returns true
-    @scope.expects(:warning)
-    @resource.expects(:set_parameter).never
-    @scope.expects(:function_include)
-
     @scope.function_require("myclass")
   end
 
