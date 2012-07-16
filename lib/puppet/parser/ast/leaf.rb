@@ -113,10 +113,10 @@ class Puppet::Parser::AST
     # not include syntactical constructs, like '$' and '{}').
     def evaluate(scope)
       parsewrap do
-        if ! scope.include?(@value)
-          :undef
-        else
+        if scope.include?(@value)
           scope[@value, {:file => file, :line => line}]
+        else
+          :undef
         end
       end
     end
