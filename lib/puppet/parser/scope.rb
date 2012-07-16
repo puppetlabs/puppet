@@ -43,10 +43,10 @@ class Puppet::Parser::Scope
     def_delegators :@symbols, :include?, :delete, :[]=
 
     def [](name)
-      unless @symbols.include?(name) or @parent.nil?
-        @parent[name]
-      else
+      if @symbols.include?(name) or @parent.nil?
         @symbols[name]
+      else
+        @parent[name]
       end
     end
   end
@@ -174,8 +174,11 @@ class Puppet::Parser::Scope
   # Store the fact that we've evaluated a class, and store a reference to
   # the scope in which it was evaluated, so that we can look it up later.
   def class_set(name, scope)
-    return parent.class_set(name,scope) if parent
-    @class_scopes[name] = scope
+    if parent
+      parent.class_set(name, scope)
+    else
+      @class_scopes[name] = scope
+    end
   end
 
   # Return the scope associated with a class.  This is just here so
@@ -196,7 +199,7 @@ class Puppet::Parser::Scope
     values = {}
 
     # first collect the values from the parents
-    unless parent.nil?
+    if parent
       parent.lookupdefaults(type).each { |var,value|
         values[var] = value
       }
