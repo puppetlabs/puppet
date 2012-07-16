@@ -1,7 +1,10 @@
 require 'puppet/util/warnings'
+require 'puppet/util/methodhelper'
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
+  include Puppet::Util::MethodHelper
+
   @autoloaders = {}
   @loaded = {}
 
@@ -186,13 +189,7 @@ class Puppet::Util::Autoload
 
     self.class[obj] = self
 
-    options.each do |opt, value|
-      begin
-        self.send(opt.to_s + "=", value)
-      rescue NoMethodError
-        raise ArgumentError, "#{opt} is not a valid option"
-      end
-    end
+    set_options(options)
 
     @wrap = true unless defined?(@wrap)
   end

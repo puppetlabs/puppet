@@ -1,6 +1,9 @@
 require 'puppet/util/ldap'
+require 'puppet/util/methodhelper'
 
 class Puppet::Util::Ldap::Connection
+  include Puppet::Util::MethodHelper
+
   attr_accessor :host, :port, :user, :password, :reset, :ssl
 
   attr_reader :connection
@@ -36,13 +39,7 @@ class Puppet::Util::Ldap::Connection
 
     @host, @port = host, port
 
-    options.each do |param, value|
-      begin
-        send(param.to_s + "=", value)
-      rescue
-        raise ArgumentError, "LDAP connections do not support #{param} parameters"
-      end
-    end
+    set_options(options)
   end
 
   # Create a per-connection unique name.

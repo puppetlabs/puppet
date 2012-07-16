@@ -13,6 +13,7 @@ class Puppet::Parser::Compiler
 
   include Puppet::Util
   include Puppet::Util::Errors
+  include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
@@ -177,15 +178,7 @@ class Puppet::Parser::Compiler
 
   def initialize(node, options = {})
     @node = node
-
-    options.each do |param, value|
-      begin
-        send(param.to_s + "=", value)
-      rescue NoMethodError
-        raise ArgumentError, "Compiler objects do not accept #{param}"
-      end
-    end
-
+    set_options(options)
     initvars
   end
 
