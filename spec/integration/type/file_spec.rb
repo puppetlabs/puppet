@@ -70,8 +70,9 @@ describe Puppet::Type.type(:file) do
 
     file.parameter(:mode).expects(:retrieve).never
 
-    report = catalog.apply.report
-    report.resource_statuses["File[#{path}]"].should_not be_failed
+    status = catalog.apply.report.resource_statuses["File[#{path}]"]
+    status.should_not be_failed
+    status.should_not be_changed
     File.should_not be_exist(path)
   end
 
@@ -212,14 +213,11 @@ describe Puppet::Type.type(:file) do
         describe "when managing links" do
           let(:target) { tmpfile('target') }
 
-          before :each do
+          it "should not set the executable bit on the link nor the target" do
             FileUtils.touch(target)
             File.chmod(0444, target)
-
             File.symlink(target, link)
-          end
 
-          it "should not set the executable bit on the link nor the target" do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
             catalog.apply
 
@@ -228,12 +226,22 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should ignore dangling symlinks (#6856)" do
-            File.delete(target)
+            File.symlink(target, link)
 
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
             catalog.apply
 
             File.should_not be_exist(link)
+          end
+
+          it "should create a link to the target if ensure is omitted" do
+            FileUtils.touch(target)
+            catalog.add_resource described_class.new(:path => link, :target => target)
+            catalog.apply
+
+            File.should be_exist link
+            File.lstat(link).ftype.should == 'link'
+            File.readlink(link).should == target
           end
         end
 
