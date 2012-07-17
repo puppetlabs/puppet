@@ -219,7 +219,8 @@ class Type
   end
 
   def self.key_attributes
-    key_attribute_parameters.collect { |p| p.name }
+    # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
+    @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
   def self.title_patterns
