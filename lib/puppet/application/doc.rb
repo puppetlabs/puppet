@@ -106,7 +106,7 @@ OPTIONS
 * --mode:
   Determine the output mode. Valid modes are 'text', 'pdf' and 'rdoc'. The 'pdf'
   mode creates PDF formatted files in the /tmp directory. The default mode is
-  'text'. In 'rdoc' mode you must provide 'manifests-path'
+  'text'.
 
 * --reference:
   Build a particular reference. Get a list of references by running
@@ -126,7 +126,7 @@ OPTIONS
 * --environment:
   Used only in 'rdoc' mode. The configuration environment from which
   to read the modulepath and manifestdir settings, when reading said settings
-  from puppet.conf. Due to a known bug, this option is not currently effective.
+  from puppet.conf.
 
 
 EXAMPLE
