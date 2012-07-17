@@ -53,11 +53,17 @@ class Puppet::Parameter::Value
   # A standard way of converting all of our values, so we're always
   # comparing apples to apples.
   def convert(value)
-    if value == ''
-      # We can't intern an empty string, yay.
+    case value
+    when Symbol, ''             # can't intern an empty string
       value
+    when String
+      value.intern
+    when true
+      :true
+    when false
+      :false
     else
-      value.to_s.to_sym
+      value.to_s.intern
     end
   end
 end
