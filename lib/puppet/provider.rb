@@ -124,8 +124,7 @@ class Puppet::Provider
   # @yield A block that configures the command (@see Puppet::Provider::Command) 
   def self.has_command(name, path, &block)
     name = symbolize(name)
-    configuration = block_given? ? block : Proc.new {}
-    command = CommandDefiner.define(name, path, self, &configuration)
+    command = CommandDefiner.define(name, path, self, &block)
 
     @commands[name] = command.executable
 
@@ -140,7 +139,7 @@ class Puppet::Provider
 
     def self.define(name, path, confiner, &block)
       definer = new(name, path, confiner)
-      definer.instance_eval &block
+      definer.instance_eval(&block) if block
       definer.command
     end
 
