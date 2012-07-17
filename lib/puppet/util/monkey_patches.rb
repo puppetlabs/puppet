@@ -24,10 +24,6 @@ require "yaml"
 require "puppet/util/zaml.rb"
 
 class Symbol
-  def to_zaml(z)
-    z.emit("!ruby/sym ")
-    to_s.to_zaml(z)
-  end
   def <=> (other)
     self.to_s <=> other.to_s
   end unless method_defined? "<=>"
