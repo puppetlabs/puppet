@@ -1112,6 +1112,15 @@ describe Puppet::Type.type(:file) do
       File.chmod(0777, dir)
     end
 
+    it "should return nil if parts of path are no directories" do
+      regular_file = tmpfile('ENOTDIR_test')
+      FileUtils.touch(regular_file)
+      impossible_child = File.join(regular_file, 'some_file')
+
+      file[:path] = impossible_child
+      file.stat.should be_nil
+    end
+
     it "should return the stat instance" do
       file.stat.should be_a(File::Stat)
     end
