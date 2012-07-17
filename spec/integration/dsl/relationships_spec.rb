@@ -12,9 +12,7 @@ describe Puppet::DSL do
   end
 
   describe "relationships" do
-
-
-
+    # MLEN:TODO add specs
   end
 end
 

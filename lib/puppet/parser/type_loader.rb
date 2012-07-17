@@ -135,6 +135,7 @@ class Puppet::Parser::TypeLoader
     return nil
   end
 
+  # MLEN:TODO create a version for Ruby DSL
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
     parser = Puppet::Parser::Parser.new(environment)

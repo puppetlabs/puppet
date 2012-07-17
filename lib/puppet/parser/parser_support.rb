@@ -142,6 +142,8 @@ class Puppet::Parser::Parser
     raise except
   end
 
+  # MLEN:TODO check whether there is a failing spec about this
+  #
   # how should I do error handling here?
   def parse(string = nil)
     self.string = string if string

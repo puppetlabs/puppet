@@ -325,6 +325,8 @@ class Puppet::Resource
 
       if external_value.nil?
         next if default.nil?
+
+        # MLEN:TODO write a spec for this
         value = unless use_ruby_dsl? environment.to_s
                  default.safeevaluate(scope)
                 else
