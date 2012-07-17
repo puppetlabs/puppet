@@ -117,7 +117,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
     describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
-      lang_sentinel_value = "es_ES.UTF-8"
+      lang_sentinel_value = "en_US.UTF-8"
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
       # "exec"
       locale_sentinel_env = {}
