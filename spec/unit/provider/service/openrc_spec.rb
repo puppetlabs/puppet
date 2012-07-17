@@ -7,8 +7,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     ['/sbin/rc-service', '/bin/rc-status', '/sbin/rc-update'].each do |command|
-      FileTest.stubs(:file?).with(command).returns true
-      FileTest.stubs(:executable?).with(command).returns true
+      described_class.stubs(:which).with(command).returns(command)
     end
   end
 
