@@ -111,18 +111,7 @@ describe Puppet::Indirector::REST do
 
       expect do
         @searcher.http_request(:get, stub('request'))
-      end.to raise_error(/shady looking signature/)
-    end
-
-    it "should provide a suggestive error message when certificate verify failed without a better message" do
-      connection = Net::HTTP.new('my_server', 8140)
-      @searcher.stubs(:network).returns(connection)
-
-      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
-
-      expect do
-        @searcher.http_request(:get, stub('request'))
-      end.to raise_error(/This is often because the time is out of sync on the server or client/)
+      end.to raise_error(Puppet::Error, /shady looking signature/)
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
@@ -133,6 +122,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(connection)
       ssl_context = OpenSSL::SSL::SSLContext.new
       ssl_context.stubs(:current_cert).returns(cert)
+      ssl_context.stubs(:error).returns(nil)
       connection.stubs(:get).with do
         connection.verify_callback.call(true, ssl_context)
       end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))

@@ -98,7 +98,9 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # use otherwise.
       peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
       # And also keep the detailed verification error if such an error occurs
-      verify_errors << "verify error #{ssl_context.error} for #{ssl_context.current_cert.subject}" unless preverify_ok
+      if ssl_context.error
+        verify_errors << "verify error #{ssl_context.error} for #{ssl_context.current_cert.subject}" unless preverify_ok
+      end
       preverify_ok
     end
 
@@ -106,12 +108,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   rescue OpenSSL::SSL::SSLError => error
     if error.message.include? "certificate verify failed"
       msg = error.message
-      if verify_errors.empty?
-        msg << ".  This is often because the time is out of sync on the server or client"
-      else
-        msg << ".  "
-        msg << verify_errors.join('; ')
-      end
+      msg << ".  " + verify_errors.join('; ') unless verify_errors.empty?
       raise Puppet::Error, msg
     elsif error.message =~ /hostname (was )?not match/
       raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
