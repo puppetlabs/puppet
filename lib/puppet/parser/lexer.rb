@@ -320,7 +320,6 @@ class Puppet::Parser::Lexer
 
   # Find the next token that matches a regex.  We look for these first.
   def find_regex_token
-    @regex += 1
     best_token = nil
     best_length = 0
 
@@ -341,13 +340,10 @@ class Puppet::Parser::Lexer
 
   # Find the next token, returning the string and the token.
   def find_token
-    @find += 1
     shift_token || find_regex_token || find_string_token
   end
 
   def initialize
-    @find = 0
-    @regex = 0
     initvars
   end
 
