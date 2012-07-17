@@ -72,7 +72,7 @@ describe Puppet::DSL::Helper do
       Puppet[:code] = "test string"
       Puppet[:manifest] = "test.rb"
 
-      @helper.get_ruby_code(nil).should == "test string"
+      @helper.get_ruby_code("test").should == "test string"
     end
 
     it "should read the contents of the :manifest" do
@@ -81,7 +81,7 @@ describe Puppet::DSL::Helper do
         f << "test file contents"
       end
       Puppet[:manifest] = filename
-      @helper.get_ruby_code(nil).should == "test file contents"
+      @helper.get_ruby_code("test").should == "test file contents"
     end
 
     it "should raise when not using ruby dsl" do
