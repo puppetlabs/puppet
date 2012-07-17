@@ -7,4 +7,5 @@ env: MOCHA_OPTIONS=skip_integration
 branches:
   only:
     - dsl
+    - master-travis
 
