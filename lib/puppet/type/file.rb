@@ -52,18 +52,8 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    # convert the current path in an index into the collection and the last
-    # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      # We know the value is absolute, so expanding it will just standardize it.
-      path, name = ::File.split(::File.expand_path(value))
-
-      { :index => Puppet::FileCollection.collection.index(path), :name => name }
-    end
-
-    # and the reverse
-    unmunge do |value|
-      ::File.join(Puppet::FileCollection.collection.path(value[:index]), value[:name])
+      ::File.expand_path(value)
     end
   end
 
@@ -518,6 +508,7 @@ Puppet::Type.newtype(:file) do
     # remote system.
     mark_children_for_purging(children) if self.purge?
 
+    # REVISIT: sort_by is more efficient?
     result = children.values.sort { |a, b| a[:path] <=> b[:path] }
     remove_less_specific_files(result)
   end
@@ -527,6 +518,7 @@ Puppet::Type.newtype(:file) do
   # not likely to have many actual conflicts, which is good, because
   # this is a pretty inefficient implementation.
   def remove_less_specific_files(files)
+    # REVISIT: is this Windows safe?  AltSeparator?
     mypath = self[:path].split(::File::Separator)
     other_paths = catalog.vertices.
       select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
