@@ -432,7 +432,7 @@ describe Puppet::Type.type(:file) do
 
     it "should set a desired 'ensure' value if none is set and 'target' is set" do
       file = described_class.new(:path => path, :target => File.expand_path(__FILE__))
-      file[:ensure].should == :symlink
+      file[:ensure].should == :link
     end
   end
 
@@ -1111,6 +1111,15 @@ describe Puppet::Type.type(:file) do
       File.chmod(0777, dir)
     end
 
+    it "should return nil if parts of path are no directories" do
+      regular_file = tmpfile('ENOTDIR_test')
+      FileUtils.touch(regular_file)
+      impossible_child = File.join(regular_file, 'some_file')
+
+      file[:path] = impossible_child
+      file.stat.should be_nil
+    end
+
     it "should return the stat instance" do
       file.stat.should be_a(File::Stat)
     end
@@ -1259,7 +1268,7 @@ describe Puppet::Type.type(:file) do
     describe "target" do
       it "should require file resource when specified with the target property" do
         file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
-        link = described_class.new(:path => File.expand_path("/bar"), :ensure => :symlink, :target => File.expand_path("/foo"))
+        link = described_class.new(:path => File.expand_path("/bar"), :ensure => :link, :target => File.expand_path("/foo"))
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
@@ -1280,7 +1289,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should not require target if target is not managed" do
-        link = described_class.new(:path => File.expand_path('/foo'), :ensure => :symlink, :target => '/bar')
+        link = described_class.new(:path => File.expand_path('/foo'), :ensure => :link, :target => '/bar')
         catalog.add_resource link
         link.autorequire.size.should == 0
       end
