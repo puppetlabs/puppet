@@ -295,7 +295,7 @@ describe Puppet::Util::Log do
 
     it "should include attributes @level, @message, @source, @tags, and @time" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      log.to_yaml_properties.should == %w{@level @message @source @tags @time}
+      log.to_yaml_properties.should =~ %w{@level @message @source @tags @time}
     end
 
     it "should include attributes @file and @line if specified" do
