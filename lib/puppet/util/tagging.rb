@@ -2,6 +2,24 @@
 # Copyright Luke Kanies
 
 # A common module to handle tagging.
+#
+# So, do you want the bad news or the good news first?
+#
+# The bad news is that using an array here is hugely costly compared to using
+# a hash.  Like, the same speed empty, 50 percent slower with one item, and
+# 300 percent slower at 6 - one of our common peaks for tagging items.
+#
+# ...and that assumes an efficient implementation, just using include?.  These
+# methods have even more costs hidden in them.
+#
+# The good news is that this module has no API.  Various objects directly
+# interact with their `@tags` member as an array, or dump it directly in YAML,
+# or whatever.
+#
+# So, er, you can't actually change this.  No matter how much you want to be
+# cause it is inefficient in both CPU and object allocation terms.
+#
+# Good luck, my friend. --daniel 2012-07-17
 module Puppet::Util::Tagging
   # Add a tag to our current list.  These tags will be added to all
   # of the objects contained in this scope.
@@ -38,16 +56,19 @@ module Puppet::Util::Tagging
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
 
-    tags.each do |t|
-      tag(t)
-    end
+    tags.each {|t| tag(t) }
   end
 
   private
 
-  def handle_qualified_tags( qualified )
+  def handle_qualified_tags(qualified)
     # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    qualified.collect { |name| x = name.split("::") }.flatten.each { |tag| @tags << tag unless @tags.include?(tag) }
+    x = 1
+    qualified.each do |name|
+      name.split("::").each do |tag|
+        @tags << tag unless @tags.include?(tag)
+      end
+    end
   end
 
   def valid_tag?(tag)
