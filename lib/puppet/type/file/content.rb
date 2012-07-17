@@ -173,7 +173,7 @@ module Puppet
     def each_chunk_from(source_or_content)
       if source_or_content.is_a?(String)
         yield source_or_content
-      elsif content_is_really_a_checksum? && source_or_content.nil?
+      elsif content_is_really_a_checksum? && Puppet[:content_origin_priority] == "bucket"
         yield read_file_from_filebucket
       elsif source_or_content.nil?
         yield ''

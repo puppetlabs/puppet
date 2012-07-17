@@ -53,7 +53,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     end
 
     store_content(resource) if resource[:ensure] == "file"
-    old_source = resource.delete(:source)
+    old_source = resource[:source]
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
   end
 
