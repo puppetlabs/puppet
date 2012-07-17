@@ -43,7 +43,6 @@ module Puppet
       ##
       def method_missing(name, *args)
         if name.to_s =~ SETTER_REGEX
-          puts $1
           define_singleton_method name do |*a|
             value = a.first
             value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
