@@ -19,8 +19,8 @@ module Puppet
         # Undefine all methods but those defined in BasicObject.
         ##
         instance_methods.each do |m|
-          unless [:==, :equal?, :'!', :'!=', :instance_eval, :instance_exec,
-                  :__send__, :__id__].include? m
+          unless ['==', 'equal?', '!', '!=', 'instance_eval', 'instance_exec',
+            '__send__', '__id__'].include? m
             undef_method m
           end
         end
