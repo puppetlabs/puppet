@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
 # see the bottom of the file for the rest of the inclusions
@@ -20,7 +19,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
   ###############################
@@ -1741,6 +1739,9 @@ class Type
     define_method(:validate, &block)
     #@validate = block
   end
+
+  # Origin information.
+  attr_accessor :file, :line
 
   # The catalog that this resource is stored in.
   attr_accessor :catalog
