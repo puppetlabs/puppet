@@ -22,7 +22,7 @@ describe Puppet::ModuleTool do
   end
 
   describe '.find_module_root' do
-    let(:sample_path) { Pathname.new('/a/b/c') }
+    let(:sample_path) { Pathname.new('/a/b/c').expand_path }
 
     it 'should return the first path as a pathname when it contains a module file' do
       Puppet::ModuleTool.expects(:is_module_root?).with(sample_path).
@@ -33,11 +33,11 @@ describe Puppet::ModuleTool do
 
     it 'should return a parent path as a pathname when it contains a module file' do
       Puppet::ModuleTool.expects(:is_module_root?).
-        with(responds_with(:to_s, '/a/b/c')).returns(false)
+        with(responds_with(:to_s, File.expand_path('/a/b/c'))).returns(false)
       Puppet::ModuleTool.expects(:is_module_root?).
-        with(responds_with(:to_s, '/a/b')).returns(true)
+        with(responds_with(:to_s, File.expand_path('/a/b'))).returns(true)
 
-      subject.find_module_root(sample_path).should == Pathname.new('/a/b')
+      subject.find_module_root(sample_path).should == Pathname.new('/a/b').expand_path
     end
 
     it 'should return nil when no module root can be found' do
