@@ -253,12 +253,16 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     tmpfile.close()
 
     # Options '-e', '-c', use encrypted password and clear flags
-    # Must receibe "user:enc_password" as input
+    # Must receive "user:enc_password" as input
     # command, arguments = {:failonfail => true, :combine => true}
-    cmd = [self.class.command(:chpasswd),"-R", self.class.ia_module,
-           '-e', '-c', user]
+    # Fix for bugs #11200 and #10915
+    cmd = [self.class.command(:chpasswd), get_ia_module_args, '-e', '-c', user].flatten
     begin
-      execute(cmd, {:failonfail => true, :combine => true, :stdinfile => tmpfile.path })
+      output = execute(cmd, {:failonfail => false, :combine => true, :stdinfile => tmpfile.path })
+      # chpasswd can return 1, even on success (at least on AIX 6.1); empty output indicates success
+      if output != ""
+        raise Puppet::ExecutionFailure, "chpasswd said #{output}"
+      end
     rescue Puppet::ExecutionFailure  => detail
       raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
     ensure
