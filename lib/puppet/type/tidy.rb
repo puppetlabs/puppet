@@ -178,7 +178,7 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:type) do
-    desc "Set the mechanism for determining age."
+    desc "Set the mechanism for determining age. Default: atime."
 
     newvalues(:atime, :mtime, :ctime)
 
