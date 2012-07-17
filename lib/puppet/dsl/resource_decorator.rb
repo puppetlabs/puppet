@@ -15,7 +15,7 @@ module Puppet
       ##
       # Regular expression used when determining whether method is a setter.
       ##
-      SETTER_REGEX = /\A(.*)=\z/
+      SETTER_REGEX = /^(.*)=$/
 
       ##
       # Initializes new object.
@@ -42,7 +42,8 @@ module Puppet
       #
       ##
       def method_missing(name, *args)
-        if name =~ SETTER_REGEX
+        if name.to_s =~ SETTER_REGEX
+          puts $1
           define_singleton_method name do |*a|
             value = a.first
             value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
