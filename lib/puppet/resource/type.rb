@@ -135,7 +135,7 @@ class Puppet::Resource::Type
 
     code.safeevaluate(scope) if code
 
-    evaluate_ruby_code(resource, scope) if ruby_code
+    evaluate_ruby_code(scope) if ruby_code
   end
 
   def initialize(type, name, options = {})
@@ -363,7 +363,7 @@ class Puppet::Resource::Type
     parent_scope(resource.scope, klass)
   end
 
-  def evaluate_ruby_code(resource, scope)
+  def evaluate_ruby_code(scope)
     ruby_code.evaluate(scope)
   end
 

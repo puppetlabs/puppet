@@ -469,12 +469,10 @@ describe Puppet::Resource::Type do
     end
 
     describe "and ruby code is provided" do
-      it "should create a DSL Resource API and evaluate it" do
-        @type.stubs(:ruby_code).returns(proc { "foo" })
-        @api = stub 'api'
-        Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
-        @api.expects(:evaluate)
-
+      it "should evaluate ruby code" do
+        code = stub 'code'
+        code.expects(:evaluate).with {|scope| scope.is_a? Puppet::Parser::Scope }
+        @type.stubs(:ruby_code).returns(code)
         @type.evaluate_code(@resource)
       end
     end
