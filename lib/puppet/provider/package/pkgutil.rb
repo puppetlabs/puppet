@@ -9,7 +9,9 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   confine :operatingsystem => :solaris
 
-  commands :pkguti => pkgutil_bin
+  has_command (:pkguti, pkgutil_bin) do
+    environment :HOME => ENV['HOME']
+  end
 
   def self.healthcheck()
     unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
