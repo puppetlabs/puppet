@@ -194,7 +194,8 @@ end
 
 class Symbol
   def to_zaml(z)
-    z.emit(self.inspect)
+    z.emit("!ruby/sym ")
+    to_s.to_zaml(z)
   end
 end
 
