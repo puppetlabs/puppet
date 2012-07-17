@@ -244,10 +244,6 @@ class Puppet::Parser::Compiler
     resource.evaluate
 
     @node_scope = topscope.class_scope(astnode)
-
-    # MLEN:TODO add a spec
-    @node_scope.resource = resource
-    @node_scope.compiler = self
   end
 
   # Evaluate our collections and return true if anything returned an object.
