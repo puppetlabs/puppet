@@ -35,7 +35,7 @@ Puppet::Type.newtype(:file) do
     parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
-    [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]
+    [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
   end
 
   newparam(:path) do
@@ -64,9 +64,7 @@ Puppet::Type.newtype(:file) do
 
     # and the reverse
     unmunge do |value|
-      basedir = Puppet::FileCollection.collection.path(value[:index])
-
-      ::File.join( basedir, value[:name] )
+      ::File.join(Puppet::FileCollection.collection.path(value[:index]), value[:name])
     end
   end
 
