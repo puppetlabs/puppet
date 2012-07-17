@@ -52,10 +52,6 @@ describe Puppet::Parser::Resource do
     @known_resource_types.add Puppet::Resource::Type.new(:node, name)
   end
 
-  it "should use the file lookup module" do
-    Puppet::Parser::Resource.ancestors.should be_include(Puppet::FileCollection::Lookup)
-  end
-
   it "should get its environment from its scope" do
     scope = stub 'scope', :source => stub("source"), :namespaces => nil
     scope.expects(:environment).returns("foo").at_least_once

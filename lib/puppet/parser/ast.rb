@@ -2,7 +2,6 @@
 
 require 'puppet'
 require 'puppet/util/autoload'
-require 'puppet/file_collection/lookup'
 
 # The base class for all of the objects that make up the parse trees.
 # Handles things like file name, line #, and also does the initialization
@@ -11,13 +10,11 @@ class Puppet::Parser::AST
   # Do this so I don't have to type the full path in all of the subclasses
   AST = Puppet::Parser::AST
 
-  include Puppet::FileCollection::Lookup
-
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
-  attr_accessor :parent, :scope
+  attr_accessor :parent, :scope, :file, :line
 
   def inspect
     "( #{self.class} #{self.to_s} #{@children.inspect} )"
