@@ -239,8 +239,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
     describe "the compile command" do
       before do
-        Puppet.stubs(:[]).with(:environment)
-        Puppet.stubs(:[]).with(:manifest).returns("site.pp")
+        Puppet[:manifest] = "site.pp"
         Puppet.stubs(:err)
         @master.stubs(:jj)
         Puppet.features.stubs(:pson?).returns true
@@ -296,7 +295,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         Puppet::SSL::CertificateAuthority.stubs(:ca?)
         Process.stubs(:uid).returns(1000)
         Puppet.stubs(:service)
-        Puppet.stubs(:[])
+        Puppet[:daemonize] = false
         Puppet.stubs(:notice)
         Puppet.stubs(:start)
       end
@@ -336,7 +335,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       end
 
       it "should daemonize if needed" do
-        Puppet.stubs(:[]).with(:daemonize).returns(true)
+        Puppet[:daemonize] = true
 
         @daemon.expects(:daemonize)
 

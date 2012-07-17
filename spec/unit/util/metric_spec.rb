@@ -20,8 +20,9 @@ describe Puppet::Util::Metric do
   end
 
   it "should default to the :rrdir as the basedir "do
-    Puppet.settings.expects(:value).with(:rrddir).returns "myrrd"
-    @metric.basedir.should == "myrrd"
+    rrddir = File.expand_path("myrrd")
+    Puppet[:rrddir] = rrddir
+    @metric.basedir.should == rrddir
   end
 
   it "should use any provided basedir" do

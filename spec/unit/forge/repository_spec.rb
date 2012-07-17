@@ -125,7 +125,7 @@ describe Puppet::Forge::Repository do
   end
 
   def proxy_settings_of(host, port)
-    Puppet.settings.stubs(:[]).with(:http_proxy_host).returns(host)
-    Puppet.settings.stubs(:[]).with(:http_proxy_port).returns(port)
+    Puppet[:http_proxy_host] = host
+    Puppet[:http_proxy_port] = port
   end
 end

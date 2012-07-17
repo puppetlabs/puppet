@@ -539,8 +539,7 @@ describe Puppet::Configurer do
     end
 
     it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
-      Puppet.stubs(:[])
-      Puppet.expects(:[]).with(:usecacheonfailure).returns false
+      Puppet[:usecacheonfailure] = false
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
 
       Puppet.expects(:warning)

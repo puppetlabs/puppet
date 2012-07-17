@@ -4,9 +4,8 @@ require 'puppet/util/pidlock'
 class Puppet::Network::Server
   attr_reader :server_type, :address, :port
 
-
-  # TODO: does anything actually call this?  It seems like it's a duplicate of the code in Puppet::Daemon, but that
-  #  it's not actually called anywhere.
+  # TODO: does anything actually call this?  It seems like it's a duplicate of
+  # the code in Puppet::Daemon, but that it's not actually called anywhere.
 
   # Put the daemon into the background.
   def daemonize

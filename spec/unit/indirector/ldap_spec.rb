@@ -49,7 +49,7 @@ describe Puppet::Indirector::Ldap do
     end
 
     it "should default to the value of the :search_base setting as the result of the ldapbase method" do
-      Puppet.expects(:[]).with(:ldapbase).returns("myldapbase")
+      Puppet[:ldapbase] = "myldapbase"
       searcher = @ldap_class.new
       searcher.search_base.should == "myldapbase"
     end

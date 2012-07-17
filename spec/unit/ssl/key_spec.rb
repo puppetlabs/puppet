@@ -34,11 +34,10 @@ describe Puppet::SSL::Key do
 
   describe "when initializing" do
     it "should set its password file to the :capass if it's a CA key" do
-      Puppet.settings.stubs(:value).returns "whatever"
-      Puppet.settings.stubs(:value).with(:capass).returns "/ca/pass"
+      Puppet[:capass] = File.expand_path("/ca/pass")
 
       key = Puppet::SSL::Key.new(Puppet::SSL::Host.ca_name)
-      key.password_file.should == "/ca/pass"
+      key.password_file.should == Puppet[:capass]
     end
 
     it "should downcase its name" do
@@ -46,11 +45,10 @@ describe Puppet::SSL::Key do
     end
 
     it "should set its password file to the default password file if it is not the CA key" do
-      Puppet.settings.stubs(:value).returns "whatever"
-      Puppet.settings.stubs(:value).with(:passfile).returns "/normal/pass"
+      Puppet[:passfile] = File.expand_path("/normal/pass")
 
       key = Puppet::SSL::Key.new("notca")
-      key.password_file.should == "/normal/pass"
+      key.password_file.should == Puppet[:passfile]
     end
   end
 
@@ -135,7 +133,7 @@ describe Puppet::SSL::Key do
     end
 
     it "should create the private key with the keylength specified in the settings" do
-      Puppet.settings.expects(:value).with(:keylength).returns("50")
+      Puppet[:keylength] = "50"
       OpenSSL::PKey::RSA.expects(:new).with(50).returns(@key)
 
       @instance.generate
@@ -178,7 +176,7 @@ describe Puppet::SSL::Key do
       end
 
       it "should export the private key to text using the password" do
-        Puppet.settings.stubs(:value).with(:keylength).returns("50")
+        Puppet[:keylength] = "50"
 
         @instance.password_file = "/path/to/pass"
         @instance.stubs(:password).returns "my password"

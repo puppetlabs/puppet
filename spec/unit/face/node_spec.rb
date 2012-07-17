@@ -161,7 +161,7 @@ describe Puppet::Face[:node, '0.0.1'] do
           # Stub this so we don't need access to the DB
           require 'puppet/rails/host'
 
-          Puppet.stubs(:[]).with(:storeconfigs).returns(true)
+          Puppet[:storeconfigs] = true
 
           Puppet::Rails.stubs(:connect)
           @rails_node = stub_everything 'rails_node'

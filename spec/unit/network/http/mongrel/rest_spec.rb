@@ -210,33 +210,15 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? d
         @handler.params(@request)[:ip].should == "ipaddress"
       end
 
-      it "should use the :ssl_client_header to determine the parameter when looking for the certificate" do
-        Puppet.settings.stubs(:value).returns "eh"
-        Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
-        @params["myheader"] = "/CN=host.domain.com"
-        @handler.params(@request)
-      end
-
-      it "should retrieve the hostname by matching the certificate parameter" do
-        Puppet.settings.stubs(:value).returns "eh"
-        Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
+      it "should retrieve the hostname by matching the certificate parameter from the header in :ssl_client_header" do
+        Puppet[:ssl_client_header] = "myheader"
         @params["myheader"] = "/CN=host.domain.com"
         @handler.params(@request)[:node].should == "host.domain.com"
       end
 
-      it "should use the :ssl_client_header to determine the parameter for checking whether the host certificate is valid" do
-        Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
-        Puppet.settings.expects(:value).with(:ssl_client_verify_header).returns "myheader"
-        @params.merge!(
-          "myheader"   => "SUCCESS",
-          "certheader" => "/CN=host.domain.com"
-        )
-        @handler.params(@request)
-      end
-
-      it "should consider the host authenticated if the validity parameter contains 'SUCCESS'" do
-        Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
-        Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
+      it "should use :ssl_client_header and :ssl_client_verify_header to determine the parameter for checking whether the host certificate is valid" do
+        Puppet[:ssl_client_header] = "certheader"
+        Puppet[:ssl_client_verify_header] = "myheader"
         @params.merge!(
           "myheader"   => "SUCCESS",
           "certheader" => "/CN=host.domain.com"
@@ -245,8 +227,8 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? d
       end
 
       it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
-        Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
-        Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
+        Puppet[:ssl_client_header] = "certheader"
+        Puppet[:ssl_client_verify_header] = "myheader"
         @params.merge!(
           "myheader"   => "whatever",
           "certheader" => "/CN=host.domain.com"
@@ -255,8 +237,8 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? d
       end
 
       it "should consider the host unauthenticated if no certificate information is present" do
-        Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
-        Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
+        Puppet[:ssl_client_header] = "certheader"
+        Puppet[:ssl_client_verify_header] = "myheader"
         @params.merge!(
           "myheader"   => nil,
           "certheader" => "SUCCESS"
@@ -265,8 +247,7 @@ describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? d
       end
 
       it "should resolve the node name with an ip address look-up if no certificate is present" do
-        Puppet.settings.stubs(:value).returns "eh"
-        Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
+        Puppet[:ssl_client_header] = "myheader"
         @params["myheader"] = nil
         @handler.expects(:resolve_node).returns("host.domain.com")
         @handler.params(@request)[:node].should == "host.domain.com"

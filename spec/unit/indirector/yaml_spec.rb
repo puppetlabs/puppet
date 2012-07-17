@@ -12,6 +12,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       self
     end
   end
+
   before :each do
     @store = @store_class.new
 
@@ -19,36 +20,38 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     @subject.singleton_class.send(:attr_accessor, :name)
     @subject.name = :me
 
-    @dir = "/what/ever"
-    Puppet.settings.stubs(:value).returns("fakesettingdata")
-    Puppet.settings.stubs(:value).with(:clientyamldir).returns(@dir)
+    @dir = File.expand_path("/what/ever")
+    Puppet[:clientyamldir] = @dir
     Puppet.run_mode.stubs(:master?).returns false
 
     @request = stub 'request', :key => :me, :instance => @subject
   end
 
+  let(:serverdir) { File.expand_path("/server/yaml/dir") }
+  let(:clientdir) { File.expand_path("/client/yaml/dir") }
+
   describe Puppet::Indirector::Yaml, " when choosing file location" do
     it "should use the server_datadir if the run_mode is master" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
-      @store.path(:me).should =~ %r{^/server/yaml/dir}
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
+      @store.path(:me).should =~ /^#{serverdir}/
     end
 
     it "should use the client yamldir if the run_mode is not master" do
-      Puppet.run_mode.expects(:master?).returns false
-      Puppet.settings.expects(:value).with(:clientyamldir).returns "/client/yaml/dir"
-      @store.path(:me).should =~ %r{^/client/yaml/dir}
+      Puppet.run_mode.stubs(:master?).returns false
+      Puppet[:clientyamldir] = clientdir
+      @store.path(:me).should =~ /^#{clientdir}/
     end
 
     it "should use the extension if one is specified" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
       @store.path(:me,'.farfignewton').should =~ %r{\.farfignewton$}
     end
 
     it "should assume an extension of .yaml if none is specified" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
       @store.path(:me).should =~ %r{\.yaml$}
     end
 

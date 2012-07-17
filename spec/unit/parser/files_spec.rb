@@ -33,11 +33,11 @@ describe Puppet::Parser::Files do
     end
 
     it "should return the file in the templatedir if it exists" do
-      Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
+      Puppet[:templatedir] = "/my/templates"
       Puppet[:modulepath] = "/one:/two"
       File.stubs(:directory?).returns(true)
       FileTest.stubs(:exist?).returns(true)
-      Puppet::Parser::Files.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
+      Puppet::Parser::Files.find_template("mymod/mytemplate").should == File.join(Puppet[:templatedir], "mymod/mytemplate")
     end
 
     it "should not raise an error if no valid templatedir exists and the template exists in a module" do

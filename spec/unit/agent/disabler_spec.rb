@@ -12,7 +12,6 @@ describe Puppet::Agent::Disabler do
     @disabler = DisablerTester.new
   end
 
-
   ## These tests are currently very implementation-specific, and they rely heavily on
   ##  having access to the "disable_lockfile" method.  However, I've made this method private
   ##  because it really shouldn't be exposed outside of our implementation... therefore
@@ -24,11 +23,11 @@ describe Puppet::Agent::Disabler do
     @disabler.send(:disable_lockfile).should be_instance_of(Puppet::Util::JsonLockfile)
   end
 
-
   it "should use puppet's :agent_disabled_lockfile' setting to determine its lockfile path" do
-    Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
-    lock = Puppet::Util::JsonLockfile.new("/my/lock.disabled")
-    Puppet::Util::JsonLockfile.expects(:new).with("/my/lock.disabled").returns lock
+    lockfile = File.expand_path("/my/lock.disabled")
+    Puppet[:agent_disabled_lockfile] = lockfile
+    lock = Puppet::Util::JsonLockfile.new(lockfile)
+    Puppet::Util::JsonLockfile.expects(:new).with(lockfile).returns lock
 
     @disabler.send(:disable_lockfile)
   end
@@ -56,10 +55,7 @@ describe Puppet::Agent::Disabler do
   end
 
   it "should report the disable message when disabled" do
-    lockfile = PuppetSpec::Files.tmpfile("lock")
-    lock = Puppet::Util::JsonLockfile.new(lockfile)
-    Puppet.expects(:[]).with(:agent_disabled_lockfile).returns("/my/lock.disabled")
-    Puppet::Util::JsonLockfile.expects(:new).with("/my/lock.disabled").returns lock
+    Puppet[:agent_disabled_lockfile] = PuppetSpec::Files.tmpfile("lock")
 
     msg = "I'm busy, go away"
     @disabler.disable(msg)

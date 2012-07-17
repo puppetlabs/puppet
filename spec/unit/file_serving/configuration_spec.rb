@@ -8,8 +8,8 @@ describe Puppet::FileServing::Configuration do
 
   before :each do
     @path = make_absolute("/path/to/configuration/file.conf")
-    Puppet.settings.stubs(:value).with(:trace).returns(false)
-    Puppet.settings.stubs(:value).with(:fileserverconfig).returns(@path)
+    Puppet[:trace] = false
+    Puppet[:fileserverconfig] = @path
   end
 
   after :each do
@@ -17,7 +17,7 @@ describe Puppet::FileServing::Configuration do
   end
 
   it "should make :new a private method" do
-    proc { Puppet::FileServing::Configuration.new }.should raise_error
+    expect { Puppet::FileServing::Configuration.new }.to raise_error
   end
 
   it "should return the same configuration each time 'configuration' is called" do
@@ -28,7 +28,7 @@ describe Puppet::FileServing::Configuration do
 
     it "should work without a configuration file" do
       FileTest.stubs(:exists?).with(@path).returns(false)
-      proc { Puppet::FileServing::Configuration.configuration }.should_not raise_error
+      expect { Puppet::FileServing::Configuration.configuration }.to_not raise_error
     end
 
     it "should parse the configuration file if present" do
@@ -60,7 +60,7 @@ describe Puppet::FileServing::Configuration do
 
     it "should not raise exceptions" do
       @parser.expects(:parse).raises(ArgumentError)
-      proc { Puppet::FileServing::Configuration.configuration }.should_not raise_error
+      expect { Puppet::FileServing::Configuration.configuration }.to_not raise_error
     end
 
     it "should replace the existing mount list with the results of reparsing" do

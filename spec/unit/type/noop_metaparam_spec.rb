@@ -21,8 +21,8 @@ describe Puppet::Type.type(:file).attrclass(:noop) do
 
   describe "when set on a resource" do
     it "should default to the :noop setting" do
-      Puppet.settings.expects(:value).with(:noop).returns "myval"
-      @file.noop.should == "myval"
+      Puppet[:noop] = true
+      @file.noop.should == true
     end
 
     it "should prefer true values from the attribute" do
