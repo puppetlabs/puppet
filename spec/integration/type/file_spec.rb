@@ -14,7 +14,12 @@ describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }
-  let(:path) { tmpfile('file_testing') }
+  let(:path) do
+    # we create a directory first so backups of :path that are stored in
+    # the same directory will also be removed after the tests
+    parent = tmpdir('file_spec')
+    File.join(parent, 'file_testing')
+  end
 
   if Puppet.features.posix?
     def set_mode(mode, file)
@@ -64,10 +69,35 @@ describe Puppet::Type.type(:file) do
 
     catalog.add_resource described_class.new :path => source, :mode => 0755
 
-    report = catalog.apply.report
-
-    report.resource_statuses["File[#{source}]"].should_not be_failed
+    status = catalog.apply.report.resource_statuses["File[#{source}]"]
+    status.should_not be_failed
+    status.should_not be_changed
     File.should_not be_exist(source)
+  end
+
+  describe "when ensure is absent" do
+    it "should remove the file if present" do
+      FileUtils.touch(path)
+      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should_not be_failed
+      File.should_not be_exist(path)
+    end
+
+    it "should do nothing if file is not present" do
+      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should_not be_failed
+      File.should_not be_exist(path)
+    end
+
+    # issue #14599
+    it "should not fail if parts of path aren't directories" do
+      FileUtils.touch(path)
+      catalog.add_resource(described_class.new(:path => File.join(path,'no_such_file'), :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{File.join(path,'no_such_file')}]"].should_not be_failed
+    end
   end
 
   describe "when setting permissions" do
@@ -203,6 +233,16 @@ describe Puppet::Type.type(:file) do
             catalog.apply
 
             File.should_not be_exist(link)
+          end
+
+          it "should create a link to the target if ensure is omitted" do
+            FileUtils.touch(link_target)
+            catalog.add_resource described_class.new(:path => link, :target => link_target)
+            catalog.apply
+
+            File.should be_exist link
+            File.lstat(link).ftype.should == 'link'
+            File.readlink(link).should == link_target
           end
         end
 
@@ -380,8 +420,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if no backup can be performed" do
-      dir = tmpfile("backups")
-      Dir.mkdir(dir)
+      dir = tmpdir("backups")
 
       file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
       catalog.add_resource file

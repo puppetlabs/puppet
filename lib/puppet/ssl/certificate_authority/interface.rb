@@ -26,6 +26,7 @@ module Puppet
             raise
           rescue => detail
             Puppet.log_exception(detail, "Could not call #{method}: #{detail}")
+            raise
           end
         end
 

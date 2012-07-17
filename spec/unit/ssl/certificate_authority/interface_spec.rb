@@ -95,14 +95,14 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       lambda { @applier.apply(@ca) }.should raise_error(Puppet::SSL::CertificateAuthority::Interface::InterfaceError)
     end
 
-    it "should log non-Interface failures rather than failing" do
+    it "should log non-Interface failures" do
       @applier = @class.new(:revoke, :to => :all)
 
       @ca.expects(:list).raises ArgumentError
 
       Puppet.expects(:err)
 
-      lambda { @applier.apply(@ca) }.should_not raise_error
+      lambda { @applier.apply(@ca) }.should raise_error
     end
 
     describe "with an empty array specified and the method is not list" do
