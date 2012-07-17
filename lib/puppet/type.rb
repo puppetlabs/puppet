@@ -1880,7 +1880,9 @@ class Type
 
   # Return the "type[name]" style reference.
   def ref
-    "#{self.class.name.to_s.capitalize}[#{self.title}]"
+    # memoizing this is worthwhile ~ 3 percent of calls are the "first time
+    # around" in an average run of Puppet. --daniel 2012-07-17
+    @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
   def self_refresh?
