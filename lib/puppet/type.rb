@@ -54,19 +54,6 @@ class Type
     key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
   end
 
-  # Retrieve an attribute alias, if there is one.
-  def self.attr_alias(param)
-    @attr_aliases[symbolize(param)]
-  end
-
-  # Create an alias to an existing attribute.  This will cause the aliased
-  # attribute to be valid when setting and retrieving values on the instance.
-  def self.set_attr_alias(hash)
-    hash.each do |new, old|
-      @attr_aliases[symbolize(new)] = symbolize(old)
-    end
-  end
-
   # Find the class associated with any given attribute.
   def self.attrclass(name)
     @attrclasses ||= {}
@@ -372,16 +359,6 @@ class Type
     validattr?(name)
   end
 
-  # Return either the attribute alias or the attribute.
-  def attr_alias(name)
-    name = symbolize(name)
-    if synonym = self.class.attr_alias(name)
-      return synonym
-    else
-      return name
-    end
-  end
-
   # Are we deleting this resource?
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
@@ -401,18 +378,18 @@ class Type
   # The name_var is the key_attribute in the case that there is only one.
   #
   def name_var
+    return @name_var_cache unless @name_var_cache.nil?
     key_attributes = self.class.key_attributes
-    (key_attributes.length == 1) && key_attributes.first
+    @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
 
-  # abstract accessing parameters and properties, and normalize
-  # access to always be symbols, not strings
-  # This returns a value, not an object.  It returns the 'is'
-  # value, but you can also specifically return 'is' and 'should'
-  # values using 'object.is(:property)' or 'object.should(:property)'.
+  # abstract accessing parameters and properties, and normalize access to
+  # always be symbols, not strings This returns a value, not an object.
+  # It returns the 'is' value, but you can also specifically return 'is' and
+  # 'should' values using 'object.is(:property)' or
+  # 'object.should(:property)'.
   def [](name)
-    name = attr_alias(name)
-
+    name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
     if name == :name && nv = name_var
@@ -432,7 +409,7 @@ class Type
   # access to always be symbols, not strings.  This sets the 'should'
   # value on properties, and otherwise just sets the appropriate parameter.
   def []=(name,value)
-    name = attr_alias(name)
+    name = name.intern
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
@@ -484,7 +461,7 @@ class Type
 
   # retrieve the 'should' value for a specified property
   def should(name)
-    name = attr_alias(name)
+    name = name.intern
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
@@ -568,7 +545,7 @@ class Type
 
   # Return a specific value for an attribute.
   def value(name)
-    name = attr_alias(name)
+    name = name.intern
 
     (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
   end
@@ -1708,8 +1685,6 @@ class Type
     @properties = []
     @parameters = []
     @paramhash = {}
-
-    @attr_aliases = {}
 
     @paramdoc = Hash.new { |hash,key|
       key = key.intern if key.is_a?(String)
