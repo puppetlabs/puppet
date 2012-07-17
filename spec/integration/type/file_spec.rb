@@ -75,6 +75,31 @@ describe Puppet::Type.type(:file) do
     File.should_not be_exist(path)
   end
 
+  describe "when ensure is absent" do
+    it "should remove the file if present" do
+      FileUtils.touch(path)
+      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should_not be_failed
+      File.should_not be_exist(path)
+    end
+
+    it "should do nothing if file is not present" do
+      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should_not be_failed
+      File.should_not be_exist(path)
+    end
+
+    # issue #14599
+    it "should not fail if parts of path aren't directories" do
+      FileUtils.touch(path)
+      catalog.add_resource(described_class.new(:path => File.join(path,'no_such_file'), :ensure => :absent, :backup => :false))
+      report = catalog.apply.report
+      report.resource_statuses["File[#{File.join(path,'no_such_file')}]"].should_not be_failed
+    end
+  end
+
   describe "when setting permissions" do
     it "should set the owner" do
       FileUtils.touch(path)

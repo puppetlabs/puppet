@@ -724,6 +724,8 @@ Puppet::Type.newtype(:file) do
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
       nil
+    rescue Errno::ENOTDIR => error
+      nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"
       nil
