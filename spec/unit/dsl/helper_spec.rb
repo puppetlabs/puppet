@@ -26,42 +26,42 @@ describe Puppet::DSL::Helper do
 
     it "should return :ruby when the manifest name ends with .rb" do
       Puppet[:manifest] = "test.rb"
-      @helper.dsl_type_for(nil).should == :ruby
+      @helper.dsl_type_for("test").should == :ruby
     end
 
     it "should return :puppet when the manifest name ends with .pp" do
       Puppet[:manifest] = "test.pp"
-      @helper.dsl_type_for(nil).should == :puppet
+      @helper.dsl_type_for("test").should == :puppet
     end
 
     it "should return :puppet when the manifest name is blank" do
       Puppet[:manifest] = ""
-      @helper.dsl_type_for(nil).should == :puppet
+      @helper.dsl_type_for("test").should == :puppet
     end
   end
 
   describe "#use_ruby_dsl?" do
     it "should return true when #dsl_type_for returns :ruby" do
-      @helper.expects(:dsl_type_for).with(nil).returns :ruby
-      @helper.use_ruby_dsl?(nil).should == true
+      @helper.expects(:dsl_type_for).with("test").returns :ruby
+      @helper.use_ruby_dsl?("test").should == true
     end
 
     it "should return false when #dsl_type_for returns :puppet" do
-      @helper.expects(:dsl_type_for).with(nil).returns :puppet
-      @helper.use_ruby_dsl?(nil).should == false
+      @helper.expects(:dsl_type_for).with("test").returns :puppet
+      @helper.use_ruby_dsl?("test").should == false
     end
   end
 
   describe "#use_puppet_dsl?" do
 
     it "should return false when #dsl_type_for returns :ruby" do
-      @helper.expects(:dsl_type_for).at_least_once.with(nil).returns :ruby
-      @helper.use_puppet_dsl?(nil).should be false
+      @helper.expects(:dsl_type_for).at_least_once.with("test").returns :ruby
+      @helper.use_puppet_dsl?("test").should be false
     end
 
     it "should return true when #dsl_type_for returns :puppet" do
-      @helper.expects(:dsl_type_for).at_least_once.with(nil).returns :puppet
-      @helper.use_puppet_dsl?(nil).should be true
+      @helper.expects(:dsl_type_for).at_least_once.with("test").returns :puppet
+      @helper.use_puppet_dsl?("test").should be true
     end
 
   end
