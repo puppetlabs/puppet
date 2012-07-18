@@ -53,6 +53,18 @@ class Puppet::Parser::Scope
     end
   end
 
+  # Initialize a new scope suitable for parser function testing.  This method
+  # should be considered a public API for external modules.  A shared spec
+  # helper should consume this API method.
+  def self.new_for_test_harness(node_name)
+    node = Puppet::Node.new(node_name)
+    compiler = Puppet::Parser::Compiler.new(node)
+    scope = new(compiler)
+    scope.source = Puppet::Resource::Type.new(:node, node_name)
+    scope.parent = compiler.topscope
+    scope
+  end
+
   def each
     to_hash.each { |name, value| yield(name, value) }
   end

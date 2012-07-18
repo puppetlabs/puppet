@@ -12,6 +12,28 @@ describe Puppet::Parser::Scope do
     @scope.parent = @topscope
   end
 
+  describe ".new_for_test_harness" do
+    let(:node_name) { "node_name_foo" }
+    let(:scope) { described_class.new_for_test_harness(node_name) }
+
+    it "should be a kind of Scope" do
+      scope.should be_a_kind_of Puppet::Parser::Scope
+    end
+    it "should set the source to a node resource" do
+      scope.source.should be_a_kind_of Puppet::Resource::Type
+    end
+    it "should have a compiler" do
+      scope.compiler.should be_a_kind_of Puppet::Parser::Compiler
+    end
+    it "should set the parent to the compiler topscope" do
+      scope.parent.should be scope.compiler.topscope
+    end
+  end
+
+  it "should return a scope for use in a test harness" do
+    described_class.new_for_test_harness("node_name_foo").should be_a_kind_of Puppet::Parser::Scope
+  end
+
   it "should be able to retrieve class scopes by name" do
     @scope.class_set "myname", "myscope"
     @scope.class_scope("myname").should == "myscope"

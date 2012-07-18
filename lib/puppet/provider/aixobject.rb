@@ -361,7 +361,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # Set a property.
   def set(param, value)
-    @property_hash[symbolize(param)] = value
+    @property_hash[param.intern] = value
     
     if getinfo().nil?
       # This is weird... 

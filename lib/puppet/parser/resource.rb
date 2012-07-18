@@ -40,7 +40,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def evaluated?;  !!@evaluated;  end
 
   def [](param)
-    param = symbolize(param)
+    param = param.intern
     if param == :title
       return self.title
     end

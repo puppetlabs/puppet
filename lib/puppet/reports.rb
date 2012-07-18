@@ -14,7 +14,7 @@ class Puppet::Reports
 
   # Add a new report type.
   def self.register_report(name, options = {}, &block)
-    name = symbolize(name)
+    name = name.intern
 
     mod = genmodule(name, :extend => Puppet::Util::Docs, :hash => instance_hash(:report), :block => block)
 
