@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
 # see the bottom of the file for the rest of the inclusions
@@ -20,7 +19,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
   ###############################
@@ -219,15 +217,15 @@ class Type
   end
 
   def self.key_attributes
-    key_attribute_parameters.collect { |p| p.name }
+    # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
+    @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
   def self.title_patterns
     case key_attributes.length
     when 0; []
     when 1;
-      identity = lambda {|x| x}
-      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
@@ -1739,6 +1737,9 @@ class Type
     #@validate = block
   end
 
+  # Origin information.
+  attr_accessor :file, :line
+
   # The catalog that this resource is stored in.
   attr_accessor :catalog
 
@@ -1876,7 +1877,9 @@ class Type
 
   # Return the "type[name]" style reference.
   def ref
-    "#{self.class.name.to_s.capitalize}[#{self.title}]"
+    # memoizing this is worthwhile ~ 3 percent of calls are the "first time
+    # around" in an average run of Puppet. --daniel 2012-07-17
+    @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
   def self_refresh?

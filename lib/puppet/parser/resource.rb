@@ -9,11 +9,9 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
-  require 'puppet/file_collection/lookup'
   require 'puppet/parser/yaml_trimmer'
   require 'puppet/resource/type_collection_helper'
 
-  include Puppet::FileCollection::Lookup
   include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
@@ -25,6 +23,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
+  attr_accessor :file, :line
 
   attr_reader :exported, :parameters
 

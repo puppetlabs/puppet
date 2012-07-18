@@ -130,10 +130,9 @@ class Rights
 
   # A right.
   class Right < Puppet::Network::AuthStore
-    include Puppet::FileCollection::Lookup
-
     attr_accessor :name, :key, :acl_type
     attr_accessor :methods, :environment, :authentication
+    attr_accessor :line, :file
 
     ALL = [:save, :destroy, :find, :search]
 

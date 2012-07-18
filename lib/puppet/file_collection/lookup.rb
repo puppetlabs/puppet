@@ -1,20 +1,10 @@
 require 'puppet/file_collection'
 
-# A simple module for looking up file paths and indexes
-# in a file collection.
 module Puppet::FileCollection::Lookup
-  attr_accessor :line, :file_index
-
-  def file_collection
-    Puppet::FileCollection.collection
-  end
-
-  def file=(path)
-    @file_index = file_collection.index(path)
-  end
-
-  def file
-    return nil unless file_index
-    file_collection.path(file_index)
-  end
+  # Yeah, this is all the external interface that was added to the folks who
+  # included this really was.  Thankfully.
+  #
+  # See the comments in `puppet/file_collection.rb` for the annotated version,
+  # or just port your code away from this by adding the accessors on your own.
+  attr_accessor :line, :file
 end
