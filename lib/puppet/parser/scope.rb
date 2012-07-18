@@ -88,7 +88,7 @@ class Puppet::Parser::Scope
     case value
     when Numeric
       value
-    when /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
+    when /^-?\d+(?:\.\d+|(?:\.\d+)?e\d+)$/
       value.to_f
     when /^0x[0-9a-f]+$/i
       value.to_i(16)
