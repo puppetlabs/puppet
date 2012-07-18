@@ -107,8 +107,8 @@ class Puppet::Util::Autoload
       name = File.basename(file).chomp(".rb").intern
       next if loaded?(name)
       begin
-        Kernel.require file
         loaded(name, file)
+        Kernel.require file
       rescue SystemExit,NoMemoryError
         raise
       rescue Exception => detail
