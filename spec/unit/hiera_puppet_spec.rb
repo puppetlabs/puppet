@@ -1,5 +1,3 @@
-require 'hiera_puppet'
-require 'hiera'
 require 'spec_helper'
 
 describe 'HieraPuppet' do
@@ -36,68 +34,58 @@ describe 'HieraPuppet' do
   end
 
   describe 'HieraPuppet#hiera_config_file' do
-    context "when we cannot derive the hiera config file form Puppet.settings" do
-      before do
-        Puppet.stubs(:settings).returns({})
-        File.expects(:exist?).never
+    it "should return nil when we cannot derive the hiera config file form Puppet.settings" do
+      begin
+        Puppet.settings[:hiera_config] = nil
+      rescue ArgumentError => detail
+        raise unless detail.message =~ /unknown configuration parameter/
       end
-
-      it "should return nil" do
-         HieraPuppet.send(:hiera_config_file).should be_nil
-      end
+      HieraPuppet.send(:hiera_config_file).should be_nil
     end
 
-    context "when the Puppet.settings[:hiera_config] file exits" do
-      before do
-        Puppet.stubs(:settings).returns(puppet_settings)
-        File.expects(:exist?).with('/dev/null/hiera.yaml').returns(true)
+    it "should use Puppet.settings[:hiera_config] as the hiera config file" do
+      begin
+        Puppet.settings[:hiera_config] = "/dev/null/my_hiera.yaml"
+      rescue ArgumentError => detail
+        raise unless detail.message =~ /unknown configuration parameter/
+        pending("This example does not apply to Puppet #{Puppet.version} because it does not have this setting")
       end
 
-      let(:puppet_settings) do
-        { :hiera_config => '/dev/null/hiera.yaml' }
-      end
-
-      it "should use Puppet.settings[:hiera_config] as the hiera config file" do
-        HieraPuppet.send(:hiera_config_file).should == '/dev/null/hiera.yaml'
-      end
+      File.stubs(:exist?).with("/dev/null/my_hiera.yaml").returns(true)
+      HieraPuppet.send(:hiera_config_file).should == '/dev/null/my_hiera.yaml'
     end
 
-    context "when the Puppet.settings[:hiera_config] does not exits" do
-      before do
-        Puppet.stubs(:settings).returns(puppet_settings)
-        File.expects(:exist?).with('/dev/null/puppet/hiera.yaml').returns(true)
+    it "should use Puppet.settings[:confdir] as the base directory when hiera_config is not set" do
+      begin
+        Puppet.settings[:hiera_config] = nil
+      rescue ArgumentError => detail
+        raise unless detail.message =~ /unknown configuration parameter/
       end
+      Puppet.settings[:confdir] = "/dev/null/puppet"
+      File.stubs(:exist?).with('/dev/null/puppet/hiera.yaml').returns(true)
 
-      let(:puppet_settings) do
-        { :confdir => '/dev/null/puppet' }
-      end
-
-      it "should use Puppet.settings[:confdir] as the base directory" do
-        HieraPuppet.send(:hiera_config_file).should == '/dev/null/puppet/hiera.yaml'
-      end
+      HieraPuppet.send(:hiera_config_file).should == '/dev/null/puppet/hiera.yaml'
     end
   end
 
   describe 'HieraPuppet#lookup' do
-    before do
-      @scope = Puppet::Parser::Scope.new
-    end
+    let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
 
     it "should return the value from Hiera" do
       Hiera.any_instance.stubs(:lookup).returns('8080')
-      HieraPuppet.lookup('port', nil, @scope, nil, :priority).should == '8080'
+      HieraPuppet.lookup('port', nil, scope, nil, :priority).should == '8080'
 
       Hiera.any_instance.stubs(:lookup).returns(['foo', 'bar'])
-      HieraPuppet.lookup('ntpservers', nil, @scope, nil, :array).should == ['foo', 'bar']
+      HieraPuppet.lookup('ntpservers', nil, scope, nil, :array).should == ['foo', 'bar']
 
       Hiera.any_instance.stubs(:lookup).returns({'uid' => '1000'})
-      HieraPuppet.lookup('user', nil, @scope, nil, :hash).should == {'uid' => '1000'}
+      HieraPuppet.lookup('user', nil, scope, nil, :hash).should == {'uid' => '1000'}
     end
 
     it "should raise a useful error when the answer is nil" do
       Hiera.any_instance.stubs(:lookup).returns(nil)
       expect do
-        HieraPuppet.lookup('port', nil, @scope, nil, :priority)
+        HieraPuppet.lookup('port', nil, scope, nil, :priority)
       end.should raise_error(Puppet::ParseError,
         /Could not find data item port in any Hiera data file and no default supplied/)
     end
@@ -115,4 +103,3 @@ describe 'HieraPuppet' do
     end
   end
 end
-
