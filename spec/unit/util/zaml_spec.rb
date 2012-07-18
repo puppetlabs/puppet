@@ -194,3 +194,25 @@ describe "binary data" do
     end
   end
 end
+
+describe "multi-line values" do
+  [
+    "none",
+    "one\n",
+    "two\n\n",
+    ["one\n", "two"],
+    ["two\n\n", "three"],
+    { "\nkey"        => "value" },
+    { "key\n"        => "value" },
+    { "\nkey\n"      => "value" },
+    { "key\nkey"     => "value" },
+    { "\nkey\nkey"   => "value" },
+    { "key\nkey\n"   => "value" },
+    { "\nkey\nkey\n" => "value" },
+  ].each do |input|
+    it "handles #{input.inspect} without corruption" do
+      zaml = ZAML.dump(input)
+      YAML.load(zaml).should == input
+    end
+  end
+end
