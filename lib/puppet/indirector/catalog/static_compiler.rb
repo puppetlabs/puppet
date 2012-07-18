@@ -51,11 +51,11 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       unless resource[:content]
         resource[:content] = metadata.checksum
         resource[:checksum] = metadata.checksum_type
+        resource[:source] = path
       end
     end
 
     store_content(resource) if resource[:ensure] == "file"
-    resource.delete(:source)
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{path}'"
   end
 
