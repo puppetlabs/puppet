@@ -1,30 +1,21 @@
-require 'puppet'
-require 'hiera'
-require 'hiera/scope'
+#! /usr/bin/env ruby -S rspec
+
 require 'spec_helper'
 
 describe 'Puppet::Parser::Functions#hiera' do
-  before do
-    Puppet::Parser::Functions.function(:hiera)
-    @scope = Puppet::Parser::Scope.new
-    configfile = File.join(File.dirname(Puppet.settings[:config]), "hiera.yaml")
-    File.stubs(:exist?).with(configfile).returns true
-    YAML.stubs(:load_file).with(configfile).returns(Hash.new)
-  end
+  let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
 
   it 'should require a key argument' do
-    expect { @scope.function_hiera([]) }.should raise_error(Puppet::ParseError)
+    expect { scope.function_hiera([]) }.should raise_error(Puppet::ParseError)
   end
 
   it 'should raise a useful error when nil is returned' do
     Hiera.any_instance.expects(:lookup).returns(nil)
-    expect { @scope.function_hiera("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
+    expect { scope.function_hiera("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
 
   it 'should use the priority resolution_type' do
-    scope = hacked_scope
-    Hiera.any_instance.expects(:lookup).with('key', nil, scope, nil, :priority).returns('foo')
-    scope.function_hiera(['key'])
+    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be :priority }.returns('foo_result')
+    scope.function_hiera(['key']).should == 'foo_result'
   end
 end
-
