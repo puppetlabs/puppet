@@ -71,7 +71,8 @@ module Puppet::Util::Tagging
     end
   end
 
+  ValidTagRegex = /^\w[-\w:.]*$/
   def valid_tag?(tag)
-    tag.is_a?(String) and tag =~ /^\w[-\w:.]*$/
+    tag.is_a?(String) and tag =~ ValidTagRegex
   end
 end
