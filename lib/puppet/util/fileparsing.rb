@@ -42,14 +42,14 @@ module Puppet::Util::FileParsing
     # Customize this so we can do a bit of validation.
     def fields=(fields)
       @fields = fields.collect do |field|
-        r = symbolize(field)
+        r = field.intern
         raise ArgumentError.new("Cannot have fields named #{r}") if INVALID_FIELDS.include?(r)
         r
       end
     end
 
     def initialize(type, options = {}, &block)
-      @type = symbolize(type)
+      @type = type.intern
       raise ArgumentError, "Invalid record type #{@type}" unless [:record, :text].include?(@type)
 
       set_options(options)
@@ -97,7 +97,7 @@ module Puppet::Util::FileParsing
     # Customize this so we can do a bit of validation.
     def optional=(optional)
       @optional = optional.collect do |field|
-        symbolize(field)
+        field.intern
       end
     end
 
@@ -269,7 +269,7 @@ module Puppet::Util::FileParsing
     raise ArgumentError, "Must include a list of fields" unless options.include?(:fields)
 
     record = FileRecord.new(:record, options, &block)
-    record.name = symbolize(name)
+    record.name = name.intern
 
     new_line_type(record)
   end
@@ -284,7 +284,7 @@ module Puppet::Util::FileParsing
     raise ArgumentError, "You must provide a :match regex for text lines" unless options.include?(:match)
 
     record = FileRecord.new(:text, options, &block)
-    record.name = symbolize(name)
+    record.name = name.intern
 
     new_line_type(record)
   end
@@ -338,11 +338,11 @@ module Puppet::Util::FileParsing
   end
 
   def valid_attr?(type, attr)
-    type = symbolize(type)
-    if record = record_type(type) and record.fields.include?(symbolize(attr))
+    type = type.intern
+    if record = record_type(type) and record.fields.include?(attr.intern)
       return true
     else
-      if symbolize(attr) == :ensure
+      if attr.intern == :ensure
         return true
       else
         false
@@ -367,7 +367,7 @@ module Puppet::Util::FileParsing
 
   # Retrieve the record object.
   def record_type(type)
-    @record_types[symbolize(type)]
+    @record_types[type.intern]
   end
 end
 

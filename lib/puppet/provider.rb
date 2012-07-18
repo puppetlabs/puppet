@@ -64,7 +64,7 @@ class Puppet::Provider
   #########
 
   def self.command(name)
-    name = symbolize(name)
+    name = name.intern
 
     if defined?(@commands) and command = @commands[name]
       # nothing
@@ -123,7 +123,7 @@ class Puppet::Provider
   # @param [String] path The path to the executable for the command
   # @yield A block that configures the command (@see Puppet::Provider::Command) 
   def self.has_command(name, path, &block)
-    name = symbolize(name)
+    name = name.intern
     configuration = block_given? ? block : Proc.new {}
     command = CommandDefiner.define(name, path, self, &configuration)
 
@@ -259,7 +259,7 @@ class Puppet::Provider
   # for those providers that use prefetch and flush.
   def self.mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
-      attr = symbolize(attr)
+      attr = attr.intern
       next if attr == :name
       define_method(attr) do
         @property_hash[attr] || :absent
@@ -353,7 +353,7 @@ class Puppet::Provider
 
   # Get a parameter value.
   def get(param)
-    @property_hash[symbolize(param)] || :absent
+    @property_hash[param.intern] || :absent
   end
 
   def initialize(resource = nil)
@@ -384,7 +384,7 @@ class Puppet::Provider
   # Set passed params as the current values.
   def set(params)
     params.each do |param, value|
-      @property_hash[symbolize(param)] = value
+      @property_hash[param.intern] = value
     end
   end
 

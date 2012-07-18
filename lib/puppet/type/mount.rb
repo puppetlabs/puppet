@@ -231,7 +231,7 @@ module Puppet
     end
 
     def value(name)
-      name = symbolize(name)
+      name = name.intern
       ret = nil
       if property = @parameters[name]
         return property.value
