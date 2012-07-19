@@ -58,18 +58,18 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
-    if resource.type.to_s.downcase != "class" && resource[:stage]
+    if not resource.class? and resource[:stage]
       raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
     end
 
     # Stages should not be inside of classes.  They are always a
     # top-level container, regardless of where they appear in the
     # manifest.
-    return if resource.type.to_s.downcase == "stage"
+    return if resource.stage?
 
     # This adds a resource to the class it lexically appears in in the
     # manifest.
-    if resource.type.to_s.downcase != "class"
+    unless resource.class?
       return @catalog.add_edge(scope.resource, resource)
     end
   end
