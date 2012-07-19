@@ -32,6 +32,11 @@ describe zone do
     lambda { zone.new(:name => "dummy") }.should raise_error
   end
 
+  it "should be valid when only :path is given" do
+    zone.new(:name => "dummy", :path => '/dummy' )
+  end
+
+
   it "should be invalid when :ip is missing a \":\" and iptype is :shared" do
     lambda { zone.new(:name => "dummy", :ip => "if") }.should raise_error
   end
@@ -54,6 +59,10 @@ describe zone do
 
   it "should be valid when :iptype is :exclusive and using interface" do
     zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
+  end
+
+  it "should be valid when ensure is :absent" do
+    described_class.new(:name => "dummy", :ensure => :absent, :provider => :solaris)
   end
 
   it "should auto-require :dataset entries" do
