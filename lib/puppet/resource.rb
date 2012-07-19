@@ -176,8 +176,13 @@ class Puppet::Resource
     end
   end
 
-  def class?; @is_class;   end
-  def stage?; @is_stage;   end
+  def class?
+    @is_class ||= @type == "Class"
+  end
+
+  def stage?
+    @is_stage ||= @type.to_s.downcase == "stage"
+  end
 
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
@@ -193,13 +198,10 @@ class Puppet::Resource
 
     @type = munge_type_name(@type)
 
-    if @type == "Class"
+    if self.class?
       @title = :main if @title == ""
       @title = munge_type_name(@title)
     end
-
-    @is_class = @type == "Class"
-    @is_stage = @type.to_s.downcase == "stage"
 
     if params = attributes[:parameters]
       extract_parameters(params)
@@ -210,7 +212,7 @@ class Puppet::Resource
 
     @reference = self # for serialization compatibility with 0.25.x
     if strict? and ! resource_type
-      if @type == 'Class'
+      if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
         raise ArgumentError, "Invalid resource type #{type}"
@@ -224,7 +226,7 @@ class Puppet::Resource
 
   # Find our resource.
   def resolve
-    return(catalog ? catalog.resource(to_s) : nil)
+    catalog ? catalog.resource(to_s) : nil
   end
 
   def resource_type
@@ -254,7 +256,7 @@ class Puppet::Resource
   end
 
   def key_attributes
-    return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
+    resource_type.respond_to?(:key_attributes) ? resource_type.key_attributes : [:name]
   end
 
   # Convert our resource to Puppet code.
