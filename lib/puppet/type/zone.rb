@@ -440,22 +440,31 @@ autorequire that directory."
       self.fail "'#{ip}' is an invalid #{name}"
   end
 
-  validate do
-    value = self[:ip]
-    interface, address, defrouter = value.split(':')
-    if self[:iptype] == :shared
-      if (interface && address && defrouter.nil?) ||
-        (interface && address && defrouter)
-        validate_ip(address, "IP address")
-        validate_ip(defrouter, "default router")
-      else
-        self.fail "ip must contain interface name and ip address separated by a \":\""
-      end
-    else
-      self.fail "only interface may be specified when using exclusive IP stack: #{value}" unless interface && address.nil? && defrouter.nil?
+  def validate_exclusive(interface, address, router)
+    return if !interface.nil? and address.nil?
+    self.fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
+  end
+  def validate_shared(interface, address, router)
+    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
+    [address, router].each do |ip|
+      validate_ip(address, "IP address") unless ip.nil?
     end
+  end
 
+  validate do
+    # Do not validate unless we are validating parameters for sure.
+    return unless provider.get(:ensure) == :absent
+    # Zones need atleast path for creation.
+    # A better option is to mark path as an `isrequired` parameter.
     self.fail "zone path is required" unless self[:path]
+
+    return unless self[:ip]
+    interface, address, router = self[:ip].split(':')
+    if self[:iptype] == :shared
+      validate_shared(interface, address, router)
+    else
+      validate_exclusive(interface, address, router)
+    end
   end
 
   def retrieve

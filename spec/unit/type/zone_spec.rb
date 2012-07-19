@@ -32,6 +32,11 @@ describe zone do
     lambda { zone.new(:name => "dummy") }.should raise_error
   end
 
+  it "should be valid when only :path is given" do
+    zone.new(:name => "dummy", :path => '/dummy' )
+  end
+
+
   it "should be invalid when :ip is missing a \":\" and iptype is :shared" do
     lambda { zone.new(:name => "dummy", :ip => "if") }.should raise_error
   end
