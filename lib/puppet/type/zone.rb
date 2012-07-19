@@ -441,7 +441,9 @@ autorequire that directory."
   end
 
   validate do
+    self.fail "zone path is required" unless self[:path]
     value = self[:ip]
+    return unless value
     interface, address, defrouter = value.split(':')
     if self[:iptype] == :shared
       if (interface && address && defrouter.nil?) ||
@@ -455,7 +457,6 @@ autorequire that directory."
       self.fail "only interface may be specified when using exclusive IP stack: #{value}" unless interface && address.nil? && defrouter.nil?
     end
 
-    self.fail "zone path is required" unless self[:path]
   end
 
   def retrieve
