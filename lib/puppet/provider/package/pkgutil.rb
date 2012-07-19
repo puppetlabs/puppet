@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   confine :operatingsystem => :solaris
 
-  has_command (:pkguti, pkgutil_bin) do
+  has_command(:pkguti, pkgutil_bin) do
     environment :HOME => ENV['HOME']
   end
 
