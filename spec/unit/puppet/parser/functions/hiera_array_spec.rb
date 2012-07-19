@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe 'Puppet::Parser::Functions#hiera_array' do
   let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
 
