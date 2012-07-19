@@ -21,6 +21,18 @@ describe processor do
     subject.process
   end
 
+  it "should use the report timeout for posting http reports" do
+    timeout = Puppet[:reporturl_timeout] = 40
+    uri = URI.parse(Puppet[:reporturl])
+    ssl = (uri.scheme == 'https')
+    Puppet::Network::HttpPool.expects(:http_instance).with(uri.host, uri.port, use_ssl = ssl).returns(stub_everything('http')) { |http|
+        http.read_timeout == timeout
+        http.open_timeout == timeout
+    }
+    subject.process
+  end
+
+
   describe "when making a request" do
     let(:http) { mock "http" }
     let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }

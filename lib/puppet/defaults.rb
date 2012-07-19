@@ -873,6 +873,10 @@ EOT
       :default    => "http://localhost:3000/reports/upload",
       :desc       => "The URL used by the http reports processor to send reports",
     },
+    :reporturl_timeout => {
+        :default  => 60,
+        :desc     => "The timeout used by the http reports processor to post reports",
+    },
     :fileserverconfig => {
       :default    => "$confdir/fileserver.conf",
       :type       => :file,
