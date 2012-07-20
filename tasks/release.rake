@@ -1,4 +1,3 @@
-
 VERSION_FILE = 'lib/hiera.rb'
 
 def get_current_version
