@@ -1,3 +1,25 @@
+1.0.0rc2
+===
+2fa4251 Update hiera-puppet package tasks
+8e4e76a (maint) Replace .should on blocks with .to
+9c23e9d Remove puppetlabs_spec_helper require from root Rakefile
+7ac4a54 (Maint) Fix missing spec_helper lines in some tests
+88c5f9a (Maint) Fix mock error with hiera module
+d840325 (Maint) Use PuppetlabsSpec::PuppetSeams.parser_scope
+def41d5 Add watchr script
+44bc7cb (#15105) Update README YAML examples
+9ab901f (maint) Hiera Puppet now has a LICENSE file
+bdb8563 (#15184) Refactor parser functions
+89cde8d (Maint) Create a test for the puppet backend
+8a49eab (maint) Add acceptance tests
+95d7058 (maint) parser functions do not require hiera.yaml
+01e9122 (maint) Follow Puppet Labs style guide + code cleanup
+b166328 (#14841) Add test coverage for remaining hiera parser functions
+d76a9d8 (#14841) Add test for hiera_hash parser function
+7a458a4 (#14841) Give useful error for array or hash lookup failure
+dbdda00 (#12122) Use nil as default answer in lookup
+378a1a2 Tweak debian packaging
+
 1.0.0rc1
 ===
 5adc454 Add package task to tasks
