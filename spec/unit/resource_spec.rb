@@ -305,6 +305,32 @@ describe Puppet::Resource do
       resource.set_default_parameters(@scope).should == [:a]
     end
 
+    it "doesn't call safeevaluate on default value when using Ruby DSL" do
+      Puppet[:manifest] = "test.rb"
+      value = mock
+      value.expects(:safeevaluate).never
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
+      )
+
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new
+      resource.set_default_parameters @scope
+    end
+
+
+    it "calls safeevaluate on default when not using Ruby DSL" do
+      value = mock
+      value.expects(:safeevaluate).returns 42
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
+      )
+
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new
+      resource.set_default_parameters @scope
+    end
+
+
+
     describe "when the resource type is :hostclass" do
       let(:environmnet_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }

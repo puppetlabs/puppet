@@ -202,7 +202,6 @@ class Puppet::Node::Environment
   private
 
   def perform_initial_import
-    # MLEN:TODO write a spec for this
     return empty_parse_result if Puppet.settings[:ignoreimport] or use_ruby_dsl? name
     parser = Puppet::Parser::Parser.new(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""

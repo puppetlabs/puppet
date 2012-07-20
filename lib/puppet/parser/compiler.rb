@@ -116,7 +116,6 @@ class Puppet::Parser::Compiler
     @catalog
   end
 
-  # MLEN:TODO write a test for this
   def evaluate_ruby_code
     Puppet::DSL::Parser.new(@main, get_ruby_code(@environment.name)).evaluate
   end
@@ -304,7 +303,6 @@ class Puppet::Parser::Compiler
 
     add_resource(@topscope, @main_resource)
 
-    # MLEN:TODO write a spec for this
     evaluate_ruby_code if use_ruby_dsl? environment.name
 
     @main_resource.evaluate

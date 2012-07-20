@@ -731,6 +731,34 @@ describe Puppet::Resource::Type do
       dest.doc.should == "foonessyayness"
     end
 
+    it "copies other's ruby code if it has no ruby code" do
+      dest   = Puppet::Resource::Type.new :hostclass, "bar"
+      source = Puppet::Resource::Type.new :hostclass, "foo"
+      source.ruby_code = "bar"
+
+      dest.merge source
+      dest.ruby_code.should == "bar"
+    end
+
+    it "appends other's ruby code if it has ruby code" do
+      dest   = Puppet::Resource::Type.new :hostclass, "bar"
+      source = Puppet::Resource::Type.new :hostclass, "foo"
+      dest.ruby_code   = "foo"
+      source.ruby_code = "bar"
+
+      dest.merge source
+      dest.ruby_code.should == "foo\nbar"
+    end
+
+    it "returns own ruby code if the other has no ruby code" do
+      dest   = Puppet::Resource::Type.new :hostclass, "bar", :ruby_code => "foo"
+      source = Puppet::Resource::Type.new :hostclass, "foo"
+      dest.ruby_code = "foo"
+
+      dest.merge source
+      dest.ruby_code.should == "foo"
+    end
+
     it "should turn its code into an ASTArray if necessary" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar", :code => code("foo"))
       source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))

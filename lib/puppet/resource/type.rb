@@ -182,7 +182,11 @@ class Puppet::Resource::Type
       self.doc += other.doc
     end
 
-    # MLEN:TODO merge classes with ruby code
+    if other.ruby_code
+      self.ruby_code ||= ""
+      self.ruby_code += "\n" unless self.ruby_code.empty?
+      self.ruby_code += other.ruby_code
+    end
 
     # This might just be an empty, stub class.
     return unless other.code

@@ -441,6 +441,12 @@ describe Puppet::Node::Environment do
       env.instance_eval { perform_initial_import }
     end
 
+    it "should not do anything when using ruby dsl" do
+      Puppet[:manifest] = "test.rb"
+      @parser.expects(:parse).never
+      env.instance_eval { perform_initial_import }
+    end
+
     it "should mark the type collection as needing a reparse when there is an error parsing" do
       @parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
       env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)

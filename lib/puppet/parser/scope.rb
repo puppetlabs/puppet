@@ -48,12 +48,10 @@ class Puppet::Parser::Scope
   end
 
   def [](name, options = {})
-    # MLEN:TODO write a test for to_s
     lookupvar(name.to_s, options)
   end
 
   def []=(var, value)
-    # MLEN:TODO write a test for to_s
     setvar(var.to_s, value)
   end
 

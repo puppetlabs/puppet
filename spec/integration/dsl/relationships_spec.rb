@@ -12,7 +12,41 @@ describe Puppet::DSL do
   end
 
   describe "relationships" do
-    # MLEN:TODO add specs
+    it "allows requiring resources" do
+      p = compile_to_catalog(<<-'END')
+        define foo() {
+          notify {"foo": message => "foo" }
+        }
+        define bar() {
+          notify {"bar": message => "bar" }
+        }
+
+        node "default" {
+          bar {"bar": }
+          foo {"foo":
+            require => Bar["bar"]
+          }
+        }
+      END
+
+      r = compile_ruby_to_catalog(<<-'END')
+        define :foo do
+          notify "foo", :message => "foo"
+        end
+
+        define :bar do
+          notify "bar", :message => "bar"
+        end
+
+        node "default" do
+          bar "bar"
+          foo "foo", :require => Bar["bar"]
+        end
+      END
+
+      r.should == p
+    end
+
   end
 end
 
