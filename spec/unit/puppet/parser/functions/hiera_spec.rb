@@ -6,12 +6,12 @@ describe 'Puppet::Parser::Functions#hiera' do
   let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
 
   it 'should require a key argument' do
-    expect { scope.function_hiera([]) }.should raise_error(Puppet::ParseError)
+    expect { scope.function_hiera([]) }.to raise_error(Puppet::ParseError)
   end
 
   it 'should raise a useful error when nil is returned' do
     Hiera.any_instance.expects(:lookup).returns(nil)
-    expect { scope.function_hiera("badkey") }.should raise_error(Puppet::ParseError, /Could not find data item badkey/ )
+    expect { scope.function_hiera("badkey") }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
 
   it 'should use the priority resolution_type' do
