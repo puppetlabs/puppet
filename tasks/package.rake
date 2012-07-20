@@ -9,7 +9,7 @@ def get_debversion
 end
 
 def get_origversion
-  @debversion.split('-')[0..2].join('-')
+  @debversion.split('-')[0]
 end
 
 def get_rpmversion
@@ -107,8 +107,9 @@ namespace :package do
     cp_p "pkg/#{@name}-#{@version}.tar.gz", "#{temp}"
     cd temp do
       sh "tar zxf #{@name}-#{@version}.tar.gz"
+      mv "#{@name}-#{@version}", "#{@name}-#{@debversion}"
       mv "#{@name}-#{@version}.tar.gz", "#{@name}_#{@origversion}.orig.tar.gz"
-      cd "#{@name}-#{@version}" do
+      cd "#{@name}-#{@debversion}" do
         mv File.join('ext', 'debian'), '.'
         build_cmd = "pdebuild --configfile #{@pbuild_conf} --buildresult #{temp} --pbuilder cowbuilder -- --basepath /var/cache/pbuilder/#{@cow}/"
         begin
