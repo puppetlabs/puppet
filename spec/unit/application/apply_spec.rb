@@ -113,10 +113,6 @@ describe Puppet::Application::Apply do
       @apply.setup
     end
 
-    it "should set pluginsource with no hostname" do
-      @apply.app_defaults[:pluginsource].should == 'puppet:///plugins'
-    end
-
     it "should set default_file_terminus to `file_server` to be local" do
       @apply.app_defaults[:default_file_terminus].should == 'file_server'
     end

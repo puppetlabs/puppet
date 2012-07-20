@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/configurer'
 
 class Puppet::Application::Apply < Puppet::Application
 
@@ -148,7 +149,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def app_defaults
     super.merge({
       :default_file_terminus => "file_server",
-      :pluginsource => "puppet:///plugins"
     })
   end
 
@@ -274,17 +274,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def apply_catalog(catalog)
-    require 'puppet/configurer'
     configurer = Puppet::Configurer.new
-    options = {:catalog => catalog}
-
-    # If we run pluginsync without a valid modulepath it causes confusing
-    # errors, better to complain clearly now and skip it
-    if Puppet::Node::Environment.new.modulepath.empty?
-      Puppet.warning "No valid modulepath found, skipping pluginsync"
-      options.merge!(:skip_plugin_download => true)
-    end
-
-    configurer.run(options)
+    configurer.run(:catalog => catalog, :skip_plugin_download => true)
   end
 end
