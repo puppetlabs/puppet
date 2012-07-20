@@ -1,190 +1,162 @@
 require 'erb'
 
-@build_root ||= Dir.pwd
-@cow = ENV["COW"] ||= "base-squeeze-i386.cow"
-@pbuild_conf = ENV["PBUILDCONF"] ||= "~/.pbuilderrc.foss"
-
 def get_version
   `git describe`.strip
 end
 
 def get_debversion
-  version = get_version
-  version.include?("rc") ? version.sub(/rc[0-9]+/, '-0.1\0') : version + '-1puppetlabs1'
+  @version.include?("rc") ? @version.sub(/rc[0-9]+/, '-0.1\0') : @version + '-1puppetlabs1'
+end
+
+def get_origversion
+  @debversion.split('-')[0]
 end
 
 def get_rpmversion
-  get_version.match(/^([0-9.]+)/)[1]
+  @version.match(/^([0-9.]+)/)[1]
 end
 
 def get_release
-  version = get_version
-  if version.include?("rc")
-    "0.1" + version.gsub('-', '_').match(/rc[0-9]+.*/)[0]
-  else
-    "1"
-  end
+  ENV['RELEASE'] ||
+    if @version.include?("rc")
+      "0.1" + @version.gsub('-', '_').match(/rc[0-9]+.*/)[0]
+    else
+      "1"
+    end
+end
+
+def get_cow
+  ENV["COW"] || "base-squeeze-i386.cow"
+end
+
+def get_pbuild_conf
+  ENV["PBUILDCONF"] || "~/.pbuilderrc.foss"
 end
 
 def get_temp
   `mktemp -d -t tmpXXXXXX`.strip
 end
 
-def get_name
-  'hiera-puppet'
-end
+@name         = 'hiera-puppet'
+@build_root   ||= Dir.pwd
+@cow          ||= get_cow
+@pbuild_conf  ||= get_pbuild_conf
+@version      ||= get_version
+@debversion   ||= get_debversion
+@origversion  ||= get_origversion
+@rpmversion   ||= get_rpmversion
+@release      ||= get_release
 
-def add_version_file(path)
-  sh "echo #{get_version} > #{path}/VERSION"
-end
-
-def update_redhat_spec_file(base)
-  name = get_name
-  spec_date = Time.now.strftime("%a %b %d %Y")
-  release = ENV['RELEASE'] ||= get_release
-  version = get_version
-  rpmversion = get_rpmversion
-  specfile = File.join(base, 'ext', 'redhat', "#{name}.spec")
-  erbfile = File.join(base, 'ext', 'redhat', "#{name}.spec.erb")
-  template = IO.read(erbfile)
-  message = ERB.new(template, 0, "-")
+def erb(erbfile,  outfile)
+  template = File.read(erbfile)
+  message = ERB.new(template, nil, "-")
   output = message.result(binding)
-  holder = `mktemp -t tmpXXXXXX`.strip!
-  File.open(holder, 'w') {|f| f.write(output) }
-  mv holder , specfile
-  rm_f erbfile
+  File.open(outfile, 'w') { |f| f.write output }
+  puts "Generated: #{outfile}"
 end
 
-def update_debian_changelog(base)
-  name = get_name
-  dt = Time.now.strftime("%a, %d %b %Y %H:%M:%S %z")
-  version = get_debversion
-  version.gsub!('v', '')
-  debversion = get_debversion
-  deb_changelog = File.join(base, 'ext', 'debian', 'changelog')
-  erbfile = File.join(base, 'ext', 'debian', 'cl.erb')
-  template = IO.read(erbfile)
-  message = ERB.new(template, 0, "-")
-  output = message.result(binding)
-  holder = `mktemp -t tmpXXXXXX`.strip!
-  sh "echo -n \"#{output}\" | cat - #{deb_changelog}  > #{holder}"
-  mv holder, deb_changelog
-  rm_f erbfile
+def cp_pr(src, dest, options={})
+  mandatory = {:preserve => true}
+  cp_r(src, dest, options.merge(mandatory))
 end
 
-def prep_rpm_builds
-  name=get_name
-  version=get_version
-  temp=`mktemp -d -t tmpXXXXXX`.strip!
-  raise "No /usr/bin/rpmbuild found!" unless File.exists? '/usr/bin/rpmbuild'
-  dirs = [ 'BUILD', 'SPECS', 'SOURCES', 'RPMS', 'SRPMS' ]
-  dirs.each do |d|
-    FileUtils.mkdir_p "#{temp}//#{d}"
+def cp_p(src, dest, options={})
+  mandatory = {:preserve => true}
+  cp(src, dest, options.merge(mandatory))
+end
+
+def mv_f(src, dest, options={})
+  force = {:force => true}
+  mv(src, dest, options.merge(mandatory))
+end
+
+def build_rpm(buildarg = "-bs")
+  %x{which rpmbuild}
+  unless $?.success?
+    STDERR.puts "rpmbuild command not found...exiting"
+    exit 1
   end
-  rpm_defines = " --define \"_specdir #{temp}/SPECS\" --define \"_rpmdir #{temp}/RPMS\" --define \"_sourcedir #{temp}/SOURCES\" --define \" _srcrpmdir #{temp}/SRPMS\" --define \"_builddir #{temp}/BUILD\"" + ' --define "_source_filedigest_algorithm 1" --define "_binary_filedigest_algorithm 1" \
-         --define "_binary_payload w9.gzdio" --define "_source_payload w9.gzdio" \
-         --define "_default_patch_fuzz 2"'
-  sh "tar zxvf  pkg/tar/#{name}-#{version}.tar.gz  --no-anchored ext/redhat/#{name}.spec"
-  mv "#{name}-#{version}/ext/redhat/#{name}.spec",  "#{temp}/SPECS"
-  rm_rf "#{name}-#{version}"
-  sh "cp pkg/tar/*.tar.gz #{temp}/SOURCES"
-  return [ temp,  rpm_defines ]
+  temp = get_temp
+  rpm_define = "--define \"%dist .el5\" --define \"%_topdir  #{temp}\" "
+  rpm_old_version = '--define "_source_filedigest_algorithm 1" --define "_binary_filedigest_algorithm 1" \
+     --define "_binary_payload w9.gzdio" --define "_source_payload w9.gzdio" \
+     --define "_default_patch_fuzz 2"'
+  args = rpm_define + ' ' + rpm_old_version
+  mkdir_p temp
+  mkdir_p 'pkg/rpm'
+  mkdir_p "#{temp}/SOURCES"
+  mkdir_p "#{temp}/SPECS"
+  cp_p "pkg/#{@name}-#{@version}.tar.gz", "#{temp}/SOURCES"
+  erb "ext/redhat/#{@name}.spec.erb", "#{temp}/SPECS/#{@name}.spec"
+  sh "rpmbuild #{args} #{buildarg} --nodeps #{temp}/SPECS/#{@name}.spec"
+  output = `find #{temp} -name *.rpm`
+  mv FileList["#{temp}/SRPMS/*.rpm", "#{temp}/RPMS/*/*.rpm"], "pkg/rpm"
+  rm_rf temp
+  puts
+  puts "Wrote:"
+  output.each_line do | line |
+    puts "#{`pwd`.strip}/pkg/rpm/#{line.split('/')[-1]}"
+  end
 end
 
+desc "Build various packages"
 namespace :package do
-  desc "Create .deb from this git repository, set KEY_ID=your_key to use a specific key or UNSIGNED=1 to leave unsigned."
+  desc "Create .deb from this git repository."
   task :deb => :tar  do
-    name = get_name
-    version = get_version
-    debversion = get_debversion
-    dt = Time.now.strftime("%a, %d %b %Y %H:%M:%S %z")
-    temp=`mktemp -d -t tmpXXXXXX`.strip!
-    base="#{temp}/#{name}-#{debversion}"
-    sh "cp pkg/tar/#{name}-#{version}.tar.gz #{temp}"
+    temp = get_temp
+    cp_p "pkg/#{@name}-#{@version}.tar.gz", "#{temp}"
     cd temp do
-      sh "tar zxf *.tar.gz"
-      cd "#{name}-#{version}" do
+      sh "tar zxf #{@name}-#{@version}.tar.gz"
+      mv "#{@name}-#{@version}", "#{@name}-#{@debversion}"
+      mv "#{@name}-#{@version}.tar.gz", "#{@name}_#{@origversion}.orig.tar.gz"
+      cd "#{@name}-#{@debversion}" do
         mv File.join('ext', 'debian'), '.'
-        dsc_cmd = "pdebuild --configfile #{@pbuild_conf} --pbuilder cowbuilder -- --basepath /var/cache/pbuilder/#{@cow}/"
+        build_cmd = "pdebuild --configfile #{@pbuild_conf} --buildresult #{temp} --pbuilder cowbuilder -- --basepath /var/cache/pbuilder/#{@cow}/"
         begin
-          sh dsc_cmd
-          deb_cmd = "sudo cowbuilder --build #{latest_file(File.join(temp, '*.dsc'))} --basepath /var/cache/pbuilder/#{@cow}/"
-	        sh deb_cmd
-          result_dir = "/var/cache/pbuilder/result"
+          sh build_cmd
           dest_dir = File.join(@build_root, 'pkg', 'deb')
           mkdir_p dest_dir
-          cp latest_file(File.join(result_dir, '*.deb')), dest_dir
-          cp latest_file(File.join(result_dir, '*.dsc')), dest_dir
-          cp latest_file(File.join(result_dir, '*.changes')), dest_dir
-          cp latest_file(File.join(result_dir, '*.tar.gz')), dest_dir
+          cp FileList["#{temp}/*.deb", "#{temp}/*.dsc", "#{temp}/*.changes", "#{temp}/*.debian.tar.gz", "#{temp}/*.orig.tar.gz"], dest_dir
+          output = `find #{dest_dir}`
           puts
-          puts "** Created package: "+ latest_file(File.expand_path(File.join(@build_root, 'pkg', 'deb', '*.deb')))
+          puts "Wrote:"
+          output.each_line do | line |
+            puts "#{`pwd`.strip}/pkg/deb/#{line.split('/')[-1]}"
+          end
         rescue
-          puts <<-HERE
-!! Building the .deb failed!
-!! Perhaps you want to run:
-
-    rake package:deb UNSIGNED=1
-
-!! Or provide a specific key id, e.g.:
-
-    rake package:deb KEY_ID=4BD6EC30
-    rake package:deb KEY_ID=me@example.com
-
-          HERE
+          STDERR.puts "Something went wrong. Hopefully the backscroll or #{temp}/#{@name}_#{@debversion}.build file has a clue."
         end
       end
-    end
       rm_rf temp
+    end
   end
 
   desc "Create srpm from this git repository (unsigned)"
   task :srpm => :tar do
-    name = get_name
-    version = get_version
-    temp,  rpm_defines = prep_rpm_builds
-    sh "rpmbuild #{rpm_defines} -bs --nodeps #{temp}/SPECS/*.spec"
-    mkdir_p "#{@build_root}/pkg/srpm"
-    sh "mv -f #{temp}/SRPMS/* #{@build_root}/pkg/srpm"
-    rm_rf temp
-    puts
-    puts "** Created package: "+ latest_file(File.expand_path(File.join(@build_root, 'pkg', 'srpm', '*.rpm')))
+    build_rpm("-bs")
   end
 
   desc "Create .rpm from this git repository (unsigned)"
-  task :rpm => :srpm do
-    name = get_name
-    version = get_version
-    temp, rpm_defines = prep_rpm_builds
-    sh "rpmbuild #{rpm_defines} -ba #{temp}/SPECS/*.spec"
-    mkdir_p "#{@build_root}/pkg/srpm"
-    mkdir_p "#{@build_root}/pkg/rpm"
-    sh "mv -f #{temp}/SRPMS/* pkg/srpm"
-    sh "mv -f #{temp}/RPMS/*/*rpm pkg/rpm"
-    rm_rf temp
-    puts
-    puts "** Created package: "+ latest_file(File.expand_path(File.join(@build_root, 'pkg', 'rpm', '*.rpm')))
+  task :rpm => :tar do
+    build_rpm("-ba")
   end
 
-
-  desc "Create a release .tar.gz"
-  task :tar => :build_environment do
-    name = get_name
-    rm_rf 'pkg/tar'
-    temp=`mktemp -d -t tmpXXXXXX`.strip!
-    version = get_version
-    base = "#{temp}/#{name}-#{version}/"
-    mkdir_p base
-    sh "git checkout-index -af --prefix=#{base}"
-    add_version_file(base)
-    update_redhat_spec_file(base)
-    update_debian_changelog(base)
-    mkdir_p "pkg/tar"
-    sh "tar -C #{temp} -p -c -z -f #{temp}/#{name}-#{version}.tar.gz #{name}-#{version}"
-    mv "#{temp}/#{name}-#{version}.tar.gz",  "#{@build_root}/pkg/tar"
-    rm_rf temp
+  desc "Create a source tar archive"
+  task :tar => [ :clean, :build_environment ] do
+    workdir = "pkg/#{@name}-#{@version}"
+    mkdir_p workdir
+    FileList[ "ext", "CHANGELOG", "COPYING", "README.md", "*.md", "lib", "bin", "spec", "Rakefile" ].each do |f|
+      cp_pr f, workdir
+    end
+    erb "#{workdir}/ext/redhat/#{@name}.spec.erb", "#{workdir}/ext/redhat/#{@name}.spec"
+    erb "#{workdir}/ext/debian/changelog.erb", "#{workdir}/ext/debian/changelog"
+    rm_rf FileList["#{workdir}/ext/debian/*.erb", "#{workdir}/ext/redhat/*.erb"]
+    cd "pkg" do
+      sh "tar --exclude=.gitignore -zcf #{@name}-#{@version}.tar.gz #{@name}-#{@version}"
+    end
+    rm_rf workdir
     puts
-    puts "Tarball is pkg/tar/#{name}-#{version}.tar.gz"
+    puts "Wrote #{`pwd`.strip}/pkg/#{@name}-#{@version}"
   end
 
   task :build_environment do
@@ -203,11 +175,4 @@ namespace :package do
       end
     end
   end
-
-  # Return the file with the latest mtime matching the String filename glob (e.g. "foo/*.bar").
-  def latest_file(glob)
-    require 'find'
-    return FileList[glob].map{|path| [path, File.mtime(path)]}.sort_by(&:last).map(&:first).last
-  end
-
 end

@@ -3,12 +3,12 @@
 %global confdir ext/redhat
 %global initrddir /etc/rc.d/init.d
 # VERSION is subbed out during rake srpm process
-# %global realversion <%= version %>
-# %global rpmversion <%= rpmversion %>
+# %global realversion <%= @version %>
+# %global rpmversion <%= @rpmversion %>
 
 Name:           hiera-puppet
 Version:        %{rpmversion}
-Release:        <%= release -%>%{?dist}
+Release:        <%= @release -%>%{?dist}
 Summary:        A data backend for Hiera that can query the internal Puppet scope for data.
 
 Group:          System Environment/Base
@@ -58,5 +58,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* <%= spec_date %> Puppet Labs Release <info@puppetlabs.com> -  <%= rpmversion %>-<%= release %>
-- Build for <%= version %>
+* <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @release %>
+- Build for <%= @version %>

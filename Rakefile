@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'rubygems/package_task'
 require 'rspec/core/rake_task'
-require 'puppetlabs_spec_helper/rake_tasks'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
@@ -18,7 +17,7 @@ spec = Gem::Specification.new do |s|
   s.require_path = "lib"
   s.test_files = FileList["spec/**/*.rb"].to_a
   s.has_rdoc = true
-  s.add_dependency 'hiera', '~>0.3.0'
+  s.add_dependency 'hiera', '~>1.0'
   s.executables = "extlookup2hiera"
 end
 
