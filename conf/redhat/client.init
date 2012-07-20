@@ -15,7 +15,7 @@ export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 pidfile=${PIDFILE-/var/run/puppet.pid}
-puppetd=${PUPPETD-/usr/sbin/puppetd}
+puppetd=${PUPPETD-/usr/sbin/puppet}
 RETVAL=0
 
 # Source function library.
