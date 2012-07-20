@@ -108,23 +108,21 @@ describe "puppet module list" do
     end
 
     it "should print both modules with and without metadata" do
-      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        modpath = tmpdir('modpath')
-        Puppet.settings[:modulepath] = modpath
-        PuppetSpec::Modules.create('nometadata', modpath)
-        PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
+      modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = modpath
+      PuppetSpec::Modules.create('nometadata', modpath)
+      PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
 
-        dependency_tree = Puppet::Face[:module, :current].list
+      dependency_tree = Puppet::Face[:module, :current].list
 
-        output = Puppet::Face[:module, :current].
-          list_when_rendering_console(dependency_tree, {})
+      output = Puppet::Face[:module, :current].
+        list_when_rendering_console(dependency_tree, {})
 
-        output.should == <<-HEREDOC.gsub('        ', '')
+      output.should == <<-HEREDOC.gsub('        ', '')
         #{modpath}
         ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
         └── nometadata (\e[0;36m???\e[0m)
         HEREDOC
-      end
     end
 
     it "should print the modulepaths in the order they are in the modulepath setting" do
@@ -150,35 +148,32 @@ describe "puppet module list" do
     end
 
     it "should print dependencies as a tree" do
-      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.5'})
-        PuppetSpec::Modules.create(
-          'other_mod',
-          @modpath1,
-          :metadata => {
-            :version => '1.0.0',
-            :dependencies => [{
-              "version_requirement" => ">= 0.0.5",
-              "name"                => "puppetlabs/dependable"
-            }]
-          }
-        )
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.5'})
+      PuppetSpec::Modules.create(
+        'other_mod',
+        @modpath1,
+        :metadata => {
+          :version => '1.0.0',
+          :dependencies => [{
+            "version_requirement" => ">= 0.0.5",
+            "name"                => "puppetlabs/dependable"
+          }]
+        }
+      )
 
-        dependency_tree = Puppet::Face[:module, :current].list
+      dependency_tree = Puppet::Face[:module, :current].list
 
-        output = Puppet::Face[:module, :current].list_when_rendering_console(
-          dependency_tree,
-          {:tree => true}
-        )
+      output = Puppet::Face[:module, :current].list_when_rendering_console(
+        dependency_tree,
+        {:tree => true}
+      )
 
-        output.should == <<-HEREDOC.gsub('        ', '')
+      output.should == <<-HEREDOC.gsub('        ', '')
         #{@modpath1}
         └─┬ puppetlabs-other_mod (\e[0;36mv1.0.0\e[0m)
           └── puppetlabs-dependable (\e[0;36mv0.0.5\e[0m)
         #{@modpath2} (no modules installed)
         HEREDOC
-      end
     end
   end
-
 end
