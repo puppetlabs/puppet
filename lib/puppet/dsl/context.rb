@@ -52,7 +52,7 @@ module Puppet
       def type(name)
         ::Puppet::DSL::TypeReference.new name
       end
-      
+
       ##
       # Initializes new context.
       #
@@ -81,7 +81,7 @@ module Puppet
       def raise(*args)
         ::Object.send :raise, *args
       end
-      
+
       ##
       # Proxy method for Object#raise
       ##
@@ -130,7 +130,12 @@ module Puppet
         end
 
         params = {}
-        params.merge! :parent => options[:inherits] if options[:inherits]
+        if options[:inherits]
+          options[:inherits] = options[:inherits].to_s unless options[:inherits].is_a? ::Regexp
+          params.merge! :parent => options[:inherits]
+        end
+
+        name = name.to_s unless name.is_a? ::Regexp
         node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block
         ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_node node
@@ -168,9 +173,9 @@ module Puppet
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
-        params.merge! :parent => options[:inherits] if options[:inherits]
+        params.merge! :parent => options[:inherits].to_s if options[:inherits]
 
-        hostclass = ::Puppet::Resource::Type.new :hostclass, name, params
+        hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
         hostclass.ruby_code = ::Puppet::DSL::Context.new block
 
         ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_hostclass hostclass
@@ -334,7 +339,7 @@ module Puppet
             resource.virtual = true if virtualizing? or options[:virtual] == true
             resource.exported = true if exporting? or options[:export] == true
 
-            definition = scope.find_definition name.to_s
+            definition = scope.find_definition name
             if definition
               definition.instantiate_resource scope, resource
             end

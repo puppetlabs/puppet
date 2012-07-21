@@ -23,7 +23,7 @@ describe Puppet::DSL::Context do
     end
 
     it "should create a resource" do
-      evaluate_in_context do 
+      evaluate_in_context do
         create_resource :file, "/tmp/test"
       end
       @compiler.resources.map {|r| r.name}.should include "/tmp/test"
@@ -63,7 +63,7 @@ describe Puppet::DSL::Context do
         end
       end.first
 
-      res[:ensure].should == :present
+      res[:ensure].should == "present"
       res[:mode].should == "0666"
     end
 
@@ -223,7 +223,7 @@ describe Puppet::DSL::Context do
         define(:foo) {}
       end.name.should == "foo"
     end
-      
+
     it "should raise NoMethodError when the nesting is invalid" do
       Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
@@ -243,7 +243,7 @@ describe Puppet::DSL::Context do
     end
 
     it "should assign arguments" do
-      args = {"myparam" => "myvalue"} 
+      args = {"myparam" => "myvalue"}
       evaluate_in_context do
         define :foo, :arguments => args do
         end
@@ -355,7 +355,7 @@ describe Puppet::DSL::Context do
 
       expected.should be true
     end
- 
+
     it "should return Puppet::Resource::Type object" do
       evaluate_in_context do
         hostclass(:foo) {}
@@ -574,7 +574,7 @@ describe Puppet::DSL::Context do
     end
 
     describe "#respond_to?" do
-      it "should return true when function is defined" do 
+      it "should return true when function is defined" do
         evaluate_in_context do
           respond_to?(:notice).should == true
         end

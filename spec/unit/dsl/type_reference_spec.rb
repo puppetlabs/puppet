@@ -8,7 +8,7 @@ describe Puppet::DSL::TypeReference do
 
   before :each do
     prepare_compiler_and_scope
-  end    
+  end
 
   describe "#initialize" do
 
@@ -161,7 +161,7 @@ describe Puppet::DSL::TypeReference do
           Puppet::DSL::Context::Notify.defaults :message => 30 do |d|
             d.message = 42
           end
-        end.should == {:message => 42}
+        end.should == {:message => '42'}
       end.should_not raise_error
 
     end

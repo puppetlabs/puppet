@@ -38,8 +38,8 @@ describe Puppet::DSL::ResourceDecorator do
     end
 
     describe "setting" do
-      it "should proxy get messages to a resource "do
-        @resource.expects(:[]=).with(:param, 42)
+      it "should proxy get messages to a resource" do
+        @resource.expects(:[]=).with :param, '42'
 
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.param = 42
@@ -58,7 +58,7 @@ describe Puppet::DSL::ResourceDecorator do
       end
 
       it "should cache methods for future use" do
-        @resource.expects(:[]=).twice.with :foobar, 42
+        @resource.expects(:[]=).twice.with :foobar, '42'
 
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.foobar = 42
