@@ -1,13 +1,27 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    binding_of_caller (0.6.7)
+    coderay (1.0.7)
     diff-lcs (1.1.3)
     facter (1.6.10)
     hiera (0.3.0)
     metaclass (0.0.1)
+    method_source (0.8)
     mocha (0.12.0)
       metaclass (~> 0.0.1)
     multi_json (1.3.6)
+    pry (0.9.10)
+      coderay (~> 1.0.5)
+      method_source (~> 0.8)
+      slop (~> 3.3.1)
+    pry-doc (0.4.4)
+      pry (>= 0.9.9.6)
+      yard (~> 0.8.1)
+    pry-nav (0.2.2)
+      pry (~> 0.9.10)
+    pry-stack_explorer (0.4.5)
+      binding_of_caller (~> 0.6.2)
     rack (1.4.1)
     rspec (2.10.0)
       rspec-core (~> 2.10.0)
@@ -21,6 +35,8 @@ GEM
       multi_json (~> 1.0)
       simplecov-html (~> 0.5.3)
     simplecov-html (0.5.3)
+    slop (3.3.2)
+    yard (0.8.2.1)
 
 PLATFORMS
   ruby
@@ -29,6 +45,10 @@ DEPENDENCIES
   facter
   hiera
   mocha
+  pry
+  pry-doc
+  pry-nav
+  pry-stack_explorer
   rack
   rspec (~> 2.10.0)
   simplecov

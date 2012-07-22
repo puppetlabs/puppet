@@ -1,6 +1,9 @@
 require 'spec_helper'
+require 'puppet_spec/dsl'
 require 'puppet/resource'
 require 'puppet/dsl/resource_decorator'
+
+include PuppetSpec::DSL
 
 describe Puppet::DSL::ResourceDecorator do
   it "should yield resource proxy to a block" do
@@ -63,6 +66,27 @@ describe Puppet::DSL::ResourceDecorator do
         Puppet::DSL::ResourceDecorator.new @resource do |r|
           r.foobar = 42
           r.foobar = 42
+        end
+      end
+
+      it "doesn't convert values to string when resource is given" do
+        prepare_compiler_and_scope
+        value = Puppet::Parser::Resource.new "test", "whatever", {:scope => @scope}
+        value.expects(:to_s).never
+        @resource.expects(:[]=)
+
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.key = value
+        end
+      end
+
+      it "converts values to string when unless resource is given" do
+        value = mock
+        value.expects :to_s
+        @resource.expects :[]=
+
+        Puppet::DSL::ResourceDecorator.new @resource do |r|
+          r.foo = value
         end
       end
 

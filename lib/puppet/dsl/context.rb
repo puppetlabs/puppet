@@ -120,7 +120,6 @@ module Puppet
       ##
       def node(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
-        raise ::ArgumentError unless name.is_a? ::Regexp or name.is_a? ::String
         raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
         options.each do |k, _|
@@ -333,7 +332,7 @@ module Puppet
               :scope => scope,
               :source => scope.source
             options.each do |key, val|
-              resource[key] = get_resource(val) || val
+              resource[key] = get_resource(val) || val.to_s
             end
 
             resource.virtual = true if virtualizing? or options[:virtual] == true

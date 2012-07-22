@@ -44,14 +44,21 @@ describe Puppet::DSL::Context do
       end.first.title.should == title
     end
 
-    it "should set resource parameters" do
+    it "converts title to string" do
+      title = :foobarbaz
+      evaluate_in_context do
+        notify title
+      end.first.title.should == title.to_s
+    end
+
+    it "sets resource parameters with stringified values" do
       parameters = {:ensure => :present, :mode => "0666"}
       res = evaluate_in_context do
         create_resource :file, "/tmp/test", parameters
       end.first
 
       parameters.each do |k, v|
-        res[k].should == v
+        res[k].should == v.to_s
       end
     end
 
@@ -108,7 +115,7 @@ describe Puppet::DSL::Context do
       ["foobar", :asdf, 3, 3.14].each do |i|
         evaluate_in_context do
           create_resource :notify, "test-#{i}", :message => i
-        end.last.parameters.map {|_, v| v.value }.should include(i)
+        end.last.parameters.map {|_, v| v.value }.should include(i.to_s)
       end
     end
 
@@ -195,6 +202,13 @@ describe Puppet::DSL::Context do
       end.should == known_resource_types.definition(:foo)
     end
 
+    it "converts the name to string" do
+      name = :foo
+      evaluate_in_context do
+        define(name) {}
+      end.name.should == name.to_s
+    end
+
     it "should call the block when evaluating type" do
       expected = nil
       evaluate_in_context do
@@ -250,6 +264,14 @@ describe Puppet::DSL::Context do
       end.arguments.should == args
     end
 
+    it "converts argument keys to strings" do
+      args = {:answer => 42}
+      evaluate_in_context do
+        define :foo, :arguments => args do
+        end
+      end.arguments.should == {"answer" => 42}
+    end
+
     it "should fail when passing invalid options" do
       lambda do; evaluate_in_context do
         define(:foo, :bar => "asdf") {}
@@ -273,6 +295,19 @@ describe Puppet::DSL::Context do
       evaluate_in_context do
         node("foo") {}
       end.should == known_resource_types.node(:foo)
+    end
+
+    it "converts the name to string unless it's a regexp" do
+      name = :foo
+      evaluate_in_context do
+        node(name) {}
+      end.name.should == name.to_s
+    end
+
+    it "doesn't convert the name to string when it's a regexp" do
+      evaluate_in_context do
+        node(/foo/) {}
+      end.name_is_regex?.should be true
     end
 
     it "should set proper name" do
@@ -316,11 +351,27 @@ describe Puppet::DSL::Context do
       end.should raise_error ArgumentError
     end
 
-    it "should assign a parent" do
+    it "allows to assign a parent" do
       evaluate_in_context do
         node "foo", :inherits => "bar" do
         end
       end.parent.should == "bar"
+    end
+
+    it "converts name of the parent to string unless it's a regexp" do
+      parent = :bar
+      evaluate_in_context do
+        node :foo, :inherits => parent do
+        end
+      end.parent.should == parent.to_s
+    end
+
+    it "doesn't convert name of the parent to string when it's a regexp" do
+      parent = /bar/
+      evaluate_in_context do
+        node :foo, :inherits => parent do
+        end
+      end.parent.should == parent
     end
 
     it "should support passing a name as regex" do
@@ -339,13 +390,20 @@ describe Puppet::DSL::Context do
 
   describe "when defining a class" do
 
-    it "should add a new type" do
+    it "adds a new type" do
       evaluate_in_context do
         hostclass(:foo) {}
       end.should == known_resource_types.hostclass(:foo)
     end
 
-    it "should call the block when evaluating type" do
+    it "converts the name to string" do
+      name = :foo
+      evaluate_in_context do
+        hostclass(name) {}
+      end.name.should == name.to_s
+    end
+
+    it "calls the block when evaluating type" do
       expected = nil
       evaluate_in_context do
         hostclass :foo do
@@ -399,11 +457,26 @@ describe Puppet::DSL::Context do
       end.arguments.should == args
     end
 
+    it "should stringify keys of the arguments" do
+      args = {:my => 4}
+      evaluate_in_context do
+        hostclass(:foo, :arguments => args) {}
+      end.arguments.should == {"my" => 4}
+
+    end
+
     it "should set parent type" do
       parent = "parent"
       evaluate_in_context do
         hostclass(:foo, :inherits => parent) {}
       end.parent.should == parent
+    end
+
+    it "converts parent's name to string" do
+      parent = :parent
+      evaluate_in_context do
+        hostclass(:foo, :inherits => parent) {}
+      end.parent.should == parent.to_s
     end
 
     it "should fail when passing invalid options" do

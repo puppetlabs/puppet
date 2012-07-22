@@ -17,7 +17,7 @@ module Puppet
       # string of Ruby code.
       ##
       def initialize(main, code)
-        raise ArgumentError unless main.respond_to? :ruby_code=
+        raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :ruby_code=
 
         @main = main
         @code = proc do
@@ -59,7 +59,7 @@ module Puppet
       # It'll raise RuntimeError if the stack is already empty.
       ##
       def self.remove_scope
-        raise if @@frames.first.nil?
+        raise RuntimeError, "scope stack already empty" if @@frames.first.nil?
         @@frames.pop
       end
 

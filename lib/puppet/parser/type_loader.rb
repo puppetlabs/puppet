@@ -1,5 +1,6 @@
 require 'find'
 require 'puppet/node/environment'
+require 'puppet/dsl/parser'
 
 class Puppet::Parser::TypeLoader
   include Puppet::Node::Environment::Helper
@@ -79,6 +80,7 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
+    # MLEN:TODO import Ruby manifests from here
     loaded_asts = []
     files.each do |file|
       unless Puppet::Util.absolute_path?(file)
@@ -135,12 +137,11 @@ class Puppet::Parser::TypeLoader
     return nil
   end
 
-  # MLEN:TODO create a version for Ruby DSL
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
     parser = Puppet::Parser::Parser.new(environment)
     parser.file = file
-    return parser.parse
+    parser.parse
   end
 
   private
