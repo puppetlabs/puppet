@@ -3,6 +3,17 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
+# Installing Dependencies #
+
+To make development dependency management easier a `Gemfile` is included in the
+root of the tree. The Gemfile is used by [Bundler](http://gembundler.com/) for
+installing dependent gems of at least a certain version.
+
+To use (assuming you have Bundler installed):
+
+    % bundle install
+
+
 # UTF-8 Handling #
 
 As Ruby 1.9 becomes more commonly used with Puppet, developers should be aware
