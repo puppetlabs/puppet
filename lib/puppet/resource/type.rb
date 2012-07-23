@@ -27,7 +27,7 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
-  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+  attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
   # This should probably be renamed to 'kind' eventually, in accordance with the changes
@@ -135,7 +135,16 @@ class Puppet::Resource::Type
 
     code.safeevaluate(scope) if code
 
-    evaluate_ruby_code(scope) if ruby_code
+    evaluate_ruby_code(scope) unless ruby_code.empty?
+  end
+
+
+  def ruby_code
+    @ruby_code ||= []
+  end
+
+  def ruby_code=(code)
+    ruby_code << code
   end
 
   def initialize(type, name, options = {})
@@ -182,10 +191,8 @@ class Puppet::Resource::Type
       self.doc += other.doc
     end
 
-    if other.ruby_code
-      self.ruby_code ||= ""
-      self.ruby_code += "\n" unless self.ruby_code.empty?
-      self.ruby_code += other.ruby_code
+    other.ruby_code.each do |c|
+      self.ruby_code << c
     end
 
     # This might just be an empty, stub class.
@@ -368,7 +375,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    ruby_code.evaluate(scope)
+    ruby_code.each { |c| c.evaluate(scope) }
   end
 
   # Split an fq name into a namespace and name

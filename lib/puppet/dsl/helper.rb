@@ -78,8 +78,10 @@ module Puppet
         type = canonize_type(name)
         !!(["Node", "Class"].include? type or
            ::Puppet::Type.type type or
-           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_definition '', type or
-           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_hostclass  '', type)
+           ::Puppet::DSL::Parser.top_scope.known_resource_types.definition type or
+           ::Puppet::DSL::Parser.top_scope.known_resource_types.hostclass  type or
+           ::Puppet::DSL::Parser.top_scope.known_resource_types.find_definition '', type or
+           ::Puppet::DSL::Parser.top_scope.known_resource_types.find_hostclass  '', type)
       end
 
       ##

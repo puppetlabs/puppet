@@ -215,7 +215,7 @@ describe Puppet::DSL::Context do
         define :foo do
           expected = true
         end
-      end.ruby_code.evaluate @scope
+      end.ruby_code.each {|c| c.evaluate @scope}
 
       expected.should be true
     end
@@ -239,6 +239,7 @@ describe Puppet::DSL::Context do
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
+      pending
       Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do
@@ -328,12 +329,13 @@ describe Puppet::DSL::Context do
         node "foo" do
           expected = true
         end
-      end.ruby_code.evaluate @scope
+      end.ruby_code.each {|c| c.evaluate @scope}
 
       expected.should be true
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
+      pending
       Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do
@@ -409,7 +411,7 @@ describe Puppet::DSL::Context do
         hostclass :foo do
           expected = true
         end
-      end.ruby_code.evaluate @scope
+      end.ruby_code.each {|c| c.evaluate @scope}
 
       expected.should be true
     end
@@ -433,6 +435,7 @@ describe Puppet::DSL::Context do
     end
 
     it "should raise NoMethodError when called in invalid nesting" do
+      pending
       Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
 
       lambda do

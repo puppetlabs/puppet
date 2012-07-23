@@ -213,4 +213,17 @@ class Puppet::Resource::TypeCollection
     message = yield dupe
     instance.fail Puppet::ParseError, message
   end
+
+  public
+  def definitions
+    @definitions.values
+  end
+
+  def nodes
+    @nodes.values
+  end
+
+  def hostclasses
+    @hostclasses.values
+  end
 end

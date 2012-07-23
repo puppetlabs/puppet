@@ -59,7 +59,6 @@ module Puppet
       # It'll raise RuntimeError if the stack is already empty.
       ##
       def self.remove_scope
-        raise RuntimeError, "scope stack already empty" if @@frames.first.nil?
         @@frames.pop
       end
 

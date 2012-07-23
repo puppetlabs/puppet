@@ -120,7 +120,6 @@ module Puppet
       ##
       def node(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
-        raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
         options.each do |k, _|
           unless :inherits == k
@@ -162,7 +161,6 @@ module Puppet
       ##
       def hostclass(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
-        raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
         options.each do |k, _|
           unless [:arguments, :inherits].include? k
@@ -200,7 +198,6 @@ module Puppet
       ##
       def define(name, options = {}, &block)
         raise ::ArgumentError if block.nil?
-        raise ::NoMethodError unless ::Puppet::DSL::Parser.valid_nesting?
 
         options.each do |k, _|
           unless :arguments == k
@@ -212,7 +209,7 @@ module Puppet
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
         definition.ruby_code = ::Puppet::DSL::Context.new block
-        ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_definition definition
+        ::Puppet::DSL::Parser.top_scope.known_resource_types.add_definition definition
       end
 
       ##
@@ -281,6 +278,13 @@ module Puppet
         else
           super
         end
+      end
+
+      ##
+      # Returns string description of context
+      ##
+      def inspect
+        "<#Puppet::DSL::Context #{self.__id__}>"
       end
 
       ##

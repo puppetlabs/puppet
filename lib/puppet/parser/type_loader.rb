@@ -1,5 +1,6 @@
 require 'find'
 require 'puppet/node/environment'
+require 'puppet/parser/null_scope'
 require 'puppet/dsl/parser'
 
 class Puppet::Parser::TypeLoader
@@ -80,17 +81,31 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
-    # MLEN:TODO import Ruby manifests from here
     loaded_asts = []
+    loaded_ruby = []
     files.each do |file|
-      unless Puppet::Util.absolute_path?(file)
-        file = File.join(dir, file)
-      end
-      @loading_helper.do_once(file) do
-        loaded_asts << parse_file(file)
+      file = File.join dir, file unless Puppet::Util.absolute_path? file
+
+      if file =~ /\.rb\z/
+        known_before = known_resource_types.definitions +
+                       known_resource_types.nodes +
+                       known_resource_types.hostclasses
+
+        Puppet::Resource::Type.new(:hostclass, '').tap do |type|
+          Puppet::DSL::Parser.new(type, File.read(file)).evaluate
+          type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new) }
+        end
+
+        known_now    = known_resource_types.definitions +
+                       known_resource_types.nodes +
+                       known_resource_types.hostclasses
+        loaded_ruby  = known_now - known_before
+      else
+        @loading_helper.do_once(file) { loaded_asts << parse_file(file) }
       end
     end
-    loaded_asts.inject([]) do |loaded_types, ast|
+
+    loaded_ruby + loaded_asts.inject([]) do |loaded_types, ast|
       loaded_types + known_resource_types.import_ast(ast, modname)
     end
   end
