@@ -69,7 +69,7 @@ describe 'HieraPuppet' do
   end
 
   describe 'HieraPuppet#lookup' do
-    let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
+    let(:scope) { PuppetlabsSpec::PuppetInternals.scope }
 
     it "should return the value from Hiera" do
       Hiera.any_instance.stubs(:lookup).returns('8080')
