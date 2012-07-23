@@ -55,7 +55,7 @@ Checklist (and a short version for the impatient)
       - Submit a pull request to the repository in the puppetlabs
         organization.
 
-    * Alternate methods:
+    * Alternate (but discouraged) methods:
 
       - Mail patches to puppet-dev mailing list using `rake mail_patches`,
         or `git-format-patch(1)` & `git-send-email(1)`.
@@ -175,6 +175,14 @@ The long version
 
       We accept multiple ways of submitting your changes for
       inclusion.  They are listed below in order of preference.
+
+      It's important to consider that pull requests submitted to 
+	  GitHub are _much, much_ more likely to be reviewed. Patches 
+	  submitted via email on Redmine unfortunately have a tendency 
+	  to get lost. If you don't want to risk your contribution 
+	  sitting in the back burner for a long time (or possibly forever), 
+	  then please consider making a pull request on GitHub. There are 
+	  many resources included in this document about how to use GitHub.
 
       Please keep in mind that any method that involves sending email
       to the mailing list directly requires you to be subscribed to
