@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Puppet::Parser::Functions#hiera' do
-  let(:scope) { PuppetlabsSpec::PuppetSeams.parser_scope }
+  let(:scope) { PuppetlabsSpec::PuppetInternals.scope }
 
   it 'should require a key argument' do
     expect { scope.function_hiera([]) }.to raise_error(Puppet::ParseError)
