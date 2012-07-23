@@ -42,8 +42,11 @@ Checklist (and a short version for the impatient)
 
       - Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
 
-    * Preferred method:
+	  - Submit a Redmine ticket for the issue, after confirming one does 
+	    not already exist.
 
+    * Preferred method:
+	
       - Fork the repository on GitHub.
 
       - Push your changes to a topic branch in your fork of the
@@ -62,7 +65,24 @@ Checklist (and a short version for the impatient)
 The long version
 ================
 
-  0.  Decide what to base your work on.
+  0. Create a Redmine ticket for the change you'd like to make.
+     
+	 It's very important that there be a Redmine ticket for the change 
+	 you are making. Considering the number of contributions which are 
+	 submitted and the many channels through which they can be submitted, 
+	 it is crucial that we know there is at least once place we can always 
+	 find them. 
+	
+	 Before making a ticket however, be sure that one does not already exist.
+	 You can do this by searching Redmine or by trying a Google search which 
+	 includes `projects.puppetlabs.com` in addition to some of the keywords 
+	 related to your issue. 
+	
+	 If you do not find a ticket that that accurately describes the work 
+	 you're going to be doing, go ahead and create one. But be sure to 
+	 look for related tickets and add them to the 'related tickets' section.
+
+  1.  Decide what to base your work on.
 
 	  In general, you should always base your work on the oldest 
 	  branch that your change is relevant to, and it will be 
@@ -102,7 +122,7 @@ The long version
 	  if your change is targeted at the wrong place, we will bounce it back to you and wait 
 	  to review it until it has been retargeted. 
 
-  1.  Make separate commits for logically separate changes.
+  2.  Make separate commits for logically separate changes.
 
       Please break your commits down into logically consistent units
       which include new or changed tests relevent to the rest of the
@@ -135,7 +155,7 @@ The long version
       whitespaces or other "whitespace errors".  You can do this by
       running "git diff --check" on your changes before you commit.
 
-  2.  Sign the Contributor License Agreement
+  3.  Sign the Contributor License Agreement
 
       Before we can accept your changes, we do need a signed Puppet
       Labs Contributor License Agreement (CLA).
@@ -151,7 +171,7 @@ The long version
       If you have any questions about the CLA, please feel free to
       contact Puppet Labs via email at cla-submissions@puppetlabs.com.
 
-  3.  Sending your patches
+  4.  Sending your patches
 
       We accept multiple ways of submitting your changes for
       inclusion.  They are listed below in order of preference.
@@ -225,13 +245,12 @@ The long version
         If you are generating the diff outside of Git, please be sure
         to generate a unified diff.
 
-  4.  Update the related Redmine ticket.
+  5.  Update the related Redmine ticket.
 
-      If there's a Redmine ticket associated with the change you
-      submitted, then you should update the ticket to include the
-      location of your branch, and change the status to "In Topic
-      Branch Pending Merge", along with any other commentary you may
-      wish to make.
+      You should update the Redmine ticket associated 
+      with the change you submitted to include the location of your branch,
+      and change the status to "In Topic Branch Pending Review", 
+      along with any other commentary you may wish to make.
 
 How to track the status of your change after it's been submitted
 ================================================================
