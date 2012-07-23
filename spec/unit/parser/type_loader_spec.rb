@@ -154,7 +154,6 @@ describe Puppet::Parser::TypeLoader do
 
       @loader.import_all
 
-      raise ScriptError, @loader.environment.known_resource_types.hostclasses.map {|c| c.name}.to_yaml
       @loader.environment.known_resource_types.hostclass("one::a").should be_instance_of(Puppet::Resource::Type)
       @loader.environment.known_resource_types.hostclass("one::b").should be_instance_of(Puppet::Resource::Type)
       @loader.environment.known_resource_types.hostclass("two::c").should be_instance_of(Puppet::Resource::Type)
