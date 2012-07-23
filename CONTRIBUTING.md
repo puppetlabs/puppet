@@ -64,23 +64,43 @@ The long version
 
   0.  Decide what to base your work on.
 
-      In general, you should always base your work on the oldest
-      branch that your change is relevant to.
+	  In general, you should always base your work on the oldest 
+	  branch that your change is relevant to, and it will be 
+	  eventually merged up. Currently, branches will be merged up as 
+	  follows: 
+	    2.6.x => 2.7.x => 3.x => master 
+	
+	  Currently, this is how you should decide where to target your changes: 
+	
+	  - The absolute earliest place something should be targeted is at `2.6.x`, 
+	    and these should _only_ be security fixes. Anything else must be
+	    targeted at a later branch.
+	
+	  - A bug fix should be based off the the earliest place where it is 
+		relevant. If it first appears in `2.7.x`, then it should be 
+		targeted here and eventually merged up to `3.x` and master. 
+		
+	  - New features which are _backwards compatible_ should be targeted 
+	    at the next release, which currently is `3.x`. 
+	
+	  - New features that are _breaking changes_ should be targeted at 
+		`master`.
 
-      - A bug fix should be based on the current stable series. If the
-        bug is not present in the current stable release, then base it on
-        `master`.
-
-      - A new feature should be based on `master`.
-
-      - Security fixes should be based on the current maintenance series
-        (that is, the previous stable series).  If the security issue
-        was not present in the maintenance series, then it should be
-        based on the current stable series if it was introduced there,
-        or on `master` if it is not yet present in a stable release.
-
-      The current stable series is 2.7.x, and the current maintenance
-      series is 2.6.x.
+      Part of deciding what to what your work should be based off of includes naming 
+	  your topic branch to reflect this. Your branch name should have the following 
+	  format: 
+	  		`ticket/target_branch/ticket_number_short_description_of_issuee` 
+	
+	  For example, if you are fixing a bug relating to the ssl spec, which has Redmine 
+	  ticket number 12345, then your branch should be named: 
+			`ticket/2.7.x/12345_fix_ssl_spec_tests` 
+			
+	  There is a good chance that if you submit a pull request _from_ master _to_ master, 
+	  Puppet Labs developers will suspect that you're not sure about the process. This is 
+	  why clear naming of branches and basing your work off the right place will be 
+	  extremely helpful in ensuring that your submission is reviewed and merged. Often times
+	  if your change is targeted at the wrong place, we will bounce it back to you and wait 
+	  to review it until it has been retargeted. 
 
   1.  Make separate commits for logically separate changes.
 
