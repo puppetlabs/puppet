@@ -154,16 +154,32 @@ module Puppet
       return nil unless value
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.indirection.find(source, :environment => resource.catalog.environment)
-            @metadata = data
-            @metadata.source = source
-            break
+	  if data = metadata_with_request(source)
+	    break
           end
         rescue => detail
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
       fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
+      @metadata
+    end
+
+    # Add for static compiler
+    # Same as metadata method except that we specify the request to get 
+    # information about the host
+    # This information will given to retrieve the right file in the fileserver 
+    def metadata_with_request(source, request=nil)
+      data = nil
+      if request
+         data = Puppet::FileServing::Metadata.indirection.find(source, :node => request.node, :ip => request.ip)
+      else
+         data = Puppet::FileServing::Metadata.indirection.find(source)
+      end
+      if data 
+        @metadata = data
+        @metadata.source = source
+      end
       @metadata
     end
 

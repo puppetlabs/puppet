@@ -1,6 +1,7 @@
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
+require 'puppet/file_bucket/dipper'
 
 class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
   def compiler
@@ -14,29 +15,31 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
     catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
       next unless source = resource[:source]
-      next unless source =~ /^puppet:/
 
       file = resource.to_ral
+      next unless file[:source][0] =~ /^puppet:/
       if file.recurse?
         add_children(request.key, catalog, resource, file)
       else
-        find_and_replace_metadata(request.key, resource, file)
+        find_and_replace_metadata(request, resource, file)
       end
     end
 
     catalog
   end
 
-  def find_and_replace_metadata(host, resource, file)
+  def find_and_replace_metadata(request, resource, file)
     # We remove URL info from it, so it forces a local copy
     # rather than routing through the network.
     # Weird, but true.
-    newsource = file[:source][0].sub("puppet:///", "")
-    file[:source][0] = newsource
+    metadata = nil
+    file[:source].map{ | s |
+      break if s !~ /^puppet:/
+      metadata = file.parameter(:source).metadata_with_request(s.sub("puppet:///", ""), request)
+      break if metadata 
+    }
 
-    raise "Could not get metadata for #{resource[:source]}" unless metadata = file.parameter(:source).metadata
-
-    replace_metadata(host, resource, metadata)
+    replace_metadata(request.key, resource, metadata) if metadata   
   end
 
   def replace_metadata(host, resource, metadata)
@@ -52,7 +55,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       end
     end
 
-    store_content(resource) if resource[:ensure] == "file"
+    store_content(metadata) if resource[:ensure] == "file"
     old_source = resource.delete(:source)
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
   end
@@ -119,19 +122,19 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     both.each { |name| children.delete(name) }
   end
 
-  def store_content(resource)
+  def store_content(metadata)
     @summer ||= Object.new
     @summer.extend(Puppet::Util::Checksums)
 
-    type = @summer.sumtype(resource[:content])
-    sum = @summer.sumdata(resource[:content])
+    type = @summer.sumtype(metadata.checksum)
+    sum = @summer.sumdata(metadata.checksum)
 
     if Puppet::FileBucket::File.indirection.find("#{type}/#{sum}")
-      Puppet.info "Content for '#{resource[:source]}' already exists"
+      Puppet.info "Content for '#{metadata.checksum}' already exists"
     else
-      Puppet.info "Storing content for source '#{resource[:source]}'"
-      content = Puppet::FileServing::Content.indirection.find(resource[:source])
-      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(content.content))
+      Puppet.info "Storing content for source '#{metadata.path}'"
+      dipper = Puppet::FileBucket::Dipper.new(:Path => Puppet[:bucketdir])
+      dipper.backup(metadata.path)
     end
   end
 end
