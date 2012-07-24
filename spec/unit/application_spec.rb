@@ -80,7 +80,7 @@ describe Puppet::Application do
 
       app.class.run_mode.name.should == :agent
       $puppet_application_mode.name.should == :agent
-    }.should_not raise_error
+    }.to_not raise_error
 
     Puppet[:run_mode].should == "agent"
   end
@@ -93,7 +93,7 @@ describe Puppet::Application do
       $puppet_application_mode.name.should == :master
       app.set_run_mode app.class.run_mode "agent"
       $puppet_application_mode.name.should == :agent
-    }.should raise_error
+    }.to raise_error
   end
 
   it "should explode when an invalid run mode is set at runtime, for great victory"
@@ -432,7 +432,7 @@ describe Puppet::Application do
     it "should not fail if the route file doesn't exist" do
       Puppet[:route_file] = "/dev/null/non-existent"
 
-      expect { @app.configure_indirector_routes }.should_not raise_error
+      expect { @app.configure_indirector_routes }.to_not raise_error
     end
 
     it "should raise an error if the routes file is invalid" do
@@ -443,7 +443,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.should raise_error
+      expect { @app.configure_indirector_routes }.to raise_error
     end
   end
 
@@ -565,7 +565,7 @@ describe Puppet::Application do
             raise "I can't believe it, it works!"
           end
 
-          lambda { @app.handle_test2 }.should raise_error
+          expect { @app.handle_test2 }.to raise_error
         end
 
         it "should declare the option to OptionParser" do

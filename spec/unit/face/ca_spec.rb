@@ -40,7 +40,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           :host => 'random-host', :valid => false,
           :error => 'Could not find a certificate for random-host'
         }
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should not explode if there is only a CSR" do
@@ -50,7 +50,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           :host => 'random-host', :valid => false,
           :error => 'Could not find a certificate for random-host'
         }
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should verify a signed certificate" do
@@ -69,7 +69,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
           :host => 'random-host', :valid => false,
           :error => 'certificate revoked'
         }
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should verify a revoked certificate if CRL use was turned off" do
@@ -93,14 +93,14 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     it "should not explode if there is no certificate" do
       expect {
         subject.fingerprint('random-host').should be_nil
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should fingerprint a CSR" do
       make_certs('random-host', [])
       expect {
         subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should fingerprint a certificate" do
@@ -128,14 +128,14 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     it "should not explode if there is no certificate" do
       expect {
         subject.print('random-host').should be_nil
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should return nothing if there is only a CSR" do
       make_certs('random-host', [])
       expect {
         subject.print('random-host').should be_nil
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should return the certificate content if there is a cert" do
@@ -155,7 +155,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       expect {
         subject.sign('random-host').
           should == 'Could not find certificate request for random-host'
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should not explode if there is a signed cert" do
@@ -163,7 +163,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       expect {
         subject.sign('random-host').
           should == 'Could not find certificate request for random-host'
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should sign a CSR if one exists" do
@@ -216,14 +216,14 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       make_certs('random-host', [])
       expect {
         subject.generate('random-host').should =~ /already has a certificate request/
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should not explode if the certificate with that name already exists" do
       make_certs([], 'random-host')
       expect {
         subject.generate('random-host').should =~ /already has a certificate/
-      }.should_not raise_error
+      }.to_not raise_error
     end
 
     it "should include the specified DNS alt names" do
@@ -242,7 +242,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     let :action do Puppet::Face[:ca, '0.1.0'].get_action(:revoke) end
 
     it "should not explode when asked to revoke something that doesn't exist" do
-      expect { subject.revoke('nonesuch') }.should_not raise_error
+      expect { subject.revoke('nonesuch') }.to_not raise_error
     end
 
     it "should let the user know what went wrong" do
@@ -267,7 +267,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     let :action do Puppet::Face[:ca, '0.1.0'].get_action(:destroy) end
 
     it "should not explode when asked to delete something that doesn't exist" do
-      expect { subject.destroy('nonesuch') }.should_not raise_error
+      expect { subject.destroy('nonesuch') }.to_not raise_error
     end
 
     it "should let the user know if nothing was deleted" do
@@ -325,7 +325,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         it "should not fail when a matcher is passed" do
           expect {
             subject.list(type.merge :subject => '.').should == []
-          }.should_not raise_error
+          }.to_not raise_error
         end
 
         context "when_rendering :console" do
@@ -394,7 +394,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         else
           raise "#{action} has arity #{subject.method(action).arity}"
         end
-      }.should raise_error(/Not a CA/)
+      }.to raise_error(/Not a CA/)
     end
   end
 end

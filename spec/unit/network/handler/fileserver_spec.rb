@@ -50,9 +50,9 @@ describe Puppet::Network::Handler::FileServer do
         config_file = tmpfile('fileserver.conf')
         File.open(config_file, 'w') { |f| f.puts "#{arg} 127.0.0.1/24" }
 
-        expect { 
-          Puppet::Network::Handler::FileServer.new(:Config => config_file) 
-        }.should raise_error(Puppet::Network::Handler::FileServerError, "No mount specified for argument #{arg} 127.0.0.1/24")
+        expect {
+          Puppet::Network::Handler::FileServer.new(:Config => config_file)
+        }.to raise_error(Puppet::Network::Handler::FileServerError, "No mount specified for argument #{arg} 127.0.0.1/24")
       end
     end
   end

@@ -36,7 +36,7 @@ describe provider_class do
       Puppet::Util::Execution.expects(:withenv).once.with({:PKG_PATH => path}).yields
       @provider.expects(:pkgadd).once.with("mypackage")
 
-      expect { @provider.install }.should_not raise_error
+      expect { @provider.install }.to_not raise_error
     end
 
     %w{http https ftp}.each do |protocol|
@@ -47,7 +47,7 @@ describe provider_class do
         Puppet::Util::Execution.expects(:withenv).once.with({:PACKAGESITE => path}).yields
         @provider.expects(:pkgadd).once.with('-r', "mypackage")
 
-        expect { @provider.install }.should_not raise_error
+        expect { @provider.install }.to_not raise_error
       end
     end
   end

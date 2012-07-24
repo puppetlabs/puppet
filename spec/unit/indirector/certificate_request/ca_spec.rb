@@ -48,7 +48,7 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
     host.generate_certificate_request
     @ca.sign(host.name)
 
-    expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.should raise_error(/ignoring certificate request/)
+    expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.to raise_error(/ignoring certificate request/)
 
     Puppet::SSL::Certificate.indirection.find("bar").name.should == "bar"
     Puppet::SSL::CertificateRequest.indirection.find("bar").should be_nil

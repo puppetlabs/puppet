@@ -166,7 +166,7 @@ describe Puppet::Interface::FaceCollection do
     faulty.each do |input|
       it "should fail when presented with #{input.inspect} (#{input.class})" do
         expect { subject.underscorize(input) }.
-          should raise_error ArgumentError, /not a valid face name/
+          to raise_error ArgumentError, /not a valid face name/
       end
     end
   end

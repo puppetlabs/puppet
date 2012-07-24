@@ -20,15 +20,15 @@ describe Puppet::Interface do
 
   describe "#[]" do
     it "should fail when no version is requested" do
-      expect { subject[:huzzah] }.should raise_error ArgumentError
+      expect { subject[:huzzah] }.to raise_error ArgumentError
     end
 
     it "should raise an exception when the requested version is unavailable" do
-      expect { subject[:huzzah, '17.0.0'] }.should raise_error, Puppet::Error
+      expect { subject[:huzzah, '17.0.0'] }.to raise_error, Puppet::Error
     end
 
     it "should raise an exception when the requested face doesn't exist" do
-      expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
+      expect { subject[:burrble_toot, :current] }.to raise_error, Puppet::Error
     end
 
     describe "version matching" do
@@ -98,7 +98,7 @@ describe Puppet::Interface do
 
     it "should require a valid version number" do
       expect { subject.new(:bad_version, 'Rasins') }.
-        should raise_error ArgumentError
+        to raise_error ArgumentError
     end
 
     it "should instance-eval any provided block", :'fails_on_ruby_1.9.2' => true do
@@ -159,7 +159,7 @@ describe Puppet::Interface do
           end
           option "--foo"
         end
-      }.should raise_error ArgumentError, /Option foo conflicts with existing option foo on/i
+      }.to raise_error ArgumentError, /Option foo conflicts with existing option foo on/i
     end
 
     it "should work when two actions have the same option" do
