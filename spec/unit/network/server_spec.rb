@@ -178,16 +178,16 @@ describe Puppet::Network::Server do
 
     it "should do nothing if the pidfile is not present" do
       pidfile = mock 'pidfile', :unlock => false
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
       Puppet[:pidfile] = "/my/file"
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       @server.remove_pidfile
     end
 
     it "should unlock the pidfile using the Pidlock class" do
       pidfile = mock 'pidfile', :unlock => true
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
       Puppet[:pidfile] = "/my/file"
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       @server.remove_pidfile
     end
