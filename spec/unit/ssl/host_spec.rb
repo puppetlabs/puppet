@@ -695,7 +695,7 @@ describe Puppet::SSL::Host do
 
     it "should add the local CA cert file" do
       Puppet[:localcacert] = "/ca/cert/file"
-      @store.expects(:add_file).with "/ca/cert/file"
+      @store.expects(:add_file).with Puppet[:localcacert]
       @host.ssl_store
     end
 

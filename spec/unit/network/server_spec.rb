@@ -10,7 +10,6 @@ describe Puppet::Network::Server do
     Puppet[:servertype] = :suparserver
     Puppet[:bindaddress] = ""
     Puppet[:masterport] = 8140
-    Puppet[:daemonize] = true
     Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
     Puppet[:servertype] = :suparserver
     @server = Puppet::Network::Server.new(:port => 31337)

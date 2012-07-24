@@ -10,7 +10,7 @@ describe Puppet::SSL::Key::Ca do
 
   it "should use the :privatekeydir as the collection directory" do
     Puppet[:privatekeydir] = "/key/dir"
-    Puppet::SSL::Key::Ca.collection_directory.should == "/key/dir"
+    Puppet::SSL::Key::Ca.collection_directory.should == Puppet[:privatekeydir]
   end
 
   it "should store the ca key at the :cakey location" do
@@ -18,6 +18,6 @@ describe Puppet::SSL::Key::Ca do
     Puppet[:cakey] = "/ca/key"
     file = Puppet::SSL::Key::Ca.new
     file.stubs(:ca?).returns true
-    file.path("whatever").should == "/ca/key"
+    file.path("whatever").should == Puppet[:cakey]
   end
 end

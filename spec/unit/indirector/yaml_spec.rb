@@ -166,8 +166,11 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     end
 
     describe Puppet::Indirector::Yaml, " when destroying" do
+      let(:path) do
+        File.join(@dir, @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
+      end
+
       it "should unlink the right yaml file if it exists" do
-        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
         File.expects(:exists?).with(path).returns true
         File.expects(:unlink).with(path)
 
@@ -175,7 +178,6 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       end
 
       it "should not unlink the yaml file if it does not exists" do
-        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
         File.expects(:exists?).with(path).returns false
         File.expects(:unlink).with(path).never
 
