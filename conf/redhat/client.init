@@ -14,8 +14,9 @@ PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
-pidfile=${PIDFILE-/var/run/puppet.pid}
-puppetd=${PUPPETD-/usr/sbin/puppetd}
+lockfile=${LOCKFILE-/var/lock/subsys/puppet}
+pidfile=${PIDFILE-/var/run/puppet/agent.pid}
+puppetd=${PUPPETD-/usr/bin/puppet}
 RETVAL=0
 
 # Source function library.
@@ -40,9 +41,11 @@ fi
 
 start() {
     echo -n $"Starting puppet agent: "
-    daemon $daemonopts "nohup $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --no-daemonize >/dev/null 2>&1 & echo \$! > $pidfile"
+    daemon $daemonopts $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
     RETVAL=$?
     echo
+        [ $RETVAL = 0 ] && touch ${lockfile}
+        return $RETVAL
 }
 
 stop() {
@@ -50,7 +53,7 @@ stop() {
     killproc $pidopts $puppetd
     RETVAL=$?
     echo
-    [ $RETVAL = 0 ] && rm -f ${pidfile}
+    [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
 }
 
 reload() {
@@ -104,7 +107,7 @@ case "$1" in
     once)
         shift
         $puppetd ${PUPPET_OPTS} --onetime ${PUPPET_EXTRA_OPTS} $@
-    ;;
+        ;;
     genconfig)
         genconfig
     ;;
