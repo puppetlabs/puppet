@@ -209,25 +209,28 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
 %pre
-( getent group puppet || groupadd -r puppet -g 52 ;
-  getent passwd puppet || useradd -r -u 52 -g puppet \
-    -d %{_localstatedir}/lib/puppet -s /sbin/nologin -c "Puppet" puppet ) &>/dev/null;
-
-case $1 in
-  2) # ensure that old setups have the right puppet home dir
-     usermod -d %{_localstatedir}/lib/puppet puppet;
-     # is puppet running on upgrade? If so, we need to save that info somewhere,
-     # and stop it.
-     /sbin/service puppet status && \
-        touch %{_localstatedir}/run/puppet/puppet.alive;
-     /sbin/service puppet stop;;
-esac &>/dev/null;
+getent group puppet &>/dev/null || groupadd -r puppet -g 52 &>/dev/null
+getent passwd puppet &>/dev/null || \
+useradd -r -u 52 -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
+    -c "Puppet" puppet &>/dev/null
+# ensure that old setups have the right puppet home dir
+if [ $1 -gt 1 ] ; then
+  usermod -d %{_localstatedir}/lib/puppet puppet &>/dev/null
+fi
 exit 0
 
 %post
 /sbin/chkconfig --add puppet || :
-# on an upgrade, restart only if it was running earlier
-( rm %{_localstatedir}/run/puppet/puppet.alive && /sbin/service puppet start || : ) &>/dev/null
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /sbin/service puppet start) >/dev/null 2>&1 || :
+  fi
+fi
 
 %post server
 /sbin/chkconfig --add puppetmaster || :
@@ -255,7 +258,9 @@ if [ "$1" = 0 ] ; then
 fi
 
 %postun
-# started already in %post
+if [ "$1" -ge 1 ]; then
+  /sbin/service puppet condrestart >/dev/null 2>&1 || :
+fi
 
 %postun server
 if [ "$1" -ge 1 ]; then
