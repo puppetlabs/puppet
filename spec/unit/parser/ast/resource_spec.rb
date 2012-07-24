@@ -46,11 +46,8 @@ describe Puppet::Parser::AST::Resource do
       it "should stringify the title if it is a #{title.class}" do
         @instance.title.stubs(:safeevaluate).returns title
 
-        begin
-          result = @resource.evaluate(@scope).map(&:title)
-        rescue => e
-        end
-        #result.first.should == title.to_s
+        result = @resource.evaluate(@scope).map(&:title)
+        result.first.should == title.to_s
       end
     end
 

@@ -32,7 +32,7 @@ class Resource < AST::Branch
       resource_titles = instance.title.safeevaluate(scope)
 
       # it's easier to always use an array, even for only one name
-      resource_titles = [resource_titles].flatten.map do |title|
+      resource_titles = [resource_titles].flatten.collect do |title|
         case title
         when ::String, ::Numeric, ::Symbol, true, false
           title.to_s
