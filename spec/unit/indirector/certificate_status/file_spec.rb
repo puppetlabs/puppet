@@ -78,15 +78,13 @@ describe "Puppet::Indirector::CertificateStatus::File" do
     end
 
     it "should return the Puppet::SSL::Host when a CSR exists for the host" do
-      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-        generate_csr(@host)
-        request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
+      generate_csr(@host)
+      request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
 
-        retrieved_host = @terminus.find(request)
+      retrieved_host = @terminus.find(request)
 
-        retrieved_host.name.should == @host.name
-        retrieved_host.certificate_request.content.to_s.chomp.should == @host.certificate_request.content.to_s.chomp
-      end
+      retrieved_host.name.should == @host.name
+      retrieved_host.certificate_request.content.to_s.chomp.should == @host.certificate_request.content.to_s.chomp
     end
 
     it "should return the Puppet::SSL::Host when a public key exist for the host" do
