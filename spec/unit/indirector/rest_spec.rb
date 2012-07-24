@@ -63,14 +63,14 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the server" do
-    @rest_class.expects(:server_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "myserver"
+    @rest_class.expects(:server_setting).returns :inventory_server
+    Puppet[:inventory_server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
   it "should default to :server for the server setting" do
     @rest_class.expects(:server_setting).returns nil
-    Puppet.settings.expects(:value).with(:server).returns "myserver"
+    Puppet[:server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
@@ -79,14 +79,14 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the port" do
-    @rest_class.expects(:port_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "321"
+    @rest_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_port] = "321"
     @rest_class.port.should == 321
   end
 
   it "should default to :port for the port setting" do
     @rest_class.expects(:port_setting).returns nil
-    Puppet.settings.expects(:value).with(:masterport).returns "543"
+    Puppet[:masterport] = "543"
     @rest_class.port.should == 543
   end
 
@@ -241,10 +241,6 @@ describe Puppet::Indirector::REST do
   end
 
   describe "when creating an HTTP client" do
-    before do
-      Puppet.settings.stubs(:value).returns("rest_testing")
-    end
-
     it "should use the class's server and port if the indirection request provides neither" do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil
       @searcher.class.expects(:port).returns 321

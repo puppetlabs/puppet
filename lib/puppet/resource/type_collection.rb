@@ -9,6 +9,7 @@ class Puppet::Resource::TypeCollection
     @definitions.clear
     @nodes.clear
     @watched_files.clear
+    @notfound.clear
   end
 
   def initialize(env)
@@ -16,6 +17,7 @@ class Puppet::Resource::TypeCollection
     @hostclasses = {}
     @definitions = {}
     @nodes = {}
+    @notfound = {}
 
     # So we can keep a list and match the first-defined regex
     @node_list = []
@@ -195,12 +197,18 @@ class Puppet::Resource::TypeCollection
   def find_or_load(namespaces, name, type, options = {})
     searchspace = options[:assume_fqname] ? [name].flatten : resolve_namespaces(namespaces, name)
     searchspace.each do |fqname|
-      if result = send(type, fqname) || loader.try_load_fqname(type, fqname)
-        return result
+      result = send(type, fqname)
+      unless result
+        # do not try to autoload if we already tried and it wasn't conclusive
+        # as this is a time consuming operation.
+        unless @notfound[fqname]
+          result = loader.try_load_fqname(type, fqname)
+          @notfound[fqname] = result.nil?
+        end
       end
+      return result if result
     end
 
-    # Nothing found.
     return nil
   end
 

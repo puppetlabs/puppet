@@ -26,12 +26,12 @@ describe Puppet::Configurer::PluginHandler do
   end
 
   it "should download plugins when :pluginsync is true" do
-    Puppet.settings.expects(:value).with(:pluginsync).returns true
+    Puppet[:pluginsync] = true
     @pluginhandler.should be_download_plugins
   end
 
   it "should not download plugins when :pluginsync is false" do
-    Puppet.settings.expects(:value).with(:pluginsync).returns false
+    Puppet[:pluginsync] = false
     @pluginhandler.should_not be_download_plugins
   end
 

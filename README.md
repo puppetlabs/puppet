@@ -40,6 +40,13 @@ Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
 and our [Developer
 Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
 
+Contributions
+------
+Please see our [Contibution
+Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
+and our [Developer
+Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
+
 License
 -------
 

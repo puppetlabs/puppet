@@ -9,11 +9,9 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
-  require 'puppet/file_collection/lookup'
   require 'puppet/parser/yaml_trimmer'
   require 'puppet/resource/type_collection_helper'
 
-  include Puppet::FileCollection::Lookup
   include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
@@ -25,6 +23,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
+  attr_accessor :file, :line
 
   attr_reader :exported, :parameters
 
@@ -63,7 +62,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # is drawn from  the class to the stage.   The stage for containment
   # defaults to main, if none is specified.
   def add_edge_to_stage
-    return unless self.type.to_s.downcase == "class"
+    return unless self.class?
 
     unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
       raise ArgumentError, "Could not find stage #{self[:stage] || :main} specified by #{self}"

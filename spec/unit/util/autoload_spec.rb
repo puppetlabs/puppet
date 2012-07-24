@@ -24,8 +24,8 @@ describe Puppet::Util::Autoload do
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      Puppet.settings.expects(:value).with(:environment).returns "foo"
-      Puppet.settings.expects(:value).with(:modulepath, :foo).returns "#{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}"
+      Puppet[:environment] = "foo"
+      Puppet.settings.set_value(:modulepath, "#{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}", :foo)
       Dir.expects(:entries).with(@dira).returns %w{one two}
       Dir.expects(:entries).with(@dirb).returns %w{one two}
 
@@ -40,8 +40,8 @@ describe Puppet::Util::Autoload do
     end
 
     it "should not look for lib directories in directories starting with '.'" do
-      Puppet.settings.expects(:value).with(:environment).returns "foo"
-      Puppet.settings.expects(:value).with(:modulepath, :foo).returns @dira
+      Puppet[:environment] = "foo"
+      Puppet.settings.set_value(:modulepath, @dira, :foo)
       Dir.expects(:entries).with(@dira).returns %w{. ..}
 
       FileTest.expects(:directory?).with(@dira).returns true

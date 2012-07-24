@@ -4,7 +4,6 @@ require 'puppet/util/queue'
 
 describe Puppet::Util::Queue, :if => Puppet.features.stomp? do
   it 'should load :stomp client appropriately' do
-    Puppet.settings.stubs(:value).returns 'faux_queue_source'
     Puppet::Util::Queue.queue_type_to_class(:stomp).name.should == 'Puppet::Util::Queue::Stomp'
   end
 end
@@ -27,28 +26,26 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
     end
 
     it "should provide helpful failures when the queue source is not a valid source" do
-      # Stub rather than expect, so we can include the source in the error
-      Puppet.settings.stubs(:value).with(:queue_source).returns "-----"
+      Puppet[:queue_source] = "-----"
 
-      lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Queue::Stomp.new }.to raise_error(ArgumentError, /not a Stomp URL/)
     end
 
     it "should fail unless the queue source is a stomp URL" do
-      # Stub rather than expect, so we can include the source in the error
-      Puppet.settings.stubs(:value).with(:queue_source).returns "http://foo/bar"
+      Puppet[:queue_source] = "http://foo/bar"
 
-      lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Queue::Stomp.new }.to raise_error(ArgumentError, /not a Stomp URL/)
     end
 
     it "should fail somewhat helpfully if the Stomp client cannot be created" do
       Stomp::Client.expects(:new).raises RuntimeError
-      lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+      expect { Puppet::Util::Queue::Stomp.new }.to raise_error(ArgumentError)
     end
 
     list = %w{user password host port}
     {"user" => "myuser", "password" => "mypass", "host" => "foohost", "port" => 42}.each do |name, value|
       it "should use the #{name} from the queue source as the queueing #{name}" do
-        Puppet.settings.expects(:value).with(:queue_source).returns "stomp://myuser:mypass@foohost:42/"
+        Puppet[:queue_source] = "stomp://myuser:mypass@foohost:42/"
 
         Stomp::Client.expects(:new).with { |*args| args[list.index(name)] == value }
         Puppet::Util::Queue::Stomp.new
@@ -56,7 +53,7 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
     end
 
     it "should create a reliable client instance" do
-      Puppet.settings.expects(:value).with(:queue_source).returns "stomp://myuser@foohost:42/"
+      Puppet[:queue_source] = "stomp://myuser@foohost:42/"
 
       Stomp::Client.expects(:new).with { |*args| args[4] == true }
       Puppet::Util::Queue::Stomp.new

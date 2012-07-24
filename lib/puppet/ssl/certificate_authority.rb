@@ -1,6 +1,7 @@
 require 'monitor'
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
+require 'puppet/util'
 
 # The class that knows how to sign certificates.  It creates
 # a 'special' SSL::Host whose name is 'ca', thus indicating
@@ -92,7 +93,7 @@ class Puppet::SSL::CertificateAuthority
     return false if ['false', false].include?(auto)
     return true if ['true', true].include?(auto)
 
-    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless auto =~ /^\//
+    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless Puppet::Util.absolute_path?(auto)
     FileTest.exist?(auto) && auto
   end
 

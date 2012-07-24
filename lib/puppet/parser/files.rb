@@ -82,7 +82,7 @@ module Puppet::Parser::Files
   # nil if the path is empty or absolute (starts with a /).
   # This method can return nil & anyone calling it needs to handle that.
   def split_file_path(path)
-    path.split(File::SEPARATOR, 2) unless path == "" or path == File.expand_path(path)
+    path.split(File::SEPARATOR, 2) unless path == "" or Puppet::Util.absolute_path?(path)
   end
 
 end

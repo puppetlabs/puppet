@@ -9,38 +9,36 @@ describe Puppet::SSL::Key::File do
   end
 
   it "should use the :privatekeydir as the collection directory" do
-    Puppet.settings.expects(:value).with(:privatekeydir).returns "/key/dir"
-    Puppet::SSL::Key::File.collection_directory.should == "/key/dir"
+    Puppet[:privatekeydir] = File.expand_path("/key/dir")
+    Puppet::SSL::Key::File.collection_directory.should == Puppet[:privatekeydir]
   end
 
   it "should store the ca key at the :cakey location" do
     Puppet.settings.stubs(:use)
-    Puppet.settings.stubs(:value).returns "whatever"
-    Puppet.settings.stubs(:value).with(:cakey).returns "/ca/key"
+    Puppet[:cakey] = File.expand_path("/ca/key")
     file = Puppet::SSL::Key::File.new
     file.stubs(:ca?).returns true
-    file.path("whatever").should == "/ca/key"
+    file.path("whatever").should == Puppet[:cakey]
   end
 
   describe "when choosing the path for the public key" do
     it "should use the :capub setting location if the key is for the certificate authority" do
-      Puppet.settings.stubs(:value).returns "/fake/dir"
-      Puppet.settings.stubs(:value).with(:capub).returns "/ca/pubkey"
+      Puppet[:capub] = File.expand_path("/ca/pubkey")
       Puppet.settings.stubs(:use)
 
       @searcher = Puppet::SSL::Key::File.new
       @searcher.stubs(:ca?).returns true
-      @searcher.public_key_path("whatever").should == "/ca/pubkey"
+      @searcher.public_key_path("whatever").should == Puppet[:capub]
     end
 
     it "should use the host name plus '.pem' in :publickeydir for normal hosts" do
-      Puppet.settings.stubs(:value).with(:privatekeydir).returns "/private/key/dir"
-      Puppet.settings.stubs(:value).with(:publickeydir).returns "/public/key/dir"
+      Puppet[:privatekeydir] = File.expand_path("/private/key/dir")
+      Puppet[:publickeydir] = File.expand_path("/public/key/dir")
       Puppet.settings.stubs(:use)
 
       @searcher = Puppet::SSL::Key::File.new
       @searcher.stubs(:ca?).returns false
-      @searcher.public_key_path("whatever").should == "/public/key/dir/whatever.pem"
+      @searcher.public_key_path("whatever").should == File.expand_path("/public/key/dir/whatever.pem")
     end
   end
 

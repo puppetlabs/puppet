@@ -895,31 +895,6 @@ describe Puppet::Type.metaparamclass(:audit) do
       instance.properties.must == [one, two, three]
     end
 
-    it "should handle parameter aliases correctly" do
-      type.newparam(:one) {}
-      type.newproperty(:two) {}
-
-      type.set_attr_alias :three => :one
-      type.attr_alias(:three).must == :one
-
-      type.set_attr_alias :four => :two
-      type.attr_alias(:four).must == :two
-
-      type.attr_alias(:name).must_not be
-
-      instance = type.new(:name => "my name")
-      instance.must be
-
-      instance[:three]       = "value three"
-      instance.value(:three).must == "value three"
-      instance.value(:one).must   == "value three"
-
-      instance[:four]              = "value four"
-      instance.should(:four).must == "value four"
-      instance.value(:four).must  == "value four"
-      instance.value(:two).must   == "value four"
-    end
-
     it "newattr should handle required features correctly" do
       Puppet::Util::Log.level = :debug
 

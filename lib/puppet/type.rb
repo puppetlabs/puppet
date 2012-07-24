@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
 # see the bottom of the file for the rest of the inclusions
@@ -20,7 +19,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
   ###############################
@@ -52,21 +50,6 @@ class Type
   # in the order they were specified in the files.
   def self.allattrs
     key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
-  end
-
-  # Retrieve an attribute alias, if there is one.
-  def self.attr_alias(param)
-    # Intern again, because this might be called by someone who doesn't
-    # understand the calling convention and all.
-    @attr_aliases[param.intern]
-  end
-
-  # Create an alias to an existing attribute.  This will cause the aliased
-  # attribute to be valid when setting and retrieving values on the instance.
-  def self.set_attr_alias(hash)
-    hash.each do |new, old|
-      @attr_aliases[new.intern] = old.intern
-    end
   end
 
   # Find the class associated with any given attribute.
@@ -221,15 +204,15 @@ class Type
   end
 
   def self.key_attributes
-    key_attribute_parameters.collect { |p| p.name }
+    # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
+    @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
   def self.title_patterns
     case key_attributes.length
     when 0; []
     when 1;
-      identity = lambda {|x| x}
-      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
@@ -374,16 +357,6 @@ class Type
     validattr?(name)
   end
 
-  # Return either the attribute alias or the attribute.
-  def attr_alias(name)
-    name = name.intern
-    if synonym = self.class.attr_alias(name)
-      return synonym
-    else
-      return name
-    end
-  end
-
   # Are we deleting this resource?
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
@@ -403,18 +376,18 @@ class Type
   # The name_var is the key_attribute in the case that there is only one.
   #
   def name_var
+    return @name_var_cache unless @name_var_cache.nil?
     key_attributes = self.class.key_attributes
-    (key_attributes.length == 1) && key_attributes.first
+    @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
 
-  # abstract accessing parameters and properties, and normalize
-  # access to always be symbols, not strings
-  # This returns a value, not an object.  It returns the 'is'
-  # value, but you can also specifically return 'is' and 'should'
-  # values using 'object.is(:property)' or 'object.should(:property)'.
+  # abstract accessing parameters and properties, and normalize access to
+  # always be symbols, not strings This returns a value, not an object.
+  # It returns the 'is' value, but you can also specifically return 'is' and
+  # 'should' values using 'object.is(:property)' or
+  # 'object.should(:property)'.
   def [](name)
-    name = attr_alias(name)
-
+    name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
     if name == :name && nv = name_var
@@ -434,7 +407,7 @@ class Type
   # access to always be symbols, not strings.  This sets the 'should'
   # value on properties, and otherwise just sets the appropriate parameter.
   def []=(name,value)
-    name = attr_alias(name)
+    name = name.intern
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
@@ -486,7 +459,7 @@ class Type
 
   # retrieve the 'should' value for a specified property
   def should(name)
-    name = attr_alias(name)
+    name = name.intern
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
@@ -570,7 +543,7 @@ class Type
 
   # Return a specific value for an attribute.
   def value(name)
-    name = attr_alias(name)
+    name = name.intern
 
     (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
   end
@@ -1711,8 +1684,6 @@ class Type
     @parameters = []
     @paramhash = {}
 
-    @attr_aliases = {}
-
     @paramdoc = Hash.new { |hash,key|
       key = key.intern if key.is_a?(String)
       if hash.include?(key)
@@ -1740,6 +1711,9 @@ class Type
     define_method(:validate, &block)
     #@validate = block
   end
+
+  # Origin information.
+  attr_accessor :file, :line
 
   # The catalog that this resource is stored in.
   attr_accessor :catalog
@@ -1878,7 +1852,9 @@ class Type
 
   # Return the "type[name]" style reference.
   def ref
-    "#{self.class.name.to_s.capitalize}[#{self.title}]"
+    # memoizing this is worthwhile ~ 3 percent of calls are the "first time
+    # around" in an average run of Puppet. --daniel 2012-07-17
+    @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
   def self_refresh?

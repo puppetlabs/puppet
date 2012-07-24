@@ -157,7 +157,7 @@ describe Puppet::Resource::TypeCollection do
       end
 
       it "should return nil if the name isn't found" do
-        @code.stubs(:try_load_fqname).returns(nil)
+        @code.loader.stubs(:try_load_fqname).returns(nil)
         @code.find_hostclass("Ns", "Klass").should be_nil
       end
 
@@ -165,6 +165,14 @@ describe Puppet::Resource::TypeCollection do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
         @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
         @code.find_hostclass("foo", "bar").should == :foobar
+      end
+
+      it "should not try to autoload names that we couldn't autoload in a previous step" do
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass").returns(nil)
+        @code.find_hostclass("Ns", "Klass").should be_nil
+
+        @code.find_hostclass("Ns", "Klass").should be_nil
       end
     end
   end

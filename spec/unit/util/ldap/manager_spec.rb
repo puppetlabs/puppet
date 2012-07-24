@@ -158,20 +158,20 @@ describe Puppet::Util::Ldap::Manager do
   end
 
   it "should calculate an instance's dn using the :ldapbase setting and the relative base" do
-    Puppet.settings.expects(:value).with(:ldapbase).returns "dc=testing"
+    Puppet[:ldapbase] = "dc=testing"
     @manager.at "ou=mybase"
     @manager.dn("me").should == "cn=me,ou=mybase,dc=testing"
   end
 
   it "should use the specified rdn when calculating an instance's dn" do
-    Puppet.settings.expects(:value).with(:ldapbase).returns "dc=testing"
+    Puppet[:ldapbase] = "dc=testing"
     @manager.named_by :uid
     @manager.at "ou=mybase"
     @manager.dn("me").should =~ /^uid=me/
   end
 
   it "should calculate its base using the :ldapbase setting and the relative base" do
-    Puppet.settings.expects(:value).with(:ldapbase).returns "dc=testing"
+    Puppet[:ldapbase] = "dc=testing"
     @manager.at "ou=mybase"
     @manager.base.should == "ou=mybase,dc=testing"
   end
@@ -250,76 +250,67 @@ describe Puppet::Util::Ldap::Manager do
     end
 
     it "should fail unless a block is given" do
-      lambda { @manager.connect }.should raise_error(ArgumentError)
+      expect { @manager.connect }.to raise_error(ArgumentError, /must pass a block/)
     end
 
     it "should open the connection with its server set to :ldapserver" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapserver).returns("myserver")
+      Puppet[:ldapserver] = "myserver"
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[0] == "myserver" }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should open the connection with its port set to the :ldapport" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapport).returns("28")
+      Puppet[:ldapport] = "28"
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[1] == "28" }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should open the connection with no user if :ldapuser is not set" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapuser).returns("")
+      Puppet[:ldapuser] = ""
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:user].nil? }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should open the connection with its user set to the :ldapuser if it is set" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapuser).returns("mypass")
+      Puppet[:ldapuser] = "mypass"
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:user] == "mypass" }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should open the connection with no password if :ldappassword is not set" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldappassword).returns("")
+      Puppet[:ldappassword] = ""
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:password].nil? }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should open the connection with its password set to the :ldappassword if it is set" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldappassword).returns("mypass")
+      Puppet[:ldappassword] = "mypass"
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:password] == "mypass" }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should set ssl to :tls if ldaptls is enabled" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldaptls).returns(true)
+      Puppet[:ldaptls] = true
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:ssl] == :tls }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should set ssl to true if ldapssl is enabled" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapssl).returns(true)
+      Puppet[:ldapssl] = true
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:ssl] == true }.returns @conn
 
       @manager.connect { |c| }
     end
 
     it "should set ssl to false if neither ldaptls nor ldapssl is enabled" do
-      Puppet.settings.stubs(:value).returns(false)
-      Puppet.settings.expects(:value).with(:ldapssl).returns(false)
+      Puppet[:ldapssl] = false
       Puppet::Util::Ldap::Connection.expects(:new).with { |*args| args[2][:ssl] == false }.returns @conn
 
       @manager.connect { |c| }

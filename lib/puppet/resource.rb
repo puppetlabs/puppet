@@ -176,6 +176,14 @@ class Puppet::Resource
     end
   end
 
+  def class?
+    @is_class ||= @type == "Class"
+  end
+
+  def stage?
+    @is_stage ||= @type.to_s.downcase == "stage"
+  end
+
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
@@ -190,7 +198,7 @@ class Puppet::Resource
 
     @type = munge_type_name(@type)
 
-    if @type == "Class"
+    if self.class?
       @title = :main if @title == ""
       @title = munge_type_name(@title)
     end
@@ -204,7 +212,7 @@ class Puppet::Resource
 
     @reference = self # for serialization compatibility with 0.25.x
     if strict? and ! resource_type
-      if @type == 'Class'
+      if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
         raise ArgumentError, "Invalid resource type #{type}"
@@ -218,15 +226,15 @@ class Puppet::Resource
 
   # Find our resource.
   def resolve
-    return(catalog ? catalog.resource(to_s) : nil)
+    catalog ? catalog.resource(to_s) : nil
   end
 
   def resource_type
-    case type
+    @rstype ||= case type
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else
-      Puppet::Type.type(type.to_s.downcase.to_sym) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || known_resource_types.definition(type)
     end
   end
 
@@ -248,7 +256,7 @@ class Puppet::Resource
   end
 
   def key_attributes
-    return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
+    resource_type.respond_to?(:key_attributes) ? resource_type.key_attributes : [:name]
   end
 
   # Convert our resource to Puppet code.
@@ -426,11 +434,22 @@ class Puppet::Resource
     if type.respond_to? :title_patterns
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)
-          symbols_and_lambdas.zip(captures[1..-1]).each { |symbol_and_lambda,capture|
-            sym, lam = symbol_and_lambda
-            #self[sym] = lam.call(capture)
-            h[sym] = lam.call(capture)
-          }
+          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
+            symbol, proc = symbol_and_lambda
+            # Many types pass "identity" as the proc; we might as well give
+            # them a shortcut to delivering that without the extra cost.
+            #
+            # Especially because the global type defines title_patterns and
+            # uses the identity patterns.
+            #
+            # This was worth about 8MB of memory allocation saved in my
+            # testing, so is worth the complexity for the API.
+            if proc then
+              h[symbol] = proc.call(capture)
+            else
+              h[symbol] = capture
+            end
+          end
           return h
         end
       }

@@ -24,11 +24,6 @@ require "yaml"
 require "puppet/util/zaml.rb"
 
 class Symbol
-  def to_zaml(z)
-    z.emit("!ruby/sym ")
-    to_s.to_zaml(z)
-  end
-
   def <=> (other)
     self.to_s <=> other.to_s
   end unless method_defined? '<=>'
@@ -112,9 +107,21 @@ end
 
 
 class Symbol
-  def to_proc
-    Proc.new { |*args| args.shift.__send__(self, *args) }
-  end unless method_defined? :to_proc
+  # So, it turns out that one of the biggest memory allocation hot-spots in
+  # our code was using symbol-to-proc - because it allocated a new instance
+  # every time it was called, rather than caching.
+  #
+  # Changing this means we can see XX memory reduction...
+  if method_defined? :to_proc
+    alias __original_to_proc to_proc
+    def to_proc
+      @my_proc ||= __original_to_proc
+    end
+  else
+    def to_proc
+      @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
+    end
+  end
 
   # Defined in 1.9, absent in 1.8, and used for compatibility in various
   # places, typically in third party gems.

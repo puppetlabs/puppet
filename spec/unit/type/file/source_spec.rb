@@ -345,12 +345,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         let(:uri) { "puppet:///path/to/source" }
 
         it "should return the default source server" do
-          Puppet.settings.expects(:[]).with(:server).returns("myserver")
+          Puppet[:server] = "myserver"
           resource.parameter(:source).server.should == "myserver"
         end
 
         it "should return the default source port" do
-          Puppet.settings.expects(:[]).with(:masterport).returns(1234)
+          Puppet[:masterport] = 1234
           resource.parameter(:source).port.should == 1234
         end
       end
