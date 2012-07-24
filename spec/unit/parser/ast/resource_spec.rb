@@ -41,33 +41,6 @@ describe Puppet::Parser::AST::Resource do
       result.should be_include("two")
     end
 
-
-    [5, 5.0, true, false, :three, "foo"].each do |title|
-      it "should stringify the title if it is a #{title.class}" do
-        @instance.title.stubs(:safeevaluate).returns title
-
-        result = @resource.evaluate(@scope).map(&:title)
-        result.first.should == title.to_s
-      end
-    end
-
-    [
-     {:a => 1},
-     /noway/i,
-     Puppet::Resource.new(:notify, "something"),
-     Pathname.new("foo"),
-     (1..50),
-     nil,
-    ].each do |title|
-      it "should fail if the title is a #{title.class}" do
-        @instance.title.stubs(:safeevaluate).returns title
-
-        expect do
-          @resource.evaluate(@scope)
-        end.to raise_error(Puppet::ParseError, /Resource title must be a String, not #{title.class}/)
-      end
-    end
-
     it "should create and return one resource objects per title" do
       titles = []
       %w{one two}.each do |title|
