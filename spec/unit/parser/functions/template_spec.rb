@@ -72,7 +72,7 @@ describe "the template function" do
   it "should handle legacy template variable access correctly" do
     expect {
       eval_template("template <%= deprecated %>")
-    }.to raise_error(Puppet::ParseError, /asdf/)
+    }.to raise_error(Puppet::ParseError)
   end
 
   it "should get values from the scope correctly" do
@@ -88,7 +88,7 @@ describe "the template function" do
     scope['myvar'] = 'this is yayness'
     expect {
       eval_template("<%= lookupvar('myvar') %>")
-    }.to raise_error(Puppet::ParseError, /asdf/)
+    }.to raise_error(Puppet::ParseError)
   end
 
   { "" => "", false => "false", true => "true" }.each do |input, output|

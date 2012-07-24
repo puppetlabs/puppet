@@ -12,7 +12,7 @@ describe Puppet::Interface::OptionBuilder do
     it "should fail when option #{name.inspect} already exists in puppet core" do
       expect do
         Puppet::Interface::OptionBuilder.build(face, "--#{name}")
-      end.should raise_error ArgumentError, /already defined/
+      end.to raise_error ArgumentError, /already defined/
     end
   end
 

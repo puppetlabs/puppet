@@ -8,8 +8,9 @@ describe Puppet::Util::RDoc do
   it "should fail with a clear error without RDoc 1.*" do
     Puppet.features.stubs(:rdoc1?).returns(false)
 
-    expect { Puppet::Util::RDoc.rdoc("output", []) }.
-      should raise_error(/the version of RDoc .* is not supported/)
+    expect {
+      Puppet::Util::RDoc.rdoc("output", [])
+    }.to raise_error(/the version of RDoc .* is not supported/)
   end
 
   describe "when generating RDoc HTML documentation", :if => Puppet.features.rdoc1? do

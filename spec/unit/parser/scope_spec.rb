@@ -68,12 +68,15 @@ describe Puppet::Parser::Scope do
   end
 
   it "should fail if no compiler is supplied" do
-    expect { Puppet::Parser::Scope.new }.to raise_error ArgumentError
+    expect {
+      Puppet::Parser::Scope.new
+    }.to raise_error(ArgumentError, /wrong number of arguments/)
   end
 
   it "should fail if something that isn't a compiler is supplied" do
-    expect { Puppet::Parser::Scope.new(:compiler => true) }.
-      to raise_error Puppet::DevError
+    expect {
+      Puppet::Parser::Scope.new(:compiler => true)
+    }.to raise_error(Puppet::DevError, /you must pass a compiler instance/)
   end
 
   it "should use the resource type collection helper to find its known resource types" do
@@ -92,11 +95,11 @@ describe Puppet::Parser::Scope do
     end
 
     it "should raise NoMethodError if the method doesn't look like a function" do
-      expect { @scope.sprintf(["%b", 123]) }.should raise_error(NoMethodError)
+      expect { @scope.sprintf(["%b", 123]) }.to raise_error(NoMethodError)
     end
 
     it "should raise NoMethodError if the method looks like a function but doesn't exist" do
-      expect { @scope.function_fake_bs(['cows']) }.should raise_error(NoMethodError)
+      expect { @scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
     end
   end
 
@@ -158,7 +161,9 @@ describe Puppet::Parser::Scope do
 
     it "does not allow changing a set value" do
       @scope["var"] = "childval"
-      expect { @scope["var"] = "change" }.should raise_error(Puppet::Error, "Cannot reassign variable var")
+      expect {
+        @scope["var"] = "change"
+      }.to raise_error(Puppet::Error, "Cannot reassign variable var")
     end
 
     it "should be able to detect when variables are not set" do
@@ -260,7 +265,12 @@ describe Puppet::Parser::Scope do
   describe "when variables are set with append=true" do
     it "should raise error if the variable is already defined in this scope" do
       @scope.setvar("var", "1", :append => false)
-      expect { @scope.setvar("var", "1", :append => true) }.should raise_error(Puppet::ParseError, "Cannot append, variable var is defined in this scope")
+      expect {
+        @scope.setvar("var", "1", :append => true)
+      }.to raise_error(
+        Puppet::ParseError,
+        "Cannot append, variable var is defined in this scope"
+      )
     end
 
     it "should lookup current variable value" do
@@ -288,7 +298,13 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when appending a hash with something other than another hash" do
       @topscope.setvar("var", {"a" => "b"}, :append => false)
-      expect { @scope.setvar("var", "not a hash", :append => true) }.should raise_error(ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported")
+
+      expect {
+        @scope.setvar("var", "not a hash", :append => true)
+      }.to raise_error(
+        ArgumentError,
+        "Trying to append to a hash with something which is not a hash is unsupported"
+      )
     end
   end
 
@@ -387,7 +403,9 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when setting it again" do
       @scope.setvar("1", :value2, :ephemeral => true)
-      expect { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
+      expect {
+        @scope.setvar("1", :value3, :ephemeral => true)
+      }.to raise_error(Puppet::ParseError, /Cannot reassign variable 1/)
     end
 
     it "should declare ephemeral number only variable names" do
@@ -474,7 +492,9 @@ describe Puppet::Parser::Scope do
     end
 
     it "should accept only MatchData" do
-      expect { @scope.ephemeral_from("match") }.should raise_error
+      expect {
+        @scope.ephemeral_from("match")
+      }.to raise_error(ArgumentError, /Invalid regex match data/)
     end
 
     it "should set $0 with the full match" do
@@ -519,7 +539,9 @@ describe Puppet::Parser::Scope do
     it "should fail if a default is already defined and a new default is being defined" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param)
-      expect { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
+      expect {
+        @scope.define_settings(:mytype, param)
+      }.to raise_error(Puppet::ParseError, /Default already defined .* cannot redefine/)
     end
 
     it "should return multiple defaults at once" do
