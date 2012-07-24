@@ -286,7 +286,7 @@ describe Puppet::Type, :fails_on_windows => true do
     describe "and passed a TransObject" do
       it "should fail" do
         trans = Puppet::TransObject.new("/foo", :mount)
-        lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
+        expect { Puppet::Type.type(:mount).new(trans) }.to raise_error(Puppet::DevError)
       end
     end
 
@@ -362,7 +362,7 @@ describe Puppet::Type, :fails_on_windows => true do
     end
 
     it "should fail if any invalid attributes have been provided" do
-      lambda { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error)
     end
 
     it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
@@ -372,7 +372,7 @@ describe Puppet::Type, :fails_on_windows => true do
     end
 
     it "should fail if no title, name, or namevar are provided" do
-      lambda { Puppet::Type.type(:file).new(:atboot => true) }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:file).new(:atboot => true) }.to raise_error(Puppet::Error)
     end
 
     it "should set the attributes in the order returned by the class's :allattrs method" do
@@ -485,7 +485,7 @@ describe Puppet::Type, :fails_on_windows => true do
     it "should fail if its provider is unsuitable" do
       @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
       @resource.provider.class.expects(:suitable?).returns false
-      lambda { @resource.retrieve_resource }.should raise_error(Puppet::Error)
+      expect { @resource.retrieve_resource }.to raise_error(Puppet::Error)
     end
 
     it "should return a Puppet::Resource instance with its type and title set appropriately" do
@@ -623,7 +623,7 @@ describe Puppet::Type, :fails_on_windows => true do
         end
       end
 
-      expect { fake_type.instances }.should_not raise_error
+      expect { fake_type.instances }.to_not raise_error
     end
   end
 
@@ -742,7 +742,7 @@ describe Puppet::Type.metaparamclass(:audit) do
   end
 
   it "should fail if asked to audit an invalid property" do
-    lambda { @resource[:audit] = :foobar }.should raise_error(Puppet::Error)
+    expect { @resource[:audit] = :foobar }.to raise_error(Puppet::Error)
   end
 
   it "should create an attribute instance for each auditable property" do

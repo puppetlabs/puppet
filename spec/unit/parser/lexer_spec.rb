@@ -98,7 +98,7 @@ describe Puppet::Parser::Lexer::TokenList do
 
   it "should fail to add tokens sharing a name with an existing token" do
     @list.add_token :name, "whatever"
-    lambda { @list.add_token :name, "whatever" }.should raise_error(ArgumentError)
+    expect { @list.add_token :name, "whatever" }.to raise_error(ArgumentError)
   end
 
   it "should set provided options on tokens being added" do
@@ -633,11 +633,11 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should fail usefully" do
-    lambda { tokens_scanned_from('^') }.should raise_error(RuntimeError)
+    expect { tokens_scanned_from('^') }.to raise_error(RuntimeError)
   end
 
   it "should fail if the string is not set" do
-    lambda { @lexer.fullscan }.should raise_error(Puppet::LexError)
+    expect { @lexer.fullscan }.to raise_error(Puppet::LexError)
   end
 
   it "should correctly identify keywords" do
@@ -662,7 +662,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly parse empty strings" do
-    lambda { tokens_scanned_from('$var = ""') }.should_not raise_error
+    expect { tokens_scanned_from('$var = ""') }.to_not raise_error
   end
 
   it "should correctly parse virtual resources" do
@@ -724,7 +724,7 @@ describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file
-      expect { lexer.fullscan }.should_not raise_error
+      expect { lexer.fullscan }.to_not raise_error
     end
   end
 end

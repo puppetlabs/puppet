@@ -278,6 +278,6 @@ describe 'Puppet::Util::SUIDManager#groups=' do
   it "(#3419) should fail if an Errno::EINVAL is raised NOT on OS X" do
     Process.expects(:groups=).raises(Errno::EINVAL, 'blew up')
     subject.expects(:osx_maj_ver).returns(false)
-    expect { subject.groups = ['list', 'of', 'groups'] }.should raise_error(Errno::EINVAL)
+    expect { subject.groups = ['list', 'of', 'groups'] }.to raise_error(Errno::EINVAL)
   end
 end

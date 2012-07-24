@@ -42,7 +42,7 @@ describe Puppet::Type.type(:file) do
           # REVISIT: This should be wrong, later.  See the next test.
           # --daniel 2011-01-31
           file[:path].should == '/tmp/xxx'
-        }.should_not raise_error
+        }.to_not raise_error
       end
 
       # REVISIT: This is pending, because I don't want to try and audit the
@@ -76,7 +76,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should not accept a drive letter without a slash", :'fails_on_ruby_1.9.2' => true do
-        lambda { file[:path] = "X:" }.should raise_error(/File paths must be fully qualified/)
+        expect { file[:path] = "X:" }.to raise_error(/File paths must be fully qualified/)
       end
 
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows?, :'fails_on_ruby_1.9.2' => true do
@@ -1142,7 +1142,7 @@ describe Puppet::Type.type(:file) do
       property = stub('content_property', :actual_content => "something", :length => "something".length)
       file.stubs(:property).with(:content).returns(property)
 
-      lambda { file.write(:content) }.should raise_error(Puppet::Error)
+      expect { file.write(:content) }.to raise_error(Puppet::Error)
     end
 
     it "should delegate writing to the content property" do
@@ -1170,7 +1170,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        lambda { file.write :NOTUSED }.should raise_error(Puppet::Error)
+        expect { file.write :NOTUSED }.to raise_error(Puppet::Error)
       end
     end
 
@@ -1184,7 +1184,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        lambda { file.write :NOTUSED }.should_not raise_error(Puppet::Error)
+        expect { file.write :NOTUSED }.to_not raise_error(Puppet::Error)
       end
     end
   end
@@ -1429,7 +1429,7 @@ describe Puppet::Type.type(:file) do
 
         it 'should validate' do
 
-          lambda { file.validate }.should_not raise_error
+          expect { file.validate }.to_not raise_error
         end
       end
     end
@@ -1440,7 +1440,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it 'should raise an exception when validating' do
-        lambda { file.validate }.should raise_error(/You cannot specify source when using checksum 'none'/)
+        expect { file.validate }.to raise_error(/You cannot specify source when using checksum 'none'/)
       end
     end
   end
@@ -1457,7 +1457,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'should validate' do
-          lambda { file.validate }.should_not raise_error
+          expect { file.validate }.to_not raise_error
         end
       end
     end
@@ -1467,7 +1467,7 @@ describe Puppet::Type.type(:file) do
         it 'should raise an exception when validating' do
           file[:checksum] = checksum_type
 
-          lambda { file.validate }.should raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
+          expect { file.validate }.to raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
         end
       end
     end
