@@ -5,10 +5,10 @@ GEM
     facter (1.6.10)
     hiera (0.3.0)
     metaclass (0.0.1)
-    mocha (0.12.0)
+    mocha (0.10.5)
       metaclass (~> 0.0.1)
     multi_json (1.3.6)
-    rack (1.4.1)
+    rack (1.2.5)
     rspec (2.10.0)
       rspec-core (~> 2.10.0)
       rspec-expectations (~> 2.10.0)
@@ -28,7 +28,7 @@ PLATFORMS
 DEPENDENCIES
   facter
   hiera
-  mocha
-  rack
+  mocha (~> 0.10.0)
+  rack (~> 1.2.0)
   rspec (~> 2.10.0)
   simplecov
