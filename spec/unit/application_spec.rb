@@ -105,7 +105,7 @@ describe Puppet::Application do
 
         Puppet[:run_mode].should == :master
 
-      }.should_not raise_error
+      }.to_not raise_error
 
     end
   end
@@ -447,7 +447,7 @@ describe Puppet::Application do
     it "should not fail if the route file doesn't exist" do
       Puppet[:route_file] = "/dev/null/non-existent"
 
-      expect { @app.configure_indirector_routes }.should_not raise_error
+      expect { @app.configure_indirector_routes }.to_not raise_error
     end
 
     it "should raise an error if the routes file is invalid" do
@@ -458,7 +458,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.should raise_error
+      expect { @app.configure_indirector_routes }.to raise_error
     end
   end
 
@@ -554,7 +554,7 @@ describe Puppet::Application do
             raise "I can't believe it, it works!"
           end
 
-          lambda { @app.handle_test2 }.should raise_error
+          expect { @app.handle_test2 }.to raise_error
         end
 
         it "should declare the option to OptionParser" do

@@ -26,7 +26,7 @@ describe Puppet::Network::Server do
     describe "when listening" do
       it "should be reachable on the specified address and port" do
         @server.listen
-        expect { Net::HTTP.get('127.0.0.1', '/', port) }.should_not raise_error
+        expect { Net::HTTP.get('127.0.0.1', '/', port) }.to_not raise_error
       end
 
       it "should default to '127.0.0.1' as its bind address" do
@@ -47,7 +47,7 @@ describe Puppet::Network::Server do
       it "should not allow multiple servers to listen on the same address and port" do
         @server.listen
         @server2 = Puppet::Network::Server.new(@params)
-        lambda { @server2.listen }.should raise_error
+        expect { @server2.listen }.to raise_error
       end
     end
 
@@ -55,8 +55,9 @@ describe Puppet::Network::Server do
       it "should not be reachable on the port and address assigned" do
         @server.listen
         @server.unlisten
-        expect { Net::HTTP.get('127.0.0.1', '/', port) }.
-          should raise_error Errno::ECONNREFUSED
+        expect {
+          Net::HTTP.get('127.0.0.1', '/', port)
+        }.to raise_error Errno::ECONNREFUSED
       end
     end
   end

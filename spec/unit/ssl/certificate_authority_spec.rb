@@ -367,14 +367,15 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if no CSR can be found for the host" do
         Puppet::SSL::CertificateRequest.indirection.expects(:find).with(@name).returns nil
 
-        lambda { @ca.sign(@name) }.should raise_error(ArgumentError)
+        expect { @ca.sign(@name) }.to raise_error(ArgumentError)
       end
 
       it "should fail if an unknown request extension is present" do
         @request.stubs :request_extensions => [{ "oid"   => "bananas",
                                                  "value" => "delicious" }]
-        expect { @ca.sign(@name) }.
-          should raise_error(/CSR has request extensions that are not permitted/)
+        expect {
+          @ca.sign(@name)
+        }.to raise_error(/CSR has request extensions that are not permitted/)
       end
 
       it "should fail if the CSR contains alt names and they are not expected" do
@@ -387,7 +388,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should not fail if the CSR does not contain alt names and they are expected" do
         @request.stubs(:subject_alt_names).returns []
-        expect { @ca.sign(@name, true) }.should_not raise_error
+        expect { @ca.sign(@name, true) }.to_not raise_error
       end
 
       it "should reject alt names by default" do
@@ -704,7 +705,7 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "when applying a method to a set of hosts" do
       it "should fail if no subjects have been specified" do
-        lambda { @ca.apply(:generate) }.should raise_error(ArgumentError)
+        expect { @ca.apply(:generate) }.to raise_error(ArgumentError)
       end
 
       it "should create an Interface instance with the specified method and the options" do
@@ -768,7 +769,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should raise an error if the certificate or CSR cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
         Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myhost").returns nil
-        lambda { @ca.fingerprint("myhost") }.should raise_error
+        expect { @ca.fingerprint("myhost") }.to raise_error
       end
 
       it "should try to find a CSR if no certificate can be found" do
@@ -807,7 +808,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if the host's certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("me").returns(nil)
 
-        lambda { @ca.verify("me") }.should raise_error(ArgumentError)
+        expect { @ca.verify("me") }.to raise_error(ArgumentError)
       end
 
       it "should create an SSL Store to verify" do
@@ -855,7 +856,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         @store.expects(:verify).with("mycert").returns false
 
-        lambda { @ca.verify("me") }.should raise_error
+        expect { @ca.verify("me") }.to raise_error
       end
     end
 
@@ -875,7 +876,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if the certificate revocation list is disabled" do
         @ca.stubs(:crl).returns false
 
-        lambda { @ca.revoke('ca_testing') }.should raise_error(ArgumentError)
+        expect { @ca.revoke('ca_testing') }.to raise_error(ArgumentError)
 
       end
 
@@ -921,7 +922,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if a certificate already exists for the host" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("him").returns "something"
 
-        lambda { @ca.generate("him") }.should raise_error(ArgumentError)
+        expect { @ca.generate("him") }.to raise_error(ArgumentError)
       end
 
       it "should create a new Host instance with the correct name" do

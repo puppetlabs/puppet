@@ -20,7 +20,7 @@ describe Puppet::Resource do
   end
 
   it "should require the type and title" do
-    lambda { Puppet::Resource.new }.should raise_error(ArgumentError)
+    expect { Puppet::Resource.new }.to raise_error(ArgumentError)
   end
 
   it "should canonize types to capitalized strings" do
@@ -93,15 +93,15 @@ describe Puppet::Resource do
 
 
   it "should fail if the title is nil and the type is not a valid resource reference string" do
-    expect { Puppet::Resource.new("resource-spec-foo") }.should raise_error(ArgumentError)
+    expect { Puppet::Resource.new("resource-spec-foo") }.to raise_error(ArgumentError)
   end
 
   it 'should fail if strict is set and type does not exist' do
-    expect { Puppet::Resource.new('resource-spec-foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type resource-spec-foo')
+    expect { Puppet::Resource.new('resource-spec-foo', 'title', {:strict=>true}) }.to raise_error(ArgumentError, 'Invalid resource type resource-spec-foo')
   end
 
   it 'should fail if strict is set and class does not exist' do
-    expect { Puppet::Resource.new('Class', 'resource-spec-foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class resource-spec-foo')
+    expect { Puppet::Resource.new('Class', 'resource-spec-foo', {:strict=>true}) }.to raise_error(ArgumentError, 'Could not find declared class resource-spec-foo')
   end
 
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
@@ -406,11 +406,11 @@ describe Puppet::Resource do
     end
 
     it "should fail if invalid parameters are used" do
-      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.should raise_error
+      expect { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.to raise_error
     end
 
     it "should fail if the resource type cannot be resolved" do
-      expect { Puppet::Resource.new("nosuchtype", "/path", :strict => true) }.should raise_error
+      expect { Puppet::Resource.new("nosuchtype", "/path", :strict => true) }.to raise_error
     end
   end
 
@@ -475,7 +475,7 @@ describe Puppet::Resource do
     it "should be able to set the name for non-builtin types" do
       resource = Puppet::Resource.new(:foo, "bar")
       resource[:name] = "eh"
-      expect { resource[:name] = "eh" }.should_not raise_error
+      expect { resource[:name] = "eh" }.to_not raise_error
     end
 
     it "should be able to return the name for non-builtin types" do
@@ -567,7 +567,7 @@ describe Puppet::Resource do
     end
 
     it "should be able to be dumped to yaml" do
-      proc { YAML.dump(@resource) }.should_not raise_error
+      expect { YAML.dump(@resource) }.to_not raise_error
     end
 
     it "should produce an equivalent yaml object" do
@@ -592,7 +592,7 @@ type: File
     end
 
     it "should deserialize a Puppet::Resource::Reference without exceptions" do
-      expect { YAML.load(@old_storedconfig_yaml) }.should_not raise_error
+      expect { YAML.load(@old_storedconfig_yaml) }.to_not raise_error
     end
 
     it "should deserialize as a Puppet::Resource::Reference as a Puppet::Resource" do
@@ -770,12 +770,12 @@ type: File
 
     it "should fail if no title is provided" do
       @data.delete('title')
-      expect { Puppet::Resource.from_pson(@data) }.should raise_error(ArgumentError)
+      expect { Puppet::Resource.from_pson(@data) }.to raise_error(ArgumentError)
     end
 
     it "should fail if no type is provided" do
       @data.delete('type')
-      expect { Puppet::Resource.from_pson(@data) }.should raise_error(ArgumentError)
+      expect { Puppet::Resource.from_pson(@data) }.to raise_error(ArgumentError)
     end
 
     it "should set each of the provided parameters" do

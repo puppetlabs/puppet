@@ -353,7 +353,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
         else
           raise "#{action} has arity #{subject.method(action).arity}"
         end
-      }.should raise_error(/Not a CA/)
+      }.to raise_error(/Not a CA/)
     end
   end
 end

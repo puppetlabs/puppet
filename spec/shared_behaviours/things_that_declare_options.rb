@@ -52,7 +52,7 @@ shared_examples_for "things that declare options" do
         option "--foo"
         option "--foo"
       end
-    }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
+    }.to raise_error ArgumentError, /Option foo conflicts with existing option foo/i
   end
 
   it "should detect conflicts in short options" do
@@ -61,7 +61,7 @@ shared_examples_for "things that declare options" do
         option "-f"
         option "-f"
       end
-    }.should raise_error ArgumentError, /Option f conflicts with existing option f/
+    }.to raise_error ArgumentError, /Option f conflicts with existing option f/
   end
 
   ["-f", "--foo"].each do |option|
@@ -72,7 +72,7 @@ shared_examples_for "things that declare options" do
           add_options_to do
             option input, input
           end
-        }.should raise_error ArgumentError, /duplicates existing alias/
+        }.to raise_error ArgumentError, /duplicates existing alias/
       end
     end
   end
@@ -90,13 +90,13 @@ shared_examples_for "things that declare options" do
           option *base
           option *conflict
         end
-      }.should raise_error ArgumentError, /conflicts with existing option/
+      }.to raise_error ArgumentError, /conflicts with existing option/
     end
   end
 
   it "should fail if we are not consistent about taking an argument" do
     expect { add_options_to do option "--foo=bar", "--bar" end }.
-      should raise_error ArgumentError, /inconsistent about taking an argument/
+      to raise_error ArgumentError, /inconsistent about taking an argument/
   end
 
   it "should not accept optional arguments" do
