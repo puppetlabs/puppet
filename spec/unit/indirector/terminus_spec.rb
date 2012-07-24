@@ -57,8 +57,9 @@ describe Puppet::Indirector::Terminus do
   end
 
   it "should fail when provided a name that does not resolve to an indirection" do
-    expect { terminus_class.indirection = :exploding_whales }.
-      should raise_error(ArgumentError)
+    expect {
+      terminus_class.indirection = :exploding_whales
+    }.to raise_error(ArgumentError, /Could not find indirection instance/)
 
     # We should still have the default indirection.
     terminus_class.indirection.should equal indirection
@@ -111,7 +112,7 @@ describe Puppet::Indirector::Terminus do
       expect {
         class Puppet::AbstractConcept::Physics < Puppet::Indirector::Code
         end
-      }.should raise_error(ArgumentError)
+      }.to raise_error(ArgumentError, /Could not find indirection instance/)
     end
 
     it "should register the terminus class with the terminus base class" do
@@ -141,8 +142,9 @@ describe Puppet::Indirector::Terminus do
     end
 
     it "should fail when anonymous classes are used" do
-      expect { Puppet::Indirector::Terminus.inherited(Class.new) }.
-        should raise_error(Puppet::DevError)
+      expect {
+        Puppet::Indirector::Terminus.inherited(Class.new)
+      }.to raise_error(Puppet::DevError, /Terminus subclasses must have associated constants/)
     end
 
     it "should use the last term in the constant for the terminus class name" do
@@ -204,7 +206,7 @@ describe Puppet::Indirector::Terminus do
     end
 
     it "should not allow instances of abstract subclasses to be created" do
-      expect { subclass.new }.should raise_error(Puppet::DevError)
+      expect { subclass.new }.to raise_error(Puppet::DevError)
     end
   end
 
