@@ -43,6 +43,7 @@ start() {
     daemon $daemonopts "nohup $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --no-daemonize >/dev/null 2>&1 & echo \$! > $pidfile"
     RETVAL=$?
     echo
+    return $RETVAL
 }
 
 stop() {
@@ -51,6 +52,7 @@ stop() {
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${pidfile}
+    return $RETVAL
 }
 
 reload() {
