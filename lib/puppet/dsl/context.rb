@@ -45,6 +45,14 @@ module Puppet
         is_resource_type? name
       end
 
+      def self.current_scope
+        @@scope
+      end
+
+      def self.known_resource_types
+        @@known_resource_types
+      end
+
       ##
       # Returns type reference. A fallback method for obtaining type references
       # for Ruby 1.8 users.
@@ -68,11 +76,13 @@ module Puppet
       # Method is called when evaluating resource types.
       # It executes ruby code in context of current scope.
       ##
-      def evaluate(scope)
-        ::Puppet::DSL::Parser.add_scope scope
+      def evaluate(scope, known_resource_types = nil)
+        @@scope = scope
+        @@known_resource_types = known_resource types || scope.known_resource_types
         instance_eval &@code
       ensure
-        ::Puppet::DSL::Parser.remove_scope
+        @@known_resource_types = nil
+        @@scope = nil
       end
 
       ##
@@ -136,7 +146,7 @@ module Puppet
         name = name.to_s unless name.is_a? ::Regexp
         node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block
-        ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_node node
+        ::Puppet::DSL::Context.known_resource_types.add_node node
       end
 
       ##
@@ -175,7 +185,7 @@ module Puppet
         hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
         hostclass.ruby_code = ::Puppet::DSL::Context.new block
 
-        ::Puppet::DSL::Parser.current_scope.compiler.known_resource_types.add_hostclass hostclass
+        ::Puppet::DSL::Context.known_resource_types.add_hostclass hostclass
       end
 
       ##
@@ -209,7 +219,7 @@ module Puppet
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
         definition.ruby_code = ::Puppet::DSL::Context.new block
-        ::Puppet::DSL::Parser.top_scope.known_resource_types.add_definition definition
+        ::Puppet::DSL::Context.known_resource_types.add_definition definition
       end
 
       ##
@@ -291,7 +301,7 @@ module Puppet
       # Returns current scope for access for variables
       ##
       def params
-        ::Puppet::DSL::Parser.current_scope
+        ::Puppet::DSL::Context.current_scope
       end
 
       ##
@@ -319,7 +329,7 @@ module Puppet
         ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
         ::Puppet::Util.symbolizehash! options
 
-        scope = ::Puppet::DSL::Parser.current_scope
+        scope = ::Puppet::DSL::Context.current_scope
         ::Kernel::Array(args).map do |name|
           ##
           # Implementation based on
@@ -366,7 +376,7 @@ module Puppet
       ##
       def call_function(name, *args)
         raise ::NoMethodError unless valid_function? name
-        ::Puppet::DSL::Parser.current_scope.send name, args
+        ::Puppet::DSL::Context.current_scope.send name, args
       end
 
       ##

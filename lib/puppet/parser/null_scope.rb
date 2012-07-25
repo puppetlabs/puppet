@@ -16,8 +16,12 @@ module Puppet
     end
 
     class NullScope
-      def initialize(*)
-        # do nothing
+      def initialize(resource_types)
+        @resource_types = resource_types
+      end
+
+      def known_resource_types
+        @resource_types
       end
 
       def method_missing(*)

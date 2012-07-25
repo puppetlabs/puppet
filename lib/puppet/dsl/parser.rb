@@ -33,43 +33,6 @@ module Puppet
         @main.ruby_code = Context.new(@code)
       end
 
-      ##
-      # Returns the top level scope.
-      ##
-      def self.top_scope
-        @@frames.first
-      end
-
-      ##
-      # Returns the current scope.
-      ##
-      def self.current_scope
-        @@frames.last
-      end
-
-      ##
-      # Pushes a new scope on a stack.
-      ##
-      def self.add_scope(scope)
-        @@frames.push scope
-      end
-
-      ##
-      # Pops a scope from the stack.
-      # It'll raise RuntimeError if the stack is already empty.
-      ##
-      def self.remove_scope
-        @@frames.pop
-      end
-
-      ##
-      # Checks whether nesting for creating definitions, nodes and hostclasses
-      # is valid. These resources can be only created in the top level scope.
-      ##
-      def self.valid_nesting?
-        Parser.top_scope == Parser.current_scope
-      end
-
     end
   end
 end
