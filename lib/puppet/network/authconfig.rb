@@ -115,6 +115,7 @@ module Puppet
       rescue Errno::ENOENT => detail
         Puppet.err "Configuration error: '#{@file}' does not exit; cannot serve"
       end
+      #TODO this should fail hard
 
       # Verify each of the rights are valid.
       # We let the check raise an error, so that it can raise an error

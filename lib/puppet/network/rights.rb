@@ -70,7 +70,7 @@ class Rights
     # if we end here, then that means we either didn't match
     # or failed, in any case will throw an error to the outside world
     if name =~ /^\// or right
-      # we're a patch ACL, let's fail
+      # we're a path ACL, let's fail
       msg = "#{(args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})")} access to #{name} [#{args[:method]}]"
 
       msg += " authenticated " if args[:authenticated]
@@ -186,9 +186,15 @@ class Rights
     # then return :dunno so that upper layers have a chance to try another right
     # tailored to the given method
     def allowed?(name, ip, args = {})
-      return :dunno if acl_type == :regex and not @methods.include?(args[:method])
-      return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(args[:environment])
-      return :dunno if acl_type == :regex and (@authentication and not args[:authenticated])
+      if regex?
+        if not @methods.include?(args[:method])
+          return :dunno
+        elsif @environment.size > 0 and not @environment.include?(args[:environment])
+          return :dunno
+        elsif (@authentication and not args[:authenticated])
+          return :dunno
+        end
+      end
 
       begin
         # make sure any capture are replaced if needed
