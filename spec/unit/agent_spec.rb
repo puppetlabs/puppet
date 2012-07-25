@@ -167,8 +167,8 @@ describe Puppet::Agent do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client
 
-      client.expects(:run).with("testargs")
-      @agent.run("testargs")
+      client.expects(:run).with(:pluginsync => true, :other => :options)
+      @agent.run(:other => :options)
     end
 
     it "should return the agent result" do
