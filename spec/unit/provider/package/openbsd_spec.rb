@@ -32,7 +32,7 @@ describe provider_class do
     end
 
     it "should return all packages when invoked" do
-      fixture = File.new(my_fixture('pkginfo.list'))
+      fixture = File.read(my_fixture('pkginfo.list'))
       subject.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
       subject.instances.map(&:name).sort.should ==
         %w{bash bzip2 expat gettext libiconv lzo openvpn python vim wget}.sort
@@ -86,7 +86,7 @@ describe provider_class do
     end
 
     it "should return the package version if in the output" do
-      fixture = File.new(my_fixture('pkginfo.list'))
+      fixture = File.open(my_fixture('pkginfo.list'))
       provider = subject.new(package(:name => 'bash'))
       provider.expects(:execpipe).with(%w{/bin/pkg_info -I bash}).yields(fixture)
       provider.get_version.should == '3.1.17'
