@@ -1,18 +1,18 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-require 'puppet/network/rest_authconfig'
+require 'puppet/network/authconfig'
 
-describe Puppet::Network::RestAuthConfig do
+describe Puppet::Network::AuthConfig do
 
-  DEFAULT_ACL = Puppet::Network::RestAuthConfig::DEFAULT_ACL
+  DEFAULT_ACL = Puppet::Network::AuthConfig::DEFAULT_ACL
 
   before :each do
     FileTest.stubs(:exists?).returns(true)
     File.stubs(:stat).returns(stub('stat', :ctime => :now))
     Time.stubs(:now).returns Time.now
 
-    @authconfig = Puppet::Network::RestAuthConfig.new("dummy", false)
+    @authconfig = Puppet::Network::AuthConfig.new("dummy", false)
     @authconfig.stubs(:read)
 
     @acl = stub_everything 'rights'
@@ -23,7 +23,7 @@ describe Puppet::Network::RestAuthConfig do
     file = File.expand_path("dummy")
     Puppet[:rest_authconfig] = file
 
-    Puppet::Network::RestAuthConfig.new(nil, false).file.should == file
+    Puppet::Network::AuthConfig.new(nil, false).file.should == file
   end
 
   it "should ask for authorization to the ACL subsystem" do
@@ -61,7 +61,7 @@ describe Puppet::Network::RestAuthConfig do
 
       @authconfig.expects(:insert_default_acl)
 
-      @authconfig.parse
+      @authconfig.send :parse
     end
   end
 
@@ -86,11 +86,11 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should create default ACL entries if no file have been read" do
-    Puppet::Network::RestAuthConfig.any_instance.stubs(:exists?).returns(false)
+    Puppet::Network::AuthConfig.any_instance.stubs(:exists?).returns(false)
 
-    Puppet::Network::RestAuthConfig.any_instance.expects(:insert_default_acl)
+    Puppet::Network::AuthConfig.any_instance.expects(:insert_default_acl)
 
-    Puppet::Network::RestAuthConfig.main
+    Puppet::Network::AuthConfig.main
   end
 
   describe "when adding default ACLs" do

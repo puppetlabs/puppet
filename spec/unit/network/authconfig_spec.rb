@@ -9,10 +9,10 @@ describe Puppet::Network::AuthConfig do
     Puppet::Network::Rights.stubs(:new).returns(@rights)
     @rights.stubs(:each).returns([])
 
-    FileTest.stubs(:exists?).returns(true)
     File.stubs(:stat).returns(stub('stat', :ctime => :now))
     Time.stubs(:now).returns Time.now
 
+    Puppet::Network::AuthConfig.any_instance.stubs(:exists?).returns(true)
     @authconfig = Puppet::Network::AuthConfig.new("dummy", false)
   end
 
@@ -23,7 +23,7 @@ describe Puppet::Network::AuthConfig do
 
     it "should use the authconfig default pathname if none provided" do
       path = File.expand_path('/tmp/authconfig_dummy')
-      Puppet[:authconfig] = path
+      Puppet[:rest_authconfig] = path
 
       Puppet::Network::AuthConfig.new.file.should == path
     end
@@ -42,6 +42,7 @@ describe Puppet::Network::AuthConfig do
       File.stubs(:open).yields(@fd)
       @rights.stubs(:include?).returns(false)
       @rights.stubs(:[])
+      @authconfig.stubs(:insert_default_acl)
     end
 
     it "should skip comments" do

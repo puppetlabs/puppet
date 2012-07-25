@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-require 'puppet/network/rest_authconfig'
+require 'puppet/network/authconfig'
 
 RSpec::Matchers.define :allow do |params|
 
@@ -22,7 +22,7 @@ RSpec::Matchers.define :allow do |params|
   end
 end
 
-describe Puppet::Network::RestAuthConfig do
+describe Puppet::Network::AuthConfig do
   include PuppetSpec::Files
 
   before(:each) do
@@ -33,14 +33,14 @@ describe Puppet::Network::RestAuthConfig do
     File.open(Puppet[:rest_authconfig],"w+") do |f|
       f.print "path /test\n#{rule}\n"
     end
-    @auth = Puppet::Network::RestAuthConfig.new(Puppet[:rest_authconfig], true)
+    @auth = Puppet::Network::AuthConfig.new(Puppet[:rest_authconfig], true)
   end
 
   def add_regex_rule(regex, rule)
     File.open(Puppet[:rest_authconfig],"w+") do |f|
       f.print "path ~ #{regex}\n#{rule}\n"
     end
-    @auth = Puppet::Network::RestAuthConfig.new(Puppet[:rest_authconfig], true)
+    @auth = Puppet::Network::AuthConfig.new(Puppet[:rest_authconfig], true)
   end
 
   def request(args = {})
