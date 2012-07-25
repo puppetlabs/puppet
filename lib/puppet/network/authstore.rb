@@ -11,18 +11,6 @@ module Puppet
   class Network::AuthStore
     include Puppet::Util::Logging
 
-    # Mark a given pattern as allowed.
-    def allow(pattern)
-      # a simple way to allow anyone at all to connect
-      if pattern == "*"
-        @globalallow = true
-      else
-        store(:allow, pattern)
-      end
-
-      nil
-    end
-
     # Is a given combination of name and ip address allowed?  If either input
     # is non-nil, then both inputs must be provided.  If neither input
     # is provided, then the authstore is considered local and defaults to "true".
@@ -49,9 +37,29 @@ module Puppet
       false
     end
 
+    # Mark a given pattern as allowed.
+    def allow(pattern)
+      # a simple way to allow anyone at all to connect
+      if pattern == "*"
+        @globalallow = true
+      else
+        store(:allow, pattern)
+      end
+
+      nil
+    end
+
+    def allow_ip(pattern)
+      store(:allow_ip, pattern)
+    end
+
     # Deny a given pattern.
     def deny(pattern)
       store(:deny, pattern)
+    end
+
+    def deny_ip(pattern)
+      store(:deny_ip, pattern)
     end
 
     # Is global allow enabled?
@@ -109,8 +117,8 @@ module Puppet
 
       # The type of declaration: either :allow or :deny
       attr_reader :type
+      VALID_TYPES = [ :allow, :deny, :allow_ip, :deny_ip ]
 
-      # The name: :ip or :domain
       attr_accessor :name
 
       # The pattern we're matching against.  Can be an IPAddr instance,
@@ -164,13 +172,17 @@ module Puppet
 
       # Set the pattern appropriately.  Also sets the name and length.
       def pattern=(pattern)
-        parse(pattern)
+        if [:allow_ip, :deny_ip].include?(self.type)
+          parse_ip(pattern)
+        else
+          parse(pattern)
+        end
         @orig = pattern
       end
 
       # Mapping a type of statement into a return value.
       def result
-        type == :allow
+        [:allow, :allow_ip].include?(type)
       end
 
       def to_s
@@ -180,7 +192,7 @@ module Puppet
       # Set the declaration type.  Either :allow or :deny.
       def type=(type)
         type = type.intern
-        raise ArgumentError, "Invalid declaration type #{type}" unless [:allow, :deny].include?(type)
+        raise ArgumentError, "Invalid declaration type #{type}" unless VALID_TYPES.include?(type)
         @type = type
       end
 
@@ -235,16 +247,25 @@ module Puppet
       #     IP = "#{IPv4}|#{IPv6_full}|(#{IPv6_partial}#{IPv4})".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
       # but ruby's ipaddr lib doesn't support the hybrid format
       IP = "#{IPv4}|#{IPv6_full}".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
-      def parse(value)
-        @name,@exact,@length,@pattern = *case value
+
+      def parse_ip(value)
+        @name = :ip
+        @exact, @length, @pattern = *case value
         when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
-          [:ip,:inexact,$1.to_i,IPAddr.new(value)]
+          [:inexact, $1.to_i, IPAddr.new(value)]
         when /^(#{IP})$/                                          # 10.20.30.40,
-          [:ip,:exact,nil,IPAddr.new(value)]
+          [:exact, nil, IPAddr.new(value)]
         when /^(#{Octet}\.){1,3}\*$/                              # an ip address with a '*' at the end
           segments = value.split(".")[0..-2]
           bits = 8*segments.length
-          [:ip,:inexact,bits,IPAddr.new((segments+[0,0,0])[0,4].join(".") + "/#{bits}")]
+          [:inexact, bits, IPAddr.new((segments+[0,0,0])[0,4].join(".") + "/#{bits}")]
+        else
+          raise AuthStoreError, "Invalid IP pattern #{value}"
+        end
+      end
+
+      def parse(value)
+        @name,@exact,@length,@pattern = *case value
         when /^(\w[-\w]*\.)+[-\w]+$/                              # a full hostname
           # Change to /^(\w[-\w]*\.)+[-\w]+\.?$/ for FQDN support
           [:domain,:exact,nil,munge_name(value)]

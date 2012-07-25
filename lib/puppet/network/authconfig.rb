@@ -152,7 +152,7 @@ module Puppet
             when /^path\s+((?:~\s+)?[^ ]+)\s*$/ # "path /path" or "path ~ regex"
               name = $1.chomp
               right = newrights.newright(name, count, @file)
-            when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
+            when /^\s*(allow(?:_ip)?|deny(?:_ip)?|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
               parse_right_directive(right, $1, $2, count)
             else
               raise ConfigurationError, "Invalid line #{count}: #{line}"
@@ -184,6 +184,10 @@ module Puppet
         modify_right(right, :allow, value, "allowing %s access", count)
       when "deny"
         modify_right(right, :deny, value, "denying %s access", count)
+      when "allow_ip"
+        modify_right(right, :allow_ip, value, "allowing IP %s access", count)
+      when "deny_ip"
+        modify_right(right, :deny_ip, value, "denying IP %s access", count)
       when "method"
         modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
       when "environment"
