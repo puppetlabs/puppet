@@ -121,7 +121,7 @@ The long version
       If you're going to refactor a piece of code, please do so as a
       separate commit from your feature or bug fix changes.
 
-      It's crucial that your changes includ tests to make
+      It's crucial that your changes include tests to make
       sure the bug isn't re-introduced, and that the feature isn't
       accidentally broken.
 
@@ -196,21 +196,12 @@ The long version
 How to track the status of your change after it's been submitted
 ================================================================
 
-Shortly after opening a pull request on GitHub, there should be an
-automatic message sent to the puppet-dev Google Groups mailing list
-notifying people of this.  This notification is used to let the Puppet
+Shortly after opening a pull request, there should be an automatic 
+email sent via GitHub. This notification is used to let the Puppet
 development community know about your requested change to give them a
 chance to review, test, and comment on the change(s).
 
-If you submitted your change via manually sending a pull request or
-mailing the patches, then we keep track of these using
-[patchwork](https://patchwork.puppetlabs.com).  When code is merged
-into the project it is automatically removed from patchwork, and the
-Redmine ticket is manually updated with the commit SHA1.  In addition,
-the ticket status must be updated by the person who merges the topic
-branch to a status of "Merged - Pending Release"
-
-We do our best to comment on or merge submitted changes within a week.
+We do our best to comment on or merge submitted changes within a about week.
 However, if there hasn't been any commentary on the pull request or
 mailed patches, and it hasn't been merged in after a week, then feel
 free to ask for an update by replying on the mailing list to the
