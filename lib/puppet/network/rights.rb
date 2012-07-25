@@ -67,24 +67,21 @@ class Rights
       found
     end
 
-    # if we end here, then that means we either didn't match
-    # or failed, in any case will throw an error to the outside world
-    if name =~ /^\// or right
-      # we're a path ACL, let's fail
-      msg = "#{(args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})")} access to #{name} [#{args[:method]}]"
+    # if we end here, then that means we either didn't match or failed, in any
+    # case will return an error to the outside world
+    host_description = args[:node] ? "#{args[:node]}(#{args[:ip]})" : args[:ip]
 
-      msg += " authenticated " if args[:authenticated]
-      if right
-        msg += " at #{right.file}:#{right.line}"
-      end
+    msg = "#{host_description} access to #{name} [#{args[:method]}]"
 
-      error = AuthorizationError.new("Forbidden request: #{msg}")
-    else
-      # there were no rights allowing/denying name
-      # if name is not a path, let's throw
-      raise ArgumentError, "Unknown namespace right '#{name}'"
+    if args[:authenticated]
+      msg += " authenticated "
     end
-    error
+
+    if right
+      msg += " at #{right.file}:#{right.line}"
+    end
+
+    AuthorizationError.new("Forbidden request: #{msg}")
   end
 
   def initialize
@@ -111,16 +108,8 @@ class Rights
   private
 
   def add_right(right)
-    if right.acl_type == :name and include?(right.key)
-      raise ArgumentError, "Right '%s' already exists"
-    end
     @rights << right
-    sort_rights
     right
-  end
-
-  def sort_rights
-    @rights.sort!
   end
 
   # Retrieve a right by name.
@@ -130,7 +119,7 @@ class Rights
 
   # A right.
   class Right < Puppet::Network::AuthStore
-    attr_accessor :name, :key, :acl_type
+    attr_accessor :name, :key
     attr_accessor :methods, :environment, :authentication
     attr_accessor :line, :file
 
@@ -145,26 +134,18 @@ class Rights
       @name = name
       @line = line || 0
       @file = file
+      @methods = ALL
 
       case name
-      when Symbol
-        @acl_type = :name
-        @key = name
-      when /^\[(.+)\]$/
-        @acl_type = :name
-        @key = $1.intern if name.is_a?(String)
       when /^\//
-        @acl_type = :regex
         @key = Regexp.new("^" + Regexp.escape(name))
-        @methods = ALL
       when /^~/ # this is a regex
-        @acl_type = :regex
         @name = name.gsub(/^~\s+/,'')
         @key = Regexp.new(@name)
-        @methods = ALL
       else
         raise ArgumentError, "Unknown right type '#{name}'"
       end
+
       super()
     end
 
@@ -177,31 +158,25 @@ class Rights
       true
     end
 
-    def regex?
-      acl_type == :regex
-    end
-
     # does this right is allowed for this triplet?
     # if this right is too restrictive (ie we don't match this access method)
     # then return :dunno so that upper layers have a chance to try another right
     # tailored to the given method
     def allowed?(name, ip, args = {})
-      if regex?
-        if not @methods.include?(args[:method])
-          return :dunno
-        elsif @environment.size > 0 and not @environment.include?(args[:environment])
-          return :dunno
-        elsif (@authentication and not args[:authenticated])
-          return :dunno
-        end
+      if not @methods.include?(args[:method])
+        return :dunno
+      elsif @environment.size > 0 and not @environment.include?(args[:environment])
+        return :dunno
+      elsif (@authentication and not args[:authenticated])
+        return :dunno
       end
 
       begin
         # make sure any capture are replaced if needed
-        interpolate(args[:match]) if acl_type == :regex and args[:match]
+        interpolate(args[:match]) if args[:match]
         res = super(name,ip)
       ensure
-        reset_interpolation if acl_type == :regex
+        reset_interpolation
       end
       res
     end
@@ -242,37 +217,13 @@ class Rights
     end
 
     def match?(key)
-      # if we are a namespace compare directly
-      return self.key == namespace_to_key(key) if acl_type == :name
-
       # otherwise match with the regex
       self.key.match(key)
     end
 
-    def namespace_to_key(key)
-      key = key.intern if key.is_a?(String)
-      key
-    end
-
-    # this is where all the magic happens.
-    # we're sorting the rights array with this scheme:
-    #  * namespace rights are all in front
-    #  * regex path rights are then all queued in file order
-    def <=>(rhs)
-      # move namespace rights at front
-      return self.acl_type == :name ? -1 : 1 if self.acl_type != rhs.acl_type
-
-      # sort by creation order (ie first match appearing in the file will win)
-      # that is don't sort, in which case the sort algorithm will order in the
-      # natural array order (ie the creation order)
-      0
-    end
-
     def ==(name)
-      return(acl_type == :name ? self.key == namespace_to_key(name) : self.name == name.gsub(/^~\s+/,''))
+      self.name == name.gsub(/^~\s+/,'')
     end
-
   end
-
 end
 end

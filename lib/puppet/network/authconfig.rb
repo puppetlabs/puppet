@@ -16,23 +16,6 @@ module Puppet
       end
     end
 
-    # Here we add a little bit of semantics.  They can set auth on a whole
-    # namespace or on just a single method in the namespace.
-    def allowed?(request)
-      name        = request.call.intern
-      namespace   = request.handler.intern
-      method      = request.method.intern
-
-      read
-
-      if @rights.include?(name)
-        return @rights[name].allowed?(request.name, request.ip)
-      elsif @rights.include?(namespace)
-        return @rights[namespace].allowed?(request.name, request.ip)
-      end
-      false
-    end
-
     # Does the file exist?  Puppet master does not require it, but
     # puppet agent does.
     def exists?
@@ -54,6 +37,7 @@ module Puppet
 
     # Read the configuration file.
     def read
+      #XXX So if you delete the file, that change is not picked up?
       return unless FileTest.exists?(@file)
 
       if @configstamp
@@ -91,16 +75,10 @@ module Puppet
           count = 1
           f.each_line { |line|
             case line
-            when /^\s*#/ # skip comments
-              count += 1
-              next
-            when /^\s*$/  # skip blank lines
-              count += 1
-              next
-            when /^(?:(\[[\w.]+\])|(path)\s+((?:~\s+)?[^ ]+))\s*$/ # "namespace" or "namespace.method" or "path /path" or "path ~ regex"
-              name = $1
-              name = $3 if $2 == "path"
-              name.chomp!
+            when /^\s*#/, /^\s*$/
+              # skip comments and blank lines
+            when /^path\s+((?:~\s+)?[^ ]+)\s*$/ # "path /path" or "path ~ regex"
+              name = $1.chomp
               right = newrights.newright(name, count, @file)
             when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
               parse_right_directive(right, $1, $2, count)
@@ -134,19 +112,10 @@ module Puppet
       when "deny"
         modify_right(right, :deny, value, "denying %s access", count)
       when "method"
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'method' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
         modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
       when "environment"
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
         modify_right(right, :restrict_environment, value, "adding environment %s", count)
       when /auth(?:enticated)?/
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'authenticated' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
         modify_right(right, :restrict_authenticated, value, "adding authentication %s", count)
       else
         raise ConfigurationError,

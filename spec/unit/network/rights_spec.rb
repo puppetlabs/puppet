@@ -49,27 +49,6 @@ describe Puppet::Network::Rights do
     lambda { @right.newright("name") }.should raise_error
   end
 
-  describe "when creating new namespace ACLs" do
-
-    it "should throw an error if the ACL already exists" do
-      @right.newright("[name]")
-
-      lambda { @right.newright("[name]") }.should raise_error
-    end
-
-    it "should create a new ACL with the correct name" do
-      @right.newright("[name]")
-
-      @right["name"].key.should == :name
-    end
-
-    it "should create an ACL of type Puppet::Network::AuthStore" do
-      @right.newright("[name]")
-
-      @right["name"].should be_a_kind_of(Puppet::Network::AuthStore)
-    end
-  end
-
   describe "when creating new path ACLs" do
     it "should not throw an error if the ACL already exists" do
       @right.newright("/name")
@@ -129,18 +108,6 @@ describe Puppet::Network::Rights do
       @right.include?("name").should be_false
     end
 
-    it "should return true if a namespace rights exist" do
-      @right.newright("[name]")
-
-      @right.include?("name").should be_true
-    end
-
-    it "should return false if no matching namespace rights exist" do
-      @right.newright("[name]")
-
-      @right.include?("notname").should be_false
-    end
-
     it "should return true if a path right exists" do
       @right.newright("/name")
 
@@ -170,7 +137,7 @@ describe Puppet::Network::Rights do
     before :each do
       @right.stubs(:right).returns(nil)
 
-      @pathacl = stub 'pathacl', :acl_type => :regex, :"<=>" => 1, :line => 0, :file => 'dummy'
+      @pathacl = stub 'pathacl', :"<=>" => 1, :line => 0, :file => 'dummy'
       Puppet::Network::Rights::Right.stubs(:new).returns(@pathacl)
     end
 
@@ -190,33 +157,6 @@ describe Puppet::Network::Rights do
       @right.allowed?("namespace", :args1, :args2).should be_false
     end
 
-    it "should first check namespace rights" do
-      acl = stub 'acl', :acl_type => :name, :key => :namespace
-      Puppet::Network::Rights::Right.stubs(:new).returns(acl)
-
-      @right.newright("[namespace]")
-      acl.expects(:match?).returns(true)
-      acl.expects(:allowed?).with { |node,ip,h| node == "node" and ip == "ip" }.returns(true)
-
-      @right.is_forbidden_and_why?("namespace", { :node => "node", :ip => "ip" } ).should == nil
-    end
-
-    it "should then check for path rights if no namespace match" do
-      acl = stub 'nmacl', :acl_type => :name, :key => :namespace, :"<=>" => -1, :line => 0, :file => 'dummy'
-      acl.stubs(:match?).returns(false)
-      Puppet::Network::Rights::Right.stubs(:new).with("[namespace]").returns(acl)
-
-      @right.newright("[namespace]")
-      @right.newright("/path/to/there", 0, nil)
-
-      @pathacl.stubs(:match?).returns(true)
-
-      acl.expects(:allowed?).never
-      @pathacl.expects(:allowed?).returns(true)
-
-      @right.is_forbidden_and_why?("/path/to/there", {}).should == nil
-    end
-
     it "should pass the match? return to allowed?" do
       @right.newright("/path/to/there")
 
@@ -226,18 +166,12 @@ describe Puppet::Network::Rights do
       @right.is_forbidden_and_why?("/path/to/there", {}).should == nil
     end
 
-    describe "with namespace acls" do
-      it "should return an ArgumentError if this namespace right doesn't exist" do
-        lambda { @right.is_forbidden_and_why?("namespace") }.should raise_error(ArgumentError)
-      end
-    end
-
     describe "with path acls" do
       before :each do
-        @long_acl = stub 'longpathacl', :name => "/path/to/there", :acl_type => :regex, :line => 0, :file => 'dummy'
+        @long_acl = stub 'longpathacl', :name => "/path/to/there", :line => 0, :file => 'dummy'
         Puppet::Network::Rights::Right.stubs(:new).with("/path/to/there", 0, nil).returns(@long_acl)
 
-        @short_acl = stub 'shortpathacl', :name => "/path/to", :acl_type => :regex, :line => 0, :file => 'dummy'
+        @short_acl = stub 'shortpathacl', :name => "/path/to", :line => 0, :file => 'dummy'
         Puppet::Network::Rights::Right.stubs(:new).with("/path/to", 0, nil).returns(@short_acl)
 
         @long_acl.stubs(:"<=>").with(@short_acl).returns(0)
@@ -308,10 +242,10 @@ describe Puppet::Network::Rights do
 
     describe "with regex acls" do
       before :each do
-        @regex_acl1 = stub 'regex_acl1', :name => "/files/(.*)/myfile", :acl_type => :regex, :line => 0, :file => 'dummy'
+        @regex_acl1 = stub 'regex_acl1', :name => "/files/(.*)/myfile", :line => 0, :file => 'dummy'
         Puppet::Network::Rights::Right.stubs(:new).with("~ /files/(.*)/myfile", 0, nil).returns(@regex_acl1)
 
-        @regex_acl2 = stub 'regex_acl2', :name => "/files/(.*)/myfile/", :acl_type => :regex, :line => 0, :file => 'dummy'
+        @regex_acl2 = stub 'regex_acl2', :name => "/files/(.*)/myfile/", :line => 0, :file => 'dummy'
         Puppet::Network::Rights::Right.stubs(:new).with("~ /files/(.*)/myfile/", 0, nil).returns(@regex_acl2)
 
         @regex_acl1.stubs(:"<=>").with(@regex_acl2).returns(0)
@@ -383,10 +317,6 @@ describe Puppet::Network::Rights do
     end
 
     describe "with path" do
-      it "should say it's a regex ACL" do
-        @acl.acl_type.should == :regex
-      end
-
       it "should match up to its path length" do
         @acl.match?("/path/that/works").should_not be_nil
       end
@@ -403,10 +333,6 @@ describe Puppet::Network::Rights do
     describe "with regex" do
       before :each do
         @acl = Puppet::Network::Rights::Right.new("~ .rb$",0, nil)
-      end
-
-      it "should say it's a regex ACL" do
-        @acl.acl_type.should == :regex
       end
 
       it "should match as a regex" do
