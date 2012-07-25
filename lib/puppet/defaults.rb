@@ -1216,7 +1216,7 @@ EOT
 
   # Plugin information.
 
-    define_settings(
+  define_settings(
     :main,
     :plugindest => {
       :type       => :directory,

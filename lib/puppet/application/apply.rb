@@ -275,6 +275,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def apply_catalog(catalog)
     configurer = Puppet::Configurer.new
-    configurer.run(:catalog => catalog, :skip_plugin_download => true)
+    configurer.run(:catalog => catalog, :pluginsync => false)
   end
 end

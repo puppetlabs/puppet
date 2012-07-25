@@ -94,9 +94,14 @@ describe Puppet::Configurer do
       @agent.run
     end
 
-    it "should download plugins" do
+    it "downloads plugins when told" do
       @agent.expects(:download_plugins)
-      @agent.run
+      @agent.run(:pluginsync => true)
+    end
+
+    it "does not download plugins when told" do
+      @agent.expects(:download_plugins).never
+      @agent.run(:pluginsync => false)
     end
 
     it "should initialize a transaction report if one is not provided" do
