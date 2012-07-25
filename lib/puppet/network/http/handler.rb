@@ -2,13 +2,13 @@ module Puppet::Network::HTTP
 end
 
 require 'puppet/network/http/api/v1'
-require 'puppet/network/rest_authorization'
+require 'puppet/network/authorization'
 require 'puppet/network/rights'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::HTTP::API::V1
-  include Puppet::Network::RestAuthorization
+  include Puppet::Network::Authorization
 
   attr_reader :server, :handler
 
