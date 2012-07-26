@@ -21,6 +21,28 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       gem_list_command << "--remote"
     end
 
+    if source = options[:source]
+      begin
+        uri = URI.parse(source)
+      rescue => detail
+        fail "Invalid source '#{uri}': #{detail}"
+      end
+
+      case uri.scheme
+      when nil
+        # no URI scheme => interpret the source as a local file
+        gem_list_command
+      when /file/i
+        gem_list_command
+      when 'puppet'
+        # we don't support puppet:// URLs (yet)
+        raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")
+      else
+        # interpret it as a gem repository
+        gem_list_command << "--source" << "#{source}"
+      end
+    end
+
     if name = options[:justme]
       gem_list_command << name + "$"
     end
@@ -104,13 +126,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def latest
     # This always gets the latest version available.
-    hash = self.class.gemlist(:justme => resource[:name])
+    hash = self.class.gemlist(:justme => resource[:name], :source => resource[:source])
 
     hash[:ensure][0]
   end
 
   def query
-    self.class.gemlist(:justme => resource[:name], :local => true)
+    self.class.gemlist(:justme => resource[:name], :local => true, :source => resource[:source])
   end
 
   def uninstall
