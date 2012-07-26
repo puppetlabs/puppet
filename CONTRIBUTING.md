@@ -1,88 +1,89 @@
-Checklist (and a short version for the impatient)
+Checklist/Outline (The short version)
 =================================================
 
-  * Commits:
+  * Getting Started: 
+    - Make sure you have a [Redmine account](http://projects.puppetlabs.com)
+    - Submit a ticket for your issue, assuming one does not already exist. 
+    - Decide what to base your work off of 
+      * `2.6.x`: security fixes only
+      * `2.7.x`: bug fixes only
+      * `3.x`: new features that are not breaking changes
+      * `master`: new features that are breaking changes 
+    
+  * Making Changes: 
+     - Make sure you have a [GitHub account](https://github.com/signup/free)
+     - Fork the repository on GitHub
+     - Make commits of logical units.
+     - Check for unnecessary whitespace with "git diff --check" before committing.
+     - Make sure your commit messages are in the proper format 
+     - Make sure you have added the necessary tests for your changes
+     - Run _all_ the tests to assure nothing else was accidentally broken 
 
-    - Make commits of logical units.
-
-    - Check for unnecessary whitespace with "git diff --check" before
-      committing.
-
-    - Commit using Unix line endings (check the settings around "crlf" in
-      git-config(1)).
-
-    - Do not check in commented out code or unneeded files.
-
-    - The first line of the commit message should be a short
-      description (50 characters is the soft limit, excluding ticket
-      number(s)), and should skip the full stop.
-
-    - If there is an associated Redmine ticket then the first line
-      should include the ticket number in the form "(#XXXX) Rest of
-      message".
-
-    - The body should provide a meaningful commit message, which:
-
-      - uses the imperative, present tense: "change", not "changed" or
-        "changes".
-
-      - includes motivation for the change, and contrasts its
-        implementation with the previous behavior.
-
-    - Make sure that you have tests for the bug you are fixing, or
-      feature you are adding.
-
-    - Make sure the test suite passes after your commit (rake spec unit).
-
-  * Submission:
-
-    * Pre-requisites:
-
-      - Make sure you have a [Redmine account](http://projects.puppetlabs.com)
-
-      - Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
-
-    * Preferred method:
-
-      - Fork the repository on GitHub.
-
-      - Push your changes to a topic branch in your fork of the
-        repository.
-
-      - Submit a pull request to the repository in the puppetlabs
-        organization.
-
-    * Alternate methods:
-
-      - Mail patches to puppet-dev mailing list using `rake mail_patches`,
-        or `git-format-patch(1)` & `git-send-email(1)`.
-
-      - Attach patches to Redmine ticket.
-
+  * Submitting Changes: 
+     - Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
+     -  Push your changes to a topic branch in your fork of the repository.
+     -  Submit a pull request to the repository in the puppetlabs organization.
+     -  Update your Redmine ticket 
+   
 The long version
 ================
 
-  0.  Decide what to base your work on.
+  0. Create a Redmine ticket for the change you'd like to make.
+     
+	 It's very important that there be a Redmine ticket for the change 
+	 you are making. Considering the number of contributions which are 
+	 submitted, it is crucial that we know we can find the ticket on Redmine.
+	
+	 Before making a ticket however, be sure that one does not already exist.
+	 You can do this by searching Redmine or by trying a Google search which 
+	 includes `sites:projects.puppetlabs.com` in addition to some of the keywords 
+	 related to your issue. 
+	
+	 If you do not find a ticket that that accurately describes the work 
+	 you're going to be doing, go ahead and create one. But be sure to 
+	 look for related tickets and add them to the 'related tickets' section.
 
-      In general, you should always base your work on the oldest
-      branch that your change is relevant to.
+  1.  Decide what to base your work on.
 
-      - A bug fix should be based on the current stable series. If the
-        bug is not present in the current stable release, then base it on
-        `master`.
+	  In general, you should always base your work on the oldest 
+	  branch that your change is relevant to, and it will be 
+	  eventually merged up. Currently, branches will be merged up as 
+	  follows: 
+	    2.6.x => 2.7.x => 3.x => master 
+	
+	  Currently, this is how you should decide where to target your changes: 
+	
+	  The absolute earliest place something should be targeted is at `2.6.x`, 
+	    and these should _only_ be security fixes. Anything else must be
+	    targeted at a later branch.
+	
+	  A bug fix should be based off the the earliest place where it is 
+		relevant. If it first appears in `2.7.x`, then it should be 
+		targeted here and eventually merged up to `3.x` and master. 
+		
+	  New features which are _backwards compatible_ should be targeted 
+	    at the next release, which currently is `3.x`. 
+	
+	  New features that are _breaking changes_ should be targeted at 
+		`master`.
 
-      - A new feature should be based on `master`.
+      Part of deciding what to what your work should be based off of includes naming 
+	  your topic branch to reflect this. Your branch name should have the following 
+	  format: 
+	  		`ticket/target_branch/ticket_number_short_description_of_issuee` 
+	
+	  For example, if you are fixing a bug relating to the ssl spec, which has Redmine 
+	  ticket number 12345, then your branch should be named: 
+			`ticket/2.7.x/12345_fix_ssl_spec_tests` 
+			
+	  There is a good chance that if you submit a pull request _from_ master _to_ master, 
+	  Puppet Labs developers will suspect that you're not sure about the process. This is 
+	  why clear naming of branches and basing your work off the right place will be 
+	  extremely helpful in ensuring that your submission is reviewed and merged. Often times
+	  if your change is targeted at the wrong place, we will bounce it back to you and wait 
+	  to review it until it has been retargeted. 
 
-      - Security fixes should be based on the current maintenance series
-        (that is, the previous stable series).  If the security issue
-        was not present in the maintenance series, then it should be
-        based on the current stable series if it was introduced there,
-        or on `master` if it is not yet present in a stable release.
-
-      The current stable series is 2.7.x, and the current maintenance
-      series is 2.6.x.
-
-  1.  Make separate commits for logically separate changes.
+  2.  Make separate commits for logically separate changes.
 
       Please break your commits down into logically consistent units
       which include new or changed tests relevent to the rest of the
@@ -94,7 +95,7 @@ The long version
       If you're going to refactor a piece of code, please do so as a
       separate commit from your feature or bug fix changes.
 
-      We also really appreciate changes that include tests to make
+      It's crucial that your changes include tests to make
       sure the bug isn't re-introduced, and that the feature isn't
       accidentally broken.
 
@@ -115,7 +116,11 @@ The long version
       whitespaces or other "whitespace errors".  You can do this by
       running "git diff --check" on your changes before you commit.
 
-  2.  Sign the Contributor License Agreement
+      When writing commit messages, please be sure they meet 
+	  [these standards](https://github.com/erlang/otp/wiki/Writing-good-commit-messages), and please include the ticket number in your 
+	  short summary. It should look something like this: `(#12345) Fix this issue in Puppet`
+
+  3.  Sign the Contributor License Agreement
 
       Before we can accept your changes, we do need a signed Puppet
       Labs Contributor License Agreement (CLA).
@@ -131,106 +136,46 @@ The long version
       If you have any questions about the CLA, please feel free to
       contact Puppet Labs via email at cla-submissions@puppetlabs.com.
 
-  3.  Sending your patches
+  4.  Sending your patches
 
-      We accept multiple ways of submitting your changes for
-      inclusion.  They are listed below in order of preference.
+      To submit your changes via a GitHub pull request, you must
+      have them on a topic branch, instead of directly on "master" 
+      or one of the release, or RC branches. It makes things much easier 
+      to keep track of, especially if you decide to work on another thing
+      before your first change is merged in.
 
-      Please keep in mind that any method that involves sending email
-      to the mailing list directly requires you to be subscribed to
-      the mailing list, and that your first post to the list will be
-      held in a moderation queue.
+      GitHub has some pretty good
+      [general documentation](http://help.github.com/) on using
+      their site.  They also have documentation on
+      [creating pull requests](http://help.github.com/send-pull-requests/).
 
-      * GitHub Pull Requests
+      In general, after pushing your topic branch up to your
+      repository on GitHub, you'll switch to the branch in the
+      GitHub UI and click "Pull Request" towards the top of the page
+      in order to open a pull request.
 
-        To submit your changes via a GitHub pull request, we _highly_
-        recommend that you have them on a topic branch, instead of
-        directly on "master" or one of the release, or RC branches.
-        It makes things much easier to keep track of, especially if
-        you decide to work on another thing before your first change
-        is merged in.
+      You'll want to make sure that you have the appropriate
+      destination branch in the repository under the puppetlabs
+      organization.  This should be the same branch that you based
+      your changes off of.
 
-        GitHub has some pretty good
-        [general documentation](http://help.github.com/) on using
-        their site.  They also have documentation on
-        [creating pull requests](http://help.github.com/send-pull-requests/).
+  5.  Update the related Redmine ticket.
 
-        In general, after pushing your topic branch up to your
-        repository on GitHub, you'll switch to the branch in the
-        GitHub UI and click "Pull Request" towards the top of the page
-        in order to open a pull request.
-
-        You'll want to make sure that you have the appropriate
-        destination branch in the repository under the puppetlabs
-        organization.  This should be the same branch that you based
-        your changes off of.
-
-      * Other pull requests
-
-        If you already have a publicly accessible version of the
-        repository hosted elsewhere, and don't wish to or cannot use
-        GitHub, you can submit your change by requesting that we pull
-        the changes from your repository by sending an email to the
-        puppet-dev Google Groups mailing list.
-
-        `git-request-pull(1)` provides a handy way to generate the text
-        for the email requesting that we pull your changes (and does
-        some helpful sanity checks in the process).
-
-      * Mailing patches to the mailing list
-
-        If neither of the previous methods works for you, then you can
-        also mail the patches inline to the puppet-dev Google Group
-        using either `rake mail_patches`, or by using
-        `git-format-patch(1)`, and `git-send-email(1)` directly.
-
-        `rake mail_patches` handles setting the appropriate flags to
-        `git-format-patch(1)` and `git-send-email(1)` for you, but
-        doesn't allow adding any commentary between the '---', and the
-        diffstat in the resulting email.  It also requires that you
-        have created your topic branch in the form
-        `<type>/<parent>/<name>`.
-
-        If you decide to use `git-format-patch(1)` and
-        `git-send-email(1)` directly, please be sure to use the
-        following flags for `git-format-patch(1)`: -C -M -s -n
-        --subject-prefix='PATCH/puppet'
-
-      * Attaching patches to Redmine
-
-        As a method of last resort you can also directly attach the
-        output of `git-format-patch(1)`, or `git-diff(1)` to a Redmine
-        ticket.
-
-        If you are generating the diff outside of Git, please be sure
-        to generate a unified diff.
-
-  4.  Update the related Redmine ticket.
-
-      If there's a Redmine ticket associated with the change you
-      submitted, then you should update the ticket to include the
-      location of your branch, and change the status to "In Topic
-      Branch Pending Merge", along with any other commentary you may
-      wish to make.
+      You should update the Redmine ticket associated 
+      with the change you submitted to include the location of your branch
+      on the `branch` field of the ticket, and change the status to 
+      "In Topic Branch Pending Review", along with any other commentary 
+       you may wish to make.
 
 How to track the status of your change after it's been submitted
 ================================================================
 
-Shortly after opening a pull request on GitHub, there should be an
-automatic message sent to the puppet-dev Google Groups mailing list
-notifying people of this.  This notification is used to let the Puppet
+Shortly after opening a pull request, there should be an automatic 
+email sent via GitHub. This notification is used to let the Puppet
 development community know about your requested change to give them a
 chance to review, test, and comment on the change(s).
 
-If you submitted your change via manually sending a pull request or
-mailing the patches, then we keep track of these using
-[patchwork](https://patchwork.puppetlabs.com).  When code is merged
-into the project it is automatically removed from patchwork, and the
-Redmine ticket is manually updated with the commit SHA1.  In addition,
-the ticket status must be updated by the person who merges the topic
-branch to a status of "Merged - Pending Release"
-
-We do our best to comment on or merge submitted changes within a week.
+We do our best to comment on or merge submitted changes within a about week.
 However, if there hasn't been any commentary on the pull request or
 mailed patches, and it hasn't been merged in after a week, then feel
 free to ask for an update by replying on the mailing list to the
