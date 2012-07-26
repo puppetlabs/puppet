@@ -1,56 +1,30 @@
-Checklist (and a short version for the impatient)
+Checklist/Outline (The short version)
 =================================================
 
-  * Commits:
-
-    - Make commits of logical units.
-
-    - Check for unnecessary whitespace with "git diff --check" before
-      committing.
-
-    - Commit using Unix line endings (check the settings around "crlf" in
-      git-config(1)).
-
-    - Do not check in commented out code or unneeded files.
-
-    - The first line of the commit message should be a short
-      description (50 characters is the soft limit, excluding ticket
-      number(s)), and should skip the full stop.
-
-    - If there is an associated Redmine ticket then the first line
-      should include the ticket number in the form "(#XXXX) Rest of
-      message".
-
-    - The body should provide a meaningful commit message, which:
-
-      - uses the imperative, present tense: "change", not "changed" or
-        "changes".
-
-      - includes motivation for the change, and contrasts its
-        implementation with the previous behavior.
-
-    - Make sure that you have tests for the bug you are fixing, or
-      feature you are adding.
-
-    - Make sure the test suite passes after your commit (rake spec unit).
-
-  * Submission:
-
+  * Getting Started: 
     - Make sure you have a [Redmine account](http://projects.puppetlabs.com)
+    - Submit a ticket for your issue, assuming one does not already exist. 
+    - Decide what to base your work off of 
+      * `2.6.x`: security fixes only
+      * `2.7.x`: bug fixes only
+      * `3.x`: new features that are not breaking changes
+      * `master`: new features that are breaking changes 
+    
+  * Making Changes: 
+     - Make sure you have a [GitHub account](https://github.com/signup/free)
+     - Fork the repository on GitHub
+     - Make commits of logical units.
+     - Check for unnecessary whitespace with "git diff --check" before committing.
+     - Make sure your commit messages are in the proper format 
+     - Make sure you have added the necessary tests for your changes
+     - Run _all_ the tests to assure nothing else was accidentally broken 
 
-    - Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
-
-	- Submit a Redmine ticket for the issue, after confirming one does 
-	  not already exist.
-	
-    - Fork the repository on GitHub.
-
-    - Push your changes to a topic branch in your fork of the
-        repository.
-
-    - Submit a pull request to the repository in the puppetlabs
-        organization.
-
+  * Submitting Changes: 
+     - Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
+     -  Push your changes to a topic branch in your fork of the repository.
+     -  Submit a pull request to the repository in the puppetlabs organization.
+     -  Update your Redmine ticket 
+   
 The long version
 ================
 
