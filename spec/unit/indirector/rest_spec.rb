@@ -119,7 +119,7 @@ describe Puppet::Indirector::REST do
                                            :fails_with => 'certificate verify failed'))
       expect do
         @searcher.http_request(:get, stub('request'))
-      end.to raise_error(Puppet::Error, "certificate verify failed: [verify error shady looking signature for /CN=not_my_server]")
+      end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature for /CN=not_my_server]")
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do

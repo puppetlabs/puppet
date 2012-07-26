@@ -90,7 +90,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
       # And also keep the detailed verification error if such an error occurs
       if ssl_context.error_string and not preverify_ok
-        verify_errors << "verify error #{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
+        verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
       end
       preverify_ok
     end
