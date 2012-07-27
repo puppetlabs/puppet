@@ -1,8 +1,9 @@
-begin test_name "puppet module upgrade (not upgradable)"
+test_name "puppet module upgrade (not upgradable)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
 apply_manifest_on master, <<-'MANIFEST1'
 file { '/usr/share/puppet':
   ensure  => directory,
@@ -14,6 +15,11 @@ file { ['/etc/puppet/modules', '/usr/share/puppet/modules']:
   force   => true,
 }
 MANIFEST1
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 apply_manifest_on master, <<-PP
   file {
     [
@@ -84,9 +90,4 @@ on master, puppet("module upgrade pmtacceptance-java --version 2.0.0"), :accepta
     STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> v2.0.0)
     STDERR>   No version matching '2.0.0' exists on http://forge.puppetlabs.com\e[0m
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

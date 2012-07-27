@@ -1,4 +1,4 @@
-begin test_name "puppet module list (with invalid dependencies)"
+test_name "puppet module list (with invalid dependencies)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -59,6 +59,10 @@ file {
     }';
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 on master, '[ -d /etc/puppet/modules/crakorn ]'
 on master, '[ -d /etc/puppet/modules/thelock ]'
@@ -95,8 +99,4 @@ STDERR
 └─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
   └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m) [/etc/puppet/modules]  \e[0;31minvalid\e[0m
 STDOUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

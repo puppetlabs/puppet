@@ -1,9 +1,15 @@
-begin test_name "puppet module uninstall (with multiple modules installed)"
+test_name "puppet module uninstall (with multiple modules installed)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --modulepath /etc/puppet/modules")
 on master, puppet("module install pmtacceptance-java --version 1.7.0 --modulepath /usr/share/puppet/modules")
 on master, puppet("module list") do
@@ -35,9 +41,4 @@ on master, puppet("module uninstall pmtacceptance-java --modulepath /etc/puppet/
     Preparing to uninstall 'pmtacceptance-java' ...
     Removed 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) from /etc/puppet/modules
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

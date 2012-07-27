@@ -1,4 +1,4 @@
-begin test_name "puppet module list (with modulepath)"
+test_name "puppet module list (with modulepath)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -45,6 +45,9 @@ file {
     }';
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules2"
+end
 on master, '[ -d /etc/puppet/modules2/crakorn ]'
 on master, '[ -d /etc/puppet/modules2/appleseed ]'
 on master, '[ -d /etc/puppet/modules2/thelock ]'
@@ -69,8 +72,4 @@ on master, puppet('module list --modulepath=/etc/puppet/modules2') do
 ├── jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
 └── jimmy-thelock (\e[0;36mv1.0.0\e[0m)
 STDOUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules2']: ensure => directory, recurse => true, purge => true, force => true }"
 end
