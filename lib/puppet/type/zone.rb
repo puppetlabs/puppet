@@ -98,11 +98,7 @@ autorequire that directory."
     end
 
     def self.state_name(name)
-      if other = @state_aliases[name]
-        other
-      else
-        name
-      end
+      @state_aliases[name.to_sym] || name.to_sym
     end
 
     newvalue :absent, :down => :destroy
