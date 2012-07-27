@@ -2,7 +2,7 @@ Puppet::Type.type(:zpool).provide(:solaris) do
   desc "Provider for Solaris zpool."
 
   commands :zpool => "/usr/sbin/zpool"
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   def process_zpool_data(pool_array)
     if pool_array == []

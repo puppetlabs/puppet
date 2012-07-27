@@ -2,7 +2,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
   desc "Provider for Solaris zfs."
 
   commands :zfs => "/usr/sbin/zfs"
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   def add_properties
     properties = []

@@ -12,9 +12,9 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
   EOT
 
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
   commands :adm => "/usr/sbin/svcadm", :svcs => "/usr/bin/svcs"
   commands :svccfg => "/usr/sbin/svccfg"
