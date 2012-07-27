@@ -68,9 +68,11 @@ class Puppet::Property < Puppet::Parameter
 
   # Call the provider method.
   def call_provider(value)
-      provider.send(self.class.name.to_s + "=", value)
-  rescue NoMethodError
-      self.fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
+      method = self.class.name.to_s + "="
+      unless provider.respond_to? method
+        self.fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
+      end
+      provider.send(method, value)
   end
 
   # Call the dynamically-created method associated with our value, if
