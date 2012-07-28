@@ -58,7 +58,9 @@ describe "the template function" do
     Puppet::Parser::TemplateWrapper.stubs(:new).returns(tw)
     tw.stubs(:result).raises
 
-    expect { scope.function_template(["1"]) }.should raise_error(Puppet::ParseError)
+    expect {
+      scope.function_template(["1"])
+    }.to raise_error(Puppet::ParseError, /Failed to parse template/)
   end
 
   def eval_template(content, *rest)
@@ -68,8 +70,9 @@ describe "the template function" do
   end
 
   it "should handle legacy template variable access correctly" do
-    expect { eval_template("template <%= deprecated %>") }.
-      to raise_error Puppet::ParseError
+    expect {
+      eval_template("template <%= deprecated %>")
+    }.to raise_error(Puppet::ParseError)
   end
 
   it "should get values from the scope correctly" do
@@ -78,13 +81,14 @@ describe "the template function" do
   end
 
   it "should handle kernel shadows without raising" do
-    expect { eval_template("<%= binding %>") }.should_not raise_error
+    expect { eval_template("<%= binding %>") }.to_not raise_error
   end
 
   it "should not see scopes" do
     scope['myvar'] = 'this is yayness'
-    expect { eval_template("<%= lookupvar('myvar') %>") }.
-      to raise_error Puppet::ParseError
+    expect {
+      eval_template("<%= lookupvar('myvar') %>")
+    }.to raise_error(Puppet::ParseError)
   end
 
   { "" => "", false => "false", true => "true" }.each do |input, output|
@@ -92,7 +96,7 @@ describe "the template function" do
       scope['yayness'] = input
       expect {
         eval_template("<%= @yayness %>").should == output
-      }.should_not raise_error
+      }.to_not raise_error
     end
   end
 end

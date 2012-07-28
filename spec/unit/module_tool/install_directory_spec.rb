@@ -25,7 +25,11 @@ describe Puppet::ModuleTool::InstallDirectory do
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
-    expect { install.prepare('module', '1.0.1') }.should raise_error(Puppet::ModuleTool::Errors::PermissionDeniedCreateInstallDirectoryError)
+    expect {
+      install.prepare('module', '1.0.1')
+    }.to raise_error(
+      Puppet::ModuleTool::Errors::PermissionDeniedCreateInstallDirectoryError
+    )
   end
 
   it "(#15202) errors when an entry along the path is not a directory" do
@@ -34,7 +38,9 @@ describe Puppet::ModuleTool::InstallDirectory do
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
-    expect { install.prepare('module', '1.0.1') }.should raise_error(Puppet::ModuleTool::Errors::InstallPathExistsNotDirectoryError)
+    expect {
+      install.prepare('module', '1.0.1')
+    }.to raise_error(Puppet::ModuleTool::Errors::InstallPathExistsNotDirectoryError)
   end
 
   it "(#15202) simply re-raises an unknown error" do
@@ -43,7 +49,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
-    expect { install.prepare('module', '1.0.1') }.should raise_error("unknown error")
+    expect { install.prepare('module', '1.0.1') }.to raise_error("unknown error")
   end
 
   it "(#15202) simply re-raises an unknown system call error" do
@@ -52,7 +58,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
-    expect { install.prepare('module', '1.0.1') }.should raise_error(SystemCallError)
+    expect { install.prepare('module', '1.0.1') }.to raise_error(SystemCallError)
   end
 
   def the_directory(name, options)

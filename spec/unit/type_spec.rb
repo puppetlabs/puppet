@@ -356,7 +356,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should fail if any invalid attributes have been provided" do
-      lambda { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error)
     end
 
     it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
@@ -366,7 +366,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should fail if no title, name, or namevar are provided" do
-      lambda { Puppet::Type.type(:file).new(:atboot => true) }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:file).new(:atboot => true) }.to raise_error(Puppet::Error)
     end
 
     it "should set the attributes in the order returned by the class's :allattrs method" do
@@ -479,7 +479,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     it "should fail if its provider is unsuitable" do
       @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
       @resource.provider.class.expects(:suitable?).returns false
-      lambda { @resource.retrieve_resource }.should raise_error(Puppet::Error)
+      expect { @resource.retrieve_resource }.to raise_error(Puppet::Error)
     end
 
     it "should return a Puppet::Resource instance with its type and title set appropriately" do
@@ -648,7 +648,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         mk_resource_methods
       end
 
-      expect { type.instances.should == [] }.should_not raise_error
+      expect { type.instances.should == [] }.to_not raise_error
     end
 
     context "with a default provider" do
@@ -809,7 +809,7 @@ describe Puppet::Type.metaparamclass(:audit) do
   end
 
   it "should fail if asked to audit an invalid property" do
-    lambda { @resource[:audit] = :foobar }.should raise_error(Puppet::Error)
+    expect { @resource[:audit] = :foobar }.to raise_error(Puppet::Error)
   end
 
   it "should create an attribute instance for each auditable property" do
@@ -851,8 +851,8 @@ describe Puppet::Type.metaparamclass(:audit) do
       type.newparam(:param) {}
       instance = type.new(:name => 'test')
 
-      expect { instance[:param] = true }.should_not raise_error
-      expect { instance["param"] = true }.should_not raise_error
+      expect { instance[:param] = true }.to_not raise_error
+      expect { instance["param"] = true }.to_not raise_error
       instance[:param].should == true
       instance["param"].should == true
     end
@@ -860,8 +860,8 @@ describe Puppet::Type.metaparamclass(:audit) do
     it "should work with meta-parameters" do
       instance = type.new(:name => 'test')
 
-      expect { instance[:noop] = true }.should_not raise_error
-      expect { instance["noop"] = true }.should_not raise_error
+      expect { instance[:noop] = true }.to_not raise_error
+      expect { instance["noop"] = true }.to_not raise_error
       instance[:noop].should == true
       instance["noop"].should == true
     end
@@ -870,8 +870,8 @@ describe Puppet::Type.metaparamclass(:audit) do
       type.newproperty(:property) {}
       instance = type.new(:name => 'test')
 
-      expect { instance[:property] = true }.should_not raise_error
-      expect { instance["property"] = true }.should_not raise_error
+      expect { instance[:property] = true }.to_not raise_error
+      expect { instance["property"] = true }.to_not raise_error
       instance.property(:property).must be
       instance.should(:property).must be_true
     end

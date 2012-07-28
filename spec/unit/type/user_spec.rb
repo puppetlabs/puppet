@@ -111,11 +111,11 @@ describe Puppet::Type.type(:user) do
 
   describe "when managing the ensure property" do
     it "should support a :present value" do
-      lambda { described_class.new(:name => 'foo', :ensure => :present) }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error
     end
 
     it "should support an :absent value" do
-      lambda { described_class.new(:name => 'foo', :ensure => :absent) }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :ensure => :absent) }.to_not raise_error
     end
 
     it "should call :create on the provider when asked to sync to the :present state" do
@@ -212,20 +212,20 @@ describe Puppet::Type.type(:user) do
 
   describe "when managing groups" do
     it "should support a singe group" do
-      lambda { described_class.new(:name => 'foo', :groups => 'bar') }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :groups => 'bar') }.to_not raise_error
     end
 
     it "should support multiple groups as an array" do
-      lambda { described_class.new(:name => 'foo', :groups => [ 'bar' ]) }.should_not raise_error
-      lambda { described_class.new(:name => 'foo', :groups => [ 'bar', 'baz' ]) }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :groups => [ 'bar' ]) }.to_not raise_error
+      expect { described_class.new(:name => 'foo', :groups => [ 'bar', 'baz' ]) }.to_not raise_error
     end
 
     it "should not support a comma separated list" do
-      lambda { described_class.new(:name => 'foo', :groups => 'bar,baz') }.should raise_error(Puppet::Error, /Group names must be provided as an array/)
+      expect { described_class.new(:name => 'foo', :groups => 'bar,baz') }.to raise_error(Puppet::Error, /Group names must be provided as an array/)
     end
 
     it "should not support an empty string" do
-      lambda { described_class.new(:name => 'foo', :groups => '') }.should raise_error(Puppet::Error, /Group names must not be empty/)
+      expect { described_class.new(:name => 'foo', :groups => '') }.to raise_error(Puppet::Error, /Group names must not be empty/)
     end
 
     describe "when testing is in sync" do
@@ -262,27 +262,27 @@ describe Puppet::Type.type(:user) do
 
   describe "when managing expiry" do
     it "should fail if given an invalid date" do
-      lambda { described_class.new(:name => 'foo', :expiry => "200-20-20") }.should raise_error(Puppet::Error, /Expiry dates must be YYYY-MM-DD/)
+      expect { described_class.new(:name => 'foo', :expiry => "200-20-20") }.to raise_error(Puppet::Error, /Expiry dates must be YYYY-MM-DD/)
     end
   end
 
   describe "when managing minimum password age" do
     it "should accept a negative minimum age" do
-      expect { described_class.new(:name => 'foo', :password_min_age => '-1') }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :password_min_age => '-1') }.to_not raise_error
     end
 
     it "should fail with an empty minimum age" do
-      expect { described_class.new(:name => 'foo', :password_min_age => '') }.should raise_error(Puppet::Error, /minimum age must be provided as a number/)
+      expect { described_class.new(:name => 'foo', :password_min_age => '') }.to raise_error(Puppet::Error, /minimum age must be provided as a number/)
     end
   end
 
   describe "when managing maximum password age" do
     it "should accept a negative maximum age" do
-      expect { described_class.new(:name => 'foo', :password_max_age => '-1') }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :password_max_age => '-1') }.to_not raise_error
     end
 
     it "should fail with an empty maximum age" do
-      expect { described_class.new(:name => 'foo', :password_max_age => '') }.should raise_error(Puppet::Error, /maximum age must be provided as a number/)
+      expect { described_class.new(:name => 'foo', :password_max_age => '') }.to raise_error(Puppet::Error, /maximum age must be provided as a number/)
     end
   end
 
@@ -308,17 +308,17 @@ describe Puppet::Type.type(:user) do
     end
 
     it "should fail if a ':' is included in the password" do
-      lambda { described_class.new(:name => 'foo', :password => "some:thing") }.should raise_error(Puppet::Error, /Passwords cannot include ':'/)
+      expect { described_class.new(:name => 'foo', :password => "some:thing") }.to raise_error(Puppet::Error, /Passwords cannot include ':'/)
     end
 
     it "should allow the value to be set to :absent" do
-      lambda { described_class.new(:name => 'foo', :password => :absent) }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :password => :absent) }.to_not raise_error
     end
   end
 
   describe "when manages_solaris_rbac is enabled" do
     it "should support a :role value for ensure" do
-      lambda { described_class.new(:name => 'foo', :ensure => :role) }.should_not raise_error
+      expect { described_class.new(:name => 'foo', :ensure => :role) }.to_not raise_error
     end
   end
 

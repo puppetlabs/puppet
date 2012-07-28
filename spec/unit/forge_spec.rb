@@ -40,11 +40,11 @@ describe Puppet::Forge do
     end
 
     it "raises an error for search" do
-      expect { forge.search('bacula') }.should raise_error RuntimeError
+      expect { forge.search('bacula') }.to raise_error RuntimeError
     end
 
     it "raises an error for remote_dependency_info" do
-      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.should raise_error RuntimeError
+      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.to raise_error RuntimeError
     end
   end
 end

@@ -110,8 +110,9 @@ describe Puppet::Parser::Resource do
     end
 
     it "should fail unless #{name.to_s} is specified" do
-      expect { Puppet::Parser::Resource.new('file', '/my/file') }.
-        should raise_error(ArgumentError)
+      expect {
+        Puppet::Parser::Resource.new('file', '/my/file')
+      }.to raise_error(ArgumentError, /Resources require a hash as last argument/)
     end
 
     it "should set the reference correctly" do

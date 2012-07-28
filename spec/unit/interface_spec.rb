@@ -20,15 +20,15 @@ describe Puppet::Interface do
 
   describe "#[]" do
     it "should fail when no version is requested" do
-      expect { subject[:huzzah] }.should raise_error ArgumentError
+      expect { subject[:huzzah] }.to raise_error ArgumentError
     end
 
     it "should raise an exception when the requested version is unavailable" do
-      expect { subject[:huzzah, '17.0.0'] }.should raise_error, Puppet::Error
+      expect { subject[:huzzah, '17.0.0'] }.to raise_error, Puppet::Error
     end
 
     it "should raise an exception when the requested face doesn't exist" do
-      expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
+      expect { subject[:burrble_toot, :current] }.to raise_error, Puppet::Error
     end
 
     describe "version matching" do
@@ -98,7 +98,7 @@ describe Puppet::Interface do
 
     it "should require a valid version number" do
       expect { subject.new(:bad_version, 'Rasins') }.
-        should raise_error ArgumentError
+        to raise_error ArgumentError
     end
 
     it "should instance-eval any provided block" do
@@ -136,7 +136,7 @@ describe Puppet::Interface do
       subject.new(:with_options, '0.0.1', &block)
     end
   end
-  
+
   describe "with face-level display_global_options" do
     it "should not return any action level display_global_options" do
       face = subject.new(:with_display_global_options, '0.0.1') do
@@ -148,7 +148,7 @@ describe Puppet::Interface do
       end
       face.display_global_options =~ ["environment"]
     end
-        
+
     it "should not fail when a face d_g_o duplicates an action d_g_o" do
       expect {
         subject.new(:action_level_display_global_options, '0.0.1') do
@@ -158,9 +158,9 @@ describe Puppet::Interface do
           end
           display_global_options "environment"
         end
-      }.should_not raise_error
+      }.to_not raise_error
     end
-    
+
     it "should work when two actions have the same d_g_o" do
       face = subject.new(:with_display_global_options, '0.0.1') do
         action :foo do when_invoked {|_| true} ; display_global_options "environment" end
@@ -197,7 +197,7 @@ describe Puppet::Interface do
           end
           option "--foo"
         end
-      }.should raise_error ArgumentError, /Option foo conflicts with existing option foo on/i
+      }.to raise_error ArgumentError, /Option foo conflicts with existing option foo on/i
     end
 
     it "should work when two actions have the same option" do

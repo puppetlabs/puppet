@@ -14,20 +14,20 @@ describe Puppet::Face[:help, '0.0.1'] do
   it "accepts a call with no arguments" do
     expect {
       subject.help()
-    }.should_not raise_error
+    }.to_not raise_error
   end
 
   it "accepts a face name" do
-    expect { subject.help(:help) }.should_not raise_error
+    expect { subject.help(:help) }.to_not raise_error
   end
 
   it "accepts a face and action name" do
-    expect { subject.help(:help, :help) }.should_not raise_error
+    expect { subject.help(:help, :help) }.to_not raise_error
   end
 
   it "fails if more than a face and action are given" do
     expect { subject.help(:help, :help, :for_the_love_of_god) }.
-      should raise_error ArgumentError
+      to raise_error ArgumentError
   end
 
   it "treats :current and 'current' identically" do
@@ -36,8 +36,9 @@ describe Puppet::Face[:help, '0.0.1'] do
   end
 
   it "raises an error when the face is unavailable" do
-    expect { subject.help(:huzzah, :bar, :version => '17.0.0') }.
-      should raise_error(ArgumentError, /Could not find version 17\.0\.0/)
+    expect {
+      subject.help(:huzzah, :bar, :version => '17.0.0')
+    }.to raise_error(ArgumentError, /Could not find version 17\.0\.0/)
   end
 
   it "finds a face by version" do

@@ -44,10 +44,12 @@ describe "the 'file' function" do
       with_file_content('one') do |one|
         scope.function_file([make_absolute("/should-not-exist"), one]).should == 'one'
       end
-    }.should_not raise_error
+    }.to_not raise_error
   end
 
   it "should fail when all files are absent" do
-    expect { scope.function_file(['one']) }.to raise_error Puppet::ParseError
+    expect {
+      scope.function_file([File.expand_path('one')])
+    }.to raise_error(Puppet::ParseError, /Could not find any files/)
   end
 end

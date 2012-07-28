@@ -458,7 +458,7 @@ describe Puppet::Configurer do
       Puppet::Util.expects(:replace_file).yields(fh)
 
       Puppet.expects(:err)
-      expect { @configurer.save_last_run_summary(@report) }.should_not raise_error
+      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
     end
   end
 

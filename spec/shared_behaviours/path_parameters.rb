@@ -46,7 +46,7 @@ shared_examples_for "all pathname parameters with arrays" do |win32|
         it "should #{reject ? 'reject' : 'accept'} #{set.join(", ")}" do
           if reject then
             expect { instance(data) }.
-              should raise_error Puppet::Error, /fully qualified/
+              to raise_error Puppet::Error, /fully qualified/
           else
             instance = instance(data)
             instance[@param].should == data
@@ -56,7 +56,7 @@ shared_examples_for "all pathname parameters with arrays" do |win32|
         it "should #{reject ? 'reject' : 'accept'} #{set.join(", ")} doubled" do
           if reject then
             expect { instance(data + data) }.
-              should raise_error Puppet::Error, /fully qualified/
+              to raise_error Puppet::Error, /fully qualified/
           else
             instance = instance(data + data)
             instance[@param].should == (data + data)
@@ -101,7 +101,7 @@ shared_examples_for "all path parameters" do |param, options|
     it "should give a useful error when the path is not absolute" do
       path = 'foo'
       expect { instance(path) }.
-        should raise_error Puppet::Error, /fully qualified/
+        to raise_error Puppet::Error, /fully qualified/
     end
 
     { "Unix" => '/', "Win32" => '\\' }.each do |style, slash|
@@ -109,7 +109,7 @@ shared_examples_for "all path parameters" do |param, options|
         it "should reject drive letter '#{drive}' with #{style} path separators" do
           path = "#{drive}:#{slash}Program Files"
           expect { instance(path) }.
-            should raise_error Puppet::Error, /fully qualified/
+            to raise_error Puppet::Error, /fully qualified/
         end
       end
     end
@@ -128,7 +128,7 @@ shared_examples_for "all path parameters" do |param, options|
     it "should give a useful error when the path is not absolute" do
       path = 'foo'
       expect { instance(path) }.
-        should raise_error Puppet::Error, /fully qualified/
+        to raise_error Puppet::Error, /fully qualified/
     end
 
     it "also accepts Unix style path separators" do
