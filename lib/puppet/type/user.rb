@@ -519,6 +519,23 @@ module Puppet
       defaultto :minimum
     end
 
+    newproperty(:salt) do
+      desc "This is the 32 byte salt used to generate the PBKDF2 password used in
+            OS X"
+    end
 
+    newproperty(:iterations) do
+      desc "This is the number of iterations of a chained computation of the
+            password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
+            is used in OS X"
+
+      munge do |value|
+        if value.is_a?(String) and value =~/^[-0-9]+$/
+          Integer(value)
+        else
+          value
+        end
+      end
+    end
   end
 end
