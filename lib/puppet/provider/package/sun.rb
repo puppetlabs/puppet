@@ -9,9 +9,9 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     :pkgadd => "/usr/sbin/pkgadd",
     :pkgrm => "/usr/sbin/pkgrm"
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   def self.instances
     packages = []

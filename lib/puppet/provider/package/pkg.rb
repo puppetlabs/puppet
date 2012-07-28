@@ -5,9 +5,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   commands :pkg => "/usr/bin/pkg"
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
-  #defaultfor [:operatingsystem => :solaris, :kernelrelease => "5.11"]
+  #defaultfor [:osfamily => :solaris, :kernelrelease => "5.11"]
 
   def self.instances
     packages = []

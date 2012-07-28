@@ -5,7 +5,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   desc "User and role management on Solaris, via `useradd` and `roleadd`."
 
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "passwd", :role_add => "roleadd", :role_delete => "roledel", :role_modify => "rolemod"
   options :home, :flag => "-d", :method => :dir
