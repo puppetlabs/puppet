@@ -185,6 +185,8 @@ module Puppet
         log the output when the command reports an error.  Values are
         **true**, *false*, *on_failure*, and any legal log level."
 
+      defaultto :on_failure
+
       newvalues(:true, :false, :on_failure)
     end
 

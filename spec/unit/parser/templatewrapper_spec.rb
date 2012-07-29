@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/parser/templatewrapper'
 
@@ -7,7 +7,7 @@ describe Puppet::Parser::TemplateWrapper do
     @known_resource_types = Puppet::Resource::TypeCollection.new("env")
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
-    @scope = Puppet::Parser::Scope.new :compiler => @compiler
+    @scope = Puppet::Parser::Scope.new @compiler
 
     @file = "fake_template"
     Puppet::Parser::Files.stubs(:find_template).returns("/tmp/fake_template")
@@ -72,25 +72,23 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should return the contents of a variable if called via method_missing" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
+    @scope["chicken"] = "is good"
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.chicken.should eql("is good")
   end
 
   it "should throw an exception if a variable is called via method_missing and it does not exist" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     lambda { tw.chicken }.should raise_error(Puppet::ParseError)
   end
 
   it "should allow you to check whether a variable is defined with has_variable?" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
+    @scope["chicken"] = "is good"
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(true)
   end
 
   it "should allow you to check whether a variable is not defined with has_variable?" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(false)
   end

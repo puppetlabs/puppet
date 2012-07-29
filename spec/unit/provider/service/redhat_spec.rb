@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 #
 # Unit testing for the RedHat service Provider
 #
@@ -19,6 +19,15 @@ describe provider_class, :as_platform => :posix do
     @provider.stubs(:get).with(:hasstatus).returns false
     FileTest.stubs(:file?).with('/sbin/service').returns true
     FileTest.stubs(:executable?).with('/sbin/service').returns true
+  end
+
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      provider_class.default?.should be_true
+    end
   end
 
   # test self.instances

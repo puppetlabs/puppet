@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/network/rest_authconfig'
@@ -20,9 +20,10 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should use the puppet default rest authorization file" do
-    Puppet.expects(:[]).with(:rest_authconfig).returns("dummy")
+    file = File.expand_path("dummy")
+    Puppet[:rest_authconfig] = file
 
-    Puppet::Network::RestAuthConfig.new(nil, false)
+    Puppet::Network::RestAuthConfig.new(nil, false).file.should == file
   end
 
   it "should ask for authorization to the ACL subsystem" do

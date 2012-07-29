@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/application/kick'
@@ -17,10 +17,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       command_line = stub_everything "command_line"
       lambda{ Puppet::Application::Kick.new( command_line ) }.should_not raise_error
     end
-  end
-
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @kick.should_parse_config?.should be_false
   end
 
   it "should declare a main command" do
@@ -121,7 +117,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.hosts = []
       @kick.stubs(:trap)
       @kick.stubs(:puts)
-      Puppet.stubs(:parse_config)
 
       @kick.options.stubs(:[]).with(any_parameters)
     end
@@ -144,15 +139,9 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       Puppet::Log.level.should == :info
     end
 
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @kick.setup
-    end
-
     describe "when using the ldap node terminus" do
       before :each do
-        Puppet.stubs(:[]).with(:node_terminus).returns("ldap")
+        Puppet[:node_terminus] = "ldap"
       end
 
       it "should pass the fqdn option to search" do

@@ -13,23 +13,6 @@ Puppet::Face.define(:module, '1.0.0') do
     HEREDOC
     returns "hash of paths to module objects"
 
-    option "--environment NAME" do
-      default_to { "production" }
-      summary "Which environments' modules to list"
-      description <<-EOT
-        Which environments' modules to list.
-      EOT
-    end
-
-    option "--modulepath MODULEPATH" do
-      summary "Which directories to look for modules in"
-      description <<-EOT
-        Which directories to look for modules in; use the system path separator
-        character (`:` on Unix-like systems and `;` on Windows) to specify
-        multiple directories.
-      EOT
-    end
-
     option "--tree" do
       summary "Whether to show dependencies as a tree view"
     end
@@ -85,7 +68,7 @@ Puppet::Face.define(:module, '1.0.0') do
       output = ''
 
       Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      environment = Puppet::Node::Environment.new(options[:production])
+      environment = Puppet::Node::Environment.new(options[:environment])
 
       error_types = {
         :non_semantic_version => {

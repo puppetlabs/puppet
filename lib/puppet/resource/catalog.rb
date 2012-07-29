@@ -44,6 +44,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Some metadata to help us compile and generally respond to the current state.
   attr_accessor :client_version, :server_version
 
+  # The environment for this catalog
+  attr_accessor :environment
+
   # Add classes to our class list.
   def add_class(*classes)
     classes.each do |klass|
@@ -143,11 +146,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         Puppet::Util::Log.close(transaction.report) if register_report
       end
     rescue Puppet::Error => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not apply complete catalog: #{detail}"
+      Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Got an uncaught exception of type #{detail.class}: #{detail}"
+      Puppet.log_exception(detail, "Got an uncaught exception of type #{detail.class}: #{detail}")
     ensure
       # Don't try to store state unless we're a host config
       # too recursive.
@@ -191,59 +192,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     add_resource(resource)
     resource
-  end
-
-  # Turn our catalog graph into an old-style tree of TransObjects and TransBuckets.
-  # LAK:NOTE(20081211): This is a  pre-0.25 backward compatibility method.
-  # It can be removed as soon as xmlrpc is killed.
-  def extract
-    top = nil
-    current = nil
-    buckets = {}
-
-    unless main = resource(:stage, "main")
-      raise Puppet::DevError, "Could not find 'main' stage; cannot generate catalog"
-    end
-
-    if stages = vertices.find_all { |v| v.type == "Stage" and v.title != "main" } and ! stages.empty?
-      Puppet.warning "Stages are not supported by 0.24.x client; stage(s) #{stages.collect { |s| s.to_s }.join(', ') } will be ignored"
-    end
-
-    bucket = nil
-    walk(main, :out) do |source, target|
-      # The sources are always non-builtins.
-      unless tmp = buckets[source.to_s]
-        if tmp = buckets[source.to_s] = source.to_trans
-          bucket = tmp
-        else
-          # This is because virtual resources return nil.  If a virtual
-          # container resource contains realized resources, we still need to get
-          # to them.  So, we keep a reference to the last valid bucket
-          # we returned and use that if the container resource is virtual.
-        end
-      end
-      bucket = tmp || bucket
-      if child = target.to_trans
-        raise "No bucket created for #{source}" unless bucket
-        bucket.push child
-
-        # It's important that we keep a reference to any TransBuckets we've created, so
-        # we don't create multiple buckets for children.
-        buckets[target.to_s] = child unless target.builtin?
-      end
-    end
-
-    # Retrieve the bucket for the top-level scope and set the appropriate metadata.
-    unless result = buckets[main.to_s]
-      # This only happens when the catalog is entirely empty.
-      result = buckets[main.to_s] = main.to_trans
-    end
-
-    result.classes = classes
-
-    # Clear the cache to encourage the GC
-    buckets.clear
-    result
   end
 
   # Make sure all of our resources are "finished".
@@ -452,6 +400,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       result.version = version
     end
 
+    if environment = data['environment']
+      result.environment = environment
+    end
+
     if resources = data['resources']
       resources = PSON.parse(resources) if resources.is_a?(String)
       resources.each do |res|
@@ -503,6 +455,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         'tags'      => tags,
         'name'      => name,
         'version'   => version,
+        'environment' => environment.to_s,
         'resources' => vertices.collect { |v| v.to_pson_data_hash },
         'edges'     => edges.   collect { |e| e.to_pson_data_hash },
         'classes'   => classes
@@ -592,6 +545,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result = self.class.new(self.name)
 
     result.version = self.version
+    result.environment = self.environment
 
     map = {}
     vertices.each do |resource|
@@ -603,9 +557,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       #has a reference to the catalog being converted. . . So, give it a reference to the new one
       #problem solved. . .
       if resource.class == Puppet::Resource
-        resource = resource.dup
-        resource.catalog = result
-      elsif resource.is_a?(Puppet::TransObject)
         resource = resource.dup
         resource.catalog = result
       elsif resource.is_a?(Puppet::Parser::Resource)

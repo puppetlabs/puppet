@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:file) do
@@ -36,22 +36,12 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "/"
       end
 
-      it "should accept a double-slash at the start of the path" do
+      it "should accept and preserve a double-slash at the start of the path" do
         expect {
           file[:path] = "//tmp/xxx"
-          # REVISIT: This should be wrong, later.  See the next test.
-          # --daniel 2011-01-31
-          file[:path].should == '/tmp/xxx'
+          file[:path].should == '//tmp/xxx'
         }.to_not raise_error
       end
-
-      # REVISIT: This is pending, because I don't want to try and audit the
-      # entire codebase to make sure we get this right.  POSIX treats two (and
-      # exactly two) '/' characters at the start of the path specially.
-      #
-      # See sections 3.2 and 4.11, which allow DomainOS to be all special like
-      # and still have the POSIX branding and all. --daniel 2011-01-31
-      it "should preserve the double-slash at the start of the path"
     end
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
@@ -70,16 +60,16 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "X:/foo/bar/baz"
       end
 
-      it "should leave a drive letter with a slash alone", :'fails_on_ruby_1.9.2' => true do
+      it "should leave a drive letter with a slash alone" do
         file[:path] = "X:/"
         file[:path].should == "X:/"
       end
 
-      it "should not accept a drive letter without a slash", :'fails_on_ruby_1.9.2' => true do
+      it "should not accept a drive letter without a slash" do
         expect { file[:path] = "X:" }.to raise_error(/File paths must be fully qualified/)
       end
 
-      describe "when using UNC filenames", :if => Puppet.features.microsoft_windows?, :'fails_on_ruby_1.9.2' => true do
+      describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
         before :each do
           pending("UNC file paths not yet supported")
         end
@@ -159,9 +149,8 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should warn if recurse is specified as a number" do
+      Puppet.expects(:deprecation_warning).with("Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit")
       file[:recurse] = 3
-      message = /Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit/
-      @logs.find { |log| log.level == :warning and log.message =~ message}.should_not be_nil
     end
   end
 

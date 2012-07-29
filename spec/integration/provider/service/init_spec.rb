@@ -1,9 +1,9 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 provider = Puppet::Type.type(:service).provider(:init)
 
-describe provider, :'fails_on_ruby_1.9.2' => true do
+describe provider do
   describe "when running on FreeBSD" do
     before :each do
       Facter.stubs(:value).with(:operatingsystem).returns 'FreeBSD'

@@ -1,11 +1,15 @@
-
+require 'puppet/util'
 module Puppet::Util::RDoc
-
   module_function
 
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
+    unless Puppet.features.rdoc1?
+      raise "the version of RDoc included in Ruby #{::RUBY_VERSION} is not supported"
+    end
+
+    begin
       Puppet[:ignoreimport] = true
 
       # then rdoc
@@ -18,25 +22,26 @@ module Puppet::Util::RDoc
       r = RDoc::RDoc.new
 
       RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
-          "puppet/util/rdoc/generators/puppet_generator.rb",
-          "PuppetGenerator".intern,
-          "puppet")
+        "puppet/util/rdoc/generators/puppet_generator.rb",
+        :PuppetGenerator,
+        "puppet"
+      )
 
       # specify our own format & where to output
       options = [ "--fmt", "puppet",
-        "--quiet",
-        "--exclude", "/modules/[^/]*/files/.*\.pp$",
-        "--op", outputdir ]
+                  "--quiet",
+                  "--exclude", "/modules/[^/]*/files/.*\.pp$",
+                  "--op", outputdir ]
 
       options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
       options += [ "--charset", charset] if charset
       options += files
-      #TODO dedup file paths (not strict duplication sense, parents, children, etc
 
       # launch the documentation process
       r.document(options)
-  rescue RDoc::RDocError => e
+    rescue RDoc::RDocError => e
       raise Puppet::ParseError.new("RDoc error #{e}")
+    end
   end
 
   # launch a output to console manifest doc
@@ -82,5 +87,4 @@ module Puppet::Util::RDoc
       end
     end
   end
-
 end

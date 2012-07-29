@@ -1,13 +1,8 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 
 shared_examples_for "Puppet::FileServing::Files" do |indirection|
   %w[find search].each do |method|
-    let(:request) { Puppet::Indirector::Request.new(indirection, method, 'foo') }
-
-    before :each do
-      # Stub this so we can set the :name setting
-      Puppet::Util::Settings::ReadOnly.stubs(:include?)
-    end
+    let(:request) { Puppet::Indirector::Request.new(indirection, method, 'foo', nil) }
 
     describe "##{method}" do
       it "should proxy to file terminus if the path is absolute" do
@@ -36,16 +31,16 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
             request.server = 'puppet_server'
           end
 
-          it "should proxy to rest terminus if we're 'apply'" do
-            Puppet[:name] = 'apply'
+          it "should proxy to rest terminus if default_file_terminus is rest" do
+            Puppet[:default_file_terminus] = "rest"
 
             described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
 
             subject.send(method, request)
           end
 
-          it "should proxy to rest terminus if we aren't 'apply'" do
-            Puppet[:name] = 'not_apply'
+          it "should proxy to rest terminus if default_file_terminus is not rest" do
+            Puppet[:default_file_terminus] = 'file_server'
 
             described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
 
@@ -58,16 +53,16 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
             request.server = nil
           end
 
-          it "should proxy to file_server if we're 'apply'" do
-            Puppet[:name] = 'apply'
+          it "should proxy to file_server if default_file_terminus is 'file_server'" do
+            Puppet[:default_file_terminus] = 'file_server'
 
             described_class.indirection.terminus(:file_server).class.any_instance.expects(method).with(request)
 
             subject.send(method, request)
           end
 
-          it "should proxy to rest if we're not 'apply'" do
-            Puppet[:name] = 'not_apply'
+          it "should proxy to rest if default_file_terminus is 'rest'" do
+            Puppet[:default_file_terminus] = "rest"
 
             described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
 

@@ -27,17 +27,18 @@ module Puppet
         name == :user
       end
 
+
       def conf_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"),
-          "~/.puppet"
+            Puppet::Settings.default_global_config_dir,
+            Puppet::Settings.default_user_config_dir
         )
       end
 
       def var_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"),
-          "~/.puppet/var"
+            Puppet::Settings.default_global_var_dir,
+            Puppet::Settings.default_user_var_dir
         )
       end
 
@@ -45,18 +46,8 @@ module Puppet
         "$vardir/run"
       end
 
-      def logopts
-        if master?
-          {
-            :default => "$vardir/log",
-            :mode    => 0750,
-            :owner   => "service",
-            :group   => "service",
-            :desc    => "The Puppet log directory."
-          }
-        else
-          ["$vardir/log", "The Puppet log directory."]
-        end
+      def log_dir
+        "$vardir/log"
       end
 
       private

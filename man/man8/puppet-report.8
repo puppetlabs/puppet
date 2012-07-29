@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-REPORT" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-REPORT" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-report\fR \- Create, display, and submit reports\.
@@ -146,8 +146,7 @@ begin
   Puppet::Face[:report, "0\.0\.1"]\.save(report)
   Puppet\.notice "Uploaded report for #{report\.name}"
 rescue => detail
-  puts detail\.backtrace if Puppet[:trace]
-  Puppet\.err "Could not send report: #{detail}"
+  Puppet\.log_exception(detail, "Could not send report: #{detail}")
 end
 .
 .fi

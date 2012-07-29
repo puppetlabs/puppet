@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/node/facts'
@@ -36,8 +36,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should be able to downcase fact values" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
+    Puppet[:downcasefacts] = true
 
     @facts.values["one"] = "Two"
 
@@ -46,8 +45,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should only try to downcase strings" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
+    Puppet[:downcasefacts] = true
 
     @facts.values["now"] = Time.now
 
@@ -56,8 +54,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should not downcase facts if not configured to do so" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns false
+    Puppet[:downcasefacts] = false
 
     @facts.values["one"] = "Two"
     @facts.downcase_if_necessary
@@ -123,6 +120,20 @@ describe Puppet::Node::Facts, "when indirecting" do
         result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
         result['timestamp'].should == facts.timestamp.to_s
         result['expiration'].should == facts.expiration.to_s
+      end
+
+      it "should not include nil values" do
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        pson = PSON.parse(facts.to_pson)
+        pson.should_not be_include("expiration")
+      end
+
+      it "should be able to handle nil values" do
+        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should be_nil
       end
     end
   end

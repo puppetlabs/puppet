@@ -32,21 +32,14 @@ class Resource < AST::Branch
       resource_titles = instance.title.safeevaluate(scope)
 
       # it's easier to always use an array, even for only one name
-      resource_titles = [resource_titles].flatten.collect do |title|
-        case title
-        when ::String, ::Numeric, ::Symbol, true, false
-          title.to_s
-        else
-          raise Puppet::ParseError, "Resource title must be a String, not #{title.class}"
-        end
-      end
+      resource_titles = [resource_titles] unless resource_titles.is_a?(Array)
 
       fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type, resource_titles)
 
       # Second level of implicit iteration; build a resource for each
       # title.  This handles things like:
       # file { ['/foo', '/bar']: owner => blah }
-      resource_titles.collect { |resource_title|
+      resource_titles.flatten.collect { |resource_title|
         exceptwrap :type => Puppet::ParseError do
           resource = Puppet::Parser::Resource.new(
             fully_qualified_type, resource_title,
@@ -64,7 +57,7 @@ class Resource < AST::Branch
             resource.resource_type.instantiate_resource(scope, resource)
           end
           scope.compiler.add_resource(scope, resource)
-          scope.compiler.evaluate_classes([resource_title],scope,false) if fully_qualified_type == 'class'
+          scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
           resource
         end
       }

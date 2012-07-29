@@ -1,13 +1,13 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-MODULE" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-MODULE" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-module\fR \- Creates, installs and searches for modules on the Puppet Forge\.
 .
 .SH "SYNOPSIS"
-puppet module \fIaction\fR
+puppet module \fIaction\fR [\-\-environment production ] [\-\-modulepath $confdir/modules:/usr/share/puppet/modules ]
 .
 .SH "DESCRIPTION"
 This subcommand can find, install, and manage modules from the Puppet Forge, a repository of user\-contributed Puppet code\. It can also generate empty modules, and prepare locally developed modules for release on the Forge\.
@@ -33,6 +33,14 @@ Whether to log verbosely\.
 .TP
 \-\-debug
 Whether to log debug information\.
+.
+.TP
+\-\-environment production
+The environment Puppet is running in\. For clients (e\.g\., \fBpuppet agent\fR) this determines the environment itself, which is used to find modules and much more\. For servers (i\.e\., \fBpuppet master\fR) this provides the default environment for nodes we know nothing about\.
+.
+.TP
+\-\-modulepath $confdir/modules:/usr/share/puppet/modules
+The search path for modules, as a list of directories separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .SH "ACTIONS"
 .
@@ -107,7 +115,7 @@ Array of Pathname objects representing paths of generated files\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module install [\-\-force | \-f] [\-\-target\-dir DIR | \-i DIR] [\-\-ignore\-dependencies] [\-\-modulepath MODULEPATH] [\-\-version VER | \-v VER] [\-\-environment NAME] \fIname\fR
+puppet module install [\-\-force | \-f] [\-\-target\-dir DIR | \-i DIR] [\-\-ignore\-dependencies] [\-\-version VER | \-v VER] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -119,25 +127,10 @@ Installs a module from the Puppet Forge or from a release archive file\.
 The specified module will be installed into the directory specified with the \fB\-\-target\-dir\fR option, which defaults to /Users/matthaus/\.puppet/modules\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-environment NAME\fR \- The target environment to install modules into\. Only applicable if multiple environments (with different modulepaths) have been configured in puppet\.conf\.
-.
-.IP
-\fI\-\-force\fR | \fI\-f\fR \- Force overwrite of existing module, if any\.
+\fBOPTIONS\fR \fI\-\-force\fR | \fI\-f\fR \- Force overwrite of existing module, if any\.
 .
 .IP
 \fI\-\-ignore\-dependencies\fR \- Do not attempt to install dependencies\.
-.
-.IP
-\fI\-\-modulepath MODULEPATH\fR \- The list of directories to check for modules\. When installing a new module, this setting determines where the module tool will look for its dependencies\. If the \fB\-\-target dir\fR option is not specified, the first directory in the modulepath will also be used as the install directory\.
-.
-.IP
-When installing a module into an environment whose modulepath is specified in puppet\.conf, you can use the \fB\-\-environment\fR option instead, and its modulepath will be used automatically\.
-.
-.IP
-This setting should be a list of directories separated by the path separator character\. (The path separator is \fB:\fR on Unix\-like platforms and \fB;\fR on Windows\.)
 .
 .IP
 \fI\-\-target\-dir DIR\fR | \fI\-i DIR\fR \- The directory into which modules are installed; defaults to the first directory in the modulepath\.
@@ -159,7 +152,7 @@ Pathname object representing the path to the installed module\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module list [\-\-environment NAME] [\-\-modulepath MODULEPATH] [\-\-tree]
+puppet module list [\-\-tree]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -171,16 +164,7 @@ Lists the installed puppet modules\. By default, this action scans the modulepat
 The output of this action includes information from the module\'s metadata, including version numbers and unmet module dependencies\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-environment NAME\fR \- Which environments\' modules to list\.
-.
-.IP
-\fI\-\-modulepath MODULEPATH\fR \- Which directories to look for modules in; use the system path separator character (\fB:\fR on Unix\-like systems and \fB;\fR on Windows) to specify multiple directories\.
-.
-.IP
-\fI\-\-tree\fR \- Whether to show dependencies as a tree view
+\fBOPTIONS\fR \fI\-\-tree\fR \- Whether to show dependencies as a tree view
 .
 .IP
 \fBRETURNS\fR
@@ -199,7 +183,7 @@ puppet module search \fIsearch_term\fR
 \fBDESCRIPTION\fR
 .
 .IP
-Searches the Puppet Forge for modules whose names, descriptions, or keywords match the provided search term\.
+Searches a repository for modules whose names, descriptions, or keywords match the provided search term\.
 .
 .IP
 \fBRETURNS\fR
@@ -212,7 +196,7 @@ Array of module metadata hashes
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module uninstall [\-\-force | \-f] [\-\-environment NAME] [\-\-version=] [\-\-modulepath=] \fIname\fR
+puppet module uninstall [\-\-force | \-f] [\-\-version=] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -221,16 +205,7 @@ puppet module uninstall [\-\-force | \-f] [\-\-environment NAME] [\-\-version=] 
 Uninstalls a puppet module from the modulepath (or a specific target directory)\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-environment NAME\fR \- The target environment to uninstall modules from\.
-.
-.IP
-\fI\-\-force\fR | \fI\-f\fR \- Force the uninstall of an installed module even if there are local changes or the possibility of causing broken dependencies\.
-.
-.IP
-\fI\-\-modulepath=\fR \- The target directory to search for modules\.
+\fBOPTIONS\fR \fI\-\-force\fR | \fI\-f\fR \- Force the uninstall of an installed module even if there are local changes or the possibility of causing broken dependencies\.
 .
 .IP
 \fI\-\-version=\fR \- The version of the module to uninstall\. When using this option, a module matching the specified version must be installed or else an error is raised\.
@@ -246,7 +221,7 @@ Hash of module objects representing uninstalled modules and related errors\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-environment NAME] [\-\-version=] \fIname\fR
+puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-version=] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -255,13 +230,7 @@ puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-environm
 Upgrades a puppet module\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-environment NAME\fR \- The target environment to search for modules\.
-.
-.IP
-\fI\-\-force\fR | \fI\-f\fR \- Force the upgrade of an installed module even if there are local changes or the possibility of causing broken dependencies\.
+\fBOPTIONS\fR \fI\-\-force\fR | \fI\-f\fR \- Force the upgrade of an installed module even if there are local changes or the possibility of causing broken dependencies\.
 .
 .IP
 \fI\-\-ignore\-dependencies\fR \- Do not attempt to install dependencies

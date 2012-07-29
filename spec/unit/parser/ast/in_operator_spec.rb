@@ -1,11 +1,13 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/parser/ast/in_operator'
 
 describe Puppet::Parser::AST::InOperator do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
 
     @lval = stub 'lval'
     @lval.stubs(:safeevaluate).with(@scope).returns("left")

@@ -1,9 +1,9 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/network/server'
 require 'net/http'
 
-describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Network::Server do
   describe "when using mongrel", :if => Puppet.features.mongrel? do
 
     # This reduces the odds of conflicting port numbers between concurrent runs
@@ -21,14 +21,6 @@ describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
 
     after :each do
       @server.unlisten if @server.listening?
-    end
-
-    describe "before listening" do
-      it "should not be reachable at the specified address and port" do
-        expect {
-          Net::HTTP.get('127.0.0.1', '/', port)
-        }.to raise_error(Errno::ECONNREFUSED)
-      end
     end
 
     describe "when listening" do

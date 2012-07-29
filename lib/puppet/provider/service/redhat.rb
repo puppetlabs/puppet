@@ -8,7 +8,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos, :sles, :oel, :ovm]
+  defaultfor :osfamily => [:redhat, :suse]
 
   def self.instances
     # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu

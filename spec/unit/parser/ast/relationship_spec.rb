@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Parser::AST::Relationship do
@@ -41,7 +41,7 @@ describe Puppet::Parser::AST::Relationship do
   describe "when evaluating" do
     before do
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
     end
 
     it "should create a relationship with the evaluated source and target and add it to the scope" do

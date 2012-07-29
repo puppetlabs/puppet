@@ -95,8 +95,8 @@ Puppet::Reports.register_report(:rrdgraph) do
 
     unless File.directory?(hostdir) and FileTest.writable?(hostdir)
       # Some hackishness to create the dir with all of the right modes and ownership
-      config = Puppet::Util::Settings.new
-      config.setdefaults(:reports, :hostdir => {:default => hostdir, :owner => 'service', :mode => 0755, :group => 'service', :desc => "eh"})
+      config = Puppet::Settings.new
+      config.define_settings(:reports, :hostdir => {:type => :directory, :default => hostdir, :owner => 'service', :mode => 0755, :group => 'service', :desc => "eh"})
 
       # This creates the dir.
       config.use(:reports)

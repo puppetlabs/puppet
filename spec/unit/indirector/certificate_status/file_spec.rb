@@ -1,10 +1,10 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/ssl/host'
 require 'puppet/indirector/certificate_status'
 require 'tempfile'
 
-describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => true do
+describe "Puppet::Indirector::CertificateStatus::File" do
   include PuppetSpec::Files
 
   before :all do
@@ -88,13 +88,15 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
     end
 
     it "should return the Puppet::SSL::Host when a public key exist for the host" do
-      generate_signed_cert(@host)
-      request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        generate_signed_cert(@host)
+        request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
 
-      retrieved_host = @terminus.find(request)
+        retrieved_host = @terminus.find(request)
 
-      retrieved_host.name.should == @host.name
-      retrieved_host.certificate.content.to_s.chomp.should == @host.certificate.content.to_s.chomp
+        retrieved_host.name.should == @host.name
+        retrieved_host.certificate.content.to_s.chomp.should == @host.certificate.content.to_s.chomp
+      end
     end
 
     it "should return nil when neither a CSR nor public key exist for the host" do
@@ -120,10 +122,12 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
       end
 
       it "should sign the on-disk CSR when it is present" do
-        signed_host = generate_signed_cert(@host)
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          signed_host = generate_signed_cert(@host)
 
-        signed_host.state.should == "signed"
-        Puppet::SSL::Certificate.indirection.find("foobar").should be_instance_of(Puppet::SSL::Certificate)
+          signed_host.state.should == "signed"
+          Puppet::SSL::Certificate.indirection.find("foobar").should be_instance_of(Puppet::SSL::Certificate)
+        end
       end
     end
 
@@ -138,9 +142,11 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
       end
 
       it "should revoke the certificate when it is present" do
-        generate_revoked_cert(@host)
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          generate_revoked_cert(@host)
 
-        @host.state.should == 'revoked'
+          @host.state.should == 'revoked'
+        end
       end
     end
   end
@@ -157,35 +163,39 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
     end
 
     it "should clean certs, cert requests, keys" do
-      signed_host = Puppet::SSL::Host.new("clean_signed_cert")
-      generate_signed_cert(signed_host)
-      signed_request = Puppet::Indirector::Request.new(:certificate_status, :delete, "clean_signed_cert", signed_host)
-      @terminus.destroy(signed_request).should == "Deleted for clean_signed_cert: Puppet::SSL::Certificate, Puppet::SSL::Key"
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        signed_host = Puppet::SSL::Host.new("clean_signed_cert")
+        generate_signed_cert(signed_host)
+        signed_request = Puppet::Indirector::Request.new(:certificate_status, :delete, "clean_signed_cert", signed_host)
+        @terminus.destroy(signed_request).should == "Deleted for clean_signed_cert: Puppet::SSL::Certificate, Puppet::SSL::Key"
 
-      requested_host = Puppet::SSL::Host.new("clean_csr")
-      generate_csr(requested_host)
-      csr_request = Puppet::Indirector::Request.new(:certificate_status, :delete, "clean_csr", requested_host)
-      @terminus.destroy(csr_request).should == "Deleted for clean_csr: Puppet::SSL::CertificateRequest, Puppet::SSL::Key"
+        requested_host = Puppet::SSL::Host.new("clean_csr")
+        generate_csr(requested_host)
+        csr_request = Puppet::Indirector::Request.new(:certificate_status, :delete, "clean_csr", requested_host)
+        @terminus.destroy(csr_request).should == "Deleted for clean_csr: Puppet::SSL::CertificateRequest, Puppet::SSL::Key"
+      end
     end
   end
 
   describe "when searching" do
     it "should return a list of all hosts with certificate requests, signed certs, or revoked certs" do
-      Puppet.settings.use(:main)
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        Puppet.settings.use(:main)
 
-      signed_host = Puppet::SSL::Host.new("signed_host")
-      generate_signed_cert(signed_host)
+        signed_host = Puppet::SSL::Host.new("signed_host")
+        generate_signed_cert(signed_host)
 
-      requested_host = Puppet::SSL::Host.new("requested_host")
-      generate_csr(requested_host)
+        requested_host = Puppet::SSL::Host.new("requested_host")
+        generate_csr(requested_host)
 
-      revoked_host = Puppet::SSL::Host.new("revoked_host")
-      generate_revoked_cert(revoked_host)
+        revoked_host = Puppet::SSL::Host.new("revoked_host")
+        generate_revoked_cert(revoked_host)
 
-      retrieved_hosts = @terminus.search(Puppet::Indirector::Request.new(:certificate_status, :search, "all", signed_host))
+        retrieved_hosts = @terminus.search(Puppet::Indirector::Request.new(:certificate_status, :search, "all", signed_host))
 
-      results = retrieved_hosts.map {|h| [h.name, h.state]}.sort{ |h,i| h[0] <=> i[0] }
-      results.should == [["ca","signed"],["requested_host","requested"],["revoked_host","revoked"],["signed_host","signed"]]
+        results = retrieved_hosts.map {|h| [h.name, h.state]}.sort{ |h,i| h[0] <=> i[0] }
+        results.should == [["ca","signed"],["requested_host","requested"],["revoked_host","revoked"],["signed_host","signed"]]
+      end
     end
   end
 end

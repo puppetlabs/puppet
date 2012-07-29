@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Util::RunMode do
@@ -15,8 +15,7 @@ describe Puppet::Util::RunMode do
 
   it "should have confdir ~/.puppet when run as non-root" do
     Puppet.features.stubs(:root?).returns(false)
-    @run_mode.expects(:expand_path).with("~/.puppet").returns("~/.puppet")
-    @run_mode.conf_dir.should == "~/.puppet"
+    @run_mode.conf_dir.should == File.expand_path("~/.puppet")
   end
 
   it "should have vardir /var/lib/puppet when run as root" do
@@ -28,20 +27,16 @@ describe Puppet::Util::RunMode do
 
   it "should have vardir ~/.puppet/var when run as non-root" do
     Puppet.features.stubs(:root?).returns(false)
-    @run_mode.expects(:expand_path).with("~/.puppet/var").returns("~/.puppet/var")
-    @run_mode.var_dir.should == "~/.puppet/var"
+    @run_mode.var_dir.should == File.expand_path("~/.puppet/var")
   end
 
   it "should have rundir depend on vardir" do
     @run_mode.run_dir.should == '$vardir/run'
   end
 
-  it "should have logopts return an array with $vardir/log if runmode is not master" do
-    @run_mode.expects(:master?).returns false
-    @run_mode.logopts.should == ["$vardir/log", "The Puppet log directory."]
-  end
 
   it "should have logopts return a hash with $vardir/log and other metadata if runmode is master" do
+    pending("runmode.logopts functionality is being moved")
     @run_mode.expects(:master?).returns true
     @run_mode.logopts.should == {
       :default => "$vardir/log",

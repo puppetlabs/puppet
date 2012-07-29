@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec) do
@@ -22,7 +22,13 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with(command, nil, nil).returns([output, status])
+      with() { |*args|
+        args[0] == command &&
+        args[1] == nil &&
+        args[2] == nil &&
+        args[3][:override_locale] == false &&
+        args[3].has_key?(:custom_environment)
+      } .returns([output, status])
 
     return exec
   end
@@ -368,15 +374,13 @@ describe Puppet::Type.type(:exec) do
       end
 
       it "should fail if timeout is exceeded" do
-        Puppet::Util.stubs(:execute).with do |cmd,args|
-          sleep 1
-          true
-        end
-        FileTest.stubs(:file?).returns(false)
-        FileTest.stubs(:file?).with(File.expand_path('/bin/sleep')).returns(true)
-        FileTest.stubs(:executable?).returns(false)
-        FileTest.stubs(:executable?).with(File.expand_path('/bin/sleep')).returns(true)
-        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => [File.expand_path('/bin')], :timeout => '0.2')
+        ruby_path = Puppet::Util::Execution.ruby_path()
+
+        ## Leaving this commented version in here because it fails on windows, due to what appears to be
+        ##  an assumption about hash iteration order in lib/puppet/type.rb#hash2resource, where
+        ##  resource[]= will overwrite the namevar with ":name" if the iteration is in the wrong order
+        #sleep_exec = Puppet::Type.type(:exec).new(:name => 'exec_spec sleep command', :command => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
+        sleep_exec = Puppet::Type.type(:exec).new(:name => "#{ruby_path} -e 'sleep 0.02'", :timeout => '0.01')
 
         expect { sleep_exec.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
       end
@@ -709,6 +713,30 @@ describe Puppet::Type.type(:exec) do
       @exec_resource.stubs(:provider).returns(provider)
 
       @exec_resource.refresh
+    end
+  end
+
+  describe "relative and absolute commands vs path" do
+    let :type do Puppet::Type.type(:exec) end
+    let :rel  do 'echo' end
+    let :abs  do make_absolute('/bin/echo') end
+    let :path do make_absolute('/bin') end
+
+    it "should fail with relative command and no path" do
+      expect { type.new(:command => rel) }.
+        to raise_error Puppet::Error, /no path was specified/
+    end
+
+    it "should accept a relative command with a path" do
+      type.new(:command => rel, :path => path).must be
+    end
+
+    it "should accept an absolute command with no path" do
+      type.new(:command => abs).must be
+    end
+
+    it "should accept an absolute command with a path" do
+      type.new(:command => abs, :path => path).must be
     end
   end
 end

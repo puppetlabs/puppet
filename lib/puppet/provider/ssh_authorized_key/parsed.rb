@@ -1,4 +1,5 @@
 require 'puppet/provider/parsedfile'
+
 Puppet::Type.type(:ssh_authorized_key).provide(
   :parsed,
   :parent         => Puppet::Provider::ParsedFile,

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/util/logging'
@@ -93,27 +93,59 @@ describe Puppet::Util::Logging do
   end
 
   describe "when sending a deprecation warning" do
-    before do
-      @logger.clear_deprecation_warnings
-    end
-
-    it "should the message with warn" do
-      @logger.expects(:warning).with('foo')
+    it "should log the message with warn" do
+      @logger.expects(:warning).with do |msg|
+        msg =~ /^foo\n/
+      end
       @logger.deprecation_warning 'foo'
     end
 
-    it "should only log each unique message once" do
-      @logger.expects(:warning).with('foo').once
+    it "should only log each offending line once" do
+      @logger.expects(:warning).with do |msg|
+        msg =~ /^foo\n/
+      end .once
       5.times { @logger.deprecation_warning 'foo' }
     end
 
     it "should only log the first 100 messages" do
       (1..100).each { |i|
-          @logger.expects(:warning).with(i).once
-          @logger.deprecation_warning i
+        @logger.expects(:warning).with do |msg|
+          msg =~ /^#{i}\n/
+        end .once
+        # since the deprecation warning will only log each offending line once, we have to do some tomfoolery
+        # here in order to make it think each of these calls is coming from a unique call stack; we're basically
+        # mocking the method that it would normally use to find the call stack.
+        @logger.expects(:get_deprecation_offender).returns("deprecation log count test ##{i}")
+        @logger.deprecation_warning i
       }
       @logger.expects(:warning).with(101).never
       @logger.deprecation_warning 101
+    end
+  end
+
+  describe "when formatting exceptions" do
+    it "should be able to format a chain of exceptions" do
+      exc3 = Puppet::Error.new("original")
+      exc3.set_backtrace(["1.rb:4:in `a'","2.rb:2:in `b'","3.rb:1"])
+      exc2 = Puppet::Error.new("second", exc3)
+      exc2.set_backtrace(["4.rb:8:in `c'","5.rb:1:in `d'","6.rb:3"])
+      exc1 = Puppet::Error.new("third", exc2)
+      exc1.set_backtrace(["7.rb:31:in `e'","8.rb:22:in `f'","9.rb:9"])
+      # whoa ugly
+      @logger.format_exception(exc1).should =~ /third
+.*7\.rb:31
+.*8\.rb:22
+.*9\.rb:9
+Wrapped exception:
+second
+.*4\.rb:8
+.*5\.rb:1
+.*6\.rb:3
+Wrapped exception:
+original
+.*1\.rb:4
+.*2\.rb:2
+.*3\.rb:1/
     end
   end
 end

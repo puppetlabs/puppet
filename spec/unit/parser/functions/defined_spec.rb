@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe "the 'defined' function" do
@@ -9,7 +9,7 @@ describe "the 'defined' function" do
   before :each do
     Puppet::Node::Environment.stubs(:current).returns(nil)
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope = Puppet::Parser::Scope.new(@compiler)
   end
 
   it "should exist" do

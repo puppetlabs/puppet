@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:pkg) do
@@ -66,7 +66,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
     it "should warn about incorrect lines" do
       fake_output = File.read(my_fixture('incomplete'))
-      error_line = fake_output.lines[0]
+      error_line = fake_output.split($/).first
       described_class.expects(:pkg).with(:list,'-H').returns fake_output
       described_class.expects(:warning).with "Failed to match 'pkg list' line #{error_line.inspect}"
       described_class.instances

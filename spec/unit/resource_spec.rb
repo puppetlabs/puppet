@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/resource'
 
@@ -107,10 +107,6 @@ describe Puppet::Resource do
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
     expect { Puppet::Resource.new({:type => "resource-spec-foo", :title => "bar"}) }.
       to raise_error ArgumentError, /Puppet::Resource.new does not take a hash/
-  end
-
-  it "should be able to produce a backward-compatible reference array" do
-    Puppet::Resource.new("foobar", "/f").to_trans_ref.should == %w{Foobar /f}
   end
 
   it "should be taggable" do
@@ -268,6 +264,132 @@ describe Puppet::Resource do
 
   it "should not be considered equivalent to another resource if their titles do not match" do
     Puppet::Resource.new("file", "/foo").should_not == Puppet::Resource.new("file", "/f")
+  end
+
+  describe "when setting default parameters" do
+    before do
+      @scope = mock "Scope"
+      @scope.stubs(:source).returns(nil)
+    end
+
+    it "should fail when asked to set default values and it is not a parser resource" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "default")})
+      )
+      resource = Puppet::Resource.new("default_param", "name")
+      lambda { resource.set_default_parameters(@scope) }.should raise_error(Puppet::DevError)
+    end
+
+    it "should evaluate and set any default values when no value is provided" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
+      resource.set_default_parameters(@scope)
+      resource["a"].should == "a_default_value"
+    end
+
+    it "should skip attributes with no default value" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
+      lambda { resource.set_default_parameters(@scope) }.should_not raise_error
+    end
+
+    it "should return the list of default parameters set" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
+      resource.set_default_parameters(@scope).should == [:a]
+    end
+
+    describe "when the resource type is :hostclass" do
+      let(:environmnet_name) { "testing env" }
+      let(:fact_values) { { :a => 1 } }
+      let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
+      let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
+
+      before do
+        environment = Puppet::Node::Environment.new(environmnet_name)
+        environment.known_resource_types.add(apache)
+
+        @scope.stubs(:host).returns('host')
+        @scope.stubs(:environment).returns(Puppet::Node::Environment.new(environmnet_name))
+        @scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
+      end
+
+      context "when no value is provided" do
+        let(:resource) do
+          Puppet::Parser::Resource.new("class", "apache", :scope => @scope)
+        end
+
+        it "should query the data_binding terminus using a namespaced key" do
+          Puppet::DataBinding.indirection.expects(:find).with(
+            'apache::port', :host => 'host', :environment => environmnet_name, :facts => fact_values)
+          resource.set_default_parameters(@scope)
+        end
+
+        it "should use the value from the data_binding terminus" do
+          Puppet::DataBinding.indirection.expects(:find).returns('443')
+          resource.set_default_parameters(@scope).should == [:port]
+          resource[:port].should == '443'
+        end
+
+        it "should use the default value if the data_binding terminus returns nil" do
+          Puppet::DataBinding.indirection.expects(:find).returns(nil)
+          resource.set_default_parameters(@scope).should == [:port]
+          resource[:port].should == '80'
+        end
+      end
+
+      context "when a value is provided" do
+        let(:port_parameter) do
+          Puppet::Parser::Resource::Param.new(
+            { :name => 'port', :value => '8080' }
+          )
+        end
+
+        let(:resource) do
+          Puppet::Parser::Resource.new("class", "apache", :scope => @scope,
+            :parameters => [port_parameter])
+        end
+
+        it "should not query the data_binding terminus" do
+          Puppet::DataBinding.indirection.expects(:find).never
+          resource.set_default_parameters(@scope)
+        end
+
+        it "should use the value provided" do
+          Puppet::DataBinding.indirection.expects(:find).never
+          resource.set_default_parameters(@scope).should == []
+          resource[:port].should == '8080'
+        end
+      end
+    end
+  end
+
+  describe "when validating all required parameters are present" do
+    it "should be able to validate that all required parameters are present" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "required_param", :arguments => {"a" => nil})
+      )
+      lambda { Puppet::Resource.new("required_param", "name").validate_complete }.should raise_error(Puppet::ParseError)
+    end
+
+    it "should not fail when all required parameters are present" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "no_required_param")
+      )
+      resource = Puppet::Resource.new("no_required_param", "name")
+      resource["a"] = "meh"
+      lambda { resource.validate_complete }.should_not raise_error
+    end
+
+    it "should not validate against builtin types" do
+      lambda { Puppet::Resource.new("file", "/bar").validate_complete }.should_not raise_error
+    end
   end
 
   describe "when referring to a resource with name canonicalization" do
@@ -510,7 +632,7 @@ type: File
       )
     end
 
-    it "should align, sort and add trailing commas to attributes with ensure first", :'fails_on_ruby_1.9.2' => true do
+    it "should align, sort and add trailing commas to attributes with ensure first" do
       @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
         one::two { '/my/file':
           ensure => 'present',
@@ -518,93 +640,6 @@ type: File
           noop   => 'true',
         }
       HEREDOC
-    end
-  end
-
-  describe "when converting to a TransObject" do
-    describe "and the resource is not an instance of a builtin type" do
-      before do
-        @resource = Puppet::Resource.new("resource-spec-foo", "bar")
-      end
-
-      it "should return a simple TransBucket if it is not an instance of a builtin type" do
-        bucket = @resource.to_trans
-        bucket.should be_instance_of(Puppet::TransBucket)
-        bucket.type.should == @resource.type
-        bucket.name.should == @resource.title
-      end
-
-      it "should return a simple TransBucket if it is a stage" do
-        @resource = Puppet::Resource.new("stage", "bar")
-        bucket = @resource.to_trans
-        bucket.should be_instance_of(Puppet::TransBucket)
-        bucket.type.should == @resource.type
-        bucket.name.should == @resource.title
-      end
-
-      it "should copy over the resource's file" do
-        @resource.file = "/foo/bar"
-        @resource.to_trans.file.should == "/foo/bar"
-      end
-
-      it "should copy over the resource's line" do
-        @resource.line = 50
-        @resource.to_trans.line.should == 50
-      end
-    end
-
-    describe "and the resource is an instance of a builtin type" do
-      before do
-        @resource = Puppet::Resource.new("file", "bar")
-      end
-
-      it "should return a TransObject if it is an instance of a builtin resource type" do
-        trans = @resource.to_trans
-        trans.should be_instance_of(Puppet::TransObject)
-        trans.type.should == "file"
-        trans.name.should == @resource.title
-      end
-
-      it "should copy over the resource's file" do
-        @resource.file = "/foo/bar"
-        @resource.to_trans.file.should == "/foo/bar"
-      end
-
-      it "should copy over the resource's line" do
-        @resource.line = 50
-        @resource.to_trans.line.should == 50
-      end
-
-      # Only TransObjects support tags, annoyingly
-      it "should copy over the resource's tags" do
-        @resource.tag "foo"
-        @resource.to_trans.tags.should == @resource.tags
-      end
-
-      it "should copy the resource's parameters into the transobject and convert the parameter name to a string" do
-        @resource[:foo] = "bar"
-        @resource.to_trans["foo"].should == "bar"
-      end
-
-      it "should be able to copy arrays of values" do
-        @resource[:foo] = %w{yay fee}
-        @resource.to_trans["foo"].should == %w{yay fee}
-      end
-
-      it "should reduce single-value arrays to just a value" do
-        @resource[:foo] = %w{yay}
-        @resource.to_trans["foo"].should == "yay"
-      end
-
-      it "should convert resource references into the backward-compatible form" do
-        @resource[:foo] = Puppet::Resource.new(:file, "/f")
-        @resource.to_trans["foo"].should == %w{File /f}
-      end
-
-      it "should convert resource references into the backward-compatible form even when within arrays" do
-        @resource[:foo] = ["a", Puppet::Resource.new(:file, "/f")]
-        @resource.to_trans["foo"].should == ["a", %w{File /f}]
-      end
     end
   end
 

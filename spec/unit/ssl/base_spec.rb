@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/ssl/certificate'
@@ -14,7 +14,7 @@ describe Puppet::SSL::Certificate do
     before :each do
       @cert = stub 'cert', :to_der => "DER"
       @base.stubs(:content).returns(@cert)
-      OpenSSL::Digest.stubs(:constants).returns ["MD5", "DIGEST"]
+      OpenSSL::Digest.stubs(:constants).returns ["MD5", "SHA1", "SHA256", "SHA512", "DIGEST"]
       @digest = stub_everything
       OpenSSL::Digest.stubs(:const_get).returns @digest
     end

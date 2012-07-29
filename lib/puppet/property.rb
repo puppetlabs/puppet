@@ -82,9 +82,9 @@ class Puppet::Property < Puppet::Parameter
       rescue Puppet::Error
         raise
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        error = Puppet::Error.new("Could not set '#{value} on #{self.class.name}: #{detail}", @resource.line, @resource.file)
+        error = Puppet::ResourceError.new("Could not set '#{value}' on #{self.class.name}: #{detail}", @resource.line, @resource.file, detail)
         error.set_backtrace detail.backtrace
+        Puppet.log_exception(detail, error.message)
         raise error
       end
     elsif block = self.class.value_option(name, :block)
@@ -109,8 +109,9 @@ class Puppet::Property < Puppet::Parameter
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::DevError, "Could not convert change '#{name}' to string: #{detail}"
+      message = "Could not convert change '#{name}' to string: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::DevError, message
     end
   end
 

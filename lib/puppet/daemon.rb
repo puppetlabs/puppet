@@ -8,7 +8,7 @@ class Puppet::Daemon
   attr_accessor :agent, :server, :argv
 
   def daemonname
-    Puppet[:name]
+    Puppet.run_mode.name
   end
 
   # Put the daemon into the background.
@@ -25,24 +25,36 @@ class Puppet::Daemon
 
     Process.setsid
     Dir.chdir("/")
+  end
+
+  # Close stdin/stdout/stderr so that we can finish our transition into 'daemon' mode.
+  # @return nil
+  def self.close_streams()
+    Puppet.debug("Closing streams for daemon mode")
     begin
       $stdin.reopen "/dev/null"
       $stdout.reopen "/dev/null", "a"
       $stderr.reopen $stdout
       Puppet::Util::Log.reopen
+      Puppet.debug("Finished closing streams for daemon mode")
     rescue => detail
-      Puppet.err "Could not start #{Puppet[:name]}: #{detail}"
+      Puppet.err "Could not start #{Puppet.run_mode.name}: #{detail}"
       Puppet::Util::replace_file("/tmp/daemonout", 0644) do |f|
-        f.puts "Could not start #{Puppet[:name]}: #{detail}"
+        f.puts "Could not start #{Puppet.run_mode.name}: #{detail}"
       end
       exit(12)
     end
   end
 
+  # Convenience signature for calling Puppet::Daemon.close_streams
+  def close_streams()
+    Puppet::Daemon.close_streams
+  end
+
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
       raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
     end
   end
@@ -72,7 +84,7 @@ class Puppet::Daemon
 
   # Remove the pid file for our daemon.
   def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
       Puppet::Util::Pidlock.new(pidfile).unlock
     end
   end
@@ -123,6 +135,12 @@ class Puppet::Daemon
     # Start the listening server, if required.
     server.start if server
 
+    # now that the server has started, we've waited just about as long as possible to close
+    #  our streams and become a "real" daemon process.  This is in hopes of allowing
+    #  errors to have the console available as a fallback for logging for as long as
+    #  possible.
+    close_streams if Puppet[:daemonize]
+
     # Finally, loop forever running events - or, at least, until we exit.
     run_event_loop
   end
@@ -160,7 +178,7 @@ class Puppet::Daemon
       # `reparse` will just check if the action is required, and would be
       # better named `reparse_if_changed` instead.
       if reparse_interval > 0 and now >= next_reparse
-        Puppet.settings.reparse
+        Puppet.settings.reparse_config_files
 
         # The time to the next reparse might have changed, so recalculate
         # now.  That way we react dynamically to reconfiguration.

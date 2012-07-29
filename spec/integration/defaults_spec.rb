@@ -1,13 +1,10 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/defaults'
 require 'puppet/rails'
 
 describe "Puppet defaults" do
-    include Puppet::Util::Execution
-  after { Puppet.settings.clear }
-
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
       Facter.expects(:search).with("/my/fact/path")
@@ -64,7 +61,7 @@ describe "Puppet defaults" do
 
   describe "when setting the :catalog_format" do
     it "should log a deprecation notice" do
-      Puppet.expects(:warning)
+      Puppet.expects(:deprecation_warning)
       Puppet.settings[:catalog_format] = 'marshal'
     end
     it "should copy the value to :preferred_serialization_format" do
@@ -122,20 +119,14 @@ describe "Puppet defaults" do
     Puppet.settings[:bindaddress].should == ""
   end
 
-  [:factdest].each do |setting|
-    it "should force the :factdest to be a directory" do
-      Puppet.settings[setting].should =~ /\/$/
-    end
-  end
-
   [:modulepath, :factpath].each do |setting|
     it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
-      Puppet.settings.setting(setting).should be_instance_of(Puppet::Util::Settings::Setting)
+      Puppet.settings.setting(setting).should be_instance_of(Puppet::Settings::PathSetting)
     end
   end
 
   it "should add /usr/sbin and /sbin to the path if they're not there" do
-    withenv("PATH" => "/usr/bin:/usr/local/bin") do
+    Puppet::Util.withenv("PATH" => "/usr/bin:/usr/local/bin") do
       Puppet.settings[:path] = "none" # this causes it to ignore the setting
       ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/usr/sbin")
       ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
@@ -312,6 +303,22 @@ describe "Puppet defaults" do
 
     it "should default to '' on Windows", :if => Puppet.features.microsoft_windows? do
       Puppet.settings[:diff].should == ''
+    end
+  end
+
+  describe "when configuring hiera" do
+    it "should have a hiera_config setting" do
+      Puppet.settings[:hiera_config].should_not be_nil
+    end
+  end
+
+  describe "when configuring the data_binding terminus" do
+    it "should have a data_binding_terminus setting" do
+      Puppet.settings[:data_binding_terminus].should_not be_nil
+    end
+
+    it "should be set to hiera by default" do
+      Puppet.settings[:data_binding_terminus].should == 'hiera'
     end
   end
 end

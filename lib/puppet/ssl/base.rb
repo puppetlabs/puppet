@@ -1,4 +1,4 @@
-require 'openssl/digest'
+require 'openssl'
 require 'puppet/ssl'
 
 # The base class for wrapping SSL instances.
@@ -63,7 +63,7 @@ class Puppet::SSL::Base
     content.to_text
   end
 
-  def fingerprint(md = :MD5)
+  def fingerprint(md = :SHA256)
     # ruby 1.8.x openssl digest constants are string
     # but in 1.9.x they are symbols
     mds = md.to_s.upcase

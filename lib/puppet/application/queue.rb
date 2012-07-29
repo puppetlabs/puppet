@@ -2,9 +2,12 @@ require 'puppet/application'
 require 'puppet/util'
 
 class Puppet::Application::Queue < Puppet::Application
-  should_parse_config
 
   attr_accessor :daemon
+  
+  def app_defaults()
+    super.merge( :pidfile => "$rundir/queue.pid" )
+  end
 
   def preinit
     require 'puppet/daemon'
@@ -113,14 +116,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
-    Puppet.notice "Starting puppetqd #{Puppet.version}"
+    Puppet.notice "Starting puppet queue #{Puppet.version}"
     Puppet::Resource::Catalog::Queue.subscribe do |catalog|
       # Once you have a Puppet::Resource::Catalog instance, passing it to save should suffice
       # to put it through to the database via its active_record indirector (which is determined
@@ -129,8 +131,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           Puppet::Resource::Catalog.indirection.save(catalog)
         rescue => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not save queued catalog for #{catalog.name}: #{detail}"
+          Puppet.log_exception(detail, "Could not save queued catalog for #{catalog.name}: #{detail}")
         end
       end
     end

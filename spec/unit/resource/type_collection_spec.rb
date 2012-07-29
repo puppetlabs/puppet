@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/resource/type_collection'
@@ -157,7 +157,7 @@ describe Puppet::Resource::TypeCollection do
       end
 
       it "should return nil if the name isn't found" do
-        @code.stubs(:try_load_fqname).returns(nil)
+        @code.loader.stubs(:try_load_fqname).returns(nil)
         @code.find_hostclass("Ns", "Klass").should be_nil
       end
 
@@ -165,6 +165,14 @@ describe Puppet::Resource::TypeCollection do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
         @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
         @code.find_hostclass("foo", "bar").should == :foobar
+      end
+
+      it "should not try to autoload names that we couldn't autoload in a previous step" do
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass").returns(nil)
+        @code.find_hostclass("Ns", "Klass").should be_nil
+
+        @code.find_hostclass("Ns", "Klass").should be_nil
       end
     end
   end
@@ -309,7 +317,10 @@ describe Puppet::Resource::TypeCollection do
       it "should only look in the topclass, if the name is qualified" do
         @loader.find_hostclass("foo", "::bar").name.should == 'bar'
       end
-
+      
+      it "should only look in the topclass, if we assume the name is fully qualified" do
+        @loader.find_hostclass("foo", "bar", :assume_fqname => true).name.should == 'bar'
+      end
     end
     
     it "should not look in the local scope for classes when the name is qualified" do
@@ -330,7 +341,7 @@ describe Puppet::Resource::TypeCollection do
 
   it "should use the 'find_or_load' method to find hostclasses" do
     loader = Puppet::Resource::TypeCollection.new("env")
-    loader.expects(:find_or_load).with("foo", "bar", :hostclass)
+    loader.expects(:find_or_load).with("foo", "bar", :hostclass, {})
     loader.find_hostclass("foo", "bar")
   end
 
@@ -435,13 +446,13 @@ describe Puppet::Resource::TypeCollection do
     it "should use the output of the environment's config_version setting if one is provided" do
       @code.environment.stubs(:[]).with(:config_version).returns("/my/foo")
 
-      Puppet::Util.expects(:execute).with(["/my/foo"]).returns "output\n"
+      Puppet::Util::Execution.expects(:execute).with(["/my/foo"]).returns "output\n"
       @code.version.should == "output"
     end
 
     it "should raise a puppet parser error if executing config_version fails" do
       @code.environment.stubs(:[]).with(:config_version).returns("test")
-      Puppet::Util.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+      Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
 
       lambda { @code.version }.should raise_error(Puppet::ParseError)
     end

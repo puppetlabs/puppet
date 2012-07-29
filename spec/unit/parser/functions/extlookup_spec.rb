@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'tempfile'
 
@@ -10,8 +10,9 @@ describe "the extlookup function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.stubs(:environment).returns(Puppet::Node::Environment.new('production'))
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should exist" do
@@ -67,7 +68,7 @@ describe "the extlookup function" do
   describe "should look in $extlookup_datadir for data files listed by $extlookup_precedence" do
     before do
       dir = tmpdir('extlookup_datadir')
-      @scope.stubs(:lookupvar).with('::extlookup_datadir').returns(dir)
+      @scope.stubs(:[]).with('::extlookup_datadir').returns(dir)
       File.open(File.join(dir, "one.csv"),"w"){|one| one.puts "key,value1" }
       File.open(File.join(dir, "two.csv"),"w") do |two|
         two.puts "key,value2"
@@ -76,21 +77,21 @@ describe "the extlookup function" do
     end
 
     it "when the key is in the first file" do
-      @scope.stubs(:lookupvar).with('::extlookup_precedence').returns(["one","two"])
+      @scope.stubs(:[]).with('::extlookup_precedence').returns(["one","two"])
       result = @scope.function_extlookup([ "key" ])
       result.should == "value1"
     end
 
     it "when the key is in the second file" do
-      @scope.stubs(:lookupvar).with('::extlookup_precedence').returns(["one","two"])
+      @scope.stubs(:[]).with('::extlookup_precedence').returns(["one","two"])
       result = @scope.function_extlookup([ "key2" ])
       result.should == "value_two"
     end
 
     it "should not modify extlookup_precedence data" do
       variable = '%{fqdn}'
-      @scope.stubs(:lookupvar).with('::extlookup_precedence').returns([variable,"one"])
-      @scope.stubs(:lookupvar).with('::fqdn').returns('myfqdn')
+      @scope.stubs(:[]).with('::extlookup_precedence').returns([variable,"one"])
+      @scope.stubs(:[]).with('::fqdn').returns('myfqdn')
       result = @scope.function_extlookup([ "key" ])
       variable.should == '%{fqdn}'
     end

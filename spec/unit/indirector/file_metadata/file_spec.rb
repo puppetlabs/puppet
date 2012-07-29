@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/file_metadata/file'
@@ -21,7 +21,7 @@ describe Puppet::Indirector::FileMetadata::File do
       @data.stubs(:collect)
       FileTest.expects(:exists?).with(@path).returns true
 
-      @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
+      @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri, nil)
     end
 
     it "should collect its attributes when a file is found" do
@@ -38,7 +38,7 @@ describe Puppet::Indirector::FileMetadata::File do
       @path = File.expand_path('/my/local')
       @uri = Puppet::Util.path_to_uri(@path).to_s
 
-      @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
+      @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri, nil)
     end
 
     it "should collect the attributes of the instances returned" do

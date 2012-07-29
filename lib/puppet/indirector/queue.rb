@@ -73,8 +73,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
       begin
         yield(self.intern(msg))
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Error occured with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}"
+        Puppet.log_exception(detail, "Error occured with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}")
       end
     end
   end

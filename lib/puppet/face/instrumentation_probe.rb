@@ -1,4 +1,5 @@
 require 'puppet/indirector/face'
+require 'puppet/util/instrumentation/indirection_probe'
 
 Puppet::Indirector::Face.define(:instrumentation_probe, '0.0.1') do
   copyright "Puppet Labs", 2011

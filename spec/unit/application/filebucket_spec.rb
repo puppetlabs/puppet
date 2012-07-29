@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/application/filebucket'
@@ -7,10 +7,6 @@ require 'puppet/file_bucket/dipper'
 describe Puppet::Application::Filebucket do
   before :each do
     @filebucket = Puppet::Application[:filebucket]
-  end
-
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @filebucket.should_parse_config?.should be_false
   end
 
   it "should declare a get command" do
@@ -41,7 +37,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
     end
@@ -71,12 +66,6 @@ describe Puppet::Application::Filebucket do
       Puppet::Log.level.should == :info
     end
 
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @filebucket.setup
-    end
-
     it "should print puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
       Puppet.settings.expects(:print_configs).returns(true)
@@ -89,23 +78,24 @@ describe Puppet::Application::Filebucket do
     end
 
     describe "with local bucket" do
+      let(:path) { File.expand_path("path") }
 
       before :each do
         @filebucket.options.stubs(:[]).with(:local).returns(true)
       end
 
       it "should create a client with the default bucket if none passed" do
-        Puppet.stubs(:[]).with(:bucketdir).returns("path")
+        Puppet[:bucketdir] = path
 
-        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
+        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == path }
 
         @filebucket.setup
       end
 
       it "should create a local Dipper with the given bucket" do
-        @filebucket.options.stubs(:[]).with(:bucket).returns("path")
+        @filebucket.options.stubs(:[]).with(:bucket).returns(path)
 
-        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
+        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == path }
 
         @filebucket.setup
       end
@@ -115,7 +105,7 @@ describe Puppet::Application::Filebucket do
     describe "with remote bucket" do
 
       it "should create a remote Client to the configured server" do
-        Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+        Puppet[:server] = "puppet.reductivelabs.com"
 
         Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
 
@@ -131,7 +121,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
 

@@ -16,6 +16,10 @@ authconf = node_names.map do |node_name|
 path /catalog/#{node_name}
 auth yes
 allow *
+
+path /node/#{node_name}
+auth yes
+allow *
 ]
 end.join("\n")
 
@@ -23,13 +27,13 @@ manifest_file = "/tmp/node_name_value-test-#{$$}.pp"
 manifest = %Q[
   Exec { path => "/usr/bin:/bin" }
   node default {
-    exec { "false": }
+    notify { "false": }
   }
 ]
 manifest << node_names.map do |node_name|
   %Q[
     node "#{node_name}" {
-      exec { "echo #{success_message}": }
+      notify { "#{success_message}": }
     }
   ]
 end.join("\n")
@@ -41,6 +45,6 @@ on master, "chmod 644 #{authfile} #{manifest_file}"
 
 with_master_running_on(master, "--rest_authconfig #{authfile} --manifest #{manifest_file} --daemonize --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --autosign true") do
   run_agent_on(agents, "--no-daemonize --verbose --onetime --node_name_fact kernel --server #{master}") do
-    assert_match(success_message, stdout)
+    assert_match(/defined 'message'.*#{success_message}/, stdout)
   end
 end

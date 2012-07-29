@@ -18,7 +18,7 @@ agents.each do |host|
   create_remote_file(host, bad, 'notify{bad:')
 
   step "Agents: use --parseonly on an invalid manifest, should return 1 and issue deprecation warning"
-  on(host, puppet('--parseonly', bad), :acceptable_exit_codes => [ 1 ]) do
+  on(host, puppet('apply', '--parseonly', bad), :acceptable_exit_codes => [ 1 ]) do
     assert_match(/--parseonly has been removed. Please use \'puppet parser validate <manifest>\'/, stdout, "Deprecation warning not issued for --parseonly on #{host}" )
   end
 
@@ -27,6 +27,6 @@ agents.each do |host|
 
   step "Test Faces for 'parser validate' with bad manifest -- should fail"
   on(host, puppet('parser', 'validate', bad), :acceptable_exit_codes => [ 1 ]) do
-    assert_match(/err: Could not parse for environment production/, stdout, "Bad manifest detection failed on #{host}" )
+    assert_match(/Error: Could not parse for environment production/, stderr, "Bad manifest detection failed on #{host}" )
   end
 end

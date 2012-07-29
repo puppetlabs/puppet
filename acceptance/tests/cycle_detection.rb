@@ -7,7 +7,7 @@ notify { "a2": require => Notify["a1"] }
 EOT
 
 apply_manifest_on(agents, manifest) do
-  assert_match(/Found 1 dependency cycle/, stdout,
+  assert_match(/Found 1 dependency cycle/, stderr,
                "found and reported the cycle correctly")
 end
 
@@ -21,6 +21,6 @@ notify { "b2": require => Notify["b1"] }
 EOT
 
 apply_manifest_on(agents, manifest) do
-  assert_match(/Found 2 dependency cycles/, stdout,
+  assert_match(/Found 2 dependency cycles/, stderr,
                "found and reported the cycle correctly")
 end

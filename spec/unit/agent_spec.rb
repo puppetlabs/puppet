@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/agent'
 
@@ -61,33 +61,18 @@ describe Puppet::Agent do
     @agent.run
   end
 
-  it "should determine its lock file path by asking the client class" do
-    AgentTestClient.expects(:lockfile_path).returns "/my/lock"
-    @agent.lockfile_path.should == "/my/lock"
-  end
-
-  it "should be considered running if the lock file is locked and not anonymous" do
+  it "should be considered running if the lock file is locked" do
     lockfile = mock 'lockfile'
 
-    @agent.expects(:lockfile).returns(lockfile).twice
+    @agent.expects(:lockfile).returns(lockfile)
     lockfile.expects(:locked?).returns true
-    lockfile.expects(:anonymous?).returns false
 
     @agent.should be_running
   end
 
-  it "should be considered disabled if the lock file is locked and anonymous" do
-    lockfile = mock 'lockfile'
-
-    @agent.expects(:lockfile).returns(lockfile).at_least_once
-    lockfile.expects(:locked?).returns(true).at_least_once
-    lockfile.expects(:anonymous?).returns(true).at_least_once
-
-    @agent.should be_disabled
-  end
-
   describe "when being run" do
     before do
+      AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
     end
@@ -104,6 +89,12 @@ describe Puppet::Agent do
       @agent.run
     end
 
+    it "should do nothing if disabled" do
+      @agent.expects(:disabled?).returns(true)
+      AgentTestClient.expects(:new).never
+      @agent.run
+    end
+
     it "(#11057) should notify the user about why a run is skipped" do
       Puppet::Application.stubs(:controlled_run).returns(false)
       Puppet::Application.stubs(:run_status).returns('MOCK_RUN_STATUS')
@@ -116,7 +107,8 @@ describe Puppet::Agent do
 
     it "should display an informative message if the agent is administratively disabled" do
       @agent.expects(:disabled?).returns true
-      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled/))
+      @agent.expects(:disable_message).returns "foo"
+      Puppet.expects(:notice).with(regexp_matches(/Skipping run of .*; administratively disabled.*\(Reason: 'foo'\)/))
       @agent.run
     end
 
@@ -178,16 +170,77 @@ describe Puppet::Agent do
       client.expects(:run).with("testargs")
       @agent.run("testargs")
     end
+
+    it "should return the agent result" do
+      client = AgentTestClient.new
+      AgentTestClient.expects(:new).returns client
+
+      @agent.expects(:lock).returns(:result)
+      @agent.run.should == :result
+    end
+
+    describe "when should_fork is true" do
+      before do
+        @agent.should_fork = true
+        Kernel.stubs(:fork)
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 0)]
+        @agent.stubs(:exit)
+      end
+
+      it "should run the agent in a forked process" do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run)
+
+        Kernel.expects(:fork).yields
+        @agent.run
+      end
+
+      it "should exit child process if child exit" do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run).raises(SystemExit)
+
+        Kernel.expects(:fork).yields
+        @agent.expects(:exit).with(-1)
+        @agent.run
+      end
+
+      it "should re-raise exit happening in the child" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -1)]
+        lambda { @agent.run }.should raise_error(SystemExit)
+      end
+
+      it "should re-raise NoMoreMemory happening in the child" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -2)]
+        lambda { @agent.run }.should raise_error(NoMemoryError)
+      end
+
+      it "should return the child exit code" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 777)]
+        @agent.run.should == 777
+      end
+
+      it "should return the block exit code as the child exit code" do
+        Kernel.expects(:fork).yields
+        @agent.expects(:exit).with(777)
+        @agent.run_in_fork {
+          777
+        }
+      end
+    end
   end
 
   describe "when splaying" do
     before do
-      Puppet.settings.stubs(:value).with(:splay).returns true
-      Puppet.settings.stubs(:value).with(:splaylimit).returns "10"
+      Puppet[:splay] = true
+      Puppet[:splaylimit] = "10"
     end
 
     it "should do nothing if splay is disabled" do
-      Puppet.settings.expects(:value).returns false
+      Puppet[:splay] = false
       @agent.expects(:sleep).never
       @agent.splay
     end
@@ -205,7 +258,7 @@ describe Puppet::Agent do
     end
 
     it "should sleep for a random portion of the splaylimit plus 1" do
-      Puppet.settings.expects(:value).with(:splaylimit).returns "50"
+      Puppet[:splaylimit] = "50"
       @agent.expects(:rand).with(51).returns 10
       @agent.expects(:sleep).with(10)
       @agent.splay

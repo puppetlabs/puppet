@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/simple_graph'
 
@@ -452,11 +452,25 @@ describe Puppet::SimpleGraph do
     end
   end
 
-  describe "when matching edges", :'fails_on_ruby_1.9.2' => true do
+  describe "when matching edges" do
     before do
       @graph = Puppet::SimpleGraph.new
-      @event = Puppet::Transaction::Event.new(:name => :yay, :resource => "a")
-      @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => "a")
+
+      # The Ruby 1.8 semantics for String#[] are that treating it like an
+      # array and asking for `"a"[:whatever]` returns `nil`.  Ruby 1.9
+      # enforces that your index has to be numeric.
+      #
+      # Now, the real object here, a resource, implements [] and does
+      # something sane, but we don't care about any of the things that get
+      # asked for.  Right now, anyway.
+      #
+      # So, in 1.8 we could just pass a string and it worked.  For 1.9 we can
+      # fake it well enough by stubbing out the operator to return nil no
+      # matter what input we give. --daniel 2012-03-11
+      resource = "a"
+      resource.stubs(:[])
+      @event = Puppet::Transaction::Event.new(:name => :yay, :resource => resource)
+      @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => resource)
 
       @edges = {}
       @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
@@ -776,7 +790,7 @@ describe Puppet::SimpleGraph do
     # Test serialization of graph to YAML.
     [:old, :new].each do |which_format|
       all_test_graphs.each do |graph_to_test|
-        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)" do
+        it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)", :if => (RUBY_VERSION[0,3] == '1.8' or YAML::ENGINE.syck?) do
           graph = Puppet::SimpleGraph.new
           send(graph_to_test, graph)
           yaml_form = graph_to_yaml(graph, which_format)

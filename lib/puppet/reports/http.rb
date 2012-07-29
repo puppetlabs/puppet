@@ -1,5 +1,5 @@
 require 'puppet'
-require 'net/http'
+require 'puppet/network/http_pool'
 require 'uri'
 
 Puppet::Reports.register_report(:http) do
@@ -15,7 +15,9 @@ Puppet::Reports.register_report(:http) do
     req = Net::HTTP::Post.new(url.path)
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
-    Net::HTTP.new(url.host, url.port).start {|http|
+    conn = Puppet::Network::HttpPool.http_instance(url.host, url.port,
+                                                   ssl=(url.scheme == 'https'))
+    conn.start {|http|
       response = http.request(req)
       unless response.kind_of?(Net::HTTPSuccess)
         Puppet.err "Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}"

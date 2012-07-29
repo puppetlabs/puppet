@@ -1,15 +1,18 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'stringio'
 
 provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
+  let(:no_extra_options) { { :custom_environment => {} } }
+  let(:executor) { Puppet::Util::Execution }
+  let(:resolver) { Puppet::Util }
+
   before do
-    provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
-    @resource = stub 'resource'
-    @resource.stubs(:[]).returns("package")
-    @resource.stubs(:name).returns("name")
+    resolver.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
 
@@ -20,45 +23,96 @@ describe provider do
       })
     end
 
-    it "should call pacman" do
-      provider.
+    it "should call pacman to install the right package quietly" do
+      executor.
         expects(:execute).
         at_least_once.
-        with { |args|
-          args[0] == "/usr/bin/pacman"
-        }.
+        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]], no_extra_options).
         returns ""
 
       @provider.install
     end
 
-    it "should be quiet" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[1,2] == ["--noconfirm", "--noprogressbar"]
-        }.
-        returns("")
-
-      @provider.install
-    end
-
-    it "should install the right package" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[3,4] == ["-Sy", @resource[0]]
-        }.
-        returns("")
-
-      @provider.install
-    end
-
     it "should raise an ExecutionFailure if the installation failed" do
-      provider.stubs(:execute).returns("")
+      executor.stubs(:execute).returns("")
       @provider.expects(:query).returns(nil)
 
       lambda { @provider.install }.should raise_exception(Puppet::ExecutionFailure)
+    end
+
+    context "when :source is specified" do
+      before :each do
+        @install = sequence("install")
+      end
+
+      context "recognizable by pacman" do
+        %w{
+          /some/package/file
+          http://some.package.in/the/air
+          ftp://some.package.in/the/air
+        }.each do |source|
+          it "should install #{source} directly" do
+            @resource[:source] = source
+
+            executor.expects(:execute).
+              with(all_of(includes("-Sy"), includes("--noprogressbar")), no_extra_options).
+              in_sequence(@install).
+              returns("")
+
+            executor.expects(:execute).
+              with(all_of(includes("-U"), includes(source)), no_extra_options).
+              in_sequence(@install).
+              returns("")
+
+            @provider.install
+          end
+        end
+      end
+
+      context "as a file:// URL" do
+        before do
+          @package_file = "file:///some/package/file"
+          @actual_file_path = "/some/package/file"
+          @resource[:source] = @package_file
+        end
+
+        it "should install from the path segment of the URL" do
+          executor.expects(:execute).
+            with(all_of(includes("-Sy"),
+                        includes("--noprogressbar"),
+                        includes("--noconfirm")),
+                 no_extra_options).
+            in_sequence(@install).
+            returns("")
+
+          executor.expects(:execute).
+            with(all_of(includes("-U"), includes(@actual_file_path)), no_extra_options).
+            in_sequence(@install).
+            returns("")
+
+          @provider.install
+        end
+      end
+
+      context "as a puppet URL" do
+        before do
+          @resource[:source] = "puppet://server/whatever"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
+
+      context "as a malformed URL" do
+        before do
+          @resource[:source] = "blah://"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
     end
   end
 
@@ -70,35 +124,11 @@ describe provider do
   end
 
   describe "when uninstalling" do
-    it "should call pacman" do
-      provider.
+    it "should call pacman to remove the right package quietly" do
+      executor.
         expects(:execute).
-        with { |args|
-          args[0] == "/usr/bin/pacman"
-        }.
+        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", @resource[:name]], no_extra_options).
         returns ""
-
-      @provider.uninstall
-    end
-
-    it "should be quiet" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[1,2] == ["--noconfirm", "--noprogressbar"]
-        }.
-        returns("")
-
-      @provider.uninstall
-    end
-
-    it "should remove the right package" do
-      provider.
-        expects(:execute).
-        with { |args|
-          args[3,4] == ["-R", @resource[0]]
-        }.
-        returns("")
 
       @provider.uninstall
     end
@@ -106,9 +136,9 @@ describe provider do
 
   describe "when querying" do
     it "should query pacman" do
-      provider.
+      executor.
         expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", @resource[0]])
+        with(["/usr/bin/pacman", "-Qi", @resource[:name]], no_extra_options)
       @provider.query
     end
 
@@ -136,21 +166,21 @@ Install Script : Yes
 Description    : A library-based package manager with dependency support
 EOF
 
-      provider.expects(:execute).returns(query_output)
+      executor.expects(:execute).returns(query_output)
       @provider.query.should == {:ensure => "1.01.3-2"}
     end
 
     it "should return a nil if the package isn't found" do
-      provider.expects(:execute).returns("")
+      executor.expects(:execute).returns("")
       @provider.query.should be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
-      provider.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
       @provider.query.should == {
         :ensure => :purged,
         :status => 'missing',
-        :name => @resource[0],
+        :name => @resource[:name],
         :error => 'ok',
       }
     end
@@ -195,39 +225,37 @@ EOF
 
   describe "when determining the latest version" do
     it "should refresh package list" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
-      provider.
+      get_latest_version = sequence("get_latest_version")
+      executor.
         expects(:execute).
-        when(refreshed.is('unrefreshed')).
-        with(['/usr/bin/pacman', '-Sy']).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sy'], no_extra_options)
 
-      provider.
+      executor.
         stubs(:execute).
-        when(refreshed.is('refreshed')).
+        in_sequence(get_latest_version).
         returns("")
 
       @provider.latest
     end
 
     it "should get query pacman for the latest version" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
-      provider.
+      get_latest_version = sequence("get_latest_version")
+      executor.
         stubs(:execute).
-        when(refreshed.is('unrefreshed')).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version)
 
-      provider.
+      executor.
         expects(:execute).
-        when(refreshed.is('refreshed')).
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[0]]).
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]], no_extra_options).
         returns("")
 
       @provider.latest
     end
 
     it "should return the version number from pacman" do
-      provider.
+      executor.
         expects(:execute).
         at_least_once().
         returns("1.00.2-3\n")

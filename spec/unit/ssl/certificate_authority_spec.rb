@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
@@ -43,7 +43,7 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "and the host is not a CA host" do
       it "should return nil" do
-        Puppet.settings.stubs(:value).with(:ca).returns false
+        Puppet[:ca] = false
         Puppet.run_mode.stubs(:master?).returns true
 
         ca = mock('ca')
@@ -54,7 +54,7 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "and the run_mode is not master" do
       it "should return nil" do
-        Puppet.settings.stubs(:value).with(:ca).returns true
+        Puppet[:ca] = true
         Puppet.run_mode.stubs(:master?).returns false
 
         ca = mock('ca')
@@ -67,13 +67,12 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when initializing" do
     before do
       Puppet.settings.stubs(:use)
-      Puppet.settings.stubs(:value).returns "ca_testing"
 
       Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
     end
 
     it "should always set its name to the value of :certname" do
-      Puppet.settings.expects(:value).with(:certname).returns "ca_testing"
+      Puppet[:certname] = "ca_testing"
 
       Puppet::SSL::CertificateAuthority.new.name.should == "ca_testing"
     end
@@ -122,8 +121,7 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when retrieving the certificate revocation list" do
     before do
       Puppet.settings.stubs(:use)
-      Puppet.settings.stubs(:value).returns "ca_testing"
-      Puppet.settings.stubs(:value).with(:cacrl).returns "/my/crl"
+      Puppet[:cacrl] = "/my/crl"
 
       cert = stub("certificate", :content => "real_cert")
       key = stub("key", :content => "real_key")
@@ -157,7 +155,6 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when generating a self-signed CA certificate" do
     before do
       Puppet.settings.stubs(:use)
-      Puppet.settings.stubs(:value).returns "ca_testing"
 
       Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
       Puppet::SSL::CertificateAuthority.any_instance.stubs(:crl)
@@ -171,9 +168,9 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should create and store a password at :capass" do
-      Puppet.settings.expects(:value).with(:capass).returns "/path/to/pass"
+      Puppet[:capass] = File.expand_path("/path/to/pass")
 
-      FileTest.expects(:exist?).with("/path/to/pass").returns false
+      FileTest.expects(:exist?).with(Puppet[:capass]).returns false
 
       fh = mock 'filehandle'
       Puppet.settings.expects(:write).with(:capass).yields fh
@@ -258,8 +255,8 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "and calculating the next certificate serial number" do
       before do
-        @path = "/path/to/serial"
-        Puppet.settings.stubs(:value).with(:serial).returns @path
+        @path = File.expand_path("/path/to/serial")
+        Puppet[:serial] = @path
 
         @filehandle = stub 'filehandle', :<< => @filehandle
         Puppet.settings.stubs(:readwritelock).with(:serial).yields @filehandle
@@ -418,7 +415,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should sign the resulting certificate using its real key and a digest" do
         digest = mock 'digest'
-        OpenSSL::Digest::SHA1.expects(:new).returns digest
+        OpenSSL::Digest::SHA256.expects(:new).returns digest
 
         key = stub 'key', :content => "real_key"
         @ca.host.stubs(:key).returns key
@@ -473,6 +470,7 @@ describe Puppet::SSL::CertificateAuthority do
       describe "when validating the CN" do
         before :all do
           Puppet[:keylength] = 1024
+          Puppet[:passfile] = '/f00'
           @signing_key = Puppet::SSL::Key.new('my_signing_key')
           @signing_key.generate
         end
@@ -499,7 +497,7 @@ describe Puppet::SSL::CertificateAuthority do
          "not\neven\tkind\rof",
          "ding\adong\a",
          "hidden\b\b\b\b\b\bmessage",
-         "☃ :("
+         "\xE2\x98\x83 :("
         ].each do |name|
           it "should reject #{name.inspect}" do
             # We aren't even allowed to make objects with these names, so let's
@@ -610,16 +608,17 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "when autosigning certificates" do
+      let(:autosign) { File.expand_path("/auto/sign") }
       it "should do nothing if autosign is disabled" do
-        Puppet.settings.expects(:value).with(:autosign).returns 'false'
+        Puppet[:autosign] = 'false'
 
         Puppet::SSL::CertificateRequest.indirection.expects(:search).never
         @ca.autosign
       end
 
       it "should do nothing if no autosign.conf exists" do
-        Puppet.settings.expects(:value).with(:autosign).returns '/auto/sign'
-        FileTest.expects(:exist?).with("/auto/sign").returns false
+        Puppet[:autosign] = autosign
+        FileTest.expects(:exist?).with(autosign).returns false
 
         Puppet::SSL::CertificateRequest.indirection.expects(:search).never
         @ca.autosign
@@ -627,9 +626,9 @@ describe Puppet::SSL::CertificateAuthority do
 
       describe "and autosign is enabled and the autosign.conf file exists" do
         before do
-          Puppet.settings.stubs(:value).with(:autosign).returns '/auto/sign'
-          FileTest.stubs(:exist?).with("/auto/sign").returns true
-          File.stubs(:readlines).with("/auto/sign").returns ["one\n", "two\n"]
+          Puppet[:autosign] = autosign
+          FileTest.stubs(:exist?).with(autosign).returns true
+          File.stubs(:readlines).with(autosign).returns ["one\n", "two\n"]
 
           Puppet::SSL::CertificateRequest.indirection.stubs(:search).returns []
 
@@ -655,14 +654,14 @@ describe Puppet::SSL::CertificateAuthority do
           end
 
           it "should ignore comments" do
-            File.stubs(:readlines).with("/auto/sign").returns ["one\n", "#two\n"]
+            File.stubs(:readlines).with(autosign).returns ["one\n", "#two\n"]
 
             @store.expects(:allow).with("one")
             @ca.autosign
           end
 
           it "should ignore blank lines" do
-            File.stubs(:readlines).with("/auto/sign").returns ["one\n", "\n"]
+            File.stubs(:readlines).with(autosign).returns ["one\n", "\n"]
 
             @store.expects(:allow).with("one")
             @ca.autosign
@@ -792,12 +791,11 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "and verifying certificates" do
+      let(:cacert) { File.expand_path("/ca/cert") }
       before do
         @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true, :flags= => nil
 
         OpenSSL::X509::Store.stubs(:new).returns @store
-
-        Puppet.settings.stubs(:value).returns "crtstuff"
 
         @cert = stub 'cert', :content => "mycert"
         Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
@@ -820,8 +818,8 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should add the CA Certificate to the store" do
-        Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
-        @store.expects(:add_file).with "/ca/cert"
+        Puppet[:cacert] = cacert
+        @store.expects(:add_file).with cacert
 
         @ca.verify("me")
       end
@@ -833,8 +831,8 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should set the store purpose to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
-        Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
-        @store.expects(:add_file).with "/ca/cert"
+        Puppet[:cacert] = cacert
+        @store.expects(:add_file).with cacert
 
         @ca.verify("me")
       end

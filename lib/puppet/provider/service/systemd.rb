@@ -5,13 +5,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "/bin/systemctl"
 
-  #defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos, :sles, :oel, :ovm]
+  #defaultfor :osfamily => [:redhat, :suse]
 
   def self.instances
     i = []
-    output = `systemctl list-units --full --all --no-pager`
+    output = systemctl('list-units', '--full', '--all',  '--no-pager')
     output.scan(/^(\S+)\s+(loaded|error)\s+(active|inactive)\s+(active|waiting|running|plugged|mounted|dead|exited|listening|elapsed)\s*?(\S.*?)?$/i).each do |m|
-      i << m[0]
+      i << new(:name => m[0])
     end
     return i
   rescue Puppet::ExecutionFailure

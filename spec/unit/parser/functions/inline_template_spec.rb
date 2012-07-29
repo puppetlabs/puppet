@@ -1,13 +1,15 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
+describe "the inline_template function" do
   before :all do
     Puppet::Parser::Functions.autoloader.loadall
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should exist" do
@@ -19,7 +21,7 @@ describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
 
     Puppet::Parser::TemplateWrapper.expects(:new).returns(tw)
 
-    @scope.function_inline_template("test")
+    @scope.function_inline_template(["test"])
   end
 
   it "should pass the template string to TemplateWrapper.result" do
@@ -28,7 +30,7 @@ describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
 
     tw.expects(:result).with("test")
 
-    @scope.function_inline_template("test")
+    @scope.function_inline_template(["test"])
   end
 
   it "should return what TemplateWrapper.result returns" do
@@ -37,7 +39,7 @@ describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
 
     tw.expects(:result).returns("template contents evaluated")
 
-    @scope.function_inline_template("test").should == "template contents evaluated"
+    @scope.function_inline_template(["test"]).should == "template contents evaluated"
   end
 
   it "should concatenate template wrapper outputs for multiple templates" do
@@ -55,7 +57,7 @@ describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
     Puppet::Parser::TemplateWrapper.stubs(:new).returns(tw)
     tw.stubs(:result).raises
 
-    lambda { @scope.function_inline_template("1") }.should raise_error(Puppet::ParseError)
+    lambda { @scope.function_inline_template(["1"]) }.should raise_error(Puppet::ParseError)
   end
 
 end

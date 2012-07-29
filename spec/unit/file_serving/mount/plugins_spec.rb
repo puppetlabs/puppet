@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/file_serving/mount/plugins'
 
@@ -7,7 +7,8 @@ describe Puppet::FileServing::Mount::Plugins do
     @mount = Puppet::FileServing::Mount::Plugins.new("plugins")
 
     @environment = stub 'environment', :module => nil
-    @request = stub 'request', :environment => @environment
+    @options = { :recurse => true }
+    @request = stub 'request', :environment => @environment, :options => @options
   end
 
   describe  "when finding files" do
@@ -36,16 +37,28 @@ describe Puppet::FileServing::Mount::Plugins do
 
   describe "when searching for files" do
     it "should use the node's environment to find the modules" do
-      @environment.expects(:modules).returns []
+      @environment.expects(:modules).at_least_once.returns []
+      @environment.stubs(:modulepath).returns ["/tmp/modules"]
 
       @mount.search("foo", @request)
     end
 
-    it "should return nil if no modules can be found that have plugins" do
+    it "should return modulepath if no modules can be found that have plugins" do
       mod = mock 'module'
       mod.stubs(:plugins?).returns false
 
       @environment.stubs(:modules).returns []
+      @environment.stubs(:modulepath).returns ["/"]
+      @options.expects(:[]=).with(:recurse, false)
+      @mount.search("foo/bar", @request).should == ["/"]
+    end
+
+    it "should return nil if no modules can be found that have plugins and modulepath is invalid" do
+      mod = mock 'module'
+      mod.stubs(:plugins?).returns false
+
+      @environment.stubs(:modules).returns []
+      @environment.stubs(:modulepath).returns []
       @mount.search("foo/bar", @request).should be_nil
     end
 

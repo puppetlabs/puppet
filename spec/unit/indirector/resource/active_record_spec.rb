@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/rails'
 require 'puppet/node/facts'
@@ -32,7 +32,7 @@ describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
 
     def search(type, host = 'default.local', filter = nil)
       args = { :host => host, :filter => filter }
-      subject.search(Puppet::Resource.indirection.request(:search, type, args))
+      subject.search(Puppet::Resource.indirection.request(:search, type, nil, args))
     end
 
     it "should return an empty array if no resources match" do

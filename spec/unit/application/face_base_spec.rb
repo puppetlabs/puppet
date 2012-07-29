@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/application/face_base'
 require 'tmpdir'
@@ -160,6 +160,7 @@ describe Puppet::Application::FaceBase do
     }.each do |name, args|
       it "should accept global boolean settings #{name} the action" do
         app.command_line.stubs(:args).returns args
+        Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
         Puppet[:trace].should be_true
@@ -171,13 +172,14 @@ describe Puppet::Application::FaceBase do
     }.each do |name, args|
       it "should accept global settings with arguments #{name} the action" do
         app.command_line.stubs(:args).returns args
+        Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
         Puppet[:syslogfacility].should == "user1"
       end
     end
 
-    it "should handle application-level options", :'fails_on_ruby_1.9.2' => true do
+    it "should handle application-level options" do
       app.command_line.stubs(:args).returns %w{--verbose return_true}
       app.preinit
       app.parse_options
@@ -195,7 +197,8 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should pass positional arguments" do
-      app.command_line.stubs(:args).returns %w{--mandatory --bar foo bar baz quux}
+      myargs = %w{--mandatory --bar foo bar baz quux}
+      app.command_line.stubs(:args).returns(myargs)
       app.preinit
       app.parse_options
       app.setup
@@ -360,9 +363,10 @@ EOT
       # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
       Puppet::Face[:help, :current].expects(:help).never
 
-      expect {
-        expect { app.run }.to exit_with 1
-      }.to have_printed(/I don't know how to render 'interpretive-dance'/)
+      Puppet.expects(:err).with("Could not parse application options: I don't know how to render 'interpretive-dance'")
+
+      expect { app.run }.to exit_with 1
+
     end
 
     it "should work if asked to render a NetworkHandler format" do

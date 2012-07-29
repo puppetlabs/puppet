@@ -3,11 +3,8 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::ModuleTool::Applications::Upgrader, :fails_on_windows => true do
+describe Puppet::ModuleTool::Applications::Upgrader do
   include PuppetSpec::Files
-
-  before do
-  end
 
   it "should update the requested module"
   it "should not update dependencies"

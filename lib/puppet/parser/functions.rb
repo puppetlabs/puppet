@@ -15,30 +15,27 @@ module Puppet::Parser::Functions
   end
 
   def self.autoloader
-    unless defined?(@autoloader)
-      @autoloader = Puppet::Util::Autoload.new(
-        self,
-        "puppet/parser/functions",
-        :wrap => false
-      )
-    end
-
-    @autoloader
+    @autoloader ||= Puppet::Util::Autoload.new(
+      self, "puppet/parser/functions", :wrap => false
+    )
   end
 
   Environment = Puppet::Node::Environment
 
   def self.environment_module(env = nil)
+    if env and ! env.is_a?(Puppet::Node::Environment)
+      env = Puppet::Node::Environment.new(env)
+    end
     @modules.synchronize {
-      @modules[ env || Environment.current || Environment.root ] ||= Module.new
+      @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
     }
   end
 
   # Create a new function type.
   def self.newfunction(name, options = {}, &block)
-    name = symbolize(name)
+    name = name.intern
 
-    raise Puppet::DevError, "Function #{name} already defined" if functions.include?(name)
+    Puppet.warning "Overwriting previous definition for function #{name}" if functions.include?(name)
 
     ftype = options[:type] || :statement
 
@@ -57,7 +54,7 @@ module Puppet::Parser::Functions
 
   # Remove a function added by newfunction
   def self.rmfunction(name)
-    name = symbolize(name)
+    name = name.intern
 
     raise Puppet::DevError, "Function #{name} is not defined" unless functions.include? name
 
@@ -69,7 +66,7 @@ module Puppet::Parser::Functions
 
   # Determine if a given name is a function
   def self.function(name)
-    name = symbolize(name)
+    name = name.intern
 
     @functions.synchronize do
       unless functions.include?(name) or functions(Puppet::Node::Environment.root).include?(name)
@@ -107,7 +104,7 @@ module Puppet::Parser::Functions
 
   # Determine if a given function returns a value or not.
   def self.rvalue?(name)
-    (functions[symbolize(name)] || {})[:type] == :rvalue
+    (functions[name.intern] || {})[:type] == :rvalue
   end
 
   # Runs a newfunction to create a function for each of the log levels

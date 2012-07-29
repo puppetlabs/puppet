@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/ldap'
@@ -49,7 +49,7 @@ describe Puppet::Indirector::Ldap do
     end
 
     it "should default to the value of the :search_base setting as the result of the ldapbase method" do
-      Puppet.expects(:[]).with(:ldapbase).returns("myldapbase")
+      Puppet[:ldapbase] = "myldapbase"
       searcher = @ldap_class.new
       searcher.search_base.should == "myldapbase"
     end
@@ -108,7 +108,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when connecting to ldap", :if => Puppet.features.ldap?, :'fails_on_ruby_1.9.2' => true do
+  describe "when connecting to ldap", :if => Puppet.features.ldap? do
     it "should create and start a Util::Ldap::Connection instance" do
       conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn

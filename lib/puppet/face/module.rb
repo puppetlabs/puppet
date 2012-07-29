@@ -14,4 +14,6 @@ Puppet::Face.define(:module, '1.0.0') do
     a repository of user-contributed Puppet code. It can also generate empty
     modules, and prepare locally developed modules for release on the Forge.
   EOT
+  
+  display_global_options "environment", "modulepath"
 end

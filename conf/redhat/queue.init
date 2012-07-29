@@ -1,0 +1,105 @@
+#!/bin/bash
+# puppetqueue   Init script for running the puppet queue daemon
+#
+# chkconfig: - 65 45
+#
+# description: Processes entities in a queue as they are recieved.
+# processname: puppetqd
+# config: /etc/sysconfig/puppetqueue
+
+PATH=/usr/bin:/sbin:/bin:/usr/sbin
+export PATH
+
+[ -f /etc/sysconfig/puppetqueue ] && . /etc/sysconfig/puppetqueue
+lockfile=${LOCKFILE-/var/lock/subsys/puppetqd}
+pidfile=${PIDFILE-/var/run/puppet/queue.pid}
+puppetqd=${PUPPETQD-/usr/bin/puppet}
+RETVAL=0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+PUPPET_OPTS="queue "
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
+
+# Determine if we can use the -p option to daemon, killproc, and status.
+# RHEL < 5 can't.
+if status | grep -q -- '-p' 2>/dev/null; then
+    daemonopts="--pidfile $pidfile"
+    pidopts="-p $pidfile"
+fi
+
+start() {
+    echo -n $"Starting puppet queue: "
+    daemon $daemonopts $puppetqd ${PUPPET_OPTS}
+    RETVAL=$?
+    echo
+        [ $RETVAL = 0 ] && touch ${lockfile}
+        return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping puppet queue: "
+    killproc $pidopts $puppetqd
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+}
+
+reload() {
+    echo -n $"Restarting puppet queue: "
+    killproc $pidopts $puppetqd -HUP
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
+restart() {
+    stop
+    start
+}
+
+rh_status() {
+    status $pidopts $puppetqd
+    RETVAL=$?
+    return $RETVAL
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+genconfig() {
+    echo -n $"Generate puppet queue configuration: "
+    $puppetqd ${PUPPET_OPTS} --genconfig
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    restart)
+        restart
+    ;;
+    reload|force-reload)
+        reload
+    ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+    ;;
+    status)
+        rh_status
+    ;;
+    genconfig)
+        genconfig
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
+        exit 1
+esac
+
+exit $RETVAL

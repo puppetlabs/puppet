@@ -41,8 +41,7 @@ Puppet::Reports.register_report(:store) do
       end
       FileUtils.mv(f.path, file)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.warning "Could not write report for #{host} at #{file}: #{detail}"
+      Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
     end
 
     # Only testing cares about the return value

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/network/authconfig'
@@ -22,15 +22,10 @@ describe Puppet::Network::AuthConfig do
     end
 
     it "should use the authconfig default pathname if none provided" do
-      Puppet.expects(:[]).with(:authconfig).returns("dummy")
+      path = File.expand_path('/tmp/authconfig_dummy')
+      Puppet[:authconfig] = path
 
-      Puppet::Network::AuthConfig.new
-    end
-
-    it "should raise an error if no file is defined finally" do
-      Puppet.stubs(:[]).with(:authconfig).returns(nil)
-
-      lambda { Puppet::Network::AuthConfig.new }.should raise_error(Puppet::DevError)
+      Puppet::Network::AuthConfig.new.file.should == path
     end
 
     it "should read and parse the file if parsenow is true" do

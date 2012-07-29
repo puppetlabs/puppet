@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
@@ -45,9 +45,9 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       interface.digest.should == :digest
     end
 
-    it "should set the digest to md5 if none given" do
+    it "should set the digest to SHA256 if none given" do
       interface = @class.new(:generate, :to => :all)
-      interface.digest.should == :MD5
+      interface.digest.should == :SHA256
     end
   end
 
@@ -347,10 +347,10 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
           @applier = @class.new(:fingerprint, :to => :all)
 
-          @ca.expects(:fingerprint).with("host1", :MD5).returns "fingerprint1"
+          @ca.expects(:fingerprint).with("host1", :SHA256).returns "fingerprint1"
           @applier.expects(:puts).with "host1 fingerprint1"
 
-          @ca.expects(:fingerprint).with("host2", :MD5).returns "fingerprint2"
+          @ca.expects(:fingerprint).with("host2", :SHA256).returns "fingerprint2"
           @applier.expects(:puts).with "host2 fingerprint2"
 
           @applier.apply(@ca)
@@ -361,10 +361,10 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should print each named certificate if found" do
           @applier = @class.new(:fingerprint, :to => %w{host1 host2})
 
-          @ca.expects(:fingerprint).with("host1", :MD5).returns "fingerprint1"
+          @ca.expects(:fingerprint).with("host1", :SHA256).returns "fingerprint1"
           @applier.expects(:puts).with "host1 fingerprint1"
 
-          @ca.expects(:fingerprint).with("host2", :MD5).returns "fingerprint2"
+          @ca.expects(:fingerprint).with("host2", :SHA256).returns "fingerprint2"
           @applier.expects(:puts).with "host2 fingerprint2"
 
           @applier.apply(@ca)

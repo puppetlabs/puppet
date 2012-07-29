@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Node::Facts do
@@ -10,7 +10,7 @@ describe Puppet::Node::Facts do
       terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
       terminus.stubs :save
 
-      Puppet::Node.indirection.expects(:expire).with("me")
+      Puppet::Node.indirection.expects(:expire).with("me", optionally(instance_of(Hash)))
 
       facts = Puppet::Node::Facts.new("me")
       Puppet::Node::Facts.indirection.save(facts)

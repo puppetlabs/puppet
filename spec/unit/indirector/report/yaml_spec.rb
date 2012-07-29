@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/transaction/report'
@@ -22,16 +22,7 @@ describe Puppet::Transaction::Report::Yaml do
     Puppet::Transaction::Report::Yaml.name.should == :yaml
   end
 
-  it "should inconditionnally save/load from the --lastrunreport setting", :'fails_on_ruby_1.9.2' => true do
-    indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
-    Puppet::Indirector::Indirection.stubs(:instance).with(:my_yaml).returns(indirection)
-    store_class = Class.new(Puppet::Transaction::Report::Yaml) do
-      def self.to_s
-        "MyYaml::MyType"
-      end
-    end
-    store = store_class.new
-
-    store.path(:me).should == Puppet[:lastrunreport]
+  it "should unconditionally save/load from the --lastrunreport setting" do
+    subject.path(:me).should == Puppet[:lastrunreport]
   end
 end

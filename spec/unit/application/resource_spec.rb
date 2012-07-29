@@ -1,21 +1,18 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/application/resource'
 
 describe Puppet::Application::Resource do
+  include PuppetSpec::Files
   before :each do
     @resource_app = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
     Puppet::Resource.indirection.stubs(:terminus_class=)
   end
 
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @resource_app.should_parse_config?.should be_false
-  end
-
   describe "in preinit" do
-    it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
+    it "should init extra_params to empty array" do
       @resource_app.preinit
       @resource_app.extra_params.should == []
     end
@@ -54,12 +51,23 @@ describe Puppet::Application::Resource do
 
       @resource_app.extra_params.should == [ :param1, :whatever ]
     end
+
+    it "should get a parameter in the printed data if extra_params are passed" do
+      tty  = stub("tty",  :tty? => true )
+      path = tmpfile('testfile')
+      command_line = Puppet::Util::CommandLine.new("puppet", [ 'resource', 'file', path ], tty )
+      @resource_app.stubs(:command_line).returns command_line
+
+      # provider is a parameter that should always be available
+      @resource_app.extra_params = [ :provider ]
+
+      expect { @resource_app.main }.to have_printed /provider\s+=>/
+    end
   end
 
   describe "during setup" do
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:parse_config)
     end
 
     it "should set console as the log destination" do
@@ -81,11 +89,6 @@ describe Puppet::Application::Resource do
       Puppet::Log.level.should == :info
     end
 
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @resource_app.setup
-    end
   end
 
   describe "when running" do

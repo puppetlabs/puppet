@@ -33,9 +33,7 @@ shared_examples_for "a file_serving model" do
 
     describe "when running the apply application" do
       before :each do
-        # Stub this so we can set the 'name' setting
-        Puppet::Util::Settings::ReadOnly.stubs(:include?)
-        Puppet[:name] = 'apply'
+        Puppet[:default_file_terminus] = 'file_server'
       end
 
       {
@@ -54,9 +52,7 @@ shared_examples_for "a file_serving model" do
 
     describe "when running another application" do
       before :each do
-        # Stub this so we can set the 'name' setting
-        Puppet::Util::Settings::ReadOnly.stubs(:include?)
-        Puppet[:name] = 'agent'
+        Puppet[:default_file_terminus] = 'rest'
       end
 
       {

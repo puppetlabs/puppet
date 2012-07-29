@@ -1,10 +1,11 @@
 require 'puppet/util/terminal'
+require 'puppet/forge'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
     summary "Search the Puppet Forge for a module."
     description <<-EOT
-      Searches the Puppet Forge for modules whose names, descriptions, or keywords
+      Searches a repository for modules whose names, descriptions, or keywords
       match the provided search term.
     EOT
 
@@ -21,11 +22,16 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<search_term>"
 
     when_invoked do |term, options|
-      Puppet::ModuleTool::Applications::Searcher.run(term, options)
+      Puppet::ModuleTool.set_option_defaults options
+      Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new("PMT", self.version), options).run
     end
 
     when_rendering :console do |results, term, options|
-      return "No results found for '#{term}'." if results.empty?
+      if results[:result] == :failure
+        raise results[:error][:multiline]
+      end
+
+      return "No results found for '#{term}'." if results[:answers].empty?
 
       padding = '  '
       headers = {
@@ -42,7 +48,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       terminal_width = [Puppet::Util::Terminal.width, min_width].max
 
-      columns = results.inject(min_widths) do |hash, result|
+      columns = results[:answers].inject(min_widths) do |hash, result|
         {
           'full_name' => [ hash['full_name'], result['full_name'].length          ].max,
           'desc'      => [ hash['desc'],      result['desc'].length               ].max,
@@ -52,7 +58,7 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       flex_width = terminal_width - columns['full_name'] - columns['author'] - (padding.length * (headers.length - 1))
-      tag_lists = results.map { |r| r['tag_list'] }
+      tag_lists = results[:answers].map { |r| r['tag_list'] }
 
       while (columns['tag_list'] > flex_width / 3)
         longest_tag_list = tag_lists.sort_by { |tl| tl.join(' ').length }.last
@@ -78,7 +84,7 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       format % [ headers['full_name'], headers['desc'], headers['author'], headers['tag_list'] ] +
-      results.map do |match|
+      results[:answers].map do |match|
         name, desc, author, keywords = %w{full_name desc author tag_list}.map { |k| match[k] }
         desc = desc[0...(columns['desc'] - 3)] + '...' if desc.length > columns['desc']
         highlight[format % [ name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ') ]]

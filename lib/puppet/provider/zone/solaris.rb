@@ -19,7 +19,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # Configured but not installed zones do not have IDs
     properties.delete(:id) if properties[:id] == "-"
 
-    properties[:ensure] = symbolize(properties[:ensure])
+    properties[:ensure] = properties[:ensure].intern
 
     properties
   end

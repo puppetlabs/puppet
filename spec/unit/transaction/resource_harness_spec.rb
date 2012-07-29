@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/transaction/resource_harness'
@@ -60,7 +60,7 @@ describe Puppet::Transaction::ResourceHarness do
     events.map do |event|
       hash = {}
       event.instance_variables.each do |varname|
-        hash[varname] = event.instance_variable_get(varname.to_sym)
+        hash[varname] = event.instance_variable_get(varname)
       end
       hash
     end

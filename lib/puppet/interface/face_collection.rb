@@ -119,7 +119,7 @@ module Puppet::Interface::FaceCollection
   end
 
   def self.underscorize(name)
-    unless name.to_s =~ /^[-_a-z]+$/i then
+    unless name.to_s =~ /^[-_a-z][-_a-z0-9]*$/i then
       raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid face name"
     end
 

@@ -45,8 +45,9 @@ class Puppet::Util::FileType
         rescue Puppet::Error => detail
           raise
         rescue => detail
-          puts detail.backtrace if Puppet[:trace]
-          raise Puppet::Error, "#{self.class} could not read #{@path}: #{detail}"
+          message = "#{self.class} could not read #{@path}: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
         end
       end
 
@@ -60,8 +61,9 @@ class Puppet::Util::FileType
         rescue Puppet::Error => detail
           raise
         rescue => detail
-          puts detail.backtrace if Puppet[:debug]
-          raise Puppet::Error, "#{self.class} could not write #{@path}: #{detail}"
+          message = "#{self.class} could not write #{@path}: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
         end
       end
     end
@@ -204,7 +206,7 @@ class Puppet::Util::FileType
   newfiletype(:suntab) do
     # Read a specific @path's cron tab.
     def read
-        output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
+        output = Puppet::Util::Execution.execute(%w{crontab -l}, :uid => @path)
         return "" if output.include?("can't open your crontab")
         raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("you are not authorized to use cron")
         return output
@@ -214,7 +216,7 @@ class Puppet::Util::FileType
 
     # Remove a specific @path's cron tab.
     def remove
-        Puppet::Util.execute(%w{crontab -r}, :uid => @path)
+        Puppet::Util::Execution.execute(%w{crontab -r}, :uid => @path)
     rescue => detail
         raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
     end
@@ -232,7 +234,7 @@ class Puppet::Util::FileType
       File.chown(Puppet::Util.uid(@path), nil, output_file.path)
 
       begin
-        Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
+        Puppet::Util::Execution.execute(["crontab", output_file.path], :uid => @path)
       rescue => detail
         raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
       end
@@ -244,7 +246,7 @@ class Puppet::Util::FileType
   newfiletype(:aixtab) do
     # Read a specific @path's cron tab.
     def read
-        output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
+        output = Puppet::Util::Execution.execute(%w{crontab -l}, :uid => @path)
         raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("You are not authorized to use the cron command")
         return output
     rescue => detail
@@ -253,7 +255,7 @@ class Puppet::Util::FileType
 
     # Remove a specific @path's cron tab.
     def remove
-        Puppet::Util.execute(%w{crontab -r}, :uid => @path)
+        Puppet::Util::Execution.execute(%w{crontab -r}, :uid => @path)
     rescue => detail
         raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
     end
@@ -270,7 +272,7 @@ class Puppet::Util::FileType
       File.chown(Puppet::Util.uid(@path), nil, output_file.path)
 
       begin
-        Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
+        Puppet::Util::Execution.execute(["crontab", output_file.path], :uid => @path)
       rescue => detail
         raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
       ensure

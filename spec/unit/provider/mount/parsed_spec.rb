@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 
@@ -35,7 +35,7 @@ FSTAB
 #   it_should_behave_like "all parsedfile providers",
 #     provider_class, my_fixtures('*.fstab')
 
-    describe "on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris', :'fails_on_ruby_1.9.2' => true do
+    describe "on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris' do
 
       before :each do
         @example_line = "/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0 \t\t    /  \t    ufs     1 no\t-"
@@ -217,14 +217,17 @@ FSTAB
 
       # Following mountpoint are present in all fstabs/mountoutputs
       it "should include unmounted resources" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @retrieve.should include(:name => '/', :ensure => :mounted)
       end
 
       it "should include mounted resources" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @retrieve.should include(:name => '/boot', :ensure => :unmounted)
       end
 
       it "should include ghost resources" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @retrieve.should include(:name => '/ghost', :ensure => :ghost)
       end
 
@@ -266,16 +269,19 @@ FSTAB
       end
 
       it "should set :ensure to :unmounted if found in fstab but not mounted" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @provider.prefetch(@resource_hash)
         @res_unmounted.provider.get(:ensure).should == :unmounted
       end
 
       it "should set :ensure to :ghost if not found in fstab but mounted" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @provider.prefetch(@resource_hash)
         @res_ghost.provider.get(:ensure).should == :ghost
       end
 
       it "should set :ensure to :mounted if found in fstab and mounted" do
+        pending("Solaris:Unable to stub Operating System Fact at runtime", Facter[:operatingsystem] == "Solaris")
         @provider.prefetch(@resource_hash)
         @res_mounted.provider.get(:ensure).should == :mounted
       end

@@ -68,8 +68,9 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
         conn.start
         @connection = conn.connection
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        raise Puppet::Error, "Could not connect to LDAP: #{detail}"
+        message = "Could not connect to LDAP: #{detail}"
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message
       end
     end
 

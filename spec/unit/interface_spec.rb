@@ -101,10 +101,10 @@ describe Puppet::Interface do
         to raise_error ArgumentError
     end
 
-    it "should instance-eval any provided block", :'fails_on_ruby_1.9.2' => true do
+    it "should instance-eval any provided block" do
       face = subject.new(:face_test_block, '0.0.1') do
         action(:something) do
-          when_invoked { "foo" }
+          when_invoked {|_| "foo" }
         end
       end
 
@@ -137,13 +137,51 @@ describe Puppet::Interface do
     end
   end
 
-  describe "with face-level options", :'fails_on_ruby_1.9.2' => true do
+  describe "with face-level display_global_options" do
+    it "should not return any action level display_global_options" do
+      face = subject.new(:with_display_global_options, '0.0.1') do
+        display_global_options "environment"
+        action :baz do
+          when_invoked {|_| true }
+          display_global_options "modulepath"
+        end
+      end
+      face.display_global_options =~ ["environment"]
+    end
+
+    it "should not fail when a face d_g_o duplicates an action d_g_o" do
+      expect {
+        subject.new(:action_level_display_global_options, '0.0.1') do
+          action :bar do
+            when_invoked {|_| true }
+            display_global_options "environment"
+          end
+          display_global_options "environment"
+        end
+      }.to_not raise_error
+    end
+
+    it "should work when two actions have the same d_g_o" do
+      face = subject.new(:with_display_global_options, '0.0.1') do
+        action :foo do when_invoked {|_| true} ; display_global_options "environment" end
+        action :bar do when_invoked {|_| true} ; display_global_options "environment" end
+      end
+      face.get_action(:foo).display_global_options =~ ["environment"]
+      face.get_action(:bar).display_global_options =~ ["environment"]
+    end
+      
+  end
+  
+  describe "with inherited display_global_options" do
+  end
+
+  describe "with face-level options" do
     it "should not return any action-level options" do
       face = subject.new(:with_options, '0.0.1') do
         option "--foo"
         option "--bar"
         action :baz do
-          when_invoked { true }
+          when_invoked {|_| true }
           option "--quux"
         end
       end
@@ -154,7 +192,7 @@ describe Puppet::Interface do
       expect {
         subject.new(:action_level_options, '0.0.1') do
           action :bar do
-            when_invoked { true }
+            when_invoked {|_| true }
             option "--foo"
           end
           option "--foo"
@@ -164,8 +202,8 @@ describe Puppet::Interface do
 
     it "should work when two actions have the same option" do
       face = subject.new(:with_options, '0.0.1') do
-        action :foo do when_invoked { true } ; option "--quux" end
-        action :bar do when_invoked { true } ; option "--quux" end
+        action :foo do when_invoked {|_| true } ; option "--quux" end
+        action :bar do when_invoked {|_| true } ; option "--quux" end
       end
 
       face.get_action(:foo).options.should =~ [:quux]
@@ -185,18 +223,18 @@ describe Puppet::Interface do
     let :parent do
       parent = Class.new(subject)
       parent.option("--inherited")
-      parent.action(:parent_action) do when_invoked { true } end
+      parent.action(:parent_action) do when_invoked {|_| true } end
       parent
     end
 
     let :face do
       face = parent.new(:example, '0.2.1')
       face.option("--local")
-      face.action(:face_action) do when_invoked { true } end
+      face.action(:face_action) do when_invoked {|_| true } end
       face
     end
 
-    describe "#options", :'fails_on_ruby_1.9.2' => true do
+    describe "#options" do
       it "should list inherited options" do
         face.options.should =~ [:inherited, :local]
       end
@@ -218,7 +256,7 @@ describe Puppet::Interface do
       end
     end
 
-    describe "#get_option", :'fails_on_ruby_1.9.2' => true do
+    describe "#get_option" do
       it "should return an inherited option object" do
         face.get_option(:inherited).should be_an_instance_of subject::Option
       end

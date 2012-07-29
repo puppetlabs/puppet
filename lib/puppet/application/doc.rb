@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
-  should_not_parse_config
   run_mode :master
 
   attr_accessor :unknown_args, :manifest
@@ -60,6 +59,8 @@ SYNOPSIS
 Generates a reference for all Puppet types. Largely meant for internal
 Puppet Labs use.
 
+WARNING: RDoc support is only available under Ruby 1.8.7 and earlier.
+
 
 USAGE
 -----
@@ -83,6 +84,11 @@ can be changed with the 'outputdir' option.
 If the command is run with the name of a manifest file as an argument,
 puppet doc will output a single manifest's documentation on stdout.
 
+WARNING: RDoc support is only available under Ruby 1.8.7 and earlier.
+The internal API used to support manifest documentation has changed
+radically in newer versions, and support is not yet available for
+using those versions of RDoc.
+
 
 OPTIONS
 -------
@@ -100,7 +106,7 @@ OPTIONS
 * --mode:
   Determine the output mode. Valid modes are 'text', 'pdf' and 'rdoc'. The 'pdf'
   mode creates PDF formatted files in the /tmp directory. The default mode is
-  'text'. In 'rdoc' mode you must provide 'manifests-path'
+  'text'.
 
 * --reference:
   Build a particular reference. Get a list of references by running
@@ -120,7 +126,7 @@ OPTIONS
 * --environment:
   Used only in 'rdoc' mode. The configuration environment from which
   to read the modulepath and manifestdir settings, when reading said settings
-  from puppet.conf. Due to a known bug, this option is not currently effective.
+  from puppet.conf.
 
 
 EXAMPLE
@@ -182,8 +188,7 @@ HELP
         Puppet::Util::RDoc.rdoc(options[:outputdir], files, options[:charset])
       end
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Could not generate documentation: #{detail}"
+      Puppet.log_exception(detail, "Could not generate documentation: #{detail}")
       exit_code = 1
     end
     exit exit_code
@@ -201,8 +206,7 @@ HELP
         # Add the per-section text, but with no ToC
         text += section.send(options[:format], with_contents)
       rescue => detail
-        puts detail.backtrace
-        $stderr.puts "Could not generate reference #{name}: #{detail}"
+        Puppet.log_exception(detail, "Could not generate reference #{name}: #{detail}")
         exit_code = 1
         next
       end
@@ -257,9 +261,6 @@ HELP
         Puppet.settings.handlearg(option[:opt], option[:arg])
       end
     end
-
-    # Now parse the config
-    Puppet.parse_config
 
     # Handle the logging settings.
     if options[:debug] or options[:verbose]

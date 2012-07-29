@@ -74,12 +74,11 @@ class Rights
       msg = "#{(args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})")} access to #{name} [#{args[:method]}]"
 
       msg += " authenticated " if args[:authenticated]
+      if right
+        msg += " at #{right.file}:#{right.line}"
+      end
 
       error = AuthorizationError.new("Forbidden request: #{msg}")
-      if right
-        error.file = right.file
-        error.line = right.line
-      end
     else
       # there were no rights allowing/denying name
       # if name is not a path, let's throw
@@ -131,10 +130,9 @@ class Rights
 
   # A right.
   class Right < Puppet::Network::AuthStore
-    include Puppet::FileCollection::Lookup
-
     attr_accessor :name, :key, :acl_type
     attr_accessor :methods, :environment, :authentication
+    attr_accessor :line, :file
 
     ALL = [:save, :destroy, :find, :search]
 
@@ -190,7 +188,7 @@ class Rights
     def allowed?(name, ip, args = {})
       return :dunno if acl_type == :regex and not @methods.include?(args[:method])
       return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(args[:environment])
-      return :dunno if acl_type == :regex and not @authentication.nil? and args[:authenticated] != @authentication
+      return :dunno if acl_type == :regex and (@authentication and not args[:authenticated])
 
       begin
         # make sure any capture are replaced if needed
@@ -229,10 +227,8 @@ class Rights
       case authentication
       when "yes", "on", "true", true
         authentication = true
-      when "no", "off", "false", false
+      when "no", "off", "false", false, "all" ,"any", :all, :any
         authentication = false
-      when "all","any", :all, :any
-        authentication = nil
       else
         raise ArgumentError, "'#{name}' incorrect authenticated value: #{authentication}"
       end

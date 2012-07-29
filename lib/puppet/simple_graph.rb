@@ -526,11 +526,8 @@ class Puppet::SimpleGraph
   end
 
   def to_yaml_properties
-    other_vars = instance_variables.
-      map {|v| v.to_s}.
-      reject { |v| %w{@in_to @out_from @upstream_from @downstream_from}.include?(v) }
-
-    (other_vars + %w{@vertices @edges}).sort.uniq
+    (instance_variables + [:@vertices, :@edges] -
+     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
   end
 
   def yaml_initialize(tag, var)

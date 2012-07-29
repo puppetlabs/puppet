@@ -1,12 +1,19 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/util/rdoc'
 require 'rdoc/rdoc'
 
 describe Puppet::Util::RDoc do
+  it "should fail with a clear error without RDoc 1.*" do
+    Puppet.features.stubs(:rdoc1?).returns(false)
 
-  describe "when generating RDoc HTML documentation", :'fails_on_ruby_1.9.2' => true do
+    expect {
+      Puppet::Util::RDoc.rdoc("output", [])
+    }.to raise_error(/the version of RDoc .* is not supported/)
+  end
+
+  describe "when generating RDoc HTML documentation", :if => Puppet.features.rdoc1? do
     before :each do
       @rdoc = stub_everything 'rdoc'
       RDoc::RDoc.stubs(:new).returns(@rdoc)
@@ -14,7 +21,6 @@ describe Puppet::Util::RDoc do
 
     it "should tell the parser to ignore import" do
       Puppet.expects(:[]=).with(:ignoreimport, true)
-
       Puppet::Util::RDoc.rdoc("output", [])
     end
 

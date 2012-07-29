@@ -27,7 +27,9 @@ spec = Gem::Specification.new do |spec|
     spec.files = GEM_FILES.to_a
     spec.executables = EXECUTABLES.gsub(/sbin\/|bin\//, '').to_a
     spec.version = Puppet::PUPPETVERSION
-    spec.add_dependency('facter', '~> 1.5')
+    spec.add_dependency('facter', '>= 2.0.0')
+    spec.add_dependency('hiera', '>= 1.0.0')
+    spec.add_dependency('hiera-puppet', '>= 1.0.0')
     spec.summary = 'Puppet, an automated configuration management tool'
     spec.description = 'Puppet, an automated configuration management tool'
     spec.author = 'Puppet Labs'
@@ -49,7 +51,7 @@ task :prepare_gem do
 end
 
 desc "Create the gem"
-task :create_gem => :prepare_gem do
+task :gem => :prepare_gem do
     Dir.mkdir("pkg") rescue nil
     Gem::Builder.new(spec).build
     FileUtils.move("puppet-#{Puppet::PUPPETVERSION}.gem", "pkg")

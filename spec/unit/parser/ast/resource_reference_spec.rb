@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Parser::AST::ResourceReference do
@@ -6,7 +6,9 @@ describe Puppet::Parser::AST::ResourceReference do
   ast = Puppet::Parser::AST
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   def ast_name(value)
@@ -36,7 +38,7 @@ describe Puppet::Parser::AST::ResourceReference do
   end
 
   it "should return an array of resources if given a variable containing an array of titles" do
-    @scope.setvar("my_files", ["foo", "bar"])
+    @scope["my_files"] = ["foo", "bar"]
     titles = Puppet::Parser::AST::Variable.new(:value => "my_files")
     ref = newref('File', titles)
     ref.evaluate(@scope).should == [

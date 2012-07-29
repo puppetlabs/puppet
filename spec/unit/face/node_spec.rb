@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/face'
 
@@ -88,7 +88,7 @@ describe Puppet::Face[:node, '0.0.1'] do
 
         it "should run in master mode" do
           subject.clean('hostname')
-          $puppet_application_mode.name.should == :master
+          Puppet[:run_mode].should == :master
         end
 
         it "should set node cache as yaml" do
@@ -162,7 +162,7 @@ describe Puppet::Face[:node, '0.0.1'] do
           # Stub this so we don't need access to the DB
           require 'puppet/rails/host'
 
-          Puppet.stubs(:[]).with(:storeconfigs).returns(true)
+          Puppet[:storeconfigs] = true
 
           Puppet::Rails.stubs(:connect)
           @rails_node = stub_everything 'rails_node'

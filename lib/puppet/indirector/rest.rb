@@ -19,13 +19,22 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @server_setting = setting
   end
 
-  def self.server
-    Puppet.settings[server_setting || :server]
-  end
-
   # Specify the setting that we should use to get the port.
   def self.use_port_setting(setting)
     @port_setting = setting
+  end
+
+  # Specify the service to use when doing SRV record lookup
+  def self.use_srv_service(service)
+    @srv_service = service
+  end
+
+  def self.srv_service
+    @srv_service || :puppet
+  end
+
+  def self.server
+    Puppet.settings[server_setting || :server]
   end
 
   def self.port
@@ -116,20 +125,29 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def find(request)
     uri, body = request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
-    # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
-    # http://redmine.ruby-lang.org/issues/show/3991
-    response = if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
-      http_post(request, uri, body, headers)
-    else
-      http_get(request, uri_with_query_string, headers)
+
+    response = do_request(request) do |request|
+      # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
+      # http://redmine.ruby-lang.org/issues/show/3991
+      if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
+        http_post(request, uri, body, headers)
+      else
+        http_get(request, uri_with_query_string, headers)
+      end
     end
-    result = deserialize response
+    result = deserialize(response)
+
+    return nil unless result
+
     result.name = request.key if result.respond_to?(:name=)
     result
   end
 
   def head(request)
-    response = http_head(request, indirection2uri(request), headers)
+    response = do_request(request) do |request|
+      http_head(request, indirection2uri(request), headers)
+    end
+
     case response.code
     when "404"
       return false
@@ -142,20 +160,38 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    unless result = deserialize(http_get(request, indirection2uri(request), headers), true)
-      return []
+    result = do_request(request) do |request|
+      deserialize(http_get(request, indirection2uri(request), headers), true)
     end
-    result
+
+    # result from the server can be nil, but we promise to return an array...
+    result || []
   end
 
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-    deserialize http_delete(request, indirection2uri(request), headers)
+
+    do_request(request) do |request|
+      return deserialize(http_delete(request, indirection2uri(request), headers))
+    end
   end
 
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-    deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+
+    do_request(request) do |request|
+      deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    end
+  end
+
+  # Encapsulate call to request.do_request with the arguments from this class
+  # Then yield to the code block that was called in
+  # We certainly could have retained the full request.do_request(...) { |r| ... }
+  # but this makes the code much cleaner and we only then actually make the call
+  # to request.do_request from here, thus if we change what we pass or how we
+  # get it, we only need to change it here.
+  def do_request(request)
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
 
   private

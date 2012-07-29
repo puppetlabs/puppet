@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 #
 # Unit testing for the RedHat service Provider
 #
@@ -17,9 +17,26 @@ describe provider_class do
     @provider.resource = @resource
   end
 
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      pending "This test is pending the change in RedHat-related Linuxes to systemd for service management"
+    end
+  end
+
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
       @provider.should respond_to(method)
     end
   end
+
+
+  it 'should return resources from self.instances' do
+    provider_class.expects(:systemctl).with('list-units', '--full', '--all',  '--no-pager').returns(
+      "my_service loaded active running\nmy_other_service loaded active running"
+    )
+    provider_class.instances.map {|provider| provider.name}.should =~ ["my_service","my_other_service"]
+  end
+
 end

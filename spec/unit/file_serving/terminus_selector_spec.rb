@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/file_serving/terminus_selector'
@@ -39,18 +39,18 @@ describe Puppet::FileServing::TerminusSelector do
       end
 
       # This is so a given file location works when bootstrapping with no server.
-      it "should choose :rest when the Settings name isn't 'puppet'" do
+      it "should choose :rest when default_file_terminus is rest" do
         @request.stubs(:protocol).returns "puppet"
-        # We have to stub this because we can't set name
-        Puppet.settings.stubs(:value).with(:name).returns "foo"
+        Puppet[:server] = 'localhost'
         @object.select(@request).should == :rest
       end
 
-      it "should choose :file_server when the settings name is 'puppet' and no server is specified" do
+      it "should choose :file_server when default_file_terminus is file_server and no server is specified on the request" do
         modules = mock 'modules'
 
         @request.expects(:protocol).returns "puppet"
         @request.expects(:server).returns nil
+        Puppet[:default_file_terminus] = 'file_server'
         @object.select(@request).should == :file_server
       end
     end

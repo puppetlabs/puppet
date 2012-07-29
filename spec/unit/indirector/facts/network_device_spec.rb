@@ -1,6 +1,7 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
+require 'puppet/util/network_device'
 require 'puppet/indirector/facts/network_device'
 
 describe Puppet::Node::Facts::NetworkDevice do

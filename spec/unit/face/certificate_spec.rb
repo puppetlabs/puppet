@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/face'
 
@@ -126,6 +126,23 @@ describe Puppet::Face[:certificate, '0.0.1'] do
         expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
         csr.subject_alt_names.should =~ expected
+      end
+      
+      it "should use the global setting if set by CLI" do
+        Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
+        
+        subject.generate(hostname, options)
+        
+        expected = %W[DNS:from DNS:the DNS:cli DNS:#{hostname}]
+        
+        csr.subject_alt_names.should =~ expected
+      end
+      
+      it "should generate an error if both set on CLI" do
+        Puppet.settings.set_value(:dns_alt_names, 'from,the,cli', :cli)
+        expect do
+          subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+        end.to raise_error ArgumentError, /Can't specify both/ 
       end
     end
   end

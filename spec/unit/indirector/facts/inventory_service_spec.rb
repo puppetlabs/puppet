@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/facts/inventory_service'
@@ -6,7 +6,7 @@ require 'puppet/indirector/facts/inventory_service'
 describe Puppet::Node::Facts::InventoryService do
   it "should suppress failures and warn when saving facts" do
     facts = Puppet::Node::Facts.new('foo')
-    request = Puppet::Indirector::Request.new(:facts, :save, facts)
+    request = Puppet::Indirector::Request.new(:facts, :save, nil, facts)
 
     Net::HTTP.any_instance.stubs(:put).raises(Errno::ECONNREFUSED)
 
@@ -19,4 +19,3 @@ describe Puppet::Node::Facts::InventoryService do
     }.to_not raise_error
   end
 end
-

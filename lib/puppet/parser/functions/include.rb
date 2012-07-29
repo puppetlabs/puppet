@@ -1,6 +1,11 @@
 # Include the specified classes
 Puppet::Parser::Functions::newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
-    vals = [vals] unless vals.is_a?(Array)
+    if vals.is_a?(Array)
+      # Protect against array inside array
+      vals = vals.flatten
+    else
+      vals = [vals]
+    end
 
     # The 'false' disables lazy evaluation.
     klasses = compiler.evaluate_classes(vals, self, false)

@@ -66,7 +66,95 @@ module Puppet::Test
         }
       end
 
+      # The process environment is a shared, persistent resource.
+      $old_env = ENV.to_hash
+
+      # So is the load_path
+      $old_load_path = $LOAD_PATH.dup
+
       initialize_settings_before_each()
+
+      Puppet.clear_deprecation_warnings
+    end
+
+    # Call this method once per test, after execution of each individual test.
+    # @return nil
+    def self.after_each_test()
+      Puppet.settings.send(:clear_everything_for_tests)
+
+      Puppet::Node::Environment.clear
+      Puppet::Util::Storage.clear
+      Puppet::Util::ExecutionStub.reset
+
+      Puppet.clear_deprecation_warnings
+
+      # uncommenting and manipulating this can be useful when tracking down calls to deprecated code
+      #Puppet.log_deprecations_to_file("deprecations.txt", /^Puppet::Util.exec/)
+
+      # Restore the indirector configuration.  See before hook.
+      indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
+      indirections.each do |indirector|
+        $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
+          indirector.instance_variable_set(variable, value)
+        end
+      end
+      $saved_indirection_state = nil
+
+      # Restore the global process environment.  Can't just assign because this
+      # is a magic variable, sadly, and doesn't do that™.  It is sufficiently
+      # faster to use the compare-then-set model to avoid excessive work that it
+      # justifies the complexity.  --daniel 2012-03-15
+      unless ENV.to_hash == $old_env
+        ENV.clear
+        $old_env.each {|k, v| ENV[k] = v }
+      end
+
+
+      # Some tests can cause us to connect, in which case the lingering
+      # connection is a resource that can cause unexpected failure in later
+      # tests, as well as sharing state accidentally.
+      # We're testing if ActiveRecord::Base is defined because some test cases
+      # may stub Puppet.features.rails? which is how we should normally
+      # introspect for this functionality.
+      ActiveRecord::Base.remove_connection if defined?(ActiveRecord::Base)
+
+      # Restore the load_path late, to avoid messing with stubs from the test.
+      $LOAD_PATH.clear
+      $old_load_path.each {|x| $LOAD_PATH << x }
+
+    end
+
+
+    #########################################################################################
+    # PRIVATE METHODS (not part of the public TestHelper API--do not call these from outside
+    #  of this class!)
+    #########################################################################################
+
+    def self.app_defaults_for_tests()
+      {
+          :run_mode   => :user,
+          :logdir     => "/dev/null",
+          :confdir    => "/dev/null",
+          :vardir     => "/dev/null",
+          :rundir     => "/dev/null",
+          :hiera_config => "/dev/null",
+      }
+    end
+    private_class_method :app_defaults_for_tests
+
+    def self.initialize_settings_before_each()
+      # Initialize "app defaults" settings to a good set of test values
+      app_defaults_for_tests.each do |key, value|
+        Puppet.settings.set_value(key, value, :application_defaults)
+      end
+
+      # Avoid opening ports to the outside world
+      Puppet.settings[:bindaddress] = "127.0.0.1"
+
+      # We don't want to depend upon the reported domain name of the
+      # machine running the tests, nor upon the DNS setup of that
+      # domain.
+      Puppet.settings[:use_srv_records] = false
 
       # Longer keys are secure, but they sure make for some slow testing - both
       # in terms of generating keys, and in terms of anything the next step down
@@ -78,62 +166,7 @@ module Puppet::Test
       # below 512 bits.  Sad, really, because a 0 bit key would be just fine.
       Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
-
-      Puppet.clear_deprecation_warnings
-    end
-
-    # Call this method once per test, after execution of each individual test.
-    # @return nil
-    def self.after_each_test()
-      clear_settings_after_each()
-
-      Puppet::Node::Environment.clear
-      Puppet::Util::Storage.clear
-      Puppet::Util::ExecutionStub.reset
-
-      # Restore the indirector configuration.  See before hook.
-      indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
-      indirections.each do |indirector|
-        $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
-          indirector.instance_variable_set(variable, value)
-        end
-      end
-      $saved_indirection_state = nil
-
-
-      # Some tests can cause us to connect, in which case the lingering
-      # connection is a resource that can cause unexpected failure in later
-      # tests, as well as sharing state accidentally.
-      # We're testing if ActiveRecord::Base is defined because some test cases
-      # may stub Puppet.features.rails? which is how we should normally
-      # introspect for this functionality.
-      ActiveRecord::Base.remove_connection if defined?(ActiveRecord::Base)
-
-    end
-
-
-    #########################################################################################
-    # PRIVATE METHODS (not part of the public TestHelper API--do not call these from outside
-    #  of this class!)
-    #########################################################################################
-
-    def self.initialize_settings_before_each()
-      # these globals are set by Application
-      $puppet_application_mode = nil
-      $puppet_application_name = nil
-      # Set the confdir and vardir to gibberish so that tests
-      # have to be correctly mocked.
-      Puppet[:confdir] = "/dev/null"
-      Puppet[:vardir] = "/dev/null"
-
-      # Avoid opening ports to the outside world
-      Puppet[:bindaddress] = "127.0.0.1"
     end
     private_class_method :initialize_settings_before_each
-
-    def self.clear_settings_after_each()
-      Puppet.settings.clear
-    end
-    private_class_method :clear_settings_after_each
   end
 end

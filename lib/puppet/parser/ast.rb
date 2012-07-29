@@ -2,7 +2,6 @@
 
 require 'puppet'
 require 'puppet/util/autoload'
-require 'puppet/file_collection/lookup'
 
 # The base class for all of the objects that make up the parse trees.
 # Handles things like file name, line #, and also does the initialization
@@ -11,13 +10,11 @@ class Puppet::Parser::AST
   # Do this so I don't have to type the full path in all of the subclasses
   AST = Puppet::Parser::AST
 
-  include Puppet::FileCollection::Lookup
-
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
-  attr_accessor :parent, :scope
+  attr_accessor :parent, :scope, :file, :line
 
   def inspect
     "( #{self.class} #{self.to_s} #{@children.inspect} )"
@@ -32,23 +29,12 @@ class Puppet::Parser::AST
   class << self
     attr_accessor :use_docs
     def associates_doc
-    self.use_docs = true
-    end
-  end
-
-  # Does this ast object set something?  If so, it gets evaluated first.
-  def self.settor?
-    if defined?(@settor)
-      @settor
-    else
-      false
+      self.use_docs = true
     end
   end
 
   # Evaluate the current object.  Just a stub method, since the subclass
   # should override this method.
-  # of the contained children and evaluates them in turn, returning a
-  # list of all of the collected values, rejecting nil values
   def evaluate(*options)
     raise Puppet::DevError, "Did not override #evaluate in #{self.class}"
   end
@@ -77,7 +63,7 @@ class Puppet::Parser::AST
     rescue Puppet::Error => detail
       raise adderrorcontext(detail)
     rescue => detail
-      error = Puppet::Error.new(detail.to_s)
+      error = Puppet::ParseError.new(detail.to_s, nil, nil, detail)
       # We can't use self.fail here because it always expects strings,
       # not exceptions.
       raise adderrorcontext(error, detail)

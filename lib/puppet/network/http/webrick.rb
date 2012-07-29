@@ -1,11 +1,11 @@
 require 'webrick'
 require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
-require 'puppet/network/xmlrpc/webrick_servlet'
 require 'thread'
 
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_revocation_list'
+require 'puppet/ssl/configuration'
 
 class Puppet::Network::HTTP::WEBrick
   def initialize(args = {})
@@ -13,18 +13,9 @@ class Puppet::Network::HTTP::WEBrick
     @mutex = Mutex.new
   end
 
-  def self.class_for_protocol(protocol)
-    return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
-    raise "Unknown protocol [#{protocol}]."
-  end
-
   def listen(args = {})
-    raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
     raise ArgumentError, ":address must be specified." unless args[:address]
     raise ArgumentError, ":port must be specified." unless args[:port]
-
-    @protocols = args[:protocols]
-    @xmlrpc_handlers = args[:xmlrpc_handlers]
 
     arguments = {:BindAddress => args[:address], :Port => args[:port]}
     arguments.merge!(setup_logger)
@@ -33,7 +24,7 @@ class Puppet::Network::HTTP::WEBrick
     @server = WEBrick::HTTPServer.new(arguments)
     @server.listeners.each { |l| l.start_immediately = false }
 
-    setup_handlers
+    @server.mount('/', Puppet::Network::HTTP::WEBrickREST, :this_value_is_apparently_necessary_but_unused)
 
     @mutex.synchronize do
       raise "WEBrick server is already listening" if @listening
@@ -68,7 +59,7 @@ class Puppet::Network::HTTP::WEBrick
   # Configure our http log file.
   def setup_logger
     # Make sure the settings are all ready for us.
-    Puppet.settings.use(:main, :ssl, Puppet[:name])
+    Puppet.settings.use(:main, :ssl, :application)
 
     if Puppet.run_mode.master?
       file = Puppet[:masterhttplog]
@@ -109,7 +100,7 @@ class Puppet::Network::HTTP::WEBrick
 
     raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
 
-    results[:SSLCACertificateFile] = Puppet[:localcacert]
+    results[:SSLCACertificateFile] = ssl_configuration.ca_auth_file
     results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
     results[:SSLCertificateStore] = host.ssl_store
@@ -119,23 +110,10 @@ class Puppet::Network::HTTP::WEBrick
 
   private
 
-  def setup_handlers
-    # Set up the new-style protocols.
-    klass = self.class.class_for_protocol(:rest)
-    @server.mount('/', klass, :this_value_is_apparently_necessary_but_unused)
-
-    # And then set up xmlrpc, if configured.
-    @server.mount("/RPC2", xmlrpc_servlet) if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
-  end
-
-  # Create our xmlrpc servlet, which provides backward compatibility.
-  def xmlrpc_servlet
-    handlers = @xmlrpc_handlers.collect { |handler|
-      unless hclass = Puppet::Network::Handler.handler(handler)
-        raise "Invalid xmlrpc handler #{handler}"
-      end
-      hclass.new({})
-    }
-    Puppet::Network::XMLRPC::WEBrickServlet.new handlers
+  def ssl_configuration
+    @ssl_configuration ||= Puppet::SSL::Configuration.new(
+      Puppet[:localcacert],
+      :ca_chain_file => Puppet[:ssl_server_ca_chain],
+      :ca_auth_file  => Puppet[:ssl_server_ca_auth])
   end
 end

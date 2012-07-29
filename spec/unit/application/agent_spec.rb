@@ -1,13 +1,14 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 require 'puppet/daemon'
-require 'puppet/network/handler'
 
 describe Puppet::Application::Agent do
+  include PuppetSpec::Files
+
   before :each do
     @puppetd = Puppet::Application[:agent]
     @puppetd.stubs(:puts)
@@ -26,10 +27,6 @@ describe Puppet::Application::Agent do
 
   it "should operate in agent run_mode" do
     @puppetd.class.run_mode.name.should == :agent
-  end
-
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @puppetd.should_parse_config?.should be_true
   end
 
   it "should declare a main command" do
@@ -84,6 +81,12 @@ describe Puppet::Application::Agent do
 
       @puppetd.options[:fingerprint].should be_false
     end
+
+    it "should init waitforcert to nil" do
+      @puppetd.preinit
+
+      @puppetd.options[:waitforcert].should be_nil
+    end
   end
 
   describe "when handling options" do
@@ -91,7 +94,7 @@ describe Puppet::Application::Agent do
       @puppetd.command_line.stubs(:args).returns([])
     end
 
-    [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
+    [:centrallogging, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
         @puppetd.should respond_to("handle_#{option}".to_sym)
       end
@@ -102,11 +105,22 @@ describe Puppet::Application::Agent do
       end
     end
 
-    it "should set an existing handler on server" do
-      Puppet::Network::Handler.stubs(:handler).with("handler").returns(true)
+    describe "when handling --disable" do
+      it "should declare handle_disable method" do
+        @puppetd.should respond_to(:handle_disable)
+      end
 
-      @puppetd.handle_serve("handler")
-      @puppetd.options[:serve].should == [ :handler ]
+      it "should set disable to true" do
+        @puppetd.options.stubs(:[]=)
+        @puppetd.options.expects(:[]=).with(:disable, true)
+        @puppetd.handle_disable('')
+      end
+
+      it "should store disable message" do
+        @puppetd.options.stubs(:[]=)
+        @puppetd.options.expects(:[]=).with(:disable_message, "message")
+        @puppetd.handle_disable('message')
+      end
     end
 
     it "should set client to false with --no-client" do
@@ -129,6 +143,12 @@ describe Puppet::Application::Agent do
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @puppetd.setup_host
+    end
+
+    it "should use the waitforcert setting when checking for a signed certificate" do
+      Puppet[:waitforcert] = 10
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
       @puppetd.setup_host
     end
 
@@ -259,9 +279,10 @@ describe Puppet::Application::Agent do
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet[:modulepath] = '/my/path'
+      path = make_absolute('/my/path')
+      Puppet[:modulepath] = path
       Puppet[:configprint] = "modulepath"
-      Puppet::Util::Settings.any_instance.expects(:puts).with('/my/path')
+      Puppet::Settings.any_instance.expects(:puts).with(path)
       expect { @puppetd.setup }.to exit_with 0
     end
 
@@ -306,10 +327,14 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet[:catalog_terminus] = :foo
-      @puppetd.setup
+    it "should default catalog_terminus setting to 'rest'" do
+      @puppetd.initialize_app_defaults
       Puppet[:catalog_terminus].should ==  :rest
+    end
+
+    it "should default node_terminus setting to 'rest'" do
+      @puppetd.initialize_app_defaults
+      Puppet[:node_terminus].should ==  :rest
     end
 
     it "should tell the catalog handler to use cache" do
@@ -318,10 +343,8 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should change the facts_terminus setting to 'facter'" do
-      Puppet[:facts_terminus] = :foo
-
-      @puppetd.setup
+    it "should default facts_terminus setting to 'facter'" do
+      @puppetd.initialize_app_defaults
       Puppet[:facts_terminus].should == :facter
     end
 
@@ -347,6 +370,20 @@ describe Puppet::Application::Agent do
           @agent.expects(action)
           expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
         end
+      end
+
+      it "should pass the disable message when disabling" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns("message")
+        @agent.expects(:disable).with("message")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+      end
+
+      it "should pass the default disable message when disabling without a message" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns(nil)
+        @agent.expects(:disable).with("reason not specified")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
       end
 
       it "should finally exit" do
@@ -414,19 +451,6 @@ describe Puppet::Application::Agent do
         Puppet.stubs(:err)
         FileTest.stubs(:exists?).with(Puppet[:rest_authconfig]).returns(false)
         expect { @puppetd.setup_listen }.to exit_with 14
-      end
-
-      it "should create a server to listen on at least the Runner handler" do
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Runner] }
-
-        @puppetd.setup_listen
-      end
-
-      it "should create a server to listen for specific handlers" do
-        @puppetd.options.stubs(:[]).with(:serve).returns([:handler])
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:handler] }
-
-        @puppetd.setup_listen
       end
 
       it "should use puppet default port" do
@@ -514,6 +538,11 @@ describe Puppet::Application::Agent do
         expect { @puppetd.onetime }.to exit_with 0
       end
 
+      it "should not let the agent fork" do
+        @agent.expects(:should_fork=).with(false)
+        expect { @puppetd.onetime }.to exit_with 0
+      end
+
       it "should let the agent run" do
         @agent.expects(:run).returns(:report)
         expect { @puppetd.onetime }.to exit_with 0
@@ -533,18 +562,16 @@ describe Puppet::Application::Agent do
           @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
         end
 
-        it "should exit with report's computed exit status" do
+        it "should exit with agent computed exit status" do
           Puppet[:noop] = false
-          report = stub 'report', :exit_status => 666
-          @agent.stubs(:run).returns(report)
+          @agent.stubs(:run).returns(666)
 
           expect { @puppetd.onetime }.to exit_with 666
         end
 
-        it "should exit with the report's computer exit status, even if --noop is set." do
+        it "should exit with the agent's exit status, even if --noop is set." do
           Puppet[:noop] = true
-          report = stub 'report', :exit_status => 666
-          @agent.stubs(:run).returns(report)
+          @agent.stubs(:run).returns(666)
 
           expect { @puppetd.onetime }.to exit_with 666
         end

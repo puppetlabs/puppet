@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe "http compression" do
@@ -53,7 +53,7 @@ describe "http compression" do
     end
 
     it "should add an Accept-Encoding header when http compression is available" do
-      Puppet.settings.expects(:[]).with(:http_compression).returns(true)
+      Puppet[:http_compression] = true
       headers = @uncompressor.add_accept_encoding({})
       headers.should have_key('accept-encoding')
       headers['accept-encoding'].should =~ /gzip/
@@ -62,7 +62,7 @@ describe "http compression" do
     end
 
     it "should not add Accept-Encoding header if http compression is not available" do
-      Puppet.settings.stubs(:[]).with(:http_compression).returns(false)
+      Puppet[:http_compression] = false
       @uncompressor.add_accept_encoding({}).should == {}
     end
 

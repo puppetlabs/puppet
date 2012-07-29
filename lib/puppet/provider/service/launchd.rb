@@ -134,6 +134,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
     @product_version ||= self.class.get_macosx_version_major
+    # (#11593) Remove support for OS X 10.4 & earlier
+    # leaving this as is because 10.5 still didn't have plist support
     return true unless /^10\.[0-5]/.match(@product_version)
     return false
   end
@@ -168,7 +170,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
       end
-      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail

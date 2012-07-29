@@ -110,8 +110,7 @@ module Puppet::Util::Docs
       begin
         return text.gsub(/^#{indent}/,'')
       rescue => detail
-        puts detail.backtrace
-        puts detail
+        Puppet.log_exception(detail)
       end
     else
       return text

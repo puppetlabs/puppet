@@ -101,7 +101,7 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source)
+      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment)
         fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -154,7 +154,7 @@ module Puppet
       return nil unless value
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.indirection.find(source)
+          if data = Puppet::FileServing::Metadata.indirection.find(source, :environment => resource.catalog.environment)
             @metadata = data
             @metadata.source = source
             break
@@ -163,7 +163,7 @@ module Puppet
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless @metadata
+      fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 
@@ -173,6 +173,10 @@ module Puppet
 
     def full_path
       Puppet::Util.uri_to_path(uri) if found?
+    end
+
+    def server?
+       uri and uri.host
     end
 
     def server

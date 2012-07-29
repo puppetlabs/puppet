@@ -1,6 +1,32 @@
 require 'puppet/interface/option_builder'
 
 module Puppet::Interface::OptionManager
+  
+  def display_global_options(*args)
+    @display_global_options ||= []
+    [args].flatten.each do |refopt|
+      raise ArgumentError, "Global option #{refopt} does not exist in Puppet.settings" unless Puppet.settings.include? refopt
+      @display_global_options << refopt if refopt
+    end
+    @display_global_options.uniq!
+    @display_global_options
+  end
+  alias :display_global_option :display_global_options
+  
+  def all_display_global_options
+    walk_inheritance_tree(@display_global_options, :all_display_global_options)
+  end
+  
+  def walk_inheritance_tree(start, sym)
+    result = (start ||= [])
+    if self.is_a?(Class) and superclass.respond_to?(sym)
+      result = superclass.send(sym) + result
+    elsif self.class.respond_to?(sym)
+      result = self.class.send(sym) + result
+    end
+    return result
+  end
+  
   # Declare that this app can take a specific option, and provide
   # the code to do so.
   def option(*declaration, &block)
@@ -36,15 +62,7 @@ module Puppet::Interface::OptionManager
   end
 
   def options
-    result = (@options ||= [])
-
-    if self.is_a?(Class) and superclass.respond_to?(:options)
-      result = superclass.options + result
-    elsif self.class.respond_to?(:options)
-      result = self.class.options + result
-    end
-
-    return result
+    walk_inheritance_tree(@options, :options)
   end
 
   def get_option(name, with_inherited_options = true)

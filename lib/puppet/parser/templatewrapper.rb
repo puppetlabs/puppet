@@ -18,14 +18,20 @@ class Puppet::Parser::TemplateWrapper
     @__scope__
   end
 
-  def script_line
+  def script_line_proc
     # find which line in the template (if any) we were called from
-    (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1]
+    # but defer to when necessary since fetching the caller information on
+    # every variable lookup can be quite time consuming
+    Proc.new { (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1] }
+  end
+
+  def script_line
+    script_line_proc.call
   end
 
   # Should return true if a variable is defined, false if it is not
   def has_variable?(name)
-    scope.lookupvar(name.to_s, :file => file, :line => script_line) != :undefined
+    scope.include?(name.to_s)
   end
 
   # Allow templates to access the defined classes
@@ -56,9 +62,8 @@ class Puppet::Parser::TemplateWrapper
   # the missing_method definition here until we declare the syntax finally
   # dead.
   def method_missing(name, *args)
-    value = scope.lookupvar(name.to_s,:file => file,:line => script_line)
-    if value != :undefined
-      return value
+    if scope.include?(name.to_s)
+      return scope[name.to_s, {:file => file,:lineproc => script_line_proc}]
     else
       # Just throw an error immediately, instead of searching for
       # other missingmethod things or whatever.

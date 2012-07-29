@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/application/queue'
@@ -12,10 +12,6 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     Puppet::Util::Log.stubs(:newdestination)
 
     Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
-  end
-
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @queue.should_parse_config?.should be_true
   end
 
   it "should declare a main command" do
@@ -135,7 +131,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     end
 
     it "should daemonize if needed" do
-      Puppet.expects(:[]).with(:daemonize).returns(true)
+      Puppet[:daemonize] = true
 
       @queue.daemon.expects(:daemonize)
 

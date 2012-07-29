@@ -1,10 +1,7 @@
 require 'puppet/util/package'
 
-
-      Puppet::Parser::Functions::newfunction(
-        :versioncmp, :type => :rvalue,
-
-  :doc => "Compares two version numbers.
+Puppet::Parser::Functions::newfunction( :versioncmp, :type => :rvalue, :doc =>
+"Compares two version numbers.
 
 Prototype:
 

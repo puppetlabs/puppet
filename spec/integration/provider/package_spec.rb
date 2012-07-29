@@ -1,7 +1,7 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-describe "Package provider", :'fails_on_ruby_1.9.2' => true do
+describe "Package provider" do
   include PuppetSpec::Files
 
   Puppet::Type.type(:package).providers.each do |name|
@@ -22,7 +22,7 @@ describe "Package provider", :'fails_on_ruby_1.9.2' => true do
         lambda { pkg.provider.install }.should raise_error
       end
 
-      it "should be able to get a list of existing packages", :fails_on_windows => true do
+      it "should be able to get a list of existing packages" do
         if provider.name == :msi
           Puppet[:vardir] = tmpdir('msi_package_var_dir')
         end

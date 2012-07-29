@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Resource < Puppet::Application
 
-  should_not_parse_config
-
   attr_accessor :host, :extra_params
 
   def preinit
@@ -153,8 +151,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def setup
     Puppet::Util::Log.newdestination(:console)
-
-    Puppet.parse_config
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

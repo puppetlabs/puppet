@@ -1,7 +1,6 @@
 require 'puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
-  include Puppet::Util::Execution
 
   confine    :operatingsystem => :windows
   defaultfor :operatingsystem => :windows
@@ -46,7 +45,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
     end
 
     if resource[:path]
-      withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
+      Puppet::Util.withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
         return if which(exe)
       end
     end

@@ -1,13 +1,16 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-DOC" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-DOC" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-doc\fR \- Generate Puppet documentation and references
 .
 .SH "SYNOPSIS"
 Generates a reference for all Puppet types\. Largely meant for internal Puppet Labs use\.
+.
+.P
+WARNING: RDoc support is only available under Ruby 1\.8\.7 and earlier\.
 .
 .SH "USAGE"
 puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir \fIrdoc\-outputdir\fR] [\-m|\-\-mode text|pdf|rdoc] [\-r|\-\-reference \fIreference\-name\fR] [\-\-charset \fIcharset\fR] [\fImanifest\-file\fR]
@@ -20,6 +23,9 @@ In \'rdoc\' mode, this command generates an html RDoc hierarchy describing the m
 .
 .P
 If the command is run with the name of a manifest file as an argument, puppet doc will output a single manifest\'s documentation on stdout\.
+.
+.P
+WARNING: RDoc support is only available under Ruby 1\.8\.7 and earlier\. The internal API used to support manifest documentation has changed radically in newer versions, and support is not yet available for using those versions of RDoc\.
 .
 .SH "OPTIONS"
 .

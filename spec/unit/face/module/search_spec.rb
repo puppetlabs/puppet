@@ -3,7 +3,7 @@ require 'puppet/face'
 require 'puppet/application/module'
 require 'puppet/module_tool'
 
-describe "puppet module search", :fails_on_windows => true do
+describe "puppet module search" do
   subject { Puppet::Face[:module, :current] }
 
   let(:options) do
@@ -21,13 +21,27 @@ describe "puppet module search", :fails_on_windows => true do
     before { Puppet::Util::Terminal.stubs(:width).returns(100) }
 
     it 'should output nothing when receiving an empty dataset' do
-      subject.render([], ['apache', {}]).should == "No results found for 'apache'."
+      subject.render({:answers => [], :result => :sucess}, ['apache', {}]).should == "No results found for 'apache'."
+    end
+
+    it 'should return error and exit when error returned' do
+      results = {
+        :result => :failure,
+        :error => {
+          :oneline => 'Something failed',
+          :multiline => 'Something failed',
+        }
+      }
+      expect { subject.render(results, ['apache', {}]) }.to raise_error 'Something failed'
     end
 
     it 'should output a header when receiving a non-empty dataset' do
-      results = [
-        {'full_name' => '', 'author' => '', 'desc' => '', 'tag_list' => [] },
-      ]
+      results = {
+        :result => :success,
+        :answers => [
+          {'full_name' => '', 'author' => '', 'desc' => '', 'tag_list' => [] },
+        ],
+      }
 
       subject.render(results, ['apache', {}]).should =~ /NAME/
       subject.render(results, ['apache', {}]).should =~ /DESCRIPTION/
@@ -36,9 +50,12 @@ describe "puppet module search", :fails_on_windows => true do
     end
 
     it 'should output the relevant fields when receiving a non-empty dataset' do
-      results = [
-        {'full_name' => 'Name', 'author' => 'Author', 'desc' => 'Summary', 'tag_list' => ['tag1', 'tag2'] },
-      ]
+      results = {
+        :result => :success,
+        :answers => [
+          {'full_name' => 'Name', 'author' => 'Author', 'desc' => 'Summary', 'tag_list' => ['tag1', 'tag2'] },
+        ]
+      }
 
       subject.render(results, ['apache', {}]).should =~ /Name/
       subject.render(results, ['apache', {}]).should =~ /Author/
@@ -48,53 +65,65 @@ describe "puppet module search", :fails_on_windows => true do
     end
 
     it 'should elide really long descriptions' do
-      results = [
-        {
-          'full_name' => 'Name',
-          'author' => 'Author',
-          'desc' => 'This description is really too long to fit in a single data table, guys -- we should probably set about truncating it',
-          'tag_list' => ['tag1', 'tag2'],
-        },
-      ]
+      results = {
+        :result => :success,
+        :answers => [
+          {
+            'full_name' => 'Name',
+            'author' => 'Author',
+            'desc' => 'This description is really too long to fit in a single data table, guys -- we should probably set about truncating it',
+            'tag_list' => ['tag1', 'tag2'],
+          },
+        ]
+      }
 
       subject.render(results, ['apache', {}]).should =~ /\.{3}  @Author/
     end
 
     it 'should never truncate the module name' do
-      results = [
-        {
-          'full_name' => 'This-module-has-a-really-really-long-name',
-          'author' => 'Author',
-          'desc' => 'Description',
-          'tag_list' => ['tag1', 'tag2'],
-        },
-      ]
+      results = {
+        :result => :success,
+        :answers => [
+          {
+            'full_name' => 'This-module-has-a-really-really-long-name',
+            'author' => 'Author',
+            'desc' => 'Description',
+            'tag_list' => ['tag1', 'tag2'],
+          },
+        ]
+      }
 
       subject.render(results, ['apache', {}]).should =~ /This-module-has-a-really-really-long-name/
     end
 
     it 'should never truncate the author name' do
-      results = [
-        {
-          'full_name' => 'Name',
-          'author' => 'This-author-has-a-really-really-long-name',
-          'desc' => 'Description',
-          'tag_list' => ['tag1', 'tag2'],
-        },
-      ]
+      results = {
+        :result => :success,
+        :answers => [
+          {
+            'full_name' => 'Name',
+            'author' => 'This-author-has-a-really-really-long-name',
+            'desc' => 'Description',
+            'tag_list' => ['tag1', 'tag2'],
+          },
+        ]
+      }
 
       subject.render(results, ['apache', {}]).should =~ /@This-author-has-a-really-really-long-name/
     end
 
     it 'should never remove tags that match the search term' do
-      results = [
-        {
-          'full_name' => 'Name',
-          'author' => 'Author',
-          'desc' => 'Description',
-          'tag_list' => ['Supercalifragilisticexpialidocious'] + (1..100).map { |i| "tag#{i}" },
-        },
-      ]
+      results = {
+        :results => :success,
+        :answers => [
+          {
+            'full_name' => 'Name',
+            'author' => 'Author',
+            'desc' => 'Description',
+            'tag_list' => ['Supercalifragilisticexpialidocious'] + (1..100).map { |i| "tag#{i}" },
+          },
+        ]
+      }
 
       subject.render(results, ['Supercalifragilisticexpialidocious', {}]).should =~ /Supercalifragilisticexpialidocious/
       subject.render(results, ['Supercalifragilisticexpialidocious', {}]).should_not =~ /tag/
@@ -114,14 +143,17 @@ describe "puppet module search", :fails_on_windows => true do
              "Name          This description is really too long to fit in a single data table, guys -- we should probably set about trunca...  @JohnnyApples  tag1 tag2 taggitty3#{' '*37}\n"
     }.each do |width, expectation|
       it "should resize the table to fit the screen, when #{width} columns" do
-        results = [
-          {
-            'full_name' => 'Name',
-            'author' => 'JohnnyApples',
-            'desc' => 'This description is really too long to fit in a single data table, guys -- we should probably set about truncating it',
-            'tag_list' => ['tag1', 'tag2', 'taggitty3'],
-          },
-        ]
+        results = {
+          :result => :success,
+          :answers => [
+            {
+              'full_name' => 'Name',
+              'author' => 'JohnnyApples',
+              'desc' => 'This description is really too long to fit in a single data table, guys -- we should probably set about truncating it',
+              'tag_list' => ['tag1', 'tag2', 'taggitty3'],
+            },
+          ]
+        }
 
         Puppet::Util::Terminal.expects(:width).returns(width)
         result = subject.render(results, ['apache', {}])
@@ -140,8 +172,14 @@ describe "puppet module search", :fails_on_windows => true do
     end
 
     it "should accept the --module-repository option" do
+      forge = mock("Puppet::Forge")
+      searcher = mock("Searcher")
       options[:module_repository] = "http://forge.example.com"
-      Puppet::ModuleTool::Applications::Searcher.expects(:run).with("puppetlabs-apache", options).once
+
+      Puppet::Forge.expects(:new).with("PMT", subject.version).returns(forge)
+      Puppet::ModuleTool::Applications::Searcher.expects(:new).with("puppetlabs-apache", forge, has_entries(options)).returns(searcher)
+      searcher.expects(:run)
+
       subject.search("puppetlabs-apache", options)
     end
   end

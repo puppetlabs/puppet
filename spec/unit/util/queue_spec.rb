@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/util/queue'
 require 'spec/mocks'
@@ -87,7 +87,7 @@ describe Puppet::Util::Queue do
 
   context 'when determining client type' do
     it 'returns client class based on the :queue_type setting' do
-      Puppet.settings.expects(:value).with(:queue_type).returns(:myqueue)
+      Puppet[:queue_type] = :myqueue
       Puppet::Util::Queue.expects(:queue_type_to_class).with(:myqueue).returns "eh"
       @class.client_class.should == "eh"
     end

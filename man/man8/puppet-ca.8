@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CA" "8" "June 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-CA" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-ca\fR \- Local Puppet Certificate Authority management\.
@@ -66,10 +66,7 @@ puppet ca fingerprint [\-\-digest ALGORITHM]
 Undocumented action\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-digest ALGORITHM\fR \- The hash algorithm to use when displaying the fingerprint
+\fBOPTIONS\fR \fI\-\-digest ALGORITHM\fR \- The hash algorithm to use when displaying the fingerprint
 .
 .TP
 \fBgenerate\fR \-
@@ -85,10 +82,7 @@ puppet ca generate [\-\-dns\-alt\-names NAMES]
 Undocumented action\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-dns\-alt\-names NAMES\fR \- The comma\-separated list of alternative DNS names to use for the local host\. When the node generates a CSR for itself, these are added to the request as the desired \fBsubjectAltName\fR in the certificate: additional DNS labels that the certificate is also valid answering as\. This is generally required if you use a non\-hostname \fBcertname\fR, or if you want to use \fBpuppet kick\fR or \fBpuppet resource \-H\fR and the primary certname does not match the DNS name you use to communicate with the host\. This is unnecessary for agents, unless you intend to use them as a server for \fBpuppet kick\fR or remote \fBpuppet resource\fR management\. It is rarely necessary for servers; it is usually helpful only if you need to have a pool of multiple load balanced masters, or for the same master to respond on two physically separate networks under different names\.
+\fBOPTIONS\fR \fI\-\-dns\-alt\-names NAMES\fR \- The comma\-separated list of alternative DNS names to use for the local host\. When the node generates a CSR for itself, these are added to the request as the desired \fBsubjectAltName\fR in the certificate: additional DNS labels that the certificate is also valid answering as\. This is generally required if you use a non\-hostname \fBcertname\fR, or if you want to use \fBpuppet kick\fR or \fBpuppet resource \-H\fR and the primary certname does not match the DNS name you use to communicate with the host\. This is unnecessary for agents, unless you intend to use them as a server for \fBpuppet kick\fR or remote \fBpuppet resource\fR management\. It is rarely necessary for servers; it is usually helpful only if you need to have a pool of multiple load balanced masters, or for the same master to respond on two physically separate networks under different names\.
 .
 .TP
 \fBlist\fR \- List certificates and/or certificate requests\.
@@ -104,10 +98,7 @@ puppet ca list [\-\-[no\-]all] [\-\-[no\-]pending] [\-\-[no\-]signed] [\-\-subje
 This will list the current certificates and certificate signing requests in the Puppet CA\. You will also get the fingerprint, and any certificate verification failure reported\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-[no\-]all\fR \- Include all certificates and requests\.
+\fBOPTIONS\fR \fI\-\-[no\-]all\fR \- Include all certificates and requests\.
 .
 .IP
 \fI\-\-[no\-]pending\fR \- Include pending certificate signing requests\.
@@ -161,10 +152,7 @@ puppet ca sign [\-\-[no\-]allow\-dns\-alt\-names]
 Undocumented action\.
 .
 .IP
-\fBOPTIONS\fR
-.
-.IP
-\fI\-\-[no\-]allow\-dns\-alt\-names\fR \- Whether or not to accept DNS alt names in the certificate request
+\fBOPTIONS\fR \fI\-\-[no\-]allow\-dns\-alt\-names\fR \- Whether or not to accept DNS alt names in the certificate request
 .
 .TP
 \fBverify\fR \-

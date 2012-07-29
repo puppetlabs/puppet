@@ -14,7 +14,7 @@ manifest = %q{
 
 agents.each do |host|
   apply_manifest_on(host, manifest) do
-    assert_match(/notice: parent array element/, stdout, "#{host}: parent missing")
-    assert_match(/notice: child array element/, stdout, "#{host}: child missing")
+    assert_match(/parent array element/, stdout, "#{host}: parent missing")
+    assert_match(/child array element/, stdout, "#{host}: child missing")
   end
 end

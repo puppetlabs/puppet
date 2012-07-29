@@ -18,7 +18,18 @@ class Puppet::Interface::Option
         @optparse << item
 
         # Duplicate checking...
-        name = optparse_to_name(item)
+        # for our duplicate checking purpose, we don't make a check with the
+        # translated '-' -> '_'. Right now, we do that on purpose because of
+        # a duplicated option made publicly available on certificate and ca
+        # faces for dns alt names. Puppet defines 'dns_alt_names', those
+        # faces include 'dns-alt-names'.  We can't get rid of 'dns-alt-names'
+        # yet, so we need to do our duplicate checking on the untranslated
+        # version of the option.
+        # jeffweiss 17 april 2012
+        name = optparse_to_optionname(item)
+        if Puppet.settings.include? name then
+          raise ArgumentError, "#{item.inspect}: already defined in puppet"
+        end
         if dup = dups[name] then
           raise ArgumentError, "#{item.inspect}: duplicates existing alias #{dup.inspect} in #{@parent}"
         else
@@ -62,11 +73,16 @@ class Puppet::Interface::Option
     @name.to_s.tr('_', '-')
   end
 
-  def optparse_to_name(declaration)
+  def optparse_to_optionname(declaration)
     unless found = declaration.match(/^-+(?:\[no-\])?([^ =]+)/) then
       raise ArgumentError, "Can't find a name in the declaration #{declaration.inspect}"
     end
-    name = found.captures.first.tr('-', '_')
+    name = found.captures.first
+  end
+    
+
+  def optparse_to_name(declaration)
+    name = optparse_to_optionname(declaration).tr('-', '_')
     raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
     name.to_sym
   end

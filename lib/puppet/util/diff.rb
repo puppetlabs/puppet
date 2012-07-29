@@ -2,7 +2,7 @@ require 'tempfile'
 
 # Provide a diff between two strings.
 module Puppet::Util::Diff
-  include Puppet::Util
+  include Puppet::Util::Execution
   require 'tempfile'
 
   def diff(old, new)
@@ -13,7 +13,7 @@ module Puppet::Util::Diff
       command << args
     end
     command << old << new
-    execute(command, :failonfail => false)
+    Puppet::Util::Execution.execute(command, :failonfail => false)
   end
 
   module_function :diff

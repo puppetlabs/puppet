@@ -36,8 +36,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
         newrep.extend(mod)
         newrep.process
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Report #{name} failed: #{detail}"
+        Puppet.log_exception(detail, "Report #{name} failed: #{detail}")
       end
     end
   end

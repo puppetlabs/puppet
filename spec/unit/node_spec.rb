@@ -1,8 +1,12 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'matchers/json'
 
 describe Puppet::Node do
+  it "should register its document type as Node" do
+    PSON.registered_document_types["Node"].should equal(Puppet::Node)
+  end
+
   describe "when managing its environment" do
     it "should use any set environment" do
       Puppet::Node.new("foo", :environment => "bar").environment.name.should == :bar
@@ -34,6 +38,73 @@ describe Puppet::Node do
       node = Puppet::Node.new("foo")
       node.parameters["environment"] = :bar
       node.environment.name.should == :bar
+    end
+  end
+
+  describe "when converting to json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+    end
+
+    it "should provide its name" do
+      @node.should set_json_attribute('name').to("mynode")
+    end
+
+    it "should produce a hash with the document_type set to 'Node'" do
+      @node.should set_json_document_type_to("Node")
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      @node.should set_json_attribute("classes").to(%w{a b c})
+    end
+
+    it "should not include the classes if there are none" do
+      @node.should_not set_json_attribute('classes')
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      @node.should set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
+    end
+
+    it "should not include the parameters if there are none" do
+      @node.should_not set_json_attribute('parameters')
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      @node.should set_json_attribute('environment').to('production')
+    end
+  end
+
+  describe "when converting from json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+      @format = Puppet::Network::FormatHandler.format('pson')
+    end
+
+    def from_json(json)
+      @format.intern(Puppet::Node, json)
+    end
+
+    it "should set its name" do
+      Puppet::Node.should read_json_attribute('name').from(@node.to_pson).as("mynode")
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      Puppet::Node.should read_json_attribute('classes').from(@node.to_pson).as(%w{a b c})
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      Puppet::Node.should read_json_attribute('parameters').from(@node.to_pson).as({"a" => "b", "c" => "d"})
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(Puppet::Node::Environment.new(:production))
     end
   end
 end
@@ -84,11 +155,11 @@ end
 describe Puppet::Node, "when merging facts" do
   before do
     @node = Puppet::Node.new("testnode")
-    Puppet::Node::Facts.indirection.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
+    Puppet::Node::Facts.indirection.stubs(:find).with(@node.name, instance_of(Hash)).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
   end
 
   it "should fail intelligently if it cannot find facts" do
-    Puppet::Node::Facts.indirection.expects(:find).with(@node.name).raises "foo"
+    Puppet::Node::Facts.indirection.expects(:find).with(@node.name, instance_of(Hash)).raises "foo"
     lambda { @node.fact_merge }.should raise_error(Puppet::Error)
   end
 
@@ -111,16 +182,14 @@ describe Puppet::Node, "when merging facts" do
   end
 
   it "should add the environment to the list of parameters" do
-    Puppet.settings.stubs(:value).with(:environments).returns("one,two")
-    Puppet.settings.stubs(:value).with(:environment).returns("one")
+    Puppet[:environment] = "one"
     @node = Puppet::Node.new("testnode", :environment => "one")
     @node.merge "two" => "three"
     @node.parameters["environment"].should == "one"
   end
 
   it "should not set the environment if it is already set in the parameters" do
-    Puppet.settings.stubs(:value).with(:environments).returns("one,two")
-    Puppet.settings.stubs(:value).with(:environment).returns("one")
+    Puppet[:environment] = "one"
     @node = Puppet::Node.new("testnode", :environment => "one")
     @node.merge "environment" => "two"
     @node.parameters["environment"].should == "two"
@@ -168,8 +237,8 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
   describe "and :node_name is set to 'cert'" do
     before do
-      Puppet.settings.stubs(:value).with(:strict_hostname_checking).returns false
-      Puppet.settings.stubs(:value).with(:node_name).returns "cert"
+      Puppet[:strict_hostname_checking] = false
+      Puppet[:node_name] = "cert"
     end
 
     it "should use the passed-in key as the first value" do
@@ -178,7 +247,7 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
     describe "and strict hostname checking is enabled" do
       it "should only use the passed-in key" do
-        Puppet.settings.expects(:value).with(:strict_hostname_checking).returns true
+        Puppet[:strict_hostname_checking] = true
         @node.names.should == ["foo.domain.com"]
       end
     end
@@ -186,8 +255,8 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
   describe "and :node_name is set to 'facter'" do
     before do
-      Puppet.settings.stubs(:value).with(:strict_hostname_checking).returns false
-      Puppet.settings.stubs(:value).with(:node_name).returns "facter"
+      Puppet[:strict_hostname_checking] = false
+      Puppet[:node_name] = "facter"
     end
 
     it "should use the node's 'hostname' fact as the first value" do

@@ -16,6 +16,8 @@ end
 # We can use Microsoft Windows functions
 Puppet.features.add(:microsoft_windows) do
   begin
+    require 'Win32API'          # case matters in this require!
+    require 'win32ole'
     require 'sys/admin'
     require 'win32/process'
     require 'win32/dir'
@@ -45,7 +47,7 @@ Puppet.features.add(:libshadow, :libs => ["shadow"])
 Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.root? }
 
 # We've got mongrel available
-Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http_server/mongrel})
+Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http/mongrel})
 
 # We have lcs diff
 Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
@@ -65,3 +67,6 @@ Puppet.features.add(:couchdb, :libs => ["couchrest"])
 
 # We have sqlite
 Puppet.features.add(:sqlite, :libs => ["sqlite3"])
+
+# We have Hiera
+Puppet.features.add(:hiera, :libs => ["hiera"])

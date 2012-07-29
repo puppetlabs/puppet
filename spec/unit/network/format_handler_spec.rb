@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/network/format_handler'
@@ -59,7 +59,7 @@ describe Puppet::Network::FormatHandler do
     end
     describe "that is supported" do
       before do
-        Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :one
+        Puppet[:preferred_serialization_format] = :one
       end
       it "should return the preferred serialization format first" do
         FormatTester.supported_formats.should == [:one, :two]
@@ -67,7 +67,7 @@ describe Puppet::Network::FormatHandler do
     end
     describe "that is not supported" do
       before do
-        Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :unsupported
+        Puppet[:preferred_serialization_format] = :unsupported
       end
       it "should still return the default format first" do
         FormatTester.supported_formats.should == [:two, :one]

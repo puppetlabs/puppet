@@ -141,7 +141,7 @@ class Puppet::Transaction::Report
   end
 
   def to_yaml_properties
-    (instance_variables - ["@external_times"]).sort
+    instance_variables - [:@external_times]
   end
 
   private

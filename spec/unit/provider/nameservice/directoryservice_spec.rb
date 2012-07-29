@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 # We use this as a reasonable way to obtain all the support infrastructure.
@@ -37,28 +37,15 @@ require 'spec_helper'
 end
 
 describe 'DirectoryService.single_report' do
-  it 'should fail on OS X < 10.4' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.3")
+  it 'should fail on OS X < 10.5' do
+    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
 
     expect {
       Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
-    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.4")
+    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
   end
 
-  it 'should use url data on 10.4' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
-    Puppet::Provider::NameService::DirectoryService.stubs(:list_all_present).returns(
-      ['root', 'user1', 'user2', 'resource_name']
-    )
-    Puppet::Provider::NameService::DirectoryService.stubs(:generate_attribute_hash)
-    Puppet::Provider::NameService::DirectoryService.stubs(:execute)
-    Puppet::Provider::NameService::DirectoryService.expects(:parse_dscl_url_data)
-
-    Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
-  end
-
-  it 'should use plist data on > 10.4' do
+  it 'should use plist data on >= 10.5' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.5")
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
     Puppet::Provider::NameService::DirectoryService.stubs(:list_all_present).returns(
@@ -73,22 +60,15 @@ describe 'DirectoryService.single_report' do
 end
 
 describe 'DirectoryService.get_exec_preamble' do
-  it 'should fail on OS X < 10.4' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.3")
+  it 'should fail on OS X < 10.5' do
+    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
 
     expect {
       Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list')
-    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.4")
+    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
   end
 
-  it 'should use url data on 10.4' do
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
-    Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
-
-    Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list').should include("-url")
-  end
-
-  it 'should use plist data on > 10.4' do
+  it 'should use plist data on >= 10.5' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.5")
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
 

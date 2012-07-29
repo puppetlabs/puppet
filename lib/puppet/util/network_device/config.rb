@@ -1,5 +1,6 @@
 require 'ostruct'
 require 'puppet/util/loadedfile'
+require 'puppet/util/network_device'
 
 class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
 

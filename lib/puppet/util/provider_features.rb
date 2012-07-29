@@ -25,7 +25,7 @@ module Puppet::Util::ProviderFeatures
     end
 
     def initialize(name, docs, hash)
-      self.name = symbolize(name)
+      self.name = name.intern
       self.docs = docs
       hash = symbolize_options(hash)
       set_options(hash)
@@ -149,8 +149,7 @@ module Puppet::Util::ProviderFeatures
       @feature_module.send(:define_method, :has_features) do |*names|
         @declared_features ||= []
         names.each do |name|
-          name = symbolize(name)
-          @declared_features << name
+          @declared_features << name.intern
         end
       end
       # Aaah, grammatical correctness

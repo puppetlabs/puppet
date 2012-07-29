@@ -1,6 +1,5 @@
-# This class is basically a hidden class that knows how to act
-# on the CA.  It's only used by the 'puppetca' executable, and its
-# job is to provide a CLI-like interface to the CA class.
+# This class is basically a hidden class that knows how to act on the
+# CA.  Its job is to provide a CLI-like interface to the CA class.
 module Puppet
   module SSL
     class CertificateAuthority
@@ -14,7 +13,7 @@ module Puppet
         # Actually perform the work.
         def apply(ca)
           unless subjects or method == :list
-            raise ArgumentError, "You must provide hosts or :all when using #{method}"
+            raise ArgumentError, "You must provide hosts or --all when using #{method}"
           end
 
           begin
@@ -26,8 +25,7 @@ module Puppet
           rescue InterfaceError
             raise
           rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not call #{method}: #{detail}"
+            Puppet.log_exception(detail, "Could not call #{method}: #{detail}")
             raise
           end
         end
@@ -43,7 +41,7 @@ module Puppet
         def initialize(method, options)
           self.method = method
           self.subjects = options.delete(:to)
-          @digest = options.delete(:digest) || :MD5
+          @digest = options.delete(:digest) || :SHA256
           @options = options
         end
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Parser::Functions do
@@ -20,11 +20,15 @@ describe Puppet::Parser::Functions do
   end
 
   it "should have a method for returning an environment-specific module" do
-    Puppet::Parser::Functions.environment_module("myenv").should be_instance_of(Module)
+    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should be_instance_of(Module)
   end
 
   it "should use the current default environment if no environment is provided" do
     Puppet::Parser::Functions.environment_module.should be_instance_of(Module)
+  end
+
+  it "should be able to retrieve environment modules asked for by name rather than instance" do
+    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should equal(Puppet::Parser::Functions.environment_module("myenv"))
   end
 
   describe "when calling newfunction" do
@@ -39,11 +43,12 @@ describe Puppet::Parser::Functions do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
     end
 
-    it "should raise an error if the function already exists" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }.once
+    it "should warn if the function already exists" do
+      @module.expects(:define_method).with { |name,block| name == "function_name" }.twice
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      Puppet.expects(:warning)
 
-      lambda { Puppet::Parser::Functions.newfunction("name", :type => :rvalue) }.should raise_error
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
     end
 
     it "should raise an error if the function type is not correct" do

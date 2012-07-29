@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/indirector/rest'
 
@@ -63,14 +63,14 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the server" do
-    @rest_class.expects(:server_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "myserver"
+    @rest_class.expects(:server_setting).returns :inventory_server
+    Puppet[:inventory_server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
   it "should default to :server for the server setting" do
     @rest_class.expects(:server_setting).returns nil
-    Puppet.settings.expects(:value).with(:server).returns "myserver"
+    Puppet[:server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
@@ -79,14 +79,14 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the port" do
-    @rest_class.expects(:port_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "321"
+    @rest_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_port] = "321"
     @rest_class.port.should == 321
   end
 
   it "should default to :port for the port setting" do
     @rest_class.expects(:port_setting).returns nil
-    Puppet.settings.expects(:value).with(:masterport).returns "543"
+    Puppet[:masterport] = "543"
     @rest_class.port.should == 543
   end
 
@@ -146,6 +146,10 @@ describe Puppet::Indirector::REST do
         @searcher.http_request(:get, stub('request'))
       end.to raise_error(/some other message/)
     end
+  end
+
+  it 'should default to :puppet for the srv_service' do
+    Puppet::Indirector::REST.srv_service.should == :puppet
   end
 
   describe "when deserializing responses" do
@@ -248,10 +252,6 @@ describe Puppet::Indirector::REST do
   end
 
   describe "when creating an HTTP client" do
-    before do
-      Puppet.settings.stubs(:value).returns("rest_testing")
-    end
-
     it "should use the class's server and port if the indirection request provides neither" do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil
       @searcher.class.expects(:port).returns 321
@@ -281,7 +281,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       # Use a key with spaces, so we can test escaping
-      @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", :environment => "myenv")
+      @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", nil, :environment => "myenv")
     end
 
     describe "with a large body" do
@@ -296,7 +296,7 @@ describe Puppet::Indirector::REST do
         # to avoid a failure.
         params.delete('ip')
 
-        @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", params.merge(:environment => "myenv"))
+        @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", nil, params.merge(:environment => "myenv"))
 
         @connection.expects(:post).with do |uri, body|
           uri == "/myenv/foo/foo%20bar" and body.split("&").sort == params.map {|key,value| "#{key}=#{value}"}.sort
@@ -375,7 +375,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)
 
       # Use a key with spaces, so we can test escaping
-      @request = Puppet::Indirector::Request.new(:foo, :head, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :head, "foo bar", nil)
     end
 
     it "should call the HEAD http method on a network connection" do
@@ -412,7 +412,7 @@ describe Puppet::Indirector::REST do
 
       @model.stubs(:convert_from_multiple)
 
-      @request = Puppet::Indirector::Request.new(:foo, :search, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :search, "foo bar", nil)
     end
 
     it "should call the GET http method on a network connection" do
@@ -458,7 +458,7 @@ describe Puppet::Indirector::REST do
       @connection = stub('mock http connection', :delete => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-      @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar", nil)
     end
 
     it "should call the DELETE http method on a network connection" do
@@ -515,7 +515,7 @@ describe Puppet::Indirector::REST do
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @instance = stub 'instance', :render => "mydata", :mime => "mime"
-      @request = Puppet::Indirector::Request.new(:foo, :save, "foo bar")
+      @request = Puppet::Indirector::Request.new(:foo, :save, "foo bar", nil)
       @request.instance = @instance
     end
 
@@ -573,6 +573,27 @@ describe Puppet::Indirector::REST do
     it "should generate an error when result data deserializes fails" do
       @searcher.expects(:deserialize).raises(ArgumentError)
       lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
+    end
+  end
+
+  context 'dealing with SRV settings' do
+    [
+      :destroy,
+      :find,
+      :head,
+      :save,
+      :search
+    ].each do |method|
+      it "##{method} passes the SRV service, and fall-back server & port to the request's do_request method" do
+        request = Puppet::Indirector::Request.new(:indirection, method, 'key', nil)
+        stub_response = stub 'response'
+        stub_response.stubs(:code).returns('200')
+        @searcher.stubs(:deserialize)
+
+        request.expects(:do_request).with(@searcher.class.srv_service, @searcher.class.server, @searcher.class.port).returns(stub_response)
+
+        @searcher.send(method, request)
+      end
     end
   end
 end

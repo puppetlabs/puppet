@@ -3,7 +3,6 @@ require 'puppet/indirector'
 # A class for managing nodes, including their facts and environment.
 class Puppet::Node
   require 'puppet/node/facts'
-  require 'puppet/node/inventory'
   require 'puppet/node/environment'
 
   # Set up indirection, so that nodes can be looked for in
@@ -18,7 +17,33 @@ class Puppet::Node
     A node is composed of its name, its facts, and its environment."
 
   attr_accessor :name, :classes, :source, :ipaddress, :parameters
-  attr_reader :time
+  attr_reader :time, :facts
+  #
+  # Load json before trying to register.
+  Puppet.features.pson? and ::PSON.register_document_type('Node',self)
+
+  def self.from_pson(pson)
+    raise ArgumentError, "No name provided in pson data" unless name = pson['name']
+
+    node = new(name)
+    node.classes = pson['classes']
+    node.parameters = pson['parameters']
+    node.environment = pson['environment']
+    node
+  end
+
+  def to_pson(*args)
+    result = {
+      'document_type' => "Node",
+      'data' => {}
+    }
+    result['data']['name'] = name
+    result['data']['classes'] = classes unless classes.empty?
+    result['data']['parameters'] = parameters unless parameters.empty?
+    result['data']['environment'] = environment.name
+
+    result.to_pson(*args)
+  end
 
   def environment
     return super if @environment
@@ -48,6 +73,8 @@ class Puppet::Node
 
     @parameters = options[:parameters] || {}
 
+    @facts = options[:facts]
+
     if env = options[:environment]
       self.environment = env
     end
@@ -57,13 +84,13 @@ class Puppet::Node
 
   # Merge the node facts with parameters from the node source.
   def fact_merge
-      if facts = Puppet::Node::Facts.indirection.find(name)
-        merge(facts.values)
-      end
+    if @facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
+      merge(@facts.values)
+    end
   rescue => detail
-      error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
-      error.set_backtrace(detail.backtrace)
-      raise error
+    error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
+    error.set_backtrace(detail.backtrace)
+    raise error
   end
 
   # Merge any random parameters into our parameter list.

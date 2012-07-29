@@ -3,7 +3,9 @@ require 'spec_helper'
 
 describe Puppet::Parser::AST::Leaf do
   before :each do
-    @scope = stub 'scope'
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
     @value = stub 'value'
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
@@ -34,8 +36,12 @@ end
 describe Puppet::Parser::AST::FlatString do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::FlatString.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::FlatString.new(:value => 'ab').to_s.should == "\"ab\""
+    end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::FlatString.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
     end
   end
 end
@@ -43,9 +49,14 @@ end
 describe Puppet::Parser::AST::String do
   describe "when converting to string" do
     it "should transform its value to a quoted string" do
-      value = stub 'value', :is_a? => true, :to_s => "ab"
-      Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
+      Puppet::Parser::AST::String.new(:value => 'ab').to_s.should == "\"ab\""
     end
+
+    it "should escape embedded double-quotes" do
+      value = Puppet::Parser::AST::String.new(:value => 'hello "friend"')
+      value.to_s.should == "\"hello \\\"friend\\\"\""
+    end
+
     it "should return a dup of its value" do
       value = ""
       Puppet::Parser::AST::String.new( :value => value ).evaluate(stub('scope')).should_not be_equal(value)
@@ -56,8 +67,11 @@ end
 describe Puppet::Parser::AST::Concat do
   describe "when evaluating" do
     before :each do
-      @scope = stub_everything 'scope'
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      @scope   = Puppet::Parser::Scope.new(compiler)
     end
+
     it "should interpolate variables and concatenate their values" do
       one = Puppet::Parser::AST::String.new(:value => "one")
       one.stubs(:evaluate).returns("one ")
@@ -86,8 +100,10 @@ end
 
 describe Puppet::Parser::AST::Undef do
   before :each do
-    @scope = stub 'scope'
-    @undef = Puppet::Parser::AST::Undef.new(:value => :undef)
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
+    @undef   = Puppet::Parser::AST::Undef.new(:value => :undef)
   end
 
   it "should match undef with undef" do
@@ -101,12 +117,14 @@ end
 
 describe Puppet::Parser::AST::HashOrArrayAccess do
   before :each do
-    @scope = stub 'scope'
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
     it "should evaluate the variable part if necessary" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(["b"])
+      @scope["a"] = ["b"]
 
       variable = stub 'variable', :evaluate => "a"
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => variable, :key => 0 )
@@ -117,7 +135,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should evaluate the access key part if necessary" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(["b"])
+      @scope["a"] = ["b"]
 
       index = stub 'index', :evaluate => 0
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => index )
@@ -128,7 +146,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an array member" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(["val1", "val2", "val3"])
+      @scope["a"] = %w{val1 val2 val3}
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 1 )
 
@@ -136,7 +154,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an array member when index is a stringified number" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a" }.returns(["val1", "val2", "val3"])
+      @scope["a"] = %w{val1 val2 val3}
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "1" )
 
@@ -144,7 +162,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should raise an error when accessing an array with a key" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a"}.returns(["val1", "val2", "val3"])
+      @scope["a"] = ["val1", "val2", "val3"]
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "get_me_the_second_element_please" )
 
@@ -152,7 +170,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return :undef for an unknown array index" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(["val1", "val2", "val3"])
+      @scope["a"] = ["val1", "val2", "val3"]
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 6 )
 
@@ -160,7 +178,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an hash value" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
+      @scope["a"] = { "key1" => "val1", "key2" => "val2", "key3" => "val3" }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
 
@@ -168,7 +186,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return :undef for unknown hash keys" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
+      @scope["a"] = { "key1" => "val1", "key2" => "val2", "key3" => "val3" }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key12" )
 
@@ -176,7 +194,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an hash value with a numerical key" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a"}.returns({ "key1" => "val1", "key2" => "val2", "45" => "45", "key3" => "val3" })
+      @scope["a"] = { "key1" => "val1", "key2" => "val2", "45" => "45", "key3" => "val3" }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "45" )
 
@@ -184,7 +202,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should raise an error if the variable lookup didn't return an hash or an array" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a"}.returns("I'm a string")
+      @scope["a"] = "I'm a string"
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
 
@@ -192,8 +210,6 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should raise an error if the variable wasn't in the scope" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(nil)
-
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
 
       lambda { access.evaluate(@scope) }.should raise_error
@@ -205,7 +221,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should work with recursive hash access" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key" => { "subkey" => "b" }})
+      @scope["a"] = { "key" => { "subkey" => "b" }}
 
       access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
       access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => "subkey")
@@ -214,7 +230,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should work with interleaved array and hash access" do
-      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key" => [ "a" , "b" ]})
+      @scope['a'] = { "key" => [ "a" , "b" ]}
 
       access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
       access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => 1)
@@ -225,17 +241,20 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
 
   describe "when assigning" do
     it "should add a new key and value" do
-      scope = Puppet::Parser::Scope.new
-      scope.setvar("a", { 'a' => 'b' })
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(compiler)
+
+      scope['a'] = { 'a' => 'b' }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "b")
       access.assign(scope, "c" )
 
-      scope.lookupvar("a").should be_include("b")
+      scope['a'].should be_include("b")
     end
 
     it "should raise an error when assigning an array element with a key" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a"}.returns([])
+      @scope['a'] = []
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "get_me_the_second_element_please" )
 
@@ -243,17 +262,20 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an array member when index is a stringified number" do
-      scope = Puppet::Parser::Scope.new
-      scope.setvar("a", [])
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(compiler)
+
+      scope['a'] = []
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "0" )
 
       access.assign(scope, "val2")
-      scope.lookupvar("a").should == ["val2"]
+      scope['a'].should == ["val2"]
     end
 
     it "should raise an error when trying to overwrite an hash value" do
-      @scope.stubs(:lookupvar).with { |name,options| name == "a" }.returns({ "key" => [ "a" , "b" ]})
+      @scope['a'] = { "key" => [ "a" , "b" ]}
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
 
       lambda { access.assign(@scope, "test") }.should raise_error
@@ -263,7 +285,9 @@ end
 
 describe Puppet::Parser::AST::Regex do
   before :each do
-    @scope = stub 'scope', :ephemeral_from => true
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when initializing" do
@@ -361,22 +385,23 @@ end
 
 describe Puppet::Parser::AST::Variable do
   before :each do
-    @scope = stub 'scope'
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope = Puppet::Parser::Scope.new(compiler)
     @var = Puppet::Parser::AST::Variable.new(:value => "myvar", :file => 'my.pp', :line => 222)
   end
 
   it "should lookup the variable in scope" do
-    @scope.expects(:lookupvar).with { |name,options| name == "myvar" }.returns(:myvalue)
+    @scope["myvar"] = :myvalue
     @var.safeevaluate(@scope).should == :myvalue
   end
 
   it "should pass the source location to lookupvar" do
-    @scope.expects(:lookupvar).with { |name,options| name == "myvar" and options[:file] == 'my.pp' and options[:line] == 222 }.returns(:myvalue)
+    @scope.setvar("myvar", :myvalue, :file => 'my.pp', :line => 222 )
     @var.safeevaluate(@scope).should == :myvalue
   end
 
   it "should return undef if the variable wasn't set" do
-    @scope.expects(:lookupvar).with { |name,options| name == "myvar" }.returns(:undefined)
     @var.safeevaluate(@scope).should == :undef
   end
 
@@ -390,11 +415,13 @@ end
 
 describe Puppet::Parser::AST::HostName do
   before :each do
-    @scope = stub 'scope'
-    @value = stub 'value', :=~ => false
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
+    @value   = 'value'
     @value.stubs(:to_s).returns(@value)
     @value.stubs(:downcase).returns(@value)
-    @host = Puppet::Parser::AST::HostName.new( :value => @value)
+    @host = Puppet::Parser::AST::HostName.new(:value => @value)
   end
 
   it "should raise an error if hostname is not valid" do

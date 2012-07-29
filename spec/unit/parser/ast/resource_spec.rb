@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Parser::AST::Resource do
@@ -8,7 +8,7 @@ describe Puppet::Parser::AST::Resource do
     before :each do
       @title = Puppet::Parser::AST::String.new(:value => "mytitle")
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
       @scope.stubs(:resource).returns(stub_everything)
       @instance = ast::ResourceInstance.new(:title => @title, :parameters => ast::ASTArray.new(:children => []))
       @resource = ast::Resource.new(:type => "file", :instances => ast::ASTArray.new(:children => [@instance]))
@@ -39,33 +39,6 @@ describe Puppet::Parser::AST::Resource do
       result = @resource.evaluate(@scope).collect { |r| r.title }
       result.should be_include("one")
       result.should be_include("two")
-    end
-
-
-    [5, 5.0, true, false, :three, "foo"].each do |title|
-      it "should stringify the title if it is a #{title.class}" do
-        @instance.title.stubs(:safeevaluate).returns title
-
-        result = @resource.evaluate(@scope).map(&:title)
-        result.first.should == title.to_s
-      end
-    end
-
-    [
-     {:a => 1},
-     /noway/i,
-     Puppet::Resource.new(:notify, "something"),
-     Pathname.new("foo"),
-     (1..50),
-     nil,
-    ].each do |title|
-      it "should fail if the title is a #{title.class}" do
-        @instance.title.stubs(:safeevaluate).returns title
-
-        expect do
-          @resource.evaluate(@scope)
-        end.to raise_error(Puppet::ParseError, /Resource title must be a String, not #{title.class}/)
-      end
     end
 
     it "should create and return one resource objects per title" do
@@ -123,7 +96,7 @@ describe Puppet::Parser::AST::Resource do
     # Related to #806, make sure resources always look up the full path to the resource.
     describe "when generating qualified resources" do
       before do
-        @scope = Puppet::Parser::Scope.new :compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
+        @scope = Puppet::Parser::Scope.new Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
         ["one", "one::two", "three"].each do |name|
           @parser.environment.known_resource_types.add(Puppet::Resource::Type.new(:definition, name, {}))
@@ -162,7 +135,7 @@ describe Puppet::Parser::AST::Resource do
 
       it "should evaluate parameterized classes when they are instantiated" do
         @scope.known_resource_types.add_hostclass Puppet::Resource::Type.new(:hostclass, "Myresource", {})
-        @scope.compiler.expects(:evaluate_classes).with(['myresource'],@twoscope,false)
+        @scope.compiler.expects(:evaluate_classes).with(['myresource'],@twoscope,false,true)
         resource("class").evaluate(@twoscope)[0]
       end
 
@@ -176,7 +149,7 @@ describe Puppet::Parser::AST::Resource do
     before do
       @title = Puppet::Parser::AST::String.new(:value => "classname")
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
       @scope.stubs(:resource).returns(stub_everything)
       @instance = ast::ResourceInstance.new(:title => @title, :parameters => ast::ASTArray.new(:children => []))
       @resource = ast::Resource.new(:type => "Class", :instances => ast::ASTArray.new(:children => [@instance]))

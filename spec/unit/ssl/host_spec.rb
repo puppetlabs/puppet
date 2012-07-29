@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/ssl/host'
@@ -366,18 +366,13 @@ describe Puppet::SSL::Host do
 
   describe "when initializing" do
     it "should default its name to the :certname setting" do
-      Puppet.settings.expects(:value).with(:certname).returns "myname"
+      Puppet[:certname] = "myname"
 
       Puppet::SSL::Host.new.name.should == "myname"
     end
 
     it "should downcase a passed in name" do
       Puppet::SSL::Host.new("Host.Domain.Com").name.should == "host.domain.com"
-    end
-
-    it "should downcase the certname if it's used" do
-      Puppet.settings.expects(:value).with(:certname).returns "Host.Domain.Com"
-      Puppet::SSL::Host.new.name.should == "host.domain.com"
     end
 
     it "should indicate that it is a CA host if its name matches the ca_name constant" do
@@ -588,10 +583,10 @@ describe Puppet::SSL::Host do
       Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
     end
 
-    it "should return a Host instance created with the name of each found instance", :'fails_on_ruby_1.9.2' => true do
-      key = stub 'key', :name => "key"
-      cert = stub 'cert', :name => "cert"
-      csr = stub 'csr', :name => "csr"
+    it "should return a Host instance created with the name of each found instance" do
+      key  = stub 'key',  :name => "key",  :to_ary => nil
+      cert = stub 'cert', :name => "cert", :to_ary => nil
+      csr  = stub 'csr',  :name => "csr",  :to_ary => nil
 
       Puppet::SSL::Key.indirection.expects(:search).returns [key]
       Puppet::SSL::Certificate.indirection.expects(:search).returns [cert]
@@ -683,7 +678,7 @@ describe Puppet::SSL::Host do
       @store.stub_everything
       OpenSSL::X509::Store.stubs(:new).returns @store
 
-      Puppet.settings.stubs(:value).with(:localcacert).returns "ssl_host_testing"
+      Puppet[:localcacert] = "ssl_host_testing"
 
       Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns(nil)
     end
@@ -699,8 +694,8 @@ describe Puppet::SSL::Host do
     end
 
     it "should add the local CA cert file" do
-      Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert/file"
-      @store.expects(:add_file).with "/ca/cert/file"
+      Puppet[:localcacert] = "/ca/cert/file"
+      @store.expects(:add_file).with Puppet[:localcacert]
       @host.ssl_store
     end
 
@@ -708,7 +703,7 @@ describe Puppet::SSL::Host do
       before do
         @crl = stub 'crl', :content => "real_crl"
         Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns @crl
-        Puppet.settings.stubs(:value).with(:certificate_revocation).returns true
+        Puppet[:certificate_revocation] = true
       end
 
       it "should add the CRL" do

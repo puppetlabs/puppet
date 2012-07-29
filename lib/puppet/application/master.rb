@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Master < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   option("--debug", "-d")
@@ -20,8 +19,7 @@ class Puppet::Application::Master < Puppet::Application
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -127,6 +125,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  def app_defaults()
+    super.merge :facts_terminus => 'yaml'
+  end
+
   def preinit
     Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
@@ -166,10 +168,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def main
     require 'etc'
 
-    xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
-
-    xmlrpc_handlers << :CA if Puppet[:ca]
-
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
 
@@ -181,19 +179,18 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       begin
         Puppet::Util.chuser
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        $stderr.puts "Could not change user to #{Puppet[:user]}: #{detail}"
+        Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
         exit(39)
       end
     end
 
     unless options[:rack]
       require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
+      @daemon.server = Puppet::Network::Server.new()
       @daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
-      @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
+      @app = Puppet::Network::HTTP::Rack.new()
     end
 
     Puppet.notice "Starting Puppet master version #{Puppet.version}"
@@ -226,9 +223,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup_terminuses
     require 'puppet/file_serving/content'
     require 'puppet/file_serving/metadata'
-
-    # Cache our nodes in yaml.  Currently not configurable.
-    Puppet::Node.indirection.cache_class = :yaml
 
     Puppet::FileServing::Content.indirection.terminus_class = :file_server
     Puppet::FileServing::Metadata.indirection.terminus_class = :file_server

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/reports'
 
@@ -7,9 +7,17 @@ processor = Puppet::Reports.report(:http)
 describe processor do
   subject { Puppet::Transaction::Report.new("apply").extend(processor) }
 
-  it "should use the reporturl setting's host and port" do
+  it "should use the reporturl setting's host, port and ssl option" do
     uri = URI.parse(Puppet[:reporturl])
-    Net::HTTP.expects(:new).with(uri.host, uri.port).returns(stub_everything('http'))
+    ssl = (uri.scheme == 'https')
+    Puppet::Network::HttpPool.expects(:http_instance).with(uri.host, uri.port, use_ssl=ssl).returns(stub_everything('http'))
+    subject.process
+  end
+
+  it "should use ssl if requested" do
+    Puppet[:reporturl] = Puppet[:reporturl].sub(/^http:\/\//, 'https://')
+    uri = URI.parse(Puppet[:reporturl])
+    Puppet::Network::HttpPool.expects(:http_instance).with(uri.host, uri.port, use_ssl=true).returns(stub_everything('http'))
     subject.process
   end
 

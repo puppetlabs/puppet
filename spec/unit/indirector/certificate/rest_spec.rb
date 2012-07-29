@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/certificate/rest'
@@ -18,6 +18,10 @@ describe Puppet::SSL::Certificate::Rest do
 
   it "should set port_setting to :ca_port" do
     Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
+  end
+
+  it "should use the :ca SRV service" do
+    Puppet::SSL::Certificate::Rest.srv_service.should == :ca
   end
 
   it "should make sure found certificates have their names set to the search string" do
@@ -50,7 +54,7 @@ rn/G
     network.stubs(:verify_callback=)
     network.expects(:get).returns response
 
-    request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com")
+    request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com", nil)
     result = terminus.find(request)
     result.should_not be_nil
     result.name.should == "foo.com"

@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Kick < Puppet::Application
 
-  should_not_parse_config
-
   attr_accessor :hosts, :tags, :classes
 
   option("--all","-a")
@@ -262,8 +260,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       result = run.status
       puts "status is #{result}"
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Host #{host} failed: #{detail}\n"
+      Puppet.log_exception(detail, "Host #{host} failed: #{detail}\n")
       exit(2)
     end
 
@@ -308,9 +305,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::Util::Log.level = :info
     end
-
-    # Now parse the config
-    Puppet.parse_config
 
     if Puppet[:node_terminus] == "ldap" and (options[:all] or @classes)
       if options[:all]

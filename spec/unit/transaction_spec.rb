@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/transaction'
@@ -801,17 +801,17 @@ describe Puppet::Transaction, " when determining tags" do
   end
 
   it "should default to the tags specified in the :tags setting" do
-    Puppet.expects(:[]).with(:tags).returns("one")
+    Puppet[:tags] = "one"
     @transaction.tags.should == %w{one}
   end
 
   it "should split tags based on ','" do
-    Puppet.expects(:[]).with(:tags).returns("one,two")
+    Puppet[:tags] = "one,two"
     @transaction.tags.should == %w{one two}
   end
 
   it "should use any tags set after creation" do
-    Puppet.expects(:[]).with(:tags).never
+    Puppet[:tags] = ""
     @transaction.tags = %w{one two}
     @transaction.tags.should == %w{one two}
   end

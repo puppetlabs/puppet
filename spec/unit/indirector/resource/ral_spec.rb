@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
@@ -18,7 +18,7 @@ describe "Puppet::Resource::Ral" do
       Puppet::Resource::Ral.new.find(@request).should == my_resource
     end
 
-    it "if there is no instance, it should create one", :'fails_on_ruby_1.9.2' => true do
+    it "if there is no instance, it should create one" do
       wrong_instance = stub "wrong user", :name => "bob"
       root = mock "Root User"
       root_resource = mock "Root Resource"

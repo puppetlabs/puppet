@@ -7,17 +7,17 @@ class Puppet::Agent
   require 'puppet/agent/locker'
   include Puppet::Agent::Locker
 
+  require 'puppet/agent/disabler'
+  include Puppet::Agent::Disabler
+
   attr_reader :client_class, :client, :splayed
+  attr_accessor :should_fork
 
   # Just so we can specify that we are "the" instance.
   def initialize(client_class)
     @splayed = false
 
     @client_class = client_class
-  end
-
-  def lockfile_path
-    client_class.lockfile_path
   end
 
   def needing_restart?
@@ -31,21 +31,22 @@ class Puppet::Agent
       return
     end
     if disabled?
-      Puppet.notice "Skipping run of #{client_class}; administratively disabled; use 'puppet agent --enable' to re-enable."
+      Puppet.notice "Skipping run of #{client_class}; administratively disabled (Reason: '#{disable_message}');\nUse 'puppet agent --enable' to re-enable."
       return
     end
 
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
-      with_client do |client|
-        begin
-          sync.synchronize { lock { result = client.run(*args) } }
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not run #{client_class}: #{detail}"
+      result = run_in_fork(should_fork) do
+        with_client do |client|
+          begin
+            sync.synchronize { lock { client.run(*args) } }
+          rescue SystemExit,NoMemoryError
+            raise
+          rescue Exception => detail
+            Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
+          end
         end
       end
       true
@@ -78,6 +79,29 @@ class Puppet::Agent
     @sync ||= Sync.new
   end
 
+  def run_in_fork(forking = true)
+    return yield unless forking or Puppet.features.windows?
+
+    child_pid = Kernel.fork do
+      $0 = "puppet agent: applying configuration"
+      begin
+        exit(yield)
+      rescue SystemExit
+        exit(-1)
+      rescue NoMemoryError
+        exit(-2)
+      end
+    end
+    exit_code = Process.waitpid2(child_pid)
+    case exit_code[1].exitstatus
+    when -1
+      raise SystemExit
+    when -2
+      raise NoMemoryError
+    end
+    exit_code[1].exitstatus
+  end
+
   private
 
   # Create and yield a client instance, keeping a reference
@@ -88,8 +112,7 @@ class Puppet::Agent
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not create instance of #{client_class}: #{detail}"
+      Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
       return
     end
     yield @client

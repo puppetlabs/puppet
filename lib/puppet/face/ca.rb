@@ -83,7 +83,7 @@ Puppet::Face.define(:ca, '0.1.0') do
           "  #{name} (#{host.certificate_request.fingerprint})"
         else
           begin
-            ca.verify(host.certificate)
+            ca.verify(host.name)
             "+ #{name} (#{host.certificate.fingerprint})"
           rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => e
             "- #{name} (#{host.certificate.fingerprint}) (#{e.to_s})"

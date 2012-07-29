@@ -1,3 +1,4 @@
+require 'puppet/ssl/configuration'
 require 'puppet/ssl/host'
 require 'net/https'
 
@@ -11,9 +12,9 @@ module Puppet::Network::HttpPool
 
   # Use cert information from a Puppet client to set up the http object.
   def self.cert_setup(http)
-    if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(Puppet[:localcacert])
+    if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
       http.cert_store  = ssl_host.ssl_store
-      http.ca_file     = Puppet[:localcacert]
+      http.ca_file     = ssl_configuration.ca_auth_file
       http.cert        = ssl_host.certificate.content
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
       http.key         = ssl_host.key.content
@@ -30,9 +31,16 @@ module Puppet::Network::HttpPool
     end
   end
 
+  def self.ssl_configuration
+    @ssl_configuration ||= Puppet::SSL::Configuration.new(
+      Puppet[:localcacert],
+      :ca_chain_file => Puppet[:ssl_client_ca_chain],
+      :ca_auth_file  => Puppet[:ssl_client_ca_auth])
+  end
+
   # Retrieve a cached http instance if caching is enabled, else return
   # a new one.
-  def self.http_instance(host, port, reset = false)
+  def self.http_instance(host, port, reset = false, use_ssl = true)
     args = [host, port]
     if Puppet[:http_proxy_host] == "none"
       args << nil << nil
@@ -45,7 +53,7 @@ module Puppet::Network::HttpPool
     # give us a reader for ca_file... Grr...
     class << http; attr_accessor :ca_file; end
 
-    http.use_ssl = true
+    http.use_ssl = use_ssl
     # Use configured timeout (#1176)
     http.read_timeout = Puppet[:configtimeout]
     http.open_timeout = Puppet[:configtimeout]

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/file'
@@ -188,7 +188,7 @@ HERE
                 key += "/path/to/file"
               end
 
-              @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, request_options)
+              @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, nil, request_options)
             end
 
             def make_bucketed_file

@@ -5,7 +5,7 @@ require 'puppet/face'
 require 'puppet/module_tool'
 require 'puppet_spec/modules'
 
-describe "puppet module list", :fails_on_windows => true do
+describe "puppet module list" do
   include PuppetSpec::Files
 
   before do
@@ -37,36 +37,36 @@ describe "puppet module list", :fails_on_windows => true do
 
     Puppet::Face[:module, :current].list.should == {
       @modpath1 => [
-        Puppet::Module.new('bar', :environment => env, :path => barmod1.path),
-        Puppet::Module.new('foo', :environment => env, :path => foomod1.path)
+        Puppet::Module.new('bar', barmod1.path, env),
+        Puppet::Module.new('foo', foomod1.path, env)
       ],
-      @modpath2 => [Puppet::Module.new('foo', :environment => env, :path => foomod2.path)]
+      @modpath2 => [Puppet::Module.new('foo', foomod2.path, env)]
     }
   end
 
   it "should use the specified environment" do
-    PuppetSpec::Modules.create('foo', @modpath1)
-    PuppetSpec::Modules.create('bar', @modpath1)
+    foomod = PuppetSpec::Modules.create('foo', @modpath1)
+    barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
     usedenv = Puppet::Node::Environment.new('useme')
     usedenv.modulepath = [@modpath1, @modpath2]
 
     Puppet::Face[:module, :current].list(:environment => 'useme').should == {
       @modpath1 => [
-        Puppet::Module.new('bar', :environment => usedenv),
-        Puppet::Module.new('foo', :environment => usedenv)
+        Puppet::Module.new('bar', barmod.path, usedenv),
+        Puppet::Module.new('foo', foomod.path, usedenv)
       ],
       @modpath2 => []
     }
   end
 
   it "should use the specified modulepath" do
-    PuppetSpec::Modules.create('foo', @modpath1)
-    PuppetSpec::Modules.create('bar', @modpath2)
+    foomod = PuppetSpec::Modules.create('foo', @modpath1)
+    barmod = PuppetSpec::Modules.create('bar', @modpath2)
 
     Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}").should == {
-      @modpath1 => [ Puppet::Module.new('foo') ],
-      @modpath2 => [ Puppet::Module.new('bar') ]
+      @modpath1 => [ Puppet::Module.new('foo', foomod.path, Puppet::Node::Environment.new) ],
+      @modpath2 => [ Puppet::Module.new('bar', barmod.path, Puppet::Node::Environment.new) ]
     }
   end
 
@@ -82,8 +82,8 @@ describe "puppet module list", :fails_on_windows => true do
     # to have a different object_id than the env above
     env = Puppet::Node::Environment.new('myenv')
     list.should == {
-      @modpath1 => [ Puppet::Module.new('foo', :environment => env, :path => foomod1.path) ],
-      @modpath2 => [ Puppet::Module.new('bar', :environment => env, :path => barmod2.path) ]
+      @modpath1 => [ Puppet::Module.new('foo', foomod1.path, env) ],
+      @modpath2 => [ Puppet::Module.new('bar', barmod2.path, env) ]
     }
   end
 
@@ -108,23 +108,23 @@ describe "puppet module list", :fails_on_windows => true do
     end
 
     it "should print both modules with and without metadata" do
-      modpath = tmpdir('modpath')
-      Puppet.settings[:modulepath] = modpath
-      PuppetSpec::Modules.create('nometadata', modpath)
-      PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        modpath = tmpdir('modpath')
+        Puppet.settings[:modulepath] = modpath
+        PuppetSpec::Modules.create('nometadata', modpath)
+        PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
 
-      dependency_tree = Puppet::Face[:module, :current].list
+        dependency_tree = Puppet::Face[:module, :current].list
 
-      output = Puppet::Face[:module, :current].list_when_rendering_console(
-        dependency_tree,
-        {}
-      )
+        output = Puppet::Face[:module, :current].
+          list_when_rendering_console(dependency_tree, {})
 
-      output.should == <<-HEREDOC.gsub('        ', '')
+        output.should == <<-HEREDOC.gsub('        ', '')
         #{modpath}
         ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
         └── nometadata (\e[0;36m???\e[0m)
-      HEREDOC
+        HEREDOC
+      end
     end
 
     it "should print the modulepaths in the order they are in the modulepath setting" do
@@ -150,32 +150,34 @@ describe "puppet module list", :fails_on_windows => true do
     end
 
     it "should print dependencies as a tree" do
-      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.5'})
-      PuppetSpec::Modules.create(
-        'other_mod',
-        @modpath1,
-        :metadata => {
-          :version => '1.0.0',
-          :dependencies => [{
-            "version_requirement" => ">= 0.0.5",
-            "name"                => "puppetlabs/dependable"
-          }]
-        }
-      )
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.5'})
+        PuppetSpec::Modules.create(
+          'other_mod',
+          @modpath1,
+          :metadata => {
+            :version => '1.0.0',
+            :dependencies => [{
+              "version_requirement" => ">= 0.0.5",
+              "name"                => "puppetlabs/dependable"
+            }]
+          }
+        )
 
-      dependency_tree = Puppet::Face[:module, :current].list
+        dependency_tree = Puppet::Face[:module, :current].list
 
-      output = Puppet::Face[:module, :current].list_when_rendering_console(
-        dependency_tree,
-        {:tree => true}
-      )
+        output = Puppet::Face[:module, :current].list_when_rendering_console(
+          dependency_tree,
+          {:tree => true}
+        )
 
-      output.should == <<-HEREDOC.gsub('        ', '')
+        output.should == <<-HEREDOC.gsub('        ', '')
         #{@modpath1}
         └─┬ puppetlabs-other_mod (\e[0;36mv1.0.0\e[0m)
           └── puppetlabs-dependable (\e[0;36mv0.0.5\e[0m)
         #{@modpath2} (no modules installed)
-      HEREDOC
+        HEREDOC
+      end
     end
   end
 

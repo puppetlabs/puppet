@@ -82,7 +82,6 @@ module Puppet::Util::Colors
   if Puppet::Util::Platform.windows?
     # We're on windows, need win32console for color to work
     begin
-      require 'rubygems'
       require 'win32console'
     rescue LoadError
       def console_has_color?

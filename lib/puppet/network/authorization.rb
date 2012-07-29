@@ -15,36 +15,32 @@ module Puppet::Network
       @authconfig
     end
 
+    # This is just the logic of authorized? extracted so it's separate from
+    # the logging
+    def check_auth(request)
+      if request.authenticated?
+        if authconfig.exists?
+          authconfig.allowed?(request)
+        else
+          Puppet.run_mode.master?
+        end
+      else
+        false
+      end
+    end
+    private :check_auth
+
     # Verify that our client has access.  We allow untrusted access to
     # puppetca methods but no others.
     def authorized?(request)
       msg = "#{request.authenticated? ? "authenticated" : "unauthenticated"} client #{request} access to #{request.call}"
 
-      if request.authenticated?
-        if authconfig.exists?
-          if authconfig.allowed?(request)
-            Puppet.debug "Allowing #{msg}"
-            return true
-          else
-            Puppet.notice "Denying #{msg}"
-            return false
-          end
-        else
-          if Puppet.run_mode.master?
-            Puppet.debug "Allowing #{msg}"
-            return true
-          else
-            Puppet.notice "Denying #{msg}"
-            return false
-          end
-        end
+      if check_auth(request)
+        Puppet.notice "Allowing #{msg}"
+        true
       else
-        if request.handler == "puppetca"
-          Puppet.notice "Allowing #{msg}"
-        else
-          Puppet.notice "Denying #{msg}"
-          return false
-        end
+        Puppet.notice "Denying #{msg}"
+        false
       end
     end
 

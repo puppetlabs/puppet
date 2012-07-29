@@ -4,25 +4,27 @@ require 'puppet/file_serving'
 # in file-serving indirections.  This is necessary because
 # the terminus varies based on the URI asked for.
 module Puppet::FileServing::TerminusSelector
-  PROTOCOL_MAP = {"puppet" => :rest, "file" => :file}
-
   def select(request)
     # We rely on the request's parsing of the URI.
 
     # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.
-    return PROTOCOL_MAP["file"] if Puppet::Util.absolute_path?(request.key)
-    return PROTOCOL_MAP["file"] if request.protocol == "file"
-
-    # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'apply' or 'puppet'
-    if request.protocol == "puppet" and (request.server or !["puppet","apply"].include?(Puppet.settings[:name]))
-      return PROTOCOL_MAP["puppet"]
+    if Puppet::Util.absolute_path?(request.key)
+      return :file
     end
 
-    if request.protocol and PROTOCOL_MAP[request.protocol].nil?
-      raise(ArgumentError, "URI protocol '#{request.protocol}' is not currently supported for file serving")
+    case request.protocol
+    when "file"
+      :file
+    when "puppet"
+      if request.server
+        :rest
+      else
+        Puppet[:default_file_terminus].to_sym
+      end
+    when nil
+      :file_server
+    else
+      raise ArgumentError, "URI protocol '#{request.protocol}' is not currently supported for file serving"
     end
-
-    # If we're still here, we're using the file_server or modules.
-    :file_server
   end
 end

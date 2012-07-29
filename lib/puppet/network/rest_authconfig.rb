@@ -36,15 +36,11 @@ module Puppet
       check_authorization(request)
     end
 
-    # check wether this request is allowed in our ACL
+    # check whether this request is allowed in our ACL
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
     def check_authorization(indirection, method, key, params)
       read
-
-      # we're splitting the request in part because
-      # fail_on_deny could as well be called in the XMLRPC context
-      # with a ClientRequest.
 
       if authorization_failure_exception = @rights.is_request_forbidden_and_why?(indirection, method, key, params)
         Puppet.warning("Denying access: #{authorization_failure_exception}")

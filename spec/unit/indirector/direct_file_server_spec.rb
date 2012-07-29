@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/direct_file_server'
@@ -20,7 +20,7 @@ describe Puppet::Indirector::DirectFileServer do
     @path = File.expand_path('/my/local')
     @uri = Puppet::Util.path_to_uri(@path).to_s
 
-    @request = Puppet::Indirector::Request.new(:mytype, :find, @uri)
+    @request = Puppet::Indirector::Request.new(:mytype, :find, @uri, nil)
   end
 
   describe Puppet::Indirector::DirectFileServer, "when finding a single file" do

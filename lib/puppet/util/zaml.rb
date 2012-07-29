@@ -129,7 +129,7 @@ end
 
 class Object
   def to_yaml_properties
-    instance_variables.sort        # Default YAML behavior
+    instance_variables          # default YAML behaviour.
   end
   def yaml_property_munge(x)
     x
@@ -148,7 +148,7 @@ class Object
         else
           instance_variables.each { |v|
             z.nl
-            v[1..-1].to_zaml(z)       # Remove leading '@'
+            v.to_s[1..-1].to_zaml(z)       # Remove leading '@'
             z.emit(': ')
             yaml_property_munge(instance_variable_get(v)).to_zaml(z)
           }
@@ -172,7 +172,8 @@ end
 
 class Symbol
   def to_zaml(z)
-    z.emit(self.inspect)
+    z.emit("!ruby/sym ")
+    to_s.to_zaml(z)
   end
 end
 
@@ -237,8 +238,7 @@ class String
     # will be reconstructed properly into the unicode character.
     self.to_ascii8bit.gsub( /\x5C/n, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
     gsub( /"/n, "\\\"" ).
-    gsub( /([\x00-\x1F])/n ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }.
-    gsub( /([\x80-\xFF])/n ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
+    gsub( /([\x00-\x1F])/n ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
   end
   def to_zaml(z)
     z.first_time_only(self) {
@@ -246,30 +246,36 @@ class String
       float = '\d+\.?\d*'
       num = "[-+]?(?:#{float}|#{hex_num})"
       case
-        when self == ''
-          z.emit('""')
-        # when self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/
-        #   z.emit("!binary |\n")
-        #   z.emit([self].pack("m*"))
-        when (
-          (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
-          (self =~ /\A\n* /) or
-          (self =~ /[\s:]$/) or
-          (self =~ /^[>|][-+\d]*\s/i) or
-          (self[-1..-1] =~ /\s/) or
-          # This regular expression assumes the string is a byte sequence.
-          # It does not concern itself with characters so we convert the string
-          # to ASCII-8BIT for Ruby 1.9 to match up encodings.
-          (self.to_ascii8bit=~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/n) or
-          (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
-          (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
-          )
-          z.emit("\"#{escaped_for_zaml}\"")
-        when self =~ /\n/
-          if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
-          z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-        else
-          z.emit(self)
+      when self == ''
+        z.emit('""')
+      when self.to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
+                 [\x09\x0A\x0D\x20-\x7E]            # ASCII
+               | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
+               |  \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte
+               |  \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
+               |  \xF0[\x90-\xBF][\x80-\xBF]{2}     # planes 1-3
+               | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
+               |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
+               )*\z/mnx
+
+        z.emit("!binary ")
+        z.emit([self].pack("m*"))
+      when (
+            (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
+            (self =~ /\A\n* /) or
+            (self =~ /[\s:]$/) or
+            (self =~ /^[>|][-+\d]*\s/i) or
+            (self[-1..-1] =~ /\s/) or
+            (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
+            (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
+            )
+        z.emit("\"#{escaped_for_zaml}\"")
+      when self =~ /\n/
+        if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
+        z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
+      else
+        z.emit(self)
       end
     }
   end
@@ -325,7 +331,7 @@ end
 class Time
   def to_zaml(z)
     # 2008-12-06 10:06:51.373758 -07:00
-    ms = ("%0.6f" % (usec * 1e-6)).sub(/^\d+\./,'')
+    ms = ("%0.6f" % (usec * 1e-6))[2..-1]
     offset = "%+0.2i:%0.2i" % [utc_offset / 3600, (utc_offset / 60) % 60]
     z.emit(self.strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
   end

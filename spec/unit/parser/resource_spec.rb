@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 # LAK: FIXME This is just new tests for resources; I have
@@ -50,10 +50,6 @@ describe Puppet::Parser::Resource do
 
   def newnode(name)
     @known_resource_types.add Puppet::Resource::Type.new(:node, name)
-  end
-
-  it "should use the file lookup module" do
-    Puppet::Parser::Resource.ancestors.should be_include(Puppet::FileCollection::Lookup)
   end
 
   it "should get its environment from its scope" do
@@ -113,8 +109,10 @@ describe Puppet::Parser::Resource do
       @arguments = {:scope => @scope}
     end
 
-    it "should fail unless #{name.to_s} is specified", :'fails_on_ruby_1.9.2' => true do
-      lambda { Puppet::Parser::Resource.new('file', '/my/file') }.should raise_error(ArgumentError)
+    it "should fail unless #{name.to_s} is specified" do
+      expect {
+        Puppet::Parser::Resource.new('file', '/my/file')
+      }.to raise_error(ArgumentError, /Resources require a hash as last argument/)
     end
 
     it "should set the reference correctly" do
@@ -137,7 +135,7 @@ describe Puppet::Parser::Resource do
       @catalog = Puppet::Resource::Catalog.new
       source = stub('source')
       source.stubs(:module_name)
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => source)
+      @scope = Puppet::Parser::Scope.new(@compiler, :source => source)
       @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @scope))
     end
 
@@ -163,8 +161,8 @@ describe Puppet::Parser::Resource do
       res.evaluate
     end
 
-    it "should add an edge to any specified stage for class resources", :'fails_on_ruby_1.9.2' => true do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+    it "should add an edge to any specified stage for class resources" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       other_stage = Puppet::Parser::Resource.new(:stage, "other", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, other_stage)
@@ -177,8 +175,8 @@ describe Puppet::Parser::Resource do
       @compiler.catalog.edge?(other_stage, resource).should be_true
     end
 
-    it "should fail if an unknown stage is specified", :'fails_on_ruby_1.9.2' => true do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+    it "should fail if an unknown stage is specified" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'other'
@@ -186,11 +184,11 @@ describe Puppet::Parser::Resource do
       lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
     end
 
-    it "should add edges from the class resources to the parent's stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
+    it "should add edges from the class resources to the parent's stage if no stage is specified" do
       main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'foo_stage'
       @compiler.add_resource(@scope, resource)
@@ -244,9 +242,9 @@ describe Puppet::Parser::Resource do
       edges.should include(["Stage[after]", "Class[Beta]"])
     end
 
-    it "should add edges from top-level class resources to the main stage if no stage is specified", :'fails_on_ruby_1.9.2' => true do
+    it "should add edges from top-level class resources to the main stage if no stage is specified" do
       main = @compiler.catalog.resource(:stage, :main)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, resource)
 
@@ -266,7 +264,7 @@ describe Puppet::Parser::Resource do
 
     it "should do nothing if it has already been finished" do
       @resource.finish
-      @resource.expects(:add_metaparams).never
+      @resource.expects(:add_defaults).never
       @resource.finish
     end
 
@@ -294,52 +292,6 @@ describe Puppet::Parser::Resource do
       @resource.finish
 
       @resource[:owner].should == "other"
-    end
-
-    it "should be running in metaparam compatibility mode if running a version below 0.25" do
-      catalog = stub 'catalog', :client_version => "0.24.8"
-      @resource.stubs(:catalog).returns catalog
-      @resource.should be_metaparam_compatibility_mode
-    end
-
-    it "should be running in metaparam compatibility mode if running no client version is available" do
-      catalog = stub 'catalog', :client_version => nil
-      @resource.stubs(:catalog).returns catalog
-      @resource.should be_metaparam_compatibility_mode
-    end
-
-    it "should not be running in metaparam compatibility mode if running a version at or above 0.25" do
-      catalog = stub 'catalog', :client_version => "0.25.0"
-      @resource.stubs(:catalog).returns catalog
-      @resource.should_not be_metaparam_compatibility_mode
-    end
-
-    it "should not copy relationship metaparams when not in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns false
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should be_nil
-    end
-
-    it "should copy relationship metaparams when in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns true
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should == "bar"
-    end
-
-    it "should stack relationship metaparams when in metaparam compatibility mode" do
-      @resource.set_parameter("require", "foo")
-      @scope.setvar("require", "bar")
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns true
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should == ["foo", "bar"]
     end
   end
 
@@ -494,26 +446,6 @@ describe Puppet::Parser::Resource do
     @source = stub 'scope', :name => "myscope"
     @resource = mkresource :source => @source
     @resource.should respond_to(:to_resource)
-  end
-
-  it "should use its resource converter to convert to a transportable resource" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    newresource = Puppet::Resource.new(:file, "/my")
-    Puppet::Resource.expects(:new).returns(newresource)
-
-    newresource.expects(:to_trans).returns "mytrans"
-
-    @resource.to_trans.should == "mytrans"
-  end
-
-  it "should return nil if converted to a transportable resource and it is virtual" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    @resource.expects(:virtual?).returns true
-    @resource.to_trans.should be_nil
   end
 
   describe "when being converted to a resource" do

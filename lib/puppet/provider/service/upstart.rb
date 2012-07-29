@@ -184,7 +184,7 @@ private
     # So we check to see if an uncommented start on or manual stanza is the last one in the file
     # The last one in the file wins.
     enabled = :false
-    script_text.each do |line|
+    script_text.each_line do |line|
       if line.match(START_ON)
         enabled = :true
       elsif line.match(MANUAL)
@@ -200,14 +200,14 @@ private
     # conf file and any override files. The last one in the file wins.
     enabled = :false
 
-    script_text.each do |line|
+    script_text.each_line do |line|
       if line.match(START_ON)
         enabled = :true
       elsif line.match(MANUAL)
         enabled = :false
       end
     end
-    over_text.each do |line|
+    over_text.each_line do |line|
       if line.match(START_ON)
         enabled = :true
       elsif line.match(MANUAL)
@@ -292,7 +292,7 @@ private
 
   def comment_start_block_in(text)
     parens = 0
-    text.map do |line|
+    text.lines.map do |line|
       if line.match(START_ON) || parens > 0
         # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
         parens += unbalanced_parens_on(remove_trailing_comments_from(line))
@@ -305,7 +305,7 @@ private
 
   def uncomment_start_block_in(text)
     parens = 0
-    text.map do |line|
+    text.lines.map do |line|
       if line.match(COMMENTED_START_ON) || parens > 0
         parens += unbalanced_parens_on(remove_trailing_comments_from_commented_line_of(line))
         uncomment(line)
@@ -317,7 +317,7 @@ private
 
   def extract_start_on_block_from(text)
     parens = 0
-    text.map do |line|
+    text.lines.map do |line|
       if line.match(START_ON) || parens > 0
         parens += unbalanced_parens_on(remove_trailing_comments_from(line))
         line

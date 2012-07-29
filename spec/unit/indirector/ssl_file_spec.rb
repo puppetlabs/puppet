@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/indirector/ssl_file'
@@ -19,6 +19,8 @@ describe Puppet::Indirector::SslFile do
 
     @setting = :certdir
     @file_class.store_in @setting
+    @file_class.store_at nil
+    @file_class.store_ca_at nil
     @path = make_absolute("/thisdoesntexist/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
@@ -68,21 +70,21 @@ describe Puppet::Indirector::SslFile do
       it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
         @file_class.store_in nil
         @file_class.store_at :mysetting
-        @file_class.store_ca_at :casetting
+        @file_class.store_ca_at :cakey
 
-        Puppet.settings.stubs(:value).with(:casetting).returns "/ca/file"
+        Puppet[:cakey] = File.expand_path("/ca/file")
 
         @searcher.expects(:ca?).with(@cert.name).returns true
-        @searcher.path(@cert.name).should == "/ca/file"
+        @searcher.path(@cert.name).should == Puppet[:cakey]
       end
 
       it "should set them at the file location if a file setting is available" do
         @file_class.store_in nil
-        @file_class.store_at :mysetting
+        @file_class.store_at :cacrl
 
-        Puppet.settings.stubs(:value).with(:mysetting).returns "/some/file"
+        Puppet[:cacrl] = File.expand_path("/some/file")
 
-        @searcher.path(@cert.name).should == "/some/file"
+        @searcher.path(@cert.name).should == Puppet[:cacrl]
       end
 
       it "should set them in the setting directory, with the certificate name plus '.pem', if a directory setting is available" do
@@ -217,12 +219,12 @@ describe Puppet::Indirector::SslFile do
       describe "and the name is the CA name and a ca setting is set" do
         it "should use the filehandle provided by the Settings" do
           @searcher.class.store_at @setting
-          @searcher.class.store_ca_at :castuff
-          Puppet.settings.stubs(:value).with(:castuff).returns "castuff stub"
+          @searcher.class.store_ca_at :cakey
+          Puppet[:cakey] = "castuff stub"
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.expects(:write).with(:castuff).yields fh
+          Puppet.settings.expects(:write).with(:cakey).yields fh
           @searcher.stubs(:ca?).returns true
           @searcher.save(@request)
         end

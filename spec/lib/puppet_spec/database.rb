@@ -27,6 +27,6 @@ def setup_scratch_database
     :log_level => Puppet[:rails_loglevel],
     :database => ':memory:'
   )
-  Puppet[:railslog]     = '/dev/null'
+  Puppet[:railslog] = PuppetSpec::Files.tmpfile('storeconfigs.log')
   Puppet::Rails.init
 end

@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Cert < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   attr_accessor :all, :ca, :digest, :signed
@@ -189,8 +188,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
       @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      puts detail.to_s
+      Puppet.log_exception(detail)
       exit(24)
     end
   end
@@ -211,7 +209,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # the data.  This will do the right thing for non-local certificates, in
     # that the command line but *NOT* the config file option will apply.
     if subcommand == :generate
-      if Puppet.settings.setting(:dns_alt_names).setbycli
+      if Puppet.settings.set_by_cli?(:dns_alt_names)
         options[:dns_alt_names] = Puppet[:dns_alt_names]
       end
     end
@@ -219,8 +217,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     begin
       @ca = Puppet::SSL::CertificateAuthority.new
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      puts detail.to_s
+      Puppet.log_exception(detail)
       exit(23)
     end
   end

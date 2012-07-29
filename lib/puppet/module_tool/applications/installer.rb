@@ -1,24 +1,29 @@
 require 'open-uri'
 require 'pathname'
+require 'fileutils'
 require 'tmpdir'
 require 'semver'
 require 'puppet/forge'
 require 'puppet/module_tool'
 require 'puppet/module_tool/shared_behaviors'
+require 'puppet/module_tool/install_directory'
 
 module Puppet::ModuleTool
   module Applications
     class Installer < Application
 
       include Puppet::ModuleTool::Errors
+      include Puppet::Forge::Errors
 
-      def initialize(name, options = {})
+      def initialize(name, forge, install_dir, options = {})
+        super(options)
         @action              = :install
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name
-        super(options)
+        @forge               = forge
+        @install_dir         = install_dir
       end
 
       def run
@@ -43,12 +48,7 @@ module Puppet::ModuleTool
             :install_dir    => options[:target_dir],
           }
 
-          unless File.directory? options[:target_dir]
-            raise MissingInstallDirectoryError,
-              :requested_module  => @module_name,
-              :requested_version => @version || 'latest',
-              :directory         => options[:target_dir]
-          end
+          @install_dir.prepare(@module_name, @version || 'latest')
 
           cached_paths = get_release_packages
 
@@ -60,7 +60,7 @@ module Puppet::ModuleTool
               end
             end
           end
-        rescue ModuleToolError => err
+        rescue ModuleToolError, ForgeError => err
           results[:error] = {
             :oneline   => err.message,
             :multiline => err.multiline,
@@ -102,7 +102,7 @@ module Puppet::ModuleTool
             ]
           }
         else
-          get_remote_constraints
+          get_remote_constraints(@forge)
         end
 
         @graph = resolve_constraints({ @module_name => @version })
@@ -116,7 +116,7 @@ module Puppet::ModuleTool
         # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
         # but for now this is a quick fix to disable caching
         Puppet::Forge::Cache.clean
-        download_tarballs(@graph, @graph.last[:path])
+        download_tarballs(@graph, @graph.last[:path], @forge)
       end
 
       #

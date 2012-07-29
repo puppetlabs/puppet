@@ -9,8 +9,11 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
   before do
     @resource = stub("resource", :name => "myuser", :managehome? => nil)
+
     @resource.stubs(:should).returns "fakeval"
+    @resource.stubs(:should).with(:keys).returns Hash.new
     @resource.stubs(:[]).returns "fakeval"
+
     @resource.stubs(:allowdupe?).returns false
     @provider = provider_class.new(@resource)
   end
@@ -43,7 +46,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "when calling transition", :'fails_on_ruby_1.9.2' => true do
+  describe "when calling transition" do
     it "should return the type set to whatever is passed in" do
       @provider.expects(:command).with(:modify).returns("foomod")
       @provider.transition("bar").include?("type=bar")
@@ -123,7 +126,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       @provider.expects(:execute).with { |args| args.include?("-o") }
     end
 
-    it "should add -o when the user is being created", :'fails_on_ruby_1.9.2' => true do
+    it "should add -o when the user is being created" do
       @provider.stubs(:password=)
       @provider.create
     end

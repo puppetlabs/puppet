@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/network/http'
 require 'webrick'
@@ -9,10 +9,20 @@ describe Puppet::Network::HTTP::WEBrickREST do
     Puppet::Network::HTTP::WEBrickREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end
 
-  describe "when initializing", :'fails_on_ruby_1.9.2' => true do
+  describe "when initializing" do
     it "should call the Handler's initialization hook with its provided arguments as the server and handler" do
-      Puppet::Network::HTTP::WEBrickREST.any_instance.expects(:initialize_for_puppet).with(:server => "my", :handler => "arguments")
-      Puppet::Network::HTTP::WEBrickREST.new("my", "arguments")
+      server = WEBrick::HTTPServer.new(:BindAddress => '127.0.0.1',
+                                       # Probablistically going to succeed
+                                       # even if we run more than one test
+                                       # instance at once.
+                                       :Port        => 40000 + rand(10000),
+                                       # Just discard any log output, thanks.
+                                       :Logger      => stub_everything('logger'))
+
+      Puppet::Network::HTTP::WEBrickREST.any_instance.
+        expects(:initialize_for_puppet).with(:server => server, :handler => "arguments")
+
+      Puppet::Network::HTTP::WEBrickREST.new(server, "arguments")
     end
   end
 

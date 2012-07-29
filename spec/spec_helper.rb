@@ -8,6 +8,11 @@ $LOAD_PATH.unshift File.join(dir, 'lib')
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
 
+begin
+  require 'rubygems'
+rescue LoadError
+end
+
 require 'puppet'
 require 'mocha'
 gem 'rspec', '>=2.0.0'
@@ -23,6 +28,7 @@ require 'tmpdir'
 
 require 'puppet_spec/verbose'
 require 'puppet_spec/files'
+require 'puppet_spec/settings'
 require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
 require 'puppet_spec/database'
@@ -99,5 +105,16 @@ RSpec.configure do |config|
     # experimented with forcing a GC run, and that was less efficient than
     # just letting it run all the time.
     GC.enable
+  end
+
+  config.after :suite do
+    # Log the spec order to a file, but only if the LOG_SPEC_ORDER environment variable is
+    #  set.  This should be enabled on Jenkins runs, as it can be used with Nick L.'s bisect
+    #  script to help identify and debug order-dependent spec failures.
+    if ENV['LOG_SPEC_ORDER']
+      File.open("./spec_order.txt", "w") do |logfile|
+        config.instance_variable_get(:@files_to_run).each { |f| logfile.puts f }
+      end
+    end
   end
 end

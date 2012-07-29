@@ -47,8 +47,9 @@ class Puppet::FileBucket::Dipper
 
       return file_bucket_file.checksum_data
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Could not back up #{file}: #{detail}"
+      message = "Could not back up #{file}: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
   end
 

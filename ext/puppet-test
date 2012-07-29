@@ -542,7 +542,7 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 # Now parse the config
-Puppet.parse_config
+Puppet.initialize_settings
 
 $options[:nodes] << Puppet.settings[:certname] if $options[:nodes].empty?
 

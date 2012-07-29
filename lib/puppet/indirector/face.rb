@@ -41,8 +41,9 @@ class Puppet::Indirector::Face < Puppet::Face
     begin
       result = indirection.__send__(method, key, options)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+      message = "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+      Puppet.log_exception(detail, message)
+      raise message
     end
 
     return result

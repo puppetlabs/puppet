@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 require 'puppet/application/device'
@@ -23,10 +23,6 @@ describe Puppet::Application::Device do
     @device.class.run_mode.name.should == :agent
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @device.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @device.should respond_to(:main)
   end
@@ -44,6 +40,12 @@ describe Puppet::Application::Device do
       Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @device.preinit
+    end
+
+    it "should init waitforcert to nil" do
+      @device.preinit
+
+      @device.options[:waitforcert].should be_nil
     end
   end
 
@@ -78,6 +80,12 @@ describe Puppet::Application::Device do
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @device.setup_host
+    end
+
+    it "should use the waitforcert setting when checking for a signed certificate" do
+      Puppet[:waitforcert] = 10
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
       @device.setup_host
     end
 
@@ -201,10 +209,14 @@ describe Puppet::Application::Device do
       @device.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet[:catalog_terminus] = :foo
-      @device.setup
+    it "should default the catalog_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
       Puppet[:catalog_terminus].should ==  :rest
+    end
+
+    it "should default the node_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
+      Puppet[:node_terminus].should ==  :rest
     end
 
     it "should tell the catalog handler to use cache" do
@@ -213,10 +225,8 @@ describe Puppet::Application::Device do
       @device.setup
     end
 
-    it "should change the facts_terminus setting to 'network_device'" do
-      Puppet[:facts_terminus] = :foo
-
-      @device.setup
+    it "should default the facts_terminus setting to 'network_device'" do
+      @device.initialize_app_defaults
       Puppet[:facts_terminus].should == :network_device
     end
   end

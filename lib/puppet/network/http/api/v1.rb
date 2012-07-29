@@ -54,7 +54,7 @@ module Puppet::Network::HTTP::API::V1
     raise ArgumentError, "No support for http method #{http_method}" unless METHOD_MAP[http_method]
 
     unless method = METHOD_MAP[http_method][plurality(indirection)]
-      raise ArgumentError, "No support for plural #{http_method} operations"
+      raise ArgumentError, "No support for plurality #{plurality(indirection)} for #{http_method} operations"
     end
 
     method
