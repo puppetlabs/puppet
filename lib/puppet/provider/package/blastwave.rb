@@ -4,7 +4,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   pkgget = "pkg-get"
   pkgget = "/opt/csw/bin/pkg-get" if FileTest.executable?("/opt/csw/bin/pkg-get")
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
   commands :pkgget => pkgget
 

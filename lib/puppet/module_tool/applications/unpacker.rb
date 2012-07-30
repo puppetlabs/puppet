@@ -35,7 +35,7 @@ module Puppet::ModuleTool
         build_dir.mkpath
         begin
           begin
-            if Facter.value('operatingsystem') == "Solaris"
+            if Facter.value('osfamily') == "Solaris"
               # Solaris tar is not as safe and works differently, so we prefer
               # gnutar instead.
               if Puppet::Util.which('gtar')

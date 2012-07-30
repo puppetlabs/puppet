@@ -2,7 +2,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   desc "Provider for Solaris Zones."
 
   commands :adm => "/usr/sbin/zoneadm", :cfg => "/usr/sbin/zonecfg"
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   mk_resource_methods
 

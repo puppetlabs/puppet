@@ -157,11 +157,11 @@ describe Puppet::Provider do
 
   it "should consider two defaults to be higher specificity than one default" do
     one = provider_of do
-      defaultfor :operatingsystem => "solaris"
+      defaultfor :osfamily => "solaris"
     end
 
     two = provider_of do
-      defaultfor :operatingsystem => "solaris", :operatingsystemrelease => "5.10"
+      defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
     end
 
     two.specificity.should > one.specificity
@@ -319,11 +319,11 @@ describe Puppet::Provider do
 
     it "should consider two defaults to be higher specificity than one default" do
       one = type.provide(:one) do
-        defaultfor :operatingsystem => "solaris"
+        defaultfor :osfamily => "solaris"
       end
 
       two = type.provide(:two) do
-        defaultfor :operatingsystem => "solaris", :operatingsystemrelease => "5.10"
+        defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
       end
 
       two.specificity.should > one.specificity
