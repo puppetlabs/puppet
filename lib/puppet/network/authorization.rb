@@ -1,16 +1,22 @@
 require 'puppet/network/client_request'
 require 'puppet/network/authconfig'
+require 'puppet/network/auth_config_parser'
 
 module Puppet::Network
   module Authorization
-
-
     # Create our config object if necessary. If there's no configuration file
     # we install our defaults
     def authconfig
-      @authconfig ||= Puppet::Network::AuthConfig.main
+      @auth_config_file ||= Puppet::Util::LoadedFile.new(Puppet[:rest_authconfig])
+      if (not @auth_config) or @auth_config_file.changed?
+        begin
+          @auth_config = Puppet::Network::AuthConfigParser.new_from_file(Puppet[:rest_authconfig]).parse
+        rescue Errno::ENOENT, Errno::ENOTDIR
+          @auth_config = Puppet::Network::AuthConfig.new
+        end
+      end
 
-      @authconfig
+      @auth_config
     end
 
     # Verify that our client has access.

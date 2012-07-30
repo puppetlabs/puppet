@@ -14,6 +14,7 @@ class Rights
 
   # We basically just proxy directly to our rights.  Each Right stores
   # its own auth abilities.
+  # XXX I don't understand how this works?
   [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |method|
     define_method(method) do |name, *args|
       if obj = self[name]
@@ -92,6 +93,10 @@ class Rights
     @rights.find { |acl| acl == name }
   end
 
+  def empty?
+    @rights.empty?
+  end
+
   def include?(name)
     @rights.include?(name)
   end
@@ -120,6 +125,8 @@ class Rights
   # A right.
   class Right < Puppet::Network::AuthStore
     attr_accessor :name, :key
+    # Overriding Object#methods sucks for debugging. If we're in here in the
+    # future, it would be nice to rename Right#methods
     attr_accessor :methods, :environment, :authentication
     attr_accessor :line, :file
 
