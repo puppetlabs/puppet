@@ -429,6 +429,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
                                    '/dev/stdout', \
                                    "#{users_plist_dir}/#{resource_name}.plist")
     users_plist = Plist::parse_xml(converted_users_plist)
+    # on 10.8, at least, this field *must* contain 8 stars, or authentication will
+    # fail.  I can't explain it.  It's just true.
+    users_plist['passwd'] = '*'*8
     set_shadowhashdata(resource_name, converted_hash_plist, users_plist)
   end
   # This method will accept a hash that has been returned from Plist::parse_xml
@@ -580,11 +583,11 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
       # if they're not a member, make them one.
       add_members(current_members, value)
-    elsif ns_to_ds_attribute_map.key? param.intern
+    elsif ns_to_ds_attribute_map.key? param
       exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
       # JJM: The following line just maps the NS name to the DS name
       #      e.g. { :uid => 'UniqueID' }
-      exec_arg_vector << ns_to_ds_attribute_map[param.intern]
+      exec_arg_vector << ns_to_ds_attribute_map[param]
       # JJM: The following line sends the actual value to set the property to
       exec_arg_vector << value.to_s
       begin
@@ -633,9 +636,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       if value != "" and not value.nil?
         if property == :members
           add_members(nil, value)
-        elsif ns_to_ds_attribute_map.key? property.intern
+        elsif ns_to_ds_attribute_map.key? property
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-          exec_arg_vector << ns_to_ds_attribute_map[property.intern]
+          exec_arg_vector << ns_to_ds_attribute_map[property]
           next if property == :password  # skip setting the password here
           exec_arg_vector << value.to_s
           begin
