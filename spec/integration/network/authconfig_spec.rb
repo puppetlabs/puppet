@@ -230,7 +230,6 @@ describe Puppet::Network::AuthConfig do
     end
 
     it "should deny based on IP (ordering #2)" do
-      #XXX Is this right? Seems like it should be allowed based on ordering
       add_rule <<-EOALLOWRULE
         allow host.domain.com
         deny_ip 10.1.1.1
