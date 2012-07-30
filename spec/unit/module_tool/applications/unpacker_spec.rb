@@ -27,7 +27,7 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
 
     before :each do
       # Mock redhat for most test cases
-      Facter.stubs(:value).with("operatingsystem").returns("Redhat")
+      Facter.stubs(:value).with("osfamily").returns("Redhat")
       build_dir.stubs(:mkpath => nil, :rmtree => nil, :children => [])
       unpacker.stubs(:build_dir).at_least_once.returns(build_dir)
       FileUtils.stubs(:mv)
@@ -42,7 +42,7 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
 
     context "on solaris" do
       before :each do
-        Facter.expects(:value).with("operatingsystem").returns("Solaris")
+        Facter.expects(:value).with("osfamily").returns("Solaris")
       end
 
       it "should attempt to untar file to temporary location using gnu tar" do
