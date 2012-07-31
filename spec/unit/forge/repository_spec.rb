@@ -81,7 +81,9 @@ describe Puppet::Forge::Repository do
         http.expects(:request).with(responds_with(:path, "the_path")).raises SocketError
       end
 
-      expect { repository.make_http_request("the_path") }.to raise_error Puppet::Forge::Errors::CommunicationError, 'Unable to connect to the server at http://fake.com'
+      expect { repository.make_http_request("the_path") }.
+        to raise_error Puppet::Forge::Errors::CommunicationError,
+        'Unable to connect to the server at http://fake.com. Detail: SocketError.'
     end
 
     it "sets the user agent for the request" do
