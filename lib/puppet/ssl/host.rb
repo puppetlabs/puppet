@@ -276,13 +276,21 @@ ERROR_STRING
     pson_hash[:state] = my_state
     pson_hash[:desired_state] = desired_state if desired_state
 
-    if my_state == 'requested'
-      pson_hash[:fingerprint] = certificate_request.fingerprint
-      pson_hash[:dns_alt_names] = certificate_request.subject_alt_names
-    else
-      pson_hash[:fingerprint] = my_cert.fingerprint
-      pson_hash[:dns_alt_names] = my_cert.subject_alt_names
+    thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
+
+    pson_hash[:fingerprint] = thing_to_use.fingerprint
+    
+    # The above fingerprint doesn't tell us what message digest algorithm was used
+    # No problem, expect that the default is changing between 2.7 and 3.0. Also, as
+    # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
+    # segfault in rubies older than 1.9.3)
+    # So, when we add the newer fingerprints, we're explicit about the hashing
+    # algorithm used.
+    # --jeffweiss 31 july 2012
+    [:SHA1, :SHA256, :SHA512].each do |md| 
+      pson_hash["fingerprint_#{md}".downcase.to_sym] = thing_to_use.fingerprint md
     end
+    pson_hash[:dns_alt_names] = thing_to_use.subject_alt_names
 
     pson_hash.to_pson(*args)
   end

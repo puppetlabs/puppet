@@ -812,6 +812,28 @@ describe Puppet::SSL::Host do
         result["state"].should       == pson_hash["desired_state"]
       end
       
+      describe "explicit fingerprints" do
+        [:SHA1, :SHA256, :SHA512].each do |md|
+          it "should include #{md}" do
+            host = Puppet::SSL::Host.new("bazinga")
+            explicit_md = "fingerprint_#{md}".downcase
+            host.generate_certificate_request
+            pson_hash = {
+              "fingerprint"   => host.certificate_request.fingerprint,
+              explicit_md     => host.certificate_request.fingerprint(md),
+              "desired_state" => 'requested',
+              "name"          => host.name
+            }
+
+            result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
+            result["fingerprint"].should == pson_hash["fingerprint"]
+            result["name"].should == pson_hash["name"]
+            result["state"].should == pson_hash["desired_state"]
+            result[explicit_md].should == pson_hash[explicit_md]
+          end
+        end
+      end
+      
       describe "dns_alt_names" do
         describe "when not specified" do
           it "should include the dns_alt_names associated with the certificate" do
