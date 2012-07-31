@@ -3,10 +3,10 @@ require 'puppet/network/authconfig'
 require 'puppet/network/auth_config_parser'
 
 module Puppet::Network
-  module Authorization
+  class AuthConfigLoader
     # Create our config object if necessary. If there's no configuration file
     # we install our defaults
-    def authconfig
+    def self.authconfig
       @auth_config_file ||= Puppet::Util::LoadedFile.new(Puppet[:rest_authconfig])
       if (not @auth_config) or @auth_config_file.changed?
         begin
@@ -17,6 +17,12 @@ module Puppet::Network
       end
 
       @auth_config
+    end
+  end
+
+  module Authorization
+    def authconfig
+      AuthConfigLoader.authconfig
     end
 
     # Verify that our client has access.
