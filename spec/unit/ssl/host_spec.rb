@@ -811,6 +811,51 @@ describe Puppet::SSL::Host do
         result["name"].should        == pson_hash["name"]
         result["state"].should       == pson_hash["desired_state"]
       end
+      
+      describe "dns_alt_names" do
+        describe "when not specified" do
+          it "should include the dns_alt_names associated with the certificate" do
+            host = Puppet::SSL::Host.new("bazinga")
+            host.generate_certificate_request
+            pson_hash = {
+              "fingerprint"       => host.certificate_request.fingerprint,
+              "desired_alt_names" => host.certificate_request.subject_alt_names,
+              "desired_state"     => 'requested',
+              "name"              => host.name
+            }
+
+            result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
+            result["fingerprint"].should == pson_hash["fingerprint"]
+            result["name"].should == pson_hash["name"]
+            result["state"].should == pson_hash["desired_state"]
+            result["dns_alt_names"].should == pson_hash["desired_alt_names"]
+          end
+        end
+
+        [ "", 
+          "test, alt, names"
+        ].each do |alt_names|
+          describe "when #{alt_names}" do
+            it "should include the dns_alt_names associated with the certificate" do
+              host = Puppet::SSL::Host.new("bazinga")
+              host.generate_certificate_request :dns_alt_names => alt_names
+              pson_hash = {
+                "fingerprint"       => host.certificate_request.fingerprint,
+                "desired_alt_names" => host.certificate_request.subject_alt_names,
+                "desired_state"     => 'requested',
+                "name"              => host.name
+              }
+
+              result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
+              result["fingerprint"].should == pson_hash["fingerprint"]
+              result["name"].should == pson_hash["name"]
+              result["state"].should == pson_hash["desired_state"]
+              result["dns_alt_names"].should == pson_hash["desired_alt_names"]
+            end
+          end
+        end
+      end
+      
 
       it "should be able to identify a host with a signed certificate" do
         host = Puppet::SSL::Host.new("bazinga")

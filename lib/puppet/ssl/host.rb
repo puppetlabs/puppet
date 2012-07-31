@@ -278,8 +278,10 @@ ERROR_STRING
 
     if my_state == 'requested'
       pson_hash[:fingerprint] = certificate_request.fingerprint
+      pson_hash[:dns_alt_names] = certificate_request.subject_alt_names
     else
       pson_hash[:fingerprint] = my_cert.fingerprint
+      pson_hash[:dns_alt_names] = my_cert.subject_alt_names
     end
 
     pson_hash.to_pson(*args)
