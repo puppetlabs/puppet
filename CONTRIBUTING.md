@@ -191,8 +191,6 @@ Additional Resources
 
 * [Bug tracker (Redmine)](http://projects.puppetlabs.com)
 
-* [Patchwork](https://patchwork.puppetlabs.com)
-
 * [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
 
 * [General GitHub documentation](http://help.github.com/)
