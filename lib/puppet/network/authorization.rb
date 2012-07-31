@@ -1,71 +1,33 @@
 require 'puppet/network/client_request'
 require 'puppet/network/authconfig'
+require 'puppet/network/auth_config_parser'
 
 module Puppet::Network
-  # Most of our subclassing is just so that we can get
-  # access to information from the request object, like
-  # the client name and IP address.
-  class InvalidClientRequest < Puppet::Error; end
-  module Authorization
-    # Create our config object if necessary.  This works even if
-    # there's no configuration file.
-    def authconfig
-      @authconfig ||= Puppet::Network::AuthConfig.main
-
-      @authconfig
-    end
-
-    # This is just the logic of authorized? extracted so it's separate from
-    # the logging
-    def check_auth(request)
-      if request.authenticated?
-        if authconfig.exists?
-          authconfig.allowed?(request)
-        else
-          Puppet.run_mode.master?
+  class AuthConfigLoader
+    # Create our config object if necessary. If there's no configuration file
+    # we install our defaults
+    def self.authconfig
+      @auth_config_file ||= Puppet::Util::LoadedFile.new(Puppet[:rest_authconfig])
+      if (not @auth_config) or @auth_config_file.changed?
+        begin
+          @auth_config = Puppet::Network::AuthConfigParser.new_from_file(Puppet[:rest_authconfig]).parse
+        rescue Errno::ENOENT, Errno::ENOTDIR
+          @auth_config = Puppet::Network::AuthConfig.new
         end
-      else
-        false
       end
+
+      @auth_config
     end
-    private :check_auth
+  end
 
-    # Verify that our client has access.  We allow untrusted access to
-    # puppetca methods but no others.
-    def authorized?(request)
-      msg = "#{request.authenticated? ? "authenticated" : "unauthenticated"} client #{request} access to #{request.call}"
-
-      if check_auth(request)
-        Puppet.notice "Allowing #{msg}"
-        true
-      else
-        Puppet.notice "Denying #{msg}"
-        false
-      end
+  module Authorization
+    def authconfig
+      AuthConfigLoader.authconfig
     end
 
-    # Is this functionality available?
-    def available?(request)
-      if handler_loaded?(request.handler)
-        return true
-      else
-        Puppet.warning "Client #{request} requested unavailable functionality #{request.handler}"
-        return false
-      end
-    end
-
-    # Make sure that this method is available and authorized.
-    def verify(request)
-      unless available?(request)
-        raise InvalidClientRequest.new(
-          "Functionality #{request.handler} not available"
-        )
-      end
-      unless authorized?(request)
-        raise InvalidClientRequest.new(
-          "Host #{request} not authorized to call #{request.call}"
-        )
-      end
+    # Verify that our client has access.
+    def check_authorization(indirection, method, key, params)
+      authconfig.check_authorization(indirection, method, key, params)
     end
   end
 end

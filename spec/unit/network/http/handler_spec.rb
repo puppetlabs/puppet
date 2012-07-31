@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/network/http/handler'
-require 'puppet/network/rest_authorization'
+require 'puppet/network/authorization'
 
 class HttpHandled
   include Puppet::Network::HTTP::Handler
@@ -17,7 +17,7 @@ describe Puppet::Network::HTTP::Handler do
   end
 
   it "should include the Rest Authorization system" do
-    Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::RestAuthorization)
+    Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::Authorization)
   end
 
   it "should have a method for initializing" do
@@ -80,7 +80,7 @@ describe Puppet::Network::HTTP::Handler do
       @handler.process(@request, @response)
     end
 
-    it "should call the 'do' method and delegate authorization to the RestAuthorization layer" do
+    it "should call the 'do' method and delegate authorization to the authorization layer" do
       @handler.expects(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
 
       @handler.expects(:do_mymethod).with("facts", "key", {:node => "name"}, @request, @response)
