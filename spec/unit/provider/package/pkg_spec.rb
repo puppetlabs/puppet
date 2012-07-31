@@ -64,6 +64,11 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       @instances[11].should == {:name => 'security/sudo', :ensure => :present}
     end
 
+    it "should work correctly for ensure latest on solaris 11" do
+      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11'))
+      @provider.latest
+    end
+
     it "should warn about incorrect lines" do
       fake_output = File.read(my_fixture('incomplete'))
       error_line = fake_output.split($/).first

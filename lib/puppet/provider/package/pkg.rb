@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def latest
     version = nil
     pkg(:list, "-Ha", @resource[:name]).each_line do |line|
-      v = parse_line(line.chomp)[:status]
+      v = self.class.parse_line(line.chomp)[:status]
       case v
       when "known"
         return v
