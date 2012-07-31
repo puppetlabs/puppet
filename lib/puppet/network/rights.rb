@@ -6,25 +6,8 @@ module Puppet::Network
 # this exception is thrown when a request is not authenticated
 class AuthorizationError < Puppet::Error; end
 
-# Define a set of rights and who has access to them.
-# There are two types of rights:
-#  * named rights (ie a common string)
-#  * path based rights (which are matched on a longest prefix basis)
+# Rights class manages a list of ACLs for paths.
 class Rights
-
-  # We basically just proxy directly to our rights.  Each Right stores
-  # its own auth abilities.
-  # XXX I don't understand how this works?
-  [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |method|
-    define_method(method) do |name, *args|
-      if obj = self[name]
-        obj.send(method, *args)
-      else
-        raise ArgumentError, "Unknown right '#{name}'"
-      end
-    end
-  end
-
   # Check that name is allowed or not
   def allowed?(name, *args)
     !is_forbidden_and_why?(name, :node => args[0], :ip => args[1])
@@ -68,7 +51,7 @@ class Rights
       found
     end
 
-    # if we end here, then that means we either didn't match or failed, in any
+    # if we end up here, then that means we either didn't match or failed, in any
     # case will return an error to the outside world
     host_description = args[:node] ? "#{args[:node]}(#{args[:ip]})" : args[:ip]
 

@@ -43,20 +43,19 @@ module Puppet
       # actually this is not strictly necessary as the rights system
       # denies not explicitely allowed paths
       unless rights["/"]
-        rights.newright("/")
-        rights.restrict_authenticated("/", :any)
+        rights.newright("/").restrict_authenticated(:any)
       end
     end
 
     def mk_acl(acl)
-      @rights.newright(acl[:acl])
-      @rights.allow(acl[:acl], acl[:allow] || "*")
+      right = @rights.newright(acl[:acl])
+      right.allow(acl[:allow] || "*")
 
       if method = acl[:method]
         method = [method] unless method.is_a?(Array)
-        method.each { |m| @rights.restrict_method(acl[:acl], m) }
+        method.each { |m| right.restrict_method(m) }
       end
-      @rights.restrict_authenticated(acl[:acl], acl[:authenticated]) unless acl[:authenticated].nil?
+      right.restrict_authenticated(acl[:authenticated]) unless acl[:authenticated].nil?
     end
 
     # check whether this request is allowed in our ACL

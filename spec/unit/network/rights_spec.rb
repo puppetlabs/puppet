@@ -12,10 +12,10 @@ describe Puppet::Network::Rights do
     [:find, :save].each do |allowed_method|
       it "should allow the request if only #{allowed_method} is allowed" do
         rights = Puppet::Network::Rights.new
-        rights.newright("/")
-        rights.allow("/", "*")
-        rights.restrict_method("/", allowed_method)
-        rights.restrict_authenticated("/", :any)
+        right = rights.newright("/")
+        right.allow("*")
+        right.restrict_method(allowed_method)
+        right.restrict_authenticated(:any)
         rights.is_request_forbidden_and_why?(:indirection_name, :head, "key", {}).should == nil
       end
     end
@@ -25,23 +25,6 @@ describe Puppet::Network::Rights do
       why_forbidden = rights.is_request_forbidden_and_why?(:indirection_name, :head, "key", {})
       why_forbidden.should be_instance_of(Puppet::Network::AuthorizationError)
       why_forbidden.to_s.should == "Forbidden request:  access to /indirection_name/key [find]"
-    end
-  end
-
-  [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |m|
-    it "should have a #{m} method" do
-      @right.should respond_to(m)
-    end
-
-    describe "when using #{m}" do
-      it "should delegate to the correct acl" do
-        acl = stub 'acl'
-        @right.stubs(:[]).returns(acl)
-
-        acl.expects(m).with("me")
-
-        @right.send(m, 'thisacl', "me")
-      end
     end
   end
 
@@ -179,14 +162,14 @@ describe Puppet::Network::Rights do
       end
 
       it "should select the first match" do
-        @right.newright("/path/to/there", 0)
         @right.newright("/path/to", 0)
+        @right.newright("/path/to/there", 0)
 
         @long_acl.stubs(:match?).returns(true)
         @short_acl.stubs(:match?).returns(true)
 
-        @long_acl.expects(:allowed?).returns(true)
-        @short_acl.expects(:allowed?).never
+        @short_acl.expects(:allowed?).returns(true)
+        @long_acl.expects(:allowed?).never
 
         @right.is_forbidden_and_why?("/path/to/there/and/there", {}).should == nil
       end
