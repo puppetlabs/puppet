@@ -40,7 +40,7 @@ module Puppet::Network::HttpPool
 
   # Retrieve a cached http instance if caching is enabled, else return
   # a new one.
-  def self.http_instance(host, port, reset = false, use_ssl = true)
+  def self.http_instance(host, port, use_ssl = true)
     args = [host, port]
     if Puppet[:http_proxy_host] == "none"
       args << nil << nil

@@ -15,8 +15,8 @@ Puppet::Reports.register_report(:http) do
     req = Net::HTTP::Post.new(url.path)
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
-    conn = Puppet::Network::HttpPool.http_instance(url.host, url.port,
-                                                   ssl=(url.scheme == 'https'))
+    use_ssl = url.scheme == 'https'
+    conn = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl)
     conn.start {|http|
       response = http.request(req)
       unless response.kind_of?(Net::HTTPSuccess)
