@@ -134,7 +134,7 @@ describe Puppet::Type.type(:file) do
       file[:recurse].should be_false
     end
 
-    [true, "true", 10, "inf", "remote"].each do |value|
+    [true, "true", "inf", "remote"].each do |value|
       it "should consider #{value} to enable recursion" do
         file[:recurse] = value
         file[:recurse].should be_true
@@ -146,11 +146,6 @@ describe Puppet::Type.type(:file) do
         file[:recurse] = value
         file[:recurse].should be_false
       end
-    end
-
-    it "should warn if recurse is specified as a number" do
-      Puppet.expects(:deprecation_warning).with("Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit")
-      file[:recurse] = 3
     end
   end
 
