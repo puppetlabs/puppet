@@ -10,10 +10,10 @@ with_master_running_on(master) do
 Searching https://#{master}:8140 ...
 STDOUT
     assert_match <<-STDERR.chomp, stderr
-Error: Unable to verify the SSL certificate at https://#{master}:8140
-  This could be because the certificate is invalid or that the CA bundle
-  installed with your version of OpenSSL is not available, not valid or
-  not up to date.
+Error: Could not connect via HTTPS to https://#{master}:8140
+  Unable to verify the SSL certificate
+    The certificate may not be signed by a valid CA
+    The CA bundle included with OpenSSL may not be valid or up to date
 STDERR
 end
 

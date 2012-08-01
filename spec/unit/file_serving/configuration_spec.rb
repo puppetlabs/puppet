@@ -133,27 +133,13 @@ describe Puppet::FileServing::Configuration do
       config.find_mount("one", mock('env')).should == "foo"
     end
 
-    it "should use the provided environment to find a matching module if the named module cannot be found" do
-      config = Puppet::FileServing::Configuration.configuration
-
-      mod = mock 'module'
-      env = mock 'environment'
-      env.expects(:module).with("foo").returns mod
-      mount = mock 'mount'
-
-      config.stubs(:mounts).returns("modules" => mount)
-      Puppet.expects(:deprecation_warning)
-      config.find_mount("foo", env).should equal(mount)
-    end
-
-    it "should return nil if there is no such named mount and no module with the same name exists" do
+    it "should return nil if there is no such named mount" do
       config = Puppet::FileServing::Configuration.configuration
 
       env = mock 'environment'
-      env.expects(:module).with("foo").returns nil
-
       mount = mock 'mount'
       config.stubs(:mounts).returns("modules" => mount)
+
       config.find_mount("foo", env).should be_nil
     end
   end
