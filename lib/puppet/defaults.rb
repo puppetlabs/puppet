@@ -672,11 +672,6 @@ EOT
       :desc       => "Whether to allow a new certificate
       request to overwrite an existing certificate.",
     },
-    :ca_days => {
-      :default    => "",
-      :desc       => "How long a certificate should be valid, in days.
-      This setting is deprecated; use `ca_ttl` instead",
-    },
     :ca_ttl => {
       :default    => "5y",
       :desc       => "The default TTL for new certificates; valid values
