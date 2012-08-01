@@ -68,8 +68,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}
-#%setup -q -n %{name}-%{version}rc1
+#%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -80,7 +80,7 @@ for f in mac_dscl.pp mac_dscl_revert.pp \
   sed -i -e'1d' examples/$f
   chmod a-x examples/$f
 done
-for f in external/nagios.rb relationship.rb; do
+for f in external/nagios.rb network/http_server/mongrel.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
 #chmod +x ext/puppetstoredconfigclean.rb
@@ -108,6 +108,12 @@ install -Dp -m0755 %{confdir}/queue.init %{buildroot}%{_initrddir}/puppetqueue
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+
+# We need something for these ghosted files, otherwise rpmbuild
+# will complain loudly. They won't be included in the binary packages
+touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+touch %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
+touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
 # Install the ext/ directory to %%{_datadir}/%%{name}
 install -d %{buildroot}%{_datadir}/%{name}
@@ -139,7 +145,13 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %files
 %defattr(-, root, root, 0755)
 %doc CHANGELOG LICENSE README.md examples
+%{_bindir}/pi
 %{_bindir}/puppet
+%{_bindir}/ralsh
+%{_bindir}/filebucket
+%{_bindir}/puppetdoc
+%{_sbindir}/puppetca
+%{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
@@ -150,6 +162,8 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %config(noreplace) %{_sysconfdir}/puppet/auth.conf
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # We don't want to require emacs or vim, so we need to own these dirs
 %{_datadir}/emacs
@@ -161,7 +175,12 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
 %{_mandir}/man5/puppet.conf.5.gz
+%{_mandir}/man8/pi.8.gz
 %{_mandir}/man8/puppet.8.gz
+%{_mandir}/man8/puppetca.8.gz
+%{_mandir}/man8/puppetd.8.gz
+%{_mandir}/man8/ralsh.8.gz
+%{_mandir}/man8/puppetdoc.8.gz
 %{_mandir}/man8/puppet-agent.8.gz
 %{_mandir}/man8/puppet-apply.8.gz
 %{_mandir}/man8/puppet-catalog.8.gz
@@ -198,12 +217,18 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
 %files server
 %defattr(-, root, root, 0755)
+%{_sbindir}/puppetmasterd
+%{_sbindir}/puppetrun
+%{_sbindir}/puppetqd
 %{_initrddir}/puppetmaster
-%{_initrddir}/puppetqueue
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
-%{_mandir}/man8/puppet-ca.8.gz
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetmasterd.conf
+%{_mandir}/man8/filebucket.8.gz
+%{_mandir}/man8/puppetmasterd.8.gz
+%{_mandir}/man8/puppetrun.8.gz
+%{_mandir}/man8/puppetqd.8.gz
 %{_mandir}/man8/puppet-master.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
@@ -271,6 +296,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Aug 1 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-0.1rc1
+- Update for 2.7.19rc1
+
 * Wed Jul 11 2012 William Hopper <whopper@puppetlabs.com> - 2.7.18-2
 - (#15221) Create /etc/puppet/modules for puppet module tool
 
