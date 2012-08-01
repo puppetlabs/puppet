@@ -1,3 +1,52 @@
+2.7.19rc1
+===
+ 1dd660a (Maint) Remove reference to Patchwork
+ a26d1ee Replace "the short version" with outline
+ b73d0dd (#15595) Improve message on SSL errors
+ 9567ec8 (#15595) Clear up tests around ssl errors
+ ccca77f use error_message instead of error
+ 3809b59 updates as requested
+ e7b3049 (#15595) Offer better errors for certificate validation errors
+ 6a43e96 Update CONTRIBUTING.md
+ c44973c (Maint) Remove some more ambiguity
+ c236001 Use rspec 2.11 compatible block syntax
+ b504ab7 Fix buggy resource title tests
+ 00b563d (Maint) Be more honest about submission methods
+ b90c92b (Maint) Clarify that Redmine tickets are mandatory
+ 62c14bd (Maint) Clarify which branches changes should be based on
+ c0a0a45 tidy.rb: Added info about the default value of 'type' to the doc.
+ 2d994c2 Switch Rakefile off deprecated rake/gempackagetask
+ 7324f54 Update main readme to have links to contrib and dev docs
+ 57a74f7 (13070) Mark files as loaded before we load
+ a23cf6e (Maint) Don't assume paths are absolute
+ dd96d84 Determine packaging version with git describe
+ 04fbccd Try again to avoid circular dependency in file indirections
+ 3e23686 Avoid circular requirement in FileMetadata indirection
+ 125ecec (Maint) Spec test wasn't testing anything
+ 4c18d08 (#14964) Unlink Tempfiles consistently across different ruby versions
+ 690c39b (Maint) Require the right file for md5
+ 44ada58 Extract host validation in store report processor
+ 91df2f3 Use cross-platform absolute paths in file_serving tests
+ c7e4ca7 (#15221) Create /etc/puppet/modules directory for puppet module tool
+ c05489b (Maint:) Fix bad doc strings for two settings ("wether")
+ 33fce73 Try again to avoid circular dependency in file indirections
+ b227aa1 Remove useless tests for Envelope
+ 86ccca4 Clear deprecation warnings between tests
+ d7078c3 Avoid circular requirement in FileMetadata indirection
+ 03d546e (Maint) Document common Windows issues
+ 761b48f (#11868) Use `Installer` automation interface to query package state
+ cc4d8d2 Don't allow resource titles which aren't strings
+ 37742db Eliminate require calls at runtime.
+ be5fcf4 Fix broken TransBucket transformation tests.
+ 8f99187 Fix broken ability to remove resources from the catalog.
+ 9bd4fd3 Fix type check when transforming catalog.
+ 825b80d Fix all trivial "should to must" errors in our tests.
+ 7a7bea7 Enforce "must not should" on Puppet::Type instances in tests.
+ 39f0bf4 (#14962) PMT doesn't support setting a relative modulepath
+ 39f425f (#15078) Document USR2 log rotation signal
+ 300fce9 (#14909) Update createpackage.sh to resolve permissions issues
+ 0d5a46a (#14600) Fix cleanup of tempfiles in file_spec
+
 2.7.18
 ===
 d804782 Reject directory traversal in store report processor

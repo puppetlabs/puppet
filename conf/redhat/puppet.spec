@@ -5,16 +5,16 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.18
-#Release:        0.1rc1.2%{?dist}
-Release:        2%{?dist}
+Version:        2.7.19
+Release:        0.1rc1%{?dist}
+#Release:        2%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
+#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
+#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -66,8 +66,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}
-#%setup -q -n %{name}-%{version}rc1
+#%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}rc1
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -293,6 +293,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Aug 1 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-0.1rc1
+- Update for 2.7.19rc1
+
 * Wed Jul 11 2012 William Hopper <whopper@puppetlabs.com> - 2.7.18-2
 - (#15221) Create /etc/puppet/modules for puppet module tool
 
