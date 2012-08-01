@@ -28,6 +28,7 @@ module Puppet
           rescue => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not call #{method}: #{detail}"
+            raise
           end
         end
 

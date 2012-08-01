@@ -8,6 +8,7 @@ configurations) based on a centralized specification.
 Documentation (and detailed installation instructions) can be found online at the
 [Puppet Docs site](http://docs.puppetlabs.com).
 
+
 Installation
 ------------
 
@@ -31,6 +32,13 @@ Generally, you need the following things installed:
   library, though.
 
 * Facter => 1.5.1 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter).
+
+Contributions
+------
+Please see our [Contibution
+Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
+and our [Developer
+Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
 
 License
 -------

@@ -437,7 +437,7 @@ Puppet::Type.newtype(:file) do
     # from it.
     unless self[:ensure]
       if self[:target]
-        self[:ensure] = :symlink
+        self[:ensure] = :link
       elsif self[:content]
         self[:ensure] = :file
       end
@@ -723,6 +723,8 @@ Puppet::Type.newtype(:file) do
     @stat = begin
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
+      nil
+    rescue Errno::ENOTDIR => error
       nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"

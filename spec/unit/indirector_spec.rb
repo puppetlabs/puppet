@@ -37,7 +37,7 @@ describe Puppet::Indirector, "when configuring routes" do
       }
     }
 
-    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/fake_indirection does not exist/)
+    expect { Puppet::Indirector.configure_routes(routes) }.to raise_error(/fake_indirection does not exist/)
   end
 
   it "should fail when given an invalid terminus" do
@@ -48,7 +48,7 @@ describe Puppet::Indirector, "when configuring routes" do
       }
     }
 
-    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/Could not find terminus fake_terminus/)
+    expect { Puppet::Indirector.configure_routes(routes) }.to raise_error(/Could not find terminus fake_terminus/)
   end
 
   it "should fail when given an invalid cache" do
@@ -59,7 +59,7 @@ describe Puppet::Indirector, "when configuring routes" do
       }
     }
 
-    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/Could not find terminus fake_cache/)
+    expect { Puppet::Indirector.configure_routes(routes) }.to raise_error(/Could not find terminus fake_cache/)
   end
 end
 
@@ -87,7 +87,7 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 
   it "should require a name when registering a model" do
-    Proc.new {@thingie.send(:indirects) }.should raise_error(ArgumentError)
+    expect {@thingie.send(:indirects) }.to raise_error(ArgumentError)
   end
 
   it "should create an indirection instance to manage each indirecting model" do
@@ -98,7 +98,7 @@ describe Puppet::Indirector, "when registering an indirection" do
   it "should not allow a model to register under multiple names" do
     # Keep track of the indirection instance so we can delete it on cleanup
     @indirection = @thingie.indirects :first
-    Proc.new { @thingie.indirects :second }.should raise_error(ArgumentError)
+    expect { @thingie.indirects :second }.to raise_error(ArgumentError)
   end
 
   it "should make the indirection available via an accessor" do

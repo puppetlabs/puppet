@@ -101,23 +101,29 @@ describe Puppet::Util::Autoload do
   describe "when loading all files" do
     before do
       @autoload.stubs(:searchpath).returns %w{/a}
-      Dir.stubs(:glob).returns "/path/to/file.rb"
-
-      @autoload.class.stubs(:loaded?).returns(false)
+      @filename = rand(10000).to_s + ".rb"
+      Dir.stubs(:glob).returns(@filename)
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
-      it "should die an if a #{error.to_s} exception is thrown", :'fails_on_ruby_1.9.2' => true do
+      it "dies if a #{error.to_s} exception is thrown", :'fails_on_ruby_1.9.2' => true do
         Kernel.expects(:require).raises error
 
-        lambda { @autoload.loadall }.should raise_error(Puppet::Error)
+        expect { @autoload.loadall }.to raise_error(Puppet::Error)
       end
     end
 
-    it "should require the full path to the file", :'fails_on_ruby_1.9.2' => true do
-      Kernel.expects(:require).with("/path/to/file.rb")
+    it "requires the file", :'fails_on_ruby_1.9.2' => true do
+      Kernel.expects(:require).with(@filename)
 
       @autoload.loadall
+    end
+
+    it "marks the file as required even if loading fails", :'fails_on_ruby_1.9.2' => true do
+      Dir.stubs(:glob).returns "/this/file/does/not/exist.rb"
+
+      expect { @autoload.loadall }.to raise_error(Puppet::Error)
+      expect { @autoload.loadall }.not_to raise_error
     end
   end
 end

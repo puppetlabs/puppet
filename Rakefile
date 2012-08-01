@@ -2,14 +2,30 @@
 
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 
+begin
+  require 'rubygems'
+  require 'rubygems/package_task'
+rescue LoadError
+  # Users of older versions of Rake (0.8.7 for example) will not necessarily
+  # have rubygems installed, or the newer rubygems package_task for that
+  # matter.
+  require 'rake/packagetask'
+  require 'rake/gempackagetask'
+end
+
 require 'rake'
-require 'rake/packagetask'
-require 'rake/gempackagetask'
 require 'rspec'
 require "rspec/core/rake_task"
 
+
 module Puppet
-    PUPPETVERSION = File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
+    %x{which git &> /dev/null}
+    if $?.success? and File.exist?('.git')
+        # remove the git hash from git describe string
+        PUPPETVERSION=%x{git describe}.chomp.gsub('-','.').split('.')[0..3].join('.')
+    else
+        PUPPETVERSION=File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
+    end
 end
 
 Dir['tasks/**/*.rake'].each { |t| load t }
