@@ -35,32 +35,6 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["environment"].should == "foo"
   end
 
-  it "should be able to downcase fact values" do
-    Puppet[:downcasefacts] = true
-
-    @facts.values["one"] = "Two"
-
-    @facts.downcase_if_necessary
-    @facts.values["one"].should == "two"
-  end
-
-  it "should only try to downcase strings" do
-    Puppet[:downcasefacts] = true
-
-    @facts.values["now"] = Time.now
-
-    @facts.downcase_if_necessary
-    @facts.values["now"].should be_instance_of(Time)
-  end
-
-  it "should not downcase facts if not configured to do so" do
-    Puppet[:downcasefacts] = false
-
-    @facts.values["one"] = "Two"
-    @facts.downcase_if_necessary
-    @facts.values["one"].should == "Two"
-  end
-
   describe "when indirecting" do
     before do
       @indirection = stub 'indirection', :request => mock('request'), :name => :facts
