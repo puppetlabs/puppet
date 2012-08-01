@@ -28,7 +28,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should consider a parameter to be valid if it is a valid parameter" do
-    Puppet::Type.type(:mount).should be_valid_parameter(:path)
+    Puppet::Type.type(:mount).should be_valid_parameter(:name)
   end
 
   it "should consider a parameter to be valid if it is a valid property" do
