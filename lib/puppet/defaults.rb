@@ -613,11 +613,6 @@ EOT
       :mode => 0664,
 
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
-      :hook => proc do |value|
-        if value == 'false'
-          Puppet.deprecation_warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
-        end
-      end
     },
     :caprivatedir => {
       :default => "$cadir/private",
