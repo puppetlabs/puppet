@@ -38,15 +38,6 @@ class Puppet::Node::Facts
     add_timestamp
   end
 
-  def downcase_if_necessary
-    return unless Puppet.settings[:downcasefacts]
-
-    Puppet.deprecation_warning "DEPRECATION NOTICE: Fact downcasing is deprecated; please disable (20080122)"
-    values.each do |fact, value|
-      values[fact] = value.downcase if value.is_a?(String)
-    end
-  end
-
   # Convert all fact values into strings.
   def stringify
     values.each do |fact, value|

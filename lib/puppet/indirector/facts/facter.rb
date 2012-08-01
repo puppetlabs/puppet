@@ -71,7 +71,6 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
     result.add_local_facts
     result.stringify
-    result.downcase_if_necessary
 
     result
   end

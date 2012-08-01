@@ -1087,11 +1087,6 @@ EOT
       fact be stale even if the timestamps are up to date - if the facts
       change or if the server changes.",
     },
-    :downcasefacts => {
-      :default    => false,
-      :type       => :boolean,
-      :desc       => "Whether facts should be made all lowercase when sent to the server.",
-    },
     :dynamicfacts => {
       :default    => "memorysize,memoryfree,swapsize,swapfree",
       :desc       => "Facts that are dynamic; these facts will be ignored when deciding whether

@@ -10,7 +10,6 @@ class Puppet::Node::Facts::NetworkDevice < Puppet::Indirector::Code
 
     result.add_local_facts
     result.stringify
-    result.downcase_if_necessary
 
     result
   end
