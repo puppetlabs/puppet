@@ -52,13 +52,6 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "when configuring the :crl" do
-    it "should warn if :cacrl is set to false" do
-      Puppet.expects(:warning)
-      Puppet.settings[:cacrl] = 'false'
-    end
-  end
-
   describe "when setting the :catalog_format" do
     it "should log a deprecation notice" do
       Puppet.expects(:deprecation_warning)
