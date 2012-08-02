@@ -123,21 +123,25 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   end
 
   def install_options
-    # properties is a string delimited by spaces, so each key value must be quoted
-    properties_for_command = nil
-    if resource[:install_options]
-      properties_for_command = resource[:install_options].collect do |k,v|
-        property = shell_quote k
-        value    = shell_quote v
-
-        "#{property}=#{value}"
-      end
-    end
-
-    properties_for_command
+    join_options(resource[:install_options])
   end
 
   def shell_quote(value)
     value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end
