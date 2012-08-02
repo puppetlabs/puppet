@@ -3,7 +3,12 @@
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `/bin/systemctl`."
 
-  commands :systemctl => "/bin/systemctl"
+  # with the Usrmove this test will ensure we get the right systemctl
+  if File.exists? '/usr/bin/systemctl'
+  	commands :systemctl => "/usr/bin/systemctl" 
+  else
+  	commands :systemctl => "/bin/systemctl" 
+  end
 
   #defaultfor :osfamily => [:redhat, :suse]
 
