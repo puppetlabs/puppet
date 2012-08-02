@@ -1,7 +1,11 @@
 require 'erb'
 
 def get_version
-  `git describe`.strip
+  if File.exists?('.git')
+    %x{git describe}.chomp.gsub('-', '.').split('.')[0..3].join('.').gsub('v', '')
+  else
+    %x{pwd}.strip!.split('.')[-1]
+  end
 end
 
 def get_debversion
