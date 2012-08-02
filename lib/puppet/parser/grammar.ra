@@ -700,18 +700,9 @@ arguments:    argument
     result << val[2]
 }
 
-argument:     NAME EQUALS expression {
-  Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
-  result = [val[0][:value], val[2]]
-}
-  | NAME {
-    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
-    result = [val[0][:value]]
-}           | VARIABLE EQUALS expression {
-  result = [val[0][:value], val[2]]
-}           | VARIABLE {
-  result = [val[0][:value]]
-}
+argument:
+ VARIABLE EQUALS expression { result = [val[0][:value], val[2]] }
+| VARIABLE { result = [val[0][:value]] }
 
 nodeparent:       nil
   | INHERITS hostname {
