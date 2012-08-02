@@ -63,7 +63,7 @@ class Puppet::Run
   end
 
   def self.from_pson( pson )
-    options = {}
+    options = { :pluginsync => Puppet[:pluginsync] }
     pson.each do |key, value|
       options[key.to_sym] = value
     end

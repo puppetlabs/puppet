@@ -113,10 +113,6 @@ describe Puppet::Application::Apply do
       @apply.setup
     end
 
-    it "should set pluginsource with no hostname" do
-      @apply.app_defaults[:pluginsource].should == 'puppet:///plugins'
-    end
-
     it "should set default_file_terminus to `file_server` to be local" do
       @apply.app_defaults[:default_file_terminus].should == 'file_server'
     end
@@ -401,7 +397,7 @@ describe Puppet::Application::Apply do
         configurer = stub 'configurer'
         Puppet::Configurer.expects(:new).returns configurer
         configurer.expects(:run).
-          with(:catalog => "mycatalog", :skip_plugin_download => true)
+          with(:catalog => "mycatalog", :pluginsync => false)
 
         @apply.apply
       end
@@ -412,7 +408,7 @@ describe Puppet::Application::Apply do
     it "should call the configurer with the catalog" do
       catalog = "I am a catalog"
       Puppet::Configurer.any_instance.expects(:run).
-        with(:catalog => catalog, :skip_plugin_download => true)
+        with(:catalog => catalog, :pluginsync => false)
       @apply.send(:apply_catalog, catalog)
     end
   end
