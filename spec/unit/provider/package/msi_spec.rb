@@ -32,6 +32,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
     it { should be_installable }
     it { should be_uninstallable }
     it { should be_install_options }
+    it { should be_uninstall_options }
   end
 
   context '::instances' do
@@ -216,13 +217,13 @@ describe Puppet::Type.type(:package).provider(:msi) do
       provider.install_options.should be_nil
     end
 
-    it 'should use the install_options as parameter/value pairs' do
+    it 'should return the options' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
 
       provider.install_options.should == ['INSTALLDIR=C:\mysql-here']
     end
 
-    it 'should only quote the value when an install_options value has a space in it' do
+    it 'should only quote if needed' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql here' }
 
       provider.install_options.should == ['INSTALLDIR="C:\mysql here"']
@@ -232,6 +233,18 @@ describe Puppet::Type.type(:package).provider(:msi) do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql "here"' }
 
       provider.install_options.should == ['INSTALLDIR="C:\mysql \"here\""']
+    end
+  end
+
+  context '#uninstall_options' do
+    it 'should return nil by default' do
+      provider.uninstall_options.should be_nil
+    end
+
+    it 'should return the options' do
+      resource[:uninstall_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
+
+      provider.uninstall_options.should == ['INSTALLDIR=C:\mysql-here']
     end
   end
 end

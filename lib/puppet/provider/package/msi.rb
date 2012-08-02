@@ -13,6 +13,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   has_feature :installable
   has_feature :uninstallable
   has_feature :install_options
+  has_feature :uninstall_options
 
   class MsiPackage
     extend Enumerable
@@ -83,7 +84,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   def uninstall
     fail("The productcode property is missing.") unless properties[:productcode]
 
-    command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode]].flatten.compact.join(' ')
+    command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode], uninstall_options].flatten.compact.join(' ')
     execute(command, :combine => true)
 
     check_result(exit_status)
@@ -124,6 +125,10 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
 
   def install_options
     join_options(resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(resource[:uninstall_options])
   end
 
   def shell_quote(value)
