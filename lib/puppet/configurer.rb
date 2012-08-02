@@ -90,7 +90,7 @@ class Puppet::Configurer
   end
 
   def get_facts(options)
-    download_plugins unless options[:skip_plugin_download]
+    download_plugins if options[:pluginsync]
 
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,
