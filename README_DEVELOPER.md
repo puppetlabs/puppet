@@ -123,4 +123,21 @@ Puppet directly from source without using install.rb or copying files around.
  * Don't assume 'C' drive.  Use environment variables to look these up:
 
     "#{ENV['windir']}/system32/netsh.exe"
+
+# Configuration Directory #
+
+In Puppet 3.x we've simplified the behavior of selecting a configuration file
+to load.  The intended behavior of reading `puppet.conf` is:
+
+ 1. Use the explicit configuration provided by --confdir or --config if present
+ 2. If running as root (`Puppet.features.root?`) then use the system
+    `puppet.conf`
+ 3. Otherwise, use `~/.puppet/puppet.conf`.
+
+When Puppet master is started from Rack, Puppet 3.x will read from
+~/.puppet/puppet.conf by default.  This is intended behavior.  Rack
+configurations should start Puppet master with an explicit configuration
+directory using `ARGV << "--confdir" << "/etc/puppet"`.  Please see the
+`ext/rack/files/config.ru` file for an up-to-date example.
+
 EOF

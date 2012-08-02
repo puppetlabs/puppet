@@ -671,11 +671,10 @@ describe Puppet::Settings do
     end
 
     describe "when not root" do
-      it "should look for #{MAIN_CONFIG_FILE_DEFAULT_LOCATION} and #{USER_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
+      it "should look for #{USER_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(false)
 
         seq = sequence "load config files"
-        FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
         FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
 
         @settings.send(:parse_config_files)
@@ -875,7 +874,6 @@ describe Puppet::Settings do
         @settings[:config] = somefile
       end
     end
-
   end
 
 
@@ -884,28 +882,81 @@ describe Puppet::Settings do
     let(:user_config_text) { "[main]\none = user\n" }
     let(:seq) { sequence "config_file_sequence" }
 
-    before do
-      Puppet.features.stubs(:root?).returns(false)
+    before :each do
       @settings = Puppet::Settings.new
       @settings.define_settings(:section,
-          { :one => { :default => "ONE", :desc => "a" },
-            :two => { :default => "TWO", :desc => "b" }, })
-      FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(true).in_sequence(seq)
-      @settings.expects(:read_file).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(main_config_text).in_sequence(seq)
-      FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(true).in_sequence(seq)
-      @settings.expects(:read_file).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(user_config_text).in_sequence(seq)
+          { :confdir => { :default => nil,                    :desc => "Conf dir" },
+            :config  => { :default => "$confdir/puppet.conf", :desc => "Config" },
+            :one     => { :default => "ONE",                  :desc => "a" },
+            :two     => { :default => "TWO",                  :desc => "b" }, })
     end
 
-    it "should return values from the config file in the user's home dir before values set in the main configuration file" do
-      @settings.send(:parse_config_files)
-      @settings[:one].should == "user"
+    context "running non-root without explicit config file" do
+      before :each do
+        Puppet.features.stubs(:root?).returns(false)
+        FileTest.expects(:exist?).
+          with(USER_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(true).in_sequence(seq)
+        @settings.expects(:read_file).
+          with(USER_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(user_config_text).in_sequence(seq)
+      end
+
+      it "should return values from the user config file" do
+        @settings.send(:parse_config_files)
+        @settings[:one].should == "user"
+      end
+
+      it "should not return values from the main config file" do
+        @settings.send(:parse_config_files)
+        @settings[:two].should == "TWO"
+      end
     end
 
-    it "should return values from the main config file if they aren't overridden in the config file in the user's home dir" do
-      @settings.send(:parse_config_files)
-      @settings[:two].should == "main2"
+    context "running as root without explicit config file" do
+      before :each do
+        Puppet.features.stubs(:root?).returns(true)
+        FileTest.expects(:exist?).
+          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(true).in_sequence(seq)
+        @settings.expects(:read_file).
+          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(main_config_text).in_sequence(seq)
+      end
+
+      it "should return values from the main config file" do
+        @settings.send(:parse_config_files)
+        @settings[:one].should == "main"
+      end
+
+      it "should not return values from the user config file" do
+        @settings.send(:parse_config_files)
+        @settings[:two].should == "main2"
+      end
     end
 
+    context "running with an explicit config file as a user (e.g. Apache + Passenger)" do
+      before :each do
+        Puppet.features.stubs(:root?).returns(false)
+        @settings[:confdir] = "/etc/puppet"
+        FileTest.expects(:exist?).
+          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(true).in_sequence(seq)
+        @settings.expects(:read_file).
+          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          returns(main_config_text).in_sequence(seq)
+      end
+
+      it "should return values from the main config file" do
+        @settings.send(:parse_config_files)
+        @settings[:one].should == "main"
+      end
+
+      it "should not return values from the user config file" do
+        @settings.send(:parse_config_files)
+        @settings[:two].should == "main2"
+      end
+    end
   end
 
   describe "when reparsing its configuration" do

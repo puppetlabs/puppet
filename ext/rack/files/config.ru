@@ -11,6 +11,9 @@ $0 = "master"
 
 ARGV << "--rack"
 
+# Rack applications typically don't start as root.  Set --confdir to prevent
+# reading configuration from ~/.puppet/puppet.conf
+ARGV << "--confdir" << "/etc/puppet"
 
 # NOTE: it's unfortunate that we have to use the "CommandLine" class
 #  here to launch the app, but it contains some initialization logic

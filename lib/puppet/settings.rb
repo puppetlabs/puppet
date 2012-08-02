@@ -485,15 +485,19 @@ class Puppet::Settings
 
   # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
-    # we are now supporting multiple config files; the "main" config file will be the one located in
-    # /etc/puppet (or overridden $confdir)... but we will also look for a config file in the user's home
-    # directory.  This was introduced in an effort to provide maximum backwards compatibility while
-    # de-coupling the process of locating the config file from the "run mode" of the application.
-    files = [main_config_file]
-    files << user_config_file unless Puppet.features.root?
+    # we are able to support multiple config files; the "main" config file will
+    # be the one located in /etc/puppet (or overridden $confdir)... but we can
+    # also look for a config file in the user's home directory.  We only load
+    # one configuration file in order to present a simple and consistent
+    # configuration model to the end user.  It should also be noted we decided
+    # to merge in the user puppet.conf with the system puppet.conf for a time
+    # (e.g. load two configuration files) as a small part of #7749 but then
+    # decided to reverse this decision in 15337 to return to a disjoint
+    # configuration file model.
+    config_files = [which_configuration_file]
 
     @sync.synchronize do
-      unsafe_parse(files)
+      unsafe_parse(config_files)
     end
 
     # talking with cprice, Settings.parse will not be the final location for this. He's working on ticket
@@ -511,24 +515,12 @@ class Puppet::Settings
     #  * if no explicit config location has been specified, we fall back to
     #    the default.
     #
-    # The easiest way to determine whether an explicit one has been specified
-    #  is to simply attempt to evaluate the value of ":config".  This will
-    #  obviously be successful if they've passed an explicit value for :config,
-    #  but it will also result in successful interpolation if they've only
-    #  passed an explicit value for :confdir.
-    #
-    # If they've specified neither, then the interpolation will fail and we'll
-    #  get an exception.
-    #
-    begin
-      return self[:config] if self[:config]
-    rescue InterpolationError => err
-      # This means we failed to interpolate, which means that they didn't
-      #  explicitly specify either :config or :confdir... so we'll fall out to
-      #  the default value.
-    end
     # return the default value.
-    return File.join(self.class.default_global_config_dir, config_file_name)
+    if explicit_config_file?
+      return self[:config]
+    else
+      return File.join(self.class.default_global_config_dir, config_file_name)
+    end
   end
   private :main_config_file
 
@@ -1280,5 +1272,44 @@ if @config.include?(:run_mode)
     end
   end
   private :clear_everything_for_tests
+
+  def which_configuration_file
+    # (#15337) All of the logic to determine the configuration file to use
+    # should be centralized into this method.  The simplified approach is:
+    # 1. If there is an explicit configuration file, use that.  (--confdir or
+    #    --config)
+    # 2. If we're running as a root process, use the system puppet.conf
+    #    (usually /etc/puppet/puppet.conf)
+    # 3: Otherwise, use the user puppet.conf (usually ~/.puppet/puppet.conf)
+    if explicit_config_file? or Puppet.features.root? then
+      return main_config_file
+    else
+      return user_config_file
+    end
+  end
+
+  def explicit_config_file?
+    # Figure out if the user has provided an explicit configuration file.  If
+    # so, return the path to the file, if not return nil.
+    #
+    # The easiest way to determine whether an explicit one has been specified
+    #  is to simply attempt to evaluate the value of ":config".  This will
+    #  obviously be successful if they've passed an explicit value for :config,
+    #  but it will also result in successful interpolation if they've only
+    #  passed an explicit value for :confdir.
+    #
+    # If they've specified neither, then the interpolation will fail and we'll
+    #  get an exception.
+    #
+    begin
+      return true if self[:config]
+    rescue InterpolationError => err
+      # This means we failed to interpolate, which means that they didn't
+      #  explicitly specify either :config or :confdir... so we'll fall out to
+      #  the default value.
+      return false
+    end
+  end
+  private :explicit_config_file?
 
 end
