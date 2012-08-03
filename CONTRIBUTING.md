@@ -27,7 +27,7 @@ top of things.
     checkout fix/master/my_contribution`.  Please avoid working directly on the
     `master` branch.
 * Make commits of logical units.
-* Check for unnecessary whitespace with "git diff --check" before committing.
+* Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format.
 
 ````
