@@ -16,7 +16,7 @@ class Puppet::Provider::Package::Windows
       with_key do |key, values|
         name = key.name.match(/^.+\\([^\\]+)$/).captures[0]
 
-        [MsiPackage].find do |klass|
+        [MsiPackage, ExePackage].find do |klass|
           if pkg = klass.from_registry(name, values)
             yield pkg
           end
@@ -52,6 +52,9 @@ class Puppet::Provider::Package::Windows
         # REMIND: can we install from URL?
         # REMIND: what about msp, etc
         MsiPackage
+      when /\.exe"?\Z/i
+        fail("The source does not exist: '#{resource[:source]}'") unless File.exists?(resource[:source])
+        ExePackage
       else
         fail("Don't know how to install '#{resource[:source]}'")
       end
@@ -69,3 +72,4 @@ class Puppet::Provider::Package::Windows
 end
 
 require 'puppet/provider/package/windows/msi_package'
+require 'puppet/provider/package/windows/exe_package'
