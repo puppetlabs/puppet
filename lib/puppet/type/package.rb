@@ -317,7 +317,6 @@ module Puppet
 
             package { 'mysql':
               ensure          => installed,
-              provider        => 'msi',
               source          => 'N:/packages/mysql-5.5.16-winx64.msi',
               install_options => [ '/S', { 'INSTALLDIR' => 'C:\\mysql-5.5' } ],
             }

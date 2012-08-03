@@ -1,12 +1,11 @@
-#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-describe Puppet::Type.type(:package).provider(:msi) do
+describe Puppet::Type.type(:package).provider(:windows) do
   let (:name)        { 'mysql-5.1.58-win-x64' }
   let (:source)      { 'E:\mysql-5.1.58-win-x64.msi' }
   let (:productcode) { '{E437FFB6-5C49-4DAC-ABAE-33FF065FE7CC}' }
   let (:packagecode) { '{5A6FD560-763A-4BC1-9E03-B18DFFB7C72C}' }
-  let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :msi, :source => source) }
+  let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
   let (:provider)    { resource.provider }
   let (:execute_options) do {:combine => true} end
 
@@ -36,23 +35,28 @@ describe Puppet::Type.type(:package).provider(:msi) do
     it { should be_uninstall_options }
   end
 
-  describe 'on Windows', :as_platform => :windows do
-    it 'should not be the default provider' do
-      Puppet::Type.type(:package).defaultprovider.should_not == subject.class
+  describe 'on Windows', :if => Puppet.features.microsoft_windows? do
+    it 'should be the default provider' do
+      Puppet::Type.type(:package).defaultprovider.should == subject.class
     end
   end
 
   context '::instances' do
-    it 'should return an empty array' do
-      described_class.instances.should == []
+    it 'should return an array of provider instances' do
+      installer([1, 2])
+
+      MsiPackage.map do |pkg|
+        pkg[:name].should        == "name-#{pkg[:productcode]}"
+        pkg[:ensure].should      == :installed
+        pkg[:provider].should    == :windows
+        pkg[:packagecode].should == "package-#{pkg[:productcode]}"
+      end.count.should == 2
     end
-  end
 
-  context '#initialize' do
-    it 'should issue a deprecation warning' do
-      Puppet.expects(:deprecation_warning).with("The `:msi` package provider is deprecated, use the `:windows` provider instead.")
+    it 'should return an empty array of none found' do
+      installer([])
 
-      Puppet::Type.type(:package).new(:name => name, :provider => :msi, :source => source)
+      MsiPackage.to_a.size.should == 0
     end
   end
 
@@ -60,7 +64,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
     let (:package) do {
         :name        => name,
         :ensure      => :installed,
-        :provider    => :msi,
+        :provider    => :windows,
         :productcode => productcode,
         :packagecode => packagecode.upcase
       }
@@ -95,7 +99,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
     end
 
     it 'should require the source parameter' do
-      resource = Puppet::Type.type(:package).new(:name => name, :provider => :msi)
+      resource = Puppet::Type.type(:package).new(:name => name, :provider => :windows)
 
       expect do
         resource.provider.install

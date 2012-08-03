@@ -1,12 +1,14 @@
 require 'puppet/provider/package'
 require 'puppet/util/windows'
 
-Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) do
+Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Package) do
   desc "Windows package management by installing and removing MSIs.
 
-    The `msi` provider is deprecated. Use the `windows` provider instead."
+    This provider requires a `source` attribute, and will accept paths to local
+    files, mapped drives, or UNC paths."
 
   confine    :operatingsystem => :windows
+  defaultfor :operatingsystem => :windows
 
   has_feature :installable
   has_feature :uninstallable
@@ -18,19 +20,23 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     include Puppet::Util::Windows::Registry
     extend Puppet::Util::Windows::Registry
 
+    # From msi.h
+    INSTALLSTATE_DEFAULT = 5 # product is installed for the current user
+    INSTALLUILEVEL_NONE  = 2 # completely silent installation
+
     def self.installer
       WIN32OLE.new("WindowsInstaller.Installer")
     end
 
     def self.each(&block)
       inst = installer
-      inst.UILevel = 2
+      inst.UILevel = INSTALLUILEVEL_NONE
 
       inst.Products.each do |guid|
         # products may be advertised, installed in a different user
         # context, etc, we only want to know about products currently
         # installed in our context.
-        next unless inst.ProductState(guid) == 5
+        next unless inst.ProductState(guid) == INSTALLSTATE_DEFAULT
 
         package = {
           :name        => inst.ProductInfo(guid, 'ProductName'),
@@ -38,7 +44,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
           # so we can't return a version
           # :ensure      => inst.ProductInfo(guid, 'VersionString'),
           :ensure      => :installed,
-          :provider    => :msi,
+          :provider    => :windows,
           :productcode => guid,
           :packagecode => inst.ProductInfo(guid, 'PackageCode')
         }
@@ -48,13 +54,9 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     end
   end
 
+  # Get an array of provider instances for currently installed packages
   def self.instances
-    []
-  end
-
-  def initialize(resource = nil)
-    Puppet.deprecation_warning "The `:msi` package provider is deprecated, use the `:windows` provider instead."
-    super(resource)
+    MsiPackage.enum_for.map { |package| new(package) }
   end
 
   # Find first package whose PackageCode, e.g. {B2BE95D2-CD2C-46D6-8D27-35D150E58EC9},
@@ -92,21 +94,25 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     $CHILD_STATUS.exitstatus
   end
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
+  ERROR_SUCCESS                  = 0
+  ERROR_SUCCESS_REBOOT_INITIATED = 1641
+  ERROR_SUCCESS_REBOOT_REQUIRED  = 3010
+
   # (Un)install may "fail" because the package requested a reboot, the system requested a
   # reboot, or something else entirely. Reboot requests mean the package was installed
   # successfully, but we warn since we don't have a good reboot strategy.
   def check_result(hr)
     operation = resource[:ensure] == :absent ? 'uninstall' : 'install'
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
     case hr
-    when 0
+    when ERROR_SUCCESS
       # yeah
     when 194
       warning("The package requested a reboot to finish the operation.")
-    when 1641
+    when ERROR_SUCCESS_REBOOT_INITIATED
       warning("The package #{operation}ed successfully and the system is rebooting now.")
-    when 3010
+    when ERROR_SUCCESS_REBOOT_REQUIRED
       warning("The package #{operation}ed successfully, but the system must be rebooted.")
     else
       raise Puppet::Util::Windows::Error.new("Failed to #{operation}", hr)
