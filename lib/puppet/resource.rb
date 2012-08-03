@@ -439,6 +439,10 @@ class Puppet::Resource
           return h
         end
       }
+      # If we've gotten this far, then none of the provided title patterns
+      # matched. Since there's no way to determine the title then the
+      # resource should fail here.
+      raise Puppet::Error, "No set of title patterns matched the title \"#{title}\"."
     else
       return { :name => title.to_s }
     end

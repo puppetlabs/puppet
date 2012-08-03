@@ -799,6 +799,79 @@ type: File
     end
   end
 
+  describe '#parse_title' do
+    describe 'with a composite namevar' do
+      before do
+        Puppet::Type.newtype(:composite) do
+
+          newparam(:name)
+          newparam(:value)
+
+          # Configure two title patterns to match a title that is either
+          # separated with a colon or exclamation point. The first capture
+          # will be used for the :name param, and the second capture will be
+          # used for the :value param.
+          def self.title_patterns
+            identity = lambda {|x| x }
+            reverse  = lambda {|x| x.reverse }
+            [
+              [
+                /^(.*?):(.*?)$/,
+                [
+                  [:name, identity],
+                  [:value, identity],
+                ]
+              ],
+              [
+                /^(.*?)!(.*?)$/,
+                [
+                  [:name, reverse],
+                  [:value, reverse],
+                ]
+              ],
+            ]
+          end
+        end
+      end
+
+      describe "with no matching title patterns" do
+        subject { Puppet::Resource.new(:composite, 'unmatching title')}
+
+        it "should raise an exception if no title patterns match" do
+          expect do
+            subject.to_hash
+          end.to raise_error(Puppet::Error, /No set of title patterns matched/)
+        end
+      end
+
+      describe "with a matching title pattern" do
+        subject { Puppet::Resource.new(:composite, 'matching:title') }
+
+        it "should not raise an exception if there was a match" do
+          expect do
+            subject.to_hash
+          end.to_not raise_error
+        end
+
+        it "should set the resource parameters from the parsed title values" do
+          h = subject.to_hash
+          h[:name].should == 'matching'
+          h[:value].should == 'title'
+        end
+      end
+
+      describe "and multiple title patterns" do
+        subject { Puppet::Resource.new(:composite, 'matching!title') }
+
+        it "should use the first title pattern that matches" do
+          h = subject.to_hash
+          h[:name].should == 'gnihctam'
+          h[:value].should == 'eltit'
+        end
+      end
+    end
+  end
+
   describe "#prune_parameters" do
     before do
       Puppet.newtype('blond') do
