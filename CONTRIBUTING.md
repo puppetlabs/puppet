@@ -22,6 +22,10 @@ top of things.
   * This is usually the master branch.
   * Only target release branches if you are certain your fix must be on that
     branch.
+  * To quickly create a topic branch based on master; `git branch
+    fix/master/my_contribution master` then checkout the new branch with `git
+    checkout fix/master/my_contribution`.  Please avoid working directly on the
+    `master` branch.
 * Make commits of logical units.
 * Check for unnecessary whitespace with "git diff --check" before committing.
 * Make sure your commit messages are in the proper format.
