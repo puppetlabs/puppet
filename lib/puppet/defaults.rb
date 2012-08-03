@@ -714,7 +714,7 @@ EOT
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0640,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",

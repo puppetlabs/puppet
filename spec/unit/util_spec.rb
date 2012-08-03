@@ -719,20 +719,12 @@ describe Puppet::Util do
         expect { subject.replace_file(target.path, 0600) }.to raise_error /block/
       end
 
-      it "should replace a file when invoked" do
-        # Check that our file has the expected content.
-        File.read(target.path).should == "hello, world\n"
-
-        # Replace the file.
-        subject.replace_file(target.path, 0600) do |fh|
-          fh.puts "I am the passenger..."
-        end
-
-        # ...and check the replacement was complete.
-        File.read(target.path).should == "I am the passenger...\n"
-      end
-
-      [0555, 0600, 0660, 0700, 0770].each do |mode|
+      # When running with the same user and group sid, which is the default,
+      # Windows collapses the owner and group modes into a single ACE, resulting
+      # in set(0600) => get(0660) and so forth. --daniel 2012-03-30
+      modes = [0555, 0660, 0770]
+      modes += [0600, 0700] unless Puppet.features.microsoft_windows?
+      modes.each do |mode|
         it "should copy 0#{mode.to_s(8)} permissions from the target file by default" do
           set_mode(mode, target.path)
 
@@ -745,9 +737,9 @@ describe Puppet::Util do
         end
       end
 
-      it "should copy the permissions of the source file before yielding" do
+      it "should copy the permissions of the source file before yielding on Unix", :if => !Puppet.features.microsoft_windows? do
         set_mode(0555, target.path)
-        inode = File.stat(target.path).ino unless Puppet.features.microsoft_windows?
+        inode = File.stat(target.path).ino
 
         yielded = false
         subject.replace_file(target.path, 0600) do |fh|
@@ -756,9 +748,7 @@ describe Puppet::Util do
         end
         yielded.should be_true
 
-        # We can't check inode on Windows
-        File.stat(target.path).ino.should_not == inode unless Puppet.features.microsoft_windows?
-
+        File.stat(target.path).ino.should_not == inode
         get_mode(target.path).should == 0555
       end
 
@@ -797,14 +787,6 @@ describe Puppet::Util do
 
         # ...and check the replacement was complete.
         File.read(target.path).should == "hello, world\n"
-      end
-    end
-
-    describe "on Windows platforms" do
-      it "should fail and complain" do
-        Puppet.features.stubs(:microsoft_windows?).returns true
-
-        expect { Puppet::Util.replace_file("C:/foo", 0644) {} }.to raise_error(Puppet::DevError, "replace_file is non-functional on Windows")
       end
     end
   end

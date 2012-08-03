@@ -180,9 +180,8 @@ class Puppet::Configurer
 
   def save_last_run_summary(report)
     mode = Puppet.settings.setting(:lastrunfile).mode
-    Puppet::Util::FileLocking.writelock(Puppet[:lastrunfile]) do |file|
-      file.chmod(mode)
-      file.print YAML.dump(report.raw_summary)
+    Puppet::Util.replace_file(Puppet[:lastrunfile], mode) do |fh|
+      fh.print YAML.dump(report.raw_summary)
     end
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
