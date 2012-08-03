@@ -1,11 +1,19 @@
 require 'puppet/provider/package'
 require 'puppet/util/windows'
+require 'puppet/provider/package/windows/package'
 
 Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Package) do
-  desc "Windows package management by installing and removing MSIs.
+  desc "Windows package management.
 
-    This provider requires a `source` attribute, and will accept paths to local
-    files, mapped drives, or UNC paths."
+    This provider supports either MSI or self-extracting executable installers.
+
+    This provider requires a `source` attribute when installing the package.
+    It accepts paths paths to local files, mapped drives, or UNC paths.
+
+    If the executable requires special arguments to perform a silent install or
+    uninstall, then the appropriate arguments should be specified using the
+    `install_options` or `uninstall_options` attributes, respectively.  Puppet
+    will automatically quote any option that contains spaces."
 
   confine    :operatingsystem => :windows
   defaultfor :operatingsystem => :windows
@@ -15,77 +23,50 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   has_feature :install_options
   has_feature :uninstall_options
 
-  class MsiPackage
-    extend Enumerable
-    include Puppet::Util::Windows::Registry
-    extend Puppet::Util::Windows::Registry
+  attr_accessor :package
 
-    # From msi.h
-    INSTALLSTATE_DEFAULT = 5 # product is installed for the current user
-    INSTALLUILEVEL_NONE  = 2 # completely silent installation
-
-    def self.installer
-      WIN32OLE.new("WindowsInstaller.Installer")
+  # Return an array of provider instances
+  def self.instances
+    Puppet::Provider::Package::Windows::Package.map do |pkg|
+      provider = new(to_hash(pkg))
+      provider.package = pkg
+      provider
     end
+  end
 
-    def self.each(&block)
-      inst = installer
-      inst.UILevel = INSTALLUILEVEL_NONE
+  def self.to_hash(pkg)
+    {
+      :name     => pkg.name,
+      # we're not versionable, so we can't set the ensure
+      # parameter to the currently installed version
+      :ensure   => :installed,
+      :provider => :windows
+    }
+  end
 
-      inst.Products.each do |guid|
-        # products may be advertised, installed in a different user
-        # context, etc, we only want to know about products currently
-        # installed in our context.
-        next unless inst.ProductState(guid) == INSTALLSTATE_DEFAULT
-
-        package = {
-          :name        => inst.ProductInfo(guid, 'ProductName'),
-          # although packages have a version, the provider isn't versionable,
-          # so we can't return a version
-          # :ensure      => inst.ProductInfo(guid, 'VersionString'),
-          :ensure      => :installed,
-          :provider    => :windows,
-          :productcode => guid,
-          :packagecode => inst.ProductInfo(guid, 'PackageCode')
-        }
-
-        yield package
+  # Query for the provider hash for the current resource. The provider we
+  # are querying, may not have existed during prefetch
+  def query
+    Puppet::Provider::Package::Windows::Package.find do |pkg|
+      if pkg.match?(resource)
+        return self.class.to_hash(pkg)
       end
     end
-  end
-
-  # Get an array of provider instances for currently installed packages
-  def self.instances
-    MsiPackage.enum_for.map { |package| new(package) }
-  end
-
-  # Find first package whose PackageCode, e.g. {B2BE95D2-CD2C-46D6-8D27-35D150E58EC9},
-  # matches the resource name (case-insensitively due to hex) or the ProductName matches
-  # the resource name. The ProductName is not guaranteed to be unique, but the PackageCode
-  # should be if the package is authored correctly.
-  def query
-    MsiPackage.enum_for.find do |package|
-      resource[:name].casecmp(package[:packagecode]) == 0 || resource[:name] == package[:name]
-    end
+    nil
   end
 
   def install
-    fail("The source parameter is required when using the MSI provider.") unless resource[:source]
+    installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
-    # Unfortunately, we can't use the msiexec method defined earlier,
-    # because of the special quoting we need to do around the MSI
-    # properties to use.
-    command = ['msiexec.exe', '/qn', '/norestart', '/i', shell_quote(resource[:source]), install_options].flatten.compact.join(' ')
-    execute(command, :combine => true)
+    command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
+    execute(command, {:combine => true})
 
     check_result(exit_status)
   end
 
   def uninstall
-    fail("The productcode property is missing.") unless properties[:productcode]
-
-    command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode], uninstall_options].flatten.compact.join(' ')
-    execute(command, :combine => true)
+    command = [package.uninstall_command, uninstall_options].flatten.compact.join(' ')
+    execute(command, {:combine => true})
 
     check_result(exit_status)
   end
@@ -119,8 +100,9 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     end
   end
 
+  # This only get's called if there is a value to validate, but not if it's absent
   def validate_source(value)
-    fail("The source parameter cannot be empty when using the MSI provider.") if value.empty?
+    fail("The source parameter cannot be empty when using the Windows provider.") if value.empty?
   end
 
   def install_options
@@ -129,10 +111,6 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
   def uninstall_options
     join_options(resource[:uninstall_options])
-  end
-
-  def shell_quote(value)
-    value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
   end
 
   def join_options(options)
