@@ -31,10 +31,17 @@ top of things.
 * Make sure your commit messages are in the proper format.
 
 ````
-    (#Ticket Number) What you are changing with this commit
+    (#99999) Make the example in CONTRIBUTING imperative and concrete
 
-    Describe what happened before. Describe the change in behavior that this
-    commit makes.
+    Without this patch applied the example commit message in the CONTRIBUTING
+    document is not a concrete example.  This is a problem because the
+    contributor is left to imagine what the commit message should look like
+    based on a description rather than an example.  This patch fixes the
+    problem by making the example concrete and imperative.
+
+    The first line is a real life imperative statement with a ticket number
+    from our issue tracker.  The body describes the behavior without the patch,
+    why this is a problem, and how the patch fixes the problem when applied.
 ````
 
 * Make sure you have added the necessary tests for your changes.
