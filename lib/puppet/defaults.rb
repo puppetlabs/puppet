@@ -291,10 +291,11 @@ module Puppet
       :desc       => "The HTTP proxy port to use for outgoing connections",
     },
     :filetimeout => {
-      :default    => 15,
-      :desc       => "The minimum time to wait (in seconds) between checking for updates in
+      :default    => "15s",
+      :type       => :duration,
+      :desc       => "The minimum time to wait between checking for updates in
       configuration files.  This timeout determines how quickly Puppet checks whether
-      a file (such as manifests or templates) has changed on disk.",
+      a file (such as manifests or templates) has changed on disk. Can be specified as a duration.",
     },
     :queue_type => {
       :default    => "stomp",
@@ -680,11 +681,8 @@ EOT
     },
     :ca_ttl => {
       :default    => "5y",
-      :desc       => "The default TTL for new certificates; valid values
-      must be an integer, optionally followed by one of the units
-      'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds.  Examples are '3600'
-      (one hour) and '1825d', which is the same as '5y' (5 years) ",
+      :type       => :duration,
+      :desc       => "The default TTL for new certificates. Can be specified as a duration."
     },
     :ca_md => {
       :default    => "md5",
@@ -887,8 +885,9 @@ EOT
     },
     :rrdinterval => {
       :default  => "$runinterval",
+      :type     => :duration,
       :desc     => "How often RRD should expect data.
-            This should match how often the hosts report back to the server.",
+            This should match how often the hosts report back to the server. Can be specified as a duration.",
     }
   )
 
@@ -1007,11 +1006,12 @@ EOT
       :desc       => "Whether puppet agent should be run in noop mode.",
     },
     :runinterval => {
-      :default  => 1800, # 30 minutes
+      :default  => "30m",
+      :type     => :duration,
       :desc     => "How often puppet agent applies the client configuration; in seconds.
           Note that a runinterval of 0 means \"run continuously\" rather than
           \"never run.\" If you want puppet agent to never run, you should start
-          it with the `--no-client` option.",
+          it with the `--no-client` option. Can be specified as a duration.",
     },
     :listen => {
       :default    => false,
@@ -1093,8 +1093,9 @@ EOT
     },
     :splaylimit => {
       :default    => "$runinterval",
+      :type       => :duration,
       :desc       => "The maximum time to delay before runs.  Defaults to being the same as the
-      run interval.",
+      run interval. Can be specified as a duration.",
     },
     :splay => {
       :default    => false,
@@ -1109,10 +1110,11 @@ EOT
       :desc     => "Where FileBucket files are stored locally."
     },
     :configtimeout => {
-      :default  => 120,
+      :default  => "2m",
+      :type     => :duration,
       :desc     => "How long the client should wait for the configuration to be retrieved
       before considering it a failure.  This can help reduce flapping if too
-      many clients contact the server at one time.",
+      many clients contact the server at one time. Can be specified as a duration.",
     },
     :report_server => {
       :default  => "$server",
@@ -1170,10 +1172,12 @@ EOT
       compression, but if it supports it, this setting might reduce performance on high-speed LANs.",
     },
     :waitforcert => {
-        :default  => 120, # 2 minutes
-        :desc     => "The time interval, specified in seconds, 'puppet agent' should connect to the server
-            and ask it to sign a certificate request. This is useful for the initial setup of a
-            puppet client. You can turn off waiting for certificates by specifying a time of 0.",
+      :default  => "2m",
+      :type     => :duration,
+      :desc     => "The time interval 'puppet agent' should connect to the server
+      and ask it to sign a certificate request. This is useful for the initial setup of a
+      puppet client. You can turn off waiting for certificates by specifying a time of 0.
+      Can be specified as a duration.",
     }
   )
 

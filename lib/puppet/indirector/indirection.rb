@@ -72,7 +72,7 @@ class Puppet::Indirector::Indirection
 
   # Default to the runinterval for the ttl.
   def ttl
-    @ttl ||= Puppet[:runinterval].to_i
+    @ttl ||= Puppet[:runinterval]
   end
 
   # Calculate the expiration date for a returned instance.
