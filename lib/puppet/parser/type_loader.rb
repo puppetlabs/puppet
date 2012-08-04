@@ -87,18 +87,18 @@ class Puppet::Parser::TypeLoader
       file = File.join dir, file unless Puppet::Util.absolute_path? file
 
       if file =~ /\.rb\z/
-        known_before = known_resource_types.definitions +
-                       known_resource_types.nodes +
-                       known_resource_types.hostclasses
+        known_before = known_resource_types.definitions.values +
+                       known_resource_types.nodes.values +
+                       known_resource_types.hostclasses.values
 
         Puppet::Resource::Type.new(:hostclass, '').tap do |type|
           Puppet::DSL::Parser.new(type, File.read(file)).evaluate
           type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
         end
 
-        known_now    = known_resource_types.definitions +
-                       known_resource_types.nodes +
-                       known_resource_types.hostclasses
+        known_now    = known_resource_types.definitions.values +
+                       known_resource_types.nodes.values +
+                       known_resource_types.hostclasses.values
         loaded_ruby  = known_now - known_before
       else
         @loading_helper.do_once(file) { loaded_asts << parse_file(file) }

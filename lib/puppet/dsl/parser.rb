@@ -33,6 +33,29 @@ module Puppet
         @main.ruby_code = Context.new(@code)
       end
 
+      ##
+      # Returns the current scope.
+      ##
+      def self.current_scope
+        @@frames.last
+      end
+
+      ##
+      # Pushes a new scope on a stack.
+      ##
+      def self.add_scope(scope)
+        @@frames.push scope
+      end
+
+      ##
+      # Pops a scope from the stack.
+      # It'll raise RuntimeError if the stack is already empty.
+      ##
+      def self.remove_scope
+        raise RuntimeError, "scope stack already empty" if @@frames.empty?
+        @@frames.pop
+      end
+
     end
   end
 end

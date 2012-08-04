@@ -45,14 +45,6 @@ module Puppet
         is_resource_type? name
       end
 
-      def self.current_scope
-        @@scope
-      end
-
-      def self.known_resource_types
-        @@known_resource_types
-      end
-
       ##
       # Returns type reference. A fallback method for obtaining type references
       # for Ruby 1.8 users.
@@ -76,13 +68,11 @@ module Puppet
       # Method is called when evaluating resource types.
       # It executes ruby code in context of current scope.
       ##
-      def evaluate(scope, known_resource_types = nil)
-        @@scope = scope
-        @@known_resource_types = known_resource types || scope.known_resource_types
+      def evaluate(scope)
+        ::Puppet::DSL::Parser.add_scope scope
         instance_eval &@code
       ensure
-        @@known_resource_types = nil
-        @@scope = nil
+        ::Puppet::DSL::Parser.remove_scope
       end
 
       ##
@@ -90,13 +80,6 @@ module Puppet
       ##
       def raise(*args)
         ::Object.send :raise, *args
-      end
-
-      ##
-      # Proxy method for Object#raise
-      ##
-      def require(*args)
-        ::Object.send :require, *args
       end
 
       ##
@@ -146,7 +129,8 @@ module Puppet
         name = name.to_s unless name.is_a? ::Regexp
         node = ::Puppet::Resource::Type.new :node, name, params
         node.ruby_code = ::Puppet::DSL::Context.new block
-        ::Puppet::DSL::Context.known_resource_types.add_node node
+
+        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_node node
       end
 
       ##
@@ -180,12 +164,12 @@ module Puppet
 
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
-        params.merge! :parent => options[:inherits].to_s if options[:inherits]
+        params.merge! :parent    => options[:inherits].to_s if options[:inherits]
 
         hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
         hostclass.ruby_code = ::Puppet::DSL::Context.new block
 
-        ::Puppet::DSL::Context.known_resource_types.add_hostclass hostclass
+        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_hostclass hostclass
       end
 
       ##
@@ -219,7 +203,7 @@ module Puppet
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
         definition.ruby_code = ::Puppet::DSL::Context.new block
-        ::Puppet::DSL::Context.known_resource_types.add_definition definition
+        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_definition definition
       end
 
       ##
@@ -294,14 +278,14 @@ module Puppet
       # Returns string description of context
       ##
       def inspect
-        "<#Puppet::DSL::Context #{self.__id__}>"
+        "<#Puppet::DSL::Context #{self.__id__} @code=#{@code.inspect}>"
       end
 
       ##
       # Returns current scope for access for variables
       ##
       def params
-        ::Puppet::DSL::Context.current_scope
+        ::Puppet::DSL::Parser.current_scope
       end
 
       ##
@@ -323,13 +307,16 @@ module Puppet
       #
       ##
       def create_resource(type, *args, &block)
-        raise ::NoMethodError unless valid_type? type
+        # when performing type import the scope is nil
+        return if ::Puppet::DSL::Parser.current_scope.nil?
+
+        raise ::NoMethodError, "resource type #{type} not found" unless valid_type? type
         options = args.last.is_a?(::Hash) ? args.pop : {}
 
         ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
         ::Puppet::Util.symbolizehash! options
 
-        scope = ::Puppet::DSL::Context.current_scope
+        scope = ::Puppet::DSL::Parser.current_scope
         ::Kernel::Array(args).map do |name|
           ##
           # Implementation based on
@@ -339,7 +326,7 @@ module Puppet
 
           case type
           when :class
-            klass = scope.find_hostclass name
+            klass = ::Puppet::DSL::Parser.current_scope.known_resource_types.find_hostclass '', name
             klass.ensure_in_catalog scope, options
           else
             resource = ::Puppet::Parser::Resource.new type, name,
@@ -353,9 +340,8 @@ module Puppet
             resource.exported = true if exporting? or options[:export] == true
 
             definition = scope.find_definition name
-            if definition
-              definition.instantiate_resource scope, resource
-            end
+            definition.instantiate_resource scope, resource if definition
+
             scope.compiler.add_resource scope, resource
           end
           resource
@@ -375,8 +361,11 @@ module Puppet
       #
       ##
       def call_function(name, *args)
-        raise ::NoMethodError unless valid_function? name
-        ::Puppet::DSL::Context.current_scope.send name, args
+        # when performing type import the scope is nil
+        return if ::Puppet::DSL::Parser.current_scope.nil?
+
+        raise ::NoMethodError, "calling undefined function #{name}(#{args.join ', '})" unless valid_function? name
+        ::Puppet::DSL::Parser.current_scope.send name, args
       end
 
       ##

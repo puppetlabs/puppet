@@ -529,15 +529,6 @@ describe Puppet::DSL::Context do
 
   describe "utility methods" do
 
-    describe "#require" do
-      it "should proxy require to Object" do
-        Object.expects(:require).with "asdf"
-        evaluate_in_context do
-          require "asdf"
-        end
-      end
-    end
-
     describe "#raise" do
       it "should proxy raise to Object" do
         Object.expects :raise

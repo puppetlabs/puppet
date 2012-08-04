@@ -30,7 +30,7 @@ module Puppet
       def reference
         @resource.to_s
       end
-      alias to_s reference 
+      alias to_s reference
 
       ##
       # Method allows to create overrides for a resource.

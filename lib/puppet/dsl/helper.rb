@@ -78,8 +78,8 @@ module Puppet
         type = canonize_type(name)
         !!(["Node", "Class"].include? type or
            ::Puppet::Type.type type or
-           ::Puppet::DSL::Context.known_resource_types.find_definition '', type or
-           ::Puppet::DSL::Context.known_resource_types.find_hostclass  '', type)
+           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_definition '', type or
+           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_hostclass  '', type)
       end
 
       ##
@@ -99,7 +99,7 @@ module Puppet
         when ::Puppet::DSL::ResourceReference
           reference.resource
         when ::String
-          ::Puppet::DSL::Context.current_scope.findresource reference
+          ::Puppet::DSL::Parser.current_scope.findresource reference
         else
           nil
         end
