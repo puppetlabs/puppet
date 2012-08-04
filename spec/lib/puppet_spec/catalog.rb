@@ -5,9 +5,9 @@ module PuppetSpec::Catalog
     # compares compiled catalogs
     def ==(other)
       [:name, :environment, :tags,
-       :resources, :edges, :classes].map do |m|
+        :resources, :edges, :classes].map do |m|
         self.send(m) == other.send(m)
-      end.all?
+        end.all?
     end
   end
 
@@ -15,9 +15,14 @@ module PuppetSpec::Catalog
 
     # compares relationships
     def ==(other)
-      [:source, :target, :event, :callback].map do |m|
-        self.send(m) == other.send(m)
-      end.all?
+      if other.is_a? String
+        # this happens when loading from YAML
+        self.to_s == other
+      else
+        [:source, :target, :event, :callback].map do |m|
+          self.send(m) == other.send(m)
+        end.all?
+      end
     end
   end
 

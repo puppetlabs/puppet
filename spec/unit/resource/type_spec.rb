@@ -8,11 +8,18 @@ describe Puppet::Resource::Type do
     Puppet::Resource::Type.new(:hostclass, "foo").name.should == "foo"
   end
 
-  [:code, :doc, :line, :file, :resource_type_collection, :ruby_code].each do |attr|
+  [:code, :doc, :line, :file, :resource_type_collection].each do |attr|
     it "should have a '#{attr}' attribute" do
       type = Puppet::Resource::Type.new(:hostclass, "foo")
       type.send(attr.to_s + "=", "yay")
       type.send(attr).should == "yay"
+    end
+  end
+
+  it "has ruby_code attribute" do
+    Puppet::Resource::Type.new(:hostclass, "foo").tap do |type|
+      type.ruby_code = "yay"
+      type.ruby_code.should == ["yay"]
     end
   end
 
@@ -472,7 +479,7 @@ describe Puppet::Resource::Type do
       it "should evaluate ruby code" do
         code = stub 'code'
         code.expects(:evaluate).with {|scope| scope.is_a? Puppet::Parser::Scope }
-        @type.stubs(:ruby_code).returns(code)
+        @type.stubs(:ruby_code).returns(Array(code))
         @type.evaluate_code(@resource)
       end
     end
@@ -737,7 +744,7 @@ describe Puppet::Resource::Type do
       source.ruby_code = "bar"
 
       dest.merge source
-      dest.ruby_code.should == "bar"
+      dest.ruby_code.should == ["bar"]
     end
 
     it "appends other's ruby code if it has ruby code" do
@@ -747,7 +754,7 @@ describe Puppet::Resource::Type do
       source.ruby_code = "bar"
 
       dest.merge source
-      dest.ruby_code.should == "foo\nbar"
+      dest.ruby_code.should == ["foo", "bar"]
     end
 
     it "returns own ruby code if the other has no ruby code" do
@@ -756,7 +763,7 @@ describe Puppet::Resource::Type do
       dest.ruby_code = "foo"
 
       dest.merge source
-      dest.ruby_code.should == "foo"
+      dest.ruby_code.should == ["foo"]
     end
 
     it "should turn its code into an ASTArray if necessary" do

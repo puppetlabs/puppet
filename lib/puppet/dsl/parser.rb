@@ -34,13 +34,6 @@ module Puppet
       end
 
       ##
-      # Returns the top level scope.
-      ##
-      def self.top_scope
-        @@frames.first
-      end
-
-      ##
       # Returns the current scope.
       ##
       def self.current_scope
@@ -59,16 +52,8 @@ module Puppet
       # It'll raise RuntimeError if the stack is already empty.
       ##
       def self.remove_scope
-        raise RuntimeError, "scope stack already empty" if @@frames.first.nil?
+        raise RuntimeError, "scope stack already empty" if @@frames.empty?
         @@frames.pop
-      end
-
-      ##
-      # Checks whether nesting for creating definitions, nodes and hostclasses
-      # is valid. These resources can be only created in the top level scope.
-      ##
-      def self.valid_nesting?
-        Parser.top_scope == Parser.current_scope
       end
 
     end
