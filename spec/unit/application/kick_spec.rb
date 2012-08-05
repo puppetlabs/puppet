@@ -141,7 +141,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
     describe "when using the ldap node terminus" do
       before :each do
-        Puppet.stubs(:[]).with(:node_terminus).returns("ldap")
+        Puppet[:node_terminus] = "ldap"
       end
 
       it "should pass the fqdn option to search" do

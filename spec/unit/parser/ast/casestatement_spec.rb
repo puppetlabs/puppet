@@ -3,7 +3,9 @@ require 'spec_helper'
 
 describe Puppet::Parser::AST::CaseStatement do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
@@ -153,9 +155,11 @@ describe Puppet::Parser::AST::CaseStatement do
 
     tests.each do |should, values|
       values.each do |value|
-        @scope = Puppet::Parser::Scope.new
-        @scope['testparam'] = value
-        result = ast.evaluate(@scope)
+        node     = Puppet::Node.new('localhost')
+        compiler = Puppet::Parser::Compiler.new(node)
+        scope    = Puppet::Parser::Scope.new(compiler)
+        scope['testparam'] = value
+        result = ast.evaluate(scope)
 
         result.should == should
       end

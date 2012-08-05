@@ -5,5 +5,5 @@ Puppet::Type.type(:package).provide :sunfreeware, :parent => :blastwave, :source
     has not actually been tested."
   commands :pkgget => "pkg-get"
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 end

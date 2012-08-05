@@ -36,8 +36,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should be able to downcase fact values" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
+    Puppet[:downcasefacts] = true
 
     @facts.values["one"] = "Two"
 
@@ -46,8 +45,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should only try to downcase strings" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
+    Puppet[:downcasefacts] = true
 
     @facts.values["now"] = Time.now
 
@@ -56,8 +54,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should not downcase facts if not configured to do so" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns false
+    Puppet[:downcasefacts] = false
 
     @facts.values["one"] = "Two"
     @facts.downcase_if_necessary

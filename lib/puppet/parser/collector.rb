@@ -1,7 +1,8 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-  attr_accessor :type, :scope, :vquery, :equery, :form, :resources, :overrides, :collected
+  attr_accessor :type, :scope, :vquery, :equery, :form
+  attr_accessor :resources, :overrides, :collected
 
   # Call the collection method, mark all of the returned objects as
   # non-virtual, optionally applying parameter overrides. The collector can

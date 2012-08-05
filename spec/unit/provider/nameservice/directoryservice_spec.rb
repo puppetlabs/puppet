@@ -31,7 +31,7 @@ require 'spec_helper'
           with([:dseditgroup, '-o', 'edit', '-n', '.', '-a', add, group])
       end
 
-      expect { @provider.set(:members, desired) }.should_not raise_error
+      expect { @provider.set(:members, desired) }.to_not raise_error
     end
   end
 end
@@ -40,9 +40,9 @@ describe 'DirectoryService.single_report' do
   it 'should fail on OS X < 10.5' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
 
-    lambda {
+    expect {
       Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
-    }.should raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
+    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
   end
 
   it 'should use plist data on >= 10.5' do
@@ -63,9 +63,9 @@ describe 'DirectoryService.get_exec_preamble' do
   it 'should fail on OS X < 10.5' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.4")
 
-    lambda {
+    expect {
       Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list')
-    }.should raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
+    }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
   end
 
   it 'should use plist data on >= 10.5' do
@@ -120,7 +120,7 @@ describe 'DirectoryService password behavior' do
   it 'should fail if a salted-SHA512 password hash is not passed in >= 10.7' do
     expect {
       subject.set_password('jeff', 'uid', 'badpassword')
-    }.should raise_error(RuntimeError, /OS X 10.7 requires a Salted SHA512 hash password of 136 characters./)
+    }.to raise_error(RuntimeError, /OS X 10.7 requires a Salted SHA512 hash password of 136 characters./)
   end
 
   it 'should convert xml-to-binary and binary-to-xml when setting the pw on >= 10.7' do

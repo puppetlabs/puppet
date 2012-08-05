@@ -6,13 +6,12 @@ describe Puppet::Network::Server do
   before do
     @mock_http_server_class = mock('http server class')
     Puppet.settings.stubs(:use)
-    Puppet.run_mode.stubs(:name).returns "me"
-    Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
-    Puppet.settings.stubs(:value).with(:bindaddress).returns("")
-    Puppet.settings.stubs(:value).with(:masterport).returns(8140)
-    Puppet.settings.stubs(:value).with(:daemonize).returns(true)
+    Puppet.run_mode.stubs(:name).returns :master
+    Puppet[:servertype] = :suparserver
+    Puppet[:bindaddress] = ""
+    Puppet[:masterport] = 8140
     Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
-    Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
+    Puppet[:servertype] = :suparserver
     @server = Puppet::Network::Server.new(:port => 31337)
     @server.stubs(:close_streams).returns(nil)
   end
@@ -20,63 +19,52 @@ describe Puppet::Network::Server do
   describe "when initializing" do
     before do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-      Puppet.settings.stubs(:value).with(:bindaddress).returns("")
-      Puppet.settings.stubs(:value).with(:masterport).returns('')
+      Puppet[:bindaddress] = ""
+      Puppet[:masterport] = ''
     end
 
     it 'should fail if an unknown option is provided' do
-      lambda { Puppet::Network::Server.new(:foo => 31337) }.should raise_error(ArgumentError)
+      expect { Puppet::Network::Server.new(:foo => 31337) }.to raise_error(ArgumentError)
     end
 
     it "should allow specifying a listening port" do
-      Puppet.settings.stubs(:value).with(:bindaddress).returns('')
+      Puppet[:bindaddress] = ''
       @server = Puppet::Network::Server.new(:port => 31337)
       @server.port.should == 31337
     end
 
     it "should use the :bindaddress setting to determine the default listening address" do
-      Puppet.settings.stubs(:value).with(:masterport).returns('')
-      Puppet.settings.expects(:value).with(:bindaddress).returns("10.0.0.1")
+      Puppet[:masterport] = ''
+      Puppet[:bindaddress] = "10.0.0.1"
       @server = Puppet::Network::Server.new
       @server.address.should == "10.0.0.1"
     end
 
     it "should set the bind address to '127.0.0.1' if the default address is an empty string and the server type is mongrel" do
-      Puppet.settings.stubs(:value).with(:servertype).returns("mongrel")
-      Puppet.settings.expects(:value).with(:bindaddress).returns("")
+      Puppet[:servertype] = "mongrel"
+      Puppet[:bindaddress] = ""
       @server = Puppet::Network::Server.new
       @server.address.should == '127.0.0.1'
     end
 
     it "should set the bind address to '0.0.0.0' if the default address is an empty string and the server type is webrick" do
-      Puppet.settings.stubs(:value).with(:servertype).returns("webrick")
-      Puppet.settings.expects(:value).with(:bindaddress).returns("")
+      Puppet[:servertype] = "webrick"
+      Puppet[:bindaddress] = ""
       @server = Puppet::Network::Server.new
       @server.address.should == '0.0.0.0'
     end
 
     it "should use the Puppet configurator to find a default listening port" do
-      Puppet.settings.stubs(:value).with(:bindaddress).returns('')
-      Puppet.settings.expects(:value).with(:masterport).returns(6667)
+      Puppet[:bindaddress] = ''
+      Puppet[:masterport] = 6667
       @server = Puppet::Network::Server.new
       @server.port.should == 6667
     end
 
-    it "should fail to initialize if no listening port can be found" do
-      Puppet.settings.stubs(:value).with(:bindaddress).returns("127.0.0.1")
-      Puppet.settings.stubs(:value).with(:masterport).returns(nil)
-      lambda { Puppet::Network::Server.new }.should raise_error(ArgumentError)
-    end
-
     it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
-      Puppet.settings.expects(:value).with(:servertype).returns(:suparserver)
+      Puppet[:servertype] = :suparserver
       @server = Puppet::Network::Server.new(:port => 31337)
       @server.server_type.should == :suparserver
-    end
-
-    it "should fail to initialize if there is no HTTP server known to the Puppet configurator" do
-      Puppet.settings.expects(:value).with(:servertype).returns(nil)
-      lambda { Puppet::Network::Server.new(:port => 31337) }.should raise_error
     end
 
     it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
@@ -86,12 +74,12 @@ describe Puppet::Network::Server do
 
     it "should fail if the HTTP server class is unknown" do
       Puppet::Network::HTTP.stubs(:server_class_by_type).returns(nil)
-      lambda { Puppet::Network::Server.new(:port => 31337) }.should raise_error(ArgumentError)
+      expect { Puppet::Network::Server.new(:port => 31337) }.to raise_error(ArgumentError)
     end
 
     it "should allow registering REST handlers" do
       @server = Puppet::Network::Server.new(:port => 31337, :handlers => [ :foo, :bar, :baz])
-      lambda { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
+      expect { @server.unregister(:foo, :bar, :baz) }.to_not raise_error
     end
 
     it "should not be listening after initialization" do
@@ -160,9 +148,9 @@ describe Puppet::Network::Server do
       pidfile = mock 'pidfile'
 
       Puppet.run_mode.expects(:name).returns "eh"
-      Puppet.settings.expects(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = File.expand_path("/my/file")
 
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       pidfile.expects(:lock).returns true
       @server.create_pidfile
@@ -171,14 +159,13 @@ describe Puppet::Network::Server do
     it "should fail if it cannot lock" do
       pidfile = mock 'pidfile'
 
-      Puppet.run_mode.stubs(:name).returns "eh"
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = File.expand_path("/my/file")
 
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       pidfile.expects(:lock).returns false
 
-      lambda { @server.create_pidfile }.should raise_error
+      expect { @server.create_pidfile }.to raise_error /Could not create PID/
     end
   end
 
@@ -191,16 +178,16 @@ describe Puppet::Network::Server do
 
     it "should do nothing if the pidfile is not present" do
       pidfile = mock 'pidfile', :unlock => false
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = "/my/file"
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       @server.remove_pidfile
     end
 
     it "should unlock the pidfile using the Pidlock class" do
       pidfile = mock 'pidfile', :unlock => true
-      Puppet::Util::Pidlock.expects(:new).with("/my/file").returns pidfile
-      Puppet.settings.stubs(:value).with(:pidfile).returns "/my/file"
+      Puppet[:pidfile] = "/my/file"
+      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
 
       @server.remove_pidfile
     end
@@ -212,60 +199,60 @@ describe Puppet::Network::Server do
     end
 
     it "should allow registering an indirection for client access by specifying its indirection name" do
-      lambda { @server.register(:foo) }.should_not raise_error
+      expect { @server.register(:foo) }.to_not raise_error
     end
 
     it "should require that the indirection be valid" do
       Puppet::Indirector::Indirection.expects(:model).with(:foo).returns nil
-      lambda { @server.register(:foo) }.should raise_error(ArgumentError)
+      expect { @server.register(:foo) }.to raise_error(ArgumentError)
     end
 
     it "should require at least one indirection name when registering indirections for client access" do
-      lambda { @server.register }.should raise_error(ArgumentError)
+      expect { @server.register }.to raise_error(ArgumentError)
     end
 
     it "should allow for numerous indirections to be registered at once for client access" do
-      lambda { @server.register(:foo, :bar, :baz) }.should_not raise_error
+      expect { @server.register(:foo, :bar, :baz) }.to_not raise_error
     end
 
     it "should allow the use of indirection names to specify which indirections are to be no longer accessible to clients" do
       @server.register(:foo)
-      lambda { @server.unregister(:foo) }.should_not raise_error
+      expect { @server.unregister(:foo) }.to_not raise_error
     end
 
     it "should leave other indirections accessible to clients when turning off indirections" do
       @server.register(:foo, :bar)
       @server.unregister(:foo)
-      lambda { @server.unregister(:bar)}.should_not raise_error
+      expect { @server.unregister(:bar)}.to_not raise_error
     end
 
     it "should allow specifying numerous indirections which are to be no longer accessible to clients" do
       @server.register(:foo, :bar)
-      lambda { @server.unregister(:foo, :bar) }.should_not raise_error
+      expect { @server.unregister(:foo, :bar) }.to_not raise_error
     end
 
     it "should not turn off any indirections if given unknown indirection names to turn off" do
       @server.register(:foo, :bar)
-      lambda { @server.unregister(:foo, :bar, :baz) }.should raise_error(ArgumentError)
-      lambda { @server.unregister(:foo, :bar) }.should_not raise_error
+      expect { @server.unregister(:foo, :bar, :baz) }.to raise_error(ArgumentError)
+      expect { @server.unregister(:foo, :bar) }.to_not raise_error
     end
 
     it "should not allow turning off unknown indirection names" do
       @server.register(:foo, :bar)
-      lambda { @server.unregister(:baz) }.should raise_error(ArgumentError)
+      expect { @server.unregister(:baz) }.to raise_error(ArgumentError)
     end
 
     it "should disable client access immediately when turning off indirections" do
       @server.register(:foo, :bar)
       @server.unregister(:foo)
-      lambda { @server.unregister(:foo) }.should raise_error(ArgumentError)
+      expect { @server.unregister(:foo) }.to raise_error(ArgumentError)
     end
 
     it "should allow turning off all indirections at once" do
       @server.register(:foo, :bar)
       @server.unregister
       [ :foo, :bar, :baz].each do |indirection|
-        lambda { @server.unregister(indirection) }.should raise_error(ArgumentError)
+        expect { @server.unregister(indirection) }.to raise_error(ArgumentError)
       end
     end
   end
@@ -294,8 +281,8 @@ describe Puppet::Network::Server do
     @server2.register(:foo, :xyzzy)
     @server.unregister(:foo, :bar)
     @server2.unregister(:foo, :xyzzy)
-    lambda { @server.unregister(:xyzzy) }.should raise_error(ArgumentError)
-    lambda { @server2.unregister(:bar) }.should raise_error(ArgumentError)
+    expect { @server.unregister(:xyzzy) }.to raise_error(ArgumentError)
+    expect { @server2.unregister(:bar) }.to raise_error(ArgumentError)
   end
 
   describe "when listening is off" do
@@ -310,11 +297,11 @@ describe Puppet::Network::Server do
     end
 
     it "should not allow listening to be turned off" do
-      lambda { @server.unlisten }.should raise_error(RuntimeError)
+      expect { @server.unlisten }.to raise_error(RuntimeError)
     end
 
     it "should allow listening to be turned on" do
-      lambda { @server.listen }.should_not raise_error
+      expect { @server.listen }.to_not raise_error
     end
 
   end
@@ -333,11 +320,11 @@ describe Puppet::Network::Server do
     end
 
     it "should not allow listening to be turned on" do
-      lambda { @server.listen }.should raise_error(RuntimeError)
+      expect { @server.listen }.to raise_error(RuntimeError)
     end
 
     it "should allow listening to be turned off" do
-      lambda { @server.unlisten }.should_not raise_error
+      expect { @server.unlisten }.to_not raise_error
     end
   end
 
@@ -404,7 +391,7 @@ describe Puppet::Network::Server do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
 
       @server.register(:foo)
-      lambda { @server.unregister(:foo) }.should raise_error(RuntimeError)
+      expect { @server.unregister(:foo) }.to raise_error(RuntimeError)
     end
   end
 end

@@ -167,8 +167,8 @@ describe Puppet::Agent do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client
 
-      client.expects(:run).with("testargs")
-      @agent.run("testargs")
+      client.expects(:run).with(:pluginsync => true, :other => :options)
+      @agent.run(:other => :options)
     end
 
     it "should return the agent result" do
@@ -235,12 +235,12 @@ describe Puppet::Agent do
 
   describe "when splaying" do
     before do
-      Puppet.settings.stubs(:value).with(:splay).returns true
-      Puppet.settings.stubs(:value).with(:splaylimit).returns "10"
+      Puppet[:splay] = true
+      Puppet[:splaylimit] = "10"
     end
 
     it "should do nothing if splay is disabled" do
-      Puppet.settings.expects(:value).returns false
+      Puppet[:splay] = false
       @agent.expects(:sleep).never
       @agent.splay
     end
@@ -258,7 +258,7 @@ describe Puppet::Agent do
     end
 
     it "should sleep for a random portion of the splaylimit plus 1" do
-      Puppet.settings.expects(:value).with(:splaylimit).returns "50"
+      Puppet[:splaylimit] = "50"
       @agent.expects(:rand).with(51).returns 10
       @agent.expects(:sleep).with(10)
       @agent.splay

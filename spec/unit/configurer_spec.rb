@@ -94,9 +94,14 @@ describe Puppet::Configurer do
       @agent.run
     end
 
-    it "should download plugins" do
+    it "downloads plugins when told" do
       @agent.expects(:download_plugins)
-      @agent.run
+      @agent.run(:pluginsync => true)
+    end
+
+    it "does not download plugins when told" do
+      @agent.expects(:download_plugins).never
+      @agent.run(:pluginsync => false)
     end
 
     it "should initialize a transaction report if one is not provided" do
@@ -458,7 +463,7 @@ describe Puppet::Configurer do
       Puppet::Util.expects(:replace_file).yields(fh)
 
       Puppet.expects(:err)
-      expect { @configurer.save_last_run_summary(@report) }.should_not raise_error
+      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
     end
   end
 
@@ -539,8 +544,7 @@ describe Puppet::Configurer do
     end
 
     it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
-      Puppet.stubs(:[])
-      Puppet.expects(:[]).with(:usecacheonfailure).returns false
+      Puppet[:usecacheonfailure] = false
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
 
       Puppet.expects(:warning)

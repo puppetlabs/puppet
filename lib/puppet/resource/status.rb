@@ -57,9 +57,8 @@ module Puppet
         @skipped = false
         @failed = false
 
-        [:file, :line].each do |attr|
-          send(attr.to_s + "=", resource.send(attr))
-        end
+        @file = resource.file
+        @line = resource.line
 
         tag(*resource.tags)
         @time = Time.now
@@ -69,7 +68,7 @@ module Puppet
       end
 
       def to_yaml_properties
-        (YAML_ATTRIBUTES & instance_variables).sort
+        YAML_ATTRIBUTES & instance_variables
       end
 
       private

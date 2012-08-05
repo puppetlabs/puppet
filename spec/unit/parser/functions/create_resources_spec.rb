@@ -6,10 +6,10 @@ describe 'function for dynamically creating resources' do
   include PuppetSpec::Compiler
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production'))
+    node      = Puppet::Node.new("floppy", :environment => 'production')
+    @compiler = Puppet::Parser::Compiler.new(node)
+    @scope    = Puppet::Parser::Scope.new(@compiler)
     @topscope = @scope.compiler.topscope
-    @compiler = @scope.compiler
     @scope.parent = @topscope
     Puppet::Parser::Functions.function(:create_resources)
   end
@@ -19,8 +19,8 @@ describe 'function for dynamically creating resources' do
   end
 
   it 'should require two or three arguments' do
-    expect { @scope.function_create_resources(['foo']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (1; must be 2 or 3)')
-    expect { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.should raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
+    expect { @scope.function_create_resources(['foo']) }.to raise_error(ArgumentError, 'create_resources(): wrong number of arguments (1; must be 2 or 3)')
+    expect { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.to raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
   end
 
   describe 'when the caller does not supply a name parameter' do
@@ -57,7 +57,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should fail to add non-existing type' do
-      expect { @scope.function_create_resources(['create-resource-foo', {}]) }.should raise_error(ArgumentError, 'could not create resource of unknown type create-resource-foo')
+      expect { @scope.function_create_resources(['create-resource-foo', {}]) }.to raise_error(ArgumentError, 'could not create resource of unknown type create-resource-foo')
     end
 
     it 'should be able to add edges' do
@@ -89,7 +89,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should fail if defines are missing params' do
-      expect { 
+      expect {
         compile_to_catalog(<<-MANIFEST)
           define foocreateresource($one) {
             notify { $name: message => $one }
@@ -97,7 +97,7 @@ describe 'function for dynamically creating resources' do
           
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.should raise_error(Puppet::Error, 'Must pass one to Foocreateresource[blah] on node foonode')
+      }.to raise_error(Puppet::Error, 'Must pass one to Foocreateresource[blah] on node foonode')
     end
 
     it 'should be able to add multiple defines' do
@@ -165,7 +165,7 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'blah'=>{'one'=>'two'}})
         MANIFEST
-      }.should raise_error(Puppet::Error ,'could not find hostclass blah at line 1 on node foonode')
+      }.to raise_error(Puppet::Error ,'could not find hostclass blah at line 1 on node foonode')
     end
 
     it 'should be able to add edges' do

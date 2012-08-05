@@ -25,7 +25,7 @@ class Puppet::Agent
   end
 
   # Perform a run with our client.
-  def run(*args)
+  def run(client_options = {})
     if running?
       Puppet.notice "Run of #{client_class} already in progress; skipping"
       return
@@ -41,7 +41,8 @@ class Puppet::Agent
       result = run_in_fork(should_fork) do
         with_client do |client|
           begin
-            sync.synchronize { lock { client.run(*args) } }
+            client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
+            sync.synchronize { lock { client.run(client_args) } }
           rescue SystemExit,NoMemoryError
             raise
           rescue Exception => detail

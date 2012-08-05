@@ -163,7 +163,7 @@ describe Puppet::Indirector::Indirection do
     end
 
     it "should default to the :runinterval setting, converted to an integer, for its ttl" do
-      Puppet.settings.expects(:value).returns "1800"
+      Puppet[:runinterval] = 1800
       @indirection.ttl.should == 1800
     end
 
@@ -688,8 +688,8 @@ describe Puppet::Indirector::Indirection do
 
     it "should use the provided Puppet setting if told to do so" do
       Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :my_terminus).returns(mock("terminus_class2"))
-      Puppet.settings.expects(:value).with(:my_setting).returns("my_terminus")
-      @indirection.terminus_setting = :my_setting
+      Puppet[:node_terminus] = :my_terminus
+      @indirection.terminus_setting = :node_terminus
       @indirection.terminus_class.should equal(:my_terminus)
     end
 
@@ -816,7 +816,6 @@ describe Puppet::Indirector::Indirection do
 
   describe "when using a cache" do
     before :each do
-      Puppet.settings.stubs(:value).with("test_terminus").returns("test_terminus")
       @terminus_class = mock 'terminus_class'
       @terminus = mock 'terminus'
       @terminus_class.stubs(:new).returns(@terminus)
@@ -836,7 +835,6 @@ describe Puppet::Indirector::Indirection do
 
       it "should reuse the cache terminus" do
         @cache_class.expects(:new).returns(@cache)
-        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
         @indirection.cache_class = :cache_terminus
         @indirection.cache.should equal(@cache)
         @indirection.cache.should equal(@cache)

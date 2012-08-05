@@ -26,8 +26,13 @@ describe Puppet::Network::HttpPool do
       http.port.should    == 54321
     end
 
-    it "should enable ssl on the http instance" do
+    it "should enable ssl on the http instance by default" do
       Puppet::Network::HttpPool.http_instance("me", 54321).should be_use_ssl
+    end
+
+    it "can set ssl using an option" do
+      Puppet::Network::HttpPool.http_instance("me", 54321, false).should_not be_use_ssl
+      Puppet::Network::HttpPool.http_instance("me", 54321, true).should be_use_ssl
     end
 
     context "proxy and timeout settings should propagate" do

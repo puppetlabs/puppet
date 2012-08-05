@@ -1,0 +1,43 @@
+Runlevel: boot
+ hwclock                                                           [  started  ]
+ modules                                                           [  started  ]
+ dmcrypt                                                           [  started  ]
+ lvm                                                               [  started  ]
+ fsck                                                              [  started  ]
+ root                                                              [  started  ]
+ mtab                                                              [  started  ]
+ swap                                                              [  started  ]
+ localmount                                                        [  started  ]
+ sysctl                                                            [  started  ]
+ bootmisc                                                          [  started  ]
+ hostname                                                          [  started  ]
+ termencoding                                                      [  started  ]
+ keymaps                                                           [  started  ]
+ net.lo                                                            [  started  ]
+ procfs                                                            [  started  ]
+ rsyslog                                                           [  started  ]
+ swapfiles                                                         [  started  ]
+ urandom                                                           [  started  ]
+Runlevel: default
+ netmount                                                          [  started  ]
+ foo_with_very_very_long_servicename_no_still_not_the_end_wait_for_it_almost_there_almost_there_now_finally_the_end [  started  ]
+ xdm                                                               [  started  ]
+ alsasound                                                         [  started  ]
+ udev-postmount                                                    [  started  ]
+ local                                                             [  started  ]
+Runlevel: shutdown
+ killprocs                                                         [  stopped  ]
+ savecache                                                         [  stopped  ]
+ mount-ro                                                          [  stopped  ]
+Runlevel: sysinit
+ dmesg                                                             [  started  ]
+ udev                                                              [  started  ]
+ devfs                                                             [  started  ]
+Dynamic Runlevel: hotplugged
+ net.eth0                                                          [  started  ]
+ pcscd                                                             [  started  ]
+Dynamic Runlevel: needed
+ sysfs                                                             [  started  ]
+ udev-mount                                                        [  started  ]
+Dynamic Runlevel: manual
+ sshd                                                              [  started  ]

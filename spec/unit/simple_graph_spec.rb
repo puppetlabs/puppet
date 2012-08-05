@@ -24,7 +24,7 @@ describe Puppet::SimpleGraph do
     @graph = Puppet::SimpleGraph.new
     @graph.add_edge(:one, :two)
 
-    proc { @graph.to_dot_graph }.should_not raise_error
+    expect { @graph.to_dot_graph }.to_not raise_error
   end
 
   describe "when managing vertices" do
@@ -45,7 +45,7 @@ describe Puppet::SimpleGraph do
 
     it "should ignore already-present vertices when asked to add a vertex" do
       @graph.add_vertex(:test)
-      proc { @graph.add_vertex(:test) }.should_not raise_error
+      expect { @graph.add_vertex(:test) }.to_not raise_error
     end
 
     it "should return true when asked if a vertex is present" do
@@ -72,7 +72,7 @@ describe Puppet::SimpleGraph do
     end
 
     it "should do nothing when a non-vertex is asked to be removed" do
-      proc { @graph.remove_vertex!(:one) }.should_not raise_error
+      expect { @graph.remove_vertex!(:one) }.to_not raise_error
     end
   end
 
@@ -291,22 +291,22 @@ describe Puppet::SimpleGraph do
 
     it "should fail on two-vertex loops" do
       add_edges :a => :b, :b => :a
-      proc { @graph.report_cycles_in_graph }.should raise_error(Puppet::Error)
+      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
     end
 
     it "should fail on multi-vertex loops" do
       add_edges :a => :b, :b => :c, :c => :a
-      proc { @graph.report_cycles_in_graph }.should raise_error(Puppet::Error)
+      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
     end
 
     it "should fail when a larger tree contains a small cycle" do
       add_edges :a => :b, :b => :a, :c => :a, :d => :c
-      proc { @graph.report_cycles_in_graph }.should raise_error(Puppet::Error)
+      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
     end
 
     it "should succeed on trees with no cycles" do
       add_edges :a => :b, :b => :e, :c => :a, :d => :c
-      proc { @graph.report_cycles_in_graph }.should_not raise_error
+      expect { @graph.report_cycles_in_graph }.to_not raise_error
     end
 
     it "should produce the correct relationship text" do
@@ -323,7 +323,7 @@ describe Puppet::SimpleGraph do
       add_edges "b" => "c"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == [["a", "b"]]
     end
 
@@ -332,7 +332,7 @@ describe Puppet::SimpleGraph do
       add_edges "b" => "b1", "b1" => "b"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == [["a1", "a"], ["b1", "b"]]
     end
 
@@ -342,7 +342,7 @@ describe Puppet::SimpleGraph do
       add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == [%w{a1 a}, %w{c1 c2 c3 c}]
     end
 
@@ -353,7 +353,7 @@ describe Puppet::SimpleGraph do
       add_edges "c" => "c2", "c2" => "b"
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == [%w{a b c1 c2 c}]
     end
 
@@ -362,7 +362,7 @@ describe Puppet::SimpleGraph do
       (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
 
       cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.should_not raise_error
+      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == []
     end
 

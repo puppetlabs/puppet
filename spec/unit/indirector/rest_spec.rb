@@ -63,14 +63,14 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the server" do
-    @rest_class.expects(:server_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "myserver"
+    @rest_class.expects(:server_setting).returns :inventory_server
+    Puppet[:inventory_server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
   it "should default to :server for the server setting" do
     @rest_class.expects(:server_setting).returns nil
-    Puppet.settings.expects(:value).with(:server).returns "myserver"
+    Puppet[:server] = "myserver"
     @rest_class.server.should == "myserver"
   end
 
@@ -79,50 +79,61 @@ describe Puppet::Indirector::REST do
   end
 
   it "should use any specified setting to pick the port" do
-    @rest_class.expects(:port_setting).returns :servset
-    Puppet.settings.expects(:value).with(:servset).returns "321"
+    @rest_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_port] = "321"
     @rest_class.port.should == 321
   end
 
   it "should default to :port for the port setting" do
     @rest_class.expects(:port_setting).returns nil
-    Puppet.settings.expects(:value).with(:masterport).returns "543"
+    Puppet[:masterport] = "543"
     @rest_class.port.should == 543
   end
 
   describe "when making http requests" do
     include PuppetSpec::Files
 
-    it "should provide a suggestive error message when certificate verify failed" do
+    def a_connection_that_verifies(args)
       connection = Net::HTTP.new('my_server', 8140)
-      @searcher.stubs(:network).returns(connection)
+      connection.stubs(:get).with do
+        connection.verify_callback.call(args[:has_passed_pre_checks], args[:in_context])
+        true
+      end.raises(OpenSSL::SSL::SSLError.new(args[:fails_with]))
+      connection
+    end
 
-      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
+    def a_store_context(args)
+      Puppet[:confdir] = tmpdir('conf')
+      cert = Puppet::SSL::CertificateAuthority.new.generate(args[:for_server], :dns_alt_names => args[:for_aliases]).content
+      ssl_context = mock('OpenSSL::X509::StoreContext')
+      ssl_context.stubs(:current_cert).returns(cert)
+      ssl_context.stubs(:error_string).returns(args[:with_error_string])
+      ssl_context
+    end
 
+    it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
+      @searcher.stubs(:network).
+        returns(a_connection_that_verifies(:has_passed_pre_checks => false,
+                                           :in_context => a_store_context(:for_server => 'not_my_server',
+                                                                          :with_error_string => 'shady looking signature'),
+                                           :fails_with => 'certificate verify failed'))
       expect do
         @searcher.http_request(:get, stub('request'))
-      end.to raise_error(/This is often because the time is out of sync on the server or client/)
+      end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature for /CN=not_my_server]")
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
-      Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
+      @searcher.stubs(:network).
+        returns(a_connection_that_verifies(:has_passed_pre_checks => true,
+                                           :in_context => a_store_context(:for_server => 'not_my_server',
+                                                                          :for_aliases => 'foo,bar,baz'),
+                                           :fails_with => 'hostname was not match with server certificate'))
 
-      connection = Net::HTTP.new('my_server', 8140)
-      @searcher.stubs(:network).returns(connection)
-      ssl_context = OpenSSL::SSL::SSLContext.new
-      ssl_context.stubs(:current_cert).returns(cert)
-      connection.stubs(:get).with do
-        connection.verify_callback.call(true, ssl_context)
-      end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
-
-      msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-      expect { @searcher.http_request(:get, stub('request')) }.to(
-        raise_error(Puppet::Error, msg) do |error|
-          error.message =~ msg
+      expect { @searcher.http_request(:get, stub('request')) }.
+        to raise_error(Puppet::Error) do |error|
+          error.message =~ /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
           $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
         end
-      )
     end
 
     it "should pass along the error message otherwise" do
@@ -241,10 +252,6 @@ describe Puppet::Indirector::REST do
   end
 
   describe "when creating an HTTP client" do
-    before do
-      Puppet.settings.stubs(:value).returns("rest_testing")
-    end
-
     it "should use the class's server and port if the indirection request provides neither" do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil
       @searcher.class.expects(:port).returns 321

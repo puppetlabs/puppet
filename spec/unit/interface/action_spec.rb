@@ -6,8 +6,9 @@ describe Puppet::Interface::Action do
   describe "when validating the action name" do
     [nil, '', 'foo bar', '-foobar'].each do |input|
       it "should treat #{input.inspect} as an invalid name" do
-        expect { Puppet::Interface::Action.new(nil, input) }.
-          should raise_error(/is an invalid action name/)
+        expect {
+          Puppet::Interface::Action.new(nil, input)
+        }.to raise_error(/is an invalid action name/)
       end
     end
   end
@@ -261,7 +262,7 @@ describe Puppet::Interface::Action do
           option "--foo"
           action :bar do option "--foo" end
         end
-      }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
+      }.to raise_error ArgumentError, /Option foo conflicts with existing option foo/i
     end
 
     it "should fail when a required action option is not provided" do

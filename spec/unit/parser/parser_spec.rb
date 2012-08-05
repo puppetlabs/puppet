@@ -13,7 +13,9 @@ describe Puppet::Parser do
   end
 
   it "should require an environment at initialization" do
-    expect { Puppet::Parser::Parser.new }.should raise_error(ArgumentError)
+    expect {
+      Puppet::Parser::Parser.new
+    }.to raise_error(ArgumentError, /wrong number of arguments/)
   end
 
   it "should set the environment" do
@@ -50,11 +52,13 @@ describe Puppet::Parser do
   describe "when parsing append operator" do
 
     it "should not raise syntax errors" do
-      expect { @parser.parse("$var += something") }.should_not raise_error
+      expect { @parser.parse("$var += something") }.to_not raise_error
     end
 
-    it "shouldraise syntax error on incomplete syntax " do
-      expect { @parser.parse("$var += ") }.should raise_error
+    it "should raise syntax error on incomplete syntax " do
+      expect {
+        @parser.parse("$var += ")
+      }.to raise_error(Puppet::ParseError, /Syntax error at end of file/)
     end
 
     it "should create ast::VarDef with append=true" do
@@ -73,7 +77,7 @@ describe Puppet::Parser do
 
   describe "when parsing selector" do
     it "should support hash access on the left hand side" do
-      expect { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.should_not raise_error
+      expect { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.to_not raise_error
     end
   end
 
@@ -84,7 +88,7 @@ describe Puppet::Parser do
     end
     
     it "should not raise an error with empty statements" do
-      expect { @parser.parse("unless false { }") }.should_not raise_error
+      expect { @parser.parse("unless false { }") }.to_not raise_error
     end
     
     #test for bug #13296
@@ -141,7 +145,9 @@ describe Puppet::Parser do
     end
 
     it "should raise an error on incorrect expression" do
-      expect { @parser.parse("if (1 > 2 > ) or (1 == 2) { $var = 1 }") }.should raise_error
+      expect {
+        @parser.parse("if (1 > 2 > ) or (1 == 2) { $var = 1 }")
+      }.to raise_error(Puppet::ParseError, /Syntax error at '\)'/)
     end
 
   end
@@ -149,11 +155,11 @@ describe Puppet::Parser do
   describe "when parsing resource references" do
 
     it "should not raise syntax errors" do
-      expect { @parser.parse('exec { test: param => File["a"] }') }.should_not raise_error
+      expect { @parser.parse('exec { test: param => File["a"] }') }.to_not raise_error
     end
 
     it "should not raise syntax errors with multiple references" do
-      expect { @parser.parse('exec { test: param => File["a","b"] }') }.should_not raise_error
+      expect { @parser.parse('exec { test: param => File["a","b"] }') }.to_not raise_error
     end
 
     it "should create an ast::ResourceReference" do
@@ -167,11 +173,11 @@ describe Puppet::Parser do
   describe "when parsing resource overrides" do
 
     it "should not raise syntax errors" do
-      expect { @parser.parse('Resource["title"] { param => value }') }.should_not raise_error
+      expect { @parser.parse('Resource["title"] { param => value }') }.to_not raise_error
     end
 
     it "should not raise syntax errors with multiple overrides" do
-      expect { @parser.parse('Resource["title1","title2"] { param => value }') }.should_not raise_error
+      expect { @parser.parse('Resource["title1","title2"] { param => value }') }.to_not raise_error
     end
 
     it "should create an ast::ResourceOverride" do
@@ -190,15 +196,15 @@ describe Puppet::Parser do
   describe "when parsing if statements" do
 
     it "should not raise errors with empty if" do
-      expect { @parser.parse("if true { }") }.should_not raise_error
+      expect { @parser.parse("if true { }") }.to_not raise_error
     end
 
     it "should not raise errors with empty else" do
-      expect { @parser.parse("if false { notice('if') } else { }") }.should_not raise_error
+      expect { @parser.parse("if false { notice('if') } else { }") }.to_not raise_error
     end
 
     it "should not raise errors with empty if and else" do
-      expect { @parser.parse("if false { } else { }") }.should_not raise_error
+      expect { @parser.parse("if false { } else { }") }.to_not raise_error
     end
 
     it "should create a nop node for empty branch" do
@@ -212,7 +218,7 @@ describe Puppet::Parser do
     end
 
     it "should build a chain of 'ifs' if there's an 'elsif'" do
-      expect { @parser.parse(<<-PP) }.should_not raise_error
+      expect { @parser.parse(<<-PP) }.to_not raise_error
         if true { notice('test') } elsif true {} else { }
       PP
     end
@@ -221,38 +227,38 @@ describe Puppet::Parser do
 
   describe "when parsing function calls" do
     it "should not raise errors with no arguments" do
-      expect { @parser.parse("tag()") }.should_not raise_error
+      expect { @parser.parse("tag()") }.to_not raise_error
     end
 
     it "should not raise errors with rvalue function with no args" do
-      expect { @parser.parse("$a = template()") }.should_not raise_error
+      expect { @parser.parse("$a = template()") }.to_not raise_error
     end
 
     it "should not raise errors with arguments" do
-      expect { @parser.parse("notice(1)") }.should_not raise_error
+      expect { @parser.parse("notice(1)") }.to_not raise_error
     end
 
     it "should not raise errors with multiple arguments" do
-      expect { @parser.parse("notice(1,2)") }.should_not raise_error
+      expect { @parser.parse("notice(1,2)") }.to_not raise_error
     end
 
     it "should not raise errors with multiple arguments and a trailing comma" do
-      expect { @parser.parse("notice(1,2,)") }.should_not raise_error
+      expect { @parser.parse("notice(1,2,)") }.to_not raise_error
     end
 
   end
 
   describe "when parsing arrays" do
     it "should parse an array" do
-      expect { @parser.parse("$a = [1,2]") }.should_not raise_error
+      expect { @parser.parse("$a = [1,2]") }.to_not raise_error
     end
 
     it "should not raise errors with a trailing comma" do
-      expect { @parser.parse("$a = [1,2,]") }.should_not raise_error
+      expect { @parser.parse("$a = [1,2,]") }.to_not raise_error
     end
 
     it "should accept an empty array" do
-      expect { @parser.parse("$var = []\n") }.should_not raise_error
+      expect { @parser.parse("$var = []\n") }.to_not raise_error
     end
   end
 
@@ -416,7 +422,7 @@ describe Puppet::Parser do
 
     it "should be able to parse class resources" do
       @krt.add(Puppet::Resource::Type.new(:hostclass, "foobar", :arguments => {"biz" => nil}))
-      expect { @parser.parse("class { foobar: biz => stuff }") }.should_not raise_error
+      expect { @parser.parse("class { foobar: biz => stuff }") }.to_not raise_error
     end
 
     it "should correctly mark exported resources as exported" do
@@ -455,8 +461,9 @@ describe Puppet::Parser do
   end
 
   it "should fail if trying to collect defaults" do
-    expect { @parser.parse("@Port { protocols => tcp }") }.
-      to raise_error Puppet::ParseError
+    expect {
+      @parser.parse("@Port { protocols => tcp }")
+    }.to raise_error(Puppet::ParseError, /Defaults are not virtualizable/)
   end
 
   context "when parsing collections" do
@@ -472,7 +479,9 @@ describe Puppet::Parser do
   end
 
   it "should not assign to a fully qualified variable" do
-    expect { @parser.parse("$one::two = yay") }.to raise_error Puppet::ParseError
+    expect {
+      @parser.parse("$one::two = yay")
+    }.to raise_error(Puppet::ParseError, /Cannot assign to variables in other namespaces/)
   end
 
   it "should parse assignment of undef" do

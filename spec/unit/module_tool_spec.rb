@@ -5,6 +5,47 @@ require 'spec_helper'
 require 'puppet/module_tool'
 
 describe Puppet::ModuleTool do
+  describe '.is_module_root?' do
+    it 'should return true if directory has a module file' do
+      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
+        returns(true)
+
+      subject.is_module_root?(Pathname.new('/a/b/c')).should be_true
+    end
+
+    it 'should return false if directory does not have a module file' do
+      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/Modulefile')).
+        returns(false)
+
+      subject.is_module_root?(Pathname.new('/a/b/c')).should be_false
+    end
+  end
+
+  describe '.find_module_root' do
+    let(:sample_path) { Pathname.new('/a/b/c').expand_path }
+
+    it 'should return the first path as a pathname when it contains a module file' do
+      Puppet::ModuleTool.expects(:is_module_root?).with(sample_path).
+        returns(true)
+
+      subject.find_module_root(sample_path).should == sample_path
+    end
+
+    it 'should return a parent path as a pathname when it contains a module file' do
+      Puppet::ModuleTool.expects(:is_module_root?).
+        with(responds_with(:to_s, File.expand_path('/a/b/c'))).returns(false)
+      Puppet::ModuleTool.expects(:is_module_root?).
+        with(responds_with(:to_s, File.expand_path('/a/b'))).returns(true)
+
+      subject.find_module_root(sample_path).should == Pathname.new('/a/b').expand_path
+    end
+
+    it 'should return nil when no module root can be found' do
+      Puppet::ModuleTool.expects(:is_module_root?).at_least_once.returns(false)
+      subject.find_module_root(sample_path).should be_nil
+    end
+  end
+
   describe '.format_tree' do
     it 'should return an empty tree when given an empty list' do
       subject.format_tree([]).should == ''

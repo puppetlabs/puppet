@@ -1,6 +1,10 @@
 # I pulled this into a separate file, because I got
 # tired of rebuilding the parser.rb file all the time.
+require 'forwardable'
+
 class Puppet::Parser::Parser
+  extend Forwardable
+
   require 'puppet/parser/functions'
   require 'puppet/parser/files'
   require 'puppet/resource/type_collection'
@@ -70,9 +74,7 @@ class Puppet::Parser::Parser
     raise except
   end
 
-  def file
-    @lexer.file
-  end
+  def_delegators :@lexer, :file, :string=
 
   def file=(file)
     unless FileTest.exist?(file)
@@ -86,19 +88,9 @@ class Puppet::Parser::Parser
     @lexer.file = file
   end
 
-  [:hostclass, :definition, :node, :nodes?].each do |method|
-    define_method(method) do |*args|
-      known_resource_types.send(method, *args)
-    end
-  end
-
-  def find_hostclass(namespace, name)
-    known_resource_types.find_hostclass(namespace, name)
-  end
-
-  def find_definition(namespace, name)
-    known_resource_types.find_definition(namespace, name)
-  end
+  def_delegators :known_resource_types, :hostclass, :definition, :node, :nodes?
+  def_delegators :known_resource_types, :find_hostclass, :find_definition
+  def_delegators :known_resource_types, :watch_file, :version
 
   def import(file)
     known_resource_types.loader.import(file, @lexer.file)
@@ -159,18 +151,18 @@ class Puppet::Parser::Parser
     @lexer.clear
   end
 
-  def string=(string)
-    @lexer.string = string
-  end
+  # def string=(string)
+    # @lexer.string = string
+  # end
 
-  def version
-    known_resource_types.version
-  end
+  # def version
+    # known_resource_types.version
+  # end
 
-  # Add a new file to be checked when we're checking to see if we should be
-  # reparsed.  This is basically only used by the TemplateWrapper to let the
-  # parser know about templates that should be parsed.
-  def watch_file(filename)
-    known_resource_types.watch_file(filename)
-  end
+  # # Add a new file to be checked when we're checking to see if we should be
+  # # reparsed.  This is basically only used by the TemplateWrapper to let the
+  # # parser know about templates that should be parsed.
+  # def watch_file(filename)
+    # known_resource_types.watch_file(filename)
+  # end
 end

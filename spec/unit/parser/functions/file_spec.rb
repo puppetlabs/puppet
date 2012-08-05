@@ -9,7 +9,9 @@ describe "the 'file' function" do
     Puppet::Parser::Functions.autoloader.loadall
   end
 
-  let :scope do Puppet::Parser::Scope.new end
+  let :node     do Puppet::Node.new('localhost') end
+  let :compiler do Puppet::Parser::Compiler.new(node) end
+  let :scope    do Puppet::Parser::Scope.new(compiler) end
 
   it "should exist" do
     Puppet::Parser::Functions.function("file").should == "function_file"
@@ -42,10 +44,12 @@ describe "the 'file' function" do
       with_file_content('one') do |one|
         scope.function_file([make_absolute("/should-not-exist"), one]).should == 'one'
       end
-    }.should_not raise_error
+    }.to_not raise_error
   end
 
   it "should fail when all files are absent" do
-    expect { scope.function_file(['one']) }.to raise_error Puppet::ParseError
+    expect {
+      scope.function_file([File.expand_path('one')])
+    }.to raise_error(Puppet::ParseError, /Could not find any files/)
   end
 end

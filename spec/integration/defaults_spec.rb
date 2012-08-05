@@ -15,7 +15,7 @@ describe "Puppet defaults" do
 
   describe "when setting the :certname" do
     it "should fail if the certname is not downcased" do
-      lambda { Puppet.settings[:certname] = "Host.Domain.Com" }.should raise_error(ArgumentError)
+      expect { Puppet.settings[:certname] = "Host.Domain.Com" }.to raise_error(ArgumentError)
     end
   end
 
@@ -43,7 +43,7 @@ describe "Puppet defaults" do
 
   describe "when :certdnsnames is set" do
     it "should not fail" do
-      expect { Puppet[:certdnsnames] = 'fred:wilma' }.should_not raise_error
+      expect { Puppet[:certdnsnames] = 'fred:wilma' }.to_not raise_error
     end
 
     it "should warn the value is ignored" do
@@ -291,7 +291,7 @@ describe "Puppet defaults" do
       end
 
       it "should raise an error if set to true" do
-        lambda { Puppet.settings[:daemonize] = true }.should raise_error(/Cannot daemonize on Windows/)
+        expect { Puppet.settings[:daemonize] = true }.to raise_error(/Cannot daemonize on Windows/)
       end
     end
   end

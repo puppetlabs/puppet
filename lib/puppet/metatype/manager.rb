@@ -39,8 +39,8 @@ module Manager
     end
 
     # First make sure we don't have a method sitting around
-    name = symbolize(name)
-    newmethod = "new#{name.to_s}"
+    name = name.intern
+    newmethod = "new#{name}"
 
     # Used for method manipulation.
     selfobj = singleton_class
@@ -109,17 +109,24 @@ module Manager
   def type(name)
     @types ||= {}
 
-    name = name.to_s.downcase.to_sym
+    # We are overwhelmingly symbols here, which usually match, so it is worth
+    # having this special-case to return quickly.  Like, 25K to 300 symbols to
+    # strings in this method. --daniel 2012-07-17
+    return @types[name] if @types[name]
 
-    if t = @types[name]
-      return t
-    else
-      if typeloader.load(name, Puppet::Node::Environment.current)
-        Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
-      end
-
-      return @types[name]
+    # Try mangling the name, if it is a string.
+    if name.is_a? String
+      name = name.downcase.intern
+      return @types[name] if @types[name]
     end
+
+    # Try loading the type.
+    if typeloader.load(name, Puppet::Node::Environment.current)
+      Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
+    end
+
+    # ...and I guess that is that, eh.
+    return @types[name]
   end
 
   # Create a loader for Puppet types.

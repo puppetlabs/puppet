@@ -128,7 +128,7 @@ module Puppet
 
       # Default to the device but with "dsk" replaced with "rdsk".
       defaultto do
-        if Facter["operatingsystem"].value == "Solaris"
+        if Facter["osfamily"].value == "Solaris"
           device = @resource.value(:device)
           if device =~ %r{/dsk/}
             device.sub(%r{/dsk/}, "/rdsk/")
@@ -231,7 +231,7 @@ module Puppet
     end
 
     def value(name)
-      name = symbolize(name)
+      name = name.intern
       ret = nil
       if property = @parameters[name]
         return property.value

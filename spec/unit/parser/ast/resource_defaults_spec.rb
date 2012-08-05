@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::ResourceDefaults do
 
   before :each do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope = Puppet::Parser::Scope.new(@compiler)
     @params = Puppet::Parser::AST::ASTArray.new({})
     @compiler.stubs(:add_override)
   end

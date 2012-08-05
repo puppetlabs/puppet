@@ -23,8 +23,9 @@ describe Puppet::Interface::ActionBuilder do
   end
 
   it "should require a block" do
-    expect { Puppet::Interface::ActionBuilder.build(nil, :foo) }.
-      should raise_error("Action :foo must specify a block")
+    expect {
+      Puppet::Interface::ActionBuilder.build(nil, :foo)
+    }.to raise_error("Action :foo must specify a block")
   end
 
   it "should require an invocation block" do

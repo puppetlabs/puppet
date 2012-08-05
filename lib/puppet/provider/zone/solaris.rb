@@ -2,7 +2,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   desc "Provider for Solaris Zones."
 
   commands :adm => "/usr/sbin/zoneadm", :cfg => "/usr/sbin/zonecfg"
-  defaultfor :operatingsystem => :solaris
+  defaultfor :osfamily => :solaris
 
   mk_resource_methods
 
@@ -19,7 +19,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # Configured but not installed zones do not have IDs
     properties.delete(:id) if properties[:id] == "-"
 
-    properties[:ensure] = symbolize(properties[:ensure])
+    properties[:ensure] = properties[:ensure].intern
 
     properties
   end

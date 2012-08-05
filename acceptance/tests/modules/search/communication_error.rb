@@ -11,6 +11,7 @@ STDOUT
   assert_match <<-STDERR.chomp, stderr
 Error: Could not connect to https://forge.puppetlabs.com
   There was a network communications problem
+    The error we caught said 'Connection refused - connect(2)'
     Check your network connection and try again
 STDERR
 end

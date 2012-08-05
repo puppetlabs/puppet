@@ -25,8 +25,8 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
   end
 
   it "should use the :csrdir as the collection directory" do
-    Puppet.settings.expects(:value).with(:csrdir).returns "/request/dir"
-    Puppet::SSL::CertificateRequest::Ca.collection_directory.should == "/request/dir"
+    Puppet[:csrdir] = File.expand_path("/request/dir")
+    Puppet::SSL::CertificateRequest::Ca.collection_directory.should == Puppet[:csrdir]
   end
 
   it "should overwrite the previous certificate request if allow_duplicate_certs is true" do
@@ -48,7 +48,7 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
     host.generate_certificate_request
     @ca.sign(host.name)
 
-    expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.should raise_error(/ignoring certificate request/)
+    expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.to raise_error(/ignoring certificate request/)
 
     Puppet::SSL::Certificate.indirection.find("bar").name.should == "bar"
     Puppet::SSL::CertificateRequest.indirection.find("bar").should be_nil

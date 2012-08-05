@@ -14,12 +14,12 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
     end
 
     it "no source is specified" do
-      expect { provider.install }.should raise_error(Puppet::Error, /must specify a package source/)
+      expect { provider.install }.to raise_error(Puppet::Error, /must specify a package source/)
     end
 
     it "the source does not end in .dmg or .pkg" do
       resource[:source] = "bar"
-      expect { provider.install }.should raise_error(Puppet::Error, /must specify a source string ending in .*dmg.*pkg/)
+      expect { provider.install }.to raise_error(Puppet::Error, /must specify a source string ending in .*dmg.*pkg/)
     end
   end
 
@@ -40,7 +40,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
 
     it "should fail when a disk image with no system entities is mounted" do
       described_class.stubs(:hdiutil).returns(empty_hdiutil_plist)
-      expect { provider.install }.should raise_error(Puppet::Error, /No disk entities/)
+      expect { provider.install }.to raise_error(Puppet::Error, /No disk entities/)
     end
 
     it "should call hdiutil to mount and eject the disk image" do

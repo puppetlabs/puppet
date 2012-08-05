@@ -527,7 +527,7 @@ class Puppet::SimpleGraph
 
   def to_yaml_properties
     (instance_variables + [:@vertices, :@edges] -
-     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).sort.uniq
+     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
   end
 
   def yaml_initialize(tag, var)

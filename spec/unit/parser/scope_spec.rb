@@ -4,11 +4,34 @@ require 'puppet_spec/compiler'
 
 describe Puppet::Parser::Scope do
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    @scope = Puppet::Parser::Scope.new(
+      Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+    )
     @scope.source = Puppet::Resource::Type.new(:node, :foo)
     @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
+  end
+
+  describe ".new_for_test_harness" do
+    let(:node_name) { "node_name_foo" }
+    let(:scope) { described_class.new_for_test_harness(node_name) }
+
+    it "should be a kind of Scope" do
+      scope.should be_a_kind_of Puppet::Parser::Scope
+    end
+    it "should set the source to a node resource" do
+      scope.source.should be_a_kind_of Puppet::Resource::Type
+    end
+    it "should have a compiler" do
+      scope.compiler.should be_a_kind_of Puppet::Parser::Compiler
+    end
+    it "should set the parent to the compiler topscope" do
+      scope.parent.should be scope.compiler.topscope
+    end
+  end
+
+  it "should return a scope for use in a test harness" do
+    described_class.new_for_test_harness("node_name_foo").should be_a_kind_of Puppet::Parser::Scope
   end
 
   it "should be able to retrieve class scopes by name" do
@@ -39,13 +62,21 @@ describe Puppet::Parser::Scope do
 
   it "should get its environment from its compiler" do
     env = Puppet::Node::Environment.new
-    compiler = stub 'compiler', :environment => env
-    scope = Puppet::Parser::Scope.new :compiler => compiler
+    compiler = stub 'compiler', :environment => env, :is_a? => true
+    scope = Puppet::Parser::Scope.new(compiler)
     scope.environment.should equal(env)
   end
 
-  it "should use the default environment if none is available" do
-    Puppet::Parser::Scope.new.environment.should equal(Puppet::Node::Environment.new)
+  it "should fail if no compiler is supplied" do
+    expect {
+      Puppet::Parser::Scope.new
+    }.to raise_error(ArgumentError, /wrong number of arguments/)
+  end
+
+  it "should fail if something that isn't a compiler is supplied" do
+    expect {
+      Puppet::Parser::Scope.new(:compiler => true)
+    }.to raise_error(Puppet::DevError, /you must pass a compiler instance/)
   end
 
   it "should use the resource type collection helper to find its known resource types" do
@@ -70,7 +101,7 @@ describe Puppet::Parser::Scope do
     before :each do
       @env      = Puppet::Node::Environment.new('testing')
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => @env))
-      @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope    = Puppet::Parser::Scope.new(@compiler)
     end
 
     it "should load and call the method if it looks like a function and it exists" do
@@ -78,11 +109,11 @@ describe Puppet::Parser::Scope do
     end
 
     it "should raise NoMethodError if the method doesn't look like a function" do
-      expect { @scope.sprintf(["%b", 123]) }.should raise_error(NoMethodError)
+      expect { @scope.sprintf(["%b", 123]) }.to raise_error(NoMethodError)
     end
 
     it "should raise NoMethodError if the method looks like a function but doesn't exist" do
-      expect { @scope.function_fake_bs(['cows']) }.should raise_error(NoMethodError)
+      expect { @scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
     end
   end
 
@@ -90,16 +121,18 @@ describe Puppet::Parser::Scope do
     it "should extend itself with its environment's Functions module as well as the default" do
       env = Puppet::Node::Environment.new("myenv")
       root = Puppet::Node::Environment.root
-      compiler = stub 'compiler', :environment => env
+      compiler = stub 'compiler', :environment => env, :is_a? => true
 
-      scope = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope = Puppet::Parser::Scope.new(compiler)
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(env))
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
 
     it "should extend itself with the default Functions module if its environment is the default" do
-      root = Puppet::Node::Environment.root
-      scope = Puppet::Parser::Scope.new
+      root     = Puppet::Node::Environment.root
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      scope    = Puppet::Parser::Scope.new(compiler)
       scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
   end
@@ -142,7 +175,9 @@ describe Puppet::Parser::Scope do
 
     it "does not allow changing a set value" do
       @scope["var"] = "childval"
-      expect { @scope["var"] = "change" }.should raise_error(Puppet::Error, "Cannot reassign variable var")
+      expect {
+        @scope["var"] = "change"
+      }.to raise_error(Puppet::Error, "Cannot reassign variable var")
     end
 
     it "should be able to detect when variables are not set" do
@@ -164,6 +199,9 @@ describe Puppet::Parser::Scope do
     describe "and the variable is qualified" do
       before :each do
         @known_resource_types = @scope.known_resource_types
+
+        node      = Puppet::Node.new('localhost')
+        @compiler = Puppet::Parser::Compiler.new(node)
       end
 
       def newclass(name)
@@ -174,7 +212,7 @@ describe Puppet::Parser::Scope do
         klass = newclass(name)
 
         catalog = Puppet::Resource::Catalog.new
-        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new))
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(@compiler)))
 
         Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 
@@ -241,7 +279,12 @@ describe Puppet::Parser::Scope do
   describe "when variables are set with append=true" do
     it "should raise error if the variable is already defined in this scope" do
       @scope.setvar("var", "1", :append => false)
-      expect { @scope.setvar("var", "1", :append => true) }.should raise_error(Puppet::ParseError, "Cannot append, variable var is defined in this scope")
+      expect {
+        @scope.setvar("var", "1", :append => true)
+      }.to raise_error(
+        Puppet::ParseError,
+        "Cannot append, variable var is defined in this scope"
+      )
     end
 
     it "should lookup current variable value" do
@@ -269,7 +312,13 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when appending a hash with something other than another hash" do
       @topscope.setvar("var", {"a" => "b"}, :append => false)
-      expect { @scope.setvar("var", "not a hash", :append => true) }.should raise_error(ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported")
+
+      expect {
+        @scope.setvar("var", "not a hash", :append => true)
+      }.to raise_error(
+        ArgumentError,
+        "Trying to append to a hash with something which is not a hash is unsupported"
+      )
     end
   end
 
@@ -363,7 +412,9 @@ describe Puppet::Parser::Scope do
 
     it "should raise an error when setting it again" do
       @scope.setvar("1", :value2, :ephemeral => true)
-      expect { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
+      expect {
+        @scope.setvar("1", :value3, :ephemeral => true)
+      }.to raise_error(Puppet::ParseError, /Cannot reassign variable 1/)
     end
 
     it "should declare ephemeral number only variable names" do
@@ -450,7 +501,9 @@ describe Puppet::Parser::Scope do
     end
 
     it "should accept only MatchData" do
-      expect { @scope.ephemeral_from("match") }.should raise_error
+      expect {
+        @scope.ephemeral_from("match")
+      }.to raise_error(ArgumentError, /Invalid regex match data/)
     end
 
     it "should set $0 with the full match" do
@@ -495,7 +548,9 @@ describe Puppet::Parser::Scope do
     it "should fail if a default is already defined and a new default is being defined" do
       param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
       @scope.define_settings(:mytype, param)
-      expect { @scope.define_settings(:mytype, param) }.should raise_error(Puppet::ParseError)
+      expect {
+        @scope.define_settings(:mytype, param)
+      }.to raise_error(Puppet::ParseError, /Default already defined .* cannot redefine/)
     end
 
     it "should return multiple defaults at once" do
@@ -525,7 +580,8 @@ describe Puppet::Parser::Scope do
       "false"    => true,
       true       => true,
       ""         => false,
-      :undef     => false
+      :undef     => false,
+      nil        => false
     }.each do |input, output|
       it "should treat #{input.inspect} as #{output}" do
         Puppet::Parser::Scope.true?(input).should == output

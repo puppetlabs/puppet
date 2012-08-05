@@ -1,9 +1,12 @@
 require 'puppet/file_serving'
 require 'puppet/util'
+require 'puppet/util/methodhelper'
 
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
 class Puppet::FileServing::Base
+  include Puppet::Util::MethodHelper
+
   # This is for external consumers to store the source that was used
   # to retrieve the metadata.
   attr_accessor :source
@@ -19,23 +22,16 @@ class Puppet::FileServing::Base
   # Return the full path to our file.  Fails if there's no path set.
   def full_path(dummy_argument=:work_arround_for_ruby_GC_bug)
     (if relative_path.nil? or relative_path == "" or relative_path == "."
-      path
-    else
-      File.join(path, relative_path)
-    end).gsub(%r{/+}, "/")
+       path
+     else
+       File.join(path, relative_path)
+     end).gsub(%r{//+}, "/")
   end
 
   def initialize(path, options = {})
     self.path = path
     @links = :manage
-
-    options.each do |param, value|
-      begin
-        send param.to_s + "=", value
-      rescue NoMethodError
-        raise ArgumentError, "Invalid option #{param} for #{self.class}"
-      end
-    end
+    set_options(options)
   end
 
   # Determine how we deal with links.

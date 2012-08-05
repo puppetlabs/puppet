@@ -52,10 +52,6 @@ describe Puppet::Parser::Resource do
     @known_resource_types.add Puppet::Resource::Type.new(:node, name)
   end
 
-  it "should use the file lookup module" do
-    Puppet::Parser::Resource.ancestors.should be_include(Puppet::FileCollection::Lookup)
-  end
-
   it "should get its environment from its scope" do
     scope = stub 'scope', :source => stub("source"), :namespaces => nil
     scope.expects(:environment).returns("foo").at_least_once
@@ -114,8 +110,9 @@ describe Puppet::Parser::Resource do
     end
 
     it "should fail unless #{name.to_s} is specified" do
-      expect { Puppet::Parser::Resource.new('file', '/my/file') }.
-        should raise_error(ArgumentError)
+      expect {
+        Puppet::Parser::Resource.new('file', '/my/file')
+      }.to raise_error(ArgumentError, /Resources require a hash as last argument/)
     end
 
     it "should set the reference correctly" do
@@ -138,7 +135,7 @@ describe Puppet::Parser::Resource do
       @catalog = Puppet::Resource::Catalog.new
       source = stub('source')
       source.stubs(:module_name)
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => source)
+      @scope = Puppet::Parser::Scope.new(@compiler, :source => source)
       @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @scope))
     end
 
@@ -267,7 +264,7 @@ describe Puppet::Parser::Resource do
 
     it "should do nothing if it has already been finished" do
       @resource.finish
-      @resource.expects(:add_metaparams).never
+      @resource.expects(:add_defaults).never
       @resource.finish
     end
 
@@ -295,52 +292,6 @@ describe Puppet::Parser::Resource do
       @resource.finish
 
       @resource[:owner].should == "other"
-    end
-
-    it "should be running in metaparam compatibility mode if running a version below 0.25" do
-      catalog = stub 'catalog', :client_version => "0.24.8"
-      @resource.stubs(:catalog).returns catalog
-      @resource.should be_metaparam_compatibility_mode
-    end
-
-    it "should be running in metaparam compatibility mode if running no client version is available" do
-      catalog = stub 'catalog', :client_version => nil
-      @resource.stubs(:catalog).returns catalog
-      @resource.should be_metaparam_compatibility_mode
-    end
-
-    it "should not be running in metaparam compatibility mode if running a version at or above 0.25" do
-      catalog = stub 'catalog', :client_version => "0.25.0"
-      @resource.stubs(:catalog).returns catalog
-      @resource.should_not be_metaparam_compatibility_mode
-    end
-
-    it "should not copy relationship metaparams when not in metaparam compatibility mode" do
-      @scope['require'] = "bar"
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns false
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should be_nil
-    end
-
-    it "should copy relationship metaparams when in metaparam compatibility mode" do
-      @scope['require'] = "bar"
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns true
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should == "bar"
-    end
-
-    it "should stack relationship metaparams when in metaparam compatibility mode" do
-      @resource.set_parameter("require", "foo")
-      @scope['require'] = "bar"
-
-      @resource.stubs(:metaparam_compatibility_mode?).returns true
-      @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-      @resource["require"].should == ["foo", "bar"]
     end
   end
 

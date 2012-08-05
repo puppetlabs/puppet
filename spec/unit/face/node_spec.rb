@@ -48,26 +48,27 @@ describe Puppet::Face[:node, '0.0.1'] do
     end
 
     it "should not accept a call with no arguments" do
-      expect { subject.clean() }.should raise_error
+      expect { subject.clean() }.to raise_error
     end
 
     it "should accept a node name" do
-      expect { subject.clean('hostname') }.should_not raise_error
+      expect { subject.clean('hostname') }.to_not raise_error
     end
 
     it "should accept more than one node name" do
       expect do
         subject.clean('hostname', 'hostname2', {})
-      end.should_not raise_error
+      end.to_not raise_error
 
       expect do
         subject.clean('hostname', 'hostname2', 'hostname3', { :unexport => true })
-      end.should_not raise_error
+      end.to_not raise_error
     end
 
     it "should accept the option --unexport" do
-      expect { subject.help('hostname', :unexport => true) }.
-        should_not raise_error ArgumentError
+      expect {
+        subject.help('hostname', :unexport => true)
+      }.to_not raise_error(ArgumentError)
     end
 
     context "clean action" do
@@ -161,7 +162,7 @@ describe Puppet::Face[:node, '0.0.1'] do
           # Stub this so we don't need access to the DB
           require 'puppet/rails/host'
 
-          Puppet.stubs(:[]).with(:storeconfigs).returns(true)
+          Puppet[:storeconfigs] = true
 
           Puppet::Rails.stubs(:connect)
           @rails_node = stub_everything 'rails_node'

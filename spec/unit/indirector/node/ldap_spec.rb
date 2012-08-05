@@ -361,27 +361,27 @@ describe Puppet::Node::Ldap do
 
   describe Puppet::Node::Ldap, " when developing the search query" do
     it "should return the value of the :ldapclassattrs split on commas as the class attributes" do
-      Puppet.stubs(:[]).with(:ldapclassattrs).returns("one,two")
+      Puppet[:ldapclassattrs] = "one,two"
       node_indirection.class_attributes.should == %w{one two}
     end
 
     it "should return nil as the parent attribute if the :ldapparentattr is set to an empty string" do
-      Puppet.stubs(:[]).with(:ldapparentattr).returns("")
+      Puppet[:ldapparentattr] = ""
       node_indirection.parent_attribute.should be_nil
     end
 
     it "should return the value of the :ldapparentattr as the parent attribute" do
-      Puppet.stubs(:[]).with(:ldapparentattr).returns("pere")
+      Puppet[:ldapparentattr] = "pere"
       node_indirection.parent_attribute.should == "pere"
     end
 
     it "should use the value of the :ldapstring as the search filter" do
-      Puppet.stubs(:[]).with(:ldapstring).returns("mystring")
+      Puppet[:ldapstring] = "mystring"
       node_indirection.search_filter("testing").should == "mystring"
     end
 
     it "should replace '%s' with the node name in the search filter if it is present" do
-      Puppet.stubs(:[]).with(:ldapstring).returns("my%sstring")
+      Puppet[:ldapstring] = "my%sstring"
       node_indirection.search_filter("testing").should == "mytestingstring"
     end
 
@@ -389,26 +389,26 @@ describe Puppet::Node::Ldap do
       filter = mock 'filter'
       filter.expects(:include?).with("%s").returns(true)
       filter.expects(:gsub).with("%s", "testing").returns("mynewstring")
-      Puppet.stubs(:[]).with(:ldapstring).returns(filter)
+      Puppet[:ldapstring] = filter
       node_indirection.search_filter("testing").should == "mynewstring"
     end
   end
 
   describe Puppet::Node::Ldap, " when deciding attributes to search for" do
     it "should use 'nil' if the :ldapattrs setting is 'all'" do
-      Puppet.stubs(:[]).with(:ldapattrs).returns("all")
+      Puppet[:ldapattrs] = "all"
       node_indirection.search_attributes.should be_nil
     end
 
     it "should split the value of :ldapattrs on commas and use the result as the attribute list" do
-      Puppet.stubs(:[]).with(:ldapattrs).returns("one,two")
+      Puppet[:ldapattrs] = "one,two"
       node_indirection.stubs(:class_attributes).returns([])
       node_indirection.stubs(:parent_attribute).returns(nil)
       node_indirection.search_attributes.should == %w{one two}
     end
 
     it "should add the class attributes to the search attributes if not returning all attributes" do
-      Puppet.stubs(:[]).with(:ldapattrs).returns("one,two")
+      Puppet[:ldapattrs] = "one,two"
       node_indirection.stubs(:class_attributes).returns(%w{three four})
       node_indirection.stubs(:parent_attribute).returns(nil)
       # Sort them so i don't have to care about return order
@@ -416,14 +416,14 @@ describe Puppet::Node::Ldap do
     end
 
     it "should add the parent attribute to the search attributes if not returning all attributes" do
-      Puppet.stubs(:[]).with(:ldapattrs).returns("one,two")
+      Puppet[:ldapattrs] = "one,two"
       node_indirection.stubs(:class_attributes).returns([])
       node_indirection.stubs(:parent_attribute).returns("parent")
       node_indirection.search_attributes.sort.should == %w{one two parent}.sort
     end
 
     it "should not add nil parent attributes to the search attributes" do
-      Puppet.stubs(:[]).with(:ldapattrs).returns("one,two")
+      Puppet[:ldapattrs] = "one,two"
       node_indirection.stubs(:class_attributes).returns([])
       node_indirection.stubs(:parent_attribute).returns(nil)
       node_indirection.search_attributes.should == %w{one two}

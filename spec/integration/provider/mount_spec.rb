@@ -107,6 +107,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
               ["local", "journaled"].each do |options_setting|
                 describe "When setting options => #{options_setting}" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
+                    pending("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb", Facter[:osfamily] == "Solaris")
                     @desired_options = options_setting
                     run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
                     @mounted.should == expected_final_state

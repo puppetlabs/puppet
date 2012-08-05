@@ -60,10 +60,10 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     @catalog.add_class "foo", "bar"
 
-    Puppet.settings.expects(:value).with(:classfile).returns "/class/file"
+    Puppet[:classfile] = File.expand_path("/class/file")
 
     fh = mock 'filehandle'
-    File.expects(:open).with("/class/file", "w").yields fh
+    File.expects(:open).with(Puppet[:classfile], "w").yields fh
 
     fh.expects(:puts).with "foo\nbar"
 

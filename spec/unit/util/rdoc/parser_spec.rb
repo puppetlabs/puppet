@@ -326,7 +326,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should scan for resources if needed" do
-      Puppet.settings.stubs(:[]).with(:document_all).returns(true)
+      Puppet[:document_all] = true
       @parser.expects(:scan_for_resource).with(@rdoc_node, @code)
       @parser.document_node("mynode", @node, @class)
     end
@@ -370,7 +370,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should scan for resources if needed" do
-      Puppet.settings.stubs(:[]).with(:document_all).returns(true)
+      Puppet[:document_all] = true
       @parser.expects(:scan_for_resource).with(@rdoc_class, @code)
       @parser.document_class("mynode", @class, @module)
     end

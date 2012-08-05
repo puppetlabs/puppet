@@ -8,7 +8,7 @@ class LockerTester
 end
 
 describe Puppet::Agent::Locker do
-  before do    
+  before do
     @locker = LockerTester.new
   end
 
@@ -24,9 +24,10 @@ describe Puppet::Agent::Locker do
   end
 
   it "should use puppet's :agent_pidfile' setting to determine its lockfile path" do
-    Puppet.expects(:[]).with(:agent_pidfile).returns("/my/lock")
-    lock = Puppet::Util::Pidlock.new("/my/lock")
-    Puppet::Util::Pidlock.expects(:new).with("/my/lock").returns lock
+    lockfile = File.expand_path("/my/lock")
+    Puppet[:agent_pidfile] = lockfile
+    lock = Puppet::Util::Pidlock.new(lockfile)
+    Puppet::Util::Pidlock.expects(:new).with(lockfile).returns lock
 
     @locker.send(:lockfile)
   end

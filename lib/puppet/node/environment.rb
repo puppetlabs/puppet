@@ -110,21 +110,26 @@ class Puppet::Node::Environment
     validate_dirs(dirs)
   end
 
-  # Return all modules from this environment.
+  # Return all modules from this environment, in the order they appear
+  # in the modulepath
   # Cache the list, because it can be expensive to create.
   cached_attr(:modules, Puppet[:filetimeout]) do
-    module_references = {}
+    module_references = []
+    seen_modules = {}
     modulepath.each do |path|
       Dir.entries(path).each do |name|
         warn_about_mistaken_path(path, name)
         next if module_references.include?(name)
-        module_references[name] = File.join(path, name)
+        if not seen_modules[name]
+          module_references << {:name => name, :path => File.join(path, name)}
+          seen_modules[name] = true
+        end
       end
     end
 
-    module_references.collect do |name, path|
+    module_references.collect do |reference|
       begin
-        Puppet::Module.new(name, path, self)
+        Puppet::Module.new(reference[:name], reference[:path], self)
       rescue Puppet::Module::Error => e
         nil
       end

@@ -566,7 +566,12 @@ describe "Two step scoping for variables" do
     it "does not allow the enc to specify an existing top scope var" do
       enc_node = Puppet::Node.new("the_node", { :parameters => { "var" => 'from_enc' } })
 
-      expect { compile_to_catalog("$var = 'top scope'", enc_node) }.should raise_error(Puppet::Error, "Cannot reassign variable var at line 1 on node the_node")
+      expect {
+        compile_to_catalog("$var = 'top scope'", enc_node)
+      }.to raise_error(
+        Puppet::Error,
+        "Cannot reassign variable var at line 1 on node the_node"
+      )
     end
 
     it "evaluates enc classes in top scope when there is no node" do

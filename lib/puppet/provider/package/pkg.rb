@@ -5,9 +5,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   commands :pkg => "/usr/bin/pkg"
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
-  #defaultfor [:operatingsystem => :solaris, :kernelrelease => "5.11"]
+  #defaultfor [:osfamily => :solaris, :kernelrelease => "5.11"]
 
   def self.instances
     packages = []
@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def latest
     version = nil
     pkg(:list, "-Ha", @resource[:name]).each_line do |line|
-      v = parse_line(line.chomp)[:status]
+      v = self.class.parse_line(line.chomp)[:status]
       case v
       when "known"
         return v

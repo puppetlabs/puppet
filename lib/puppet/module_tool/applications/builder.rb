@@ -5,7 +5,7 @@ module Puppet::ModuleTool
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(Puppet::ModuleTool.find_module_root(path))
+        @path = File.expand_path(path)
         @pkg_path = File.join(@path, 'pkg')
         super(options)
       end

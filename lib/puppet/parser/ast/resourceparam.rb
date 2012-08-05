@@ -15,7 +15,7 @@ class Puppet::Parser::AST
         :name => @param,
         :value => @value.safeevaluate(scope),
         :source => scope.source, :line => self.line, :file => self.file,
-        :add => self.add
+        :add    => self.add
       )
     end
 

@@ -131,7 +131,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     end
 
     it "should daemonize if needed" do
-      Puppet.expects(:[]).with(:daemonize).returns(true)
+      Puppet[:daemonize] = true
 
       @queue.daemon.expects(:daemonize)
 

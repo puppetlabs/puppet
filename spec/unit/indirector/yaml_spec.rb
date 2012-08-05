@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/indirector/yaml'
 
-describe Puppet::Indirector::Yaml, " when choosing file location" do
+describe Puppet::Indirector::Yaml do
   before :all do
     @indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
     Puppet::Indirector::Indirection.expects(:instance).with(:my_yaml).returns(@indirection)
@@ -12,6 +12,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       self
     end
   end
+
   before :each do
     @store = @store_class.new
 
@@ -19,36 +20,38 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     @subject.singleton_class.send(:attr_accessor, :name)
     @subject.name = :me
 
-    @dir = "/what/ever"
-    Puppet.settings.stubs(:value).returns("fakesettingdata")
-    Puppet.settings.stubs(:value).with(:clientyamldir).returns(@dir)
+    @dir = File.expand_path("/what/ever")
+    Puppet[:clientyamldir] = @dir
     Puppet.run_mode.stubs(:master?).returns false
 
     @request = stub 'request', :key => :me, :instance => @subject
   end
 
-  describe Puppet::Indirector::Yaml, " when choosing file location" do
+  let(:serverdir) { File.expand_path("/server/yaml/dir") }
+  let(:clientdir) { File.expand_path("/client/yaml/dir") }
+
+  describe "when choosing file location" do
     it "should use the server_datadir if the run_mode is master" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
-      @store.path(:me).should =~ %r{^/server/yaml/dir}
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
+      @store.path(:me).should =~ /^#{serverdir}/
     end
 
     it "should use the client yamldir if the run_mode is not master" do
-      Puppet.run_mode.expects(:master?).returns false
-      Puppet.settings.expects(:value).with(:clientyamldir).returns "/client/yaml/dir"
-      @store.path(:me).should =~ %r{^/client/yaml/dir}
+      Puppet.run_mode.stubs(:master?).returns false
+      Puppet[:clientyamldir] = clientdir
+      @store.path(:me).should =~ /^#{clientdir}/
     end
 
     it "should use the extension if one is specified" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
       @store.path(:me,'.farfignewton').should =~ %r{\.farfignewton$}
     end
 
     it "should assume an extension of .yaml if none is specified" do
-      Puppet.run_mode.expects(:master?).returns true
-      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet[:yamldir] = serverdir
       @store.path(:me).should =~ %r{\.yaml$}
     end
 
@@ -79,7 +82,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     end
   end
 
-  describe Puppet::Indirector::Yaml, " when storing objects as YAML" do
+  describe "when storing objects as YAML" do
     it "should only store objects that respond to :name" do
       @request.stubs(:instance).returns Object.new
       proc { @store.save(@request) }.should raise_error(ArgumentError)
@@ -130,11 +133,13 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       # Something that will fail in yaml
       File.expects(:read).returns "--- foo:\n  1,2,3\nargh"
 
-      expect { @store.find(@request) }.should raise_error(Puppet::Error)
+      expect {
+        @store.find(@request)
+      }.to raise_error(Puppet::Error, /Could not parse YAML data/)
     end
   end
 
-  describe Puppet::Indirector::Yaml, " when searching" do
+  describe "when searching" do
     it "should return an array of fact instances with one instance for each file when globbing *" do
       @request = stub 'request', :key => "*", :instance => @subject
       @one = mock 'one'
@@ -162,9 +167,12 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       @store.search(@request).should == []
     end
 
-    describe Puppet::Indirector::Yaml, " when destroying" do
+    describe "when destroying" do
+      let(:path) do
+        File.join(@dir, @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
+      end
+
       it "should unlink the right yaml file if it exists" do
-        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
         File.expects(:exists?).with(path).returns true
         File.expects(:unlink).with(path)
 
@@ -172,7 +180,6 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       end
 
       it "should not unlink the yaml file if it does not exists" do
-        path = File.join("/what/ever", @store.class.indirection_name.to_s, @request.key.to_s + ".yaml")
         File.expects(:exists?).with(path).returns false
         File.expects(:unlink).with(path).never
 
