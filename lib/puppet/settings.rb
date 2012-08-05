@@ -270,8 +270,12 @@ class Puppet::Settings
     return value unless value.is_a? String
     newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
       varname = $2 || $1
-      if varname == "environment" and environment
-        environment
+      if varname =~ /^environment(\d*)$/ and environment
+        if $1.empty?
+          environment
+        else
+          environment.to_s.slice(0,$1.to_i)
+        end
       elsif pval = self.value(varname, environment)
         pval
       else
