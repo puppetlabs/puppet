@@ -89,10 +89,10 @@ Puppet directly from source without using install.rb or copying files around.
 ## Common Issues ##
 
  * Don't assume file paths start with '/', as that is not a valid path on
-   Windows.  Use Puppet::Util.absolute_path? to validate that a path is fully
+   Windows.  Use Puppet::Util.absolute\_path? to validate that a path is fully
    qualified.
 
- * Use File.expand_path('/tmp') in tests to generate a fully qualified path
+ * Use File.expand\_path('/tmp') in tests to generate a fully qualified path
    that is valid on POSIX and Windows.  In the latter case, the current working
    directory will be used to expand the path.
 
@@ -108,11 +108,11 @@ Puppet directly from source without using install.rb or copying files around.
 
      IO.open(path, 'rb')
 
- * Don't assume file paths are separated by ':'.  Use File::PATH_SEPARATOR
+ * Don't assume file paths are separated by ':'.  Use `File::PATH_SEPARATOR`
    instead, which is ':' on POSIX and ';' on Windows.
 
- * On Windows, File::SEPARATOR is '/', and File::ALT_SEPARATOR is '\'.  On
-   POSIX systems, File::ALT_SEPARATOR is nil.  In general, use '/' as the
+ * On Windows, `File::SEPARATOR` is '/', and `File::ALT_SEPARATOR` is '\'.  On
+   POSIX systems, `File::ALT_SEPARATOR` is nil.  In general, use '/' as the
    separator as most Windows APIs, e.g. CreateFile, accept both types of
    separators.
 
