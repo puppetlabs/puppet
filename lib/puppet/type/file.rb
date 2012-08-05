@@ -298,7 +298,7 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  CREATORS = [:content, :source, :target]
+  CREATORS = [:content, :source]
   SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
 
   validate do
@@ -307,7 +307,7 @@ Puppet::Type.newtype(:file) do
       creator_count += 1 if self.should(param)
     end
     creator_count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
+    self.fail "You cannot specify target and one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if self.should(:target) and creator_count > 0
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
 
@@ -649,7 +649,7 @@ Puppet::Type.newtype(:file) do
   end
 
   def retrieve
-    if source = parameter(:source)
+    if source = parameter(:source) && !parameter(:checksum)
       source.copy_source_values
     end
     super

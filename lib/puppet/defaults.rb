@@ -264,6 +264,10 @@ module Puppet
       retrieved using the `server` setting. When running `apply` the default
       is `file_server`, causing requests to be filled locally."
     },
+    :content_origin_priority => {
+      :default => "bucket", 
+      :desc => "The preferred retrieve method for static compiler",
+    }
     :httplog => {
         :default  => "$logdir/http.log",
         :type     => :file,
