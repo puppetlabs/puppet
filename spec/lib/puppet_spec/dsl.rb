@@ -3,7 +3,7 @@ module PuppetSpec
 
     def prepare_compiler_and_scope
       @compiler = Puppet::Parser::Compiler.new Puppet::Node.new("test")
-      @scope = Puppet::Parser::Scope.new :compiler => @compiler, :source => "test"
+      @scope = Puppet::Parser::Scope.new @compiler, :source => "test"
     end
 
     def evaluate_in_context(&block)

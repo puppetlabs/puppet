@@ -314,7 +314,6 @@ module Puppet
         options = args.last.is_a?(::Hash) ? args.pop : {}
 
         ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
-        ::Puppet::Util.symbolizehash! options
 
         scope = ::Puppet::DSL::Parser.current_scope
         ::Kernel::Array(args).map do |name|
