@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'puppet/util/windows'
 
 Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) do
   desc "Windows package management by installing and removing MSIs.
@@ -15,13 +16,14 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
 
   class MsiPackage
     extend Enumerable
+    include Puppet::Util::Windows::Registry
+    extend Puppet::Util::Windows::Registry
 
     # From msi.h
     INSTALLSTATE_DEFAULT = 5 # product is installed for the current user
     INSTALLUILEVEL_NONE  = 2 # completely silent installation
 
     def self.installer
-      require 'win32ole'
       WIN32OLE.new("WindowsInstaller.Installer")
     end
 

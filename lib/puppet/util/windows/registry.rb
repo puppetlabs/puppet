@@ -1,7 +1,7 @@
+require 'puppet/util/windows'
+
 module Puppet::Util::Windows
   module Registry
-    require 'win32/registry' if Puppet::Util::Platform.windows?
-
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384129(v=vs.85).aspx
     KEY64 = 0x100
     KEY32 = 0x200
