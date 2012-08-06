@@ -344,7 +344,7 @@ module Puppet
             resource.virtual = true if virtualizing? or options[:virtual] == true
             resource.exported = true if exporting? or options[:export] == true
 
-            definition = scope.find_definition name
+            definition = scope.known_resource_types.definition name
             definition.instantiate_resource scope, resource if definition
 
             scope.compiler.add_resource scope, resource
