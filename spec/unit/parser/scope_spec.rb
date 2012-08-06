@@ -83,20 +83,6 @@ describe Puppet::Parser::Scope do
     Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
   end
 
-  it "calls #to_s on a key when setting variable" do
-    key = mock
-    key.expects(:to_s).returns "42"
-
-    @scope[key] = 42
-  end
-
-  it "calls #to_s on a key when getting variable" do
-    key = mock
-    key.expects(:to_s).returns "42"
-
-    @scope[key]
-  end
-
   describe "when missing methods are called" do
     before :each do
       @env      = Puppet::Node::Environment.new('testing')
