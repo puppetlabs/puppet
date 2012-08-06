@@ -334,7 +334,7 @@ class Puppet::Resource
       if external_value.nil?
         next if default.nil?
 
-        value = unless use_ruby_dsl? environment.to_s
+        value = if default.respond_to? :safeevaluate
                   default.safeevaluate(scope)
                 else
                   default

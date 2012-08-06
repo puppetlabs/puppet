@@ -305,27 +305,28 @@ describe Puppet::Resource do
       resource.set_default_parameters(@scope).should == [:a]
     end
 
-    it "doesn't call safeevaluate on default value when using Ruby DSL" do
+    it "doesn't call safeevaluate on default value when it doesn't respond to safeevaluate" do
       Puppet[:manifest] = "test.rb"
       value = mock
+      value.stubs(:respond_to?).with(:safeevaluate).returns false
       value.expects(:safeevaluate).never
       Puppet::Node::Environment.new.known_resource_types.add(
         Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
       )
 
-      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
       resource.set_default_parameters @scope
     end
 
 
-    it "calls safeevaluate on default when not using Ruby DSL" do
+    it "calls safeevaluate on default when it responds to safeevaluate" do
       value = mock
       value.expects(:safeevaluate).returns 42
       Puppet::Node::Environment.new.known_resource_types.add(
         Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
       )
 
-      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
       resource.set_default_parameters @scope
     end
 
