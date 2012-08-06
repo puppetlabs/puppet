@@ -4,7 +4,7 @@ GEM
     coderay (1.0.7)
     diff-lcs (1.1.3)
     facter (1.6.10)
-    hiera (0.3.0)
+    hiera (1.0.0rc4)
     metaclass (0.0.1)
     method_source (0.8)
     mocha (0.10.5)
@@ -33,8 +33,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  facter
-  hiera
+  facter (>= 1.6.10)
+  hiera (~> 1.0.0rc4)
   mocha (~> 0.10.0)
   pry
   rack (~> 1.2.0)
