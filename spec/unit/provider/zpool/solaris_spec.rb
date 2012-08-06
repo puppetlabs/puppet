@@ -19,6 +19,22 @@ describe provider_class do
     end
   end
 
+  describe "self.instances" do
+    it "should have an instances method" do
+      provider_class.should respond_to(:instances)
+    end
+
+    it "should list instances" do
+      provider_class.expects(:zpool).with(:list,'-H').returns File.read(my_fixture('zpool-list.out'))
+      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances.size.should == 2
+      instances[0].should == {:name => 'rpool', :ensure => :present}
+      instances[1].should == {:name => 'mypool', :ensure => :present}
+    end
+  end
+
+
+
   describe "when calling flush" do
     it "should need to reload the pool" do
       @provider.stubs(:get_pool_data)
