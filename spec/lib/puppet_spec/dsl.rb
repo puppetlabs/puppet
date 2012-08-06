@@ -6,8 +6,10 @@ module PuppetSpec
       @scope = Puppet::Parser::Scope.new @compiler, :source => "test"
     end
 
-    def evaluate_in_context(&block)
-      Puppet::DSL::Context.new(block).evaluate @scope
+    def evaluate_in_context(options = {}, &block)
+      nesting = options.fetch(:nesting) { 0      }
+      scope   = options.fetch(:scope)   { @scope }
+      Puppet::DSL::Context.new(block, nesting).evaluate scope
     end
 
     def known_resource_types

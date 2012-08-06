@@ -1,5 +1,6 @@
 require 'puppet/dsl/blank_slate'
 require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/scope_decorator'
 require 'puppet/dsl/type_reference'
 require 'puppet/dsl/helper'
 
@@ -59,7 +60,8 @@ module Puppet
       # +code+ should be a +Proc+ that will be evaluated during evaluation of a
       # resource.
       ##
-      def initialize(code)
+      def initialize(code, nesting = 0)
+        @nesting = nesting
         @code = code
         @object = ::Object.new
       end
@@ -112,7 +114,8 @@ module Puppet
       #
       ##
       def node(name, options = {}, &block)
-        raise ::ArgumentError if block.nil?
+        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
+        raise ::ArgumentError, "no block supplied"           if block.nil?
 
         options.each do |k, _|
           unless :inherits == k
@@ -128,7 +131,7 @@ module Puppet
 
         name = name.to_s unless name.is_a? ::Regexp
         node = ::Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = ::Puppet::DSL::Context.new block
+        node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
 
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_node node
       end
@@ -154,7 +157,8 @@ module Puppet
       #
       ##
       def hostclass(name, options = {}, &block)
-        raise ::ArgumentError if block.nil?
+        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
+        raise ::ArgumentError, "no block supplied"           if block.nil?
 
         options.each do |k, _|
           unless [:arguments, :inherits].include? k
@@ -167,7 +171,7 @@ module Puppet
         params.merge! :parent    => options[:inherits].to_s if options[:inherits]
 
         hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
-        hostclass.ruby_code = ::Puppet::DSL::Context.new block
+        hostclass.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
 
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_hostclass hostclass
       end
@@ -191,7 +195,8 @@ module Puppet
       #
       ##
       def define(name, options = {}, &block)
-        raise ::ArgumentError if block.nil?
+        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
+        raise ::ArgumentError, "no block supplied"           if block.nil?
 
         options.each do |k, _|
           unless :arguments == k
@@ -202,7 +207,8 @@ module Puppet
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
-        definition.ruby_code = ::Puppet::DSL::Context.new block
+        definition.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_definition definition
       end
 
@@ -285,7 +291,7 @@ module Puppet
       # Returns current scope for access for variables
       ##
       def params
-        ::Puppet::DSL::Parser.current_scope
+        ::Puppet::DSL::ScopeDecorator.new(::Puppet::DSL::Parser.current_scope)
       end
 
       ##
@@ -308,7 +314,7 @@ module Puppet
       ##
       def create_resource(type, *args, &block)
         # when performing type import the scope is nil
-        return if ::Puppet::DSL::Parser.current_scope.nil?
+        raise ::NoMethodError, "resources can't be created in top level scope when importing a manifest" if ::Puppet::DSL::Parser.current_scope.nil?
 
         raise ::NoMethodError, "resource type #{type} not found" unless valid_type? type
         options = args.last.is_a?(::Hash) ? args.pop : {}
@@ -361,7 +367,7 @@ module Puppet
       ##
       def call_function(name, *args)
         # when performing type import the scope is nil
-        return if ::Puppet::DSL::Parser.current_scope.nil?
+        raise ::NoMethodError, "resources can't be created in top level scope when importing a manifest" if ::Puppet::DSL::Parser.current_scope.nil?
 
         raise ::NoMethodError, "calling undefined function #{name}(#{args.join ', '})" unless valid_function? name
         ::Puppet::DSL::Parser.current_scope.send name, args

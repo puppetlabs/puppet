@@ -3,6 +3,7 @@ require 'puppet_spec/dsl'
 
 require 'puppet/dsl/parser'
 require 'puppet/dsl/context'
+require 'puppet/parser/null_scope'
 
 include PuppetSpec::DSL
 
@@ -17,6 +18,14 @@ describe Puppet::DSL::Context do
     it "should raise a NoMethodError when trying to create a resoruce with invalid type" do
       lambda do
         evaluate_in_context do
+          create_resource :foobar, "test"
+        end
+      end.should raise_error NoMethodError
+    end
+
+    it "should raise NoMethodError when creating resources in a imported file on top level scope" do
+      lambda do
+        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
           create_resource :foobar, "test"
         end
       end.should raise_error NoMethodError
@@ -154,6 +163,14 @@ describe Puppet::DSL::Context do
       end
     end
 
+    it "raises NoMethodError when calling functions in a imported file on top level scope" do
+      lambda do
+        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
+          call_function :foobar
+        end
+      end.should raise_error NoMethodError
+    end
+
     it "should raise NoMethodError if the function is invalid" do
       lambda do
         evaluate_in_context do
@@ -239,11 +256,8 @@ describe Puppet::DSL::Context do
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
-      pending
-      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
-
       lambda do
-        evaluate_in_context do
+        evaluate_in_context :nesting => 1 do
           define(:foo) {}
         end
       end.should raise_error NoMethodError
@@ -335,11 +349,8 @@ describe Puppet::DSL::Context do
     end
 
     it "should raise NoMethodError when the nesting is invalid" do
-      pending
-      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
-
       lambda do
-        evaluate_in_context do
+        evaluate_in_context :nesting => 1 do
           node("foo") {}
         end
       end.should raise_error NoMethodError
@@ -435,11 +446,8 @@ describe Puppet::DSL::Context do
     end
 
     it "should raise NoMethodError when called in invalid nesting" do
-      pending
-      Puppet::DSL::Parser.stubs(:valid_nesting?).returns false
-
       lambda do
-        evaluate_in_context do
+        evaluate_in_context :nesting => 1 do
           hostclass(:foo) {}
         end
       end.should raise_error NoMethodError
@@ -539,10 +547,10 @@ describe Puppet::DSL::Context do
     end
 
     describe "#params" do
-      it "should return current scope" do
+      it "should return scope decorator" do
         evaluate_in_context do
-          params.should == Puppet::DSL::Parser.current_scope
-        end
+          params
+        end.should be_a Puppet::DSL::ScopeDecorator
       end
     end
 
