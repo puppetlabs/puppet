@@ -61,9 +61,9 @@ module Puppet
       # resource.
       ##
       def initialize(code, nesting = 0)
-        @nesting = nesting
-        @code = code
-        @object = ::Object.new
+        @nesting  = nesting
+        @code     = code
+        @object   = ::Object.new
       end
 
       ##
@@ -284,7 +284,7 @@ module Puppet
       # Returns string description of context
       ##
       def inspect
-        "<#Puppet::DSL::Context #{self.__id__} @code=#{@code.inspect}>"
+        "dsl_main"
       end
 
       ##

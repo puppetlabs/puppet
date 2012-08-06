@@ -113,7 +113,7 @@ class Puppet::Parser::Compiler
   end
 
   def evaluate_ruby_code
-    Puppet::DSL::Parser.new(@main, get_ruby_code(@environment.name)).evaluate
+    Puppet::DSL::Parser.new(@main, get_ruby_code(@environment.name), Puppet[:manifest]).evaluate
   end
 
   def_delegator :@collections, :delete, :delete_collection

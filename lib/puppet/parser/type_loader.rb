@@ -94,7 +94,7 @@ class Puppet::Parser::TypeLoader
                        known_resource_types.hostclasses.values
 
         Puppet::Resource::Type.new(:hostclass, '').tap do |type|
-          Puppet::DSL::Parser.new(type, File.read(file)).evaluate
+          Puppet::DSL::Parser.new(type, File.read(file), file).evaluate
           type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
         end
 

@@ -16,12 +16,12 @@ module Puppet
       # It requires +main+ object to respond to +ruby_code=+ and +code+ to be a
       # string of Ruby code.
       ##
-      def initialize(main, code)
+      def initialize(main, code, filename = "")
         raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :ruby_code=
 
         @main = main
         @code = proc do
-          instance_eval code
+          instance_eval code, filename, 0
         end
       end
 

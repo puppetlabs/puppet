@@ -375,7 +375,17 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    ruby_code.each { |c| c.evaluate(scope) }
+    ruby_code.each do |c|
+      silence_backtrace { c.evaluate(scope) }
+    end
+  end
+
+  def silence_backtrace
+    yield
+  rescue ::Exception => e
+    backtrace = e.backtrace.reject {|l| l =~ %r|lib/puppet| or l =~ %r|bin/puppet| }
+    message   = "#{e.message}\n#{backtrace.join "\n"}"
+    raise ::Puppet::Error, message
   end
 
   # Split an fq name into a namespace and name
