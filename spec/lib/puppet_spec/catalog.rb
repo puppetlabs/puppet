@@ -4,9 +4,6 @@ module PuppetSpec::Catalog
 
     # compares compiled catalogs
     def ==(other)
-      puts self.to_yaml
-      puts "------------"
-      puts other.to_yaml
       [:name, :environment, :tags,
         :resources, :edges, :classes].map do |m|
         self.send(m) == other.send(m)
