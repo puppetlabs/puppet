@@ -24,7 +24,7 @@ describe Puppet::Node::Environment do
   end
 
   it "should use the default environment if no name is provided while initializing an environment" do
-    Puppet.settings.expects(:value).with(:environment).returns("one")
+    Puppet[:environment] = "one"
     Puppet::Node::Environment.new.name.should == :one
   end
 
@@ -156,8 +156,8 @@ describe Puppet::Node::Environment do
     end
 
     it "should ask the Puppet settings instance for the setting qualified with the environment name" do
-      Puppet.settings.expects(:value).with("myvar", :testing).returns("myval")
-      env["myvar"].should == "myval"
+      Puppet.settings.set_value(:server, "myval", :testing)
+      env[:server].should == "myval"
     end
 
     it "should be able to return an individual module that exists in its module path" do

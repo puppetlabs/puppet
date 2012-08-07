@@ -79,6 +79,8 @@ module Puppet::Test
       Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
 
+      Puppet::Node::Environment.clear
+
       Puppet.clear_deprecation_warnings
     end
 
@@ -87,7 +89,6 @@ module Puppet::Test
     def self.after_each_test()
       clear_settings_after_each()
 
-      Puppet::Node::Environment.clear
       Puppet::Util::Storage.clear
       Puppet::Util::ExecutionStub.reset
 
