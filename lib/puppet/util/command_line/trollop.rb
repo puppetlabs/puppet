@@ -6,9 +6,15 @@
 ## 2012-03: small changes made by cprice (chris@puppetlabs.com);
 ##           patch submitted for upstream consideration:
 ##           https://gitorious.org/trollop/mainline/merge_requests/9
+## 2012-08: namespace changes made by Jeff McCune (jeff@puppetlabs.com)
+##           moved Trollop into Puppet::Util::CommandLine to prevent monkey
+##           patching the upstream trollop library if also loaded.
 
 require 'date'
 
+module Puppet
+module Util
+class CommandLine
 module Trollop
 
 VERSION = "1.16.2"
@@ -813,3 +819,6 @@ end
 module_function :options, :die, :with_standard_exception_handling
 
 end # module
+end
+end
+end
