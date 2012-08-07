@@ -37,13 +37,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     Proc.new { @server.listen(@listen_params.delete_if {|k,v| :port == k})}.should raise_error(ArgumentError)
   end
 
-  it "should order a webrick server to start in a separate thread" do
-    @mock_webrick.expects(:start)
-    # If you remove this you'll sometimes get race condition problems
-    Thread.expects(:new).yields
-    @server.listen(@listen_params)
-  end
-
   it "should tell webrick to listen on the specified address and port" do
     WEBrick::HTTPServer.expects(:new).with {|args|
       args[:Port] == 31337 and args[:BindAddress] == "127.0.0.1"

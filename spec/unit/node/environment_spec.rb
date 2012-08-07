@@ -80,15 +80,15 @@ describe Puppet::Node::Environment do
     end
 
     it "should give to all threads using the same environment the same collection if the collection isn't stale" do
-      original_thread_type_collection = Puppet::Resource::TypeCollection.new(env)
-      Puppet::Resource::TypeCollection.expects(:new).with(env).returns original_thread_type_collection
-      env.known_resource_types.should equal(original_thread_type_collection)
+      @original_thread_type_collection = Puppet::Resource::TypeCollection.new(env)
+      Puppet::Resource::TypeCollection.expects(:new).with(env).returns @original_thread_type_collection
+      env.known_resource_types.should equal(@original_thread_type_collection)
 
-      original_thread_type_collection.expects(:require_reparse?).returns(false)
+      @original_thread_type_collection.expects(:require_reparse?).returns(false)
       Puppet::Resource::TypeCollection.stubs(:new).with(env).returns @collection
 
       t = Thread.new {
-        env.known_resource_types.should equal(original_thread_type_collection)
+        env.known_resource_types.should equal(@original_thread_type_collection)
       }
       t.join
     end
