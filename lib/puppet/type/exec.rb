@@ -220,8 +220,8 @@ module Puppet
     newparam(:timeout) do
       desc "The maximum time the command should take.  If the command takes
         longer than the timeout, the command is considered to have failed
-        and will be stopped.  Use 0 to disable the timeout.
-        The time is specified in seconds."
+        and will be stopped. The timeout is specified in seconds. The default
+        timeout is 300 seconds and you can set it to 0 to disable the timeout."
 
       munge do |value|
         value = value.shift if value.is_a?(Array)

@@ -938,7 +938,7 @@ describe Puppet::Settings do
     context "running with an explicit config file as a user (e.g. Apache + Passenger)" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        @settings[:confdir] = "/etc/puppet"
+        @settings[:confdir] = File.dirname(MAIN_CONFIG_FILE_DEFAULT_LOCATION)
         FileTest.expects(:exist?).
           with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
           returns(true).in_sequence(seq)
