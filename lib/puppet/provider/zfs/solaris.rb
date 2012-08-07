@@ -4,6 +4,13 @@ Puppet::Type.type(:zfs).provide(:solaris) do
   commands :zfs => "/usr/sbin/zfs"
   defaultfor :osfamily => :solaris
 
+  def self.instances
+    zfs(:list, '-H').split("\n").collect do |line|
+      name,used,avail,refer,mountpoint = line.split(/\s+/)
+      new({:name => name, :ensure => :present})
+    end
+  end
+
   def add_properties
     properties = []
     Puppet::Type.type(:zfs).validproperties.each do |property|
