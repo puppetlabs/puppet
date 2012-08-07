@@ -1,3 +1,10 @@
+2.7.19rc2
+===
+b540aa0 (#15471) Fix setting mode of last_run_summary
+7c7cffe (#15471) Ensure non-root can read report summary
+a257105 Use Win32 API atomic replace in `replace_file`
+a619bfd Add additional commits to CHANGELOG missed in 2.7.19rc1
+
 2.7.19rc1
 ===
 1dd660a (Maint) Remove reference to Patchwork
