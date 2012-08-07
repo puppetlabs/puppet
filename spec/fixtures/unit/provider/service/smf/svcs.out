@@ -1,0 +1,3 @@
+legacy_run     16:19:12 lrc:/etc/rcS_d/S50sk98sol
+online         16:19:08 svc:/system/svc/restarter:default
+maintenance    16:19:13 svc:/network/cswrsyncd:default
