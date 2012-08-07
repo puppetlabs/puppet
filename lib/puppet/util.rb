@@ -9,6 +9,7 @@ require 'sync'
 require 'monitor'
 require 'tempfile'
 require 'pathname'
+require 'ostruct'
 require 'puppet/util/platform'
 
 module Puppet
@@ -523,34 +524,31 @@ module Util
   # across.
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
-    raise Puppet::DevError, "replace_file is non-functional on Windows" if Puppet.features.microsoft_windows?
 
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
 
     file_exists = file.exist?
 
-    # If the file exists, use its current mode/owner/group. If it doesn't, use
-    # the supplied mode, and default to current user/group.
-    if file_exists
-      stat = file.lstat
-
-      # We only care about the four lowest-order octets. Higher octets are
-      # filesystem-specific.
-      mode = stat.mode & 07777
-      uid = stat.uid
-      gid = stat.gid
-    else
-      mode = default_mode
-      uid = Process.euid
-      gid = Process.egid
-    end
-
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
     # that it avoids races around creating the file.
-    tempfile.chmod(mode)
-    tempfile.chown(uid, gid)
+    #
+    # Our Windows emulation is pretty limited, and so we have to carefully
+    # and specifically handle the platform, which has all sorts of magic.
+    # So, unlike Unix, we don't pre-prep security; we use the default "quite
+    # secure" tempfile permissions instead.  Magic happens later.
+    unless Puppet.features.microsoft_windows?
+      # Grab the current file mode, and fall back to the defaults.
+      stat = file.lstat rescue OpenStruct.new(:mode => default_mode,
+                                              :uid  => Process.euid,
+                                              :gid  => Process.egid)
+
+      # We only care about the bottom four slots, which make the real mode,
+      # and not the rest of the platform stat call fluff and stuff.
+      tempfile.chmod(stat.mode & 07777)
+      tempfile.chown(stat.uid, stat.gid)
+    end
 
     # OK, now allow the caller to write the content of the file.
     yield tempfile
@@ -571,7 +569,45 @@ module Util
 
     tempfile.close
 
-    File.rename(tempfile.path, file)
+    if Puppet.features.microsoft_windows?
+      # This will appropriately clone the file, but only if the file we are
+      # replacing exists.  Which is kind of annoying; thanks Microsoft.
+      #
+      # So, to avoid getting into an infinite loop we will retry once if the
+      # file doesn't exist, but only the once...
+      have_retried = false
+
+      begin
+        # Yes, the arguments are reversed compared to the rename in the rest
+        # of the world.
+        Puppet::Util::Windows::File.replace_file(file, tempfile.path)
+      rescue Puppet::Util::Windows::Error => e
+        # This might race, but there are enough possible cases that there
+        # isn't a good, solid "better" way to do this, and the next call
+        # should fail in the same way anyhow.
+        raise if have_retried or File.exist?(file)
+        have_retried = true
+
+        # OK, so, we can't replace a file that doesn't exist, so let us put
+        # one in place and set the permissions.  Then we can retry and the
+        # magic makes this all work.
+        #
+        # This is the least-worst option for handling Windows, as far as we
+        # can determine.
+        File.open(file, 'a') do |fh|
+          # this space deliberately left empty for auto-close behaviour,
+          # append mode, and not actually changing any of the content.
+        end
+
+        # Set the permissions to what we want.
+        Puppet::Util::Windows::Security.set_mode(default_mode, file.to_s)
+
+        # ...and finally retry the operation.
+        retry
+      end
+    else
+      File.rename(tempfile.path, file)
+    end
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't
     # have support for that, and it doesn't matter /that/ much...
