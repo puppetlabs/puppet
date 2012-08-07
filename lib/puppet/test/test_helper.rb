@@ -80,6 +80,7 @@ module Puppet::Test
       Puppet[:keylength] = 512
 
       Puppet::Node::Environment.clear
+      Puppet::Parser::Functions.reset
 
       Puppet.clear_deprecation_warnings
     end
