@@ -264,8 +264,9 @@ describe content do
       end
 
       it "should write to the given file handle" do
-        @fh.expects(:print).with("this is content")
-        @content.write(@fh)
+        fh = mock 'filehandle'
+        fh.expects(:print).with("this is content")
+        @content.write(fh)
       end
 
       it "should return the current checksum value" do
@@ -295,8 +296,9 @@ describe content do
         @content.resource.expects(:bucket).returns bucket
         bucket.expects(:getfile).with("foo").returns "mycontent"
 
-        @fh.expects(:print).with("mycontent")
-        @content.write(@fh)
+        fh = mock 'filehandle'
+        fh.expects(:print).with("mycontent")
+        @content.write(fh)
       end
     end
 
