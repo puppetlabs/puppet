@@ -1116,14 +1116,6 @@ EOT
       before considering it a failure.  This can help reduce flapping if too
       many clients contact the server at one time.",
     },
-    :reportserver => {
-      :default => "$server",
-      :call_hook => :on_write_only,
-      :desc => "(Deprecated for 'report_server') The server to which to send transaction reports.",
-      :hook => proc do |value|
-        Puppet.settings[:report_server] = value if value
-      end
-    },
     :report_server => {
       :default  => "$server",
       :desc     => "The server to send transaction reports to.",
