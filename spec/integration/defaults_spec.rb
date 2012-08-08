@@ -153,7 +153,7 @@ describe "Puppet defaults" do
 
     it "should not set the Catalog cache class to :store_configs if asynchronous storeconfigs is enabled" do
       Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:store_configs).never
-      Puppet.settings.expects(:value).with(:async_storeconfigs).returns true
+      Puppet.settings[:async_storeconfigs] = true
       Puppet.settings[:storeconfigs] = true
     end
 
