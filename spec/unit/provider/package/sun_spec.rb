@@ -33,7 +33,7 @@ describe provider_class do
       provider.should respond_to(method)
     end
   end
-  
+
   context '#install' do
     it "should install a package" do
       resource[:ensure] = :installed
