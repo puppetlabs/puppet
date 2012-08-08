@@ -103,6 +103,13 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
+2.7.19rc2
+===
+b540aa0 (#15471) Fix setting mode of last_run_summary
+7c7cffe (#15471) Ensure non-root can read report summary
+a257105 Use Win32 API atomic replace in `replace_file`
+a619bfd Add additional commits to CHANGELOG missed in 2.7.19rc1
+
 2.7.19rc1
 ===
 1dd660a (Maint) Remove reference to Patchwork
