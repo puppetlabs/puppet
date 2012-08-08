@@ -1,113 +1,108 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:zfs).provider(:zfs)
+describe Puppet::Type.type(:zfs).provider(:zfs) do
+  let(:name) { 'myzfs' }
+  let(:zfs) { '/usr/sbin/zfs' }
 
-describe provider_class do
+  let(:resource) do
+    Puppet::Type.type(:zfs).new(:name => name, :provider => :zfs)
+  end
+
+  let(:provider) { resource.provider }
+
   before do
-    @resource = stub("resource", :name => "myzfs")
-    @resource.stubs(:[]).with(:name).returns "myzfs"
-    @resource.stubs(:[]).returns "shouldvalue"
-    @provider = provider_class.new(@resource)
+    provider.class.stubs(:which).with('zfs').returns(zfs)
   end
 
-  it "should have a create method" do
-    @provider.should respond_to(:create)
-  end
-
-  it "should have a destroy method" do
-    @provider.should respond_to(:destroy)
-  end
-
-  it "should have an exists? method" do
-    @provider.should respond_to(:exists?)
-  end
-
-  describe "self.instances" do
+  context ".instances" do
     it "should have an instances method" do
-      provider_class.should respond_to(:instances)
+      provider.class.should respond_to(:instances)
     end
 
     it "should list instances" do
-      provider_class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
-      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      provider.class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
+      instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       instances.size.should == 2
       instances[0].should == {:name => 'rpool', :ensure => :present}
       instances[1].should == {:name => 'rpool/ROOT', :ensure => :present}
     end
   end
 
-  describe "when calling add_properties" do
-    it "should add -o and the key=value for each properties with a value" do
-      @resource.stubs(:[]).with(:quota).returns ""
-      @resource.stubs(:[]).with(:refquota).returns ""
-      @resource.stubs(:[]).with(:mountpoint).returns "/foo"
-      properties = @provider.add_properties
-      properties.include?("-o").should == true
-      properties.include?("mountpoint=/foo").should == true
-      properties.detect { |a| a.include?("quota") }.should == nil
+  context '#add_properties' do
+    it 'should return an array of properties' do
+      resource[:mountpoint] = '/foo'
+
+      provider.add_properties.should == ['-o', "mountpoint=/foo"]
+    end
+
+    it 'should return an empty array' do
+      provider.add_properties.should == []
     end
   end
 
-  describe "when calling create" do
-    it "should call add_properties" do
-      @provider.stubs(:zfs)
-      @provider.expects(:add_properties).returns([])
-      @provider.create
+  context "#create" do
+    it "should execute zfs create" do
+      provider.expects(:zfs).with(:create, name)
+
+      provider.create
     end
 
-    it "should call zfs with create, properties and this zfs" do
-      @provider.stubs(:add_properties).returns(%w{a b})
-      @provider.expects(:zfs).with(:create, "a", "b", @resource[:name])
-      @provider.create
-    end
-  end
+    Puppet::Type.type(:zfs).validproperties.each do |prop|
+      next if prop == :ensure
+      it "should include property #{prop}" do
+        resource[prop] = prop
 
-  describe "when calling destroy" do
-    it "should call zfs with :destroy and this zfs" do
-      @provider.expects(:zfs).with(:destroy, @resource[:name])
-      @provider.destroy
+        provider.expects(:zfs).with(:create, '-o', "#{prop}=#{prop}", name)
+
+        provider.create
+      end
     end
   end
 
-  describe "when calling exist?" do
-    it "should call zfs with :list" do
+  context "#destroy" do
+    it "should execute zfs destroy" do
+      provider.expects(:zfs).with(:destroy, name)
+
+      provider.destroy
+    end
+  end
+
+  context "#exists?" do
+    it "should return true if the resource exists" do
       #return stuff because we have to slice and dice it
-      @provider.expects(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\nmyzfs 100K 27.4M /myzfs")
-      @provider.exists?
-    end
+      provider.expects(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\nmyzfs 100K 27.4M /myzfs")
 
-    it "should return true if returned values match the name" do
-      @provider.stubs(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\n#{@resource[:name]} 100K 27.4M /myzfs")
-      @provider.exists?.should == true
+      provider.should be_exists
     end
 
     it "should return false if returned values don't match the name" do
-      @provider.stubs(:zfs).with(:list).returns("no soup for you")
-      @provider.exists?.should == false
-    end
+      provider.expects(:zfs).with(:list).returns("no soup for you")
 
-  end
-
-  [:mountpoint, :recordsize, :aclmode, :aclinherit, :primarycache, :secondarycache, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |prop|
-    describe "when getting the #{prop} value" do
-      it "should call zfs with :get, #{prop} and this zfs" do
-        @provider.expects(:zfs).with(:get, "-H", "-o", "value", prop, @resource[:name]).returns("value\n")
-        @provider.send(prop)
-      end
-
-      it "should get the third value of the second line from the output" do
-        @provider.stubs(:zfs).with(:get, "-H", "-o", "value", prop, @resource[:name]).returns("value\n")
-        @provider.send(prop).should == "value"
-      end
-    end
-
-    describe "when setting the #{prop} value" do
-      it "should call zfs with :set, #{prop}=value and this zfs" do
-        @provider.expects(:zfs).with(:set, "#{prop}=value", @resource[:name])
-        @provider.send("#{prop}=".intern, "value")
-      end
+      provider.should_not be_exists
     end
   end
 
+  describe "zfs properties" do
+    [:aclinherit, :aclmode, :atime, :canmount, \
+     :checksum, :compression, :copies, :devices, \
+     :exec, :logbias, :mountpoint, :nbmand, \
+     :primarycache, :quota, :readonly, :recordsize, \
+     :refquota, :refreservation, :reservation, :secondarycache,\
+     :setuid, :shareiscsi, :sharenfs, :sharesmb, \
+     :snapdir, :version, :volsize, :vscan, \
+     :xattr, :zoned, :vscan].each do |prop|
+      it "should get #{prop}" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
+
+        provider.send(prop).should == 'value'
+      end
+
+      it "should set #{prop}=value" do
+        provider.expects(:zfs).with(:set, "#{prop}=value", name)
+
+        provider.send("#{prop}=", "value")
+      end
+    end
+  end
 end
