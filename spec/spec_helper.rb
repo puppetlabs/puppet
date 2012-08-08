@@ -9,7 +9,6 @@ $LOAD_PATH.unshift File.join(dir, 'lib')
 ARGV.clear
 
 require 'puppet'
-require 'mocha'
 gem 'rspec', '>=2.0.0'
 require 'rspec/expectations'
 
