@@ -1,5 +1,5 @@
-Puppet::Type.type(:zfs).provide(:solaris) do
-  desc "Provider for Solaris zfs."
+Puppet::Type.type(:zfs).provide(:zfs) do
+  desc "Provider for zfs."
 
   commands :zfs => "/usr/sbin/zfs"
   defaultfor :osfamily => :solaris

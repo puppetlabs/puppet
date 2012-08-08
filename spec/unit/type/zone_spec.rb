@@ -61,7 +61,7 @@ describe zone do
 
     # ick
     provider = stub 'zfs::provider'
-    provider.stubs(:name).returns(:solaris)
+    provider.stubs(:name).returns(:zfs)
     Puppet::Type.type(:zfs).stubs(:defaultprovider).returns(provider)
 
     catalog = Puppet::Resource::Catalog.new

@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:zfs).provider(:solaris)
+provider_class = Puppet::Type.type(:zfs).provider(:zfs)
 
 describe provider_class do
   before do
