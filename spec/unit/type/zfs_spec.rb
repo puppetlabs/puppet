@@ -26,7 +26,7 @@ describe zfs do
     zfs.stubs(:defaultprovider).returns(zfs_provider)
 
     zpool_provider = mock "provider"
-    zpool_provider.stubs(:name).returns(:solaris)
+    zpool_provider.stubs(:name).returns(:zpool)
     Puppet::Type.type(:zpool).stubs(:defaultprovider).returns(zpool_provider)
 
     foo_pool = Puppet::Type.type(:zpool).new(:name => "foo")
