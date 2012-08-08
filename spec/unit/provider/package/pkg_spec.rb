@@ -66,7 +66,12 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
     it "should work correctly for ensure latest on solaris 11" do
       @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11'))
-      @provider.latest
+      @provider.latest.should == 'installed'
+    end
+
+    it "should work correctly for ensure latest on solaris 11(2)" do
+      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11.known'))
+      @provider.latest.should == 'known'
     end
 
     it "should warn about incorrect lines" do
