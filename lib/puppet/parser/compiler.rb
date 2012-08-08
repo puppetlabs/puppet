@@ -112,8 +112,10 @@ class Puppet::Parser::Compiler
     @catalog
   end
 
-  def evaluate_ruby_code
-    Puppet::DSL::Parser.new(@main, get_ruby_code(@environment.name), Puppet[:manifest]).evaluate
+  def evaluate_ruby_code(file)
+    File.open file do |f|
+      Puppet::DSL::Parser.evaluate @main, f
+    end
   end
 
   def_delegator :@collections, :delete, :delete_collection
@@ -287,7 +289,8 @@ class Puppet::Parser::Compiler
 
     add_resource(@topscope, @main_resource)
 
-    evaluate_ruby_code if use_ruby_dsl? environment.name
+    file = Puppet.settings.value :manifest, environment
+    evaluate_ruby_code file if is_ruby_dsl? file
 
     @main_resource.evaluate
   end

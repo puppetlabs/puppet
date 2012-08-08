@@ -207,7 +207,7 @@ class Puppet::Node::Environment
   private
 
   def perform_initial_import
-    return empty_parse_result if Puppet.settings[:ignoreimport] or use_ruby_dsl? name
+    return empty_parse_result if Puppet.settings[:ignoreimport] or is_ruby_dsl?(Puppet.settings.value(:manifest, name.to_s))
     parser = Puppet::Parser::Parser.new(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code

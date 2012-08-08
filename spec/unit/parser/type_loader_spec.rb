@@ -122,7 +122,7 @@ describe Puppet::Parser::TypeLoader do
 
         # write out the class
         if type == "ruby"
-          File.open(path, "w") { |f| f.print "hostclass '#{name}' do\nend" }
+          File.open(path, "w") { |f| f.print "hostclass :'#{name}' do; end" }
         else
           File.open(path, "w") { |f| f.print "class #{name} {}" }
         end

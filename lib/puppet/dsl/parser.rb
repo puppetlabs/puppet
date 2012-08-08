@@ -12,25 +12,18 @@ module Puppet
       @@frames = []
 
       ##
-      # Initializes Parser object.
-      # It requires +main+ object to respond to +ruby_code=+ and +code+ to be a
-      # string of Ruby code.
-      ##
-      def initialize(main, code, filename = "")
-        raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :ruby_code=
-
-        @main = main
-        @code = proc do
-          instance_eval code, filename, 0
-        end
-      end
-
-      ##
       # Creates a new Puppet::DSL::Context and assings it as ruby_code to the
       # main object.
+      # It requires +main+ object to respond to +ruby_code=+ and +io+ has to
+      # respond to +read+.
       ##
-      def evaluate
-        @main.ruby_code = Context.new(@code)
+      def self.evaluate(main, io)
+        raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :'ruby_code='
+
+        filename       = io.respond_to?(:path) ? io.path : ""
+        source         = io.read
+        code           = proc { instance_eval source, filename, 0 }
+        main.ruby_code = Context.new code
       end
 
       ##

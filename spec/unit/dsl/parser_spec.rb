@@ -26,7 +26,7 @@ describe Puppet::DSL::Parser do
       main = mock
       main.expects :'ruby_code='
 
-      Puppet::DSL::Parser.new(main, proc {}).evaluate
+      Puppet::DSL::Parser.evaluate main, StringIO.new
     end
   end
 

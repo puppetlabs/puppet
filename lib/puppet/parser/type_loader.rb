@@ -3,10 +3,12 @@ require 'forwardable'
 require 'puppet/node/environment'
 require 'puppet/parser/null_scope'
 require 'puppet/dsl/parser'
+require 'puppet/dsl/helper'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable
   include Puppet::Node::Environment::Helper
+  include Puppet::DSL::Helper
 
   # Helper class that makes sure we don't try to import the same file
   # more than once from either the same thread or different threads.
@@ -88,14 +90,14 @@ class Puppet::Parser::TypeLoader
     files.each do |file|
       file = File.join dir, file unless Puppet::Util.absolute_path? file
 
-      if file =~ /\.rb\z/
+      if is_ruby_dsl? file
         known_before = known_resource_types.definitions.values +
                        known_resource_types.nodes.values +
                        known_resource_types.hostclasses.values
 
         Puppet::Resource::Type.new(:hostclass, '').tap do |type|
-          Puppet::DSL::Parser.new(type, File.read(file), file).evaluate
-          type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
+          File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+          type.ruby_code.each { |c| silence_backtrace { c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) } }
         end
 
         known_now    = known_resource_types.definitions.values +

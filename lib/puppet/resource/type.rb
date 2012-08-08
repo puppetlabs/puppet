@@ -10,6 +10,7 @@ class Puppet::Resource::Type
   include Puppet::Util::InlineDocs
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
+  include Puppet::DSL::Helper
 
   RESOURCE_KINDS = [:hostclass, :node, :definition]
 
@@ -378,14 +379,6 @@ class Puppet::Resource::Type
     ruby_code.each do |c|
       silence_backtrace { c.evaluate(scope) }
     end
-  end
-
-  def silence_backtrace
-    yield
-  rescue ::Exception => e
-    backtrace = e.backtrace.reject {|l| l =~ %r|lib/puppet| or l =~ %r|bin/puppet| }
-    message   = "#{e.message}\n#{backtrace.join "\n"}"
-    raise ::Puppet::Error, message
   end
 
   # Split an fq name into a namespace and name

@@ -18,79 +18,33 @@ describe Puppet::DSL::Helper do
       include Puppet::DSL::Helper
     end
 
-    A.new.should respond_to :dsl_type_for
-    A.should respond_to :dsl_type_for
+    A.new.should respond_to :is_ruby_dsl?
+    A.should     respond_to :is_ruby_dsl?
   end
 
-  describe "#dsl_type_for" do
-
-    it "should return :ruby when the manifest name ends with .rb" do
-      Puppet[:manifest] = "test.rb"
-      @helper.dsl_type_for("test").should == :ruby
+  describe "#is_ruby_dsl?" do
+    it "returns true when Ruby filename is passed as an argument" do
+      @helper.is_ruby_dsl?("test.rb").should be true
     end
 
-    it "should return :puppet when the manifest name ends with .pp" do
-      Puppet[:manifest] = "test.pp"
-      @helper.dsl_type_for("test").should == :puppet
-    end
-
-    it "should return :puppet when the manifest name is blank" do
-      Puppet[:manifest] = ""
-      @helper.dsl_type_for("test").should == :puppet
+    it "returns false when not Ruby filename is passed as an argument" do
+      @helper.is_ruby_dsl?("test").should be false
     end
   end
 
-  describe "#use_ruby_dsl?" do
-    it "should return true when #dsl_type_for returns :ruby" do
-      @helper.expects(:dsl_type_for).with("test").returns :ruby
-      @helper.use_ruby_dsl?("test").should == true
+  describe "#is_puppet_dsl?" do
+
+    it "returns true when Puppet filename is passed as an argument" do
+      @helper.is_puppet_dsl?("test.pp").should be true
     end
 
-    it "should return false when #dsl_type_for returns :puppet" do
-      @helper.expects(:dsl_type_for).with("test").returns :puppet
-      @helper.use_ruby_dsl?("test").should == false
-    end
-  end
-
-  describe "#use_puppet_dsl?" do
-
-    it "should return false when #dsl_type_for returns :ruby" do
-      @helper.expects(:dsl_type_for).at_least_once.with("test").returns :ruby
-      @helper.use_puppet_dsl?("test").should be false
+    it "returns true when non-Puppet filename is passed as an argument" do
+      @helper.is_puppet_dsl?("test").should be true
     end
 
-    it "should return true when #dsl_type_for returns :puppet" do
-      @helper.expects(:dsl_type_for).at_least_once.with("test").returns :puppet
-      @helper.use_puppet_dsl?("test").should be true
+    it "returns false when Ruby filename is passed as an argument" do
+      @helper.is_puppet_dsl?("test.rb").should be false
     end
-
-  end
-
-  describe "#get_ruby_code" do
-
-    it "should return :code despite :manifest is set" do
-      Puppet[:code] = "test string"
-      Puppet[:manifest] = "test.rb"
-
-      @helper.get_ruby_code("test").should == "test string"
-    end
-
-    it "should read the contents of the :manifest" do
-      filename = tmpfile ["test", ".rb"]
-      File.open filename, "w" do |f|
-        f << "test file contents"
-      end
-      Puppet[:manifest] = filename
-      @helper.get_ruby_code("test").should == "test file contents"
-    end
-
-    it "should raise when not using ruby dsl" do
-      Puppet[:manifest] = "test.pp"
-      lambda do
-        @helper.get_ruby_code nil
-      end.should raise_error
-    end
-
   end
 
   describe "#canonize_type" do
