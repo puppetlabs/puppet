@@ -159,12 +159,7 @@ module Puppet
       # Does this declaration match the name/ip combo?
       def match?(name, ip)
         if ip?
-          if pattern.include?(IPAddr.new(ip))
-            Puppet.deprecation_warning "Authentication based on IP address is deprecated; please use certname-based rules instead"
-            true
-          else
-            false
-          end
+          pattern.include?(IPAddr.new(ip))
         else
           matchname?(name)
         end
