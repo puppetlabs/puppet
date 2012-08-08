@@ -141,7 +141,11 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    [false, "false", 0].each do |value|
+    it "should not allow numbers" do
+      expect { file[:recurse] = 10 }.to raise_error(Puppet::Error, "Parameter recurse failed: Invalid recurse value 10")
+    end
+
+    [false, "false"].each do |value|
       it "should consider #{value} to disable recursion" do
         file[:recurse] = value
         file[:recurse].should be_false
