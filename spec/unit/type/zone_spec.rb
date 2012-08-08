@@ -65,6 +65,16 @@ describe Puppet::Type.type(:zone) do
     described_class.new(:name => "dummy", :ensure => :absent, :provider => :solaris)
   end
 
+  context "state_name" do
+    it "should correctly fetch alias from state_aliases when available" do
+      zone.parameter(:ensure).class.state_name('incomplete').should == :installed
+    end
+
+    it "should correctly use symbol when alias is unavailable" do
+      zone.parameter(:ensure).class.state_name('noalias').should == :noalias
+    end
+  end
+
   it "should auto-require :dataset entries" do
     fs = 'random-pool/some-zfs'
 
