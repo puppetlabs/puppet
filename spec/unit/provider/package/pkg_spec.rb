@@ -64,28 +64,35 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       @instances[11].should == {:name => 'security/sudo', :ensure => :present}
     end
 
-    it "should work correctly for ensure latest on solaris 11" do
-      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11'))
+    it "should work correctly for ensure latest on solaris 11 (UFOXI)" do
+      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
       @provider.latest.should == 'installed'
     end
 
-    it "should work correctly for ensure latest on solaris 11(2)" do
+    it "should work correctly for ensure latest on solaris 11(known UFOXI)" do
       @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11.known'))
       @provider.latest.should == 'known'
     end
 
-    it "should warn about incorrect lines" do
-      fake_output = File.read(my_fixture('incomplete'))
-      error_line = fake_output.split($/).first
-      described_class.expects(:pkg).with(:list,'-H').returns fake_output
-      described_class.expects(:warning).with "Failed to match 'pkg list' line #{error_line.inspect}"
-      described_class.instances
+    it "should work correctly for ensure latest on solaris 11 (IFO)" do
+      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.installed'))
+      @provider.latest.should == 'installed'
     end
 
-    it "should warn about unknown package status" do
+    it "should work correctly for ensure latest on solaris 11(known IFO)" do
+      @provider.stubs(:pkg).with(:list,'-Ha','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.known'))
+      @provider.latest.should == 'known'
+    end
+
+    it "should fail on incorrect lines" do
+      fake_output = File.read(my_fixture('incomplete'))
+      described_class.expects(:pkg).with(:list,'-H').returns fake_output
+      expect { described_class.instances }.to raise_error
+    end
+
+    it "should fail on unknown package status" do
       described_class.expects(:pkg).with(:list,'-H').returns File.read(my_fixture('unknown_status'))
-      described_class.expects(:warning).with "unknown package state for compress/unzip: x--"
-      described_class.instances
+      expect { described_class.instances }.to raise_error
     end
   end
 
@@ -113,13 +120,13 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
     context "on solaris 11" do
       it "should find the package" do
-        @provider.stubs(:pkg).with(:list,'-H','dummy').returns File.read(my_fixture('dummy_solaris11'))
+        @provider.stubs(:pkg).with(:list,'-H','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         @provider.query.should == {
           :name     => 'dummy',
-          :ensure   => :present,
           :version  => '1.0.6-0.175.0.0.0.2.537',
-          :status   => "installed",
-          :provider => :pkg,
+          :status   => 'installed',
+          :ensure   => :present,
+          :provider => :pkg
         }
       end
 
@@ -131,12 +138,9 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       end
     end
 
-    it "should return :absent when the packageline cannot be parsed" do
+    it "should return fail when the packageline cannot be parsed" do
       @provider.stubs(:pkg).with(:list,'-H','dummy').returns File.read(my_fixture('incomplete'))
-      @provider.query.should == {
-        :name   => 'dummy',
-        :ensure => :absent
-      }
+      expect { @provider.query }.to raise_error
     end
   end
 
