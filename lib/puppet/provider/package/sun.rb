@@ -43,21 +43,6 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     pkgs
   end
 
-  def install
-    raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
-    cmd = []
-
-    cmd << "-a" << @resource[:adminfile] if @resource[:adminfile]
-
-    cmd << "-r" << @resource[:responsefile] if @resource[:responsefile]
-
-    cmd << "-d" << @resource[:source]
-    cmd << "-n" << @resource[:name]
-
-    pkgadd cmd
-
-  end
-
   def self.instances
     parse_pkginfo(execute([command(:pkginfo), '-l'])).collect do |p|
       new(Hash[namemap(p) << [:provider, :sun] ])
@@ -81,27 +66,34 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   # Retrieve the version from the current package file.
   def latest
-    hash = info2hash(@resource[:source])
-    hash[:ensure]
+    info2hash(@resource[:source])[:ensure]
   end
 
   def query
-    info2hash()
+    info2hash
+  end
+
+  def prepare_cmd(opt)
+    cmd = []
+    cmd << '-a' << @resource[:adminfile] if @resource[:adminfile] && opt[:adminfile]
+    cmd << '-r' << @resource[:responsefile] if @resource[:responsefile] && opt[:responsefile]
+    cmd << '-d' << @resource[:source] if opt[:source]
+    cmd << '-n' << @resource[:name]
+  end
+
+  def install
+    raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
+    pkgadd prepare_cmd(:adminfile => true, :responsefile => true, :source => true)
   end
 
   def uninstall
-    command  = ["-n"]
-
-    command << "-a" << @resource[:adminfile] if @resource[:adminfile]
-
-    command << @resource[:name]
-    pkgrm command
+    pkgrm prepare_cmd(:adminfile => true)
   end
 
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
+    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
     self.install
   end
 end
