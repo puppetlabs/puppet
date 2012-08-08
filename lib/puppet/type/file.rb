@@ -132,10 +132,8 @@ Puppet::Type.newtype(:file) do
       * `false` --- Default of no recursion.
     "
 
-    newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
+    newvalues(:true, :false, :inf, :remote)
 
-    # Replace the validation so that we allow numbers in
-    # addition to string representations of them.
     validate { |arg| }
     munge do |value|
       newval = super(value)
@@ -143,6 +141,8 @@ Puppet::Type.newtype(:file) do
       when :true, :inf; true
       when :false; false
       when :remote; :remote
+      else
+        self.fail "Invalid recurse value #{value.inspect}"
       end
     end
   end
