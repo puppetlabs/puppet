@@ -105,14 +105,21 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     ['known', 'installed'].find { |s| lst.include?(s) } || :absent
   end
 
-  # install the package
+  # install the package and accept all licenses.
   def install
-    pkg :install, @resource[:name]
+    pkg :install, '--accept', @resource[:name]
   end
 
-  # uninstall the package
+  # uninstall the package. The complication comes from the -r_ecursive flag which is no longer
+  # present in newer package version.
   def uninstall
-    pkg :uninstall, '-r', @resource[:name]
+    cmd = [:uninstall]
+    case (pkg :version).chomp
+    when /052adf36c3f4/
+      cmd << '-r'
+    end
+    cmd << @resource[:name]
+    pkg cmd
   end
 
   # update the package to the latest version available

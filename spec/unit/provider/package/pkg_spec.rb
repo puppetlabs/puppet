@@ -150,4 +150,24 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     end
   end
 
+  context "#install" do
+    it "should accept all licenses" do
+      described_class.expects(:pkg).with(:install, '--accept', @resource[:name])
+      @provider.install
+    end
+  end
+
+  context "#uninstall" do
+    it "should support current pkg version" do
+      described_class.expects(:pkg).with(:version).returns('630e1ffc7a19')
+      described_class.expects(:pkg).with([:uninstall, @resource[:name]])
+      @provider.uninstall
+    end
+
+    it "should support original pkg commands" do
+      described_class.expects(:pkg).with(:version).returns('052adf36c3f4')
+      described_class.expects(:pkg).with([:uninstall, '-r', @resource[:name]])
+      @provider.uninstall
+    end
+  end
 end
