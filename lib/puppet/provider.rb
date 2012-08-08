@@ -248,14 +248,6 @@ class Puppet::Provider
   # Create getter/setter methods for each property our resource type supports.
   # They all get stored in @property_hash.  This method is useful
   # for those providers that use prefetch and flush.
-  def self.mkmodelmethods
-    Puppet.deprecation_warning "Provider.mkmodelmethods is deprecated; use Provider.mk_resource_methods"
-    mk_resource_methods
-  end
-
-  # Create getter/setter methods for each property our resource type supports.
-  # They all get stored in @property_hash.  This method is useful
-  # for those providers that use prefetch and flush.
   def self.mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
       attr = attr.intern
