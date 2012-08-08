@@ -129,12 +129,11 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   # Retrieve the version from the current package file.
   def latest
-    hash = info2hash(@resource[:source])
-    hash[:ensure]
+    info2hash(@resource[:source])[:ensure]
   end
 
   def query
-    info2hash()
+    info2hash
   end
 
   def uninstall
@@ -149,7 +148,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
+    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
     self.install
   end
 end
