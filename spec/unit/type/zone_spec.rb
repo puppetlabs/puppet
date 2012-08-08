@@ -56,6 +56,18 @@ describe zone do
     zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
   end
 
+  context "state_name" do
+    it "should correctly fetch alias from state_aliases when available" do
+      z = zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
+      z.parameter(:ensure).class.state_name('incomplete').should == :installed
+    end
+
+    it "should correctly use symbol when alias is unavailable" do
+      z = zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
+      z.parameter(:ensure).class.state_name('noalias').should == :noalias
+    end
+  end
+
   it "should auto-require :dataset entries" do
     fs = 'random-pool/some-zfs'
 
