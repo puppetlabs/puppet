@@ -8,7 +8,16 @@ describe "the template function" do
 
   let :node     do Puppet::Node.new('localhost') end
   let :compiler do Puppet::Parser::Compiler.new(node) end
-  let :scope    do Puppet::Parser::Scope.new(compiler) end
+  let :scope    do 
+    s = Puppet::Parser::Scope.new(compiler) 
+    n = stub 'node'
+    n.stubs(:name).returns 'test_node'
+    n.stubs(:classes).returns []
+    e = Puppet::Node::Environment.new 'production'
+    n.stubs(:environment).returns e
+    s.compiler = Puppet::Parser::Compiler.new n
+    s
+  end
 
   it "should exist" do
     Puppet::Parser::Functions.function("template").should == "function_template"
