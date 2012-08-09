@@ -51,25 +51,41 @@ class Puppet::Rails::Host < ActiveRecord::Base
   # This is *very* similar to the merge_parameters method
   # of Puppet::Rails::Resource.
   def merge_facts(facts)
+    # symbol key handling is not good, but works as long keys don't conflict, i.e. for all keys a, b: a.to_s != b.to_s
     db_facts = {}
 
     deletions = []
     self.fact_values.find(:all, :include => :fact_name).each do |value|
-      deletions << value['id'] and next unless facts.include?(value['name'])
+      name = value.fact_name.name
+      Puppet.debug "Found db fact: #{name} = #{value.value.inspect}"
+      unless facts.include?(name) or facts.include?(name.to_sym)
+        deletions << value['id']
+        Puppet.debug "Deleting fact, not present anymore: #{name}"
+        next
+      end
       # Now store them for later testing.
-      db_facts[value['name']] ||= []
-      db_facts[value['name']] << value
+      db_facts[name] ||= []
+      db_facts[name] << value
     end
 
-    # Now get rid of any parameters whose value list is different.
-    # This might be extra work in cases where an array has added or lost
-    # a single value, but in the most common case (a single value has changed)
-    # this makes sense.
+    # Update single facts directly.
+    # For list of values clear the old list and readd the new list if the list is different.
+    # TODO: sort lists before comparing them? database returns them in random order...
     db_facts.each do |name, value_hashes|
       values = value_hashes.collect { |v| v['value'] }
+      value = facts.include?(name) ? facts[name] : facts[name.to_sym]
+      value = value.is_a?(Array) ? value : [value]
 
-      unless values == facts[name]
-        value_hashes.each { |v| deletions << v['id'] }
+      unless values == value
+        if (values.length == 1 and value.length == 1)
+          Puppet.debug "Updating single fact: #{name} = #{value[0].inspect}"
+          value_hashes[0].value= value[0]
+          value_hashes[0].save!
+        else
+          Puppet.debug "Delete changing multi fact: #{name}"
+          db_facts.delete(name) # we have to re add it below
+          value_hashes.each { |v| deletions << v['id'] }
+        end
       end
     end
 
@@ -78,11 +94,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Lastly, add any new parameters.
     facts.each do |name, value|
-      next if db_facts.include?(name)
+      next if db_facts.include?(name.to_s)
+      Puppet.debug "Adding fact: #{name} = #{value.inspect}"
       values = value.is_a?(Array) ? value : [value]
 
       values.each do |v|
-        fact_values.build(:value => v, :fact_name => Puppet::Rails::FactName.find_or_create_by_name(name))
+        fact_values.build(:value => v, :fact_name => Puppet::Rails::FactName.find_or_create_by_name(name.to_s))
       end
     end
   end
