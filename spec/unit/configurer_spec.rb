@@ -340,12 +340,10 @@ describe Puppet::Configurer do
 
     it "should clear the thread local caches" do
       Thread.current[:env_module_directories] = false
-      Thread.current[:gem_directories] = false
 
       @agent.run
 
       Thread.current[:env_module_directories].should == nil
-      Thread.current[:gem_directories].should == nil
     end
 
     describe "when not using a REST terminus for catalogs" do

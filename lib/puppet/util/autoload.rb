@@ -15,6 +15,10 @@ class Puppet::Util::Autoload
     attr_accessor :loaded
     private :autoloaders, :loaded
 
+    def gem_source
+      @gem_source ||= Puppet::Util::RubyGems::Source.new
+    end
+
     # List all loaded files.
     def list_loaded
       loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
@@ -161,14 +165,8 @@ class Puppet::Util::Autoload
       end
     end
 
-    # We have to cache this locally to the thread as the heavy use of the the
-    # autoloader by puppet means that without caching it would have a big negative
-    # impact on performance.
-    #
-    # This cache is being cleared before compiles and runs in puppet/configurer.rb and
-    # puppet/parser/compiler.rb
     def gem_directories
-      Thread.current[:gem_directories] ||= Puppet::Util::RubyGems.directories
+      gem_source.directories
     end
 
     def search_directories(env=nil)

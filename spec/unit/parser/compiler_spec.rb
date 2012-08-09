@@ -113,13 +113,13 @@ describe Puppet::Parser::Compiler do
     compiler.expects(:compile).returns catalog
     catalog.expects(:to_resource)
 
-    [:known_resource_types, :env_module_directories, :gem_directories].each do |var|
+    [:known_resource_types, :env_module_directories].each do |var|
       Thread.current[var] = "rspec"
     end
 
     Puppet::Parser::Compiler.compile(@node)
 
-    [:known_resource_types, :env_module_directories, :gem_directories].each do |var|
+    [:known_resource_types, :env_module_directories].each do |var|
       Thread.current[var].should == nil
     end
   end

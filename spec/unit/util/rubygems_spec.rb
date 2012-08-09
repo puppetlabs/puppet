@@ -1,43 +1,53 @@
 require 'spec_helper'
 require 'puppet/util/rubygems'
 
-describe Puppet::Util::RubyGems do
-  describe 'directories' do
+describe Puppet::Util::RubyGems::Source do
+  let(:gem_path) { File.expand_path('/foo/gems') }
+  let(:gem_lib) { File.join(gem_path, 'lib') }
+  let(:fake_gem) { stub(:full_gem_path => gem_path) }
 
-    it "should return no directories if rubygems fails to load" do
-      # I could not figure out a better way to produce a LoadError, as rubygems
-      # is already loaded by the time we get here. 
-      Gem::Specification.expects(:latest_specs).raises LoadError
-      Puppet::Util::RubyGems.directories.should == []
+  describe "::new" do
+    it "returns NoGemsSource if requiring rubygems fails" do
+      described_class.expects(:require).with('rubygems').raises(LoadError)
+      described_class.new.should be_kind_of(Puppet::Util::RubyGems::NoGemsSource)
     end
 
-    context "when rubygems is installed", :if => Puppet.features.rubygems? do
-      let :fakegem do
-        stub(:full_gem_path => '/foo/gems')
-      end
+    it "returns Gems18Source if Gem::Specification responds to latest_specs" do
+      Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(true)
+      described_class.new.should be_kind_of(Puppet::Util::RubyGems::Gems18Source)
+    end
 
-      it "should use Gem::Specification.latest_specs when available" do
-        FileTest.expects(:directory?).with('/foo/gems/lib').returns(true)
-        Gem::Specification.expects(:latest_specs).returns([fakegem])
+    it "returns Gems18Source if Gem::Specification does not respond to latest_specs" do
+      Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(false)
+      described_class.new.should be_kind_of(Puppet::Util::RubyGems::OldGemsSource)
+    end
+  end
 
-        Puppet::Util::RubyGems.directories.should == ['/foo/gems/lib']
-      end
+  describe '::NoGemsSource' do
+    before(:each) { described_class.stubs(:source).returns(Puppet::Util::RubyGems::NoGemsSource) }
 
-      it "should fallback to Gem.latest_load_paths" do
-        FileTest.expects(:directory?).with('/foo/gems/lib').returns(true)
-        Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(false)
-        Gem.expects(:latest_load_paths).returns('/foo/gems/lib')
+    it "#directories returns an empty list" do
+      described_class.new.directories.should == []
+    end
+  end
 
-        Puppet::Util::RubyGems.directories.should == ['/foo/gems/lib']
-      end
+  describe '::Gems18Source' do
+    before(:each) { described_class.stubs(:source).returns(Puppet::Util::RubyGems::Gems18Source) }
 
-      it "should return no directories if Gem.latest_load_paths and Gem::Specification.latest_specs not available" do
-        FileTest.expects(:directory?).never
-        Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(false)
-        Gem.expects(:respond_to?).with(:latest_load_paths).returns(false)
+    it "#directories returns the lib subdirs of Gem::Specification.latest_specs" do
+      Gem::Specification.expects(:latest_specs).returns([fake_gem])
 
-        Puppet::Util::RubyGems.directories.should == []
-      end
+      described_class.new.directories.should == [gem_lib]
+    end
+  end
+
+  describe '::OldGemsSource' do
+    before(:each) { described_class.stubs(:source).returns(Puppet::Util::RubyGems::OldGemsSource) }
+
+    it "#directories returns the contents of Gem.latest_load_paths" do
+      Gem.expects(:latest_load_paths).returns([gem_lib])
+
+      described_class.new.directories.should == [gem_lib]
     end
   end
 end

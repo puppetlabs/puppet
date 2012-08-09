@@ -185,7 +185,6 @@ class Puppet::Configurer
     # pick up on new functions installed by gems or new modules being added
     # without the daemon being restarted.
     Thread.current[:env_module_directories] = nil
-    Thread.current[:gem_directories] = nil
 
     Puppet::Util::Log.close(report)
     send_report(report)

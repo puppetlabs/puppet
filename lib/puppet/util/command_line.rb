@@ -22,17 +22,15 @@ module Puppet
         File.join('puppet', 'application')
       end
 
-
-
-
-
       def self.available_subcommands
-        # Eventually we probably want to replace this with a call to the autoloader.  however, at the moment
-        #  the autoloader considers the module path when loading, and we don't want to allow apps / faces to load
-        #  from there.  Once that is resolved, this should be replaced.  --cprice 2012-03-06
+        # Eventually we probably want to replace this with a call to the
+        # autoloader.  however, at the moment the autoloader considers the
+        # module path when loading, and we don't want to allow apps / faces to
+        # load from there.  Once that is resolved, this should be replaced.
+        # --cprice 2012-03-06
         #
         # But we do want to load from rubygems --hightower
-        search_path = Puppet::Util::RubyGems.directories + $LOAD_PATH
+        search_path = Puppet::Util::RubyGems::Source.new.directories + $LOAD_PATH
         absolute_appdirs = search_path.uniq.collect do |x|
           File.join(x,'puppet','application')
         end.select{ |x| File.directory?(x) }

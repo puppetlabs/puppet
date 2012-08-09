@@ -59,16 +59,6 @@ describe Puppet::Util::Autoload do
       @autoload.class.expects(:module_directories).returns %w{/three /four}
       @autoload.class.search_directories.should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
     end
-
-    it "should save the gem load path to the thread local cache" do
-      Thread.current[:gem_directories] = nil
-      Puppet::Util::RubyGems.expects(:directories).returns(["foo/loaddir"])
-
-      @autoload = Puppet::Util::Autoload.new("foo", "loaddir")
-      @autoload.class.search_directories
-
-      Thread.current[:gem_directories].should == ["foo/loaddir"]
-    end
   end
 
   describe "when loading a file" do
