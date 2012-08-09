@@ -1,9 +1,12 @@
+require 'puppet/util/command_line/trollop'
+
 module Puppet
   module Util
     class CommandLine
-
       class PuppetOptionError < Puppet::Error
       end
+
+      class TrollopCommandlineError < Puppet::Util::CommandLine::Trollop::CommandlineError; end
 
       # This is a command line option parser.  It is intended to have an API that is very similar to
       #  the ruby stdlib 'OptionParser' API, for ease of integration into our existing code... however,
@@ -17,7 +20,7 @@ module Puppet
 
           @create_default_short_options = false
 
-          @parser = ::Trollop::Parser.new do
+          @parser = Trollop::Parser.new do
             banner usage_msg
             create_default_short_options = false
             handle_help_and_version = false
@@ -71,7 +74,7 @@ module Puppet
           args_copy = args.dup
           begin
             @parser.parse args_copy
-          rescue ::Trollop::CommandlineError => err
+          rescue Puppet::Util::CommandLine::Trollop::CommandlineError => err
             raise PuppetOptionError.new("Error parsing arguments", err)
           end
         end

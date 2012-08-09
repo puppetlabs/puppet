@@ -4,6 +4,14 @@ Puppet::Type.type(:zpool).provide(:solaris) do
   commands :zpool => "/usr/sbin/zpool"
   defaultfor :osfamily => :solaris
 
+  #NAME    SIZE  ALLOC   FREE    CAP  HEALTH  ALTROOT
+  def self.instances
+    zpool(:list, '-H').split("\n").collect do |line|
+      name, size, alloc, free, cap, health, altroot = line.split(/\s+/)
+      new({:name => name, :ensure => :present})
+    end
+  end
+
   def process_zpool_data(pool_array)
     if pool_array == []
       return Hash.new(:absent)
