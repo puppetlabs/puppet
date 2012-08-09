@@ -40,6 +40,14 @@ describe Puppet::Type.type(:package).provider(:sun) do
       provider.expects(:install)
       provider.update
     end
+
+     it "should install a package on global zone if -G specified" do
+      resource[:ensure] = :installed
+      resource[:source] = '/cdrom'
+      resource[:install_options] = '-G'
+      provider.expects(:pkgadd).with(['-d', '/cdrom', '-G', '-n', 'dummy'])
+      provider.install
+    end
   end
 
   context '#uninstall' do
