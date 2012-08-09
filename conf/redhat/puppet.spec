@@ -1,7 +1,14 @@
 # Augeas and SELinux requirements may be disabled at build time by passing
 # --without augeas and/or --without selinux to rpmbuild or mock
 
-%{!?ruby_sitelibdir: %global ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
+# Fedora 17 ships with Ruby 1.9, which uses vendorlibdir instead of
+# sitelibdir. Adjust our target if installing on f17.
+%if 0%{?fedora} >= 17
+%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
+%else
+%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
+%endif
+
 %global confdir conf/redhat
 
 Name:           puppet
@@ -91,7 +98,7 @@ mv conf/puppet-queue.conf examples/etc/puppet/
 
 %install
 rm -rf %{buildroot}
-ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
+ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
 
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
@@ -149,7 +156,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_bindir}/puppetdoc
 %{_sbindir}/puppetca
 %{_sbindir}/puppetd
-%{ruby_sitelibdir}/*
+%{puppet_libdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
 %dir %{_sysconfdir}/%{name}/modules
