@@ -224,9 +224,7 @@ class Puppet::Util::FileType
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
     def write(text)
-      puts text
       output_file = Tempfile.new("puppet_suntab")
-
       begin
         output_file.print text
         output_file.close
