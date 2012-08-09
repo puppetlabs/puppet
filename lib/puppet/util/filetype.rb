@@ -155,7 +155,7 @@ class Puppet::Util::FileType
       begin
         @uid = Puppet::Util.uid(user)
       rescue Puppet::Error => detail
-        raise Puppet::Error, "Could not retrieve user #{user}"
+        raise Puppet::Error, "Could not retrieve user #{user}: #{detail}", detail.backtrace
       end
 
       # XXX We have to have the user name, not the uid, because some
@@ -220,7 +220,7 @@ class Puppet::Util::FileType
     def remove
         Puppet::Util.execute(%w{crontab -r}, cronargs)
     rescue => detail
-        raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
+        raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -236,7 +236,7 @@ class Puppet::Util::FileType
         File.chown(Puppet::Util.uid(@path), nil, output_file.path)
         Puppet::Util.execute(["crontab", output_file.path], cronargs)
       rescue => detail
-        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
+        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
         output_file.close!
       end
@@ -264,14 +264,14 @@ class Puppet::Util::FileType
         raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("You are not authorized to use the cron command")
         return output
     rescue => detail
-        raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"
+        raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}", detail.backtrace
     end
 
     # Remove a specific @path's cron tab.
     def remove
         Puppet::Util.execute(%w{crontab -r}, :uid => @path)
     rescue => detail
-        raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
+        raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -286,7 +286,7 @@ class Puppet::Util::FileType
         File.chown(Puppet::Util.uid(@path), nil, output_file.path)
         Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
       rescue => detail
-        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
+        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
         output_file.close!
       end
