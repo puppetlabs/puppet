@@ -4,14 +4,33 @@ module PuppetSpec::Catalog
 
     # compares compiled catalogs
     def ==(other)
-      [:name, :environment, :tags,
-        :resources, :edges, :classes].map do |m|
-        self.send(m) == other.send(m)
-        end.all?
+      [
+        :name,
+        :environment,
+        :tags,
+        :resources,
+        :edges,
+        :classes
+      ].map do |m|
+        self_results  = self.send  m
+        other_results = other.send m
+        self_results  = self_results.sort  if self_results.respond_to?  :sort
+        other_results = other_results.sort if other_results.respond_to? :sort
+        self_results == other_results
+      end.all?
+    end
+  end
+
+  class Puppet::Resource
+    def <=>(other)
+      self.name <=> other.name
     end
   end
 
   class Puppet::Relationship
+    def <=>(other)
+      self.to_s <=> other.to_s
+    end
 
     # compares relationships
     def ==(other)
