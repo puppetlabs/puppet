@@ -4,10 +4,11 @@ require 'spec_helper'
 host = Puppet::Type.type(:host)
 
 describe host do
+  FakeHostProvider = Struct.new(:ip, :host_aliases, :comment)
   before do
     @class = host
     @catalog = Puppet::Resource::Catalog.new
-    @provider = stub 'provider'
+    @provider = FakeHostProvider.new
     @resource = stub 'resource', :resource => nil, :provider => @provider
   end
 
@@ -618,27 +619,35 @@ describe host do
 
     it "should send the first value to the provider for ip property" do
       @ip = @class.attrclass(:ip).new(:resource => @resource, :should => %w{192.168.0.1 192.168.0.2})
-      @provider.expects(:ip=).with '192.168.0.1'
+
       @ip.sync
+
+      @provider.ip.should == '192.168.0.1'
     end
 
     it "should send the first value to the provider for comment property" do
       @comment = @class.attrclass(:comment).new(:resource => @resource, :should => %w{Bazinga Notme})
-      @provider.expects(:comment=).with 'Bazinga'
+
       @comment.sync
+
+      @provider.comment.should == 'Bazinga'
     end
 
     it "should send the joined array to the provider for host_alias" do
       @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
-      @provider.expects(:host_aliases=).with 'foo bar'
+
       @host_aliases.sync
+
+      @provider.host_aliases.should == 'foo bar'
     end
 
     it "should also use the specified delimiter for joining" do
       @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
       @host_aliases.stubs(:delimiter).returns "\t"
-      @provider.expects(:host_aliases=).with "foo\tbar"
+
       @host_aliases.sync
+
+      @provider.host_aliases.should == "foo\tbar"
     end
 
     it "should care about the order of host_aliases" do

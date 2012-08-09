@@ -23,6 +23,20 @@ describe provider_class do
     @provider.should respond_to(:exists?)
   end
 
+  describe "self.instances" do
+    it "should have an instances method" do
+      provider_class.should respond_to(:instances)
+    end
+
+    it "should list instances" do
+      provider_class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
+      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances.size.should == 2
+      instances[0].should == {:name => 'rpool', :ensure => :present}
+      instances[1].should == {:name => 'rpool/ROOT', :ensure => :present}
+    end
+  end
+
   describe "when calling add_properties" do
     it "should add -o and the key=value for each properties with a value" do
       @resource.stubs(:[]).with(:quota).returns ""
