@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
+ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
+
 describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
@@ -737,6 +739,8 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  ALGORITHMS_TO_TRY.each do |algo|
+    describe "when using digest_algorithm #{algo || 'nil'}" do
   describe "#recurse_remote" do
     let(:my) { File.expand_path('/my') }
 
@@ -750,6 +754,14 @@ describe Puppet::Type.type(:file) do
 
       @parameter = stub 'property', :metadata= => nil
       @resource = stub 'file', :[]= => nil, :parameter => @parameter
+
+      @oda = Puppet[:digest_algorithm]
+      Puppet[:digest_algorithm] = algo
+      @algo = algo || 'md5'
+    end
+
+    after do
+      Puppet[:digest_algorithm] = @oda
     end
 
     it "should pass its source to the :perform_recursion method" do
@@ -795,11 +807,11 @@ describe Puppet::Type.type(:file) do
 
     # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
     # filed, and when it's fixed, we'll just fix the whole flow.
-    it "should set the checksum type to :md5 if the remote file is a file" do
+    it "should set the checksum type to #{(algo || 'md5').intern} if the remote file is a file" do
       @first.stubs(:ftype).returns "file"
       file.stubs(:perform_recursion).returns [@first]
       @resource.stubs(:[]=)
-      @resource.expects(:[]=).with(:checksum, :md5)
+      @resource.expects(:[]=).with(:checksum, @algo.intern)
       file.recurse_remote("first" => @resource)
     end
 
@@ -881,6 +893,8 @@ describe Puppet::Type.type(:file) do
         end
       end
     end
+  end
+  end
   end
 
   describe "#perform_recursion" do
