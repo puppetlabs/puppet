@@ -772,17 +772,6 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 end
 
-describe Puppet::Type.metaparamclass(:check) do
-  include PuppetSpec::Files
-
-  it "should warn and create an instance of ':audit'" do
-    file = Puppet::Type.type(:file).new :path => make_absolute('/foo')
-    file.expects(:warning)
-    file[:check] = :mode
-    file[:audit].should == [:mode]
-  end
-end
-
 describe Puppet::Type.metaparamclass(:audit) do
   include PuppetSpec::Files
 
