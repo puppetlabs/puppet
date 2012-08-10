@@ -13,6 +13,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   confine :osfamily => :solaris
   defaultfor :osfamily => :solaris
 
+  has_feature :install_options
+
   Namemap = {
     "PKGINST"  => :name,
     "CATEGORY" => :category,
@@ -83,12 +85,20 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     cmd << '-a' << @resource[:adminfile] if @resource[:adminfile] && opt[:adminfile]
     cmd << '-r' << @resource[:responsefile] if @resource[:responsefile] && opt[:responsefile]
     cmd << '-d' << @resource[:source] if opt[:source]
+    cmd << opt[:cmd_options] if opt[:cmd_options]
     cmd << '-n' << @resource[:name]
   end
 
+  # only looking for -G now
   def install
     raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
-    pkgadd prepare_cmd(:adminfile => true, :responsefile => true, :source => true)
+    options = {
+      :adminfile    => true,
+      :responsefile => true,
+      :source       => true,
+      :cmd_options  => @resource[:install_options]
+    }
+    pkgadd prepare_cmd(options)
   end
 
   def uninstall
