@@ -25,7 +25,7 @@ module Puppet::Network::HTTP::API::V1
   def uri2indirection(http_method, uri, params)
     environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
 
-    raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'" unless environment =~ /^\w+$/
+    raise ArgumentError, "The environment must be alphanumeric, not '#{environment}'" unless environment =~ /^\w[\w\-_]*$/
     raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'" unless indirection =~ /^\w+$/
 
     method = indirection_method(http_method, indirection)
