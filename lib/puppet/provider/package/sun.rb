@@ -13,104 +13,34 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   defaultfor :osfamily => :solaris
 
-  def self.instances
-    packages = []
-    hash = {}
-    names = {
+  def self.namemap(hash)
+    map = {
       "PKGINST" => :name,
-      "NAME" => nil,
       "CATEGORY" => :category,
       "ARCH" => :platform,
       "VERSION" => :ensure,
       "BASEDIR" => :root,
-      "HOTLINE" => nil,
-      "EMAIL" => nil,
       "VENDOR" => :vendor,
       "DESC" => :description,
-      "PSTAMP" => nil,
-      "INSTDATE" => nil,
-      "STATUS" => nil,
-      "FILES" => nil
     }
-
-    cmd = "#{command(:pkginfo)} -l"
-
-    # list out all of the packages
-    execpipe(cmd) { |process|
-      # we're using the long listing, so each line is a separate
-      # piece of information
-      process.each_line { |line|
-        case line
-        when /^$/
-          hash[:provider] = :sun
-
-          packages << new(hash)
-          hash = {}
-        when /\s*(\w+):\s+(.+)/
-          name = $1
-          value = $2
-          if names.include?(name)
-            hash[names[name]] = value unless names[name].nil?
-          end
-        when /\s+\d+.+/
-          # nothing; we're ignoring the FILES info
-        end
-      }
-    }
-    packages
+    map.collect{|k,v| [v, hash[k]]}
   end
 
-  # Get info on a package, optionally specifying a device.
-  def info2hash(device = nil)
-    names = {
-      "PKGINST" => :name,
-      "NAME" => nil,
-      "CATEGORY" => :category,
-      "ARCH" => :platform,
-      "VERSION" => :ensure,
-      "BASEDIR" => :root,
-      "HOTLINE" => nil,
-      "EMAIL" => nil,
-      "VSTOCK" => nil,
-      "VENDOR" => :vendor,
-      "DESC" => :description,
-      "PSTAMP" => nil,
-      "INSTDATE" => nil,
-      "STATUS" => nil,
-      "FILES" => nil
-    }
-
-    hash = {}
-    cmd = "#{command(:pkginfo)} -l"
-    cmd += " -d #{device}" if device
-    cmd += " #{@resource[:name]}"
-
-    begin
-      # list out all of the packages
-      execpipe(cmd) { |process|
-        # we're using the long listing, so each line is a separate
-        # piece of information
-        process.readlines.each { |line|
-          case line
-          when /^$/  # ignore
-          when /\s*([A-Z]+):\s+(.+)/
-            name = $1
-            value = $2
-            if names.include?(name)
-              hash[names[name]] = value unless names[name].nil?
-            end
-          when /\s+\d+.+/
-            # nothing; we're ignoring the FILES info
-          end
-        }
-      }
-      return hash
-    rescue Puppet::ExecutionFailure => detail
-      return {:ensure => :absent} if detail.message =~ /information for "#{Regexp.escape(@resource[:name])}" was not found/
-      message = "Unable to get information about package #{@resource[:name]} because of: #{detail}"
-      Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
+  def self.parse_pkginfo(out)
+    # collect all the lines with : in them, and separate them out by ^$
+    pkgs = []
+    pkg = {}
+    out.each_line do |line|
+      case line.chomp
+      when /^\s*$/
+        pkgs << pkg unless pkg.empty?
+        pkg = {}
+      when /^\s*([^:]+):\s+(.+)$/
+        pkg[$1] = $2
+      end
     end
+    pkgs << pkg unless pkg.empty?
+    pkgs
   end
 
   def install
@@ -125,6 +55,28 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     cmd << "-n" << @resource[:name]
 
     pkgadd cmd
+
+  end
+
+  def self.instances
+    parse_pkginfo(execute([command(:pkginfo), '-l'])).collect do |p|
+      new(Hash[namemap(p) << [:provider, :sun] ])
+    end
+  end
+
+  # Get info on a package, optionally specifying a device.
+  def info2hash(device = nil)
+    cmd = [command(:pkginfo), '-l']
+    cmd << '-d' << device if device
+    cmd << @resource[:name]
+    pkgs = self.class.parse_pkginfo(execute(cmd, :failonfail => false))
+    errmsg = case pkgs.size
+             when 0; 'No message'
+             when 1; pkgs[0]['ERROR']
+             end
+    return Hash[self.class.namemap(pkgs[0])] if errmsg.nil?
+    return {:ensure => :absent} if errmsg =~ /information for "#{Regexp.escape(@resource[:name])}"/
+    raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{errmsg}"
   end
 
   # Retrieve the version from the current package file.
