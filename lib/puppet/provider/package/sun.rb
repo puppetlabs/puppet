@@ -13,17 +13,20 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   confine :osfamily => :solaris
   defaultfor :osfamily => :solaris
 
+  Namemap = {
+    "PKGINST"  => :name,
+    "CATEGORY" => :category,
+    "ARCH"     => :platform,
+    "VERSION"  => :ensure,
+    "BASEDIR"  => :root,
+    "VENDOR"   => :vendor,
+    "DESC"     => :description,
+  }
+
   def self.namemap(hash)
-    map = {
-      "PKGINST" => :name,
-      "CATEGORY" => :category,
-      "ARCH" => :platform,
-      "VERSION" => :ensure,
-      "BASEDIR" => :root,
-      "VENDOR" => :vendor,
-      "DESC" => :description,
-    }
-    map.collect{|k,v| [v, hash[k]]}
+    Namemap.keys.inject({}) do |hsh,k|
+      hsh.merge(Namemap[k] => hash[k])
+    end
   end
 
   def self.parse_pkginfo(out)
@@ -45,7 +48,9 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   def self.instances
     parse_pkginfo(execute([command(:pkginfo), '-l'])).collect do |p|
-      new(Hash[namemap(p) << [:provider, :sun] ])
+      hash = namemap(p)
+      hash[:provider] = :sun
+      new(hash)
     end
   end
 
@@ -59,7 +64,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
              when 0; 'No message'
              when 1; pkgs[0]['ERROR']
              end
-    return Hash[self.class.namemap(pkgs[0])] if errmsg.nil?
+    return self.class.namemap(pkgs[0]) if errmsg.nil?
     return {:ensure => :absent} if errmsg =~ /information for "#{Regexp.escape(@resource[:name])}"/
     raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{errmsg}"
   end
