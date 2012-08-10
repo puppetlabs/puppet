@@ -19,6 +19,13 @@ describe provider_class do
     provider_class.stubs(:command).with(:pkgrm).returns('/usr/sbin/pkgrm')
   end
 
+  describe 'provider features' do
+    it { should be_installable }
+    it { should be_uninstallable }
+    it { should be_upgradeable }
+    it { should_not be_versionable }
+  end
+
   [:install, :uninstall, :latest, :query, :update].each do |method|
     it "should have a #{method} method" do
       provider.should respond_to(method)
@@ -61,7 +68,6 @@ describe provider_class do
       provider.expects(:install)
       provider.update
     end
-
   end
 
   context '#query' do
