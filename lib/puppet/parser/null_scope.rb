@@ -28,6 +28,14 @@ module Puppet
         self
       end
 
+      def respond_to?(*)
+        true
+      end
+
+      def respond_to_missing?(*)
+        true
+      end
+
       def nil?
         true
       end
