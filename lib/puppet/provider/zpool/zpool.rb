@@ -1,8 +1,7 @@
-Puppet::Type.type(:zpool).provide(:solaris) do
-  desc "Provider for Solaris zpool."
+Puppet::Type.type(:zpool).provide(:zpool) do
+  desc "Provider for zpool."
 
-  commands :zpool => "/usr/sbin/zpool"
-  defaultfor :osfamily => :solaris
+  commands :zpool => 'zpool'
 
   #NAME    SIZE  ALLOC   FREE    CAP  HEALTH  ALTROOT
   def self.instances

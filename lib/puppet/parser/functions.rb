@@ -6,12 +6,16 @@ require 'monitor'
 # is added to a central module that then gets included into the Scope
 # class.
 module Puppet::Parser::Functions
-
-  (@functions = Hash.new { |h,k| h[k] = {} }).extend(MonitorMixin)
-  (@modules   = {}                          ).extend(MonitorMixin)
+  Environment = Puppet::Node::Environment
 
   class << self
     include Puppet::Util
+  end
+
+  # This is used by tests
+  def self.reset
+    @functions = Hash.new { |h,k| h[k] = {} }.extend(MonitorMixin)
+    @modules = Hash.new.extend(MonitorMixin)
   end
 
   def self.autoloader
@@ -19,8 +23,6 @@ module Puppet::Parser::Functions
       self, "puppet/parser/functions", :wrap => false
     )
   end
-
-  Environment = Puppet::Node::Environment
 
   def self.environment_module(env = nil)
     if env and ! env.is_a?(Puppet::Node::Environment)
@@ -106,6 +108,8 @@ module Puppet::Parser::Functions
   def self.rvalue?(name)
     (functions[name.intern] || {})[:type] == :rvalue
   end
+
+  reset  # initialize the class instance variables
 
   # Runs a newfunction to create a function for each of the log levels
   Puppet::Util::Log.levels.each do |level|
