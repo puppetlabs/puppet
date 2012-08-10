@@ -20,12 +20,14 @@ describe zfs do
     end
   end
 
-  it "should autorequire the containing zfss and the zpool" do
-    provider = mock "provider"
-    provider.stubs(:name).returns(:solaris)
-    zfs.stubs(:defaultprovider).returns(provider)
-    Puppet::Type.type(:zpool).stubs(:defaultprovider).returns(provider)
+  it "should autorequire the containing zfs and the zpool" do
+    zfs_provider = mock "provider"
+    zfs_provider.stubs(:name).returns(:zfs)
+    zfs.stubs(:defaultprovider).returns(zfs_provider)
 
+    zpool_provider = mock "provider"
+    zpool_provider.stubs(:name).returns(:zpool)
+    Puppet::Type.type(:zpool).stubs(:defaultprovider).returns(zpool_provider)
 
     foo_pool = Puppet::Type.type(:zpool).new(:name => "foo")
 
