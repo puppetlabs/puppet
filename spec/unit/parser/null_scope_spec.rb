@@ -20,11 +20,5 @@ describe Puppet::Parser::NullScope do
     subject.known_resource_types.should == collection
   end
 
-  ['==', 'equal?', 'instance_eval', 'instance_exec', '__send__', '__id__'].each do |m|
-    it "responds to ##{m}" do
-      subject.send(m).should_not be subject
-    end
-  end
-
 end
 
