@@ -187,14 +187,6 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#[]" do
-    it "should raise an exception" do
-      expect do
-        described_class['anything']
-      end.to raise_error("Global resource access is deprecated")
-    end
-  end
-
   describe ".instances" do
     it "should return an empty array" do
       described_class.instances.should == []
