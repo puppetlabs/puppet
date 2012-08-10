@@ -1,22 +1,16 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:sun)
-
-describe provider_class do
-  let(:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :ensure => :installed}) }
-  let(:provider) { provider_class.new(resource) }
+describe Puppet::Type.type(:package).provider(:sun) do
+  let(:resource) { Puppet::Type.type(:package).new(:name => 'dummy', :ensure => :installed, :provider => :sun) }
+  let(:provider) { resource.provider }
 
   before(:each) do
-    resource[:name] = 'dummy'
-    resource[:adminfile] = nil
-    resource[:responsefile] = nil
-
     # Stub some provider methods to avoid needing the actual software
     # installed, so we can test on whatever platform we want.
-    provider_class.stubs(:command).with(:pkginfo).returns('/usr/bin/pkginfo')
-    provider_class.stubs(:command).with(:pkgadd).returns('/usr/sbin/pkgadd')
-    provider_class.stubs(:command).with(:pkgrm).returns('/usr/sbin/pkgrm')
+    provider.class.stubs(:command).with(:pkginfo).returns('/usr/bin/pkginfo')
+    provider.class.stubs(:command).with(:pkgadd).returns('/usr/sbin/pkgadd')
+    provider.class.stubs(:command).with(:pkgrm).returns('/usr/sbin/pkgrm')
   end
 
   describe 'provider features' do
@@ -98,7 +92,7 @@ describe provider_class do
   context '#instance' do
     it "should list instances when there are packages in the system" do
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l']).returns File.read(my_fixture('simple'))
-      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       instances.size.should == 2
       instances[0].should == {
         :name     => 'SUNWdummy',
@@ -112,7 +106,7 @@ describe provider_class do
 
     it "should return empty if there were no packages" do
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l']).returns ''
-      instances = provider_class.instances
+      instances = provider.class.instances
       instances.size.should == 0
     end
 
