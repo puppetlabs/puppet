@@ -19,6 +19,7 @@ module Puppet
       ##
       def self.evaluate(main, io)
         raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :'ruby_code='
+        raise ArgumentError, "can't read from file"              unless io.respond_to?   :read
 
         filename       = io.respond_to?(:path) ? io.path : ""
         source         = io.read
