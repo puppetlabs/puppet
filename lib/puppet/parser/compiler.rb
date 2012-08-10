@@ -112,6 +112,7 @@ class Puppet::Parser::Compiler
     @catalog
   end
 
+  # MLEN:TODO add tests
   def evaluate_ruby_code(file)
     File.open file do |f|
       Puppet::DSL::Parser.evaluate @main, f
@@ -289,6 +290,7 @@ class Puppet::Parser::Compiler
 
     add_resource(@topscope, @main_resource)
 
+    # MLEN:TODO check for tests
     file = Puppet.settings.value :manifest, environment
     evaluate_ruby_code file if is_ruby_dsl? file
 

@@ -85,6 +85,7 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
+    # MLEN:TODO add tests
     loaded_asts = []
     loaded_ruby = []
     files.each do |file|

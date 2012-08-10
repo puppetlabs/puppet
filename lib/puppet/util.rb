@@ -362,6 +362,7 @@ module Util
   # utility method to get the current call stack and format it to a human-readable string (which some IDEs/editors
   # will recognize as links to the line numbers in the trace)
   def self.pretty_backtrace(backtrace = caller(1))
+    # MLEN:TODO check/update tests
     backtrace.collect do |line|
       file_path, line_num = line.split(":")
       file_path = expand_symlinks(File.expand_path(file_path))
