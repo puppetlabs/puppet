@@ -84,14 +84,12 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
   end
 
   describe "zfs properties" do
-    [:aclinherit, :aclmode, :atime, :canmount, \
-     :checksum, :compression, :copies, :devices, \
-     :exec, :logbias, :mountpoint, :nbmand, \
-     :primarycache, :quota, :readonly, :recordsize, \
-     :refquota, :refreservation, :reservation, :secondarycache,\
-     :setuid, :shareiscsi, :sharenfs, :sharesmb, \
-     :snapdir, :version, :volsize, :vscan, \
-     :xattr, :zoned, :vscan].each do |prop|
+    [:aclinherit, :aclmode, :atime, :canmount, :checksum,
+     :compression, :copies, :dedup, :devices, :exec, :logbias,
+     :mountpoint, :nbmand,  :primarycache, :quota, :readonly,
+     :recordsize, :refquota, :refreservation, :reservation,
+     :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb,
+     :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |prop|
       it "should get #{prop}" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
 

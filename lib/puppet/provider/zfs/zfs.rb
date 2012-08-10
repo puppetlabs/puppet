@@ -37,7 +37,12 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     end
   end
 
-  [:aclinherit, :aclmode, :atime, :canmount, :checksum, :compression, :copies, :devices, :exec, :logbias, :mountpoint, :nbmand, :primarycache, :quota, :readonly, :recordsize, :refquota, :refreservation, :reservation, :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb, :snapdir, :version, :volsize, :vscan, :xattr, :zoned, :vscan].each do |field|
+  [:aclinherit, :aclmode, :atime, :canmount, :checksum,
+   :compression, :copies, :dedup, :devices, :exec, :logbias,
+   :mountpoint, :nbmand,  :primarycache, :quota, :readonly,
+   :recordsize, :refquota, :refreservation, :reservation,
+   :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb,
+   :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |field|
     define_method(field) do
       zfs(:get, "-H", "-o", "value", field, @resource[:name]).strip
     end
