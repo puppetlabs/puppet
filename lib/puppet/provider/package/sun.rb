@@ -5,6 +5,9 @@ require 'puppet/provider/package'
 Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package do
   desc "Sun's packaging system.  Requires that you specify the source for
     the packages you're managing."
+
+  has_feature :install_options
+
   commands :pkginfo => "/usr/bin/pkginfo",
     :pkgadd => "/usr/sbin/pkgadd",
     :pkgrm => "/usr/sbin/pkgrm"
@@ -13,143 +16,91 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   defaultfor :osfamily => :solaris
 
-  def self.instances
-    packages = []
-    hash = {}
-    names = {
+  has_feature :upgradeable
+
+  def self.namemap(hash)
+    map = {
       "PKGINST" => :name,
-      "NAME" => nil,
       "CATEGORY" => :category,
       "ARCH" => :platform,
       "VERSION" => :ensure,
       "BASEDIR" => :root,
-      "HOTLINE" => nil,
-      "EMAIL" => nil,
       "VENDOR" => :vendor,
       "DESC" => :description,
-      "PSTAMP" => nil,
-      "INSTDATE" => nil,
-      "STATUS" => nil,
-      "FILES" => nil
     }
+    map.collect{|k,v| [v, hash[k]]}
+  end
 
-    cmd = "#{command(:pkginfo)} -l"
+  def self.parse_pkginfo(out)
+    # collect all the lines with : in them, and separate them out by ^$
+    pkgs = []
+    pkg = {}
+    out.each_line do |line|
+      case line.chomp
+      when /^\s*$/
+        pkgs << pkg unless pkg.empty?
+        pkg = {}
+      when /^\s*([^:]+):\s+(.+)$/
+        pkg[$1] = $2
+      end
+    end
+    pkgs << pkg unless pkg.empty?
+    pkgs
+  end
 
-    # list out all of the packages
-    execpipe(cmd) { |process|
-      # we're using the long listing, so each line is a separate
-      # piece of information
-      process.each_line { |line|
-        case line
-        when /^$/
-          hash[:provider] = :sun
-
-          packages << new(hash)
-          hash = {}
-        when /\s*(\w+):\s+(.+)/
-          name = $1
-          value = $2
-          if names.include?(name)
-            hash[names[name]] = value unless names[name].nil?
-          end
-        when /\s+\d+.+/
-          # nothing; we're ignoring the FILES info
-        end
-      }
-    }
-    packages
+  def self.instances
+    parse_pkginfo(execute([command(:pkginfo), '-l'])).collect do |p|
+      new(Hash[namemap(p) << [:provider, :sun] ])
+    end
   end
 
   # Get info on a package, optionally specifying a device.
   def info2hash(device = nil)
-    names = {
-      "PKGINST" => :name,
-      "NAME" => nil,
-      "CATEGORY" => :category,
-      "ARCH" => :platform,
-      "VERSION" => :ensure,
-      "BASEDIR" => :root,
-      "HOTLINE" => nil,
-      "EMAIL" => nil,
-      "VSTOCK" => nil,
-      "VENDOR" => :vendor,
-      "DESC" => :description,
-      "PSTAMP" => nil,
-      "INSTDATE" => nil,
-      "STATUS" => nil,
-      "FILES" => nil
-    }
-
-    hash = {}
-    cmd = "#{command(:pkginfo)} -l"
-    cmd += " -d #{device}" if device
-    cmd += " #{@resource[:name]}"
-
-    begin
-      # list out all of the packages
-      execpipe(cmd) { |process|
-        # we're using the long listing, so each line is a separate
-        # piece of information
-        process.readlines.each { |line|
-          case line
-          when /^$/  # ignore
-          when /\s*([A-Z]+):\s+(.+)/
-            name = $1
-            value = $2
-            if names.include?(name)
-              hash[names[name]] = value unless names[name].nil?
-            end
-          when /\s+\d+.+/
-            # nothing; we're ignoring the FILES info
-          end
-        }
-      }
-      return hash
-    rescue Puppet::ExecutionFailure => detail
-      return {:ensure => :absent} if detail.message =~ /information for "#{Regexp.escape(@resource[:name])}" was not found/
-      message = "Unable to get information about package #{@resource[:name]} because of: #{detail}"
-      Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
-    end
-  end
-
-  def install
-    raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
-    cmd = []
-
-    cmd << "-a" << @resource[:adminfile] if @resource[:adminfile]
-
-    cmd << "-r" << @resource[:responsefile] if @resource[:responsefile]
-
-    cmd << "-d" << @resource[:source]
-    cmd << "-n" << @resource[:name]
-
-    pkgadd cmd
+    cmd = [command(:pkginfo), '-l']
+    cmd << '-d' << device if device
+    cmd << @resource[:name]
+    pkgs = self.class.parse_pkginfo(execute(cmd, :failonfail => false))
+    errmsg = case pkgs.size
+             when 0; 'No message'
+             when 1; pkgs[0]['ERROR']
+             end
+    return Hash[self.class.namemap(pkgs[0])] if errmsg.nil?
+    return {:ensure => :absent} if errmsg =~ /information for "#{Regexp.escape(@resource[:name])}"/
+    raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{errmsg}"
   end
 
   # Retrieve the version from the current package file.
   def latest
-    hash = info2hash(@resource[:source])
-    hash[:ensure]
+    info2hash(@resource[:source])[:ensure]
   end
 
   def query
-    info2hash()
+    info2hash
+  end
+
+  def prepare_cmd(opt)
+    cmd = []
+    cmd << '-a' << @resource[:adminfile] if @resource[:adminfile] && opt[:adminfile]
+    cmd << '-r' << @resource[:responsefile] if @resource[:responsefile] && opt[:responsefile]
+    cmd << '-d' << @resource[:source] if opt[:source]
+    cmd << opt[:cmd_options] if opt[:cmd_options]
+    cmd << '-n' << @resource[:name]
+  end
+
+  # only looking for -G now.
+  def install
+    raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
+    pkgadd prepare_cmd(:adminfile => true, :responsefile => true, :source => true, :cmd_options => @resource[:install_options])
   end
 
   def uninstall
-    command  = ["-n"]
-
-    command << "-a" << @resource[:adminfile] if @resource[:adminfile]
-
-    command << @resource[:name]
-    pkgrm command
+    pkgrm prepare_cmd(:adminfile => true)
   end
 
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
+    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
     self.install
   end
 end
