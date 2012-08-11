@@ -138,13 +138,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
   # Execute a configuration string.  Can't be private because it's called
   # by the properties.
   def setconfig(str)
-    command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
-    debug "Executing '#{command}' in zone #{@resource[:name]} with '#{str}'"
-    IO.popen(command, "w") do |pipe|
-      pipe.puts str
-    end
-
-    unless $CHILD_STATUS == 0
+    output = cfg '-z', @resource[:name], str
+    if output =~ /not allowed/ or $CHILD_STATUS != 0
       raise ArgumentError, "Failed to apply configuration"
     end
   end
