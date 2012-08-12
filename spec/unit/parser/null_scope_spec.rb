@@ -17,7 +17,20 @@ describe Puppet::Parser::NullScope do
   end
 
   it "responds to #known_resource_types" do
+    subject.respond_to?(:known_resource_types).should be true
     subject.known_resource_types.should == collection
+  end
+
+  it "responds to any method" do
+    subject.respond_to?(:asdf).should be true
+  end
+
+  it "returns any method when called #method" do
+    lambda { subject.method(:asdf) }.should_not raise_error
+  end
+
+  it "defines #respond_to_missing?" do
+    subject.respond_to_missing?(:asdf).should be true
   end
 
 end
