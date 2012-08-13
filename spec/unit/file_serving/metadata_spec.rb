@@ -143,26 +143,26 @@ describe Puppet::FileServing::Metadata do
                 myDigest.new.method(@algo).call *args
               end
             end
-        describe "#checksum" do
-          let(:checksum) { digest("some content\n") }
+            describe "#checksum" do
+              let(:checksum) { digest("some content\n") }
 
-          before :each do
-            File.open(path, "wb") {|f| f.print("some content\n")}
-          end
+              before :each do
+                File.open(path, "wb") {|f| f.print("some content\n")}
+              end
 
-          it "should default to a checksum of type MD5 with the file's current checksum" do
-            metadata.checksum.should == "{#@algo}#{checksum}"
-          end
+              it "should default to a checksum of type MD5 with the file's current checksum" do
+                metadata.checksum.should == "{#@algo}#{checksum}"
+              end
 
-          it "should give a mtime checksum when checksum_type is set" do
-            time = Time.now
-            metadata.checksum_type = "mtime"
-            metadata.expects(:mtime_file).returns(@time)
-            metadata.collect
-            metadata.checksum.should == "{mtime}#{@time}"
+              it "should give a mtime checksum when checksum_type is set" do
+                time = Time.now
+                metadata.checksum_type = "mtime"
+                metadata.expects(:mtime_file).returns(@time)
+                metadata.collect
+                metadata.checksum.should == "{mtime}#{@time}"
+              end
+            end
           end
-        end
-        end
         end
       end
 
@@ -199,25 +199,25 @@ describe Puppet::FileServing::Metadata do
               myDigest.new.method(@algo).call *args
             end
           end
-      describe "when managing links", :unless => Puppet.features.microsoft_windows? do
-        # 'path' is a link that points to 'target'
-        let(:path) { tmpfile('file_serving_metadata_link') }
-        let(:target) { tmpfile('file_serving_metadata_target') }
-        let(:checksum) { digest("some content\n") }
-        let(:fmode) { File.lstat(path).mode & 0777 }
+          describe "when managing links", :unless => Puppet.features.microsoft_windows? do
+            # 'path' is a link that points to 'target'
+            let(:path) { tmpfile('file_serving_metadata_link') }
+            let(:target) { tmpfile('file_serving_metadata_target') }
+            let(:checksum) { digest("some content\n") }
+            let(:fmode) { File.lstat(path).mode & 0777 }
 
-        before :each do
-          File.open(target, "wb") {|f| f.print("some content\n")}
-          set_mode(0644, target)
+            before :each do
+              File.open(target, "wb") {|f| f.print("some content\n")}
+              set_mode(0644, target)
 
-          FileUtils.symlink(target, path)
+              FileUtils.symlink(target, path)
+            end
+
+            it "should read links instead of returning their checksums" do
+              metadata.destination.should == target
+            end
+          end
         end
-
-        it "should read links instead of returning their checksums" do
-          metadata.destination.should == target
-        end
-      end
-      end
       end
     end
 
@@ -325,48 +325,48 @@ ALGORITHMS_TO_TRY.each do |algo|
         myDigest.new.method(@algo).call *args
       end
     end
-describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => Puppet.features.microsoft_windows? do
-  describe "when links are managed" do
-    before do
-      @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
-      File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-      File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
+    describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => Puppet.features.microsoft_windows? do
+      describe "when links are managed" do
+        before do
+          @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
+          File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
+          File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
 
-      @checksum = digest("some content\n") # Remove these when :managed links are no longer checksumed.
-      @file.stubs("#{@algo}_file".intern).returns(@checksum)           #
-    end
-    it "should store the destination of the link in :destination if links are :manage" do
-      @file.collect
-      @file.destination.should == "/some/other/path"
-    end
-    pending "should not collect the checksum if links are :manage" do
-      # We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow.
-      @file.collect
-      @file.checksum.should be_nil
-    end
-    it "should collect the checksum if links are :manage" do # see pending note above
-      @file.collect
-      @file.checksum.should == "{#@algo}#{@checksum}"
+          @checksum = digest("some content\n") # Remove these when :managed links are no longer checksumed.
+          @file.stubs("#{@algo}_file".intern).returns(@checksum)           #
+        end
+        it "should store the destination of the link in :destination if links are :manage" do
+          @file.collect
+          @file.destination.should == "/some/other/path"
+        end
+        pending "should not collect the checksum if links are :manage" do
+          # We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow.
+          @file.collect
+          @file.checksum.should be_nil
+        end
+        it "should collect the checksum if links are :manage" do # see pending note above
+          @file.collect
+          @file.checksum.should == "{#@algo}#{@checksum}"
+        end
+      end
+
+      describe "when links are followed" do
+        before do
+          @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
+          File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+          File.expects(:readlink).with("/base/path/my/file").never
+          @checksum = digest("some content\n")
+          @file.stubs("#{@algo}_file".intern).returns(@checksum)
+        end
+        it "should not store the destination of the link in :destination if links are :follow" do
+          @file.collect
+          @file.destination.should be_nil
+        end
+        it "should collect the checksum if links are :follow" do
+          @file.collect
+          @file.checksum.should == "{#@algo}#{@checksum}"
+        end
+      end
     end
   end
-
-  describe "when links are followed" do
-    before do
-      @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
-      File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
-      File.expects(:readlink).with("/base/path/my/file").never
-      @checksum = digest("some content\n")
-      @file.stubs("#{@algo}_file".intern).returns(@checksum)
-    end
-    it "should not store the destination of the link in :destination if links are :follow" do
-      @file.collect
-      @file.destination.should be_nil
-    end
-    it "should collect the checksum if links are :follow" do
-      @file.collect
-      @file.checksum.should == "{#@algo}#{@checksum}"
-    end
-  end
-end
-end
 end
