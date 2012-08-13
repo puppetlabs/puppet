@@ -125,6 +125,7 @@ def pack_source
   # Make all necessary directories
   directories = ["#{work}/usr/bin",
                  "#{work}/usr/share/doc/#{@package_name}",
+                 "#{work}/usr/lib/ruby/site_ruby/1.8",
                  "#{work}/usr/lib/ruby/site_ruby/1.8/hiera",
                  "#{work}/usr/lib/ruby/site_ruby/1.8/puppet"]
   FileUtils.mkdir_p(directories)
