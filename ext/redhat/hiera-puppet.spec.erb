@@ -10,7 +10,7 @@ Name:           hiera-puppet
 Version:        %{rpmversion}
 Release:        <%= @release -%>%{?dist}
 Summary:        A data backend for Hiera that can query the internal Puppet scope for data.
-
+Vendor:         %{?_host_vendor}
 Group:          System Environment/Base
 License:        Apache 2.0
 URL:            http://projects.puppetlabs.com/projects/%{name}/
