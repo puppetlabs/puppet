@@ -11,6 +11,7 @@ class Puppet::FileBucket::Dipper
 
   # Create our bucket client
   def initialize(hash = {})
+    Puppet.settings.use :main
     # Emulate the XMLRPC client
     server      = hash[:Server]
     port        = hash[:Port] || Puppet[:masterport]
@@ -55,7 +56,8 @@ class Puppet::FileBucket::Dipper
 
   # Retrieve a file by sum.
   def getfile(sum)
-    source_path = "#{@rest_path}md5/#{sum}"
+    algorithm = Puppet['digest_algorithm'] || 'md5'
+    source_path = "#{@rest_path}#{algorithm}/#{sum}"
     file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
 
     raise Puppet::Error, "File not found" unless file_bucket_file

@@ -3,6 +3,7 @@ require 'spec_helper'
 require 'puppet/node'
 require 'puppet/indirector/memory'
 require 'puppet/indirector/node/store_configs'
+require 'puppet/indirector/memory'
 
 class Puppet::Node::StoreConfigsTesting < Puppet::Indirector::Memory
 end
