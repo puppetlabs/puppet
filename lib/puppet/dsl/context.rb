@@ -60,10 +60,11 @@ module Puppet
       # +code+ should be a +Proc+ that will be evaluated during evaluation of a
       # resource.
       ##
-      def initialize(code, nesting = 0)
-        @nesting  = nesting
-        @code     = code
+      def initialize(code, options = {})
+        @nesting  = options.fetch(:nesting)  { 0            }
+        @filename = options.fetch(:filename) { "dsl_main"   }
         @object   = ::Object.new
+        @code     = code
       end
 
       ##
@@ -131,7 +132,7 @@ module Puppet
 
         name = name.to_s unless name.is_a? ::Regexp
         node = ::Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+        node.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
 
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_node node
       end
@@ -171,7 +172,7 @@ module Puppet
         params.merge! :parent    => options[:inherits].to_s if options[:inherits]
 
         hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
-        hostclass.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+        hostclass.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
 
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_hostclass hostclass
       end
@@ -207,7 +208,7 @@ module Puppet
         params = {}
         params.merge! :arguments => options[:arguments] if options[:arguments]
         definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
-        definition.ruby_code = ::Puppet::DSL::Context.new block, @nesting + 1
+        definition.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
 
         ::Puppet::DSL::Parser.current_scope.known_resource_types.add_definition definition
       end
@@ -284,7 +285,7 @@ module Puppet
       # Returns string description of context
       ##
       def inspect
-        "dsl_main"
+        @filename.to_s
       end
 
       ##

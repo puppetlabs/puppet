@@ -7,9 +7,8 @@ module PuppetSpec
     end
 
     def evaluate_in_context(options = {}, &block)
-      nesting = options.fetch(:nesting) { 0      }
       scope   = options.fetch(:scope)   { @scope }
-      Puppet::DSL::Context.new(block, nesting).evaluate scope
+      Puppet::DSL::Context.new(block, options).evaluate scope
     end
 
     def known_resource_types

@@ -21,10 +21,11 @@ module Puppet
         raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :'ruby_code='
         raise ArgumentError, "can't read from file"              unless io.respond_to?   :read
 
-        filename       = io.respond_to?(:path) ? io.path : ""
+        options = {}
+        options[:filename] = io.path if io.respond_to? :path
         source         = io.read
-        code           = proc { instance_eval source, filename, 0 }
-        main.ruby_code = Context.new code
+        code           = proc { instance_eval source, options[:filename], 0 }
+        main.ruby_code = Context.new code, options
       end
 
       ##
