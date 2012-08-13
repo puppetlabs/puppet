@@ -268,14 +268,25 @@ class Puppet::Settings
   def convert(value, environment = nil)
     return nil if value.nil?
     return value unless value.is_a? String
-    newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-      varname = $2 || $1
-      if varname == "environment" and environment
+
+    #
+    # Accept $var, ${var} or hash($var, 2)
+    # hash($var, XX) will return the first XX characters of $var
+    #
+    newval = value.gsub(/\$(\w+)|\$\{(\w+)\}|hash\(\$(\w+),\s*(\d+)\)/) do |value|
+      varname = $1 || $2 || $3
+      retval = if varname == "environment" and environment
         environment
       elsif pval = self.value(varname, environment)
         pval
       else
         raise InterpolationError, "Could not find value for #{value}"
+      end
+
+      if $4
+        retval.to_s.slice(0,$4.to_i)
+      else
+        retval
       end
     end
 
