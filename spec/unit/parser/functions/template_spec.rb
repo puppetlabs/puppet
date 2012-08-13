@@ -7,14 +7,12 @@ describe "the template function", :'fails_on_ruby_1.9.2' => true do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    s = Puppet::Parser::Scope.new
     node = stub 'node'
     node.stubs(:name).returns 'test_node'
     node.stubs(:classes).returns []
     env = Puppet::Node::Environment.new('production')
     node.stubs(:environment).returns env
-    @scope.compiler = Puppet::Parser::Compiler.new(node)
+    @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(node))
   end
 
   it "should exist" do
