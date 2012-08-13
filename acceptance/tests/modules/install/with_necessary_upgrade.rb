@@ -1,9 +1,15 @@
-begin test_name "puppet module install (with necessary dependency upgrade)"
+test_name "puppet module install (with necessary dependency upgrade)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
+# Ensure module path dirs are purged before and after the tests
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 
 step "Install an older module version"
 on master, puppet("module install pmtacceptance-java --version 1.6.0") do
@@ -47,9 +53,4 @@ on master, puppet('module list') do
     └── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
     /usr/share/puppet/modules (no modules installed)
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

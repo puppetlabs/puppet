@@ -1,9 +1,15 @@
-begin test_name "puppet module install (force ignores dependencies)"
+test_name "puppet module install (force ignores dependencies)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
+# Ensure module path dirs are purged before and after the tests
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 
 step "Try to install an unsatisfiable module"
 on master, puppet("module install pmtacceptance-php"), :acceptable_exit_codes => [1] do
@@ -33,8 +39,3 @@ on master, puppet("module install pmtacceptance-php --force") do
 end
 on master, '[ -d /etc/puppet/modules/php ]'
 on master, '[ ! -d /etc/puppet/modules/apache ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { '/etc/puppet/modules': recurse => true, purge => true, force => true }"
-end

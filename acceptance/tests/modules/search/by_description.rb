@@ -1,8 +1,7 @@
-begin test_name 'puppet module search should do substring matches on description'
+test_name 'puppet module search should do substring matches on description'
 
-step 'Stub http://forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+step 'Setup'
+stub_forge_on(master)
 
 step 'Search for a module by description'
 on master, puppet("module search dummy") do
@@ -21,8 +20,4 @@ on master, puppet("module search dummy") do
 # pmtacceptance-php     This is a dummy php modu...  @pmtacceptance  apache php
 # pmtacceptance-geordi  This is a module that do...  @pmtacceptance  star trek
 # STDOUT
-end
-
-ensure step 'Unstub http://forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end

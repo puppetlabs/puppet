@@ -1,9 +1,16 @@
-begin test_name "puppet module install (with unsatisfied constraints)"
+test_name "puppet module install (with unsatisfied constraints)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
+# Ensure module path dirs are purged before and after the tests
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -90,8 +97,3 @@ on master, puppet("module install pmtacceptance-stdlib --force") do
   OUTPUT
 end
 on master, '[ -d /etc/puppet/modules/stdlib ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { '/etc/puppet/modules': recurse => true, purge => true, force => true }"
-end

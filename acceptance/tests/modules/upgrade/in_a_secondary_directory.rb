@@ -1,8 +1,9 @@
-begin test_name "puppet module upgrade (in a secondary directory)"
+test_name "puppet module upgrade (in a secondary directory)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
 apply_manifest_on master, <<-'MANIFEST1'
 file { '/usr/share/puppet':
   ensure  => directory,
@@ -14,6 +15,11 @@ file { ['/etc/puppet/modules', '/usr/share/puppet/modules']:
   force   => true,
 }
 MANIFEST1
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --target-dir /usr/share/puppet/modules")
 on master, puppet("module list") do
   assert_output <<-OUTPUT
@@ -34,9 +40,4 @@ on master, puppet("module upgrade pmtacceptance-java") do
     /usr/share/puppet/modules
     └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.1\e[0m)
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end
