@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/dsl/blank_slate'
-require 'puppet/dsl/type_reference'
 
 describe Puppet::DSL::BlankSlate do
 
@@ -17,16 +16,11 @@ describe Puppet::DSL::BlankSlate do
 
     it "should be able to define singleton methods" do
       lambda do
-        evaluate do
-          define_singleton_method :foobarbaz do
+          Puppet::DSL::BlankSlate.new.__send__ :define_singleton_method, :foobarbaz do
             raise ::NameError
-          end
-
-          foobarbaz
-        end
+          end.foobarbaz
       end.should raise_error NameError
     end
-
   end
 
 end
