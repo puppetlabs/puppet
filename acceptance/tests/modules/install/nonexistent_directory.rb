@@ -1,9 +1,7 @@
-begin test_name "puppet module install (nonexistent directory)"
+test_name "puppet module install (nonexistent directory)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -21,7 +19,7 @@ on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules"
     STDERR>   Directory /tmp/modules does not exist\e[0m
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ ! -d /tmp/modules/nginx ]'
 
 step "Try to install a module to a non-existent implicit directory"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
@@ -32,9 +30,3 @@ on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes 
   OUTPUT
 end
 on master, '[ ! -d /etc/puppet/modules/nginx ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { '/etc/puppet/modules': ensure => directory }"
-apply_manifest_on master, "file { '/etc/puppet/modules': recurse => true, purge => true, force => true }"
-end

@@ -1,8 +1,9 @@
-begin test_name "puppet module upgrade (with constraints on it)"
+test_name "puppet module upgrade (with constraints on it)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
 apply_manifest_on master, <<-'MANIFEST1'
 file { '/usr/share/puppet':
   ensure  => directory,
@@ -14,6 +15,11 @@ file { ['/etc/puppet/modules', '/usr/share/puppet/modules']:
   force   => true,
 }
 MANIFEST1
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 on master, puppet("module install pmtacceptance-java --version 1.7.0")
 on master, puppet("module install pmtacceptance-apollo")
 on master, puppet("module list") do
@@ -50,9 +56,4 @@ on master, puppet("module upgrade pmtacceptance-stdlib"), :acceptable_exit_codes
     STDERR>     'pmtacceptance-java' (v1.7.1) requires 'pmtacceptance-stdlib' (v1.0.0)
     STDERR>     Use `puppet module install --force` to re-install this module\e[0m
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

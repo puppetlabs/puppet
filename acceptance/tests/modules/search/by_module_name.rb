@@ -1,8 +1,7 @@
-begin test_name 'puppet module search should do substring matches on module name'
+test_name 'Searching for modules by part of the name'
 
-step 'Stub http://forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+step 'Setup'
+stub_forge_on(master)
 
 step 'Search for modules by partial name'
 on master, puppet("module search geordi") do
@@ -33,8 +32,4 @@ Searching http://forge.puppetlabs.com ...
 NAME                  DESCRIPTION                  AUTHOR          KEYWORDS     
 pmtaccep\e[0;32mtance-ge\e[0mordi  This is a module that do...  @pmtacceptance  star trek    
 STDOUT
-end
-
-ensure step 'Unstub http://forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end
