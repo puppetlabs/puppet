@@ -15,6 +15,7 @@ Name:           puppet
 Version:        2.7.19
 Release:        0.1rc2%{?dist}
 #Release:        2%{?dist}
+Vendor:         %{?_host_vendor}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
