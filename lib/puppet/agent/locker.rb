@@ -5,11 +5,13 @@ require 'puppet/util/pidlock'
 module Puppet::Agent::Locker
   # Let the daemon run again, freely in the filesystem.
   def enable
+    Puppet.notice "Enabling Puppet."
     lockfile.unlock(:anonymous => true)
   end
 
   # Stop the daemon from making any catalog runs.
   def disable
+    Puppet.notice "Disabling Puppet."
     lockfile.lock(:anonymous => true)
   end
 
