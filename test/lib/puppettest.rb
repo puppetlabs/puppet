@@ -22,6 +22,8 @@ end
 
 require File.expand_path(File.join(File.dirname(__FILE__), '../../spec/monkey_patches/publicize_methods'))
 
+require 'puppet/test/test_helper'
+
 module PuppetTest
   # These need to be here for when rspec tests use these
   # support methods.
@@ -145,6 +147,8 @@ module PuppetTest
   end
 
   def setup
+    Puppet::Test::TestHelper.before_each_test
+
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @memoryatstart = Puppet::Util.memory
     if defined?(@@testcount)
@@ -153,10 +157,8 @@ module PuppetTest
       @@testcount = 0
     end
 
-
-      @configpath = File.join(
-        tmpdir,
-
+    @configpath = File.join(
+      tmpdir,
       "configdir" + @@testcount.to_s + "/"
     )
 
@@ -165,7 +167,6 @@ module PuppetTest
       $group = nonrootgroup.gid.to_s
     end
 
-    Puppet.settings.clear
     Puppet[:user] = $user
     Puppet[:group] = $group
 
@@ -181,30 +182,16 @@ module PuppetTest
 
     @logs = []
 
-    # If we're running under rake, then disable debugging and such.
-    #if rake? or ! Puppet[:debug]
-    #if defined?($puppet_debug) or ! rake?
-      Puppet[:color] = false if textmate?
-      Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
-      if defined? $console
-        Puppet.info @method_name
-        Puppet::Util::Log.newdestination(:console)
-        Puppet[:trace] = true
-      end
-      Puppet::Util::Log.level = :debug
-      #$VERBOSE = 1
-    #else
-    #    Puppet::Util::Log.close
-    #    Puppet::Util::Log.newdestination(@logs)
-    #    Puppet[:httplog] = tempfile
-    #end
+    Puppet[:color] = false if textmate?
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
+    if defined? $console
+      Puppet.info @method_name
+      Puppet::Util::Log.newdestination(:console)
+      Puppet[:trace] = true
+    end
+    Puppet::Util::Log.level = :debug
 
     Puppet[:ignoreschedules] = true
-
-    #@start = Time.now
-
-    #Facter.stubs(:value).returns "stubbed_value"
-    #Facter.stubs(:to_hash).returns({})
   end
 
   def tempfile(suffix = '')
@@ -300,6 +287,8 @@ module PuppetTest
     rescue Timeout::Error
       # just move on
     end
+
+    Puppet::Test::TestHelper.after_each_test
   end
 
   def logstore

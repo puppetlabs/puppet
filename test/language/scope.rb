@@ -20,11 +20,6 @@ class TestScope < Test::Unit::TestCase
   include PuppetTest::ParserTesting
   include PuppetTest::ResourceTesting
 
-  def setup
-    Puppet::Node::Environment.clear
-    super
-  end
-
   def to_ary(hash)
     hash.collect { |key,value|
       [key,value]

@@ -476,12 +476,11 @@ class TestSnippets < Test::Unit::TestCase
   Dir.entries(snippetdir).sort.each { |file|
     next if file =~ /^\./
 
-
     mname = "snippet_" + file.sub(/\.pp$/, '')
     if self.method_defined?(mname)
       #eval("alias #{testname} #{mname}")
       testname = ("test_#{mname}").intern
-      self.send(:define_method, testname) {
+      define_method(testname) {
         Puppet[:manifest] = snippet(file)
         facts = {
           "hostname" => "testhost",

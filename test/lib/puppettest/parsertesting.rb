@@ -55,7 +55,6 @@ module PuppetTest::ParserTesting
   end
 
   def mkparser
-    Puppet::Node::Environment.clear
     Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
   end
 

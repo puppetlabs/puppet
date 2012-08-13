@@ -444,6 +444,7 @@ file { "/tmp/yayness":
     end
 
     tests.each do |form|
+      Puppet::Node::Environment.clear
       parser = mkparser
 
       if form == :virtual
