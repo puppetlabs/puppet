@@ -86,8 +86,7 @@ module Puppet::SSL::CertificateFactory
     end
   end
 
-  # TTL for new certificates in seconds. If config param :ca_ttl is set,
-  # use that, otherwise use :ca_days for backwards compatibility
+  # TTL for new certificates in seconds.
   def self.ttl
     ttl = Puppet.settings[:ca_ttl]
 

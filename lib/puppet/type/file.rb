@@ -132,13 +132,13 @@ Puppet::Type.newtype(:file) do
       * `false` --- Default of no recursion.
     "
 
-    newvalues(:true, :false, :inf, :remote)
+    newvalues(:true, :false, :remote)
 
     validate { |arg| }
     munge do |value|
       newval = super(value)
       case newval
-      when :true, :inf; true
+      when :true; true
       when :false; false
       when :remote; :remote
       else
