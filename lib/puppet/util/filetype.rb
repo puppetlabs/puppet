@@ -245,7 +245,8 @@ class Puppet::Util::FileType
       rescue => detail
         raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
-        output_file.close!
+        output_file.close
+        output_file.unlink
       end
     end
   end
@@ -287,7 +288,8 @@ class Puppet::Util::FileType
       rescue => detail
         raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
-        output_file.close!
+        output_file.close
+        output_file.unlink
       end
     end
   end
