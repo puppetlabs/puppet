@@ -447,7 +447,12 @@ describe Puppet::Node::Environment do
       env.instance_eval { perform_initial_import }
     end
 
-    it "should return empty hostclass"
+    it "returns empty hostclass when using Ruby DSL" do
+      Puppet[:manifest] = "test.rb"
+      env.instance_eval { perform_initial_import }.tap {|c|
+        c.should be_a Puppet::Parser::AST::Hostclass
+      }.code.should be nil
+    end
 
     it "should mark the type collection as needing a reparse when there is an error parsing" do
       @parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
