@@ -134,7 +134,7 @@ describe Puppet::Type.type(:file) do
       file[:recurse].should be_false
     end
 
-    [true, "true", "remote"].each do |value|
+    [true, "true", "inf", "remote"].each do |value|
       it "should consider #{value} to enable recursion" do
         file[:recurse] = value
         file[:recurse].should be_true
