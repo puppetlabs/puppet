@@ -1,8 +1,9 @@
-begin test_name "puppet module upgrade (with scattered dependencies)"
+test_name "puppet module upgrade (with scattered dependencies)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
 apply_manifest_on master, <<-'MANIFEST1'
   file { '/usr/share/puppet':
     ensure  => directory,
@@ -14,6 +15,11 @@ apply_manifest_on master, <<-'MANIFEST1'
     force   => true,
   }
 MANIFEST1
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
+
 on master, puppet("module install pmtacceptance-stdlib --version 0.0.2 --target-dir /usr/share/puppet/modules")
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --target-dir /etc/puppet/modules --ignore-dependencies")
 on master, puppet("module install pmtacceptance-postgresql --version 0.0.1 --target-dir /etc/puppet/modules --ignore-dependencies")
@@ -40,9 +46,4 @@ on master, puppet("module upgrade pmtacceptance-postgresql --version 0.0.2") do
       │ └── pmtacceptance-stdlib (\e[0;36mv0.0.2 -> v1.0.0\e[0m) [/usr/share/puppet/modules]
       └── pmtacceptance-stdlib (\e[0;36mv0.0.2 -> v1.0.0\e[0m) [/usr/share/puppet/modules]
   OUTPUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

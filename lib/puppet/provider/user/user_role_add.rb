@@ -173,7 +173,8 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def password_max_age
-    shadow_entry ? shadow_entry[4] : :absent
+    return :absent unless shadow_entry
+    shadow_entry[4] || -1
   end
 
   # Read in /etc/shadow, find the line for our used and rewrite it with the

@@ -16,6 +16,13 @@ module Puppet::Parser::Functions
   def self.reset
     @functions = Hash.new { |h,k| h[k] = {} }.extend(MonitorMixin)
     @modules = Hash.new.extend(MonitorMixin)
+
+    # Runs a newfunction to create a function for each of the log levels
+    Puppet::Util::Log.levels.each do |level|
+      newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
+        send(level, vals.join(" "))
+      end
+    end
   end
 
   def self.autoloader
@@ -110,11 +117,4 @@ module Puppet::Parser::Functions
   end
 
   reset  # initialize the class instance variables
-
-  # Runs a newfunction to create a function for each of the log levels
-  Puppet::Util::Log.levels.each do |level|
-    newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
-      send(level, vals.join(" "))
-    end
-  end
 end

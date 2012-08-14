@@ -1,4 +1,4 @@
-begin test_name "puppet module uninstall (with modulepath)"
+test_name "puppet module uninstall (with modulepath)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -28,6 +28,9 @@ file {
     }';
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules2"
+end
 on master, '[ -d /etc/puppet/modules2/crakorn ]'
 on master, '[ -d /etc/puppet/modules2/absolute ]'
 
@@ -48,7 +51,3 @@ on master, 'cd /etc/puppet/modules2 && puppet module uninstall jimmy-absolute --
   OUTPUT
 end
 on master, '[ ! -d /etc/puppet/modules2/absolute ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules2']: ensure => directory, recurse => true, purge => true, force => true }"
-end
