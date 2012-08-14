@@ -13,7 +13,6 @@ require 'puppet/util/pidlock'
 # For more information, please see docs on the website.
 #  http://links.puppetlabs.com/agent_lockfiles
 module Puppet::Agent::Locker
-
   # Yield if we get a lock, else do nothing.  Return
   # true/false depending on whether we get the lock.
   def lock

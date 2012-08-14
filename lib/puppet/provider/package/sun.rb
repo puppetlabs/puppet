@@ -80,29 +80,20 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     info2hash
   end
 
-  def prepare_cmd(opt)
-    cmd = []
-    cmd << '-a' << @resource[:adminfile] if @resource[:adminfile] && opt[:adminfile]
-    cmd << '-r' << @resource[:responsefile] if @resource[:responsefile] && opt[:responsefile]
-    cmd << '-d' << @resource[:source] if opt[:source]
-    cmd << opt[:cmd_options] if opt[:cmd_options]
-    cmd << '-n' << @resource[:name]
-  end
-
   # only looking for -G now
   def install
     raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
     options = {
-      :adminfile    => true,
-      :responsefile => true,
-      :source       => true,
+      :adminfile    => @resource[:adminfile],
+      :responsefile => @resource[:responsefile],
+      :source       => @resource[:source],
       :cmd_options  => @resource[:install_options]
     }
     pkgadd prepare_cmd(options)
   end
 
   def uninstall
-    pkgrm prepare_cmd(:adminfile => true)
+    pkgrm prepare_cmd(:adminfile => @resource[:adminfile])
   end
 
   # Remove the old package, and install the new one.  This will probably
@@ -110,5 +101,21 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   def update
     self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
     self.install
+  end
+
+  def prepare_cmd(opt)
+    [if_have_value('-a', opt[:adminfile]),
+     if_have_value('-r', opt[:responsefile]),
+     if_have_value('-d', opt[:source]),
+     opt[:cmd_options] || [],
+     ['-n', @resource[:name]]].flatten
+  end
+
+  def if_have_value(prefix, value)
+    if value
+      [prefix, value]
+    else
+      []
+    end
   end
 end

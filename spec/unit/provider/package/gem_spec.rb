@@ -99,6 +99,18 @@ describe provider_class do
           })
       provider.latest.should == "3.0"
     end
+
+    it "should list from the specified source repository" do
+      resource[:source] = "http://foo.bar.baz/gems"
+      provider.class.expects(:gemlist).
+        with({:justme => 'myresource', :source => "http://foo.bar.baz/gems"}).
+        returns({
+          :name     => 'myresource',
+          :ensure   => ["3.0"],
+          :provider => :gem,
+          })
+      provider.latest.should == "3.0"
+    end
   end
 
   describe "#instances" do

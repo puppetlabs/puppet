@@ -20,7 +20,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     else
       gem_list_command << "--remote"
     end
-
+    if options[:source]
+      gem_list_command << "--source" << options[:source]
+    end
     if name = options[:justme]
       gem_list_command << name + "$"
     end
@@ -104,7 +106,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def latest
     # This always gets the latest version available.
-    hash = self.class.gemlist(:justme => resource[:name])
+    gemlist_options = {:justme => resource[:name]}
+    gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
+    hash = self.class.gemlist(gemlist_options)
 
     hash[:ensure][0]
   end
