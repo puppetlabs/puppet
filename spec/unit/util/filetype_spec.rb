@@ -187,4 +187,19 @@ describe Puppet::Util::FileType do
 
     it_should_behave_like "crontab provider"
   end
+
+  describe "the aixtab filetype" do
+    let(:type)           { Puppet::Util::FileType.filetype(:aixtab) }
+    let(:name)           { type.name }
+    let(:crontab_output) { 'aixtab_output' }
+
+    let(:absent_crontab) do
+      '0481-103 Cannot open a file in the /var/spool/cron/crontabs directory.'
+    end
+    let(:unauthorized_crontab) do
+      '0481-109 You are not authorized to use the cron command.'
+    end
+
+    it_should_behave_like "crontab provider"
+  end
 end
