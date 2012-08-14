@@ -10,7 +10,7 @@ Name:           hiera-puppet
 Version:        %{rpmversion}
 Release:        <%= @release -%>%{?dist}
 Summary:        A data backend for Hiera that can query the internal Puppet scope for data.
-
+Vendor:         %{?_host_vendor}
 Group:          System Environment/Base
 License:        Apache 2.0
 URL:            http://projects.puppetlabs.com/projects/%{name}/
@@ -38,6 +38,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{ruby_sitelibdir}
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 cp -pr lib/hiera $RPM_BUILD_ROOT/%{ruby_sitelibdir}
+cp -p lib/hiera_puppet.rb $RPM_BUILD_ROOT/%{ruby_sitelibdir}
 cp -pr lib/puppet $RPM_BUILD_ROOT/%{ruby_sitelibdir}
 install -p -m0755 bin/extlookup2hiera $RPM_BUILD_ROOT/%{_bindir}
 
@@ -49,6 +50,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/extlookup2hiera
 %{ruby_sitelibdir}/hiera/scope.rb
+%{ruby_sitelibdir}/hiera_puppet.rb
 %{ruby_sitelibdir}/hiera/backend/puppet_backend.rb
 %{ruby_sitelibdir}/puppet/parser/functions/hiera.rb
 %{ruby_sitelibdir}/puppet/parser/functions/hiera_array.rb
