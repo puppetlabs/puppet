@@ -23,6 +23,7 @@ install/hiera-puppet::
 	mkdir -p  $(BIN_DIR)
 	mkdir -p  $(DOC_DIR)
 	cp -pr    lib/hiera $(RUBYLIB)
+	cp -p     lib/hiera_puppet.rb $(RUBYLIB)
 	cp -pr    lib/puppet $(RUBYLIB)
 	cp -p     bin/extlookup2hiera $(BIN_DIR)
 	cp -p     CHANGELOG COPYING README.md $(DOC_DIR)
