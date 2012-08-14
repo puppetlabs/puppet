@@ -9,21 +9,9 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     between Puppet and Facter.  It's only `somewhat` abstract because it always
     returns the local host's facts, regardless of what you attempt to find."
 
-
-  # Clear out all of the loaded facts. Reload facter but not puppet facts.
-  # NOTE: This is clumsy and shouldn't be required for later (1.5.x) versions
-  # of Facter.
   def self.reload_facter
     Facter.clear
-
-    # Reload everything.
-    if Facter.respond_to? :loadfacts
-      Facter.loadfacts
-    elsif Facter.respond_to? :load
-      Facter.load
-    else
-      Puppet.warning "You should upgrade your version of Facter to at least 1.3.8"
-    end
+    Facter.loadfacts
   end
 
   def self.load_fact_plugins
