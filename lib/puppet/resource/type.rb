@@ -139,7 +139,6 @@ class Puppet::Resource::Type
     evaluate_ruby_code(scope) unless ruby_code.empty?
   end
 
-  # MLEN:TODO check for tests
   def ruby_code
     @ruby_code ||= []
   end
@@ -192,7 +191,6 @@ class Puppet::Resource::Type
       self.doc += other.doc
     end
 
-    # MLEN:TODO check for tests
     other.ruby_code.each do |c|
       self.ruby_code << c
     end
@@ -377,7 +375,6 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    # MLEN:TODO check for tests
     ruby_code.each do |c|
       silence_backtrace { c.evaluate(scope) }
     end

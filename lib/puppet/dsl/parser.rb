@@ -23,9 +23,9 @@ module Puppet
 
         options = {}
         options[:filename] = io.path if io.respond_to? :path
-        source         = io.read
-        code           = proc { instance_eval source, options[:filename], 0 }
-        main.ruby_code = Context.new code, options
+        source             = io.read
+        code               = proc { instance_eval source, options[:filename] || "dsl_main", 0 }
+        main.ruby_code     = Context.new code, options
       end
 
       ##

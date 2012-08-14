@@ -334,7 +334,6 @@ class Puppet::Resource
       if external_value.nil?
         next if default.nil?
 
-        # MLEN:TODO check/update tests
         value = if default.respond_to? :safeevaluate
                   default.safeevaluate(scope)
                 else

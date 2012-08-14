@@ -85,7 +85,6 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
-    # MLEN:TODO add tests
     loaded_asts = []
     loaded_ruby = []
     files.each do |file|
@@ -97,7 +96,12 @@ class Puppet::Parser::TypeLoader
                        known_resource_types.hostclasses.values
 
         Puppet::Resource::Type.new(:hostclass, '').tap do |type|
-          File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+          begin
+            File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+          rescue => e
+            raise Puppet::ParseError, e.message
+          end
+
           type.ruby_code.each { |c| silence_backtrace { c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) } }
         end
 

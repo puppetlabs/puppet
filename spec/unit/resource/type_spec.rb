@@ -16,9 +16,16 @@ describe Puppet::Resource::Type do
     end
   end
 
-  it "returns array when calling ruby_code"
+  it "returns array when calling ruby_code" do
+    Puppet::Resource::Type.new(:hostclass, "foo").ruby_code.should be_an Array
+  end
 
-  it "should be able to append to ruby_code"
+  it "assignment operator should append to ruby_code" do
+    type = Puppet::Resource::Type.new :hostclass, 'foo'
+    type.ruby_code = "code"
+    type.ruby_code = "more code"
+    type.ruby_code.should == ["code", "more code"]
+  end
 
   it "has ruby_code attribute" do
     Puppet::Resource::Type.new(:hostclass, "foo").tap do |type|
