@@ -1,3 +1,10 @@
+1.0.0rc3
+===
+fd3fe17 Add hiera_puppet.rb to debian, redhat packages, fix gem version dependency
+0fbdd62 (#15291) Add Vendor tag to Hiera-Puppet spec file
+5e516ee Update Debian packaging rake task to correctly create the orig.tar.gz
+84b4d11 (Maint) Rename PuppetlabsSpec::Puppet{Seams,Internals}
+
 1.0.0rc2
 ===
 2fa4251 Update hiera-puppet package tasks
