@@ -672,9 +672,8 @@ EOT
       :desc       => "The default TTL for new certificates; valid values
       must be an integer, optionally followed by one of the units
       'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds. If this setting
-      is set, ca_days is ignored. Examples are '3600' (one hour)
-      and '1825d', which is the same as '5y' (5 years) ",
+      's' (seconds). The unit defaults to seconds.  Examples are '3600'
+      (one hour) and '1825d', which is the same as '5y' (5 years) ",
     },
     :ca_md => {
       :default    => "md5",
