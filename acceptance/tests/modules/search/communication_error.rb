@@ -1,7 +1,7 @@
-begin test_name 'puppet module search should print a reasonable message on communication errors'
+test_name 'puppet module search should print a reasonable message on communication errors'
 
-step 'Stub forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '127.0.0.2' }"
+step 'Setup'
+stub_hosts_on(master, 'forge.puppetlabs.com' => '127.0.0.2')
 
 step "Search against a non-existent Forge"
 on master, puppet("module search yup"), :acceptable_exit_codes => [1] do
@@ -14,8 +14,4 @@ Error: Could not connect to https://forge.puppetlabs.com
     The error we caught said 'Connection refused - connect(2)'
     Check your network connection and try again
 STDERR
-end
-
-ensure step 'Unstub forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end
