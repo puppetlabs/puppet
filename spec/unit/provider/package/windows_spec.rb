@@ -35,9 +35,11 @@ describe Puppet::Type.type(:package).provider(:windows) do
     it 'should return an array of provider instances' do
       pkg1 = stub('pkg1')
       pkg2 = stub('pkg2')
-      prov1 = stub(:name => 'pkg1', :package => pkg1)
-      prov2 = stub(:name => 'pkg2', :package => pkg2)
-      Puppet::Provider::Package::Windows::Package.expects(:map).multiple_yields(prov1, prov2).returns([prov1, prov2])
+
+      prov1 = stub('prov1', :name => 'pkg1', :package => pkg1)
+      prov2 = stub('prov2', :name => 'pkg2', :package => pkg2)
+
+      Puppet::Provider::Package::Windows::Package.expects(:map).multiple_yields([prov1], [prov2]).returns([prov1, prov2])
 
       providers = provider.class.instances
       providers.count.should == 2
