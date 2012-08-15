@@ -46,6 +46,7 @@ module Puppet::Parser::Functions
 
     Puppet.warning "Overwriting previous definition for function #{name}" if functions.include?(name)
 
+    arity = options[:arity] || -1
     ftype = options[:type] || :statement
 
     unless ftype == :statement or ftype == :rvalue
@@ -55,9 +56,7 @@ module Puppet::Parser::Functions
     fname = "function_#{name}"
     environment_module.send(:define_method, fname, &block)
 
-    # Someday we'll support specifying an arity, but for now, nope
-    #functions[name] = {:arity => arity, :type => ftype}
-    functions[name] = {:type => ftype, :name => fname}
+    functions[name] = {:arity => arity, :type => ftype, :name => fname}
     functions[name][:doc] = options[:doc] if options[:doc]
   end
 
@@ -114,6 +113,11 @@ module Puppet::Parser::Functions
   # Determine if a given function returns a value or not.
   def self.rvalue?(name)
     (functions[name.intern] || {})[:type] == :rvalue
+  end
+
+  # Return the arity of a function
+  def self.arity(name)
+    (functions[symbolize(name)] || {})[:arity] || -1
   end
 
   reset  # initialize the class instance variables
