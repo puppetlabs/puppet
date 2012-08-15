@@ -32,12 +32,16 @@ class Puppet::Provider::Package::Windows
       %w[HKEY_LOCAL_MACHINE HKEY_CURRENT_USER].each do |hive|
         [KEY64, KEY32].each do |mode|
           mode |= KEY_READ
-          open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
-            uninstall.each_key do |name, wtime|
-              open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
-                yield key, values(key)
+          begin
+            open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
+              uninstall.each_key do |name, wtime|
+                open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
+                  yield key, values(key)
+                end
               end
             end
+          rescue Puppet::Util::Windows::Error => e
+            raise e unless e.code == Windows::Error::ERROR_FILE_NOT_FOUND
           end
         end
       end
