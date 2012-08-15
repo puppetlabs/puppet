@@ -89,16 +89,6 @@ module Puppet::Network::HTTP
       http_conn.use_ssl?
     end
 
-    # TODO: this shouldn't be here; it leaks our underlying Net::HTTP object out to the
-    #  world, and it circumvents our local request methods.  The only reason it's here for
-    #  the moment is because the current HTTP report processor relies on it; we should refactor that
-    #  code so that it doesn't need this 'start' method (or so that this start method doesn't yield
-    #  the Net::HTTP object directly)
-    def start(&block)
-      http_conn.start(&block)
-    end
-
-
     private
     
     def http_conn
