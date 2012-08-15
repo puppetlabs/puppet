@@ -80,46 +80,29 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
   end
 
-  [:get, :post, :head, :delete, :put].each do |method|
-    define_method "http_#{method}" do |request, *args|
-      http_request(method, request, *args)
-    end
+  def http_get(request, *args)
+    http_request(:get, request, *args)
+  end
+
+  def http_post(request, *args)
+    http_request(:post, request, *args)
+  end
+
+  def http_head(request, *args)
+    http_request(:head, request, *args)
+  end
+
+  def http_delete(request, *args)
+    http_request(:delete, request, *args)
+  end
+
+  def http_put(request, *args)
+    http_request(:put, request, *args)
   end
 
   def http_request(method, request, *args)
-    http_connection = network(request)
-    peer_certs = []
-    verify_errors = []
-
-    http_connection.verify_callback = proc do |preverify_ok, ssl_context|
-      # We use the callback to collect the certificates for use in constructing
-      # the error message if the verification failed.  This is necessary since we
-      # don't have direct access to the cert that we expected the connection to
-      # use otherwise.
-      peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
-      # And also keep the detailed verification error if such an error occurs
-      if ssl_context.error_string and not preverify_ok
-        verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
-      end
-      preverify_ok
-    end
-
-    http_connection.send(method, *args)
-  rescue OpenSSL::SSL::SSLError => error
-    if error.message.include? "certificate verify failed"
-      msg = error.message
-      msg << ": [" + verify_errors.join('; ') + "]"
-      raise Puppet::Error, msg
-    elsif error.message =~ /hostname (was )?not match/
-      raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
-
-      valid_certnames = [cert.name, *cert.subject_alt_names].uniq
-      msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
-
-      raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
-    else
-      raise
-    end
+    conn = network(request)
+    conn.send(method, *args)
   end
 
   def find(request)
