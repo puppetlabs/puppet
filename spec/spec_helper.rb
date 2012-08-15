@@ -1,47 +1,6 @@
 # NOTE: a lot of the stuff in this file is duplicated in the "puppet_spec_helper" in the project
 #  puppetlabs_spec_helper.  We should probably eat our own dog food and get rid of most of this from here,
 #  and have the puppet core itself use puppetlabs_spec_helper
-begin
-  require 'simplecov'
-
-  SimpleCov.start do
-    add_filter "/spec/"
-    add_group "DSL",             "lib/puppet/dsl"
-    add_group "Agent",           "lib/puppet/agent"
-    add_group "Application",     "lib/puppet/application"
-    add_group "Configurer",      "lib/puppet/configurer"
-    add_group "External",        "lib/puppet/external"
-    add_group "Face",            "lib/puppet/face"
-    add_group "Feature",         "lib/puppet/feature"
-    add_group "File Bucket",     "lib/puppet/file_bucket"
-    add_group "File Collection", "lib/puppet/file_collection"
-    add_group "File Serving",    "lib/puppet/file_serving"
-    add_group "Forge",           "lib/puppet/forge"
-    add_group "Indirector",      "lib/puppet/indirector"
-    add_group "Interface",       "lib/puppet/interface"
-    add_group "MetaType",        "lib/puppet/metatype"
-    add_group "Module Tool",     "lib/puppet/module_tool"
-    add_group "Network",         "lib/puppet/network"
-    add_group "Node",            "lib/puppet/node"
-    add_group "Parameter",       "lib/puppet/parameter"
-    add_group "Parser",          "lib/puppet/parser"
-    add_group "Property",        "lib/puppet/property"
-    add_group "Provider",        "lib/puppet/provider"
-    add_group "Rails",           "lib/puppet/rails"
-    add_group "Reference",       "lib/puppet/reference"
-    add_group "Reports",         "lib/puppet/reports"
-    add_group "Resource",        "lib/puppet/resource"
-    add_group "Settings",        "lib/puppet/settings"
-    add_group "SSL",             "lib/puppet/ssl"
-    add_group "Test",            "lib/puppet/test"
-    add_group "Transaction",     "lib/puppet/transaction"
-    add_group "Type",            "lib/puppet/type"
-    add_group "Util",            "lib/puppet/util"
-  end
-rescue LoadError
-  puts "No coverage for you..."
-end
-
 
 dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift File.join(dir, 'lib')

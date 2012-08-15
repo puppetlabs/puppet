@@ -1,6 +1,4 @@
+.rspec
 results
 tags
 .*.sw[op]
-doc
-build
-coverage
