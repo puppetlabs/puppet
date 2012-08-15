@@ -171,7 +171,7 @@ describe Puppet::Util::FileType do
     end
   end
 
-  describe "the suntab filetype" do
+  describe "the suntab filetype", :unless => Puppet.features.microsoft_windows? do
     let(:type)           { Puppet::Util::FileType.filetype(:suntab) }
     let(:name)           { type.name }
     let(:crontab_output) { 'suntab_output' }
@@ -188,7 +188,7 @@ describe Puppet::Util::FileType do
     it_should_behave_like "crontab provider"
   end
 
-  describe "the aixtab filetype" do
+  describe "the aixtab filetype", :unless => Puppet.features.microsoft_windows? do
     let(:type)           { Puppet::Util::FileType.filetype(:aixtab) }
     let(:name)           { type.name }
     let(:crontab_output) { 'aixtab_output' }
