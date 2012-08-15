@@ -3,7 +3,7 @@ require 'semver'
 
 # See if Facter is available, and check revision
 Puppet.features.add(:facter) do
-  required_facter = "2.0.0"
+  required_facter = "2.0.0-rc"
 
   begin
     require 'facter'
