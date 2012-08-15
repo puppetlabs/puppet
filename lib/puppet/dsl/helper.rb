@@ -28,24 +28,6 @@ module Puppet
       end
 
       ##
-      # Checks whether resource type exists
-      ##
-      def is_resource_type?(name)
-        type = canonize_type(name)
-        !!(["Node", "Class"].include? type or
-           ::Puppet::Type.type type or
-           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_definition '', type or
-           ::Puppet::DSL::Parser.current_scope.known_resource_types.find_hostclass  '', type)
-      end
-
-      ##
-      # Checks whether Puppet function exists
-      ##
-      def is_function?(name)
-        !!::Puppet::Parser::Functions.function(name)
-      end
-
-      ##
       # Returns a resource for the passed reference
       ##
       def get_resource(reference)
@@ -60,7 +42,6 @@ module Puppet
           nil
         end
       end
-
 
       ##
       # Removes unnecessary noise from backtraces and reraises catched exception

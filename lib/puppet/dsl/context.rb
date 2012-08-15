@@ -1,8 +1,5 @@
+require 'puppet/dsl/proxy'
 require 'puppet/dsl/blank_slate'
-require 'puppet/dsl/resource_decorator'
-require 'puppet/dsl/scope_decorator'
-require 'puppet/dsl/type_reference'
-require 'puppet/dsl/helper'
 
 module Puppet
   module DSL
@@ -21,7 +18,6 @@ module Puppet
     # compilation.
     ##
     class Context < BlankSlate
-      include ::Puppet::DSL::Helper
 
       ##
       # Provides syntactic sugar for resource references.
@@ -32,8 +28,9 @@ module Puppet
       # For further information look at lib/puppet/dsl/type_reference.rb
       ##
       def self.const_missing(name)
-        ref = ::Puppet::DSL::TypeReference.new name
-        const_set name, ref unless is_resource_type? name
+        proxy = ::Puppet::DSL::Proxy.new "dsl_main"
+        ref = proxy.type_reference name
+        const_set name, ref unless proxy.is_resource_type? name
         ref
       end
 
@@ -43,7 +40,8 @@ module Puppet
       # The algorithm is identical to one used in +respond_to?+ method.
       ##
       def self.const_defined?(name)
-        is_resource_type? name
+        proxy = ::Puppet::DSL::Proxy.new "dsl_main"
+        proxy.is_resource_type? name
       end
 
       ##
@@ -51,7 +49,7 @@ module Puppet
       # for Ruby 1.8 users.
       ##
       def type(name)
-        ::Puppet::DSL::TypeReference.new name
+        @proxy.type_reference name
       end
 
       ##
@@ -61,9 +59,10 @@ module Puppet
       # resource.
       ##
       def initialize(code, options = {})
-        @nesting  = options.fetch(:nesting)  { 0            }
-        @filename = options.fetch(:filename) { "dsl_main"   }
+        @nesting  = options.fetch(:nesting)  { 0          }
+        @filename = options.fetch(:filename) { "dsl_main" }
         @object   = ::Object.new
+        @proxy    = ::Puppet::DSL::Proxy.new @filename
         @code     = code
       end
 
@@ -115,26 +114,7 @@ module Puppet
       #
       ##
       def node(name, options = {}, &block)
-        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
-        raise ::ArgumentError, "no block supplied"           if block.nil?
-
-        options.each do |k, _|
-          unless :inherits == k
-            raise ::ArgumentError, "unrecognized option #{k} in node #{name}"
-          end
-        end
-
-        params = {}
-        if options[:inherits]
-          options[:inherits] = options[:inherits].to_s unless options[:inherits].is_a? ::Regexp
-          params.merge! :parent => options[:inherits]
-        end
-
-        name = name.to_s unless name.is_a? ::Regexp
-        node = ::Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
-
-        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_node node
+        @proxy.create_node(name, options, block, @nesting)
       end
 
       ##
@@ -158,23 +138,7 @@ module Puppet
       #
       ##
       def hostclass(name, options = {}, &block)
-        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
-        raise ::ArgumentError, "no block supplied"           if block.nil?
-
-        options.each do |k, _|
-          unless [:arguments, :inherits].include? k
-            raise ::ArgumentError, "unrecognized option #{k} in hostclass #{name}"
-          end
-        end
-
-        params = {}
-        params.merge! :arguments => options[:arguments] if options[:arguments]
-        params.merge! :parent    => options[:inherits].to_s if options[:inherits]
-
-        hostclass = ::Puppet::Resource::Type.new :hostclass, name.to_s, params
-        hostclass.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
-
-        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_hostclass hostclass
+        @proxy.create_hostclass(name, options, block, @nesting)
       end
 
       ##
@@ -196,21 +160,7 @@ module Puppet
       #
       ##
       def define(name, options = {}, &block)
-        raise ::NoMethodError, "called from invalid nesting" if @nesting > 0
-        raise ::ArgumentError, "no block supplied"           if block.nil?
-
-        options.each do |k, _|
-          unless :arguments == k
-            raise ::ArgumentError, "unrecognized option #{k} in definition #{name}"
-          end
-        end
-
-        params = {}
-        params.merge! :arguments => options[:arguments] if options[:arguments]
-        definition = ::Puppet::Resource::Type.new :definition, name.to_s, params
-        definition.ruby_code = ::Puppet::DSL::Context.new block, :filename => @filename, :nesting => @nesting + 1
-
-        ::Puppet::DSL::Parser.current_scope.known_resource_types.add_definition definition
+        @proxy.create_definition(name, options, block, @nesting)
       end
 
       ##
@@ -227,14 +177,14 @@ module Puppet
       # - is it a defined type?
       ##
       def valid_type?(name)
-        is_resource_type? name
+        @proxy.is_resource_type? name
       end
 
       ##
       # Checks whether Puppet function exists.
       ##
       def valid_function?(name)
-        is_function? name
+        @proxy.is_function? name
       end
 
       ##
@@ -262,14 +212,14 @@ module Puppet
       #
       ##
       def method_missing(name, *args, &block)
-        if valid_type? name
+        if @proxy.is_resource_type? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a, &b|
             create_resource name, *a, &b
           end
 
           create_resource name, *args, &block
-        elsif valid_function? name
+        elsif @proxy.is_function? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a|
             call_function name, *a
@@ -292,7 +242,7 @@ module Puppet
       # Returns current scope for access for variables
       ##
       def params
-        ::Puppet::DSL::ScopeDecorator.new(::Puppet::DSL::Parser.current_scope)
+        @proxy.params
       end
 
       ##
@@ -314,44 +264,8 @@ module Puppet
       #
       ##
       def create_resource(type, *args, &block)
-        # when performing type import the scope is nil
-        raise ::NoMethodError, "resources can't be created in top level scope when importing a manifest" if ::Puppet::DSL::Parser.current_scope.nil?
-
-        raise ::NoMethodError, "resource type #{type} not found" unless valid_type? type
         options = args.last.is_a?(::Hash) ? args.pop : {}
-
-        ::Puppet::DSL::ResourceDecorator.new(options, &block) if block
-
-        scope = ::Puppet::DSL::Parser.current_scope
-        ::Kernel::Array(args).map do |name|
-          ##
-          # Implementation based on
-          # lib/puppet/parser/functions/create_resources.rb
-          ##
-          name = name.to_s
-
-          case type
-          when :class
-            klass = ::Puppet::DSL::Parser.current_scope.known_resource_types.find_hostclass '', name
-            klass.ensure_in_catalog scope, options
-          else
-            resource = ::Puppet::Parser::Resource.new type, name,
-              :scope => scope,
-              :source => scope.source
-            options.each do |key, val|
-              resource[key] = get_resource(val) || val.to_s
-            end
-
-            resource.virtual = true if virtualizing? or options[:virtual] == true
-            resource.exported = true if exporting? or options[:export] == true
-
-            definition = scope.known_resource_types.definition name
-            definition.instantiate_resource scope, resource if definition
-
-            scope.compiler.add_resource scope, resource
-          end
-          resource
-        end
+        @proxy.create_resource(type, args, options, block)
       end
 
       ##
@@ -367,25 +281,21 @@ module Puppet
       #
       ##
       def call_function(name, *args)
-        # when performing type import the scope is nil
-        raise ::NoMethodError, "resources can't be created in top level scope when importing a manifest" if ::Puppet::DSL::Parser.current_scope.nil?
-
-        raise ::NoMethodError, "calling undefined function #{name}(#{args.join ', '})" unless valid_function? name
-        ::Puppet::DSL::Parser.current_scope.send name, args
+        @proxy.call_function(name, args)
       end
 
       ##
       # Returns the current value of exporting flag
       ##
       def exporting?
-        !!@exporting
+        @proxy.exporting?
       end
 
       ##
       # Returns the current value of virtualizing flag
       ##
       def virtualizing?
-        !!@virtualizing
+        @proxy.virtualizing?
       end
 
       ##
@@ -413,14 +323,14 @@ module Puppet
       def export(*args, &block)
         if block
           begin
-            @exporting = true
+            @proxy.exporting = true
             instance_eval &block
           ensure
-            @exporting = false
+            @proxy.exporting = false
           end
         else
           args.flatten.each do |r|
-            get_resource(r).exported = true
+            @proxy.get_resource(r).exported = true
           end
         end
       end
@@ -450,14 +360,14 @@ module Puppet
       def virtual(*args, &block)
         if block
           begin
-            @virtualizing = true
+            @proxy.virtualizing = true
             instance_eval &block
           ensure
-            @virtualizing = false
+            @proxy.virtualizing = false
           end
         else
           args.flatten.each do |r|
-            get_resource(r).virtual = true
+            @proxy.get_resource(r).virtual = true
           end
         end
       end
