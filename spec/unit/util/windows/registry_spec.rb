@@ -59,10 +59,11 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
     end
 
     it "should raise for a path that doesn't exist" do
+      hkey.expects(:keyname).returns('HKEY_LOCAL_MACHINE')
       hkey.expects(:open).raises(Win32::Registry::Error.new(2)) # file not found
       expect do
         subject.open(hkey, 'doesnotexist') {|hkey| }
-      end.to raise_error(Puppet::Error, /Failed to open registry key/)
+      end.to raise_error(Puppet::Error, /Failed to open registry key 'HKEY_LOCAL_MACHINE\\doesnotexist'/)
     end
   end
 

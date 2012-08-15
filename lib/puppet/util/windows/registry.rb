@@ -23,7 +23,7 @@ module Puppet::Util::Windows
           return yield subkey
         end
       rescue Win32::Registry::Error => error
-        raise Puppet::Util::Windows::Error.new("Failed to open registry key", error.code)
+        raise Puppet::Util::Windows::Error.new("Failed to open registry key '#{hkey.keyname}\\#{path}'", error.code)
       end
     end
 
