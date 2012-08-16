@@ -52,13 +52,6 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "when configuring the :crl" do
-    it "should warn if :cacrl is set to false" do
-      Puppet.expects(:warning)
-      Puppet.settings[:cacrl] = 'false'
-    end
-  end
-
   describe "when setting the :catalog_format" do
     it "should log a deprecation notice" do
       Puppet.expects(:deprecation_warning)
@@ -226,21 +219,10 @@ describe "Puppet defaults" do
       Puppet.settings[:report_port].should == "1234"
     end
 
-    it "should set report_server when reportserver is set" do
-      Puppet.settings[:reportserver] = "reportserver"
-      Puppet.settings[:report_server].should == "reportserver"
-    end
-
     it "should use report_port when set" do
       Puppet.settings[:masterport] = "1234"
       Puppet.settings[:report_port] = "5678"
       Puppet.settings[:report_port].should == "5678"
-    end
-
-    it "should prefer report_server over reportserver" do
-      Puppet.settings[:reportserver] = "reportserver"
-      Puppet.settings[:report_server] = "report_server"
-      Puppet.settings[:report_server].should == "report_server"
     end
   end
 

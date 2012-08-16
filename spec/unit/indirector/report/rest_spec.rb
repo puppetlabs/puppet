@@ -8,12 +8,6 @@ describe Puppet::Transaction::Report::Rest do
     Puppet::Transaction::Report::Rest.superclass.should equal(Puppet::Indirector::REST)
   end
 
-  it "should use the :report_server setting in preference to :reportserver" do
-    Puppet.settings[:reportserver] = "reportserver"
-    Puppet.settings[:report_server] = "report_server"
-    Puppet::Transaction::Report::Rest.server.should == "report_server"
-  end
-
   it "should use the :report_server setting in preference to :server" do
     Puppet.settings[:server] = "server"
     Puppet.settings[:report_server] = "report_server"

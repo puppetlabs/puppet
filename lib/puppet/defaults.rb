@@ -613,11 +613,6 @@ EOT
       :mode => 0664,
 
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
-      :hook => proc do |value|
-        if value == 'false'
-          Puppet.deprecation_warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
-        end
-      end
     },
     :caprivatedir => {
       :default => "$cadir/private",
@@ -672,19 +667,13 @@ EOT
       :desc       => "Whether to allow a new certificate
       request to overwrite an existing certificate.",
     },
-    :ca_days => {
-      :default    => "",
-      :desc       => "How long a certificate should be valid, in days.
-      This setting is deprecated; use `ca_ttl` instead",
-    },
     :ca_ttl => {
       :default    => "5y",
       :desc       => "The default TTL for new certificates; valid values
       must be an integer, optionally followed by one of the units
       'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds. If this setting
-      is set, ca_days is ignored. Examples are '3600' (one hour)
-      and '1825d', which is the same as '5y' (5 years) ",
+      's' (seconds). The unit defaults to seconds.  Examples are '3600'
+      (one hour) and '1825d', which is the same as '5y' (5 years) ",
     },
     :ca_md => {
       :default    => "md5",
@@ -1097,11 +1086,6 @@ EOT
       fact be stale even if the timestamps are up to date - if the facts
       change or if the server changes.",
     },
-    :downcasefacts => {
-      :default    => false,
-      :type       => :boolean,
-      :desc       => "Whether facts should be made all lowercase when sent to the server.",
-    },
     :dynamicfacts => {
       :default    => "memorysize,memoryfree,swapsize,swapfree",
       :desc       => "Facts that are dynamic; these facts will be ignored when deciding whether
@@ -1130,14 +1114,6 @@ EOT
       :desc     => "How long the client should wait for the configuration to be retrieved
       before considering it a failure.  This can help reduce flapping if too
       many clients contact the server at one time.",
-    },
-    :reportserver => {
-      :default => "$server",
-      :call_hook => :on_write_only,
-      :desc => "(Deprecated for 'report_server') The server to which to send transaction reports.",
-      :hook => proc do |value|
-        Puppet.settings[:report_server] = value if value
-      end
     },
     :report_server => {
       :default  => "$server",
