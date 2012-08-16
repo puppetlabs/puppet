@@ -43,6 +43,26 @@ describe Puppet::Provider::Package::Windows::Package do
 
       subject.with_key { |key, values| }
     end
+
+    it 'should ignore file not found exceptions', :if => Puppet.features.microsoft_windows? do
+      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_FILE_NOT_FOUND)
+
+      # make sure we don't stop after the first exception
+      subject.expects(:open).times(4).raises(ex)
+
+      keys = []
+      subject.with_key { |key, values| keys << key }
+      keys.should be_empty
+    end
+
+    it 'should raise other types of exceptions', :if => Puppet.features.microsoft_windows? do
+      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_ACCESS_DENIED)
+      subject.expects(:open).raises(ex)
+
+      expect {
+        subject.with_key{ |key, values| }
+      }.to raise_error(Puppet::Error, /Access is denied/)
+    end
   end
 
   context '::installer_class' do

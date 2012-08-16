@@ -2,6 +2,8 @@ test_name "puppet module install (nonexistent directory)"
 
 step 'Setup'
 
+stub_forge_on(master)
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -10,6 +12,10 @@ file {
   ]: ensure => absent, recurse => true, force => true;
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /tmp/modules"
+end
 
 step "Try to install a module to a non-existent directory"
 on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules") do
@@ -22,7 +28,7 @@ on master, puppet("module install pmtacceptance-nginx --target-dir /tmp/modules"
     └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
-on master, '[ ! -d /tmp/modules/nginx ]'
+on master, '[ -d /tmp/modules/nginx ]'
 
 step "Try to install a module to a non-existent implicit directory"
 on master, puppet("module install pmtacceptance-nginx") do
@@ -36,4 +42,4 @@ on master, puppet("module install pmtacceptance-nginx") do
   OUTPUT
 end
 
-on master, '[ ! -d /etc/puppet/modules/nginx ]'
+on master, '[ -d /etc/puppet/modules/nginx ]'
