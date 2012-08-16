@@ -42,12 +42,6 @@ module Puppet # :nodoc:
     include ExternalFileError
   end
 
-  # Error type used by Ruby DSL when resource type doesn't exist
-  class InvalidTypeError < Puppet::Error; end
-
-  # Error type used by Ruby DSL when Puppet function doesn't exist
-  class InvalidFunctionError < Puppet::Error; end
-
   # An error class for when I don't know what happened.  Automatically
   # prints a stack trace when in debug mode.
   class DevError < Puppet::Error
