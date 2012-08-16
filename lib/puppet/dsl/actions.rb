@@ -13,7 +13,7 @@ module Puppet
     # Puppet::DSL::Context forwards all the calls to a proxy instance.
     # This also allows to limit the number of methods existing in that class.
     ##
-    class Proxy
+    class Actions
       include Puppet::DSL::Helper
 
       ##
@@ -153,7 +153,7 @@ module Puppet
       def create_resource(type, args, options, code)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise NoMethodError, "resource type #{type} not found" unless is_resource_type? type
+        raise Puppet::InvalidTypeError, "resource type #{type} not found" unless is_resource_type? type
 
         ResourceDecorator.new(options, &code) if code
 
@@ -198,7 +198,7 @@ module Puppet
       def call_function(name, args)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise NoMethodError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
+        raise Puppet::InvalidFunctionError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
         Parser.current_scope.send name, args
       end
 

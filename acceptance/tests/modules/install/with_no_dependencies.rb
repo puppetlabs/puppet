@@ -1,9 +1,15 @@
-begin test_name "puppet module install (with no dependencies)"
+test_name "puppet module install (with no dependencies)"
 
 step 'Setup'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+
+stub_forge_on(master)
+
+# Ensure module path dirs are purged before and after the tests
 apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 
 step "Install a module with no dependencies"
 on master, puppet("module install pmtacceptance-nginx") do
@@ -16,8 +22,3 @@ on master, puppet("module install pmtacceptance-nginx") do
   OUTPUT
 end
 on master, '[ -d /etc/puppet/modules/nginx ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
-end

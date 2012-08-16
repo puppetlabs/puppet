@@ -1,8 +1,7 @@
 require 'spec_helper'
-require 'puppet_spec/catalog'
+require 'matchers/catalog'
 require 'puppet_spec/compiler'
 
-include PuppetSpec::Catalog
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
@@ -25,7 +24,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to define resource with parameters" do
@@ -41,7 +40,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to use defined resource" do
@@ -61,7 +60,7 @@ describe Puppet::DSL do
         foo "foo"
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to use defined resource in a node" do
@@ -85,7 +84,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to use defined resource in a class" do
@@ -109,7 +108,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to export resources" do
@@ -139,7 +138,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      p.should == r
+      p.should be_equivalent_to r
     end
 
     it "should be able to virtualise resources" do
@@ -169,7 +168,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      p.should == r
+      p.should be_equivalent_to r
     end
 
     context "references" do
@@ -182,7 +181,7 @@ describe Puppet::DSL do
       end
 
       it "should be able to reference other resources" do
-        compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
+        compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to @catalog
           file "redis.conf", :owner => "root"
 
           service "redis", :require => File["redis.conf"]
@@ -190,7 +189,7 @@ describe Puppet::DSL do
       end
 
       it "should be able to reference other resources using a block" do
-        r = compile_ruby_to_catalog(<<-MANIFEST).should == @catalog
+        r = compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to @catalog
           file "redis.conf", :owner => "root"
 
           service "redis" do |s|

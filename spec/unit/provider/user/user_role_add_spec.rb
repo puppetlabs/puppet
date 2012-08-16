@@ -303,4 +303,16 @@ FIXTURE
       @provider.shadow_entry.should == ["fakeval", "*", "20", "10", "30", "7", "2"]
     end
   end
+
+  describe "#password_max_age" do
+    it "should return a maximum age number" do
+      File.stubs(:readlines).returns(["fakeval:NP:12345:0:50::::\n"])
+      @provider.password_max_age.should == "50"
+    end
+
+    it "should return -1 for no maximum" do
+      File.stubs(:readlines).returns(["fakeval:NP:12345::::::\n"])
+      @provider.password_max_age.should == -1
+    end
+  end
 end

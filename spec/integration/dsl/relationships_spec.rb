@@ -1,9 +1,8 @@
 require 'puppet'
 require 'spec_helper'
-require 'puppet_spec/catalog'
+require 'matchers/catalog'
 require 'puppet_spec/compiler'
 
-include PuppetSpec::Catalog
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
@@ -44,7 +43,7 @@ describe Puppet::DSL do
         end
       END
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
   end

@@ -57,14 +57,12 @@ module Puppet
       ##
       # Method creates a collection for virtual resources.
       ##
-      def realise
+      def realize
         scope = Puppet::DSL::Parser.current_scope
         c = Puppet::Parser::Collector.new scope, @type, nil, nil, :virtual
         scope.compiler.add_collection c
         c
       end
-
-      alias ralize realise
 
       ##
       # Method allows to set defaults for a resource type.

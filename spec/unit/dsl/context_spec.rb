@@ -15,12 +15,12 @@ describe Puppet::DSL::Context do
 
   context "when creating resources" do
 
-    it "should raise a NoMethodError when trying to create a resoruce with invalid type" do
+    it "should raise a InvalidTypeError when trying to create a resoruce with invalid type" do
       lambda do
         evaluate_in_context do
           create_resource :foobar, "test"
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::InvalidTypeError
     end
 
     it "should raise NoMethodError when creating resources in a imported file on top level scope" do
@@ -171,12 +171,12 @@ describe Puppet::DSL::Context do
       end.should raise_error NoMethodError
     end
 
-    it "should raise NoMethodError if the function is invalid" do
+    it "should raise InvalidFunctionError if the function is invalid" do
       lambda do
         evaluate_in_context do
           call_function :foobar
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::InvalidFunctionError
     end
 
     it "should call function with passed arguments" do

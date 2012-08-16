@@ -168,6 +168,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
+        restricted = true
       elsif glob_avail and opt_ctx
         restricted = true
         # Optimize loading if the context is given, requires the glob function

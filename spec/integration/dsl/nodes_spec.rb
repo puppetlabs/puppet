@@ -1,9 +1,8 @@
 require 'puppet'
 require 'spec_helper'
-require 'puppet_spec/catalog'
+require 'matchers/catalog'
 require 'puppet_spec/compiler'
 
-include PuppetSpec::Catalog
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
@@ -26,7 +25,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to create named node" do
@@ -42,7 +41,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to create node with regexp" do
@@ -58,7 +57,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to create node inheriting from another node" do
@@ -82,7 +81,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
   end
