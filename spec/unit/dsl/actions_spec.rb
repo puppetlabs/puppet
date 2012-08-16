@@ -283,9 +283,9 @@ describe Puppet::DSL::Actions do
       end
     end
 
-    it "raises NoMethodError when the resource type doesn't exist" do
+    it "raises InvalidTypeError when the resource type doesn't exist" do
       evaluate_in_scope do
-        lambda { subject.create_resource :asdf, "title", {}, nil }.should raise_error NoMethodError
+        lambda { subject.create_resource :asdf, "title", {}, nil }.should raise_error Puppet::InvalidTypeError
       end
     end
 
@@ -364,9 +364,9 @@ describe Puppet::DSL::Actions do
       end
     end
 
-    it "raises NoMethodError when the function does not exist" do
+    it "raises InvalidFunctionError when the function does not exist" do
       evaluate_in_scope do
-        lambda { subject.call_function "asdf", [] }.should raise_error NoMethodError
+        lambda { subject.call_function "asdf", [] }.should raise_error Puppet::InvalidFunctionError
       end
     end
 

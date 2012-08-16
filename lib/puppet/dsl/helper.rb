@@ -50,10 +50,9 @@ module Puppet
         yield
       rescue Exception => e
         backtrace = e.backtrace.reject {|l| l =~ %r|lib/puppet| or l =~ %r|bin/puppet| }
-        exception = Puppet::Error.new e.message
-        exception.set_backtrace backtrace
+        e.set_backtrace backtrace
 
-        raise exception
+        raise e
       end
 
     end

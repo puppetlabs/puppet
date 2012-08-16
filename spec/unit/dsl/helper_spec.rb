@@ -53,7 +53,6 @@ describe Puppet::DSL::Helper do
     end
   end
 
-
   describe "#silence_backtrace" do
     it "executes the block of code" do
       test = nil
@@ -61,17 +60,11 @@ describe Puppet::DSL::Helper do
       test.should be true
     end
 
-    it "raises Puppet::Error when exception within a block is raised" do
+    it "reraises exception when exception within a block is raised" do
+      class TestError < Exception; end
       lambda do
-        @helper.silence_backtrace { raise }
-      end.should raise_error Puppet::Error
-    end
-
-    it "sets Puppet::Error message from the exception" do
-      message = "foobarbaz"
-      lambda do
-        @helper.silence_backtrace { raise message }
-      end.should raise_error Puppet::Error, message
+        @helper.silence_backtrace { raise TestError.new }
+      end.should raise_error TestError
     end
 
     it "filters the original backtrace" do
