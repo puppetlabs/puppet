@@ -13,7 +13,7 @@ module Puppet
     # Puppet::DSL::Context forwards all the calls to a proxy instance.
     # This also allows to limit the number of methods existing in that class.
     ##
-    class Proxy
+    class Actions
       include Puppet::DSL::Helper
 
       ##

@@ -1,4 +1,4 @@
-require 'puppet/dsl/proxy'
+require 'puppet/dsl/actions'
 require 'puppet/dsl/blank_slate'
 
 module Puppet
@@ -28,7 +28,7 @@ module Puppet
       # For further information look at lib/puppet/dsl/type_reference.rb
       ##
       def self.const_missing(name)
-        proxy = ::Puppet::DSL::Proxy.new "dsl_main"
+        proxy = ::Puppet::DSL::Actions.new "dsl_main"
         ref = proxy.type_reference name
         const_set name, ref unless proxy.is_resource_type? name
         ref
@@ -40,7 +40,7 @@ module Puppet
       # The algorithm is identical to one used in +respond_to?+ method.
       ##
       def self.const_defined?(name)
-        proxy = ::Puppet::DSL::Proxy.new "dsl_main"
+        proxy = ::Puppet::DSL::Actions.new "dsl_main"
         proxy.is_resource_type? name
       end
 
@@ -62,7 +62,7 @@ module Puppet
         @nesting  = options.fetch(:nesting)  { 0          }
         @filename = options.fetch(:filename) { "dsl_main" }
         @object   = ::Object.new
-        @proxy    = ::Puppet::DSL::Proxy.new @filename
+        @proxy    = ::Puppet::DSL::Actions.new @filename
         @code     = code
       end
 

@@ -1,16 +1,16 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
 
-require 'puppet/dsl/proxy'
+require 'puppet/dsl/actions'
 
 include PuppetSpec::DSL
 
-describe Puppet::DSL::Proxy do
-  subject       { Puppet::DSL::Proxy.new :undefined }
+describe Puppet::DSL::Actions do
+  subject       { Puppet::DSL::Actions.new :undefined }
   before(:each) { prepare_compiler_and_scope        }
 
   it "mixins Puppet::DSL::Helper module" do
-    Puppet::DSL::Proxy.ancestors.should include Puppet::DSL::Helper
+    Puppet::DSL::Actions.ancestors.should include Puppet::DSL::Helper
   end
 
   describe "#type_reference" do
