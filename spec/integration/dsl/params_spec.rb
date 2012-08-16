@@ -1,9 +1,8 @@
 require 'puppet'
 require 'spec_helper'
-require 'puppet_spec/catalog'
+require 'matchers/catalog'
 require 'puppet_spec/compiler'
 
-include PuppetSpec::Catalog
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
@@ -26,7 +25,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to read a variable" do
@@ -46,7 +45,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
     it "should be able to read params for a resource" do
@@ -70,7 +69,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should == p
+      r.should be_equivalent_to p
     end
 
   end

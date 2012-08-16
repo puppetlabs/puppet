@@ -1,9 +1,8 @@
 require 'puppet'
 require 'spec_helper'
-require 'puppet_spec/catalog'
+require 'matchers/catalog'
 require 'puppet_spec/compiler'
 
-include PuppetSpec::Catalog
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
@@ -23,7 +22,7 @@ describe Puppet::DSL do
         Notify.defaults :message => "foo"
       MANIFEST
 
-      @catalog.should == r
+      @catalog.should be_equivalent_to r
     end
 
     it "should be able to update defaults for a resource passing a block" do
@@ -33,7 +32,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      @catalog.should == r
+      @catalog.should be_equivalent_to r
     end
   end
 end
