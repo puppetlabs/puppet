@@ -28,7 +28,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should consider a parameter to be valid if it is a valid parameter" do
-    Puppet::Type.type(:mount).should be_valid_parameter(:path)
+    Puppet::Type.type(:mount).should be_valid_parameter(:name)
   end
 
   it "should consider a parameter to be valid if it is a valid property" do
@@ -769,17 +769,6 @@ describe Puppet::Type::RelationshipMetaparam do
     param.expects(:fail).with { |string| string.include?("Class[Test]") }
 
     param.validate_relationship
-  end
-end
-
-describe Puppet::Type.metaparamclass(:check) do
-  include PuppetSpec::Files
-
-  it "should warn and create an instance of ':audit'" do
-    file = Puppet::Type.type(:file).new :path => make_absolute('/foo')
-    file.expects(:warning)
-    file[:check] = :mode
-    file[:audit].should == [:mode]
   end
 end
 

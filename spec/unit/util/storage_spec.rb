@@ -41,7 +41,7 @@ describe Puppet::Util::Storage do
 
   describe "when caching a Puppet::Type" do
     before(:all) do
-      @file_test = Puppet::Type.type(:file).new(:name => @basepath+"/yayness", :check => %w{checksum type})
+      @file_test = Puppet::Type.type(:file).new(:name => @basepath+"/yayness", :audit => %w{checksum type})
       @exec_test = Puppet::Type.type(:exec).new(:name => @basepath+"/bin/ls /yayness")
     end
 
