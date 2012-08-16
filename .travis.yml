@@ -9,4 +9,7 @@ branches:
   only:
     - dsl
     - master-travis
+  except:
+    - master
+    - dsl-to-master
 
