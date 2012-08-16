@@ -14,7 +14,6 @@ rescue LoadError
 end
 
 require 'puppet'
-require 'mocha'
 gem 'rspec', '>=2.0.0'
 require 'rspec/expectations'
 

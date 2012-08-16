@@ -1,4 +1,4 @@
-begin test_name "puppet module uninstall (with active dependency)"
+test_name "puppet module uninstall (with active dependency)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -30,6 +30,9 @@ file {
     }';
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+end
 on master, '[ -d /etc/puppet/modules/crakorn ]'
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 
@@ -68,7 +71,3 @@ on master, puppet('module uninstall jimmy-crakorn --force') do
 end
 on master, '[ ! -d /etc/puppet/modules/crakorn ]'
 on master, '[ -d /etc/puppet/modules/appleseed ]'
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
-end

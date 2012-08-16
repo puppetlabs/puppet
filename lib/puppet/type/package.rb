@@ -3,6 +3,8 @@
 # This allows packages to exist on the same machine using different packaging
 # systems.
 
+require 'puppet/parameter/package_options'
+
 module Puppet
   newtype(:package) do
     @doc = "Manage packages.  There is a basic dichotomy in package
@@ -46,6 +48,8 @@ module Puppet
       :methods => [:hold]
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
+    feature :uninstall_options, "The provider accepts options to be
+      passed to the uninstaller command."
 
     ensurable do
       desc <<-EOT
@@ -305,25 +309,49 @@ module Puppet
         further specifications for which type of package you want."
     end
 
-    newparam(:install_options, :required_features => :install_options) do
+    newparam(:install_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :install_options) do
       desc <<-EOT
-        A hash of additional options to pass when installing a package. These
+        An array of additional options to pass when installing a package. These
         options are package-specific, and should be documented by the software
-        vendor. The most commonly implemented option is `INSTALLDIR`:
+        vendor.  One commonly implemented option is `INSTALLDIR`:
 
             package { 'mysql':
               ensure          => installed,
-              provider        => 'msi',
               source          => 'N:/packages/mysql-5.5.16-winx64.msi',
-              install_options => { 'INSTALLDIR' => 'C:\\mysql-5.5' },
+              install_options => [ '/S', { 'INSTALLDIR' => 'C:\\mysql-5.5' } ],
             }
 
-        Since these options are passed verbatim to `msiexec`, any file paths
-        specified in `install_options` should use a backslash as the separator
-        character rather than a forward slash. This is the **only** place in Puppet
-        where backslash separators should be used. Note that backslashes in
-        double-quoted strings _must_ be double-escaped and backslashes
-        in single-quoted strings _may_ be double-escaped.
+        Each option in the array can either be a string or a hash, where each
+        key and value pair are interpreted in a provider specific way.  Each
+        option will automatically be quoted when passed to the install command.
+
+        On Windows, this is the **only** place in Puppet where backslash
+        separators should be used.  Note that backslashes in double-quoted
+        strings _must_ be double-escaped and backslashes in single-quoted
+        strings _may_ be double-escaped.
+      EOT
+    end
+
+    newparam(:uninstall_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :uninstall_options) do
+      desc <<-EOT
+        An array of additional options to pass when uninstalling a package. These
+        options are package-specific, and should be documented by the software
+        vendor.  For example:
+
+            package { 'VMware Tools':
+              ensure            => absent,
+              uninstall_options => [ { 'REMOVE' => 'Sync,VSS' } ],
+            }
+
+        Each option in the array can either be a string or a hash, where each
+        key and value pair are interpreted in a provider specific way.  Each
+        option will automatically be quoted when passed to the uninstall
+        command.
+
+        On Windows, this is the **only** place in Puppet where backslash
+        separators should be used.  Note that backslashes in double-quoted
+        strings _must_ be double-escaped and backslashes in single-quoted
+        strings _may_ be double-escaped.
       EOT
     end
 

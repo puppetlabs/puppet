@@ -1,3 +1,4 @@
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:msi) do
@@ -32,24 +33,26 @@ describe Puppet::Type.type(:package).provider(:msi) do
     it { should be_installable }
     it { should be_uninstallable }
     it { should be_install_options }
+    it { should be_uninstall_options }
+  end
+
+  describe 'on Windows', :as_platform => :windows do
+    it 'should not be the default provider' do
+      Puppet::Type.type(:package).defaultprovider.should_not == subject.class
+    end
   end
 
   context '::instances' do
-    it 'should return an array of provider instances' do
-      installer([1, 2])
-
-      MsiPackage.map do |pkg|
-        pkg[:name].should        == "name-#{pkg[:productcode]}"
-        pkg[:ensure].should      == :installed
-        pkg[:provider].should    == :msi
-        pkg[:packagecode].should == "package-#{pkg[:productcode]}"
-      end.count.should == 2
+    it 'should return an empty array' do
+      described_class.instances.should == []
     end
+  end
 
-    it 'should return an empty array of none found' do
-      installer([])
+  context '#initialize' do
+    it 'should issue a deprecation warning' do
+      Puppet.expects(:deprecation_warning).with("The `:msi` package provider is deprecated, use the `:windows` provider instead.")
 
-      MsiPackage.to_a.size.should == 0
+      Puppet::Type.type(:package).new(:name => name, :provider => :msi, :source => source)
     end
   end
 
@@ -216,13 +219,13 @@ describe Puppet::Type.type(:package).provider(:msi) do
       provider.install_options.should be_nil
     end
 
-    it 'should use the install_options as parameter/value pairs' do
+    it 'should return the options' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
 
       provider.install_options.should == ['INSTALLDIR=C:\mysql-here']
     end
 
-    it 'should only quote the value when an install_options value has a space in it' do
+    it 'should only quote if needed' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql here' }
 
       provider.install_options.should == ['INSTALLDIR="C:\mysql here"']
@@ -232,6 +235,18 @@ describe Puppet::Type.type(:package).provider(:msi) do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql "here"' }
 
       provider.install_options.should == ['INSTALLDIR="C:\mysql \"here\""']
+    end
+  end
+
+  context '#uninstall_options' do
+    it 'should return nil by default' do
+      provider.uninstall_options.should be_nil
+    end
+
+    it 'should return the options' do
+      resource[:uninstall_options] = { 'INSTALLDIR' => 'C:\mysql-here' }
+
+      provider.uninstall_options.should == ['INSTALLDIR=C:\mysql-here']
     end
   end
 end

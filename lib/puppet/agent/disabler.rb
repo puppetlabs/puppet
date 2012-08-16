@@ -16,12 +16,14 @@ module Puppet::Agent::Disabler
 
   # Let the daemon run again, freely in the filesystem.
   def enable
+    Puppet.notice "Enabling Puppet."
     disable_lockfile.unlock
   end
 
   # Stop the daemon from making any catalog runs.
   def disable(msg=nil)
     data = {}
+    Puppet.notice "Disabling Puppet."
     if (! msg.nil?)
       data[DISABLED_MESSAGE_JSON_KEY] = msg
     end

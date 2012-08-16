@@ -1,4 +1,4 @@
-begin test_name "puppet module list (with circular dependencies)"
+test_name "puppet module list (with circular dependencies)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -39,6 +39,10 @@ file {
 PP
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 on master, '[ -d /usr/share/puppet/modules/crakorn ]'
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 
 step "List the installed modules"
 on master, puppet('module list') do
@@ -62,8 +66,4 @@ on master, puppet('module list --tree') do
 └─┬ jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
   └── jimmy-appleseed (\e[0;36mv1.1.0\e[0m) [/etc/puppet/modules]
 STDOUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

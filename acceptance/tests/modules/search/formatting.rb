@@ -1,8 +1,7 @@
-begin test_name 'puppet module search output should be well structured'
+test_name 'puppet module search output should be well structured'
 
-step 'Stub forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+step 'Setup'
+stub_forge_on(master)
 
 step 'Search results should line up by column'
 on master, puppet("module search apache") do
@@ -15,8 +14,4 @@ on master, puppet("module search apache") do
   stdout.gsub(/\e.*?m/, '').lines.to_a[1..-1].each do |line|
     assert_match(pattern, line.chomp, 'columns were misaligned')
   end
-end
-
-ensure step 'Unstub forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
 end
