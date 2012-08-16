@@ -15,7 +15,7 @@ describe Puppet::DSL::Context do
 
   context "when creating resources" do
 
-    it "should raise a InvalidTypeError when trying to create a resoruce with invalid type" do
+    it "should raise a InvalidTypeError when trying to create a resource with invalid type" do
       lambda do
         evaluate_in_context do
           create_resource :foobar, "test"
