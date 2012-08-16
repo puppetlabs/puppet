@@ -80,15 +80,15 @@ describe Puppet::Node::Environment do
     end
 
     it "should give to all threads using the same environment the same collection if the collection isn't stale" do
-      original_thread_type_collection = Puppet::Resource::TypeCollection.new(env)
-      Puppet::Resource::TypeCollection.expects(:new).with(env).returns original_thread_type_collection
-      env.known_resource_types.should equal(original_thread_type_collection)
+      @original_thread_type_collection = Puppet::Resource::TypeCollection.new(env)
+      Puppet::Resource::TypeCollection.expects(:new).with(env).returns @original_thread_type_collection
+      env.known_resource_types.should equal(@original_thread_type_collection)
 
-      original_thread_type_collection.expects(:require_reparse?).returns(false)
+      @original_thread_type_collection.expects(:require_reparse?).returns(false)
       Puppet::Resource::TypeCollection.stubs(:new).with(env).returns @collection
 
       t = Thread.new {
-        env.known_resource_types.should equal(original_thread_type_collection)
+        env.known_resource_types.should equal(@original_thread_type_collection)
       }
       t.join
     end
@@ -156,8 +156,8 @@ describe Puppet::Node::Environment do
     end
 
     it "should ask the Puppet settings instance for the setting qualified with the environment name" do
-      Puppet.settings.expects(:value).with("myvar", :testing).returns("myval")
-      env["myvar"].should == "myval"
+      Puppet.settings.set_value(:server, "myval", :testing)
+      env[:server].should == "myval"
     end
 
     it "should be able to return an individual module that exists in its module path" do

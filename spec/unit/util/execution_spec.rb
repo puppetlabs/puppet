@@ -297,7 +297,7 @@ describe Puppet::Util::Execution do
 
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
-      lang_sentinel_value = "es_ES.UTF-8"
+      lang_sentinel_value = "en_US.UTF-8"
       # a temporary hash that contains sentinel values for each of the locale environment variables that we override in
       # "execute"
       locale_sentinel_env = {}

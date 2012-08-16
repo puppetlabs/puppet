@@ -74,6 +74,9 @@ module Puppet::Test
 
       initialize_settings_before_each()
 
+      Puppet::Node::Environment.clear
+      Puppet::Parser::Functions.reset
+
       Puppet.clear_deprecation_warnings
     end
 
@@ -82,7 +85,6 @@ module Puppet::Test
     def self.after_each_test()
       Puppet.settings.send(:clear_everything_for_tests)
 
-      Puppet::Node::Environment.clear
       Puppet::Util::Storage.clear
       Puppet::Util::ExecutionStub.reset
 

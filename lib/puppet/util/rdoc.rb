@@ -30,7 +30,8 @@ module Puppet::Util::RDoc
       # specify our own format & where to output
       options = [ "--fmt", "puppet",
                   "--quiet",
-                  "--exclude", "/modules/[^/]*/files/.*\.pp$",
+                  "--exclude", "/modules/[^/]*/files/.*$",
+                  "--exclude", "/modules/[^/]*/templates/.*$",
                   "--op", outputdir ]
 
       options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }

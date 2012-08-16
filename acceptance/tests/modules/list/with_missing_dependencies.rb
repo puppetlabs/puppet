@@ -1,4 +1,4 @@
-begin test_name "puppet module list (with missing dependencies)"
+test_name "puppet module list (with missing dependencies)"
 
 step "Setup"
 apply_manifest_on master, <<-PP
@@ -50,6 +50,10 @@ file {
     }';
 }
 PP
+teardown do
+  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf /usr/share/puppet/modules"
+end
 on master, '[ -d /etc/puppet/modules/appleseed ]'
 on master, '[ -d /etc/puppet/modules/thelock ]'
 on master, '[ -d /usr/share/puppet/modules/crick ]'
@@ -91,8 +95,4 @@ STDERR
 └─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
   └── \e[0;41mUNMET DEPENDENCY\e[0m jimmy-crakorn (\e[0;36mv0.4.x\e[0m)
 STDOUT
-end
-
-ensure step "Teardown"
-apply_manifest_on master, "file { ['/etc/puppet/modules', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
 end

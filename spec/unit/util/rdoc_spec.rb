@@ -68,8 +68,14 @@ describe Puppet::Util::RDoc do
       Puppet::Util::RDoc.rdoc("myoutputdir", [])
     end
 
-    it "should tell RDoc to exclude .pp files under any modules/<mod>/files section" do
-      @rdoc.expects(:document).with { |args| args.include?("--exclude") and args.include?("/modules/[^/]*/files/.*\.pp$") }
+    it "should tell RDoc to exclude all files under any modules/<mod>/files section" do
+      @rdoc.expects(:document).with { |args| args.include?("--exclude") and args.include?("/modules/[^/]*/files/.*$") }
+
+      Puppet::Util::RDoc.rdoc("myoutputdir", [])
+    end
+
+    it "should tell RDoc to exclude all files under any modules/<mod>/templates section" do
+      @rdoc.expects(:document).with { |args| args.include?("--exclude") and args.include?("/modules/[^/]*/templates/.*$") }
 
       Puppet::Util::RDoc.rdoc("myoutputdir", [])
     end

@@ -1,8 +1,7 @@
-begin test_name 'puppet module search should handle multiple search terms sensibly'
+test_name 'puppet module search should handle multiple search terms sensibly'
 
-step 'Stub forge.puppetlabs.com'
-require 'resolv'; ip = Resolv.getaddress('forge-dev.puppetlabs.lan')
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
+#step 'Setup'
+#stub_forge_on(master)
 
 # FIXME: The Forge doesn't properly handle multi-term searches.
 # step 'Search for a module by description'
@@ -19,7 +18,3 @@ apply_manifest_on master, "host { 'forge.puppetlabs.com': ip => '#{ip}' }"
 # on master, puppet("module search 'star trek'") do
 #   assert stdout !~ /'star trek'/
 # end
-
-ensure step 'Unstub forge.puppetlabs.com'
-apply_manifest_on master, "host { 'forge.puppetlabs.com': ensure => absent }"
-end

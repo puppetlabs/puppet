@@ -60,6 +60,7 @@ class Puppet::Node::Environment
 
   def self.clear
     @seen.clear
+    Thread.current[:environment] = nil
   end
 
   attr_reader :name
