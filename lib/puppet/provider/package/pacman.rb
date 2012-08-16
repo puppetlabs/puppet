@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   def self.instances
     packages = []
     begin
-      execpipe(listcmd()) do |process|
+      Puppet::Util::Execution.execpipe(listcmd()) do |process|
         # pacman -Q output is 'packagename version-rel'
         regex = %r{^(\S+)\s(\S+)}
         fields = [:name, :ensure]
