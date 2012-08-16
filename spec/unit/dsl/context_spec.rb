@@ -20,7 +20,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context do
           create_resource :foobar, "test"
         end
-      end.should raise_error Puppet::InvalidTypeError
+      end.should raise_error Puppet::DSL::InvalidTypeError
     end
 
     it "should raise NoMethodError when creating resources in a imported file on top level scope" do
@@ -176,7 +176,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context do
           call_function :foobar
         end
-      end.should raise_error Puppet::InvalidFunctionError
+      end.should raise_error Puppet::DSL::InvalidFunctionError
     end
 
     it "should call function with passed arguments" do

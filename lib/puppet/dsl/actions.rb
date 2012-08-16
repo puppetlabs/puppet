@@ -6,6 +6,12 @@ require 'puppet/dsl/helper'
 module Puppet
   module DSL
 
+    # Error type used by Ruby DSL when resource type doesn't exist
+    class InvalidTypeError < Puppet::Error; end
+
+    # Error type used by Ruby DSL when Puppet function doesn't exist
+    class InvalidFunctionError < Puppet::Error; end
+
     ##
     # This class is created for ease of debugging.
     # Unlike Puppet::DSL::Context it inherits from Object and works fine with
@@ -153,7 +159,7 @@ module Puppet
       def create_resource(type, args, options, code)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise Puppet::InvalidTypeError, "resource type #{type} not found" unless is_resource_type? type
+        raise Puppet::DSL::InvalidTypeError, "resource type #{type} not found" unless is_resource_type? type
 
         ResourceDecorator.new(options, &code) if code
 
@@ -198,7 +204,7 @@ module Puppet
       def call_function(name, args)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise Puppet::InvalidFunctionError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
+        raise Puppet::DSL::InvalidFunctionError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
         Parser.current_scope.send name, args
       end
 
