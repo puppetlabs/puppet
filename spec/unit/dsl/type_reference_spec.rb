@@ -96,20 +96,19 @@ describe Puppet::DSL::TypeReference do
 
   end
 
-  describe "#realise" do
+  describe "#realize" do
     it "should create a new virtual collection" do
       evaluate_in_context do
-        Puppet::DSL::Context::Notify.realise
+        Puppet::DSL::Context::Notify.realize
       end
       @compiler.collections.map do |c|
         [c.type, c.form]
       end.should include ["Notify", :virtual]
     end
 
-
     it "should return the created collection" do
       evaluate_in_context do
-        Puppet::DSL::Context::Notify.realise
+        Puppet::DSL::Context::Notify.realize
       end.should be_a Puppet::Parser::Collector
     end
 
