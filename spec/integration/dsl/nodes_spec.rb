@@ -12,18 +12,19 @@ describe Puppet::DSL do
 
   describe "nodes" do
 
-    it "should be able to default node" do
+    it "should be able to create default node" do
       p = compile_to_catalog(<<-MANIFEST)
         node default {
-          notice("foo")
+          notify{"foo": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         node "default" do
-          notice "foo"
+          notify "foo"
         end
       MANIFEST
+      r.resources.map(&:name).should include "Notify/foo"
 
       r.should be_equivalent_to p
     end
@@ -31,15 +32,16 @@ describe Puppet::DSL do
     it "should be able to create named node" do
       p = compile_to_catalog(<<-MANIFEST)
         node "foonode" {
-          notice("foo")
+          notify{"foo": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         node "foonode" do
-          notice "foo"
+          notify "foo"
         end
       MANIFEST
+      r.resources.map(&:name).should include "Notify/foo"
 
       r.should be_equivalent_to p
     end
@@ -47,15 +49,16 @@ describe Puppet::DSL do
     it "should be able to create node with regexp" do
       p = compile_to_catalog(<<-MANIFEST)
         node /^foo/ {
-          notice("foo")
+          notify{"foo": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         node /^foo/ do
-          notice "foo"
+          notify "foo"
         end
       MANIFEST
+      r.resources.map(&:name).should include "Notify/foo"
 
       r.should be_equivalent_to p
     end
@@ -63,23 +66,29 @@ describe Puppet::DSL do
     it "should be able to create node inheriting from another node" do
       p = compile_to_catalog(<<-MANIFEST)
         node "base.example.com" {
-          notice("base")
+          notify {"base": }
         }
 
         node "foonode" inherits "base.example.com" {
-          notice "foonode"
+          notify {"foonode": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         node "base.example.com" do
-          notice("base")
+          notify "base"
         end
 
         node "foonode", :inherits => "base.example.com" do
-          notice "foonode"
+          notify "foonode"
         end
       MANIFEST
+
+      r.resources.map(&:name).tap do |names|
+        %w[base foonode].each do |node_name|
+          names.should include "Notify/#{node_name}"
+        end
+      end
 
       r.should be_equivalent_to p
     end
