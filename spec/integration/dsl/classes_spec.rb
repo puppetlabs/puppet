@@ -14,17 +14,28 @@ describe Puppet::DSL do
 
     it "should be able to create a class" do
       p = compile_to_catalog(<<-MANIFEST)
+        class foo {}
+      MANIFEST
+
+      r = compile_ruby_to_catalog(<<-MANIFEST)
+        hostclass :foo do; end
+      MANIFEST
+
+      r.should be_equivalent_to p
+    end
+
+    it "shouldn't evaluate the body of the class until it is used" do
+      p = compile_to_catalog(<<-MANIFEST)
         class foo {
-          notice("foo")
+          notify {"bar": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         hostclass :foo do
-          notice "foo"
+          notify "bar"
         end
       MANIFEST
-
       r.should be_equivalent_to p
     end
 
@@ -50,17 +61,34 @@ describe Puppet::DSL do
       r.should be_equivalent_to p
     end
 
-    it "should be able to create class with arguments" do
+    it "should evaluate contents of the class when the class is used" do
       p = compile_to_catalog(<<-MANIFEST)
-        class foo($param = "value") {
-          notice($param)
+        class foo {
+          notify {"bar": }
         }
+
+        include foo
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        hostclass :foo, :arguments => {:param => "value"} do
-          notice params[:param]
+        hostclass :foo do
+          notify "bar"
         end
+
+        use :foo
+      MANIFEST
+
+      r.should be_equivalent_to p
+    end
+
+    it "should be able to create class with arguments and use them" do
+      p = compile_to_catalog(<<-MANIFEST)
+        class foo($param = "value") {}
+
+      MANIFEST
+
+      r = compile_ruby_to_catalog(<<-MANIFEST)
+        hostclass :foo, :arguments => {:param => "value"} do; end
       MANIFEST
 
       r.should be_equivalent_to p
@@ -68,23 +96,19 @@ describe Puppet::DSL do
 
     it "should be able to use class with arguments" do
       p = compile_to_catalog(<<-MANIFEST)
-        class foo($param) {
-          notice($param)
+        class foo($param = "value") {
+          notify {"$param": }
         }
 
-        node default {
-          class {"foo": param => "bar"}
-        }
+        class {"foo": param => "bar"}
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
-        hostclass :foo, :arguments => {:param => nil} do
-          notice params[:param]
+        hostclass :foo, :arguments => {:param => "value"} do
+          notify params[:param]
         end
 
-        node "default" do
-          use :foo, :param => "bar"
-        end
+        use :foo, :param => "bar"
       MANIFEST
 
       r.should be_equivalent_to p
@@ -93,22 +117,18 @@ describe Puppet::DSL do
     it "should be able to create class with arguments with default values" do
       p = compile_to_catalog(<<-MANIFEST)
         class foo($param = "value") {
-          notice($param)
+          notify {"$param": }
         }
 
-        node default {
-          class {"foo": param => "bar"}
-        }
+        class {"foo": param => "bar"}
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         hostclass :foo, :arguments => {:param => "value"} do
-          notice params[:param]
+          notify params[:param]
         end
 
-        node "default" do
-          use :foo, :param => "bar"
-        end
+        use :foo, :param => "bar"
       MANIFEST
 
       r.should be_equivalent_to p
@@ -117,22 +137,24 @@ describe Puppet::DSL do
     it "should allow inheritance" do
       p = compile_to_catalog(<<-MANIFEST)
         class foo {
-          notice("foo")
+          notify {"foo": }
         }
 
         class bar inherits foo {
-          notice("bar")
+          notify {"bar": }
         }
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         hostclass :foo do
-          notice "foo"
+          notify "foo"
         end
 
         hostclass :bar, :inherits => :foo do
-          notice "bar"
+          notify "bar"
         end
+
+        use :bar
       MANIFEST
 
       r.should be_equivalent_to p
@@ -141,22 +163,26 @@ describe Puppet::DSL do
     it "should allow inheritance with arguments" do
       p = compile_to_catalog(<<-MANIFEST)
         class foo {
-          notice("foo")
+          notify {"foo": }
         }
 
         class bar($msg) inherits foo {
-          notice("bar", $msg)
+          notify {"bar": message => $msg}
         }
+
+        class {"bar": msg => "foobarbaz"}
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         hostclass :foo do
-          notice "foo"
+          notify "foo"
         end
 
         hostclass :bar, :inherits => :foo, :arguments => {:msg => nil} do
-          notice "bar", params[:msg]
+          notify "bar", :message => params[:msg]
         end
+
+        use "bar", :msg => "foobarbaz"
       MANIFEST
 
       r.should be_equivalent_to p

@@ -22,9 +22,7 @@ describe Puppet::DSL do
 
         node "default" {
           bar {"bar": }
-          foo {"foo":
-            require => Bar["bar"]
-          }
+          foo {"foo": require => Bar["bar"] }
         }
       END
 

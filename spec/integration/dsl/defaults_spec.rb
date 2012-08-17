@@ -9,9 +9,7 @@ describe Puppet::DSL do
   before :each do
     prepare_compiler
     @catalog = compile_to_catalog(<<-MANIFEST)
-                 Notify {
-                   message => "foo"
-                 }
+                 Notify { message => "foo" }
                MANIFEST
   end
 

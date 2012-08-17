@@ -12,28 +12,12 @@ describe Puppet::DSL do
 
   describe "params" do
 
-    it "should be able to set variable" do
-      p = compile_to_catalog(<<-MANIFEST)
-        node default {
-          $asdf = "foo"
-        }
-      MANIFEST
-
-      r = compile_ruby_to_catalog(<<-MANIFEST)
-        node "default" do
-          params[:asdf] = "foo"
-        end
-      MANIFEST
-
-      r.should be_equivalent_to p
-    end
-
-    it "should be able to read a variable" do
+    it "should be able to set and read a variable" do
       p = compile_to_catalog(<<-MANIFEST)
         node default {
           $asdf = "foo"
 
-          notice($asdf)
+          notify {"$asdf": }
         }
       MANIFEST
 
@@ -41,9 +25,10 @@ describe Puppet::DSL do
         node "default" do
           params[:asdf] = "foo"
 
-          notice params[:asdf]
+          notify params[:asdf]
         end
       MANIFEST
+      r.resources.map(&:name).should include "Notify/foo"
 
       r.should be_equivalent_to p
     end
@@ -51,25 +36,111 @@ describe Puppet::DSL do
     it "should be able to read params for a resource" do
       p = compile_to_catalog(<<-MANIFEST)
         define foo($msg) {
-          notice($msg)
+          notify {"$msg": }
         }
 
-        node default {
-          foo {"foo": msg => "asdf"}
-        }
+        foo {"foo": msg => "asdf"}
       MANIFEST
 
       r = compile_ruby_to_catalog(<<-MANIFEST)
         define :foo, :arguments => {:msg => nil} do
-          notice params[:msg]
+          notify params[:msg]
         end
 
-        node "default" do
-          foo :foo, :msg => "asdf"
-        end
+        foo :foo, :msg => "asdf"
       MANIFEST
+      r.resources.map(&:name).should include "Notify/asdf"
 
       r.should be_equivalent_to p
+    end
+
+    context "defined in outer scope" do
+      it "should available in inner scope" do
+        p = compile_to_catalog(<<-MANIFEST)
+          $foobar = "baz"
+          define foo() {
+            notify {"$foobar": }
+          }
+
+          foo {"foo": }
+        MANIFEST
+
+        r = compile_ruby_to_catalog(<<-MANIFEST)
+          params[:foobar] = "baz"
+
+          define :foo do
+            notify params[:foobar]
+          end
+
+          foo :foo
+        MANIFEST
+        r.resources.map(&:name).should include "Notify/baz"
+
+        r.should be_equivalent_to p
+      end
+
+      it "should be overwritten in inner scope" do
+        p = compile_to_catalog(<<-MANIFEST)
+          $foobar = "baz"
+          define foo() {
+            $foobar = "asdf"
+            notify {"$foobar": }
+          }
+
+          foo {"foo": }
+        MANIFEST
+
+        r = compile_ruby_to_catalog(<<-MANIFEST)
+          params[:foobar] = "baz"
+
+          define :foo do
+            params[:foobar] = "asdf"
+            notify params[:foobar]
+          end
+
+          foo :foo
+        MANIFEST
+        r.resources.map(&:name).should include "Notify/asdf"
+
+        r.should be_equivalent_to p
+      end
+
+      it "should not be overwritten in outer scope" do
+        p = compile_to_catalog(<<-MANIFEST)
+          $foobar = "baz"
+          define foo() {
+            $foobar = "asdf"
+            notify {"$foobar": }
+          }
+
+          notify {"$foobar": }
+
+          foo {"foo": }
+        MANIFEST
+
+        r = compile_ruby_to_catalog(<<-MANIFEST)
+          params[:foobar] = "baz"
+
+          define :foo do
+            params[:foobar] = "asdf"
+            notify params[:foobar]
+          end
+
+          notify params[:foobar]
+
+          foo :foo
+        MANIFEST
+        r.resources.map(&:name).tap do |names|
+          %w[asdf baz].each do |name|
+            names.should include "Notify/#{name}"
+          end
+        end
+
+        r.should be_equivalent_to p
+
+
+      end
+
     end
 
   end
