@@ -11,40 +11,45 @@ describe provider_class do
     @provider = provider_class.new(@resource)
   end
 
-  # #1360
-  it "should add -o when allowdupe is enabled and the user is being created" do
-    @resource.expects(:allowdupe?).returns true
-    @resource.expects(:system?).returns true
-    @provider.stubs(:execute)
-    @provider.expects(:execute).with { |args| args.include?("-o") }
-    @provider.create
+  describe "#create" do
+    it "should add -o when allowdupe is enabled and the user is being created" do
+      @resource.expects(:allowdupe?).returns true
+      @resource.expects(:system?).returns true
+      @provider.stubs(:execute)
+      @provider.expects(:execute).with { |args| args.include?("-o") }
+      @provider.create
+    end
+
+    it "should add -r when system is enabled" do
+      @resource.expects(:allowdupe?).returns true
+      @resource.expects(:system?).returns true
+      @provider.stubs(:execute)
+      @provider.expects(:execute).with { |args| args.include?("-r") }
+      @provider.create
+    end
+
+    it "should set password age rules" do
+      provider_class.has_feature :manages_password_age
+      @resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :provider => :useradd
+      @provider = provider_class.new(@resource)
+      @provider.stubs(:execute)
+      @provider.expects(:execute).with { |cmd, *args| args == ["-m", 5, "-M", 10, "myuser"] }
+      @provider.create
+    end
   end
 
-  it "should add -o when allowdupe is enabled and the uid is being modified" do
-    @resource.expects(:allowdupe?).returns true
-    @provider.expects(:execute).with { |args| args.include?("-o") }
+  describe "#uid=" do
 
-    @provider.uid = 150
+    it "should add -o when allowdupe is enabled and the uid is being modified" do
+      @resource.expects(:allowdupe?).returns true
+      @provider.expects(:execute).with { |args| args.include?("-o") }
+
+      @provider.uid = 150
+    end
+
   end
 
-  it "should add -r when system is enabled" do
-    @resource.expects(:allowdupe?).returns true
-    @resource.expects(:system?).returns true
-    @provider.stubs(:execute)
-    @provider.expects(:execute).with { |args| args.include?("-r") }
-    @provider.create
-  end
-
-  it "should set password age rules" do
-    provider_class.has_feature :manages_password_age
-    @resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :provider => :useradd
-    @provider = provider_class.new(@resource)
-    @provider.stubs(:execute)
-    @provider.expects(:execute).with { |cmd, *args| args == ["-m", 5, "-M", 10, "myuser"] }
-    @provider.create
-  end
-
-  describe "when checking to add allow dup" do
+  describe "#check_allow_dup" do
     it "should check allow dup" do
       @resource.expects(:allowdupe?)
       @provider.check_allow_dup
@@ -61,7 +66,7 @@ describe provider_class do
     end
   end
 
-  describe "when checking to add system users" do
+  describe "#check_system_users" do
     it "should check system users" do
       @resource.expects(:system?)
       @provider.check_system_users
@@ -78,7 +83,7 @@ describe provider_class do
     end
   end
 
-  describe "when checking manage home" do
+  describe "#check_manage_home" do
     it "should check manage home" do
       @resource.expects(:managehome?)
       @provider.check_manage_home
@@ -88,7 +93,7 @@ describe provider_class do
       @resource.stubs(:managehome?).returns true
       @provider.check_manage_home.must == ["-m"]
     end
-    
+
     it "should return an array with -r flag if home is managed" do
       @resource.stubs(:managehome?).returns true
       @resource.stubs(:ensure) == :absent
@@ -116,7 +121,7 @@ describe provider_class do
     it "should return and array of flags and values"
   end
 
-  describe "when calling addcmd" do
+  describe "#addcmd" do
     before do
       @resource.stubs(:allowdupe?).returns true
       @resource.stubs(:managehome?).returns true
@@ -177,7 +182,7 @@ describe provider_class do
     end
   end
 
-  describe "when calling passcmd" do
+  describe "#passcmd" do
     before do
       @resource.stubs(:allowdupe?).returns true
       @resource.stubs(:managehome?).returns true
