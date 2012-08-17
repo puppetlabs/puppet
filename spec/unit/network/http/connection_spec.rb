@@ -26,24 +26,24 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "should return an http instance created with the passed host and port" do
-        http = subject.send(:http_conn)
+        http = subject.send(:connection)
         http.should be_an_instance_of Net::HTTP
         http.address.should == host
         http.port.should    == port
       end
 
       it "should enable ssl on the http instance by default" do
-        http = subject.send(:http_conn)
+        http = subject.send(:connection)
         http.should be_use_ssl
       end
 
       it "can set ssl using an option" do
-        Puppet::Network::HTTP::Connection.new(host, port, false).send(:http_conn).should_not be_use_ssl
-        Puppet::Network::HTTP::Connection.new(host, port, true).send(:http_conn).should be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, false).send(:connection).should_not be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection).should be_use_ssl
       end
 
       context "proxy and timeout settings should propagate" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port).send(:http_conn) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port).send(:connection) }
         before :each do
           Puppet[:http_proxy_host] = "myhost"
           Puppet[:http_proxy_port] = 432
@@ -58,7 +58,7 @@ describe Puppet::Network::HTTP::Connection do
 
       it "should not set a proxy if the value is 'none'" do
         Puppet[:http_proxy_host] = 'none'
-        subject.send(:http_conn).proxy_address.should be_nil
+        subject.send(:connection).proxy_address.should be_nil
       end
 
     end
@@ -85,7 +85,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       shared_examples "HTTPS setup without all certificates" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:http_conn) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
 
         it                { should be_use_ssl }
         its(:cert)        { should be_nil }
@@ -123,7 +123,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       context "with both the host and CA cert" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:http_conn) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
 
         before :each do
           FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
@@ -140,7 +140,7 @@ describe Puppet::Network::HTTP::Connection do
 
       it "should set up certificate information when creating http instances" do
         subject.expects(:cert_setup)
-        subject.send(:http_conn)
+        subject.send(:connection)
       end
     end
   end
@@ -172,7 +172,7 @@ describe Puppet::Network::HTTP::Connection do
     end
 
     it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
-      subject.stubs(:create_http_conn).
+      subject.stubs(:create_connection).
           returns(a_connection_that_verifies(:has_passed_pre_checks => false,
                                              :in_context => a_store_context(:for_server => 'not_my_server',
                                                                             :with_error_string => 'shady looking signature'),
@@ -183,7 +183,7 @@ describe Puppet::Network::HTTP::Connection do
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
-      subject.stubs(:create_http_conn).
+      subject.stubs(:create_connection).
           returns(a_connection_that_verifies(:has_passed_pre_checks => true,
                                              :in_context => a_store_context(:for_server => 'not_my_server',
                                                                             :for_aliases => 'foo,bar,baz'),
@@ -198,7 +198,7 @@ describe Puppet::Network::HTTP::Connection do
 
     it "should pass along the error message otherwise" do
       connection = Net::HTTP.new('my_server', 8140)
-      subject.stubs(:create_http_conn).returns(connection)
+      subject.stubs(:create_connection).returns(connection)
 
       connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('some other message'))
 

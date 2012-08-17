@@ -46,7 +46,7 @@ module Puppet::Network::HTTP
       peer_certs = []
       verify_errors = []
 
-      http_conn.verify_callback = proc do |preverify_ok, ssl_context|
+      connection.verify_callback = proc do |preverify_ok, ssl_context|
         # We use the callback to collect the certificates for use in constructing
         # the error message if the verification failed.  This is necessary since we
         # don't have direct access to the cert that we expected the connection to
@@ -59,7 +59,7 @@ module Puppet::Network::HTTP
         preverify_ok
       end
     
-      http_conn.send(method, *args)
+      connection.send(method, *args)
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
@@ -71,31 +71,31 @@ module Puppet::Network::HTTP
         valid_certnames = [cert.name, *cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
     
-        raise Puppet::Error, "Server hostname '#{http_conn.address}' did not match server certificate; expected #{msg}"
+        raise Puppet::Error, "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
       else
         raise
       end
     end
 
     def address
-      http_conn.address
+      connection.address
     end
 
     def port
-      http_conn.port
+      connection.port
     end
 
     def use_ssl?
-      http_conn.use_ssl?
+      connection.use_ssl?
     end
 
     private
     
-    def http_conn
-      @http_conn || initialize_http_conn
+    def connection
+      @connection || initialize_connection
     end
 
-    def initialize_http_conn
+    def initialize_connection
       args = [@host, @port]
       if Puppet[:http_proxy_host] == "none"
         args << nil << nil
@@ -103,30 +103,30 @@ module Puppet::Network::HTTP
         args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
       end
       
-      @http_conn = create_http_conn(*args)
+      @connection = create_connection(*args)
 
       # Pop open the http client a little; older versions of Net::HTTP(s) didn't
       # give us a reader for ca_file... Grr...
-      class << @http_conn; attr_accessor :ca_file; end
+      class << @connection; attr_accessor :ca_file; end
 
-      @http_conn.use_ssl = @use_ssl
+      @connection.use_ssl = @use_ssl
       # Use configured timeout (#1176)
-      @http_conn.read_timeout = Puppet[:configtimeout]
-      @http_conn.open_timeout = Puppet[:configtimeout]
+      @connection.read_timeout = Puppet[:configtimeout]
+      @connection.open_timeout = Puppet[:configtimeout]
 
       cert_setup
 
-      @http_conn
+      @connection
     end
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
       if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
-        @http_conn.cert_store  = ssl_host.ssl_store
-        @http_conn.ca_file     = ssl_configuration.ca_auth_file
-        @http_conn.cert        = ssl_host.certificate.content
-        @http_conn.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        @http_conn.key         = ssl_host.key.content
+        @connection.cert_store  = ssl_host.ssl_store
+        @connection.ca_file     = ssl_configuration.ca_auth_file
+        @connection.cert        = ssl_host.certificate.content
+        @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        @connection.key         = ssl_host.key.content
       else
         # We don't have the local certificates, so we don't do any verification
         # or setup at this early stage.  REVISIT: Shouldn't we supply the local
@@ -136,13 +136,13 @@ module Puppet::Network::HTTP
         # Ruby 1.8 defaulted to this, but 1.9 defaults to peer verify, and we
         # almost always talk to a dedicated, not-standard CA that isn't trusted
         # out of the box.  This forces the expected state.
-        @http_conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        @connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
       end
     end
 
     # This method largely exists for testing purposes, so that we can
     #  mock the actual HTTP connection.
-    def create_http_conn(*args)
+    def create_connection(*args)
       Net::HTTP.new(*args)
     end
 

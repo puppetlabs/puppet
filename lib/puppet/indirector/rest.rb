@@ -77,7 +77,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def network(request)
-    Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
+    Puppet::Network::HTTP::Connection.new(request.server || self.class.server, request.port || self.class.port)
   end
 
   def http_get(request, *args)
