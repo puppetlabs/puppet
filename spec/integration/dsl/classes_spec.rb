@@ -184,7 +184,6 @@ describe Puppet::DSL do
 
         use "bar", :msg => "foobarbaz"
       MANIFEST
-      r.resources.select {|r| r.name == "Notify/bar"}.first[:message].should == "foobarbaz"
 
       r.should be_equivalent_to p
     end
