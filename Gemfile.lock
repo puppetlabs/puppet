@@ -1,3 +1,9 @@
+PATH
+  remote: .
+  specs:
+    puppet (2.7.19)
+      facter (~> 1.5)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -22,6 +28,7 @@ PLATFORMS
 DEPENDENCIES
   facter (~> 1.6.4)
   mocha (~> 0.10.5)
+  puppet!
   rack (~> 1.4.1)
   rspec (~> 2.10.0)
   sys-admin (~> 1.5.6)

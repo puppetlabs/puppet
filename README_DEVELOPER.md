@@ -3,6 +3,55 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
+# Dependencies #
+
+Puppet is considered an Application as it relates to the recommendation of
+adding a Gemfile.lock file to the repository and the information published at
+[Clarifying the Roles of the .gemspec and
+Gemfile](http://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/)
+
+To install the dependencies run: `bundle install` to install the dependencies.
+
+A checkout of the source repository should be used in a way that provides
+puppet as a gem rather than a simple Ruby library.  The parent directory should
+be set along the `GEM_PATH`, preferably before other tools such as RVM that
+manage gemsets using `GEM_PATH`.
+
+For example, Puppet checked out into `/workspace/src/puppet` using `git
+checkout https://github.com/puppetlabs/puppet` in `/workspace/src` can be used
+with the following actions.  The trick is to symlink `gems` to `src`.
+
+    $ cd /workspace
+    $ ln -s src gems
+    $ mkdir specifications
+    $ pushd specifications; ln -s ../gems/puppet/puppet.gemspec; popd
+    $ export GEM_PATH="/workspace:${GEM_PATH}"
+    $ gem list puppet
+
+This should list out
+
+    puppet (2.7.19)
+
+## Bundler ##
+
+With a source checkout of Puppet properly setup as a gem, dependencies can be
+installed using [Bundler](http://gembundler.com/)
+
+    $ bundle install
+    Fetching gem metadata from http://rubygems.org/........
+    Using diff-lcs (1.1.3)
+    Installing facter (1.6.11)
+    Using metaclass (0.0.1)
+    Using mocha (0.10.5)
+    Using puppet (2.7.19) from source at /workspace/puppet-2.7.x/src/puppet
+    Using rack (1.4.1)
+    Using rspec-core (2.10.1)
+    Using rspec-expectations (2.10.0)
+    Using rspec-mocks (2.10.1)
+    Using rspec (2.10.0)
+    Using bundler (1.1.5)
+    Your bundle is complete! Use `bundle show [gemname]` to see where a bundled gem is installed.
+
 # UTF-8 Handling #
 
 As Ruby 1.9 becomes more commonly used with Puppet, developers should be aware
@@ -123,4 +172,5 @@ Puppet directly from source without using install.rb or copying files around.
  * Don't assume 'C' drive.  Use environment variables to look these up:
 
     "#{ENV['windir']}/system32/netsh.exe"
+
 EOF

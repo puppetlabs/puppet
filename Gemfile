@@ -1,5 +1,7 @@
 source :rubygems
 
+gemspec
+
 group(:development, :test) do
   gem "facter", "~> 1.6.4", :require => false
   gem "rack", "~> 1.4.1", :require => false
