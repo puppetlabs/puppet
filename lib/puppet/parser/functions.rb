@@ -44,7 +44,7 @@ module Puppet::Parser::Functions
   def self.newfunction(name, options = {}, &block)
     name = name.intern
 
-    Puppet.warning "Overwriting previous definition for function #{name}" if functions.include?(name)
+    Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name)
 
     ftype = options[:type] || :statement
 
@@ -57,19 +57,30 @@ module Puppet::Parser::Functions
 
     # Someday we'll support specifying an arity, but for now, nope
     #functions[name] = {:arity => arity, :type => ftype}
-    functions[name] = {:type => ftype, :name => fname}
-    functions[name][:doc] = options[:doc] if options[:doc]
+    func = {:type => ftype, :name => fname}
+    func[:doc] = options[:doc] if options[:doc]
+
+    add_function(name, func)
+    func
   end
 
   # Remove a function added by newfunction
   def self.rmfunction(name)
+    Puppet.deprecation_warning "Puppet::Parser::Functions.rmfunction is deprecated and will be removed in 3.0"
     name = name.intern
 
-    raise Puppet::DevError, "Function #{name} is not defined" unless functions.include? name
+    raise Puppet::DevError, "Function #{name} is not defined" unless get_function(name)
 
-    functions.delete name
+    @functions.synchronize {
+      @functions[Environment.current].delete(name)
+      # This seems wrong because it won't delete a function defined on root if
+      # the current environment is different
+      #@functions[Environment.root].delete(name)
+    }
 
     fname = "function_#{name}"
+    # This also only deletes from the module associated with
+    # Environment.current
     environment_module.send(:remove_method, fname)
   end
 
@@ -77,13 +88,19 @@ module Puppet::Parser::Functions
   def self.function(name)
     name = name.intern
 
+    func = nil
     @functions.synchronize do
-      unless functions.include?(name) or functions(Puppet::Node::Environment.root).include?(name)
-        autoloader.load(name,Environment.current || Environment.root)
+      unless func = get_function(name)
+        autoloader.load(name, Environment.current)
+        func = get_function(name)
       end
     end
 
-    ( functions(Environment.root)[name] || functions[name] || {:name => false} )[:name]
+    if func
+      func[:name]
+    else
+      false
+    end
   end
 
   def self.functiondocs
@@ -91,7 +108,7 @@ module Puppet::Parser::Functions
 
     ret = ""
 
-    functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
+    merged_functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
       ret += "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
         ret += Puppet::Util::Docs.scrub(hash[:doc])
@@ -106,6 +123,7 @@ module Puppet::Parser::Functions
   end
 
   def self.functions(env = nil)
+    Puppet.deprecation_warning "Puppet::Parser::Functions.functions is deprecated and will be removed in 3.0"
     @functions.synchronize {
       @functions[ env || Environment.current || Environment.root ]
     }
@@ -113,7 +131,31 @@ module Puppet::Parser::Functions
 
   # Determine if a given function returns a value or not.
   def self.rvalue?(name)
-    (functions[name.intern] || {})[:type] == :rvalue
+    func = get_function(name)
+    func ? func[:type] == :rvalue : false
+  end
+
+
+  class << self
+    private
+
+    def merged_functions
+      @functions.synchronize {
+        @functions[Environment.root].merge(@functions[Environment.current])
+      }
+    end
+
+    def get_function(name)
+      name = name.intern
+      merged_functions[name]
+    end
+
+    def add_function(name, func)
+      name = name.intern
+      @functions.synchronize {
+        @functions[Environment.current][name] = func
+      }
+    end
   end
 
   reset  # initialize the class instance variables

@@ -3,22 +3,6 @@ require 'spec_helper'
 
 describe Puppet::Parser::Functions do
 
-  after(:each) do
-    # Rationale:
-    # our various tests will almost all register to Pupet::Parser::Functions
-    # a new function called "name". All tests are required to stub Puppet::Parser::Scope
-    # so that +no+ new real ruby method are defined.
-    # After each test, we want to leave the whole Puppet::Parser::Functions environment
-    # as it was before we were called, hence we call rmfunction (which might not succeed
-    # if the function hasn't been registered in the test). It is also important in this
-    # section to stub +remove_method+ here so that we don't pollute the scope.
-    Puppet::Parser::Scope.stubs(:remove_method)
-    begin
-      Puppet::Parser::Functions.rmfunction("name")
-    rescue
-    end
-  end
-
   it "should have a method for returning an environment-specific module" do
     Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should be_instance_of(Module)
   end
@@ -101,6 +85,79 @@ describe Puppet::Parser::Functions do
       Puppet::Parser::Functions.autoloader.expects(:load)
 
       Puppet::Parser::Functions.function("name")
+    end
+  end
+
+  describe "::get_function" do
+    it "can retrieve a function defined on the *root* environment" do
+      Thread.current[:environment] = nil
+      function = Puppet::Parser::Functions.newfunction("atest", :type => :rvalue) do
+        nil
+      end
+
+      Puppet::Node::Environment.current = "test_env"
+      Puppet::Parser::Functions.send(:get_function, "atest").should equal(function)
+    end
+
+    it "can retrieve a function from the current environment" do
+      Puppet::Node::Environment.current = "test_env"
+      function = Puppet::Parser::Functions.newfunction("atest", :type => :rvalue) do
+        nil
+      end
+
+      Puppet::Parser::Functions.send(:get_function, "atest").should equal(function)
+    end
+
+    it "takes a function in the current environment over one in the root" do
+      root = Puppet::Node::Environment.root
+      env = Puppet::Node::Environment.current = "test_env"
+      func1 = {:type => :rvalue, :name => :testfunc, :extra => :func1}
+      func2 = {:type => :rvalue, :name => :testfunc, :extra => :func2}
+      Puppet::Parser::Functions.instance_eval do
+        @functions[Puppet::Node::Environment.root][:atest] = func1
+        @functions[Puppet::Node::Environment.current][:atest] = func2
+      end
+
+      Puppet::Parser::Functions.send(:get_function, "atest").should equal(func2)
+    end
+  end
+
+  describe "::merged_functions" do
+    it "returns functions in both the current and root environment" do
+      Thread.current[:environment] = nil
+      func_a = Puppet::Parser::Functions.newfunction("test_a", :type => :rvalue) do
+        nil
+      end
+      Puppet::Node::Environment.current = "test_env"
+      func_b = Puppet::Parser::Functions.newfunction("test_b", :type => :rvalue) do
+        nil
+      end
+
+      Puppet::Parser::Functions.send(:merged_functions).should include(:test_a, :test_b)
+    end
+
+    it "returns functions from the current environment over the root environment" do
+      root = Puppet::Node::Environment.root
+      env = Puppet::Node::Environment.current = "test_env"
+      func1 = {:type => :rvalue, :name => :testfunc, :extra => :func1}
+      func2 = {:type => :rvalue, :name => :testfunc, :extra => :func2}
+      Puppet::Parser::Functions.instance_eval do
+        @functions[Puppet::Node::Environment.root][:atest] = func1
+        @functions[Puppet::Node::Environment.current][:atest] = func2
+      end
+
+      Puppet::Parser::Functions.send(:merged_functions)[:atest].should equal(func2)
+    end
+  end
+
+  describe "::add_function" do
+    it "adds functions to the current environment" do
+      func = {:type => :rvalue, :name => :testfunc}
+      Puppet::Node::Environment.current = "add_function_test"
+      Puppet::Parser::Functions.send(:add_function, :testfunc, func)
+
+      Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.root].should_not include(:testfunc)
+      Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.current].should include(:testfunc)
     end
   end
 end
