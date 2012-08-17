@@ -42,26 +42,6 @@ describe Puppet::Parser::Functions do
     end
   end
 
-  describe "when calling rmfunction" do
-    before do
-      @module = Module.new
-      Puppet::Parser::Functions.stubs(:environment_module).returns @module
-    end
-
-    it "should remove the function in the scope class" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }
-      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
-
-      @module.expects(:remove_method).with("function_name").once
-
-      Puppet::Parser::Functions.rmfunction("name")
-    end
-
-    it "should raise an error if the function doesn't exists" do
-      lambda { Puppet::Parser::Functions.rmfunction("name") }.should raise_error
-    end
-  end
-
   describe "when calling function to test function existance" do
     before do
       @module = Module.new

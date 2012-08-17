@@ -64,26 +64,6 @@ module Puppet::Parser::Functions
     func
   end
 
-  # Remove a function added by newfunction
-  def self.rmfunction(name)
-    Puppet.deprecation_warning "Puppet::Parser::Functions.rmfunction is deprecated and will be removed in 3.0"
-    name = name.intern
-
-    raise Puppet::DevError, "Function #{name} is not defined" unless get_function(name)
-
-    @functions.synchronize {
-      @functions[Environment.current].delete(name)
-      # This seems wrong because it won't delete a function defined on root if
-      # the current environment is different
-      #@functions[Environment.root].delete(name)
-    }
-
-    fname = "function_#{name}"
-    # This also only deletes from the module associated with
-    # Environment.current
-    environment_module.send(:remove_method, fname)
-  end
-
   # Determine if a given name is a function
   def self.function(name)
     name = name.intern
@@ -122,19 +102,11 @@ module Puppet::Parser::Functions
     ret
   end
 
-  def self.functions(env = nil)
-    Puppet.deprecation_warning "Puppet::Parser::Functions.functions is deprecated and will be removed in 3.0"
-    @functions.synchronize {
-      @functions[ env || Environment.current || Environment.root ]
-    }
-  end
-
   # Determine if a given function returns a value or not.
   def self.rvalue?(name)
     func = get_function(name)
     func ? func[:type] == :rvalue : false
   end
-
 
   class << self
     private
