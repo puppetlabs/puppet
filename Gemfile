@@ -12,7 +12,9 @@ gem "mocha",  "~> 0.10.0"
 group :development do
   gem "pry"
   gem "pry-doc"
-  gem "guard-rspec"
   gem "simplecov"
+
+  gem "guard-rspec"
+  gem "growl"
 end
 
