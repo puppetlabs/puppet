@@ -1,5 +1,9 @@
 # Rakefile for Puppet -*- ruby -*-
 
+# We need access to the Puppet.version method
+$LOAD_PATH.unshift(File.expand_path("lib"))
+require 'puppet/version'
+
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 
 begin
@@ -18,14 +22,10 @@ require 'rspec'
 require "rspec/core/rake_task"
 
 
-module Puppet
-    %x{which git &> /dev/null}
-    if $?.success? and File.exist?('.git')
-        # remove the git hash from git describe string
-        PUPPETVERSION=%x{git describe}.chomp.gsub('-','.').split('.')[0..3].join('.')
-    else
-        PUPPETVERSION=File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
-    end
+%x{which git &> /dev/null}
+if $?.success? and File.exist?('.git')
+  # remove the git hash from git describe string
+  Puppet.version = %x{git describe}.chomp.gsub('-','.').split('.')[0..3].join('.')
 end
 
 Dir['tasks/**/*.rake'].each { |t| load t }
@@ -45,7 +45,7 @@ FILES = FileList[
     'spec/**/*'
 ]
 
-Rake::PackageTask.new("puppet", Puppet::PUPPETVERSION) do |pkg|
+Rake::PackageTask.new("puppet", Puppet.version) do |pkg|
     pkg.package_dir = 'pkg'
     pkg.need_tar_gz = true
     pkg.package_files = FILES.to_a
