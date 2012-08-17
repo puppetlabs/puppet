@@ -174,8 +174,7 @@ module Puppet
           case type
           when :class
             klass = scope.known_resource_types.find_hostclass '', name
-            klass.ensure_in_catalog scope, options
-            # MLEN:FIXME: this doesn't return a resource
+            resource = klass.ensure_in_catalog scope, options
           else
             resource = Puppet::Parser::Resource.new type, name,
               :scope => scope,
