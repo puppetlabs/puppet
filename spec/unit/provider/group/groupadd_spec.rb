@@ -18,10 +18,20 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       provider.create
     end
 
-    it "should add -r when system is enabled and the group is being created" do
-      resource[:system] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'])
-      provider.create
+    describe "on system that feature system_groups", :if => described_class.system_groups? do
+      it "should add -r when system is enabled and the group is being created" do
+        resource[:system] = :true
+        provider.expects(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'])
+        provider.create
+      end
+    end
+
+    describe "on system that do not feature system_groups", :unless => described_class.system_groups? do
+      it "should not add -r when system is enabled and the group is being created" do
+        resource[:system] = :true
+        provider.expects(:execute).with(['/usr/sbin/groupadd', 'mygroup'])
+        provider.create
+      end
     end
   end
 
