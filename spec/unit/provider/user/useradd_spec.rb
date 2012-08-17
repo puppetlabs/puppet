@@ -21,17 +21,29 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   let(:provider) { described_class.new(resource) }
 
   describe "#create" do
+
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
       provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
       provider.create
     end
 
-    it "should add -r when system is enabled" do
-      resource[:system] = :true
-      provider.should be_system_users
-      provider.expects(:execute).with(['/usr/sbin/useradd', '-r', 'myuser'])
-      provider.create
+    describe "on systems that support has_system", :if => described_class.system_users? do
+      it "should add -r when system is enabled" do
+        resource[:system] = :true
+        provider.should be_system_users
+        provider.expects(:execute).with(['/usr/sbin/useradd', '-r', 'myuser'])
+        provider.create
+      end
+    end
+
+    describe "on systems that do not support has_system", :unless => described_class.system_users? do
+      it "should not add -r when system is enabled" do
+        resource[:system] = :true
+        provider.should_not be_system_users
+        provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'])
+        provider.create
+      end
     end
 
     it "should set password age rules" do
@@ -71,17 +83,26 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   describe "#check_system_users" do
     it "should check system users" do
+      described_class.expects(:system_users?).returns true
       resource.expects(:system?)
       provider.check_system_users
     end
 
     it "should return an array with a flag if it's a system user" do
+      described_class.expects(:system_users?).returns true
       resource[:system] = :true
       provider.check_system_users.must == ["-r"]
     end
 
     it "should return an empty array if it's not a system user" do
+      described_class.expects(:system_users?).returns true
       resource[:system] = :false
+      provider.check_system_users.must == []
+    end
+
+    it "should return an empty array if system user is not featured" do
+      described_class.expects(:system_users?).returns false
+      resource[:system] = :true
       provider.check_system_users.must == []
     end
   end
@@ -154,17 +175,29 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.addcmd.should include 'myuser'
     end
 
-    it "should return an array with -r if system? is true" do
-      resource[:system] = :true
-      provider.addcmd.should include("-r")
+    describe "on systems featuring system_users", :if => described_class.system_users? do
+      it "should return an array with -r if system? is true" do
+        resource[:system] = :true
+        provider.addcmd.should include("-r")
+      end
+
+      it "should return an array without -r if system? is false" do
+        resource[:system] = :false
+        provider.addcmd.should_not include("-r")
+      end
     end
 
-    it "should return an array without -r if system? is false" do
-      resource[:system] = :false
-      provider.addcmd.should_not include("-r")
+    describe "on systems not featuring system_users", :unless => described_class.system_users? do
+      [:false, :true].each do |system|
+        it "should return an array without -r if system? is #{system}" do
+          resource[:system] = system
+          provider.addcmd.should_not include("-r")
+        end
+      end
     end
 
     it "should return an array with full command" do
+      described_class.expects(:system_users?).returns true
       provider.stubs(:add_properties).returns(["-G", "somegroup"])
       resource[:expiry] = "2012-08-18"
 
@@ -172,6 +205,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should return an array without -e if expiry is undefined full command" do
+      described_class.expects(:system_users?).returns true
       provider.stubs(:add_properties).returns(["-G", "somegroup"])
       provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
     end
