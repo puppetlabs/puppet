@@ -28,6 +28,15 @@ class Puppet::Parser::AST
       # We don't need to evaluate the name, because it's plaintext
       args = @arguments.safeevaluate(scope).map { |x| x == :undef ? '' : x }
 
+      arity = Puppet::Parser::Functions.arity(@name)
+      if arity >= 0 and args.size != arity
+        raise Puppet::ParseError,
+          "#{@name}(): Wrong number of arguments given (#{args.size} for #{arity})"
+      elsif arity < 0 and args.size < (arity+1).abs
+        raise Puppet::ParseError,
+          "#{@name}(): Wrong number of arguments given (#{args.size} for minimun #{(arity+1).abs})"
+      end
+
       scope.send("function_#{@name}", args)
     end
 
