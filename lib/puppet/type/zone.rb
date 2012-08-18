@@ -180,6 +180,15 @@ autorequire that directory."
       current_value = self.retrieve
       self.class.state_index(current_value) < self.class.state_index(self.should)
     end
+
+    # We override the newvalue in the parent class. Thus the values that we get from the
+    # manifest are stored as they are and later compared to the current state of the instance,
+    # which is in symbol form. Hence we have to convert this to symbol here for now.
+    # TODO: fix this so that munging is no longer necessary. see also #15886
+
+    munge do |value|
+      value.intern
+    end
   end
 
   newparam(:name) do
