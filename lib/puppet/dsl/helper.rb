@@ -32,12 +32,12 @@ module Puppet
       ##
       def get_resource(reference)
         case reference
-        when ::Puppet::Resource
+        when Puppet::Resource
           reference
-        when ::Puppet::DSL::ResourceReference
+        when ResourceReference
           reference.resource
-        when ::String
-          ::Puppet::DSL::Parser.current_scope.findresource reference
+        when String
+          Puppet::DSL::Parser.current_scope.findresource reference
         else
           nil
         end
