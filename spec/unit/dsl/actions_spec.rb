@@ -158,6 +158,7 @@ describe Puppet::DSL::Actions do
       evaluate_in_scope do
         resource_types = mock
         resource_types.expects(:add_node).with {|n| n.type == :node }
+        resource_types.stubs(:hostclass).returns nil
         @scope.stubs(:known_resource_types).returns resource_types
 
         subject.create_node "foo", {}, proc {}, 0
