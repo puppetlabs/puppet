@@ -275,6 +275,29 @@ autorequire that directory."
     end
   end
 
+  newproperty(:path, :parent => ZoneConfigProperty) do
+    desc "The root of the zone's filesystem.  Must be a fully qualified
+      file name.  If you include `%s` in the path, then it will be
+      replaced with the zone's name.  Currently, you cannot use
+      Puppet to move a zone. Consequently this is a readonly property."
+
+    def configtext
+      "set zonepath=#{self.should}"
+    end
+
+    validate do |value|
+      raise ArgumentError, "The zone base must be fully qualified" unless value =~ /^\//
+    end
+
+    munge do |value|
+      if value =~ /%s/
+        value % @resource[:name]
+      else
+        value
+      end
+    end
+  end
+
   newproperty(:pool, :parent => ZoneConfigProperty) do
     desc "The resource pool for this zone."
 
@@ -379,27 +402,6 @@ autorequire that directory."
       so Puppet only checks for it at that time.}
   end
 
-  newparam(:path) do
-    desc "The root of the zone's filesystem.  Must be a fully qualified
-      file name.  If you include `%s` in the path, then it will be
-      replaced with the zone's name.  Currently, you cannot use
-      Puppet to move a zone."
-
-    validate do |value|
-      unless value =~ /^\//
-        raise ArgumentError, "The zone base must be fully qualified"
-      end
-    end
-
-    munge do |value|
-      if value =~ /%s/
-        value % @resource[:name]
-      else
-        value
-      end
-    end
-  end
-
   newparam(:create_args) do
     desc "Arguments to the `zonecfg` create command.  This can be used to create branded zones."
   end
@@ -457,13 +459,6 @@ autorequire that directory."
   end
 
   validate do
-    # Do not validate unless we are validating parameters for sure.
-    return if self[:ensure] == :absent
-
-    # Zones need atleast path for creation.
-    # A better option is to mark path as an `isrequired` parameter.
-    self.fail "zone path is required" unless self[:path]
-
     return unless self[:ip]
     interface, address, router = self[:ip].split(':')
     if self[:iptype] == :shared
