@@ -35,7 +35,7 @@ describe Puppet::DSL::ResourceReference do
       evaluate_in_context { notify "foo" }
     end
 
-    it "should return string reference of a resource" do 
+    it "should return string reference of a resource" do
       evaluate_in_scope do
         Puppet::DSL::ResourceReference.new(@typeref, "foo").reference.should == "Notify[foo]"
       end
@@ -104,6 +104,49 @@ describe Puppet::DSL::ResourceReference do
       end
 
     end
+  end
+
+  describe "#realize" do
+
+    it "realizes the resource if it was virtual" do
+      evaluate_in_context { virtual notify "foobarbaz" }
+      evaluate_in_scope do
+        Puppet::DSL::ResourceReference.new(@typeref, "foobarbaz").realize
+      end
+
+      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
+    end
+
+    it "does nothing when the resource is not virtual" do
+      evaluate_in_context { notify "foobarbaz" }
+      evaluate_in_scope do
+        Puppet::DSL::ResourceReference.new(@typeref, "foobarbaz").realize
+      end
+
+      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
+    end
+  end
+
+  describe "#collect" do
+
+    it "collects the resource if it was exported" do
+      evaluate_in_context { export notify "foobarbaz" }
+      evaluate_in_scope do
+        Puppet::DSL::ResourceReference.new(@typeref, "foobarbaz").collect
+      end
+
+      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
+    end
+
+    it "does nothein when resource is not exported" do
+      evaluate_in_context { notify "foobarbaz" }
+      evaluate_in_scope do
+        Puppet::DSL::ResourceReference.new(@typeref, "foobarbaz").collect
+      end
+
+      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
+    end
+
   end
 
 end

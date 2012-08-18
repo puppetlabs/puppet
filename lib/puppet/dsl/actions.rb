@@ -78,6 +78,12 @@ module Puppet
         raise NoMethodError, "called from invalid nesting" if nesting > 0
         raise ArgumentError, "no block supplied"           if code.nil?
 
+        # do nothing if hostclass already exist (init.rb gets parser multiple
+        # times sometimes
+        #
+        # MLEN:FIXME this probable should get removed somehow
+        return if Parser.current_scope.known_resource_types.hostclass name
+
         options.each do |k, _|
           unless :inherits == k
             raise ArgumentError, "unrecognized option #{k} in node #{name}"
@@ -163,7 +169,7 @@ module Puppet
 
         ResourceDecorator.new(options, &code) if code
 
-        Array(args).map do |name|
+        Array(args).flatten.map do |name|
           ##
           # Implementation based on
           # lib/puppet/parser/functions/create_resources.rb

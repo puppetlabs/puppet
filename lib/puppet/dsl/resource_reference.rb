@@ -58,6 +58,30 @@ module Puppet
         end
         result
       end
+
+      ##
+      # Realizes referenced resource
+      ##
+      def realize
+        return unless @resource.virtual
+        scope = Puppet::DSL::Parser.current_scope
+        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :virtual
+        c.resources = [@resource]
+        scope.compiler.add_collection c
+        c
+      end
+
+      ##
+      # Collects referenced resource
+      ##
+      def collect
+        return unless @resource.exported
+        scope = Puppet::DSL::Parser.current_scope
+        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :exported
+        c.resources = [@resource]
+        scope.compiler.add_collection c
+        c
+      end
     end
   end
 end
