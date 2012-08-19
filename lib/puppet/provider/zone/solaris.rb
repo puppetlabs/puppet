@@ -120,7 +120,6 @@ Puppet::Type.type(:zone).provide(:solaris) do
       method = (property.name.to_s + '_conf').intern
       arr << self.send(method ,@resource[property.name]) unless property.safe_insync?(properties[property.name])
     end
-    arr << "commit"
     setconfig(arr.join("\n"))
   end
 
@@ -128,13 +127,37 @@ Puppet::Type.type(:zone).provide(:solaris) do
     zonecfg :delete, "-F"
   end
 
+  def add_cmd(cmd)
+    @cmds = [] if @cmds.nil?
+    @cmds << cmd
+  end
+
   def exists?
     properties[:ensure] != :absent
   end
 
+  # We cannot use the execpipe in util because the pipe is not opened in
+  # read/write mode.
+  def exec_cmd(var)
+    # In bash, the exit value of the last command is the exit value of the
+    # entire pipeline
+    out = execute("echo \"#{var[:input]}\" | #{var[:cmd]}", :failonfail => false, :combine => true)
+    st = $?.exitstatus
+    {:out => out, :exit => st}
+  end
+
   # Clear out the cached values.
   def flush
+    return if @cmds.nil? || @cmds.empty?
+    str = (@cmds << "commit" << "exit").join("\n")
+    @cmds = []
     @property_hash.clear
+
+    command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
+    r = exec_cmd(:cmd => command, :input => str)
+    if r[:exit] != 0 or r[:out] =~ /not allowed/
+      raise ArgumentError, "Failed to apply configuration"
+    end
   end
 
   def install(dummy_argument=:work_arround_for_ruby_GC_bug)
@@ -225,10 +248,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   # Execute a configuration string.  Can't be private because it's called
   # by the properties.
   def setconfig(str)
-    output = cfg '-z', @resource[:name], str
-    if output =~ /not allowed/ or $CHILD_STATUS != 0
-      raise ArgumentError, "Failed to apply configuration"
-    end
+    add_cmd str
   end
 
   def start
