@@ -307,6 +307,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     if datasets = config["dataset"]
       result[:dataset] = datasets.collect { |dataset| dataset[:name] }
     end
+    result[:iptype] = config[:'ip-type'] if config[:'ip-type']
     if net = config["net"]
       result[:ip] = net.collect do |params|
         if params[:defrouter]
