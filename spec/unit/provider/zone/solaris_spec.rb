@@ -9,7 +9,17 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
     it "should add the create args to the create str" do
       resource.stubs(:properties).returns([])
       resource[:create_args] = "create_args"
-      provider.expects(:setconfig).with("create -b create_args\ncommit")
+      provider.expects(:setconfig).with("create -b create_args")
+      provider.configure
+    end
+    it "should add the create args to the create str" do
+      iptype = stub "property"
+      iptype.stubs(:name).with().returns(:iptype)
+      iptype.stubs(:safe_insync?).with(iptype).returns(false)
+      provider.stubs(:properties).returns({:iptype => iptype})
+      resource.stubs(:properties).with().returns([iptype])
+      resource[:create_args] = "create_args"
+      provider.expects(:setconfig).with("create -b create_args\nset ip-type=shared")
       provider.configure
     end
   end
@@ -59,15 +69,18 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
   end
   context "#setconfig" do
     it "should correctly set configuration" do
-      provider.expects(:cfg).with('-z', 'dummy', "create -b create_args\nset zonepath=\/\ncommit\n").returns('')
-      $CHILD_STATUS.stubs(:exitstatus).with().returns 0
-      provider.setconfig("create -b create_args\nset zonepath=\/\ncommit\n")
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set zonepath=/\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 0})
+      provider.setconfig("set zonepath=\/")
+      provider.flush
     end
 
     it "should correctly warn on 'not allowed'" do
-      provider.expects(:cfg).with('-z', 'dummy', 'set zonepath=/').returns("Zone z2 already installed; set zonepath not allowed.\n")
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set zonepath=/\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>"Zone z2 already installed; set zonepath not allowed.\n", :exit => 0})
+      provider.setconfig("set zonepath=\/")
       expect {
-        provider.setconfig("set zonepath=\/")
+        provider.flush
       }.to raise_error(ArgumentError, /Failed to apply configuration/)
     end
   end
@@ -102,6 +115,23 @@ net:
         "net"=>[{:physical=>"ex0001", :address=>"1.1.1.1"}, {:physical=>"ex0002", :address=>"1.1.1.2"}],
         :zonepath=>"/dummy/z"
       }
+    end
+  end
+  context "#flush" do
+    it "should correctly execute pending commands" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set iptype=shared\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 0})
+      provider.setconfig("set iptype=shared")
+      provider.flush
+    end
+
+    it "should correctly raise error on failure" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set iptype=shared\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 1})
+      provider.setconfig("set iptype=shared")
+      expect {
+        provider.flush
+      }.to raise_error(ArgumentError, /Failed to apply/)
     end
   end
   context "#start" do
