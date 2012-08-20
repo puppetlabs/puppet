@@ -1,7 +1,7 @@
 desc "Sign to the package with the Puppet Labs release key"
 task :sign_packages do
 
-version = Puppet::PUPPETVERSION
+version = Puppet.version
 
 # Sign package
 
