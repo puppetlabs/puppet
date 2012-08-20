@@ -1,3 +1,5 @@
+require 'puppet/version'
+
 # Try to load rubygems.  Hey rubygems, I hate you.
 begin
   require 'rubygems'
@@ -24,12 +26,6 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '3.0.0-rc3'
-
-  def Puppet.version
-    PUPPETVERSION
-  end
-
   class << self
     include Puppet::Util
     attr_reader :features
