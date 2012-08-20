@@ -114,6 +114,25 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
     end
   end
 
+  describe "#restart" do
+    it "should use the supplied restart command if specified" do
+      resource[:restart] = 'c:/bin/foo'
+
+      provider.expects(:execute).never
+      provider.expects(:execute).with(['c:/bin/foo'], :failonfail => true, :squelch => true)
+
+      provider.restart
+    end
+
+    it "should restart the service" do
+      seq = sequence("restarting")
+      provider.expects(:stop).in_sequence(seq)
+      provider.expects(:start).in_sequence(seq)
+
+      provider.restart
+    end
+  end
+
   describe "#enabled?" do
     it "should report a service with a startup type of manual as manual" do
       config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DEMAND_START)
