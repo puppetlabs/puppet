@@ -194,6 +194,8 @@ class TestSettings < Test::Unit::TestCase
       owner = root
       group = root
       yay = /a/path
+      longline = long \\
+        line
 
       [main]
   four = five
@@ -205,6 +207,8 @@ class TestSettings < Test::Unit::TestCase
   group = puppet
   attrdir = /some/dir
   attr3 = $attrdir/other
+  longline = long \\
+    line
     }
 
     file = tempfile
@@ -223,6 +227,7 @@ class TestSettings < Test::Unit::TestCase
       :owner => "root",
       :group => "root",
       :yay => "/a/path",
+      :longline => "long line",
       :four => "five",
       :six => "seven"
     }.each do |param, value|
@@ -237,7 +242,8 @@ class TestSettings < Test::Unit::TestCase
       :owner => "puppet",
       :group => "puppet",
       :attrdir => "/some/dir",
-      :attr3 => "$attrdir/other"
+      :attr3 => "$attrdir/other",
+      :longline => "long line"
     }.each do |param, value|
       assert_equal(value, section1[param], "Param #{param} was not set correctly in section1")
     end
