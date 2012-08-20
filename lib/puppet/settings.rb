@@ -1194,13 +1194,20 @@ if @config.include?(:run_mode)
     }
 
     count = 0
+    prev  = ""
 
     # Default to 'main' for the section.
     section = :main
     result[section][:_meta] = {}
     text.split(/\n/).each do |line|
       count += 1
+      line = line.gsub(/^\s+/,"")  # leading spaces are not taken into account anywhere
+      line = "#{prev}#{line}"     # eat the previous line (if there is one).
+      prev = ""                   # *burp*. previous line cleanup.
       case line
+      when /^\s*(.*?)\\$/         # delay processing until the next line.
+        prev = $1.intern
+        next
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
         #disallow application_defaults in config file
