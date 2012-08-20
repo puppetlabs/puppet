@@ -1,0 +1,44 @@
+# @(#)08        1.15.1.3  src/bos/usr/sbin/cron/root, cmdcntl, bos530 2/11/94 17:19:47
+# IBM_PROLOG_BEGIN_TAG 
+# This is an automatically generated prolog. 
+#  
+# bos530 src/bos/usr/sbin/cron/root 1.15.1.3 
+#  
+# Licensed Materials - Property of IBM 
+#  
+# (C) COPYRIGHT International Business Machines Corp. 1989,1994 
+# All Rights Reserved 
+#  
+# US Government Users Restricted Rights - Use, duplication or 
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp. 
+#  
+# IBM_PROLOG_END_TAG 
+#
+# COMPONENT_NAME: (CMDCNTL) commands needed for basic system needs
+#
+# FUNCTIONS: 
+#
+# ORIGINS: 27
+#
+# (C) COPYRIGHT International Business Machines Corp. 1989,1994
+# All Rights Reserved
+# Licensed Materials - Property of IBM
+#
+# US Government Users Restricted Rights - Use, duplication or
+# disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+#
+#0 3 * * * /usr/sbin/skulker
+#45 2 * * 0 /usr/lib/spell/compress
+#45 23 * * * ulimit 5000; /usr/lib/smdemon.cleanu > /dev/null
+0 11 * * * /usr/bin/errclear -d S,O 30
+0 12 * * * /usr/bin/errclear -d H 90
+0 15 * * *  /usr/lib/ras/dumpcheck >/dev/null 2>&1
+# SSA warning : Deleting the next two lines may cause errors in redundant
+# SSA warning : hardware to go undetected.
+01 5 * * * /usr/lpp/diagnostics/bin/run_ssa_ela 1>/dev/null 2>/dev/null
+0 * * * * /usr/lpp/diagnostics/bin/run_ssa_healthcheck 1>/dev/null 2>/dev/null
+# SSA warning : Deleting the next line may allow enclosure hardware errors to go undetected
+30 * * * * /usr/lpp/diagnostics/bin/run_ssa_encl_healthcheck 1>/dev/null 2>/dev/null
+# SSA warning : Deleting the next line may allow link speed exceptions to go undetected
+30 4 * * * /usr/lpp/diagnostics/bin/run_ssa_link_speed 1>/dev/null 2>/dev/null
+55 23 * * * /var/perf/pm/bin/pmcfg >/dev/null 2>&1      #Enable PM Data Collection

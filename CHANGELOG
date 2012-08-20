@@ -103,6 +103,12 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
+2.7.19rc3
+===
+85f5543 Ruby 1.9.3 has a different error when `require` fails.
+b2d08a4 (#15291) Add Vendor tag to Puppet spec file
+7611753 Add packaging support for fedora 17
+
 2.7.19rc2
 ===
 b540aa0 (#15471) Fix setting mode of last_run_summary

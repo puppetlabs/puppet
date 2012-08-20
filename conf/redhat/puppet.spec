@@ -1,20 +1,28 @@
 # Augeas and SELinux requirements may be disabled at build time by passing
 # --without augeas and/or --without selinux to rpmbuild or mock
 
-%{!?ruby_sitelibdir: %global ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
+# Fedora 17 ships with Ruby 1.9, which uses vendorlibdir instead of
+# sitelibdir. Adjust our target if installing on f17.
+%if 0%{?fedora} >= 17
+%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
+%else
+%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
+%endif
+
 %global confdir conf/redhat
 
 Name:           puppet
 Version:        3.0.0
 Release:        0.1rc3%{?dist}
 #Release:        1%{?dist}
+Vendor:         %{?_host_vendor}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 #Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc2.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz
 #Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc2.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -69,7 +77,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 #%setup -q -n %{name}-%{version}
-%setup -q -n %{name}-%{version}rc2
+%setup -q -n %{name}-%{version}rc3
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -93,7 +101,7 @@ mv conf/puppet-queue.conf examples/etc/puppet/
 
 %install
 rm -rf %{buildroot}
-ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
+ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
 
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
@@ -140,7 +148,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %defattr(-, root, root, 0755)
 %doc CHANGELOG LICENSE README.md examples
 %{_bindir}/puppet
-%{ruby_sitelibdir}/*
+%{puppet_libdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
 %dir %{_sysconfdir}/%{name}/modules
@@ -271,6 +279,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Aug 14 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-0.1rc3
+- Update for 2.7.19rc3
+
 * Tue Aug 7 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-0.1rc2
 - Update for 2.7.19rc2
 
