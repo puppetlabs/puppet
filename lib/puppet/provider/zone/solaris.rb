@@ -148,9 +148,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
   end
 
   def start
-    self.fail "Path is required" unless @resource[:path]
     # Check the sysidcfg stuff
     if cfg = @resource[:sysidcfg]
+      self.fail "Path is required" unless @resource[:path]
       zoneetc = File.join(@resource[:path], "root", "etc")
       sysidcfg = File.join(zoneetc, "sysidcfg")
 
