@@ -69,8 +69,24 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
       expect {
         provider.setconfig("set zonepath=\/")
       }.to raise_error(ArgumentError, /Failed to apply configuration/)
-
+    end
+  end
+  context "#start" do
+    it "should not require path if sysidcfg is specified" do
+      resource[:path] = '/mypath'
+      resource[:sysidcfg] = 'dummy'
+      File.stubs(:exists?).with('/mypath/root/etc/sysidcfg').returns true
+      File.stubs(:directory?).with('/mypath/root/etc').returns true
+      provider.expects(:zoneadm).with(:boot)
+      provider.start
     end
 
+    it "should require path if sysidcfg is specified" do
+      resource.stubs(:[]).with(:path).returns nil
+      resource.stubs(:[]).with(:sysidcfg).returns 'dummy'
+      expect {
+        provider.start
+      }.to raise_error(Puppet::Error, /Path is required/)
+    end
   end
 end
