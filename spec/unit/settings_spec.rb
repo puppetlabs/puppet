@@ -769,6 +769,16 @@ describe Puppet::Settings do
       @settings[:one].should == 65
     end
 
+    it "should convert splitted lines in the configuration file to a single line" do
+      text = "[main]
+      one = long \\
+        line
+      "
+      @settings.expects(:read_file).returns(text)
+      @settings.send(:parse_config_files)
+      @settings[:one].should == "long line"
+    end
+
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
