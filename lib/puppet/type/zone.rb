@@ -17,57 +17,27 @@ autorequire that directory."
 
   # Those properties that can have multiple instances.
   class ZoneMultiConfigProperty < ZoneConfigProperty
+    # wrap the value if it is not an array
+    def wrap(a)
+      case a
+      when Array; a
+      when NilClass; []
+      else [a]
+      end
+    end
     def configtext
-      list = @should
-
-      current_value = self.retrieve
-
-      unless current_value.is_a? Symbol
-        if current_value.is_a? Array
-          list += current_value
-        else
-          list << current_value if current_value
-        end
-      end
-
-      # Some hackery so we can test whether current_value is an array or a symbol
-      if current_value.is_a? Array
-        tmpis = current_value
-      else
-        if current_value
-          tmpis = [current_value]
-        else
-          tmpis = []
-        end
-      end
-
-      rms = []
-      adds = []
-
-      # Collect the modifications to make
-      list.sort.uniq.collect do |obj|
-        # Skip objectories that are configured and should be
-        next if tmpis.include?(obj) and @should.include?(obj)
-
-        if tmpis.include?(obj)
-          rms << obj
-        else
-          adds << obj
-        end
-      end
-
-
-      # And then perform all of the removals before any of the adds.
-      (rms.collect { |o| rm(o) } + adds.collect { |o| add(o) }).join("\n")
+      # say we have should = [1,2,3,4,5] and cur_has = {2,3,4,6} then we should have
+      # rms = [6] adds = [1,5]
+      should = @should.sort.uniq
+      cur_has = wrap(self.retrieve).sort.uniq
+      rms = cur_has - should
+      adds = should - cur_has
+      (rms.map{|o| rm o} + adds.map{|o| add o}).join("\n")
     end
 
     # We want all specified directories to be included.
     def insync?(current_value)
-      if current_value.is_a? Array and @should.is_a? Array
-        current_value.sort == @should.sort
-      else
-        current_value == @should
-      end
+      wrap(current_value).sort == wrap(@should).sort
     end
   end
 
