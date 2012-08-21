@@ -76,6 +76,28 @@ module Puppet::Network::HTTP
       end
     end
 
+
+    # TODO: These are proxies for the Net::HTTP#request_* methods, which are
+    # almost the same as the "get", "post", etc. methods that we've ported above,
+    # but they are able to accept a code block and will yield to it.  For now
+    # we're not funneling these proxy implementations through our #request
+    # method above, so they will not inherit the same error handling.  In the
+    # future we may want to refactor these so that they are funneled through
+    # that method and do inherit the error handling.
+    def request_get(*args)
+      connection.request_get(*args)
+    end
+
+    def request_head(*args)
+      connection.request_head(*args)
+    end
+
+    def request_post(*args)
+      connection.request_post(*args)
+    end
+    # end of Net::HTTP#request_* proxies
+
+
     def address
       connection.address
     end
