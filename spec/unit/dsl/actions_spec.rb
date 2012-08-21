@@ -379,6 +379,22 @@ describe Puppet::DSL::Actions do
     end
   end
 
+  describe "#validate_options" do
+    let(:attributes) { {:foo => "bar"} }
+
+    it "raises ArgumentError when invalid options are passed" do
+      lambda do
+        subject.validate_options :asdf, attributes
+      end.should raise_error ArgumentError
+    end
+
+    it "does nothing when all attributes are valid" do
+      lambda do
+        subject.validate_options :foo, attributes
+      end.should_not raise_error ArgumentError
+    end
+  end
+
   it "allows to read and set exporting setting" do
     subject.exporting?.should be false
     subject.exporting = true

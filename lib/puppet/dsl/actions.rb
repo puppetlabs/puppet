@@ -68,6 +68,22 @@ module Puppet
       end
 
       ##
+      # Helper to validate options. Example:
+      #
+      #   validate_options :arguments, :inherits, options
+      #
+      # It expects list of valid options and a hash to validate as a last
+      # argument.
+      ##
+      def validate_options(allow, options = {})
+        options.each do |k, _|
+          unless Array(allow).include? k
+            raise ArgumentError, "unrecognized option #{k}"
+          end
+        end
+      end
+
+      ##
       # Creates a new Puppet node. All arguments have to be passed.
       # Nesting is the nesting of scopes in the Ruby DSL,
       # Code is a Ruby block of code for that node,
@@ -84,11 +100,7 @@ module Puppet
         # MLEN:FIXME this probable should get removed somehow
         return if Parser.current_scope.known_resource_types.hostclass name
 
-        options.each do |k, _|
-          unless :inherits == k
-            raise ArgumentError, "unrecognized option #{k} in node #{name}"
-          end
-        end
+        validate_options :inherits, options
 
         params = {}
         if options[:inherits]
@@ -114,13 +126,8 @@ module Puppet
         raise NoMethodError, "called from invalid nesting" if nesting > 0
         raise ArgumentError, "no block supplied"           if code.nil?
 
-        options.each do |k, _|
-          unless [:arguments, :inherits].include? k
-            raise ArgumentError, "unrecognized option #{k} in hostclass #{name}"
-          end
-        end
+        validate_options [:inherits, :arguments], options
 
-        params = {}
         params[:arguments] = options[:arguments]     if options[:arguments]
         params[:parent]    = options[:inherits].to_s if options[:inherits]
 
@@ -141,14 +148,9 @@ module Puppet
         raise NoMethodError, "called from invalid nesting" if nesting > 0
         raise ArgumentError, "no block supplied"           if code.nil?
 
-        options.each do |k, _|
-          unless :arguments == k
-            raise ArgumentError, "unrecognized option #{k} in definition #{name}"
-          end
-        end
+        validate_options :arguments, options
 
-        params = {}
-        params[:arguments] = options[:arguments] if options[:arguments]
+        params = options.select { |k, _| k == :arguments }
         definition = Puppet::Resource::Type.new :definition, name.to_s, params
         definition.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
 
