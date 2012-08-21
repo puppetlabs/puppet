@@ -70,7 +70,7 @@ module Puppet
       ##
       # Helper to validate options. Example:
       #
-      #   validate_options :arguments, :inherits, options
+      #   validate_options [:arguments, :inherits], options
       #
       # It expects list of valid options and a hash to validate as a last
       # argument.
@@ -126,7 +126,7 @@ module Puppet
         raise NoMethodError, "called from invalid nesting" if nesting > 0
         raise ArgumentError, "no block supplied"           if code.nil?
 
-        validate_options :inherits, :arguments, options
+        validate_options [:inherits, :arguments], options
 
         params = {}
         params[:arguments] = options[:arguments]     if options[:arguments]
