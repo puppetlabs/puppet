@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby -S rspec
 #
 # Unit testing for the RedHat service Provider
 #
@@ -43,6 +43,11 @@ describe provider_class, :as_platform => :posix do
       @provider.expects(:execute).with{|command, *args| command == ['/sbin/service', 'myservice', 'status']}
       @provider.send(:status)
     end
+  end
+
+  it "(#15797) should use 'reset' instead of 'on' when calling enable" do
+    provider_class.expects(:chkconfig).with(@resource[:name], :reset)
+    @provider.enable
   end
 
   it "should have an enabled? method" do
