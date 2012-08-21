@@ -84,12 +84,12 @@ module Puppet::Network::HTTP
     # method above, so they will not inherit the same error handling.  In the
     # future we may want to refactor these so that they are funneled through
     # that method and do inherit the error handling.
-    def request_get(*args)
-      connection.request_get(*args)
+    def request_get(*args, &block)
+      connection.request_get(*args, &block)
     end
 
-    def request_head(*args)
-      connection.request_head(*args)
+    def request_head(*args, &block)
+      connection.request_head(*args, &block)
     end
 
     def request_post(*args)
