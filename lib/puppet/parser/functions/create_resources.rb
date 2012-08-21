@@ -18,7 +18,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
 
     A third, optional parameter may be given, also as a hash:
 
-        $defaults => {
+        $defaults = {
           'ensure'   => present,
           'provider' => 'ldap',
         }
