@@ -126,7 +126,7 @@ module Puppet
         raise NoMethodError, "called from invalid nesting" if nesting > 0
         raise ArgumentError, "no block supplied"           if code.nil?
 
-        validate_options [:inherits, :arguments], options
+        validate_options :inherits, :arguments, options
 
         params = {}
         params[:arguments] = options[:arguments]     if options[:arguments]
@@ -151,7 +151,8 @@ module Puppet
 
         validate_options :arguments, options
 
-        params = options.select { |k, _| k == :arguments }
+        params = {}
+        params[:arguments] = options[:arguments] if options[:arguments]
         definition = Puppet::Resource::Type.new :definition, name.to_s, params
         definition.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
 
