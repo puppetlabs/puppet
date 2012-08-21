@@ -8,7 +8,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
   # Convert the output of a list into a hash
   def self.line2hash(line)
-    fields = [:id, :name, :ensure, :path]
+    fields = [:id, :name, :ensure, :path, :uuid, :brand, :iptype]
 
     properties = {}
     line.split(":").each_with_index { |value, index|
@@ -20,6 +20,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
     properties.delete(:id) if properties[:id] == "-"
 
     properties[:ensure] = properties[:ensure].intern
+    properties.delete(:brand)
+    properties.delete(:uuid)
 
     properties
   end
@@ -33,6 +35,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
   # Perform all of our configuration steps.
   def configure
+    self.fail "Path is required" unless @resource[:path]
     # If the thing is entirely absent, then we need to create the config.
     # Is there someway to get this on one line?
     str = "create -b #{@resource[:create_args]}\nset zonepath=#{@resource[:path]}\n"
@@ -138,18 +141,14 @@ Puppet::Type.type(:zone).provide(:solaris) do
   # Execute a configuration string.  Can't be private because it's called
   # by the properties.
   def setconfig(str)
-    command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
-    debug "Executing '#{command}' in zone #{@resource[:name]} with '#{str}'"
-    IO.popen(command, "w") do |pipe|
-      pipe.puts str
-    end
-
-    unless $CHILD_STATUS == 0
+    output = cfg '-z', @resource[:name], str
+    if output =~ /not allowed/ or $CHILD_STATUS != 0
       raise ArgumentError, "Failed to apply configuration"
     end
   end
 
   def start
+    self.fail "Path is required" unless @resource[:path]
     # Check the sysidcfg stuff
     if cfg = @resource[:sysidcfg]
       zoneetc = File.join(@resource[:path], "root", "etc")
@@ -215,7 +214,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     config = getconfig
     result = {}
 
-    result[:autoboot] = config[:autoboot] ? config[:autoboot].intern : :absent
+    result[:autoboot] = config[:autoboot] ? config[:autoboot].intern : :true
     result[:pool] = config[:pool]
     result[:shares] = config[:shares]
     if dir = config["inherit-pkg-dir"]
@@ -224,7 +223,6 @@ Puppet::Type.type(:zone).provide(:solaris) do
     if datasets = config["dataset"]
       result[:dataset] = datasets.collect { |dataset| dataset[:name] }
     end
-    result[:iptype] = config[:"ip-type"]
     if net = config["net"]
       result[:ip] = net.collect do |params|
         if params[:defrouter]
@@ -247,9 +245,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
   end
 
   def zonecfg(*cmd)
-    # You apparently can't get the configuration of the global zone
+    # You apparently can't get the configuration of the global zone (strictly in solaris11)
     return "" if self.name == "global"
-
     begin
       cfg("-z", self.name, *cmd)
     rescue Puppet::ExecutionFailure => detail
