@@ -773,10 +773,14 @@ describe Puppet::Settings do
       text = "[main]
       one = long \\
         line
+      vardir = C:\\puppet\\var\\
+      confdir = C:\\puppet\\etc\\
       "
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:one].should == "long line"
+      @settings[:vardir].should == "C:\\puppet\\var\\"
+      @settings[:confdir].should == "C:\\puppet\\etc\\"
     end
 
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
