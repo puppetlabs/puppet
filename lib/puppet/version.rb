@@ -6,7 +6,7 @@
 # Raketasks and such to set the version based on the output of `git describe`
 #
 module Puppet
-  PUPPETVERSION = '2.7.19'
+  PUPPETVERSION = '3.0.0-rc3'
 
   def self.version
     @puppet_version || PUPPETVERSION
