@@ -128,6 +128,7 @@ module Puppet
 
         validate_options [:inherits, :arguments], options
 
+        params = {}
         params[:arguments] = options[:arguments]     if options[:arguments]
         params[:parent]    = options[:inherits].to_s if options[:inherits]
 
