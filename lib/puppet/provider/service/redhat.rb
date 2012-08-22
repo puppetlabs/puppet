@@ -21,7 +21,10 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   # Remove the symlinks
   def disable
-    output = chkconfig(@resource[:name], :off)
+    # The off method operates on run levels 2,3,4 and 5 by default We ensure
+    # all run levels are turned off because the reset method may turn on the
+    # service in run levels 0, 1 and/or 6
+    output = chkconfig("--level", "0123456", @resource[:name], :off)
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not disable #{self.name}: #{output}"
   end
