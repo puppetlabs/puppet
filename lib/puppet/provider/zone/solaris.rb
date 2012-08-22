@@ -29,21 +29,99 @@ Puppet::Type.type(:zone).provide(:solaris) do
     end
   end
 
+  def multi_conf(name, should, &action)
+    has = properties[name]
+    has = [] if has == :absent
+    rms = has - should
+    adds = should - has
+    (rms.map{|o| action.call(:rm,o)} + adds.map{|o| action.call(:add,o)}).join("\n")
+  end
+
+  def self.def_prop(var, str)
+    define_method('%s_conf' % var.to_s) do |v|
+      str % v
+    end
+    define_method('%s=' % var.to_s) do |v|
+      setconfig self.send( ('%s_conf'% var).intern, v)
+    end
+  end
+
+  def self.def_multiprop(var, &conf)
+    define_method(var.to_s) do |v|
+      o = properties[var]
+      return '' if o.nil? or o == :absent
+      o.join(' ')
+    end
+    define_method('%s=' % var.to_s) do |v|
+      setconfig self.send( ('%s_conf'% var).intern, v)
+    end
+    define_method('%s_conf' % var.to_s) do |v|
+      multi_conf(var, v, &conf)
+    end
+  end
+
+  def_prop :iptype, "set ip-type=%s"
+  def_prop :autoboot, "set autoboot=%s"
+  def_prop :path, "set zonepath=%s"
+  def_prop :pool, "set pool=%s"
+  def_prop :shares, "add rctl\nset name=zone.cpu-shares\nadd value (priv=privileged,limit=%s,action=none)\nend"
+
+  def_multiprop :ip do |action, str|
+    interface, ip, defrouter = str.split(':')
+    case action
+    when :add
+      cmd = ["add net"]
+      cmd << "set physical=#{interface}" if interface
+      cmd << "set address=#{ip}" if ip
+      cmd << "set defrouter=#{defrouter}" if defrouter
+      cmd << "end"
+      cmd.join("\n")
+    when :rm
+      if ip
+        "remove net address=#{ip}"
+      elsif interface
+        "remove net physical=#{interface}"
+      else
+        raise ArgumentError, "can not remove network based on default router"
+      end
+    else self.fail action
+    end
+  end
+
+  def_multiprop :dataset do |action, str|
+    case action
+    when :add; ['add dataset',"set name=#{str}",'end'].join("\n")
+    when :rm; "remove dataset name=#{str}"
+    else self.fail action
+    end
+  end
+
+  def_multiprop :inherit do |action, str|
+    case action
+    when :add; ['add inherit-pkg-dir', "set dir=#{str}",'end'].join("\n")
+    when :rm; "remove inherit-pkg-dir dir=#{str}"
+    else self.fail action
+    end
+  end
+
+  def my_properties
+    [:path, :iptype, :autoboot, :pool, :shares, :ip, :dataset, :inherit]
+  end
+
   # Perform all of our configuration steps.
   def configure
     self.fail "Path is required" unless @resource[:path]
-    # If the thing is entirely absent, then we need to create the config.
-    # Is there someway to get this on one line?
-    str = "create -b #{@resource[:create_args]}\nset zonepath=#{@resource[:path]}\n"
+    arr = ["create -b #{@resource[:create_args]}"]
 
     # Then perform all of our configuration steps.  It's annoying
     # that we need this much internal info on the resource.
-    @resource.send(:properties).each do |property|
-      str += property.configtext + "\n" if property.is_a? ZoneConfigProperty and ! property.safe_insync?(properties[property.name])
+    self.resource.properties.each do |property|
+      next unless my_properties.include? property.name
+      method = (property.name.to_s + '_conf').intern
+      arr << self.send(method ,@resource[property.name]) unless property.safe_insync?(properties[property.name])
     end
-
-    str += "commit\n"
-    setconfig(str)
+    arr << "commit"
+    setconfig(arr.join("\n"))
   end
 
   def destroy
