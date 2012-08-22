@@ -103,21 +103,15 @@ c01cac9 (#13204) Don't ignore missing PATH.augnew files
 7d27cd2 Use :as_platform in the smf service spec
 876785a Use :as_platform in the redhat service spec
 
-2.7.19rc3
+2.7.19
 ===
 85f5543 Ruby 1.9.3 has a different error when `require` fails.
 b2d08a4 (#15291) Add Vendor tag to Puppet spec file
 7611753 Add packaging support for fedora 17
-
-2.7.19rc2
-===
 b540aa0 (#15471) Fix setting mode of last_run_summary
 7c7cffe (#15471) Ensure non-root can read report summary
 a257105 Use Win32 API atomic replace in `replace_file`
 a619bfd Add additional commits to CHANGELOG missed in 2.7.19rc1
-
-2.7.19rc1
-===
 1dd660a (Maint) Remove reference to Patchwork
 a26d1ee Replace "the short version" with outline
 b73d0dd (#15595) Improve message on SSL errors
@@ -190,7 +184,6 @@ af6f7ba (#13880) Add openrc service provider for Gentoo and Funtoo
 087d5ae (#7285) Add spec for Augeas initialisation and file loading
 06eb9a9 Fixes for #10915 and #11200 - user provider for AIX
 ed73845 (#10354) added delete command to fix missing userdel flag in useradd provider
-
 
 2.7.18
 ===
