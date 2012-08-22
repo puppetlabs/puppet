@@ -181,8 +181,9 @@ class Puppet::Configurer
       execute_postrun_command or return nil
     end
   ensure
-    # Make sure we forget the retained module_directories of any autoload
-    # we might have used.
+    # Between Puppet runs we need to forget the cached values.  This lets us
+    # pick up on new functions installed by gems or new modules being added
+    # without the daemon being restarted.
     Thread.current[:env_module_directories] = nil
 
     Puppet::Util::Log.close(report)
