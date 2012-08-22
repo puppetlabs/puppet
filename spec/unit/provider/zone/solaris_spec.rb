@@ -59,8 +59,8 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
   end
   context "#setconfig" do
     it "should correctly set configuration" do
-      # provider.expects(:cfg).with('-z', 'myzone')
-      provider.expects(:cfg).with('-z', 'dummy', "create -b create_args\nset zonepath=\/\ncommit\n")
+      provider.expects(:cfg).with('-z', 'dummy', "create -b create_args\nset zonepath=\/\ncommit\n").returns('')
+      $CHILD_STATUS.stubs(:exitstatus).with().returns 0
       provider.setconfig("create -b create_args\nset zonepath=\/\ncommit\n")
     end
 
