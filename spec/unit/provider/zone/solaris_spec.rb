@@ -9,7 +9,7 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
     it "should add the create args to the create str" do
       resource.stubs(:properties).returns([])
       resource[:create_args] = "create_args"
-      provider.expects(:setconfig).with("create -b create_args\nset zonepath=\/\ncommit\n")
+      provider.expects(:setconfig).with("create -b create_args\ncommit")
       provider.configure
     end
   end
@@ -134,6 +134,32 @@ net:
     end
     it "should parse lines correctly(3)" do
       described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
+    end
+  end
+  context "#multi_conf" do
+    it "should correctly add and remove properties" do
+      provider.stubs(:properties).with().returns({:ip => ['1.1.1.1', '2.2.2.2']})
+      should = ['1.1.1.1', '3.3.3.3']
+      p = Proc.new do |a, str|
+        case a
+        when :add; 'add:' + str
+        when :rm; 'rm:' + str
+        end
+      end
+      provider.multi_conf(:ip, should, &p).should == "rm:2.2.2.2\nadd:3.3.3.3"
+    end
+  end
+  context "single props" do
+    {:iptype => /set ip-type/, :autoboot => /set autoboot/, :path => /set zonepath/, :pool => /set pool/, :shares => /add rctl/}.each do |p, v|
+      it "#{p.to_s}: should correctly return conf string" do
+        provider.send(p.to_s + '_conf', 'dummy').should =~ v
+      end
+      it "#{p.to_s}: should correctly set property string" do
+        provider.expects((p.to_s + '_conf').intern).returns('dummy')
+        provider.expects(:setconfig).with('dummy').returns('dummy2')
+        provider.send(p.to_s + '=', 'dummy').should == 'dummy2'
+      end
+
     end
   end
 end

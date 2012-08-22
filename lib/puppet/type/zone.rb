@@ -1,45 +1,10 @@
+require 'puppet/property/list'
 Puppet::Type.newtype(:zone) do
   @doc = "Manages Solaris zones.
 
 **Autorequires:** If Puppet is managing the directory specified as the root of
 the zone's filesystem (with the `path` attribute), the zone resource will
 autorequire that directory."
-
-  # These properties modify the zone configuration, and they need to provide
-  # the text separately from syncing it, so all config statements can be rolled
-  # into a single creation statement.
-  class ZoneConfigProperty < Puppet::Property
-    # Perform the config operation.
-    def sync
-      provider.setconfig self.configtext
-    end
-  end
-
-  # Those properties that can have multiple instances.
-  class ZoneMultiConfigProperty < ZoneConfigProperty
-    # wrap the value if it is not an array
-    def wrap(a)
-      case a
-      when Array; a
-      when NilClass; []
-      else [a]
-      end
-    end
-    def configtext
-      # say we have should = [1,2,3,4,5] and cur_has = {2,3,4,6} then we should have
-      # rms = [6] adds = [1,5]
-      should = @should.sort.uniq
-      cur_has = wrap(self.retrieve).sort.uniq
-      rms = cur_has - should
-      adds = should - cur_has
-      (rms.map{|o| rm o} + adds.map{|o| add o}).join("\n")
-    end
-
-    # We want all specified directories to be included.
-    def insync?(current_value)
-      wrap(current_value).sort == wrap(@should).sort
-    end
-  end
 
   class StateMachine
     # A silly little state machine.
@@ -179,81 +144,46 @@ autorequire that directory."
       zone will be used. The zone from which you clone must not be running."
   end
 
-  newproperty(:ip, :parent => ZoneMultiConfigProperty) do
+  newproperty(:ip, :parent => Puppet::Property::List) do
     require 'ipaddr'
 
     desc "The IP address of the zone.  IP addresses must be specified
       with the interface, separated by a colon, e.g.: bge0:192.168.0.1.
       For multiple interfaces, specify them in an array."
 
-    # Add an interface.
-    def add(str)
-      interface, ip, defrouter = ipsplit(str)
-      cmd = "add net\n"
-      cmd += "set physical=#{interface}\n" if interface
-      cmd += "set address=#{ip}\n" if ip
-      cmd += "set defrouter=#{defrouter}\n" if defrouter
-      #if @resource[:iptype] == :shared
-      cmd += "end\n"
+    # The default action of list should is to lst.join(' '). By specifying
+    # @should, we ensure the should remains an array. If we override should, we
+    # should also override insync?() -- property/list.rb
+    def should
+      @should
     end
 
-    # Convert a string into the component interface, address and defrouter
-    def ipsplit(str)
-      interface, address, defrouter = str.split(':')
-      return interface, address, defrouter
-    end
-
-    # Remove an interface.
-    def rm(str)
-      interface, ip, defrouter = ipsplit(str)
-      # Reality seems to disagree with the documentation here; the docs
-      # specify that braces are required, but they're apparently only
-      # required if you're specifying multiple values.
-      if ip
-        "remove net address=#{ip}"
-      elsif interface
-        "remove net interface=#{interface}"
-      else
-        raise ArgumentError, "can not remove network based on default router"
-      end
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
     end
   end
 
-  newproperty(:iptype, :parent => ZoneConfigProperty) do
+  newproperty(:iptype) do
     desc "The IP stack type of the zone."
-
     defaultto :shared
-
     newvalue :shared
     newvalue :exclusive
-
-    def configtext
-      "set ip-type=#{self.should}"
-    end
   end
 
-  newproperty(:autoboot, :parent => ZoneConfigProperty) do
+  newproperty(:autoboot, :boolean => true) do
     desc "Whether the zone should automatically boot."
-
     defaultto true
-
-    newvalue(:true) {}
-    newvalue(:false) {}
-
-    def configtext
-      "set autoboot=#{self.should}"
-    end
+    newvalues(:true, :false)
   end
 
-  newproperty(:path, :parent => ZoneConfigProperty) do
+  newproperty(:path) do
     desc "The root of the zone's filesystem.  Must be a fully qualified
       file name.  If you include `%s` in the path, then it will be
       replaced with the zone's name.  Currently, you cannot use
       Puppet to move a zone. Consequently this is a readonly property."
-
-    def configtext
-      "set zonepath=#{self.should}"
-    end
 
     validate do |value|
       raise ArgumentError, "The zone base must be fully qualified" unless value =~ /^\//
@@ -268,72 +198,56 @@ autorequire that directory."
     end
   end
 
-  newproperty(:pool, :parent => ZoneConfigProperty) do
+  newproperty(:pool) do
     desc "The resource pool for this zone."
-
-    def configtext
-      "set pool=#{self.should}"
-    end
   end
 
-  newproperty(:shares, :parent => ZoneConfigProperty) do
+  newproperty(:shares) do
     desc "Number of FSS CPU shares allocated to the zone."
-
-    def configtext
-      "add rctl\nset name=zone.cpu-shares\nadd value (priv=privileged,limit=#{self.should},action=none)\nend"
-    end
   end
 
-  newproperty(:dataset, :parent => ZoneMultiConfigProperty) do
+  newproperty(:dataset, :parent => Puppet::Property::List ) do
     desc "The list of datasets delegated to the non-global zone from the
       global zone.  All datasets must be zfs filesystem names which are
       different from the mountpoint."
+
+    def should
+      @should
+    end
+
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
+    end
 
     validate do |value|
       unless value !~ /^\//
         raise ArgumentError, "Datasets must be the name of a zfs filesystem"
       end
     end
+  end
 
-    # Add a zfs filesystem to our list of datasets.
-    def add(dataset)
-      "add dataset\nset name=#{dataset}\nend"
-    end
-
-    # Remove a zfs filesystem from our list of datasets.
-    def rm(dataset)
-      "remove dataset name=#{dataset}"
-    end
+  newproperty(:inherit, :parent => Puppet::Property::List) do
+    desc "The list of directories that the zone inherits from the global
+      zone.  All directories must be fully qualified."
 
     def should
       @should
     end
-  end
 
-  newproperty(:inherit, :parent => ZoneMultiConfigProperty) do
-    desc "The list of directories that the zone inherits from the global
-      zone.  All directories must be fully qualified."
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
+    end
 
     validate do |value|
       unless value =~ /^\//
         raise ArgumentError, "Inherited filesystems must be fully qualified"
       end
-    end
-
-    # Add a directory to our list of inherited directories.
-    def add(dir)
-      "add inherit-pkg-dir\nset dir=#{dir}\nend"
-    end
-
-    def rm(dir)
-      # Reality seems to disagree with the documentation here; the docs
-      # specify that braces are required, but they're apparently only
-      # required if you're specifying multiple values.
-      "remove inherit-pkg-dir dir=#{dir}"
-    end
-
-    def should
-      @should
     end
   end
 
@@ -421,11 +335,15 @@ autorequire that directory."
 
   validate do
     return unless self[:ip]
-    interface, address, router = self[:ip].split(':')
-    if self[:iptype] == :shared
-      validate_shared(interface, address, router)
-    else
-      validate_exclusive(interface, address, router)
+    # self[:ip] reflects the type passed from proeprty:ip.should. If we
+    # override it and pass @should, then we get an array here back.
+    self[:ip].each do |ip|
+      interface, address, router = ip.split(':')
+      if self[:iptype] == :shared
+        validate_shared(interface, address, router)
+      else
+        validate_exclusive(interface, address, router)
+      end
     end
   end
 
