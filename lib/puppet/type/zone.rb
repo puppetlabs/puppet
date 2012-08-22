@@ -41,6 +41,48 @@ autorequire that directory."
     end
   end
 
+  class StateMachine
+    # A silly little state machine.
+    def initialize
+      @state = {}
+      @sequence = []
+      @state_aliases = {}
+      @default = nil
+    end
+
+    # The order of calling insert_state is important
+    def insert_state(name, transitions)
+      @sequence << name
+      @state[name] = transitions
+    end
+
+    def alias_state(state, salias)
+      @state_aliases[state] = salias
+    end
+
+    def name(n)
+      @state_aliases[n.to_sym] || n.to_sym
+    end
+
+    def index(state)
+      @sequence.index(name(state))
+    end
+
+    # return all states between fs and ss excluding fs
+    def sequence(fs, ss)
+      fi = index(fs)
+      si= index(ss)
+      (if fi > si
+        then @sequence[si .. fi].map{|i| @state[i]}.reverse
+        else @sequence[fi .. si].map{|i| @state[i]}
+      end)[1..-1]
+    end
+
+    def cmp?(a,b)
+      index(a) < index(b)
+    end
+  end
+
   ensurable do
     desc "The running state of the zone.  The valid states directly reflect
       the states that `zoneadm` provides.  The states are linear,
@@ -48,68 +90,35 @@ autorequire that directory."
       only then can be `running`.  Note also that `halt` is currently
       used to stop zones."
 
-    @states = {}
-    @parametervalues = []
+    def self.fsm
+      return @fsm if @fsm
+      @fsm = StateMachine.new
+    end
 
     def self.alias_state(values)
-      @state_aliases ||= {}
-      values.each do |nick, name|
-        @state_aliases[nick] = name
+      values.each do |k,v|
+        fsm.alias_state(k,v)
       end
     end
 
-    def self.newvalue(name, hash)
-      @parametervalues = [] if @parametervalues.is_a? Hash
-
-      @parametervalues << name
-
-      @states[name] = hash
-      hash[:name] = name
+    def self.seqvalue(name, hash)
+      fsm.insert_state(name, hash)
+      self.newvalue name
     end
 
-    def self.state_name(name)
-      @state_aliases[name.to_sym] || name.to_sym
-    end
-
-    newvalue :absent, :down => :destroy
-    newvalue :configured, :up => :configure, :down => :uninstall
-    newvalue :installed, :up => :install, :down => :stop
-    newvalue :running, :up => :start
+    # This is seq value because the order of declaration is important.
+    # i.e we go linearly from :absent -> :configured -> :installed -> :running
+    seqvalue :absent, :down => :destroy
+    seqvalue :configured, :up => :configure, :down => :uninstall
+    seqvalue :installed, :up => :install, :down => :stop
+    seqvalue :running, :up => :start
 
     alias_state :incomplete => :installed, :ready => :installed, :shutting_down => :running
 
     defaultto :running
 
-    def self.state_index(value)
-      @parametervalues.index(state_name(value))
-    end
-
-    # Return all of the states between two listed values, exclusive
-    # of the first item.
     def self.state_sequence(first, second)
-      findex = sindex = nil
-      unless findex = @parametervalues.index(state_name(first))
-        raise ArgumentError, "'#{first}' is not a valid zone state"
-      end
-      unless sindex = @parametervalues.index(state_name(second))
-        raise ArgumentError, "'#{first}' is not a valid zone state"
-      end
-      list = nil
-
-      # Apparently ranges are unidirectional, so we have to reverse
-      # the range op twice.
-      if findex > sindex
-        list = @parametervalues[sindex..findex].collect do |name|
-          @states[name]
-        end.reverse
-      else
-        list = @parametervalues[findex..sindex].collect do |name|
-          @states[name]
-        end
-      end
-
-      # The first result is the current state, so don't return it.
-      list[1..-1]
+      fsm.sequence(first, second)
     end
 
     # Why override it? because property/ensure.rb has a default retrieve method
@@ -119,30 +128,27 @@ autorequire that directory."
       provider.properties[:ensure]
     end
 
+    def provider_sync_send(method)
+      warned = false
+      while provider.processing?
+        next if warned
+        info "Waiting for zone to finish processing"
+        warned = true
+        sleep 1
+      end
+      provider.send(method)
+    end
+
     def sync
       method = nil
-      if up?
-        direction = :up
-      else
-        direction = :down
-      end
+      direction = up? ? :up : :down
 
       # We need to get the state we're currently in and just call
       # everything between it and us.
       self.class.state_sequence(self.retrieve, self.should).each do |state|
-        if method = state[direction]
-          warned = false
-          while provider.processing?
-            unless warned
-              info "Waiting for zone to finish processing"
-              warned = true
-            end
-            sleep 1
-          end
-          provider.send(method)
-        else
-          raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}"
-        end
+        method = state[direction]
+        raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}" unless method
+        provider_sync_send(method)
       end
 
       ("zone_#{self.should}").intern
@@ -150,18 +156,9 @@ autorequire that directory."
 
     # Are we moving up the property tree?
     def up?
-      current_value = self.retrieve
-      self.class.state_index(current_value) < self.class.state_index(self.should)
+      self.class.fsm.cmp?(self.retrieve, self.should)
     end
 
-    # We override the newvalue in the parent class. Thus the values that we get from the
-    # manifest are stored as they are and later compared to the current state of the instance,
-    # which is in symbol form. Hence we have to convert this to symbol here for now.
-    # TODO: fix this so that munging is no longer necessary. see also #15886
-
-    munge do |value|
-      value.intern
-    end
   end
 
   newparam(:name) do
