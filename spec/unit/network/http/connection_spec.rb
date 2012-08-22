@@ -146,6 +146,40 @@ describe Puppet::Network::HTTP::Connection do
   end
 
 
+  context "when methods that accept a block are called with a block" do
+    let (:host) { "my_server" }
+    let (:port) { 8140 }
+    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, false) }
+    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
+
+    before :each do
+      httpok.stubs(:body).returns ""
+
+      # This stubbing relies a bit more on knowledge of the internals of Net::HTTP
+      # than I would prefer, but it works on ruby 1.8.7 and 1.9.3, and it seems
+      # valuable enough to have tests for blocks that this is probably warranted.
+      socket = stub_everything("socket")
+      TCPSocket.stubs(:open).returns(socket)
+
+      Net::HTTP::Post.any_instance.stubs(:exec).returns("")
+      Net::HTTP::Head.any_instance.stubs(:exec).returns("")
+      Net::HTTP::Get.any_instance.stubs(:exec).returns("")
+      Net::HTTPResponse.stubs(:read_new).returns(httpok)
+    end
+
+    [:request_get, :request_head, :request_post].each do |method|
+      context "##{method}" do
+        it "should yield to the block" do
+          block_executed = false
+          subject.send(method, "/foo", {}) do |response|
+            block_executed = true
+          end
+          block_executed.should == true
+        end
+      end
+    end
+  end
+
   context "when validating HTTPS requests" do
     include PuppetSpec::Files
 
