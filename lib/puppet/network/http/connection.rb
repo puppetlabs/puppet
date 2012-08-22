@@ -92,8 +92,8 @@ module Puppet::Network::HTTP
       connection.request_head(*args, &block)
     end
 
-    def request_post(*args)
-      connection.request_post(*args)
+    def request_post(*args, &block)
+      connection.request_post(*args, &block)
     end
     # end of Net::HTTP#request_* proxies
 
