@@ -112,6 +112,9 @@ autorequire that directory."
       list[1..-1]
     end
 
+    # Why override it? because property/ensure.rb has a default retrieve method
+    # that knows only about :present and :absent. That method just calls
+    # provider.exists? and returns :present if a result was returned.
     def retrieve
       provider.properties[:ensure]
     end
@@ -310,7 +313,6 @@ autorequire that directory."
     end
   end
 
-
   newproperty(:inherit, :parent => ZoneMultiConfigProperty) do
     desc "The list of directories that the zone inherits from the global
       zone.  All directories must be fully qualified."
@@ -399,22 +401,14 @@ autorequire that directory."
   # type.  We just need to autorequire the dataset zfs itself as the zfs type
   # will autorequire all of the zfs parents and zpool.
   autorequire(:zfs) do
-
-  # Check if we have datasets in our zone configuration
-    if @parameters.include? :dataset
-      reqs = []
-      # Autorequire each dataset
-      self[:dataset].each { |value|
-        reqs << value
-      }
-      reqs
-    end
+    # Check if we have datasets in our zone configuration and autorequire each dataset
+    self[:dataset] if @parameters.include? :dataset
   end
 
   def validate_ip(ip, name)
-      IPAddr.new(ip) if ip
+    IPAddr.new(ip) if ip
   rescue ArgumentError
-      self.fail "'#{ip}' is an invalid #{name}"
+    self.fail "'#{ip}' is an invalid #{name}"
   end
 
   def validate_exclusive(interface, address, router)
@@ -440,16 +434,10 @@ autorequire that directory."
 
   def retrieve
     provider.flush
-    if hash = provider.properties and hash[:ensure] != :absent
-      result = setstatus(hash)
-      result
-    else
-      # Return all properties as absent.
-      return properties.inject({}) do | prophash, property|
-        prophash[property] = :absent
-        prophash
-      end
-    end
+    hash = provider.properties
+    return setstatus(hash) unless hash.nil? or hash[:ensure] == :absent
+    # Return all properties as absent.
+    return Hash[properties.map{|p| [p, :absent]} ]
   end
 
   # Take the results of a listing and set everything appropriately.
@@ -460,9 +448,8 @@ autorequire that directory."
       case self.class.attrtype(param)
       when :property
         # Only try to provide values for the properties we're managing
-        if prop = self.property(param)
-          prophash[prop] = value
-        end
+        prop = self.property(param)
+        prophash[prop] = value if prop
       else
         self[param] = value
       end
