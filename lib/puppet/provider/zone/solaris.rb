@@ -9,19 +9,15 @@ Puppet::Type.type(:zone).provide(:solaris) do
   # Convert the output of a list into a hash
   def self.line2hash(line)
     fields = [:id, :name, :ensure, :path, :uuid, :brand, :iptype]
+    properties = Hash[fields.zip(line.split(':'))]
 
-    properties = {}
-    line.split(":").each_with_index { |value, index|
-      next unless fields[index]
-      properties[fields[index]] = value
-    }
-
+    del_id = [:brand, :uuid]
     # Configured but not installed zones do not have IDs
-    properties.delete(:id) if properties[:id] == "-"
+    del_id << :id if properties[:id] == "-"
+    del_id.each { |p| properties.delete(p) }
 
     properties[:ensure] = properties[:ensure].intern
-    properties.delete(:brand)
-    properties.delete(:uuid)
+    properties[:iptype] = 'exclusive' if properties[:iptype] == 'excl'
 
     properties
   end
@@ -84,7 +80,6 @@ Puppet::Type.type(:zone).provide(:solaris) do
           @property_hash[name] ||= :absent
         end
       end
-
     end
     @property_hash.dup
   end

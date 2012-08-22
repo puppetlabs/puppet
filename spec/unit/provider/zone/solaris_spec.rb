@@ -122,4 +122,18 @@ net:
       }.to raise_error(Puppet::Error, /Path is required/)
     end
   end
+  context "#line2hash" do
+    it "should parse lines correctly" do
+      described_class.line2hash('0:dummy:running:/z::native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+    end
+    it "should parse lines correctly(2)" do
+      described_class.line2hash('0:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+    end
+    it "should parse lines correctly(3)" do
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"}
+    end
+    it "should parse lines correctly(3)" do
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
+    end
+  end
 end
