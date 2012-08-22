@@ -21,9 +21,9 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   # Remove the symlinks
   def disable
-      output = chkconfig(@resource[:name], :off)
+    output = chkconfig(@resource[:name], :off)
   rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not disable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not disable #{self.name}: #{output}"
   end
 
   def enabled?
@@ -45,9 +45,9 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   # Don't support them specifying runlevels; always use the runlevels
   # in the init scripts.
   def enable
-      output = chkconfig(@resource[:name], :reset)
+    output = chkconfig(@resource[:name], :reset)
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
+    raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
   end
 
   def initscript
@@ -70,6 +70,4 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   def stopcmd
     [command(:service), @resource[:name], "stop"]
   end
-
 end
-
