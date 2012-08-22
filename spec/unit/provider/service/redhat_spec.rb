@@ -54,6 +54,16 @@ describe provider_class, :as_platform => :posix do
     end
   end
 
+  it "(#15797) should use 'reset' instead of 'on' when calling enable" do
+    provider_class.expects(:chkconfig).with(@resource[:name], :reset)
+    @provider.enable
+  end
+
+  it "(#15797) should explicitly turn off the service in all run levels" do
+    provider_class.expects(:chkconfig).with("--level", "0123456", @resource[:name], :off)
+    @provider.disable
+  end
+
   it "should have an enabled? method" do
     @provider.should respond_to(:enabled?)
   end
