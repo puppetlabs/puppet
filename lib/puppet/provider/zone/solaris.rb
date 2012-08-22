@@ -92,19 +92,31 @@ Puppet::Type.type(:zone).provide(:solaris) do
   # We need a way to test whether a zone is in process.  Our 'ensure'
   # property models the static states, but we need to handle the temporary ones.
   def processing?
-    if hash = status
-      case hash[:ensure]
-      when "incomplete", "ready", "shutting_down"
-        true
-      else
-        false
-      end
-    else
-      false
-    end
+    hash = status
+    return false unless hash
+    ["incomplete", "ready", "shutting_down"].include? hash[:ensure]
   end
 
-  # Collect the configuration of the zone.
+  # Collect the configuration of the zone. The output looks like:
+  # zonename: z1
+  # zonepath: /export/z1
+  # brand: native
+  # autoboot: true
+  # bootargs:
+  # pool:
+  # limitpriv:
+  # scheduling-class:
+  # ip-type: shared
+  # hostid:
+  # net:
+  #         address: 192.168.1.1
+  #         physical: eg0001
+  #         defrouter not specified
+  # net:
+  #         address: 192.168.1.3
+  #         physical: eg0002
+  #         defrouter not specified
+  #
   def getconfig
     output = zonecfg :info
 
@@ -116,12 +128,11 @@ Puppet::Type.type(:zone).provide(:solaris) do
       when /^(\S+):\s*$/
         name = $1
         current = nil # reset it
-      when /^(\S+):\s*(.+)$/
+      when /^(\S+):\s*(\S+)$/
         hash[$1.intern] = $2
       when /^\s+(\S+):\s*(.+)$/
         if name
-          hash[name] = [] unless hash.include? name
-
+          hash[name] ||= []
           unless current
             current = {}
             hash[name] << current
@@ -239,9 +250,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
   end
 
   def zoneadm(*cmd)
-      adm("-z", @resource[:name], *cmd)
+    adm("-z", @resource[:name], *cmd)
   rescue Puppet::ExecutionFailure => detail
-      self.fail "Could not #{cmd[0]} zone: #{detail}"
+    self.fail "Could not #{cmd[0]} zone: #{detail}"
   end
 
   def zonecfg(*cmd)

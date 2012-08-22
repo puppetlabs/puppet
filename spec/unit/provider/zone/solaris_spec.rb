@@ -71,6 +71,39 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
       }.to raise_error(ArgumentError, /Failed to apply configuration/)
     end
   end
+  context "#getconfig" do
+    zone_info =<<-EOF
+zonename: dummy
+zonepath: /dummy/z
+brand: native
+autoboot: true
+bootargs:
+pool:
+limitpriv:
+scheduling-class:
+ip-type: shared
+hostid:
+net:
+        address: 1.1.1.1
+        physical: ex0001
+        defrouter not specified
+net:
+        address: 1.1.1.2
+        physical: ex0002
+        defrouter not specified
+    EOF
+    it "should correctly parse zone info" do
+      provider.expects(:zonecfg).with(:info).returns(zone_info)
+      provider.getconfig.should == {
+        :brand=>"native",
+        :autoboot=>"true",
+        :"ip-type"=>"shared",
+        :zonename=>"dummy",
+        "net"=>[{:physical=>"ex0001", :address=>"1.1.1.1"}, {:physical=>"ex0002", :address=>"1.1.1.2"}],
+        :zonepath=>"/dummy/z"
+      }
+    end
+  end
   context "#start" do
     it "should not require path if sysidcfg is specified" do
       resource[:path] = '/mypath'
