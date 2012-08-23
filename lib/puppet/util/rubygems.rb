@@ -42,7 +42,7 @@ module Puppet::Util::RubyGems
   # RubyGems < 1.8.0
   class OldGemsSource < Source
     def directories
-      Gem.latest_load_paths
+      @paths ||= Gem.latest_load_paths
     end
   end
 

@@ -49,6 +49,18 @@ describe Puppet::Util::RubyGems::Source do
 
       described_class.new.directories.should == [gem_lib]
     end
+
+    # Older rubygems seem to have a problem with rescanning the gem paths in which they
+    # look for a file in the wrong place and expect it to be there. By caching the first
+    # set of results we don't trigger this bug. This behavior was seen on ruby 1.8.7-p334
+    # using rubygems v1.6.2
+    it "caches the gem paths (works around a bug in older rubygems)" do
+      Gem.expects(:latest_load_paths).returns([gem_lib]).once
+
+      source = described_class.new
+
+      source.directories.should == [gem_lib]
+    end
   end
 end
 
