@@ -773,14 +773,17 @@ describe Puppet::Settings do
       text = "[main]
       one = long \\
         line
-      vardir = C:\\puppet\\var\\
-      confdir = C:\\puppet\\etc\\
+      two = 'long line with spaces ' \\
+        that should not be stripped by using quoting.
+      three = C:\\very\\long\\windows\\paths \\
+        \\can\\be\\splitted \\
+        \\too\\with\\little\\effort\\
       "
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
-      @settings[:one].should == "long line"
-      @settings[:vardir].should == "C:\\puppet\\var\\"
-      @settings[:confdir].should == "C:\\puppet\\etc\\"
+      @settings[:one].should == "longline"
+      @settings[:two].should == "long line with spaces that should not be stripped by using quoting."
+      @settings[:three].should == "C:\\very\\long\\windows\\paths\\can\\be\\splitted\\too\\with\\little\\effort\\"
     end
 
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
