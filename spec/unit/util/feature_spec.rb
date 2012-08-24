@@ -39,7 +39,7 @@ describe Puppet::Util::Feature do
     @features.should be_available
   end
 
-  it "should cache the results of a feature load" do
+  it "should cache the results of a feature load via code block" do
     $loaded_feature = 0
     @features.add(:myfeature) { $loaded_feature += 1 }
     @features.myfeature?
@@ -67,5 +67,16 @@ describe Puppet::Util::Feature do
     Puppet.expects(:debug)
 
     @features.should_not be_myfeature
+  end
+
+  it "should change the feature to be present when its libraries become available" do
+    @features.add(:myfeature, :libs => %w{foo bar})
+    @features.expects(:require).twice().with("foo").raises(LoadError).then.returns(nil)
+    @features.stubs(:require).with("bar")
+
+    Puppet.expects(:debug)
+
+    @features.should_not be_myfeature
+    @features.should be_myfeature
   end
 end
