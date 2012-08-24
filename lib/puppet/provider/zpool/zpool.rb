@@ -97,7 +97,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     zpool(*([:create, @resource[:pool]] + build_vdevs + build_named("spare") + build_named("log")))
   end
 
-  def delete
+  def destroy
     zpool :destroy, @resource[:pool]
   end
 
