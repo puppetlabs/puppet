@@ -12,7 +12,7 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
     not specify one, but it is a potentially expensive operation, as it
     iterates across all existing groups to pick the appropriate next one."
 
-  confine :true => Puppet.features.ldap?, :false => (Puppet[:ldapuser] == "")
+  confine :feature => :ldap, :false => (Puppet[:ldapuser] == "")
 
   # We're mapping 'members' here because we want to make it
   # easy for the ldap user provider to manage groups.  This
