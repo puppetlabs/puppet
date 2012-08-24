@@ -13,7 +13,7 @@
 
 Name:           puppet
 Version:        3.0.0
-Release:        0.1rc3%{?dist}
+Release:        0.1rc4%{?dist}
 #Release:        1%{?dist}
 Vendor:         %{?_host_vendor}
 Summary:        A network tool for managing many disparate systems
@@ -28,7 +28,7 @@ Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  facter >= 2.0
+BuildRequires:  facter >= 1.6
 BuildRequires:  ruby >= 1.8.5
 
 BuildArch:      noarch
@@ -44,7 +44,7 @@ Requires:       ruby-shadow
 %endif
 %endif
 
-Requires:       facter >= 2.0.0
+Requires:       facter >= 1.6.11
 Requires:       ruby >= 1.8.5
 Requires:       hiera >= 1.0.0
 Requires:       hiera-puppet >= 1.0.0
@@ -279,6 +279,10 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Aug 24 2012 Eric Sorenson <eric0@puppetlabs.com> - 3.0.0-0.1rc4
+- Facter requirement is 1.6.11, not 2.0
+- Update for 3.0.0 rc4
+
 * Tue Aug 21 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-1
 - Update for 2.7.19
 

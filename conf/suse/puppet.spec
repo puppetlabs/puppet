@@ -4,8 +4,9 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.7.14
-Release: 1%{?dist}
+Version: 3.0.0
+Release:        0.1rc4%{?dist}
+#Release: 1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
 
@@ -14,7 +15,7 @@ Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.2
-Requires: facter >= 1.5
+Requires: facter >= 1.6.11
 Requires: cron
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ruby >= 1.8.2
@@ -136,6 +137,10 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Fri Aug 24 2012 Eric Sorenson <eric0@puppetlabs.com> - 3.0.0-0.1rc4
+- Update facter version dependency
+- Update for 3.0.0-0.1rc4
+
 * Wed May 02 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.14-1
 - Update for 2.7.14
 
