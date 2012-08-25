@@ -50,7 +50,7 @@ module Puppet::Network::HTTP
         # constructing the error message if the verification failed.
         # This is necessary since we don't have direct access to the
         # cert that we expected the connection to use otherwise.
-        peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
+        peer_certs << Puppet::SSL::Certificate.from_instance(ssl_context.current_cert)
         # And also keep the detailed verification error if such an error occurs
         if ssl_context.error_string and not preverify_ok
           verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
