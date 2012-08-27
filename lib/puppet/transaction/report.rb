@@ -76,7 +76,7 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 2
+    @report_format = 3
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @environment = environment
