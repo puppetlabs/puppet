@@ -13,7 +13,7 @@ final_mocks: 'pl-5-i386 pl-5-x86_64 pl-6-i386 pl-6-x86_64 fedora-15-i386 fedora-
 rc_mocks: 'pl-5-i386-dev pl-5-x86_64-dev pl-6-i386-dev pl-6-x86_64-dev fedora-15-i386-dev fedora-15-x86_64-dev fedora-16-i386-dev fedora-16-x86_64-dev fedora-17-i386-dev fedora-17-x86_64-dev'
 yum_host: 'burji.puppetlabs.com'
 yum_repo_path: '~/repo/'
-build_gem: TRUE
+build_gem: FALSE
 build_dmg: TRUE
 apt_host: 'burji.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
