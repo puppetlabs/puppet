@@ -1,0 +1,27 @@
+# Defaults for puppetqd - sourced by /etc/init.d/puppetqd
+
+# Should puppetqd (the storeconfigs queuing broker) be started? 
+#  This can take some load off of the puppetmaster by queuing the
+#  storeconfig updates to the database with puppetqd. You need
+#  to have the 'stompserver' package installed and running, and
+#  the following configured in your puppet.conf:
+#
+#  [main]
+#  queue_type = stomp
+#  queue_source = stomp://localhost:61613
+#  dbadapter = (sqlite3|mysql|postgresql)
+#  dbserver=localhost
+#  dbname=puppet
+#  dbuser=puppet
+#  dbpassword=xxxx
+#  dblocation = /var/lib/puppet/storeconfigs.sqlite <-- only if using sqlite
+#
+#  [master]
+#  async_storeconfigs = true
+#
+#  See: http://puppetlabs.com/trac/puppet/wiki/UsingStoredConfiguration
+#
+#  Once you have the proper puppet.conf, and stompserver, you can enable
+#  the following:
+PUPPETQD=no
+PUPPETQD_OPTS=""

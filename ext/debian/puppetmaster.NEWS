@@ -1,0 +1,13 @@
+puppet (2.6.1~rc3-1) experimental; urgency=low
+
+  Some packages recommended by the puppetmaster package are now suggested
+  instead, since they are not needed for the default operation of the
+  puppetmaster package.  This means they are not installed by default.
+
+  The packages affected are "libldap-ruby1.8", used for external nodes in LDAP,
+  "rdoc", which is used by puppet doc, and "rails", which is used for stored
+  configurations.
+
+  If you need this functionality, please install the packages explicitly.
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 12:17:02 +0200

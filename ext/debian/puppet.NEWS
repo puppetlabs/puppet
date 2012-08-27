@@ -1,0 +1,86 @@
+puppet (0.25.4-1) unstable; urgency=low
+
+  In this packaging version we add a "puppet-common" package, on which the
+  packages "puppet" and "puppetmaster" depend.
+
+  The editor syntax highlighting code previously in the "puppet" package has
+  been moved to the packages "puppet-el" and "vim-puppet".
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 19 Jan 2010 13:09:36 +0000
+
+puppet (0.25.1-3) unstable; urgency=low
+
+  The default setting for puppet starting on boot has been changed from true
+  to false.  This means the puppet client will not automatically start on
+  install or boot until this file is modified.
+
+  Note that the last Debian packaged version of puppet 0.24.x is too old to
+  communicate with a 0.25.x puppetmaster server.  To resolve this, either
+  upgrade your client to 0.25.x, or install puppet 0.24.8 from source from:
+  http://puppetlabs.com/downloads/puppet/puppet-0.24.8.tgz
+
+ -- Nigel Kersten <nigel@explanatorygap.net>  Wed, 16 Dec 2009 12:49:03 -0800
+
+puppet (0.23.2-12) unstable; urgency=low
+
+  * Handling of the rundir setting has been changed; we now store PID files
+    in /var/run/puppet, and the initscripts have been modified to ensure
+    that this directory exists on startup.  It is no longer necessary to set
+    rundir explicitly in /etc/puppet/puppet.conf, and you should ensure that
+    you have no explicit rundir setting in your puppet.conf unless you want
+    to use a custom rundir setting for your own local purposes.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Sat, 20 Oct 2007 11:58:58 +1000
+
+puppet (0.23.2-3) unstable; urgency=low
+
+  * This version of Puppet makes a fairly major change to the location of
+    the CA and certificates, from /etc/puppet/ssl to the more FHS-compliant
+    location /var/lib/puppet/ssl.  This is to be both policy-compliant and
+    to match the location of the ssldir in other distributions.
+    
+    If you have transitioned to using the consolidated puppet.conf config
+    file, there should be no problems.  If you are using a stock
+    puppet.conf, the change should be made for you automatically, while if
+    you've customised puppet.conf the ssldir will be left where it is and
+    you should transition to the new location manually.
+
+    The only source of problems is if you're still using per-program config
+    files (puppetd.conf, puppetmasterd.conf, etc).  I haven't been able to
+    work out a damage-free way of transitioning to the new location, so
+    things will likely break for you -- ssldir will have been moved to
+    /var/lib/puppet/ssl, but your puppet programs will use the
+    old config file (with the default ssldir of /etc/puppet/ssl.  In this
+    case, you'll likely get all sorts of certificate-related problems.
+    
+    The solution is to either switch to using puppet.conf (which is
+    necessary anyway because support for the deprecated per-program config
+    files will be going away sometime) with the new ssldir setting, or add
+    the ssldir setting to all your per-program config files (this includes
+    creating them for programs that don't already have a config file, like
+    puppetca.conf).  Then delete /etc/puppet/ssl (since it's not needed) and
+    use the existing SSL data that was moved to /var/lib/puppet/ssl.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Fri, 24 Aug 2007 16:08:04 +1000
+
+puppet (0.23.0-1) unstable; urgency=low
+
+  * As of upstream 0.23.0, the configuration file layout has been largely
+    revamped.  Now, instead of having one file per program, there is now
+    a single file, /etc/puppet/puppet.conf, which contains sections for
+    each program, as well as a "main" section that sets global config
+    options relevant for all programs.
+    
+    See http://puppetlabs.com/trac/puppet/wiki/ConfigurationReference for
+    more info.
+    
+    For backwards compatibility, all programs still read the per-program
+    configuration files, and will ignore the generic puppet.conf file if the
+    per-program file still exists.  To prevent accidents, you will need to
+    do the configuration change manually, by rewriting puppet.conf to match
+    your local configuration parameters and then deleting the old files.  If
+    you haven't changed any config parameters, then it should be as simple
+    as deleting puppetd.conf and puppetmasterd.conf and restarting the
+    daemons, as the configuration itself hasn't changed between versions.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Mon, 25 Jun 2007 10:43:53 +1000

@@ -1,0 +1,7 @@
+# Defaults for puppet - sourced by /etc/init.d/puppet
+
+# Start puppet on boot?
+START=no
+
+# Startup options
+DAEMON_OPTS=""

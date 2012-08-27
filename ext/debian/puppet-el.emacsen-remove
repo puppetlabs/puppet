@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+FLAVOR=$1
+PACKAGE=puppet-el
+ELCFILE=puppet-mode.elc
+
+if [ ${FLAVOR} != emacs ]; then
+  echo remove/${PACKAGE}: Purging byte-compiled files for ${FLAVOR}
+  rm -f /usr/share/${FLAVOR}/site-lisp/${ELCFILE}
+fi
