@@ -11,7 +11,8 @@ class Puppet::Transaction::Report
   indirects :report, :terminus_class => :processor
 
   attr_accessor :configuration_version, :host, :environment
-  attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status
+  attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status,
+              :puppet_version, :report_format
 
   # This is necessary since Marshall doesn't know how to
   # dump hash with default proc (see below @records)
