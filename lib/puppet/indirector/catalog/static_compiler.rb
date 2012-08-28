@@ -128,8 +128,9 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       Puppet.info "Content for '#{resource[:source]}' already exists"
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"
-      content = Puppet::FileServing::Content.find(resource[:source])
-      Puppet::FileBucket::File.new(content.content).save
+      content = Puppet::FileServing::Content.indirection.find(resource[:source])
+      file = Puppet::FileBucket::File.new(content.content)
+      Puppet::FileBucket::File.indirection.save(file)
     end
   end
 end
