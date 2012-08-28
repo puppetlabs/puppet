@@ -85,19 +85,7 @@ module Puppet::Util::ADSI
     end
 
     def self.logon(name, password)
-      fLOGON32_LOGON_NETWORK = 3
-      fLOGON32_PROVIDER_DEFAULT = 0
-
-      logon_user = Win32API.new("advapi32", "LogonUser", ['P', 'P', 'P', 'L', 'L', 'P'], 'L')
-      close_handle = Win32API.new("kernel32", "CloseHandle", ['P'], 'V')
-
-      token = ' ' * 4
-      if logon_user.call(name, "", password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token) != 0
-        close_handle.call(token.unpack('L')[0])
-        true
-      else
-        false
-      end
+      Puppet::Util::Windows::User.password_is?(name, password)
     end
 
     def [](attribute)

@@ -40,4 +40,32 @@ module Puppet::Util::Windows::User
     member.unpack('L')[0] == 1
   end
   module_function :check_token_membership
+
+  def password_is?(name, password)
+    logon_user(name, password)
+    true
+  rescue Puppet::Util::Windows::Error => e
+    false
+  end
+  module_function :password_is?
+
+  def logon_user(name, password, &block)
+    fLOGON32_LOGON_NETWORK = 3
+    fLOGON32_PROVIDER_DEFAULT = 0
+
+    logon_user = Win32API.new("advapi32", "LogonUser", ['P', 'P', 'P', 'L', 'L', 'P'], 'L')
+    close_handle = Win32API.new("kernel32", "CloseHandle", ['P'], 'V')
+
+    token = 0.chr * 4
+    if logon_user.call(name, ".", password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token) == 0
+      raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+    end
+
+    begin
+      yield token.unpack('L')[0] if block_given?
+    ensure
+      close_handle.call(token.unpack('L')[0])
+    end
+  end
+  module_function :logon_user
 end
