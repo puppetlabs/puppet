@@ -111,7 +111,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     end
 
     define_method(field.to_s + "=") do |should|
-      Puppet.warning "NO CHANGES BEING MADE: zpool #{field} does not match, should be '#{should}' currently is '#{current_pool[field]}'"
+      self.fail "zpool #{field} can't be changed. should be #{should}, currently is #{current_pool[field]}"
     end
   end
 
