@@ -68,4 +68,39 @@ module Puppet::Util::Windows::User
     end
   end
   module_function :logon_user
+
+  def load_profile(user, password)
+    logon_user(user, password) do |token|
+      # Set up the PROFILEINFO structure that will be used to load the
+      # new user's profile
+      # typedef struct _PROFILEINFO {
+      #   DWORD  dwSize;
+      #   DWORD  dwFlags;
+      #   LPTSTR lpUserName;
+      #   LPTSTR lpProfilePath;
+      #   LPTSTR lpDefaultPath;
+      #   LPTSTR lpServerName;
+      #   LPTSTR lpPolicyPath;
+      #   HANDLE hProfile;
+      # } PROFILEINFO, *LPPROFILEINFO;
+      fPI_NOUI = 1
+      profile = 0.chr * 4
+      pi = [4 * 8, fPI_NOUI, user, nil, nil, nil, nil, profile].pack('LLPPPPPP')
+
+      load_user_profile   = Win32API.new('userenv', 'LoadUserProfile', ['L', 'P'], 'L')
+      unload_user_profile = Win32API.new('userenv', 'UnloadUserProfile', ['L', 'P'], 'L')
+
+      # Load the profile. Since it doesn't exist, it will be created
+      if load_user_profile.call(token, pi) == 0
+        raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
+      end
+
+      Puppet.debug("Loaded profile for #{user}")
+
+      if unload_user_profile.call(token, pi.unpack('LLLLLLLL').last) == 0
+        raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+      end
+    end
+  end
+  module_function :load_profile
 end

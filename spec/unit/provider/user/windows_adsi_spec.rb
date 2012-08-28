@@ -83,6 +83,17 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       provider.create
     end
 
+    it "should load the profile if managehome is set", :if => Puppet.features.microsoft_windows? do
+      resource[:password] = '0xDeadBeef'
+      resource[:managehome] = true
+
+      user = stub_everything 'user'
+      Puppet::Util::ADSI::User.expects(:create).with('testuser').returns user
+      Puppet::Util::Windows::User.expects(:load_profile).with('testuser', '0xDeadBeef')
+
+      provider.create
+    end
+
     it "should set a user's password" do
       provider.user.expects(:password=).with('plaintextbad')
 
