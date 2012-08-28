@@ -48,8 +48,9 @@ Puppet::Type.type(:zpool).provide(:zpool) do
   end
 
   def get_pool_data
-    #this is all voodoo dependent on the output from zpool
-    zpool_data = %x{ zpool status #{@resource[:pool]}}.split("\n").select { |line| line.index("\t") == 0 }.collect { |l| l.strip.split("\s")[0] }
+    # http://docs.oracle.com/cd/E19082-01/817-2271/gbcve/index.html
+    # we could also use zpool iostat -v mypool for a (little bit) cleaner output
+    zpool_data = execute("zpool status #{@resource[:pool]}", :failonfail => false).lines.select { |line| line.index("\t") == 0 }.collect { |l| l.strip.split("\s")[0] }
     zpool_data.shift
     zpool_data
   end
