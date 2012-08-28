@@ -769,6 +769,23 @@ describe Puppet::Settings do
       @settings[:one].should == 65
     end
 
+    it "should convert splitted lines in the configuration file to a single line" do
+      text = "[main]
+      one = long \\
+        line
+      two = 'long line with spaces ' \\
+        that should not be stripped by using quoting.
+      three = C:\\very\\long\\windows\\paths \\
+        \\can\\be\\splitted \\
+        \\too\\with\\little\\effort\\
+      "
+      @settings.expects(:read_file).returns(text)
+      @settings.send(:parse_config_files)
+      @settings[:one].should == "longline"
+      @settings[:two].should == "long line with spaces that should not be stripped by using quoting."
+      @settings[:three].should == "C:\\very\\long\\windows\\paths\\can\\be\\splitted\\too\\with\\little\\effort\\"
+    end
+
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
