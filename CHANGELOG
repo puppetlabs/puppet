@@ -1,12 +1,9 @@
-1.0.0rc3
+1.0.0
 ===
 fd3fe17 Add hiera_puppet.rb to debian, redhat packages, fix gem version dependency
 0fbdd62 (#15291) Add Vendor tag to Hiera-Puppet spec file
 5e516ee Update Debian packaging rake task to correctly create the orig.tar.gz
 84b4d11 (Maint) Rename PuppetlabsSpec::Puppet{Seams,Internals}
-
-1.0.0rc2
-===
 2fa4251 Update hiera-puppet package tasks
 8e4e76a (maint) Replace .should on blocks with .to
 9c23e9d Remove puppetlabs_spec_helper require from root Rakefile
@@ -26,9 +23,6 @@ d76a9d8 (#14841) Add test for hiera_hash parser function
 7a458a4 (#14841) Give useful error for array or hash lookup failure
 dbdda00 (#12122) Use nil as default answer in lookup
 378a1a2 Tweak debian packaging
-
-1.0.0rc1
-===
 5adc454 Add package task to tasks
 470c5c8 Add Redhat packaging to hiera-puppet
 4101d02 Add debian packaging for hiera-puppet

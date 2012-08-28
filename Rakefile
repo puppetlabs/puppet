@@ -17,7 +17,7 @@ spec = Gem::Specification.new do |s|
   s.require_path = "lib"
   s.test_files = FileList["spec/**/*.rb"].to_a
   s.has_rdoc = true
-  s.add_dependency 'hiera', '>=1.0.0rc'
+  s.add_dependency 'hiera', '~> 1.0'
   s.executables = "extlookup2hiera"
 end
 
