@@ -25,7 +25,91 @@ When we setup CI nodes, but this is not standard or expected behavior.
 Please consider rbenv instead of rvm.  The default behavior of rvm is difficult
 to maintain with `set -e` shell environments.
 
-# Dependencies #
+# Two Types of Catalog
+
+When working on subsystems of Puppet that deal with the catalog it is important
+to be aware of the two different types of Catalog.  I often ran into this when
+working in Professional Services when I built a small tool to diff two catalogs
+to determine if an upgrade in Puppet produces the same configuration catalogs.
+As a developer I've run into this difference while working on spec tests for
+the static compiler and working on spec tests for types and providers.
+
+The two different types of catalog becomes relevant when writing spec tests
+because we frequently need to wire up a fake catalog so that we can exercise
+types, providers, or terminii that filter the catalog.
+
+The two different types of catalogs are so-called "resource" catalogs and "RAL"
+(resource abstraction layer) catalogs.  At a high level, the resource catalog
+is the in-memory object we serialize and transfer around the network.  The
+compiler terminus is expected to produce a resource catalog.  The agent takes a
+resource catalog and converts it into a RAL catalog.  The RAL catalog is what
+is used to apply the configuration model to the system.
+
+Resource dependency information is most easily obtained from a RAL catalog by
+walking the graph instance produced by the `relationship_graph` method.
+
+## Resource Catalog
+
+If you're writing spec tests for something that deals with a catalog "server
+side," a new catalog terminus for example, then you'll be dealing with a
+resource catalog.  You can produce a resource catalog suitable for spec tests
+using something like this:
+
+    let(:catalog) do
+      catalog = Puppet::Resource::Catalog.new("node-name-val") # NOT certname!
+      rsrc = Puppet::Resource.new("file", "sshd_config",
+        :parameters => {
+          :ensure => 'file',
+          :source => 'puppet:///modules/filetest/sshd_config',
+        }
+      )
+      rsrc.file = 'site.pp'
+      rsrc.line = 21
+      catalog.add_resource(rsrc)
+    end
+
+The resources in this catalog may be accessed using `catalog.resources`.
+Resource dependencies are not easily walked using a resource catalog however.
+To walk the dependency tree convert the catalog to a RAL catalog as described
+in
+
+## RAL Catalog
+
+The resource catalog may be converted to a RAL catalog using `catalog.to_ral`.
+The RAL catalog contains `Puppet::Type` instances instead of `Puppet::Resource`
+instances as is the case with the resource catalog.
+
+One very useful feature of the RAL catalog are the methods to work with
+resource relationships.  For example:
+
+    irb> catalog = catalog.to_ral
+    irb> graph = catalog.relationship_graph
+    irb> pp graph.edges
+    [{ Notify[alpha] => File[/tmp/file_20.txt] },
+     { Notify[alpha] => File[/tmp/file_21.txt] },
+     { Notify[alpha] => File[/tmp/file_22.txt] },
+     { Notify[alpha] => File[/tmp/file_23.txt] },
+     { Notify[alpha] => File[/tmp/file_24.txt] },
+     { Notify[alpha] => File[/tmp/file_25.txt] },
+     { Notify[alpha] => File[/tmp/file_26.txt] },
+     { Notify[alpha] => File[/tmp/file_27.txt] },
+     { Notify[alpha] => File[/tmp/file_28.txt] },
+     { Notify[alpha] => File[/tmp/file_29.txt] },
+     { File[/tmp/file_20.txt] => Notify[omega] },
+     { File[/tmp/file_21.txt] => Notify[omega] },
+     { File[/tmp/file_22.txt] => Notify[omega] },
+     { File[/tmp/file_23.txt] => Notify[omega] },
+     { File[/tmp/file_24.txt] => Notify[omega] },
+     { File[/tmp/file_25.txt] => Notify[omega] },
+     { File[/tmp/file_26.txt] => Notify[omega] },
+     { File[/tmp/file_27.txt] => Notify[omega] },
+     { File[/tmp/file_28.txt] => Notify[omega] },
+     { File[/tmp/file_29.txt] => Notify[omega] }]
+
+If the `relationship_graph` method is throwing exceptions at you, there's a
+good chance the catalog is not a RAL catalog.
+
+# Ruby Dependencies #
 
 Puppet is considered an Application as it relates to the recommendation of
 adding a Gemfile.lock file to the repository and the information published at
