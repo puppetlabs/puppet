@@ -113,9 +113,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
   def remove_existing_resources(children, catalog)
     existing_names = catalog.resources.collect { |r| r.to_s }
-
     both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
-    
     both.each { |name| children.delete(name) }
   end
 
