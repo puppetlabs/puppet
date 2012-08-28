@@ -190,7 +190,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
   context '#delete' do
     it "should call zpool with destroy and the pool name" do
       provider.expects(:zpool).with(:destroy, name)
-      provider.delete
+      provider.destroy
     end
   end
 
