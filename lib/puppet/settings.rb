@@ -55,29 +55,6 @@ class Puppet::Settings
 
   def self.domain_fact()
     Facter["domain"].value
-  end 
-
-
-  def self.default_global_config_dir
-    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
-  end
-
-  def self.default_user_config_dir
-    # ensure HOME is set, if not set, get user's home directory
-    require 'etc'
-    ENV["HOME"] ||= Etc.getpwuid(Process.uid).dir
-    File.expand_path("~/.puppet")
-  end
-
-  def self.default_global_var_dir
-    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"
-  end
-
-  def self.default_user_var_dir
-    # ensure HOME is set, if not set, get user's home directory
-    require 'etc'
-    ENV["HOME"] ||= Etc.getpwuid(Process.uid).dir
-    File.expand_path("~/.puppet/var")
   end
 
   def self.default_config_file_name
@@ -525,13 +502,13 @@ class Puppet::Settings
     if explicit_config_file?
       return self[:config]
     else
-      return File.join(self.class.default_global_config_dir, config_file_name)
+      return File.join(Puppet::Util::RunMode[:master].conf_dir, config_file_name)
     end
   end
   private :main_config_file
 
   def user_config_file
-    return File.join(self.class.default_user_config_dir, config_file_name)
+    return File.join(Puppet::Util::RunMode[:user].conf_dir, config_file_name)
   end
   private :user_config_file
 
