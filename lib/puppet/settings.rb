@@ -37,8 +37,8 @@ class Puppet::Settings
         :logdir   => run_mode.log_dir,
     }
   end
-  
-  def self.default_certname() 
+
+  def self.default_certname()
     hostname = hostname_fact
     domain = domain_fact
     if domain and domain != ""
@@ -47,11 +47,11 @@ class Puppet::Settings
       fqdn = hostname
     end
     fqdn.gsub(/\.$/, '')
-  end 
+  end
 
   def self.hostname_fact()
-    Facter["hostname"].value 
-  end 
+    Facter["hostname"].value
+  end
 
   def self.domain_fact()
     Facter["domain"].value
