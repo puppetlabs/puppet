@@ -6,8 +6,13 @@ require 'puppet/settings/errors'
 describe Puppet::Settings do
   include PuppetSpec::Files
 
-  MAIN_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
-  USER_CONFIG_FILE_DEFAULT_LOCATION = File.join(Puppet::Util::RunMode[:user].conf_dir, "puppet.conf")
+  let(:main_config_file_default_location) do
+    File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
+  end
+
+  let(:user_config_file_default_location) do
+    File.join(Puppet::Util::RunMode[:user].conf_dir, "puppet.conf")
+  end
 
   describe "when specifying defaults" do
     before do
@@ -648,21 +653,21 @@ describe Puppet::Settings do
     end
 
     describe "when root" do
-      it "should look for #{MAIN_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
+      it "should look for the main config file default location config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(true)
-        FileTest.expects(:exist?).with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).returns(false)
-        FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).never
+        FileTest.expects(:exist?).with(main_config_file_default_location).returns(false)
+        FileTest.expects(:exist?).with(user_config_file_default_location).never
 
         @settings.send(:parse_config_files)
       end
     end
 
     describe "when not root" do
-      it "should look for #{USER_CONFIG_FILE_DEFAULT_LOCATION} if config settings haven't been overridden'" do
+      it "should look for user config file default location if config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(false)
 
         seq = sequence "load config files"
-        FileTest.expects(:exist?).with(USER_CONFIG_FILE_DEFAULT_LOCATION).returns(false).in_sequence(seq)
+        FileTest.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
 
         @settings.send(:parse_config_files)
       end
@@ -882,10 +887,10 @@ describe Puppet::Settings do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
         FileTest.expects(:exist?).
-          with(USER_CONFIG_FILE_DEFAULT_LOCATION).
+          with(user_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
-          with(USER_CONFIG_FILE_DEFAULT_LOCATION).
+          with(user_config_file_default_location).
           returns(user_config_text).in_sequence(seq)
       end
 
@@ -904,10 +909,10 @@ describe Puppet::Settings do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
         FileTest.expects(:exist?).
-          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
-          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          with(main_config_file_default_location).
           returns(main_config_text).in_sequence(seq)
       end
 
@@ -925,12 +930,12 @@ describe Puppet::Settings do
     context "running with an explicit config file as a user (e.g. Apache + Passenger)" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        @settings[:confdir] = File.dirname(MAIN_CONFIG_FILE_DEFAULT_LOCATION)
+        @settings[:confdir] = File.dirname(main_config_file_default_location)
         FileTest.expects(:exist?).
-          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
-          with(MAIN_CONFIG_FILE_DEFAULT_LOCATION).
+          with(main_config_file_default_location).
           returns(main_config_text).in_sequence(seq)
       end
 
