@@ -65,7 +65,7 @@ describe Puppet::Indirector::Hiera do
   let(:datadir) { my_fixture_dir }
 
   it "should be the default data_binding terminus" do
-    Puppet.settings[:data_binding_terminus].should == 'hiera'
+    Puppet.settings[:data_binding_terminus].should == :hiera
   end
 
   it "should raise an error if we don't have the hiera feature" do

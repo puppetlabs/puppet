@@ -462,7 +462,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 
     if Puppet[:catalog_cache_terminus]
-      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus].intern
+      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 
     unless options[:fingerprint]
