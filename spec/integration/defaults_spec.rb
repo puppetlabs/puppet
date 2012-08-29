@@ -300,7 +300,7 @@ describe "Puppet defaults" do
     end
 
     it "should be set to hiera by default" do
-      Puppet.settings[:data_binding_terminus].should == 'hiera'
+      Puppet.settings[:data_binding_terminus].should == :hiera
     end
   end
 end

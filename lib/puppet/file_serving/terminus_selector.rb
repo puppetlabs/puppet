@@ -19,7 +19,7 @@ module Puppet::FileServing::TerminusSelector
       if request.server
         :rest
       else
-        Puppet[:default_file_terminus].to_sym
+        Puppet[:default_file_terminus]
       end
     when nil
       :file_server
