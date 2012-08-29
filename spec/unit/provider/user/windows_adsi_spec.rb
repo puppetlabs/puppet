@@ -136,6 +136,17 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.delete
   end
 
+  it 'should delete the profile if managehome is set' do
+    resource[:managehome] = true
+
+    sid = 'S-A-B-C'
+    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns(sid)
+    Puppet::Util::ADSI::UserProfile.expects(:delete).with(sid)
+    connection.expects(:Delete).with('user', 'testuser')
+
+    provider.delete
+  end
+
   it "should commit the user when flushed" do
     provider.user.expects(:commit)
 

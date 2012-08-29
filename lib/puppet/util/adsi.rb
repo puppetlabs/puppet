@@ -45,8 +45,12 @@ module Puppet::Util::ADSI
       "#{computer_uri}/#{resource_name},#{resource_type}"
     end
 
+    def wmi_connection
+      connect(wmi_resource_uri)
+    end
+
     def execquery(query)
-      connect(wmi_resource_uri).execquery(query)
+      wmi_connection.execquery(query)
     end
 
     def sid_for_account(name)
@@ -185,6 +189,22 @@ module Puppet::Util::ADSI
       end
 
       users.each(&block)
+    end
+  end
+
+  class UserProfile
+    def self.delete(sid)
+      begin
+        Puppet::Util::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
+      rescue => e
+        # http://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
+        # Prior to Vista SP1, there's no builtin way to programmatically
+        # delete user profiles (except for delprof.exe). So try to delete
+        # but warn if we fail
+        raise e unless e.message.include?('80041010')
+
+        Puppet.warning "Cannot delete user profile for '#{sid}' prior to Vista SP1"
+      end
     end
   end
 
