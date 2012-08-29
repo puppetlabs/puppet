@@ -13,7 +13,7 @@ class Puppet::Application::Filebucket < Puppet::Application
   attr :args
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-filebucket(8) -- Store and retrieve files in a filebucket
 ========

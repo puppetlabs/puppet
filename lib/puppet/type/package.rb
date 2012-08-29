@@ -306,7 +306,7 @@ module Puppet
     end
 
     newparam(:install_options, :required_features => :install_options) do
-      desc <<-EOT
+      desc <<-'EOT'
         A hash of additional options to pass when installing a package. These
         options are package-specific, and should be documented by the software
         vendor. The most commonly implemented option is `INSTALLDIR`:

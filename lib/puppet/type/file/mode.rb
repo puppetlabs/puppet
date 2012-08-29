@@ -6,7 +6,7 @@ module Puppet
     require 'puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
 
-    desc <<-EOT
+    desc <<-'EOT'
       The desired permissions mode for the file, in symbolic or numeric
       notation. Puppet uses traditional Unix permission schemes and translates
       them to equivalent permissions for systems which represent permissions

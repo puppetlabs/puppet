@@ -15,7 +15,7 @@ module Puppet
 
     attr_reader :actual_content
 
-    desc <<-EOT
+    desc <<-'EOT'
       The desired contents of a file, as a string. This attribute is mutually
       exclusive with `source` and `target`.
 

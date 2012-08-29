@@ -43,7 +43,7 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:matches) do
-    desc <<-EOT
+    desc <<-'EOT'
       One or more (shell type) file glob patterns, which restrict
       the list of files to be tidied to those whose basenames match
       at least one of the patterns specified. Multiple patterns can
