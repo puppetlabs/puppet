@@ -337,16 +337,16 @@ describe Puppet::Application::Agent do
       Puppet[:node_terminus].should ==  :rest
     end
 
-    it "has an application default :catalog_cache_terminus setting of 'yaml'" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
+    it "has an application default :catalog_cache_terminus setting of 'json'" do
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup
     end
 
     it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
-      Puppet[:catalog_cache_terminus] = "pson"
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:pson)
+      Puppet[:catalog_cache_terminus] = "yaml"
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup
