@@ -242,6 +242,10 @@ module Puppet
       :desc       => "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store.",
     },
+    :catalog_cache_terminus => {
+      :default    => nil,
+      :desc       => "How to store cached catalogs."
+    },
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",
@@ -303,7 +307,7 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppet queue` be running and that 'PSON' support for ruby be installed.",
+      Requires that `puppet queue` be running.",
         :hook     => proc do |value|
           if value
             # This reconfigures the terminii for Node, Facts, and Catalog
@@ -311,6 +315,7 @@ module Puppet
 
             # But then we modify the configuration
             Puppet::Resource::Catalog.indirection.cache_class = :queue
+            Puppet.settings[:catalog_cache_terminus] = :queue
           else
             raise "Cannot disable asynchronous storeconfigs in a running process"
           end
@@ -1465,8 +1470,10 @@ You can adjust the backend using the storeconfigs_backend setting.",
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          Puppet.settings[:async_storeconfigs] or
+          if not Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+            Puppet.settings[:catalog_cache_terminus] = :store_configs
+          end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
           Puppet::Node.indirection.cache_class = :store_configs
 
