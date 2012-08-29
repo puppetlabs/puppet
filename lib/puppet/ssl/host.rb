@@ -287,12 +287,22 @@ ERROR_STRING
     # So, when we add the newer fingerprints, we're explicit about the hashing
     # algorithm used.
     # --jeffweiss 31 july 2012
-    [:SHA1, :SHA256, :SHA512].each do |md| 
-      pson_hash["fingerprint_#{md}".downcase.to_sym] = thing_to_use.fingerprint md
+    pson_hash[:fingerprints] = {}
+    pson_hash[:fingerprints][:default] = thing_to_use.fingerprint
+    
+    suitable_message_digest_algorithms.each do |md| 
+      pson_hash[:fingerprints][md] = thing_to_use.fingerprint md
     end
     pson_hash[:dns_alt_names] = thing_to_use.subject_alt_names
 
     pson_hash.to_pson(*args)
+  end
+  
+  # eventually we'll probably want to move this somewhere else or make it
+  # configurable
+  # --jeffweiss 29 aug 2012
+  def suitable_message_digest_algorithms
+    [:SHA1, :SHA256, :SHA512]
   end
 
   # Attempt to retrieve a cert, if we don't already have one.
