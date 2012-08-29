@@ -242,6 +242,10 @@ module Puppet
       :desc       => "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store.",
     },
+    :content_origin_priority => {
+      :default => "bucket", 
+      :desc => "The preferred retrieve methode for static compiler",
+    },
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",

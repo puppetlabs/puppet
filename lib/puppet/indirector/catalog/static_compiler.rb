@@ -14,32 +14,34 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
     catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
       next unless source = resource[:source]
-      next unless source =~ /^puppet:/
 
       file = resource.to_ral
       if file.recurse?
         add_children(request.key, catalog, resource, file)
       else
-        find_and_replace_metadata(request.key, resource, file)
+        find_and_replace_metadata(request, resource, file)
       end
     end
 
     catalog
   end
 
-  def find_and_replace_metadata(host, resource, file)
+  def find_and_replace_metadata(request, resource, file)
     # We remove URL info from it, so it forces a local copy
     # rather than routing through the network.
     # Weird, but true.
-    newsource = file[:source][0].sub("puppet:///", "")
-    file[:source][0] = newsource
-
-    raise "Could not get metadata for #{resource[:source]}" unless metadata = file.parameter(:source).metadata
-
-    replace_metadata(host, resource, metadata)
+    metadata = nil
+    path = nil
+    file[:source].map{ | s |
+        break if s !~ /^puppet:/
+        metadata = file.parameter(:source).metadata_with_request(s.sub("puppet:///", ""), request)
+        path = s
+        break if metadata 
+    }
+    replace_metadata(request.key, resource, metadata, path) if metadata     
   end
 
-  def replace_metadata(host, resource, metadata)
+  def replace_metadata(host, resource, metadata, path)
     [:mode, :owner, :group].each do |param|
       resource[param] ||= metadata.send(param)
     end
@@ -49,12 +51,12 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       unless resource[:content]
         resource[:content] = metadata.checksum
         resource[:checksum] = metadata.checksum_type
+        resource[:source] = path
       end
     end
 
     store_content(resource) if resource[:ensure] == "file"
-    old_source = resource.delete(:source)
-    Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
+    Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{path}'"
   end
 
   def add_children(host, catalog, resource, file)
