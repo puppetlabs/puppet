@@ -219,9 +219,26 @@ describe Puppet::Application::Device do
       Puppet[:node_terminus].should ==  :rest
     end
 
-    it "should tell the catalog handler to use cache" do
+    it "has an application default :catalog_cache_terminus setting of 'yaml'" do
       Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
 
+      @device.initialize_app_defaults
+      @device.setup
+    end
+
+    it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
+      Puppet[:catalog_cache_terminus] = "pson"
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:pson)
+
+      @device.initialize_app_defaults
+      @device.setup
+    end
+
+    it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
+      Puppet[:catalog_cache_terminus] = nil
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+
+      @device.initialize_app_defaults
       @device.setup
     end
 
