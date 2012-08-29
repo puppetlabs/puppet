@@ -13,16 +13,16 @@
 
 Name:           puppet
 Version:        3.0.0
-Release:        0.1rc4%{?dist}
+Release:        0.1rc5%{?dist}
 #Release:        1%{?dist}
 Vendor:         %{?_host_vendor}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc3.tar.gz.asc
+#Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc5.tar.gz
+#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc5.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -76,8 +76,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}
-#%setup -q -n %{name}-%{version}rc3
+#%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}rc5
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -279,6 +279,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Aug 29 2012 Moses Mendoza <moses@puppetlabs.com> - 3.0.0-0.1rc5
+- Update for 3.0.0 rc5
+
 * Fri Aug 24 2012 Eric Sorenson <eric0@puppetlabs.com> - 3.0.0-0.1rc4
 - Facter requirement is 1.6.11, not 2.0
 - Update for 3.0.0 rc4

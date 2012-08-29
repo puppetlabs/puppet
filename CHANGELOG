@@ -1,3 +1,15 @@
+3.0.0rc5
+===
+88171aa Maint: Use pending block
+33bf085 Maint: Make paths absolute on Windows
+54acfba (#16137) Delay evaluation of config and var directories
+b53e600 (#16137) Tilde expansion should only occur for normal users
+43590bd (Maint) Remove trailing whitespace
+c0ff98d (#16137) Ensure HOME is set before attempting ~ expansion
+224d380 Move singleton require to puppet/util/storage.rb
+605e34d (#15739) Bump report_version since #10064 change its format
+d834e76 (#6143) ensure that destroy works for zpools
+
 3.0.0rc4
 ===
 adcab02 (#15966) Update gem.rake task for correct facter version dependency
