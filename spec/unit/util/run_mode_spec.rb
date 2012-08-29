@@ -17,7 +17,7 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
-        as_root { @run_mode.conf_dir.should == '/etc/puppet' }
+        as_root { @run_mode.conf_dir.should == File.expand_path('/etc/puppet') }
       end
 
       it "has confdir ~/.puppet when run as non-root" do
@@ -35,7 +35,7 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
-        as_root { @run_mode.var_dir.should == '/var/lib/puppet' }
+        as_root { @run_mode.var_dir.should == File.expand_path('/var/lib/puppet') }
       end
 
       it "has vardir ~/.puppet/var when run as non-root" do
@@ -79,21 +79,21 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
-        as_root { @run_mode.conf_dir.should == File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") }
+        as_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")) }
       end
 
       it "has confdir in the local appdata when run as non-root" do
-        as_non_root { @run_mode.conf_dir.should == File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet") }
+        as_non_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet")) }
       end
     end
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
-        as_root { @run_mode.var_dir.should == File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") }
+        as_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")) }
       end
 
       it "has vardir local appdata when run as non-root" do
-        as_non_root { @run_mode.var_dir.should == File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet", "var") }
+        as_non_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet", "var")) }
       end
     end
   end
