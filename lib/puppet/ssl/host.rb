@@ -276,13 +276,38 @@ ERROR_STRING
     pson_hash[:state] = my_state
     pson_hash[:desired_state] = desired_state if desired_state
 
-    if my_state == 'requested'
-      pson_hash[:fingerprint] = certificate_request.fingerprint
-    else
-      pson_hash[:fingerprint] = my_cert.fingerprint
+    thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
+
+    # this is for backwards-compatibility
+    # we should deprecate it and transition people to using
+    # pson[:fingerprints][:default]
+    # It appears that we have no internal consumers of this api
+    # --jeffweiss 30 aug 2012
+    pson_hash[:fingerprint] = thing_to_use.fingerprint
+    
+    # The above fingerprint doesn't tell us what message digest algorithm was used
+    # No problem, except that the default is changing between 2.7 and 3.0. Also, as
+    # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
+    # segfault in rubies older than 1.9.3)
+    # So, when we add the newer fingerprints, we're explicit about the hashing
+    # algorithm used.
+    # --jeffweiss 31 july 2012
+    pson_hash[:fingerprints] = {}
+    pson_hash[:fingerprints][:default] = thing_to_use.fingerprint
+    
+    suitable_message_digest_algorithms.each do |md| 
+      pson_hash[:fingerprints][md] = thing_to_use.fingerprint md
     end
+    pson_hash[:dns_alt_names] = thing_to_use.subject_alt_names
 
     pson_hash.to_pson(*args)
+  end
+  
+  # eventually we'll probably want to move this somewhere else or make it
+  # configurable
+  # --jeffweiss 29 aug 2012
+  def suitable_message_digest_algorithms
+    [:SHA1, :SHA256, :SHA512]
   end
 
   # Attempt to retrieve a cert, if we don't already have one.
