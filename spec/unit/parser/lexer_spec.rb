@@ -37,6 +37,18 @@ describe Puppet::Parser::Lexer do
 
       @lexer.line.should == 13
     end
+
+    {
+      'r'  => "\r",
+      'n'  => "\n",
+      't'  => "\t",
+      's'  => " "
+    }.each do |esc, expected_result|
+      it "should recognize \\#{esc} sequence" do
+        @lexer.string = "\\#{esc}'"
+        @lexer.slurpstring("'")[0].should == expected_result
+      end
+    end
   end
 end
 
@@ -457,6 +469,7 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string with an escaped "\\'"'}                => [[:STRING,'single quoted string with an escaped "\'"']],
     %q{'single quoted string with an escaped "\$"'}                 => [[:STRING,'single quoted string with an escaped "\$"']],
     %q{'single quoted string with an escaped "\."'}                 => [[:STRING,'single quoted string with an escaped "\."']],
+    %q{'single quoted string with an escaped "\r\n"'}               => [[:STRING,'single quoted string with an escaped "\r\n"']],
     %q{'single quoted string with an escaped "\n"'}                 => [[:STRING,'single quoted string with an escaped "\n"']],
     %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
