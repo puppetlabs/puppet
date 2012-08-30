@@ -102,6 +102,7 @@ autorequire that directory."
         sleep 1
       end
       provider.send(method)
+      provider.flush()
     end
 
     def sync
