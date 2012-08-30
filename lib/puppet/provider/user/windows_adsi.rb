@@ -28,6 +28,10 @@ Puppet::Type.type(:user).provide :windows_adsi do
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
     end
+
+    if @resource.managehome?
+      Puppet::Util::Windows::User.load_profile(@resource[:name], @resource[:password])
+    end
   end
 
   def exists?
@@ -35,7 +39,14 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def delete
+    # lookup sid before we delete account
+    sid = uid if @resource.managehome?
+
     Puppet::Util::ADSI::User.delete(@resource[:name])
+
+    if sid
+      Puppet::Util::ADSI::UserProfile.delete(sid)
+    end
   end
 
   # Only flush if we created or modified a user, not deleted
