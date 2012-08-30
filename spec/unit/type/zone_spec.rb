@@ -55,16 +55,6 @@ describe Puppet::Type.type(:zone) do
     described_class.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive, :provider => :solaris)
   end
 
-  context "state_name" do
-    it "should correctly fetch alias from state_aliases when available" do
-      zone.parameter(:ensure).class.state_name('incomplete').should == :installed
-    end
-
-    it "should correctly use symbol when alias is unavailable" do
-      zone.parameter(:ensure).class.state_name('noalias').should == :noalias
-    end
-  end
-
   it "should auto-require :dataset entries" do
     fs = 'random-pool/some-zfs'
 
@@ -80,5 +70,57 @@ describe Puppet::Type.type(:zone) do
     catalog.add_resource zone
 
     catalog.relationship_graph.dependencies(zone).should == [zfs]
+  end
+  describe StateMachine do
+    let (:sm) { StateMachine.new }
+    before :each do
+      sm.insert_state :absent, :down => :destroy
+      sm.insert_state :configured, :up => :configure, :down => :uninstall
+      sm.insert_state :installed, :up => :install, :down => :stop
+      sm.insert_state :running, :up => :start
+    end
+
+    context ":insert_state" do
+      it "should insert state in correct order" do
+        sm.insert_state :dummy, :left => :right
+        sm.index(:dummy).should == 4
+      end
+    end
+    context ":alias_state" do
+      it "should alias state" do
+        sm.alias_state :dummy, :running
+        sm.name(:dummy).should == :running
+      end
+    end
+    context ":name" do
+      it "should get an aliased state correctly" do
+        sm.alias_state :dummy, :running
+        sm.name(:dummy).should == :running
+      end
+      it "should get an un aliased state correctly" do
+        sm.name(:dummy).should == :dummy
+      end
+    end
+    context ":index" do
+      it "should return the state index correctly" do
+        sm.insert_state :dummy, :left => :right
+        sm.index(:dummy).should == 4
+      end
+    end
+    context ":sequence" do
+      it "should correctly return the actions to reach state specified" do
+        sm.sequence(:absent, :running).map{|p|p[:up]}.should ==  [:configure,:install,:start]
+      end
+      it "should correctly return the actions to reach state specified(2)" do
+        sm.sequence(:running, :absent).map{|p|p[:down]}.should == [:stop, :uninstall, :destroy]
+      end
+    end
+    context ":cmp" do
+      it "should correctly compare state sequence values" do
+        sm.cmp?(:absent, :running).should == true
+        sm.cmp?(:running, :running).should == false
+        sm.cmp?(:running, :absent).should == false
+      end
+    end
   end
 end
