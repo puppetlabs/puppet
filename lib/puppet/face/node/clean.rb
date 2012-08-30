@@ -1,27 +1,32 @@
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
     option "--[no-]unexport" do
-      summary "Unexport exported resources"
+      summary "Whether to remove this node's exported resources from other nodes"
     end
 
-    summary "Clean up everything a puppetmaster knows about a node"
+    summary "Clean up everything a puppetmaster knows about a node."
     arguments "<host1> [<host2> ...]"
     description <<-EOT
-      This includes
+      Clean up everything a puppet master knows about a node, including certificates
+      and storeconfigs data.
+      
+      The full list of info cleaned by this action is:
 
-       * Signed certificates ($vardir/ssl/ca/signed/node.domain.pem)
-       * Cached facts ($vardir/yaml/facts/node.domain.yaml)
-       * Cached node stuff ($vardir/yaml/node/node.domain.yaml)
-       * Reports ($vardir/reports/node.domain)
-       * Stored configs: it can either remove all data from an host in your
-       storedconfig database, or with --unexport turn every exported resource
-       supporting ensure to absent so that any other host checking out their
-       config can remove those exported configurations.
-
-      This will unexport exported resources of a
-      host, so that consumers of these resources can remove the exported
-      resources and we will safely remove the node from our
-      infrastructure.
+      <Signed certificates> - ($vardir/ssl/ca/signed/node.domain.pem)
+      
+      <Cached facts> - ($vardir/yaml/facts/node.domain.yaml)
+      
+      <Cached node objects> - ($vardir/yaml/node/node.domain.yaml)
+      
+      <Reports> - ($vardir/reports/node.domain)
+      
+      <Stored configs> - (in database) The clean action can either remove all
+      data from a host in your storeconfigs database, or, with the
+      <--unexport> option, turn every exported resource supporting ensure to
+      absent so that any other host that collected those resources can remove
+      them. Without unexporting, a removed node's exported resources become
+      unmanaged by Puppet, and may linger as cruft unless you are purging
+      that resource type.
     EOT
 
     when_invoked do |*args|

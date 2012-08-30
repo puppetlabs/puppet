@@ -7,7 +7,6 @@ rescue LoadError
 end
 
 # see the bottom of the file for further inclusions
-require 'singleton'
 require 'facter'
 require 'puppet/error'
 require 'puppet/util'

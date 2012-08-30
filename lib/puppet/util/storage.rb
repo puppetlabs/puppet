@@ -1,5 +1,6 @@
 require 'yaml'
 require 'sync'
+require 'singleton'
 
 # a class for storing state
 class Puppet::Util::Storage
