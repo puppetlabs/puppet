@@ -278,10 +278,15 @@ ERROR_STRING
 
     thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
 
+    # this is for backwards-compatibility
+    # we should deprecate it and transition people to using
+    # pson[:fingerprints][:default]
+    # It appears that we have no internal consumers of this api
+    # --jeffweiss 30 aug 2012
     pson_hash[:fingerprint] = thing_to_use.fingerprint
     
     # The above fingerprint doesn't tell us what message digest algorithm was used
-    # No problem, expect that the default is changing between 2.7 and 3.0. Also, as
+    # No problem, except that the default is changing between 2.7 and 3.0. Also, as
     # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
     # segfault in rubies older than 1.9.3)
     # So, when we add the newer fingerprints, we're explicit about the hashing
