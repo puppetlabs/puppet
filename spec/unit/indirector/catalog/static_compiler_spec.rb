@@ -156,7 +156,8 @@ describe Puppet::Resource::Catalog::StaticCompiler do
       }
       # The static compiler does not operate on a RAL catalog, so we're
       # using Puppet::Resource to produce a resource catalog.
-      rsrc = Puppet::Resource.new("file", "/tmp/file_#{idx}.txt", :parameters => parameters)
+      agnostic_path = File.expand_path("/tmp/file_#{idx}.txt") # Windows Friendly
+      rsrc = Puppet::Resource.new("file", agnostic_path, :parameters => parameters)
       rsrc.file = 'site.pp'
       rsrc.line = idx
       resources << rsrc
@@ -182,7 +183,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
   links: !ruby/sym manage
   mode: 420
   owner: 0
-  path: /etc/puppet/modules/mymodule/files/config_file.txt
+  path: #{File.expand_path('/etc/puppet/modules/mymodule/files/config_file.txt')}
   source: #{options[:source]}
   stat_method: !ruby/sym lstat
 EOFILESERVERMETADATA
