@@ -225,10 +225,12 @@ module Puppet
       :desc       => "The YAML file containing indirector route configuration.",
     },
     :node_terminus => {
+      :type       => :terminus,
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
     },
     :data_binding_terminus => {
+      :type    => :terminus,
       :default => "hiera",
       :desc    => "Where to retrive information about data.",
     },
@@ -238,9 +240,15 @@ module Puppet
       :type    => :file,
     },
     :catalog_terminus => {
+      :type       => :terminus,
       :default    => "compiler",
       :desc       => "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store.",
+    },
+    :catalog_cache_terminus => {
+      :type       => :terminus,
+      :default    => nil,
+      :desc       => "How to store cached catalogs. Valid values are 'json' and 'yaml'. The agent application defaults to 'json'."
     },
     :facts_terminus => {
       :default => 'facter',
@@ -254,10 +262,12 @@ module Puppet
       end
     },
     :inventory_terminus => {
+      :type       => :terminus,
       :default    => "$facts_terminus",
       :desc       => "Should usually be the same as the facts terminus",
     },
     :default_file_terminus => {
+      :type       => :terminus,
       :default    => "rest",
       :desc       => "The default source for files if no server is given in a
       uri, e.g. puppet:///file. The default of `rest` causes the file to be
@@ -303,7 +313,7 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppet queue` be running and that 'PSON' support for ruby be installed.",
+      Requires that `puppet queue` be running.",
         :hook     => proc do |value|
           if value
             # This reconfigures the terminii for Node, Facts, and Catalog
@@ -311,6 +321,7 @@ module Puppet
 
             # But then we modify the configuration
             Puppet::Resource::Catalog.indirection.cache_class = :queue
+            Puppet.settings[:catalog_cache_terminus] = :queue
           else
             raise "Cannot disable asynchronous storeconfigs in a running process"
           end
@@ -1465,8 +1476,10 @@ You can adjust the backend using the storeconfigs_backend setting.",
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          Puppet.settings[:async_storeconfigs] or
+          if not Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+            Puppet.settings[:catalog_cache_terminus] = :store_configs
+          end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
           Puppet::Node.indirection.cache_class = :store_configs
 
@@ -1475,6 +1488,7 @@ You can adjust the backend using the storeconfigs_backend setting.",
       end
     },
     :storeconfigs_backend => {
+      :type => :terminus,
       :default => "active_record",
       :desc => "Configure the backend terminus used for StoreConfigs.
 By default, this uses the ActiveRecord store, which directly talks to the

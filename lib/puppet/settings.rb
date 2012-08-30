@@ -9,6 +9,7 @@ require 'puppet/settings/file_setting'
 require 'puppet/settings/directory_setting'
 require 'puppet/settings/path_setting'
 require 'puppet/settings/boolean_setting'
+require 'puppet/settings/terminus_setting'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -624,6 +625,7 @@ class Puppet::Settings
           :directory  => DirectorySetting,
           :path       => PathSetting,
           :boolean    => BooleanSetting,
+          :terminus   => TerminusSetting,
       } [type]
         raise ArgumentError, "Invalid setting type '#{type}'"
       end

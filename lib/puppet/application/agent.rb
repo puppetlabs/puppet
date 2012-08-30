@@ -9,6 +9,7 @@ class Puppet::Application::Agent < Puppet::Application
   def app_defaults
     super.merge({
       :catalog_terminus => :rest,
+      :catalog_cache_terminus => :json,
       :node_terminus => :rest,
       :facts_terminus => :facter,
     })
@@ -460,7 +461,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 
-    Puppet::Resource::Catalog.indirection.cache_class = :yaml
+    if Puppet[:catalog_cache_terminus]
+      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
+    end
 
     unless options[:fingerprint]
       setup_agent
