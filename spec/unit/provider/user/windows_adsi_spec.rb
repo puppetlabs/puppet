@@ -83,6 +83,17 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       provider.create
     end
 
+    it "should load the profile if managehome is set", :if => Puppet.features.microsoft_windows? do
+      resource[:password] = '0xDeadBeef'
+      resource[:managehome] = true
+
+      user = stub_everything 'user'
+      Puppet::Util::ADSI::User.expects(:create).with('testuser').returns user
+      Puppet::Util::Windows::User.expects(:load_profile).with('testuser', '0xDeadBeef')
+
+      provider.create
+    end
+
     it "should set a user's password" do
       provider.user.expects(:password=).with('plaintextbad')
 
@@ -120,6 +131,17 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
   end
 
   it 'should be able to delete a user' do
+    connection.expects(:Delete).with('user', 'testuser')
+
+    provider.delete
+  end
+
+  it 'should delete the profile if managehome is set' do
+    resource[:managehome] = true
+
+    sid = 'S-A-B-C'
+    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns(sid)
+    Puppet::Util::ADSI::UserProfile.expects(:delete).with(sid)
     connection.expects(:Delete).with('user', 'testuser')
 
     provider.delete
