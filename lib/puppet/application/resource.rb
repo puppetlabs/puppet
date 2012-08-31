@@ -35,7 +35,7 @@ class Puppet::Application::Resource < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-resource(8) -- The resource abstraction layer shell
 ========

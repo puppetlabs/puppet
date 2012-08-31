@@ -274,7 +274,7 @@ module Puppet
 
 
     newcheck(:refreshonly) do
-      desc <<-EOT
+      desc <<-'EOT'
         The command should only be run as a
         refresh mechanism for when a dependent object is changed.  It only
         makes sense to use this option when this command depends on some
@@ -311,7 +311,7 @@ module Puppet
     end
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
-      desc <<-EOT
+      desc <<-'EOT'
         A file that this command creates.  If this
         parameter is provided, then the command will only be run
         if the specified file does not exist.
@@ -336,7 +336,7 @@ module Puppet
     end
 
     newcheck(:unless) do
-      desc <<-EOT
+      desc <<-'EOT'
         If this parameter is set, then this `exec` will run unless
         the command returns 0.  For example:
 
@@ -378,7 +378,7 @@ module Puppet
     end
 
     newcheck(:onlyif) do
-      desc <<-EOT
+      desc <<-'EOT'
         If this parameter is set, then this `exec` will only run if
         the command returns 0.  For example:
 

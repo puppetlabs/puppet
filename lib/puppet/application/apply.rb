@@ -40,7 +40,7 @@ EOM
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-apply(8) -- Apply Puppet manifests locally
 ========
