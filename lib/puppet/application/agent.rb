@@ -89,7 +89,7 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-agent(8) -- The puppet agent daemon
 ========

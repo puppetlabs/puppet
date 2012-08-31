@@ -64,7 +64,7 @@ class Puppet::Application::Device < Puppet::Application
   end
 
     def help
-      <<-HELP
+      <<-'HELP'
 
 puppet-device(8) -- Manage remote network devices
 ========

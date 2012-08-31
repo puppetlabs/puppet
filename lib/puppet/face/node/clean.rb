@@ -6,7 +6,7 @@ Puppet::Face.define(:node, '0.0.1') do
 
     summary "Clean up everything a puppetmaster knows about a node."
     arguments "<host1> [<host2> ...]"
-    description <<-EOT
+    description <<-'EOT'
       Clean up everything a puppet master knows about a node, including certificates
       and storeconfigs data.
       

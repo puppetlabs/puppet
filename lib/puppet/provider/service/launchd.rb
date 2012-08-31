@@ -1,6 +1,6 @@
 require 'facter/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
-  desc <<-EOT
+  desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 

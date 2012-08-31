@@ -8,7 +8,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     returns "Hash of module objects representing uninstalled modules and related errors."
 
-    examples <<-EOT
+    examples <<-'EOT'
       Uninstall a module:
 
       $ puppet module uninstall puppetlabs-ssh

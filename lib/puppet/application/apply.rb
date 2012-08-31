@@ -31,7 +31,7 @@ class Puppet::Application::Apply < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-apply(8) -- Apply Puppet manifests locally
 ========
