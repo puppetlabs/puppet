@@ -89,7 +89,7 @@ def do_configs(configs, target, strip = 'conf/')
   end
 
   if $operatingsystem == 'windows'
-    src_dll = 'conf/windows/eventlog/puppetres.dll'
+    src_dll = 'ext/windows/eventlog/puppetres.dll'
     dst_dll = File.join(InstallOptions.bin_dir, 'puppetres.dll')
     if $haveftools
       File.install(src_dll, dst_dll, 0644, true)
