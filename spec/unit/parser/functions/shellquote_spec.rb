@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe "the shellquote function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
-
   before :each do
     @scope = Puppet::Parser::Scope.new
   end
@@ -13,7 +9,6 @@ describe "the shellquote function" do
   it "should exist" do
     Puppet::Parser::Functions.function("shellquote").should == "function_shellquote"
   end
-
 
   it "should handle no arguments" do
     result = @scope.function_shellquote([])
