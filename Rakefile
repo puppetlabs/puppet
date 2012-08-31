@@ -20,43 +20,40 @@ end
 require 'rake'
 require 'rspec'
 require "rspec/core/rake_task"
-
-
-%x{which git &> /dev/null}
-if $?.success? and File.exist?('.git')
-  # remove the git hash from git describe string
-  Puppet.version = %x{git describe}.chomp.gsub('-','.').split('.')[0..3].join('.')
-end
+require 'yaml'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
+Dir['ext/packaging/tasks/**/*'].sort.each { |t| load t }
 
-FILES = FileList[
-    '[A-Z]*',
-    'install.rb',
-    'bin/**/*',
-    'sbin/**/*',
-    'lib/**/*',
-    'conf/**/*',
-    'man/**/*',
-    'examples/**/*',
-    'ext/**/*',
-    'tasks/**/*',
-    'test/**/*',
-    'spec/**/*'
-]
-
-Rake::PackageTask.new("puppet", Puppet.version) do |pkg|
-    pkg.package_dir = 'pkg'
-    pkg.need_tar_gz = true
-    pkg.package_files = FILES.to_a
+begin
+  @build_defaults ||= YAML.load_file('ext/build_defaults.yaml')
+  @packaging_url  = @build_defaults['packaging_url']
+  @packaging_repo = @build_defaults['packaging_repo']
+rescue
+  STDERR.puts 'Unable to read the packaging repo info from ext/build_defaults.yaml'
 end
+
+namespace :package do
+  desc "Bootstrap packaging automation, e.g. clone into packaging repo"
+  task :bootstrap do
+    if File.exist?("ext/#{@packaging_repo}")
+      puts "It looks like you already have ext/#{@packaging_repo}. If you don't like it, blow it away with package:implode."
+    else
+      cd 'ext' do
+        %x{git clone #{@packaging_url}}
+      end
+    end
+  end
+  desc "Remove all cloned packaging automation"
+  task :implode do
+    rm_rf "ext/#{@packaging_repo}"
+  end
+end
+
 
 task :default do
     sh %{rake -T}
 end
-
-desc "Create the tarball and the gem - use when releasing"
-task :puppetpackages => [:create_gem, :package]
 
 RSpec::Core::RakeTask.new do |t|
     t.pattern ='spec/{unit,integration}/**/*.rb'

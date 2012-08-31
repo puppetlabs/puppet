@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e
+
+# Remove renamed configuration files which are now handled by other
+# packages
+if dpkg-maintscript-helper supports rm_conffile 2>/dev/null; then
+
+    dpkg-maintscript-helper rm_conffile \
+        /etc/logrotate.d/puppet 2.6.4-2 puppet -- "$@"
+
+    dpkg-maintscript-helper rm_conffile \
+        /etc/logcheck/ignore.d.server/puppet 2.6.4-2 puppet -- "$@"
+
+    dpkg-maintscript-helper rm_conffile \
+        /etc/emacs/site-start.d/50puppet-mode-init.el 2.6.4-2 puppet -- "$@"
+
+fi
+
+#DEBHELPER#

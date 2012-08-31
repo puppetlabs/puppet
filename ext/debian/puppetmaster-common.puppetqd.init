@@ -1,0 +1,84 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: puppetqd
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+### END INIT INFO                 
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/puppet
+DAEMON_OPTS="queue"
+NAME=queue
+DESC="puppet queue"
+PIDFILE="/var/run/puppet/${NAME}.pid"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/puppetqd ] && . /etc/default/puppetqd
+
+. /lib/lsb/init-functions
+
+if [ ! -d /var/run/puppet ]; then
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
+is_true() {
+    if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+start_puppet_queue() {
+    if is_true "$PUPPETQD" ; then
+	start-stop-daemon --start --quiet --pidfile=${PIDFILE} \
+	    --startas $DAEMON -- $NAME $DAEMON_OPTS $PUPPETQD_OPTS
+    fi
+}
+
+stop_puppet_queue() {
+    start-stop-daemon --stop --quiet --oknodo --pidfile ${PIDFILE}
+    rm -f ${PIDFILE}
+}
+
+status_puppet_queue() {
+    if is_true "$PUPPETQD" ; then
+        status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
+    else
+	echo ""
+	echo "puppetqd not configured to start"
+    fi
+}
+
+
+case "$1" in
+    start)
+	log_begin_msg "Starting $DESC"
+	start_puppet_queue
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping $DESC"
+	stop_puppet_queue
+	log_end_msg $?
+	;;
+    status)
+	status_puppet_queue
+        ;;
+    reload|restart|force-reload)
+	log_begin_msg "Restarting $DESC"
+	stop_puppet_queue
+	sleep 1
+	start_puppet_queue
+	log_end_msg $?
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|restart|force-reload}" >&2
+	exit 1
+	;;
+esac

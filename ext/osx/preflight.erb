@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# Make sure that old puppet cruft is removed
+# This also allows us to downgrade puppet as
+# it's more likely that installing old versions
+# over new will cause issues.
+#
+# ${3} is the destination volume so that this works correctly
+# when being installed to volumes other than the current OS.
+
+<% begin %>
+<% require 'rubygems' %>
+<% rescue LoadError %>
+<% end %>
+<% require 'rake' %>
+
+<% Dir.chdir("lib") %>
+<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
+/bin/rm -Rf "${3}<%= @apple_libdir %>/<%=file%>"
+<% end %>
+
+<% Dir.chdir("../bin") %>
+<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
+/bin/rm -Rf "${3}<%= @apple_bindir %>/<%=file%>"
+<% end %>
+<% Dir.chdir("..") %>
+
+# remove old doc files
+/bin/rm -Rf "${3}<%= @apple_docdir %>/<%= @package_name %>"
+
+# These files used to live in the sbindir but were
+# removed in Pupppet >= 3.0. Remove them
+/bin/rm -Rf "${3}<%= @apple_sbindir %>/puppetca"
+/bin/rm -Rf "${3}<%= @apple_sbindir %>/puppetd"
+/bin/rm -Rf "${3}<%= @apple_sbindir %>/puppetmasterd"
+/bin/rm -Rf "${3}<%= @apple_sbindir %>/puppetqd"
+/bin/rm -Rf "${3}<%= @apple_sbindir %>/puppetrun"
