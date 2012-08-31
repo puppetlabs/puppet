@@ -134,11 +134,23 @@ describe "Puppet defaults" do
     end
   end
 
-  it "should add /usr/sbin and /sbin to the path if they're not there" do
-    withenv("PATH" => "/usr/bin:/usr/local/bin") do
-      Puppet.settings[:path] = "none" # this causes it to ignore the setting
-      ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/usr/sbin")
-      ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
+  describe "on a Unix-like platform it", :as_platform => :posix do
+    it "should add /usr/sbin and /sbin to the path if they're not there" do
+      withenv("PATH" => "/usr/bin#{File::PATH_SEPARATOR}/usr/local/bin") do
+        Puppet.settings[:path] = "none" # this causes it to ignore the setting
+        ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/usr/sbin")
+        ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
+      end
+    end
+  end
+
+  describe "on a Windows-like platform it", :as_platform => :windows do
+    it "should not add anything" do
+      path = "c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows"
+      withenv("PATH" => path) do
+        Puppet.settings[:path] = "none" # this causes it to ignore the setting
+        ENV["PATH"].should == path
+      end
     end
   end
 
