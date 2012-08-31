@@ -136,6 +136,21 @@ module Puppet::Util::SELinux
     nil
   end
 
+  ########################################################################
+  # Internal helper methods from here on in, kids.  Don't fiddle.
+  private
+
+  # Check filesystem a path resides on for SELinux support against
+  # whitelist of known-good filesystems.
+  # Returns true if the filesystem can support SELinux labels and
+  # false if not.
+  def selinux_label_support?(file)
+    fstype = find_fs(file)
+    return false if fstype.nil?
+    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs']
+    filesystems.include?(fstype)
+  end
+
   # Internal helper function to read and parse /proc/mounts
   def read_mounts
     mounts = ""
@@ -201,16 +216,4 @@ module Puppet::Util::SELinux
     end
     mnts['/']
   end
-
-  # Check filesystem a path resides on for SELinux support against
-  # whitelist of known-good filesystems.
-  # Returns true if the filesystem can support SELinux labels and
-  # false if not.
-  def selinux_label_support?(file)
-    fstype = find_fs(file)
-    return false if fstype.nil?
-    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs']
-    filesystems.include?(fstype)
-  end
-
 end
