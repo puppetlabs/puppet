@@ -141,7 +141,7 @@ module Puppet
           ENV["PATH"] = "" if ENV["PATH"].nil?
           ENV["PATH"] = value unless value == "none"
           paths = ENV["PATH"].split(File::PATH_SEPARATOR)
-          %w{/usr/sbin /sbin}.each do |path|
+          Puppet::Util::Platform.default_paths.each do |path|
             ENV["PATH"] += File::PATH_SEPARATOR + path unless paths.include?(path)
           end
           value
