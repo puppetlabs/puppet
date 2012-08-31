@@ -5,7 +5,7 @@ module Puppet
     require 'puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
 
-    desc <<-EOT
+    desc <<-'EOT'
       Whether to create files that don't currently exist.
       Possible values are *absent*, *present*, *file*, and *directory*.
       Specifying `present` will match any form of file existence, and

@@ -31,7 +31,7 @@ class Puppet::Application::Master < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-master(8) -- The puppet master daemon
 ========

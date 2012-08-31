@@ -181,7 +181,7 @@ class Puppet::Application::Describe < Puppet::Application
   option("--meta","-m")
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-describe(8) -- Display help about resource types
 ========

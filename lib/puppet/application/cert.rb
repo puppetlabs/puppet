@@ -53,7 +53,7 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-cert(8) -- Manage certificates and requests
 ========
