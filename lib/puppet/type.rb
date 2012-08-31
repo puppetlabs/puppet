@@ -448,7 +448,7 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue => detail
-        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error = Puppet::Error.new("Parameter #{name} failed on #{ref}: #{detail}")
         error.set_backtrace(detail.backtrace)
         raise error
       end
