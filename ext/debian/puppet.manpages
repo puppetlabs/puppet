@@ -1,7 +1,3 @@
-man/man8/filebucket.8  
-man/man8/puppetd.8  
-man/man8/puppetdoc.8  
-man/man8/ralsh.8
 man/man8/puppet-agent.8
 man/man8/puppet-apply.8
 man/man8/puppet-catalog.8

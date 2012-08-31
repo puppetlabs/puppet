@@ -13,7 +13,7 @@
 # %global realversion <%= @version %>
 # %global rpmversion <%= @rpmversion %>
 
-%global confdir conf/redhat
+%global confdir ext/redhat
 
 Name:           puppet
 Version:        %{rpmversion}
@@ -78,7 +78,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q -n %{name}-%{realversion}
-patch -s -p1 < conf/redhat/rundir-perms.patch
+patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build

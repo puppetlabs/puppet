@@ -9,11 +9,6 @@ directories:
     owner: 'root'
     group: 'wheel'
     perms: '0755'
-  sbin:
-    path: 'usr/sbin'
-    owner: 'root'
-    group: 'wheel'
-    perms: '0755'
   'man/man8':
     path: 'usr/share/man/man8'
     owner: 'root'
