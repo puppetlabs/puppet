@@ -1,0 +1,33 @@
+#!/bin/sh -e
+
+case "$1" in
+    purge)
+	if dpkg-statoverride --list /usr/share/puppet/rack/puppetmasterd/config.ru >/dev/null 2>&1
+	then
+	    dpkg-statoverride --remove /usr/share/puppet/rack/puppetmasterd/config.ru
+	fi
+	# Remove the puppetmaster site configuration on purge
+	rm -f /etc/apache2/sites-available/puppetmaster
+	;;
+    remove)
+        # Disable the puppetmaster apache2 site configuration on package removal
+        a2dissite puppetmaster
+        if [ -x "/etc/init.d/apache2" ]; then
+            if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+                invoke-rc.d apache2 force-reload || exit $?
+            else
+                /etc/init.d/apache2 force-reload || exit $?
+            fi
+        fi
+	;;
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+
+esac
+
+#DEBHELPER#
+
+exit 0

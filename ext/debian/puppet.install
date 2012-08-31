@@ -1,0 +1,4 @@
+debian/tmp/usr/bin/filebucket usr/bin
+debian/tmp/usr/bin/puppetdoc usr/bin
+debian/tmp/usr/sbin/puppetd usr/sbin
+debian/tmp/usr/bin/ralsh usr/bin

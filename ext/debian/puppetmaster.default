@@ -1,0 +1,38 @@
+# Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
+
+# Start puppetmaster on boot? If you are using passenger, you should
+# have this set to "no"
+START=yes
+
+# Startup options
+DAEMON_OPTS=""
+
+# What server type to run 
+# Options: 
+# 	   webrick: default, cannot handle more than ~30 nodes
+#	   mongrel: scales better than webrick because you can run
+#	    	    multiple processes if you are getting
+#	    	    connection-reset or End-of-file errors, switch to
+#	    	    mongrel. Requires front-end web-proxy such as
+#	    	    apache, nginx, or pound, more information:
+#	            http://puppetlabs.com/trac/puppet/wiki/UsingMongrel
+#          passenger: no need to set this, be sure to set START=no above
+SERVERTYPE=webrick
+
+# How many puppetmaster instances to start? Its pointless to set this
+# higher than 1 if you are not using mongrel. 
+PUPPETMASTERS=1
+
+# What port should the puppetmaster listen on (default: 8140). If
+# PUPPETMASTERS is set to a number greater than 1, then the port for
+# the first puppetmaster will be set to the port listed below, and
+# further instances will be incremented by one 
+#
+# NOTE: if you are using mongrel, then you will need to have a
+# front-end web-proxy (such as apache, nginx, pound) that takes
+# incoming requests on the port your clients are connecting to
+# (default is: 8140), and then passes them off to the mongrel
+# processes.  In this case it is recommended to run your web-proxy on
+# port 8140 and change the below number to something else, such as
+# 18140.
+PORT=8140
