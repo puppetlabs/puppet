@@ -34,7 +34,7 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
         described_class.new(:name => 'Test Task', :command => 'notepad.exe')
       }.to raise_error(
         Puppet::Error,
-        /Parameter command failed: Must be specified using an absolute path\./
+        /Parameter command failed on Scheduled_task\[Test Task\]: Must be specified using an absolute path\./
       )
     end
   end
@@ -77,7 +77,7 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
         )
       }.to raise_error(
         Puppet::Error,
-        /Parameter working_dir failed: Must be specified using an absolute path/
+        /Parameter working_dir failed on Scheduled_task\[Test Task\]: Must be specified using an absolute path/
       )
     end
 

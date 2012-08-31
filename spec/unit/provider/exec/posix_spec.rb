@@ -5,10 +5,11 @@ describe Puppet::Type.type(:exec).provider(:posix) do
   include PuppetSpec::Files
 
   def make_exe
-    command_path = tmpdir('cmdpath')
-    command = Tempfile.new('my_command', command_path)
-    File.chmod(0755, command.path)
-    command.path
+    cmdpath = tmpdir('cmdpath')
+    exepath = tmpfile('my_command', cmdpath)
+    FileUtils.touch(exepath)
+    File.chmod(0755, exepath)
+    exepath
   end
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
