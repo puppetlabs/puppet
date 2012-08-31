@@ -484,7 +484,8 @@ describe Puppet::SSL::CertificateAuthority do
          'this"is#just&madness%you[see]',
          'and even a (an?) \\!',
          'waltz, nymph, for quick jigs vex bud.',
-         '{552c04ca-bb1b-11e1-874b-60334b04494e}'
+         '{552c04ca-bb1b-11e1-874b-60334b04494e}',
+         'super/bad'
         ].each do |name|
           it "should accept #{name.inspect}" do
             csr = Puppet::SSL::CertificateRequest.new(name)
@@ -495,11 +496,11 @@ describe Puppet::SSL::CertificateAuthority do
         end
 
         [
-         'super/bad',
          "not\neven\tkind\rof",
          "ding\adong\a",
          "hidden\b\b\b\b\b\bmessage",
-         "☃ :("
+         "☃ :(",
+         "\x00zero byte"
         ].each do |name|
           it "should reject #{name.inspect}" do
             # We aren't even allowed to make objects with these names, so let's

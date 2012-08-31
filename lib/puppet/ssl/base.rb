@@ -7,7 +7,7 @@ class Puppet::SSL::Base
   SEPARATOR = "\n---\n"
 
   # Only allow printing ascii characters, excluding /
-  VALID_CERTNAME = /\A[ -.0-~]+\Z/
+  VALID_CERTNAME = /\A[[:print:]]+\Z/
 
   def self.from_multiple_s(text)
     text.split(SEPARATOR).collect { |inst| from_s(inst) }
