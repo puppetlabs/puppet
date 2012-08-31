@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# emacsen install script for the Debian GNU/Linux puppet-el package
+
+FLAVOR=$1
+PACKAGE=puppet-el
+
+ELDIR=/usr/share/emacs/site-lisp/
+ELCDIR=/usr/share/${FLAVOR}/site-lisp/${PACKAGE}
+ELFILE="puppet-mode.el"
+FLAGS="-batch -no-site-file -l path.el -f batch-byte-compile"
+
+if [ ${FLAVOR} != emacs ]; then
+  echo install/${PACKAGE}: Byte-compiling for ${FLAVOR}
+
+  install -m 755 -d ${ELCDIR}
+  cd ${ELDIR}
+  cp ${ELFILE} ${ELCDIR}
+  cd ${ELCDIR}
+  cat << EOF > path.el
+(setq load-path (cons "." load-path) byte-compile-warnings nil)
+EOF
+  ${FLAVOR} ${FLAGS} ${ELFILE}
+  rm -f ${ELFILE} path.el
+fi

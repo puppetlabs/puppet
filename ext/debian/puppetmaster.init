@@ -1,0 +1,158 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          puppetmaster
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO                 
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/puppet
+DAEMON_OPTS=""
+NAME=master
+DESC="puppet master"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/puppetmaster ] && . /etc/default/puppetmaster
+
+. /lib/lsb/init-functions
+
+if [ ! -d /var/run/puppet ]; then
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
+is_true() {
+    if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+start_puppet_master() {
+    if is_true "$START" ; then
+	if [ "$SERVERTYPE" = "mongrel" ]
+	then
+	    DAEMON_OPTS="$DAEMON_OPTS --servertype=mongrel"
+	    NUMSTART=0
+	    STARTPORT=$PORT
+	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+		start-stop-daemon --start --quiet --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid \
+		    --startas $DAEMON -- $NAME $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid
+		STARTPORT=$(($STARTPORT + 1))
+		NUMSTART=$(($NUMSTART + 1))
+	    done
+	else
+	    start-stop-daemon --start --quiet --pidfile /var/run/puppet/${NAME}.pid \
+		--startas $DAEMON -- $NAME $DAEMON_OPTS --masterport=$PORT
+	fi
+    else
+	echo ""
+	echo "puppetmaster not configured to start, please edit /etc/default/puppetmaster to enable"
+    fi
+}
+
+stop_puppet_master() {
+    if [ "$SERVERTYPE" = "mongrel" ]
+    then
+	NUMSTART=0
+	STOPPORT=$PORT
+	while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+	    start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/${NAME}-${STOPPORT}.pid
+	    rm -f /var/run/puppet/${NAME}-${STOPPORT}.pid
+	    STOPPORT=$(($STOPPORT + 1))
+	    NUMSTART=$(($NUMSTART + 1))
+	done
+    else
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/${NAME}.pid
+    fi
+}
+
+status_puppet_master() {
+    if ( ! type status_of_proc > /dev/null 2>&1 ) ; then
+        status_of_proc() {
+            local pidfile daemon name status
+            pidfile=
+            OPTIND=1
+            while getopts p: opt ; do
+                case "$opt" in
+                    p)  pidfile="$OPTARG";;
+                esac
+            done
+            shift $(($OPTIND - 1))
+            
+            if [ -n "$pidfile" ]; then
+                pidfile="-p $pidfile"
+            fi
+            daemon="$1"
+            name="$2"
+        
+            status="0"
+            pidofproc $pidfile $daemon >/dev/null || status="$?"
+            if [ "$status" = 0 ]; then
+                log_success_msg "$name is running"
+                return 0
+            elif [ "$status" = 4 ]; then
+                log_failure_msg "could not access PID file for $name"
+                return $status
+            else
+                log_failure_msg "$name is not running"
+                return $status
+            fi         
+        }
+    fi
+
+   if is_true "$START" ; then
+	if [ "$SERVERTYPE" = "mongrel" ]
+	then
+	    NUMSTART=0
+	    STARTPORT=$PORT
+	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+		status_of_proc -p "/var/run/puppet/${NAME}-${STARTPORT}.pid" \
+                    "${DAEMON}" "${NAME}-${STARTPORT}"
+		STARTPORT=$(($STARTPORT + 1))
+		NUMSTART=$(($NUMSTART + 1))
+	    done
+	else
+            status_of_proc -p "/var/run/puppet/${NAME}.pid" "${DAEMON}" "${NAME}"
+	fi
+    else
+	echo ""
+	echo "puppetmaster not configured to start"
+    fi
+}
+
+
+case "$1" in
+    start)
+	log_begin_msg "Starting $DESC"
+	start_puppet_master
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping $DESC"
+	stop_puppet_master
+	log_end_msg $?
+	;;
+    reload)
+  	# Do nothing, as Puppetmaster rechecks its config automatically
+        ;;
+    status)
+	status_puppet_master
+        ;;
+    restart|force-reload)
+	log_begin_msg "Restarting $DESC"
+	stop_puppet_master
+	sleep 1
+	start_puppet_master
+	log_end_msg $?
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
