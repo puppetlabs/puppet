@@ -36,7 +36,7 @@ describe Puppet::Util::FileLocking, :'fails_on_ruby_1.9.2' => true do
     threads.each { |th| th.join }
   end
 
-  it "should be able to keep file corruption from happening when there are multiple writers processes" do
+  it "should be able to keep file corruption from happening when there are multiple writers processes", :unless => Puppet.features.microsoft_windows? do
     unless Process.fork
       50.times { |b|
         Puppet::Util::FileLocking.writelock(@file) { |f|
