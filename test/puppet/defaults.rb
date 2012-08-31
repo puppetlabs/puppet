@@ -13,10 +13,6 @@ class TestPuppetDefaults < Test::Unit::TestCase
   @@normals = %w{puppetport masterport server}
   @@booleans = %w{noop}
 
-  def testVersion
-    assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*/, "got invalid version number #{Puppet.version}")
-  end
-
   def testStringOrParam
     [@@dirs,@@files,@@booleans].flatten.each { |param|
       assert_nothing_raised { Puppet[param] }
