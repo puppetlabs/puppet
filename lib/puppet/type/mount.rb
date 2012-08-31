@@ -207,7 +207,7 @@ module Puppet
       newvalues(:true, :false)
       defaultto do
         case Facter.value(:operatingsystem)
-        when "FreeBSD", "Darwin", "AIX"
+        when "FreeBSD", "Darwin", "AIX", "DragonFly"
           false
         else
           true

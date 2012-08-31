@@ -35,6 +35,14 @@ OUTPUT
     @provider.rcvar.should == ['# ntpd', 'ntpd_enable="YES"', '#   (default: "")']
   end
 
+  it "should correctly parse rcvar for DragonFly BSD" do
+    @provider.stubs(:execute).returns <<OUTPUT
+# ntpd
+$ntpd=YES
+OUTPUT
+    @provider.rcvar.should == ['# ntpd', 'ntpd=YES']
+  end
+
   it "should find the right rcvar_value for FreeBSD < 7" do
     @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable=YES'])
 
