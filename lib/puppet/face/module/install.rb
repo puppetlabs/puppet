@@ -16,7 +16,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     returns "Pathname object representing the path to the installed module."
 
-    examples <<-EOT
+    examples <<-'EOT'
       Install a module:
 
       $ puppet module install puppetlabs-vcsrepo

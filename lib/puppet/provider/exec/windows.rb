@@ -5,7 +5,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
   confine    :operatingsystem => :windows
   defaultfor :operatingsystem => :windows
 
-  desc <<-EOT
+  desc <<-'EOT'
     Execute external binaries on Windows systems. As with the `posix`
     provider, this provider directly calls the command with the arguments
     given, without passing it through a shell or performing any interpolation.

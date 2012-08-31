@@ -38,7 +38,7 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:path) do
-    desc <<-EOT
+    desc <<-'EOT'
       The path to the file to manage.  Must be fully qualified.
 
       On Windows, the path should include the drive letter and should use `/` as

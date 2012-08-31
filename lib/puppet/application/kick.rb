@@ -36,7 +36,7 @@ class Puppet::Application::Kick < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-kick(8) -- Remotely control puppet agent
 ========
