@@ -142,7 +142,8 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not allow numbers" do
-      expect { file[:recurse] = 10 }.to raise_error(Puppet::Error, "Parameter recurse failed: Invalid recurse value 10")
+      expect { file[:recurse] = 10 }.to raise_error(
+        Puppet::Error, /Parameter recurse failed on File\[[^\]]+\]: Invalid recurse value 10/)
     end
 
     [false, "false"].each do |value|
