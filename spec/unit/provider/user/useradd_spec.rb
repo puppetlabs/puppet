@@ -12,13 +12,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   let(:resource) do
     Puppet::Type.type(:user).new(
-      :name => 'myuser',
+      :name       => 'myuser',
       :managehome => :false,
-      :system => :false
+      :system     => :false,
+      :provider   => provider
     )
   end
 
-  let(:provider) { described_class.new(resource) }
+  let(:provider) { described_class.new(:name => 'myuser') }
 
   describe "#create" do
 

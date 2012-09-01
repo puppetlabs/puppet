@@ -8,8 +8,8 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/groupmod'
   end
 
-  let(:resource) { Puppet::Type.type(:group).new(:name => 'mygroup') }
-  let(:provider) { described_class.new(resource) }
+  let(:resource) { Puppet::Type.type(:group).new(:name => 'mygroup', :provider => provider) }
+  let(:provider) { described_class.new(:name => 'mygroup') }
 
   describe "#create" do
     it "should add -o when allowdupe is enabled and the group is being created" do
