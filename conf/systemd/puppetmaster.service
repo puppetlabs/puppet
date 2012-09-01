@@ -1,0 +1,13 @@
+[Unit]
+Description=Puppet master
+Wants=basic.target
+After=basic.target
+
+[Service]
+Type=forking
+PIDFile=/run/puppet/master.pid
+ExecStartPre=/usr/bin/install -d -o puppet -m 755 /run/puppet
+ExecStart=/usr/bin/puppet master
+
+[Install]
+WantedBy=multi-user.target
