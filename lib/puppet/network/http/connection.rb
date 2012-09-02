@@ -1,6 +1,7 @@
 require 'net/https'
 require 'puppet/ssl/host'
 require 'puppet/ssl/configuration'
+require 'puppet/network/authentication'
 
 module Puppet::Network::HTTP
 
@@ -14,6 +15,7 @@ module Puppet::Network::HTTP
   # * Provides some useful error handling for any SSL errors that occur
   #   during a request.
   class Connection
+    include Puppet::Network::Authentication
 
     def initialize(host, port, use_ssl = true)
       @host = host
@@ -58,7 +60,13 @@ module Puppet::Network::HTTP
         preverify_ok
       end
 
-      connection.send(method, *args)
+      response = connection.send(method, *args)
+
+      # Now that the request completed successfully, lets check the involved
+      # certificates for approaching expiration dates
+      warn_if_near_expiration(*peer_certs)
+
+      response
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
