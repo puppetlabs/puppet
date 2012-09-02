@@ -29,6 +29,13 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     content.not_after
   end
 
+  def near_expiration?(interval = nil)
+    return false unless expiration
+    interval ||= Puppet[:certificate_expire_warning]
+    # Certificate expiration timestamps are always in UTC
+    expiration < Time.now.utc + interval
+  end
+
   # This name is what gets extracted from the subject before being passed
   # to the constructor, so it's not downcased
   def unmunged_name

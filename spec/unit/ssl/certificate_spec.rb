@@ -151,4 +151,28 @@ describe Puppet::SSL::Certificate do
       @certificate.to_text.should == "certificatetext"
     end
   end
+
+  describe "when checking if the certificate's expiration is approaching" do
+    before do
+      @days = 24*60*60
+      @certificate = @class.new("myname")
+      @certificate.stubs(:expiration).returns(Time.now.utc() + 30*@days)
+    end
+
+    it "should be true if the expiration is within the given interval from now" do
+      @certificate.near_expiration?(31*@days).should be_true
+    end
+
+    it "should be false if there is no expiration" do
+      @certificate.stubs(:expiration).returns(nil)
+      @certificate.near_expiration?.should be_false
+    end
+
+    it "should default to using the `certificate_expire_warning` setting as the interval" do
+      Puppet[:certificate_expire_warning] = 31*@days
+      @certificate.near_expiration?.should be_true
+      Puppet[:certificate_expire_warning] = 29*@days
+      @certificate.near_expiration?.should be_false
+    end
+  end
 end
