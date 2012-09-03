@@ -26,7 +26,7 @@ module Puppet
       # Raises NameError when resource type is not found
       ##
       def initialize(typename)
-        name = canonize_type typename
+        name = canonicalize_type typename
         if Puppet::DSL::Context.const_defined? name
           @type = name
           @cache = {}

@@ -90,7 +90,7 @@ class Puppet::Parser::TypeLoader
     files.each do |file|
       file = File.join dir, file unless Puppet::Util.absolute_path? file
 
-      if is_ruby_dsl? file
+      if is_ruby_filename? file
         known_before = known_resource_types.definitions.values +
                        known_resource_types.nodes.values +
                        known_resource_types.hostclasses.values
@@ -125,7 +125,7 @@ class Puppet::Parser::TypeLoader
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
       Find.find(mod.manifests) do |path|
-        if path =~ /\.pp$/ or path =~ /\.rb$/
+        if is_ruby_filename? path or is_puppet_filename? path
           import(path)
         end
       end

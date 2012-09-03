@@ -231,7 +231,7 @@ describe Puppet::Parser::Compiler do
 
     it "should evaluate ruby code on main object when using ruby dsl" do
       compile_stub(:evaluate_main)
-      @compiler.stubs(:is_ruby_dsl?).returns true
+      @compiler.stubs(:is_ruby_filename?).returns true
       @compiler.expects :evaluate_ruby_code
 
       @compiler.compile
@@ -248,7 +248,7 @@ describe Puppet::Parser::Compiler do
 
     it "should call evaluate on DSL Parser instance when using ruby dsl" do
       compile_stub(:evaluate_main)
-      @compiler.stubs(:is_ruby_dsl?).returns true
+      @compiler.stubs(:is_ruby_filename?).returns true
       File.stubs(:open).yields(StringIO.new)
       Puppet::DSL::Parser.expects :evaluate
 

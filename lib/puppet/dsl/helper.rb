@@ -4,43 +4,19 @@ module Puppet
     # Module that gathers helper functions for Ruby DSL.
     ##
     module Helper
-
-      ##
-      # This allows to access helper methods from class methods.
-      ##
-      def self.included(base)
-        base.extend Helper
+      def is_ruby_filename?(file)
+        !!(file =~ /\.rb\z/i)
       end
 
-      def is_ruby_dsl?(file)
-        !!(file =~ /\.rb\z/)
-      end
-
-      def is_puppet_dsl?(file)
-        !is_ruby_dsl? file
+      def is_puppet_filename?(file)
+        !!(file =~ /\.pp\z/i)
       end
 
       ##
       # Returns canonical name of a type given as an argument.
       ##
-      def canonize_type(type)
+      def canonicalize_type(type)
         Puppet::Resource.new(type, "").type
-      end
-
-      ##
-      # Returns a resource for the passed reference
-      ##
-      def get_resource(reference)
-        case reference
-        when Puppet::Resource
-          reference
-        when ResourceReference
-          reference.resource
-        when String
-          Puppet::DSL::Parser.current_scope.findresource reference
-        else
-          nil
-        end
       end
 
       ##

@@ -75,29 +75,31 @@ describe Puppet::DSL::Actions do
   describe "#get_resource" do
     it "should return the reference if it's already a resource" do
       ref = Puppet::Resource.new "foo", "bar"
-      subject.get_resource(ref).should == ref
+      subject.send(:get_resource, ref).should == ref
     end
 
     it "should get a resource from Puppet::DSL::ResourceReference" do
       prepare_compiler_and_scope
       res = evaluate_in_context { file "foo" }.first
       ref = evaluate_in_context { type("file")["foo"] }
-      subject.get_resource(ref).should == res
+      subject.send(:get_resource, ref).should == res
     end
 
     it "should get a resource from a string" do
       prepare_compiler_and_scope
       res = evaluate_in_context { file "foo" }.first
-      evaluate_in_scope { subject.get_resource("File[foo]").should == res }
+      evaluate_in_scope { subject.send(:get_resource, "File[foo]").should == res }
     end
 
-    it "should return nil when the string reference doesn't exist" do
+    it "should return a string when the string reference doesn't exist" do
       prepare_compiler_and_scope
-      evaluate_in_scope { subject.get_resource("File[foo]").should == nil }
+      reference = "File[foo]"
+      evaluate_in_scope { subject.send(:get_resource, reference).should == reference }
     end
 
-    it "should return nil otherwise" do
-      subject.get_resource(3).should == nil
+    it "should stringify the parameter when resource can't be found" do
+      prepare_compiler_and_scope
+      evaluate_in_scope { subject.send(:get_resource, 3).should == "3" }
     end
   end
 
