@@ -16,14 +16,14 @@ module Puppet
     # This class is created for ease of debugging.
     # Unlike Puppet::DSL::Context it inherits from Object and works fine with
     # pry, a very useful debugging tool.
-    # Puppet::DSL::Context forwards all the calls to a proxy instance.
+    # Puppet::DSL::Context forwards all the calls to Actions instance.
     # This also allows to limit the number of methods existing in that class.
     ##
     class Actions
       include Puppet::DSL::Helper
 
       ##
-      # Initializes a Proxy instance.
+      # Initializes Puppet::DSL::Actions instance.
       # The filename argument is only used when creating new nodes, definitions
       # or classes.
       ##
@@ -45,7 +45,7 @@ module Puppet
       # Checks whether resource type exists
       ##
       def is_resource_type?(name)
-        type = canonize_type(name)
+        type = canonicalize_type(name)
         !!(["Node", "Class"].include? type or
            Puppet::Type.type type or
            Parser.current_scope.known_resource_types.find_definition '', type or
@@ -91,12 +91,11 @@ module Puppet
       # Name is the name of created node.
       ##
       def create_node(name, options, code, nesting)
-        raise NoMethodError, "called from invalid nesting" if nesting > 0
-        raise ArgumentError, "no block supplied"           if code.nil?
+        raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
+        raise ArgumentError, "no block supplied" if code.nil?
 
         # do nothing if hostclass already exist (init.rb gets parser multiple
         # times sometimes
-        #
         # MLEN:FIXME this probable should get removed somehow
         return if Parser.current_scope.known_resource_types.hostclass name
 
@@ -123,8 +122,8 @@ module Puppet
       # Name is the name for the new hostclass.
       ##
       def create_hostclass(name, options, code, nesting)
-        raise NoMethodError, "called from invalid nesting" if nesting > 0
-        raise ArgumentError, "no block supplied"           if code.nil?
+        raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
+        raise ArgumentError, "no block supplied" if code.nil?
 
         validate_options [:inherits, :arguments], options
 
@@ -146,8 +145,8 @@ module Puppet
       # Name is the name for the new definition.
       ##
       def create_definition(name, options, code, nesting)
-        raise NoMethodError, "called from invalid nesting" if nesting > 0
-        raise ArgumentError, "no block supplied"           if code.nil?
+        raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
+        raise ArgumentError, "no block supplied" if code.nil?
 
         validate_options :arguments, options
 
@@ -190,11 +189,11 @@ module Puppet
               :scope => scope,
               :source => scope.source
             options.each do |key, val|
-              resource[key] = get_resource(val) || val.to_s
+              resource[key] = get_resource(val)
             end
 
-            resource.virtual  = true if virtualizing? or options[:virtual] == true
-            resource.exported = true if exporting?    or options[:export]  == true
+            resource.virtual  = true if virtualizing? or options[:virtual]
+            resource.exported = true if exporting?    or options[:export]
 
             definition = scope.known_resource_types.definition name
             definition.instantiate_resource scope, resource if definition
@@ -234,6 +233,48 @@ module Puppet
       ##
       def virtualizing?
         !!@virtualizing
+      end
+
+      ##
+      # Exports resources passed in as an array. It also allows resource
+      # references.
+      ##
+      def export_resources(resources)
+        resources.flatten.each do |r|
+          get_resource(r).exported = true
+        end
+      end
+
+      ##
+      # Virtualizes resources passed in as an array. It also allows resource
+      # references and string references.
+      ##
+      def virtualize_resources(resources)
+        resources.flatten.each do |r|
+          get_resource(r).virtual = true
+        end
+      end
+
+      private
+
+      ##
+      # Returns a resource for the passed reference
+      ##
+      def get_resource(reference)
+        case reference
+        when Puppet::Resource
+          reference
+        when ResourceReference
+          reference.resource
+        when String
+          # Try to look up a resource by String, if it fails (function returns
+          # nil) just return the string
+          resource = Puppet::DSL::Parser.current_scope.findresource(reference)
+          resource ||= reference
+        else
+          # All values have to be stringified before passing to Puppet Core
+          reference.to_s
+        end
       end
 
     end

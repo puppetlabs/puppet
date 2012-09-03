@@ -61,7 +61,6 @@ module Puppet
       def initialize(code, options = {})
         @nesting  = options.fetch(:nesting)  { 0          }
         @filename = options.fetch(:filename) { "dsl_main" }
-        @object   = ::Object.new
         @proxy    = ::Puppet::DSL::Actions.new @filename
         @code     = code
       end
@@ -90,6 +89,7 @@ module Puppet
       # methods defined in global scope (like +require+).
       ##
       def my(&block)
+        @object ||= ::Object.new
         @object.instance_eval &block
       end
 
@@ -329,9 +329,7 @@ module Puppet
             @proxy.exporting = false
           end
         else
-          args.flatten.each do |r|
-            @proxy.get_resource(r).exported = true
-          end
+          @proxy.export_resources(args)
         end
       end
 
@@ -366,9 +364,7 @@ module Puppet
             @proxy.virtualizing = false
           end
         else
-          args.flatten.each do |r|
-            @proxy.get_resource(r).virtual = true
-          end
+          @proxy.virtualize_resources(args)
         end
       end
     end

@@ -95,7 +95,7 @@ describe Puppet::Parser::TypeLoader do
 
     it "checks the type of DSL to import" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", [make_absolute("/one")]]
-      @loader.expects(:is_ruby_dsl?).returns false
+      @loader.expects(:is_ruby_filename?).returns false
 
       @loader.import("myfile")
     end

@@ -290,7 +290,7 @@ class Puppet::Parser::Compiler
     add_resource(@topscope, @main_resource)
 
     file = Puppet.settings.value :manifest, environment
-    evaluate_ruby_code file if is_ruby_dsl? file
+    evaluate_ruby_code file if is_ruby_filename? file
 
     @main_resource.evaluate
   end

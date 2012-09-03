@@ -35,7 +35,7 @@ describe Puppet::DSL::TypeReference do
 
     it "should canonize type name" do
       Puppet::DSL::Context.stubs(:const_defined?).returns true
-      Puppet::DSL::TypeReference.any_instance.expects(:canonize_type).with("name").returns "Name"
+      Puppet::DSL::TypeReference.any_instance.expects(:canonicalize_type).with("name").returns "Name"
 
       Puppet::DSL::TypeReference.new "name"
     end
