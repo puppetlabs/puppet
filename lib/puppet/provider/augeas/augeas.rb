@@ -444,9 +444,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             rv = aug.clear(cmd_array[0])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           when "clearm"
-            debug("sending command '#{command}' with params #{cmd_array.inspect}")
-            rv = aug.clearm(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+	    # Add check command exists ... doesn't currently in ruby-augeas 0.4.1
+	    if aug.respond_to?(command)
+              debug("sending command '#{command}' with params #{cmd_array.inspect}")
+              rv = aug.clearm(cmd_array[0], cmd_array[1])
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+	    else
+	      fail("command '#{command}' not supported in installed version of ruby-augeas")
+	    end
           when "insert", "ins"
             label = cmd_array[0]
             where = cmd_array[1]
