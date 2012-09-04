@@ -242,7 +242,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     # reading of the file.
     Etc.endgrent
 
-    groups.join(",")
+    groups.uniq.join(",")
   end
 
   # Convert the Etc struct into a hash.
