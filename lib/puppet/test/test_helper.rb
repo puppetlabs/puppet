@@ -77,6 +77,10 @@ module Puppet::Test
       Puppet::Node::Environment.clear
       Puppet::Parser::Functions.reset
 
+      # Every query to the facts indirection will call load_all in facter.
+      # This is really slow, so stub it out.
+      Facter::Util::Loader.any_instance.stubs(:load_all)
+
       Puppet.clear_deprecation_warnings
     end
 
