@@ -21,7 +21,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates, :manages_expiry, :system_users
+  has_features :manages_homedir, :allows_duplicates, :manages_expiry
+  has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
 
@@ -33,7 +34,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd = []
     if @resource.managehome?
       cmd << "-m"
-    elsif %w{Fedora RedHat CentOS OEL OVS}.include?(Facter.value("operatingsystem"))
+    elsif %w{Fedora RedHat CentOS OEL OVS}.include?(Facter.value(:operatingsystem))
       cmd << "-M"
     end
     cmd
@@ -49,7 +50,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_system_users
-    @resource.system? ? ["-r"] : []
+    if self.class.system_users? and resource.system?
+      ["-r"]
+    else
+      []
+    end
   end
 
   def add_properties
