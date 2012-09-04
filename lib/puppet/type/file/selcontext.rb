@@ -48,9 +48,13 @@ module Puppet
     def insync?(value)
       if not selinux_support?
         debug("SELinux bindings not found. Ignoring parameter.")
-        return true
+        true
+      elsif not selinux_label_support?(@resource[:path])
+        debug("SELinux not available for this filesystem. Ignoring parameter.")
+        true
+      else
+        super
       end
-      super
     end
 
     def sync

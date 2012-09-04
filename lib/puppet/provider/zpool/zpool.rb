@@ -48,8 +48,10 @@ Puppet::Type.type(:zpool).provide(:zpool) do
   end
 
   def get_pool_data
-    #this is all voodoo dependent on the output from zpool
-    zpool_data = %x{ zpool status #{@resource[:pool]}}.split("\n").select { |line| line.index("\t") == 0 }.collect { |l| l.strip.split("\s")[0] }
+    # http://docs.oracle.com/cd/E19082-01/817-2271/gbcve/index.html
+    # we could also use zpool iostat -v mypool for a (little bit) cleaner output
+    out = execute("zpool status #{@resource[:pool]}", :failonfail => false)
+    zpool_data = out.lines.select { |line| line.index("\t") == 0 }.collect { |l| l.strip.split("\s")[0] }
     zpool_data.shift
     zpool_data
   end
@@ -77,19 +79,14 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     @resource[:raid_parity] ? @resource[:raid_parity] : "raidz1"
   end
 
-  #handle mirror or raid
-  def handle_multi_arrays(prefix, array)
-    array.collect{ |a| [prefix] +  a.split(' ') }.flatten
-  end
-
   #builds up the vdevs for create command
   def build_vdevs
     if disk = @resource[:disk]
       disk.collect { |d| d.split(' ') }.flatten
     elsif mirror = @resource[:mirror]
-      handle_multi_arrays("mirror", mirror)
+      ["mirror"] +  mirror
     elsif raidz = @resource[:raidz]
-      handle_multi_arrays(raidzarity, raidz)
+      [raidzarity] + raidz
     end
   end
 
@@ -115,7 +112,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     end
 
     define_method(field.to_s + "=") do |should|
-      Puppet.warning "NO CHANGES BEING MADE: zpool #{field} does not match, should be '#{should}' currently is '#{current_pool[field]}'"
+      self.fail "zpool #{field} can't be changed. should be #{should}, currently is #{current_pool[field]}"
     end
   end
 
