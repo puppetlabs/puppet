@@ -38,8 +38,7 @@ describe Puppet::Network::Server do
       @server.address.should == "10.0.0.1"
     end
 
-    it "should set the bind address to '0.0.0.0' if the default address is an empty string and the server type is webrick" do
-      Puppet[:servertype] = "webrick"
+    it "should set the bind address to '0.0.0.0' if the default address is an empty string" do
       Puppet[:bindaddress] = ""
       @server = Puppet::Network::Server.new
       @server.address.should == '0.0.0.0'

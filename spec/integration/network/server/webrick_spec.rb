@@ -15,7 +15,6 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
 
   describe "when using webrick" do
     before :each do
-      Puppet[:servertype] = 'webrick'
       Puppet[:server] = '127.0.0.1'
       @params = { :port => port, :handlers => [ :node ] }
 
@@ -50,12 +49,6 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
         @server = Puppet::Network::Server.new(@params.merge(:port => port))
         @server.listen
         lambda { TCPSocket.new('127.0.0.1', port) }.should_not raise_error
-      end
-
-      it "should default to '0.0.0.0' as its bind address" do
-        Puppet.settings.clear
-        Puppet[:servertype] = 'webrick'
-        Puppet[:bindaddress].should == '0.0.0.0'
       end
 
       it "should use any specified bind address" do
