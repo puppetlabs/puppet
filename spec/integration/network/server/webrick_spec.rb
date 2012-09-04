@@ -62,7 +62,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
         Puppet[:bindaddress] = "127.0.0.1"
         @server = Puppet::Network::Server.new(@params.merge(:port => port))
         @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
-        @server.send(:http_server).expects(:listen).with { |args| args[:address] == "127.0.0.1" }
+        Puppet::Network::HTTP::WEBrick.any_instance.expects(:listen).with { |args| args[:address] == "127.0.0.1" }
         @server.listen
       end
 

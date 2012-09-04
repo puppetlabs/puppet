@@ -1,8 +1,9 @@
 require 'puppet/network/http'
 require 'puppet/util/pidlock'
+require 'puppet/network/http/webrick'
 
 class Puppet::Network::Server
-  attr_reader :server_type, :address, :port
+  attr_reader :address, :port
 
   # TODO: does anything actually call this?  It seems like it's a duplicate of
   # the code in Puppet::Daemon, but that it's not actually called anywhere.
@@ -49,11 +50,10 @@ class Puppet::Network::Server
     valid_args = [:handlers, :port]
     bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
     raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
-    @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
-    http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
 
     @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
     @address = determine_bind_address
+    @http_server = Puppet::Network::HTTP::WEBrick.new
 
     @listening = false
     @routes = {}
@@ -93,17 +93,13 @@ class Puppet::Network::Server
   def listen
     raise "Cannot listen -- already listening." if listening?
     @listening = true
-    http_server.listen(:address => address, :port => port, :handlers => @routes.keys)
+    @http_server.listen(:address => address, :port => port, :handlers => @routes.keys)
   end
 
   def unlisten
     raise "Cannot unlisten -- not currently listening." unless listening?
-    http_server.unlisten
+    @http_server.unlisten
     @listening = false
-  end
-
-  def http_server_class
-    http_server_class_by_type(@server_type)
   end
 
   def start
@@ -119,17 +115,11 @@ class Puppet::Network::Server
 
   private
 
-  def http_server
-    @http_server ||= http_server_class.new
-  end
-
-  def http_server_class_by_type(kind)
-    Puppet::Network::HTTP.server_class_by_type(kind)
-  end
-
   def determine_bind_address
-    tmp = Puppet[:bindaddress]
-    return tmp if tmp != ""
-    server_type.to_s == "webrick" ? "0.0.0.0" : "127.0.0.1"
+    if Puppet[:bindaddress] != ""
+      Puppet[:bindaddress]
+    else
+      "0.0.0.0"
+    end
   end
 end

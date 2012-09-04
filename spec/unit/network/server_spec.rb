@@ -4,14 +4,12 @@ require 'puppet/network/server'
 
 describe Puppet::Network::Server do
   before do
-    @mock_http_server_class = mock('http server class')
+    @mock_http_server = mock('http server')
     Puppet.settings.stubs(:use)
     Puppet.run_mode.stubs(:name).returns :master
-    Puppet[:servertype] = :suparserver
     Puppet[:bindaddress] = ""
     Puppet[:masterport] = 8140
-    Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
-    Puppet[:servertype] = :suparserver
+    Puppet::Network::HTTP::WEBrick.stubs(:new).returns(@mock_http_server)
     @server = Puppet::Network::Server.new(:port => 31337)
     @server.stubs(:close_streams).returns(nil)
   end
@@ -40,13 +38,6 @@ describe Puppet::Network::Server do
       @server.address.should == "10.0.0.1"
     end
 
-    it "should set the bind address to '127.0.0.1' if the default address is an empty string and the server type is mongrel" do
-      Puppet[:servertype] = "mongrel"
-      Puppet[:bindaddress] = ""
-      @server = Puppet::Network::Server.new
-      @server.address.should == '127.0.0.1'
-    end
-
     it "should set the bind address to '0.0.0.0' if the default address is an empty string and the server type is webrick" do
       Puppet[:servertype] = "webrick"
       Puppet[:bindaddress] = ""
@@ -59,22 +50,6 @@ describe Puppet::Network::Server do
       Puppet[:masterport] = 6667
       @server = Puppet::Network::Server.new
       @server.port.should == 6667
-    end
-
-    it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
-      Puppet[:servertype] = :suparserver
-      @server = Puppet::Network::Server.new(:port => 31337)
-      @server.server_type.should == :suparserver
-    end
-
-    it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
-      Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(@mock_http_server_class)
-      @server = Puppet::Network::Server.new(:port => 31337)
-    end
-
-    it "should fail if the HTTP server class is unknown" do
-      Puppet::Network::HTTP.stubs(:server_class_by_type).returns(nil)
-      expect { Puppet::Network::Server.new(:port => 31337) }.to raise_error(ArgumentError)
     end
 
     it "should allow registering REST handlers" do
@@ -257,22 +232,6 @@ describe Puppet::Network::Server do
     end
   end
 
-  it "should provide a means of determining whether it is listening" do
-    @server.should respond_to(:listening?)
-  end
-
-  it "should provide a means of determining which HTTP server will be used to provide access to clients" do
-    @server.server_type.should == :suparserver
-  end
-
-  it "should provide a means of determining the listening address" do
-    @server.address.should == "127.0.0.1"
-  end
-
-  it "should provide a means of determining the listening port" do
-    @server.port.should == 31337
-  end
-
   it "should allow for multiple configurations, each handling different indirections" do
     Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
 
@@ -287,9 +246,7 @@ describe Puppet::Network::Server do
 
   describe "when listening is off" do
     before do
-      @mock_http_server = mock('http server')
       @mock_http_server.stubs(:listen)
-      @server.stubs(:http_server).returns(@mock_http_server)
     end
 
     it "should indicate that it is not listening" do
@@ -308,10 +265,8 @@ describe Puppet::Network::Server do
 
   describe "when listening is on" do
     before do
-      @mock_http_server = mock('http server')
       @mock_http_server.stubs(:listen)
       @mock_http_server.stubs(:unlisten)
-      @server.stubs(:http_server).returns(@mock_http_server)
       @server.listen
     end
 
@@ -333,50 +288,17 @@ describe Puppet::Network::Server do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
 
       @server = Puppet::Network::Server.new(:port => 31337, :handlers => [:node])
-      @mock_http_server = mock('http server')
-      @mock_http_server.stubs(:listen)
-    end
-
-    it "should fetch an instance of an HTTP server" do
-      @server.stubs(:http_server_class).returns(@mock_http_server_class)
-      @mock_http_server_class.expects(:new).returns(@mock_http_server)
-      @server.listen
     end
 
     it "should cause the HTTP server to listen" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen)
-      @server.listen
-    end
-
-    it "should pass the listening address to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:address] == '127.0.0.1'
-      end
-      @server.listen
-    end
-
-    it "should pass the listening port to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:port] == 31337
-      end
-      @server.listen
-    end
-
-    it "should pass a list of REST handlers to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:handlers] == [ :node ]
-      end
+      @mock_http_server.expects(:listen).with(
+        :address => '0.0.0.0', :port => 31337, :handlers => [:node])
       @server.listen
     end
   end
 
   describe "when listening is being turned off" do
     before do
-      @mock_http_server = mock('http server')
       @mock_http_server.stubs(:listen)
       @server.stubs(:http_server).returns(@mock_http_server)
       @server.listen
