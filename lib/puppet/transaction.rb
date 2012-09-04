@@ -12,8 +12,7 @@ class Puppet::Transaction
   require 'puppet/transaction/resource_harness'
   require 'puppet/resource/status'
 
-  attr_accessor :component, :catalog, :ignoreschedules, :for_network_device
-  attr_accessor :configurator
+  attr_accessor :catalog, :ignoreschedules, :for_network_device
 
   # The report, once generated.
   attr_reader :report
