@@ -7,7 +7,7 @@ describe Puppet::Network::Server do
     @mock_http_server = mock('http server')
     Puppet.settings.stubs(:use)
     Puppet.run_mode.stubs(:name).returns :master
-    Puppet[:bindaddress] = ""
+    Puppet[:bindaddress] = "0.0.0.0"
     Puppet[:masterport] = 8140
     Puppet::Network::HTTP::WEBrick.stubs(:new).returns(@mock_http_server)
     @server = Puppet::Network::Server.new(:port => 31337)
@@ -17,7 +17,6 @@ describe Puppet::Network::Server do
   describe "when initializing" do
     before do
       Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-      Puppet[:bindaddress] = ""
       Puppet[:masterport] = ''
     end
 
@@ -26,7 +25,6 @@ describe Puppet::Network::Server do
     end
 
     it "should allow specifying a listening port" do
-      Puppet[:bindaddress] = ''
       @server = Puppet::Network::Server.new(:port => 31337)
       @server.port.should == 31337
     end
@@ -38,14 +36,7 @@ describe Puppet::Network::Server do
       @server.address.should == "10.0.0.1"
     end
 
-    it "should set the bind address to '0.0.0.0' if the default address is an empty string" do
-      Puppet[:bindaddress] = ""
-      @server = Puppet::Network::Server.new
-      @server.address.should == '0.0.0.0'
-    end
-
     it "should use the Puppet configurator to find a default listening port" do
-      Puppet[:bindaddress] = ''
       Puppet[:masterport] = 6667
       @server = Puppet::Network::Server.new
       @server.port.should == 6667

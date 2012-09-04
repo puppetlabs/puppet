@@ -52,7 +52,7 @@ class Puppet::Network::Server
     raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
 
     @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-    @address = determine_bind_address
+    @address = Puppet[:bindaddress]
     @http_server = Puppet::Network::HTTP::WEBrick.new
 
     @listening = false
@@ -111,15 +111,5 @@ class Puppet::Network::Server
   def stop
     unlisten
     remove_pidfile
-  end
-
-  private
-
-  def determine_bind_address
-    if Puppet[:bindaddress] != ""
-      Puppet[:bindaddress]
-    else
-      "0.0.0.0"
-    end
   end
 end
