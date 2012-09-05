@@ -51,7 +51,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
 
       it "should use any specified bind address" do
         @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
-        Puppet::Network::HTTP::WEBrick.any_instance.expects(:listen).with { |args| args[:address] == "127.0.0.1" }
+        Puppet::Network::HTTP::WEBrick.any_instance.expects(:listen).with(address, port)
         @server.listen
       end
 

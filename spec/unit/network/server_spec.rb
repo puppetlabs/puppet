@@ -257,8 +257,7 @@ describe Puppet::Network::Server do
 
     it "should cause the HTTP server to listen" do
       server = Puppet::Network::Server.new(address, port, [:node])
-      @mock_http_server.expects(:listen).with(
-        :address => address, :port => port, :handlers => [:node])
+      @mock_http_server.expects(:listen).with(address, port)
       server.listen
     end
   end

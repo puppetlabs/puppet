@@ -89,7 +89,7 @@ class Puppet::Network::Server
   def listen
     raise "Cannot listen -- already listening." if listening?
     @listening = true
-    @http_server.listen(:address => address, :port => port, :handlers => @routes.keys)
+    @http_server.listen(address, port)
   end
 
   def unlisten
