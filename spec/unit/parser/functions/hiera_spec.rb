@@ -11,7 +11,7 @@ describe 'Puppet::Parser::Functions#hiera' do
 
   it 'should raise a useful error when nil is returned' do
     Hiera.any_instance.expects(:lookup).returns(nil)
-    expect { scope.function_hiera("badkey") }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
+    expect { scope.function_hiera(["badkey"]) }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
 
   it 'should use the priority resolution_type' do

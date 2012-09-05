@@ -13,7 +13,7 @@ describe 'Puppet::Parser::Functions#hiera_array' do
 
   it 'should raise a useful error when nil is returned' do
     Hiera.any_instance.expects(:lookup).returns(nil)
-    expect { scope.function_hiera_array("badkey") }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
+    expect { scope.function_hiera_array(["badkey"]) }.to raise_error(Puppet::ParseError, /Could not find data item badkey/ )
   end
 
   it 'should use the array resolution_type' do
