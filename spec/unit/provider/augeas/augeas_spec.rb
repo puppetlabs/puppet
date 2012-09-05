@@ -577,6 +577,17 @@ describe provider_class do
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
     end
+
+    it "should handle clearm commands" do
+      @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","clearm test Jar/Jar"]
+      @resource[:context] = "/foo/"
+      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
+      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      @augeas.expects(:clearm).with("/foo/test", "Jar/Jar").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
   end
 
   describe "when making changes", :if => Puppet.features.augeas? do
