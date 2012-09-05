@@ -363,11 +363,16 @@ module Util
   # will recognize as links to the line numbers in the trace)
   def self.pretty_backtrace(backtrace = caller(1))
     backtrace.collect do |line|
-      file_path, line_num = line.split(":")
+      _, path, rest = /^(.*):(\d+.*)$/.match(line).to_a
       # If the path doesn't exist - like in one test, and like could happen in
       # the world - we should just tolerate it and carry on. --daniel 2012-09-05
-      file_path = Pathname(file_path).realpath rescue path
-      "#{file_path}:#{line_num}"
+      # Also, if we don't match, just include the whole line.
+      if path
+        path = Pathname(path).realpath rescue path
+        "#{path}:#{rest}"
+      else
+        line
+      end
     end.join("\n")
   end
 
