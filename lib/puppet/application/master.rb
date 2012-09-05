@@ -186,7 +186,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     unless options[:rack]
       require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new()
+      @daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
       @daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
