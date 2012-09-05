@@ -727,18 +727,8 @@ EOT
           :desc     => "The pid file",
       },
       :bindaddress => {
-        :default    => "",
-        :desc       => "The address a listening server should bind to.  Mongrel servers
-        default to 127.0.0.1 and WEBrick defaults to 0.0.0.0.",
-      },
-      :servertype => {
-        :default => "webrick", :desc => "The type of server to use.  Currently supported
-        options are webrick and mongrel.  If you use mongrel, you will need
-        a proxy in front of the process or processes, since Mongrel cannot
-        speak SSL.",
-
-        :call_hook => :on_define_and_write, # Call our hook with the default value, so we always get the correct bind address set.
-        :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
+        :default    => "0.0.0.0",
+        :desc       => "The address a listening server should bind to.",
       }
   )
 
@@ -826,17 +816,15 @@ EOT
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
-      :desc       => "The header containing an authenticated
-      client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-      to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
-      See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information.",
+      :desc       => "The header containing an authenticated client's SSL DN.
+      This header must be set by the proxy to the authenticated client's SSL
+      DN (e.g., `/CN=puppet.puppetlabs.com`).",
     },
     :ssl_client_verify_header => {
       :default    => "HTTP_X_CLIENT_VERIFY",
-      :desc       => "The header containing the status
-      message of the client verification. Only used with Mongrel.  This header must be set by the proxy
-      to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-      See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information.",
+      :desc       => "The header containing the status message of the client
+      verification. This header must be set by the proxy to 'SUCCESS' if the
+      client successfully authenticated, and anything else otherwise.",
     },
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).

@@ -386,7 +386,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     require 'puppet/network/server'
     # No REST handlers yet.
-    server = Puppet::Network::Server.new(:port => Puppet[:puppetport])
+    server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:puppetport])
 
     @daemon.server = server
   end

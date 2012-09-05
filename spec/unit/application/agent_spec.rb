@@ -473,7 +473,7 @@ describe Puppet::Application::Agent do
       it "should use puppet default port" do
         Puppet[:puppetport] = 32768
 
-        Puppet::Network::Server.expects(:new).with { |args| args[:port] == 32768 }
+        Puppet::Network::Server.expects(:new).with(anything, 32768)
 
         @puppetd.setup_listen
       end
