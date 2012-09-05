@@ -46,18 +46,14 @@ class Puppet::Network::Server
     Puppet[:pidfile]
   end
 
-  def initialize(args = {})
-    valid_args = [:handlers, :port]
-    bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
-    raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
-
-    @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-    @address = Puppet[:bindaddress]
+  def initialize(address, port, handlers = nil)
+    @port = port
+    @address = address
     @http_server = Puppet::Network::HTTP::WEBrick.new
 
     @listening = false
     @routes = {}
-    self.register(args[:handlers]) if args[:handlers]
+    self.register(handlers) if handlers
 
     # Make sure we have all of the directories we need to function.
     Puppet.settings.use(:main, :ssl, :application)
