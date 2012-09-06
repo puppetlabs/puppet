@@ -20,5 +20,16 @@ module Puppet
         on agent,"chmod 700 /tstzones/mnt"
       end
     end
+    module CronUtils
+      def clean(agent)
+        on agent, "userdel monitor ||:"
+        on agent, "groupdel monitor ||:"
+        on agent, "mv /var/spool/cron/crontabs/root.orig /var/spool/cron/crontabs/root ||:"
+      end
+
+      def setup(agent)
+        on agent, "cp /var/spool/cron/crontabs/root /var/spool/cron/crontabs/root.orig"
+      end
+    end
   end
 end
