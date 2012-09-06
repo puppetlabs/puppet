@@ -444,7 +444,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             rv = aug.clear(cmd_array[0])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           when "clearm"
-            # Add check command exists ... doesn't currently in ruby-augeas 0.4.1
+            # Check command exists ... doesn't currently in ruby-augeas 0.4.1
             if aug.respond_to?(command)
               debug("sending command '#{command}' with params #{cmd_array.inspect}")
               rv = aug.clearm(cmd_array[0], cmd_array[1])
