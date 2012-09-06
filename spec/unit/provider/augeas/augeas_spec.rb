@@ -570,12 +570,22 @@ describe provider_class do
     it "should handle setm commands" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
       @resource[:context] = "/foo/"
+      @augeas.expects(:respond_to?).with("setm").returns(true)
       @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
       @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
       @augeas.expects(:setm).with("/foo/test", "Jar/Jar", "Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
+    end
+
+    it "should throw error if setm command not supported" do
+      @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
+      @resource[:context] = "/foo/"
+      @augeas.expects(:respond_to?).with("setm").returns(false)
+      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
+      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      lambda { @provider.execute_changes }.should raise_error
     end
 
     it "should handle clearm commands" do
