@@ -8,16 +8,13 @@ require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/configuration'
 
 class Puppet::Network::HTTP::WEBrick
-  def initialize(args = {})
+  def initialize
     @listening = false
     @mutex = Mutex.new
   end
 
-  def listen(args = {})
-    raise ArgumentError, ":address must be specified." unless args[:address]
-    raise ArgumentError, ":port must be specified." unless args[:port]
-
-    arguments = {:BindAddress => args[:address], :Port => args[:port]}
+  def listen(address, port)
+    arguments = {:BindAddress => address, :Port => port}
     arguments.merge!(setup_logger)
     arguments.merge!(setup_ssl)
 

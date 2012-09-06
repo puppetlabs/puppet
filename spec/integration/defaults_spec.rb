@@ -107,11 +107,6 @@ describe "Puppet defaults" do
     Puppet.settings.setting(:hostcert).owner.should == Puppet.settings[:user]
   end
 
-  it "should use a bind address of ''" do
-    Puppet.settings.clear
-    Puppet.settings[:bindaddress].should == ""
-  end
-
   [:modulepath, :factpath].each do |setting|
     it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
       Puppet.settings.setting(setting).should be_instance_of(Puppet::Settings::PathSetting)
