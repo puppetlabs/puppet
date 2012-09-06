@@ -67,5 +67,62 @@ module Puppet
         on agent, "pkg refresh"
       end
     end
+    module SMFUtils
+      def clean(agent, o={})
+        o = {:service => 'tstapp'}.merge(o)
+        on agent, "svcadm disable %s ||:" % o[:service]
+        on agent, "svccfg delete %s ||:" % o[:service]
+        on agent, "rm -rf /var/svc/manifest/application/%s.xml ||:" % o[:service]
+        on agent, "rm -f /opt/bin/%s ||:" % o[:service]
+      end
+      def setup(agent, o={})
+        setup_methodscript(agent, o)
+      end
+
+      def setup_methodscript(agent, o={})
+        o = {:service => 'tstapp'}.merge(o)
+        on agent, "mkdir -p /opt/bin"
+        create_remote_file agent, '/lib/svc/method/%s' % o[:service], %[
+case "$1" in
+  start) nohup /opt/bin/%s & ;;
+  stop) kill -9 $(cat /tmp/%s.pid) ||: ;;
+  refresh) kill -9 $(cat /tmp/%s.pid) ; nohup /opt/bin/%s & ;;
+  *) echo "Usage: $0 { start | stop | refresh }" ; exit 1 ;;
+esac
+exit $SMF_EXIT_OK
+        ] % ([o[:service]] * 4)
+        create_remote_file agent, ('/opt/bin/%s' % o[:service]), %[
+echo $$ > /tmp/%s.pidfile
+sleep 5
+        ] % o[:service]
+        on agent, "chmod 755 /lib/svc/method/%s" % o[:service]
+        on agent, "chmod 755 /opt/bin/%s" % o[:service]
+        on agent, "mkdir -p /var/svc/manifest/application"
+        create_remote_file agent, ('/var/svc/manifest/application/%s.xml' % o[:service]),
+%[<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<service_bundle type='manifest' name='%s:default'>
+  <service name='application/tstapp' type='service' version='1'>
+  <create_default_instance enabled='false' />
+  <single_instance />
+  <method_context> <method_credential user='root' group='root' /> </method_context>
+  <exec_method type='method' name='start' exec='/lib/svc/method/%s start' timeout_seconds="60" />
+  <exec_method type='method' name='stop' exec='/lib/svc/method/%s stop' timeout_seconds="60" />
+  <exec_method type='method' name='refresh' exec='/lib/svc/method/%s refresh' timeout_seconds="60" />
+  <stability value='Unstable' />
+  <template>
+    <common_name> <loctext xml:lang='C'>Dummy</loctext> </common_name>
+    <documentation>
+      <manpage title='tstapp' section='1m' manpath='/usr/share/man' />
+    </documentation>
+  </template>
+</service>
+</service_bundle>
+        ] % ([o[:service]] * 4)
+        on agent, "svccfg -v validate /var/svc/manifest/application/%s.xml" % o[:service]
+        on agent, "echo > /var/svc/log/application-%s:default.log" % o[:service]
+        return ("/var/svc/manifest/application/%s.xml" % o[:service]), ("/lib/svc/method/%s" % o[:service])
+      end
+    end
   end
 end
