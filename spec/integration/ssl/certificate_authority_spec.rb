@@ -122,5 +122,23 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
         $CHILD_STATUS.should == 0
       end
     end
+
+    it "should verify proof of possession when signing certificates" do
+      csr = @host.certificate_request
+      wrong_key = Puppet::SSL::Key.new(@host.name)
+      wrong_key.generate
+
+      csr.content.public_key = wrong_key.content.public_key
+      # The correct key has to be removed so we can save the incorrect one
+      Puppet::SSL::CertificateRequest.indirection.destroy(@host.name)
+      Puppet::SSL::CertificateRequest.indirection.save(csr)
+
+      expect {
+        @ca.sign(@host.name)
+      }.to raise_error(
+        Puppet::SSL::CertificateAuthority::CertificateSigningError,
+        "CSR contains a public key that does not correspond to the signing key"
+      )
+    end
   end
 end
