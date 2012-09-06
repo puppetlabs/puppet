@@ -24,9 +24,9 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["clientversion"].should == Puppet.version.to_s
   end
 
-  it "should add the current environment as a fact if one is not set when adding local facts" do
+  it "should not add the current environment" do
     @facts.add_local_facts
-    @facts.values["environment"].should == Puppet[:environment]
+    @facts.values.should_not include("environment")
   end
 
   it "should not replace any existing environment fact when adding local facts" do
