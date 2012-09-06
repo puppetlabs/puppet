@@ -216,6 +216,9 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:ignoreschedules).returns(false)
         @kick.options.stubs(:[]).with(:foreground).returns(false)
         @kick.options.stubs(:[]).with(:debug).returns(false)
+        @kick.options.stubs(:[]).with(:verbose).returns(false) # needed when logging is initialized
+        @kick.options.stubs(:[]).with(:setdest).returns(false) # needed when logging is initialized
+         
         @kick.stubs(:print)
         @kick.preinit
         @kick.stubs(:parse_options)
