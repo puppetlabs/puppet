@@ -432,9 +432,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             rv = aug.set(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           when "setm"
-            debug("sending command '#{command}' with params #{cmd_array.inspect}")
-            rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            if aug.respond_to?(command)
+              debug("sending command '#{command}' with params #{cmd_array.inspect}")
+              rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            else
+              fail("command '#{command}' not supported in installed version of ruby-augeas")
+            end
           when "rm", "remove"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rm(cmd_array[0])
