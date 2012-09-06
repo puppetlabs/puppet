@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'hiera_puppet'
 
 describe 'HieraPuppet' do
   describe 'HieraPuppet#hiera_config' do
@@ -69,7 +70,11 @@ describe 'HieraPuppet' do
   end
 
   describe 'HieraPuppet#lookup' do
-    let(:scope) { PuppetlabsSpec::PuppetInternals.scope }
+    let :scope do Puppet::Parser::Scope.new_for_test_harness('foo') end
+
+    before :each do
+      Puppet[:hiera_config] = PuppetSpec::Files.tmpfile('hiera_config')
+    end
 
     it "should return the value from Hiera" do
       Hiera.any_instance.stubs(:lookup).returns('8080')
