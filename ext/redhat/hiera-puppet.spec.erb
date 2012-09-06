@@ -1,0 +1,64 @@
+%{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Object.const_get(defined?(RbConfig) ? :RbConfig : :Config)::CONFIG["sitelibdir"]')}
+
+%global confdir ext/redhat
+%global initrddir /etc/rc.d/init.d
+# VERSION is subbed out during rake srpm process
+# %global realversion <%= @version %>
+# %global rpmversion <%= @rpmversion %>
+
+Name:           hiera-puppet
+Version:        %{rpmversion}
+Release:        <%= @release -%>%{?dist}
+Summary:        A data backend for Hiera that can query the internal Puppet scope for data.
+Vendor:         %{?_host_vendor}
+Group:          System Environment/Base
+License:        Apache 2.0
+URL:            http://projects.puppetlabs.com/projects/%{name}/
+Source0:        http://downloads.puppetlabs.com/%{name}/%{name}-%{realversion}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch:      noarch
+BuildRequires:  ruby >= 1.8.5
+Requires:       ruby(abi) >= 1.8
+Requires:       ruby >= 1.8.5
+Requires:       puppet
+Requires:       hiera >= 1.0.0
+
+%description
+A data backend for Hiera that can query the internal Puppet scope for data.
+
+%prep
+%setup -q  -n %{name}-%{realversion}
+
+
+%build
+
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/%{ruby_sitelibdir}
+mkdir -p $RPM_BUILD_ROOT/%{_bindir}
+cp -pr lib/hiera $RPM_BUILD_ROOT/%{ruby_sitelibdir}
+cp -p lib/hiera_puppet.rb $RPM_BUILD_ROOT/%{ruby_sitelibdir}
+cp -pr lib/puppet $RPM_BUILD_ROOT/%{ruby_sitelibdir}
+install -p -m0755 bin/extlookup2hiera $RPM_BUILD_ROOT/%{_bindir}
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/extlookup2hiera
+%{ruby_sitelibdir}/hiera/scope.rb
+%{ruby_sitelibdir}/hiera_puppet.rb
+%{ruby_sitelibdir}/hiera/backend/puppet_backend.rb
+%{ruby_sitelibdir}/puppet/parser/functions/hiera.rb
+%{ruby_sitelibdir}/puppet/parser/functions/hiera_array.rb
+%{ruby_sitelibdir}/puppet/parser/functions/hiera_hash.rb
+%{ruby_sitelibdir}/puppet/parser/functions/hiera_include.rb
+%doc CHANGELOG COPYING README.md
+
+
+%changelog
+* <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @release %>
+- Build for <%= @version %>

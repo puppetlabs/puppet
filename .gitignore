@@ -2,3 +2,5 @@
 results
 tags
 .*.sw[op]
+test.pp
+pkg
