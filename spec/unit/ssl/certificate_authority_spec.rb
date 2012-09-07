@@ -334,7 +334,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false, @request)
-        end.should_not raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
+        end.not_to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
       end
 
       it "should save the resulting certificate" do
