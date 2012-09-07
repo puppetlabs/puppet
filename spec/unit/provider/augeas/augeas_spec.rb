@@ -585,7 +585,7 @@ describe provider_class do
       @augeas.expects(:respond_to?).with("setm").returns(false)
       @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
       @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      lambda { @provider.execute_changes }.should raise_error
+      expect { @provider.execute_changes }.to raise_error RuntimeError, /command 'setm' not supported/
     end
 
     it "should handle clearm commands" do
@@ -606,7 +606,7 @@ describe provider_class do
       @augeas.expects(:respond_to?).with("clearm").returns(false)
       @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
       @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      lambda { @provider.execute_changes }.should raise_error
+      expect { @provider.execute_changes }.to raise_error RuntimeError, /command 'clearm' not supported/
     end
   end
 
