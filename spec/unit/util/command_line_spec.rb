@@ -116,7 +116,7 @@ describe Puppet::Util::CommandLine do
     end
     describe 'when loading commands' do
       let :core_apps do
-        %w{describe filebucket kick queue resource agent cert apply doc master}
+        %w{describe filebucket kick resource agent cert apply doc master}
       end
 
       let :command_line do

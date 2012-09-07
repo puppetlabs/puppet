@@ -297,37 +297,6 @@ module Puppet
       configuration files.  This timeout determines how quickly Puppet checks whether
       a file (such as manifests or templates) has changed on disk. Can be specified as a duration.",
     },
-    :queue_type => {
-      :default    => "stomp",
-      :desc       => "Which type of queue to use for asynchronous processing.",
-    },
-    :queue_type => {
-      :default    => "stomp",
-      :desc       => "Which type of queue to use for asynchronous processing.",
-    },
-    :queue_source => {
-      :default    => "stomp://localhost:61613/",
-      :desc       => "Which type of queue to use for asynchronous processing.  If your stomp server requires
-      authentication, you can include it in the URI as long as your stomp client library is at least 1.1.1",
-    },
-    :async_storeconfigs => {
-        :default  => false,
-        :type     => :boolean,
-        :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppet queue` be running.",
-        :hook     => proc do |value|
-          if value
-            # This reconfigures the terminii for Node, Facts, and Catalog
-            Puppet.settings[:storeconfigs] = true
-
-            # But then we modify the configuration
-            Puppet::Resource::Catalog.indirection.cache_class = :queue
-            Puppet.settings[:catalog_cache_terminus] = :queue
-          else
-            raise "Cannot disable asynchronous storeconfigs in a running process"
-          end
-        end
-    },
     :thin_storeconfigs => {
       :default  => false,
       :type     => :boolean,
@@ -1474,10 +1443,8 @@ You can adjust the backend using the storeconfigs_backend setting.",
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          if not Puppet.settings[:async_storeconfigs]
-            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
-            Puppet.settings[:catalog_cache_terminus] = :store_configs
-          end
+          Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+          Puppet.settings[:catalog_cache_terminus] = :store_configs
           Puppet::Node::Facts.indirection.cache_class = :store_configs
           Puppet::Node.indirection.cache_class = :store_configs
 
