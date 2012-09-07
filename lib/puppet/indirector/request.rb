@@ -150,6 +150,10 @@ class Puppet::Indirector::Request
     return(uri ? uri : "/#{indirection_name}/#{key}")
   end
 
+  def remote?
+    self.node or self.ip
+  end
+
   private
 
   def set_attributes(options)
