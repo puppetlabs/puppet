@@ -379,7 +379,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup_listen
-    Puppet.deprecation_warning "Puppet --listen / kick is deprecated. See http://tbd"
+    Puppet.deprecation_warning "Puppet --listen / kick is deprecated. See http://links.puppetlabs.com/puppet-kick-deprecation"
     unless FileTest.exists?(Puppet[:rest_authconfig])
       Puppet.err "Will not start without authorization file #{Puppet[:rest_authconfig]}"
       exit(14)
