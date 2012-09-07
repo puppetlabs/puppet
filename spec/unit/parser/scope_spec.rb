@@ -64,11 +64,11 @@ describe Puppet::Parser::Scope do
     end
 
     it "should raise NoMethodError if the method doesn't look like a function" do
-      expect { @scope.sprintf(["%b", 123]) }.should raise_error(NoMethodError)
+      expect { @scope.sprintf(["%b", 123]) }.to raise_error(NoMethodError)
     end
 
     it "should raise NoMethodError if the method looks like a function but doesn't exist" do
-      expect { @scope.function_fake_bs(['cows']) }.should raise_error(NoMethodError)
+      expect { @scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
     end
   end
 
