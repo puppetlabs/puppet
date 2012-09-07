@@ -124,5 +124,21 @@ sleep 5
         return ("/var/svc/manifest/application/%s.xml" % o[:service]), ("/lib/svc/method/%s" % o[:service])
       end
     end
+    module ZFSUtils
+      def clean(agent, o={})
+        o = {:fs=>'tstfs', :pool=>'tstpool', :poolpath => '/ztstpool'}.merge(o)
+        on agent, "zfs destroy -r %s/%s ||:" % [o[:pool], o[:fs]]
+        on agent, "zpool destroy %s ||:" %  o[:pool]
+        on agent, "rm -rf %s ||:" % o[:poolpath]
+      end
+
+      def setup(agent, o={})
+        o = {:poolpath=>'/ztstpool', :pool => 'tstpool'}.merge(o)
+        on agent, "mkdir -p %s/mnt" % o[:poolpath]
+        on agent, "mkdir -p %s/mnt2" % o[:poolpath]
+        on agent, "mkfile 64m %s/dsk" % o[:poolpath]
+        on agent, "zpool create %s %s/dsk" % [ o[:pool],  o[:poolpath]]
+      end
+    end
   end
 end
