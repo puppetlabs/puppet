@@ -1,4 +1,5 @@
 test_name "#11727: support stdin parsing in puppet parser validate"
+confine :except, :platform => 'windows'
 
 step "validate with a tty parses the default manifest"
 on agents, puppet('parser', 'validate'), :pty => true do
