@@ -243,7 +243,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(/some other message/)
     end
 
-    it "should check all peer certificates for upcoming expiration" do
+    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? do
       connection = Net::HTTP.new('my_server', 8140)
       subject.stubs(:create_connection).returns(connection)
 
