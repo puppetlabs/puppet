@@ -121,6 +121,11 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.options.stubs(:[]).with(any_parameters)
     end
 
+    it "should issue a warning that kick is deprecated" do
+      Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /kick is deprecated/ }
+      @kick.setup
+    end
+
     it "should abort stating that kick is not supported on Windows" do
       Puppet.features.stubs(:microsoft_windows?).returns(true)
 
