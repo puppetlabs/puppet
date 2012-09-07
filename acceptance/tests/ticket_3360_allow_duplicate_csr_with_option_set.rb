@@ -10,8 +10,8 @@ with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet
     end
 
     step "Generate a certificate request for the agent"
-    myhost = facter('fqdn')
-    on agent, "puppet certificate generate #{myhost} --ca-location remote --server #{master}"
+    fqdn = on(agent, facter("fqdn")).stdout
+    on agent, "puppet certificate generate #{fqdn} --ca-location remote --server #{master}"
   end
 
   step "Collect the original certs"
