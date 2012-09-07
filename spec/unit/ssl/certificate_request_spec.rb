@@ -27,13 +27,13 @@ describe Puppet::SSL::CertificateRequest do
 
   describe "when converting from a string" do
     it "should create a CSR instance with its name set to the CSR subject and its content set to the extracted CSR" do
-      csr = stub 'csr', :subject => "/CN=Foo.madstop.com"
+      csr = stub 'csr', :subject => "/CN=Foo.madstop.com", :is_a? => true
       OpenSSL::X509::Request.expects(:new).with("my csr").returns(csr)
 
       mycsr = stub 'sslcsr'
       mycsr.expects(:content=).with(csr)
 
-      @class.expects(:new).with("foo.madstop.com").returns mycsr
+      @class.expects(:new).with("Foo.madstop.com").returns mycsr
 
       @class.from_s("my csr")
     end

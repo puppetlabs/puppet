@@ -3,13 +3,11 @@ require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
-require 'puppet/util/config_timeout'
 
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
 
-  extend Puppet::Util::ConfigTimeout
   include Puppet::Configurer::FactHandler
   include Puppet::Configurer::PluginHandler
 
