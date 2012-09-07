@@ -140,5 +140,19 @@ sleep 5
         on agent, "zpool create %s %s/dsk" % [ o[:pool],  o[:poolpath]]
       end
     end
+    module ZPoolUtils
+      def clean(agent, o={})
+        o = {:pool=>'tstpool', :poolpath => '/ztstpool'}.merge(o)
+        on agent, "zpool destroy %s ||:" % o[:pool]
+        on agent, "rm -rf %s ||:" % o[:poolpath]
+      end
+
+      def setup(agent, o={})
+        o = {:poolpath => '/ztstpool'}.merge(o)
+        on agent, "mkdir -p %s/mnt||:" % o[:poolpath]
+        on agent, "mkfile 100m %s/dsk1 %s/dsk2 %s/dsk3 %s/dsk5 ||:" % ([o[:poolpath]] * 4)
+        on agent, "mkfile 50m %s/dsk4 ||:" % o[:poolpath]
+      end
+    end
   end
 end
