@@ -30,7 +30,7 @@ on master, "chown -R root:puppet #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 agents.each do |agent|
-  with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --autosign true") do
+  with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
     atmp = agent.tmpdir('respect_enc_test')
     puts "agent: #{agent} \tagent.tmpdir => #{atmp}"
     create_remote_file master, "#{testdir}/different.pp", <<END
