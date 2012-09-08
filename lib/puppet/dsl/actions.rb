@@ -102,10 +102,7 @@ module Puppet
         validate_options :inherits, options
 
         params = {}
-        if options[:inherits]
-          options[:inherits] = options[:inherits].to_s unless options[:inherits].is_a? Regexp
-          params[:parent] = options[:inherits]
-        end
+        params[:parent] = options[:inherits].to_s if options[:inherits]
 
         name = name.to_s unless name.is_a? Regexp
         node = Puppet::Resource::Type.new :node, name, params
@@ -150,9 +147,7 @@ module Puppet
 
         validate_options :arguments, options
 
-        params = {}
-        params[:arguments] = options[:arguments] if options[:arguments]
-        definition = Puppet::Resource::Type.new :definition, name.to_s, params
+        definition = Puppet::Resource::Type.new :definition, name.to_s, options
         definition.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
 
         Parser.current_scope.known_resource_types.add_definition definition
