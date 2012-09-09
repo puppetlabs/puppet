@@ -218,14 +218,14 @@ module Puppet
             create_resource name, *a, &b
           end
 
-          send name, *args, &block
+          __send__ name, *args, &block
         elsif @proxy.is_function? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a|
             call_function name, *a
           end
 
-          send name, *args
+          __send__ name, *args
         else
           super
         end
