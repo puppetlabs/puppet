@@ -379,14 +379,6 @@ describe Puppet::DSL::Context do
       end.parent.should == parent.to_s
     end
 
-    it "doesn't convert name of the parent to string when it's a regexp" do
-      parent = /bar/
-      evaluate_in_context do
-        node :foo, :inherits => parent do
-        end
-      end.parent.should == parent
-    end
-
     it "should support passing a name as regex" do
       evaluate_in_context do
         node(/mac/) {}
