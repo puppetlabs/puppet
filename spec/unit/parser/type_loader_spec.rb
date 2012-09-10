@@ -92,6 +92,20 @@ describe Puppet::Parser::TypeLoader do
       # This will fail if it tries to reimport the file.
       @loader.import("myfile")
     end
+
+    it "checks the type of DSL to import" do
+      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", [make_absolute("/one")]]
+      @loader.expects(:is_ruby_filename?).returns false
+
+      @loader.import("myfile")
+    end
+
+    it "evaluates loaded Ruby code" do
+      File.stubs(:open).yields(StringIO.new("hostclass(:asdf) {}"))
+      Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", [make_absolute("/one.rb")]]
+
+      @loader.import("myfile").map(&:name).should include "asdf"
+    end
   end
 
   describe "when importing all" do
@@ -122,7 +136,7 @@ describe Puppet::Parser::TypeLoader do
 
         # write out the class
         if type == "ruby"
-          File.open(path, "w") { |f| f.print "hostclass '#{name}' do\nend" }
+          File.open(path, "w") { |f| f.print "hostclass :'#{name}' do; end" }
         else
           File.open(path, "w") { |f| f.print "class #{name} {}" }
         end

@@ -136,34 +136,33 @@ class Puppet::Parser::Parser
 
   # how should I do error handling here?
   def parse(string = nil)
-    if self.file =~ /\.rb$/
-      main = parse_ruby_file
-    else
-      self.string = string if string
-      begin
-        @yydebug = false
-        main = yyparse(@lexer,:scan)
-      rescue Puppet::ParseError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-      rescue => except
-        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
-      end
-    end
-    # Store the results as the top-level class.
-    return Puppet::Parser::AST::Hostclass.new('', :code => main)
+    self.string = string if string
+
+    @yydebug = false
+    code = yyparse(@lexer, :scan)
+    Puppet::Parser::AST::Hostclass.new('', :code => code)
+  rescue Puppet::ParseError => except
+    except.line ||= @lexer.line
+    except.file ||= @lexer.file
+    raise except
+  rescue => except
+    raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
   ensure
     @lexer.clear
   end
 
-  def parse_ruby_file
-    # Execute the contents of the file inside its own "main" object so
-    # that it can call methods in the resource type API.
-    main_object = Puppet::DSL::ResourceTypeAPI.new
-    main_object.instance_eval(File.read(self.file))
+  # def string=(string)
+    # @lexer.string = string
+  # end
 
-    # Then extract any types that were created.
-    Puppet::Parser::AST::ASTArray.new :children => main_object.instance_eval { @__created_ast_objects__ }
-  end
+  # def version
+    # known_resource_types.version
+  # end
+
+  # # Add a new file to be checked when we're checking to see if we should be
+  # # reparsed.  This is basically only used by the TemplateWrapper to let the
+  # # parser know about templates that should be parsed.
+  # def watch_file(filename)
+    # known_resource_types.watch_file(filename)
+  # end
 end

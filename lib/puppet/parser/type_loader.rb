@@ -1,10 +1,14 @@
 require 'find'
 require 'forwardable'
 require 'puppet/node/environment'
+require 'puppet/parser/null_scope'
+require 'puppet/dsl/parser'
+require 'puppet/dsl/helper'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable
   include Puppet::Node::Environment::Helper
+  include Puppet::DSL::Helper
 
   # Helper class that makes sure we don't try to import the same file
   # more than once from either the same thread or different threads.
@@ -82,15 +86,35 @@ class Puppet::Parser::TypeLoader
     end
 
     loaded_asts = []
+    loaded_ruby = []
     files.each do |file|
-      unless Puppet::Util.absolute_path?(file)
-        file = File.join(dir, file)
-      end
-      @loading_helper.do_once(file) do
-        loaded_asts << parse_file(file)
+      file = File.join dir, file unless Puppet::Util.absolute_path? file
+
+      if is_ruby_filename? file
+        known_before = known_resource_types.definitions.values +
+                       known_resource_types.nodes.values +
+                       known_resource_types.hostclasses.values
+
+        Puppet::Resource::Type.new(:hostclass, '').tap do |type|
+          begin
+            File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+          rescue => e
+            raise Puppet::ParseError, e.message
+          end
+
+          type.ruby_code.each { |c| silence_backtrace { c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) } }
+        end
+
+        known_now    = known_resource_types.definitions.values +
+                       known_resource_types.nodes.values +
+                       known_resource_types.hostclasses.values
+        loaded_ruby  = known_now - known_before
+      else
+        @loading_helper.do_once(file) { loaded_asts << parse_file(file) }
       end
     end
-    loaded_asts.inject([]) do |loaded_types, ast|
+
+    loaded_ruby + loaded_asts.inject([]) do |loaded_types, ast|
       loaded_types + known_resource_types.import_ast(ast, modname)
     end
   end
@@ -101,7 +125,7 @@ class Puppet::Parser::TypeLoader
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
       Find.find(mod.manifests) do |path|
-        if path =~ /\.pp$/ or path =~ /\.rb$/
+        if is_ruby_filename? path or is_puppet_filename? path
           import(path)
         end
       end
@@ -139,7 +163,7 @@ class Puppet::Parser::TypeLoader
     Puppet.debug("importing '#{file}' in environment #{environment}")
     parser = Puppet::Parser::Parser.new(environment)
     parser.file = file
-    return parser.parse
+    parser.parse
   end
 
   private

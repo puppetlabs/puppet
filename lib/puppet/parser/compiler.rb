@@ -5,6 +5,8 @@ require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
 require 'puppet/resource/type_collection_helper'
+require 'puppet/dsl/helper'
+require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -15,6 +17,7 @@ class Puppet::Parser::Compiler
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
+  include Puppet::DSL::Helper
 
   def self.compile(node)
     # We get these from the environment and only cache them in a thread
@@ -90,6 +93,7 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
+
     set_node_parameters
     create_settings_scope
 
@@ -106,6 +110,12 @@ class Puppet::Parser::Compiler
     fail_on_unevaluated
 
     @catalog
+  end
+
+  def evaluate_ruby_code(file)
+    File.open file do |f|
+      Puppet::DSL::Parser.evaluate @main, f
+    end
   end
 
   def_delegator :@collections, :delete, :delete_collection
@@ -278,6 +288,9 @@ class Puppet::Parser::Compiler
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
+
+    file = Puppet.settings.value :manifest, environment
+    evaluate_ruby_code file if is_ruby_filename? file
 
     @main_resource.evaluate
   end

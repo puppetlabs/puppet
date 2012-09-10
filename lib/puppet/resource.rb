@@ -16,6 +16,9 @@ class Puppet::Resource
   require 'puppet/resource/type_collection_helper'
   include Puppet::Resource::TypeCollectionHelper
 
+  require 'puppet/dsl/helper'
+  include Puppet::DSL::Helper
+
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
@@ -330,7 +333,12 @@ class Puppet::Resource
 
       if external_value.nil?
         next if default.nil?
-        value = default.safeevaluate(scope)
+
+        value = if default.respond_to? :safeevaluate
+                  default.safeevaluate(scope)
+                else
+                  default
+                end
       else
         value = external_value
       end
@@ -411,6 +419,7 @@ class Puppet::Resource
   end
 
   def extract_type_and_title(argtype, argtitle)
+
     if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
     elsif argtitle                                         then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]

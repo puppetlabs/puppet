@@ -1,12 +1,21 @@
-source :rubygems
-
+source "https://rubygems.org"
 gemspec
 
-group(:development, :test) do
-  gem "facter", "~> 1.6.4", :require => false
-  gem "rack", "~> 1.4.1", :require => false
-  gem "rspec", "~> 2.10.0", :require => false
-  gem "mocha", "~> 0.10.5", :require => false
+group :development do
+  gem "pry"
+  gem "pry-doc"
+  gem "simplecov"
+
+  gem "guard-rspec"
+  gem "growl"
+end
+
+group :development, :test do
+  gem "facter", "~> 1.6.4",    :require => false
+  gem "rack",   "~> 1.4.1",    :require => false
+  gem "rspec",  "~> 2.10.0",   :require => false
+  gem "mocha",  "~> 0.10.5",   :require => false
+  gem "hiera",  "~> 1.0.0rc4", :require => false
 end
 
 platforms :mswin, :mingw do
@@ -26,7 +35,7 @@ platforms :mswin, :mingw do
 end
 
 if File.exists? "#{__FILE__}.local"
-  eval(File.read("#{__FILE__}.local"), binding)
+  instance_eval File.read "#{__FILE__}.local"
 end
 
 # vim:filetype=ruby

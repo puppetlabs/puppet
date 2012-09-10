@@ -367,8 +367,7 @@ module Util
       file_path = expand_symlinks(File.expand_path(file_path))
 
       file_path + ":" + line_num
-    end .join("\n")
-
+    end.join("\n")
   end
 
   # utility method that takes a path as input, checks each component of the path to see if it is a symlink, and expands

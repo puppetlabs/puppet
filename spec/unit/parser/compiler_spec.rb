@@ -247,6 +247,32 @@ describe Puppet::Parser::Compiler do
       @compiler.compile
     end
 
+    it "should evaluate ruby code on main object when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      @compiler.stubs(:is_ruby_filename?).returns true
+      @compiler.expects :evaluate_ruby_code
+
+      @compiler.compile
+    end
+
+    it "should create a new Puppet::DSL::Parser when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      File.stubs(:open).yields(StringIO.new("test code"))
+      Puppet[:manifest] = "test.rb"
+      Puppet::DSL::Parser.expects(:evaluate).with {|main, io| io.read == "test code" and main.is_a? Puppet::Resource::Type}.returns stub(:evaluate)
+
+      @compiler.compile
+    end
+
+    it "should call evaluate on DSL Parser instance when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      @compiler.stubs(:is_ruby_filename?).returns true
+      File.stubs(:open).yields(StringIO.new)
+      Puppet::DSL::Parser.expects :evaluate
+
+      @compiler.compile
+    end
+
     it "should create a new, empty 'main' if no main class exists" do
       compile_stub(:evaluate_main)
       @compiler.compile

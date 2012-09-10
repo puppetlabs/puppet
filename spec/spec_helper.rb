@@ -123,3 +123,7 @@ RSpec.configure do |config|
     end
   end
 end
+
+# http://stackoverflow.com/questions/3118866/mocha-mock-carries-to-another-test/4375296#4375296
+require 'mocha'
+

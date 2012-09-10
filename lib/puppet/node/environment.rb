@@ -2,6 +2,8 @@ require 'puppet/util'
 require 'puppet/util/cacher'
 require 'monitor'
 
+require 'puppet/dsl/helper'
+
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node
 end
@@ -24,6 +26,7 @@ class Puppet::Node::Environment
   end
 
   include Puppet::Util::Cacher
+  include Puppet::DSL::Helper
 
   @seen = {}
 
@@ -205,7 +208,7 @@ class Puppet::Node::Environment
   private
 
   def perform_initial_import
-    return empty_parse_result if Puppet.settings[:ignoreimport]
+    return empty_parse_result if Puppet.settings[:ignoreimport] or is_ruby_filename?(Puppet.settings.value(:manifest, name))
     parser = Puppet::Parser::Parser.new(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code
