@@ -50,4 +50,3 @@ agents.each do |agent|
     assert_match( /configured/, result.stdout, "err: #{agent}")
   end
 end
-

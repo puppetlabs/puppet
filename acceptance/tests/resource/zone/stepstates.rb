@@ -58,4 +58,3 @@ agents.each do |agent|
     assert_match( /ensure: removed/, result.stdout, "err: #{agent}")
   end
 end
-
