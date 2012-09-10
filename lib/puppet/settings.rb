@@ -553,8 +553,7 @@ class Puppet::Settings
         end
 
       rescue => detail
-        Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
-        return
+        Puppet.log_and_raise(detail, "Could not parse config file #{file}: #{detail}")
       end
     end
 
@@ -1200,6 +1199,18 @@ if @config.include?(:run_mode)
       when /^\s*$/; next # Skip blanks
       when /^\s*(\w+)\s*=\s*(.*?)\s*$/ # settings
         var = $1.intern
+
+        # This stanza ensures that we do not allow libdir or vardir to be set
+        #  in any other sections besides 'main' and 'master'.  The reason for
+        #  this is that the 'agent' command is responsible for plugin-syncing
+        #  puppet modules into the libdir, and all other client tools *must*
+        #  use that same libdir in order for things like faces to work.
+        #   (See #7316.)
+        if [:libdir, :vardir].include?(var)
+          unless [:main, :master].include?(section)
+            raise Puppet::Error, "Configuration error; option '#{var}' may only be set in the [main] or [master] sections."
+          end
+        end
 
         # We don't want to munge modes, because they're specified in octal, so we'll
         # just leave them as a String, since Puppet handles that case correctly.
