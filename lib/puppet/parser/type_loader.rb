@@ -102,7 +102,7 @@ class Puppet::Parser::TypeLoader
             raise Puppet::ParseError, e.message
           end
 
-          type.ruby_code.each { |c| silence_backtrace { c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) } }
+          type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
         end
 
         known_now    = known_resource_types.definitions.values +

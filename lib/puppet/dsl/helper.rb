@@ -19,18 +19,6 @@ module Puppet
         Puppet::Resource.new(type, "").type
       end
 
-      ##
-      # Removes unnecessary noise from backtraces and reraises catched exception
-      ##
-      def silence_backtrace
-        yield
-      rescue Exception => e
-        backtrace = e.backtrace.reject {|l| l =~ %r|lib/puppet| or l =~ %r|bin/puppet| }
-        e.set_backtrace backtrace
-
-        raise e
-      end
-
     end
   end
 end

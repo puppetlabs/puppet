@@ -375,9 +375,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    ruby_code.each do |c|
-      silence_backtrace { c.evaluate(scope) }
-    end
+    ruby_code.each { |c| c.evaluate(scope) }
   end
 
   # Split an fq name into a namespace and name

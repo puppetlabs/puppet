@@ -40,30 +40,5 @@ describe Puppet::DSL::Helper do
     end
   end
 
-  describe "#silence_backtrace" do
-    it "executes the block of code" do
-      test = nil
-      @helper.silence_backtrace { test = true }
-      test.should be true
-    end
-
-    it "reraises exception when exception within a block is raised" do
-      class TestError < Exception; end
-      lambda do
-        @helper.silence_backtrace { raise TestError.new }
-      end.should raise_error TestError
-    end
-
-    it "filters the original backtrace" do
-      exception = Exception.new
-      exception.set_backtrace ["lib/puppet", "bin/puppet"]
-      begin
-        @helper.silence_backtrace { raise exception }
-      rescue Exception => e
-        e.backtrace.should == []
-      end
-    end
-
-  end
 end
 
