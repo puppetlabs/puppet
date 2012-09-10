@@ -2,13 +2,6 @@
 require 'spec_helper'
 require 'puppet/daemon'
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Daemon do
   include PuppetSpec::Files
 
@@ -77,12 +70,12 @@ describe Puppet::Daemon do
       Puppet::Util::Log.stubs(:close_all)
       # to make the global safe to mock, set it to a subclass of itself,
       # then restore it in an after pass
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+      with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
     end
 
     after do
       # restore from the superclass so we lose the stub garbage
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
+      with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
     end
 
     it "should stop its server if one is configured" do
@@ -204,11 +197,11 @@ describe Puppet::Daemon do
 
   describe "when restarting" do
     before do
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+      with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
     end
 
     after do
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
+      with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
     end
 
     it 'should set Puppet::Application.restart!' do

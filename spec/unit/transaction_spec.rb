@@ -4,13 +4,6 @@ require 'spec_helper'
 require 'puppet/transaction'
 require 'fileutils'
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Transaction do
   include PuppetSpec::Files
 
@@ -753,13 +746,13 @@ describe Puppet::Transaction do
 
   describe 'when checking application run state' do
     before do
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+      with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
       @catalog = Puppet::Resource::Catalog.new
       @transaction = Puppet::Transaction.new(@catalog)
     end
 
     after do
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
+      with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
     end
 
     it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do

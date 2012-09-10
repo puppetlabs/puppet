@@ -11,13 +11,6 @@ class AgentTestClient
   end
 end
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Agent do
   before do
     @agent = Puppet::Agent.new(AgentTestClient)
@@ -26,7 +19,7 @@ describe Puppet::Agent do
     @agent.stubs(:lock).yields
 
     # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.
-    without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+    with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
     Puppet::Application.stubs(:clear?).returns(true)
     Puppet::Application.class_eval do
       class << self
@@ -39,7 +32,7 @@ describe Puppet::Agent do
 
   after do
     # restore Puppet::Application from stub-safe subclass, and silence warnings
-    without_warnings { Puppet::Application = Puppet::Application.superclass }
+    with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
   end
 
   it "should set its client class at initialization" do
