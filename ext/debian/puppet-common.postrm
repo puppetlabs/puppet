@@ -1,0 +1,32 @@
+#!/bin/sh -e
+
+case "$1" in
+    purge)
+		# Remove puppetd.conf (used in > 0.24)
+		rm -f /etc/puppet/puppetd.conf
+
+		# Remove puppet state directory created by the postinst script.
+		# This directory can be removed without causing harm 
+		# according to upstream documentation.
+		rm -rf /var/lib/puppet/state
+		if [ -d /var/lib/puppet ]; then
+			rmdir --ignore-fail-on-non-empty /var/lib/puppet
+		fi
+
+		# Remove puppet log files
+		rm -rf /var/log/puppet/
+		;;
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+
+
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+
+esac
+
+#DEBHELPER#
+
+exit 0

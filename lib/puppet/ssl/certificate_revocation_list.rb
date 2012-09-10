@@ -12,9 +12,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
 
   # Convert a string into an instance.
   def self.from_s(string)
-    crl = new('foo') # The name doesn't matter
-    crl.content = wrapped_class.new(string)
-    crl
+    super(string, 'foo') # The name doesn't matter
   end
 
   # Because of how the format handler class is included, this

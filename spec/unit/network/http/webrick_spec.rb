@@ -12,13 +12,8 @@ end
 describe Puppet::Network::HTTP::WEBrick do
   include PuppetSpec::Files
 
-  let(:listen_params) do
-    { :address => "127.0.0.1",
-      :port => 31337,
-      :protocols => [ :rest ],
-      :handlers => [ :node, :catalog ],
-    }
-  end
+  let(:address) { '127.0.0.1' }
+  let(:port) { 31337 }
 
   let(:server) do
     s = Puppet::Network::HTTP::WEBrick.new
@@ -43,25 +38,15 @@ describe Puppet::Network::HTTP::WEBrick do
 
   describe "when turning on listening" do
     it "should fail if already listening" do
-      server.listen(listen_params)
-      expect { server.listen(listen_params) }.to raise_error(RuntimeError, /server is already listening/)
-    end
-
-    it "should require a listening address to be specified" do
-      listen_params.delete(:address)
-      expect { server.listen(listen_params) }.to raise_error(ArgumentError, /:address must be specified/)
-    end
-
-    it "should require a listening port to be specified" do
-      listen_params.delete(:port)
-      expect { server.listen(listen_params) }.to raise_error(ArgumentError, /:port must be specified/)
+      server.listen(address, port)
+      expect { server.listen(address, port) }.to raise_error(RuntimeError, /server is already listening/)
     end
 
     it "should tell webrick to listen on the specified address and port" do
       WEBrick::HTTPServer.expects(:new).with {|args|
         args[:Port] == 31337 and args[:BindAddress] == "127.0.0.1"
       }.returns(mock_webrick)
-      server.listen(listen_params)
+      server.listen(address, port)
     end
 
     it "should configure a logger for webrick" do
@@ -71,7 +56,7 @@ describe Puppet::Network::HTTP::WEBrick do
         args[:Logger] == :mylogger
       }.returns(mock_webrick)
 
-      server.listen(listen_params)
+      server.listen(address, port)
     end
 
     it "should configure SSL for webrick" do
@@ -81,11 +66,11 @@ describe Puppet::Network::HTTP::WEBrick do
         args[:Ssl] == :testing and args[:Other] == :yay
       }.returns(mock_webrick)
 
-      server.listen(listen_params)
+      server.listen(address, port)
     end
 
     it "should be listening" do
-      server.listen(listen_params)
+      server.listen(address, port)
       server.should be_listening
     end
 
@@ -94,7 +79,7 @@ describe Puppet::Network::HTTP::WEBrick do
         # We don't care about the options here.
         mock_webrick.expects(:mount).with("/", Puppet::Network::HTTP::WEBrickREST, anything)
 
-        server.listen(listen_params.merge(:protocols => [:rest]))
+        server.listen(address, port)
       end
     end
   end
@@ -106,12 +91,12 @@ describe Puppet::Network::HTTP::WEBrick do
 
     it "should order webrick server to stop" do
       mock_webrick.expects(:shutdown)
-      server.listen(listen_params)
+      server.listen(address, port)
       server.unlisten
     end
 
     it "should no longer be listening" do
-      server.listen(listen_params)
+      server.listen(address, port)
       server.unlisten
       server.should_not be_listening
     end

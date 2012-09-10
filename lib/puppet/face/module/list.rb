@@ -17,7 +17,7 @@ Puppet::Face.define(:module, '1.0.0') do
       summary "Whether to show dependencies as a tree view"
     end
 
-    examples <<-EOT
+    examples <<-'EOT'
       List installed modules:
 
       $ puppet module list

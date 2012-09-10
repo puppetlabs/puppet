@@ -113,9 +113,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
   def remove_existing_resources(children, catalog)
     existing_names = catalog.resources.collect { |r| r.to_s }
-
     both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
-
     both.each { |name| children.delete(name) }
   end
 
@@ -131,7 +129,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"
       content = Puppet::FileServing::Content.indirection.find(resource[:source])
-      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(content.content))
+      file = Puppet::FileBucket::File.new(content.content)
+      Puppet::FileBucket::File.indirection.save(file)
     end
   end
 end

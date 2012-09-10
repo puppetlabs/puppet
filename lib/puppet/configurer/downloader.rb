@@ -1,10 +1,7 @@
 require 'puppet/configurer'
 require 'puppet/resource/catalog'
-require 'puppet/util/config_timeout'
 
 class Puppet::Configurer::Downloader
-  extend Puppet::Util::ConfigTimeout
-  
   attr_reader :name, :path, :source, :ignore
 
   # Evaluate our download, returning the list of changed values.
@@ -13,7 +10,7 @@ class Puppet::Configurer::Downloader
 
     files = []
     begin
-      ::Timeout.timeout(self.class.timeout_interval) do
+      ::Timeout.timeout(Puppet[:configtimeout]) do
         catalog.apply do |trans|
           trans.changed?.find_all do |resource|
             yield resource if block_given?

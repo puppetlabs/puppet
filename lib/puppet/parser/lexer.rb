@@ -487,7 +487,7 @@ class Puppet::Parser::Lexer
 
   # we've encountered the start of a string...
   # slurp in the rest of the string and return it
-  def slurpstring(terminators,escapes=%w{ \\  $ ' " n t s }+["\n"],ignore_invalid_escapes=false)
+  def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
@@ -496,6 +496,7 @@ class Puppet::Parser::Lexer
       ch = $1
       if escapes.include? ch
         case ch
+        when 'r'; "\r"
         when 'n'; "\n"
         when 't'; "\t"
         when 's'; " "

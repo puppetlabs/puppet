@@ -1,6 +1,6 @@
 require 'facter/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
-  desc <<-EOT
+  desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 
@@ -161,15 +161,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       # Make sure we've loaded all of the facts
       Facter.loadfacts
-      if Facter.value(:macosx_productversion_major)
-        product_version_major = Facter.value(:macosx_productversion_major)
-      else
-        # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-        warnonce("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
-        product_version = Facter.value(:macosx_productversion)
-        fail("Could not determine OS X version from Facter") if product_version.nil?
-        product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
-      end
+
+      product_version_major = Facter.value(:macosx_productversion_major)
+
       fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major

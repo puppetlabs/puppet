@@ -2,7 +2,7 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
-  desc <<-EOT
+  desc <<-'EOT'
     Runit service management.
 
     This provider manages daemons running supervised by Runit.

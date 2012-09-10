@@ -10,6 +10,13 @@ module Puppet
         !!File::ALT_SEPARATOR
       end
       module_function :windows?
+
+      def default_paths
+        return [] if windows?
+
+        %w{/usr/sbin /sbin}
+      end
+      module_function :default_paths
     end
   end
 end

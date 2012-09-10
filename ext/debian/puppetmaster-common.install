@@ -1,0 +1,2 @@
+debian/fileserver.conf etc/puppet
+conf/auth.conf etc/puppet

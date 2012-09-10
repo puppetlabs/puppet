@@ -1,5 +1,5 @@
-Puppet::Type.type(:service).provide :base do
-  desc "The simplest form of service support.
+Puppet::Type.type(:service).provide :base, :parent => :service do
+  desc "The simplest form of Unix service support.
 
   You have to specify enough about your service for this to work; the
   minimum you can specify is a binary for starting the process, and this
@@ -10,10 +10,6 @@ Puppet::Type.type(:service).provide :base do
   "
 
   commands :kill => "kill"
-
-  def self.instances
-    []
-  end
 
   # Get the process ID for a running process. Requires the 'pattern'
   # parameter.
@@ -34,20 +30,6 @@ Puppet::Type.type(:service).provide :base do
     }
 
     nil
-  end
-
-  # How to restart the process.
-  def restart
-    if @resource[:restart] or restartcmd
-      ucommand(:restart)
-    else
-      self.stop
-      self.start
-    end
-  end
-
-  # There is no default command, which causes other methods to be used
-  def restartcmd
   end
 
   # Check if the process is running.  Prefer the 'status' parameter,
@@ -119,27 +101,6 @@ Puppet::Type.type(:service).provide :base do
 
   # There is no default command, which causes other methods to be used
   def stopcmd
-  end
-
-  # A simple wrapper so execution failures are a bit more informative.
-  def texecute(type, command, fof = true)
-    begin
-      # #565: Services generally produce no output, so squelch them.
-      execute(command, :failonfail => fof, :squelch => true)
-    rescue Puppet::ExecutionFailure => detail
-      @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
-    end
-    nil
-  end
-
-  # Use either a specified command or the default for our provider.
-  def ucommand(type, fof = true)
-    if c = @resource[type]
-      cmd = [c]
-    else
-      cmd = [send("#{type}cmd")].flatten
-    end
-    texecute(type, cmd, fof)
   end
 end
 

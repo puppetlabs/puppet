@@ -246,17 +246,6 @@ module Puppet
       desc "A read-only parameter set by the package."
     end
 
-    newparam(:type) do
-      desc "Deprecated form of `provider`."
-
-      munge do |value|
-        Puppet.deprecation_warning "'type' is deprecated; use 'provider' instead"
-        @resource[:provider] = value
-
-        @resource[:provider]
-      end
-    end
-
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
         This is currently only used on Solaris.  The value will be

@@ -51,6 +51,11 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     body
   end
 
+  # There is no standard way of retrieving the client certificate since it is completely
+  # dictated by the web server environment; this is a stub to prevent a NotImplementedError
+  def client_cert(request)
+  end
+
   def set_content_type(response, format)
     response.header['Content-Type'] = format_to_mime(format)
   end

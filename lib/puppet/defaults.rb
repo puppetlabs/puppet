@@ -141,7 +141,7 @@ module Puppet
           ENV["PATH"] = "" if ENV["PATH"].nil?
           ENV["PATH"] = value unless value == "none"
           paths = ENV["PATH"].split(File::PATH_SEPARATOR)
-          %w{/usr/sbin /sbin}.each do |path|
+          Puppet::Util::Platform.default_paths.each do |path|
             ENV["PATH"] += File::PATH_SEPARATOR + path unless paths.include?(path)
           end
           value
@@ -225,10 +225,12 @@ module Puppet
       :desc       => "The YAML file containing indirector route configuration.",
     },
     :node_terminus => {
+      :type       => :terminus,
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
     },
     :data_binding_terminus => {
+      :type    => :terminus,
       :default => "hiera",
       :desc    => "Where to retrive information about data.",
     },
@@ -238,9 +240,15 @@ module Puppet
       :type    => :file,
     },
     :catalog_terminus => {
+      :type       => :terminus,
       :default    => "compiler",
       :desc       => "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store.",
+    },
+    :catalog_cache_terminus => {
+      :type       => :terminus,
+      :default    => nil,
+      :desc       => "How to store cached catalogs. Valid values are 'json' and 'yaml'. The agent application defaults to 'json'."
     },
     :facts_terminus => {
       :default => 'facter',
@@ -254,10 +262,12 @@ module Puppet
       end
     },
     :inventory_terminus => {
+      :type       => :terminus,
       :default    => "$facts_terminus",
       :desc       => "Should usually be the same as the facts terminus",
     },
     :default_file_terminus => {
+      :type       => :terminus,
       :default    => "rest",
       :desc       => "The default source for files if no server is given in a
       uri, e.g. puppet:///file. The default of `rest` causes the file to be
@@ -281,10 +291,11 @@ module Puppet
       :desc       => "The HTTP proxy port to use for outgoing connections",
     },
     :filetimeout => {
-      :default    => 15,
-      :desc       => "The minimum time to wait (in seconds) between checking for updates in
+      :default    => "15s",
+      :type       => :duration,
+      :desc       => "The minimum time to wait between checking for updates in
       configuration files.  This timeout determines how quickly Puppet checks whether
-      a file (such as manifests or templates) has changed on disk.",
+      a file (such as manifests or templates) has changed on disk. Can be specified as a duration.",
     },
     :queue_type => {
       :default    => "stomp",
@@ -303,7 +314,7 @@ module Puppet
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that `puppet queue` be running and that 'PSON' support for ruby be installed.",
+      Requires that `puppet queue` be running.",
         :hook     => proc do |value|
           if value
             # This reconfigures the terminii for Node, Facts, and Catalog
@@ -311,6 +322,7 @@ module Puppet
 
             # But then we modify the configuration
             Puppet::Resource::Catalog.indirection.cache_class = :queue
+            Puppet.settings[:catalog_cache_terminus] = :queue
           else
             raise "Cannot disable asynchronous storeconfigs in a running process"
           end
@@ -565,6 +577,12 @@ EOT
         :type     => :boolean,
         :desc     => "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
             to all clients.  If enabled, CA chaining will almost definitely not work.",
+    },
+    :certificate_expire_warning => {
+      :default  => "60d",
+      :type     => :duration,
+      :desc     => "The window of time leading up to a certificate's expiration that a notification
+        will be logged. This applies to CA, master, and agent certificates. Can be specified as a duration."
     }
   )
 
@@ -613,11 +631,6 @@ EOT
       :mode => 0664,
 
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
-      :hook => proc do |value|
-        if value == 'false'
-          Puppet.deprecation_warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
-        end
-      end
     },
     :caprivatedir => {
       :default => "$cadir/private",
@@ -672,19 +685,10 @@ EOT
       :desc       => "Whether to allow a new certificate
       request to overwrite an existing certificate.",
     },
-    :ca_days => {
-      :default    => "",
-      :desc       => "How long a certificate should be valid, in days.
-      This setting is deprecated; use `ca_ttl` instead",
-    },
     :ca_ttl => {
       :default    => "5y",
-      :desc       => "The default TTL for new certificates; valid values
-      must be an integer, optionally followed by one of the units
-      'y' (years of 365 days), 'd' (days), 'h' (hours), or
-      's' (seconds). The unit defaults to seconds. If this setting
-      is set, ca_days is ignored. Examples are '3600' (one hour)
-      and '1825d', which is the same as '5y' (5 years) ",
+      :type       => :duration,
+      :desc       => "The default TTL for new certificates. Can be specified as a duration."
     },
     :ca_md => {
       :default    => "md5",
@@ -727,18 +731,8 @@ EOT
           :desc     => "The pid file",
       },
       :bindaddress => {
-        :default    => "",
-        :desc       => "The address a listening server should bind to.  Mongrel servers
-        default to 127.0.0.1 and WEBrick defaults to 0.0.0.0.",
-      },
-      :servertype => {
-        :default => "webrick", :desc => "The type of server to use.  Currently supported
-        options are webrick and mongrel.  If you use mongrel, you will need
-        a proxy in front of the process or processes, since Mongrel cannot
-        speak SSL.",
-
-        :call_hook => :on_define_and_write, # Call our hook with the default value, so we always get the correct bind address set.
-        :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
+        :default    => "0.0.0.0",
+        :desc       => "The address a listening server should bind to.",
       }
   )
 
@@ -826,17 +820,15 @@ EOT
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
-      :desc       => "The header containing an authenticated
-      client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-      to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
-      See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information.",
+      :desc       => "The header containing an authenticated client's SSL DN.
+      This header must be set by the proxy to the authenticated client's SSL
+      DN (e.g., `/CN=puppet.puppetlabs.com`).",
     },
     :ssl_client_verify_header => {
       :default    => "HTTP_X_CLIENT_VERIFY",
-      :desc       => "The header containing the status
-      message of the client verification. Only used with Mongrel.  This header must be set by the proxy
-      to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-      See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information.",
+      :desc       => "The header containing the status message of the client
+      verification. This header must be set by the proxy to 'SUCCESS' if the
+      client successfully authenticated, and anything else otherwise.",
     },
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).
@@ -899,8 +891,9 @@ EOT
     },
     :rrdinterval => {
       :default  => "$runinterval",
+      :type     => :duration,
       :desc     => "How often RRD should expect data.
-            This should match how often the hosts report back to the server.",
+            This should match how often the hosts report back to the server. Can be specified as a duration.",
     }
   )
 
@@ -1019,11 +1012,12 @@ EOT
       :desc       => "Whether puppet agent should be run in noop mode.",
     },
     :runinterval => {
-      :default  => 1800, # 30 minutes
+      :default  => "30m",
+      :type     => :duration,
       :desc     => "How often puppet agent applies the client configuration; in seconds.
           Note that a runinterval of 0 means \"run continuously\" rather than
           \"never run.\" If you want puppet agent to never run, you should start
-          it with the `--no-client` option.",
+          it with the `--no-client` option. Can be specified as a duration.",
     },
     :listen => {
       :default    => false,
@@ -1097,11 +1091,6 @@ EOT
       fact be stale even if the timestamps are up to date - if the facts
       change or if the server changes.",
     },
-    :downcasefacts => {
-      :default    => false,
-      :type       => :boolean,
-      :desc       => "Whether facts should be made all lowercase when sent to the server.",
-    },
     :dynamicfacts => {
       :default    => "memorysize,memoryfree,swapsize,swapfree",
       :desc       => "Facts that are dynamic; these facts will be ignored when deciding whether
@@ -1110,8 +1099,9 @@ EOT
     },
     :splaylimit => {
       :default    => "$runinterval",
+      :type       => :duration,
       :desc       => "The maximum time to delay before runs.  Defaults to being the same as the
-      run interval.",
+      run interval. Can be specified as a duration.",
     },
     :splay => {
       :default    => false,
@@ -1126,18 +1116,11 @@ EOT
       :desc     => "Where FileBucket files are stored locally."
     },
     :configtimeout => {
-      :default  => 120,
+      :default  => "2m",
+      :type     => :duration,
       :desc     => "How long the client should wait for the configuration to be retrieved
       before considering it a failure.  This can help reduce flapping if too
-      many clients contact the server at one time.",
-    },
-    :reportserver => {
-      :default => "$server",
-      :call_hook => :on_write_only,
-      :desc => "(Deprecated for 'report_server') The server to which to send transaction reports.",
-      :hook => proc do |value|
-        Puppet.settings[:report_server] = value if value
-      end
+      many clients contact the server at one time. Can be specified as a duration.",
     },
     :report_server => {
       :default  => "$server",
@@ -1195,10 +1178,12 @@ EOT
       compression, but if it supports it, this setting might reduce performance on high-speed LANs.",
     },
     :waitforcert => {
-        :default  => 120, # 2 minutes
-        :desc     => "The time interval, specified in seconds, 'puppet agent' should connect to the server
-            and ask it to sign a certificate request. This is useful for the initial setup of a
-            puppet client. You can turn off waiting for certificates by specifying a time of 0.",
+      :default  => "2m",
+      :type     => :duration,
+      :desc     => "The time interval 'puppet agent' should connect to the server
+      and ask it to sign a certificate request. This is useful for the initial setup of a
+      puppet client. You can turn off waiting for certificates by specifying a time of 0.
+      Can be specified as a duration.",
     }
   )
 
@@ -1489,8 +1474,10 @@ You can adjust the backend using the storeconfigs_backend setting.",
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          Puppet.settings[:async_storeconfigs] or
+          if not Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+            Puppet.settings[:catalog_cache_terminus] = :store_configs
+          end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
           Puppet::Node.indirection.cache_class = :store_configs
 
@@ -1499,6 +1486,7 @@ You can adjust the backend using the storeconfigs_backend setting.",
       end
     },
     :storeconfigs_backend => {
+      :type => :terminus,
       :default => "active_record",
       :desc => "Configure the backend terminus used for StoreConfigs.
 By default, this uses the ActiveRecord store, which directly talks to the

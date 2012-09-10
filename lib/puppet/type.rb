@@ -40,11 +40,6 @@ class Type
     attr_reader :properties
   end
 
-  def self.states
-    Puppet.deprecation_warning "The states method is deprecated; use properties"
-    properties
-  end
-
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
@@ -247,11 +242,6 @@ class Type
     param
   end
 
-  def self.newstate(name, options = {}, &block)
-    Puppet.warning "newstate() has been deprecrated; use newproperty(#{name})"
-    newproperty(name, options, &block)
-  end
-
   # Create a new property. The first parameter must be the name of the property;
   # this is how users will refer to the property when creating new instances.
   # The second parameter is a hash of options; the options are:
@@ -423,7 +413,7 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue => detail
-        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error = Puppet::Error.new("Parameter #{name} failed on #{ref}: #{detail}")
         error.set_backtrace(detail.backtrace)
         raise error
       end
@@ -746,111 +736,6 @@ class Type
     noop?
   end
 
-  # retrieve a named instance of the current type
-  def self.[](name)
-    raise "Global resource access is deprecated"
-    @objects[name] || @aliases[name]
-  end
-
-  # add an instance by name to the class list of instances
-  def self.[]=(name,object)
-    raise "Global resource storage is deprecated"
-    newobj = nil
-    if object.is_a?(Puppet::Type)
-      newobj = object
-    else
-      raise Puppet::DevError, "must pass a Puppet::Type object"
-    end
-
-    if exobj = @objects[name] and self.isomorphic?
-      msg = "Object '#{newobj.class.name}[#{name}]' already exists"
-
-      msg += ("in file #{object.file} at line #{object.line}") if exobj.file and exobj.line
-      msg += ("and cannot be redefined in file #{object.file} at line #{object.line}") if object.file and object.line
-      error = Puppet::Error.new(msg)
-      raise error
-    else
-      #Puppet.info("adding %s of type %s to class list" %
-      #    [name,object.class])
-      @objects[name] = newobj
-    end
-  end
-
-  # Create an alias.  We keep these in a separate hash so that we don't encounter
-  # the objects multiple times when iterating over them.
-  def self.alias(name, obj)
-    raise "Global resource aliasing is deprecated"
-    if @objects.include?(name)
-      unless @objects[name] == obj
-        raise Puppet::Error.new(
-          "Cannot create alias #{name}: object already exists"
-        )
-      end
-    end
-
-    if @aliases.include?(name)
-      unless @aliases[name] == obj
-        raise Puppet::Error.new(
-          "Object #{@aliases[name].name} already has alias #{name}"
-        )
-      end
-    end
-
-    @aliases[name] = obj
-  end
-
-  # remove all of the instances of a single type
-  def self.clear
-    raise "Global resource removal is deprecated"
-    if defined?(@objects)
-      @objects.each do |name, obj|
-        obj.remove(true)
-      end
-      @objects.clear
-    end
-    @aliases.clear if defined?(@aliases)
-  end
-
-  # Force users to call this, so that we can merge objects if
-  # necessary.
-  def self.create(args)
-    # LAK:DEP Deprecation notice added 12/17/2008
-    Puppet.deprecation_warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
-    new(args)
-  end
-
-  # remove a specified object
-  def self.delete(resource)
-    raise "Global resource removal is deprecated"
-    return unless defined?(@objects)
-    @objects.delete(resource.title) if @objects.include?(resource.title)
-    @aliases.delete(resource.title) if @aliases.include?(resource.title)
-    if @aliases.has_value?(resource)
-      names = []
-      @aliases.each do |name, otherres|
-        if otherres == resource
-          names << name
-        end
-      end
-      names.each { |name| @aliases.delete(name) }
-    end
-  end
-
-  # iterate across each of the type's instances
-  def self.each
-    raise "Global resource iteration is deprecated"
-    return unless defined?(@objects)
-    @objects.each { |name,instance|
-      yield instance
-    }
-  end
-
-  # does the type have an object with the given name?
-  def self.has_key?(name)
-    raise "Global resource access is deprecated"
-    @objects.has_key?(name)
-  end
-
   # Retrieve all known instances.  Either requires providers or must be overridden.
   def self.instances
     raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
@@ -1013,17 +898,6 @@ class Type
       else
         list = Array(list).collect { |p| p.to_sym }
       end
-    end
-  end
-
-  newmetaparam(:check) do
-    desc "Audit specified attributes of resources over time, and report if any have changed.
-      This parameter has been deprecated in favor of 'audit'."
-
-    munge do |args|
-      Puppet.deprecation_warning "'check' attribute is deprecated; use 'audit' instead"
-      resource.warning "'check' attribute is deprecated; use 'audit' instead"
-      resource[:audit] = args
     end
   end
 

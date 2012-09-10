@@ -1,0 +1,4 @@
+usr/share/puppet/rack/puppetmasterd
+usr/share/puppet/rack/puppetmasterd/public
+usr/share/puppet/rack/puppetmasterd/tmp
+usr/share/puppetmaster-passenger/

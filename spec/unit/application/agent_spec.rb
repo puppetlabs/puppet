@@ -337,9 +337,26 @@ describe Puppet::Application::Agent do
       Puppet[:node_terminus].should ==  :rest
     end
 
-    it "should tell the catalog handler to use cache" do
+    it "has an application default :catalog_cache_terminus setting of 'json'" do
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+
+      @puppetd.initialize_app_defaults
+      @puppetd.setup
+    end
+
+    it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
+      Puppet[:catalog_cache_terminus] = "yaml"
       Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
 
+      @puppetd.initialize_app_defaults
+      @puppetd.setup
+    end
+
+    it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
+      Puppet[:catalog_cache_terminus] = nil
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+
+      @puppetd.initialize_app_defaults
       @puppetd.setup
     end
 
@@ -456,7 +473,7 @@ describe Puppet::Application::Agent do
       it "should use puppet default port" do
         Puppet[:puppetport] = 32768
 
-        Puppet::Network::Server.expects(:new).with { |args| args[:port] == 32768 }
+        Puppet::Network::Server.expects(:new).with(anything, 32768)
 
         @puppetd.setup_listen
       end

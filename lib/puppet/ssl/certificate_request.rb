@@ -20,15 +20,6 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner
 
-  # Convert a string into an instance.
-  def self.from_s(string)
-    instance = wrapped_class.new(string)
-    name = instance.subject.to_s.sub(/\/CN=/i, '').downcase
-    result = new(name)
-    result.content = instance
-    result
-  end
-
   # Because of how the format handler class is included, this
   # can't be in the base class.
   def self.supported_formats

@@ -15,7 +15,7 @@ module Puppet
 
     attr_reader :actual_content
 
-    desc <<-EOT
+    desc <<-'EOT'
       The desired contents of a file, as a string. This attribute is mutually
       exclusive with `source` and `target`.
 
@@ -177,7 +177,7 @@ module Puppet
         yield read_file_from_filebucket
       elsif source_or_content.nil?
         yield ''
-      elsif Puppet[:default_file_terminus] == "file_server"
+      elsif Puppet[:default_file_terminus] == :file_server
         yield source_or_content.content
       elsif source_or_content.local?
         chunk_file_from_disk(source_or_content) { |chunk| yield chunk }

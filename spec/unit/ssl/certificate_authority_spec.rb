@@ -243,8 +243,9 @@ describe Puppet::SSL::CertificateAuthority do
       # Stub out the factory
       Puppet::SSL::CertificateFactory.stubs(:build).returns "my real cert"
 
-      @request_content = stub "request content stub", :subject => OpenSSL::X509::Name.new([['CN', @name]])
+      @request_content = stub "request content stub", :subject => OpenSSL::X509::Name.new([['CN', @name]]), :public_key => stub('public_key')
       @request = stub 'request', :name => @name, :request_extensions => [], :subject_alt_names => [], :content => @request_content
+      @request_content.stubs(:verify).returns(true)
 
       # And the inventory
       @inventory = stub 'inventory', :add => nil
@@ -331,7 +332,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false, @request)
-        end.should_not raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
+        end.not_to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
       end
 
       it "should save the resulting certificate" do

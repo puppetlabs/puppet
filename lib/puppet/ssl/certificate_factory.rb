@@ -3,19 +3,13 @@ require 'puppet/ssl'
 # The tedious class that does all the manipulations to the
 # certificate to correctly sign it.  Yay.
 module Puppet::SSL::CertificateFactory
-  # How we convert from various units to the required seconds.
-  UNITMAP = {
-    "y" => 365 * 24 * 60 * 60,
-    "d" => 24 * 60 * 60,
-    "h" => 60 * 60,
-    "s" => 1
-  }
-
-  def self.build(cert_type, csr, issuer, serial)
+  def self.build(cert_type, csr, issuer, serial, ttl = nil)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
     respond_to?(build_extensions) or
       raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!"
+
+    raise ArgumentError, "Certificate TTL must be an integer" unless ttl.nil? || ttl.is_a?(Fixnum)
 
     # set up the certificate, and start building the content.
     cert = OpenSSL::X509::Certificate.new
@@ -32,7 +26,7 @@ module Puppet::SSL::CertificateFactory
     # clock fail, and better than having every cert we generate expire a day
     # before the user expected it to when they asked for "one year".
     cert.not_before = Time.now - (60*60*24)
-    cert.not_after  = Time.now + ttl
+    cert.not_after  = Time.now + (ttl || Puppet[:ca_ttl])
 
     add_extensions_to(cert, csr, issuer, send(build_extensions))
 
@@ -84,18 +78,6 @@ module Puppet::SSL::CertificateFactory
       # right thing regardless of what we get passed.
       ef.create_ext(oid, val, crit)
     end
-  end
-
-  # TTL for new certificates in seconds. If config param :ca_ttl is set,
-  # use that, otherwise use :ca_days for backwards compatibility
-  def self.ttl
-    ttl = Puppet.settings[:ca_ttl]
-
-    return ttl unless ttl.is_a?(String)
-
-    raise ArgumentError, "Invalid ca_ttl #{ttl}" unless ttl =~ /^(\d+)(y|d|h|s)$/
-
-    $1.to_i * UNITMAP[$2]
   end
 
   # Woot! We're a CA.

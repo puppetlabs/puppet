@@ -1,9 +1,9 @@
 Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
-  desc "Provider for FreeBSD. Uses the `rcvar` argument of init scripts and parses/edits rc files."
+  desc "Provider for FreeBSD and DragonFly BSD. Uses the `rcvar` argument of init scripts and parses/edits rc files."
 
-  confine :operatingsystem => [:freebsd]
-  defaultfor :operatingsystem => [:freebsd]
+  confine :operatingsystem => [:freebsd, :dragonfly]
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
 
   def rcconf()        '/etc/rc.conf' end
   def rcconf_local()  '/etc/rc.conf.local' end
@@ -11,6 +11,10 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
   def self.defpath
     superclass.defpath
+  end
+
+  def error(msg)
+    raise Puppet::Error, msg
   end
 
   # Executing an init script with the 'rcvar' argument returns
@@ -37,7 +41,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_name
     name = self.rcvar[1]
     self.error("No rcvar name found in rcvar") if name.nil?
-    name = name.gsub!(/(.*)_enable=(.*)/, '\1')
+    name = name.gsub!(/(.*)(_enable)?=(.*)/, '\1')
     self.error("rcvar name is empty") if name.nil?
     self.debug("rcvar name is #{name}")
     name
@@ -47,7 +51,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_value
     value = self.rcvar[1]
     self.error("No rcvar value found in rcvar") if value.nil?
-    value = value.gsub!(/(.*)_enable="?(\w+)"?/, '\2')
+    value = value.gsub!(/(.*)(_enable)?="?(\w+)"?/, '\3')
     self.error("rcvar value is empty") if value.nil?
     self.debug("rcvar value is #{value}")
     value
@@ -69,7 +73,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     [rcconf, rcconf_local, rcconf_dir + "/#{service}"].each do |filename|
       if File.exists?(filename)
         s = File.read(filename)
-        if s.gsub!(/(#{rcvar}_enable)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+        if s.gsub!(/(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
           File.open(filename, File::WRONLY) { |f| f << s }
           self.debug("Replaced in #{filename}")
           success = true

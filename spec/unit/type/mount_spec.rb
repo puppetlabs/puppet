@@ -67,7 +67,7 @@ describe Puppet::Type.type(:mount)::Ensure, :unless => Puppet.features.microsoft
     provider_properties = {}
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
-    @mount = Puppet::Type.type(:mount).new(:name => "yay", :check => :ensure)
+    @mount = Puppet::Type.type(:mount).new(:name => "yay", :audit => :ensure)
 
     @ensure = @mount.property(:ensure)
   end

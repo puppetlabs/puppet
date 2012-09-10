@@ -70,7 +70,7 @@ class Puppet::Agent
     return unless Puppet[:splay]
     return if splayed?
 
-    time = rand(Integer(Puppet[:splaylimit]) + 1)
+    time = rand(Puppet[:splaylimit] + 1)
     Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
