@@ -77,5 +77,8 @@ file { '/var/lib/hiera':
   purge   => true,
   force   => true,
 }
+file { '/etc/puppet/hiera.yaml':
+  ensure  => absent,
+}
 PP
 end

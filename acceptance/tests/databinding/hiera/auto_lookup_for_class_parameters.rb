@@ -9,6 +9,23 @@ file { '/etc/puppet/hieradata':
   purge   => true,
   force   => true,
 }
+
+file { '/etc/puppet/hiera.yaml':
+  ensure  => present,
+  content => '---
+    :backends:
+      - "puppet"
+      - "yaml"
+    :logger: "console"
+    :hierarchy:
+      - "%{fqdn}"
+      - "%{environment}"
+      - "global"
+
+    :yaml:
+      :datadir: "/etc/puppet/hieradata"
+  '
+}
 PP
 
 testdir = master.tmpdir('databinding')
@@ -79,6 +96,9 @@ file { '/etc/puppet/hieradata':
   recurse => true,
   purge   => true,
   force   => true,
+}
+file { '/etc/puppet/hiera.yaml':
+  ensure => absent,
 }
 PP
 end
