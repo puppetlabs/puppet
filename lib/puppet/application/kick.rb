@@ -298,7 +298,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    super()
     raise Puppet::Error.new("Puppet kick is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+    Puppet.warning "Puppet kick is deprecated. See http://links.puppetlabs.com/puppet-kick-deprecation"
 
     if options[:debug]
       Puppet::Util::Log.level = :debug
