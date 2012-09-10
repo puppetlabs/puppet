@@ -122,7 +122,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
     end
 
     it "should issue a warning that kick is deprecated" do
-      Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /kick is deprecated/ }
+      Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
       @kick.setup
     end
 

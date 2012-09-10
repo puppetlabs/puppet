@@ -479,10 +479,9 @@ describe Puppet::Application::Agent do
       end
       
       it "should issue a warning that listen is deprecated" do
-        Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /kick is deprecated/ }
+        Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
         @puppetd.setup_listen
       end
-
     end
 
     describe "when setting up for fingerprint" do
