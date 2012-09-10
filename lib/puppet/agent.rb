@@ -7,12 +7,10 @@ class Puppet::Agent
   require 'puppet/agent/locker'
   include Puppet::Agent::Locker
 
-  attr_reader :client_class, :client, :splayed
+  attr_reader :client_class, :client
 
   # Just so we can specify that we are "the" instance.
   def initialize(client_class)
-    @splayed = false
-
     @client_class = client_class
   end
 
@@ -37,7 +35,6 @@ class Puppet::Agent
 
     result = nil
     block_run = Puppet::Application.controlled_run do
-      splay
       with_client do |client|
         begin
           sync.synchronize { lock { result = client.run(*args) } }
@@ -56,22 +53,6 @@ class Puppet::Agent
 
   def stopping?
     Puppet::Application.stop_requested?
-  end
-
-  # Have we splayed already?
-  def splayed?
-    splayed
-  end
-
-  # Sleep when splay is enabled; else just return.
-  def splay
-    return unless Puppet[:splay]
-    return if splayed?
-
-    time = rand(Integer(Puppet[:splaylimit]) + 1)
-    Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
-    sleep(time)
-    @splayed = true
   end
 
   def sync

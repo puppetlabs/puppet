@@ -130,70 +130,76 @@ class Puppet::Daemon
   def run_event_loop
     # Now, we loop waiting for either the configuration file to change, or the
     # next agent run to be due.  Fun times.
-    #
-    # We want to trigger the reparse if 15 seconds passed since the previous
-    # wakeup, and the agent run if Puppet[:runinterval] seconds have passed
-    # since the previous wakeup.
-    #
-    # We always want to run the agent on startup, so it was always before now.
-    # Because 0 means "continuously run", `to_i` does the right thing when the
-    # input is strange or badly formed by returning 0.  Integer will raise,
-    # which we don't want, and we want to protect against -1 or below.
-    next_agent_run = 0
-    agent_run_interval = [Puppet[:runinterval].to_i, 0].max
-
-    # We may not want to reparse; that can be disable.  Fun times.
-    next_reparse = 0
-    reparse_interval = Puppet[:filetimeout].to_i
-
     loop do
       now = Time.now.to_i
 
-      # We set a default wakeup of "one hour from now", which will
-      # recheck everything at a minimum every hour.  Just in case something in
-      # the math messes up or something; it should be inexpensive enough to
-      # wake once an hour, then go back to sleep after doing nothing, if
-      # someone only wants listen mode.
-      next_event = now + 60 * 60
-
-      # Handle reparsing of configuration files, if desired and required.
-      # `reparse` will just check if the action is required, and would be
-      # better named `reparse_if_changed` instead.
-      if reparse_interval > 0 and now >= next_reparse
-        Puppet.settings.reparse
-
-        # The time to the next reparse might have changed, so recalculate
-        # now.  That way we react dynamically to reconfiguration.
-        reparse_interval = Puppet[:filetimeout].to_i
-
-        # Set up the next reparse check based on the new reparse_interval.
-        if reparse_interval > 0
-          next_reparse = now + reparse_interval
-          next_event > next_reparse and next_event = next_reparse
-        end
-
-        # We should also recalculate the agent run interval, and adjust the
-        # next time it is scheduled to run, just in case.  In the event that
-        # we made no change the result will be a zero second adjustment.
-        new_run_interval    = [Puppet[:runinterval].to_i, 0].max
-        next_agent_run     += agent_run_interval - new_run_interval
-        agent_run_interval  = new_run_interval
+      # Work out when the next event is going to happen, and enact any
+      # operations that triggers.
+      if reparse_time = next_reparse_time(now)
+        Puppet.settings.reparse if now >= reparse_time
       end
 
-      # Handle triggering another agent run.  This will block the next check
-      # for configuration reparsing, which is a desired and deliberate
-      # behaviour.  You should not change that. --daniel 2012-02-21
-      if agent and now >= next_agent_run
-        agent.run
-
-        # Set up the next agent run time
-        next_agent_run = now + agent_run_interval
-        next_event > next_agent_run and next_event = next_agent_run
+      if agent_time = next_agent_run_time(now)
+        agent.run if now >= agent_time
       end
 
-      # Finally, an interruptable able sleep until the next scheduled event.
-      how_long = next_event - now
+      # Finally, an interruptable able sleep until the next scheduled event,
+      # assuming that there is some delay before they are due.
+      how_long = [reparse_time, agent_time, now + 3600].compact.min - now
       how_long > 0 and select([], [], [], how_long)
+    end
+  end
+
+  private
+  def next_agent_run_time(now)
+    return nil unless agent
+
+    # We always want to run the agent on startup, so it was always before now.
+    # Because 0 means "continuously run", `to_i` does the right thing when the
+    # input is strange or badly formed by returning 0. Integer will raise,
+    # which we don't want, and we want to protect against -1 or below.
+    timeout = Puppet[:runinterval].to_i
+    return now if timeout <= 0
+
+    if @next_agent_run_time
+      while @next_agent_run_time < now
+        @next_agent_run_time += timeout
+      end
+    else
+      # This is the first run - we need to set the run time, and also splay.
+      @next_agent_run_time = now + timeout + splay
+    end
+
+    return @next_agent_run_time
+  end
+
+  def next_reparse_time(now)
+    timeout = Puppet[:filetimeout].to_i
+    return nil if timeout <= 0
+
+    if @next_reparse_time
+      # If our next run is in the past we need to calculate the next event in
+      # the series - otherwise, return the current value.  Do this in steady
+      # increments, but remember that we might be arbitrarily delayed by, eg,
+      # an agent run that takes more than one timeout increment.
+      while @next_reparse_time < now
+        @next_reparse_time += timeout
+      end
+    else
+      # Not yet initialized, so we wait for a full timeout before we reparse
+      # the file on disk.
+      @next_reparse_time = now + timeout
+    end
+
+    # ...and, finally, tell everyone when the wall time of the next run.
+    return @next_reparse_time
+  end
+
+  def splay
+    return 0 unless Puppet[:splay]
+
+    rand(Integer(Puppet[:splaylimit]) + 1).tap do |time|
+      Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     end
   end
 end

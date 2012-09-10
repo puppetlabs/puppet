@@ -85,12 +85,6 @@ describe Puppet::Agent do
       @agent.stubs(:disabled?).returns false
     end
 
-    it "should splay" do
-      @agent.expects(:splay)
-
-      @agent.run
-    end
-
     it "should do nothing if already running" do
       @agent.expects(:running?).returns true
       AgentTestClient.expects(:new).never
@@ -170,44 +164,6 @@ describe Puppet::Agent do
 
       client.expects(:run).with("testargs")
       @agent.run("testargs")
-    end
-  end
-
-  describe "when splaying" do
-    before do
-      Puppet.settings.stubs(:value).with(:splay).returns true
-      Puppet.settings.stubs(:value).with(:splaylimit).returns "10"
-    end
-
-    it "should do nothing if splay is disabled" do
-      Puppet.settings.expects(:value).returns false
-      @agent.expects(:sleep).never
-      @agent.splay
-    end
-
-    it "should do nothing if it has already splayed" do
-      @agent.expects(:splayed?).returns true
-      @agent.expects(:sleep).never
-      @agent.splay
-    end
-
-    it "should log that it is splaying" do
-      @agent.stubs :sleep
-      Puppet.expects :info
-      @agent.splay
-    end
-
-    it "should sleep for a random portion of the splaylimit plus 1" do
-      Puppet.settings.expects(:value).with(:splaylimit).returns "50"
-      @agent.expects(:rand).with(51).returns 10
-      @agent.expects(:sleep).with(10)
-      @agent.splay
-    end
-
-    it "should mark that it has splayed" do
-      @agent.stubs(:sleep)
-      @agent.splay
-      @agent.should be_splayed
     end
   end
 
