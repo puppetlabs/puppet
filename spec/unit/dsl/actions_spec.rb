@@ -104,20 +104,12 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#params" do
-    it "returns a scope decorator" do
+    it "returns current scope" do
       evaluate_in_scope do
-        subject.params.should be_a Puppet::DSL::ScopeDecorator
+        subject.params.should == Puppet::DSL::Parser.current_scope
       end
     end
 
-    it "returns scope decorator for the current scope" do
-      scope = mock "Scope"
-      Puppet::DSL::ScopeDecorator.expects(:new).with(scope)
-
-      evaluate_in_scope(scope) do
-        subject.params
-      end
-    end
   end
 
   describe "#create_node" do

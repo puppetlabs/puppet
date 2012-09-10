@@ -539,10 +539,10 @@ describe Puppet::DSL::Context do
     end
 
     describe "#params" do
-      it "should return scope decorator" do
+      it "should return current scope" do
         evaluate_in_context do
           params
-        end.should be_a Puppet::DSL::ScopeDecorator
+        end.should be_a Puppet::Parser::Scope
       end
     end
 
