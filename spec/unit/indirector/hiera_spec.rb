@@ -65,7 +65,7 @@ describe Puppet::Indirector::Hiera do
   let(:datadir) { my_fixture_dir }
 
   it "should be the default data_binding terminus" do
-    Puppet.settings[:data_binding_terminus].should == 'hiera'
+    Puppet.settings[:data_binding_terminus].should == :hiera
   end
 
   it "should raise an error if we don't have the hiera feature" do
@@ -100,19 +100,21 @@ describe Puppet::Indirector::Hiera do
     end
 
     context "when the Hiera configuration file does not exist" do
+      let(:path) { File.expand_path('/doesnotexist') }
+
       before do
-        Puppet.settings[:hiera_config] = '/doesnotexists'
+        Puppet.settings[:hiera_config] = path
       end
 
       it "should log a warning" do
         Puppet.expects(:warning).with(
-          "Config file /doesnotexists not found, using Hiera defaults")
+         "Config file #{path} not found, using Hiera defaults")
         @hiera_class.hiera_config
       end
 
       it "should only configure the logger and set it to puppet" do
         Puppet.expects(:warning).with(
-          "Config file /doesnotexists not found, using Hiera defaults")
+         "Config file #{path} not found, using Hiera defaults")
         @hiera_class.hiera_config.should == { :logger => 'puppet' }
       end
     end

@@ -99,7 +99,7 @@ class Puppet::Node
       @parameters[name] = value unless @parameters.include?(name)
     end
 
-    @parameters["environment"] ||= self.environment.name.to_s if self.environment
+    @parameters["environment"] ||= self.environment.name.to_s
   end
 
   # Calculate the list of names we might use for looking

@@ -72,7 +72,7 @@ class Puppet::Indirector::Indirection
 
   # Default to the runinterval for the ttl.
   def ttl
-    @ttl ||= Puppet[:runinterval].to_i
+    @ttl ||= Puppet[:runinterval]
   end
 
   # Calculate the expiration date for a returned instance.
@@ -133,7 +133,7 @@ class Puppet::Indirector::Indirection
   def terminus_class
     unless @terminus_class
       if setting = self.terminus_setting
-        self.terminus_class = Puppet.settings[setting].to_sym
+        self.terminus_class = Puppet.settings[setting]
       else
         raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection #{self.name}"
       end

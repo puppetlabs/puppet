@@ -46,6 +46,28 @@ class Puppet::SSL::Base
     self.class.validate_certname(@name)
   end
 
+  # Method to extract a 'name' from the subject of a certificate
+  def self.name_from_subject(subject)
+    subject.to_s.sub(/\/CN=/i, '')
+  end
+
+  # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class
+  def self.from_instance(instance, name = nil)
+    raise ArgumentError, "Object must be an instance of #{wrapped_class}, #{instance.class} given" unless instance.is_a? wrapped_class
+    raise ArgumentError, "Name must be supplied if it cannot be determined from the instance" if name.nil? and !instance.respond_to?(:subject)
+
+    name ||= name_from_subject(instance.subject)
+    result = new(name)
+    result.content = instance
+    result
+  end
+
+  # Convert a string into an instance
+  def self.from_s(string, name = nil)
+    instance = wrapped_class.new(string)
+    from_instance(instance, name)
+  end
+
   # Read content from disk appropriately.
   def read(path)
     @content = wrapped_class.new(File.read(path))

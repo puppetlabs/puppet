@@ -158,11 +158,11 @@ class Puppet::Daemon
     # input is strange or badly formed by returning 0.  Integer will raise,
     # which we don't want, and we want to protect against -1 or below.
     next_agent_run = 0
-    agent_run_interval = [Puppet[:runinterval].to_i, 0].max
+    agent_run_interval = [Puppet[:runinterval], 0].max
 
     # We may not want to reparse; that can be disable.  Fun times.
     next_reparse = 0
-    reparse_interval = Puppet[:filetimeout].to_i
+    reparse_interval = Puppet[:filetimeout]
 
     loop do
       now = Time.now.to_i
@@ -182,7 +182,7 @@ class Puppet::Daemon
 
         # The time to the next reparse might have changed, so recalculate
         # now.  That way we react dynamically to reconfiguration.
-        reparse_interval = Puppet[:filetimeout].to_i
+        reparse_interval = Puppet[:filetimeout]
 
         # Set up the next reparse check based on the new reparse_interval.
         if reparse_interval > 0
@@ -193,7 +193,7 @@ class Puppet::Daemon
         # We should also recalculate the agent run interval, and adjust the
         # next time it is scheduled to run, just in case.  In the event that
         # we made no change the result will be a zero second adjustment.
-        new_run_interval    = [Puppet[:runinterval].to_i, 0].max
+        new_run_interval    = [Puppet[:runinterval], 0].max
         next_agent_run     += agent_run_interval - new_run_interval
         agent_run_interval  = new_run_interval
       end

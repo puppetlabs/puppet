@@ -49,7 +49,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-doc(8) -- Generate Puppet documentation and references
 ========

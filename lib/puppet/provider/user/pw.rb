@@ -2,12 +2,12 @@ require 'puppet/provider/nameservice/pw'
 require 'open3'
 
 Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::PW do
-  desc "User management via `pw` on FreeBSD."
+  desc "User management via `pw` on FreeBSD and DragonFly BSD."
 
   commands :pw => "pw"
   has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry
 
-  defaultfor :operatingsystem => :freebsd
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos

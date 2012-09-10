@@ -9,6 +9,11 @@ describe processor do
 
   describe "when setting up the connection" do
     let(:http) { stub_everything "http" }
+    let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
+
+    before :each do
+      http.expects(:post).returns(httpok)
+    end
 
     it "should use the reporturl setting's host, port and ssl option" do
       uri = URI.parse(Puppet[:reporturl])
@@ -42,32 +47,32 @@ describe processor do
   end
 
   describe "when making a request" do
-    let(:http) { mock "http" }
+    let(:http) { stub_everything "http" }
     let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
-      Net::HTTP.any_instance.expects(:start).yields(http)
+      Net::HTTP.expects(:new).returns(http)
     end
 
     it "should use the path specified by the 'reporturl' setting" do
-      http.expects(:request).with {|req|
-        req.path.should == URI.parse(Puppet[:reporturl]).path
+      http.expects(:post).with {|path, data, headers|
+        path.should == URI.parse(Puppet[:reporturl]).path
       }.returns(httpok)
 
       subject.process
     end
 
     it "should give the body as the report as YAML" do
-      http.expects(:request).with {|req|
-        req.body.should == subject.to_yaml
+      http.expects(:post).with {|path, data, headers|
+        data.should == subject.to_yaml
       }.returns(httpok)
 
       subject.process
     end
 
     it "should set content-type to 'application/x-yaml'" do
-      http.expects(:request).with {|req|
-        req.content_type.should == "application/x-yaml"
+      http.expects(:post).with {|path, data, headers|
+        headers["Content-Type"].should == "application/x-yaml"
       }.returns(httpok)
 
       subject.process
@@ -77,7 +82,7 @@ describe processor do
       if code.to_i >= 200 and code.to_i < 300
         it "should succeed on http code #{code}" do
           response = klass.new('1.1', code, '')
-          http.expects(:request).returns(response)
+          http.expects(:post).returns(response)
 
           Puppet.expects(:err).never
           subject.process
@@ -87,7 +92,7 @@ describe processor do
       if code.to_i >= 300
         it "should log error on http code #{code}" do
           response = klass.new('1.1', code, '')
-          http.expects(:request).returns(response)
+          http.expects(:post).returns(response)
 
           Puppet.expects(:err)
           subject.process

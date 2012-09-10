@@ -13,11 +13,17 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # Thankfully, solaris has not changed the commands to be used.
   # TODO: We still have to allow packages to specify a preferred publisher.
 
+  has_feature :versionable
+
+  has_feature :upgradable
+
+  has_feature :holdable
+
   commands :pkg => "/usr/bin/pkg"
 
   confine :osfamily => :solaris
 
-  #defaultfor [:osfamily => :solaris, :kernelrelease => "5.11"]
+  defaultfor :osfamily => :solaris, :kernelrelease => '5.11'
 
   def self.instances
     pkg(:list, '-H').split("\n").map{|l| new(parse_line(l))}
@@ -30,14 +36,25 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # if not the field is -, else we dont know what we are doing and exit with
   # out doing more damage.
   def self.ifo_flag(flags)
-    case flags
-    when /i../
-      {:status => 'installed', :ensure => :present}
-    when /-../
-      {:status => 'known', :ensure => :absent}
-    else
-      raise ArgumentError, 'Unknown format %s: %s' % [self.name, flags]
-    end
+    (
+      case flags[0..0]
+      when 'i'
+        {:status => 'installed'}
+      when '-'
+        {:status => 'known'}
+      else
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[0..0]]
+      end
+    ).merge(
+      case flags[1..1]
+      when 'f'
+        {:ensure => 'held'}
+      when '-'
+        {}
+      else
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[1..1]]
+      end
+    )
   end
 
   # The UFOXI field is the field present in the older pkg
@@ -47,6 +64,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # f_rozen(n/i) o_bsolete x_cluded(n/i) i_constrained(n/i)
   # note that u_pdate flag may not be trustable due to constraints.
   # so we dont rely on it
+  # Frozen was never implemented in UFOXI so skipping frozen here.
   def self.ufoxi_flag(flags)
     {}
   end
@@ -60,11 +78,11 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def self.pkg_state(state)
     case state
     when /installed/
-      {:status => 'installed', :ensure => :present}
+      {:status => 'installed'}
     when /known/
-      {:status => 'known', :ensure => :absent}
+      {:status => 'known'}
     else
-      raise ArgumentError, 'Unknown format %s: %s,%s' % [self.name, state, flags]
+      raise ArgumentError, 'Unknown format %s: %s' % [self.name, state]
     end
   end
 
@@ -75,39 +93,65 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # NAME (PUBLISHER)            VERSION           IFO  (new:630e1ffc7a19)
     # system/core-os              0.5.11-0.169      i--
     when /^(\S+) +(\S+) +(...)$/
-       {:name => $1, :version => $2}.merge ifo_flag($3)
+      {:name => $1, :ensure => $2}.merge ifo_flag($3)
 
     # x11/wm/fvwm (fvwm.org)      2.6.1-3           i--
-    when /^(\S+) \((.+)\) +(\S+) +(\S+)$/
-       {:name => $1, :publisher => $2, :version => $3}.merge ifo_flag($4)
+    when /^(\S+) \((.+)\) +(\S+) +(...)$/
+      {:name => $1, :publisher => $2, :ensure => $3}.merge ifo_flag($4)
 
     # NAME (PUBLISHER)                  VERSION          STATE      UFOXI (dvd:052adf36c3f4)
     # SUNWcs                            0.5.11-0.126     installed  -----
     when /^(\S+) +(\S+) +(\S+) +(.....)$/
-       {:name => $1, :version => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
+      {:name => $1, :ensure => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
 
     # web/firefox/plugin/flash (extra)  10.0.32.18-0.111 installed  -----
     when /^(\S+) \((.+)\) +(\S+) +(\S+) +(.....)$/
-       {:name => $1, :publisher => $2, :version => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
+      {:name => $1, :publisher => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
       raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
     end).merge({:provider => self.name})
   end
 
-  # return the version of the package. Note that this returns only installable versions of the package.
-  # This output is different from pkg list -Hn which also lists other versions that are not installable.
-  # due to various constraints.
+  def hold
+    pkg(:freeze, @resource[:name])
+  end
+
+  def unhold
+    r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
+    raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
+  end
+
+  # Return the version of the package. Note that the bug
+  # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
+  # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
-    lst = pkg(:list, "-Ha", @resource[:name]).split("\n").map{|l| self.class.parse_line(l)[:status]}
-    # First check if there are any known lines (updatable), if so, we can update ourselves.
-    # else it may be installed.
-    ['known', 'installed'].find { |s| lst.include?(s) } || :absent
+    lst = pkg(:list, "-Hn", @resource[:name]).split("\n").map{|l|self.class.parse_line(l)}
+
+    # Now we know there is a newer version. But is that installable? (i.e are there any constraints?)
+    # return the first known we find. The only way that is currently available is to do a dry run of
+    # pkg update and see if could get installed (`pkg update -n res`).
+    known = lst.find {|p| p[:status] == 'known' }
+    return known[:ensure] if known and exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
+
+    # If not, then return the installed, else nil
+    (lst.find {|p| p[:status] == 'installed' } || {})[:ensure]
   end
 
   # install the package and accept all licenses.
-  def install
-    pkg :install, '--accept', @resource[:name]
+  def install(nofail = false)
+    name = @resource[:name]
+    should = @resource[:ensure]
+    # always unhold if explicitly told to install/update
+    self.unhold
+    unless should.is_a? Symbol
+      name += "@#{should}"
+      is = self.query
+      self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+    end
+    r = exec_cmd(command(:pkg), 'install', '--accept', name)
+    return r if nofail
+    raise Puppet::Error, "Unable to update #{r[:out]}" if r[:exit] != 0
   end
 
   # uninstall the package. The complication comes from the -r_ecursive flag which is no longer
@@ -124,15 +168,21 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   # update the package to the latest version available
   def update
-    self.install
+    r = install(true)
+    # 4 == /No updates available for this image./
+    return if [0,4].include? r[:exit]
+    raise Puppet::Error, "Unable to update #{r[:out]}"
   end
 
   # list a specific package
   def query
-    begin
-      self.class.parse_line(pkg(:list, "-H", @resource[:name]))
-    rescue Puppet::ExecutionFailure
-      {:ensure => :absent, :name => @resource[:name]}
-    end
+    r = exec_cmd(command(:pkg), 'list', '-H', @resource[:name])
+    return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
+    self.class.parse_line(r[:out])
+  end
+
+  def exec_cmd(*cmd)
+    output = Puppet::Util::Execution.execute(cmd, :failonfail => false, :combine => true)
+    {:out => output, :exit => $CHILD_STATUS.exitstatus}
   end
 end

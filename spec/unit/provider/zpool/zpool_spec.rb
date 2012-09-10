@@ -160,10 +160,11 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
       end
 
       describe "when setting the #{field}" do
-        it "should warn the #{field} values were not in sync" do
-          Puppet.expects(:warning).with("NO CHANGES BEING MADE: zpool #{field} does not match, should be 'shouldvalue' currently is 'currentvalue'")
+        it "should fail if readonly #{field} values change" do
           provider.stubs(:current_pool).returns(Hash.new("currentvalue"))
-          provider.send((field.to_s + "=").intern, "shouldvalue")
+          expect {
+            provider.send((field.to_s + "=").intern, "shouldvalue")
+          }.to raise_error(Puppet::Error, /can\'t be changed/)
         end
       end
     end
@@ -190,7 +191,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
   context '#delete' do
     it "should call zpool with destroy and the pool name" do
       provider.expects(:zpool).with(:destroy, name)
-      provider.delete
+      provider.destroy
     end
   end
 

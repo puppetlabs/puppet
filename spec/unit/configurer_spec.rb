@@ -338,6 +338,14 @@ describe Puppet::Configurer do
       @agent.environment.should == "second_env"
     end
 
+    it "should clear the thread local caches" do
+      Thread.current[:env_module_directories] = false
+
+      @agent.run
+
+      Thread.current[:env_module_directories].should == nil
+    end
+
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler

@@ -15,7 +15,7 @@ module Puppet
     # call code when sync is called.
     newproperty(:ensure) do
       desc "Control what to do with this mount. Set this attribute to
-        `umounted` to make sure the filesystem is in the filesystem table
+        `unmounted` to make sure the filesystem is in the filesystem table
         but not mounted (if the filesystem is currently mounted, it will be
         unmounted).  Set it to `absent` to unmount (if necessary) and remove
         the filesystem from the fstab.  Set to `mounted` to add it to the
@@ -199,16 +199,6 @@ module Puppet
       isnamevar
     end
 
-    newparam(:path) do
-      desc "The deprecated name for the mount point.  Please use `name` now."
-
-      def value=(value)
-        Puppet.deprecation_warning "'path' is deprecated for mounts.  Please use 'name'."
-        @resource[:name] = value
-        super
-      end
-    end
-
     newparam(:remounts) do
       desc "Whether the mount can be remounted  `mount -o remount`.  If
         this is false, then the filesystem will be unmounted and remounted
@@ -217,7 +207,7 @@ module Puppet
       newvalues(:true, :false)
       defaultto do
         case Facter.value(:operatingsystem)
-        when "FreeBSD", "Darwin", "AIX"
+        when "FreeBSD", "Darwin", "AIX", "DragonFly"
           false
         else
           true

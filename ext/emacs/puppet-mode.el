@@ -386,6 +386,7 @@ The variable puppet-indent-level controls the amount of indentation.
   (setq mode-name "Puppet")
   (setq major-mode 'puppet-mode)
   (set-syntax-table puppet-mode-syntax-table)
+  (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'local-abbrev-table) puppet-mode-abbrev-table)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "#+ *")

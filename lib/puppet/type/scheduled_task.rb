@@ -80,7 +80,7 @@ Puppet::Type.newtype(:scheduled_task) do
   end
 
   newproperty(:trigger, :array_matching => :all) do
-    desc <<-EOT
+    desc <<-'EOT'
       One or more triggers defining when the task should run. A single trigger is
       represented as a hash, and multiple triggers can be specified with an array of
       hashes.

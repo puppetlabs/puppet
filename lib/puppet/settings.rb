@@ -9,6 +9,8 @@ require 'puppet/settings/file_setting'
 require 'puppet/settings/directory_setting'
 require 'puppet/settings/path_setting'
 require 'puppet/settings/boolean_setting'
+require 'puppet/settings/terminus_setting'
+require 'puppet/settings/duration_setting'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -37,8 +39,8 @@ class Puppet::Settings
         :logdir   => run_mode.log_dir,
     }
   end
-  
-  def self.default_certname() 
+
+  def self.default_certname()
     hostname = hostname_fact
     domain = domain_fact
     if domain and domain != ""
@@ -47,31 +49,14 @@ class Puppet::Settings
       fqdn = hostname
     end
     fqdn.gsub(/\.$/, '')
-  end 
+  end
 
   def self.hostname_fact()
-    Facter["hostname"].value 
-  end 
+    Facter["hostname"].value
+  end
 
   def self.domain_fact()
     Facter["domain"].value
-  end 
-
-
-  def self.default_global_config_dir
-    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"
-  end
-
-  def self.default_user_config_dir
-    File.expand_path("~/.puppet")
-  end
-
-  def self.default_global_var_dir
-    Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"
-  end
-
-  def self.default_user_var_dir
-    File.expand_path("~/.puppet/var")
   end
 
   def self.default_config_file_name
@@ -519,13 +504,13 @@ class Puppet::Settings
     if explicit_config_file?
       return self[:config]
     else
-      return File.join(self.class.default_global_config_dir, config_file_name)
+      return File.join(Puppet::Util::RunMode[:master].conf_dir, config_file_name)
     end
   end
   private :main_config_file
 
   def user_config_file
-    return File.join(self.class.default_user_config_dir, config_file_name)
+    return File.join(Puppet::Util::RunMode[:user].conf_dir, config_file_name)
   end
   private :user_config_file
 
@@ -641,6 +626,8 @@ class Puppet::Settings
           :directory  => DirectorySetting,
           :path       => PathSetting,
           :boolean    => BooleanSetting,
+          :terminus   => TerminusSetting,
+          :duration   => DurationSetting,
       } [type]
         raise ArgumentError, "Invalid setting type '#{type}'"
       end

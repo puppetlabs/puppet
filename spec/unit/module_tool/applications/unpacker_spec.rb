@@ -2,14 +2,16 @@ require 'spec_helper'
 require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 
-describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true do
+describe Puppet::ModuleTool::Applications::Unpacker do
   include PuppetSpec::Files
 
   let(:target) { tmpdir("unpacker") }
 
   context "initialization" do
     it "should support filename and basic options" do
-      Puppet::ModuleTool::Applications::Unpacker.new("myusername-mytarball-1.0.0.tar.gz", :target_dir => target)
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        Puppet::ModuleTool::Applications::Unpacker.new("myusername-mytarball-1.0.0.tar.gz", :target_dir => target)
+      end
     end
 
     it "should raise ArgumentError when filename is invalid" do
@@ -22,7 +24,9 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
     let(:filename) { tmpdir("module") + "/myusername-mytarball-1.0.0.tar.gz" }
     let(:build_dir) { Pathname.new(tmpdir("build_dir")) }
     let(:unpacker) do
-      Puppet::ModuleTool::Applications::Unpacker.new(filename, :target_dir => target)
+      pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+        Puppet::ModuleTool::Applications::Unpacker.new(filename, :target_dir => target)
+      end
     end
 
     before :each do
@@ -35,8 +39,10 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
 
     context "on linux" do
       it "should attempt to untar file to temporary location using system tar" do
-        Puppet::Util::Execution.expects(:execute).with("tar xzf #{filename} -C #{build_dir}").returns(true)
-        unpacker.run
+        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+          Puppet::Util::Execution.expects(:execute).with("tar xzf #{filename} -C #{build_dir}").returns(true)
+          unpacker.run
+        end
       end
     end
 

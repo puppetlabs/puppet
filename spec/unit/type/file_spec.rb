@@ -134,23 +134,23 @@ describe Puppet::Type.type(:file) do
       file[:recurse].should be_false
     end
 
-    [true, "true", 10, "inf", "remote"].each do |value|
+    [true, "true", "inf", "remote"].each do |value|
       it "should consider #{value} to enable recursion" do
         file[:recurse] = value
         file[:recurse].should be_true
       end
     end
 
-    [false, "false", 0].each do |value|
+    it "should not allow numbers" do
+      expect { file[:recurse] = 10 }.to raise_error(
+        Puppet::Error, /Parameter recurse failed on File\[[^\]]+\]: Invalid recurse value 10/)
+    end
+
+    [false, "false"].each do |value|
       it "should consider #{value} to disable recursion" do
         file[:recurse] = value
         file[:recurse].should be_false
       end
-    end
-
-    it "should warn if recurse is specified as a number" do
-      Puppet.expects(:deprecation_warning).with("Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit")
-      file[:recurse] = 3
     end
   end
 
@@ -185,14 +185,6 @@ describe Puppet::Type.type(:file) do
         file[:replace] = value
         file[:replace].should == :false
       end
-    end
-  end
-
-  describe "#[]" do
-    it "should raise an exception" do
-      expect do
-        described_class['anything']
-      end.to raise_error("Global resource access is deprecated")
     end
   end
 

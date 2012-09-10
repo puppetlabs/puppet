@@ -5,10 +5,11 @@ describe Puppet::Type.type(:exec).provider(:posix) do
   include PuppetSpec::Files
 
   def make_exe
-    command = tmpfile('my_command')
-    FileUtils.touch(command)
-    File.chmod(0755, command)
-    command
+    cmdpath = tmpdir('cmdpath')
+    exepath = tmpfile('my_command', cmdpath)
+    FileUtils.touch(exepath)
+    File.chmod(0755, exepath)
+    exepath
   end
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
@@ -74,8 +75,8 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       end
 
       it "should fail if the command is in the path but not executable" do
-        command = tmpfile('foo')
-        FileUtils.touch(command)
+        command = make_exe
+        File.chmod(0644, command)
         FileTest.stubs(:executable?).with(command).returns(false)
         resource[:path] = [File.dirname(command)]
         filename = File.basename(command)

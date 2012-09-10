@@ -1,3 +1,5 @@
+require 'puppet/version'
+
 # Try to load rubygems.  Hey rubygems, I hate you.
 begin
   require 'rubygems'
@@ -5,7 +7,6 @@ rescue LoadError
 end
 
 # see the bottom of the file for further inclusions
-require 'singleton'
 require 'facter'
 require 'puppet/error'
 require 'puppet/util'
@@ -24,12 +25,6 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '3.0.0'
-
-  def Puppet.version
-    PUPPETVERSION
-  end
-
   class << self
     include Puppet::Util
     attr_reader :features
@@ -149,12 +144,6 @@ module Puppet
   def self.newtype(name, options = {}, &block)
     Puppet::Type.newtype(name, options, &block)
   end
-
-  # We don't want to continue if Facter is not around, or isn't feature
-  # compliant
-  
-  # MLEN:FIXME temporarily disable this for Travis CI
-  #raise Puppet::Error, "Unsatifisied Facter dependency" unless Puppet.features.facter?
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement

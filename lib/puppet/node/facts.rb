@@ -28,7 +28,6 @@ class Puppet::Node::Facts
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s
-    values["environment"] ||= Puppet.settings[:environment]
   end
 
   def initialize(name, values = {})
@@ -36,15 +35,6 @@ class Puppet::Node::Facts
     @values = values
 
     add_timestamp
-  end
-
-  def downcase_if_necessary
-    return unless Puppet.settings[:downcasefacts]
-
-    Puppet.deprecation_warning "DEPRECATION NOTICE: Fact downcasing is deprecated; please disable (20080122)"
-    values.each do |fact, value|
-      values[fact] = value.downcase if value.is_a?(String)
-    end
   end
 
   # Convert all fact values into strings.

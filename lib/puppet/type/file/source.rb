@@ -12,7 +12,7 @@ module Puppet
     include Puppet::Util::Diff
 
     attr_accessor :source, :local
-    desc <<-EOT
+    desc <<-'EOT'
       A source file, which will be copied into place on the local system.
       Values can be URIs pointing to remote files, or fully qualified paths to
       files available on the local system (including files on NFS shares or
