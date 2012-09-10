@@ -363,30 +363,17 @@ module Util
   # will recognize as links to the line numbers in the trace)
   def self.pretty_backtrace(backtrace = caller(1))
     backtrace.collect do |line|
-      file_path, line_num = line.split(":")
-      file_path = expand_symlinks(File.expand_path(file_path))
-
-      file_path + ":" + line_num
-    end .join("\n")
-
-  end
-
-  # utility method that takes a path as input, checks each component of the path to see if it is a symlink, and expands
-  # it if it is.  returns the expanded path.
-  def self.expand_symlinks(file_path)
-    file_path.split("/").inject do |full_path, next_dir|
-      next_path = full_path + "/" + next_dir
-      if File.symlink?(next_path) then
-        link = File.readlink(next_path)
-        next_path =
-            case link
-              when /^\// then link
-              else
-                File.expand_path(full_path + "/" + link)
-            end
+      _, path, rest = /^(.*):(\d+.*)$/.match(line).to_a
+      # If the path doesn't exist - like in one test, and like could happen in
+      # the world - we should just tolerate it and carry on. --daniel 2012-09-05
+      # Also, if we don't match, just include the whole line.
+      if path
+        path = Pathname(path).realpath rescue path
+        "#{path}:#{rest}"
+      else
+        line
       end
-      next_path
-    end
+    end.join("\n")
   end
 
   # Replace a file, securely.  This takes a block, and passes it the file
