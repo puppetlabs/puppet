@@ -2,7 +2,7 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :daemontools, :parent => :base do
-  desc <<-EOT
+  desc <<-'EOT'
     Daemontools service management.
 
     This provider manages daemons supervised by D.J. Bernstein daemontools.

@@ -323,6 +323,10 @@ class Puppet::SSL::CertificateAuthority
       raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
     end
 
+    unless csr.content.verify(csr.content.public_key)
+      raise CertificateSigningError.new(hostname), "CSR contains a public key that does not correspond to the signing key"
+    end
+
     unless csr.subject_alt_names.empty?
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.

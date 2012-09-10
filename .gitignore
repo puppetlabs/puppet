@@ -2,3 +2,8 @@
 results
 tags
 .*.sw[op]
+doc
+build
+coverage
+ext/packaging
+pkg

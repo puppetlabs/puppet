@@ -1,0 +1,5 @@
+--- 
+exclude:
+ - gem
+ - rake
+ - rspec

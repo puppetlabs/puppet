@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+LIBDIR=$(shell /usr/bin/ruby18 -rrbconfig -e 'puts Config::CONFIG["rubylibdir"]')
+DESTDIR=$(CURDIR)/pkg/ips/proto
+
+binary-install/puppet::
+	/usr/bin/ruby18 install.rb --destdir=$(DESTDIR) --bindir=/usr/bin --sbindir=/usr/sbin --sitelibdir=$(LIBDIR) --mandir=/usr/share/man
+	mkdir -p $(DESTDIR)/var/{lib,log}/puppet/
+	mkdir -p $(DESTDIR)/var/svc/manifest/network/puppet/
+	mkdir -p $(DESTDIR)/lib/svc/method/
+	mkdir -p $(DESTDIR)/etc/puppet/
+	svccfg validate ext/ips/puppetagent.xml
+	svccfg validate ext/ips/puppetmaster.xml
+	cp ext/ips/puppetagent.xml $(DESTDIR)/var/svc/manifest/network/puppet/
+	cp ext/ips/puppetmaster.xml $(DESTDIR)/var/svc/manifest/network/puppet/
+	cp ext/ips/puppet-agent $(DESTDIR)/lib/svc/method/
+	cp ext/ips/puppet-master $(DESTDIR)/lib/svc/method/
+	cp ext/ips/puppet.conf $(DESTDIR)/etc/puppet/puppet.conf
+	chmod 700  $(DESTDIR)/lib/svc/method/puppet-{agent,master}

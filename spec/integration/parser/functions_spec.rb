@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe Puppet::Parser::Functions do
-  before :each do
-    Puppet::Parser::Functions.rmfunction("template") if Puppet::Parser::Functions.functions.include?("template")
-  end
-
   it "should support multiple threads autoloading the same function" do
     threads = []
     lambda {

@@ -1,0 +1,66 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ]; then
+    
+    # Change the owner of the rack config.ru to be the puppet user
+    # because passenger will suid to that user, see #577366
+    if ! dpkg-statoverride --list /usr/share/puppet/rack/puppetmasterd/config.ru >/dev/null 2>&1
+    then
+	dpkg-statoverride --update --add puppet puppet 0644 /usr/share/puppet/rack/puppetmasterd/config.ru
+    fi
+    # Setup passenger configuration
+    if [ "$2" = "" ]; then
+        # Initialize puppetmaster CA and generate the master certificate 
+        # only if the host doesn't already have any puppet ssl certificate.
+        # The ssl key and cert need to be available (eg generated) before
+        # apache2 is configured and started since apache2 ssl configuration 
+        # uses the puppetmaster ssl files.
+	if [ ! -e "$(puppet master --configprint hostcert)" ]; then
+		puppet cert generate $(puppet master --configprint certname)
+	fi
+        # Setup apache2 configuration files
+        APACHE2_SITE_FILE="/etc/apache2/sites-available/puppetmaster" 
+        if  [ ! -e "${APACHE2_SITE_FILE}" ]; then
+            cp /usr/share/puppetmaster-passenger/apache2.site.conf.tmpl "${APACHE2_SITE_FILE}"
+            # Fix path to SSL files
+            sed -r -i "s|(SSLCertificateFile\s+).+$|\1$(puppet master --configprint hostcert)|" "${APACHE2_SITE_FILE}"
+            sed -r -i "s|(SSLCertificateKeyFile\s+).+$|\1$(puppet master --configprint hostprivkey)|" "${APACHE2_SITE_FILE}"
+            sed -r -i "s|(SSLCACertificateFile\s+).+$|\1$(puppet master --configprint localcacert)|" "${APACHE2_SITE_FILE}"
+            sed -r -i "s|(SSLCertificateChainFile\s+).+$|\1$(puppet master --configprint localcacert)|" "${APACHE2_SITE_FILE}"
+            sed -r -i "s|(SSLCARevocationFile\s+).+$|\1$(puppet master --configprint cacrl)|" "${APACHE2_SITE_FILE}"
+
+            # Fix path to rack docroot and directory
+            sed -r -i "s|DocumentRoot /etc/puppet/rack/public|DocumentRoot /usr/share/puppet/rack/puppetmasterd/public|g" "${APACHE2_SITE_FILE}"
+            sed -r -i "s|<Directory /etc/puppet/rack/>|<Directory /usr/share/puppet/rack/puppetmasterd/>|g" "${APACHE2_SITE_FILE}"
+        fi
+        a2enmod ssl
+        a2enmod headers
+        a2ensite puppetmaster
+        if [ -x "/etc/init.d/apache2" ]; then
+            # Seems that a restart is needed. reload breaks ssl apparently.
+            if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+                invoke-rc.d apache2 restart || exit $?
+            else
+                /etc/init.d/apache2 restart || exit $?
+            fi
+        fi
+    fi
+    # Fix CRL file on upgrade to use the CA crl file instead of the host crl.
+    if dpkg --compare-versions "$2" lt-nl "2.6.1-1"; then
+        if [ -e /etc/apache2/sites-available/puppetmaster ]; then
+            sed -r -i 's|SSLCARevocationFile[[:space:]]+/var/lib/puppet/ssl/crl.pem$|SSLCARevocationFile /var/lib/puppet/ssl/ca/ca_crl.pem|' /etc/apache2/sites-available/puppetmaster
+            if [ -x "/etc/init.d/apache2" ]; then
+                # Seems that a restart is needed. reload breaks ssl apparently.
+                if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+                    invoke-rc.d apache2 restart || exit $?
+                else
+                    /etc/init.d/apache2 restart || exit $?
+                fi
+            fi
+        fi
+    fi
+fi
+
+#DEBHELPER#

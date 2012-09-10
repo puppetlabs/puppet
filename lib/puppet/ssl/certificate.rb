@@ -12,15 +12,6 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   extend Puppet::Indirector
   indirects :certificate, :terminus_class => :file
 
-  # Convert a string into an instance.
-  def self.from_s(string)
-    instance = wrapped_class.new(string)
-    name = instance.subject.to_s.sub(/\/CN=/i, '').downcase
-    result = new(name)
-    result.content = instance
-    result
-  end
-
   # Because of how the format handler class is included, this
   # can't be in the base class.
   def self.supported_formats
@@ -36,5 +27,18 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   def expiration
     return nil unless content
     content.not_after
+  end
+
+  def near_expiration?(interval = nil)
+    return false unless expiration
+    interval ||= Puppet[:certificate_expire_warning]
+    # Certificate expiration timestamps are always in UTC
+    expiration < Time.now.utc + interval
+  end
+
+  # This name is what gets extracted from the subject before being passed
+  # to the constructor, so it's not downcased
+  def unmunged_name
+    self.class.name_from_subject(content.subject)
   end
 end

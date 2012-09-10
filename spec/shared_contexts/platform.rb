@@ -12,13 +12,17 @@ shared_context "windows", :as_platform => :windows do
 
   around do |example|
     file_alt_separator = File::ALT_SEPARATOR
+    file_path_separator = File::PATH_SEPARATOR
+
     # prevent Ruby from warning about changing a constant
     with_verbose_disabled do
       File::ALT_SEPARATOR = '\\'
+      File::PATH_SEPARATOR = ';'
     end
     example.run
     with_verbose_disabled do
       File::ALT_SEPARATOR = file_alt_separator
+      File::PATH_SEPARATOR = file_path_separator
     end
   end
 end
@@ -31,13 +35,17 @@ shared_context "posix", :as_platform => :posix do
 
   around do |example|
     file_alt_separator = File::ALT_SEPARATOR
+    file_path_separator = File::PATH_SEPARATOR
+
     # prevent Ruby from warning about changing a constant
     with_verbose_disabled do
       File::ALT_SEPARATOR = nil
+      File::PATH_SEPARATOR = ':'
     end
     example.run
     with_verbose_disabled do
       File::ALT_SEPARATOR = file_alt_separator
+      File::PATH_SEPARATOR = file_path_separator
     end
   end
 end

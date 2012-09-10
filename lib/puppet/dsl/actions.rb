@@ -1,5 +1,4 @@
 require 'puppet/dsl/resource_decorator'
-require 'puppet/dsl/scope_decorator'
 require 'puppet/dsl/type_reference'
 require 'puppet/dsl/helper'
 
@@ -64,7 +63,7 @@ module Puppet
       # All keys will be stringified
       ##
       def params
-        ScopeDecorator.new Parser.current_scope
+        Parser.current_scope
       end
 
       ##

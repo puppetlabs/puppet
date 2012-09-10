@@ -4,7 +4,7 @@ agents.each do |agent|
   file = agent.tmpfile('4131-require-ip')
 
   step "configure the target system for the test"
-  on agent, "rm -vrf #{file} ; touch #{file}"
+  on agent, "rm -rf #{file} ; touch #{file}"
 
   step "try to create the host, which should fail"
   # REVISIT: This step should properly need to handle the non-zero exit code,

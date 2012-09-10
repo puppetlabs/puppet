@@ -17,7 +17,7 @@ describe Puppet::SSL::CertificateRevocationList do
 
   describe "when converting from a string" do
     it "should create a CRL instance with its name set to 'foo' and its content set to the extracted CRL" do
-      crl = stub 'crl'
+      crl = stub 'crl', :is_a? => true
       OpenSSL::X509::CRL.expects(:new).returns(crl)
 
       mycrl = stub 'sslcrl'

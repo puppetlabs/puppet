@@ -71,11 +71,6 @@ class Puppet::Interface
     end
   end
 
-  def set_default_format(format)
-    Puppet.deprecation_warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
-  end
-
-
   ########################################################################
   # Documentation.  We currently have to rewrite both getters because we share
   # the same instance between build-time and the runtime instance.  When that

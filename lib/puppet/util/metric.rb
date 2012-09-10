@@ -46,9 +46,9 @@ class Puppet::Util::Metric
 
     begin
       if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
-        @rrd.create( Puppet[:rrdinterval].to_i, start, args)
+        @rrd.create( Puppet[:rrdinterval], start, args)
       else
-        RRD.create( self.path, '-s', Puppet[:rrdinterval].to_i.to_s, '-b', start.to_i.to_s, *args)
+        RRD.create( self.path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
       end
     rescue => detail
       raise "Could not create RRD file #{path}: #{detail}"

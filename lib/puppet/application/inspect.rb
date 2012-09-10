@@ -17,7 +17,7 @@ class Puppet::Application::Inspect < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-inspect(8) -- Send an inspection report
 ========

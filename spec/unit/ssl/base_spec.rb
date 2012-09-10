@@ -3,11 +3,14 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate'
 
-class TestCertificate < Puppet::SSL::Base; end
+class TestCertificate < Puppet::SSL::Base
+    wraps(Puppet::SSL::Certificate)
+end
 
 describe Puppet::SSL::Certificate do
   before :each do
     @base = TestCertificate.new("name")
+    @class = TestCertificate
   end
 
   describe "when fingerprinting content" do
@@ -37,6 +40,44 @@ describe Puppet::SSL::Certificate do
       @digest.expects(:hexdigest).with("DER").returns "digest"
 
       @base.fingerprint(:digest).should == "DI:GE:ST"
+    end
+  end
+
+  describe "when creating new instances" do
+    it "should fail if given an object that is not an instance of the wrapped class" do
+      obj = stub 'obj', :is_a? => false
+      lambda { @class.from_instance(obj) }.should raise_error(ArgumentError)
+    end
+
+    it "should fail if a name is not supplied and can't be determined from the object" do
+      obj = stub 'obj', :is_a? => true
+      lambda { @class.from_instance(obj) }.should raise_error(ArgumentError)
+    end
+
+    it "should determine the name from the object if it has a subject" do
+      obj = stub 'obj', :is_a? => true, :subject => '/CN=foo'
+
+      inst = stub 'base'
+      inst.expects(:content=).with(obj)
+
+      @class.expects(:new).with('foo').returns inst
+      @class.expects(:name_from_subject).with('/CN=foo').returns('foo')
+
+      @class.from_instance(obj).should == inst
+    end
+  end
+
+  describe "when determining a name from a certificate subject" do
+    it "should convert it to a string" do
+      subject = stub 'sub'
+      subject.expects(:to_s).returns('foo')
+
+      @class.name_from_subject(subject).should == 'foo'
+    end
+
+    it "should strip the prefix" do
+      subject = '/CN=foo'
+      @class.name_from_subject(subject).should == 'foo'
     end
   end
 end

@@ -38,7 +38,7 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:path) do
-    desc <<-EOT
+    desc <<-'EOT'
       The path to the file to manage.  Must be fully qualified.
 
       On Windows, the path should include the drive letter and should use `/` as
@@ -130,14 +130,10 @@ Puppet::Type.newtype(:file) do
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
       * `false` --- Default of no recursion.
-      * `[0-9]+` --- Same as true, but limit recursion. Warning: this syntax
-        has been deprecated in favor of the `recurselimit` attribute.
     "
 
-    newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
+    newvalues(:true, :false, :inf, :remote)
 
-    # Replace the validation so that we allow numbers in
-    # addition to string representations of them.
     validate { |arg| }
     munge do |value|
       newval = super(value)
@@ -145,23 +141,6 @@ Puppet::Type.newtype(:file) do
       when :true, :inf; true
       when :false; false
       when :remote; :remote
-      when Integer, Fixnum, Bignum
-        Puppet.deprecation_warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
-
-        # recurse == 0 means no recursion
-        return false if value == 0
-
-        resource[:recurselimit] = value
-        true
-      when /^\d+$/
-        Puppet.deprecation_warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
-        value = Integer(value)
-
-        # recurse == 0 means no recursion
-        return false if value == 0
-
-        resource[:recurselimit] = value
-        true
       else
         self.fail "Invalid recurse value #{value.inspect}"
       end

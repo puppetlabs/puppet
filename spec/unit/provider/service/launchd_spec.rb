@@ -202,21 +202,4 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.enable
     end
   end
-
-  describe "when using an incompatible version of Facter" do
-    before :each do
-      provider.instance_variable_set(:@macosx_version_major, nil)
-    end
-    it "should display a deprecation warning" do
-      resource[:enable] = true
-      Facter.expects(:value).with(:macosx_productversion_major).returns(nil)
-      Facter.expects(:value).with(:macosx_productversion).returns('10.5.8')
-      Facter.expects(:loadfacts)
-      Puppet::Util::Warnings.expects(:maybe_log)
-      subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
-      subject.expects(:enabled?).returns :false
-      File.expects(:open).returns('')
-      subject.enable
-    end
-  end
 end

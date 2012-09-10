@@ -1,3 +1,5 @@
+require 'pathname'
+require 'puppet/util/rubygems'
 require 'puppet/util/warnings'
 require 'puppet/util/methodhelper'
 
@@ -12,6 +14,10 @@ class Puppet::Util::Autoload
     attr_reader :autoloaders
     attr_accessor :loaded
     private :autoloaders, :loaded
+
+    def gem_source
+      @gem_source ||= Puppet::Util::RubyGems::Source.new
+    end
 
     # List all loaded files.
     def list_loaded
@@ -159,8 +165,12 @@ class Puppet::Util::Autoload
       end
     end
 
+    def gem_directories
+      gem_source.directories
+    end
+
     def search_directories(env=nil)
-      [module_directories(env), libdirs(), $LOAD_PATH].flatten
+      [gem_directories, module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows

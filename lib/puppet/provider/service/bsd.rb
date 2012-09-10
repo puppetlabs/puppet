@@ -7,7 +7,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
 
   EOT
 
-  confine :operatingsystem => [:freebsd, :netbsd, :openbsd]
+  confine :operatingsystem => [:freebsd, :netbsd, :openbsd, :dragonfly]
 
   def rcconf_dir
     '/etc/rc.conf.d'

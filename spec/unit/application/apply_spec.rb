@@ -49,17 +49,6 @@ describe Puppet::Application::Apply do
 
       @apply.handle_logdest("console")
     end
-
-    it "should deprecate --apply" do
-      Puppet.expects(:deprecation_warning).with do |arg|
-        arg.match(/--apply is deprecated/)
-      end
-
-      command_line = Puppet::Util::CommandLine.new('puppet', ['apply', '--apply', 'catalog.json'])
-      apply = Puppet::Application::Apply.new(command_line)
-      apply.stubs(:run_command)
-      apply.run
-    end
   end
 
   describe "during setup" do
@@ -114,7 +103,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should set default_file_terminus to `file_server` to be local" do
-      @apply.app_defaults[:default_file_terminus].should == 'file_server'
+      @apply.app_defaults[:default_file_terminus].should == :file_server
     end
   end
 

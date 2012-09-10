@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+# Remove renamed configuration files which are now handled by other
+# packages
+if dpkg-maintscript-helper supports rm_conffile 2>/dev/null; then
+
+    dpkg-maintscript-helper rm_conffile \
+        /etc/logrotate.d/puppetmaster 2.7.16-1puppetlabs1 puppetmaster -- "$@"
+
+
+# For systems with dpkg < 1.15.7-2
+else
+
+    if [ -f /etc/logrotate.d/puppetmaster ]; then
+        rm /etc/logrotate.d/puppetmaster || true
+    fi
+fi
+
+
+#DEBHELPER#

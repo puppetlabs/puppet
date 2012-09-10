@@ -1,0 +1,12 @@
+set name=pkg.fmri value=pkg://puppetlabs.com/system/management/<%=@name%>@<%=@ipsversion%>
+set name=pkg.summary value="<%=@summary%>"
+set name=pkg.human-version value="<%=@version%>"
+set name=pkg.description value="<%=@description%>"
+set name=info.classification value="org.opensolaris.category.2008:System/Administration and Configuration"
+set name=org.opensolaris.consolidation value="puppet"
+set name=description value="<%=@description%>"
+set name=variant.opensolaris.zone value=global value=nonglobal
+set name=variant.arch value=sparc value=i386
+license puppet.license license="Apache v2.0"
+group groupname=puppet
+user username=puppet password='*NP*' group=puppet

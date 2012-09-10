@@ -14,7 +14,7 @@ agents.each do |agent|
   options = { :confdir => scratch, :vardir => scratch }
 
   step "removing the SSL scratch directory..."
-  on(agent, "rm -vrf #{scratch}")
+  on(agent, "rm -rf #{scratch}")
 
   step "generate a certificate in #{scratch}"
   on(agent,puppet_cert('--trace', '--generate', target, options)) do

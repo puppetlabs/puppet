@@ -48,6 +48,12 @@ RSpec.configure do |config|
 
   config.mock_with :mocha
 
+  if Puppet::Util::Platform.windows?
+    config.output_stream = $stdout
+    config.error_stream = $stderr
+    config.formatters.each { |f| f.instance_variable_set(:@output, $stdout) }
+  end
+
   config.before :all do
     Puppet::Test::TestHelper.before_all_tests()
   end

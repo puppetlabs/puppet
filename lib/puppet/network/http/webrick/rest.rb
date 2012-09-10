@@ -44,6 +44,10 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     request.body
   end
 
+  def client_cert(request)
+    request.client_cert
+  end
+
   # Set the specified format as the content type of the response.
   def set_content_type(response, format)
     response["content-type"] = format_to_mime(format)

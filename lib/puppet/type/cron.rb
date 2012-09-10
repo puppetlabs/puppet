@@ -3,7 +3,7 @@ require 'facter'
 require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do
-  @doc = <<-EOT
+  @doc = <<-'EOT'
     Installs and manages cron jobs.  Every cron resource requires a command
     and user attribute, as well as at least one periodic attribute (hour,
     minute, month, monthday, weekday, or special).  While the name of the cron
