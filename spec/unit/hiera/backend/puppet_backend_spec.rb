@@ -62,7 +62,7 @@ describe Hiera::Backend::Puppet_backend do
       catalog.expects(:classes).returns([])
 
       @scope.expects(:catalog).returns(catalog)
-      @scope.expects(:function_include).with("rspec")
+      @scope.expects(:function_include).with(["rspec"])
       @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec")
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec"])
