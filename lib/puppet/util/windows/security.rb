@@ -72,13 +72,13 @@ require 'windows/memory'
 require 'windows/volume'
 
 module Puppet::Util::Windows::Security
-  include Windows::File
-  include Windows::Handle
-  include Windows::Security
-  include Windows::Process
-  include Windows::Memory
-  include Windows::MSVCRT::Buffer
-  include Windows::Volume
+  include ::Windows::File
+  include ::Windows::Handle
+  include ::Windows::Security
+  include ::Windows::Process
+  include ::Windows::Memory
+  include ::Windows::MSVCRT::Buffer
+  include ::Windows::Volume
 
   extend Puppet::Util::Windows::Security
 
