@@ -50,17 +50,29 @@ describe provider_class do
     end
 
     describe "when a source is specified" do
+      it "should specify that documentation should not be included" do
+        resource[:source] = "/my/file"
+        provider.expects(:execute).with { |args| args[3] == "--no-rdoc" }.returns ""
+        provider.install
+      end
+
+      it "should specify that RI should not be included" do
+        resource[:source] = "/my/file"
+        provider.expects(:execute).with { |args| args[4] == "--no-ri" }.returns ""
+        provider.install
+      end
+
       describe "as a normal file" do
         it "should use the file name instead of the gem name" do
           resource[:source] = "/my/file"
-          provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+          provider.expects(:execute).with { |args| args[5] == "/my/file" }.returns ""
           provider.install
         end
       end
       describe "as a file url" do
         it "should use the file name instead of the gem name" do
           resource[:source] = "file:///my/file"
-          provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+          provider.expects(:execute).with { |args| args[5] == "/my/file" }.returns ""
           provider.install
         end
       end
@@ -73,7 +85,7 @@ describe provider_class do
       describe "as a non-file and non-puppet url" do
         it "should treat the source as a gem repository" do
           resource[:source] = "http://host/my/file"
-          provider.expects(:execute).with { |args| args[3..5] == ["--source", "http://host/my/file", "myresource"] }.returns ""
+          provider.expects(:execute).with { |args| args[5..7] == ["--source", "http://host/my/file", "myresource"] }.returns ""
           provider.install
         end
       end
