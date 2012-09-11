@@ -83,7 +83,7 @@ describe Puppet::Parser::Scope do
     Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
   end
 
-  describe "when missing methods are called" do
+  describe "when custom functions are called" do
     before :each do
       @env      = Puppet::Node::Environment.new('testing')
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => @env))
@@ -92,6 +92,16 @@ describe Puppet::Parser::Scope do
 
     it "should load and call the method if it looks like a function and it exists" do
       @scope.function_sprintf(["%b", 123]).should == "1111011"
+    end
+
+    it "should raise and error when called without an Array" do
+      expect { @scope.function_sprintf("%b", 123) }.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
+    end
+
+    it "should raise and error when subsequent calls are without an Array" do
+      @scope.function_sprintf(["first call"])
+
+      expect { @scope.function_sprintf("%b", 123) }.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
     end
 
     it "should raise NoMethodError if the method doesn't look like a function" do

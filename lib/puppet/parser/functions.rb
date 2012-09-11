@@ -52,8 +52,19 @@ module Puppet::Parser::Functions
       raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
     end
 
+    # the block must be installed as a method because it may use "return",
+    # which is not allowed from procs.
+    real_fname = "real_function_#{name}"
+    environment_module.send(:define_method, real_fname, &block)
+
     fname = "function_#{name}"
-    environment_module.send(:define_method, fname, &block)
+    environment_module.send(:define_method, fname) do |*args|
+      if args[0].is_a? Array
+        self.send(real_fname, args[0])
+      else
+        raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
+      end
+    end
 
     # Someday we'll support specifying an arity, but for now, nope
     #functions[name] = {:arity => arity, :type => ftype}
