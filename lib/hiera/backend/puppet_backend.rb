@@ -58,9 +58,9 @@ class Hiera
           unless loaded_classes.include?(klass)
             begin
               if scope.respond_to?(:function_include)
-                scope.function_include(klass)
+                scope.function_include([klass])
               else
-                scope.real.function_include(klass)
+                scope.real.function_include([klass])
               end
 
               temp_answer = scope[varname]
