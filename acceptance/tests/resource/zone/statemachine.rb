@@ -1,5 +1,11 @@
 test_name "Zone:Statemachine configuration"
-confine :to, :platform => 'solaris'
+confine :to, :platform => 'solaris:pending'
+
+# If you plan to enable it, it would be a good idea to have a multi-cpu system with
+# atleast 2G ram. If it takes too long, open agent and try
+# truss -t open -p <auto-install:pid>
+# The auto install pid can be found by using ptree on the puppet apply pid
+# (use grep)
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
@@ -42,10 +48,6 @@ agents.each do |agent|
     assert_match( /ensure changed 'running' to 'configured'/ , result.stdout, "err: #{agent}")
   end
 
-  step "Zone: statemachine - ensure zone is correct (configured)"
-  on agent, "zoneadm -z tstzone verify" do
-    assert_no_match( /could not verify/, result.stdout, "err: #{agent}")
-  end
   on agent, "zoneadm -z tstzone list -v" do
     assert_match( /configured/, result.stdout, "err: #{agent}")
   end

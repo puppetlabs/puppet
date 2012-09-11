@@ -1,5 +1,11 @@
 test_name "Zone:statemachine single states"
-confine :to, :platform => 'solaris'
+confine :to, :platform => 'solaris:pending'
+
+# If you plan to enable it, it would be a good idea to have a multi-cpu system with
+# atleast 2G ram. If it takes too long, open agent and try
+# truss -t open -p <auto-install:pid>
+# The auto install pid can be found by using ptree on the puppet apply pid
+# (use grep)
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
