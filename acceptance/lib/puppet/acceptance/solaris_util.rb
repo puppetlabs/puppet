@@ -2,13 +2,39 @@ module Puppet
   module Acceptance
     module ZoneUtils
       def clean(agent)
-        on agent,"zoneadm -z tstzone halt ||:"
-        on agent,"zoneadm -z tstzone uninstall -F ||:"
-        on agent,"zonecfg -z tstzone delete -F ||:"
-        on agent,"rm -f /etc/zones/tstzone.xml ||:"
-        on agent,"zfs destroy -r tstpool/tstfs ||:"
-        on agent,"zpool destroy tstpool ||:"
-        on agent,"rm -rf /tstzones ||:"
+        lst = on(agent, "zoneadm list -cip").stdout.lines.each do |l|
+          case l
+          when /tstzone:running/
+            on agent,"zoneadm -z tstzone halt"
+            on agent,"zoneadm -z tstzone uninstall"
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          when /tstzone:configured/
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          when /tstzone:*/
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          end
+        end
+        lst = on(agent, "zfs list -H").stdout.lines.each do |l|
+          case l
+          when /tstpool\/tstfs/
+            on agent,"zfs destroy -r tstpool/tstfs"
+          end
+        end
+        lst = on(agent, "zpool list -H").stdout.lines.each do |l|
+          case l
+          when /tstpool/
+            on agent,"zpool destroy tstpool"
+          end
+        end
+        lst = on(agent, "ls /").stdout.lines.each do |l|
+          case l
+          when /tstzones/
+            on agent,"rm -rf /tstzones"
+          end
+        end
       end
 
       def setup(agent, o={})
