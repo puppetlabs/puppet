@@ -1,3 +1,4 @@
+confine :except, :platform => 'solaris'
 begin test_name "Auto lookup for class parameters"
 
 step "Setup"
