@@ -35,7 +35,7 @@ module DOT
     'fontcolor',   # default: black; type face color
     'fontname',    # default: Times-Roman; font family
     'fontsize',    # default: 14; point size of label
-    'group',       # name of node’s group
+    'group',       # name of node's group
     'height',      # default: .5; height in inches
     'label',       # default: node name; any string
     'layer',       # default: overlay range; all, id or id:id
