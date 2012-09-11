@@ -26,14 +26,14 @@ describe "the require function" do
   end
 
   it "should delegate to the 'include' puppet function" do
-    @scope.expects(:function_include).with("myclass")
+    @scope.expects(:function_include).with(["myclass"])
 
-    @scope.function_require("myclass")
+    @scope.function_require(["myclass"])
   end
 
   it "should set the 'require' prarameter on the resource to a resource reference" do
     @scope.stubs(:function_include)
-    @scope.function_require("myclass")
+    @scope.function_require(["myclass"])
 
     @resource["require"].should be_instance_of(Array)
     @resource["require"][0].should be_instance_of(Puppet::Resource)
@@ -45,7 +45,7 @@ describe "the require function" do
     @scope.expects(:find_hostclass).with("myclass").returns(@klass)
     @klass.expects(:name).returns("myclass")
 
-    @scope.function_require("myclass")
+    @scope.function_require(["myclass"])
   end
 
   it "should append the required class to the require parameter" do
@@ -53,7 +53,7 @@ describe "the require function" do
 
     one = Puppet::Resource.new(:file, "/one")
     @resource[:require] = one
-    @scope.function_require("myclass")
+    @scope.function_require(["myclass"])
 
     @resource[:require].should be_include(one)
     @resource[:require].detect { |r| r.to_s == "Class[Myclass]" }.should be_instance_of(Puppet::Resource)

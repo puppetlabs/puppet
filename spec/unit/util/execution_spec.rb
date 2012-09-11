@@ -265,7 +265,7 @@ describe Puppet::Util::Execution do
           Process.expects(:CloseHandle).with(thread_handle)
           Process.expects(:CloseHandle).with(process_handle)
 
-          expect { Puppet::Util::Execution.execute('test command') }.should raise_error(RuntimeError)
+          expect { Puppet::Util::Execution.execute('test command') }.to raise_error(RuntimeError)
         end
       end
     end
