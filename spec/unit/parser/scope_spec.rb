@@ -129,6 +129,11 @@ describe Puppet::Parser::Scope do
       @scope.lookupvar("var").should == "yep"
     end
 
+    it "should fail if invoked with a non-string name" do
+      expect { @scope[:foo] }.to raise_error Puppet::DevError
+      expect { @scope[:foo] = 12 }.to raise_error Puppet::DevError
+    end
+
     it "should return nil for unset variables" do
       @scope["var"].should be_nil
     end

@@ -236,6 +236,10 @@ class Puppet::Parser::Scope
   end
 
   def lookupvar(name, options = {})
+    unless name.is_a? String
+      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+    end
+
     # Save the originating scope for the request
     options[:origin] = self unless options[:origin]
     table = ephemeral?(name) ? @ephemeral.last : @symtable
@@ -327,6 +331,10 @@ class Puppet::Parser::Scope
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
   def setvar(name, value, options = {})
+    unless name.is_a? String
+      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+    end
+
     table = options[:ephemeral] ? @ephemeral.last : @symtable
     if table.include?(name)
       if options[:append]
