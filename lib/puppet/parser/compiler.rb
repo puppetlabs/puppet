@@ -436,7 +436,7 @@ class Puppet::Parser::Compiler
   # Set the node's parameters into the top-scope as variables.
   def set_node_parameters
     node.parameters.each do |param, value|
-      @topscope[param] = value
+      @topscope[param.to_s] = value
     end
 
     # These might be nil.
