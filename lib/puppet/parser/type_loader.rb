@@ -85,37 +85,36 @@ class Puppet::Parser::TypeLoader
     end
 
     loaded_asts = []
-    loaded_ruby = []
+    loaded_ruby_types = []
     files.each do |file|
       file = File.join dir, file unless Puppet::Util.absolute_path? file
 
       if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
         known_before = known_resource_types.definitions.values +
-                       known_resource_types.nodes.values +
-                       known_resource_types.hostclasses.values
+          known_resource_types.nodes.values +
+          known_resource_types.hostclasses.values
 
-        Puppet::Resource::Type.new(:hostclass, '').tap do |type|
-          begin
-            File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
-          rescue => e
-            raise Puppet::ParseError, e.message
-          end
-
-          type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
+        type = Puppet::Resource::Type.new(:hostclass, '')
+        begin
+          File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+        rescue => e
+          raise Puppet::ParseError, e.message
         end
+        type.ruby_code.each { |c| c.evaluate(Puppet::Parser::NullScope.new(known_resource_types)) }
 
         known_now    = known_resource_types.definitions.values +
-                       known_resource_types.nodes.values +
-                       known_resource_types.hostclasses.values
-        loaded_ruby  = known_now - known_before
+          known_resource_types.nodes.values +
+          known_resource_types.hostclasses.values
+        loaded_ruby_types = known_now - known_before
       else
         @loading_helper.do_once(file) { loaded_asts << parse_file(file) }
       end
     end
 
-    loaded_ruby + loaded_asts.inject([]) do |loaded_types, ast|
+    loaded_puppet_types = loaded_asts.inject([]) do |loaded_types, ast|
       loaded_types + known_resource_types.import_ast(ast, modname)
     end
+    loaded_ruby_types + loaded_puppet_types
   end
 
   def import_all
@@ -125,7 +124,7 @@ class Puppet::Parser::TypeLoader
     environment.modules.each do |mod|
       Find.find(mod.manifests) do |path|
         if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? path or
-           Puppet::Util::ManifestFiletypeHelper.is_puppet_filename? path
+          Puppet::Util::ManifestFiletypeHelper.is_puppet_filename? path
           import(path)
         end
       end
