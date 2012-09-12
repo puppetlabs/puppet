@@ -12,10 +12,13 @@ Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet-common
 Architecture: all
-Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, libaugeas-ruby1.8, adduser, facter (>= 1.6.11), lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 0.99), hiera-puppet (>= 1.0)
+Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, libaugeas-ruby1.8, adduser, facter (>= 1.6.11), lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0)
 Recommends: lsb-release, debconf-utils
 Suggests: libselinux-ruby1.8, librrd-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
+Provides: hiera-puppet
+Conflicts: hiera-puppet
+Replaces: hiera-puppet
 Description: Centralized configuration management
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
