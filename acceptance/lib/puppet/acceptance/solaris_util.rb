@@ -11,10 +11,11 @@ module Puppet
         on agent,"rm -rf /tstzones ||:"
       end
 
-      def setup(agent)
+      def setup(agent, o={})
+        o = {:size => '64m'}.merge(o)
         on agent,"mkdir -p /tstzones/mnt"
         on agent,"chmod -R 700 /tstzones"
-        on agent,"mkfile 1024m /tstzones/dsk"
+        on agent,"mkfile %s /tstzones/dsk" % o[:size]
         on agent,"zpool create tstpool /tstzones/dsk"
         on agent,"zfs create -o mountpoint=/tstzones/mnt tstpool/tstfs"
         on agent,"chmod 700 /tstzones/mnt"

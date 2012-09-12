@@ -14,7 +14,11 @@ agents.each do |agent|
   step "Zone: ip - cleanup"
   clean agent
   step "Zone: ip - setup"
-  setup agent
+  setup agent, :size => '64m'
+  # See
+  # https://hg.openindiana.org/upstream/illumos/illumos-gate/file/03d5725cda56/usr/src/lib/libinetutil/common/ifspec.c
+  # for the funciton ifparse_ifspec. This is the only documentation that exists
+  # as to what the zone interface can be.
   #-----------------------------------
   # Make sure that the zone is absent.
   step "Zone: ip - cleanslate"
@@ -49,23 +53,23 @@ agents.each do |agent|
 
   step "Zone: ip - assign: ensure that our ip assignment works."
   # --------------------------------------------------------------------
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"eg0001" }', :acceptable_exit_codes => [1] ) do
+  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"ip.if.1" }', :acceptable_exit_codes => [1] ) do
     assert_match(/Error: ip must contain interface name and ip address separated by a ":"/, result.output, "err: #{agent}")
   end
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"eg0001:1.1.1.1" }') do
-    assert_match(/defined 'ip' as .'eg0001:1.1.1.1'./ , result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"ip.if.1:1.1.1.1" }') do
+    assert_match(/defined 'ip' as .'ip.if.1:1.1.1.1'./ , result.stdout, "err: #{agent}")
   end
   step "Zone: ip - assign: arrays should be created"
   # --------------------------------------------------------------------
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["eg0001:1.1.1.1", "eg0002:1.1.1.2"] }') do
-    assert_match( /ip changed 'eg0001:1.1.1.1' to .'eg0001:1.1.1.1', 'eg0002:1.1.1.2'./, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["ip.if.1:1.1.1.1", "ip.if.2:1.1.1.2"] }') do
+    assert_match( /ip changed 'ip.if.1:1.1.1.1' to .'ip.if.1:1.1.1.1', 'ip.if.2:1.1.1.2'./, result.stdout, "err: #{agent}")
   end
   step "Zone: ip - assign: arrays should be modified"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["eg0001:1.1.1.1", "eg0002:1.1.1.3"] }') do
-    assert_match(/ip changed 'eg0001:1.1.1.1,eg0002:1.1.1.2' to .'eg0001:1.1.1.1', 'eg0002:1.1.1.3'./, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["ip.if.1:1.1.1.1", "ip.if.2:1.1.1.3"] }') do
+    assert_match(/ip changed 'ip.if.1:1.1.1.1,ip.if.2:1.1.1.2' to .'ip.if.1:1.1.1.1', 'ip.if.2:1.1.1.3'./, result.stdout, "err: #{agent}")
   end
   step "Zone: ip - idempotency: arrays"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["eg0001:1.1.1.1", "eg0002:1.1.1.3"] }') do
+  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["ip.if.1:1.1.1.1", "ip.if.2:1.1.1.3"] }') do
     assert_no_match(/ip changed/, result.stdout, "err: #{agent}")
   end
 

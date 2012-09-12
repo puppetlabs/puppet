@@ -23,7 +23,7 @@ agents.each do |agent|
   step "Zone: dataset - cleanup"
   clean agent
   step "Zone: dataset - setup"
-  setup agent
+  setup agent, :size => '64m'
   moresetup agent
   #-----------------------------------
   step "Zone: dataset - clean slate"

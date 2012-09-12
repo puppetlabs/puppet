@@ -12,7 +12,7 @@ end
 
 agents.each do |agent|
   clean agent
-  setup agent
+  setup agent, :size => '1536m'
   #-----------------------------------
   # Make sure that the zone is absent.
   apply_manifest_on(agent,%[

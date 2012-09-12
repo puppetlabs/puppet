@@ -27,7 +27,7 @@ agents.each do |agent|
   step "Zone: path - cleanup"
   clean agent
   step "Zone: path - setup"
-  setup agent
+  setup agent, :size => '1536m'
   moresetup agent
   #-----------------------------------
   # Make sure that the zone is absent.
