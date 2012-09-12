@@ -4,7 +4,7 @@ module Puppet
     # A class that starts evaluation of Ruby manifests.
     # It sets the +ruby_code+ for further evaluation.
     ##
-    class Parser
+    module Parser
 
       ##
       # An array of scopes for access by Puppet::DSL::Context
