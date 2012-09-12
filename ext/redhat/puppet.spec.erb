@@ -122,6 +122,9 @@ install -d %{buildroot}%{_datadir}/%{name}
 cp -a ext/ %{buildroot}%{_datadir}/%{name}
 # emacs and vim bits are installed elsewhere
 rm -rf %{buildroot}%{_datadir}/%{name}/ext/{emacs,vim}
+# remove misc packaging artifacts not applicable to rpms
+rm -rf %{buildroot}%{_datadir}/%{name}/ext/{gentoo,freebsd,solaris,suse,windows,osx,ips,debian}
+rm -f %{buildroot}%{_datadir}/%{name}/ext/{build_defaults.yaml,project_data.yaml}
 
 # Install emacs mode files
 emacsdir=%{buildroot}%{_datadir}/emacs/site-lisp

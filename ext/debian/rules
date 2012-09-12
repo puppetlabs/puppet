@@ -82,6 +82,17 @@ install: build
 
 	# Add ext directory
 	cp -pr ext $(CURDIR)/debian/puppet-common/usr/share/puppet
+	# Remove misc packaging artifacts not applicable to debian
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/gentoo
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/freebsd
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/solaris
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/suse
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/windows
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/redhat
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/ips
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/osx
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/build_defaults.yaml
+	rm -rf $(CURDIR)/debian/puppet-common/usr/share/puppet/ext/project_data.yaml
 
 	dh_installexamples -p puppet-common examples/*
 
