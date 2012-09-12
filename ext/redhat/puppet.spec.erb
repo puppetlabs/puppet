@@ -1,17 +1,28 @@
 # Augeas and SELinux requirements may be disabled at build time by passing
 # --without augeas and/or --without selinux to rpmbuild or mock
 
+# If you're using ruby19 (a side-by-side install with 1.8.5 on el5) then we
+# need to figure out what packages are named, and requirements for building and
+# such.
+%if "0%{?rhel}" == "05"
+%global rubyname ruby19
+%global rubygemname rubygem19
+%else
+%global rubyname ruby
+%global rubygemname rubygem
+%endif
+
 # Fedora 17 ships with Ruby 1.9, which uses vendorlibdir instead of
 # sitelibdir. Adjust our target if installing on f17.
-%if 0%{?fedora} >= 17
-%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
+%if (0%{?fedora} >= 17 || "0%{?rubyname}" == "0ruby19" )
+%global puppet_libdir   %(%{rubyname} -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
 %else
-%global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
+%global puppet_libdir   %(%{rubyname} -rrbconfig -e 'puts Object.const_get(defined?(RbConfig) ? :RbConfig : :Config)::CONFIG["sitelibdir"]')
 %endif
 
 # VERSION is subbed out during rake srpm process
-# %global realversion <%= @version %>
-# %global rpmversion <%= @rpmversion %>
+%global realversion <%= @version %>
+%global rpmversion <%= @rpmversion %>
 
 %global confdir ext/redhat
 
@@ -23,40 +34,42 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz.asc
 
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  facter < 1:2.0
-BuildRequires:  ruby >= 1.8.5
+BuildRequires:  %{rubyname} >= 1.8.5
 
 BuildArch:      noarch
-Requires:       ruby(abi) >= 1.8
-Requires:       ruby-shadow
+Requires:       %{rubyname}(abi) >= 1.8
+Requires:       %{rubyname}-shadow
 
 # Pull in ruby selinux bindings where available
 %if 0%{?fedora} || 0%{?rhel} >= 6
-%{!?_without_selinux:Requires: ruby(selinux), libselinux-utils}
+%{!?_without_selinux:Requires: %{rubyname}(selinux), libselinux-utils}
 %else
 %if 0%{?rhel} && 0%{?rhel} == 5
-%{!?_without_selinux:Requires: libselinux-ruby, libselinux-utils}
+%{!?_without_selinux:Requires: libselinux-%{rubyname}, libselinux-utils}
 %endif
 %endif
 
 Requires:       facter >= 1.6.11
-Requires:       ruby >= 1.8.5
+Requires:       %{rubyname} >= 1.8.5
 Requires:       hiera >= 1.0.0
-Obsoletes:      hiera-puppet <= 1.0.0
+Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
-%{!?_without_augeas:Requires: ruby-augeas}
+%{!?_without_augeas:Requires: %{rubyname}-augeas}
 
-Requires(pre):  shadow-utils
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# Stuff for Pre
+Requires:  shadow-utils
+# Stuff for Post
+Requires: chkconfig
+# Stuff for preun
+Requires: chkconfig
+Requires: initscripts
+Requires: initscripts
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a
@@ -68,10 +81,13 @@ along with obviously discrete elements like packages, services, and files.
 Group:          System Environment/Base
 Summary:        Server for the puppet system management tool
 Requires:       puppet = %{version}-%{release}
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# Stuff for post
+Requires: chkconfig
+# Preun
+Requires: chkconfig
+Requires: initscripts
+# Post
+Requires: initscripts
 
 %description server
 Provides the central puppet server daemon which provides manifests to clients.
@@ -100,15 +116,34 @@ find examples/ -type f | xargs chmod a-x
 # puppet-queue.conf is more of an example, used for stompserver
 mv conf/puppet-queue.conf examples/etc/puppet/
 
+
+# If you're building against ruby19 directly, edit the /usr/bin/env statement
+%if "%{?rubyname}" == "ruby19"
+for file in `grep -i -r "/usr/bin/ruby" * | grep ruby  | grep rb\: | cut -d: -f 1`; do
+  sed -i "s|/usr/bin/ruby|/usr/bin/ruby19|" $file
+done
+
+for file in `find bin -type f`; do
+  sed -i "s|/usr/bin/env ruby|/usr/bin/ruby19|" $file
+done
+for file in `find ext -type f`; do
+  sed -i "s|/usr/bin/env ruby|/usr/bin/ruby19|" $file
+done
+%endif
+
 %install
 rm -rf %{buildroot}
-ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
+
+%{rubyname} install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
 
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
+
+# As per redhat bz #495096
 install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
+
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
@@ -147,6 +182,9 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 
 # Create puppet modules directory for puppet module tool
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
+
+#Fixup rpmlint issues
+chmod 755 %{buildroot}/usr/share/puppet/ext/redhat/*.init
 
 %files
 %defattr(-, root, root, 0755)
