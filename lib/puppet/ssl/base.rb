@@ -1,5 +1,6 @@
 require 'openssl'
 require 'puppet/ssl'
+require 'puppet/ssl/digest'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base
@@ -86,18 +87,35 @@ class Puppet::SSL::Base
   end
 
   def fingerprint(md = :SHA256)
-    # ruby 1.8.x openssl digest constants are string
-    # but in 1.9.x they are symbols
     mds = md.to_s.upcase
-    if OpenSSL::Digest.constants.include?(mds)
-      md = mds
-    elsif OpenSSL::Digest.constants.include?(mds.to_sym)
-      md = mds.to_sym
-    else
-      raise ArgumentError, "#{md} is not a valid digest algorithm for fingerprinting certificate #{name}"
+    digest(mds).to_hex
+  end
+
+  def digest(algorithm=nil)
+    unless algorithm
+      algorithm = digest_algorithm
     end
 
-    OpenSSL::Digest.const_get(md).hexdigest(content.to_der).scan(/../).join(':').upcase
+    Puppet::SSL::Digest.new(algorithm, content.to_der)
+  end
+
+  def digest_algorithm
+    # The signature_algorithm on the X509 cert is a combination of the digest
+    # algorithm and the encryption algorithm
+    # e.g. md5WithRSAEncryption, sha256WithRSAEncryption
+    # Unfortunately there isn't a consistent pattern
+    # See RFCs 3279, 5758
+    digest_re = Regexp.union(
+      /ripemd160/i,
+      /md[245]/i,
+      /sha\d*/i
+    )
+    ln = content.signature_algorithm
+    if match = digest_re.match(ln)
+      match[0].downcase
+    else
+      raise Puppet::Error, "Unknown signature algorithm '#{ln}'"
+    end
   end
 
   private
