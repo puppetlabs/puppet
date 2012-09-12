@@ -48,7 +48,8 @@ Requires:       ruby-shadow
 Requires:       facter >= 1.6.11
 Requires:       ruby >= 1.8.5
 Requires:       hiera >= 1.0.0
-Requires:       hiera-puppet >= 1.0.0
+Obsoletes:      hiera-puppet <= 1.0.0
+Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
 
 Requires(pre):  shadow-utils
@@ -151,6 +152,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %defattr(-, root, root, 0755)
 %doc CHANGELOG LICENSE README.md examples
 %{_bindir}/puppet
+%{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
