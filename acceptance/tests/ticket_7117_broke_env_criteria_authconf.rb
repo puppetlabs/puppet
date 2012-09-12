@@ -13,10 +13,10 @@ create_remote_file master, "/tmp/auth.conf-7117", add_2_authconf
 
 on master, "chmod 644 /tmp/auth.conf-7117"
 
-with_master_running_on(master, "--dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --autosign true") do
+with_master_running_on(master, "--dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --autosign true") do
   agents.each do |agent|
     if agent['platform'].include?('windows')
-      Log.warn("Pending: Window's doesn't support hostname -f")
+      Log.warn("Pending: Window's doesn't support facter fqdn")
       next
     end
 

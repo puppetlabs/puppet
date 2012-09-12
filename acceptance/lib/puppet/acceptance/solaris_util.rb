@@ -2,19 +2,46 @@ module Puppet
   module Acceptance
     module ZoneUtils
       def clean(agent)
-        on agent,"zoneadm -z tstzone halt ||:"
-        on agent,"zoneadm -z tstzone uninstall -F ||:"
-        on agent,"zonecfg -z tstzone delete -F ||:"
-        on agent,"rm -f /etc/zones/tstzone.xml ||:"
-        on agent,"zfs destroy -r tstpool/tstfs ||:"
-        on agent,"zpool destroy tstpool ||:"
-        on agent,"rm -rf /tstzones ||:"
+        lst = on(agent, "zoneadm list -cip").stdout.lines.each do |l|
+          case l
+          when /tstzone:running/
+            on agent,"zoneadm -z tstzone halt"
+            on agent,"zoneadm -z tstzone uninstall"
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          when /tstzone:configured/
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          when /tstzone:*/
+            on agent,"zonecfg -z tstzone delete -F"
+            on agent,"rm -f /etc/zones/tstzone.xml"
+          end
+        end
+        lst = on(agent, "zfs list -H").stdout.lines.each do |l|
+          case l
+          when /tstpool\/tstfs/
+            on agent,"zfs destroy -r tstpool/tstfs"
+          end
+        end
+        lst = on(agent, "zpool list -H").stdout.lines.each do |l|
+          case l
+          when /tstpool/
+            on agent,"zpool destroy tstpool"
+          end
+        end
+        lst = on(agent, "ls /").stdout.lines.each do |l|
+          case l
+          when /tstzones/
+            on agent,"rm -rf /tstzones"
+          end
+        end
       end
 
-      def setup(agent)
+      def setup(agent, o={})
+        o = {:size => '64m'}.merge(o)
         on agent,"mkdir -p /tstzones/mnt"
         on agent,"chmod -R 700 /tstzones"
-        on agent,"mkfile 1024m /tstzones/dsk"
+        on agent,"mkfile %s /tstzones/dsk" % o[:size]
         on agent,"zpool create tstpool /tstzones/dsk"
         on agent,"zfs create -o mountpoint=/tstzones/mnt tstpool/tstfs"
         on agent,"chmod 700 /tstzones/mnt"
@@ -83,22 +110,34 @@ module Puppet
         o = {:service => 'tstapp'}.merge(o)
         on agent, "mkdir -p /opt/bin"
         create_remote_file agent, '/lib/svc/method/%s' % o[:service], %[
+#!/usr/bin/sh
+. /lib/svc/share/smf_include.sh
 case "$1" in
-  start) nohup /opt/bin/%s & ;;
-  stop) kill -9 $(cat /tmp/%s.pid) ||: ;;
-  refresh) kill -9 $(cat /tmp/%s.pid) ; nohup /opt/bin/%s & ;;
-  *) echo "Usage: $0 { start | stop | refresh }" ; exit 1 ;;
+  start) /opt/bin/%s ;;
+  stop)
+      ctid=`svcprop -p restarter/contract $SMF_FMRI`
+      if [ -n "$ctid" ]; then
+        smf_kill_contract $ctid TERM
+      fi
+  ;;
+  *) echo "Usage: $0 { start | stop }" ; exit 1 ;;
 esac
 exit $SMF_EXIT_OK
         ] % ([o[:service]] * 4)
         create_remote_file agent, ('/opt/bin/%s' % o[:service]), %[
-echo $$ > /tmp/%s.pidfile
-sleep 5
-        ] % o[:service]
+#!/usr/bin/sh
+cleanup() {
+  rm -f /tmp/%s.pidfile; exit 0
+}
+
+trap cleanup INT TERM
+trap '' HUP
+(while :; do sleep 1;  done) & echo $! > /tmp/%s.pidfile
+        ] % ([o[:service]] * 2)
         on agent, "chmod 755 /lib/svc/method/%s" % o[:service]
         on agent, "chmod 755 /opt/bin/%s" % o[:service]
         on agent, "mkdir -p /var/svc/manifest/application"
-        create_remote_file agent, ('/var/svc/manifest/application/%s.xml' % o[:service]),
+        create_remote_file agent, ('/var/smf-%s.xml' % o[:service]),
 %[<?xml version="1.0"?>
 <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
 <service_bundle type='manifest' name='%s:default'>
@@ -119,9 +158,9 @@ sleep 5
 </service>
 </service_bundle>
         ] % ([o[:service]] * 4)
-        on agent, "svccfg -v validate /var/svc/manifest/application/%s.xml" % o[:service]
+        on agent, "svccfg -v validate /var/smf-%s.xml" % o[:service]
         on agent, "echo > /var/svc/log/application-%s:default.log" % o[:service]
-        return ("/var/svc/manifest/application/%s.xml" % o[:service]), ("/lib/svc/method/%s" % o[:service])
+        return ("/var/smf-%s.xml" % o[:service]), ("/lib/svc/method/%s" % o[:service])
       end
     end
     module ZFSUtils
