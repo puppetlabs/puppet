@@ -10,7 +10,6 @@ class Puppet::Resource::Type
   include Puppet::Util::InlineDocs
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
-  include Puppet::DSL::Helper
 
   RESOURCE_KINDS = [:hostclass, :node, :definition]
 

@@ -3,9 +3,9 @@ require 'forwardable'
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
+require 'puppet/util/manifest_filetype_helper'
 
 require 'puppet/resource/type_collection_helper'
-require 'puppet/dsl/helper'
 require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
@@ -17,7 +17,6 @@ class Puppet::Parser::Compiler
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
   include Puppet::Resource::TypeCollectionHelper
-  include Puppet::DSL::Helper
 
   def self.compile(node)
     # We get these from the environment and only cache them in a thread
@@ -290,7 +289,7 @@ class Puppet::Parser::Compiler
     add_resource(@topscope, @main_resource)
 
     file = Puppet.settings.value :manifest, environment
-    evaluate_ruby_code file if is_ruby_filename? file
+    evaluate_ruby_code file if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
 
     @main_resource.evaluate
   end

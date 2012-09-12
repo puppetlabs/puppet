@@ -9,10 +9,6 @@ describe Puppet::DSL::Actions do
   subject       { Puppet::DSL::Actions.new :undefined }
   before(:each) { prepare_compiler_and_scope        }
 
-  it "mixins Puppet::DSL::Helper module" do
-    Puppet::DSL::Actions.ancestors.should include Puppet::DSL::Helper
-  end
-
   describe "#type_reference" do
     it "returns a type reference object" do
       evaluate_in_scope do

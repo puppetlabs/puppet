@@ -3,7 +3,6 @@ require 'puppet/parser/resource/param'
 require 'puppet/dsl/resource_reference'
 require 'puppet/dsl/resource_decorator'
 require 'puppet/dsl/parser'
-require 'puppet/dsl/helper'
 
 module Puppet
   module DSL
@@ -13,7 +12,6 @@ module Puppet
     # resources of given type.
     ##
     class TypeReference
-      include Puppet::DSL::Helper
 
       ##
       # Returns Puppet type represented by this reference
@@ -26,7 +24,7 @@ module Puppet
       # Raises NameError when resource type is not found
       ##
       def initialize(typename)
-        name = canonicalize_type typename
+        name = Puppet::Resource.canonicalize_type typename
         if Puppet::DSL::Context.const_defined? name
           @type = name
           @cache = {}

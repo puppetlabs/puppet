@@ -1,6 +1,5 @@
 require 'puppet/dsl/resource_decorator'
 require 'puppet/dsl/type_reference'
-require 'puppet/dsl/helper'
 
 module Puppet
   module DSL
@@ -19,7 +18,6 @@ module Puppet
     # This also allows to limit the number of methods existing in that class.
     ##
     class Actions
-      include Puppet::DSL::Helper
 
       ##
       # Initializes Puppet::DSL::Actions instance.
@@ -44,7 +42,7 @@ module Puppet
       # Checks whether resource type exists
       ##
       def is_resource_type?(name)
-        type = canonicalize_type(name)
+        type = Puppet::Resource.canonicalize_type(name)
         !!(["Node", "Class"].include? type or
            Puppet::Type.type type or
            Parser.current_scope.known_resource_types.find_definition '', type or

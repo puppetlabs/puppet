@@ -3,12 +3,11 @@ require 'forwardable'
 require 'puppet/node/environment'
 require 'puppet/parser/null_scope'
 require 'puppet/dsl/parser'
-require 'puppet/dsl/helper'
+require 'puppet/util/manifest_filetype_helper'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable
   include Puppet::Node::Environment::Helper
-  include Puppet::DSL::Helper
 
   # Helper class that makes sure we don't try to import the same file
   # more than once from either the same thread or different threads.
@@ -90,7 +89,7 @@ class Puppet::Parser::TypeLoader
     files.each do |file|
       file = File.join dir, file unless Puppet::Util.absolute_path? file
 
-      if is_ruby_filename? file
+      if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
         known_before = known_resource_types.definitions.values +
                        known_resource_types.nodes.values +
                        known_resource_types.hostclasses.values
@@ -125,7 +124,8 @@ class Puppet::Parser::TypeLoader
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
       Find.find(mod.manifests) do |path|
-        if is_ruby_filename? path or is_puppet_filename? path
+        if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? path or
+           Puppet::Util::ManifestFiletypeHelper.is_puppet_filename? path
           import(path)
         end
       end
