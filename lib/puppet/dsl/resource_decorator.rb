@@ -50,16 +50,13 @@ module Puppet
             @resource[$1.to_sym] = value
           end
 
-          value = args.first
-          value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
-          value = value.to_s  unless value.is_a? ::Puppet::Resource
-          @resource[$1.to_sym] = value
+          self.__send__ name, *args
         else
           define_singleton_method name do
             @resource[name]
           end
 
-          @resource[name]
+          self.__send__ name, *args
         end
       end
 
