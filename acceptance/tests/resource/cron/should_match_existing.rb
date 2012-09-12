@@ -7,7 +7,7 @@ tmpfile = "/tmp/cron-test-#{Time.new.to_i}"
 create_user = "user { '#{tmpuser}': ensure => present, managehome => false }"
 delete_user = "user { '#{tmpuser}': ensure => absent,  managehome => false }"
 
-package_cron = "case $operatingsystem { centos, redhat: {$cron = 'cronie'}\n default: {$cron ='cron'} } package {'cron': name=> $cron, ensure=>present, }"
+package_cron = "case $operatingsystem { centos, redhat: {$cron = 'cronie'}\n solaris: { $cron = 'core-os' } default: {$cron ='cron'} } package {'cron': name=> $cron, ensure=>present, }"
 
 agents.each do |host|
     step "ensure the user exist via puppet"

@@ -10,7 +10,7 @@ manifest_file = "/tmp/missing_site-5477-#{$$}.pp"
 
 on master, "rm -f #{manifest_file}"
 
-with_master_running_on(master, "--manifest #{manifest_file} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --verbose --filetimeout 1 --autosign true") do
+with_master_running_on(master, "--manifest #{manifest_file} --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --verbose --filetimeout 1 --autosign true") do
   # Run test on Agents
   step "Agent: agent --test"
   on agents, puppet_agent("--test --server #{master}")
