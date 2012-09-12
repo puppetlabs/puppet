@@ -152,31 +152,12 @@ describe Puppet::DSL::Context do
   end
 
   context "when calling a function" do
-    it "should check whether the function is valid" do
-      Puppet::Parser::Functions.expects(:function).
-                                at_least_once.
-                                with(:notice).
-                                returns true
-
-      evaluate_in_context do
-        call_function :notice, "foo"
-      end
-    end
-
     it "raises NoMethodError when calling functions in a imported file on top level scope" do
       lambda do
         evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
           call_function :foobar
         end
       end.should raise_error NoMethodError
-    end
-
-    it "should raise InvalidFunctionError if the function is invalid" do
-      lambda do
-        evaluate_in_context do
-          call_function :foobar
-        end
-      end.should raise_error Puppet::DSL::InvalidFunctionError
     end
 
     it "should call function with passed arguments" do

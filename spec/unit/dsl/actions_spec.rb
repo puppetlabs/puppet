@@ -355,12 +355,6 @@ describe Puppet::DSL::Actions do
       end
     end
 
-    it "raises InvalidFunctionError when the function does not exist" do
-      evaluate_in_scope do
-        lambda { subject.call_function "asdf", [] }.should raise_error Puppet::DSL::InvalidFunctionError
-      end
-    end
-
     it "calls the function and passes the array of arguments when it exists" do
       @scope.expects(:notice).with(["foo", "bar"])
       evaluate_in_scope do
