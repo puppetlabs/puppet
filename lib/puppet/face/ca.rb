@@ -50,6 +50,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       pattern = options[:subject].nil? ? nil :
         Regexp.new(options[:subject], Regexp::IGNORECASE)
@@ -99,6 +100,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :local
 
       ca.destroy host
     end
@@ -110,6 +112,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.revoke host
@@ -134,6 +137,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :local
 
       begin
         ca.generate(host, :dns_alt_names => options[:dns_alt_names])
@@ -163,6 +167,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.sign(host, options[:allow_dns_alt_names])
@@ -182,6 +187,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       ca.print host
     end
@@ -197,6 +203,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         # I want the default from the CA, not to duplicate it, but passing
@@ -219,6 +226,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.verify host

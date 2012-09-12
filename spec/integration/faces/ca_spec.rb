@@ -260,7 +260,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       subject.list(:signed => true, :subject => 'random-host').should_not == []
 
       subject.destroy('random-host').
-        should == "Deleted for random-host: Puppet::SSL::Certificate, Puppet::SSL::Key"
+        should == "Deleted for random-host: Puppet::SSL::Certificate"
     end
   end
 
