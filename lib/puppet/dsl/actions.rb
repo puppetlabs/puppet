@@ -203,8 +203,7 @@ module Puppet
       ##
       def call_function(name, args)
         # when performing type import the scope is nil
-        raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise Puppet::DSL::InvalidFunctionError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
+        raise NoMethodError, "functions can't be called in top level scope when importing a manifest" if Parser.current_scope.nil?
         Parser.current_scope.send name, args
       end
 
