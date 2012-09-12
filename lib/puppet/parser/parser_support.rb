@@ -150,19 +150,4 @@ class Puppet::Parser::Parser
   ensure
     @lexer.clear
   end
-
-  # def string=(string)
-    # @lexer.string = string
-  # end
-
-  # def version
-    # known_resource_types.version
-  # end
-
-  # # Add a new file to be checked when we're checking to see if we should be
-  # # reparsed.  This is basically only used by the TemplateWrapper to let the
-  # # parser know about templates that should be parsed.
-  # def watch_file(filename)
-    # known_resource_types.watch_file(filename)
-  # end
 end
