@@ -23,6 +23,11 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
     setup_scratch_database
   end
 
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    terminus
+  end
+
   describe "#save" do
     let(:node) {
       Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
