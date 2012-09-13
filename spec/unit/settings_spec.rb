@@ -469,15 +469,6 @@ describe Puppet::Settings do
         @settings[:why_so_serious] = "foo"
       }.should raise_error(ArgumentError, /unknown configuration parameter/)
     end
-
-    it "should raise an error if we try to set a setting that is read-only (which, really, all of our settings probably should be)" do
-      @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
-      @settings.expects(:read_only_settings).returns([:one])
-
-      lambda{
-        @settings[:one] = "foo"
-      }.should raise_error(ArgumentError, /read-only/)
-    end
   end
 
   describe "when returning values" do
