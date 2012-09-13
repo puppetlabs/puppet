@@ -2,10 +2,10 @@ test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
 agent_hostnames = agents.map {|a| a.to_s}
 
-with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --verbose --noop" do
+with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --verbose --noop" do
   agents.each do |agent|
     if agent['platform'].include?('windows')
-      Log.warn("Pending: Windows does not support hostname -f")
+      Log.warn("Pending: Windows does not support facter fqdn")
       next
     end
 
@@ -28,7 +28,7 @@ with_master_running_on master, "--allow_duplicate_certs --dns_alt_names=\"puppet
 
   agents.each do |agent|
     if agent['platform'].include?('windows')
-      Log.warn("Pending: Windows does not support hostname -f")
+      Log.warn("Pending: Windows does not support facter fqdn")
       next
     end
 
