@@ -253,10 +253,12 @@ module Puppet
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",
+      :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
         require 'puppet/node/facts'
         # Cache to YAML if we're uploading facts away
         if %w[rest inventory_service].include? value.to_s
+          Puppet.info "configuring the YAML fact cache because a remote terminus is active"
           Puppet::Node::Facts.indirection.cache_class = :yaml
         end
       end
