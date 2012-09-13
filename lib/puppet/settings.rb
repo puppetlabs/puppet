@@ -22,8 +22,6 @@ class Puppet::Settings
   attr_accessor :files
   attr_reader :timer
 
-  READ_ONLY_SETTINGS = [:run_mode]
-
   # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
   REQUIRED_APP_SETTINGS = [:run_mode, :logdir, :confdir, :vardir]
 
@@ -448,7 +446,9 @@ class Puppet::Settings
 
   # PRIVATE!  This only exists because we need a hook to validate the run mode when it's being set, and
   #  it should never, ever, ever, ever be called from outside of this file.
+  # This method is also called when --run_mode MODE is used on the command line to set the default
   def run_mode=(mode)
+    mode = mode.to_s.downcase.intern
     raise ValidationError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
     @run_mode = mode
   end
@@ -752,10 +752,6 @@ class Puppet::Settings
     end
 
     setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
-    if read_only_settings.include? param and type != :application_defaults
-      raise ArgumentError,
-        "You're attempting to set configuration parameter $#{param}, which is read-only."
-    end
 
     @sync.synchronize do # yay, thread-safe
 
@@ -898,7 +894,7 @@ if @config.include?(:run_mode)
     end
     eachsection do |section|
       persection(section) do |obj|
-        str += obj.to_config + "\n" unless read_only_settings.include? obj.name or obj.name == :genconfig
+        str += obj.to_config + "\n" unless obj.name == :genconfig
       end
     end
 
@@ -1081,11 +1077,6 @@ if @config.include?(:run_mode)
   end
 
   private
-
-  # This is just here to simplify testing.  This method can be stubbed easily.  Constants can't.
-  def read_only_settings()
-    READ_ONLY_SETTINGS
-  end
 
   def get_config_file_default(default)
     obj = nil

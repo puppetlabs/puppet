@@ -22,7 +22,7 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
     notes <<-'EOT'
       By default, this action reads the configuration in agent mode.
-      Use the '--mode' and '--environment' flags to examine other
+      Use the '--run_mode' and '--environment' flags to examine other
       configuration domains.
     EOT
     examples <<-'EOT'
@@ -32,7 +32,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
       Get a list of important directories from the master's config:
 
-      $ puppet config print all --mode master | grep -E "(path|dir)"
+      $ puppet config print all --run_mode master | grep -E "(path|dir)"
     EOT
 
     when_invoked do |*args|
