@@ -86,27 +86,20 @@ describe Puppet::Application do
 
     it "should sadly and frighteningly allow run_mode to change at runtime via #initialize_app_defaults" do
       Puppet.features.stubs(:syslog?).returns(true)
-      Puppet[:run_mode].should == :user
 
-      expect {
-        app = TestApp.new
-        app.initialize_app_defaults
+      app = TestApp.new
+      app.initialize_app_defaults
 
-        Puppet[:run_mode].should == :master
-      }.to_not raise_error
+      Puppet.run_mode.should be_master
     end
 
     it "should sadly and frighteningly allow run_mode to change at runtime via #run" do
-      expect {
-        app = TestApp.new
-        app.run
+      app = TestApp.new
+      app.run
 
-        app.class.run_mode.name.should == :master
+      app.class.run_mode.name.should == :master
 
-        Puppet[:run_mode].should == :master
-
-      }.to_not raise_error
-
+      Puppet.run_mode.should be_master
     end
   end
 
@@ -124,16 +117,13 @@ describe Puppet::Application do
 
 
   it "should explode when an invalid run mode is set at runtime, for great victory" do
-    class InvalidRunModeTestApp < Puppet::Application
-      run_mode :abracadabra
-      def run_command
-        # no-op
-      end
-    end
-
     expect {
-      app = InvalidRunModeTestApp.new
-      app.initialize_app_defaults
+      class InvalidRunModeTestApp < Puppet::Application
+        run_mode :abracadabra
+        def run_command
+          # no-op
+        end
+      end
     }.to raise_error
   end
 

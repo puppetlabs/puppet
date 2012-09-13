@@ -42,7 +42,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
     Query a DB-backed inventory directly (bypassing the REST API):
 
-    $ puppet facts find somenode.puppetlabs.lan --terminus inventory_active_record --mode master
+    $ puppet facts find somenode.puppetlabs.lan --terminus inventory_active_record --run_mode master
   EOT
 
   get_action(:destroy).summary "Invalid for this subcommand."

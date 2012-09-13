@@ -34,7 +34,7 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
 
     Retrieve a node using the puppet master's configured ENC:
 
-    $ puppet node find somenode.puppetlabs.lan --terminus exec --mode master --render-as yaml
+    $ puppet node find somenode.puppetlabs.lan --terminus exec --run_mode master --render-as yaml
 
     Retrieve the same node from the puppet master:
 
