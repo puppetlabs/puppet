@@ -7,10 +7,7 @@ class Puppet::Application::Certificate < Puppet::Application::IndirectionBase
       # I'd prefer if this could be dealt with differently; ideally, run_mode should be set as
       #  part of a class definition, and should not be modifiable beyond that.  This is one of
       #  the cases where that isn't currently possible.
-      # Perhaps a separate issue, but related, is that the run_mode probably shouldn't be a
-      #  normal 'setting' like the rest of the config stuff; I left some notes in settings.rb
-      #  and defaults.rb discussing this.  --cprice 2012-03-22
-      Puppet.settings.set_value(:run_mode, :master, :application_defaults)
+      Puppet.settings.preferred_run_mode = "master"
     end
 
     super

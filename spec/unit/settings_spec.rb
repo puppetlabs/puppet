@@ -72,35 +72,41 @@ describe Puppet::Settings do
 
 
   describe "when initializing application defaults do" do
+    let(:default_values) do
+      values = {}
+      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+        values[key] = 'default value'
+      end
+      values
+    end
+
     before do
       @settings = Puppet::Settings.new
+      @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
     end
 
     it "should fail if someone attempts to initialize app defaults more than once" do
-      @settings.expects(:app_defaults_initialized?).returns(true)
+      @settings.initialize_app_defaults(default_values)
+
       expect {
-        @settings.initialize_app_defaults({})
+        @settings.initialize_app_defaults(default_values)
       }.to raise_error(Puppet::DevError)
     end
 
     it "should fail if the app defaults hash is missing any required values" do
+      incomplete_default_values = default_values.reject { |key, _| key == :confdir }
       expect {
-        @settings.initialize_app_defaults({})
+        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
       }.to raise_error(Puppet::Settings::SettingsError)
     end
 
     # ultimately I'd like to stop treating "run_mode" as a normal setting, because it has so many special
     #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
     #  setter method gets properly called during app initialization.
-    it "should call the hacky run mode setter method until we do a better job of separating run_mode" do
-      app_defaults = {}
-      Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
-        app_defaults[key] = "foo"
-      end
+    it "sets the preferred run mode when initializing the app defaults" do
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
 
-      @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-      @settings.expects(:run_mode=).with("foo")
-      @settings.initialize_app_defaults(app_defaults)
+      @settings.preferred_run_mode.should == :master
     end
   end
 
@@ -469,15 +475,6 @@ describe Puppet::Settings do
         @settings[:why_so_serious] = "foo"
       }.should raise_error(ArgumentError, /unknown configuration parameter/)
     end
-
-    it "should raise an error if we try to set a setting that is read-only (which, really, all of our settings probably should be)" do
-      @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
-      @settings.expects(:read_only_settings).returns([:one])
-
-      lambda{
-        @settings[:one] = "foo"
-      }.should raise_error(ArgumentError, /read-only/)
-    end
   end
 
   describe "when returning values" do
@@ -556,8 +553,9 @@ describe Puppet::Settings do
     end
 
     it "should have a run_mode that defaults to user" do
-      @settings.run_mode.should == :user
+      @settings.preferred_run_mode.should == :user
     end
+
     describe "setbycli" do
       it "should generate a deprecation warning" do
         @settings.handlearg("--one", "blah")
@@ -579,7 +577,7 @@ describe Puppet::Settings do
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
       FileTest.stubs(:exist?).returns true
-      @settings.stubs(:run_mode).returns :mymode
+      @settings.preferred_run_mode = :agent
     end
 
     it "should return default values if no values have been set" do
@@ -602,7 +600,7 @@ describe Puppet::Settings do
     end
 
     it "should return values set in the mode-specific section before values set in the main section" do
-      text = "[main]\none = mainval\n[mymode]\none = modeval\n"
+      text = "[main]\none = mainval\n[agent]\none = modeval\n"
       @settings.stubs(:read_file).returns(text)
       @settings.send(:parse_config_files)
 

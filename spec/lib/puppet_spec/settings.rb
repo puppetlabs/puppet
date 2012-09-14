@@ -6,7 +6,6 @@ module PuppetSpec::Settings
   #  to this already very large changeset.
   #  Would be nice to clean this up later.  --cprice 2012-03-20
   TEST_APP_DEFAULT_DEFINITIONS = {
-    :run_mode     => { :default => :test, :desc => "run mode" },
     :name         => { :default => "test", :desc => "name" },
     :logdir       => { :type => :directory, :default => "test", :desc => "logdir" },
     :confdir      => { :type => :directory, :default => "test", :desc => "confdir" },

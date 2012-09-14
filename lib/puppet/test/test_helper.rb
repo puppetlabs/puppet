@@ -134,7 +134,6 @@ module Puppet::Test
 
     def self.app_defaults_for_tests()
       {
-          :run_mode   => :user,
           :logdir     => "/dev/null",
           :confdir    => "/dev/null",
           :vardir     => "/dev/null",
@@ -145,6 +144,7 @@ module Puppet::Test
     private_class_method :app_defaults_for_tests
 
     def self.initialize_settings_before_each()
+      Puppet.settings.preferred_run_mode = "user"
       # Initialize "app defaults" settings to a good set of test values
       app_defaults_for_tests.each do |key, value|
         Puppet.settings.set_value(key, value, :application_defaults)

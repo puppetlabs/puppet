@@ -211,6 +211,13 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.install
       end
+      it "should install if no version was previously installed, and a specific version was requested" do
+        resource[:ensure] = '0.0.7'
+        provider.expects(:query).with().returns({:ensure => :absent})
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        provider.install
+      end
 
     end
 
