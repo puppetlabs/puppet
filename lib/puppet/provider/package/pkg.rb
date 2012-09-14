@@ -17,6 +17,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   has_feature :upgradable
 
+  has_feature :holdable
+
   commands :pkg => "/usr/bin/pkg"
 
   confine :osfamily => :solaris
@@ -34,14 +36,25 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # if not the field is -, else we dont know what we are doing and exit with
   # out doing more damage.
   def self.ifo_flag(flags)
-    case flags
-    when /i../
-      {:status => 'installed'}
-    when /-../
-      {:status => 'known'}
-    else
-      raise ArgumentError, 'Unknown format %s: %s' % [self.name, flags]
-    end
+    (
+      case flags[0..0]
+      when 'i'
+        {:status => 'installed'}
+      when '-'
+        {:status => 'known'}
+      else
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[0..0]]
+      end
+    ).merge(
+      case flags[1..1]
+      when 'f'
+        {:ensure => 'held'}
+      when '-'
+        {}
+      else
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[1..1]]
+      end
+    )
   end
 
   # The UFOXI field is the field present in the older pkg
@@ -51,6 +64,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # f_rozen(n/i) o_bsolete x_cluded(n/i) i_constrained(n/i)
   # note that u_pdate flag may not be trustable due to constraints.
   # so we dont rely on it
+  # Frozen was never implemented in UFOXI so skipping frozen here.
   def self.ufoxi_flag(flags)
     {}
   end
@@ -82,7 +96,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       {:name => $1, :ensure => $2}.merge ifo_flag($3)
 
     # x11/wm/fvwm (fvwm.org)      2.6.1-3           i--
-    when /^(\S+) \((.+)\) +(\S+) +(\S+)$/
+    when /^(\S+) \((.+)\) +(\S+) +(...)$/
       {:name => $1, :publisher => $2, :ensure => $3}.merge ifo_flag($4)
 
     # NAME (PUBLISHER)                  VERSION          STATE      UFOXI (dvd:052adf36c3f4)
@@ -97,6 +111,15 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     else
       raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
     end).merge({:provider => self.name})
+  end
+
+  def hold
+    pkg(:freeze, @resource[:name])
+  end
+
+  def unhold
+    r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
+    raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
   end
 
   # Return the version of the package. Note that the bug
@@ -119,6 +142,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def install(nofail = false)
     name = @resource[:name]
     should = @resource[:ensure]
+    # always unhold if explicitly told to install/update
+    self.unhold
     unless should.is_a? Symbol
       name += "@#{should}"
       is = self.query
