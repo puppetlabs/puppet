@@ -30,17 +30,6 @@ module Puppet
         o = {:size => '64m'}.merge(o)
       end
     end
-    module CronUtils
-      def clean(agent)
-        on agent, "userdel monitor ||:"
-        on agent, "groupdel monitor ||:"
-        on agent, "mv /var/spool/cron/crontabs/root.orig /var/spool/cron/crontabs/root ||:"
-      end
-
-      def setup(agent)
-        on agent, "cp /var/spool/cron/crontabs/root /var/spool/cron/crontabs/root.orig"
-      end
-    end
     module IPSUtils
       def clean(agent, o={})
         o = {:repo => '/var/tstrepo', :pkg => 'mypkg', :publisher => 'tstpub.lan'}.merge(o)
