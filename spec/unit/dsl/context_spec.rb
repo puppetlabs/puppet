@@ -20,7 +20,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context do
           create_resource :foobar, "test"
         end
-      end.should raise_error Puppet::DSL::InvalidTypeError
+      end.should raise_error NoMethodError
     end
 
     it "should raise NoMethodError when creating resources in a imported file on top level scope" do

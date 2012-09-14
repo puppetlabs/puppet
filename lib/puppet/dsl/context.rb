@@ -215,14 +215,15 @@ module Puppet
         if @proxy.is_resource_type? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a, &b|
-            create_resource name, *a, &b
+            options = a.last.is_a?(::Hash) ? a.pop : {}
+            @proxy.create_resource(name, a, options, b)
           end
 
           __send__ name, *args, &block
         elsif @proxy.is_function? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a|
-            call_function name, *a
+            @proxy.call_function name, a
           end
 
           __send__ name, *args
@@ -264,8 +265,7 @@ module Puppet
       #
       ##
       def create_resource(type, *args, &block)
-        options = args.last.is_a?(::Hash) ? args.pop : {}
-        @proxy.create_resource(type, args, options, block)
+        __send__ type, *args, &block
       end
 
       ##
@@ -281,7 +281,7 @@ module Puppet
       #
       ##
       def call_function(name, *args)
-        @proxy.call_function(name, args)
+        __send__ name, *args
       end
 
       ##

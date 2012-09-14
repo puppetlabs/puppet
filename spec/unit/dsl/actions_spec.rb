@@ -274,12 +274,6 @@ describe Puppet::DSL::Actions do
       end
     end
 
-    it "raises InvalidTypeError when the resource type doesn't exist" do
-      evaluate_in_scope do
-        lambda { subject.create_resource :asdf, "title", {}, nil }.should raise_error Puppet::DSL::InvalidTypeError
-      end
-    end
-
     it "creates the resource when the type exists" do
       @scope.compiler.expects(:add_resource).with { |scope, resource| scope == @scope and resource.is_a? Puppet::Parser::Resource }
 
