@@ -122,7 +122,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     unless should.is_a? Symbol
       name += "@#{should}"
       is = self.query
-      self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      unless is[:ensure].to_sym == :absent
+        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      end
     end
     r = exec_cmd(command(:pkg), 'install', '--accept', name)
     return r if nofail
