@@ -27,20 +27,6 @@ module Puppet
         :default  => nil,
         :desc     => "The name of the application, if we are running as one.  The\n" +
             "default is essentially $0 without the path or `.rb`.",
-    },
-
-    ## This setting needs to go away.  As a first step, we could just make it a first-class property of the Settings
-    ##  class, instead of treating it as a normal setting.  There are places where the Settings class tries to use
-    ##  the value of run_mode to help in resolving other values, and that is no good for nobody.  It would cause
-    ##  infinite recursion and stack overflows without some chicanery... so, it needs to be cleaned up.
-    ##
-    ## As a longer term goal I think we should be looking into getting rid of run_mode altogether, but that is going
-    ##  to be a larger undertaking, as it is being branched on in a lot of places in the current code.
-    ##
-    ## --cprice 2012-03-16
-    :run_mode => {
-        :default  => nil,
-        :desc     => "The effective 'run mode' of the application: master, agent, or user.",
     }
   )
 

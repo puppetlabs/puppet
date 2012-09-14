@@ -94,7 +94,7 @@ class Puppet::Indirector::Face < Puppet::Face
     description <<-EOT
       Prints the default terminus class for this subcommand. Note that different
       run modes may have different default termini; when in doubt, specify the
-      run mode with the '--mode' option.
+      run mode with the '--run_mode' option.
     EOT
 
     when_invoked do |options|
