@@ -81,6 +81,24 @@ module Puppet
         on agent, "echo dummy > %s/tst/usr/bin/x" % o[:root]
         on agent, "echo val > %s/tst/etc/y" % o[:root]
       end
+      def setup_fakeroot2(agent, o={})
+        o = {:root=>'/opt/fakeroot'}.merge(o)
+        on agent, "rm -rf %s" % o[:root]
+        on agent, "mkdir -p %s/tst2/usr/bin" % o[:root]
+        on agent, "mkdir -p %s/tst2/etc" % o[:root]
+        on agent, "echo dummy > %s/tst2/usr/bin/x" % o[:root]
+        on agent, "echo val > %s/tst2/etc/y" % o[:root]
+      end
+      def send_pkg2(agent, o={})
+        o = {:repo=>'/var/tstrepo', :root=>'/opt/fakeroot', :publisher=>'tstpub.lan', :pkg=>'mypkg2@0.0.1', :pkgdep => 'mypkg@0.0.1'}.merge(o)
+        on agent, "(pkgsend generate %s; echo set name=pkg.fmri value=pkg://%s/%s)> /tmp/%s.p5m" % [o[:root], o[:publisher], o[:pkg], o[:pkg]]
+        on agent, "echo depend type=require fmri=%s >> /tmp/%s.p5m" % [o[:pkgdep], o[:pkg]]
+        on agent, "pkgsend publish -d %s -s %s /tmp/%s.p5m" % [o[:root], o[:repo], o[:pkg]]
+        on agent, "pkgrepo refresh -p %s -s %s" % [o[:publisher], o[:repo]]
+        on agent, "pkg refresh"
+        on agent, "pkg list -g %s" % o[:repo]
+      end
+
       def send_pkg(agent, o={})
         o = {:repo=>'/var/tstrepo', :root=>'/opt/fakeroot', :publisher=>'tstpub.lan', :pkg=>'mypkg@0.0.1'}.merge(o)
         on agent, "(pkgsend generate %s; echo set name=pkg.fmri value=pkg://%s/%s)> /tmp/%s.p5m" % [o[:root], o[:publisher], o[:pkg], o[:pkg]]
