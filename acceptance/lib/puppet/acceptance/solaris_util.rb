@@ -6,7 +6,7 @@ module Puppet
           case l
           when /tstzone:running/
             on agent,"zoneadm -z tstzone halt"
-            on agent,"zoneadm -z tstzone uninstall"
+            on agent,"zoneadm -z tstzone uninstall -F"
             on agent,"zonecfg -z tstzone delete -F"
             on agent,"rm -f /etc/zones/tstzone.xml"
           when /tstzone:configured/
@@ -17,34 +17,17 @@ module Puppet
             on agent,"rm -f /etc/zones/tstzone.xml"
           end
         end
-        lst = on(agent, "zfs list -H").stdout.lines.each do |l|
+        lst = on(agent, "zfs list").stdout.lines.each do |l|
           case l
-          when /tstpool\/tstfs/
-            on agent,"zfs destroy -r tstpool/tstfs"
+          when /rpool.tstzones/
+            on agent,"zfs destroy -r rpool/tstzones"
           end
         end
-        lst = on(agent, "zpool list -H").stdout.lines.each do |l|
-          case l
-          when /tstpool/
-            on agent,"zpool destroy tstpool"
-          end
-        end
-        lst = on(agent, "ls /").stdout.lines.each do |l|
-          case l
-          when /tstzones/
-            on agent,"rm -rf /tstzones"
-          end
-        end
+        on agent, "rm -rf /tstzones"
       end
 
       def setup(agent, o={})
         o = {:size => '64m'}.merge(o)
-        on agent,"mkdir -p /tstzones/mnt"
-        on agent,"chmod -R 700 /tstzones"
-        on agent,"mkfile %s /tstzones/dsk" % o[:size]
-        on agent,"zpool create tstpool /tstzones/dsk"
-        on agent,"zfs create -o mountpoint=/tstzones/mnt tstpool/tstfs"
-        on agent,"chmod 700 /tstzones/mnt"
       end
     end
     module CronUtils
