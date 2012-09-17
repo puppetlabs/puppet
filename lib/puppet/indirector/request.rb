@@ -216,6 +216,10 @@ class Puppet::Indirector::Request
     return yield(self)
   end
 
+  def remote?
+    self.node or self.ip
+  end
+
   private
 
   def set_attributes(options)
