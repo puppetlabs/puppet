@@ -27,6 +27,11 @@ describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
     ActiveRecord::Base.should be_connected
   end
 
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    Puppet::Resource::ActiveRecord.new
+  end
+
   describe "#search" do
     before :each do Puppet::Rails.init end
 
