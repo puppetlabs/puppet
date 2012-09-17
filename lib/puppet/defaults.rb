@@ -1048,7 +1048,7 @@ EOT
     },
     :agent_pidfile => {
       :default    => "$statedir/agent.pid",
-    :type         => :file,
+      :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.
       :desc       => "A lock file to indicate that a puppet agent run is currently in progress.  File contains the pid of the running process.",
     },
     :agent_disabled_lockfile => {
