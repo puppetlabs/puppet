@@ -16,10 +16,6 @@ describe Puppet::SSL::Key do
     @class.indirection.name.should == :key
   end
 
-  it "should default to the :file terminus" do
-    @class.indirection.terminus_class.should == :file
-  end
-
   it "should only support the text format" do
     @class.supported_formats.should == [:s]
   end
