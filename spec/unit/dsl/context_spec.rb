@@ -3,7 +3,6 @@ require 'puppet_spec/dsl'
 
 require 'puppet/dsl/parser'
 require 'puppet/dsl/context'
-require 'puppet/parser/null_scope'
 
 include PuppetSpec::DSL
 
@@ -25,7 +24,11 @@ describe Puppet::DSL::Context do
 
     it "should raise NoMethodError when creating resources in a imported file on top level scope" do
       lambda do
-        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
+        scope = mock
+        scope.stubs(:nil?).returns true
+        scope.stubs(:known_resource_types).returns nil
+
+        evaluate_in_context :scope => scope do
           create_resource :foobar, "test"
         end
       end.should raise_error NoMethodError
@@ -154,7 +157,10 @@ describe Puppet::DSL::Context do
   context "when calling a function" do
     it "raises NoMethodError when calling functions in a imported file on top level scope" do
       lambda do
-        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
+        scope = mock
+        scope.stubs(:nil?).returns true
+        scope.stubs :known_resource_types
+        evaluate_in_context :scope => scope do
           call_function :foobar
         end
       end.should raise_error NoMethodError
@@ -213,7 +219,7 @@ describe Puppet::DSL::Context do
         define :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
 
       expected.should be true
     end
@@ -324,7 +330,7 @@ describe Puppet::DSL::Context do
         node "foo" do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
 
       expected.should be true
     end
@@ -395,7 +401,7 @@ describe Puppet::DSL::Context do
         hostclass :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
 
       expected.should be true
     end
@@ -504,7 +510,7 @@ describe Puppet::DSL::Context do
     it "should return type reference for a given type" do
       evaluate_in_context do
         Puppet::DSL::Context::Notify
-      end.type.should == "Notify"
+      end.type_name.should == "Notify"
     end
   end
 

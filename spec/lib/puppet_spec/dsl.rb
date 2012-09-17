@@ -7,8 +7,8 @@ module PuppetSpec
     end
 
     def evaluate_in_context(options = {}, &block)
-      scope   = options.fetch(:scope)   { @scope }
-      Puppet::DSL::Context.new(block, options).evaluate scope
+      scope   = options.fetch(:scope, @scope)
+      Puppet::DSL::Context.new(block, options).evaluate scope, scope.known_resource_types
     end
 
     def known_resource_types
@@ -17,8 +17,10 @@ module PuppetSpec
 
     def evaluate_in_scope(scope = @scope)
       Puppet::DSL::Parser.add_scope scope
+      Puppet::DSL::Parser.known_resource_types = scope.known_resource_types
       yield
     ensure
+      Puppet::DSL::Parser.known_resource_types = nil
       Puppet::DSL::Parser.remove_scope
     end
 

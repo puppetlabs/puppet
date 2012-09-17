@@ -16,8 +16,8 @@ module Puppet
       ##
       # Returns Puppet type represented by this reference
       ##
-      attr_reader :type
-      alias to_s type
+      attr_reader :type_name
+      alias to_s type_name
 
       ##
       # Creates new TypeReference.
@@ -26,7 +26,7 @@ module Puppet
       def initialize(typename)
         name = Puppet::Resource.canonicalize_type typename
         if Puppet::DSL::Context.const_defined? name
-          @type = name
+          @type_name = name
           @cache = {}
         else
           raise NameError, "resource type `#{name}' not found"
@@ -47,7 +47,7 @@ module Puppet
       ##
       def collect
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :exported
+        c = Puppet::Parser::Collector.new scope, @type_name, nil, nil, :exported
         scope.compiler.add_collection c
         c
       end
@@ -57,7 +57,7 @@ module Puppet
       ##
       def realize
         scope = Puppet::DSL::Parser.current_scope
-        c = Puppet::Parser::Collector.new scope, @type, nil, nil, :virtual
+        c = Puppet::Parser::Collector.new scope, @type_name, nil, nil, :virtual
         scope.compiler.add_collection c
         c
       end
@@ -66,19 +66,19 @@ module Puppet
       # Method allows to set defaults for a resource type.
       ##
       def defaults(options = {}, &block)
-        unless options == {} and block.nil?
+        if options != {} or block
           Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
 
           # for compatibility with Puppet parser
           options = options.map do |k, v|
             Puppet::Parser::Resource::Param.new :name => k, :value => v
           end
-          Puppet::DSL::Parser.current_scope.define_settings @type, options
+          Puppet::DSL::Parser.current_scope.define_settings @type_name, options
         end
 
         result = {}
-        Puppet::DSL::Parser.current_scope.lookupdefaults(@type).map do |_, v|
-          result.merge! v.name => v.value
+        Puppet::DSL::Parser.current_scope.lookupdefaults(@type_name).map do |_, v|
+          result[v.name] = v.value
         end
         result
       end

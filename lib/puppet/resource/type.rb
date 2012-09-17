@@ -142,10 +142,6 @@ class Puppet::Resource::Type
     @ruby_code ||= []
   end
 
-  def ruby_code=(code)
-    ruby_code << code
-  end
-
   def initialize(type, name, options = {})
     @type = type.to_s.downcase.to_sym
     raise ArgumentError, "Invalid resource supertype '#{type}'" unless RESOURCE_KINDS.include?(@type)
@@ -374,7 +370,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    ruby_code.each { |c| c.evaluate(scope) }
+    ruby_code.each { |c| c.evaluate(scope, scope.known_resource_types) }
   end
 
   # Split an fq name into a namespace and name

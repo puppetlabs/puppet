@@ -18,7 +18,7 @@ describe Puppet::DSL::Actions do
 
     it "returns a type reference for a given type" do
       evaluate_in_scope do
-        subject.type_reference("file").type.should == "File"
+        subject.type_reference("file").type_name.should == "File"
       end
     end
   end
@@ -149,7 +149,7 @@ describe Puppet::DSL::Actions do
         resource_types = mock
         resource_types.expects(:add_node).with {|n| n.type == :node }
         resource_types.stubs(:hostclass).returns nil
-        @scope.stubs(:known_resource_types).returns resource_types
+        Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
         subject.create_node "foo", {}, proc {}, 0
       end
@@ -200,7 +200,7 @@ describe Puppet::DSL::Actions do
       evaluate_in_scope do
         resource_types = mock
         resource_types.expects(:add_hostclass).with {|n| n.type == :hostclass }
-        @scope.stubs(:known_resource_types).returns resource_types
+        Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
         subject.create_hostclass :foo, {}, proc {}, 0
       end
@@ -250,7 +250,7 @@ describe Puppet::DSL::Actions do
       evaluate_in_scope do
         resource_types = mock
         resource_types.expects(:add_definition).with {|n| n.type == :definition }
-        @scope.stubs(:known_resource_types).returns resource_types
+        Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
         subject.create_definition :foo, {}, proc {}, 0
       end
@@ -269,7 +269,10 @@ describe Puppet::DSL::Actions do
 
   describe "#create_resource" do
     it "raises NoMethodError when importing" do
-      evaluate_in_scope nil do
+      scope = mock
+      scope.stubs(:nil?).returns true
+      scope.stubs(:known_resource_types).returns nil
+      evaluate_in_scope scope do
         lambda { subject.create_resource :notify, "message", {}, nil }.should raise_error NoMethodError
       end
     end
@@ -344,7 +347,10 @@ describe Puppet::DSL::Actions do
 
   describe "#call_function" do
     it "raises NoMethodError when importing" do
-      evaluate_in_scope nil do
+      scope = mock
+      scope.stubs(:nil?).returns true
+      scope.stubs(:known_resource_types).returns nil
+      evaluate_in_scope scope do
         lambda { subject.call_function "notice", [] }.should raise_error NoMethodError
       end
     end

@@ -39,8 +39,8 @@ module Puppet
         type = Puppet::Resource.canonicalize_type(name)
         !!(["Node", "Class"].include? type or
            Puppet::Type.type type or
-           Parser.current_scope.known_resource_types.find_definition '', type or
-           Parser.current_scope.known_resource_types.find_hostclass  '', type)
+           Parser.known_resource_types.find_definition '', type or
+           Parser.known_resource_types.find_hostclass  '', type)
       end
 
       ##
@@ -85,21 +85,13 @@ module Puppet
         raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
-        # do nothing if hostclass already exist (init.rb gets parser multiple
-        # times sometimes
-        # MLEN:FIXME this probable should get removed somehow
-        return if Parser.current_scope.known_resource_types.hostclass name
-
         validate_options :inherits, options
 
-        params = {}
-        params[:parent] = options[:inherits].to_s if options[:inherits]
-
         name = name.to_s unless name.is_a? Regexp
-        node = Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
+        node = Puppet::Resource::Type.new :node, name, :parent => options[:inherits].to_s
+        node.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        Parser.current_scope.known_resource_types.add_node node
+        Parser.known_resource_types.add_node node
       end
 
       ##
@@ -115,14 +107,10 @@ module Puppet
 
         validate_options [:inherits, :arguments], options
 
-        params = {}
-        params[:arguments] = options[:arguments]     if options[:arguments]
-        params[:parent]    = options[:inherits].to_s if options[:inherits]
+        hostclass = Puppet::Resource::Type.new :hostclass, name.to_s, :arguments => options[:arguments], :parent => options[:inherits].to_s
+        hostclass.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        hostclass = Puppet::Resource::Type.new :hostclass, name.to_s, params
-        hostclass.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
-
-        Parser.current_scope.known_resource_types.add_hostclass hostclass
+        Parser.known_resource_types.add_hostclass hostclass
       end
 
       ##
@@ -139,9 +127,9 @@ module Puppet
         validate_options :arguments, options
 
         definition = Puppet::Resource::Type.new :definition, name.to_s, options
-        definition.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
+        definition.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        Parser.current_scope.known_resource_types.add_definition definition
+        Parser.known_resource_types.add_definition definition
       end
 
       ##
@@ -167,7 +155,7 @@ module Puppet
 
           case type
           when :class
-            klass = scope.known_resource_types.find_hostclass '', name
+            klass = Parser.known_resource_types.find_hostclass '', name
             resource = klass.ensure_in_catalog scope, options
           else
             resource = Puppet::Parser::Resource.new type, name,
@@ -180,7 +168,7 @@ module Puppet
             resource.virtual  = true if virtualizing? or options[:virtual]
             resource.exported = true if exporting?    or options[:export]
 
-            definition = scope.known_resource_types.definition name
+            definition = Parser.known_resource_types.definition name
             definition.instantiate_resource scope, resource if definition
 
             scope.compiler.add_resource scope, resource

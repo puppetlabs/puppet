@@ -69,10 +69,12 @@ module Puppet
       # Method is called when evaluating resource types.
       # It executes ruby code in context of current scope.
       ##
-      def evaluate(scope)
+      def evaluate(scope, type_collection)
         ::Puppet::DSL::Parser.add_scope scope
+        ::Puppet::DSL::Parser.known_resource_types = type_collection
         instance_eval &@code
       ensure
+        ::Puppet::DSL::Parser.known_resource_types = nil
         ::Puppet::DSL::Parser.remove_scope
       end
 

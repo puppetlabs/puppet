@@ -20,8 +20,8 @@ module Puppet
       # +type+ is the name of resource type and +name+ is a name of a resource.
       ##
       def initialize(typeref, name)
-        @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type, name
-        raise ArgumentError, "resource `#{typeref.type}[#{name}]' not found" unless @resource
+        @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type_name, name
+        raise ArgumentError, "resource `#{typeref.type_name}[#{name}]' not found" unless @resource
       end
 
       ##

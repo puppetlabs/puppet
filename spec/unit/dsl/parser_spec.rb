@@ -9,6 +9,7 @@ describe Puppet::DSL::Parser do
   describe "scope" do
     it "should allow to access current scope" do
       scope = mock
+      scope.stubs(:known_resource_types)
       evaluate_in_scope scope do
         Puppet::DSL::Parser.current_scope.should be scope
       end
@@ -34,30 +35,25 @@ describe Puppet::DSL::Parser do
     let(:main) { mock "main"         }
     subject    { Puppet::DSL::Parser }
 
-    # before(:each) { file.rewind }
-
     it "sets ruby_code for main object" do
-      main.expects :'ruby_code='
+      main.expects(:ruby_code).returns Array.new
 
       subject.evaluate main, file
     end
 
     it "reads the contents of IO object" do
-      main.stubs :'ruby_code='
+      main.stubs(:ruby_code).returns Array.new
 
       subject.evaluate main, file
     end
 
     it "calls #path on io when it responds to it" do
-      main.stubs :'ruby_code='
+      main.stubs(:ruby_code).returns Array.new
       file.expects(:path).returns nil
 
       subject.evaluate main, file
     end
 
-    it "raises an exception when io doesn't respond to read" do
-      lambda { subject.evaluate main, nil }.should raise_error ArgumentError
-    end
   end
 
 end
