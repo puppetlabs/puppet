@@ -4,7 +4,7 @@ require 'puppet/util'
 class Puppet::Application::Queue < Puppet::Application
 
   attr_accessor :daemon
-  
+
   def app_defaults()
     super.merge( :pidfile => "$rundir/queue.pid" )
   end
@@ -140,6 +140,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    Puppet.warning "Puppet queue is deprecated. See http://links.puppetlabs.com/puppet-queue-deprecation"
+
     unless Puppet.features.stomp?
       raise ArgumentError, "Could not load the 'stomp' library, which must be present for queueing to work.  You must install the required library."
     end

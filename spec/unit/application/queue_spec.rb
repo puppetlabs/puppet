@@ -82,6 +82,11 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
       lambda { @queue.setup }.should raise_error(ArgumentError)
     end
 
+    it "should issue a warning that queue is deprecated" do
+      Puppet.expects(:warning).with() { |msg| msg =~ /queue is deprecated/ }
+      @queue.setup
+    end
+
     it "should print puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
       Puppet.settings.expects(:print_configs).returns(true)

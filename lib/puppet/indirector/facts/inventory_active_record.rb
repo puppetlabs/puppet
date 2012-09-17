@@ -5,6 +5,12 @@ require 'puppet/indirector/active_record'
 require 'puppet/util/retryaction'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
+
+  def initialize
+    Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+    super
+  end
+
   def find(request)
     node = Puppet::Rails::InventoryNode.find_by_name(request.key)
     return nil unless node
