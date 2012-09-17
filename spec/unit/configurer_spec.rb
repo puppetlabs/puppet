@@ -104,6 +104,12 @@ describe Puppet::Configurer do
       @agent.run(:pluginsync => false)
     end
 
+    it "should carry on when it can't fetch it's node definition" do
+      error = Net::HTTPError.new(400, 'dummy server communication error')
+      Puppet::Node.indirection.expects(:find).raises(error)
+      @agent.run.should == 0
+    end
+
     it "should initialize a transaction report if one is not provided" do
       report = Puppet::Transaction::Report.new("apply")
       Puppet::Transaction::Report.expects(:new).returns report
