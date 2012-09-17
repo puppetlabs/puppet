@@ -109,6 +109,48 @@ resource relationships.  For example:
 If the `relationship_graph` method is throwing exceptions at you, there's a
 good chance the catalog is not a RAL catalog.
 
+## Settings Catalog ##
+
+Be aware that Puppet creates a mini catalog and applies this catalog locally to
+manage file resource from the settings.  This behavior made it difficult and
+time consuming to track down a race condition in
+[2888](http://projects.puppetlabs.com/issues/2888).
+
+Even more surprising, the `File[puppetdlockfile]` resource is only added to the
+settings catalog if the file exists on disk.  This caused the race condition as
+it will exist when a separate process holds the lock while applying the
+catalog.
+
+It may be sufficient to simply be aware of the settings catalog and the
+potential for race conditions it presents.  An effective way to be reasonably
+sure and track down the problem is to wrap the File.open method like so:
+
+    # We're wrapping ourselves around the File.open method.
+    # As described at: http://goo.gl/lDsv6
+    class File
+      WHITELIST = [ /pidlock.rb:39/ ]
+
+      class << self
+        alias xxx_orig_open open
+      end
+
+      def self.open(name, *rest, &block)
+        # Check the whitelist for any "good" File.open calls against the #
+        puppetdlock file
+        white_listed = caller(0).find do |line|
+          JJM_WHITELIST.find { |re| re.match(line) }
+        end
+
+        # If you drop into IRB here, take a look at your caller, it might be
+        # the ghost in the machine you're looking for.
+        binding.pry if name =~ /puppetdlock/ and not white_listed
+        xxx_orig_open(name, *rest, &block)
+      end
+    end
+
+The settings catalog is populated by the `Puppet::Util::Settings#to\_catalog`
+method.
+
 # Ruby Dependencies #
 
 Puppet is considered an Application as it relates to the recommendation of

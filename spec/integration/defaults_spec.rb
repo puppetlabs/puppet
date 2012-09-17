@@ -310,4 +310,11 @@ describe "Puppet defaults" do
       Puppet.settings[:data_binding_terminus].should == :hiera
     end
   end
+
+  describe "agent_pidfile" do
+    it "(#2888) is not a file setting so it is absent from the Settings catalog" do
+      Puppet.settings.setting(:agent_pidfile).should_not be_a_kind_of Puppet::Settings::FileSetting
+      Puppet.settings.setting(:agent_pidfile).should be_a Puppet::Settings::StringSetting
+    end
+  end
 end
