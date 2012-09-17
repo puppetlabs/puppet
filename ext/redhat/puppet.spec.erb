@@ -9,6 +9,12 @@
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
 %endif
 
+%if 0%{?fedora} >= 17
+%global _with_systemd 1
+%else
+%global _with_systemd 0
+%endif
+
 # VERSION is subbed out during rake srpm process
 # %global realversion <%= @version %>
 # %global rpmversion <%= @rpmversion %>
@@ -109,11 +115,21 @@ install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
+
+%if 0%{?_with_systemd}
+# Systemd for fedora >= 17
+%{__install} -d -m0755  %{buildroot}%{_unitdir}
+install -Dp -m0644 ext/systemd/puppetagent.service %{buildroot}%{_unitdir}/puppetagent.service
+install -Dp -m0644 ext/systemd/puppetmaster.service %{buildroot}%{_unitdir}/puppetmaster.service
+%else
+# Otherwise init.d for fedora < 17 or el 5, 6
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0755 %{confdir}/queue.init %{buildroot}%{_initrddir}/puppetqueue
+%endif
+
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
@@ -154,13 +170,17 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_bindir}/puppet
 %{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
+%if 0%{?_with_systemd}
+%{_unitdir}/puppetagent.service
+%else
 %{_initrddir}/puppet
+%config(noreplace) %{_sysconfdir}/sysconfig/puppet
+%endif
 %dir %{_sysconfdir}/puppet
 %dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
-%config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -211,11 +231,15 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
 %files server
 %defattr(-, root, root, 0755)
+%if 0%{?_with_systemd}
+%{_unitdir}/puppetmaster.service
+%else
 %{_initrddir}/puppetmaster
 %{_initrddir}/puppetqueue
+%config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
+%endif
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
-%config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
 %{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-master.8.gz
 
@@ -233,6 +257,19 @@ fi
 exit 0
 
 %post
+%if 0%{?_with_systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /bin/systemctl start puppetagent.service) >/dev/null 2>&1 || :
+  fi
+fi
+%else
 /sbin/chkconfig --add puppet || :
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
@@ -244,8 +281,22 @@ if [ "$1" -ge 1 ]; then
       /sbin/service puppet start) >/dev/null 2>&1 || :
   fi
 fi
+%endif
 
 %post server
+%if 0%{?_with_systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
+  newpid="%{_localstatedir}/run/puppet/master.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /bin/systemctl start puppetmaster.service) > /dev/null 2>&1 || :
+  fi
+fi
+%else
 /sbin/chkconfig --add puppetmaster || :
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
@@ -257,28 +308,61 @@ if [ "$1" -ge 1 ]; then
       /sbin/service puppetmaster start) >/dev/null 2>&1 || :
   fi
 fi
+%endif
 
 %preun
-if [ "$1" = 0 ] ; then
-  /sbin/service puppet stop >/dev/null 2>&1
-  /sbin/chkconfig --del puppet || :
+%if 0%{?_with_systemd}
+if [ "$1" -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable puppetagent.service > /dev/null 2>&1 || :
+    /bin/systemctl stop puppetagent.service > /dev/null 2>&1 || :
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" = 0 ] ; then
+    /sbin/service puppet stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppet || :
+fi
+%endif
 
 %preun server
-if [ "$1" = 0 ] ; then
-  /sbin/service puppetmaster stop >/dev/null 2>&1
-  /sbin/chkconfig --del puppetmaster || :
+%if 0%{?_with_systemd}
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable puppetmaster.service > /dev/null 2>&1 || :
+    /bin/systemctl stop puppetmaster.service > /dev/null 2>&1 || :
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" = 0 ] ; then
+    /sbin/service puppetmaster stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppetmaster || :
+fi
+%endif
 
 %postun
-if [ "$1" -ge 1 ]; then
-  /sbin/service puppet condrestart >/dev/null 2>&1 || :
+%if 0%{?_with_systemd}
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart puppetagent.service >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" -ge 1 ]; then
+    /sbin/service puppet condrestart >/dev/null 2>&1 || :
+fi
+%endif
 
 %postun server
-if [ "$1" -ge 1 ]; then
-  /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
+%if 0%{?_with_systemd}
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart puppetmaster.service >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" -ge 1 ]; then
+    /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
+fi
+%endif
 
 %clean
 rm -rf %{buildroot}
