@@ -652,7 +652,10 @@ EOT
       instances will be serialized using this method, since not all classes
       can be guaranteed to support this format, but it will be used for all
       classes that support it."],
-    :puppetdlockfile => [ "$statedir/puppetdlock", "A lock file to temporarily stop puppet agent from doing anything."],
+    :puppetdlockfile => { :default => "$statedir/puppetdlock",
+      :type => :setting, # (#2888) Ensure this file is not added to the settings catalog.
+      :desc => "A lock file to temporarily stop puppet agent from doing anything.",
+    },
     :usecacheonfailure => [true,
       "Whether to use the cached configuration when the remote
       configuration will not compile.  This option is useful for testing

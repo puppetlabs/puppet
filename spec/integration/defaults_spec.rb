@@ -326,4 +326,11 @@ describe "Puppet defaults" do
       Puppet.settings[:diff].should == ''
     end
   end
+
+  describe "puppetdlock" do
+    it "(#2888) is not a file setting so it is absent from the Settings catalog" do
+      Puppet.settings.setting(:puppetdlockfile).should_not be_a_kind_of Puppet::Util::Settings::FileSetting
+      Puppet.settings.setting(:puppetdlockfile).should be_a Puppet::Util::Settings::Setting
+    end
+  end
 end
