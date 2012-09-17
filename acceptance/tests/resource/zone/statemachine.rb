@@ -1,11 +1,5 @@
 test_name "Zone:Statemachine configuration"
-confine :to, :platform => 'solaris:pending'
-
-# If you plan to enable it, it would be a good idea to have a multi-cpu system with
-# atleast 2G ram. If it takes too long, open agent and try
-# truss -t open -p <auto-install:pid>
-# The auto install pid can be found by using ptree on the puppet apply pid
-# (use grep)
+confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
@@ -17,18 +11,13 @@ teardown do
   end
 end
 
-def moresetup(agent)
-  on agent, "chmod 700 /tstzones/mnt"
-end
-
 agents.each do |agent|
-  step "Zone: statemachine - cleanup"
-  clean agent
   step "Zone: statemachine - setup"
-  setup agent, :size => '1536m'
-  moresetup agent
+  setup agent
 
   step "Zone: statemachine - create zone and make it running"
+  step "progress would be logged to agent:/var/log/zones/zoneadm.<date>.<zonename>.install"
+  step "install log would be at agent:/system/volatile/install.<id>/install_log"
   apply_manifest_on(agent, "zone {tstzone : ensure=>running, iptype=>shared, path=>'/tstzones/mnt' }") do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end

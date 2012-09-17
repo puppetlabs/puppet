@@ -1,4 +1,4 @@
-test_name "Zone:IPS configuration"
+test_name "Package:IPS basic tests"
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'

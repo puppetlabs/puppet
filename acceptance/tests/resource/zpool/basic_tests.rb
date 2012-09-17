@@ -13,8 +13,6 @@ end
 
 
 agents.each do |agent|
-  step "ZPool: cleanup"
-  clean agent
   step "ZPool: setup"
   setup agent
   #-----------------------------------
