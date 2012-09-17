@@ -54,7 +54,7 @@ class Puppet::SSL::Host
     CertificateRequest.indirection.terminus_class = terminus
     CertificateRevocationList.indirection.terminus_class = terminus
 
-    host_map = {:ca => :file, :file => nil, :rest => :rest}
+    host_map = {:ca => :file, :disabled_ca => nil, :file => nil, :rest => :rest}
     if term = host_map[terminus]
       self.indirection.terminus_class = term
     else
@@ -94,7 +94,7 @@ class Puppet::SSL::Host
     # We are the CA, so we don't have read/write access to the normal certificates.
     :only => [:ca],
     # We have no CA, so we just look in the local file store.
-    :none => [:file]
+    :none => [:disabled_ca]
   }
 
   # Specify how we expect to interact with our certificate authority.
