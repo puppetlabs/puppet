@@ -665,13 +665,13 @@ describe Puppet::DSL::Context do
     describe "#inspect" do
       it "returns manifest filename if it is set" do
         filename = "foo.rb"
-        evaluate_in_context :filename => filename do
+        evaluate_in_context(:filename => filename) {
           inspect
-        end.should be_equal filename
+        }.should == filename.inspect
       end
 
       it "returns 'dsl_main' when no filename is set" do
-        evaluate_in_context { inspect }.should == "dsl_main"
+        evaluate_in_context { inspect }.should == "dsl_main".inspect
       end
 
     end

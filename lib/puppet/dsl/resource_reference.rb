@@ -36,7 +36,7 @@ module Puppet
       # Method allows to create overrides for a resource.
       ##
       def override(options = {}, &block)
-        raise ArgumentError if options == {} and block.nil?
+        raise ArgumentError, "no block or options supplied" if options == {} and block.nil?
 
         Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
         scope = Puppet::DSL::Parser.current_scope

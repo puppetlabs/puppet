@@ -28,9 +28,9 @@ module Puppet
       # For further information look at lib/puppet/dsl/type_reference.rb
       ##
       def self.const_missing(name)
-        proxy = ::Puppet::DSL::Actions.new "dsl_main"
-        ref = proxy.type_reference name
-        const_set name, ref unless proxy.is_resource_type? name
+        @proxy ||= ::Puppet::DSL::Actions.new "dsl_main"
+        ref = @proxy.type_reference name
+        const_set name, ref unless @proxy.is_resource_type? name
         ref
       end
 
@@ -40,8 +40,8 @@ module Puppet
       # The algorithm is identical to one used in +respond_to?+ method.
       ##
       def self.const_defined?(name)
-        proxy = ::Puppet::DSL::Actions.new "dsl_main"
-        proxy.is_resource_type? name
+        @proxy ||= ::Puppet::DSL::Actions.new "dsl_main"
+        @proxy.is_resource_type? name
       end
 
       ##
@@ -238,7 +238,7 @@ module Puppet
       # Returns string description of context
       ##
       def inspect
-        @filename.to_s
+        @filename.inspect
       end
 
       ##

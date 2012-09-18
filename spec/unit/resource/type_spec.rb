@@ -487,7 +487,7 @@ describe Puppet::Resource::Type do
     describe "and ruby code is provided" do
       it "should evaluate ruby code" do
         code = stub 'code'
-        code.expects(:evaluate).with {|scope| scope.is_a? Puppet::Parser::Scope }
+        code.expects(:evaluate).with {|scope, type_collection| scope.is_a? Puppet::Parser::Scope and type_collection.is_a? Puppet::Resource::TypeCollection }
         @type.stubs(:ruby_code).returns(Array(code))
         @type.evaluate_code(@resource)
       end
