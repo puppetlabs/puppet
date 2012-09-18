@@ -45,7 +45,7 @@ module PSON
       string.force_encoding(Encoding::ASCII_8BIT)
       string.gsub!(/["\\\x0-\x1f]/) { MAP[$MATCH] }
       string
-    rescue Iconv::Failure => e
+    rescue => e
       raise GeneratorError, "Caught #{e.class}: #{e}"
     end
   else
