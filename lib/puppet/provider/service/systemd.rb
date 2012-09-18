@@ -3,10 +3,10 @@
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `/bin/systemctl` or `/usr/bin/systemctl."
   
-  if File.exists?(/bin/systemctl)
+  if File.exists?("/bin/systemctl")
     commands :systemctl => "/bin/systemctl"
   else
-    if File.exists?(/usr/bin/systemctl)
+    if File.exists?("/usr/bin/systemctl")
       commands :systemctl => "/usr/bin/systemctl"
     end
   end
