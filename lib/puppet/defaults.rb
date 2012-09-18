@@ -716,7 +716,10 @@ EOT
       :pidfile => {
           :type => :file,
           :default  => "$rundir/${run_mode}.pid",
-          :desc     => "The pid file",
+          :desc     => "The file containing the PID of a running process.  " <<
+                       "This file is intended to be used by service management " <<
+                       "frameworks and monitoring systems to determine if a " <<
+                       "puppet process is still in the process table.",
       },
       :bindaddress => {
         :default    => "0.0.0.0",
@@ -1046,10 +1049,11 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
-    :agent_pidfile => {
-      :default    => "$statedir/agent.pid",
+    :agent_catalog_run_lockfile => {
+      :default    => "$statedir/agent_catalog_run.lock",
       :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.
-      :desc       => "A lock file to indicate that a puppet agent run is currently in progress.  File contains the pid of the running process.",
+      :desc       => "A lock file to indicate that a puppet agent catalog run is currently in progress.  " +
+                     "The file contains the pid of the process that holds the lock on the catalog run.",
     },
     :agent_disabled_lockfile => {
         :default    => "$statedir/agent_disabled.lock",

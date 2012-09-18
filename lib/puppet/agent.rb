@@ -27,7 +27,7 @@ class Puppet::Agent
   # Perform a run with our client.
   def run(client_options = {})
     if running?
-      Puppet.notice "Run of #{client_class} already in progress; skipping"
+      Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
       return
     end
     if disabled?
