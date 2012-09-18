@@ -11,29 +11,18 @@ teardown do
 end
 
 agents.each do |agent|
-  step "Zone: ip - cleanup"
-  clean agent
   step "Zone: ip - setup"
-  setup agent, :size => '64m'
+  setup agent
   # See
   # https://hg.openindiana.org/upstream/illumos/illumos-gate/file/03d5725cda56/usr/src/lib/libinetutil/common/ifspec.c
   # for the funciton ifparse_ifspec. This is the only documentation that exists
   # as to what the zone interface can be.
   #-----------------------------------
   # Make sure that the zone is absent.
-  step "Zone: ip - cleanslate"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>absent}') do
-    assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
-  end
   step "Zone: ip - make it configured"
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
-  step "Zone: ip - idempotent, should not create again"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
-    assert_no_match( /ensure: created/, result.stdout, "err: #{agent}")
-  end
-
   step "Zone: ip - ip switch: verify that the change from shared to exclusive works."
   # --------------------------------------------------------------------
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>exclusive, path=>"/tstzones/mnt" }') do
@@ -71,10 +60,5 @@ agents.each do |agent|
   step "Zone: ip - idempotency: arrays"
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>["ip.if.1:1.1.1.1", "ip.if.2:1.1.1.3"] }') do
     assert_no_match(/ip changed/, result.stdout, "err: #{agent}")
-  end
-
-  step "Zone: ip - ensure remove"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>absent}') do
-    assert_match(/ensure: removed/, result.stdout, "err: #{agent}")
   end
 end

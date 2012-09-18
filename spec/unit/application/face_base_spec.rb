@@ -14,6 +14,10 @@ describe Puppet::Application::FaceBase do
     app
   end
 
+  after :each do
+    app.class.clear_everything_for_tests
+  end
+
   describe "#find_global_settings_argument" do
     it "should not match --ca to --ca-location" do
       option = mock('ca option', :optparse_args => ["--ca"])
@@ -270,8 +274,8 @@ describe Puppet::Application::FaceBase do
 
   describe "#render" do
     before :each do
-      app.face      = Puppet::Face[:basetest, '0.0.1']
-      app.action    = app.face.get_action(:foo)
+      app.face      = Puppet::Interface.new('basetest', '0.0.1')
+      app.action    = Puppet::Interface::Action.new(app.face, :foo)
     end
 
     context "default rendering" do
