@@ -111,7 +111,7 @@ class Puppet::Parser::Compiler
     @catalog
   end
 
-  def evaluate_ruby_code(file)
+  def assign_ruby_code(file)
     File.open file do |f|
       Puppet::DSL::Parser.evaluate @main, f
     end
@@ -289,7 +289,7 @@ class Puppet::Parser::Compiler
     add_resource(@topscope, @main_resource)
 
     file = Puppet.settings.value :manifest, environment
-    evaluate_ruby_code file if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
+    assign_ruby_code file if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
 
     @main_resource.evaluate
   end
