@@ -278,6 +278,11 @@ class Application
       require 'puppet/util/run_mode'
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
     end
+
+    # This is for testing only
+    def clear_everything_for_tests
+      @run_mode = @banner = @run_status = @option_parser_commands = nil
+    end
   end
 
   attr_reader :options, :command_line
@@ -407,8 +412,6 @@ class Application
     # respond with context-sensitive help if we want to. --daniel 2011-04-12
     option_parser.parse!(self.command_line.args)
   end
-
-
 
   def handlearg(opt, val)
     opt, val = Puppet::Settings.clean_opt(opt, val)
