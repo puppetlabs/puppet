@@ -160,6 +160,16 @@ describe Puppet::Application::FaceBase do
         to raise_error OptionParser::InvalidOption, /invalid option: --bar/
     end
 
+    it "does not skip when a puppet global setting is given as one item" do
+      app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
+      expect { app.preinit; app.parse_options }.not_to raise_error
+    end
+
+    it "does not skip when a puppet global setting is given as two items" do
+      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
+      expect { app.preinit; app.parse_options }.not_to raise_error
+    end
+
     { "boolean options before" => %w{--trace foo},
       "boolean options after"  => %w{foo --trace}
     }.each do |name, args|
