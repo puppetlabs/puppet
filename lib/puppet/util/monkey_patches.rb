@@ -21,9 +21,14 @@ class Symbol
     z.emit("!ruby/sym ")
     to_s.to_zaml(z)
   end
+
   def <=> (other)
     self.to_s <=> other.to_s
-  end
+  end unless method_defined? '<=>'
+
+  def intern
+    self
+  end unless method_defined? 'intern'
 end
 
 [Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
