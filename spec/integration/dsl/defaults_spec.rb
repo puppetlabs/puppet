@@ -6,8 +6,9 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
+  prepare_compiler
+
   before :each do
-    prepare_compiler
     @catalog = compile_to_catalog(<<-MANIFEST)
                  Notify { message => "foo" }
                MANIFEST

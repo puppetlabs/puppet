@@ -5,9 +5,7 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
-  before :each do
-    prepare_compiler
-  end
+  prepare_compiler
 
   describe "definitions" do
 
