@@ -7,10 +7,7 @@ require 'puppet/dsl/context'
 include PuppetSpec::DSL
 
 describe Puppet::DSL::Context do
-
-  before :each do
-    prepare_compiler_and_scope
-  end
+  prepare_compiler_and_scope_for_evaluation
 
   context "when creating resources" do
 
@@ -38,7 +35,7 @@ describe Puppet::DSL::Context do
       evaluate_in_context do
         create_resource :file, "/tmp/test"
       end
-      @compiler.resources.map {|r| r.name}.should include "/tmp/test"
+      compiler.resources.map {|r| r.name}.should include "/tmp/test"
     end
 
     it "should return an array of created resources" do
@@ -168,7 +165,7 @@ describe Puppet::DSL::Context do
 
     it "should call function with passed arguments" do
       Puppet::Parser::Functions.stubs(:function).returns true
-      @scope.expects(:foobar).with [1, 2, 3]
+      scope.expects(:foobar).with [1, 2, 3]
       evaluate_in_context do
         call_function :foobar, 1, 2, 3
       end
@@ -176,7 +173,7 @@ describe Puppet::DSL::Context do
 
     context "with method_missing" do
       it "should work" do
-        @scope.expects :notice
+        scope.expects :notice
         evaluate_in_context do
           notice
         end
@@ -219,7 +216,7 @@ describe Puppet::DSL::Context do
         define :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -285,7 +282,7 @@ describe Puppet::DSL::Context do
         define(:foo) { notify params[:name] }
         foo "bar"
       end
-      @compiler.findresource("Foo[bar]").should_not be nil
+      compiler.findresource("Foo[bar]").should_not be nil
     end
 
 
@@ -330,7 +327,7 @@ describe Puppet::DSL::Context do
         node "foo" do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -401,7 +398,7 @@ describe Puppet::DSL::Context do
         hostclass :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope, @scope.known_resource_types}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -480,7 +477,7 @@ describe Puppet::DSL::Context do
         hostclass(:foo) { notify params[:name] }
         use :foo
       end
-      @compiler.findresource("Class[foo]").should_not be nil
+      compiler.findresource("Class[foo]").should_not be nil
     end
 
   end

@@ -1,27 +1,23 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
 require 'puppet/dsl/resource_reference'
+include PuppetSpec::DSL
 
 describe Puppet::DSL::ResourceReference do
-  include PuppetSpec::DSL
-
-  before :each do
-    prepare_compiler_and_scope
-  end
-
+  prepare_compiler_and_scope_for_evaluation
   let(:typeref) { Puppet::DSL::TypeReference.new "notify" }
 
   describe "#initialize" do
 
     it "should validate resource existance" do
-      @scope.expects(:findresource).returns(!nil)
+      scope.expects(:findresource).returns(!nil)
       evaluate_in_scope do
         Puppet::DSL::ResourceReference.new typeref, "foo"
       end
     end
 
     it "should raise ArgumentError when resource doesn't exist" do
-      @scope.expects(:findresource).returns nil
+      scope.expects(:findresource).returns nil
       evaluate_in_scope do
         lambda do
           Puppet::DSL::ResourceReference.new typeref, "foo"
@@ -115,7 +111,7 @@ describe Puppet::DSL::ResourceReference do
         Puppet::DSL::ResourceReference.new(typeref, "foobarbaz").realize
       end
 
-      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
+      scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
     end
 
     it "does nothing when the resource is not virtual" do
@@ -124,7 +120,7 @@ describe Puppet::DSL::ResourceReference do
         Puppet::DSL::ResourceReference.new(typeref, "foobarbaz").realize
       end
 
-      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
+      scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
     end
   end
 
@@ -136,7 +132,7 @@ describe Puppet::DSL::ResourceReference do
         Puppet::DSL::ResourceReference.new(typeref, "foobarbaz").collect
       end
 
-      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
+      scope.compiler.collections.map(&:resources).flatten.map(&:name).should include "foobarbaz"
     end
 
     it "does nothein when resource is not exported" do
@@ -145,7 +141,7 @@ describe Puppet::DSL::ResourceReference do
         Puppet::DSL::ResourceReference.new(typeref, "foobarbaz").collect
       end
 
-      @scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
+      scope.compiler.collections.map(&:resources).flatten.map(&:name).should_not include "foobarbaz"
     end
 
   end

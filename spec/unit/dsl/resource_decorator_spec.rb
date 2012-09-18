@@ -16,24 +16,22 @@ describe Puppet::DSL::ResourceDecorator do
   end
 
   context "when accessing" do
-    before :each do
-      @resource = mock
-    end
+    let(:resource) { mock "Resource" }
 
     describe "getting" do
       it "should proxy messages to a resource" do
-        @resource.expects(:[]).with(:param).returns 42
+        resource.expects(:[]).with(:param).returns 42
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.param.should == 42
         end
       end
 
 
       it "should cache methods for future use" do
-        @resource.expects(:[]).twice.with(:foobar).returns 42
+        resource.expects(:[]).twice.with(:foobar).returns 42
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.foobar.should == 42
           r.foobar.should == 42
         end
@@ -41,41 +39,40 @@ describe Puppet::DSL::ResourceDecorator do
     end
 
     describe "setting" do
+      prepare_compiler_and_scope_for_evaluation
       it "should proxy get messages to a resource" do
-        @resource.expects(:[]=).with :param, '42'
+        resource.expects(:[]=).with :param, '42'
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.param = 42
         end
       end
 
       it "should call `reference' on resource references" do
-        prepare_compiler_and_scope
         evaluate_in_context { notify "bar" }
 
-        @resource.expects(:[]=).with :param, "Notify[bar]"
+        resource.expects(:[]=).with :param, "Notify[bar]"
         ref = evaluate_in_context { Puppet::DSL::Context::Notify["bar"] }
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.param = ref
         end
       end
 
       it "should cache methods for future use" do
-        @resource.expects(:[]=).twice.with :foobar, '42'
+        resource.expects(:[]=).twice.with :foobar, '42'
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.foobar = 42
           r.foobar = 42
         end
       end
 
       it "doesn't convert values to string when resource is given" do
-        prepare_compiler_and_scope
-        value = Puppet::Parser::Resource.new "test", "whatever", {:scope => @scope}
+        value = Puppet::Parser::Resource.new "test", "whatever", {:scope => scope}
         value.expects(:to_s).never
-        @resource.expects(:[]=)
+        resource.expects(:[]=)
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.key = value
         end
       end
@@ -83,9 +80,9 @@ describe Puppet::DSL::ResourceDecorator do
       it "converts values to string when unless resource is given" do
         value = mock
         value.expects :to_s
-        @resource.expects :[]=
+        resource.expects :[]=
 
-        Puppet::DSL::ResourceDecorator.new @resource do |r|
+        Puppet::DSL::ResourceDecorator.new resource do |r|
           r.foo = value
         end
       end

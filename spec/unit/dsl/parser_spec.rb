@@ -1,16 +1,16 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
 require 'puppet/dsl/parser'
+include PuppetSpec::DSL
 
 describe Puppet::DSL::Parser do
-  include PuppetSpec::DSL
-
+  prepare_compiler_and_scope_for_evaluation
 
   describe "scope" do
     it "should allow to access current scope" do
       scope = mock
       scope.stubs(:known_resource_types)
-      evaluate_in_scope scope do
+      evaluate_in_scope :scope => scope do
         Puppet::DSL::Parser.current_scope.should be scope
       end
     end

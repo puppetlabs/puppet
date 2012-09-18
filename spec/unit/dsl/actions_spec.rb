@@ -6,8 +6,8 @@ require 'puppet/dsl/actions'
 include PuppetSpec::DSL
 
 describe Puppet::DSL::Actions do
-  subject       { Puppet::DSL::Actions.new :undefined }
-  before(:each) { prepare_compiler_and_scope        }
+  prepare_compiler_and_scope_for_evaluation
+  subject { Puppet::DSL::Actions.new :undefined }
 
   describe "#type_reference" do
     it "returns a type reference object" do
@@ -69,32 +69,29 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#get_resource" do
+
     it "should return the reference if it's already a resource" do
       ref = Puppet::Resource.new "foo", "bar"
       subject.send(:get_resource, ref).should == ref
     end
 
     it "should get a resource from Puppet::DSL::ResourceReference" do
-      prepare_compiler_and_scope
       res = evaluate_in_context { file "foo" }.first
       ref = evaluate_in_context { type("file")["foo"] }
       subject.send(:get_resource, ref).should == res
     end
 
     it "should get a resource from a string" do
-      prepare_compiler_and_scope
       res = evaluate_in_context { file "foo" }.first
       evaluate_in_scope { subject.send(:get_resource, "File[foo]").should == res }
     end
 
     it "should return a string when the string reference doesn't exist" do
-      prepare_compiler_and_scope
       reference = "File[foo]"
       evaluate_in_scope { subject.send(:get_resource, reference).should == reference }
     end
 
     it "should stringify the parameter when resource can't be found" do
-      prepare_compiler_and_scope
       evaluate_in_scope { subject.send(:get_resource, 3).should == "3" }
     end
   end
@@ -272,13 +269,13 @@ describe Puppet::DSL::Actions do
       scope = mock
       scope.stubs(:nil?).returns true
       scope.stubs(:known_resource_types).returns nil
-      evaluate_in_scope scope do
+      evaluate_in_scope :scope => scope do
         lambda { subject.create_resource :notify, "message", {}, nil }.should raise_error NoMethodError
       end
     end
 
     it "creates the resource when the type exists" do
-      @scope.compiler.expects(:add_resource).with { |scope, resource| scope == @scope and resource.is_a? Puppet::Parser::Resource }
+      scope.compiler.expects(:add_resource).with { |s, r| s == scope and r.is_a? Puppet::Parser::Resource }
 
       evaluate_in_scope do
         subject.create_resource :notify, "foo", {}, nil
@@ -350,13 +347,13 @@ describe Puppet::DSL::Actions do
       scope = mock
       scope.stubs(:nil?).returns true
       scope.stubs(:known_resource_types).returns nil
-      evaluate_in_scope scope do
+      evaluate_in_scope :scope => scope do
         lambda { subject.call_function "notice", [] }.should raise_error NoMethodError
       end
     end
 
     it "calls the function and passes the array of arguments when it exists" do
-      @scope.expects(:notice).with(["foo", "bar"])
+      scope.expects(:notice).with(["foo", "bar"])
       evaluate_in_scope do
         subject.call_function "notice", ["foo", "bar"]
       end

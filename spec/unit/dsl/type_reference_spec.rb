@@ -1,14 +1,10 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
 require 'puppet/dsl/type_reference'
+include PuppetSpec::DSL
 
 describe Puppet::DSL::TypeReference do
-
-  include PuppetSpec::DSL
-
-  before :each do
-    prepare_compiler_and_scope
-  end
+  prepare_compiler_and_scope_for_evaluation
 
   describe "#initialize" do
 
@@ -41,24 +37,22 @@ describe Puppet::DSL::TypeReference do
   end
 
   describe "#[]" do
-    before :each do
-      @reference = Puppet::DSL::TypeReference.new "notify"
-    end
+    let(:reference) { Puppet::DSL::TypeReference.new "notify" }
 
     it "should return new ResourceReference instance" do
       evaluate_in_context do
         notify "test"
       end
 
-      evaluate_in_scope @scope do
-        @reference["test"].should be_a Puppet::DSL::ResourceReference
+      evaluate_in_scope do
+        reference["test"].should be_a Puppet::DSL::ResourceReference
       end
     end
 
     it "should raise ArgumentError when the resource doesn't exist" do
-      evaluate_in_scope @scope do
+      evaluate_in_scope do
         lambda do
-          @reference["asdf"]
+          reference["asdf"]
         end.should raise_error ArgumentError
       end
     end
@@ -68,9 +62,9 @@ describe Puppet::DSL::TypeReference do
         notify "test"
       end
 
-      evaluate_in_scope @scope do
-        resource = @reference["test"]
-        resource.object_id.should be_equal @reference["test"].object_id
+      evaluate_in_scope do
+        resource = reference["test"]
+        resource.object_id.should be_equal reference["test"].object_id
       end
     end
 
@@ -81,7 +75,7 @@ describe Puppet::DSL::TypeReference do
       evaluate_in_context do
         Puppet::DSL::Context::Notify.collect
       end
-      @compiler.collections.map do |c|
+      compiler.collections.map do |c|
         [c.type, c.form]
       end.should include ["Notify", :exported]
     end
@@ -99,7 +93,7 @@ describe Puppet::DSL::TypeReference do
       evaluate_in_context do
         Puppet::DSL::Context::Notify.realize
       end
-      @compiler.collections.map do |c|
+      compiler.collections.map do |c|
         [c.type, c.form]
       end.should include ["Notify", :virtual]
     end
@@ -118,7 +112,7 @@ describe Puppet::DSL::TypeReference do
       evaluate_in_context do
         Puppet::DSL::Context::Notify.defaults :message => 42
       end
-      @scope.lookupdefaults("Notify").should have_key :message
+      scope.lookupdefaults("Notify").should have_key :message
     end
 
     it "should return current defaults" do
