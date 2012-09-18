@@ -26,7 +26,7 @@ module Puppet
       # It requires +main+ object to respond to +ruby_code=+ and +io+ has to
       # respond to +read+.
       ##
-      def self.evaluate(main, io)
+      def self.prepare_for_evaluation(main, io)
         options = {}
         options[:filename] = io.path if io.respond_to? :path
         source             = io.read

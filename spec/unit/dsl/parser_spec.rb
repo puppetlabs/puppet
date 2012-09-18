@@ -38,20 +38,20 @@ describe Puppet::DSL::Parser do
     it "sets ruby_code for main object" do
       main.expects(:ruby_code).returns Array.new
 
-      subject.evaluate main, file
+      subject.prepare_for_evaluation main, file
     end
 
     it "reads the contents of IO object" do
       main.stubs(:ruby_code).returns Array.new
 
-      subject.evaluate main, file
+      subject.prepare_for_evaluation main, file
     end
 
     it "calls #path on io when it responds to it" do
       main.stubs(:ruby_code).returns Array.new
       file.expects(:path).returns nil
 
-      subject.evaluate main, file
+      subject.prepare_for_evaluation main, file
     end
 
   end

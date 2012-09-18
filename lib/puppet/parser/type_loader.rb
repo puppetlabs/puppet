@@ -96,7 +96,7 @@ class Puppet::Parser::TypeLoader
 
           type = Puppet::Resource::Type.new(:hostclass, '')
           begin
-            File.open(file)     { |f| Puppet::DSL::Parser.evaluate type, f }
+            File.open(file)     { |f| Puppet::DSL::Parser.prepare_for_evaluation type, f }
           rescue => e
             raise Puppet::ParseError, e.message
           end

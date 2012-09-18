@@ -10,10 +10,8 @@ module PuppetSpec::Compiler
   end
 
   def prepare_compiler
-    @compiler     = Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production'))
-    @scope        = Puppet::Parser::Scope.new @compiler
-    @topscope     = @compiler.topscope
-    @scope.parent = @topscope
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production')) }
+    let(:scope)    { Puppet::Parser::Scope.new compiler }
   end
 
 end
