@@ -321,6 +321,21 @@ module PSON
   rescue PSON::NestingError
     raise ArgumentError, "exceed depth limit"
   end
+
+
+  # Provide a smarter wrapper for changing string encoding that works with
+  # both Ruby 1.8 (iconv) and 1.9 (String#encode).  Thankfully they seem to
+  # have compatible input syntax, at least for the encodings we touch.
+  if String.method_defined?("encode")
+    def encode(to, from, string)
+      string.encode(to, from)
+    end
+  else
+    require 'iconv'
+    def encode(to, from, string)
+      Iconv.conv(to, from, string)
+    end
+  end
 end
 
 module ::Kernel

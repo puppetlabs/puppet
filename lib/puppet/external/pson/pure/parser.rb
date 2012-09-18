@@ -141,7 +141,7 @@ module PSON
                 bytes << c[6 * i + 2, 2].to_i(16) << c[6 * i + 4, 2].to_i(16)
                 i += 1
               end
-              PSON::UTF16toUTF8.iconv(bytes)
+              PSON.encode('utf-8', 'utf-16be', bytes)
             end
           end
           string.force_encoding(Encoding::UTF_8) if string.respond_to?(:force_encoding)
@@ -149,7 +149,7 @@ module PSON
         else
           UNPARSED
         end
-      rescue Iconv::Failure => e
+      rescue => e
         raise GeneratorError, "Caught #{e.class}: #{e}"
       end
 
