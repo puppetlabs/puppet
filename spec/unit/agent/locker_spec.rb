@@ -32,6 +32,12 @@ describe Puppet::Agent::Locker do
     @locker.send(:lockfile)
   end
 
+  it "#lockfile_path provides the path to the lockfile" do
+    lockfile = File.expand_path("/my/lock")
+    Puppet[:agent_catalog_run_lockfile] = lockfile
+    @locker.lockfile_path.should == File.expand_path("/my/lock")
+  end
+
   it "should reuse the same lock file each time" do
     @locker.send(:lockfile).should equal(@locker.send(:lockfile))
   end

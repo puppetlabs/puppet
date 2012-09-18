@@ -28,8 +28,12 @@ module Puppet::Agent::Locker
     lockfile.locked?
   end
 
+  def lockfile_path
+    @lockfile_path ||= Puppet[:agent_catalog_run_lockfile]
+  end
+
   def lockfile
-    @lockfile ||= Puppet::Util::Pidlock.new(Puppet[:agent_catalog_run_lockfile])
+    @lockfile ||= Puppet::Util::Pidlock.new(lockfile_path)
 
     @lockfile
   end
