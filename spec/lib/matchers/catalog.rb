@@ -1,18 +1,22 @@
-RSpec::Matchers.define :be_equivalent_to do |expected|
+RSpec::Matchers.define :be_equivalent_to_catalog do |expected|
+  diffable
+
   match do |actual|
+    actual.is_a? Puppet::Resource::Catalog and
+    expected.is_a? Puppet::Resource::Catalog and
     compare_catalogs(actual, expected)
   end
 
   failure_message_for_should do |actual|
-    "expected #{actual} would be equivalent to #{expected}"
+    "expected catalog #{actual.inspect} would be equivalent to catalog #{expected.inspect}"
   end
 
   failure_message_for_should_not do |actual|
-    "expected #{actual} would not be equivalent to #{expected}"
+    "expected catalog #{actual.inspect} would not be equivalent to catalog #{expected.inspect}"
   end
 
   description do
-    "be equivalent to #{expected}"
+    "be equivalent to catalog #{expected.inspect}"
   end
 
   def compare_catalogs(actual, expected)

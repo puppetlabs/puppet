@@ -26,7 +26,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/foo"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create named node" do
@@ -43,7 +43,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/foo"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create node with regexp" do
@@ -60,7 +60,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/foo"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create node inheriting from another node" do
@@ -90,7 +90,7 @@ describe Puppet::DSL do
         end
       end
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
   end

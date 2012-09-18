@@ -20,7 +20,7 @@ describe Puppet::DSL do
         Notify.defaults :message => "foo"
       MANIFEST
 
-      @catalog.should be_equivalent_to r
+      @catalog.should be_equivalent_to_catalog r
     end
 
     it "should be able to update defaults for a resource passing a block" do
@@ -30,7 +30,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      @catalog.should be_equivalent_to r
+      @catalog.should be_equivalent_to_catalog r
     end
   end
 end

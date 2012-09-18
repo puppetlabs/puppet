@@ -21,7 +21,7 @@ describe Puppet::DSL do
         hostclass :foo do; end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "shouldn't evaluate the body of the class until it is used" do
@@ -36,7 +36,7 @@ describe Puppet::DSL do
           notify "bar"
         end
       MANIFEST
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use created class" do
@@ -58,7 +58,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should evaluate contents of the class when the class is used" do
@@ -78,7 +78,7 @@ describe Puppet::DSL do
         use :foo
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create class with arguments and use them" do
@@ -91,7 +91,7 @@ describe Puppet::DSL do
         hostclass :foo, :arguments => {:param => "value"} do; end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use class with arguments" do
@@ -111,7 +111,7 @@ describe Puppet::DSL do
         use :foo, :param => "bar"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create class with arguments with default values" do
@@ -131,7 +131,7 @@ describe Puppet::DSL do
         use :foo, :param => "bar"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should allow inheritance" do
@@ -157,7 +157,7 @@ describe Puppet::DSL do
         use :bar
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should allow inheritance with arguments" do
@@ -185,7 +185,7 @@ describe Puppet::DSL do
         use "bar", :msg => "foobarbaz"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
   end

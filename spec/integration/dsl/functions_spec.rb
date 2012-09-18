@@ -25,7 +25,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use a function from a hostclass" do
@@ -45,7 +45,7 @@ describe Puppet::DSL do
         use :foo
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use a function from a definition" do
@@ -65,7 +65,7 @@ describe Puppet::DSL do
         foo "bar"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use a function from top level scope" do
@@ -77,7 +77,7 @@ describe Puppet::DSL do
           notice "foo"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to pass parameters to the function" do
@@ -89,7 +89,7 @@ describe Puppet::DSL do
           notice "foo", "bar", 3
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
   end

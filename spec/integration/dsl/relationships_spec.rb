@@ -41,7 +41,7 @@ describe Puppet::DSL do
         end
       END
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
   end
