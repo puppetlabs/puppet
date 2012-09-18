@@ -369,6 +369,15 @@ describe Puppet::DSL::Actions do
       end.should raise_error ArgumentError
     end
 
+    it "removes itself from the backtraces" do
+      begin
+        subject.validate_options :asdf, attributes
+      rescue => e
+        e.backtrace.first.should_not =~ /validate_options/
+      end
+    end
+
+
     it "does nothing when all attributes are valid" do
       lambda do
         subject.validate_options :foo, attributes
