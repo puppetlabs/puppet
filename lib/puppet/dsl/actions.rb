@@ -1,5 +1,6 @@
 require 'puppet/dsl/resource_decorator'
 require 'puppet/dsl/type_reference'
+require 'puppet/util/methodhelper'
 
 module Puppet
   module DSL
@@ -12,6 +13,7 @@ module Puppet
     # This also allows to limit the number of methods existing in that class.
     ##
     class Actions
+      include Puppet::Util::MethodHelper
 
       ##
       # Initializes Puppet::DSL::Actions instance.
@@ -56,25 +58,6 @@ module Puppet
       ##
       def params
         Parser.current_scope
-      end
-
-      ##
-      # Helper to validate options. Example:
-      #
-      #   validate_options [:arguments, :inherits], options
-      #
-      # It expects list of valid options and a hash to validate as a last
-      # argument.
-      ##
-      def validate_options(allow, options = {})
-        options.each do |k, _|
-          unless Array(allow).include? k
-            raise ArgumentError, "unrecognized option #{k}"
-          end
-        end
-      rescue Exception => e
-        e.set_backtrace e.backtrace[1..-1]
-        raise e
       end
 
       ##
