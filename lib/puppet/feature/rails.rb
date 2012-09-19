@@ -4,6 +4,25 @@ Puppet.features.rubygems?
 
 Puppet.features.add(:rails) do
   begin
+    # Turn off the constant watching parts of ActiveSupport, which have a huge
+    # cost in terms of the system watching loaded code to figure out if it was
+    # a missing content, and which we don't actually *use* anywhere.
+    #
+    # In fact, we *can't* depend on the feature: we don't require
+    # ActiveSupport, just load it if we use rails, if we depend on a feature
+    # that it offers. --daniel 2012-07-16
+    require 'active_support'
+    begin
+      require 'active_support/dependencies'
+      ActiveSupport::Dependencies.unhook!
+      ActiveSupport::Dependencies.mechanism = :require
+    rescue LoadError, ScriptError, StandardError => e
+      # ignore any failure - worst case we run without disabling the CPU
+      # sucking features, so are slower but ... not actually failed, just
+      # because some random future version of ActiveRecord changes.
+      Puppet.debug("disabling ActiveSupport::Dependencies failed: #{e}")
+    end
+
     require 'active_record'
     require 'active_record/version'
   rescue LoadError => detail
