@@ -15,6 +15,6 @@ class Puppet::SSL::Digest
   end
 
   def name
-    @digest.name
+    @digest.name.upcase
   end
 end
