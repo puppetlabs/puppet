@@ -66,7 +66,7 @@ module Puppet
       end
 
       def to_yaml_properties
-        (YAML_ATTRIBUTES & instance_variables).sort
+        YAML_ATTRIBUTES & instance_variables
       end
 
       private

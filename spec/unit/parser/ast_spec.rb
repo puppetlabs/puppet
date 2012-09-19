@@ -4,11 +4,6 @@ require 'spec_helper'
 require 'puppet/parser/ast'
 
 describe Puppet::Parser::AST do
-
-  it "should use the file lookup module" do
-    Puppet::Parser::AST.ancestors.should be_include(Puppet::FileCollection::Lookup)
-  end
-
   it "should have a doc accessor" do
     ast = Puppet::Parser::AST.new({})
     ast.should respond_to(:doc)

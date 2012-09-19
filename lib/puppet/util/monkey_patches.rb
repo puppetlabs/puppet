@@ -91,6 +91,14 @@ if RUBY_VERSION == '1.8.1' || RUBY_VERSION == '1.8.2'
   }
 end
 
+class Fixnum
+  # Returns the int itself. This method is intended for compatibility to
+  # character constant in Ruby 1.9.  1.8.5 is missing it; add it.
+  def ord
+    self
+  end unless method_defined? 'ord'
+end
+
 class Array
   # Ruby < 1.8.7 doesn't have this method but we use it in tests
   def combination(num)
@@ -109,9 +117,27 @@ end
 
 
 class Symbol
-  def to_proc
-    Proc.new { |*args| args.shift.__send__(self, *args) }
-  end unless method_defined? :to_proc
+  # So, it turns out that one of the biggest memory allocation hot-spots in
+  # our code was using symbol-to-proc - because it allocated a new instance
+  # every time it was called, rather than caching.
+  #
+  # Changing this means we can see XX memory reduction...
+  if method_defined? :to_proc
+    alias __original_to_proc to_proc
+    def to_proc
+      @my_proc ||= __original_to_proc
+    end
+  else
+    def to_proc
+      @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
+    end
+  end
+
+  # Defined in 1.9, absent in 1.8, and used for compatibility in various
+  # places, typically in third party gems.
+  def intern
+    return self
+  end unless method_defined? :intern
 end
 
 
