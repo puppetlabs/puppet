@@ -16,8 +16,8 @@
 %endif
 
 # VERSION is subbed out during rake srpm process
-# %global realversion <%= @version %>
-# %global rpmversion <%= @rpmversion %>
+%global realversion <%= @version %>
+%global rpmversion <%= @rpmversion %>
 
 %global confdir ext/redhat
 
@@ -29,7 +29,6 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -54,15 +53,22 @@ Requires:       ruby-shadow
 Requires:       facter >= 1.6.11
 Requires:       ruby >= 1.8.5
 Requires:       hiera >= 1.0.0
-Obsoletes:      hiera-puppet <= 1.0.0
+Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
 
-Requires(pre):  shadow-utils
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# Required for %%pre
+Requires:       shadow-utils
+
+%if 0%{?_with_systemd}
+# Required for %%post, %%preun, %%postun
+Requires:       systemd
+%else
+# Required for %%post and %%preun
+Requires:       chkconfig
+# Required for %%preun and %%postun
+Requires:       initscripts
+%endif
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a
@@ -74,10 +80,9 @@ along with obviously discrete elements like packages, services, and files.
 Group:          System Environment/Base
 Summary:        Server for the puppet system management tool
 Requires:       puppet = %{version}-%{release}
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# chkconfig (%%post, %%preun) and initscripts (%%preun %%postun) are required for non systemd
+# and systemd (%%post, %%preun, and %%postun) are required for systems with systemd as default
+# They come along transitively with puppet-%{version}-%{release}.
 
 %description server
 Provides the central puppet server daemon which provides manifests to clients.
@@ -114,6 +119,8 @@ install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
+
+# As per redhat bz #495096
 install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
 
 %if 0%{?_with_systemd}
@@ -141,7 +148,12 @@ cp -a ext/ %{buildroot}%{_datadir}/%{name}
 rm -rf %{buildroot}%{_datadir}/%{name}/ext/{emacs,vim}
 # remove misc packaging artifacts not applicable to rpms
 rm -rf %{buildroot}%{_datadir}/%{name}/ext/{gentoo,freebsd,solaris,suse,windows,osx,ips,debian}
+rm -f %{buildroot}%{_datadir}/%{name}/ext/redhat/*.init
 rm -f %{buildroot}%{_datadir}/%{name}/ext/{build_defaults.yaml,project_data.yaml}
+
+# Rpmlint fixup
+chmod 755 %{buildroot}%{_datadir}/%{name}/ext/regexp_nodes/regexp_nodes.rb
+chmod 755 %{buildroot}%{_datadir}/%{name}/ext/puppet-load.rb
 
 # Install emacs mode files
 emacsdir=%{buildroot}%{_datadir}/emacs/site-lisp
