@@ -195,18 +195,16 @@ module Util
 
   # Determine in a platform-specific way whether a path is absolute. This
   # defaults to the local platform if none is specified.
+  #
+  # Escape once for the string literal, and once for the regex.
+  slash = '[\\\\/]'
+  label = '[^\\\\/]+'
+  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
+  AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
-    # Escape once for the string literal, and once for the regex.
-    slash = '[\\\\/]'
-    name = '[^\\\\/]+'
-    regexes = {
-      :windows => %r!^(([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name}))!i,
-      :posix   => %r!^/!,
-    }
-
     # Due to weird load order issues, I was unable to remove this require.
     # This is fixed in Telly so it can be removed there.
-    require 'puppet'
+    require 'puppet' unless defined?(Puppet)
 
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
@@ -214,8 +212,16 @@ module Util
     # be called during the initialization of features so it can't depend on
     # that.
     platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
+    regex = case platform
+            when :windows
+              AbsolutePathWindows
+            when :posix
+              AbsolutePathPosix
+            else
+              raise Puppet::DevError, "unknown platform #{platform} in absolute_path"
+            end
 
-    !! (path =~ regexes[platform])
+    !! (path =~ regex)
   end
   module_function :absolute_path?
 

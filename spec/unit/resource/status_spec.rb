@@ -148,7 +148,7 @@ describe Puppet::Resource::Status do
       @status.line = 27
       @status.evaluation_time = 2.7
       @status.tags = %w{one two}
-      @status.to_yaml_properties.should == Puppet::Resource::Status::YAML_ATTRIBUTES.sort
+      @status.to_yaml_properties.should =~ Puppet::Resource::Status::YAML_ATTRIBUTES
     end
   end
 end
