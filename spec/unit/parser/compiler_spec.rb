@@ -257,9 +257,9 @@ describe Puppet::Parser::Compiler do
 
     it "should create a new Puppet::DSL::Parser when using ruby dsl" do
       compile_stub(:evaluate_main)
-      File.stubs(:open).yields(StringIO.new("test code"))
+      File.stubs(:read).returns("test code")
       Puppet[:manifest] = "test.rb"
-      Puppet::DSL::Parser.expects(:evaluate).with {|main, io| io.read == "test code" and main.is_a? Puppet::Resource::Type}.returns stub(:evaluate)
+      Puppet::DSL::Parser.expects(:prepare_for_evaluation).with {|main, code, filename| code == "test code" and main.is_a? Puppet::Resource::Type}.returns stub(:evaluate)
 
       @compiler.compile
     end
@@ -267,8 +267,8 @@ describe Puppet::Parser::Compiler do
     it "should call evaluate on DSL Parser instance when using ruby dsl" do
       compile_stub(:evaluate_main)
       Puppet::Util::ManifestFiletypeHelper.expects(:is_ruby_filename?).at_least_once.returns true
-      File.stubs(:open).yields(StringIO.new)
-      Puppet::DSL::Parser.expects :evaluate
+      File.stubs(:read).returns("")
+      Puppet::DSL::Parser.expects :prepare_for_evaluation
 
       @compiler.compile
     end

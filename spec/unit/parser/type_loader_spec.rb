@@ -101,7 +101,7 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "evaluates loaded Ruby code" do
-      File.stubs(:open).yields(StringIO.new("hostclass(:asdf) {}"))
+      File.stubs(:read).returns("hostclass(:asdf) {}")
       Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", [make_absolute("/one.rb")]]
 
       @loader.import("myfile").map(&:name).should include "asdf"

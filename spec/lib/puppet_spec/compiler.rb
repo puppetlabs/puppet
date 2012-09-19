@@ -5,7 +5,7 @@ module PuppetSpec::Compiler
   end
 
   def compile_ruby_to_catalog(string = nil, node = Puppet::Node.new('foonode'))
-    File.stubs(:open).yields(StringIO.new(string))
+    File.stubs(:read).returns(string)
     Puppet::Parser::Compiler.compile(node)
   end
 
