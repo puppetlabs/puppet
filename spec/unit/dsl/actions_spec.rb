@@ -108,7 +108,8 @@ describe Puppet::DSL::Actions do
   describe "#create_node" do
     it "raises NoMethodError when called from invalid nesting" do
       lambda do
-        subject.create_node "foo", {}, proc {}, 1
+        subject.create_node "foo", {}, 1 do
+        end
       end.should raise_error NoMethodError
     end
 
@@ -120,7 +121,7 @@ describe Puppet::DSL::Actions do
 
     it "creates a new puppet node" do
       evaluate_in_scope do
-        subject.create_node("foo", {}, proc {}, 0).tap do |r|
+        subject.create_node("foo", {}, 0) {}.tap do |r|
           r.type.should == :node
           r.name.should == "foo"
         end.should be_a Puppet::Resource::Type
@@ -129,7 +130,7 @@ describe Puppet::DSL::Actions do
 
     it "allows to pass a regex instead of name" do
       evaluate_in_scope do
-        subject.create_node(/foo/, {}, proc {}, 0).tap do |r|
+        subject.create_node(/foo/, {}, 0) {}.tap do |r|
           r.name_is_regex?.should be true
         end.should be_a Puppet::Resource::Type
       end
@@ -137,7 +138,7 @@ describe Puppet::DSL::Actions do
 
     it "sets options for puppet node" do
       evaluate_in_scope do
-        subject.create_node("foo", {:inherits => "bar"}, proc {}, 0).parent.should == "bar"
+        subject.create_node("foo", {:inherits => "bar"}, 0) {}.parent.should == "bar"
       end
     end
 
@@ -148,7 +149,8 @@ describe Puppet::DSL::Actions do
         resource_types.stubs(:hostclass).returns nil
         Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
-        subject.create_node "foo", {}, proc {}, 0
+        subject.create_node "foo", {}, 0 do
+        end
       end
     end
 
@@ -157,7 +159,7 @@ describe Puppet::DSL::Actions do
       context = mock "Context"
       Puppet::DSL::Context.expects(:new).with {|code, _| code == block}.returns context
       evaluate_in_scope do
-        subject.create_node("foo", {}, block, 0).ruby_code.should include context
+        subject.create_node("foo", {}, 0, &block).ruby_code.should include context
       end
     end
   end
@@ -165,7 +167,8 @@ describe Puppet::DSL::Actions do
   describe "#create_hostclass" do
     it "raises NoMethodError when called from invalid nesting" do
       lambda do
-        subject.create_hostclass :foo, {}, proc {}, 1
+        subject.create_hostclass :foo, {}, 1 do
+        end
       end.should raise_error NoMethodError
     end
 
@@ -177,7 +180,7 @@ describe Puppet::DSL::Actions do
 
     it "creates a new puppet hostclass" do
       evaluate_in_scope do
-        subject.create_hostclass(:foo, {}, proc {}, 0).tap do |r|
+        subject.create_hostclass(:foo, {}, 0) {}.tap do |r|
           r.type.should == :hostclass
           r.name.should == "foo"
         end.should be_a Puppet::Resource::Type
@@ -186,7 +189,7 @@ describe Puppet::DSL::Actions do
 
     it "sets options for puppet hostclass" do
       evaluate_in_scope do
-        subject.create_hostclass(:foo, {:inherits => :bar, :arguments => {:myparam => 3}}, proc {}, 0).tap do |r|
+        subject.create_hostclass(:foo, {:inherits => :bar, :arguments => {:myparam => 3}}, 0) {}.tap do |r|
           r.parent.should    == "bar"
           r.arguments.should == {"myparam" => 3}
         end
@@ -199,7 +202,8 @@ describe Puppet::DSL::Actions do
         resource_types.expects(:add_hostclass).with {|n| n.type == :hostclass }
         Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
-        subject.create_hostclass :foo, {}, proc {}, 0
+        subject.create_hostclass :foo, {}, 0 do
+        end
       end
     end
 
@@ -208,7 +212,7 @@ describe Puppet::DSL::Actions do
       context = mock "Context"
       Puppet::DSL::Context.expects(:new).with {|code, _| code == block}.returns context
       evaluate_in_scope do
-        subject.create_hostclass(:foo, {}, block, 0).ruby_code.should include context
+        subject.create_hostclass(:foo, {}, 0, &block).ruby_code.should include context
       end
     end
   end
@@ -216,7 +220,8 @@ describe Puppet::DSL::Actions do
   describe "#create_definition" do
     it "raises NoMethodError when called from invalid nesting" do
       lambda do
-        subject.create_definition :foo, {}, proc {}, 1
+        subject.create_definition :foo, {}, 1 do
+        end
       end.should raise_error NoMethodError
     end
 
@@ -228,7 +233,7 @@ describe Puppet::DSL::Actions do
 
     it "creates new definition" do
       evaluate_in_scope do
-        subject.create_definition(:foo, {}, proc {}, 0).tap do |r|
+        subject.create_definition(:foo, {}, 0) {}.tap do |r|
           r.should be_a Puppet::Resource::Type
           r.type.should == :definition
           r.name.should == "foo"
@@ -239,7 +244,7 @@ describe Puppet::DSL::Actions do
 
     it "set options for the definition" do
       evaluate_in_scope do
-        subject.create_definition(:foo, {:arguments => {:param => 42}}, proc {}, 0).arguments.should == {"param" => 42}
+        subject.create_definition(:foo, {:arguments => {:param => 42}}, 0) {}.arguments.should == {"param" => 42}
       end
     end
 
@@ -249,7 +254,8 @@ describe Puppet::DSL::Actions do
         resource_types.expects(:add_definition).with {|n| n.type == :definition }
         Puppet::DSL::Parser.stubs(:known_resource_types).returns resource_types
 
-        subject.create_definition :foo, {}, proc {}, 0
+        subject.create_definition :foo, {}, 0 do
+        end
       end
 
     end
@@ -259,7 +265,7 @@ describe Puppet::DSL::Actions do
       context = mock "Context"
       Puppet::DSL::Context.expects(:new).with {|code, _| code == block}.returns context
       evaluate_in_scope do
-        subject.create_definition(:foo, {}, block, 0).ruby_code.should include context
+        subject.create_definition(:foo, {}, 0, &block).ruby_code.should include context
       end
     end
   end

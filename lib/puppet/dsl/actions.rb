@@ -67,7 +67,7 @@ module Puppet
       # Options is a hash of options passed when declaring a node,
       # Name is the name of created node.
       ##
-      def create_node(name, options, code, nesting)
+      def create_node(name, options, nesting, &code)
         raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
@@ -87,7 +87,7 @@ module Puppet
       # Options is a has of settings for a hostclass,
       # Name is the name for the new hostclass.
       ##
-      def create_hostclass(name, options, code, nesting)
+      def create_hostclass(name, options, nesting, &code)
         raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
@@ -106,7 +106,7 @@ module Puppet
       # Options is a hash of arguments for the definition,
       # Name is the name for the new definition.
       ##
-      def create_definition(name, options, code, nesting)
+      def create_definition(name, options, nesting, &code)
         raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 

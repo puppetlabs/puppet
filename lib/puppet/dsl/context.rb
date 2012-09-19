@@ -116,7 +116,7 @@ module Puppet
       #
       ##
       def node(name, options = {}, &block)
-        @proxy.create_node(name, options, block, @nesting)
+        @proxy.create_node(name, options, @nesting, &block)
       end
 
       ##
@@ -140,7 +140,7 @@ module Puppet
       #
       ##
       def hostclass(name, options = {}, &block)
-        @proxy.create_hostclass(name, options, block, @nesting)
+        @proxy.create_hostclass(name, options, @nesting, &block)
       end
 
       ##
@@ -162,7 +162,7 @@ module Puppet
       #
       ##
       def define(name, options = {}, &block)
-        @proxy.create_definition(name, options, block, @nesting)
+        @proxy.create_definition(name, options, @nesting, &block)
       end
 
       ##
