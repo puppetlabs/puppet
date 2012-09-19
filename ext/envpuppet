@@ -93,6 +93,10 @@ myrubylib="${ENVPUPPET_BASEDIR}/puppet/lib"
 mypath="${mypath}:${ENVPUPPET_BASEDIR}/facter/bin"
 myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/facter/lib"
 
+# git://github.com/puppetlabs/hiera.git
+mypath="${mypath}:${ENVPUPPET_BASEDIR}/hiera/bin"
+myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/hiera/lib"
+
 if [[ "${ENVPUPPET_BLEEDING:-}" == "true" ]]; then
   # git://github.com/puppetlabs/facter.git
   mypath="${mypath}:${ENVPUPPET_BASEDIR}/puppet-interfaces/bin"
