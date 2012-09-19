@@ -59,8 +59,8 @@ module Puppet
       # resource.
       ##
       def initialize(code, options = {})
-        @nesting  = options.fetch(:nesting)  { 0          }
-        @filename = options.fetch(:filename) { "dsl_main" }
+        @nesting  = options.fetch :nesting,  0
+        @filename = options.fetch :filename, "dsl_main"
         @proxy    = ::Puppet::DSL::Actions.new @filename
         @code     = code
       end

@@ -112,9 +112,7 @@ class Puppet::Parser::Compiler
   end
 
   def assign_ruby_code(file)
-    File.open file do |f|
-      Puppet::DSL::Parser.evaluate @main, f
-    end
+    Puppet::DSL::Parser.prepare_for_evaluation @main, File.read(file), file
   end
 
   def_delegator :@collections, :delete, :delete_collection

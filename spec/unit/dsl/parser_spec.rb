@@ -31,27 +31,23 @@ describe Puppet::DSL::Parser do
   end
 
   describe "#evaluate" do
-    let(:file) { StringIO.new "test" }
-    let(:main) { mock "main"         }
-    subject    { Puppet::DSL::Parser }
+    let(:filename)  { "testfile" }
+    let(:string)    { "test" }
+    let(:ruby_code) { Array.new   }
+    let(:main)      { mock "main" }
+    subject         { Puppet::DSL::Parser }
 
     it "sets ruby_code for main object" do
-      main.expects(:ruby_code).returns Array.new
-
-      subject.prepare_for_evaluation main, file
+      main.expects(:ruby_code).returns ruby_code
+      subject.prepare_for_evaluation main, string, filename
+      ruby_code.count.should == 1
     end
 
-    it "reads the contents of IO object" do
-      main.stubs(:ruby_code).returns Array.new
+    it "sets parsed file's filename for ruby dsl" do
+      main.stubs(:ruby_code).returns ruby_code
+      subject.prepare_for_evaluation main, string, filename
 
-      subject.prepare_for_evaluation main, file
-    end
-
-    it "calls #path on io when it responds to it" do
-      main.stubs(:ruby_code).returns Array.new
-      file.expects(:path).returns nil
-
-      subject.prepare_for_evaluation main, file
+      ruby_code.first.inspect.should == filename.inspect
     end
 
   end

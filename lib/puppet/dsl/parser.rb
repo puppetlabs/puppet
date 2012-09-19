@@ -26,12 +26,9 @@ module Puppet
       # It requires +main+ object to respond to +ruby_code=+ and +io+ has to
       # respond to +read+.
       ##
-      def self.prepare_for_evaluation(main, io)
-        options = {}
-        options[:filename] = io.path if io.respond_to? :path
-        source             = io.read
-        code               = proc { instance_eval source, options[:filename] || "dsl_main", 0 }
-        main.ruby_code << Context.new(code, options)
+      def self.prepare_for_evaluation(main, code, filename = "dsl_main")
+        block = proc { instance_eval code, filename, 0 }
+        main.ruby_code << Context.new(block, :filename => filename)
       end
 
       ##
