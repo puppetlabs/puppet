@@ -4,12 +4,21 @@ module Puppet
     # A class that starts evaluation of Ruby manifests.
     # It sets the +ruby_code+ for further evaluation.
     ##
-    class Parser
+    module Parser
 
       ##
       # An array of scopes for access by Puppet::DSL::Context
       ##
-      @@frames = []
+      def self.frames
+        @frames ||= []
+      end
+
+      ##
+      # Shared known_resource_types object for DSL
+      ##
+      class << self
+        attr_accessor :known_resource_types
+      end
 
       ##
       # Creates a new Puppet::DSL::Context and assings it as ruby_code to the
@@ -17,29 +26,23 @@ module Puppet
       # It requires +main+ object to respond to +ruby_code=+ and +io+ has to
       # respond to +read+.
       ##
-      def self.evaluate(main, io)
-        raise ArgumentError, "can't assign ruby code to #{main}" unless main.respond_to? :'ruby_code='
-        raise ArgumentError, "can't read from file"              unless io.respond_to?   :read
-
-        options = {}
-        options[:filename] = io.path if io.respond_to? :path
-        source             = io.read
-        code               = proc { instance_eval source, options[:filename] || "dsl_main", 0 }
-        main.ruby_code     = Context.new code, options
+      def self.prepare_for_evaluation(main, code, filename = "dsl_main")
+        block = proc { instance_eval code, filename, 0 }
+        main.ruby_code << Context.new(block, :filename => filename)
       end
 
       ##
       # Returns the current scope.
       ##
       def self.current_scope
-        @@frames.last
+        frames.last
       end
 
       ##
       # Pushes a new scope on a stack.
       ##
       def self.add_scope(scope)
-        @@frames.push scope
+        frames.push scope
       end
 
       ##
@@ -47,8 +50,8 @@ module Puppet
       # It'll raise RuntimeError if the stack is already empty.
       ##
       def self.remove_scope
-        raise RuntimeError, "scope stack already empty" if @@frames.empty?
-        @@frames.pop
+        raise RuntimeError, "scope stack already empty" if @frames.empty?
+        @frames.pop
       end
 
     end

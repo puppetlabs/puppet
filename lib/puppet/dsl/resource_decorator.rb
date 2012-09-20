@@ -13,11 +13,6 @@ module Puppet
     class ResourceDecorator < BlankSlate
 
       ##
-      # Regular expression used when determining whether method is a setter.
-      ##
-      SETTER_REGEX = /^(.*)=$/
-
-      ##
       # Initializes new object.
       # +resource+ can be any object that responds to +[]+ and +[]=+ methods.
       # +block+ can be any kind of object that responds to +call+ methods.
@@ -42,7 +37,7 @@ module Puppet
       #
       ##
       def method_missing(name, *args)
-        if name.to_s =~ SETTER_REGEX
+        if name.to_s =~ /\A(.*)=\z/
           define_singleton_method name do |*a|
             value = a.first
             value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
@@ -50,16 +45,13 @@ module Puppet
             @resource[$1.to_sym] = value
           end
 
-          value = args.first
-          value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
-          value = value.to_s  unless value.is_a? ::Puppet::Resource
-          @resource[$1.to_sym] = value
+          self.__send__ name, *args
         else
           define_singleton_method name do
             @resource[name]
           end
 
-          @resource[name]
+          self.__send__ name, *args
         end
       end
 

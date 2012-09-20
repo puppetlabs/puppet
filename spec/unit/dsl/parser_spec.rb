@@ -1,15 +1,16 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
 require 'puppet/dsl/parser'
+include PuppetSpec::DSL
 
 describe Puppet::DSL::Parser do
-  include PuppetSpec::DSL
-
+  prepare_compiler_and_scope_for_evaluation
 
   describe "scope" do
     it "should allow to access current scope" do
       scope = mock
-      evaluate_in_scope scope do
+      scope.stubs(:known_resource_types)
+      evaluate_in_scope :scope => scope do
         Puppet::DSL::Parser.current_scope.should be scope
       end
     end
@@ -30,34 +31,25 @@ describe Puppet::DSL::Parser do
   end
 
   describe "#evaluate" do
-    let(:file) { StringIO.new "test" }
-    let(:main) { mock "main"         }
-    subject    { Puppet::DSL::Parser }
-
-    # before(:each) { file.rewind }
+    let(:filename)  { "testfile" }
+    let(:string)    { "test" }
+    let(:ruby_code) { Array.new   }
+    let(:main)      { mock "main" }
+    subject         { Puppet::DSL::Parser }
 
     it "sets ruby_code for main object" do
-      main.expects :'ruby_code='
-
-      subject.evaluate main, file
+      main.expects(:ruby_code).returns ruby_code
+      subject.prepare_for_evaluation main, string, filename
+      ruby_code.count.should == 1
     end
 
-    it "reads the contents of IO object" do
-      main.stubs :'ruby_code='
+    it "sets parsed file's filename for ruby dsl" do
+      main.stubs(:ruby_code).returns ruby_code
+      subject.prepare_for_evaluation main, string, filename
 
-      subject.evaluate main, file
+      ruby_code.first.inspect.should == filename.inspect
     end
 
-    it "calls #path on io when it responds to it" do
-      main.stubs :'ruby_code='
-      file.expects(:path).returns nil
-
-      subject.evaluate main, file
-    end
-
-    it "raises an exception when io doesn't respond to read" do
-      lambda { subject.evaluate main, nil }.should raise_error ArgumentError
-    end
   end
 
 end

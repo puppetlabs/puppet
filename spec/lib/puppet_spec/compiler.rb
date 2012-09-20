@@ -5,15 +5,13 @@ module PuppetSpec::Compiler
   end
 
   def compile_ruby_to_catalog(string = nil, node = Puppet::Node.new('foonode'))
-    File.stubs(:open).yields(StringIO.new(string))
+    File.stubs(:read).returns(string)
     Puppet::Parser::Compiler.compile(node)
   end
 
   def prepare_compiler
-    @compiler     = Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production'))
-    @scope        = Puppet::Parser::Scope.new @compiler
-    @topscope     = @compiler.topscope
-    @scope.parent = @topscope
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("floppy", :environment => 'production')) }
+    let(:scope)    { Puppet::Parser::Scope.new compiler }
   end
 
 end

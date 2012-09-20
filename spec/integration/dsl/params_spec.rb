@@ -6,9 +6,7 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
-  before :each do
-    prepare_compiler
-  end
+  prepare_compiler
 
   describe "params" do
 
@@ -30,7 +28,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/foo"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to read params for a resource" do
@@ -51,7 +49,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/asdf"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     context "defined in outer scope" do
@@ -76,7 +74,7 @@ describe Puppet::DSL do
         MANIFEST
         r.resources.map(&:name).should include "Notify/baz"
 
-        r.should be_equivalent_to p
+        r.should be_equivalent_to_catalog p
       end
 
       it "should be overwritten in inner scope" do
@@ -102,7 +100,7 @@ describe Puppet::DSL do
         MANIFEST
         r.resources.map(&:name).should include "Notify/asdf"
 
-        r.should be_equivalent_to p
+        r.should be_equivalent_to_catalog p
       end
 
       it "should not be overwritten in outer scope" do
@@ -136,7 +134,7 @@ describe Puppet::DSL do
           end
         end
 
-        r.should be_equivalent_to p
+        r.should be_equivalent_to_catalog p
 
 
       end

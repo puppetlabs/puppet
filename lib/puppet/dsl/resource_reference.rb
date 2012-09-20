@@ -20,8 +20,8 @@ module Puppet
       # +type+ is the name of resource type and +name+ is a name of a resource.
       ##
       def initialize(typeref, name)
-        @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type, name
-        raise ArgumentError, "resource `#{typeref.type}[#{name}]' not found" unless @resource
+        @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type_name, name
+        raise ArgumentError, "resource `#{typeref.type_name}[#{name}]' not found" unless @resource
       end
 
       ##
@@ -36,7 +36,7 @@ module Puppet
       # Method allows to create overrides for a resource.
       ##
       def override(options = {}, &block)
-        raise ArgumentError if options == {} and block.nil?
+        raise ArgumentError, "no block or options supplied" if options == {} and block.nil?
 
         Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
         scope = Puppet::DSL::Parser.current_scope

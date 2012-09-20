@@ -15,6 +15,7 @@ describe Puppet::Resource do
     end
   end
 
+
   it "should have a :title attribute" do
     Puppet::Resource.new(:user, "foo").title.should == "foo"
   end
@@ -987,5 +988,9 @@ type: File
         :friends         => ['Oprah'],
       })
     end
+  end
+
+  it "should be able to return canonical type name" do
+    Puppet::Resource.canonicalize_type("foo").should == "Foo"
   end
 end

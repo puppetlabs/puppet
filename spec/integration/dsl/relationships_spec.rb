@@ -6,9 +6,7 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
-  before :each do
-    prepare_compiler
-  end
+  prepare_compiler
 
   describe "relationships" do
     it "allows requiring resources" do
@@ -41,7 +39,7 @@ describe Puppet::DSL do
         end
       END
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
   end

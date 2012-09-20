@@ -10,7 +10,6 @@ class Puppet::Resource::Type
   include Puppet::Util::InlineDocs
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
-  include Puppet::DSL::Helper
 
   RESOURCE_KINDS = [:hostclass, :node, :definition]
 
@@ -141,10 +140,6 @@ class Puppet::Resource::Type
 
   def ruby_code
     @ruby_code ||= []
-  end
-
-  def ruby_code=(code)
-    ruby_code << code
   end
 
   def initialize(type, name, options = {})
@@ -375,9 +370,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_ruby_code(scope)
-    ruby_code.each do |c|
-      silence_backtrace { c.evaluate(scope) }
-    end
+    ruby_code.each { |c| c.evaluate(scope, scope.known_resource_types) }
   end
 
   # Split an fq name into a namespace and name

@@ -5,9 +5,7 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
-  before :each do
-    prepare_compiler
-  end
+  prepare_compiler
 
   describe "definitions" do
 
@@ -24,7 +22,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create a resource using definition" do
@@ -45,7 +43,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Foo/bar"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to create a definition with arguments" do
@@ -66,7 +64,7 @@ describe Puppet::DSL do
       MANIFEST
       r.resources.map(&:name).should include "Notify/asdf"
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
 
     end
 

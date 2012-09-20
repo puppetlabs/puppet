@@ -5,9 +5,7 @@ require 'puppet_spec/compiler'
 include PuppetSpec::Compiler
 
 describe Puppet::DSL do
-  before :each do
-    prepare_compiler
-  end
+  prepare_compiler
 
   describe "resources" do
 
@@ -24,7 +22,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to define resource with parameters" do
@@ -40,7 +38,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use defined resource" do
@@ -60,7 +58,7 @@ describe Puppet::DSL do
         foo "foo"
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use defined resource in a node" do
@@ -84,7 +82,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to use defined resource in a class" do
@@ -108,7 +106,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      r.should be_equivalent_to p
+      r.should be_equivalent_to_catalog p
     end
 
     it "should be able to export resources" do
@@ -138,7 +136,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      p.should be_equivalent_to r
+      p.should be_equivalent_to_catalog r
     end
 
     it "should be able to virtualise resources" do
@@ -168,7 +166,7 @@ describe Puppet::DSL do
         end
       MANIFEST
 
-      p.should be_equivalent_to r
+      p.should be_equivalent_to_catalog r
     end
 
     context "references" do
@@ -181,7 +179,7 @@ describe Puppet::DSL do
       end
 
       it "should be able to reference other resources" do
-        compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to @catalog
+        compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to_catalog @catalog
           file "redis.conf", :owner => "root"
 
           service "redis", :require => File["redis.conf"]
@@ -189,7 +187,7 @@ describe Puppet::DSL do
       end
 
       it "should be able to reference other resources using a block" do
-        r = compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to @catalog
+        r = compile_ruby_to_catalog(<<-MANIFEST).should be_equivalent_to_catalog @catalog
           file "redis.conf", :owner => "root"
 
           service "redis" do |s|

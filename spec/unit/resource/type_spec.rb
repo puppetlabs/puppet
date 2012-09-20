@@ -22,16 +22,14 @@ describe Puppet::Resource::Type do
 
   it "assignment operator should append to ruby_code" do
     type = Puppet::Resource::Type.new :hostclass, 'foo'
-    type.ruby_code = "code"
-    type.ruby_code = "more code"
+    type.ruby_code << "code"
+    type.ruby_code << "more code"
     type.ruby_code.should == ["code", "more code"]
   end
 
   it "has ruby_code attribute" do
-    Puppet::Resource::Type.new(:hostclass, "foo").tap do |type|
-      type.ruby_code = "yay"
-      type.ruby_code.should == ["yay"]
-    end
+    type = Puppet::Resource::Type.new(:hostclass, "foo")
+    type.ruby_code.should == []
   end
 
   [:hostclass, :node, :definition].each do |type|
@@ -489,7 +487,7 @@ describe Puppet::Resource::Type do
     describe "and ruby code is provided" do
       it "should evaluate ruby code" do
         code = stub 'code'
-        code.expects(:evaluate).with {|scope| scope.is_a? Puppet::Parser::Scope }
+        code.expects(:evaluate).with {|scope, type_collection| scope.is_a? Puppet::Parser::Scope and type_collection.is_a? Puppet::Resource::TypeCollection }
         @type.stubs(:ruby_code).returns(Array(code))
         @type.evaluate_code(@resource)
       end
@@ -752,7 +750,7 @@ describe Puppet::Resource::Type do
     it "copies other's ruby code if it has no ruby code" do
       dest   = Puppet::Resource::Type.new :hostclass, "bar"
       source = Puppet::Resource::Type.new :hostclass, "foo"
-      source.ruby_code = "bar"
+      source.ruby_code << "bar"
 
       dest.merge source
       dest.ruby_code.should == ["bar"]
@@ -761,8 +759,8 @@ describe Puppet::Resource::Type do
     it "appends other's ruby code if it has ruby code" do
       dest   = Puppet::Resource::Type.new :hostclass, "bar"
       source = Puppet::Resource::Type.new :hostclass, "foo"
-      dest.ruby_code   = "foo"
-      source.ruby_code = "bar"
+      dest.ruby_code   << "foo"
+      source.ruby_code << "bar"
 
       dest.merge source
       dest.ruby_code.should == ["foo", "bar"]
@@ -771,7 +769,7 @@ describe Puppet::Resource::Type do
     it "returns own ruby code if the other has no ruby code" do
       dest   = Puppet::Resource::Type.new :hostclass, "bar", :ruby_code => "foo"
       source = Puppet::Resource::Type.new :hostclass, "foo"
-      dest.ruby_code = "foo"
+      dest.ruby_code << "foo"
 
       dest.merge source
       dest.ruby_code.should == ["foo"]

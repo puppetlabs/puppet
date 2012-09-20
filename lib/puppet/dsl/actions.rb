@@ -1,15 +1,9 @@
 require 'puppet/dsl/resource_decorator'
 require 'puppet/dsl/type_reference'
-require 'puppet/dsl/helper'
+require 'puppet/util/methodhelper'
 
 module Puppet
   module DSL
-
-    # Error type used by Ruby DSL when resource type doesn't exist
-    class InvalidTypeError < Puppet::Error; end
-
-    # Error type used by Ruby DSL when Puppet function doesn't exist
-    class InvalidFunctionError < Puppet::Error; end
 
     ##
     # This class is created for ease of debugging.
@@ -19,7 +13,7 @@ module Puppet
     # This also allows to limit the number of methods existing in that class.
     ##
     class Actions
-      include Puppet::DSL::Helper
+      include Puppet::Util::MethodHelper
 
       ##
       # Initializes Puppet::DSL::Actions instance.
@@ -44,11 +38,11 @@ module Puppet
       # Checks whether resource type exists
       ##
       def is_resource_type?(name)
-        type = canonicalize_type(name)
+        type = Puppet::Resource.canonicalize_type(name)
         !!(["Node", "Class"].include? type or
            Puppet::Type.type type or
-           Parser.current_scope.known_resource_types.find_definition '', type or
-           Parser.current_scope.known_resource_types.find_hostclass  '', type)
+           Parser.known_resource_types.find_definition '', type or
+           Parser.known_resource_types.find_hostclass  '', type)
       end
 
       ##
@@ -67,89 +61,61 @@ module Puppet
       end
 
       ##
-      # Helper to validate options. Example:
-      #
-      #   validate_options [:arguments, :inherits], options
-      #
-      # It expects list of valid options and a hash to validate as a last
-      # argument.
-      ##
-      def validate_options(allow, options = {})
-        options.each do |k, _|
-          unless Array(allow).include? k
-            raise ArgumentError, "unrecognized option #{k}"
-          end
-        end
-      end
-
-      ##
       # Creates a new Puppet node. All arguments have to be passed.
-      # Nesting is the nesting of scopes in the Ruby DSL,
-      # Code is a Ruby block of code for that node,
-      # Options is a hash of options passed when declaring a node,
-      # Name is the name of created node.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Nodes can be only created on the top level scope
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node
       ##
-      def create_node(name, options, code, nesting)
+      def create_node(name, options, nesting, &code)
         raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
-        # do nothing if hostclass already exist (init.rb gets parser multiple
-        # times sometimes
-        # MLEN:FIXME this probable should get removed somehow
-        return if Parser.current_scope.known_resource_types.hostclass name
-
         validate_options :inherits, options
 
-        params = {}
-        params[:parent] = options[:inherits].to_s if options[:inherits]
-
         name = name.to_s unless name.is_a? Regexp
-        node = Puppet::Resource::Type.new :node, name, params
-        node.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
+        node = Puppet::Resource::Type.new :node, name, :parent => options[:inherits].to_s
+        node.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        Parser.current_scope.known_resource_types.add_node node
+        Parser.known_resource_types.add_node node
       end
 
       ##
       # Creates a new hostclass. All arguments are required.
-      # Nesting is the nesting of scopes in the Ruby DSL,
-      # Code is a ruby block passed when calling hostclass method in DSL,
-      # Options is a has of settings for a hostclass,
-      # Name is the name for the new hostclass.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Classes can be only created on the top level scope.
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node.
       ##
-      def create_hostclass(name, options, code, nesting)
+      def create_hostclass(name, options, nesting, &code)
         raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
         validate_options [:inherits, :arguments], options
 
-        params = {}
-        params[:arguments] = options[:arguments]     if options[:arguments]
-        params[:parent]    = options[:inherits].to_s if options[:inherits]
+        hostclass = Puppet::Resource::Type.new :hostclass, name.to_s, :arguments => options[:arguments], :parent => options[:inherits].to_s
+        hostclass.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        hostclass = Puppet::Resource::Type.new :hostclass, name.to_s, params
-        hostclass.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
-
-        Parser.current_scope.known_resource_types.add_hostclass hostclass
+        Parser.known_resource_types.add_hostclass hostclass
       end
 
       ##
       # Creates new definition. All arguments are required.
-      # Nesting is the nesting of scopes in Ruby DSL,
-      # Code is a ruby block passed to the DSL method,
-      # Options is a hash of arguments for the definition,
-      # Name is the name for the new definition.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Definitions can be only created on the top level scope.
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node
       ##
-      def create_definition(name, options, code, nesting)
+      def create_definition(name, options, nesting, &code)
         raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
         validate_options :arguments, options
 
         definition = Puppet::Resource::Type.new :definition, name.to_s, options
-        definition.ruby_code = Context.new code, :filename => @filename, :nesting => nesting + 1
+        definition.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
 
-        Parser.current_scope.known_resource_types.add_definition definition
+        Parser.known_resource_types.add_definition definition
       end
 
       ##
@@ -162,7 +128,6 @@ module Puppet
       def create_resource(type, args, options, code)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise Puppet::DSL::InvalidTypeError, "resource type #{type} not found" unless is_resource_type? type
 
         ResourceDecorator.new(options, &code) if code
 
@@ -176,7 +141,7 @@ module Puppet
 
           case type
           when :class
-            klass = scope.known_resource_types.find_hostclass '', name
+            klass = Parser.known_resource_types.find_hostclass '', name
             resource = klass.ensure_in_catalog scope, options
           else
             resource = Puppet::Parser::Resource.new type, name,
@@ -189,7 +154,7 @@ module Puppet
             resource.virtual  = true if virtualizing? or options[:virtual]
             resource.exported = true if exporting?    or options[:export]
 
-            definition = scope.known_resource_types.definition name
+            definition = Parser.known_resource_types.definition name
             definition.instantiate_resource scope, resource if definition
 
             scope.compiler.add_resource scope, resource
@@ -200,14 +165,12 @@ module Puppet
 
       ##
       # Calls a puppet function. It behaves exactly the same way as
-      # call_function method in Puppet::DSL::Context with one exception: args
-      # must be an array.
+      # call_function method in Puppet::DSL::Context.
       ##
-      def call_function(name, args)
+      def call_function(name, *args)
         # when performing type import the scope is nil
-        raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
-        raise Puppet::DSL::InvalidFunctionError, "calling undefined function #{name}(#{args.join ', '})" unless is_function? name
-        Parser.current_scope.send name, args
+        raise NoMethodError, "functions can't be called in top level scope when importing a manifest" if Parser.current_scope.nil?
+        Parser.current_scope.send name, *args
       end
 
       ##

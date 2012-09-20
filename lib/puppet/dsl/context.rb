@@ -28,9 +28,9 @@ module Puppet
       # For further information look at lib/puppet/dsl/type_reference.rb
       ##
       def self.const_missing(name)
-        proxy = ::Puppet::DSL::Actions.new "dsl_main"
-        ref = proxy.type_reference name
-        const_set name, ref unless proxy.is_resource_type? name
+        @proxy ||= ::Puppet::DSL::Actions.new "dsl_main"
+        ref = @proxy.type_reference name
+        const_set name, ref unless @proxy.is_resource_type? name
         ref
       end
 
@@ -40,8 +40,8 @@ module Puppet
       # The algorithm is identical to one used in +respond_to?+ method.
       ##
       def self.const_defined?(name)
-        proxy = ::Puppet::DSL::Actions.new "dsl_main"
-        proxy.is_resource_type? name
+        @proxy ||= ::Puppet::DSL::Actions.new "dsl_main"
+        @proxy.is_resource_type? name
       end
 
       ##
@@ -59,8 +59,8 @@ module Puppet
       # resource.
       ##
       def initialize(code, options = {})
-        @nesting  = options.fetch(:nesting)  { 0          }
-        @filename = options.fetch(:filename) { "dsl_main" }
+        @nesting  = options.fetch :nesting,  0
+        @filename = options.fetch :filename, "dsl_main"
         @proxy    = ::Puppet::DSL::Actions.new @filename
         @code     = code
       end
@@ -69,10 +69,12 @@ module Puppet
       # Method is called when evaluating resource types.
       # It executes ruby code in context of current scope.
       ##
-      def evaluate(scope)
+      def evaluate(scope, type_collection)
         ::Puppet::DSL::Parser.add_scope scope
+        ::Puppet::DSL::Parser.known_resource_types = type_collection
         instance_eval &@code
       ensure
+        ::Puppet::DSL::Parser.known_resource_types = nil
         ::Puppet::DSL::Parser.remove_scope
       end
 
@@ -114,7 +116,7 @@ module Puppet
       #
       ##
       def node(name, options = {}, &block)
-        @proxy.create_node(name, options, block, @nesting)
+        @proxy.create_node(name, options, @nesting, &block)
       end
 
       ##
@@ -138,7 +140,7 @@ module Puppet
       #
       ##
       def hostclass(name, options = {}, &block)
-        @proxy.create_hostclass(name, options, block, @nesting)
+        @proxy.create_hostclass(name, options, @nesting, &block)
       end
 
       ##
@@ -160,7 +162,7 @@ module Puppet
       #
       ##
       def define(name, options = {}, &block)
-        @proxy.create_definition(name, options, block, @nesting)
+        @proxy.create_definition(name, options, @nesting, &block)
       end
 
       ##
@@ -215,14 +217,15 @@ module Puppet
         if @proxy.is_resource_type? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a, &b|
-            create_resource name, *a, &b
+            options = a.last.is_a?(::Hash) ? a.pop : {}
+            @proxy.create_resource(name, a, options, b)
           end
 
           __send__ name, *args, &block
         elsif @proxy.is_function? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a|
-            call_function name, *a
+            @proxy.call_function name, *a
           end
 
           __send__ name, *args
@@ -235,7 +238,7 @@ module Puppet
       # Returns string description of context
       ##
       def inspect
-        @filename.to_s
+        @filename.inspect
       end
 
       ##
@@ -264,8 +267,7 @@ module Puppet
       #
       ##
       def create_resource(type, *args, &block)
-        options = args.last.is_a?(::Hash) ? args.pop : {}
-        @proxy.create_resource(type, args, options, block)
+        __send__ type, *args, &block
       end
 
       ##
@@ -281,7 +283,7 @@ module Puppet
       #
       ##
       def call_function(name, *args)
-        @proxy.call_function(name, args)
+        __send__ name, *args
       end
 
       ##

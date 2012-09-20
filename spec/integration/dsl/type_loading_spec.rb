@@ -8,26 +8,24 @@ include PuppetSpec::Modules
 include PuppetSpec::Files
 
 describe Puppet::DSL do
-  before :all do
-    @modulebase = File.join(tmpdir("base"), "modules")
-    FileUtils.mkdir_p(@modulebase)
-
-    @module = PuppetSpec::Modules.create "module", @modulebase
-
-    Puppet[:modulepath] = @modulebase
-  end
-
   def mk_manifest(file, content)
-    name = @module.name + "::" + file.gsub("/", "::").split(".")[0]
-    path = File.join(@modulebase, @module.name, "manifests", file)
+    name = self.module.name + "::" + file.gsub("/", "::").split(".")[0]
+    path = File.join(modulebase, self.module.name, "manifests", file)
     FileUtils.mkdir_p(File.split(path)[0])
 
     File.open(path, "w") { |f| f.print content }
   end
 
-  before :each do
-    prepare_compiler
+  prepare_compiler
+
+  let(:modulebase) do
+    base = File.join(tmpdir("base"), "modules")
+    FileUtils.mkdir_p(base)
+    Puppet[:modulepath] = base
+    base
   end
+
+  let(:module) { PuppetSpec::Modules.create "module", modulebase }
 
   describe "type loader" do
 

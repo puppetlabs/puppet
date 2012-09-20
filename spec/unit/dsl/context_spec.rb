@@ -3,15 +3,11 @@ require 'puppet_spec/dsl'
 
 require 'puppet/dsl/parser'
 require 'puppet/dsl/context'
-require 'puppet/parser/null_scope'
 
 include PuppetSpec::DSL
 
 describe Puppet::DSL::Context do
-
-  before :each do
-    prepare_compiler_and_scope
-  end
+  prepare_compiler_and_scope_for_evaluation
 
   context "when creating resources" do
 
@@ -20,12 +16,16 @@ describe Puppet::DSL::Context do
         evaluate_in_context do
           create_resource :foobar, "test"
         end
-      end.should raise_error Puppet::DSL::InvalidTypeError
+      end.should raise_error NoMethodError
     end
 
     it "should raise NoMethodError when creating resources in a imported file on top level scope" do
       lambda do
-        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
+        scope = mock
+        scope.stubs(:nil?).returns true
+        scope.stubs(:known_resource_types).returns nil
+
+        evaluate_in_context :scope => scope do
           create_resource :foobar, "test"
         end
       end.should raise_error NoMethodError
@@ -35,7 +35,7 @@ describe Puppet::DSL::Context do
       evaluate_in_context do
         create_resource :file, "/tmp/test"
       end
-      @compiler.resources.map {|r| r.name}.should include "/tmp/test"
+      compiler.resources.map {|r| r.name}.should include "/tmp/test"
     end
 
     it "should return an array of created resources" do
@@ -152,36 +152,20 @@ describe Puppet::DSL::Context do
   end
 
   context "when calling a function" do
-    it "should check whether the function is valid" do
-      Puppet::Parser::Functions.expects(:function).
-                                at_least_once.
-                                with(:notice).
-                                returns true
-
-      evaluate_in_context do
-        call_function :notice, "foo"
-      end
-    end
-
     it "raises NoMethodError when calling functions in a imported file on top level scope" do
       lambda do
-        evaluate_in_context :scope => Puppet::Parser::NullScope.new(nil) do
+        scope = mock
+        scope.stubs(:nil?).returns true
+        scope.stubs :known_resource_types
+        evaluate_in_context :scope => scope do
           call_function :foobar
         end
       end.should raise_error NoMethodError
     end
 
-    it "should raise InvalidFunctionError if the function is invalid" do
-      lambda do
-        evaluate_in_context do
-          call_function :foobar
-        end
-      end.should raise_error Puppet::DSL::InvalidFunctionError
-    end
-
     it "should call function with passed arguments" do
       Puppet::Parser::Functions.stubs(:function).returns true
-      @scope.expects(:foobar).with [1, 2, 3]
+      scope.expects(:foobar).with(1, 2, 3)
       evaluate_in_context do
         call_function :foobar, 1, 2, 3
       end
@@ -189,7 +173,7 @@ describe Puppet::DSL::Context do
 
     context "with method_missing" do
       it "should work" do
-        @scope.expects :notice
+        scope.expects :notice
         evaluate_in_context do
           notice
         end
@@ -232,7 +216,7 @@ describe Puppet::DSL::Context do
         define :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -298,7 +282,7 @@ describe Puppet::DSL::Context do
         define(:foo) { notify params[:name] }
         foo "bar"
       end
-      @compiler.findresource("Foo[bar]").should_not be nil
+      compiler.findresource("Foo[bar]").should_not be nil
     end
 
 
@@ -343,7 +327,7 @@ describe Puppet::DSL::Context do
         node "foo" do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -414,7 +398,7 @@ describe Puppet::DSL::Context do
         hostclass :foo do
           expected = true
         end
-      end.ruby_code.each {|c| c.evaluate @scope}
+      end.ruby_code.each {|c| c.evaluate scope, scope.known_resource_types}
 
       expected.should be true
     end
@@ -493,7 +477,7 @@ describe Puppet::DSL::Context do
         hostclass(:foo) { notify params[:name] }
         use :foo
       end
-      @compiler.findresource("Class[foo]").should_not be nil
+      compiler.findresource("Class[foo]").should_not be nil
     end
 
   end
@@ -523,7 +507,7 @@ describe Puppet::DSL::Context do
     it "should return type reference for a given type" do
       evaluate_in_context do
         Puppet::DSL::Context::Notify
-      end.type.should == "Notify"
+      end.type_name.should == "Notify"
     end
   end
 
@@ -678,13 +662,13 @@ describe Puppet::DSL::Context do
     describe "#inspect" do
       it "returns manifest filename if it is set" do
         filename = "foo.rb"
-        evaluate_in_context :filename => filename do
+        evaluate_in_context(:filename => filename) {
           inspect
-        end.should be_equal filename
+        }.should == filename.inspect
       end
 
       it "returns 'dsl_main' when no filename is set" do
-        evaluate_in_context { inspect }.should == "dsl_main"
+        evaluate_in_context { inspect }.should == "dsl_main".inspect
       end
 
     end
