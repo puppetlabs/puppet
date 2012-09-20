@@ -62,10 +62,10 @@ module Puppet
 
       ##
       # Creates a new Puppet node. All arguments have to be passed.
-      # Nesting is the nesting of scopes in the Ruby DSL,
-      # Code is a Ruby block of code for that node,
-      # Options is a hash of options passed when declaring a node,
-      # Name is the name of created node.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Nodes can be only created on the top level scope
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node
       ##
       def create_node(name, options, nesting, &code)
         raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
@@ -82,10 +82,10 @@ module Puppet
 
       ##
       # Creates a new hostclass. All arguments are required.
-      # Nesting is the nesting of scopes in the Ruby DSL,
-      # Code is a ruby block passed when calling hostclass method in DSL,
-      # Options is a has of settings for a hostclass,
-      # Name is the name for the new hostclass.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Classes can be only created on the top level scope.
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node.
       ##
       def create_hostclass(name, options, nesting, &code)
         raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
@@ -101,10 +101,10 @@ module Puppet
 
       ##
       # Creates new definition. All arguments are required.
-      # Nesting is the nesting of scopes in Ruby DSL,
-      # Code is a ruby block passed to the DSL method,
-      # Options is a hash of arguments for the definition,
-      # Name is the name for the new definition.
+      # Nesting is the number of nested blocks in Ruby DSL (this can be
+      # basically 0 or 1). Definitions can be only created on the top level scope.
+      # Options is a hash with parameters provided for the node.
+      # Code is a ruby block that will be evaluated as the body of the node
       ##
       def create_definition(name, options, nesting, &code)
         raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
