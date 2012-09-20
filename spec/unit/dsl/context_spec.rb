@@ -165,7 +165,7 @@ describe Puppet::DSL::Context do
 
     it "should call function with passed arguments" do
       Puppet::Parser::Functions.stubs(:function).returns true
-      scope.expects(:foobar).with [1, 2, 3]
+      scope.expects(:foobar).with(1, 2, 3)
       evaluate_in_context do
         call_function :foobar, 1, 2, 3
       end

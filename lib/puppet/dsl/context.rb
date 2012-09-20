@@ -225,7 +225,7 @@ module Puppet
         elsif @proxy.is_function? name
           # Creating cached version of a method for future use
           define_singleton_method name do |*a|
-            @proxy.call_function name, a
+            @proxy.call_function name, *a
           end
 
           __send__ name, *args

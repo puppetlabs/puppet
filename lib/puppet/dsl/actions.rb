@@ -165,13 +165,12 @@ module Puppet
 
       ##
       # Calls a puppet function. It behaves exactly the same way as
-      # call_function method in Puppet::DSL::Context with one exception: args
-      # must be an array.
+      # call_function method in Puppet::DSL::Context.
       ##
-      def call_function(name, args)
+      def call_function(name, *args)
         # when performing type import the scope is nil
         raise NoMethodError, "functions can't be called in top level scope when importing a manifest" if Parser.current_scope.nil?
-        Parser.current_scope.send name, args
+        Parser.current_scope.send name, *args
       end
 
       ##
