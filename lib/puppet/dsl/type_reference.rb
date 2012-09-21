@@ -1,7 +1,7 @@
 require 'puppet/parser/collector'
 require 'puppet/parser/resource/param'
 require 'puppet/dsl/resource_reference'
-require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/hash_decorator'
 require 'puppet/dsl/parser'
 
 module Puppet
@@ -67,7 +67,7 @@ module Puppet
       ##
       def defaults(options = {}, &block)
         if options != {} or block
-          Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
+          Puppet::DSL::HashDecorator.new(options, &block) unless block.nil?
 
           # for compatibility with Puppet parser
           options = options.map do |k, v|

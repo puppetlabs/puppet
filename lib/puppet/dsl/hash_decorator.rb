@@ -10,7 +10,7 @@ module Puppet
     #
     # This class inherits from BlankSlate
     ##
-    class ResourceDecorator < BlankSlate
+    class HashDecorator < BlankSlate
 
       ##
       # Initializes new object.

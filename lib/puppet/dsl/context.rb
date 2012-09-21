@@ -253,7 +253,7 @@ module Puppet
       # The last argument can be a hash with parameters for the resources.
       # Parameters can be also set by passing a block. (See an example below)
       # For further information on block syntax please look at
-      # lib/puppet/dsl/resource_decorator.rb
+      # lib/puppet/dsl/hash_decorator.rb
       # Raises NoMethodError when no valid resource type is found.
       #
       # Returns an array of created resources.

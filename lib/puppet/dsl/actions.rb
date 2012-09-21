@@ -1,4 +1,4 @@
-require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/hash_decorator'
 require 'puppet/dsl/type_reference'
 require 'puppet/util/methodhelper'
 
@@ -129,7 +129,7 @@ module Puppet
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
 
-        ResourceDecorator.new(options, &code) if code
+        HashDecorator.new(options, &code) if code
 
         Array(args).flatten.map do |name|
           ##

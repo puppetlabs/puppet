@@ -1,4 +1,4 @@
-require 'puppet/dsl/resource_decorator'
+require 'puppet/dsl/hash_decorator'
 require 'puppet/dsl/parser'
 require 'puppet/parser/resource/param'
 require 'puppet/parser/resource'
@@ -25,7 +25,7 @@ module Puppet
       end
 
       ##
-      # This method is used by ResourceDecorator for stringifying references.
+      # This method is used by HashDecorator for stringifying references.
       ##
       def reference
         @resource.to_s
@@ -38,7 +38,7 @@ module Puppet
       def override(options = {}, &block)
         raise ArgumentError, "no block or options supplied" if options == {} and block.nil?
 
-        Puppet::DSL::ResourceDecorator.new(options, &block) unless block.nil?
+        Puppet::DSL::HashDecorator.new(options, &block) unless block.nil?
         scope = Puppet::DSL::Parser.current_scope
 
         # for compatibility with Puppet parser
