@@ -1,6 +1,5 @@
 # Where we store helper methods related to, um, methods.
 module Puppet::Util::MethodHelper
-  extend self
 
   def requiredopts(*names)
     names.each do |name|
@@ -42,7 +41,7 @@ module Puppet::Util::MethodHelper
   ##
   def validate_options(allow, options = {})
     options.each do |k, _|
-      unless Array(allow).include? k
+      unless allow.include? k
         raise ArgumentError, "unrecognized option #{k}"
       end
     end
