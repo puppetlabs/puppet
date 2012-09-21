@@ -63,7 +63,6 @@ def glob(list)
   g = list.map { |i| Dir.glob(i) }
   g.flatten!
   g.compact!
-  g.reject! { |e| e =~ /\.svn/ }
   g
 end
 
