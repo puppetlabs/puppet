@@ -69,10 +69,9 @@ end
 
 # Set these values to what you want installed.
 configs = glob(%w{conf/auth.conf})
-sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
-rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
-ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
+rdoc  = glob(%w{bin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
@@ -219,8 +218,6 @@ def prepare_installation
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
-    opts.on('--sbindir[=OPTIONAL]', 'Installation directory for system binaries', 'overrides Config::CONFIG["sbindir"]') do |sbindir|
-      InstallOptions.sbindir = sbindir
     end
     opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides Config::CONFIG["sitelibdir"]') do |sitelibdir|
       InstallOptions.sitelibdir = sitelibdir
@@ -252,14 +249,12 @@ def prepare_installation
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
   libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
 
-  # Mac OS X 10.5 and higher declare bindir and sbindir as
+  # Mac OS X 10.5 and higher declare bindir
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
-  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
   # which is not generally where people expect executables to be installed
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     Config::CONFIG['bindir'] = "/usr/bin"
-    Config::CONFIG['sbindir'] = "/usr/sbin"
   end
 
   if not InstallOptions.configdir.nil?
@@ -280,12 +275,6 @@ def prepare_installation
     bindir = InstallOptions.bindir
   else
     bindir = Config::CONFIG['bindir']
-  end
-
-  if not InstallOptions.sbindir.nil?
-    sbindir = InstallOptions.sbindir
-  else
-    sbindir = Config::CONFIG['sbindir']
   end
 
   if not InstallOptions.sitelibdir.nil?
@@ -321,20 +310,17 @@ def prepare_installation
 
   configdir = join(destdir, configdir)
   bindir = join(destdir, bindir)
-  sbindir = join(destdir, sbindir)
   mandir = join(destdir, mandir)
   sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
   FileUtils.makedirs(bindir)
-  FileUtils.makedirs(sbindir)
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
 
   InstallOptions.site_dir = sitelibdir
   InstallOptions.config_dir = configdir
   InstallOptions.bin_dir  = bindir
-  InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
   InstallOptions.man_dir  = mandir
 end
@@ -456,7 +442,6 @@ prepare_installation
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
 do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
-do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
 do_man(man) unless $operatingsystem == "windows"
