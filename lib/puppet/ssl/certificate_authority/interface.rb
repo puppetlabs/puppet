@@ -112,7 +112,7 @@ module Puppet
           glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
 
           name = host.inspect.ljust(width)
-          fingerprint = cert.digest(@digest)
+          fingerprint = cert.digest(@digest).to_s
 
           explanation = "(#{verify_error})" if verify_error
 
