@@ -47,6 +47,8 @@ module Puppet::Util::MethodHelper
       end
     end
   rescue Exception => e
+    # removing +validate_options+ from the backtrace, because the error is one
+    # frame above it and it is just helping to find it.
     e.set_backtrace e.backtrace[1..-1]
     raise e
   end
