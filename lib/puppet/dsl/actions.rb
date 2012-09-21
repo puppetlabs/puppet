@@ -151,7 +151,7 @@ module Puppet
             )
 
             options.each do |key, val|
-              resource[key] = get_resource(val)
+              resource[key] = mangle_value(val)
             end
 
             resource.virtual  = true if virtualizing? or options[:virtual]
@@ -207,7 +207,9 @@ module Puppet
       ##
       def export_resources(resources)
         resources.flatten.each do |r|
-          get_resource(r).exported = true
+          resource = get_resource(r)
+          raise Puppet::Error, "resource #{r} not found in catalog" if resource.nil?
+          resource.exported = true
         end
       end
 
@@ -217,7 +219,9 @@ module Puppet
       ##
       def virtualize_resources(resources)
         resources.flatten.each do |r|
-          get_resource(r).virtual = true
+          resource = get_resource(r)
+          raise Puppet::Error, "resource #{r} not found in catalog" if resource.nil?
+          resource.virtual = true
         end
       end
 
@@ -233,14 +237,16 @@ module Puppet
         when ResourceReference
           reference.resource
         when String
-          # Try to look up a resource by String, if it fails (function returns
-          # nil) just return the string
-          resource = Puppet::DSL::Parser.current_scope.findresource(reference)
-          resource ||= reference
-        else
-          # All values have to be stringified before passing to Puppet Core
-          reference.to_s
+          Puppet::DSL::Parser.current_scope.findresource(reference)
         end
+      end
+
+      ##
+      # Converts parameter to be safe for Puppet internals.
+      ##
+      def mangle_value(param)
+        resource = get_resource(param)
+        resource || param.to_s
       end
 
     end

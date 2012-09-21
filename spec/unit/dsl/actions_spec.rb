@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet_spec/dsl'
-
 require 'puppet/dsl/actions'
 
 include PuppetSpec::DSL
@@ -86,13 +85,9 @@ describe Puppet::DSL::Actions do
       evaluate_in_scope { subject.send(:get_resource, "File[foo]").should == res }
     end
 
-    it "should return a string when the string reference doesn't exist" do
+    it "should return nil when the string reference doesn't exist" do
       reference = "File[foo]"
-      evaluate_in_scope { subject.send(:get_resource, reference).should == reference }
-    end
-
-    it "should stringify the parameter when resource can't be found" do
-      evaluate_in_scope { subject.send(:get_resource, 3).should == "3" }
+      evaluate_in_scope { subject.send(:get_resource, reference).should == nil }
     end
   end
 
@@ -106,7 +101,7 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#create_node" do
-    it "raises NoMethodError when called from invalid nesting" do
+    it "raises Puppet::Error when called from invalid nesting" do
       lambda do
         subject.create_node "foo", {}, 1 do
         end
@@ -165,7 +160,7 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#create_hostclass" do
-    it "raises NoMethodError when called from invalid nesting" do
+    it "raises Puppet::Error when called from invalid nesting" do
       lambda do
         subject.create_hostclass :foo, {}, 1 do
         end
@@ -218,7 +213,7 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#create_definition" do
-    it "raises NoMethodError when called from invalid nesting" do
+    it "raises Puppet::Error when called from invalid nesting" do
       lambda do
         subject.create_definition :foo, {}, 1 do
         end
@@ -271,7 +266,7 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#create_resource" do
-    it "raises NoMethodError when importing" do
+    it "raises Puppet::Error when importing" do
       scope = mock
       scope.stubs(:nil?).returns true
       scope.stubs(:known_resource_types).returns nil
@@ -349,10 +344,9 @@ describe Puppet::DSL::Actions do
   end
 
   describe "#call_function" do
-    it "raises NoMethodError when importing" do
-      scope = mock
-      scope.stubs(:nil?).returns true
-      scope.stubs(:known_resource_types).returns nil
+    it "raises Puppet::Error when importing" do
+      scope = mock 'scope', :nil? => true, :known_resource_types => nil
+
       evaluate_in_scope :scope => scope do
         lambda { subject.call_function "notice", [] }.should raise_error Puppet::Error
       end
@@ -405,6 +399,64 @@ describe Puppet::DSL::Actions do
     subject.virtualizing?.should be true
     subject.virtualizing = false
     subject.virtualizing?.should be false
+  end
+
+  describe "#export_resources" do
+    it "should raise Puppet::Error when resource can't be find" do
+      evaluate_in_scope do
+        lambda do
+          subject.export_resources ["File[foobarbaz]"]
+        end.should raise_error Puppet::Error
+      end
+    end
+
+    it "should set exporting flag to true on a resource" do
+      evaluate_in_scope do
+        resource = Puppet::Parser::Resource.new "File", "foo", :scope => scope
+        subject.export_resources [resource]
+        resource.exported.should be true
+      end
+    end
+  end
+
+  describe "#virtualize_resources" do
+    it "should raise Puppet::Error when resource can't be find" do
+      evaluate_in_scope do
+        lambda do
+          subject.virtualize_resources ["File[foobarbaz]"]
+        end.should raise_error Puppet::Error
+      end
+    end
+
+    it "should set virtualizeing flag to true on a resource" do
+      evaluate_in_scope do
+        resource = Puppet::Parser::Resource.new "File", "foo", :scope => scope
+        subject.virtualize_resources [resource]
+        resource.virtual.should be true
+      end
+    end
+  end
+
+  describe "#mangle_value" do
+    it "should return a resource when passed a resource" do
+      res = Puppet::Resource.new "foo", "bar"
+      subject.send(:mangle_value, res).should == res
+    end
+
+    it "should return a resource when passed a resource reference" do
+      res = evaluate_in_context { file "foo" }.first
+      ref = evaluate_in_context { type("file")["foo"] }
+      subject.send(:mangle_value, ref).should == res
+    end
+
+    it "should return a resource when passed a string reference" do
+      res = evaluate_in_context { file "foo" }.first
+      evaluate_in_scope { subject.send(:get_resource, "File[foo]").should == res }
+    end
+
+    it "should return a string when passed any other object" do
+      subject.send(:mangle_value, 3).should == "3"
+    end
   end
 
 end
