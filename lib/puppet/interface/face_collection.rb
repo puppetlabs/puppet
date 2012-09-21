@@ -126,9 +126,7 @@ module Puppet::Interface::FaceCollection
       require path
       return true
     rescue ScriptError => detail
-      if detail =~ /file -- #{path}$/
-        Puppet.debug "Could not `require \"#{path}\"` (Using the $LOAD_PATH) #{detail}"
-      else
+      if not detail.message =~ %r{file -- puppet/face/([^/]+/)?#{name}$}
         Puppet.err("Failed to load face #{name}:\n#{detail}")
       end
     end
@@ -137,8 +135,9 @@ module Puppet::Interface::FaceCollection
 
     if absolute_path = module_apps[name.to_s]['face'] then
       begin
-        require absolute_path
-        Puppet.debug "Loaded '#{absolute_path}' (Using absolute path)"
+        if require absolute_path then
+          Puppet.debug "Loaded '#{absolute_path}' (Using absolute path)"
+        end
         return true
       rescue LoadError => detail
         Puppet.debug "Unable to find face '#{name}'.  #{detail}"
