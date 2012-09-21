@@ -37,12 +37,12 @@ module Puppet
       #
       ##
       def method_missing(name, *args)
-        if name[-1] == '='
+        if name.to_s[-1] == '='
           define_singleton_method name do |*a|
             value = a.first
             value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
             value = value.to_s  unless value.is_a? ::Puppet::Resource
-            @resource[name[0...-1].to_sym] = value
+            @resource[name.to_s[0...-1].to_sym] = value
           end
 
           self.__send__ name, *args
