@@ -49,6 +49,8 @@ module Puppet
       # Checks whether Puppet function exists
       ##
       def is_function?(name)
+        # Mangle method name for puppet internals
+        name = name.to_s[9..-1] if name.to_s[0...9] == "function_"
         !!Puppet::Parser::Functions.function(name)
       end
 
@@ -68,10 +70,10 @@ module Puppet
       # Code is a ruby block that will be evaluated as the body of the node
       ##
       def create_node(name, options, nesting, &code)
-        raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
+        raise Puppet::Error, "nodes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
-        validate_options :inherits, options
+        validate_options [:inherits], options
 
         name = name.to_s unless name.is_a? Regexp
         node = Puppet::Resource::Type.new :node, name, :parent => options[:inherits].to_s
@@ -88,7 +90,7 @@ module Puppet
       # Code is a ruby block that will be evaluated as the body of the node.
       ##
       def create_hostclass(name, options, nesting, &code)
-        raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
+        raise Puppet::Error, "classes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
         validate_options [:inherits, :arguments], options
@@ -107,10 +109,10 @@ module Puppet
       # Code is a ruby block that will be evaluated as the body of the node
       ##
       def create_definition(name, options, nesting, &code)
-        raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
+        raise Puppet::Error, "definitions can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
 
-        validate_options :arguments, options
+        validate_options [:arguments], options
 
         definition = Puppet::Resource::Type.new :definition, name.to_s, options
         definition.ruby_code << Context.new(code, :filename => @filename, :nesting => nesting + 1)
@@ -127,7 +129,7 @@ module Puppet
       ##
       def create_resource(type, args, options, code)
         # when performing type import the scope is nil
-        raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
+        raise Puppet::Error, "Top level resource definitions in Ruby DSL are only available in `site.rb' or equivalent. They are not available from any imported manifest." if Parser.current_scope.nil?
 
         HashDecorator.new(options, &code) if code
 
@@ -144,9 +146,10 @@ module Puppet
             klass = Parser.known_resource_types.find_hostclass '', name
             resource = klass.ensure_in_catalog scope, options
           else
-            resource = Puppet::Parser::Resource.new type, name,
-              :scope => scope,
-              :source => scope.source
+            resource = Puppet::Parser::Resource.new(
+              type, name, :scope => scope, :source => scope.source
+            )
+
             options.each do |key, val|
               resource[key] = get_resource(val)
             end
@@ -169,8 +172,14 @@ module Puppet
       ##
       def call_function(name, *args)
         # when performing type import the scope is nil
-        raise NoMethodError, "functions can't be called in top level scope when importing a manifest" if Parser.current_scope.nil?
-        Parser.current_scope.send name, *args
+        raise Puppet::Error, "Top level function calls in Ruby DSL are only available in `site.rb' or equivalend. They are not available from any imported manifest." if Parser.current_scope.nil?
+
+        # Mangle method name for puppet internals
+        name = "function_#{name}" unless name.to_s[0...9] == "function_"
+
+        # No, this is not an error. Scope#function_* expects an array
+        # as the second argument.
+        Parser.current_scope.send name, args
       end
 
       ##

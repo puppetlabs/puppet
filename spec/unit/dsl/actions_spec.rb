@@ -110,7 +110,7 @@ describe Puppet::DSL::Actions do
       lambda do
         subject.create_node "foo", {}, 1 do
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "raises ArgumentError when code is nil" do
@@ -169,7 +169,7 @@ describe Puppet::DSL::Actions do
       lambda do
         subject.create_hostclass :foo, {}, 1 do
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "raises ArgumentError when code is nil" do
@@ -222,7 +222,7 @@ describe Puppet::DSL::Actions do
       lambda do
         subject.create_definition :foo, {}, 1 do
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "raises ArgumentError when code is nil" do
@@ -276,7 +276,7 @@ describe Puppet::DSL::Actions do
       scope.stubs(:nil?).returns true
       scope.stubs(:known_resource_types).returns nil
       evaluate_in_scope :scope => scope do
-        lambda { subject.create_resource :notify, "message", {}, nil }.should raise_error NoMethodError
+        lambda { subject.create_resource :notify, "message", {}, nil }.should raise_error Puppet::Error
       end
     end
 
@@ -354,14 +354,14 @@ describe Puppet::DSL::Actions do
       scope.stubs(:nil?).returns true
       scope.stubs(:known_resource_types).returns nil
       evaluate_in_scope :scope => scope do
-        lambda { subject.call_function "notice", [] }.should raise_error NoMethodError
+        lambda { subject.call_function "notice", [] }.should raise_error Puppet::Error
       end
     end
 
     it "calls the function and passes the array of arguments when it exists" do
-      scope.expects(:notice).with(["foo", "bar"])
+      scope.expects(:function_notice).with(["foo", "bar"])
       evaluate_in_scope do
-        subject.call_function "notice", ["foo", "bar"]
+        subject.call_function "notice", "foo", "bar"
       end
     end
   end
@@ -371,13 +371,13 @@ describe Puppet::DSL::Actions do
 
     it "raises ArgumentError when invalid options are passed" do
       lambda do
-        subject.validate_options :asdf, attributes
+        subject.validate_options [:asdf], attributes
       end.should raise_error ArgumentError
     end
 
     it "removes itself from the backtraces" do
       begin
-        subject.validate_options :asdf, attributes
+        subject.validate_options [:asdf], attributes
       rescue => e
         e.backtrace.first.should_not =~ /validate_options/
       end
@@ -386,7 +386,7 @@ describe Puppet::DSL::Actions do
 
     it "does nothing when all attributes are valid" do
       lambda do
-        subject.validate_options :foo, attributes
+        subject.validate_options [:foo], attributes
       end.should_not raise_error ArgumentError
     end
   end

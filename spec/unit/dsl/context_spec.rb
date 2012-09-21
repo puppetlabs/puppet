@@ -165,7 +165,7 @@ describe Puppet::DSL::Context do
 
     it "should call function with passed arguments" do
       Puppet::Parser::Functions.stubs(:function).returns true
-      scope.expects(:foobar).with(1, 2, 3)
+      scope.expects(:function_foobar).with([1, 2, 3])
       evaluate_in_context do
         call_function :foobar, 1, 2, 3
       end
@@ -244,7 +244,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context :nesting => 1 do
           define(:foo) {}
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "should raise ArgumentError when no block is given" do
@@ -337,7 +337,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context :nesting => 1 do
           node("foo") {}
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "should raise ArgumentError when there is no block given" do
@@ -426,7 +426,7 @@ describe Puppet::DSL::Context do
         evaluate_in_context :nesting => 1 do
           hostclass(:foo) {}
         end
-      end.should raise_error NoMethodError
+      end.should raise_error Puppet::Error
     end
 
     it "should raise ArgumentError when no block is given" do
