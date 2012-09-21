@@ -17,7 +17,6 @@ gem_forge_project: 'puppet'
 gem_runtime_dependencies:
   facter: '>= 1.6.11'
   hiera: '>= 1.0.0rc'
-  'hiera-puppet': '>1.0.0rc'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
