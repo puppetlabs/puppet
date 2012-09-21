@@ -215,14 +215,14 @@ def prepare_installation
     opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
       InstallOptions.configdir = configdir
     end
-    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
+    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
     end
-    opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides Config::CONFIG["sitelibdir"]') do |sitelibdir|
+    opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides RbConfig::CONFIG["sitelibdir"]') do |sitelibdir|
       InstallOptions.sitelibdir = sitelibdir
     end
-    opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides Config::CONFIG["mandir"]') do |mandir|
+    opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides RbConfig::CONFIG["mandir"]') do |mandir|
       InstallOptions.mandir = mandir
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
@@ -246,15 +246,15 @@ def prepare_installation
     opts.parse!
   end
 
-  version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
-  libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
+  version = [RbConfig::CONFIG["MAJOR"], RbConfig::CONFIG["MINOR"]].join(".")
+  libdir = File.join(RbConfig::CONFIG["libdir"], "ruby", version)
 
   # Mac OS X 10.5 and higher declare bindir
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
   # which is not generally where people expect executables to be installed
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
-    Config::CONFIG['bindir'] = "/usr/bin"
+    RbConfig::CONFIG['bindir'] = "/usr/bin"
   end
 
   if not InstallOptions.configdir.nil?
@@ -274,13 +274,13 @@ def prepare_installation
   if not InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
   else
-    bindir = Config::CONFIG['bindir']
+    bindir = RbConfig::CONFIG['bindir']
   end
 
   if not InstallOptions.sitelibdir.nil?
     sitelibdir = InstallOptions.sitelibdir
   else
-    sitelibdir = Config::CONFIG["sitelibdir"]
+    sitelibdir = RbConfig::CONFIG["sitelibdir"]
     if sitelibdir.nil?
       sitelibdir = $LOAD_PATH.find { |x| x =~ /site_ruby/ }
       if sitelibdir.nil?
@@ -294,7 +294,7 @@ def prepare_installation
   if not InstallOptions.mandir.nil?
     mandir = InstallOptions.mandir
   else
-    mandir = Config::CONFIG['mandir']
+    mandir = RbConfig::CONFIG['mandir']
   end
 
   # This is the new way forward
@@ -384,17 +384,17 @@ rescue LoadError
 end
 
 ##
-# Install file(s) from ./bin to Config::CONFIG['bindir']. Patch it on the way
+# Install file(s) from ./bin to RbConfig::CONFIG['bindir']. Patch it on the way
 # to insert a #! line; on a Unix install, the command is named as expected
 # (e.g., bin/rdoc becomes rdoc); the shebang line handles running it. Under
 # windows, we add an '.rb' extension and let file associations do their stuff.
 def install_binfile(from, op_file, target)
   tmp_file = Tempfile.new('puppet-binfile')
-  ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
+  ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
 
   File.open(from) do |ip|
     File.open(tmp_file.path, "w") do |op|
-      ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
+      ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
       op.puts "#!#{ruby}"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
