@@ -250,7 +250,7 @@ describe Puppet::Parser::Compiler do
     it "should evaluate ruby code on main object when using ruby dsl" do
       compile_stub(:evaluate_main)
       Puppet::Util::ManifestFiletypeHelper.expects(:is_ruby_filename?).at_least_once.returns true
-      @compiler.expects :assign_ruby_code
+      @compiler.expects :read_ruby_code
 
       @compiler.compile
     end
