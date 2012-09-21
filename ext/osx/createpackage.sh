@@ -60,7 +60,7 @@ function install_docs() {
   echo "Installing docs to ${pkgroot}"
   docdir="${pkgroot}/usr/share/doc/puppet" 
   mkdir -p "${docdir}"
-  for docfile in CHANGELOG CHANGELOG.old COPYING LICENSE README README.queueing README.rst; do
+  for docfile in COPYING LICENSE README README.queueing README.rst; do
     install -m 0644 "${puppet_root}/${docfile}" "${docdir}"
   done
   chown -R root:wheel "${docdir}"

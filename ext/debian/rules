@@ -107,7 +107,6 @@ binary-indep: build install
 	dh_testdir
 	dh_testroot
 	dh_install -i
-	dh_installchangelogs -i CHANGELOG
 	dh_installdocs -i
 	dh_installemacsen
 	dh_installlogcheck
