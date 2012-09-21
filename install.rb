@@ -218,6 +218,8 @@ def prepare_installation
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
+    opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
+      InstallOptions.ruby = ruby
     end
     opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides RbConfig::CONFIG["sitelibdir"]') do |sitelibdir|
       InstallOptions.sitelibdir = sitelibdir
@@ -390,11 +392,15 @@ end
 # windows, we add an '.rb' extension and let file associations do their stuff.
 def install_binfile(from, op_file, target)
   tmp_file = Tempfile.new('puppet-binfile')
-  ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
+
+  if not InstallOptions.ruby.nil?
+    ruby = InstallOptions.ruby
+  else
+    ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
+  end
 
   File.open(from) do |ip|
     File.open(tmp_file.path, "w") do |op|
-      ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
       op.puts "#!#{ruby}"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
