@@ -1,5 +1,11 @@
 require 'puppet/interface'
 
+# XXX The Puppet::Util::CommandLine.module_applications method needs to be
+# extracted out into its own class or module or something that both
+# Puppet::Application, Puppet::Util::CommandLine _and_
+# Puppet::Interface::FaceCollection can all use cleanly.
+require 'puppet/util/command_line'
+
 module Puppet::Interface::FaceCollection
   @faces = Hash.new { |hash, key| hash[key] = {} }
 
@@ -98,20 +104,49 @@ module Puppet::Interface::FaceCollection
     return get_face(name, version)
   end
 
+  ##
+  # Load a _face_ application from disk.  Face applications are usually have a
+  # reflected "legacy" application.  This method is similar to
+  # `Puppet::Application.load_application_file`.
+  #
+  # @param [Symbol] name the name of the face to load, e.g. "catalog" or "minicat"
+  #
+  # @param [String] version the specific version to load.  The face application
+  # file must reside in a subdirectory if specified.  e.g.
+  # `puppet/face/1.2.3/catalog`.  If the version is not specified, the face
+  # must reside in the `face` subdirectory, e.g. `puppet/face/face`.
+  #
+  # @return [Boolean] true if the face application is loaded, false if there
+  # were errors while loading the file.
+  #
+  # @see Puppet::Application.load_application_file
   def self.safely_require(name, version = nil)
     path = File.join 'puppet' ,'face', version.to_s, name.to_s
-    require path
-    true
+    begin
+      require path
+      return true
+    rescue ScriptError => detail
+      if detail =~ /file -- #{path}$/
+        Puppet.debug "Could not `require \"#{path}\"` (Using the $LOAD_PATH) #{detail}"
+      else
+        Puppet.err("Failed to load face #{name}:\n#{detail}")
+      end
+    end
 
-  rescue LoadError => e
-    raise unless e.message =~ %r{-- #{path}$}
-    # ...guess we didn't find the file; return a much better problem.
-    nil
-  rescue SyntaxError => e
-    raise unless e.message =~ %r{#{path}\.rb:\d+: }
-    Puppet.err "Failed to load face #{name}:\n#{e}"
-    # ...but we just carry on after complaining.
-    nil
+    module_apps = Puppet::Util::CommandLine.module_applications(Puppet.settings[:modulepath])
+
+    if absolute_path = module_apps[name.to_s]['face'] then
+      begin
+        require absolute_path
+        Puppet.debug "Loaded '#{absolute_path}' (Using absolute path)"
+        return true
+      rescue LoadError => detail
+        Puppet.debug "Unable to find face '#{name}'.  #{detail}"
+      rescue ScriptError => detail
+        Puppet.err("Failed to load face #{name}:\n#{detail}")
+      end
+    end
+    return nil
   end
 
   def self.register(face)
