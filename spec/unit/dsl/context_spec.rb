@@ -591,6 +591,15 @@ describe Puppet::DSL::Context do
           resource
         end.first.exported.should be true
       end
+
+      it "raises Puppet::Error when both block and args are passed" do
+        lambda do
+          evaluate_in_context do
+            export "file[foo]" do
+            end
+          end
+        end.should raise_error Puppet::Error
+      end
     end
 
     describe "#virtual" do
@@ -621,6 +630,15 @@ describe Puppet::DSL::Context do
           virtual "File[foo]"
           resource
         end.first.virtual.should be true
+      end
+
+      it "raises Puppet::Error when both block and args are passed" do
+        lambda do
+          evaluate_in_context do
+            virtual "file[foo]" do
+            end
+          end
+        end.should raise_error Puppet::Error
       end
     end
 

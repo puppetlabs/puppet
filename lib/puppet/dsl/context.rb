@@ -273,7 +273,8 @@ module Puppet
       ##
       # Calls a puppet function.
       # Will raise NoMethodError when no valid function is found.
-      # It does not validate arguments for a function.
+      # It does not validate arguments for a function, but delegates it to the
+      # puppet function that should do it.
       #
       # Returns whatever puppet function returns.
       #
@@ -323,6 +324,7 @@ module Puppet
       #
       ##
       def export(*args, &block)
+        raise ::Puppet::Error, "when exporting only block or arguments should be passed" if block and not args.empty?
         if block
           begin
             @proxy.exporting = true
@@ -358,6 +360,7 @@ module Puppet
       #
       ##
       def virtual(*args, &block)
+        raise ::Puppet::Error, "when virtualizing only block or arguments should be passed" if block and not args.empty?
         if block
           begin
             @proxy.virtualizing = true
