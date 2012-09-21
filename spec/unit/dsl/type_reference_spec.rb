@@ -86,6 +86,15 @@ describe Puppet::DSL::TypeReference do
       end.should be_a Puppet::Parser::Collector
     end
 
+    it "should raise Puppet::Error when called from imported file on top level scope" do
+      scope.expects(:nil?).returns true
+      lambda do
+        evaluate_in_context do
+          Puppet::DSL::Context::Notify.collect
+        end
+      end.should raise_error Puppet::Error
+    end
+
   end
 
   describe "#realize" do
@@ -104,6 +113,14 @@ describe Puppet::DSL::TypeReference do
       end.should be_a Puppet::Parser::Collector
     end
 
+    it "should raise Puppet::Error when called from imported file on top level scope" do
+      scope.expects(:nil?).returns true
+      lambda do
+        evaluate_in_context do
+          Puppet::DSL::Context::Notify.realize
+        end
+      end.should raise_error Puppet::Error
+    end
   end
 
   describe "#defaults" do
@@ -155,6 +172,15 @@ describe Puppet::DSL::TypeReference do
         end.should == {:message => '42'}
       end.should_not raise_error
 
+    end
+
+    it "should raise Puppet::Error when called from imported file on top level scope" do
+      scope.expects(:nil?).returns true
+      lambda do
+        evaluate_in_context do
+          Puppet::DSL::Context::Notify.defaults :message => 30
+        end
+      end.should raise_error Puppet::Error
     end
 
   end
