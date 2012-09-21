@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:file, '0.0.1'] do
+describe "Puppet::Face[:file, '0.0.1']" do
+  subject { Puppet::Face[:file, '0.0.1'] }
+
   it_should_behave_like "an indirector face"
 
   [:download, :store].each do |action|
