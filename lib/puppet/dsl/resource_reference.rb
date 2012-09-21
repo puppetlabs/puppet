@@ -18,8 +18,13 @@ module Puppet
       ##
       # Creates new ResourceReference.
       # +type+ is the name of resource type and +name+ is a name of a resource.
+      # Raises Puppet::Error when reference is created when called from imported
+      # file.
       ##
       def initialize(typeref, name)
+        # when performing type import the scope is nil
+        raise Puppet::Error, "Top level resource references in Ruby DSL are only available in `site.rb' or equivalent. They are not available from any imported manifest." if Parser.current_scope.nil?
+
         @resource = Puppet::DSL::Parser.current_scope.findresource typeref.type_name, name
         raise ArgumentError, "resource `#{typeref.type_name}[#{name}]' not found" unless @resource
       end
@@ -33,7 +38,8 @@ module Puppet
       alias to_s reference
 
       ##
-      # Method allows to create overrides for a resource.
+      # Method allows to create overrides for a resource. Values set by block
+      # override values set by hash.
       ##
       def override(options = {}, &block)
         raise ArgumentError, "no block or options supplied" if options == {} and block.nil?

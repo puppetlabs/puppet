@@ -25,6 +25,15 @@ describe Puppet::DSL::ResourceReference do
       end
     end
 
+    it "should raise Puppet::Error when called from imported file in top level scope" do
+      scope.expects(:nil?).returns true
+      evaluate_in_scope do
+        lambda do
+          Puppet::DSL::ResourceReference.new(typeref, "foo")
+        end.should raise_error Puppet::Error
+      end
+    end
+
   end
 
   describe "#reference" do
