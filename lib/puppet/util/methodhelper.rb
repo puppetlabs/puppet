@@ -1,6 +1,5 @@
 # Where we store helper methods related to, um, methods.
 module Puppet::Util::MethodHelper
-  extend self
 
   def requiredopts(*names)
     names.each do |name|
@@ -42,11 +41,13 @@ module Puppet::Util::MethodHelper
   ##
   def validate_options(allow, options = {})
     options.each do |k, _|
-      unless Array(allow).include? k
+      unless allow.include? k
         raise ArgumentError, "unrecognized option #{k}"
       end
     end
   rescue Exception => e
+    # removing +validate_options+ from the backtrace, because the error is one
+    # frame above it and it is just helping to find it.
     e.set_backtrace e.backtrace[1..-1]
     raise e
   end

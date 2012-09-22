@@ -358,6 +358,10 @@ class Puppet::Resource
       if external_value.nil?
         next if default.nil?
 
+        # This allows passing both ruby objects, (for Ruby DSL) and AST classes
+        # (for Puppet DSL) as default arguments.
+        # Safeevaluate returns a ruby object so if there is a ruby object
+        # already there, than there is no need to call it.
         value = if default.respond_to? :safeevaluate
                   default.safeevaluate(scope)
                 else

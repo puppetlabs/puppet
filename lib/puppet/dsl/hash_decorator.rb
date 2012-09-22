@@ -10,7 +10,7 @@ module Puppet
     #
     # This class inherits from BlankSlate
     ##
-    class ResourceDecorator < BlankSlate
+    class HashDecorator < BlankSlate
 
       ##
       # Initializes new object.
@@ -37,12 +37,12 @@ module Puppet
       #
       ##
       def method_missing(name, *args)
-        if name.to_s =~ /\A(.*)=\z/
+        if name.to_s[-1].chr == '='
           define_singleton_method name do |*a|
             value = a.first
             value = value.reference if value.is_a? ::Puppet::DSL::ResourceReference
             value = value.to_s  unless value.is_a? ::Puppet::Resource
-            @resource[$1.to_sym] = value
+            @resource[name.to_s[0...-1].to_sym] = value
           end
 
           self.__send__ name, *args
