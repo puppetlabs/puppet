@@ -37,6 +37,14 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
   # figure out what kind of resource we are
   type_of_resource = nil
   type_name = args[0].downcase
+  type_exported, type_virtual = false
+  if type_name.start_with? '@@'
+    type_name = type_name[2..-1]
+    type_exported = true
+  elsif type_name.start_with? '@'
+    type_name = type_name[1..-1]
+    type_virtual = true
+  end
   if type_name == 'class'
     type_of_resource = :class
   else
@@ -58,6 +66,8 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
     # for a defined type.
     when :type, :define
       p_resource = Puppet::Parser::Resource.new(type_name, title, :scope => self, :source => resource)
+      p_resource.virtual = type_virtual
+      p_resource.exported = type_exported
       {:name => title}.merge(params).each do |k,v|
         p_resource.set_parameter(k,v)
       end

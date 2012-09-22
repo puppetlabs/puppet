@@ -50,6 +50,17 @@ describe 'function for dynamically creating resources' do
       catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
     end
 
+    it 'should be able to add virtual resources' do
+      catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
+      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+    end
+
+    it 'should be able to add exported resources' do
+      catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      catalog.resource(:file, "/etc/foo").exported.should == true
+    end
+
     it 'should accept multiple types' do
       catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
       catalog.resource(:notify, "foo")['message'].should == 'one'
