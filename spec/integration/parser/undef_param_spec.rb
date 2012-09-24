@@ -32,13 +32,13 @@ describe "Undefined parameters should be handled so that" do
   end
 
   describe "when 'undef' is given as parameter value" do
-    it "the value should be set to 'undef'" do
-      expect_the_message_to_be(true) do <<-MANIFEST
+    it "the value should be set to the default" do
+      expect_the_message_to_be('1') do <<-MANIFEST
           node default {
             include foo
           }
           class foo {
-            define a($x=1) { notify { 'something': message => $x == undef }}
+            define a($x=1) { notify { 'something': message => $x }}
             a {'a': x => undef}
           }
         MANIFEST

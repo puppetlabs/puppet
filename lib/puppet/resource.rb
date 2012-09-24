@@ -307,7 +307,10 @@ class Puppet::Resource
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym
-      next if parameters.include?(param)
+      if parameters.include?(param) and parameters[param].value != :undef
+        next
+      end
+
       unless is_a?(Puppet::Parser::Resource)
         fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
       end
