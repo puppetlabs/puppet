@@ -306,17 +306,17 @@ describe Puppet::Resource do
     end
 
     describe "when the resource type is :hostclass" do
-      let(:environmnet_name) { "testing env" }
+      let(:environment_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }
       let(:port) { Puppet::Parser::AST::String.new(:value => '80') }
       let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
 
       before do
-        environment = Puppet::Node::Environment.new(environmnet_name)
+        environment = Puppet::Node::Environment.new(environment_name)
         environment.known_resource_types.add(apache)
 
         @scope.stubs(:host).returns('host')
-        @scope.stubs(:environment).returns(Puppet::Node::Environment.new(environmnet_name))
+        @scope.stubs(:environment).returns(Puppet::Node::Environment.new(environment_name))
         @scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
       end
 
@@ -327,7 +327,7 @@ describe Puppet::Resource do
 
         it "should query the data_binding terminus using a namespaced key" do
           Puppet::DataBinding.indirection.expects(:find).with(
-            'apache::port', :host => 'host', :environment => environmnet_name, :facts => fact_values)
+            'apache::port', all_of(has_key(:environment), has_key(:variables)))
           resource.set_default_parameters(@scope)
         end
 

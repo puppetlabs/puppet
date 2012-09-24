@@ -86,7 +86,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{_initrddir}/puppet
 /var/adm/fillup-templates/sysconfig.puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
-%doc CHANGELOG COPYING LICENSE README examples
+%doc COPYING LICENSE README examples
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 %dir %{_sysconfdir}/puppet
 # These need to be owned by puppet so the server can
