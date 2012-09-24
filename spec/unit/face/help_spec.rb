@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:help, '0.0.1'] do
+describe "Puppet::Face[:help, '0.0.1']" do
+  subject { Puppet::Face[:help, '0.0.1'] }
+
   it "has a help action" do
     subject.should be_action :help
   end
