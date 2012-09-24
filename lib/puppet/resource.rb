@@ -325,7 +325,9 @@ class Puppet::Resource
       if resource_type.type == :hostclass
         namespaced_param = "#{resource_type.name}::#{param}"
         external_value = Puppet::DataBinding.indirection.find(
-          namespaced_param, :host => scope.host, :environment => scope.environment.to_s, :facts => scope.facts.values)
+          namespaced_param,
+          :environment => scope.environment.to_s,
+          :variables => Puppet::DataBinding::Variables.new(scope))
       end
 
       if external_value.nil?
