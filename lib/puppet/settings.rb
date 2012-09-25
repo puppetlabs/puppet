@@ -352,6 +352,8 @@ class Puppet::Settings
     @used = []
 
     @hooks_to_call_on_application_initialization = []
+
+    @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
   end
 
   # Prints the contents of a config file with the available config settings, or it
@@ -1111,7 +1113,7 @@ Generated on #{Time.now}.
 
   # This method just turns a file in to a hash of hashes.
   def parse_file(file)
-    Puppet::Settings::ConfigFile.new(method(:munge_value)).parse_file(file, read_file(file))
+    @config_file_parser.parse_file(file, read_file(file))
   end
 
   # Read the file in.
