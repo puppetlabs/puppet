@@ -1,3 +1,4 @@
+#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'ostruct'
 require 'puppet/settings/errors'
@@ -6,46 +7,11 @@ describe Puppet::Settings do
   include PuppetSpec::Files
 
   let(:main_config_file_default_location) do
-    File.join(Puppet::Util::RunMode[:agent].conf_dir, "puppet.conf")
+    File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
   end
 
   let(:user_config_file_default_location) do
     File.join(Puppet::Util::RunMode[:user].conf_dir, "puppet.conf")
-  end
-
-  describe "#initialize_default_dir_settings" do
-    before :each do
-      subject.define_settings(:section, :confdir => {:default => nil, :desc => 'blah'})
-      subject.define_settings(:section, :vardir => {:default => nil, :desc => 'blah'})
-    end
-
-    it "should have confdir /etc/puppet when run as root" do
-      Puppet.features.stubs(:root?).returns(true)
-      etcdir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : '/etc/puppet'
-      # REMIND: issue with windows backslashes
-      subject.initialize_default_dir_settings
-      subject[:confdir].should == File.expand_path(etcdir)
-    end
-
-    it "should have confdir ~/.puppet when run as non-root" do
-      Puppet.features.stubs(:root?).returns(false)
-      subject.initialize_default_dir_settings
-      subject[:confdir].should == File.expand_path("~/.puppet")
-    end
-
-    it "should have vardir /var/lib/puppet when run as root" do
-      Puppet.features.stubs(:root?).returns(true)
-      vardir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : '/var/lib/puppet'
-      # REMIND: issue with windows backslashes
-      subject.initialize_default_dir_settings
-      subject[:vardir].should == File.expand_path(vardir)
-    end
-
-    it "should have vardir ~/.puppet/var when run as non-root" do
-      Puppet.features.stubs(:root?).returns(false)
-      subject.initialize_default_dir_settings
-      subject[:vardir].should == File.expand_path("~/.puppet/var")
-    end
   end
 
   describe "when specifying defaults" do
@@ -128,9 +94,9 @@ describe Puppet::Settings do
     end
 
     it "should fail if the app defaults hash is missing any required values" do
-      incomplete_default_values = default_values.reject { |key, _| key == :logdir }
+      incomplete_default_values = default_values.reject { |key, _| key == :confdir }
       expect {
-        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :logdir })
+        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
       }.to raise_error(Puppet::Settings::SettingsError)
     end
 
