@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-describe "Undefined parameters should be handled so that" do
+describe "Parameter passing" do
   include PuppetSpec::Compiler
 
   def expect_the_message_to_be(message, node = Puppet::Node.new('the node'))
@@ -12,77 +12,70 @@ describe "Undefined parameters should be handled so that" do
   def expect_puppet_error(message, node = Puppet::Node.new('the node'))
     expect { compile_to_catalog(yield, node) }.to raise_error(Puppet::Error, message)
   end
-  before :each do
-    Puppet.expects(:deprecation_warning).never
-  end
 
-  describe "when a value is given as parameter value" do
-    it "it should override the default" do
-      expect_the_message_to_be('2') do <<-MANIFEST
-        node default {
-          include foo
-        }
-        class foo {
-          define a($x=1) { notify { 'something': message => $x }}
-          a {'a': x => 2}
-        }
-        MANIFEST
-      end
-    end
-  end
-
-  describe "when 'undef' is given as parameter value" do
-    it "the value should be set to 'undef'" do
-      expect_the_message_to_be(true) do <<-MANIFEST
-          node default {
-            include foo
-          }
-          class foo {
-            define a($x=1) { notify { 'something': message => $x == undef }}
-            a {'a': x => undef}
-          }
-        MANIFEST
-      end
-    end
-  end
-
-  describe "when no value is given for a parameter" do
-    it "the value should be set to the default" do
-      expect_the_message_to_be('1') do <<-MANIFEST
-          node default {
-            include foo
-          }
-          class foo {
-            define a($x=1) { notify { 'something': message => $x }}
-            a {'a': }
-          }
-        MANIFEST
-      end
-    end
-    it "and the default is set to undef, the value should be set to the default" do
-      expect_the_message_to_be(true) do <<-MANIFEST
-          node default {
-            include foo
-          }
-          class foo {
-            define a($x=undef) { notify { 'something': message => $x == undef}}
-            a {'a': }
-          }
+  it "overrides the default when a value is given" do
+    expect_the_message_to_be('2') do <<-MANIFEST
+      define a($x=1) { notify { 'something': message => $x }}
+      a {'a': x => 2}
       MANIFEST
-      end
     end
+  end
 
-    it "and no default is set should fail with error" do
-      expect_puppet_error(/^Must pass x to Foo::A\[a\].*/) do <<-MANIFEST
-          node default {
-            include foo
-          }
-          class foo {
-            define a($x) { notify { 'something': message => $x }}
-            a {'a': }
-          }
+  it "shadows an inherited variable with the default value when undef is passed" do
+    expect_the_message_to_be('default') do <<-MANIFEST
+      class a { $x = 'inherited' }
+      class b($x='default') inherits a { notify { 'something': message => $x }}
+      class { 'b': x => undef}
       MANIFEST
-      end
+    end
+  end
+
+  it "uses a default value that comes from an inherited class when the parameter is undef" do
+    expect_the_message_to_be('inherited') do <<-MANIFEST
+      class a { $x = 'inherited' }
+      class b($y=$x) inherits a { notify { 'something': message => $y }}
+      class { 'b': y => undef}
+      MANIFEST
+    end
+  end
+
+  it "uses a default value that references another variable when the parameter is passed as undef" do
+    expect_the_message_to_be('a') do <<-MANIFEST
+        define a($a = $title) { notify { 'something': message => $a }}
+        a {'a': a => undef}
+      MANIFEST
+    end
+  end
+
+  it "uses the default when 'undef' is given'" do
+    expect_the_message_to_be('1') do <<-MANIFEST
+        define a($x=1) { notify { 'something': message => $x }}
+        a {'a': x => undef}
+      MANIFEST
+    end
+  end
+
+  it "uses the default when no parameter is provided" do
+    expect_the_message_to_be('1') do <<-MANIFEST
+        define a($x=1) { notify { 'something': message => $x }}
+        a {'a': }
+      MANIFEST
+    end
+  end
+
+  it "uses a value of undef when the default is undef and no parameter is provided" do
+    expect_the_message_to_be(true) do <<-MANIFEST
+        define a($x=undef) { notify { 'something': message => $x == undef}}
+        a {'a': }
+    MANIFEST
+    end
+  end
+
+  it "errors when no parameter is provided and there is no default" do
+    expect_puppet_error(/^Must pass x to A\[a\].*/) do <<-MANIFEST
+        define a($x) { notify { 'something': message => $x }}
+        a {'a': }
+    MANIFEST
     end
   end
 end
