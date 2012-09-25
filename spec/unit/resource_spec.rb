@@ -302,7 +302,7 @@ describe Puppet::Resource do
         Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
-      resource.set_default_parameters(@scope).should == [:a]
+      resource.set_default_parameters(@scope).should == ["a"]
     end
 
     describe "when the resource type is :hostclass" do
@@ -333,13 +333,17 @@ describe Puppet::Resource do
 
         it "should use the value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).returns('443')
-          resource.set_default_parameters(@scope).should == [:port]
+
+          resource.set_default_parameters(@scope)
+
           resource[:port].should == '443'
         end
 
         it "should use the default value if the data_binding terminus returns nil" do
           Puppet::DataBinding.indirection.expects(:find).returns(nil)
-          resource.set_default_parameters(@scope).should == [:port]
+
+          resource.set_default_parameters(@scope)
+
           resource[:port].should == '80'
         end
       end

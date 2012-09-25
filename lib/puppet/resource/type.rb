@@ -316,7 +316,7 @@ class Puppet::Resource::Type
 
     # Evaluate the default parameters, now that all other variables are set
     default_params = resource.set_default_parameters(scope)
-    default_params.each { |param| scope[param.to_s] = resource[param] }
+    default_params.each { |param| scope[param] = resource[param] }
 
     # This has to come after the above parameters so that default values
     # can use their values

@@ -300,50 +300,56 @@ class Puppet::Resource
     [ type, title ].join('/')
   end
 
+  def missing_arguments
+    resource_type.arguments.select do |param, default|
+      param = param.to_sym
+      parameters[param].nil? || parameters[param].value == :undef
+    end
+  end
+  private :missing_arguments
+
+  # Consult external data bindings for class parameter values which must be
+  # namespaced in the backend.
+  #
+  # Example:
+  #
+  #   class foo($port){ ... }
+  #
+  # We make a request to the backend for the key 'foo::port' not 'foo'
+  #
+  def lookup_external_default_for(param, scope)
+    if resource_type.type == :hostclass
+      Puppet::DataBinding.indirection.find(
+        "#{resource_type.name}::#{param}",
+        :environment => scope.environment.to_s,
+        :variables => Puppet::DataBinding::Variables.new(scope))
+    else
+      nil
+    end
+  end
+  private :lookup_external_default_for
+
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
-    result = []
+    unless is_a?(Puppet::Parser::Resource)
+      fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+    end
 
-    resource_type.arguments.each do |param, default|
-      param = param.to_sym
-      if parameters.include?(param) and parameters[param].value != :undef
+    missing_arguments.collect do |param, default|
+      external_value = lookup_external_default_for(param, scope)
+
+      if external_value.nil? && default.nil?
         next
-      end
-
-      unless is_a?(Puppet::Parser::Resource)
-        fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
-      end
-
-      # Consult external data bindings for class parameter values which must be
-      # namespaced in the backend.
-      #
-      # Example:
-      #
-      #   class foo($port){ ... }
-      #
-      # We make a request to the backend for the key 'foo::port' not 'foo'
-      #
-      external_value = nil
-      if resource_type.type == :hostclass
-        namespaced_param = "#{resource_type.name}::#{param}"
-        external_value = Puppet::DataBinding.indirection.find(
-          namespaced_param,
-          :environment => scope.environment.to_s,
-          :variables => Puppet::DataBinding::Variables.new(scope))
-      end
-
-      if external_value.nil?
-        next if default.nil?
+      elsif external_value.nil?
         value = default.safeevaluate(scope)
       else
         value = external_value
       end
 
-      self[param] = value
-      result << param
-    end
-    result
+      self[param.to_sym] = value
+      param
+    end.compact
   end
 
   def to_resource
