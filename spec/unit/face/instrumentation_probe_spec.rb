@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:instrumentation_probe, '0.0.1'] do
+describe "Puppet::Face[:instrumentation_probe, '0.0.1']" do
+  subject { Puppet::Face[:instrumentation_probe, '0.0.1'] }
+
   it_should_behave_like "an indirector face"
 
   describe 'when running #enable' do
