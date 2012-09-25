@@ -22,49 +22,6 @@ module Puppet
         File.join('puppet', 'application')
       end
 
-      ##
-      # Search through the Puppet modulepath and find all legacy application
-      # stubs that match `<modulepath>/*/lib/puppet/application/*.rb`
-      #
-      # @param [String] modulepath modulepaths separated by
-      #   `File::PATH_SEPARATOR` often simply `Puppet.settings[:modulepath]`.
-      #
-      # @return [Hash] of application names available in modules from the
-      #   modulepath.  The key is the application name, the value is a nested
-      #   hash for the app file and the face file, both fully qualified path to
-      #   the ruby file intended to be used with require or load because the
-      #   module lib directories are not available on the $LOAD_PATH.
-      #
-      #     { 'minicat' => {
-      #         'app'  => '/etc/puppet/modules/minicat/lib/puppet/application/minicat.rb',
-      #         'face' => '/etc/puppet/modules/minicat/lib/puppet/face/minicat.rb', }
-      #     }
-      def self.module_applications(modulepath)
-        ## Load applications from the modulepath
-        # We would like to use Puppet::Util::Autoload.module_directories to
-        # obtain a list of all module lib directories, but we cannot with the
-        # current design because that method explicitly returns an empty set if
-        # Puppet.settings.app_defaults_initialized? is not truthy.
-        app_files = modulepath.split(File::PATH_SEPARATOR).map do |mp|
-          Dir["#{mp}/*/lib/puppet/application/*.rb"]
-        end.flatten
-
-        return_hash = app_files.inject(Hash.new({})) do |memo, fn|
-          appname = File.basename(fn, '.rb')
-          memo[appname] = {
-            'app'  => fn,
-            'face' => fn.gsub(%r{/application/([^/]+)$}) { "/face/#{$1}" },
-          }
-          memo
-        end
-        return_hash
-      end
-
-      ##
-      # Locate all available subcommands, legacy and faces based, along the
-      # Ruby $LOAD_PATH, RubyGems $GEM_PATH, and Puppet modulepath.
-      #
-      # @return [Array] of unique subcommand string names.
       def self.available_subcommands
         # Eventually we probably want to replace this with a call to the
         # autoloader.  however, at the moment the autoloader considers the
@@ -74,26 +31,13 @@ module Puppet
         #
         # But we do want to load from rubygems --hightower
         search_path = Puppet::Util::RubyGems::Source.new.directories + $LOAD_PATH
-
         absolute_appdirs = search_path.uniq.collect do |x|
           File.join(x,'puppet','application')
         end.select{ |x| File.directory?(x) }
-
-        load_path_apps = absolute_appdirs.inject([]) do |commands, dir|
+        absolute_appdirs.inject([]) do |commands, dir|
           commands + Dir[File.join(dir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
         end.uniq
-
-        module_path_apps = module_applications(Puppet.settings[:modulepath]).keys
-
-        # We load applications from the $LOAD_PATH or from the
-        # Puppet[:modulepath].  We're using uniq because it might be the case
-        # the user has explicitly put a module on the $LOAD_PATH using RUBYLIB.
-        # In this situation an application will be listed twice and it
-        # shouldn't be.
-        return_array = (load_path_apps + module_path_apps).sort.uniq
-        return_array
       end
-
       # available_subcommands was previously an instance method, not a class
       # method, and we have an unknown number of user-implemented applications
       # that depend on that behaviour.  Forwarding allows us to preserve a
@@ -121,6 +65,7 @@ module Puppet
         # applications / subcommands / faces.
 
         if subcommand_name and available_subcommands.include?(subcommand_name) then
+          require_application subcommand_name
           # This will need to be cleaned up to do something that is not so
           #  application-specific (i.e.. so that we can load faces).
           #  Longer-term, use the autoloader.  See comments in

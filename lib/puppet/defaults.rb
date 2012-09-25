@@ -1488,14 +1488,7 @@ database from within the Puppet Master process."
 
   # This doesn't actually work right now.
 
-    define_settings(
-    :parser,
-
-    :lexical => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to use lexical scoping (vs. dynamic).",
-    },
+  define_settings(:parser,
     :templatedir => {
         :default  => "$vardir/templates",
         :type     => :directory,
@@ -1503,8 +1496,7 @@ database from within the Puppet Master process."
       directories.",
     }
   )
-  define_settings(
-    :puppetdoc,
+  define_settings(:puppetdoc,
     :document_all => {
         :default  => false,
         :type     => :boolean,

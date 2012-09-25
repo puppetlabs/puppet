@@ -16,7 +16,7 @@ describe Puppet::Util::Autoload do
   describe "when building the search path" do
     before :each do
       ## modulepath/libdir can't be used until after app settings are initialized, so we need to simulate that:
-      Puppet.settings.expects(:global_defaults_initialized?).returns(true).at_least_once
+      Puppet.settings.expects(:app_defaults_initialized?).returns(true).at_least_once
 
       @dira = File.expand_path('/a')
       @dirb = File.expand_path('/b')

@@ -87,7 +87,7 @@ describe Puppet::Util::Autoload do
 
   it "should be able to load files directly from modules" do
     ## modulepath can't be used until after app settings are initialized, so we need to simulate that:
-    Puppet.settings.expects(:global_defaults_initialized?).returns(true).at_least_once
+    Puppet.settings.expects(:app_defaults_initialized?).returns(true).at_least_once
 
     modulepath = tmpfile("autoload_module_testing")
     libdir = File.join(modulepath, "mymod", "lib", "foo")

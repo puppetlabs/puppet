@@ -2,9 +2,7 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe "Puppet::Face[:facts, '0.0.1']" do
-  subject { Puppet::Face[:facts, '0.0.1'] }
-
+describe Puppet::Face[:facts, '0.0.1'] do
   it "should define an 'upload' action" do
     subject.should be_action(:upload)
   end
