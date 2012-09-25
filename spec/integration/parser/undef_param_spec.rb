@@ -4,6 +4,12 @@ require 'puppet_spec/compiler'
 describe "Parameter passing" do
   include PuppetSpec::Compiler
 
+  before :each do
+    # DataBinding will be consulted before falling back to a default value,
+    # but we aren't testing that here
+    Puppet::DataBinding.indirection.stubs(:find)
+  end
+
   def expect_the_message_to_be(message, node = Puppet::Node.new('the node'))
     catalog = compile_to_catalog(yield, node)
     catalog.resource('Notify', 'something')[:message].should == message
