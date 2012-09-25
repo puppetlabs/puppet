@@ -1,3 +1,5 @@
+require 'puppet/settings/errors'
+
 ##
 # @api private
 #
@@ -55,10 +57,10 @@ class Puppet::Settings::ConfigFile
           end
           result[section][var] = value
         rescue Puppet::Error => detail
-          raise ParseError.new(detail.message, file, line, detail)
+          raise Puppet::Settings::ParseError.new(detail.message, file, line, detail)
         end
       else
-        raise ParseError.new("Could not match line #{line}", file, line)
+        raise Puppet::Settings::ParseError.new("Could not match line #{line}", file, line)
       end
     end
 
