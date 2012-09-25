@@ -126,7 +126,14 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def app_defaults()
-    super.merge :facts_terminus => 'yaml'
+    super.merge({
+        :facts_terminus => 'yaml',
+        # when we are running master, we want to default to the global/system
+        #  config and vardirs (usually /etc), rather than defaulting to user
+        #  directories (which is what we do for other applications)
+        :confdir => Puppet::Settings.default_global_config_dir,
+        :vardir => Puppet::Settings.default_global_var_dir,
+      })
   end
 
   def preinit
