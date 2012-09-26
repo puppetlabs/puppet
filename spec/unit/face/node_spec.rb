@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:node, '0.0.1'] do
+describe "Puppet::Face[:node, '0.0.1']" do
+  subject { Puppet::Face[:node, '0.0.1'] }
+
   after :all do
     Puppet::SSL::Host.ca_location = :none
   end

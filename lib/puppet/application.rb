@@ -219,17 +219,64 @@ class Application
       @option_parser_commands
     end
 
-    def find(file_name)
-      # This should probably be using the autoloader, but due to concerns about the fact that
-      #  the autoloader currently considers the modulepath when looking for things to load,
-      #  we're delaying that for now.
+    ##
+    # Load an application from disk using the convention of mapping
+    # `Puppet::Application::Foo` to the Ruby library `puppet/application/foo`.
+    # If the library cannot be loaded using `require "puppet/application/foo"`
+    # then the Puppet modulepath will be searched for
+    # `<modulepath>/*/lib/puppet/application/foo.rb`.
+    #
+    # Note, for the purposes of error handling, application files are expected
+    # to always load.  Faces, however, have better exception handling.  As a
+    # result the application stub should be a simple as possible to ensure it
+    # always loads.
+    #
+    # @param [String] file_name the file name (without .rb extension) of an
+    # application to load, e.g. "catalog" or "minicat"
+    #
+    # @param [String] face_app_name the name of the expected face application
+    # class, e.g. `Catalog` or `Agent`.
+    #
+    # @return [Boolean] result of the `require` statement of the relative or
+    # absolute file path
+    def load_application_file(file_name, face_app_name)
+      path = "puppet/application/#{file_name}"
       begin
-        require ::File.join('puppet', 'application', file_name.to_s.downcase)
-      rescue LoadError => e
-        Puppet.log_and_raise(e, "Unable to find application '#{file_name}'.  #{e}")
+        require path
+        return true
+      rescue LoadError => detail
+        first_error = detail
+        Puppet.debug "Could not `require \"puppet/application/#{file_name}\"` (Using the $LOAD_PATH)"
       end
 
-      class_name = Puppet::Util::ConstantInflector.file2constant(file_name.to_s)
+      module_apps = Puppet::Util::CommandLine.module_applications(Puppet.settings[:modulepath])
+
+      if absolute_path = module_apps[file_name]['app'] then
+        begin
+          require absolute_path
+          Puppet.debug "Loaded '#{absolute_path}' (Using absolute path)"
+        rescue LoadError => detail
+          Puppet.log_and_raise(detail, "Unable to find application '#{face_app_name}'.  #{detail}")
+        end
+      else
+        Puppet.log_and_raise(first_error, "Unable to find application '#{face_app_name}'.  #{first_error}")
+      end
+    end
+
+    ##
+    # Find a Puppet face application, loading the face script from the
+    # filesystem if necessary.
+    #
+    # @param [String] face_app_name the name of the application to find, e.g.
+    # "Agent" or "Catalog"
+    #
+    # @return [Class] the class of the face application, e.g.
+    # `Puppet::Application::Catalog`.
+    def find(face_app_name)
+      file_name = face_app_name.to_s.downcase
+      load_application_file(file_name, face_app_name)
+
+      class_name = Puppet::Util::ConstantInflector.file2constant(face_app_name.to_s)
 
       clazz = try_load_class(class_name)
 
@@ -239,7 +286,7 @@ class Application
       ####  and then get rid of this stanza in a subsequent release.
       ################################################################
       if (clazz.nil?)
-        class_name = file_name.capitalize
+        class_name = face_app_name.capitalize
         clazz = try_load_class(class_name)
       end
       ################################################################
@@ -302,9 +349,7 @@ class Application
   end
 
   def app_defaults()
-    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
-        :name => name
-    )
+    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode)
   end
 
   def initialize_app_defaults()
