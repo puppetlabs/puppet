@@ -17,6 +17,22 @@ require 'puppet/settings/config_file'
 class Puppet::Settings
   include Enumerable
 
+  # Convert arguments into booleans, integers, or whatever.
+  class ValueTranslator
+    def [](value)
+      # Handle different data types correctly
+      return case value
+        when /^false$/i; false
+        when /^true$/i; true
+        when /^\d+$/i; Integer(value)
+        when true; true
+        when false; false
+        else
+          value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
+      end
+    end
+  end
+
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
 
@@ -84,6 +100,7 @@ class Puppet::Settings
 
     @hooks_to_call_on_application_initialization = []
 
+    @translate = Puppet::Settings::ValueTranslator.new
     @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
   end
 
@@ -1099,16 +1116,7 @@ Generated on #{Time.now}.
 
   # Convert arguments into booleans, integers, or whatever.
   def munge_value(value)
-    # Handle different data types correctly
-    return case value
-      when /^false$/i; false
-      when /^true$/i; true
-      when /^\d+$/i; Integer(value)
-      when true; true
-      when false; false
-      else
-        value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
-    end
+    @translate[value]
   end
 
   # This method just turns a file in to a hash of hashes.
