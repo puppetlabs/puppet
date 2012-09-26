@@ -125,15 +125,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  ##
+  # Initialize master application default settings.
+  #
+  # See {http://projects.puppetlabs.com/issues/15337 #15337} and
+  # {https://github.com/puppetlabs/puppet/commit/38cba0a 38cba0a} for the
+  # rules governing confdir and vardir default values.  They are:
+  #
+  # 1. If provided, use explicit puppet.conf in `--confdir`
+  # 2. If root, use system puppet.conf
+  # 3. Otherwise, use `~/.puppet/puppet.conf`
+  #
   def app_defaults()
-    super.merge({
-        :facts_terminus => 'yaml',
-        # when we are running master, we want to default to the global/system
-        #  config and vardirs (usually /etc), rather than defaulting to user
-        #  directories (which is what we do for other applications)
-        :confdir => Puppet::Settings.default_global_config_dir,
-        :vardir => Puppet::Settings.default_global_var_dir,
-      })
+    super.merge({:facts_terminus => 'yaml'})
   end
 
   def preinit
