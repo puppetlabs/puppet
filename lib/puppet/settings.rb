@@ -62,6 +62,31 @@ class Puppet::Settings
     "puppet.conf"
   end
 
+  # Create a new collection of config settings.
+  def initialize
+    @config = {}
+    @shortnames = {}
+
+    @created = []
+    @searchpath = nil
+
+    # Mutex-like thing to protect @values
+    @sync = Sync.new
+
+    # Keep track of set values.
+    @values = Hash.new { |hash, key| hash[key] = {} }
+
+    # And keep a per-environment cache
+    @cache = Hash.new { |hash, key| hash[key] = {} }
+
+    # The list of sections we've used.
+    @used = []
+
+    @hooks_to_call_on_application_initialization = []
+
+    @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
+  end
+
   # Retrieve a config value
   def [](param)
     value(param)
@@ -329,31 +354,6 @@ class Puppet::Settings
   def shortinclude?(short)
     short = short.intern if name.is_a? String
     @shortnames.include?(short)
-  end
-
-  # Create a new collection of config settings.
-  def initialize
-    @config = {}
-    @shortnames = {}
-
-    @created = []
-    @searchpath = nil
-
-    # Mutex-like thing to protect @values
-    @sync = Sync.new
-
-    # Keep track of set values.
-    @values = Hash.new { |hash, key| hash[key] = {} }
-
-    # And keep a per-environment cache
-    @cache = Hash.new { |hash, key| hash[key] = {} }
-
-    # The list of sections we've used.
-    @used = []
-
-    @hooks_to_call_on_application_initialization = []
-
-    @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
   end
 
   # Prints the contents of a config file with the available config settings, or it
