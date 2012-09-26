@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 
 shared_examples_for "a file_serving model" do
   include PuppetSpec::Files

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 shared_examples_for "Puppet::Indirector::FileServerTerminus" do
   # This only works if the shared behaviour is included before
   # the 'before' block in the including context.
