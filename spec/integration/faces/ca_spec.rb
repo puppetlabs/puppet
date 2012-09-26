@@ -2,7 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_windows? do
+describe "Puppet::Face[:ca, '0.1.0']", :unless => Puppet.features.microsoft_windows? do
+  subject { Puppet::Face[:ca, '0.1.0'] }
+
   include PuppetSpec::Files
 
   before :each do
