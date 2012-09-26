@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/catalog/json'

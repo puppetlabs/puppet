@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 require 'puppet_spec/files'
