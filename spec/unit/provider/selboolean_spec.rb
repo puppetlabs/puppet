@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:selboolean).provider(:getsetsebool)

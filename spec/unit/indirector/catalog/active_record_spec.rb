@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do

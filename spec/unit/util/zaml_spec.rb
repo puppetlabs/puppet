@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 # encoding: UTF-8
 #
 # The above encoding line is a magic comment to set the default source encoding
