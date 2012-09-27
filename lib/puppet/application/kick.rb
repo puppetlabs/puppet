@@ -9,6 +9,7 @@ class Puppet::Application::Kick < Puppet::Application
   option("--debug","-d")
   option("--ping","-P")
   option("--test")
+  option("--ignoreschedules")
 
   option("--host HOST") do |arg|
     @hosts << arg

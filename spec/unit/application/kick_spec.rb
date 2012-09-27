@@ -79,7 +79,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.preinit
     end
 
-    [:all, :foreground, :debug, :ping, :test].each do |option|
+    [:all, :foreground, :debug, :ping, :test, :ignoreschedules].each do |option|
       it "should declare handle_#{option} method" do
         @kick.should respond_to("handle_#{option}".to_sym)
       end
