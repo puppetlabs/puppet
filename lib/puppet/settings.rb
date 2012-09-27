@@ -12,26 +12,11 @@ require 'puppet/settings/boolean_setting'
 require 'puppet/settings/terminus_setting'
 require 'puppet/settings/duration_setting'
 require 'puppet/settings/config_file'
+require 'puppet/settings/value_translator'
 
 # The class for handling configuration files.
 class Puppet::Settings
   include Enumerable
-
-  # Convert arguments into booleans, integers, or whatever.
-  class ValueTranslator
-    def [](value)
-      # Handle different data types correctly
-      return case value
-        when /^false$/i; false
-        when /^true$/i; true
-        when /^\d+$/i; Integer(value)
-        when true; true
-        when false; false
-        else
-          value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
-      end
-    end
-  end
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
