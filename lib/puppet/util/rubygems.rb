@@ -6,12 +6,7 @@ module Puppet::Util::RubyGems
   class Source
     class << self
       def has_rubygems?
-        begin
-          require 'rubygems'
-          true
-        rescue LoadError
-          false
-        end
+        defined? ::Gem
       end
 
       def source
