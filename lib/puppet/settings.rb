@@ -529,7 +529,7 @@ class Puppet::Settings
     files.each do |file|
       next unless FileTest.exist?(file)
       begin
-        file_data = parse_file(file)
+        file_data = @config_file_parser.parse_file(file, read_file(file))
 
         # This is a little kludgy; basically we are merging a hash of hashes.  We can't use "merge" at the
         # outermost level or we risking losing data from the hash we're merging into.
@@ -1097,11 +1097,6 @@ Generated on #{Time.now}.
   # we can call them after parsing the configuration file.
   def settings_with_hooks
     @config.values.find_all { |setting| setting.has_hook? }
-  end
-
-  # This method just turns a file in to a hash of hashes.
-  def parse_file(file)
-    @config_file_parser.parse_file(file, read_file(file))
   end
 
   # Read the file in.
