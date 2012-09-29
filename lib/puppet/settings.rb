@@ -86,7 +86,7 @@ class Puppet::Settings
     @hooks_to_call_on_application_initialization = []
 
     @translate = Puppet::Settings::ValueTranslator.new
-    @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
+    @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
   # Retrieve a config value
@@ -327,7 +327,7 @@ class Puppet::Settings
       value = "true"
     end
 
-    value &&= munge_value(value)
+    value &&= @translate[value]
     str = opt.sub(/^--/,'')
 
     bool = true
@@ -1097,11 +1097,6 @@ Generated on #{Time.now}.
   # we can call them after parsing the configuration file.
   def settings_with_hooks
     @config.values.find_all { |setting| setting.has_hook? }
-  end
-
-  # Convert arguments into booleans, integers, or whatever.
-  def munge_value(value)
-    @translate[value]
   end
 
   # This method just turns a file in to a hash of hashes.
