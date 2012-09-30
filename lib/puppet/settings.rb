@@ -1220,14 +1220,19 @@ Generated on #{Time.now}.
   end
   private :clear_everything_for_tests
 
+  ##
+  # (#15337) All of the logic to determine the configuration file to use
+  #   should be centralized into this method.  The simplified approach is:
+  #
+  # 1. If there is an explicit configuration file, use that.  (--confdir or
+  #    --config)
+  # 2. If we're running as a root process, use the system puppet.conf
+  #    (usually /etc/puppet/puppet.conf)
+  # 3. Otherwise, use the user puppet.conf (usually ~/.puppet/puppet.conf)
+  #
+  # @todo this code duplicates {Puppet::Util::RunMode#which_dir} as described
+  #   in {http://projects.puppetlabs.com/issues/16637 #16637}
   def which_configuration_file
-    # (#15337) All of the logic to determine the configuration file to use
-    # should be centralized into this method.  The simplified approach is:
-    # 1. If there is an explicit configuration file, use that.  (--confdir or
-    #    --config)
-    # 2. If we're running as a root process, use the system puppet.conf
-    #    (usually /etc/puppet/puppet.conf)
-    # 3: Otherwise, use the user puppet.conf (usually ~/.puppet/puppet.conf)
     if explicit_config_file? or Puppet.features.root? then
       return main_config_file
     else
