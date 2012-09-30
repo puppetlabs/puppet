@@ -38,17 +38,18 @@ module Puppet
         "$vardir/log"
       end
 
-    private
+      private
 
-      def which_dir( global, user )
-        #FIXME: we should test if we're user "puppet"
-        #       there's a comment that suggests that we do that
-        #       and we currently don't.
-        File.expand_path(if in_global_context? then global else user end)
-      end
-
-      def in_global_context?
-        name == :master || Puppet.features.root?
+      ##
+      # select the system or the user directory depending on the context of
+      # this process.  The most common use is determining filesystem path
+      # values for confdir and vardir.  The intended semantics are:
+      # {http://projects.puppetlabs.com/issues/16637 #16637} for Puppet 3.x
+      #
+      # @todo this code duplicates {Puppet::Settings#which\_configuration\_file}
+      #   as described in {http://projects.puppetlabs.com/issues/16637 #16637}
+      def which_dir( system, user )
+        File.expand_path(if Puppet.features.root? then system else user end)
       end
     end
 
