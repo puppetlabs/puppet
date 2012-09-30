@@ -24,6 +24,15 @@ describe Puppet::Util::RunMode do
         as_non_root { @run_mode.conf_dir.should == File.expand_path('~/.puppet') }
       end
 
+      context "master run mode" do
+        before do
+          @run_mode = Puppet::Util::UnixRunMode.new('master')
+        end
+        it "has confdir ~/.puppet when run as non-root and master run mode (#16337)" do
+          as_non_root { @run_mode.conf_dir.should == File.expand_path('~/.puppet') }
+        end
+      end
+
       it "fails when asking for the conf_dir as non-root and there is no $HOME" do
         as_non_root do
           without_home do
