@@ -3,7 +3,7 @@
 # Demonstration of a custom parser function and erb template within
 # a module, working in concert.
 
-class sample-module {
+class sample_module {
   $fqdn_to_dn = hostname_to_dn($domain)
   $sample_template = template("sample-module/sample.erb")
 
