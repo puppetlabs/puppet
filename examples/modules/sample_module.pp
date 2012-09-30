@@ -7,4 +7,4 @@
 # sample-module demonstrates the use of a custom language function
 # included within the module bundle.
 
-include sample-module
+include sample_module
