@@ -1,7 +1,7 @@
 # Returns the contents of a file
 
 Puppet::Parser::Functions::newfunction(
-  :file, :type => :rvalue,
+  :file, :arity => -2, :type => :rvalue,
   :doc => "Return the contents of a file.  Multiple files
   can be passed, and the first file that exists will be read in."
 ) do |vals|
