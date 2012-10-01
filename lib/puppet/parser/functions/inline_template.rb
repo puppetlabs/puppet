@@ -1,4 +1,4 @@
-Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :doc =>
+Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arity => -2, :doc =>
   "Evaluate a template string and return its value.  See 
   [the templating docs](http://docs.puppetlabs.com/guides/templating.html) for 
   more information.  Note that if multiple template strings are specified, their 

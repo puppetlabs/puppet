@@ -24,7 +24,7 @@
 # other dealings in this Software without prior written authorization
 # from Thomas Bellman.
 
-Puppet::Parser::Functions.newfunction(:shellquote, :type => :rvalue, :doc => "\
+Puppet::Parser::Functions.newfunction(:shellquote, :type => :rvalue, :arity => -1, :doc => "\
     Quote and concatenate arguments for use in Bourne shell.
 
     Each argument is quoted separately, and then all are concatenated
