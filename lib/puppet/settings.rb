@@ -468,19 +468,8 @@ class Puppet::Settings
 
   # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
-    # we are able to support multiple config files; the "main" config file will
-    # be the one located in /etc/puppet (or overridden $confdir)... but we can
-    # also look for a config file in the user's home directory.  We only load
-    # one configuration file in order to present a simple and consistent
-    # configuration model to the end user.  It should also be noted we decided
-    # to merge in the user puppet.conf with the system puppet.conf for a time
-    # (e.g. load two configuration files) as a small part of #7749 but then
-    # decided to reverse this decision in #15337 to return to a disjoint
-    # configuration file model.
-    config_files = [which_configuration_file]
-
     @sync.synchronize do
-      unsafe_parse(config_files)
+      unsafe_parse(which_configuration_file)
     end
 
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
@@ -521,26 +510,12 @@ class Puppet::Settings
   private :config_file_name
 
   # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
-  def unsafe_parse(files)
-    raise Puppet::DevError unless files.length > 0
-
+  def unsafe_parse(file)
     # build up a single data structure that contains the values from all of the parsed files.
     data = {}
-    files.each do |file|
-      next unless FileTest.exist?(file)
+    if FileTest.exist?(file)
       begin
-        file_data = @config_file_parser.parse_file(file, read_file(file))
-
-        # This is a little kludgy; basically we are merging a hash of hashes.  We can't use "merge" at the
-        # outermost level or we risking losing data from the hash we're merging into.
-        file_data.keys.each do |key|
-          if data.has_key?(key)
-            data[key].merge!(file_data[key])
-          else
-            data[key] = file_data[key]
-          end
-        end
-
+        data = @config_file_parser.parse_file(file, read_file(file))
       rescue => detail
         Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
         return
