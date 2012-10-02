@@ -119,6 +119,12 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:execute).with([:launchctl, :load, '-w', joblabel])
       subject.start
     end
+
+    it "(#16271) Should stop and start the service when a restart is called" do
+      subject.expects(:stop)
+      subject.expects(:start)
+      subject.restart
+    end
   end
 
   describe "when stopping the service" do
