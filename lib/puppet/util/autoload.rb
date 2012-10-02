@@ -133,16 +133,15 @@ class Puppet::Util::Autoload
       # that we ship with puppet, and thus the module path is irrelevant.
       #
       # In the long term, I think the way that we want to handle this is to
-      # have the autoloader ignore the module path in all cases where it is
-      # not specifically requested (e.g., by a constructor param or
-      # something)... because there are very few cases where we should
-      # actually be loading code from the module path.  However, until that
-      # happens, we at least need a way to prevent the autoloader from
-      # attempting to access the module path before it is initialized.  For
-      # now we are accomplishing that by calling the
-      # "app_defaults_initialized?" method on the main puppet Settings object.
-      # --cprice 2012-03-16
-      if Puppet.settings.app_defaults_initialized?
+      # have the autoloader ignore the module path in all cases where it is not
+      # specifically requested (e.g., by a constructor param or something)...
+      # because there are very few cases where we should actually be loading
+      # code from the module path.  However, until that happens, we at least
+      # need a way to prevent the autoloader from attempting to access the
+      # module path before it is initialized.  For now we are accomplishing
+      # that by calling the "global_defaults_initialized?" method on the main
+      # puppet Settings object.
+      if Puppet.settings.global_defaults_initialized?
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
@@ -150,7 +149,8 @@ class Puppet::Util::Autoload
           FileTest.directory?(d)
         end
       else
-        # if we get here, the app defaults have not been initialized, so we basically use an empty module path.
+        # if we get here, the global defaults have not been initialized, so we
+        # basically use an empty module path.
         []
       end
     end
@@ -158,7 +158,7 @@ class Puppet::Util::Autoload
     def libdirs()
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
-      if (Puppet.settings.app_defaults_initialized?)
+      if (Puppet.settings.global_defaults_initialized?)
         Puppet[:libdir].split(File::PATH_SEPARATOR)
       else
         []

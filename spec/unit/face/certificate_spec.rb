@@ -4,7 +4,9 @@ require 'puppet/face'
 
 require 'puppet/ssl/host'
 
-describe Puppet::Face[:certificate, '0.0.1'] do
+describe "Puppet::Face[:certificate, '0.0.1']" do
+  subject { Puppet::Face[:certificate, '0.0.1'] }
+
   include PuppetSpec::Files
 
   let(:ca) { Puppet::SSL::CertificateAuthority.instance }

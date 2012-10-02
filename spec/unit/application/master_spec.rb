@@ -21,6 +21,21 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     Puppet::SSL::Host.stubs(:ca_location=)
   end
 
+  context "#app_defaults" do
+    it "returns a kind of Hash object" do
+      @master.app_defaults.should be_a_kind_of Hash
+    end
+    it "does not have a default value for confdir" do
+      @master.app_defaults.should_not have_key :confdir
+    end
+    it "does not have a default vale for vardir" do
+      @master.app_defaults.should_not have_key :vardir
+    end
+    it "defaults the fact terminus value to 'yaml'" do
+      @master.app_defaults[:facts_terminus].should == 'yaml'
+    end
+  end
+
   it "should operate in master run_mode" do
     @master.class.run_mode.name.should equal(:master)
   end

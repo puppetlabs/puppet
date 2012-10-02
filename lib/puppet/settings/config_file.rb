@@ -29,9 +29,9 @@ class Puppet::Settings::ConfigFile
       case line
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
-        #disallow application_defaults in config file
-        if section == :application_defaults
-          raise Puppet::Error, "Illegal section 'application_defaults' in config file #{file} at line #{line}"
+        #disallow application_defaults and global_defaults in config file
+        if [:application_defaults, :global_defaults].include?(section)
+          raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
         end
         # Add a meta section
         result[section][:_meta] ||= {}
