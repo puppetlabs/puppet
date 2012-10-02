@@ -6,9 +6,13 @@ module Puppet::Provider::Mount
   # This only works when the mount point is synced to the fstab.
   def mount
     # Manually pass the mount options in, since some OSes *cough*OS X*cough* don't
-    # read from /etc/fstab but still want to use this type.
+    # read from /etc/fstab but still want to use this type. On the other hand, Linux
+    # appends the options from fstab to ones specified with -o unless device and type
+    # is specified, which would result in redundant options.
     args = []
+    args << "-t" << self.fstype if self.fstype
     args << "-o" << self.options if self.options and self.options != :absent
+    args << self.device if self.device
     args << resource[:name]
 
     mountcmd(*args)
