@@ -15,26 +15,21 @@ class Puppet::Settings::ConfigFile
   end
 
   def parse_file(file, text)
-    result = Hash.new { |names, name|
-      names[name] = {}
-    }
-
+    result = {}
     count = 0
 
     # Default to 'main' for the section.
-    section = :main
-    result[section][:_meta] = {}
+    section_name = :main
+    result[section_name] = empty_section
     text.split(/\n/).each do |line|
       count += 1
       case line
       when /^\s*\[(\w+)\]\s*$/
-        section = $1.intern # Section names
-        #disallow application_defaults and global_defaults in config file
-        if [:application_defaults, :global_defaults].include?(section)
-          raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
+        section_name = $1.intern
+        fail_when_illegal_section_name(section_name, file, line)
+        if result[section_name].nil?
+          result[section_name] = empty_section
         end
-        # Add a meta section
-        result[section][:_meta] ||= {}
       when /^\s*#/; next # Skip comments
       when /^\s*$/; next # Skip blanks
       when /^\s*(\w+)\s*=\s*(.*?)\s*$/ # settings
@@ -53,9 +48,9 @@ class Puppet::Settings::ConfigFile
           if value.is_a?(String) and options = extract_fileinfo(value)
             value = options[:value]
             options.delete(:value)
-            result[section][:_meta][var] = options
+            result[section_name][:_meta][var] = options
           end
-          result[section][var] = value
+          result[section_name][var] = value
         rescue Puppet::Error => detail
           raise Puppet::Settings::ParseError.new(detail.message, file, line, detail)
         end
@@ -68,6 +63,16 @@ class Puppet::Settings::ConfigFile
   end
 
 private
+
+  def empty_section
+    { :_meta => {} }
+  end
+
+  def fail_when_illegal_section_name(section, file, line)
+    if section == :application_defaults or section == :global_defaults
+      raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
+    end
+  end
 
   def extract_fileinfo(string)
     result = {}
