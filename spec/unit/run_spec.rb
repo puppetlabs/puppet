@@ -20,7 +20,17 @@ describe Puppet::Run do
   end
 
   it "should accept options at initialization" do
-    lambda { Puppet::Run.new :background => true }.should_not raise_error
+    expect do
+      Puppet::Run.new(
+        :background => true,
+        :tags => 'tag',
+        :ignoreschedules => false,
+        :pluginsync => true)
+    end.not_to raise_error
+  end
+
+  it "should not accept arbitrary options" do
+    lambda { Puppet::Run.new(:foo => true) }.should raise_error(ArgumentError)
   end
 
   it "should default to running in the foreground" do
@@ -45,10 +55,6 @@ describe Puppet::Run do
 
   it "should retain the background option" do
     Puppet::Run.new(:background => true).options[:background].should be_nil
-  end
-
-  it "should not accept arbitrary options" do
-    lambda { Puppet::Run.new(:foo => true) }.should raise_error(ArgumentError)
   end
 
   describe "when asked to run" do
