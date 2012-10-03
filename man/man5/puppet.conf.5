@@ -102,7 +102,7 @@ Whether to enable autosign\. Valid values are true (which autosigns any key requ
 .IP "" 0
 .
 .SS "bindaddress"
-The address a listening server should bind to\. Mongrel servers default to 127\.0\.0\.1 and WEBrick defaults to 0\.0\.0\.0\.
+The address a listening server should bind to\. WEBrick defaults to 0\.0\.0\.0\.
 .
 .SS "bucketdir"
 Where FileBucket files are stored\.
@@ -1357,7 +1357,7 @@ The directory in which serialized data is stored, usually in a subdirectory\.
 .IP "" 0
 .
 .SS "servertype"
-The type of server to use\. Currently supported options are webrick and mongrel\. If you use mongrel, you will need a proxy in front of the process or processes, since Mongrel cannot speak SSL\.
+The type of server to use\. Currently supported option is webrick\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: webrick
@@ -1409,22 +1409,6 @@ The domain which will be queried to find the SRV records of servers to use\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: puppetlabs\.lan
-.
-.IP "" 0
-.
-.SS "ssl_client_header"
-The header containing an authenticated client\'s SSL DN\. Only used with Mongrel\. This header must be set by the proxy to the authenticated client\'s SSL DN (e\.g\., \fB/CN=puppet\.puppetlabs\.com\fR)\. See http://projects\.puppetlabs\.com/projects/puppet/wiki/Using_Mongrel for more information\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: HTTP_X_CLIENT_DN
-.
-.IP "" 0
-.
-.SS "ssl_client_verify_header"
-The header containing the status message of the client verification\. Only used with Mongrel\. This header must be set by the proxy to \'SUCCESS\' if the client successfully authenticated, and anything else otherwise\. See http://projects\.puppetlabs\.com/projects/puppet/wiki/Using_Mongrel for more information\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: HTTP_X_CLIENT_VERIFY
 .
 .IP "" 0
 .
