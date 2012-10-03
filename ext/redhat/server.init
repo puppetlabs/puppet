@@ -24,9 +24,7 @@ fi
 
 PUPPETMASTER_OPTS="master "
 [ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --manifest=${PUPPETMASTER_MANIFEST}"
-if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --servertype=mongrel"
-elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
+if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
     PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
 fi
 [ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest ${PUPPETMASTER_LOG}"
@@ -50,16 +48,8 @@ start() {
 
     # Confirm the manifest exists
     if [ -r $PUPPETMASTER_MANIFEST ]; then
-        if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-            for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-                echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
-                daemon $PUPPETMASTER $PUPPETMASTER_OPTS --masterport=${PUPPETMASTER_PORTS[$i]} --pidfile=/var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid
-                ret=$?; [ $ret != 0 ] && RETVAL=$ret
-            done
-        else
-            daemon $daemonopts $PUPPETMASTER $PUPPETMASTER_OPTS
-            RETVAL=$?
-        fi
+        daemon $daemonopts $PUPPETMASTER $PUPPETMASTER_OPTS
+        RETVAL=$?
     else
         failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
         echo
@@ -72,16 +62,8 @@ start() {
 
 stop() {
     echo -n  $"Stopping puppetmaster: "
-    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-            echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
-            killproc -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
-            ret=$?; [ $ret != 0 ] && RETVAL=$ret
-        done
-    else
-        killproc $pidopts $PUPPETMASTER
-        RETVAL=$?
-    fi
+    killproc $pidopts $PUPPETMASTER
+    RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && rm -f "$lockfile"
     return $RETVAL
@@ -98,16 +80,8 @@ genconfig() {
 }
 
 rh_status() {
-    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-            echo -en "Port ${PUPPETMASTER_PORTS[$i]}: "
-            status -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
-            ret=$?; [ $ret != 0 ] && RETVAL=$ret
-        done
-    else
-        status $pidopts $PUPPETMASTER
-        RETVAL=$?
-    fi
+    status $pidopts $PUPPETMASTER
+    RETVAL=$?
     return $RETVAL
 }
 
