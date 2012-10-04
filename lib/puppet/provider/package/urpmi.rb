@@ -1,6 +1,6 @@
 Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
   desc "Support via `urpmi`."
-  commands :urpmi => "urpmi", :urpmq => "urpmq", :rpm => "rpm"
+  commands :urpmi => "urpmi", :urpmq => "urpmq", :rpm => "rpm", :urpme => "urpme"
 
   if command('rpm')
     confine :true => begin
@@ -55,5 +55,9 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
   def update
     # Install in urpmi can be used for update, too
     self.install
+  end
+
+  def uninstall
+    urpme @resource[:name]
   end
 end
