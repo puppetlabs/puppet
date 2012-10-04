@@ -74,6 +74,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
     # Always include dependencies
     command << "--include-dependencies"
+    # Always omit ri and rdoc
+    command << "--no-rdoc" << "--no-ri"
 
     if source = resource[:source]
       begin
@@ -96,7 +98,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         command << "--source" << "#{source}" << resource[:name]
       end
     else
-      command << "--no-rdoc" << "--no-ri" << resource[:name]
+      command << resource[:name]
     end
 
     output = execute(command)
