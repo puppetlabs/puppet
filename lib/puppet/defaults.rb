@@ -155,12 +155,6 @@ module Puppet
             "all files referenced with `import` statements to exist. This setting was primarily\n" +
             "designed for use with commit hooks for parse-checking.",
     },
-    :authconfig => {
-        :default  => "$confdir/namespaceauth.conf",
-        :desc     => "The configuration file that defines the rights to the different\n" +
-            "namespaces and methods.  This can be used as a coarse-grained\n" +
-            "authorization system for both `puppet agent` and `puppet master`.",
-    },
     :environment => {
         :default  => "production",
         :desc     => "The environment Puppet is running in.  For clients\n" +
