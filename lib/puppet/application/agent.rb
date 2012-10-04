@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/run'
 
 class Puppet::Application::Agent < Puppet::Application
 
