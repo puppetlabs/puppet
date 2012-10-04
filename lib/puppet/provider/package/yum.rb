@@ -5,9 +5,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   has_feature :versionable
 
-  commands :yum => "yum", :rpm => "rpm", :python => "python"
-
-  YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
+  commands :yum => "yum", :rpm => "rpm"
 
   attr_accessor :latest_info
 
@@ -23,6 +21,81 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
+  # Rubyized version of yumhelper.py
+  def self.yumhelper
+    result = []
+    begin
+      p = IO.popen("/usr/bin/env yum check-update --quiet 2>&1")
+      output = p.readlines()
+      p.close
+      rc = $?.exitstatus
+      
+      if rc == 0
+        return 0
+      elsif rc != 100
+        return rc
+      end
+
+      skipheaders = false
+      output.each do |line|
+        # Yum prints a line of hyphens (old versions) or a blank line between
+        # headers and package data, so skip everything before them
+        if !skipheaders
+          if /^((-){80}|)$/ =~ line
+            skipheaders = true
+          end
+          next
+        end
+
+        # Skip any blank lines
+        if /^[ \t]*$/ =~ line
+          next
+        end
+
+        # Skip 'Obsoleting Packages' line
+        if /^Obsoleting Packages *$/ =~ line
+          next
+        end
+
+        # Format is:
+        # Yum 1.x: name arch (epoch:)?version
+        # Yum 2.0: name arch (epoch:)?version repo
+        # Yum 3.x: name.arch (epoch:)?version repo
+        # epoch is optional if 0
+
+        p = line.split
+        if /^(.*)\.(.*)$/ =~ p[0]
+          pname = $1
+          parch = $2
+          pevr = p[1]
+        else
+          pname = p[0]
+          parch = p[1]
+          pevr  = p[2]
+        end
+
+        # Separate out epoch:version-release
+        evr = /^(\d:)?(\S+)-(\S+)$/ =~ pevr
+
+        if $1.nil?
+          pepoch = "0"
+        else
+          pepoch = $1.sub(":", "")
+        end
+
+        pversion = $2
+        prelease = $3
+
+        result.push "_pkg #{pname} #{pepoch} #{pversion} #{prelease} #{parch}\n"
+
+      end
+    rescue Exception => e
+      puts e
+    end
+
+    result
+  end
+
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
@@ -30,7 +103,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # collect our 'latest' info
     updates = {}
-    python(YUMHELPER).each_line do |l|
+    yumhelper.each do |l|
       l.chomp!
       next if l.empty?
       if l[0,4] == "_pkg"
