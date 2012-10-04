@@ -3,27 +3,23 @@ require 'spec_helper'
 require 'puppet/application/indirection_base'
 require 'puppet/indirector/face'
 
+########################################################################
+# Stub for testing; the names are critical, sadly. --daniel 2011-03-30
+class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
+end
+
+face = Puppet::Indirector::Face.define(:test_indirection, '0.0.1') do
+  summary "fake summary"
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+end
+# REVISIT: This horror is required because we don't allow anything to be
+# :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
+face.instance_variable_set('@version', :current)
+Puppet::Face.register(face)
+########################################################################
+
 describe Puppet::Application::IndirectionBase do
-  before :all do
-    ########################################################################
-    # Stub for testing; the names are critical, sadly. --daniel 2011-03-30
-    class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
-    end
-
-    Puppet[:modulepath] = ''
-
-    face = Puppet::Indirector::Face.define(:test_indirection, '0.0.1') do
-      summary "fake summary"
-      copyright "Puppet Labs", 2011
-      license   "Apache 2 license; see COPYING"
-    end
-    # REVISIT: This horror is required because we don't allow anything to be
-    # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
-    face.instance_variable_set('@version', :current)
-    Puppet::Face.register(face)
-    ########################################################################
-  end
-
   subject { Puppet::Application::TestIndirection.new }
 
   it "should accept a terminus command line option" do

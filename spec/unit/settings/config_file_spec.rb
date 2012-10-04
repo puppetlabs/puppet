@@ -85,12 +85,6 @@ describe Puppet::Settings::ConfigFile do
         "Illegal section 'application_defaults' in config file #{filename} at line [application_defaults]"
   end
 
-  it "errors when a global_defaults section is created" do
-    expect { the_parse_of("[global_defaults]") }.
-      to raise_error Puppet::Error,
-        "Illegal section 'global_defaults' in config file #{filename} at line [global_defaults]"
-  end
-
   it "transforms values with the given function" do
     config = Puppet::Settings::ConfigFile.new(Proc.new { |value| value + " changed" })
 

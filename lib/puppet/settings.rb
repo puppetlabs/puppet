@@ -23,9 +23,8 @@ class Puppet::Settings
   attr_accessor :files
   attr_reader :timer
 
-  # These are the settings that every app is required to specify; there are
-  # reasonable defaults defined in application.rb.
-  REQUIRED_APP_SETTINGS = [:logdir]
+  # These are the settings that every app is required to specify; there are reasonable defaults defined in application.rb.
+  REQUIRED_APP_SETTINGS = [:logdir, :confdir, :vardir]
 
   # This method is intended for puppet internal use only; it is a convenience method that
   # returns reasonable application default settings values for a given run_mode.
@@ -33,6 +32,8 @@ class Puppet::Settings
     {
         :name     => run_mode.to_s,
         :run_mode => run_mode.name,
+        :confdir  => run_mode.conf_dir,
+        :vardir   => run_mode.var_dir,
         :rundir   => run_mode.run_dir,
         :logdir   => run_mode.log_dir,
     }
@@ -109,7 +110,7 @@ class Puppet::Settings
   # Remove all set values, potentially skipping cli values.
   def unsafe_clear(clear_cli = true, clear_application_defaults = false)
     @values.each do |name, values|
-      next if (([:application_defaults, :global_defaults].include?(name)) and !clear_application_defaults)
+      next if ((name == :application_defaults) and !clear_application_defaults)
       next if ((name == :cli) and !clear_cli)
       @values.delete(name)
     end
@@ -131,7 +132,6 @@ class Puppet::Settings
     @used = []
   end
 
-
   def global_defaults_initialized?()
     @global_defaults_initialized
   end
@@ -143,25 +143,9 @@ class Puppet::Settings
     # 1) Parse the command line options and handle any of them that are
     #    registered, defined "global" puppet settings (mostly from defaults.rb).
     # 2) Parse the puppet config file(s).
-    #
-    # These 2 steps are being handled explicitly here.  If there ever arises a
-    #  situation where they need to be triggered from outside of this class,
-    #  without triggering the rest of the lifecycle--we might want to move them
-    #  out into a separate method that we call from here.  However, this seems
-    #  to be sufficient for now.
-    #  --cprice 2012-03-16
 
     parse_global_options(args)
-
-    # Here's step 2.  NOTE: this is a change in behavior where we are now
-    #  parsing the config file on every run; before, there were several apps
-    #  that specifically registered themselves as not requiring anything from
-    #  the config file.  The fact that we're always parsing it now might be a
-    #  small performance hit, but it was necessary in order to make sure that
-    #  we can resolve the libdir before we look for the available applications.
     parse_config_files
-
-    initialize_default_dir_settings
 
     @global_defaults_initialized = true
   end
@@ -201,35 +185,6 @@ class Puppet::Settings
   end
   private :parse_global_options
 
-  ##
-  # Initialize the settings object with the default values of confdir and
-  # vardir.  This method should depend only on the effective UID of the
-  # process.  If the EUID is root, then use the agent runmode to determine
-  # confdir and vardir.  If EUID is not root, then use the user runmode to
-  # determine conf_dir and var_dir.
-  def initialize_default_dir_settings
-    if (Puppet.features.root?)
-      set_value(:confdir, Puppet::Util::RunMode[:agent].conf_dir, :global_defaults)
-      set_value(:vardir, Puppet::Util::RunMode[:agent].var_dir, :global_defaults)
-    else
-      set_value(:confdir, Puppet::Util::RunMode[:user].conf_dir, :global_defaults)
-      set_value(:vardir, Puppet::Util::RunMode[:user].var_dir, :global_defaults)
-    end
-  end
-
-  ## Private utility method; this is the callback that the OptionParser will use when it finds
-  ## an option that was defined in Puppet.settings.  All that this method does is a little bit
-  ## of clanup to get the option into the exact format that Puppet.settings expects it to be in,
-  ## and then passes it along to Puppet.settings.
-  ##
-  ## @param [String] opt the command-line option that was matched
-  ## @param [String, TrueClass, FalseClass] the value for the setting (as determined by the OptionParser)
-  #def handlearg(opt, val)
-  #  opt, val = self.class.clean_opt(opt, val)
-  #  Puppet.settings.handlearg(opt, val)
-  #end
-  #private :handlearg
-
   # A utility method (public, is used by application.rb and perhaps elsewhere) that munges a command-line
   # option string into the format that Puppet.settings expects.  (This mostly has to deal with handling the
   # "no-" prefix on flag/boolean options).
@@ -251,15 +206,6 @@ class Puppet::Settings
     @app_defaults_initialized
   end
 
-  ##
-  # Initialize the settings object given a Hash of application specific
-  # defaults.  The Hash must contain at least the keys specified in the
-  # REQUIRED_APP_SETTINGS constant.
-  #
-  # @param [Hash] app_defaults containing key/value pairs of default values for
-  #   specific settings.
-  #
-  # @return [Boolean] the value of `@app_defaults_initialized`
   def initialize_app_defaults(app_defaults)
     raise Puppet::DevError, "Attempting to initialize application default settings more than once!" if app_defaults_initialized?
     REQUIRED_APP_SETTINGS.each do |key|
@@ -743,9 +689,9 @@ class Puppet::Settings
   # The order in which to search for values.
   def searchpath(environment = nil)
     if environment
-      [:cli, :memory, environment, :run_mode, :main, :application_defaults, :global_defaults]
+      [:cli, :memory, environment, :run_mode, :main, :application_defaults]
     else
-      [:cli, :memory, :run_mode, :main, :application_defaults, :global_defaults]
+      [:cli, :memory, :run_mode, :main, :application_defaults]
     end
   end
 

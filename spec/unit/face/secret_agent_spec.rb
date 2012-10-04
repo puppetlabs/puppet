@@ -4,9 +4,7 @@ require 'puppet/face'
 require 'puppet/indirector/catalog/rest'
 require 'tempfile'
 
-describe "Puppet::Face[:secret_agent, '0.0.1']" do
-  subject { Puppet::Face[:secret_agent, '0.0.1'] }
-
+describe Puppet::Face[:secret_agent, '0.0.1'] do
   include PuppetSpec::Files
 
   describe "#synchronize" do
