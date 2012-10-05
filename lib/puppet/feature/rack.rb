@@ -3,12 +3,7 @@ require 'puppet/util/feature'
 # See if we have rack available, an HTTP Application Stack
 # Explicitly depend on rack library version >= 1.0.0
 Puppet.features.add(:rack) do
-  begin
-    require 'rack'
-  rescue LoadError => detail
-    require 'rubygems'
-    require 'rack'
-  end
+  require 'rack'
 
   if ! (defined?(::Rack) and defined?(::Rack.release))
     false

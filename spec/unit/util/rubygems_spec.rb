@@ -7,8 +7,8 @@ describe Puppet::Util::RubyGems::Source do
   let(:fake_gem) { stub(:full_gem_path => gem_path) }
 
   describe "::new" do
-    it "returns NoGemsSource if requiring rubygems fails" do
-      described_class.expects(:require).with('rubygems').raises(LoadError)
+    it "returns NoGemsSource if rubygems is not present" do
+      described_class.expects(:has_rubygems?).returns(false)
       described_class.new.should be_kind_of(Puppet::Util::RubyGems::NoGemsSource)
     end
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
 
 # Load rubygems so we can require gems
-begin
-  require 'rubygems'
-rescue LoadError
+unless defined? Bundler::Setup
+  begin
+    require 'rubygems'
+  rescue LoadError
+  end
 end
 
 require 'puppet/util/command_line'
