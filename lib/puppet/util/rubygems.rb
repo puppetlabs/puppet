@@ -6,7 +6,13 @@ module Puppet::Util::RubyGems
   class Source
     class << self
       def has_rubygems?
-        defined? ::Gem
+        # Gems are not actually available when Bundler is loaded, even
+        # though the Gem constant is defined. This is because Bundler
+        # loads in rubygems, but then removes the custom require that
+        # rubygems installs. So when Bundler is around we have to act
+        # as though rubygems is not, e.g. we shouldn't be able to load
+        # a gem that Bundler doesn't want us to see.
+        defined? ::Gem and not defined? ::Bundler
       end
 
       def source

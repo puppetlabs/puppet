@@ -13,11 +13,13 @@ describe Puppet::Util::RubyGems::Source do
     end
 
     it "returns Gems18Source if Gem::Specification responds to latest_specs" do
+      described_class.expects(:has_rubygems?).returns(true)
       Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(true)
       described_class.new.should be_kind_of(Puppet::Util::RubyGems::Gems18Source)
     end
 
     it "returns Gems18Source if Gem::Specification does not respond to latest_specs" do
+      described_class.expects(:has_rubygems?).returns(true)
       Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(false)
       described_class.new.should be_kind_of(Puppet::Util::RubyGems::OldGemsSource)
     end
