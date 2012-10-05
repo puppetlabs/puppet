@@ -10,7 +10,7 @@ class Hiera
     def [](key)
       if key == "calling_class"
         def recurse_for_hostclass(scope)
-          if scope.source.type == :hostclass
+          if scope.source and scope.source.type == :hostclass
             return scope.source.name
           elsif scope.parent
             return recurse_for_hostclass(scope.parent)
@@ -27,7 +27,7 @@ class Hiera
 
       # damn you puppet visual basic style variables.
       return nil if ans == ""
-      return ans
+      return ans.downcase
     end
 
     def include?(key)
