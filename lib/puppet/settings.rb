@@ -855,6 +855,8 @@ These parameters affect the required permissions of any files specified after
 their specification.  Puppet will sometimes use these parameters to check its
 own configured state, so they can be used to make Puppet a bit more self-managing.
 
+The file format supports octothorpe-commented lines, but not partial-line comments.
+
 Generated on #{Time.now}.
 
 }.gsub(/^/, "# ")
