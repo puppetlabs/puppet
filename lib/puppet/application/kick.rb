@@ -144,6 +144,9 @@ with '--genconfig'.
   forking for each client to which to connect. The default is 1, meaning
   serial execution.
 
+* --puppetport:
+  Use the specified TCP port to connect to agents. Defaults to 8139.
+
 * --tag:
   Specify a tag for selecting the objects to apply. Does not work with
   the --test option.
