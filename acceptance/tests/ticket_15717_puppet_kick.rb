@@ -19,6 +19,11 @@ with_master_running_on(master, "--autosign true") do
       next
     end
 
+    # kick will verify the SSL server's cert, but since the master and
+    # agent can be in different domains (ec2, dc1), ask the agent for
+    # its fqdn, and always kick using that
+    agent_fqdn = on(agent, facter('fqdn')).stdout.chomp
+
     step "create rest auth.conf on agent"
     testdir = agent.tmpdir('puppet-kick-auth')
     create_remote_file(agent, "#{testdir}/auth.conf", restauth_conf)
@@ -58,7 +63,7 @@ with_master_running_on(master, "--autosign true") do
           #
           # So make sure `puppet kick` returns with exit code 0 and prints
           # 'status is success'. Also make sure we get a deprecation warning
-          on(master, puppet_kick("--host #{agent} --"), :acceptable_exit_codes => [0, 3]) do
+          on(master, puppet_kick("--host #{agent_fqdn} --"), :acceptable_exit_codes => [0, 3]) do
             assert_match(/Puppet kick is deprecated/, stderr, "Puppet kick did not issue deprecation warning")
 
             if result.exit_code == 0
