@@ -1,7 +1,5 @@
 require 'puppet/util/feature'
 
-Puppet.features.rubygems?
-
 Puppet.features.add(:rails) do
   begin
     # Turn off the constant watching parts of ActiveSupport, which have a huge
