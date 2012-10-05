@@ -28,11 +28,12 @@ describe Hiera::Scope do
     end
 
     it "should get calling_class and calling_module from puppet scope" do
-      real = mock
-      resource = mock
-      resource.expects(:name).returns("Foo::Bar").twice
-
-      real.expects(:resource).returns(resource).twice
+      real = Puppet::Parser::Scope.new_for_test_harness("test_node")
+      source = mock
+      source.expects(:type).returns(:hostclass).once
+      source.expects(:name).returns("Foo::Bar").once
+      source.expects(:module_name).returns("foo").once
+      real.expects(:source).returns(source).at_least_once
 
       scope = Hiera::Scope.new(real)
       scope["calling_class"].should == "foo::bar"

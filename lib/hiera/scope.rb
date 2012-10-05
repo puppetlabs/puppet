@@ -6,18 +6,28 @@ class Hiera
       @real = real
     end
 
+
     def [](key)
       if key == "calling_class"
-        ans = @real.resource.name.to_s.downcase
+        def recurse_for_hostclass(scope)
+          if scope.source and scope.source.type == :hostclass
+            return scope.source.name
+          elsif scope.parent
+            return recurse_for_hostclass(scope.parent)
+          else
+            return nil
+          end
+        end
+        ans = recurse_for_hostclass(@real)
       elsif key == "calling_module"
-        ans = @real.resource.name.to_s.downcase.split("::").first
+        ans = @real.source.module_name
       else
         ans = @real.lookupvar(key)
       end
 
       # damn you puppet visual basic style variables.
       return nil if ans == ""
-      return ans
+      return ans.downcase
     end
 
     def include?(key)
