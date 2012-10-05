@@ -906,6 +906,13 @@ describe Puppet::SSL::CertificateAuthority do
         @ca.crl.expects(:revoke).with { |serial, key| serial == 16 }
         @ca.revoke('host')
       end
+
+      it "should allow the user to specify a serial number (in hex) to revoke" do
+        @ca.crl.expects(:revoke).with { |serial, key| serial == 15 }
+        Puppet::SSL::Certificate.indirection.expects(:find).with("0xf").returns nil
+
+        @ca.revoke('0xf')
+      end
     end
 
     it "should be able to generate a complete new SSL host" do

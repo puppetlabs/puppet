@@ -231,6 +231,8 @@ class Puppet::SSL::CertificateAuthority
 
     if cert = Puppet::SSL::Certificate.indirection.find(name)
       serial = cert.content.serial
+    elsif name =~ /^0x[0-9A-Fa-f]+$/
+      serial = name.hex
     elsif ! serial = inventory.serial(name)
       raise ArgumentError, "Could not find a serial number for #{name}"
     end
