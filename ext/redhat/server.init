@@ -50,7 +50,6 @@ fi
 
 RETVAL=0
 
-prog=puppetmasterd
 PUPPETMASTER=/usr/bin/puppet
 
 start() {
