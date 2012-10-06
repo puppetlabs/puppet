@@ -1,0 +1,7 @@
+# HEADER: some simple
+# HEADER: header
+# Puppet Name: My daily failure
+MAILTO=""
+@daily /bin/false
+# Puppet Name: some_unrelevant job
+* * * * * /bin/true

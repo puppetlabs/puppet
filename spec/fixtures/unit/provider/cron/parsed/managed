@@ -1,0 +1,6 @@
+# Puppet Name: real_job
+* * * * * /bin/true
+# Puppet Name: complex_job
+MAILTO=foo@example.com
+SHELL=/bin/sh
+@reboot /bin/true >> /dev/null 2>&1

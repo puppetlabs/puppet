@@ -22,58 +22,64 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
 
   text_line :environment, :match => %r{^\s*\w+=}
 
-  record_line :freebsd_special, :fields => %w{special command},
-    :match => %r{^@(\w+)\s+(.+)$}, :pre_gen => proc { |record|
-      record[:special] = "@" + record[:special]
-    }
+  self::TIME_FIELDS = [:minute, :hour, :monthday, :month, :weekday]
 
-  crontab = record_line :crontab, :fields => %w{minute hour monthday month weekday command},
-    :match => %r{^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$},
-    :optional => %w{minute hour weekday month monthday}, :absent => "*"
-
-  class << crontab
-    def numeric_fields
-      fields - [:command]
-    end
-    # Do some post-processing of the parsed record.  Basically just
-    # split the numeric fields on ','.
-    def post_parse(record)
-      numeric_fields.each do |field|
-        if val = record[field] and val != :absent
-          record[field] = record[field].split(",")
+  record_line :crontab,
+    :fields     => %w{time command},
+    :match      => %r{^\s*(@\w+|\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(.+)$},
+    :absent     => '*',
+    :post_parse => proc { |record|
+      time = record.delete(:time)
+      if match = /@(\S+)/.match(time)
+        # is there another way to access the constant?
+        Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS.each { |f| record[f] = :absent }
+        record[:special] = match.captures[0]
+      elsif match = /(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/.match(time)
+        record[:special] = :absent
+        Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS.zip(match.captures).each do |field,value|
+          if value == self.absent
+            record[field] = :absent
+          else
+            record[field] = value.split(",")
+          end
         end
+      else
+        raise Puppet::Error, "Line got parsed as a crontab entry but cannot be handled. Please file a bug with the contents of your crontab"
       end
-    end
+      record
+    },
+    :pre_gen => proc { |record|
+      if record[:special] and record[:special] != :absent
+        record[:special] = "@#{record[:special]}"
+      end
 
-    # Join the fields back up based on ','.
-    def pre_gen(record)
-      numeric_fields.each do |field|
+      Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS.each do |field|
         if vals = record[field] and vals.is_a?(Array)
           record[field] = vals.join(",")
         end
       end
-    end
-
-
-    # Add name and environments as necessary.
-    def to_line(record)
+      record
+    },
+    :to_line => proc { |record|
       str = ""
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
-      if record[:environment] and record[:environment] != :absent and record[:environment] != [:absent]
-        record[:environment].each do |env|
-          str += env + "\n"
-        end
+      if record[:environment] and record[:environment] != :absent
+        str += record[:environment].map {|line| "#{line}\n"}.join('')
       end
-
-      if record[:special]
-        str += "@#{record[:special]} #{record[:command]}"
+      if record[:special] and record[:special] != :absent
+        fields = [:special, :command]
       else
-        str += join(record)
+        fields = Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS + [:command]
       end
+      str += record.values_at(*fields).map do |field|
+        if field.nil? or field == :absent
+          self.absent
+        else
+          field
+        end
+      end.join(self.joiner)
       str
-    end
-  end
-
+    }
 
   # Return the header placed at the top of each generated file, warning
   # users that modifying this file manually is probably a bad idea.
@@ -88,46 +94,35 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   def self.match(record, resources)
     resources.each do |name, resource|
       # Match the command first, since it's the most important one.
-      next unless record[:target] == resource.value(:target)
+      next unless record[:target] == resource[:target]
       next unless record[:command] == resource.value(:command)
 
-      # Then check the @special stuff
-      if record[:special]
-        next unless resource.value(:special) == record[:special]
-      end
+      # Now check the time fields
+      compare_fields = self::TIME_FIELDS + [:special]
 
-      # Then the normal fields.
       matched = true
-      record_type(record[:record_type]).fields.each do |field|
-        next if field == :command
-        next if field == :special
-        if record[field] and ! resource.value(field)
-          #Puppet.info "Cron is missing %s: %s and %s" %
-          #    [field, record[field].inspect, resource.value(field).inspect]
+      compare_fields.each do |field|
+        # If the resource does not manage a property (say monthday) it should
+        # always match. If it is the other way around (e.g. resource defines
+        # a should value for :special but the record does not have it, we do
+        # not match
+        next unless resource[field]
+        unless record.include?(field)
           matched = false
           break
         end
 
-        if ! record[field] and resource.value(field)
-          #Puppet.info "Hash is missing %s: %s and %s" %
-          #    [field, resource.value(field).inspect, record[field].inspect]
-          matched = false
-          break
+        if record_value = record[field] and resource_value = resource.value(field)
+          # The record translates '*' into absent in the post_parse hook and
+          # the resource type does exactly the opposite (alias :absent to *)
+          next if resource_value == '*' and record_value == :absent
+          next if resource_value == record_value
         end
-
-        # Yay differing definitions of absent.
-        next if (record[field] == :absent and resource.value(field) == "*")
-
-        # Everything should be in the form of arrays, not the normal text.
-        next if (record[field] == resource.value(field))
-        #Puppet.info "Did not match %s: %s vs %s" %
-        #    [field, resource.value(field).inspect, record[field].inspect]
-        matched = false
+        matched =false
         break
       end
       return resource if matched
     end
-
     false
   end
 
@@ -189,6 +184,10 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   end
 
   def user=(user)
+    # we have to mark the target as modified first, to make sure that if
+    # we move a cronjob from userA to userB, userA's crontab will also
+    # be rewritten
+    mark_target_modified
     @property_hash[:user] = user
     @property_hash[:target] = user
   end

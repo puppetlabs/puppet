@@ -1,0 +1,15 @@
+# HEADER: some simple
+# HEADER: header
+@daily /bin/unnamed_special_command >> /dev/null 2>&1
+
+# commend with blankline above and below
+
+17-19,22 0-23/2 * * 2 /bin/unnamed_regular_command
+
+# Puppet Name: My daily failure
+MAILTO=""
+@daily /bin/false
+# Puppet Name: Monthly job
+SHELL=/bin/sh
+MAILTO=mail@company.com
+15 14 1 * * $HOME/bin/monthly
