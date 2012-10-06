@@ -80,13 +80,13 @@ stop() {
 }
 
 restart() {
-  stop
-  start
+    stop
+    start
 }
 
 genconfig() {
-  echo -n $"Generate configuration puppetmaster: "
-  $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
+    echo -n $"Generate configuration puppetmaster: "
+    $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
 }
 
 rh_status() {
@@ -96,32 +96,34 @@ rh_status() {
 }
 
 rh_status_q() {
-        rh_status >/dev/null 2>&1
+    rh_status >/dev/null 2>&1
 }
 
 case "$1" in
-  start)
-      start
-    ;;
+    start)
+        start
+        ;;
     stop)
         stop
-    ;;
+        ;;
     restart|reload|force-reload)
         restart
-    ;;
+        ;;
     condrestart)
         rh_status_q || exit 0
         restart
-    ;;
+        ;;
     status)
         rh_status
-    ;;
+        ;;
     genconfig)
         genconfig
-    ;;
+        ;;
     *)
         echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
         exit 1
 esac
 
 exit $RETVAL
+
+# vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab
