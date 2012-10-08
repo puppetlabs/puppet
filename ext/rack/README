@@ -21,21 +21,6 @@ WEBrick is currently not supported as a Rack host. You'll be better off
 just running puppetmasterd directly.
 
 
-Mongrel
--------
-
-If you like Mongrel, and want to replicate wiki:UsingMongrel, you could
-probably start your backend mongrels this way:
-
-cd ext/rack
-for port in `seq 18140 18150`; do
-  rackup --server mongrel --port $port &
-done
-
-rackup is part of the rack gem. Make sure it's in your path.
-
-
-
 Apache with Passenger (aka mod_rails)
 -------------------------------------
 
