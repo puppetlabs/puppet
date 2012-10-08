@@ -65,6 +65,12 @@ module HieraPuppet
     end
 
     config[:logger] = 'puppet'
+
+    # we want the module_data backend to always be present, usually as the least
+    # significant backend but we do not want to force the decision onto our users
+    # so if they specifically put it somewhere in the hierarchy we respect that decision
+    config[:backends] << "module_data" unless config[:backends].include?("module_data")
+
     config
   end
 
