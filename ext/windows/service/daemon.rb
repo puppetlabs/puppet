@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require 'rubygems'
+
 require 'fileutils'
 require 'win32/daemon'
 require 'win32/dir'

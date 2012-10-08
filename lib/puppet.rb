@@ -1,11 +1,5 @@
 require 'puppet/version'
 
-# Try to load rubygems.  Hey rubygems, I hate you.
-begin
-  require 'rubygems'
-rescue LoadError
-end
-
 # see the bottom of the file for further inclusions
 require 'facter'
 require 'puppet/error'
