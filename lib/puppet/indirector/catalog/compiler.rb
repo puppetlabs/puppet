@@ -4,8 +4,7 @@ require 'puppet/indirector/code'
 require 'yaml'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
-  desc "Puppet's catalog compilation interface, and its back-end is
-    Puppet's compiler"
+  desc "Compiles catalogs on demand using Puppet's compiler."
 
   include Puppet::Util
 

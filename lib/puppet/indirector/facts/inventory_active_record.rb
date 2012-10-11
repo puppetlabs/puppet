@@ -6,6 +6,10 @@ require 'puppet/util/retryaction'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
 
+  desc "Medium-performance fact storage suitable for the inventory service.
+    Most users should use PuppetDB instead. Note: ActiveRecord-based storeconfigs
+    and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+
   def initialize
     Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
     super
