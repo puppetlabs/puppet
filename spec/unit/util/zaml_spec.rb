@@ -16,43 +16,71 @@ require 'spec_helper'
 require 'puppet/util/monkey_patches'
 
 describe "Pure ruby yaml implementation" do
+  def can_round_trip(value)
+    YAML.load(value.to_yaml).should == value
+  end
+
   {
-  7            => "--- 7",
-  3.14159      => "--- 3.14159",
-  "3.14159"    => '--- "3.14159"',
-  "+3.14159"   => '--- "+3.14159"',
-  "0x123abc"   => '--- "0x123abc"',
-  "-0x123abc"  => '--- "-0x123abc"',
-  "-0x123"     => '--- "-0x123"',
-  "+0x123"     => '--- "+0x123"',
-  "0x123.456"  => '--- "0x123.456"',
-  'test'       => "--- test",
-  []           => "--- []",
-  :symbol      => "--- !ruby/sym symbol",
-  {:a => "A"}  => "--- \n  !ruby/sym a: A",
-  {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y"
-  }.each { |o,y|
-    it "should convert the #{o.class} #{o.inspect} to yaml" do
-      o.to_yaml.should == y
+    7            => "--- 7",
+    3.14159      => "--- 3.14159",
+    "3.14159"    => '--- "3.14159"',
+    "+3.14159"   => '--- "+3.14159"',
+    "0x123abc"   => '--- "0x123abc"',
+    "-0x123abc"  => '--- "-0x123abc"',
+    "-0x123"     => '--- "-0x123"',
+    "+0x123"     => '--- "+0x123"',
+    "0x123.456"  => '--- "0x123.456"',
+    'test'       => "--- test",
+    []           => "--- []",
+    :symbol      => "--- !ruby/sym symbol",
+    {:a => "A"}  => "--- \n  !ruby/sym a: A",
+    {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y"
+  }.each do |data, serialized|
+    it "should convert the #{data.class} #{data.inspect} to yaml" do
+      data.to_yaml.should == serialized
     end
-    it "should produce yaml for the #{o.class} #{o.inspect} that can be reconstituted" do
-      YAML.load(o.to_yaml).should == o
+
+    it "should produce yaml for the #{data.class} #{data.inspect} that can be reconstituted" do
+      can_round_trip data
     end
-  }
+  end
+
+  [
+    { :a => "a:" },
+    { :a => "a:", :b => "b:" },
+    ["a:", "b:"],
+    { :a => "/:", :b => "/:" },
+    { :a => "a/:", :b => "a/:" },
+    { :a => "\"" },
+    { :a => {}.to_yaml },
+    { :a => [].to_yaml },
+    { :a => "".to_yaml },
+    { :a => :a.to_yaml },
+
+    { "a:" => "b" },
+    { :a.to_yaml => "b" },
+    { [1, 2, 3] => "b" },
+    { "b:" => { "a" => [] } }
+  ].each do |value|
+    it "properly escapes #{value.inspect}, which contains YAML characters" do
+      can_round_trip value
+    end
+  end
+
   #
   # Can't test for equality on raw objects
   {
-  Object.new                   => "--- !ruby/object {}",
-  [Object.new]                 => "--- \n  - !ruby/object {}",
-  {Object.new => Object.new}   => "--- \n  ? !ruby/object {}\n  : !ruby/object {}"
-  }.each { |o,y|
+    Object.new                   => "--- !ruby/object {}",
+    [Object.new]                 => "--- \n  - !ruby/object {}",
+    {Object.new => Object.new}   => "--- \n  ? !ruby/object {}\n  : !ruby/object {}"
+  }.each do |o,y|
     it "should convert the #{o.class} #{o.inspect} to yaml" do
       o.to_yaml.should == y
     end
     it "should produce yaml for the #{o.class} #{o.inspect} that can be reconstituted" do
       lambda { YAML.load(o.to_yaml) }.should_not raise_error
     end
-  }
+  end
 
   it "should emit proper labels and backreferences for common objects" do
     # Note: this test makes assumptions about the names ZAML chooses
