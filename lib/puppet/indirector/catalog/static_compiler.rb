@@ -16,10 +16,11 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     configuration. Specifically:
 
     You must create a `Filebucket['puppet']` resource in site.pp (or somewhere
-    else where all nodes will use it):
+    else where it will be added to every node's catalog). The title of this
+    resource **MUST** be "puppet"; the static compiler treats this title as magical.
 
-        # Note: the special $servername var always contains master's FQDN, even if
-        # it was reached at a different name
+        # Note: the special $servername var always contains the master's FQDN,
+        # even if it was reached at a different name.
         filebucket { puppet:
           server => $servername,
           path   => false,
