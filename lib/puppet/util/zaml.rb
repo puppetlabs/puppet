@@ -301,7 +301,7 @@ class String
       # Only legal UTF-8 characters can make it this far, so we are safe
       # against emitting something dubious. That means we don't need to mess
       # about, just emit them directly. --daniel 2012-07-14
-      when ((self =~ /\A[a-zA-Z\/][-\[\]_\/.:a-zA-Z0-9]*\z/) and
+      when ((self =~ /\A[a-zA-Z\/][-\[\]_\/.a-zA-Z0-9]*\z/) and
           (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
         # simple string literal, safe to emit unquoted.
         z.emit(self)
