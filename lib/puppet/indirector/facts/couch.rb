@@ -2,6 +2,9 @@ require 'puppet/node/facts'
 require 'puppet/indirector/couch'
 class Puppet::Node::Facts::Couch < Puppet::Indirector::Couch
 
+  desc "Store facts in CouchDB. This should not be used with the inventory service;
+    it is for more obscure custom integrations. If you are wondering whether you
+    should use it, you shouldn't; use PuppetDB instead."
   # Return the facts object or nil if there is no document
   def find(request)
     doc = super
