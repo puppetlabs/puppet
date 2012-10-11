@@ -1,10 +1,4 @@
 #!/usr/bin/env ruby
 
-# Load rubygems so we can require gems
-begin
-  require 'rubygems'
-rescue LoadError
-end
-
 require 'puppet/util/command_line'
 Puppet::Util::CommandLine.new.execute

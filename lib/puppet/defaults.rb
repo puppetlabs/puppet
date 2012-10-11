@@ -1369,12 +1369,6 @@ EOT
 
         define_settings(
         :ldap,
-    :ldapnodes => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to search for node configurations in LDAP.  See
-      http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes for more information.",
-    },
     :ldapssl => {
       :default  => false,
       :type   => :boolean,
@@ -1391,11 +1385,11 @@ EOT
     },
     :ldapserver => {
       :default  => "ldap",
-      :desc     => "The LDAP server.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP server.  Only used if `node_terminus` is set to `ldap`.",
     },
     :ldapport => {
       :default  => 389,
-      :desc     => "The LDAP port.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP port.  Only used if `node_terminus` is set to `ldap`.",
     },
 
     :ldapstring => {
