@@ -1471,7 +1471,6 @@ You can adjust the backend using the storeconfigs_backend setting.",
             Puppet.settings[:catalog_cache_terminus] = :store_configs
           end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
-          Puppet::Node.indirection.cache_class = :store_configs
 
           Puppet::Resource.indirection.terminus_class = :store_configs
         end
