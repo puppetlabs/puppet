@@ -82,7 +82,10 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
   def client_cert(request)
     # This environment variable is set by mod_ssl, note that it
     # requires the `+ExportCertData` option in the `SSLOptions` directive
-    return nil unless cert = request.env['SSL_CLIENT_CERT']
+    cert = request.env['SSL_CLIENT_CERT']
+    # NOTE: The SSL_CLIENT_CERT environment variable will be the empty string
+    # when Puppet agent nodes have not yet obtained a signed certificate.
+    return nil if cert.nil? or cert.empty?
     OpenSSL::X509::Certificate.new(cert)
   end
 

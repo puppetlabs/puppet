@@ -162,8 +162,8 @@ describe "Puppet defaults" do
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :store_configs" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
+    it "does not change the Node cache" do
+      Puppet::Node.indirection.expects(:cache_class=).never
       Puppet.settings[:storeconfigs] = true
     end
   end
@@ -191,8 +191,8 @@ describe "Puppet defaults" do
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :store_configs" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
+    it "does not change the Node cache" do
+      Puppet::Node.indirection.expects(:cache_class=).never
       Puppet.settings[:storeconfigs] = true
     end
   end
