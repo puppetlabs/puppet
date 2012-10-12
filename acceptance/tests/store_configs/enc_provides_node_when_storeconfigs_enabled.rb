@@ -1,5 +1,7 @@
 test_name "ENC node information is used when store configs enabled (#16698)"
 
+confine :except, :platform => 'solaris'
+
 testdir = master.tmpdir('use_enc')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
