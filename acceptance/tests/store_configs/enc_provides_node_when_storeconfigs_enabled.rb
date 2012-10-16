@@ -50,14 +50,12 @@ if $osfamily == "Debian" {
   }
 } elsif $osfamily == "Redhat" {
   package {
-    ['sqlite', 'sqlite-devel', 'ruby-devel', 'gcc', 'make']:
-      ensure => present,
-      before => Package[sqlite3];
+    sqlite:
+      ensure => present;
 
-    sqlite3:
+    rubygem-sqlite3-ruby:
       ensure => present,
-      provider => 'gem',
-      require => Package[rubygems]
+      require => Package[sqlite]
   }
 } else {
   fail "Unknown OS $osfamily"
