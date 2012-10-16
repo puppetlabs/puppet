@@ -52,7 +52,7 @@ module Puppet::ModuleTool
 
           # grab the first directory
           extracted = build_dir.children.detect { |c| c.directory? }
-          FileUtils.mv extracted, @module_dir
+          FileUtils.mv extracted, @module_dir, :force => true
         ensure
           build_dir.rmtree
         end
