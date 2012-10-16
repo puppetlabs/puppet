@@ -1,6 +1,7 @@
 test_name "ENC node information is used when store configs enabled (#16698)"
 
 confine :except, :platform => 'solaris'
+confine :except, :platform => 'windows'
 
 testdir = master.tmpdir('use_enc')
 
