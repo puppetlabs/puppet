@@ -40,15 +40,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
-  def check_manage_expiry
-    cmd = []
-    if @resource[:expiry]
-      cmd << "-e #{@resource[:expiry]}"
-    end
-
-    cmd
-  end
-
   def check_system_users
     if self.class.system_users? and resource.system?
       ["-r"]
@@ -76,7 +67,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += add_properties
     cmd += check_allow_dup
     cmd += check_manage_home
-    cmd += check_manage_expiry
     cmd += check_system_users
     cmd << @resource[:name]
   end

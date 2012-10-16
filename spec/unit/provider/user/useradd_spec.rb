@@ -24,7 +24,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   describe "#create" do
 
     it "should add -o when allowdupe is enabled and the user is being created" do
-      resource[:allowdupe] = true
+      resource[:allowdupe] = :true
       provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
       provider.create
     end
@@ -150,6 +150,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:allowdupe] = :true
       resource[:managehome] = :true
       resource[:system] = :true
+      resource[:groups] = [ 'somegroup' ]
     end
 
     it "should call command with :add" do
@@ -199,15 +200,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return an array with full command" do
       described_class.expects(:system_users?).returns true
-      provider.stubs(:add_properties).returns(["-G", "somegroup"])
       resource[:expiry] = "2012-08-18"
 
-      provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", '-e 2012-08-18', "-r", "myuser"]
+      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', '2012-08-18', '-o', '-m', '-r', 'myuser']
     end
 
     it "should return an array without -e if expiry is undefined full command" do
       described_class.expects(:system_users?).returns true
-      provider.stubs(:add_properties).returns(["-G", "somegroup"])
       provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
     end
   end
