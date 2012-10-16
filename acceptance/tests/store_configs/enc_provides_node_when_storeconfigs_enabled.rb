@@ -1,5 +1,7 @@
 test_name "ENC node information is used when store configs enabled (#16698)"
 
+confine :except, :platform => 'solaris'
+
 testdir = master.tmpdir('use_enc')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
@@ -48,14 +50,12 @@ if $osfamily == "Debian" {
   }
 } elsif $osfamily == "Redhat" {
   package {
-    ['sqlite', 'sqlite-devel', 'ruby-devel', 'gcc', 'make']:
-      ensure => present,
-      before => Package[sqlite3];
+    sqlite:
+      ensure => present;
 
-    sqlite3:
+    rubygem-sqlite3-ruby:
       ensure => present,
-      provider => 'gem',
-      require => Package[rubygems]
+      require => Package[sqlite]
   }
 } else {
   fail "Unknown OS $osfamily"
