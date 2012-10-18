@@ -2,6 +2,7 @@ test_name "ENC node information is used when store configs enabled (#16698)"
 
 confine :except, :platform => 'solaris'
 confine :except, :platform => 'windows'
+confine :except, :platform => 'el-6'
 
 testdir = master.tmpdir('use_enc')
 
@@ -41,7 +42,7 @@ package {
 }
 
 if $osfamily == "Debian" {
-  package { 
+  package {
     sqlite3:
       ensure => present;
 
