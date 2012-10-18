@@ -46,6 +46,8 @@ module Puppet::Util::SELinux
       mode = filestat.mode
     rescue Errno::ENOENT
       mode = 0
+    rescue Errno::EACCES
+      return nil
     end
     retval = Selinux.matchpathcon(file, mode)
     if retval == -1
