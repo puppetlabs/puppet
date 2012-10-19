@@ -8,9 +8,43 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
   end
 
-  let(:subject)       { SIDTester.new }
-  let(:sid)           { Win32::Security::SID::LocalSystem }
-  let(:invalid_sid)   { 'bogus' }
+  let(:subject)      { SIDTester.new }
+  let(:sid)          { Win32::Security::SID::LocalSystem }
+  let(:invalid_sid)  { 'bogus' }
+  let(:unknown_sid)  { 'S-0-0-0' }
+  let(:unknown_name) { 'chewbacca' }
+
+  context "#name_to_sid" do
+    it "should return nil if the account does not exist" do
+      subject.name_to_sid(unknown_name).should be_nil
+    end
+
+    it "should accept unqualified account name" do
+      subject.name_to_sid('SYSTEM').should == sid
+    end
+
+    it "should be case-insensitive" do
+      subject.name_to_sid('SYSTEM').should == subject.name_to_sid('system')
+    end
+
+    it "should accept domain qualified account names" do
+      subject.name_to_sid('NT AUTHORITY\SYSTEM').should == sid
+    end
+
+    it "should be the identity function for any sid" do
+      subject.name_to_sid(sid).should == sid
+    end
+  end
+
+  context "#sid_to_name" do
+    it "should return nil if given a sid for an account that doesn't exist" do
+      subject.sid_to_name(unknown_sid).should be_nil
+    end
+
+    it "should accept a sid" do
+      subject.sid_to_name(sid).should == "NT AUTHORITY\\SYSTEM"
+    end
+  end
 
   context "#sid_ptr_to_string" do
     it "should raise if given an invalid sid" do
