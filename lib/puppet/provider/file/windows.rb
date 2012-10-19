@@ -11,38 +11,23 @@ Puppet::Type.type(:file).provide :windows do
     include Puppet::Util::Windows::Security
   end
 
-  ERROR_INVALID_SID_STRUCTURE = 1337
+  # Determine if the account is valid, and if so, return the UID
+  def name2id(value)
+    Puppet::Util::Windows::Security.name_to_sid(value)
+  end
 
+  # If it's a valid SID, get the name. Otherwise, it's already a name,
+  # so just return it.
   def id2name(id)
-    # If it's a valid sid, get the name. Otherwise, it's already a name, so
-    # just return it.
     begin
-      if string_to_sid_ptr(id)
-        name = nil
-        Puppet::Util::ADSI.execquery(
-          "SELECT Name FROM Win32_Account WHERE SID = '#{id}'
-           AND LocalAccount = true"
-        ).each { |a| name ||= a.name }
-        return name
+      if Puppet::Util::Windows::Security.string_to_sid_ptr(id)
+        return Puppet::Util::Windows::Security.sid_to_name(id)
       end
     rescue Puppet::Util::Windows::Error => e
       raise unless e.code == ERROR_INVALID_SID_STRUCTURE
     end
 
     id
-  end
-
-  # Determine if the account is valid, and if so, return the UID
-  def name2id(value)
-    # If it's a valid sid, then return it. Else, it's a name we need to convert
-    # to sid.
-    begin
-      return value if string_to_sid_ptr(value)
-    rescue Puppet::Util::Windows::Error => e
-      raise unless e.code == ERROR_INVALID_SID_STRUCTURE
-    end
-
-    Puppet::Util::ADSI.sid_for_account(value) rescue nil
   end
 
   # We use users and groups interchangeably, so use the same methods for both
