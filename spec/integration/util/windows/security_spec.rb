@@ -15,9 +15,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
   before :all do
     @sids = {
-      :current_user => Puppet::Util::ADSI.sid_for_account(Sys::Admin.get_login),
-      :admin => Puppet::Util::ADSI.sid_for_account("Administrator"),
-      :guest => Puppet::Util::ADSI.sid_for_account("Guest"),
+      :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
+      :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
+      :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
     }
