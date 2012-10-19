@@ -15,9 +15,10 @@ module Puppet::Util::Windows
     ERROR_NONE_MAPPED           = 1332
     ERROR_INVALID_SID_STRUCTURE = 1337
 
-    # Convert a name into a SID string, e.g. "S-1-5-32-544". If the name is
-    # already in SID string form, just return it. Otherwise, convert the name,
-    # possibly DOMAIN\name, to a SID
+    # Convert an account name, e.g. 'Administrators' into a SID string,
+    # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',
+    # 'BUILTIN\Administrators', or 'S-1-5-32-544', and will return the
+    # SID. Returns nil if the account doesn't exist.
     def name_to_sid(name)
       # Apparently, we accept a symbol..
       name = name.to_s if name
@@ -31,7 +32,8 @@ module Puppet::Util::Windows
     end
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a name,
-    # e.g. BUILTIN\Administrator.
+    # e.g. 'BUILTIN\Administrators'. Returns nil if an account
+    # for that SID does not exist.
     def sid_to_name(value)
       sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(value))
 
@@ -44,7 +46,7 @@ module Puppet::Util::Windows
       nil
     end
 
-    # Convert a SID pointer to a string, e.g. "S-1-5-32-544".
+    # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
       sid_buf = 0.chr * 256
       str_ptr = 0.chr * 4
@@ -64,7 +66,8 @@ module Puppet::Util::Windows
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a pointer (containing the
     # address of the binary SID structure). The returned value can be used in
-    # Win32 APIs that expect a PSID, e.g. IsValidSid.
+    # Win32 APIs that expect a PSID, e.g. IsValidSid. The account for this
+    # SID may or may not exist.
     def string_to_sid_ptr(string, &block)
       sid_buf = 0.chr * 80
       string_addr = [string].pack('p*').unpack('L')[0]
