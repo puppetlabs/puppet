@@ -108,11 +108,10 @@ unless the '--all' option is set.
   Print the full-text version of a host's certificate.
 
 * revoke:
-  Revoke the certificate of a client. The certificate can be specified
-  either by its serial number (given as a decimal number or a
-  hexadecimal number prefixed by '0x') or by its hostname. The
-  certificate is revoked by adding it to the Certificate Revocation List
-  given by the 'cacrl' configuration option. Note that the puppet master
+  Revoke the certificate of a client. The certificate can be specified either
+  by its serial number (given as a hexadecimal number prefixed by '0x') or by its
+  hostname. The certificate is revoked by adding it to the Certificate Revocation
+  List given by the 'cacrl' configuration option. Note that the puppet master
   needs to be restarted after revoking certificates.
 
 * sign:
