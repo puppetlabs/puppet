@@ -371,26 +371,6 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # end
         end
 
-        describe "#string_to_sid_ptr" do
-          it "should raise an error if an invalid SID is specified" do
-            expect do
-              winsec.string_to_sid_ptr('foobar')
-            end.to raise_error(Puppet::Util::Windows::Error) { |error| error.code.should == 1337 }
-          end
-
-          it "should yield if a block is given" do
-            yielded = nil
-            winsec.string_to_sid_ptr('S-1-1-0') do |sid|
-              yielded = sid
-            end
-            yielded.should_not be_nil
-          end
-
-          it "should allow no block to be specified" do
-            winsec.string_to_sid_ptr('S-1-1-0').should be_true
-          end
-        end
-
         describe "when the parent directory" do
           before :each do
             winsec.set_owner(sids[:current_user], parent)

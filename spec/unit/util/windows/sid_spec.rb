@@ -3,6 +3,7 @@ require 'spec_helper'
 
 describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows? do
   if Puppet.features.microsoft_windows?
+    require 'puppet/util/windows'
     class SIDTester
       include Puppet::Util::Windows::SID
     end
@@ -63,10 +64,6 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   end
 
   context "#string_to_sid_ptr" do
-    it "should accept well known SID" do
-      subject.string_to_sid_ptr(sid).should be_true
-    end
-
     it "should yield sid_ptr" do
       ptr = nil
       subject.string_to_sid_ptr(sid) do |p|
@@ -79,6 +76,25 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect {
         subject.string_to_sid_ptr(invalid_sid)
       }.to raise_error(Puppet::Error, /Failed to convert string SID/)
+    end
+  end
+
+  context "#valid_sid?" do
+    it "should return true for a valid SID" do
+      subject.valid_sid?(sid).should be_true
+    end
+
+    it "should return false for an invalid SID" do
+      subject.valid_sid?(invalid_sid).should be_false
+    end
+
+    it "should raise if the conversion fails" do
+      subject.expects(:string_to_sid_ptr).with(sid).
+        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Windows::Error::ERROR_ACCESS_DENIED))
+
+      expect {
+        subject.string_to_sid_ptr(sid) {|ptr| }
+      }.to raise_error(Puppet::Util::Windows::Error, /Failed to convert string SID: #{sid}/)
     end
   end
 end

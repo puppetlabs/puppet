@@ -49,20 +49,21 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
   describe "#id2name" do
     it "should return the name of the user identified by the sid" do
-      Puppet::Util::Windows::Security.expects(:string_to_sid_ptr).with(sid).returns(true)
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(sid).returns(true)
       Puppet::Util::Windows::Security.expects(:sid_to_name).with(sid).returns(account)
 
       provider.id2name(sid).should == account
     end
 
     it "should return the argument if it's already a name" do
-      Puppet::Util::Windows::Security.expects(:string_to_sid_ptr).with(account).returns(false)
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(account).returns(false)
+      Puppet::Util::Windows::Security.expects(:sid_to_name).never
 
       provider.id2name(account).should == account
     end
 
     it "should return nil if the user doesn't exist" do
-      Puppet::Util::Windows::Security.expects(:string_to_sid_ptr).with(sid).returns(true)
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(sid).returns(true)
       Puppet::Util::Windows::Security.expects(:sid_to_name).with(sid).returns(nil)
 
       provider.id2name(sid).should == nil

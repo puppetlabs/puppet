@@ -19,15 +19,11 @@ Puppet::Type.type(:file).provide :windows do
   # If it's a valid SID, get the name. Otherwise, it's already a name,
   # so just return it.
   def id2name(id)
-    begin
-      if Puppet::Util::Windows::Security.string_to_sid_ptr(id)
-        return Puppet::Util::Windows::Security.sid_to_name(id)
-      end
-    rescue Puppet::Util::Windows::Error => e
-      raise unless e.code == ERROR_INVALID_SID_STRUCTURE
+    if Puppet::Util::Windows::Security.valid_sid?(id)
+      Puppet::Util::Windows::Security.sid_to_name(id)
+    else
+      id
     end
-
-    id
   end
 
   # We use users and groups interchangeably, so use the same methods for both

@@ -76,13 +76,20 @@ module Puppet::Util::Windows
 
       sid_ptr = sid_buf.unpack('L')[0]
       begin
-        if block_given?
-          yield sid_ptr
-        else
-          true
-        end
+        yield sid_ptr
       ensure
         LocalFree(sid_ptr)
+      end
+    end
+
+    # Return true if the string is a valid SID, e.g. "S-1-5-32-544", false otherwise.
+    def valid_sid?(string)
+      string_to_sid_ptr(string) { |ptr| true }
+    rescue Puppet::Util::Windows::Error => e
+      if e.code == ERROR_INVALID_SID_STRUCTURE
+        false
+      else
+        raise
       end
     end
   end
