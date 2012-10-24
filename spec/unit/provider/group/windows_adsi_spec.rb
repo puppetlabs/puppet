@@ -88,8 +88,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     provider.delete
   end
 
-  it "should report the group's SID as gid" do
-    Puppet::Util::ADSI.expects(:sid_for_account).with('testers').returns('S-1-5-32-547')
+  it "should report the group's SID as gid", :if => Puppet.features.microsoft_windows? do
+    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns('S-1-5-32-547')
     provider.gid.should == 'S-1-5-32-547'
   end
 
