@@ -84,7 +84,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   def find(request)
     path = path(request.key)
 
-    return nil unless FileTest.exist?(path) or rename_files_with_uppercase(path)
+    return nil unless (FileTest.exist?(path) and FileTest.readable?(path)) or rename_files_with_uppercase(path)
 
     result = model.new(request.key)
     result.read(path)
@@ -106,7 +106,10 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # an instance for every file in the directory.
   def search(request)
     dir = collection_directory
-    Dir.entries(dir).reject { |file| file !~ /\.pem$/ }.collect do |file|
+    Dir.entries(dir).
+        reject { |file| file !~ /\.pem$/ }.
+        reject { |file| !FileTest.readable?(File.join(dir, file)) }.
+        collect do |file|
       name = file.sub(/\.pem$/, '')
       result = model.new(name)
       result.read(File.join(dir, file))

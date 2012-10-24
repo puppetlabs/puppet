@@ -125,6 +125,7 @@ describe Puppet::Indirector::SslFile do
       describe "and a certificate is present" do
         before do
           FileTest.expects(:exist?).with(@certpath).returns true
+          FileTest.expects(:readable?).with(@certpath).returns true
         end
 
         it "should return an instance of the model, which it should use to read the certificate" do
@@ -267,6 +268,9 @@ describe Puppet::Indirector::SslFile do
       it "should return a certificate instance for all files that exist" do
         Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
 
+        FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns true
+        FileTest.stubs(:readable?).with(File.join(@path, 'two.pem')).returns true
+
         one = stub 'one', :read => nil
         two = stub 'two', :read => nil
 
@@ -279,6 +283,8 @@ describe Puppet::Indirector::SslFile do
       it "should read each certificate in using the model's :read method" do
         Dir.expects(:entries).with(@path).returns %w{one.pem}
 
+        FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns true
+
         one = stub 'one'
         one.expects(:read).with(File.join(@path, "one.pem"))
 
@@ -287,8 +293,24 @@ describe Puppet::Indirector::SslFile do
         @searcher.search(@request)
       end
 
+      it "should skip any files that are not readable" do
+        Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
+        one = stub 'one', :read => nil
+        two = stub 'two', :read => nil
+
+        FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns false
+        FileTest.stubs(:readable?).with(File.join(@path, 'two.pem')).returns true
+
+        @model.expects(:new).with("one").never
+        @model.expects(:new).with("two").returns two
+
+        @searcher.search(@request).should == [two]
+      end
+
       it "should skip any files that do not match /\.pem$/" do
         Dir.expects(:entries).with(@path).returns %w{. .. one.pem}
+
+        FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns true
 
         one = stub 'one', :read => nil
 
