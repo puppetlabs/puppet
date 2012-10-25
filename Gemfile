@@ -31,7 +31,7 @@ platforms :mswin, :mingw do
   gem "win32-dir", "~> 0.3.7", :require => false
   gem "win32-eventlog", "~> 0.5.3", :require => false
   gem "win32-process", "~> 0.6.5", :require => false
-  gem "win32-security", "~> 0.1.2", :require => false
+  gem "win32-security", "~> 0.1.4", :require => false
   gem "win32-service", "~> 0.7.2", :require => false
   gem "win32-taskscheduler", "~> 0.2.2", :require => false
   gem "win32console", "~> 1.3.2", :require => false

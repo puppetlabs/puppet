@@ -2,6 +2,7 @@ module Puppet::Util::Windows
   if Puppet::Util::Platform.windows?
     # these reference platform specific gems
     require 'puppet/util/windows/error'
+    require 'puppet/util/windows/sid'
     require 'puppet/util/windows/security'
     require 'puppet/util/windows/user'
     require 'puppet/util/windows/process'
