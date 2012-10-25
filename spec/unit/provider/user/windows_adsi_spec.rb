@@ -136,11 +136,11 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.delete
   end
 
-  it 'should delete the profile if managehome is set' do
+  it 'should delete the profile if managehome is set', :if => Puppet.features.microsoft_windows? do
     resource[:managehome] = true
 
     sid = 'S-A-B-C'
-    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns(sid)
+    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns(sid)
     Puppet::Util::ADSI::UserProfile.expects(:delete).with(sid)
     connection.expects(:Delete).with('user', 'testuser')
 
@@ -153,8 +153,8 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.flush
   end
 
-  it "should return the user's SID as uid" do
-    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
+  it "should return the user's SID as uid", :if => Puppet.features.microsoft_windows? do
+    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
 
     provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
   end

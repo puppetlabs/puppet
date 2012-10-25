@@ -28,25 +28,21 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
   end
 
-  describe ".sid_for_account" do
+  describe ".sid_for_account", :if => Puppet.features.microsoft_windows? do
     it "should return nil if the account does not exist" do
-      connection.expects(:execquery).returns([])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('foobar').returns nil
 
       Puppet::Util::ADSI.sid_for_account('foobar').should be_nil
     end
 
     it "should return a SID for a passed user or group name" do
-      Puppet::Util::ADSI.expects(:execquery).with(
-        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND LocalAccount = true"
-      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns 'S-1-5-32-547'
 
       Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
     end
 
     it "should return a SID for a passed fully-qualified user or group name" do
-      Puppet::Util::ADSI.expects(:execquery).with(
-        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND Domain = 'MACHINE' AND LocalAccount = true"
-      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('MACHINE\testers').returns 'S-1-5-32-547'
 
       Puppet::Util::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
     end
