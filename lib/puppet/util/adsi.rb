@@ -54,15 +54,9 @@ module Puppet::Util::ADSI
     end
 
     def sid_for_account(name)
-      sid = nil
-      if name =~ /\\/
-        domain, name = name.split('\\', 2)
-        query = "SELECT Sid from Win32_Account WHERE Name = '#{name}' AND Domain = '#{domain}' AND LocalAccount = true"
-      else
-        query = "SELECT Sid from Win32_Account WHERE Name = '#{name}' AND LocalAccount = true"
-      end
-      execquery(query).each { |u| sid ||= u.Sid }
-      sid
+      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_account instead."
+
+      Puppet::Util::Windows::Security.name_to_sid(name)
     end
   end
 
