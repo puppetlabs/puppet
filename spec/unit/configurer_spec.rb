@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/configurer'
 
@@ -102,6 +102,12 @@ describe Puppet::Configurer do
     it "does not download plugins when told" do
       @agent.expects(:download_plugins).never
       @agent.run(:pluginsync => false)
+    end
+
+    it "should carry on when it can't fetch it's node definition" do
+      error = Net::HTTPError.new(400, 'dummy server communication error')
+      Puppet::Node.indirection.expects(:find).raises(error)
+      @agent.run.should == 0
     end
 
     it "should initialize a transaction report if one is not provided" do

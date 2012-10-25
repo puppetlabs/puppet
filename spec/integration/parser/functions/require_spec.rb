@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "The require function" do
@@ -17,7 +17,7 @@ describe "The require function" do
   it "should add a dependency between the 'required' class and our class" do
     @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass")
 
-    @scope.function_require("requiredclass")
+    @scope.function_require(["requiredclass"])
     @scope.resource["require"].should_not be_nil
     ref = @scope.resource["require"].shift
     ref.type.should == "Class"
@@ -28,8 +28,8 @@ describe "The require function" do
     @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass1")
     @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass2")
 
-    @scope.function_require("requiredclass1")
-    @scope.function_require("requiredclass2")
+    @scope.function_require(["requiredclass1"])
+    @scope.function_require(["requiredclass2"])
 
     @scope.resource["require"].should_not be_nil
 

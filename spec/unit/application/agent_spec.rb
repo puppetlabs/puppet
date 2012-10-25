@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/agent'
@@ -70,10 +70,10 @@ describe Puppet::Application::Agent do
       @puppetd.options[:serve].should == []
     end
 
-    it "should use MD5 as default digest algorithm" do
+    it "should use SHA256 as default digest algorithm" do
       @puppetd.preinit
 
-      @puppetd.options[:digest].should == :MD5
+      @puppetd.options[:digest].should == 'SHA256'
     end
 
     it "should not fingerprint by default" do
@@ -455,7 +455,6 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet[:authconfig] = 'auth'
         FileTest.stubs(:exists?).with('auth').returns(true)
         File.stubs(:exist?).returns(true)
         @puppetd.options.stubs(:[]).with(:serve).returns([])
@@ -475,6 +474,11 @@ describe Puppet::Application::Agent do
 
         Puppet::Network::Server.expects(:new).with(anything, 32768)
 
+        @puppetd.setup_listen
+      end
+      
+      it "should issue a warning that listen is deprecated" do
+        Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
         @puppetd.setup_listen
       end
     end
@@ -606,20 +610,20 @@ describe Puppet::Application::Agent do
 
       it "should fingerprint the certificate if it exists" do
         @host.expects(:certificate).returns(@cert)
-        @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
+        @cert.expects(:digest).with('MD5').returns "fingerprint"
         @puppetd.fingerprint
       end
 
       it "should fingerprint the certificate request if no certificate have been signed" do
         @host.expects(:certificate).returns(nil)
         @host.expects(:certificate_request).returns(@cert)
-        @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
+        @cert.expects(:digest).with('MD5').returns "fingerprint"
         @puppetd.fingerprint
       end
 
       it "should display the fingerprint" do
         @host.stubs(:certificate).returns(@cert)
-        @cert.stubs(:fingerprint).with(:MD5).returns("DIGEST")
+        @cert.stubs(:digest).with('MD5').returns("DIGEST")
 
         @puppetd.expects(:puts).with "DIGEST"
 

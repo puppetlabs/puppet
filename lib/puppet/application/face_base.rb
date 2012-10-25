@@ -4,8 +4,6 @@ require 'optparse'
 require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
-  run_mode :agent
-
   option("--debug", "-d") do |arg|
     Puppet::Util::Log.level = :debug
   end
@@ -17,16 +15,6 @@ class Puppet::Application::FaceBase < Puppet::Application
   option("--render-as FORMAT") do |format|
     self.render_as = format.to_sym
   end
-
-  # This seems like a bad thing; it seems like--in an ideal world--a given app/face should have one constant run mode.
-  #  This isn't currently possible because of issues relating to the certificate authority, but I've left some notes
-  #  about "run_mode" in settings.rb and defaults.rb, and if we are able to tighten up the behavior / implementation
-  #  of that setting, we might want to revisit this.  --cprice 2012-03-16
-  option("--mode RUNMODE", "-r") do |arg|
-    raise "Invalid run mode #{arg}; supported modes are user, agent, master" unless %w{user agent master}.include?(arg)
-    self.class.run_mode(arg.to_sym)
-  end
-
 
   attr_accessor :face, :action, :type, :arguments, :render_as
 
@@ -97,7 +85,9 @@ class Puppet::Application::FaceBase < Puppet::Application
           unless Puppet.settings.boolean? option.name then
             # As far as I can tell, we treat non-bool options as always having
             # a mandatory argument. --daniel 2011-04-05
-            index += 1          # ...so skip the argument.
+            # ... But, the mandatory argument will not be the next item if an = is
+            # employed in the long form of the option. --jeffmccune 2012-09-18
+            index += 1 unless item =~ /^--#{option.name}=/
           end
         elsif option = find_application_argument(item) then
           index += 1 if (option[:argument] and not option[:optional])

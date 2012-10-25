@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 require 'puppet/network/http/rack/rest'
@@ -62,6 +62,19 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => 'certificate in pem format')
         OpenSSL::X509::Certificate.expects(:new).with('certificate in pem format').returns(cert)
         @handler.client_cert(req).should == cert
+      end
+
+      it "returns nil when SSL_CLIENT_CERT is empty" do
+        cert = stub 'cert'
+        req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => '')
+        OpenSSL::X509::Certificate.expects(:new).never
+        @handler.client_cert(req).should be_nil
+      end
+
+      it "(#16769) does not raise error 'header too long'" do
+        cert = stub 'cert'
+        req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => '')
+        lambda { @handler.client_cert(req) }.should_not raise_error
       end
 
       it "should set the response's content-type header when setting the content type" do

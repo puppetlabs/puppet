@@ -24,11 +24,7 @@ fi
 
 PUPPETMASTER_OPTS="master "
 [ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --manifest=${PUPPETMASTER_MANIFEST}"
-if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --servertype=mongrel"
-elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
-    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
-fi
+[ -n "$PUPPETMASTER_PORTS" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
 [ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest ${PUPPETMASTER_LOG}"
 PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
     ${PUPPETMASTER_EXTRA_OPTS}"
@@ -40,9 +36,20 @@ if status | grep -q -- '-p' 2>/dev/null; then
     pidopts="-p $pidfile"
 fi
 
+mongrel_warning="The mongrel servertype is no longer built-in to Puppet. It appears
+as though mongrel is being used, as the number of ports is greater than
+one. Starting the puppetmaster service will not behave as expected until this
+is resolved. Only the first port has been used in the service. These settings
+are defined at /etc/sysconfig/puppetmaster"
+
+# Warn about removed and unsupported mongrel servertype
+if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+    echo $mongrel_warning
+    echo
+fi
+
 RETVAL=0
 
-prog=puppetmasterd
 PUPPETMASTER=/usr/bin/puppet
 
 start() {
@@ -50,16 +57,8 @@ start() {
 
     # Confirm the manifest exists
     if [ -r $PUPPETMASTER_MANIFEST ]; then
-        if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-            for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-                echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
-                daemon $PUPPETMASTER $PUPPETMASTER_OPTS --masterport=${PUPPETMASTER_PORTS[$i]} --pidfile=/var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid
-                ret=$?; [ $ret != 0 ] && RETVAL=$ret
-            done
-        else
-            daemon $daemonopts $PUPPETMASTER $PUPPETMASTER_OPTS
-            RETVAL=$?
-        fi
+        daemon $daemonopts $PUPPETMASTER $PUPPETMASTER_OPTS
+        RETVAL=$?
     else
         failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
         echo
@@ -72,72 +71,58 @@ start() {
 
 stop() {
     echo -n  $"Stopping puppetmaster: "
-    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-            echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
-            killproc -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
-            ret=$?; [ $ret != 0 ] && RETVAL=$ret
-        done
-    else
-        killproc $pidopts $PUPPETMASTER
-        RETVAL=$?
-    fi
+    killproc $pidopts $PUPPETMASTER
+    RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && rm -f "$lockfile"
     return $RETVAL
 }
 
 restart() {
-  stop
-  start
+    stop
+    start
 }
 
 genconfig() {
-  echo -n $"Generate configuration puppetmaster: "
-  $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
+    echo -n $"Generate configuration puppetmaster: "
+    $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
 }
 
 rh_status() {
-    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
-        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
-            echo -en "Port ${PUPPETMASTER_PORTS[$i]}: "
-            status -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
-            ret=$?; [ $ret != 0 ] && RETVAL=$ret
-        done
-    else
-        status $pidopts $PUPPETMASTER
-        RETVAL=$?
-    fi
+    status $pidopts $PUPPETMASTER
+    RETVAL=$?
     return $RETVAL
 }
 
 rh_status_q() {
-        rh_status >/dev/null 2>&1
+    rh_status >/dev/null 2>&1
 }
 
 case "$1" in
-  start)
-      start
-    ;;
+    start)
+        start
+        ;;
     stop)
         stop
-    ;;
+        ;;
     restart|reload|force-reload)
         restart
-    ;;
+        ;;
     condrestart)
         rh_status_q || exit 0
         restart
-    ;;
+        ;;
     status)
         rh_status
-    ;;
+        ;;
     genconfig)
         genconfig
-    ;;
+        ;;
     *)
         echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
         exit 1
 esac
 
 exit $RETVAL
+
+# vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 
@@ -88,7 +88,7 @@ describe Puppet::Face[:node, '0.0.1'] do
 
         it "should run in master mode" do
           subject.clean('hostname')
-          Puppet[:run_mode].should == :master
+          Puppet.run_mode.should be_master
         end
 
         it "should set node cache as yaml" do

@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/indirector/hiera'
+require 'hiera/backend'
 
 describe Puppet::Indirector::Hiera do
   include PuppetSpec::Files

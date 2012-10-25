@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
@@ -904,6 +904,30 @@ describe Puppet::SSL::CertificateAuthority do
 
         @ca.crl.expects(:revoke).with { |serial, key| serial == 16 }
         @ca.revoke('host')
+      end
+
+      context "revocation by serial number (#16798)" do
+        it "revokes when given a lower case hexadecimal formatted string" do
+          @ca.crl.expects(:revoke).with { |serial, key| serial == 15 }
+          Puppet::SSL::Certificate.indirection.expects(:find).with("0xf").returns nil
+
+          @ca.revoke('0xf')
+        end
+
+        it "revokes when given an upper case hexadecimal formatted string" do
+          @ca.crl.expects(:revoke).with { |serial, key| serial == 15 }
+          Puppet::SSL::Certificate.indirection.expects(:find).with("0xF").returns nil
+
+          @ca.revoke('0xF')
+        end
+
+        it "handles very large serial numbers" do
+          bighex = '0x4000000000000000000000000000000000000000'
+          @ca.crl.expects(:revoke).with { |serial, key| serial == 2**(159-1) }
+          Puppet::SSL::Certificate.indirection.expects(:find).with(bighex).returns nil
+
+          @ca.revoke(bighex)
+        end
       end
     end
 

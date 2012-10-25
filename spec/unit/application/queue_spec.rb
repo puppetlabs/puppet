@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/queue'
@@ -80,6 +80,11 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     it "should fail if the stomp feature is missing" do
       Puppet.features.expects(:stomp?).returns false
       lambda { @queue.setup }.should raise_error(ArgumentError)
+    end
+
+    it "should issue a warning that queue is deprecated" do
+      Puppet.expects(:warning).with() { |msg| msg =~ /queue is deprecated/ }
+      @queue.setup
     end
 
     it "should print puppet config if asked to in Puppet config" do

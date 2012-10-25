@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
@@ -508,6 +508,28 @@ describe Puppet::Indirector::Request do
           rval.should == @block_return
         end
       end
+    end
+  end
+
+  describe "#remote?" do
+    def request(options = {})
+      Puppet::Indirector::Request.new('node', 'find', 'localhost', nil, options)
+    end
+
+    it "should not be unless node or ip is set" do
+      request.should_not be_remote
+    end
+
+    it "should be remote if node is set" do
+      request(:node => 'example.com').should be_remote
+    end
+
+    it "should be remote if ip is set" do
+      request(:ip => '127.0.0.1').should be_remote
+    end
+
+    it "should be remote if node and ip are set" do
+      request(:node => 'example.com', :ip => '127.0.0.1').should be_remote
     end
   end
 end

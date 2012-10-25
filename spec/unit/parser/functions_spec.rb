@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::Functions do
@@ -22,23 +22,20 @@ describe Puppet::Parser::Functions do
     end
 
     it "should create the function in the environment module" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
 
-      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      @module.should be_method_defined :function_name
     end
 
     it "should warn if the function already exists" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }.twice
-      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
       Puppet.expects(:warning)
 
-      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
     end
 
     it "should raise an error if the function type is not correct" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }.never
-
-      lambda { Puppet::Parser::Functions.newfunction("name", :type => :unknown) }.should raise_error
+      lambda { Puppet::Parser::Functions.newfunction("name", :type => :unknown) { |args| } }.should raise_error Puppet::DevError, "Invalid statement type :unknown"
     end
   end
 
@@ -55,8 +52,7 @@ describe Puppet::Parser::Functions do
     end
 
     it "should return its name if the function exists" do
-      @module.expects(:define_method).with { |name,block| name == "function_name" }
-      Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
 
       Puppet::Parser::Functions.function("name").should == "function_name"
     end

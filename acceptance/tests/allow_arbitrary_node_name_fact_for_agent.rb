@@ -43,7 +43,7 @@ create_remote_file master, manifest_file, manifest
 
 on master, "chmod 644 #{authfile} #{manifest_file}"
 
-with_master_running_on(master, "--rest_authconfig #{authfile} --manifest #{manifest_file} --daemonize --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --autosign true") do
+with_master_running_on(master, "--rest_authconfig #{authfile} --manifest #{manifest_file} --daemonize --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --autosign true") do
   run_agent_on(agents, "--no-daemonize --verbose --onetime --node_name_fact kernel --server #{master}") do
     assert_match(/defined 'message'.*#{success_message}/, stdout)
   end

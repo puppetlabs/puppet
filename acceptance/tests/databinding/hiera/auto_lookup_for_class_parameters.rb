@@ -1,3 +1,4 @@
+confine :except, :platform => 'solaris'
 begin test_name "Auto lookup for class parameters"
 
 step "Setup"
@@ -8,6 +9,23 @@ file { '/etc/puppet/hieradata':
   recurse => true,
   purge   => true,
   force   => true,
+}
+
+file { '/etc/puppet/hiera.yaml':
+  ensure  => present,
+  content => '---
+    :backends:
+      - "puppet"
+      - "yaml"
+    :logger: "console"
+    :hierarchy:
+      - "%{fqdn}"
+      - "%{environment}"
+      - "global"
+
+    :yaml:
+      :datadir: "/etc/puppet/hieradata"
+  '
 }
 PP
 
@@ -61,7 +79,7 @@ PP
 
 step "Should lookup class paramters from Hiera"
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(hostname -s),$(hostname -f)\" --autosign true") do
+with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
 
@@ -79,6 +97,9 @@ file { '/etc/puppet/hieradata':
   recurse => true,
   purge   => true,
   force   => true,
+}
+file { '/etc/puppet/hiera.yaml':
+  ensure => absent,
 }
 PP
 end

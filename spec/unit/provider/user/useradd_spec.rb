@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:user).provider(:useradd) do
@@ -217,6 +217,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:allowdupe] = :true
       resource[:managehome] = :true
       resource[:system] = :true
+      described_class.has_feature :manages_password_age
     end
 
     it "should call command with :pass" do

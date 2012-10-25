@@ -265,19 +265,23 @@ class Application
       find(name).new
     end
 
-    #
-    # I think that it would be nice to look into changing this into two methods (getter/setter); however,
-    #  it sounds like this is a desirable feature of our ruby DSL. --cprice 2012-03-06
-    #
-
     # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
     # passed. Otherwise, gets the run_mode or a default run_mode
     #
     def run_mode( mode_name = nil)
+      if mode_name
+        Puppet.settings.preferred_run_mode = mode_name
+      end
+
       return @run_mode if @run_mode and not mode_name
 
       require 'puppet/util/run_mode'
-      @run_mode = Puppet::Util::RunMode[ mode_name || :user ]
+      @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
+    end
+
+    # This is for testing only
+    def clear_everything_for_tests
+      @run_mode = @banner = @run_status = @option_parser_commands = nil
     end
   end
 
@@ -408,8 +412,6 @@ class Application
     # respond with context-sensitive help if we want to. --daniel 2011-04-12
     option_parser.parse!(self.command_line.args)
   end
-
-
 
   def handlearg(opt, val)
     opt, val = Puppet::Settings.clean_opt(opt, val)

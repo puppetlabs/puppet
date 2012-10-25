@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 
 require 'spec_helper'
 if Puppet.features.microsoft_windows?
@@ -14,6 +14,8 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
   let(:path) { tmpfile('windows_file_spec') }
   let(:resource) { Puppet::Type.type(:file).new :path => path, :mode => 0777, :provider => described_class.name }
   let(:provider) { resource.provider }
+  let(:sid)      { 'S-1-1-50' }
+  let(:account)  { 'quinn' }
 
   describe "#mode" do
     it "should return a string with the higher-order bits stripped away" do
@@ -47,47 +49,41 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
   describe "#id2name" do
     it "should return the name of the user identified by the sid" do
-      result = [stub('user', :name => 'quinn')]
-      Puppet::Util::ADSI.stubs(:execquery).returns(result)
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(sid).returns(true)
+      Puppet::Util::Windows::Security.expects(:sid_to_name).with(sid).returns(account)
 
-      provider.id2name('S-1-1-50').should == 'quinn'
+      provider.id2name(sid).should == account
     end
 
     it "should return the argument if it's already a name" do
-      provider.id2name('flannigan').should == 'flannigan'
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(account).returns(false)
+      Puppet::Util::Windows::Security.expects(:sid_to_name).never
+
+      provider.id2name(account).should == account
     end
 
     it "should return nil if the user doesn't exist" do
-      Puppet::Util::ADSI.stubs(:execquery).returns []
+      Puppet::Util::Windows::Security.expects(:valid_sid?).with(sid).returns(true)
+      Puppet::Util::Windows::Security.expects(:sid_to_name).with(sid).returns(nil)
 
-      provider.id2name('S-1-1-50').should == nil
+      provider.id2name(sid).should == nil
     end
   end
 
   describe "#name2id" do
-    it "should return the sid of the user" do
-      Puppet::Util::ADSI.stubs(:execquery).returns [stub('account', :Sid => 'S-1-1-50')]
+    it "should delegate to name_to_sid" do
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with(account).returns(sid)
 
-      provider.name2id('anybody').should == 'S-1-1-50'
-    end
-
-    it "should return the argument if it's already a sid" do
-      provider.name2id('S-1-1-50').should == 'S-1-1-50'
-    end
-
-    it "should return nil if the user doesn't exist" do
-      Puppet::Util::ADSI.stubs(:execquery).returns []
-
-      provider.name2id('someone').should == nil
+      provider.name2id(account).should == sid
     end
   end
 
   describe "#owner" do
     it "should return the sid of the owner if the file does exist" do
       FileUtils.touch(resource[:path])
-      provider.stubs(:get_owner).with(resource[:path]).returns('S-1-1-50')
+      provider.stubs(:get_owner).with(resource[:path]).returns(sid)
 
-      provider.owner.should == 'S-1-1-50'
+      provider.owner.should == sid
     end
 
     it "should return absent if the file doesn't exist" do
@@ -97,23 +93,25 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
   describe "#owner=" do
     it "should set the owner to the specified value" do
-      provider.expects(:set_owner).with('S-1-1-50', resource[:path])
-      provider.owner = 'S-1-1-50'
+      provider.expects(:set_owner).with(sid, resource[:path])
+      provider.owner = sid
     end
 
     it "should propagate any errors encountered when setting the owner" do
       provider.stubs(:set_owner).raises(ArgumentError)
 
-      expect { provider.owner = 'S-1-1-50' }.to raise_error(Puppet::Error, /Failed to set owner/)
+      expect {
+        provider.owner = sid
+      }.to raise_error(Puppet::Error, /Failed to set owner/)
     end
   end
 
   describe "#group" do
     it "should return the sid of the group if the file does exist" do
       FileUtils.touch(resource[:path])
-      provider.stubs(:get_group).with(resource[:path]).returns('S-1-1-50')
+      provider.stubs(:get_group).with(resource[:path]).returns(sid)
 
-      provider.group.should == 'S-1-1-50'
+      provider.group.should == sid
     end
 
     it "should return absent if the file doesn't exist" do
@@ -123,14 +121,16 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
 
   describe "#group=" do
     it "should set the group to the specified value" do
-      provider.expects(:set_group).with('S-1-1-50', resource[:path])
-      provider.group = 'S-1-1-50'
+      provider.expects(:set_group).with(sid, resource[:path])
+      provider.group = sid
     end
 
     it "should propagate any errors encountered when setting the group" do
       provider.stubs(:set_group).raises(ArgumentError)
 
-      expect { provider.group = 'S-1-1-50' }.to raise_error(Puppet::Error, /Failed to set group/)
+      expect {
+        provider.group = sid
+      }.to raise_error(Puppet::Error, /Failed to set group/)
     end
   end
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/rails'
 require 'puppet/node/facts'
@@ -25,6 +25,11 @@ describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
     ActiveRecord::Base.should_not be_connected
     subject.should be
     ActiveRecord::Base.should be_connected
+  end
+
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    Puppet::Resource::ActiveRecord.new
   end
 
   describe "#search" do

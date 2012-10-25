@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the fqdn_rand function" do
@@ -10,7 +10,7 @@ describe "the fqdn_rand function" do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     @scope   = Puppet::Parser::Scope.new(compiler)
-    @scope[:fqdn] = "127.0.0.1"
+    @scope["fqdn"] = "127.0.0.1"
   end
 
   it "should exist" do

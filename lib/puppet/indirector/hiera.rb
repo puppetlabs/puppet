@@ -9,8 +9,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    fake_scope = FakeScope.new(request.options[:facts])
-    hiera.lookup(request.key, nil, fake_scope, nil, nil)
+    hiera.lookup(request.key, nil, request.options[:variables], nil, nil)
   end
 
   private
@@ -35,35 +34,6 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
 
   def hiera
     self.class.hiera
-  end
-
-  # A class that acts just enough like a Puppet::Parser::Scope to
-  # fool Hiera's puppet backend. This class doesn't actually do anything
-  # but it does allow people to use the puppet backend with the hiera
-  # data bindings withough causing problems.
-  class FakeScope
-    FAKE_RESOURCE = Struct.new(:name).new("fake").freeze
-    FAKE_CATALOG = Struct.new(:classes).new([].freeze).freeze
-
-    def initialize(variable_bindings)
-      @variable_bindings = variable_bindings
-    end
-
-    def [](name)
-      @variable_bindings[name]
-    end
-
-    def resource
-      FAKE_RESOURCE
-    end
-
-    def catalog
-      FAKE_CATALOG
-    end
-
-    def function_include(name)
-      # noop
-    end
   end
 end
 

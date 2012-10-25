@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/logging'
@@ -133,18 +133,18 @@ describe Puppet::Util::Logging do
       exc1.set_backtrace(["7.rb:31:in `e'","8.rb:22:in `f'","9.rb:9"])
       # whoa ugly
       @logger.format_exception(exc1).should =~ /third
-.*7\.rb:31
-.*8\.rb:22
+.*7\.rb:31:in `e'
+.*8\.rb:22:in `f'
 .*9\.rb:9
 Wrapped exception:
 second
-.*4\.rb:8
-.*5\.rb:1
+.*4\.rb:8:in `c'
+.*5\.rb:1:in `d'
 .*6\.rb:3
 Wrapped exception:
 original
-.*1\.rb:4
-.*2\.rb:2
+.*1\.rb:4:in `a'
+.*2\.rb:2:in `b'
 .*3\.rb:1/
     end
   end

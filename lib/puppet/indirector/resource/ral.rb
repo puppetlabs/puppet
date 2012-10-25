@@ -1,4 +1,7 @@
 class Puppet::Resource::Ral < Puppet::Indirector::Code
+
+  desc "Manipulate resources with the resource abstraction layer. Only used internally."
+
   def find( request )
     # find by name
     res   = type(request).instances.find { |o| o.name == resource_name(request) }

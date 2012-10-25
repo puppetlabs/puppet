@@ -7,6 +7,10 @@ require 'puppet/ssl/host'
 require 'puppet/ssl/key'
 
 class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
+
+  desc "Manipulate certificate status on the local filesystem. Only functional
+    on the CA."
+
   def ca
     raise ArgumentError, "This process is not configured as a certificate authority" unless Puppet::SSL::CertificateAuthority.ca?
     Puppet::SSL::CertificateAuthority.new

@@ -46,7 +46,7 @@ on master, %Q[echo "file { '#{posix_result_file}': source => 'puppet:///modules/
 # and then once with the posix manifest.  Could potentially get around this by
 # creating a manifest with nodes or by moving the windows bits into a separate
 # test.
-with_master_running_on master, "--autosign true --manifest #{windows_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+with_master_running_on master, "--autosign true --manifest #{windows_manifest} --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\"" do
   agents.each do |agent|
     next unless agent['platform'].include?('windows')
     run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
@@ -63,7 +63,7 @@ end
   #  end
   #end
 
-with_master_running_on master, "--autosign true --manifest #{posix_manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
+with_master_running_on master, "--autosign true --manifest #{posix_manifest} --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\"" do
   agents.each do |agent|
     next if agent['platform'].include?('windows')
     run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do

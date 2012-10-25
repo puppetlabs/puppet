@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/node'
@@ -15,6 +15,13 @@ describe "Puppet::Node::ActiveRecord", :if => Puppet.features.rails? && Puppet.f
 
   before do
     require 'puppet/indirector/node/active_record'
+  end
+
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    Puppet[:statedir] = tmpdir('active_record_tmp')
+    Puppet[:railslog] = '$statedir/rails.log'
+    node_indirection
   end
 
   it "should be a subclass of the ActiveRecord terminus class" do

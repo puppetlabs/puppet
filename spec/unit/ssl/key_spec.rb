@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/key'
@@ -14,10 +14,6 @@ describe Puppet::SSL::Key do
 
   it "should indirect key" do
     @class.indirection.name.should == :key
-  end
-
-  it "should default to the :file terminus" do
-    @class.indirection.terminus_class.should == :file
   end
 
   it "should only support the text format" do

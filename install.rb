@@ -63,16 +63,14 @@ def glob(list)
   g = list.map { |i| Dir.glob(i) }
   g.flatten!
   g.compact!
-  g.reject! { |e| e =~ /\.svn/ }
   g
 end
 
 # Set these values to what you want installed.
 configs = glob(%w{conf/auth.conf})
-sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
-rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
-ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
+rdoc  = glob(%w{bin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
@@ -216,16 +214,16 @@ def prepare_installation
     opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
       InstallOptions.configdir = configdir
     end
-    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
+    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
-    opts.on('--sbindir[=OPTIONAL]', 'Installation directory for system binaries', 'overrides Config::CONFIG["sbindir"]') do |sbindir|
-      InstallOptions.sbindir = sbindir
+    opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
+      InstallOptions.ruby = ruby
     end
-    opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides Config::CONFIG["sitelibdir"]') do |sitelibdir|
+    opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides RbConfig::CONFIG["sitelibdir"]') do |sitelibdir|
       InstallOptions.sitelibdir = sitelibdir
     end
-    opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides Config::CONFIG["mandir"]') do |mandir|
+    opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides RbConfig::CONFIG["mandir"]') do |mandir|
       InstallOptions.mandir = mandir
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
@@ -249,17 +247,15 @@ def prepare_installation
     opts.parse!
   end
 
-  version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
-  libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
+  version = [RbConfig::CONFIG["MAJOR"], RbConfig::CONFIG["MINOR"]].join(".")
+  libdir = File.join(RbConfig::CONFIG["libdir"], "ruby", version)
 
-  # Mac OS X 10.5 and higher declare bindir and sbindir as
+  # Mac OS X 10.5 and higher declare bindir
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
-  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
   # which is not generally where people expect executables to be installed
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
-    Config::CONFIG['bindir'] = "/usr/bin"
-    Config::CONFIG['sbindir'] = "/usr/sbin"
+    RbConfig::CONFIG['bindir'] = "/usr/bin"
   end
 
   if not InstallOptions.configdir.nil?
@@ -279,19 +275,13 @@ def prepare_installation
   if not InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
   else
-    bindir = Config::CONFIG['bindir']
-  end
-
-  if not InstallOptions.sbindir.nil?
-    sbindir = InstallOptions.sbindir
-  else
-    sbindir = Config::CONFIG['sbindir']
+    bindir = RbConfig::CONFIG['bindir']
   end
 
   if not InstallOptions.sitelibdir.nil?
     sitelibdir = InstallOptions.sitelibdir
   else
-    sitelibdir = Config::CONFIG["sitelibdir"]
+    sitelibdir = RbConfig::CONFIG["sitelibdir"]
     if sitelibdir.nil?
       sitelibdir = $LOAD_PATH.find { |x| x =~ /site_ruby/ }
       if sitelibdir.nil?
@@ -305,7 +295,7 @@ def prepare_installation
   if not InstallOptions.mandir.nil?
     mandir = InstallOptions.mandir
   else
-    mandir = Config::CONFIG['mandir']
+    mandir = RbConfig::CONFIG['mandir']
   end
 
   # This is the new way forward
@@ -321,20 +311,17 @@ def prepare_installation
 
   configdir = join(destdir, configdir)
   bindir = join(destdir, bindir)
-  sbindir = join(destdir, sbindir)
   mandir = join(destdir, mandir)
   sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
   FileUtils.makedirs(bindir)
-  FileUtils.makedirs(sbindir)
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
 
   InstallOptions.site_dir = sitelibdir
   InstallOptions.config_dir = configdir
   InstallOptions.bin_dir  = bindir
-  InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
   InstallOptions.man_dir  = mandir
 end
@@ -398,17 +385,21 @@ rescue LoadError
 end
 
 ##
-# Install file(s) from ./bin to Config::CONFIG['bindir']. Patch it on the way
+# Install file(s) from ./bin to RbConfig::CONFIG['bindir']. Patch it on the way
 # to insert a #! line; on a Unix install, the command is named as expected
 # (e.g., bin/rdoc becomes rdoc); the shebang line handles running it. Under
 # windows, we add an '.rb' extension and let file associations do their stuff.
 def install_binfile(from, op_file, target)
   tmp_file = Tempfile.new('puppet-binfile')
-  ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
+
+  if not InstallOptions.ruby.nil?
+    ruby = InstallOptions.ruby
+  else
+    ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
+  end
 
   File.open(from) do |ip|
     File.open(tmp_file.path, "w") do |op|
-      ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
       op.puts "#!#{ruby}"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
@@ -456,7 +447,6 @@ prepare_installation
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
 do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
-do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
 do_man(man) unless $operatingsystem == "windows"

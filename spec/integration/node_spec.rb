@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/node'
@@ -43,10 +43,13 @@ describe Puppet::Node do
     describe "and using the memory terminus" do
       before do
         @name = "me"
-        @old_terminus = Puppet::Node.indirection.terminus_class
         @terminus = Puppet::Node.indirection.terminus(:memory)
         Puppet::Node.indirection.stubs(:terminus).returns @terminus
         @node = Puppet::Node.new(@name)
+      end
+
+      after do
+        @terminus.instance_variable_set(:@instances, {})
       end
 
       it "should find no nodes by default" do

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/kick'
@@ -121,6 +121,11 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.options.stubs(:[]).with(any_parameters)
     end
 
+    it "should issue a warning that kick is deprecated" do
+      Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
+      @kick.setup
+    end
+
     it "should abort stating that kick is not supported on Windows" do
       Puppet.features.stubs(:microsoft_windows?).returns(true)
 
@@ -216,6 +221,9 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:ignoreschedules).returns(false)
         @kick.options.stubs(:[]).with(:foreground).returns(false)
         @kick.options.stubs(:[]).with(:debug).returns(false)
+        @kick.options.stubs(:[]).with(:verbose).returns(false) # needed when logging is initialized
+        @kick.options.stubs(:[]).with(:setdest).returns(false) # needed when logging is initialized
+         
         @kick.stubs(:print)
         @kick.preinit
         @kick.stubs(:parse_options)

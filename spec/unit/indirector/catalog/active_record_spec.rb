@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do
@@ -15,6 +15,10 @@ describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_datab
     Puppet::Resource::Catalog::ActiveRecord.new
   end
 
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    terminus
+  end
 
   it "should be a subclass of the ActiveRecord terminus class" do
     Puppet::Resource::Catalog::ActiveRecord.ancestors.should be_include(Puppet::Indirector::ActiveRecord)

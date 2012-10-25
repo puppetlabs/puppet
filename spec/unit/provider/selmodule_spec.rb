@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 
 # Note: This unit test depends on having a sample SELinux policy file
 # in the same directory as this test called selmodule-example.pp

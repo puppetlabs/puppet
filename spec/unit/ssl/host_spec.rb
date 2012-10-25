@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/host'
@@ -328,10 +328,10 @@ describe Puppet::SSL::Host do
       end
 
       it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Key.indirection.terminus_class.should == :file
-        Puppet::SSL::Certificate.indirection.terminus_class.should == :file
-        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :file
-        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :file
+        Puppet::SSL::Key.indirection.terminus_class.should == :disabled_ca
+        Puppet::SSL::Certificate.indirection.terminus_class.should == :disabled_ca
+        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :disabled_ca
+        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :disabled_ca
       end
 
       it "should set the terminus class for Host to 'none'" do

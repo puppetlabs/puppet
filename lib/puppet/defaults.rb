@@ -27,20 +27,6 @@ module Puppet
         :default  => nil,
         :desc     => "The name of the application, if we are running as one.  The\n" +
             "default is essentially $0 without the path or `.rb`.",
-    },
-
-    ## This setting needs to go away.  As a first step, we could just make it a first-class property of the Settings
-    ##  class, instead of treating it as a normal setting.  There are places where the Settings class tries to use
-    ##  the value of run_mode to help in resolving other values, and that is no good for nobody.  It would cause
-    ##  infinite recursion and stack overflows without some chicanery... so, it needs to be cleaned up.
-    ##
-    ## As a longer term goal I think we should be looking into getting rid of run_mode altogether, but that is going
-    ##  to be a larger undertaking, as it is being branched on in a lot of places in the current code.
-    ##
-    ## --cprice 2012-03-16
-    :run_mode => {
-        :default  => nil,
-        :desc     => "The effective 'run mode' of the application: master, agent, or user.",
     }
   )
 
@@ -169,12 +155,6 @@ module Puppet
             "all files referenced with `import` statements to exist. This setting was primarily\n" +
             "designed for use with commit hooks for parse-checking.",
     },
-    :authconfig => {
-        :default  => "$confdir/namespaceauth.conf",
-        :desc     => "The configuration file that defines the rights to the different\n" +
-            "namespaces and methods.  This can be used as a coarse-grained\n" +
-            "authorization system for both `puppet agent` and `puppet master`.",
-    },
     :environment => {
         :default  => "production",
         :desc     => "The environment Puppet is running in.  For clients\n" +
@@ -253,10 +233,12 @@ module Puppet
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",
+      :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
         require 'puppet/node/facts'
         # Cache to YAML if we're uploading facts away
         if %w[rest inventory_service].include? value.to_s
+          Puppet.info "configuring the YAML fact cache because a remote terminus is active"
           Puppet::Node::Facts.indirection.cache_class = :yaml
         end
       end
@@ -688,7 +670,8 @@ EOT
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
-      :desc       => "The default TTL for new certificates. Can be specified as a duration."
+      :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
+      Can be specified as a duration."
     },
     :ca_md => {
       :default    => "md5",
@@ -728,7 +711,10 @@ EOT
       :pidfile => {
           :type => :file,
           :default  => "$rundir/${run_mode}.pid",
-          :desc     => "The pid file",
+          :desc     => "The file containing the PID of a running process.  " <<
+                       "This file is intended to be used by service management " <<
+                       "frameworks and monitoring systems to determine if a " <<
+                       "puppet process is still in the process table.",
       },
       :bindaddress => {
         :default    => "0.0.0.0",
@@ -1058,10 +1044,11 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
-    :agent_pidfile => {
-      :default    => "$statedir/agent.pid",
-    :type         => :file,
-      :desc       => "A lock file to indicate that a puppet agent run is currently in progress.  File contains the pid of the running process.",
+    :agent_catalog_run_lockfile => {
+      :default    => "$statedir/agent_catalog_run.lock",
+      :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.
+      :desc       => "A lock file to indicate that a puppet agent catalog run is currently in progress.  " +
+                     "The file contains the pid of the process that holds the lock on the catalog run.",
     },
     :agent_disabled_lockfile => {
         :default    => "$statedir/agent_disabled.lock",
@@ -1383,12 +1370,6 @@ EOT
 
         define_settings(
         :ldap,
-    :ldapnodes => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to search for node configurations in LDAP.  See
-      http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes for more information.",
-    },
     :ldapssl => {
       :default  => false,
       :type   => :boolean,
@@ -1405,11 +1386,11 @@ EOT
     },
     :ldapserver => {
       :default  => "ldap",
-      :desc     => "The LDAP server.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP server.  Only used if `node_terminus` is set to `ldap`.",
     },
     :ldapport => {
       :default  => 389,
-      :desc     => "The LDAP port.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP port.  Only used if `node_terminus` is set to `ldap`.",
     },
 
     :ldapstring => {
@@ -1479,7 +1460,6 @@ You can adjust the backend using the storeconfigs_backend setting.",
             Puppet.settings[:catalog_cache_terminus] = :store_configs
           end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
-          Puppet::Node.indirection.cache_class = :store_configs
 
           Puppet::Resource.indirection.terminus_class = :store_configs
         end
@@ -1496,14 +1476,7 @@ database from within the Puppet Master process."
 
   # This doesn't actually work right now.
 
-    define_settings(
-    :parser,
-
-    :lexical => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to use lexical scoping (vs. dynamic).",
-    },
+  define_settings(:parser,
     :templatedir => {
         :default  => "$vardir/templates",
         :type     => :directory,
@@ -1511,8 +1484,7 @@ database from within the Puppet Master process."
       directories.",
     }
   )
-  define_settings(
-    :puppetdoc,
+  define_settings(:puppetdoc,
     :document_all => {
         :default  => false,
         :type     => :boolean,

@@ -1,3 +1,14 @@
+# Bundler and rubygems maintain a set of directories from which to
+# load gems. If Bundler is loaded, let it determine what can be
+# loaded. If it's not loaded, then use rubygems. But do this before
+# loading any puppet code, so that our gem loading system is sane.
+if not defined? ::Bundler
+  begin
+    require 'rubygems'
+  rescue LoadError
+  end
+end
+
 require 'puppet'
 require "puppet/util/plugins"
 require "puppet/util/rubygems"

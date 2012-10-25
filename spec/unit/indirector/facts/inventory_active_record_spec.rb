@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/rails'
 
@@ -21,6 +21,11 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
 
     Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
     setup_scratch_database
+  end
+
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    terminus
   end
 
   describe "#save" do
