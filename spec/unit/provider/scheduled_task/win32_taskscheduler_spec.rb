@@ -568,26 +568,29 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   describe '#user_insync?', :if => Puppet.features.microsoft_windows? do
     let(:resource) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
-    before :each do
-      Puppet::Util::Windows::Security.stubs(:name_to_account).with('system').returns('SYSTEM SID')
-      Puppet::Util::Windows::Security.stubs(:name_to_account).with('joe').returns('SID A')
-      Puppet::Util::Windows::Security.stubs(:name_to_account).with('MACHINE\joe').returns('SID A')
-      Puppet::Util::Windows::Security.stubs(:name_to_account).with('bob').returns('SID B')
-    end
-
     it 'should consider the user as in sync if the name matches' do
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').twice.returns('SID A')
+
       resource.should be_user_insync('joe', ['joe'])
     end
 
     it 'should consider the user as in sync if the current user is fully qualified' do
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').returns('SID A')
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('MACHINE\joe').returns('SID A')
+
       resource.should be_user_insync('MACHINE\joe', ['joe'])
     end
 
     it 'should consider a current user of the empty string to be the same as the system user' do
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('system').twice.returns('SYSTEM SID')
+
       resource.should be_user_insync('', ['system'])
     end
 
     it 'should consider different users as being different' do
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('joe').returns('SID A')
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('bob').returns('SID B')
+
       resource.should_not be_user_insync('joe', ['bob'])
     end
   end
