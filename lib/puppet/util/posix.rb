@@ -60,7 +60,7 @@ module Puppet::Util::POSIX
 
   # Determine what the field name is for users and groups.
   def idfield(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :gid
     when :pw, :user, :passwd; return :uid
     else
@@ -70,7 +70,7 @@ module Puppet::Util::POSIX
 
   # Determine what the method is to get users and groups by id
   def methodbyid(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :getgrgid
     when :pw, :user, :passwd; return :getpwuid
     else
@@ -80,7 +80,7 @@ module Puppet::Util::POSIX
 
   # Determine what the method is to get users and groups by name
   def methodbyname(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :getgrnam
     when :pw, :user, :passwd; return :getpwnam
     else

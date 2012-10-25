@@ -33,7 +33,7 @@ class Puppet::Provider
   attr_accessor :resource
 
   def self.command(name)
-    name = symbolize(name)
+    name = name.intern
 
     if defined?(@commands) and command = @commands[name]
       # nothing
@@ -144,7 +144,7 @@ class Puppet::Provider
   # for those providers that use prefetch and flush.
   def self.mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
-      attr = symbolize(attr)
+      attr = attr.intern
       next if attr == :name
       define_method(attr) do
         @property_hash[attr] || :absent
@@ -162,7 +162,7 @@ class Puppet::Provider
   # and path to the block (really only used by 'commands').
   def self.optional_commands(hash)
     hash.each do |name, path|
-      name = symbolize(name)
+      name = name.intern
       @commands[name] = path
 
       yield(name, path) if block_given?
@@ -239,7 +239,7 @@ class Puppet::Provider
 
   # Get a parameter value.
   def get(param)
-    @property_hash[symbolize(param)] || :absent
+    @property_hash[param.intern] || :absent
   end
 
   def initialize(resource = nil)
@@ -270,7 +270,7 @@ class Puppet::Provider
   # Set passed params as the current values.
   def set(params)
     params.each do |param, value|
-      @property_hash[symbolize(param)] = value
+      @property_hash[param.intern] = value
     end
   end
 

@@ -38,8 +38,8 @@ module Manager
     end
 
     # First make sure we don't have a method sitting around
-    name = symbolize(name)
-    newmethod = "new#{name.to_s}"
+    name = name.intern
+    newmethod = "new#{name}"
 
     # Used for method manipulation.
     selfobj = singleton_class

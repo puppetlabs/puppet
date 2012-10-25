@@ -6,13 +6,13 @@ require 'puppet'
 class Puppet::Provider::NameService < Puppet::Provider
   class << self
     def autogen_default(param)
-      defined?(@autogen_defaults) ? @autogen_defaults[symbolize(param)] : nil
+      defined?(@autogen_defaults) ? @autogen_defaults[param.intern] : nil
     end
 
     def autogen_defaults(hash)
       @autogen_defaults ||= {}
       hash.each do |param, value|
-        @autogen_defaults[symbolize(param)] = value
+        @autogen_defaults[param.intern] = value
       end
     end
 
@@ -112,7 +112,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
   # with DirectoryServices, because DirectoryServices is stupid.
   def autogen(field)
-    field = symbolize(field)
+    field = field.intern
     id_generators = {:user => :uid, :group => :gid}
     if id_generators[@resource.class.name] == field
       return autogen_id(field)

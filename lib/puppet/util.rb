@@ -463,6 +463,7 @@ module Util
   end
 
   def symbolize(value)
+    Puppet.deprecation_warning "symbolize is deprecated. Call the intern method on the object instead."
     if value.respond_to? :intern
       value.intern
     else
@@ -483,6 +484,7 @@ module Util
   end
 
   def symbolizehash!(hash)
+    Puppet.deprecation_warning "symbolizehash! is deprecated. Use the non-destructive symbolizehash method instead."
     # this is not the most memory-friendly way to accomplish this, but the
     #  code re-use and clarity seems worthwhile.
     newhash = symbolizehash(hash)
