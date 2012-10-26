@@ -111,7 +111,7 @@ describe Puppet::Indirector::SslFile do
 
     describe "when finding certificates on disk" do
       describe "and no certificate is present" do
-        before do
+        before(:each) do
           # Stub things so the case management bits work.
           FileTest.stubs(:exist?).with(File.dirname(@certpath)).returns false
           FileTest.expects(:exist?).with(@certpath).returns false
@@ -123,19 +123,49 @@ describe Puppet::Indirector::SslFile do
       end
 
       describe "and a certificate is present" do
-        before do
-          FileTest.expects(:exist?).with(@certpath).returns true
-          FileTest.expects(:readable?).with(@certpath).returns true
+        let(:cert) { mock 'cert' }
+        let(:model) { mock 'model' }
+
+        before(:each) do
+          @file_class.stubs(:model).returns model
         end
 
-        it "should return an instance of the model, which it should use to read the certificate" do
-          cert = mock 'cert'
-          model = mock 'model'
-          @file_class.stubs(:model).returns model
+        describe "and is readable" do
+          before(:each) do
+            FileTest.expects(:exist?).with(@certpath).returns true
+            FileTest.expects(:readable?).with(@certpath).returns true
+          end
 
-          model.expects(:new).with("myname").returns cert
-          cert.expects(:read).with(@certpath)
-          @searcher.find(@request).should equal(cert)
+          it "should return an instance of the model, which it should use to read the certificate" do
+            model.expects(:new).with("myname").returns cert
+            cert.expects(:read).with(@certpath)
+
+            @searcher.find(@request).should equal(cert)
+          end
+        end
+
+        describe "and is unreadable" do
+          before(:each) do
+            FileTest.expects(:exist?).with(@certpath).returns(true).once
+            FileTest.expects(:readable?).with(@certpath).returns(false).once
+            @searcher.expects(:rename_files_with_uppercase).with(@certpath).returns(false)
+          end
+
+          it "should return nil" do
+            model.expects(:new).never
+            cert.expects(:read).never
+
+            @searcher.find(@request).should be_nil
+          end
+
+          it "should issue a warning" do
+            model.expects(:new).never
+            cert.expects(:read).never
+
+            Puppet.expects(:warning)
+
+            @searcher.find(@request)
+          end
         end
       end
 
@@ -261,18 +291,19 @@ describe Puppet::Indirector::SslFile do
     end
 
     describe "when searching for certificates" do
+      let(:one) { stub 'one', :read => nil }
+      let(:two) { stub 'two', :read => nil }
+
       before do
         @model = mock 'model'
         @file_class.stubs(:model).returns @model
       end
+
       it "should return a certificate instance for all files that exist" do
         Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
 
         FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns true
         FileTest.stubs(:readable?).with(File.join(@path, 'two.pem')).returns true
-
-        one = stub 'one', :read => nil
-        two = stub 'two', :read => nil
 
         @model.expects(:new).with("one").returns one
         @model.expects(:new).with("two").returns two
@@ -293,26 +324,43 @@ describe Puppet::Indirector::SslFile do
         @searcher.search(@request)
       end
 
-      it "should skip any files that are not readable" do
-        Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
-        one = stub 'one', :read => nil
-        two = stub 'two', :read => nil
+      describe "when files are not readable" do
+        let(:one_path) { File.join(@path, 'one.pem') }
+        let(:two_path) { File.join(@path, 'two.pem') }
+        let(:path) { @path }
 
-        FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns false
-        FileTest.stubs(:readable?).with(File.join(@path, 'two.pem')).returns true
 
-        @model.expects(:new).with("one").never
-        @model.expects(:new).with("two").returns two
+        it "should skip those files" do
+          Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
 
-        @searcher.search(@request).should == [two]
+          FileTest.stubs(:readable?).with(one_path).returns false
+          FileTest.stubs(:readable?).with(two_path).returns true
+
+          @model.expects(:new).with("one").never
+          @model.expects(:new).with("two").returns two
+
+          @searcher.search(@request).should == [two]
+        end
+
+        it "should log the files that are problemmatic" do
+          Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
+
+          FileTest.stubs(:readable?).with(one_path).returns false
+          FileTest.stubs(:readable?).with(two_path).returns true
+
+          @model.expects(:new).with("one").never
+          @model.expects(:new).with("two").returns two
+
+          Puppet.expects(:warning).with("Certificate file has wrong permissions (not readable): #{one_path}").once
+          @searcher.search(@request)
+        end
+
       end
 
       it "should skip any files that do not match /\.pem$/" do
         Dir.expects(:entries).with(@path).returns %w{. .. one.pem}
 
         FileTest.stubs(:readable?).with(File.join(@path, 'one.pem')).returns true
-
-        one = stub 'one', :read => nil
 
         @model.expects(:new).with("one").returns one
 
