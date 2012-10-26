@@ -24,7 +24,6 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
 
   def initialize(*args)
     super
-    raise ArgumentError, "Queueing requires pson support" unless Puppet.features.pson?
   end
 
   # Queue has no idiomatic "find"

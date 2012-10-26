@@ -151,7 +151,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def compile
     Puppet::Util::Log.newdestination :console
-    raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
         raise "Could not compile catalog for #{options[:node]}"
