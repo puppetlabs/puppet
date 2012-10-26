@@ -639,12 +639,8 @@ class TestUtilFileRecord < Test::Unit::TestCase
 
   Record = Puppet::Util::FileParsing::FileRecord
   def test_new_filerecord
-    [   [:fake, {}],
-      [nil, ]
-    ].each do |args|
-      assert_raise(ArgumentError, "Did not fail on #{args.inspect}") do
-        Record.new(*args)
-      end
+    assert_raise(ArgumentError, "Did not fail on unknown record type") do
+      Record.new(:fake, {})
     end
 
     # Make sure the fields get turned into symbols

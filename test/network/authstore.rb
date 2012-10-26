@@ -417,10 +417,8 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
           "did not result to false with #{val.inspect}")
     end
 
-    ["yay", 1, nil, false, true].each do |val|
-      assert_raise(ArgumentError, "Did not fail on #{val.inspect}") do
-        @decl.type = val
-      end
+    assert_raise(ArgumentError, "Did not fail on incorrect type") do
+      @decl.type = "nope"
     end
   end
 
