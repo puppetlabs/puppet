@@ -31,6 +31,17 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
 
     This function can be used to create defined resources and classes, as well
     as native resources.
+
+    Virtual and Exported resources may be created by prefixing the type name
+    with @ or @@ respectively.  For example, the $myusers hash may be exported
+    in the following manner:
+
+        create_resources("@@user", $myusers)
+
+    The $myusers may be declared as virtual resources using:
+
+        create_resources("@user", $myusers)
+
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length < 2 || args.length > 3
 
