@@ -105,6 +105,11 @@ class Puppet::Parser::Lexer
     def sort_tokens
       @string_tokens.sort! { |a, b| b.string.length <=> a.string.length }
     end
+
+    # Yield each token name and value in turn.
+    def each
+      @tokens.each {|name, value| yield name, value }
+    end
   end
 
   TOKENS = TokenList.new
@@ -240,9 +245,31 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
+  TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(::)?([-\w]+::)*[-\w]+} do |lexer, value|
+    msg = "Using `-` in variable names is deprecated at #{lexer.file || '<string>'}:#{lexer.line}"
+    Puppet.deprecation_warning(msg)
+
+    [TOKENS[:VARIABLE], value[1..-1]]
+  end
+  def (TOKENS[:DOLLAR_VAR_WITH_DASH]).acceptable?(context = {})
+    !!Puppet[:allow_variables_with_dashes]
+  end
+
   TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?(\w+::)*\w+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
+
+  TOKENS.add_token :VARIABLE_WITH_DASH, %r{(::)?([-\w]+::)*[-\w]+} do |lexer, value|
+    msg = "Using `-` in variable names is deprecated at #{lexer.file}:#{lexer.line}"
+    Puppet.deprecation_warning(msg)
+
+    [TOKENS[:VARIABLE], value]
+  end
+  #:stopdoc: # Issue #4161
+  def (TOKENS[:VARIABLE_WITH_DASH]).acceptable?(context={})
+    !!(Puppet[:allow_variables_with_dashes] and [:DQPRE,:DQMID].include?(context[:after]))
+  end
+  #:startdoc:
 
   TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
   #:stopdoc: # Issue #4161
@@ -546,6 +573,9 @@ class Puppet::Parser::Lexer
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
     if terminator != '$' or @scanner.scan(/\{/)
       token_queue.shift
+    elsif Puppet[:allow_variables_with_dashes] and var_name = @scanner.scan(TOKENS[:VARIABLE_WITH_DASH].regex)
+      token_queue << [TOKENS[:VARIABLE],var_name]
+      tokenize_interpolated_string(DQ_continuation_token_types)
     elsif var_name = @scanner.scan(TOKENS[:VARIABLE].regex)
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
