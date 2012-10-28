@@ -11,7 +11,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
   end
 
-  #defaultfor :osfamily => [:redhat, :suse, :archlinux]
+  #defaultfor :osfamily => [:redhat, :Suse,]
+  defaultfor  :operatingsystem => [:Archlinux,]
 
   def self.instances
     i = []
