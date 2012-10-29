@@ -313,7 +313,7 @@ module Puppet
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
       desc <<-'EOT'
-        A file that this command creates.  If this
+        A file or directory that this command creates.  If this
         parameter is provided, then the command will only be run
         if the specified file does not exist.
 
