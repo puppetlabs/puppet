@@ -164,7 +164,7 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:replace, :boolean => true) do
-    desc "Whether to replace a file that already exists on the local system but
+    desc "Whether to replace a file or symlink that already exists on the local system but
       whose content doesn't match what the `source` or `content` attribute
       specifies.  Setting this to false allows file resources to initialize files
       without overwriting future changes.  Note that this only affects content;
