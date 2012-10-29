@@ -951,35 +951,15 @@ database from within the Puppet Master process."
     :allow_variables_with_dashes => {
       :default => false,
       :desc    => <<-'EOT'
-Permit the use of `-` in variable names.
+Permit hyphens (`-`) in variable names and issue deprecation warnings about
+them. This setting **should always be `false`;** setting it to `true`
+will cause subtle and wide-ranging bugs. It will be removed in a future version.
 
-This exists because we introduced a change to the lexer that accidentally
-modified our behaviour: instead of following our documented spec, we now
-treated `-` as a valid character in variable names.
-
-That bug existed, unnoticed, for an entire 363 days before we squashed it,
-in which time a whole lot of people built code that depended on the observed
-rather than documented behaviour.
-
-This is definitely and decidedly deprecated: you should not change the value
-of this option.  However, it might hurt less to do that than to have to
-rebuild every single manifest you own!
-
-If you set this to true you will receive a rate-limited deprecation warning
-about variables with a `-` in them, during compilation, that allows you to
-identify the locations that fail and clean them up.
-
-Please be aware that allowing variables with `-` might break all sorts of
-things around, for example, Forge modules though.  Most people write code to
-the documented standard, and their code might well totally fail to work with
-this changed away from the default!
-
-Using this to migrate is great.  Using it to allow a different grammar for
-Puppet is a bad, bad idea that you will eventually come to regret.
-
-Eventually this option will be pulled entirely and you will have no choice
-but to exclude variable names with a `-` in them.  Don't make this your
-long term strategy.
+Hyphenated variables caused major problems in the language, but were allowed
+between Puppet 2.7.3 and 2.7.14. If you used them during this window, we
+apologize for the inconvenience --- you can temporarily set this to `true`
+in order to upgrade, and can rename your variables at your leisure. Please
+revert it to `false` after you have renamed all affected variables.
 EOT
     }
   )
