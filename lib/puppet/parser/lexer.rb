@@ -105,6 +105,11 @@ class Puppet::Parser::Lexer
     def sort_tokens
       @string_tokens.sort! { |a, b| b.string.length <=> a.string.length }
     end
+
+    # Yield each token name and value in turn.
+    def each
+      @tokens.each {|name, value| yield name, value }
+    end
   end
 
   TOKENS = TokenList.new
@@ -240,9 +245,29 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
+  TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
+    lexer.warn_if_variable_has_hyphen(value)
+
+    [TOKENS[:VARIABLE], value[1..-1]]
+  end
+  def (TOKENS[:DOLLAR_VAR_WITH_DASH]).acceptable?(context = {})
+    Puppet[:allow_variables_with_dashes]
+  end
+
   TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?(\w+::)*\w+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
+
+  TOKENS.add_token :VARIABLE_WITH_DASH, %r{(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
+    lexer.warn_if_variable_has_hyphen(value)
+
+    [TOKENS[:VARIABLE], value]
+  end
+  #:stopdoc: # Issue #4161
+  def (TOKENS[:VARIABLE_WITH_DASH]).acceptable?(context={})
+    Puppet[:allow_variables_with_dashes] and TOKENS[:VARIABLE].acceptable?(context)
+  end
+  #:startdoc:
 
   TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
   #:stopdoc: # Issue #4161
@@ -544,9 +569,15 @@ class Puppet::Parser::Lexer
   def tokenize_interpolated_string(token_type,preamble='')
     value,terminator = slurpstring('"$')
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
+    variable_regex = if Puppet[:allow_variables_with_dashes]
+                       TOKENS[:VARIABLE_WITH_DASH].regex
+                     else
+                       TOKENS[:VARIABLE].regex
+                     end
     if terminator != '$' or @scanner.scan(/\{/)
       token_queue.shift
-    elsif var_name = @scanner.scan(TOKENS[:VARIABLE].regex)
+    elsif var_name = @scanner.scan(variable_regex)
+      warn_if_variable_has_hyphen(var_name)
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
     else
@@ -576,5 +607,11 @@ class Puppet::Parser::Lexer
 
   def commentpush
     @commentstack.push(['', @line])
+  end
+
+  def warn_if_variable_has_hyphen(var_name)
+    if var_name.include?('-')
+      Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}")
+    end
   end
 end
