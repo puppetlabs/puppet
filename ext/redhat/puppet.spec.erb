@@ -23,7 +23,6 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -303,6 +302,9 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Tue Oct 30 2012 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.19-1.0
+- Remove the asc file as a source since it was never used
 
 * Tue Aug 21 2012 Moses Mendoza <moses@puppetlabs.com> - 2.7.19-1
 - Update for 2.7.19
