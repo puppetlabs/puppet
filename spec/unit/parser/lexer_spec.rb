@@ -493,7 +493,7 @@ describe "the horrible deprecation / compatibility variables with dashes" do
           ["", "::"].each do |global_scope|
             var = prefix + global_scope + name
             it "should match #{var.inspect}" do
-              (subject.regex.match(var) || [])[0].should == var
+              subject.regex.match(var).to_a.should == [var]
             end
           end
         end
@@ -509,7 +509,7 @@ describe "the horrible deprecation / compatibility variables with dashes" do
           ["", "::"].each do |global_scope|
             var = prefix + global_scope + name
             it "should match #{var.inspect}" do
-              (subject.regex.match(var) || [])[0].should == var
+              subject.regex.match(var).to_a.should == [var]
             end
           end
         end
@@ -522,70 +522,53 @@ describe "the horrible deprecation / compatibility variables with dashes" do
 
     it "should match a top level variable" do
       Puppet.expects(:deprecation_warning).once
-      src = %q'$foo-bar = 12'
-      tokens_scanned_from(src).should == [
-        [:VARIABLE, { :value => 'foo-bar', :line => 1 }],
-        [:EQUALS,   { :value => '=',       :line => 1 }],
-        [:NAME,     { :value => '12',      :line => 1 }],
+
+      tokens_scanned_from('$foo-bar').should == [
+        [:VARIABLE, { :value => 'foo-bar', :line => 1 }]
       ]
     end
 
-    it "should match a variable in a class with a `-`" do
+    it "does not warn about a variable without a dash" do
+      Puppet.expects(:deprecation_warning).never
+
+      tokens_scanned_from('$c').should == [
+        [:VARIABLE, { :value => "c", :line => 1 }]
+      ]
+    end
+
+    it "does not warn about referencing a class name that contains a dash" do
+      Puppet.expects(:deprecation_warning).never
+
+      tokens_scanned_from('foo-bar').should == [
+        [:NAME, { :value => "foo-bar", :line => 1 }]
+      ]
+    end
+
+    it "warns about reference to variable" do
       Puppet.expects(:deprecation_warning).once
-      src = %q'class foo-bar { $baz-quux = 12 }'
-      tokens_scanned_from(src).should == [
-        [:CLASS,    { :value => "class",    :line => 1 }],
-        [:NAME,     { :value => "foo-bar",  :line => 1 }],
-        [:LBRACE,   { :value => "{",        :line => 1 }],
-        [:VARIABLE, { :value => "baz-quux", :line => 1 }],
-        [:EQUALS,   { :value => "=",        :line => 1 }],
-        [:NAME,     { :value => "12",       :line => 1 }],
-        [:RBRACE,   { :value => "}",        :line => 1 }]
+
+      tokens_scanned_from('$::foo-bar::baz-quux').should == [
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }]
       ]
     end
 
-    it "should match a scoped reference with a `-`" do
-      Puppet.expects(:deprecation_warning).times(3)
-      # working around horrible Ruby syntax in editors.
-      src  = [
-        'class foo-bar {',
-        '  $baz-quux = 12',
-        '}',
-        'include foo-bar',
-        'notice($::foo-bar::baz-quux)',
-        'notice("$::foo-bar::baz-quux")',
-        'notice("${::foo-bar::baz-quux}")'
-      ].join("\n")
+    it "warns about reference to variable interpolated in a string" do
+      Puppet.expects(:deprecation_warning).once
 
-      # Note: this is a hand-checked parse tree.  Be careful about changing it
-      # without understanding why the lexer works how it does.  Especially, be
-      # wary of changing anything that touches a :VARIABLE output.
-      tokens_scanned_from(src).should == [
-        [:CLASS,    { :value => "class",               :line => 1 }],
-        [:NAME,     { :value => "foo-bar",             :line => 1 }],
-        [:LBRACE,   { :value => "{",                   :line => 1 }],
-        [:VARIABLE, { :value => "baz-quux",            :line => 2 }],
-        [:EQUALS,   { :value => "=",                   :line => 2 }],
-        [:NAME,     { :value => "12",                  :line => 2 }],
-        [:RBRACE,   { :value => "}",                   :line => 3 }],
-        [:NAME,     { :value => "include",             :line => 4 }],
-        [:NAME,     { :value => "foo-bar",             :line => 4 }],
-        [:NAME,     { :value => "notice",              :line => 5 }],
-        [:LPAREN,   { :value => "(",                   :line => 5 }],
-        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 5 }],
-        [:RPAREN,   { :value => ")",                   :line => 5 }],
-        [:NAME,     { :value => "notice",              :line => 6 }],
-        [:LPAREN,   { :value => "(",                   :line => 6 }],
-        [:DQPRE,    { :value => "",                    :line => 6 }],
-        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 6 }],
-        [:DQPOST,   { :value => "",                    :line => 6 }],
-        [:RPAREN,   { :value => ")",                   :line => 6 }],
-        [:NAME,     { :value => "notice",              :line => 7 }],
-        [:LPAREN,   { :value => "(",                   :line => 7 }],
-        [:DQPRE,    { :value => "",                    :line => 7 }],
-        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 7 }],
-        [:DQPOST,   { :value => "",                    :line => 7 }],
-        [:RPAREN,   { :value => ")",                   :line => 7 }]
+      tokens_scanned_from('"$::foo-bar::baz-quux"').should == [
+        [:DQPRE,    { :value => "",                    :line => 1 }],
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }],
+        [:DQPOST,   { :value => "",                    :line => 1 }],
+      ]
+    end
+
+    it "warns about reference to variable interpolated in a string as an expression" do
+      Puppet.expects(:deprecation_warning).once
+
+      tokens_scanned_from('"${::foo-bar::baz-quux}"').should == [
+        [:DQPRE,    { :value => "",                    :line => 1 }],
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }],
+        [:DQPOST,   { :value => "",                    :line => 1 }],
       ]
     end
   end
