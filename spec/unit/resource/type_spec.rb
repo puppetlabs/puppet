@@ -150,24 +150,6 @@ describe Puppet::Resource::Type do
         Puppet::Resource::Type.new(:node, "fOo").match("foO").should be_true
       end
     end
-
-    it "should return the name converted to a string when the name is not a regex" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => "foo")
-      Puppet::Resource::Type.new(:node, name).name.should == "foo"
-    end
-
-    it "should return the name converted to a string when the name is a regex" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => /regex/)
-      Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
-    end
-
-    it "should mark any created scopes as a node scope" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => /regex/)
-      Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
-    end
   end
 
   describe "when initializing" do
