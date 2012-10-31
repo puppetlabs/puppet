@@ -8,6 +8,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 
   YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
+  YUM_INSTALLONLY = File::join(File::dirname(__FILE__), "yum_installonly.py")
 
   attr_accessor :latest_info
 
@@ -49,12 +50,27 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
   end
+  
+  def installonly_pkg?
+    return false if @resource.should(:ensure) == :latest
+    python("#{YUM_INSTALLONLY}","#{@resource[:name]}").each_line do |line|
+      line.chomp!
+      next if line.empty?
+      if line[0,4] == "_pkg"
+        # yum_installonly does: print "_pkg %s %s %s %s %s" % ( pkg.name, pkg.version, pkg.release, pkg.arch, my.tsInfo._allowedMultipleInstalls( pkg ) )
+        return true if((line.split[3] == @resource.should(:ensure) || "#{line.split[3]}-#{line.split[4]}" == @resource.should(:ensure)) && line.split.last)
+      end
+    end
+    false  
+  end
 
   def install
     should = @resource.should(:ensure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
+    installonly_pkg = self.installonly_pkg?
+    self.debug "Want to install #{wanted} version: #{should} installonly?: #{installonly_pkg}"
 
     case should
     when true, false, Symbol
@@ -64,7 +80,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # Add the package version
       wanted += "-#{should}"
       is = self.query
-      if is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      if (is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0) && !(installonly_pkg)
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
         operation = :downgrade
       end
@@ -77,7 +93,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # FIXME: Should we raise an exception even if should == :latest
     # and yum updated us to a version other than @param_hash[:ensure] ?
-    raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should && should != is[:ensure]
+    raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if (should && should != is[:ensure]) && !(installonly_pkg)
   end
 
   # What's the latest package version available?
