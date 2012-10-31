@@ -611,7 +611,7 @@ class Puppet::Parser::Lexer
 
   def warn_if_variable_has_hyphen(var_name)
     if var_name.include?('-')
-      Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}")
+      Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/puppet-hyphenated-variable-deprecation")
     end
   end
 end
