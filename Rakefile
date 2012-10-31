@@ -9,6 +9,8 @@ $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 begin
   require 'rubygems'
   require 'rubygems/package_task'
+  require 'rspec'
+  require 'rspec/core/rake_task'
 rescue LoadError
   # Users of older versions of Rake (0.8.7 for example) will not necessarily
   # have rubygems installed, or the newer rubygems package_task for that
@@ -18,8 +20,6 @@ rescue LoadError
 end
 
 require 'rake'
-require 'rspec'
-require "rspec/core/rake_task"
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 Dir['ext/packaging/tasks/**/*'].sort.each { |t| load t }
@@ -60,7 +60,9 @@ task :default do
     sh %{rake -T}
 end
 
-RSpec::Core::RakeTask.new do |t|
-    t.pattern ='spec/{unit,integration}/**/*.rb'
-    t.fail_on_error = true
+if defined?(RSpec::Core::RakeTask)
+  RSpec::Core::RakeTask.new do |t|
+      t.pattern ='spec/{unit,integration}/**/*.rb'
+      t.fail_on_error = true
+  end
 end

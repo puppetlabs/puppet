@@ -23,7 +23,9 @@ class Puppet::Util::Feature
     end
 
     meta_def(method) do
-      @results[name] = test(name, options) unless @results.include?(name)
+      # Positive cache only, except blocks which are executed just once above
+      final = @results[name] || block_given?
+      @results[name] = test(name, options) unless final
       @results[name]
     end
   end
