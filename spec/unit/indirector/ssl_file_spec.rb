@@ -27,6 +27,12 @@ describe Puppet::Indirector::SslFile do
     Puppet[:trace] = false
   end
 
+  after :each do
+    @file_class.store_in nil
+    @file_class.store_at nil
+    @file_class.store_ca_at nil
+  end
+
   it "should use :main and :ssl upon initialization" do
     Puppet.settings.expects(:use).with(:main, :ssl)
     @file_class.new
