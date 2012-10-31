@@ -364,9 +364,9 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:target) do
-    desc "Where the cron job should be stored.  For crontab-style
-      entries this is the same as the user and defaults that way.
-      Other providers default accordingly."
+    desc "The username that will own the cron entry. Defaults to 
+    the value of $USER for the shell that invoked Puppet, or root if $USER
+    is empty."
 
     defaultto {
       if provider.is_a?(@resource.class.provider(:crontab))
@@ -374,7 +374,7 @@ Puppet::Type.newtype(:cron) do
           val
         else
           raise ArgumentError,
-            "You must provide a user with crontab entries"
+            "You must provide a username with crontab entries"
         end
       elsif provider.class.ancestors.include?(Puppet::Provider::ParsedFile)
         provider.class.default_target
