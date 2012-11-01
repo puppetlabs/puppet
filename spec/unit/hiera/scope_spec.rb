@@ -11,6 +11,14 @@ describe Hiera::Scope do
   end
 
   describe "#[]" do
+    it "should return nil when no value is found" do
+      real = mock
+      real.expects(:lookupvar).with("foo").returns(nil)
+
+      scope = Hiera::Scope.new(real)
+      scope["foo"].should == nil
+    end
+
     it "should treat '' as nil" do
       real = mock
       real.expects(:lookupvar).with("foo").returns("")

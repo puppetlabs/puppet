@@ -26,7 +26,7 @@ class Hiera
       end
 
       # damn you puppet visual basic style variables.
-      return nil if ans == ""
+      return nil if ans.nil? or ans == ""
       return ans.downcase
     end
 
