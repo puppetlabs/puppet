@@ -21,6 +21,22 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   let(:provider) { described_class.new(:name => 'myuser') }
 
+
+  let(:shadow_entry) {
+    return unless Puppet.features.libshadow?
+    Struct::PasswdEntry.new(
+      'myuser', # login name
+      '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0', # encrypted password
+      15573, # date of last password change
+      10,    # minimum password age
+      20,    # maximum password age
+      7,     # password warning period
+      -1,    # password inactivity period
+      15706, # account expiration date
+      -1     # reserved field
+    )
+  }
+
   describe "#create" do
 
     it "should add -o when allowdupe is enabled and the user is being created" do
@@ -201,6 +217,34 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     it "should return an array without -e if expiry is undefined full command" do
       described_class.expects(:system_users?).returns true
       provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
+    end
+  end
+
+  {
+    :password_min_age => 10,
+    :password_max_age => 20,
+    :password         => '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0'
+  }.each_pair do |property, expected_value|
+    describe "##{property}" do
+      before :each do
+        resource # just to link the resource to the provider
+      end
+
+      it "should return absent if libshadow feature is not present" do
+        Puppet.features.stubs(:libshadow?).returns false
+        # Shadow::Passwd.expects(:getspnam).never # if we really don't have libshadow we dont have Shadow::Passwd either
+        provider.send(property).should == :absent
+      end
+
+      it "should return absent if user cannot be found", :if => Puppet.features.libshadow? do
+        Shadow::Passwd.expects(:getspnam).with('myuser').returns nil
+        provider.send(property).should == :absent
+      end
+
+      it "should return the correct value if libshadow is present", :if => Puppet.features.libshadow? do
+        Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+        provider.send(property).should == expected_value
+      end
     end
   end
 
