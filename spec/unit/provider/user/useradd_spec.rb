@@ -138,13 +138,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
-  describe "when adding properties" do
-    it "should get the valid properties"
-    it "should not add the ensure property"
-    it "should add the flag and value to an array"
-    it "should return and array of flags and values"
-  end
-
   describe "#addcmd" do
     before do
       resource[:allowdupe] = :true
