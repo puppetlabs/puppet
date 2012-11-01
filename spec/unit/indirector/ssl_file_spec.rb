@@ -319,7 +319,7 @@ describe Puppet::Indirector::SslFile do
       end
 
       it "should skip any files that do not match /\.pem$/" do
-        Dir.expects(:entries).with(@path).returns(%{. .. one two.notpem})
+        Dir.expects(:entries).with(@path).returns(%w{. .. one two.notpem})
 
         model.expects(:new).never
 
