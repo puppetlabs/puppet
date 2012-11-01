@@ -101,8 +101,6 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
 end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method]) do
-  confine :true => Puppet.features.pson?
-
   def intern(klass, text)
     data_to_instance(klass, PSON.parse(text))
   end
