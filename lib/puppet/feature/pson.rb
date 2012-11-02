@@ -1,6 +1,4 @@
 Puppet.features.add(:pson) do
-  require 'puppet/external/pson/common'
-  require 'puppet/external/pson/version'
-  require 'puppet/external/pson/pure'
+  Puppet.deprecation_warning "There is no need to check for pson support. It is always available."
   true
 end

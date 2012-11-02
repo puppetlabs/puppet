@@ -647,7 +647,7 @@ type: File
     end
   end
 
-  describe "when converting to pson", :if => Puppet.features.pson? do
+  describe "when converting to pson" do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }
     end
@@ -726,7 +726,7 @@ type: File
     end
   end
 
-  describe "when converting from pson", :if => Puppet.features.pson? do
+  describe "when converting from pson" do
     def pson_result_should
       Puppet::Resource.expects(:new).with { |hash| yield hash }
     end

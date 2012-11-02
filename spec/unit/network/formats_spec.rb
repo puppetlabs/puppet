@@ -220,7 +220,7 @@ describe "Puppet Network Format" do
     Puppet::Network::FormatHandler.format(:pson).should_not be_nil
   end
 
-  describe "pson", :if => Puppet.features.pson? do
+  describe "pson" do
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
     end
