@@ -26,13 +26,13 @@ decl: object { result = [val[0]] }
 comment: COMMENT RETURN { result = nil }
     ;
 
-object: DEFINE NAME LCURLY RETURN vars RCURLY {
+object: DEFINE NAME LCURLY RETURN vars rcurly {
         result = Nagios::Base.create(val[1],val[4])
     }
     ;
 
-vars: var
-    | vars var {
+vars: varline
+    | vars varline {
         val[1].each {|p,v|
             val[0][p] = v
         }
@@ -40,12 +40,23 @@ vars: var
     }
     ;
 
-var: PARAM VALUE icomment returns { result = {val[0],val[1]} }
+varline: returns_or_comments var { result = val[1] }
+    | var { result = val[0] }
     ;
 
-returns:      RETURN
-            | returns RETURN
-            ;
+var: PARAM VALUE icomment RETURN { result = { val[0] => val[1] } }
+    ;
+
+return_or_comment: comment
+    | RETURN
+    ;
+
+returns_or_comments: return_or_comment
+    | return_or_comment returns_or_comments
+    ;
+
+rcurly: returns_or_comments RCURLY
+    | RCURLY
 
 icomment: # nothing
     | INLINECOMMENT
@@ -86,7 +97,7 @@ def token
 
 
     # remove comments from this line
-    @src.sub!(/\A[ \t]*;.*\n/,"\n")
+    @src.sub!(/\A[ \t]*(?<!\\);.*\n/,"\n")      # Only unescaped semicolon
     if $&
         return [:INLINECOMMENT, ""]
     end
@@ -96,16 +107,16 @@ def token
         return [:COMMENT, ""]
     end
 
-    @src.sub!(/#.*/,'')
-
     if @src.length == 0
         @done = true
         return [false, '$']
     end
 
     if @invar
-        @src.sub!(/\A[ \t]+/,'')
-        @src.sub!(/\A([^;\n]+)(\n|;)/,'\2')
+        @src.sub!(/\A[ \t]+/,'')                # Lines with only spaces
+        @src.sub!(/[ \t]*(?<!\\);.*\n/,"\n")    # End of lines with only comments (unescaped semicolon)
+        @src.sub!(/\A(.*)\\(;.*\n)/,'\1\2')     # Keep escaped semicolon, remove backslash
+        @src.sub!(/\A([^\n]+)(\n)/,'\2')        # Finally, remove \n
         if $1
             yytext += $1
         end
