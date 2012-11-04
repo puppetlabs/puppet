@@ -301,9 +301,9 @@ class Nagios::Base
     self.each { |param,value|
       str += %{\t%-30s %s\n} % [ param,
         if value.is_a? Array
-          value.join(",")
+          value.join(",").sub(';', '\;')
         else
-          value
+          value.sub(';', '\;')
         end
         ]
     }
