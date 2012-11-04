@@ -30,6 +30,7 @@ define command{
   command_name  command_name
 
 # This is a comment starting at the beginning of a line
+  ## --PUPPET_NAME-- (called '_naginator_name' in the manifest)                command_name
 
   command_line  command_line
 

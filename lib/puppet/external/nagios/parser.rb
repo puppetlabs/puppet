@@ -489,7 +489,7 @@ def token
         return [:INLINECOMMENT, ""]
     end
 
-    @src.sub!(/\A#.*\n/,"\n")
+    @src.sub!(/\A[ \t]*#.*\n/,"\n")
     if $&
         return [:COMMENT, ""]
     end
