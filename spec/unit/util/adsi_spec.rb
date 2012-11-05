@@ -225,23 +225,4 @@ describe Puppet::Util::ADSI do
       Puppet::Util::ADSI::Group.delete(groupname)
     end
   end
-
-  describe Puppet::Util::ADSI::UserProfile do
-    it "should be able to delete a user profile" do
-      connection.expects(:Delete).with("Win32_UserProfile.SID='S-A-B-C'")
-      Puppet::Util::ADSI::UserProfile.delete('S-A-B-C')
-    end
-
-    it "should warn on 2003" do
-      connection.expects(:Delete).raises(RuntimeError,
- "Delete (WIN32OLERuntimeError)
-    OLE error code:80041010 in SWbemServicesEx
-      Invalid class
-    HRESULT error code:0x80020009
-      Exception occurred.")
-
-      Puppet.expects(:warning).with("Cannot delete user profile for 'S-A-B-C' prior to Vista SP1")
-      Puppet::Util::ADSI::UserProfile.delete('S-A-B-C')
-    end
-  end
 end
