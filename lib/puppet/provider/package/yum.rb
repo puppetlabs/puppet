@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       next if line.empty?
       if line[0,4] == "_pkg"
         # yum_installonly does: print "_pkg %s %s %s %s %s" % ( pkg.name, pkg.version, pkg.release, pkg.arch, my.tsInfo._allowedMultipleInstalls( pkg ) )
-        return true if((line.split[3] == @resource.should(:ensure) || "#{line.split[3]}-#{line.split[4]}" == @resource.should(:ensure)) && line.split.last)
+        return true if((line.split[2] == @resource.should(:ensure) || "#{line.split[2]}-#{line.split[3]}" == @resource.should(:ensure)) && line.split.last)
       end
     end
     false  
