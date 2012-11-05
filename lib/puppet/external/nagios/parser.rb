@@ -451,19 +451,22 @@ end
 module Nagios
   class Parser < Racc::Parser
 
-module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 68)
+module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 49)
+require 'strscan'
 
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
-    @src = src
+    @ss = StringScanner.new(src)
+
+    #@src = str #.force_encoding("ASCII-8BIT")
 
     # state variables
     @invar = false
     @inobject = false
     @done = false
 
-    @line = 0
+    @line = 1
     @yydebug = true
 
     do_parse
@@ -471,108 +474,116 @@ end
 
 # The lexer.  Very simple.
 def token
-    @src.sub!(/\A\n/,'')
-    if $&
-        @line += 1
-        return [ :RETURN, "\n" ]
-    end
+    text = @ss.peek(1)
+    @line  +=  1  if text == "\n"
 
-    if @done
-        return nil
-    end
-    yytext = String.new
+    token = case @inobject
+        when false  # @inobject == false
+          case
+              when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                ;
 
+              when (text = @ss.scan(/\#.*$/))               # ignore comments
+                ;
 
-    # remove comments from this line
-    @src.sub!(/\A[ \t]*(?<!\\);.*\n/,"\n")      # Only unescaped semicolon
-    if $&
-        return [:INLINECOMMENT, ""]
-    end
+              when (text = @ss.scan(/;.*$/))               # ignore inline comments
+                ;
 
-    @src.sub!(/\A[ \t]*#.*\n/,"\n")
-    if $&
-        return [:COMMENT, ""]
-    end
+              when (text = @ss.scan(/\n/))                  # newline
+                action { [:RETURN, text] }
 
-    if @src.length == 0
-        @done = true
-        return [false, '$']
-    end
+              when (text = @ss.scan(/\b(define)\b/))
+                action { [:DEFINE, text] }
 
-    if @invar
-        @src.sub!(/\A[ \t]+/,'')                # Lines with only spaces
-        @src.sub!(/[ \t]*(?<!\\);.*\n/,"\n")    # End of lines with only comments (unescaped semicolon)
-        @src.sub!(/\A(.*)\\(;.*\n)/,'\1\2')     # Keep escaped semicolon, remove backslash
-        @src.sub!(/\A([^\n]+)(\n)/,'\2')        # Finally, remove \n
-        if $1
-            yytext += $1
-        end
-        @invar = false
-        return [:VALUE, yytext]
-    else
-        @src.sub!(/\A[\t ]*(\S+)([\t ]*|$)/,'')
-        if $1
-            yytext = $1
-            case yytext
-            when 'define'
-                #puts "got define"
-                return [:DEFINE, yytext]
-            when '{'
-                #puts "got {"
+              when (text = @ss.scan(/[^{ \t\n]+/))
+                action { [:NAME, text] }
+
+              when (text = @ss.scan(/\{/))
                 @inobject = true
-                return [:LCURLY, yytext]
-            else
-                unless @inobject
-                    #puts "got type: #{yytext}"
-                    if yytext =~ /\W/
-                        giveback = yytext.dup
-                        giveback.sub!(/^\w+/,'')
-                        #puts "giveback " + giveback
-                        #puts "yytext " + yytext
-                        yytext.sub!(/\W.*$/,'')
-                        #puts "yytext " + yytext
-                        #puts "all [#{giveback} #{yytext} #{orig}]"
-                        @src = giveback + @src
-                    end
-                    return [:NAME, yytext]
-                else
-                    if yytext == '}'
-                        #puts "got closure: #{yytext}"
+                action { [:LCURLY, text] }
+
+              else
+                text = @ss.string[@ss.pos .. -1]
+                raise  ScanError, "can not match: '" + text + "'"
+              end  # if
+        when true   # @inobject == true
+            case @invar
+                when true                # @invar == true
+                    case
+                      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                        ;
+
+                      when (text = @ss.scan(/\#.*$/))               # ignore comments
+                        ;
+
+                      when (text = @ss.scan(/\n/))                  # newline
+                        action { [:RETURN, text] }
+
+                      when (text = @ss.scan(/.+(?<!\\);/))
+                        @invar = false
+                        idx = @ss.pos
+                        @ss.pos = idx-1
+                        action { [:VALUE, text.chomp(';').strip.sub(/\\;/,';')] }
+
+                      when (text = @ss.scan(/.+/))
+                        @invar = false
+                        action { [:VALUE, text.strip.sub(/\\;/,';')] }
+
+                      else
+                        text = @ss.string[@ss.pos .. -1]
+                        raise  ScanError, "can not match: '" + text + "'"
+                      end  # if
+                when false              # @invar == false
+                    case
+                      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                        ;
+
+                      when (text = @ss.scan(/\#.*$/))               # ignore comments
+                        ;
+
+                      when (text = @ss.scan(/;.*$/))               # ignore inline comments
+                        ;
+
+                      when (text = @ss.scan(/\n/))                  # newline
+                        action { [:RETURN, text] }
+
+                      when (text = @ss.scan(/\}/))
                         @inobject = false
-                        return [:RCURLY, '}']
-                    end
+                        action { [:RCURLY, text] }
 
-                    unless @invar
+                      when (not @invar and (text = @ss.scan(/\S+/)))
                         @invar = true
-                        return [:PARAM, $1]
-                    else
-                    end
-                end
-            end
-        end
-    end
-end
+                        action { [:PARAM, text] }
 
-def next_token
+                      else
+                        text = @ss.string[@ss.pos .. -1]
+                        raise  ScanError, "can not match: '" + text + "'"
+                      end  # if
+            end
+        else
+          raise  ScanError, "undefined state: '" + state.to_s + "'"
+    end  # case state
     token
 end
 
-def yydebug
-    1
-end
+def next_token
+    return if @ss.eos?
 
-def yywrap
-    0
+    # skips empty actions
+    until _next_token = token or @ss.eos?; end
+    _next_token
 end
 
 def on_error(token, value, vstack )
+#    text = @ss.string[@ss.pos .. -1]
+    text = @ss.peek(20)
     msg = ""
     unless value.nil?
-        msg = "line #{@line}: syntax error at '#{value}'"
+        msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
     else
-        msg = "line #{@line}: syntax error at '#{token}'"
+        msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
     end
-    unless @src.size > 0
+    if @ss.eos?
         msg = "line #{@line}: Unexpected end of file"
     end
     if token == '$end'.intern
@@ -581,89 +592,72 @@ def on_error(token, value, vstack )
         raise ::Nagios::Parser::SyntaxError, msg
     end
 end
+
+def action
+    yield
+end
 ...end grammar.ry/module_eval...
 ##### State transition tables begin ###
 
 racc_action_table = [
-     8,    19,     7,    26,     7,    21,     6,    21,     6,     4,
-     6,     4,     6,    19,    19,    19,    30,    21,     6,    11,
-    10,    14,    28,    12,    13,    32,    33 ]
+     6,     5,     5,    15,    12,    17,    10,     4,     4,     9,
+    15,    12,     8,    19,    12 ]
 
 racc_action_check = [
-     1,    15,     1,    15,     0,    15,    15,    22,    22,     1,
-     1,     0,     0,    14,    25,    17,    25,    14,    14,     7,
-     6,    13,    19,     8,    11,    28,    31 ]
+     1,     0,     1,    13,    10,    13,     8,     0,     1,     6,
+    11,    12,     5,    15,    19 ]
 
 racc_action_pointer = [
-     2,     0,   nil,   nil,   nil,   nil,    11,    16,    23,   nil,
-   nil,    18,   nil,    12,     8,    -4,   nil,    10,   nil,    14,
-   nil,   nil,    -2,   nil,   nil,     9,   nil,   nil,    14,   nil,
-   nil,    17,   nil,   nil ]
+    -1,     0,   nil,   nil,   nil,     9,     9,   nil,     1,   nil,
+    -4,     6,     3,    -1,   nil,     6,   nil,   nil,   nil,     6,
+   nil ]
 
 racc_action_default = [
-   -21,   -21,    -1,    -3,    -4,    -5,   -21,   -21,   -21,    -2,
-    -6,   -21,    34,   -21,   -21,   -21,    -8,   -21,   -11,   -21,
-   -13,   -14,   -15,    -7,    -9,   -21,   -18,   -10,   -19,   -16,
-   -17,   -21,   -20,   -12 ]
+   -11,   -11,    -1,    -3,    -4,   -11,   -11,    -2,   -11,    21,
+   -11,   -11,    -9,   -11,    -6,   -11,   -10,    -5,    -7,   -11,
+    -8 ]
 
 racc_goto_table = [
-    27,    17,    25,     5,     5,     2,     9,    23,    27,    29,
-    16,    24,    15,     1,    31 ]
+    11,    14,    16,    18,     2,     7,    13,     1,   nil,    20 ]
 
 racc_goto_check = [
-     9,     8,     8,     4,     4,     2,     2,     6,     9,     8,
-     7,     7,     5,     1,    10 ]
+     4,     6,     4,     6,     2,     2,     5,     1,   nil,     4 ]
 
 racc_goto_pointer = [
-   nil,    13,     5,   nil,     3,    -2,    -8,    -4,   -13,   -17,
-   -14,   nil ]
+   nil,     7,     4,   nil,   -10,    -5,   -10 ]
 
 racc_goto_default = [
-   nil,   nil,   nil,     3,    20,   nil,   nil,   nil,   nil,    18,
-   nil,    22 ]
+   nil,   nil,   nil,     3,   nil,   nil,   nil ]
 
 racc_reduce_table = [
   0, 0, :racc_error,
-  1, 13, :_reduce_1,
-  2, 13, :_reduce_2,
-  1, 14, :_reduce_3,
-  1, 14, :_reduce_4,
+  1, 10, :_reduce_1,
+  2, 10, :_reduce_2,
+  1, 11, :_reduce_3,
+  1, 11, :_reduce_4,
+  6, 12, :_reduce_5,
   1, 14, :_reduce_none,
-  2, 16, :_reduce_6,
-  6, 15, :_reduce_7,
-  1, 17, :_reduce_none,
-  2, 17, :_reduce_9,
-  2, 19, :_reduce_10,
-  1, 19, :_reduce_11,
-  4, 21, :_reduce_12,
-  1, 23, :_reduce_none,
-  1, 23, :_reduce_none,
-  1, 20, :_reduce_none,
-  2, 20, :_reduce_none,
-  2, 18, :_reduce_none,
-  1, 18, :_reduce_none,
-  0, 22, :_reduce_none,
-  1, 22, :_reduce_none ]
+  2, 14, :_reduce_7,
+  3, 15, :_reduce_8,
+  1, 13, :_reduce_none,
+  2, 13, :_reduce_none ]
 
-racc_reduce_n = 21
+racc_reduce_n = 11
 
-racc_shift_n = 34
+racc_shift_n = 21
 
 racc_token_table = {
   false => 0,
   :error => 1,
   :DEFINE => 2,
   :NAME => 3,
-  :STRING => 4,
-  :PARAM => 5,
-  :LCURLY => 6,
-  :RCURLY => 7,
-  :VALUE => 8,
-  :RETURN => 9,
-  :COMMENT => 10,
-  :INLINECOMMENT => 11 }
+  :PARAM => 4,
+  :LCURLY => 5,
+  :RCURLY => 6,
+  :VALUE => 7,
+  :RETURN => 8 }
 
-racc_nt_base = 12
+racc_nt_base = 9
 
 racc_use_result_var = true
 
@@ -688,26 +682,18 @@ Racc_token_to_s_table = [
   "error",
   "DEFINE",
   "NAME",
-  "STRING",
   "PARAM",
   "LCURLY",
   "RCURLY",
   "VALUE",
   "RETURN",
-  "COMMENT",
-  "INLINECOMMENT",
   "$start",
   "decls",
   "decl",
   "object",
-  "comment",
+  "returns",
   "vars",
-  "rcurly",
-  "varline",
-  "returns_or_comments",
-  "var",
-  "icomment",
-  "return_or_comment" ]
+  "var" ]
 
 Racc_debug_parser = false
 
@@ -752,27 +738,18 @@ module_eval(<<'.,.,', 'grammar.ry', 21)
   end
 .,.,
 
-# reduce 5 omitted
-
 module_eval(<<'.,.,', 'grammar.ry', 25)
-  def _reduce_6(val, _values, result)
-     result = nil 
-    result
-  end
-.,.,
-
-module_eval(<<'.,.,', 'grammar.ry', 29)
-  def _reduce_7(val, _values, result)
+  def _reduce_5(val, _values, result)
             result = Nagios::Base.create(val[1],val[4])
     
     result
   end
 .,.,
 
-# reduce 8 omitted
+# reduce 6 omitted
 
-module_eval(<<'.,.,', 'grammar.ry', 35)
-  def _reduce_9(val, _values, result)
+module_eval(<<'.,.,', 'grammar.ry', 31)
+  def _reduce_7(val, _values, result)
             val[1].each {|p,v|
             val[0][p] = v
         }
@@ -782,42 +759,16 @@ module_eval(<<'.,.,', 'grammar.ry', 35)
   end
 .,.,
 
-module_eval(<<'.,.,', 'grammar.ry', 42)
-  def _reduce_10(val, _values, result)
-     result = val[1] 
-    result
-  end
-.,.,
-
-module_eval(<<'.,.,', 'grammar.ry', 43)
-  def _reduce_11(val, _values, result)
-     result = val[0] 
-    result
-  end
-.,.,
-
-module_eval(<<'.,.,', 'grammar.ry', 46)
-  def _reduce_12(val, _values, result)
+module_eval(<<'.,.,', 'grammar.ry', 38)
+  def _reduce_8(val, _values, result)
      result = { val[0] => val[1] } 
     result
   end
 .,.,
 
-# reduce 13 omitted
+# reduce 9 omitted
 
-# reduce 14 omitted
-
-# reduce 15 omitted
-
-# reduce 16 omitted
-
-# reduce 17 omitted
-
-# reduce 18 omitted
-
-# reduce 19 omitted
-
-# reduce 20 omitted
+# reduce 10 omitted
 
 def _reduce_none(val, _values, result)
   val[0]
