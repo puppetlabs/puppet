@@ -6,7 +6,7 @@
 # Should-Start:      puppet
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-### END INIT INFO                                                                                                                                          
+### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/puppet
@@ -23,28 +23,28 @@ test -x $DAEMON || exit 0
 
 is_true() {
     if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
-        return 0
+       return 0
     else
         return 1
     fi
 }
 
 reload_puppet_agent() {
-	start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE 
+    start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE
 }
 
 start_puppet_agent() {
     if is_true "$START" ; then
-	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-	    --startas $DAEMON -- $NAME $DAEMON_OPTS
+        start-stop-daemon --start --quiet --pidfile $PIDFILE \
+          --startas $DAEMON -- $NAME $DAEMON_OPTS
     else
-	echo ""
-	echo "puppet not configured to start, please edit /etc/default/puppet to enable"
+        echo ""
+        echo "puppet not configured to start, please edit /etc/default/puppet to enable"
     fi
 }
 
 stop_puppet_agent() {
-	start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+    start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
 }
 
 status_puppet_agent() {
@@ -53,7 +53,7 @@ status_puppet_agent() {
     else
         status_of_proc() {
             local pidfile daemon name status
-            
+
             pidfile=
             OPTIND=1
             while getopts p: opt ; do
@@ -62,7 +62,7 @@ status_puppet_agent() {
                 esac
             done
             shift $(($OPTIND - 1))
-            
+
             if [ -n "$pidfile" ]; then
                 pidfile="-p $pidfile"
             fi
@@ -79,40 +79,40 @@ status_puppet_agent() {
             else
                 log_failure_msg "$name is not running"
                 return $status
-            fi         
+            fi
         }
-	    status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
+        status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
     fi
 }
 
 case "$1" in
     start)
-	log_begin_msg "Starting $DESC"
-	start_puppet_agent
-	log_end_msg $?
-	;;
+        log_begin_msg "Starting $DESC"
+        start_puppet_agent
+        log_end_msg $?
+    ;;
     stop)
-	log_begin_msg "Stopping $DESC"
-	stop_puppet_agent
-	log_end_msg $?
-	;;
+        log_begin_msg "Stopping $DESC"
+        stop_puppet_agent
+        log_end_msg $?
+    ;;
     reload)
-    	log_begin_msg "Reloading $DESC"
+        log_begin_msg "Reloading $DESC"
         reload_puppet_agent
-    	log_end_msg $?
-    	;;
+        log_end_msg $?
+    ;;
     status)
         status_puppet_agent
-	;;
+    ;;
     restart|force-reload)
-	log_begin_msg "Restarting $DESC"
-	stop_puppet_agent
-	sleep 1
-	start_puppet_agent
-	log_end_msg $?
-	;;
-  *)
-	echo "Usage: $0 {start|stop|status|restart|force-reload|reload}" >&2
-	exit 1
-	;;
+        log_begin_msg "Restarting $DESC"
+        stop_puppet_agent
+        sleep 1
+        start_puppet_agent
+        log_end_msg $?
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart|force-reload|reload}" >&2
+        exit 1
+    ;;
 esac
