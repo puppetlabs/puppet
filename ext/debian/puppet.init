@@ -44,7 +44,7 @@ start_puppet_agent() {
 }
 
 stop_puppet_agent() {
-    start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile $PIDFILE
 }
 
 status_puppet_agent() {
@@ -107,7 +107,6 @@ case "$1" in
     restart|force-reload)
         log_begin_msg "Restarting $DESC"
         stop_puppet_agent
-        sleep 1
         start_puppet_agent
         log_end_msg $?
     ;;
