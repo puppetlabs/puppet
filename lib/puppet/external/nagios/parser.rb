@@ -457,9 +457,10 @@ require 'strscan'
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
+    if src.respond_to?("force_encoding") then
+        src.force_encoding("ASCII-8BIT")
+    end
     @ss = StringScanner.new(src)
-
-    #@src = str #.force_encoding("ASCII-8BIT")
 
     # state variables
     @invar = false
@@ -519,14 +520,6 @@ def token
                       when (text = @ss.scan(/\n/))                  # newline
                         action { [:RETURN, text] }
 
-=begin
-#                      when (text = @ss.scan(/.+(?<!\\);/))         # > 1.9
-                      when (text = @ss.scan(/.+(?<!\\);/))
-                        @invar = false
-                        idx = @ss.pos
-                        @ss.pos = idx-1
-                        action { [:VALUE, text.chomp(';').strip.sub(/\\;/,';')] }
-=end
                       when (text = @ss.scan(/.+$/))                 # Value of parameter
                         @invar = false
 

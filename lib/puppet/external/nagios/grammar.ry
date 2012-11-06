@@ -51,9 +51,10 @@ require 'strscan'
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
+    if src.respond_to?("force_encoding") then
+        src.force_encoding("ASCII-8BIT")
+    end
     @ss = StringScanner.new(src)
-
-    #@src = str #.force_encoding("ASCII-8BIT")
 
     # state variables
     @invar = false
