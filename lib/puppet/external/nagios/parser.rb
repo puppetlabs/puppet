@@ -519,15 +519,48 @@ def token
                       when (text = @ss.scan(/\n/))                  # newline
                         action { [:RETURN, text] }
 
+=begin
+#                      when (text = @ss.scan(/.+(?<!\\);/))         # > 1.9
                       when (text = @ss.scan(/.+(?<!\\);/))
                         @invar = false
                         idx = @ss.pos
                         @ss.pos = idx-1
                         action { [:VALUE, text.chomp(';').strip.sub(/\\;/,';')] }
-
-                      when (text = @ss.scan(/.+/))
+=end
+                      when (text = @ss.scan(/.+$/))                 # Value of parameter
                         @invar = false
-                        action { [:VALUE, text.strip.sub(/\\;/,';')] }
+
+                        # Special handling of inline comments (;) and escaped semicolons (\;)
+
+                        # We split the string on escaped semicolons (\;),
+                        # Then we rebuild it as long as there are no inline comments (;)
+                        # We join the rebuilt string with unescaped semicolons (on purpose)
+                        array = text.split('\;', 0)
+
+                        text = ""
+
+                        array.each do |elt|
+
+                            # Now we split at inline comments. If we have more than 1 element in the array
+                            # it means we have an inline comment, so we are able to stop parsing
+                            # However we still want to reconstruct the string with its first part (before the comment)
+                            linearray = elt.split(';', 0)
+
+                            # Let's reconstruct the string with a (unescaped) semicolon
+                            if text != "" then
+                                text += ';'
+                            end
+                            text += linearray[0]
+
+                            # Now we can stop
+                            if linearray.length > 1 then
+                                break                                
+                            end
+                        end
+
+
+                        # We strip the text to remove spaces between end of string and beginning of inline comment
+                        action { [:VALUE, text.strip] }
 
                       else
                         text = @ss.string[@ss.pos .. -1]
@@ -574,6 +607,18 @@ def next_token
     _next_token
 end
 
+def yydebug
+    1
+end
+
+def yywrap
+    0
+end
+
+def action
+    yield
+end
+
 def on_error(token, value, vstack )
 #    text = @ss.string[@ss.pos .. -1]
     text = @ss.peek(20)
@@ -591,10 +636,6 @@ def on_error(token, value, vstack )
     else
         raise ::Nagios::Parser::SyntaxError, msg
     end
-end
-
-def action
-    yield
 end
 ...end grammar.ry/module_eval...
 ##### State transition tables begin ###
