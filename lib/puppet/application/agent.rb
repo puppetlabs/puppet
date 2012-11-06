@@ -335,7 +335,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @daemon.set_signal_traps
 
     begin
-      @agent.should_fork = false
       exitstatus = @agent.run
     rescue => detail
       Puppet.log_exception(detail)
@@ -404,7 +403,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # if --no-client is set.
     require 'puppet/agent'
     require 'puppet/configurer'
-    @agent = Puppet::Agent.new(Puppet::Configurer)
+    @agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
 
     enable_disable_client(@agent) if options[:enable] or options[:disable]
 
