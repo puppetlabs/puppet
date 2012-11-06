@@ -6,6 +6,7 @@ require 'puppet/external/nagios'
 describe "Nagios parser" do
 
   before do
+
     @snippet = <<-'EOL'
 define host{
     use                     linux-server            ; Name of host template to use
@@ -19,6 +20,7 @@ define command{
   command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
   }
 EOL
+
     @line_comment_snippet = <<-'EOL'
 
 # This is a comment starting at the beginning of a line
@@ -41,6 +43,7 @@ define command{
 # This is a comment starting at the beginning of a line
 
 EOL
+
     @line_comment_snippet2 = <<-'EOL'
       define host{
           use                     linux-server            ; Name of host template to use
@@ -53,29 +56,34 @@ define command{
   command_line  command_line2
   }
 EOL
+
     @bad_snippet = <<-'EOL'
       define command2{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
         }
       EOL
+
     @bad_snippet2 = <<-'EOL'
       define command{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
       EOL
+
     @regression1 = <<-'EOL'
         define command {
             command_name  nagios_table_size
             command_line $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\"\;" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$
         }
       EOL
+
     @regression2 = <<-'EOL'
         define command {
             command_name  notify-by-irc
             command_line /usr/local/bin/riseup-nagios-client.pl "$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ #$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$"
         }
       EOL
+
     @regression3 = <<-EOL
 define command {
 \tcommand_name                   check_haproxy
@@ -91,6 +99,19 @@ EOL
     }.should_not raise_error
   end
 
+  it "should have the proper base type" do
+    parser =  Nagios::Parser.new
+    results = parser.parse(@snippet)
+    results.each do |obj|
+
+      describe "should parse correctly" do
+        it "should work" do
+            obj.should be_a_kind_of(Nagios::Base)
+        end
+      end
+    end
+  end
+
   it "should raise an error when an incorrect command is present" do
     parser =  Nagios::Parser.new
     lambda {
@@ -103,19 +124,6 @@ EOL
     lambda {
       results = parser.parse(@bad_snippet2)
     }.should raise_error Nagios::Parser::SyntaxError
-  end
-
-  it "should have the proper base type" do
-    parser =  Nagios::Parser.new
-    results = parser.parse(@snippet)
-    results.each do |obj|
-
-      describe "should parse correctly" do
-        it "should work" do
-            obj.should be_a_kind_of(Nagios::Base)
-        end
-      end
-    end
   end
 
   describe "when encoutering ';'" do
@@ -183,10 +191,10 @@ EOL
     parser =  Nagios::Parser.new
     src = @regression3.dup
     results = parser.parse(src)
-    @nagios_type = Nagios::Base.create(:command)
-    @nagios_type.command_name = results[0].command_name
-    @nagios_type.command_line = results[0].command_line
-    @nagios_type.to_s.should eql(@regression3)
+    nagios_type = Nagios::Base.create(:command)
+    nagios_type.command_name = results[0].command_name
+    nagios_type.command_line = results[0].command_line
+    nagios_type.to_s.should eql(@regression3)
   end
 
 end
@@ -195,24 +203,24 @@ describe "Nagios generator" do
 
   it "should escape ';'" do
     param = '$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\";" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$'
-    @nagios_type = Nagios::Base.create(:command)
-    @nagios_type.command_line = param
-    @nagios_type.to_s.should eql("define command {\n\tcommand_line                   $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\"\\;\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$\n}\n")
+    nagios_type = Nagios::Base.create(:command)
+    nagios_type.command_line = param
+    nagios_type.to_s.should eql("define command {\n\tcommand_line                   $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\"\\;\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$\n}\n")
   end
 
   it "should escape ';' if it is not already the case" do
     param = "LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'"
-    @nagios_type = Nagios::Base.create(:command)
-    @nagios_type.command_line = param
-    @nagios_type.to_s.should eql("define command {\n\tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'\n}\n")
+    nagios_type = Nagios::Base.create(:command)
+    nagios_type.command_line = param
+    nagios_type.to_s.should eql("define command {\n\tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'\n}\n")
   end
 
   it "should be idempotent" do
     param = '$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\";" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$'
-    @nagios_type = Nagios::Base.create(:command)
-    @nagios_type.command_line = param
+    nagios_type = Nagios::Base.create(:command)
+    nagios_type.command_line = param
     parser =  Nagios::Parser.new
-    results = parser.parse(@nagios_type.to_s)
+    results = parser.parse(nagios_type.to_s)
     results[0].command_line.should eql(param)
   end
 end
