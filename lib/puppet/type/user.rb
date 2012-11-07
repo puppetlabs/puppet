@@ -295,7 +295,8 @@ module Puppet
 
     newparam(:managehome, :boolean => true) do
       desc "Whether to manage the home directory when managing the user.
-        Defaults to `false`."
+        This will create the home directory when `ensure => present`, and
+        delete the home directory when `ensure => absent`. Defaults to `false`."
 
       newvalues(:true, :false)
 
