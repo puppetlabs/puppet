@@ -28,6 +28,7 @@ module Puppet::Parser::Functions
 
   newfunction(
   :regsubst, :type => :rvalue,
+  :arity => -4,
 
   :doc => "
 Perform regexp replacement on a string or array of strings.
@@ -61,7 +62,7 @@ Put angle brackets around each octet in the node's IP address:
     unless args.length.between?(3, 5)
 
       raise(
-        Puppet::ParseError,
+        ArgumentError,
 
           "regsubst(): got #{args.length} arguments, expected 3 to 5")
     end

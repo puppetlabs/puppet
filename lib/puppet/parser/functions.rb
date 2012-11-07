@@ -46,6 +46,7 @@ module Puppet::Parser::Functions
 
     Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name)
 
+    arity = options[:arity] || -1
     ftype = options[:type] || :statement
 
     unless ftype == :statement or ftype == :rvalue
@@ -60,15 +61,18 @@ module Puppet::Parser::Functions
     fname = "function_#{name}"
     environment_module.send(:define_method, fname) do |*args|
       if args[0].is_a? Array
+        if arity >= 0 and args[0].size != arity
+          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
+        elsif arity < 0 and args[0].size < (arity+1).abs
+          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
+        end
         self.send(real_fname, args[0])
       else
         raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
       end
     end
 
-    # Someday we'll support specifying an arity, but for now, nope
-    #functions[name] = {:arity => arity, :type => ftype}
-    func = {:type => ftype, :name => fname}
+    func = {:arity => arity, :type => ftype, :name => fname}
     func[:doc] = options[:doc] if options[:doc]
 
     add_function(name, func)
@@ -139,6 +143,11 @@ module Puppet::Parser::Functions
         @functions[Environment.current][name] = func
       }
     end
+  end
+
+  # Return the arity of a function
+  def self.arity(name)
+    (functions[symbolize(name)] || {})[:arity] || -1
   end
 
   reset  # initialize the class instance variables

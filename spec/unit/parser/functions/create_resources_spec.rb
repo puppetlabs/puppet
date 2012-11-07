@@ -19,7 +19,7 @@ describe 'function for dynamically creating resources' do
   end
 
   it 'should require two or three arguments' do
-    expect { @scope.function_create_resources(['foo']) }.to raise_error(ArgumentError, 'create_resources(): wrong number of arguments (1; must be 2 or 3)')
+    expect { @scope.function_create_resources(['foo']) }.to raise_error(ArgumentError, 'create_resources(): Wrong number of arguments given (1 for minimum 2)')
     expect { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.to raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
   end
 
