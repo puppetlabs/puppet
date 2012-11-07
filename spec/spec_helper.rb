@@ -19,6 +19,7 @@ end
 
 require 'pathname'
 require 'tmpdir'
+require 'fileutils'
 
 require 'puppet_spec/verbose'
 require 'puppet_spec/files'
@@ -41,6 +42,10 @@ RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
   config.mock_with :mocha
+
+  tmpdir = Dir.mktmpdir("rspecrun")
+  oldtmpdir = Dir.tmpdir()
+  ENV['TMPDIR'] = tmpdir
 
   if Puppet::Util::Platform.windows?
     config.output_stream = $stdout
@@ -104,5 +109,12 @@ RSpec.configure do |config|
     # experimented with forcing a GC run, and that was less efficient than
     # just letting it run all the time.
     GC.enable
+  end
+
+  config.after :suite do
+    # Clean up switch of TMPDIR, don't know if needed after this, so needs to reset it
+    # to old before removing it
+    ENV['TMPDIR'] = oldtmpdir
+    FileUtils.rm_rf(tmpdir) if File.exists?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
   end
 end
