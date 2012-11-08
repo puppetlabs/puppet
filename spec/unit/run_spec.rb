@@ -14,7 +14,7 @@ describe Puppet::Run do
 
   it "should use a configurer agent as its agent" do
     agent = mock 'agent'
-    Puppet::Agent.expects(:new).with(Puppet::Configurer).returns agent
+    Puppet::Agent.expects(:new).with(Puppet::Configurer, anything).returns agent
 
     @runner.agent.should equal(agent)
   end
