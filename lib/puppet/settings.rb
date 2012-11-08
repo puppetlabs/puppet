@@ -175,9 +175,9 @@ class Puppet::Settings
       Puppet.settings.preferred_run_mode = arg
 
       # remove this option from the arguments so that later parses don't think
-      # it is an unknown option
-      option_index = args.index '--run_mode'
-      args.delete_at option_index
+      # it is an unknown option. append the run_mode (master, agent, etc) to
+      # properly find the index of the argument.
+      option_index = args.index '--run_mode=' + arg
       args.delete_at option_index
     end
 
