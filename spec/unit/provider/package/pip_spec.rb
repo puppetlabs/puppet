@@ -109,6 +109,16 @@ describe provider_class do
       @provider.install
     end
 
+    it "omits the -e flag (GH-1256)" do
+      # The -e flag makes the provider non-idempotent
+      @resource[:ensure] = :installed
+      @resource[:source] = @url
+      @provider.expects(:lazy_pip).with() do |*args|
+        not args.include?("-e")
+      end
+      @provider.install
+    end
+
     it "should install from SCM" do
       @resource[:ensure] = :installed
       @resource[:source] = @url
