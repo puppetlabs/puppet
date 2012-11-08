@@ -202,6 +202,10 @@ module Util
   AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
   AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
+    # Due to weird load order issues, I was unable to remove this require.
+    # This is fixed in Telly so it can be removed there.
+    require 'puppet' unless defined?(Puppet)
+
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
     # would use Puppet.features.microsoft_windows?, but this method needs to
