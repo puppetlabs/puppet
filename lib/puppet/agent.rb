@@ -10,13 +10,13 @@ class Puppet::Agent
   require 'puppet/agent/disabler'
   include Puppet::Agent::Disabler
 
-  attr_reader :client_class, :client, :splayed
-  attr_accessor :should_fork
+  attr_reader :client_class, :client, :splayed, :should_fork
 
   # Just so we can specify that we are "the" instance.
-  def initialize(client_class)
+  def initialize(client_class, should_fork=true)
     @splayed = false
 
+    @should_fork = should_fork
     @client_class = client_class
   end
 

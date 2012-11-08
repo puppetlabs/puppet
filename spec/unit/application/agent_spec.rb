@@ -509,6 +509,19 @@ describe Puppet::Application::Agent do
         @puppetd.setup
       end
     end
+
+    describe "when configuring agent for catalog run" do
+      it "should set should_fork as true when running normally" do
+        Puppet::Agent.expects(:new).with(anything, true)
+        @puppetd.setup
+      end
+
+      it "should not set should_fork as false for --onetime" do
+        Puppet[:onetime] = true
+        Puppet::Agent.expects(:new).with(anything, false)
+        @puppetd.setup
+      end
+    end
   end
 
 
@@ -557,11 +570,6 @@ describe Puppet::Application::Agent do
 
       it "should setup traps" do
         @daemon.expects(:set_signal_traps)
-        expect { @puppetd.onetime }.to exit_with 0
-      end
-
-      it "should not let the agent fork" do
-        @agent.expects(:should_fork=).with(false)
         expect { @puppetd.onetime }.to exit_with 0
       end
 
