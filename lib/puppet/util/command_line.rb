@@ -183,5 +183,3 @@ EOM
     end
   end
 end
-
-require 'puppet'
