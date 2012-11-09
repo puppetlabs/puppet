@@ -232,9 +232,17 @@ module Util
   AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
   AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
-    # Due to weird load order issues, I was unable to remove this require.
-    # This is fixed in Telly so it can be removed there.
-    require 'puppet' unless defined?(Puppet)
+    # When running an internal subcommand (Application), the app requires puppet
+    # which loads features, which creates an autoloader, which calls this method.
+    # In that case, it isn't necessary to require puppet. When running an external
+    # subcommand or if none was specified, then the CommandLine will call the
+    # `which` method to resolve the external executable, and that requires features.
+    # Rather then moving this require to handle the external subcommand case, or
+    # no subcommand case, I'm undoing the performance change from 20efe94. This
+    # code has been eliminated in 3.x since puppet can be required before loading
+    # the application (since the default vardir/confdir locations are solely
+    # based on user vs. system user, and not the application's run_mode).
+    require 'puppet'
 
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
