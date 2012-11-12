@@ -58,7 +58,7 @@ start_puppet_master() {
 }
 
 stop_puppet_master() {
-    start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/${NAME}.pid
+    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile /var/run/puppet/${NAME}.pid
 }
 
 status_puppet_master() {
@@ -124,7 +124,6 @@ case "$1" in
     restart|force-reload)
         log_begin_msg "Restarting $DESC"
         stop_puppet_master
-        sleep 1
         start_puppet_master
         log_end_msg $?
         ;;
