@@ -40,7 +40,15 @@ module Puppet::Parser::Functions
     }
   end
 
-  # Create a new function type.
+  ##
+  # newfunction creates a new Puppet DSL function.  This method is used both
+  # internally inside of Puppet to define parser functions.  For example,
+  # template().  Third party Puppet modules use this function to extend the
+  # behavior and functionality of Puppet.
+  #
+  # FIXME: More documentation
+  #
+  # @return [Hash] describing the function.
   def self.newfunction(name, options = {}, &block)
     name = name.intern
 
