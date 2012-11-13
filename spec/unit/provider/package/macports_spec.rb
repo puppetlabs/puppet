@@ -86,6 +86,7 @@ describe provider_class do
     let :infoargs do
       ["/opt/local/bin/port", "-q", :info, "--line", "--version", "--revision",  resource_name]
     end
+    let(:arguments) do {:failonfail => false, :combine => false} end
 
     before :each do
       provider.stubs(:command).with(:port).returns("/opt/local/bin/port")
@@ -93,28 +94,28 @@ describe provider_class do
 
     it "should return nil when the package cannot be found" do
       resource[:name] = resource_name
-      provider.expects(:execute).with(infoargs, {:combine=>false}).returns("")
+      provider.expects(:execute).with(infoargs, arguments).returns("")
       provider.latest.should == nil
     end
 
     it "should return the current version if the installed port has the same revision" do
       current_hash[:revision] = "2"
-      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
+      provider.expects(:execute).with(infoargs, arguments).returns(new_info_line)
       provider.expects(:query).returns(current_hash)
       provider.latest.should == current_hash[:ensure]
     end
 
     it "should return the new version_revision if the installed port has a lower revision" do
       current_hash[:revision] = "1"
-      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
+      provider.expects(:execute).with(infoargs, arguments).returns(new_info_line)
       provider.expects(:query).returns(current_hash)
       provider.latest.should == "1.2.3_2"
     end
 
     it "should return the newest version if the port is not installed" do
       resource[:name] = resource_name
-      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
-      provider.expects(:execute).with(["/opt/local/bin/port", "-q", :installed, resource[:name]], {:combine=>false}).returns("")
+      provider.expects(:execute).with(infoargs, arguments).returns(new_info_line)
+      provider.expects(:execute).with(["/opt/local/bin/port", "-q", :installed, resource[:name]], arguments).returns("")
       provider.latest.should == "1.2.3_2"
     end
   end
