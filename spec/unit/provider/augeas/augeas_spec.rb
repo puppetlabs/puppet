@@ -713,6 +713,7 @@ describe provider_class do
         @resource[:context] = "/files/etc/test"
         @resource[:load_path] = my_fixture_dir
 
+        @provider.expects(:print_load_errors).with(:warning => true)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == []
@@ -723,6 +724,7 @@ describe provider_class do
       it "should load standard files if context isn't specific" do
         @resource[:context] = "/files/etc"
 
+        @provider.expects(:print_load_errors).with(:warning => false)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
@@ -732,6 +734,7 @@ describe provider_class do
       it "should not optimise if the context is a complex path" do
         @resource[:context] = "/files/*[label()='etc']"
 
+        @provider.expects(:print_load_errors).with(:warning => false)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
