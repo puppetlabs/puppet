@@ -1,0 +1,28 @@
+require 'puppet/pops/api'
+require 'puppet/pops/api/containment'
+
+require File.join(File.dirname(__FILE__), '/impl/factory_rspec_helper')
+
+describe Puppet::Pops::API::Containment do
+  include FactoryRspecHelper
+  
+  it "Should return an Enumerable if eAllContents is called without arguments" do
+    (literal(1) + literal(2)).current.eAllContents.is_a?(Enumerable).should == true  
+  end
+  
+  it "Should return all content" do
+    # Note the top object is not included (an ArithmeticOperation with + operator)
+    (literal(1) + literal(2) + literal(3)).current.eAllContents.collect {|x| x}.size.should == 4  
+  end
+
+  it "Should return containing feature" do
+    left = literal(1)
+    right = literal(2)
+    op = left + right
+
+    pending "eContainingFeature does not work on _uni containments"    
+    left.current.eContainingFeature.name.should == 'left_expr'
+    right.current.eContainingFeature.name.should == 'right_expr'
+    
+  end
+end
