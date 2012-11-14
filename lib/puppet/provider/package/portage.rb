@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util::Execution.withenv :LASTVERSION => version_format do
-        search_output = eix "--nocolor", "--pure-packages", "--stable", "--installed", "--format", search_format
+        search_output = eix "--nocolor", "--pure-packages", "--installed", "--format", search_format
       end
 
       packages = []
@@ -85,7 +85,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util::Execution.withenv :LASTVERSION => version_format do
-        search_output = eix "--nocolor", "--pure-packages", "--stable", "--format", search_format, "--exact", search_field, search_value
+        search_output = eix "--nocolor", "--pure-packages", "--format", search_format, "--exact", search_field, search_value
       end
 
       packages = []
