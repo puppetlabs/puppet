@@ -172,15 +172,17 @@ class Puppet::Settings
                      "The effective 'run mode' of the application: master, agent, or user.",
                      :REQUIRED) do |arg|
       Puppet.settings.preferred_run_mode = arg
-
-      # remove this option from the arguments so that later parses don't think
-      # it is an unknown option
-      option_index = args.index '--run_mode'
-      args.delete_at option_index
-      args.delete_at option_index
     end
 
     option_parser.parse(args)
+
+    # remove run_mode options from the arguments so that later parses don't think
+    # it is an unknown option.
+    while option_index = args.index('--run_mode') do
+      args.delete_at option_index
+      args.delete_at option_index
+    end
+    args.reject! { |arg| arg.start_with? '--run_mode=' }
   end
   private :parse_global_options
 
