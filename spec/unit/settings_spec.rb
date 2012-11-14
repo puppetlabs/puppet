@@ -1539,6 +1539,22 @@ describe Puppet::Settings do
     it "should transform boolean option to no- form" do
       Puppet::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
     end
+
+    it "should set preferred run mode from --run_mode <foo> string without error" do
+      args = ["--run_mode", "master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
+    end
+
+    it "should set preferred run mode from --run_mode=<foo> string without error" do
+      args = ["--run_mode=master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
+    end
   end
 
   describe "default_certname" do
