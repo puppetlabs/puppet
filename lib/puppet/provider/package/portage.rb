@@ -12,20 +12,21 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   defaultfor :operatingsystem => :gentoo
 
-  def self.instances
-    result_format = /^(\S+)\s+(\S+)\s+\[(\S+)\]\s+\[(\S+)\]\s+(\S+)\s+(.*)$/
-    result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
 
-    version_format = "{last}<version>{}"
-    search_format = "<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>\n"
+  def self.instances
+    result_format = self.eix_result_format
+    result_fields = self.eix_result_fields
+
+    version_format = self.eix_version_format
+    search_format  = self.eix_search_format
 
     begin
       eix_file = File.directory?("/var/cache/eix") ? "/var/cache/eix/portage.eix" : "/var/cache/eix"
       update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
-      Puppet::Util::Execution.withenv :LASTVERSION => version_format do
-        search_output = eix "--nocolor", "--pure-packages", "--installed", "--format", search_format
+      Puppet::Util.withenv :LASTVERSION => version_format do
+        search_output = eix *(self.eix_search_arguments.push+search_format)
       end
 
       packages = []
@@ -72,11 +73,12 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def query
-    result_format = /^(\S+)\s+(\S+)\s+\[(\S*)\]\s+\[(\S+)\]\s+(\S+)\s+(.*)$/
-    result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
+    result_format = self.class.eix_result_format
+    result_fields = self.class.eix_result_fields
 
-    version_format = "{last}<version>{}"
-    search_format = "<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>\n"
+    version_format = self.class.eix_version_format
+    search_format  = self.class.eix_search_format
+
 
     search_field = package_name.count('/') > 0 ? "--category-name" : "--name"
     search_value = package_name
@@ -86,8 +88,9 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
-      Puppet::Util::Execution.withenv :LASTVERSION => version_format do
-        search_output = eix "--nocolor", "--pure-packages", "--format", search_format, "--exact", search_field, search_value
+
+      Puppet::Util.withenv :LASTVERSION => version_format do
+        search_output = eix *(self.class.eix_search_arguments + [search_format,"--exact",search_field,search_value])
       end
 
       packages = []
@@ -120,5 +123,27 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def latest
     self.query[:version_available]
+  end
+
+
+private
+  def self.eix_search_format
+    "<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>\n"
+  end
+
+  def self.eix_result_format
+    /^(\S+)\s+(\S+)\s+\[(\S*)\]\s+\[(\S*)\]\s+(\S+)\s+(.*)$/
+  end
+
+  def self.eix_result_fields
+    [:category, :name, :ensure, :version_available, :vendor, :description]
+  end
+
+  def self.eix_version_format 
+    "{last}<version>{}"
+  end
+
+  def self.eix_search_arguments
+    ["--nocolor", "--pure-packages", "--installed", "--format"]
   end
 end
