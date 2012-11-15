@@ -32,7 +32,6 @@ describe provider do
   end
 
   it "uses eix to search the lastest version of a package" do
-    @provider.expects(:update_eix)
     @provider.expects(:eix).returns(StringIO.new(@match_result))
     @provider.query
   end
@@ -42,14 +41,12 @@ describe provider do
   end
 
   it "query uses default arguments" do
-    @provider.expects(:update_eix)
     @provider.expects(:eix).returns(StringIO.new(@match_result))
     @provider.class.expects(:eix_search_arguments).returns([])
     @provider.query
   end
 
-  it "works with valid search output" do
-    @provider.expects(:update_eix)
+  it "can handle search output with empty square brackets" do
     @provider.expects(:eix).returns(StringIO.new(@match_result))
     @provider.query[:name].should eq "sl"
   end
