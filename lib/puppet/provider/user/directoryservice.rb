@@ -27,6 +27,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   # JJM: OS X can manage passwords.
   has_feature :manages_passwords
 
+  # 10.8 Passwords use a PBKDF2 salt value
+  has_features :manages_password_salt
+
 ##               ##
 ## Class Methods ##
 ##               ##
