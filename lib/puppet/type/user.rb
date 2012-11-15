@@ -529,7 +529,7 @@ module Puppet
             OS X"
     end
 
-    newproperty(:iterations) do
+    newproperty(:iterations, :required_features => :manages_password_salt) do
       desc "This is the number of iterations of a chained computation of the
             password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
             is used in OS X"
