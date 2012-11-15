@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/node'
@@ -11,19 +11,6 @@ describe Puppet::Node do
 
       @name = "me"
       @node = Puppet::Node.new(@name)
-    end
-
-    it "should be able to use the exec terminus" do
-      Puppet::Node.indirection.stubs(:terminus_class).returns :exec
-
-      # Load now so we can stub
-      terminus = Puppet::Node.indirection.terminus(:exec)
-
-      terminus.expects(:query).with(@name).returns "myresults"
-      terminus.expects(:translate).with(@name, "myresults").returns "translated_results"
-      terminus.expects(:create_node).with(@name, "translated_results").returns @node
-
-      Puppet::Node.indirection.find(@name).should equal(@node)
     end
 
     it "should be able to use the yaml terminus" do
@@ -42,7 +29,7 @@ describe Puppet::Node do
       Puppet::Node.indirection.terminus(:ldap).should_not be_nil
     end
 
-    it "should be able to use the plain terminus", :'fails_on_ruby_1.9.2' => true do
+    it "should be able to use the plain terminus" do
       Puppet::Node.indirection.stubs(:terminus_class).returns :plain
 
       # Load now, before we stub the exists? method.
@@ -56,10 +43,13 @@ describe Puppet::Node do
     describe "and using the memory terminus" do
       before do
         @name = "me"
-        @old_terminus = Puppet::Node.indirection.terminus_class
         @terminus = Puppet::Node.indirection.terminus(:memory)
         Puppet::Node.indirection.stubs(:terminus).returns @terminus
         @node = Puppet::Node.new(@name)
+      end
+
+      after do
+        @terminus.instance_variable_set(:@instances, {})
       end
 
       it "should find no nodes by default" do

@@ -15,27 +15,32 @@ module Puppet
 
     attr_reader :actual_content
 
-    desc "Specify the contents of a file as a string.  Newlines, tabs, and
-      spaces can be specified using standard escaped syntax in
-      double-quoted strings (e.g., \\n for a newline).
+    desc <<-'EOT'
+      The desired contents of a file, as a string. This attribute is mutually
+      exclusive with `source` and `target`.
 
-      With very small files, you can construct strings directly...
+      Newlines and tabs can be specified in double-quoted strings using
+      standard escaped syntax --- \n for a newline, and \t for a tab.
+
+      With very small files, you can construct content strings directly in
+      the manifest...
 
           define resolve(nameserver1, nameserver2, domain, search) {
-              $str = \"search $search
+              $str = "search $search
                   domain $domain
                   nameserver $nameserver1
                   nameserver $nameserver2
-                  \"
+                  "
 
-              file { \"/etc/resolv.conf\":
-                content => $str
+              file { "/etc/resolv.conf":
+                content => "$str",
               }
           }
 
       ...but for larger files, this attribute is more useful when combined with the
       [template](http://docs.puppetlabs.com/references/latest/function.html#template)
-      function."
+      function.
+    EOT
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.
@@ -163,10 +168,6 @@ module Puppet
       }
     end
 
-    def self.standalone?
-      Puppet.settings[:name] == "apply"
-    end
-
     # the content is munged so if it's a checksum source_or_content is nil
     # unless the checksum indirectly comes from source
     def each_chunk_from(source_or_content)
@@ -176,7 +177,7 @@ module Puppet
         yield read_file_from_filebucket
       elsif source_or_content.nil?
         yield ''
-      elsif self.class.standalone?
+      elsif Puppet[:default_file_terminus] == :file_server
         yield source_or_content.content
       elsif source_or_content.local?
         chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
@@ -200,7 +201,7 @@ module Puppet
     end
 
     def get_from_source(source_or_content, &block)
-      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
+      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''), nil, :environment => resource.catalog.environment)
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)

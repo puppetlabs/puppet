@@ -1,5 +1,5 @@
 module Puppet::Parser::YamlTrimmer
-  REMOVE = %w{@scope @source}
+  REMOVE = [:@scope, :@source]
 
   def to_yaml_properties
     r = instance_variables - REMOVE

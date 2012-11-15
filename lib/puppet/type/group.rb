@@ -34,12 +34,13 @@ module Puppet
     end
 
     newproperty(:gid) do
-      desc "The group ID.  Must be specified numerically.  If not
-        specified, a number will be picked, which can result in ID
-        differences across systems and thus is not recommended.  The
-        GID is picked according to local system standards.
+      desc "The group ID.  Must be specified numerically.  If no group ID is
+        specified when creating a new group, then one will be chosen
+        automatically according to local system standards. This will likely
+        result in the same group having different GIDs on different systems,
+        which is not recommended.
 
-        On Windows, the property will return the group's security
+        On Windows, this property is read-only and will return the group's security
         identifier (SID)."
 
       def retrieve
@@ -91,13 +92,16 @@ module Puppet
     newparam(:name) do
       desc "The group name. While naming limitations vary by operating system,
         it is advisable to restrict names to the lowest common denominator,
-        which is a maximum of 8 characters beginning with a letter."
+        which is a maximum of 8 characters beginning with a letter.
+
+        Note that Puppet considers group names to be case-sensitive, regardless
+        of the platform's own rules; be sure to always use the same case when
+        referring to a given group."
       isnamevar
     end
 
     newparam(:allowdupe, :boolean => true) do
-      desc "Whether to allow duplicate GIDs.  This option does not work on
-        FreeBSD (contract to the `pw` man page)."
+      desc "Whether to allow duplicate GIDs. Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -120,7 +124,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
       end
     end
 

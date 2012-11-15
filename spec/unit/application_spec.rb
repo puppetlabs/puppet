@@ -1,19 +1,30 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application'
 require 'puppet'
 require 'getoptlong'
+require 'timeout'
 
 describe Puppet::Application do
 
-  before do
+  before(:each) do
+    Puppet::Util::Instrumentation.stubs(:init)
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
 
     @app.stubs(:name).returns("test_app")
-    # avoid actually trying to parse any settings
-    Puppet.settings.stubs(:parse)
+
+  end
+
+  describe "application defaults" do
+    it "should fail if required app default values are missing" do
+      @app.stubs(:app_defaults).returns({ :foo => 'bar' })
+      Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
+      expect {
+        @app.run
+      }.to exit_with 1
+    end
   end
 
   describe "finding" do
@@ -26,16 +37,24 @@ describe Puppet::Application do
       @klass.find("Agent").should == @klass::Agent
     end
 
-    it "should not find classes outside the namespace", :'fails_on_ruby_1.9.2' => true do
-      expect { @klass.find("String") }.to exit_with 1
+    it "should not find classes outside the namespace" do
+      expect { @klass.find("String") }.to raise_error(LoadError)
     end
 
-    it "should exit if it can't find a class" do
-      reg = "Unable to find application 'ThisShallNeverEverEverExist'.  "
-      reg += "no such file to load -- puppet/application/thisshallneverevereverexist"
-      @klass.expects(:puts).with(reg)
+    it "should error if it can't find a class" do
+      Puppet.expects(:err).with do |value|
+        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
+          value =~ /puppet\/application\/thisshallneverevereverexist/ and
+          value =~ /no such file to load|cannot load such file/
+      end
 
-      expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
+      expect { @klass.find("ThisShallNeverEverEverExist") }.to raise_error(LoadError)
+    end
+
+    it "#12114: should prevent File namespace collisions" do
+      # have to require the file face once, then the second time around it would fail
+      @klass.find("File").should == Puppet::Application::File
+      @klass.find("File").should == Puppet::Application::File
     end
   end
 
@@ -50,47 +69,63 @@ describe Puppet::Application do
     end
   end
 
-  it "should sadly and frighteningly allow run_mode to change at runtime" do
+
+
+  # These tests may look a little weird and repetative in its current state;
+  #  it used to illustrate several ways that the run_mode could be changed
+  #  at run time; there are fewer ways now, but it would still be nice to
+  #  get to a point where it was entirely impossible.
+  describe "when dealing with run_mode" do
+
     class TestApp < Puppet::Application
       run_mode :master
       def run_command
-        # This is equivalent to calling these methods externally to the
-        # instance, but since this is what "real world" code is likely to do
-        # (and we need the class anyway) we may as well test that. --daniel 2011-02-03
-        set_run_mode self.class.run_mode "agent"
+        # no-op
       end
     end
 
-    Puppet[:run_mode].should == "user"
+    it "should sadly and frighteningly allow run_mode to change at runtime via #initialize_app_defaults" do
+      Puppet.features.stubs(:syslog?).returns(true)
 
-    expect {
       app = TestApp.new
+      app.initialize_app_defaults
 
-      Puppet[:run_mode].should == "master"
+      Puppet.run_mode.should be_master
+    end
 
+    it "should sadly and frighteningly allow run_mode to change at runtime via #run" do
+      app = TestApp.new
       app.run
 
-      app.class.run_mode.name.should == :agent
-      $puppet_application_mode.name.should == :agent
-    }.should_not raise_error
+      app.class.run_mode.name.should == :master
 
-    Puppet[:run_mode].should == "agent"
+      Puppet.run_mode.should be_master
+    end
   end
 
-  it "it should not allow run mode to be set multiple times" do
-    pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
+
+  it "it should not allow initialize_app_defaults to be called multiple times" do
     app = Puppet::Application.new
     expect {
-      app.set_run_mode app.class.run_mode "master"
-      $puppet_application_mode.name.should == :master
-      app.set_run_mode app.class.run_mode "agent"
-      $puppet_application_mode.name.should == :agent
-    }.should raise_error
+      app.initialize_app_defaults
+    }.to_not raise_error
+
+    expect {
+      app.initialize_app_defaults
+    }.to raise_error
   end
 
-  it "should explode when an invalid run mode is set at runtime, for great victory"
-  # ...but you can, and while it will explode, that only happens too late for
-  # us to easily test. --daniel 2011-02-03
+
+  it "should explode when an invalid run mode is set at runtime, for great victory" do
+    expect {
+      class InvalidRunModeTestApp < Puppet::Application
+        run_mode :abracadabra
+        def run_command
+          # no-op
+        end
+      end
+    }.to raise_error
+  end
 
   it "should have a run entry-point" do
     @app.should respond_to(:run)
@@ -115,6 +150,22 @@ describe Puppet::Application do
   it "should invoke main as the default" do
     @app.expects( :main )
     @app.run_command
+  end
+
+  it "should initialize the Puppet Instrumentation layer early in the life cycle" do
+    # Not proud of this, but the fact that we are stubbing init_app_defaults
+    #  below means that we will get errors if anyone tries to access any
+    #  settings that depend on app_defaults.  In general this whole test
+    #  seems to be testing too many implementation details rather than
+    #  functionality, but, hey.
+    Puppet[:route_file] = "/dev/null"
+
+    startup_sequence = sequence('startup')
+    @app.expects(:initialize_app_defaults).in_sequence(startup_sequence)
+    Puppet::Util::Instrumentation.expects(:init).in_sequence(startup_sequence)
+    @app.expects(:preinit).in_sequence(startup_sequence)
+
+    expect { @app.run }.to exit_with(1)
   end
 
   describe 'when invoking clear!' do
@@ -226,17 +277,28 @@ describe Puppet::Application do
     end
 
     describe 'on POSIX systems', :if => Puppet.features.posix? do
-      it 'should signal process with HUP after block if restart requested during block execution', :'fails_on_ruby_1.9.2' => true do
-        Puppet::Application.run_status = nil
-        target = mock 'target'
-        target.expects(:some_method).once
-        old_handler = trap('HUP') { target.some_method }
-        begin
-          Puppet::Application.controlled_run do
-            Puppet::Application.run_status = :restart_requested
+      it 'should signal process with HUP after block if restart requested during block execution' do
+        Timeout::timeout(3) do  # if the signal doesn't fire, this causes failure.
+
+          has_run = false
+          old_handler = trap('HUP') { has_run = true }
+
+          begin
+            Puppet::Application.controlled_run do
+              Puppet::Application.run_status = :restart_requested
+            end
+
+            # Ruby 1.9 uses a separate OS level thread to run the signal
+            # handler, so we have to poll - ideally, in a way that will kick
+            # the OS into running other threads - for a while.
+            #
+            # You can't just use the Ruby Thread yield thing either, because
+            # that is just an OS hint, and Linux ... doesn't take that
+            # seriously. --daniel 2012-03-22
+            sleep 0.001 while not has_run
+          ensure
+            trap('HUP', old_handler)
           end
-        ensure
-          trap('HUP', old_handler)
         end
       end
     end
@@ -264,19 +326,6 @@ describe Puppet::Application do
 
       OptionParser.expects(:new).with("banner").returns(option_parser)
 
-      @app.parse_options
-    end
-
-    it "should get options from Puppet.settings.optparse_addargs" do
-      Puppet.settings.expects(:optparse_addargs).returns([])
-
-      @app.parse_options
-    end
-
-    it "should add Puppet.settings options to OptionParser" do
-      Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option"]])
-      Puppet.settings.expects(:handlearg).with("--option", 'true')
-      @app.command_line.stubs(:args).returns(["--option"])
       @app.parse_options
     end
 
@@ -316,44 +365,14 @@ describe Puppet::Application do
         @app.parse_options
       end
 
-      it "should pass it to Puppet.settings if handle_unknown says so" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
-
-        @app.stubs(:handle_unknown).with("--topuppet", "value").returns(false)
-
-        Puppet.settings.expects(:handlearg).with("--topuppet", "value")
-        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
-        @app.parse_options
-      end
-
-      it "should pass it to Puppet.settings if there is no handle_unknown method" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
-
-        @app.stubs(:respond_to?).returns(false)
-
-        Puppet.settings.expects(:handlearg).with("--topuppet", "value")
-        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
-        @app.parse_options
-      end
-
-      it "should transform boolean false value to string for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "false")
-        @app.handlearg("--option", false)
-      end
-
-      it "should transform boolean true value to string for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "true")
-        @app.handlearg("--option", true)
-      end
-
       it "should transform boolean option to normal form for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--option", "true")
-        @app.handlearg("--[no-]option", true)
+        @app.expects(:handle_unknown).with("--option", true)
+        @app.send(:handlearg, "--[no-]option", true)
       end
 
       it "should transform boolean option to no- form for Puppet.settings" do
-        Puppet.settings.expects(:handlearg).with("--no-option", "false")
-        @app.handlearg("--[no-]option", false)
+        @app.expects(:handle_unknown).with("--no-option", false)
+        @app.send(:handlearg, "--[no-]option", false)
       end
 
     end
@@ -362,7 +381,6 @@ describe Puppet::Application do
   describe "when calling default setup" do
 
     before :each do
-      @app.stubs(:should_parse_config?).returns(false)
       @app.options.stubs(:[])
     end
 
@@ -378,7 +396,7 @@ describe Puppet::Application do
     it "should honor setdest option" do
       @app.options.stubs(:[]).with(:setdest).returns(false)
 
-      Puppet::Util::Log.expects(:newdestination).with(:syslog)
+      Puppet::Util::Log.expects(:setup_default)
 
       @app.setup
     end
@@ -419,7 +437,7 @@ describe Puppet::Application do
     it "should not fail if the route file doesn't exist" do
       Puppet[:route_file] = "/dev/null/non-existent"
 
-      expect { @app.configure_indirector_routes }.should_not raise_error
+      expect { @app.configure_indirector_routes }.to_not raise_error
     end
 
     it "should raise an error if the routes file is invalid" do
@@ -430,7 +448,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.should raise_error
+      expect { @app.configure_indirector_routes }.to raise_error
     end
   end
 
@@ -465,32 +483,6 @@ describe Puppet::Application do
       @app.run
     end
 
-    it "should parse Puppet configuration if should_parse_config is called" do
-      @app.stubs(:run_command)
-      @app.class.should_parse_config
-
-      Puppet.settings.expects(:parse)
-
-      @app.run
-    end
-
-    it "should not parse_option if should_not_parse_config is called" do
-      @app.stubs(:run_command)
-      @app.class.should_not_parse_config
-
-      Puppet.settings.expects(:parse).never
-
-      @app.run
-    end
-
-    it "should parse Puppet configuration if needed" do
-      @app.stubs(:run_command)
-      @app.stubs(:should_parse_config?).returns(true)
-
-      Puppet.settings.expects(:parse)
-
-      @app.run
-    end
 
     it "should call run_command" do
       @app.expects(:run_command)
@@ -505,19 +497,19 @@ describe Puppet::Application do
     end
 
     it "should warn and exit if no command can be called" do
-      $stderr.expects(:puts)
+      Puppet.expects(:err)
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns no command" do
       @app.stubs(:get_command).returns(nil)
-      $stderr.expects(:puts)
+      Puppet.expects(:err)
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns an invalid command" do
       @app.stubs(:get_command).returns(:this_function_doesnt_exist)
-      $stderr.expects(:puts)
+      Puppet.expects(:err)
       expect { @app.run }.to exit_with 1
     end
   end
@@ -552,7 +544,7 @@ describe Puppet::Application do
             raise "I can't believe it, it works!"
           end
 
-          lambda { @app.handle_test2 }.should raise_error
+          expect { @app.handle_test2 }.to raise_error
         end
 
         it "should declare the option to OptionParser" do

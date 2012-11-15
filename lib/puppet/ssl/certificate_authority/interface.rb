@@ -1,6 +1,5 @@
-# This class is basically a hidden class that knows how to act
-# on the CA.  It's only used by the 'puppetca' executable, and its
-# job is to provide a CLI-like interface to the CA class.
+# This class is basically a hidden class that knows how to act on the
+# CA.  Its job is to provide a CLI-like interface to the CA class.
 module Puppet
   module SSL
     class CertificateAuthority
@@ -14,20 +13,13 @@ module Puppet
         # Actually perform the work.
         def apply(ca)
           unless subjects or method == :list
-            raise ArgumentError, "You must provide hosts or :all when using #{method}"
+            raise ArgumentError, "You must provide hosts or --all when using #{method}"
           end
 
-          begin
-            return send(method, ca) if respond_to?(method)
+          return send(method, ca) if respond_to?(method)
 
-            (subjects == :all ? ca.list : subjects).each do |host|
-              ca.send(method, host)
-            end
-          rescue InterfaceError
-            raise
-          rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not call #{method}: #{detail}"
+          (subjects == :all ? ca.list : subjects).each do |host|
+            ca.send(method, host)
           end
         end
 
@@ -42,7 +34,7 @@ module Puppet
         def initialize(method, options)
           self.method = method
           self.subjects = options.delete(:to)
-          @digest = options.delete(:digest) || :MD5
+          @digest = options.delete(:digest)
           @options = options
         end
 
@@ -88,6 +80,8 @@ module Puppet
           names = certs.values.map(&:keys).flatten
 
           name_width = names.sort_by(&:length).last.length rescue 0
+          # We quote these names, so account for those characters
+          name_width += 2
 
           output = [:request, :signed, :invalid].map do |type|
             next if certs[type].empty?
@@ -101,24 +95,24 @@ module Puppet
         end
 
         def format_host(ca, host, type, info, width)
-          certish, verify_error = info
+          cert, verify_error = info
           alt_names = case type
                       when :signed
-                        certish.subject_alt_names
+                        cert.subject_alt_names
                       when :request
-                        certish.subject_alt_names
+                        cert.subject_alt_names
                       else
                         []
                       end
 
           alt_names.delete(host)
 
-          alt_str = "(alt names: #{alt_names.join(', ')})" unless alt_names.empty?
+          alt_str = "(alt names: #{alt_names.map(&:inspect).join(', ')})" unless alt_names.empty?
 
           glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
 
-          name = host.ljust(width)
-          fingerprint = "(#{ca.fingerprint(host, @digest)})"
+          name = host.inspect.ljust(width)
+          fingerprint = cert.digest(@digest).to_s
 
           explanation = "(#{verify_error})" if verify_error
 
@@ -145,8 +139,8 @@ module Puppet
         # Print certificate information.
         def fingerprint(ca)
           (subjects == :all ? ca.list + ca.waiting?: subjects).each do |host|
-            if value = ca.fingerprint(host, @digest)
-              puts "#{host} #{value}"
+            if cert = (Puppet::SSL::Certificate.indirection.find(host) || Puppet::SSL::CertificateRequest.indirection.find(host))
+              puts "#{host} #{cert.digest(@digest)}"
             else
               Puppet.err "Could not find certificate for #{host}"
             end

@@ -15,7 +15,7 @@ class Puppet::Util::NetworkDevice::Transport::Telnet < Puppet::Util::NetworkDevi
     def connect
       @telnet = Net::Telnet::new("Host" => host, "Port" => port || 23,
                                  "Timeout" => 10,
-                                 "Prompt" => default_prompt, "Output_log" => "/tmp/out.log")
+                                 "Prompt" => default_prompt)
     end
 
     def close

@@ -1,5 +1,4 @@
 require 'sync'
-require 'puppet/external/event-loop'
 require 'puppet/application'
 
 # A general class for triggering a run of another
@@ -8,17 +7,17 @@ class Puppet::Agent
   require 'puppet/agent/locker'
   include Puppet::Agent::Locker
 
-  attr_reader :client_class, :client, :splayed
+  require 'puppet/agent/disabler'
+  include Puppet::Agent::Disabler
+
+  attr_reader :client_class, :client, :splayed, :should_fork
 
   # Just so we can specify that we are "the" instance.
-  def initialize(client_class)
+  def initialize(client_class, should_fork=true)
     @splayed = false
 
+    @should_fork = should_fork
     @client_class = client_class
-  end
-
-  def lockfile_path
-    client_class.lockfile_path
   end
 
   def needing_restart?
@@ -26,27 +25,34 @@ class Puppet::Agent
   end
 
   # Perform a run with our client.
-  def run(*args)
+  def run(client_options = {})
     if running?
-      Puppet.notice "Run of #{client_class} already in progress; skipping"
+      Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
       return
     end
+    if disabled?
+      Puppet.notice "Skipping run of #{client_class}; administratively disabled (Reason: '#{disable_message}');\nUse 'puppet agent --enable' to re-enable."
+      return
+    end
+
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
-      with_client do |client|
-        begin
-          sync.synchronize { lock { result = client.run(*args) } }
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not run #{client_class}: #{detail}"
+      result = run_in_fork(should_fork) do
+        with_client do |client|
+          begin
+            client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
+            sync.synchronize { lock { client.run(client_args) } }
+          rescue SystemExit,NoMemoryError
+            raise
+          rescue Exception => detail
+            Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
+          end
         end
       end
       true
     end
-    Puppet.notice "Shutdown/restart in progress; skipping run" unless block_run
+    Puppet.notice "Shutdown/restart in progress (#{Puppet::Application.run_status.inspect}); skipping run" unless block_run
     result
   end
 
@@ -64,26 +70,37 @@ class Puppet::Agent
     return unless Puppet[:splay]
     return if splayed?
 
-    time = rand(Integer(Puppet[:splaylimit]) + 1)
+    time = rand(Puppet[:splaylimit] + 1)
     Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
   end
 
-  # Start listening for events.  We're pretty much just listening for
-  # timer events here.
-  def start
-    # Create our timer.  Puppet will handle observing it and such.
-    timer = EventLoop::Timer.new(:interval => Puppet[:runinterval], :tolerance => 1, :start? => true) do
-      run
-    end
-
-    # Run once before we start following the timer
-    timer.sound_alarm
-  end
-
   def sync
     @sync ||= Sync.new
+  end
+
+  def run_in_fork(forking = true)
+    return yield unless forking or Puppet.features.windows?
+
+    child_pid = Kernel.fork do
+      $0 = "puppet agent: applying configuration"
+      begin
+        exit(yield)
+      rescue SystemExit
+        exit(-1)
+      rescue NoMemoryError
+        exit(-2)
+      end
+    end
+    exit_code = Process.waitpid2(child_pid)
+    case exit_code[1].exitstatus
+    when -1
+      raise SystemExit
+    when -2
+      raise NoMemoryError
+    end
+    exit_code[1].exitstatus
   end
 
   private
@@ -96,8 +113,7 @@ class Puppet::Agent
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not create instance of #{client_class}: #{detail}"
+      Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
       return
     end
     yield @client

@@ -1,27 +1,14 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
-
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-
 require 'puppet/rails'
 require 'puppet/node/facts'
 
-describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before :each do
-    dir = Pathname(tmpdir('puppet-var'))
-    Puppet[:vardir]       = dir.to_s
-    Puppet[:dbadapter]    = 'sqlite3'
-    Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+    setup_scratch_database
     Puppet[:storeconfigs] = true
-  end
-
-  after :each do
-    ActiveRecord::Base.remove_connection
   end
 
   subject {
@@ -40,12 +27,17 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
     ActiveRecord::Base.should be_connected
   end
 
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    Puppet::Resource::ActiveRecord.new
+  end
+
   describe "#search" do
     before :each do Puppet::Rails.init end
 
     def search(type, host = 'default.local', filter = nil)
       args = { :host => host, :filter => filter }
-      subject.search(Puppet::Resource.indirection.request(:search, type, args))
+      subject.search(Puppet::Resource.indirection.request(:search, type, nil, args))
     end
 
     it "should return an empty array if no resources match" do

@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'puppet/version'
 
 GEM_FILES = FileList[
     '[A-Z]*',
@@ -20,14 +21,15 @@ EXECUTABLES = FileList[
 ]
 
 SBIN = Dir.glob("sbin/*")
+GEMVERSION = Puppet.version.gsub('-','.')
 
 spec = Gem::Specification.new do |spec|
     spec.platform = Gem::Platform::RUBY
     spec.name = 'puppet'
     spec.files = GEM_FILES.to_a
     spec.executables = EXECUTABLES.gsub(/sbin\/|bin\//, '').to_a
-    spec.version = Puppet::PUPPETVERSION
-    spec.add_dependency('facter', '>= 1.5.1')
+    spec.version = GEMVERSION
+    spec.add_dependency('facter', '~> 1.5')
     spec.summary = 'Puppet, an automated configuration management tool'
     spec.description = 'Puppet, an automated configuration management tool'
     spec.author = 'Puppet Labs'
@@ -52,7 +54,7 @@ desc "Create the gem"
 task :create_gem => :prepare_gem do
     Dir.mkdir("pkg") rescue nil
     Gem::Builder.new(spec).build
-    FileUtils.move("puppet-#{Puppet::PUPPETVERSION}.gem", "pkg")
+    FileUtils.move("puppet-#{GEMVERSION}.gem", "pkg")
     SBIN.each do |f|
        fn = f.gsub(/sbin\/(.*)/, '\1')
        FileUtils.rm_r "bin/" + fn

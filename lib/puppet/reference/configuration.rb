@@ -16,8 +16,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     begin
       str << object.desc.gsub(/\n/, " ")
     rescue => detail
-      puts detail.backtrace
-      puts detail
+      Puppet.log_exception(detail)
     end
     str << "\n\n"
 
@@ -54,6 +53,12 @@ config.header = <<EOT
 * Multiple values should be specified as comma-separated lists; multiple
   directories should be separated with the system path separator (usually
   a colon).
+* Settings that represent time intervals should be specified in duration format:
+  an integer immediately followed by one of the units 'y' (years of 365 days),
+  'd' (days), 'h' (hours), 'm' (minutes), or 's' (seconds). The unit cannot be
+  combined with other units, and defaults to seconds when omitted. Examples are
+  '3600' which is equivalent to '1h' (one hour), and '1825d' which is equivalent
+  to '5y' (5 years).
 * Settings that take a single file or directory can optionally set the owner,
   group, and mode for their value: `rundir = $vardir/run { owner = puppet,
   group = puppet, mode = 644 }`

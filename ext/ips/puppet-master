@@ -1,0 +1,44 @@
+#!/sbin/sh
+
+. /lib/svc/share/smf_include.sh
+
+[[ -z "${SMF_FMRI}" ]] && exit $SMF_EXIT_ERR
+
+typeset -r CONF_FILE=/etc/puppet/puppet.conf
+[[ ! -f ${CONF_FILE} ]] && exit $SMF_EXIT_ERR_CONFIG
+typeset -r PUPPET=/usr/bin/puppet
+
+case "$1" in
+start)
+  exec $PUPPET master --daemonize
+  ;;
+
+stop)
+  # stop sends sigterm first followed by sigkill
+  # smf_kill_contract <CTID> TERM 1 30
+  # sends sigterm to all process in ctid and will continue
+  # to do so for 30 seconds with interval of 5 seconds
+  # smf_kill_contract <CTID> KILL 1
+  # continues until all processes are killed.
+  # svcs -p <fmri> lists all processes in the contract.
+  # http://bnsmb.de/solaris/My_Little_SMF_FAQ.html
+
+  ctid=`svcprop -p restarter/contract $SMF_FMRI`
+  if [ -n "$ctid" ]; then
+    smf_kill_contract $ctid TERM 1 5
+    ret=$?
+    [ $ret -eq 1 ] && exit $SMF_EXIT_ERR_FATAL
+
+    if [ $ret -eq 2 ] ; then
+      smf_kill_contract $ctid KILL 1
+      [ $? -ne 0 ] && exit $SMF_EXIT_ERR_FATAL
+    fi
+  fi
+  ;;
+*)
+  echo "Usage: $0 {start|stop}";
+  exit $SMF_EXIT_ERR_FATAL
+  ;;
+esac
+exit $SMF_EXIT_OK
+

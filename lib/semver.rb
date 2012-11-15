@@ -1,8 +1,13 @@
-class SemVer
-  VERSION = /^v?(\d+)\.(\d+)\.(\d+)([A-Za-z][0-9A-Za-z-]*|)$/
-  SIMPLE_RANGE = /^v?(\d+|[xX])(?:\.(\d+|[xX])(?:\.(\d+|[xX]))?)?$/
+require 'puppet/util/monkey_patches'
 
+# We need to subclass Numeric to force range comparisons not to try to iterate over SemVer
+# and instead use numeric comparisons (eg >, <, >=, <=)
+# Ruby 1.8 already did this for all ranges, but Ruby 1.9 changed range include behavior
+class SemVer < Numeric
   include Comparable
+
+  VERSION = /^v?(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z-]*|)$/
+  SIMPLE_RANGE = /^v?(\d+|[xX])(?:\.(\d+|[xX])(?:\.(\d+|[xX]))?)?$/
 
   def self.valid?(ver)
     VERSION =~ ver
@@ -10,6 +15,53 @@ class SemVer
 
   def self.find_matching(pattern, versions)
     versions.select { |v| v.matched_by?("#{pattern}") }.sort.last
+  end
+
+  def self.pre(vstring)
+    vstring =~ /-/ ? vstring : vstring + '-'
+  end
+
+  def self.[](range)
+    range.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
+      case r
+      when SemVer::VERSION
+        SemVer.new(pre(r)) .. SemVer.new(r)
+      when SemVer::SIMPLE_RANGE
+        r += ".0" unless SemVer.valid?(r.gsub(/x/i, '0'))
+        SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-')
+      when /\s+-\s+/
+        a, b = r.split(/\s+-\s+/)
+        SemVer.new(pre(a)) .. SemVer.new(b)
+      when /^~/
+        ver = r.sub(/~/, '').split('.').map(&:to_i)
+        start = (ver + [0] * (3 - ver.length)).join('.')
+
+        ver.pop unless ver.length == 1
+        ver[-1] = ver.last + 1
+
+        finish = (ver + [0] * (3 - ver.length)).join('.')
+        SemVer.new(pre(start)) ... SemVer.new(pre(finish))
+      when /^>=/
+        ver = r.sub(/^>=/, '')
+        SemVer.new(pre(ver)) .. SemVer::MAX
+      when /^<=/
+        ver = r.sub(/^<=/, '')
+        SemVer::MIN .. SemVer.new(ver)
+      when /^>/
+        if r =~ /-/
+          ver = [r[1..-1]]
+        else
+          ver = r.sub(/^>/, '').split('.').map(&:to_i)
+          ver[2] = ver.last + 1
+        end
+        SemVer.new(ver.join('.') + '-') .. SemVer::MAX
+      when /^</
+        ver = r.sub(/^</, '')
+        SemVer::MIN ... SemVer.new(pre(ver))
+      else
+        (1..1)
+      end
+    end.inject { |a,e| a & e }
   end
 
   attr_reader :major, :minor, :tiny, :special
@@ -59,7 +111,14 @@ class SemVer
   end
 
   def inspect
-    "v#{@major}.#{@minor}.#{@tiny}#{@special}"
+    @vstring || "v#{@major}.#{@minor}.#{@tiny}#{@special}"
   end
   alias :to_s :inspect
+
+  MIN = SemVer.new('0.0.0-')
+  MIN.instance_variable_set(:@vstring, 'vMIN')
+
+  MAX = SemVer.new('8.0.0')
+  MAX.instance_variable_set(:@major, (1.0/0)) # => Infinity
+  MAX.instance_variable_set(:@vstring, 'vMAX')
 end

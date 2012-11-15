@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'tmpdir'
@@ -18,10 +18,18 @@ describe Puppet::Interface::FaceCollection do
     $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     subject.instance_variable_get(:@faces).clear
     subject.instance_variable_set(:@loaded, false)
+    @autoload_loaded = {}
+    Puppet::Util::Autoload.stubs(:loaded).returns(@autoload_loaded)
   end
 
   after :each do
-    subject.instance_variable_set(:@faces, @original_faces)
+    # Just pushing the duplicate back into place doesn't work as reliably as
+    # this method to restore the state.  Honestly, I need to make this horror
+    # go away entirely. --daniel 2012-04-28
+    faces = subject.instance_variable_get("@faces")
+    faces.clear
+    @original_faces.each {|k,v| faces[k] = v }
+
     @original_required.each {|f| $".push f unless $".include? f }
   end
 
@@ -146,14 +154,16 @@ describe Puppet::Interface::FaceCollection do
   end
 
   describe "::underscorize" do
-    faulty = [1, "#foo", "$bar", "sturm und drang", :"sturm und drang"]
+    faulty = [1, "23foo", "#foo", "$bar", "sturm und drang", :"sturm und drang"]
     valid  = {
-      "Foo"      => :foo,
-      :Foo       => :foo,
-      "foo_bar"  => :foo_bar,
-      :foo_bar   => :foo_bar,
-      "foo-bar"  => :foo_bar,
-      :"foo-bar" => :foo_bar,
+      "Foo"       => :foo,
+      :Foo        => :foo,
+      "foo_bar"   => :foo_bar,
+      :foo_bar    => :foo_bar,
+      "foo-bar"   => :foo_bar,
+      :"foo-bar"  => :foo_bar,
+      "foo_bar23" => :foo_bar23,
+      :foo_bar23  => :foo_bar23,
     }
 
     valid.each do |input, expect|
@@ -166,7 +176,7 @@ describe Puppet::Interface::FaceCollection do
     faulty.each do |input|
       it "should fail when presented with #{input.inspect} (#{input.class})" do
         expect { subject.underscorize(input) }.
-          should raise_error ArgumentError, /not a valid face name/
+          to raise_error ArgumentError, /not a valid face name/
       end
     end
   end

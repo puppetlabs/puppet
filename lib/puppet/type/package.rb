@@ -3,6 +3,8 @@
 # This allows packages to exist on the same machine using different packaging
 # systems.
 
+require 'puppet/parameter/package_options'
+
 module Puppet
   newtype(:package) do
     @doc = "Manage packages.  There is a basic dichotomy in package
@@ -46,6 +48,8 @@ module Puppet
       :methods => [:hold]
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
+    feature :uninstall_options, "The provider accepts options to be
+      passed to the uninstaller command."
 
     ensurable do
       desc <<-EOT
@@ -115,7 +119,6 @@ module Puppet
       # Override the parent method, because we've got all kinds of
       # funky definitions of 'in sync'.
       def insync?(is)
-        @latest ||= nil
         @lateststamp ||= (Time.now.to_i - 1000)
         # Iterate across all of the should values, and see how they
         # turn out.
@@ -142,21 +145,27 @@ module Puppet
               end
             end
 
-            case is
-            when @latest
-              return true
-            when :present
-              # This will only happen on retarded packaging systems
-              # that can't query versions.
-              return true
-            else
-              self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
+            case
+              when is.is_a?(Array) && is.include?(@latest)
+                return true
+              when is == @latest
+                return true
+              when is == :present
+                # This will only happen on retarded packaging systems
+                # that can't query versions.
+                return true
+              else
+                self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
             end
+
+
           when :absent
             return true if is == :absent or is == :purged
           when :purged
             return true if is == :purged
-          when is
+          # this handles version number matches and
+          # supports providers that can have multiple versions installed
+          when *Array(is)
             return true
           end
         }
@@ -237,17 +246,6 @@ module Puppet
       desc "A read-only parameter set by the package."
     end
 
-    newparam(:type) do
-      desc "Deprecated form of `provider`."
-
-      munge do |value|
-        warning "'type' is deprecated; use 'provider' instead"
-        @resource[:provider] = value
-
-        @resource[:provider]
-      end
-    end
-
     newparam(:adminfile) do
       desc "A file containing package defaults for installing packages.
         This is currently only used on Solaris.  The value will be
@@ -300,9 +298,50 @@ module Puppet
         further specifications for which type of package you want."
     end
 
-    newparam(:install_options, :required_features => :install_options) do
-      desc "A hash of options to be handled by the provider when
-        installing a package."
+    newparam(:install_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :install_options) do
+      desc <<-EOT
+        An array of additional options to pass when installing a package. These
+        options are package-specific, and should be documented by the software
+        vendor.  One commonly implemented option is `INSTALLDIR`:
+
+            package { 'mysql':
+              ensure          => installed,
+              source          => 'N:/packages/mysql-5.5.16-winx64.msi',
+              install_options => [ '/S', { 'INSTALLDIR' => 'C:\\mysql-5.5' } ],
+            }
+
+        Each option in the array can either be a string or a hash, where each
+        key and value pair are interpreted in a provider specific way.  Each
+        option will automatically be quoted when passed to the install command.
+
+        On Windows, this is the **only** place in Puppet where backslash
+        separators should be used.  Note that backslashes in double-quoted
+        strings _must_ be double-escaped and backslashes in single-quoted
+        strings _may_ be double-escaped.
+      EOT
+    end
+
+    newparam(:uninstall_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :uninstall_options) do
+      desc <<-EOT
+        An array of additional options to pass when uninstalling a package. These
+        options are package-specific, and should be documented by the software
+        vendor.  For example:
+
+            package { 'VMware Tools':
+              ensure            => absent,
+              uninstall_options => [ { 'REMOVE' => 'Sync,VSS' } ],
+            }
+
+        Each option in the array can either be a string or a hash, where each
+        key and value pair are interpreted in a provider specific way.  Each
+        option will automatically be quoted when passed to the uninstall
+        command.
+
+        On Windows, this is the **only** place in Puppet where backslash
+        separators should be used.  Note that backslashes in double-quoted
+        strings _must_ be double-escaped and backslashes in single-quoted
+        strings _may_ be double-escaped.
+      EOT
     end
 
     autorequire(:file) do
@@ -313,10 +352,8 @@ module Puppet
         end
       }
 
-      if source = self[:source]
-        if source =~ /^#{File::SEPARATOR}/
-          autos << source
-        end
+      if source = self[:source] and absolute_path?(source)
+        autos << source
       end
       autos
     end

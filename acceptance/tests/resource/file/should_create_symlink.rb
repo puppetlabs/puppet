@@ -1,28 +1,31 @@
 test_name "should create symlink"
+confine :except, :platform => 'windows'
 
 message = 'hello world'
 target  = "/tmp/test-#{Time.new.to_i}"
 source  = "/tmp/test-#{Time.new.to_i}-source"
 
-step "clean up the system before we begin"
-on agents, "rm -rf #{target}"
-on agents, "echo '#{message}' > #{source}"
+agents.each do |agent|
+  step "clean up the system before we begin"
+  on agent, "rm -rf #{target}"
+  on agent, "echo '#{message}' > #{source}"
 
-step "verify we can create a symlink"
-on(agents, puppet_resource("file", target, "ensure=#{source}"))
+  step "verify we can create a symlink"
+  on(agent, puppet_resource("file", target, "ensure=#{source}"))
 
-step "verify the symlink was created"
-on agents, "test -L #{target} && test -f #{target}"
-step "verify source file"
-on agents, "test -f #{source}"
+  step "verify the symlink was created"
+  on agent, "test -L #{target} && test -f #{target}"
+  step "verify source file"
+  on agent, "test -f #{source}"
 
-step "verify the content is identical on both sides"
-on(agents, "cat #{source}") do
+  step "verify the content is identical on both sides"
+  on(agent, "cat #{source}") do
     fail_test "source missing content" unless stdout.include? message
-end
-on(agents, "cat #{target}") do
+  end
+  on(agent, "cat #{target}") do
     fail_test "target missing content" unless stdout.include? message
-end
+  end
 
-step "clean up after the test run"
-on agents, "rm -rf #{target} #{source}"
+  step "clean up after the test run"
+  on agent, "rm -rf #{target} #{source}"
+end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
@@ -18,14 +18,19 @@ describe "Puppet::Resource::Ral" do
       Puppet::Resource::Ral.new.find(@request).should == my_resource
     end
 
-    it "if there is no instance, it should create one", :'fails_on_ruby_1.9.2' => true do
+    it "if there is no instance, it should create one" do
       wrong_instance = stub "wrong user", :name => "bob"
+      root = mock "Root User"
+      root_resource = mock "Root Resource"
 
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ wrong_instance, wrong_instance ])
+      Puppet::Type::User.expects(:new).with(has_entry(:name => "root")).returns(root)
+      root.expects(:to_resource).returns(root_resource)
+
       result = Puppet::Resource::Ral.new.find(@request)
-      result.should be_is_a(Puppet::Resource)
-      result.title.should == "root"
+
+      result.should == root_resource
     end
   end
 

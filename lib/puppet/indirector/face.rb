@@ -41,8 +41,9 @@ class Puppet::Indirector::Face < Puppet::Face
     begin
       result = indirection.__send__(method, key, options)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+      message = "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+      Puppet.log_exception(detail, message)
+      raise message
     end
 
     return result
@@ -50,11 +51,11 @@ class Puppet::Indirector::Face < Puppet::Face
 
   option "--extra HASH" do
     summary "Extra arguments to pass to the indirection request"
-    description <<-end
+    description <<-EOT
       A terminus can take additional arguments to refine the operation, which
       are passed as an arbitrary hash to the back-end.  Anything passed as
       the extra value is just send direct to the back-end.
-    end
+    EOT
     default_to do Hash.new end
   end
 
@@ -72,7 +73,7 @@ class Puppet::Indirector::Face < Puppet::Face
 
   action :save do
     summary "API only: create or overwrite an object."
-    arguments "<object>"
+    arguments "<key>"
     description <<-EOT
       API only: create or overwrite an object. As the Faces framework does not
       currently accept data from STDIN, save actions cannot currently be invoked
@@ -93,7 +94,7 @@ class Puppet::Indirector::Face < Puppet::Face
     description <<-EOT
       Prints the default terminus class for this subcommand. Note that different
       run modes may have different default termini; when in doubt, specify the
-      run mode with the '--mode' option.
+      run mode with the '--run_mode' option.
     EOT
 
     when_invoked do |options|

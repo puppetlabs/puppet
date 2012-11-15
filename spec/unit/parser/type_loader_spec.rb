@@ -1,10 +1,12 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parser/type_loader'
+require 'puppet_spec/modules'
 require 'puppet_spec/files'
 
 describe Puppet::Parser::TypeLoader do
+  include PuppetSpec::Modules
   include PuppetSpec::Files
 
   before do
@@ -106,12 +108,7 @@ describe Puppet::Parser::TypeLoader do
     end
 
     def mk_module(basedir, name)
-      module_dir = File.join(basedir, name)
-
-      # Go ahead and make our manifest directory
-      FileUtils.mkdir_p(File.join(module_dir, "manifests"))
-
-      return Puppet::Module.new(name)
+      PuppetSpec::Modules.create(name, basedir)
     end
 
     # We have to pass the base path so that we can

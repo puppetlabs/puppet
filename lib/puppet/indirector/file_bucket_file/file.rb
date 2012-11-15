@@ -27,7 +27,7 @@ module Puppet::FileBucketFile
         raise "could not find diff_with #{request.options[:diff_with]}" unless ::File.exists?(file2_path)
         return `diff #{file_path.inspect} #{file2_path.inspect}`
       else
-        contents = Puppet::Util.binread(file_path)
+        contents = IO.binread(file_path)
         Puppet.info "FileBucket read #{checksum}"
         model.new(contents)
       end
@@ -55,7 +55,7 @@ module Puppet::FileBucketFile
       paths_path = ::File.join(dir_path, 'paths')
       return false unless ::File.exists?(paths_path)
       ::File.open(paths_path) do |f|
-        f.each do |line|
+        f.each_line do |line|
           return true if line.chomp == files_original_path
         end
       end
@@ -67,9 +67,10 @@ module Puppet::FileBucketFile
       dir_path = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
       paths_path = ::File.join(dir_path, 'paths')
 
-      # If the file already exists, do nothing.
+      # If the file already exists, touch it.
       if ::File.exist?(filename)
         verify_identical_file!(bucket_file)
+        ::FileUtils.touch(filename)
       else
         # Make the directories if necessary.
         unless ::File.directory?(dir_path)
@@ -122,7 +123,7 @@ module Puppet::FileBucketFile
     # If conflict_check is enabled, verify that the passed text is
     # the same as the text in our file.
     def verify_identical_file!(bucket_file)
-      disk_contents = Puppet::Util.binread(path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents'))
+      disk_contents = IO.binread(path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents'))
 
       # If the contents don't match, then we've found a conflict.
       # Unlikely, but quite bad.

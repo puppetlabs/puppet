@@ -1,4 +1,5 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
+# Encoding: UTF-8
 require 'spec_helper'
 
 require 'puppet/util/pson'
@@ -7,9 +8,11 @@ class PsonUtil
   include Puppet::Util::Pson
 end
 
-describe Puppet::Util::Pson, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Util::Pson do
   it "should fail if no data is provided" do
-    lambda { PsonUtil.new.pson_create("type" => "foo") }.should raise_error(ArgumentError)
+    expect {
+      PsonUtil.new.pson_create("type" => "foo")
+    }.to raise_error(ArgumentError, /No data provided in pson data/)
   end
 
   it "should call 'from_pson' with the provided data" do
@@ -18,21 +21,32 @@ describe Puppet::Util::Pson, :'fails_on_ruby_1.9.2' => true do
     pson.pson_create("type" => "foo", "data" => "mydata")
   end
 
-
-  { 
+  {
     'foo' => '"foo"',
     1 => '1',
     "\x80" => "\"\x80\"",
     [] => '[]'
-  }.each { |str,pson|
+  }.each do |str, expect|
     it "should be able to encode #{str.inspect}" do
-      str.to_pson.should == pson
+      got = str.to_pson
+      if got.respond_to? :force_encoding
+        got.force_encoding('binary').should == expect.force_encoding('binary')
+      else
+        got.should == expect
+      end
     end
-  }
+  end
 
   it "should be able to handle arbitrary binary data" do
     bin_string = (1..20000).collect { |i| ((17*i+13*i*i) % 255).chr }.join
-    PSON.parse(%Q{{ "type": "foo", "data": #{bin_string.to_pson} }})["data"].should == bin_string
+    parsed = PSON.parse(%Q{{ "type": "foo", "data": #{bin_string.to_pson} }})["data"]
+
+    if parsed.respond_to? :force_encoding
+      parsed.force_encoding('binary')
+      bin_string.force_encoding('binary')
+    end
+
+    parsed.should == bin_string
   end
 
   it "should be able to handle UTF8 that isn't a real unicode character" do

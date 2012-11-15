@@ -1,6 +1,16 @@
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
 
+  # This is a list of environment variables that we will set when we want to override the POSIX locale
+  LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
+                           'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
+
+  # This is a list of user-related environment variables that we will unset when we want to provide a pristine
+  # environment for "exec" runs
+  USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
+
+
+
   # Retrieve a field from a POSIX Etc object.  The id can be either an integer
   # or a name.  This only works for users and groups.  It's also broken on
   # some platforms, unfortunately, which is why we fall back to the other
@@ -60,7 +70,7 @@ module Puppet::Util::POSIX
 
   # Determine what the field name is for users and groups.
   def idfield(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :gid
     when :pw, :user, :passwd; return :uid
     else
@@ -70,7 +80,7 @@ module Puppet::Util::POSIX
 
   # Determine what the method is to get users and groups by id
   def methodbyid(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :getgrgid
     when :pw, :user, :passwd; return :getpwuid
     else
@@ -80,7 +90,7 @@ module Puppet::Util::POSIX
 
   # Determine what the method is to get users and groups by name
   def methodbyname(space)
-    case Puppet::Util.symbolize(space)
+    case space.intern
     when :gr, :group; return :getgrnam
     when :pw, :user, :passwd; return :getpwnam
     else

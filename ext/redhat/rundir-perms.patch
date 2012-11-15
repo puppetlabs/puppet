@@ -1,0 +1,28 @@
+From c181799a30427966cbe028fde7b390cac9cf44e9 Mon Sep 17 00:00:00 2001
+From: Matthaus Litteken <matthaus@puppetlabs.com>
+Date: Fri, 4 May 2012 10:59:26 -0700
+Subject: [PATCH] Tighten rundir perms (rhbz #495096)
+
+The loose default permissions are not required for Red Hat systems
+installed via rpm packages because the packages create the required
+service user/group.
+---
+ lib/puppet/defaults.rb |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/puppet/defaults.rb b/lib/puppet/defaults.rb
+index dc498e7..eef36d2 100644
+--- a/lib/puppet/defaults.rb
++++ b/lib/puppet/defaults.rb
+@@ -84,7 +84,7 @@ module Puppet
+     :rundir => {
+       :default  => nil,
+       :type     => :directory,
+-      :mode     => 01777,
++      :mode     => 0755,
+       :desc     => "Where Puppet PID files are kept."
+     },
+     :genconfig => {
+-- 
+1.7.7.6
+

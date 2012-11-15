@@ -54,7 +54,7 @@ class Puppet::SSL::Host
     CertificateRequest.indirection.terminus_class = terminus
     CertificateRevocationList.indirection.terminus_class = terminus
 
-    host_map = {:ca => :file, :file => nil, :rest => :rest}
+    host_map = {:ca => :file, :disabled_ca => nil, :file => nil, :rest => :rest}
     if term = host_map[terminus]
       self.indirection.terminus_class = term
     else
@@ -94,7 +94,7 @@ class Puppet::SSL::Host
     # We are the CA, so we don't have read/write access to the normal certificates.
     :only => [:ca],
     # We have no CA, so we just look in the local file store.
-    :none => [:file]
+    :none => [:disabled_ca]
   }
 
   # Specify how we expect to interact with our certificate authority.
@@ -236,6 +236,7 @@ ERROR_STRING
 
   def initialize(name = nil)
     @name = (name || Puppet[:certname]).downcase
+    Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
     @ca = (name == self.class.ca_name)
   end
@@ -275,13 +276,38 @@ ERROR_STRING
     pson_hash[:state] = my_state
     pson_hash[:desired_state] = desired_state if desired_state
 
-    if my_state == 'requested'
-      pson_hash[:fingerprint] = certificate_request.fingerprint
-    else
-      pson_hash[:fingerprint] = my_cert.fingerprint
+    thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
+
+    # this is for backwards-compatibility
+    # we should deprecate it and transition people to using
+    # pson[:fingerprints][:default]
+    # It appears that we have no internal consumers of this api
+    # --jeffweiss 30 aug 2012
+    pson_hash[:fingerprint] = thing_to_use.fingerprint
+    
+    # The above fingerprint doesn't tell us what message digest algorithm was used
+    # No problem, except that the default is changing between 2.7 and 3.0. Also, as
+    # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
+    # segfault in rubies older than 1.9.3)
+    # So, when we add the newer fingerprints, we're explicit about the hashing
+    # algorithm used.
+    # --jeffweiss 31 july 2012
+    pson_hash[:fingerprints] = {}
+    pson_hash[:fingerprints][:default] = thing_to_use.fingerprint
+    
+    suitable_message_digest_algorithms.each do |md| 
+      pson_hash[:fingerprints][md] = thing_to_use.fingerprint md
     end
+    pson_hash[:dns_alt_names] = thing_to_use.subject_alt_names
 
     pson_hash.to_pson(*args)
+  end
+  
+  # eventually we'll probably want to move this somewhere else or make it
+  # configurable
+  # --jeffweiss 29 aug 2012
+  def suitable_message_digest_algorithms
+    [:SHA1, :SHA256, :SHA512]
   end
 
   # Attempt to retrieve a cert, if we don't already have one.
@@ -293,8 +319,7 @@ ERROR_STRING
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not request certificate: #{detail}"
+      Puppet.log_exception(detail, "Could not request certificate: #{detail}")
       if time < 1
         puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
         exit(1)
@@ -315,20 +340,18 @@ ERROR_STRING
         break if certificate
         Puppet.notice "Did not receive certificate"
       rescue StandardError => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not request certificate: #{detail}"
+        Puppet.log_exception(detail, "Could not request certificate: #{detail}")
       end
     end
   end
 
   def state
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
     if certificate_request
       return 'requested'
     end
 
     begin
-      Puppet::SSL::CertificateAuthority.new.verify(my_cert)
+      Puppet::SSL::CertificateAuthority.new.verify(name)
       return 'signed'
     rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
       return 'revoked'

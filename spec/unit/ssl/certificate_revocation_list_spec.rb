@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
@@ -17,7 +17,7 @@ describe Puppet::SSL::CertificateRevocationList do
 
   describe "when converting from a string" do
     it "should create a CRL instance with its name set to 'foo' and its content set to the extracted CRL" do
-      crl = stub 'crl'
+      crl = stub 'crl', :is_a? => true
       OpenSSL::X509::CRL.expects(:new).returns(crl)
 
       mycrl = stub 'sslcrl'
@@ -136,11 +136,11 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl.revoke(1, @key)
     end
 
-    it "should mark the CRL as updated" do
+    it "should mark the CRL as updated at a time that makes it valid now" do
       time = Time.now
       Time.stubs(:now).returns time
 
-      @crl.content.expects(:last_update=).with(time)
+      @crl.content.expects(:last_update=).with(time - 1)
 
       @crl.revoke(1, @key)
     end

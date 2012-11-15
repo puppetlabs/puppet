@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the regsubst function" do
@@ -7,19 +7,21 @@ describe "the regsubst function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should exist" do
     Puppet::Parser::Functions.function("regsubst").should == "function_regsubst"
   end
 
-  it "should raise a ParseError if there is less than 3 arguments" do
-    lambda { @scope.function_regsubst(["foo", "bar"]) }.should( raise_error(Puppet::ParseError))
+  it "should raise a ArgumentError if there is less than 3 arguments" do
+    lambda { @scope.function_regsubst(["foo", "bar"]) }.should( raise_error(ArgumentError))
   end
 
-  it "should raise a ParseError if there is more than 5 arguments" do
-    lambda { @scope.function_regsubst(["foo", "bar", "gazonk", "del", "x", "y"]) }.should( raise_error(Puppet::ParseError))
+  it "should raise a ArgumentError if there is more than 5 arguments" do
+    lambda { @scope.function_regsubst(["foo", "bar", "gazonk", "del", "x", "y"]) }.should( raise_error(ArgumentError))
   end
 
 

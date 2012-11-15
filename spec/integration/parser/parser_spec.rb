@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::Parser do
@@ -119,7 +119,7 @@ describe Puppet::Parser::Parser do
     end
 
     it "should fail if asked to parse '$foo::::bar'" do
-      expect { @parser.parse("$foo::::bar") }.should raise_error(Puppet::ParseError, /Syntax error at ':'/)
+      expect { @parser.parse("$foo::::bar") }.to raise_error(Puppet::ParseError, /Syntax error at ':'/)
     end
 
     describe "function calls" do

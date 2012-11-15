@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the RedHat service Provider
 #
@@ -22,4 +22,13 @@ describe provider_class do
       @provider.should respond_to(method)
     end
   end
+
+
+  it 'should return resources from self.instances' do
+    provider_class.expects(:systemctl).with('list-units', '--full', '--all',  '--no-pager').returns(
+      "my_service loaded active running\nmy_other_service loaded active running"
+    )
+    provider_class.instances.map {|provider| provider.name}.should =~ ["my_service","my_other_service"]
+  end
+
 end

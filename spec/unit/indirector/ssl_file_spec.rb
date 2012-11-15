@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/ssl_file'
@@ -19,10 +19,18 @@ describe Puppet::Indirector::SslFile do
 
     @setting = :certdir
     @file_class.store_in @setting
+    @file_class.store_at nil
+    @file_class.store_ca_at nil
     @path = make_absolute("/thisdoesntexist/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
     Puppet[:trace] = false
+  end
+
+  after :each do
+    @file_class.store_in nil
+    @file_class.store_at nil
+    @file_class.store_ca_at nil
   end
 
   it "should use :main and :ssl upon initialization" do
@@ -41,11 +49,12 @@ describe Puppet::Indirector::SslFile do
   end
 
   it "should fail if no store directory or file location has been set" do
+    Puppet.settings.expects(:use).with(:main, :ssl)
     @file_class.store_in nil
     @file_class.store_at nil
-    FileTest.expects(:exists?).with(File.dirname(@path)).at_least(0).returns(true)
-    Dir.stubs(:mkdir).with(@path)
-    lambda { @file_class.new }.should raise_error(Puppet::DevError, /No file or directory setting provided/)
+    expect {
+      @file_class.new
+    }.to raise_error(Puppet::DevError, /No file or directory setting provided/)
   end
 
   describe "when managing ssl files" do
@@ -68,21 +77,21 @@ describe Puppet::Indirector::SslFile do
       it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
         @file_class.store_in nil
         @file_class.store_at :mysetting
-        @file_class.store_ca_at :casetting
+        @file_class.store_ca_at :cakey
 
-        Puppet.settings.stubs(:value).with(:casetting).returns "/ca/file"
+        Puppet[:cakey] = File.expand_path("/ca/file")
 
         @searcher.expects(:ca?).with(@cert.name).returns true
-        @searcher.path(@cert.name).should == "/ca/file"
+        @searcher.path(@cert.name).should == Puppet[:cakey]
       end
 
       it "should set them at the file location if a file setting is available" do
         @file_class.store_in nil
-        @file_class.store_at :mysetting
+        @file_class.store_at :cacrl
 
-        Puppet.settings.stubs(:value).with(:mysetting).returns "/some/file"
+        Puppet[:cacrl] = File.expand_path("/some/file")
 
-        @searcher.path(@cert.name).should == "/some/file"
+        @searcher.path(@cert.name).should == Puppet[:cacrl]
       end
 
       it "should set them in the setting directory, with the certificate name plus '.pem', if a directory setting is available" do
@@ -111,30 +120,45 @@ describe Puppet::Indirector::SslFile do
 
     describe "when finding certificates on disk" do
       describe "and no certificate is present" do
-        before do
-          # Stub things so the case management bits work.
-          FileTest.stubs(:exist?).with(File.dirname(@certpath)).returns false
-          FileTest.expects(:exist?).with(@certpath).returns false
-        end
-
         it "should return nil" do
+          FileTest.expects(:exist?).with(@path).returns(true)
+          Dir.expects(:entries).with(@path).returns([])
+          FileTest.expects(:exist?).with(@certpath).returns(false)
+
           @searcher.find(@request).should be_nil
         end
       end
 
       describe "and a certificate is present" do
-        before do
-          FileTest.expects(:exist?).with(@certpath).returns true
+        let(:cert) { mock 'cert' }
+        let(:model) { mock 'model' }
+
+        before(:each) do
+          @file_class.stubs(:model).returns model
         end
 
-        it "should return an instance of the model, which it should use to read the certificate" do
-          cert = mock 'cert'
-          model = mock 'model'
-          @file_class.stubs(:model).returns model
+        context "is readable" do
+          it "should return an instance of the model, which it should use to read the certificate" do
+            FileTest.expects(:exist?).with(@certpath).returns true
 
-          model.expects(:new).with("myname").returns cert
-          cert.expects(:read).with(@certpath)
-          @searcher.find(@request).should equal(cert)
+            model.expects(:new).with("myname").returns cert
+            cert.expects(:read).with(@certpath)
+
+            @searcher.find(@request).should equal(cert)
+          end
+        end
+
+        context "is unreadable" do
+          it "should raise an exception" do
+            FileTest.expects(:exist?).with(@certpath).returns(true)
+
+            model.expects(:new).with("myname").returns cert
+            cert.expects(:read).with(@certpath).raises(Errno::EACCES)
+
+            expect {
+              @searcher.find(@request)
+            }.to raise_error(Errno::EACCES)
+          end
         end
       end
 
@@ -217,12 +241,12 @@ describe Puppet::Indirector::SslFile do
       describe "and the name is the CA name and a ca setting is set" do
         it "should use the filehandle provided by the Settings" do
           @searcher.class.store_at @setting
-          @searcher.class.store_ca_at :castuff
-          Puppet.settings.stubs(:value).with(:castuff).returns "castuff stub"
+          @searcher.class.store_ca_at :cakey
+          Puppet[:cakey] = "castuff stub"
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.expects(:write).with(:castuff).yields fh
+          Puppet.settings.expects(:write).with(:cakey).yields fh
           @searcher.stubs(:ca?).returns true
           @searcher.save(@request)
         end
@@ -260,41 +284,46 @@ describe Puppet::Indirector::SslFile do
     end
 
     describe "when searching for certificates" do
-      before do
-        @model = mock 'model'
-        @file_class.stubs(:model).returns @model
+      let(:one) { stub 'one' }
+      let(:two) { stub 'two' }
+      let(:one_path) { File.join(@path, 'one.pem') }
+      let(:two_path) { File.join(@path, 'two.pem') }
+      let(:model) { mock 'model' }
+
+      before :each do
+        @file_class.stubs(:model).returns model
       end
+
       it "should return a certificate instance for all files that exist" do
-        Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
+        Dir.expects(:entries).with(@path).returns(%w{. .. one.pem two.pem})
 
-        one = stub 'one', :read => nil
-        two = stub 'two', :read => nil
-
-        @model.expects(:new).with("one").returns one
-        @model.expects(:new).with("two").returns two
+        model.expects(:new).with("one").returns one
+        one.expects(:read).with(one_path)
+        model.expects(:new).with("two").returns two
+        two.expects(:read).with(two_path)
 
         @searcher.search(@request).should == [one, two]
       end
 
-      it "should read each certificate in using the model's :read method" do
-        Dir.expects(:entries).with(@path).returns %w{one.pem}
+      it "should raise an exception if any file is unreadable" do
+        Dir.expects(:entries).with(@path).returns(%w{. .. one.pem two.pem})
 
-        one = stub 'one'
-        one.expects(:read).with(File.join(@path, "one.pem"))
+        model.expects(:new).with("one").returns(one)
+        one.expects(:read).with(one_path)
+        model.expects(:new).with("two").returns(two)
+        two.expects(:read).raises(Errno::EACCES)
 
-        @model.expects(:new).with("one").returns one
-
-        @searcher.search(@request)
+        expect {
+          @searcher.search(@request)
+        }.to raise_error(Errno::EACCES)
       end
 
       it "should skip any files that do not match /\.pem$/" do
-        Dir.expects(:entries).with(@path).returns %w{. .. one.pem}
+        Dir.expects(:entries).with(@path).returns(%w{. .. one two.notpem})
 
-        one = stub 'one', :read => nil
+        model.expects(:new).never
 
-        @model.expects(:new).with("one").returns one
-
-        @searcher.search(@request)
+        @searcher.search(@request).should == []
       end
     end
   end

@@ -1,3 +1,6 @@
+require 'digest/md5'
+require 'digest/sha1'
+
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
@@ -24,7 +27,6 @@ module Puppet::Util::Checksums
 
   # Calculate a checksum using Digest::MD5.
   def md5(content)
-    require 'digest/md5'
     Digest::MD5.hexdigest(content)
   end
 
@@ -35,8 +37,6 @@ module Puppet::Util::Checksums
 
   # Calculate a checksum of a file's content using Digest::MD5.
   def md5_file(filename, lite = false)
-    require 'digest/md5'
-
     digest = Digest::MD5.new
     checksum_file(digest, filename,  lite)
   end
@@ -47,7 +47,6 @@ module Puppet::Util::Checksums
   end
 
   def md5_stream(&block)
-    require 'digest/md5'
     digest = Digest::MD5.new
     yield digest
     digest.hexdigest
@@ -74,7 +73,6 @@ module Puppet::Util::Checksums
 
   # Calculate a checksum using Digest::SHA1.
   def sha1(content)
-    require 'digest/sha1'
     Digest::SHA1.hexdigest(content)
   end
 
@@ -85,8 +83,6 @@ module Puppet::Util::Checksums
 
   # Calculate a checksum of a file's content using Digest::SHA1.
   def sha1_file(filename, lite = false)
-    require 'digest/sha1'
-
     digest = Digest::SHA1.new
     checksum_file(digest, filename, lite)
   end
@@ -97,7 +93,6 @@ module Puppet::Util::Checksums
   end
 
   def sha1_stream
-    require 'digest/sha1'
     digest = Digest::SHA1.new
     yield digest
     digest.hexdigest

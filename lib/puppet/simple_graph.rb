@@ -136,18 +136,7 @@ class Puppet::SimpleGraph
               s[:seen][top] = false
               this_scc << top
             end until top == vertex
-            # NOTE: if we don't reverse we get the components in the opposite
-            # order to what a human being would expect; reverse should be an
-            # O(1) operation, without even copying, because we know the length
-            # of the source, but I worry that an implementation will get this
-            # wrong.  Still, the worst case is O(n) for n vertices as we can't
-            # possibly put a vertex into two SCCs.
-            #
-            # Also, my feeling is that most implementations are going to do
-            # better with a reverse operation than a string of 'unshift'
-            # insertions at the head of the array; if they were going to mess
-            # up the performance of one, it would be unshift.
-            s[:scc] << this_scc.reverse
+            s[:scc] << this_scc
           end
           recur.pop               # done with this node, finally.
         end
@@ -181,7 +170,15 @@ class Puppet::SimpleGraph
       end
     end
 
-    state[:scc].select { |c| c.length > 1 }
+    # To provide consistent results to the user, given that a hash is never
+    # assured to return the same order, and given our graph processing is
+    # based on hash tables, we need to sort the cycles internally, as well as
+    # the set of cycles.
+    #
+    # Given we are in a failure state here, any extra cost is more or less
+    # irrelevant compared to the cost of a fix - which is on a human
+    # time-scale.
+    state[:scc].select { |c| c.length > 1 }.map {|x| x.sort }.sort
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
@@ -215,7 +212,7 @@ class Puppet::SimpleGraph
       end
     end
 
-    return found
+    return found.sort
   end
 
   def report_cycles_in_graph
@@ -529,11 +526,8 @@ class Puppet::SimpleGraph
   end
 
   def to_yaml_properties
-    other_vars = instance_variables.
-      map {|v| v.to_s}.
-      reject { |v| %w{@in_to @out_from @upstream_from @downstream_from}.include?(v) }
-
-    (other_vars + %w{@vertices @edges}).sort.uniq
+    (instance_variables + [:@vertices, :@edges] -
+     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
   end
 
   def yaml_initialize(tag, var)

@@ -3,7 +3,7 @@ require 'facter'
 require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do
-  @doc = <<-EOT
+  @doc = <<-'EOT'
     Installs and manages cron jobs.  Every cron resource requires a command
     and user attribute, as well as at least one periodic attribute (hour,
     minute, month, monthday, weekday, or special).  While the name of the cron
@@ -87,7 +87,7 @@ Puppet::Type.newtype(:cron) do
       # if we can lengthen it (e.g., mon => monday).
       if tmp.length == 3
         ary.each_with_index { |name, index|
-          if name =~ /#{tmp}/i
+          if tmp.upcase == name[0..2].upcase
             return index
           end
         }
@@ -352,13 +352,21 @@ Puppet::Type.newtype(:cron) do
 
       The user defaults to whomever Puppet is running as."
 
-    defaultto { Etc.getpwuid(Process.uid).name || "root" }
+    defaultto {
+      struct = Etc.getpwuid(Process.uid)
+      struct.respond_to?(:name) && struct.name or 'root'
+    }
+  end
+
+  # Autorequire the owner of the crontab entry.
+  autorequire(:user) do
+    self[:user]
   end
 
   newproperty(:target) do
-    desc "Where the cron job should be stored.  For crontab-style
-      entries this is the same as the user and defaults that way.
-      Other providers default accordingly."
+    desc "The username that will own the cron entry. Defaults to 
+    the value of $USER for the shell that invoked Puppet, or root if $USER
+    is empty."
 
     defaultto {
       if provider.is_a?(@resource.class.provider(:crontab))
@@ -366,7 +374,7 @@ Puppet::Type.newtype(:cron) do
           val
         else
           raise ArgumentError,
-            "You must provide a user with crontab entries"
+            "You must provide a username with crontab entries"
         end
       elsif provider.class.ancestors.include?(Puppet::Provider::ParsedFile)
         provider.class.default_target
@@ -381,7 +389,7 @@ Puppet::Type.newtype(:cron) do
   attr_accessor :uid
 
   def value(name)
-    name = symbolize(name)
+    name = name.intern
     ret = nil
     if obj = @parameters[name]
       ret = obj.should

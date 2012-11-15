@@ -20,15 +20,6 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner
 
-  # Convert a string into an instance.
-  def self.from_s(string)
-    instance = wrapped_class.new(string)
-    name = instance.subject.to_s.sub(/\/CN=/i, '').downcase
-    result = new(name)
-    result.content = instance
-    result
-  end
-
   # Because of how the format handler class is included, this
   # can't be in the base class.
   def self.supported_formats
@@ -68,83 +59,13 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    csr.sign(key, OpenSSL::Digest::SHA256.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 
     @content = csr
-    Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"
+    Puppet.info "Certificate Request fingerprint (#{digest.name}): #{digest.to_hex}"
     @content
-  end
-
-  # Return the set of extensions requested on this CSR, in a form designed to
-  # be useful to Ruby: a hash.  Which, not coincidentally, you can pass
-  # successfully to the OpenSSL constructor later, if you want.
-  def request_extensions
-    raise Puppet::Error, "CSR needs content to extract fields" unless @content
-
-    # Prefer the standard extReq, but accept the Microsoft specific version as
-    # a fallback, if the standard version isn't found.
-    ext = @content.attributes.find {|x| x.oid == "extReq" } or
-      @content.attributes.find {|x| x.oid == "msExtReq" }
-    return [] unless ext
-
-    # Assert the structure and extract the names into an array of arrays.
-    unless ext.value.is_a? OpenSSL::ASN1::Set
-      raise Puppet::Error, "In #{ext.oid}, expected Set but found #{ext.value.class}"
-    end
-
-    unless ext.value.value.is_a? Array
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array] but found #{ext.value.value.class}"
-    end
-
-    unless ext.value.value.length == 1
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[...]], but found #{ext.value.value.length} items in the array"
-    end
-
-    san = ext.value.value.first
-    unless san.is_a? OpenSSL::ASN1::Sequence
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[Sequence[...]]], but found #{san.class}"
-    end
-    san = san.value
-
-    # OK, now san should be the array of items, validate that...
-    index = -1
-    san.map do |name|
-      index += 1
-
-      unless name.is_a? OpenSSL::ASN1::Sequence
-        raise Puppet::Error, "In #{ext.oid}, expected request extension record #{index} to be a Sequence, but found #{name.class}"
-      end
-      name = name.value
-
-      # OK, turn that into an extension, to unpack the content.  Lovely that
-      # we have to swap the order of arguments to the underlying method, or
-      # perhaps that the ASN.1 representation chose to pack them in a
-      # strange order where the optional component comes *earlier* than the
-      # fixed component in the sequence.
-      case name.length
-      when 2
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[1].value)
-        { "oid" => ev.oid, "value" => ev.value }
-
-      when 3
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[2].value, name[1].value)
-        { "oid" => ev.oid, "value" => ev.value, "critical" => ev.critical? }
-
-      else
-        raise Puppet::Error, "In #{ext.oid}, expected extension record #{index} to have two or three items, but found #{name.length}"
-      end
-    end.flatten
-  end
-
-  def subject_alt_names
-    @subject_alt_names ||= request_extensions.
-      select {|x| x["oid"] = "subjectAltName" }.
-      map {|x| x["value"].split(/\s*,\s*/) }.
-      flatten.
-      sort.
-      uniq
   end
 
   # Return the set of extensions requested on this CSR, in a form designed to

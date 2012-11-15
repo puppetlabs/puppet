@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/posix'
@@ -51,7 +51,7 @@ describe Puppet::Util::POSIX do
 
     describe "and the id is an integer" do
       it "should log an error and return nil if the specified id is greater than the maximum allowed ID" do
-        Puppet.settings.expects(:value).with(:maximum_uid).returns 100
+        Puppet[:maximum_uid] = 100
         Puppet.expects(:err)
 
         @posix.get_posix_field("asdf", "bar", 200).should be_nil
@@ -247,9 +247,5 @@ describe Puppet::Util::POSIX do
 
   it "should be able to iteratively search for posix values" do
     @posix.should respond_to(:search_posix_field)
-  end
-
-  describe "when searching for posix values iteratively" do
-    it "should iterate across all of the structs returned by Etc and return the appropriate field from the first matching value"
   end
 end

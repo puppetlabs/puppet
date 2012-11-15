@@ -3,6 +3,7 @@ require 'csv'
 module Puppet::Parser::Functions
   newfunction(:extlookup,
   :type => :rvalue,
+  :arity => -2,
   :doc => "This is a parser function to read data from external files, this version
 uses CSV files but the concept can easily be adjust for databases, yaml
 or any other queryable data source.
@@ -50,7 +51,7 @@ Now create the following data files in /etc/puppet/manifests/extdata:
 Now you can replace the case statement with the simple single line to achieve
 the exact same outcome:
 
-   $snmp_contact = extlookup(\"snmp_contact\")
+    $snmp_contact = extlookup(\"snmp_contact\")
 
 The above code shows some other features, you can use any fact or variable that
 is in scope by simply using %{varname} in your data files, you can return arrays
@@ -60,7 +61,7 @@ In the event that a variable is nowhere to be found a critical error will be rai
 that will prevent your manifest from compiling, this is to avoid accidentally putting
 in empty values etc.  You can however specify a default value:
 
-   $ntp_servers = extlookup(\"ntp_servers\", \"1.${country}.pool.ntp.org\")
+    $ntp_servers = extlookup(\"ntp_servers\", \"1.${country}.pool.ntp.org\")
 
 In this case it will default to \"1.${country}.pool.ntp.org\" if nothing is defined in
 any data file.
@@ -89,7 +90,7 @@ This is for back compatibility to interpolate variables with %. % interpolation 
   default  = args[1]
   datafile = args[2]
 
-  raise Puppet::ParseError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
+  raise ArgumentError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
 
   extlookup_datadir = undef_as('',self['::extlookup_datadir'])
 

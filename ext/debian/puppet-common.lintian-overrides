@@ -1,0 +1,5 @@
+# Man pages are automatically generated, not much to do here
+puppet-common binary: manpage-has-bad-whatis-entry
+puppet-common binary: manpage-has-errors-from-man
+# These are "scripts" but do nothing other than providing documentation
+puppet-common: script-not-executable

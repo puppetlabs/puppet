@@ -1,6 +1,15 @@
 require 'puppet/indirector/active_record'
 
 class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
+
+  desc "A component of ActiveRecord storeconfigs. ActiveRecord-based storeconfigs
+    and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+
+  def initialize
+    Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+    super
+  end
+
   def search(request)
     type   = request_to_type_name(request)
     host   = request.options[:host]

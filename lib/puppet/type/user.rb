@@ -113,8 +113,10 @@ module Puppet
     end
 
     newproperty(:gid) do
-      desc "The user's primary group.  Can be specified numerically or
-        by name."
+      desc "The user's primary group.  Can be specified numerically or by name.
+
+        Note that users on Windows systems do not have a primary group; manage groups
+        with the `groups` attribute instead."
 
       munge do |value|
         if value.is_a?(String) and value =~ /^[-0-9]+$/
@@ -156,14 +158,28 @@ module Puppet
 
     newproperty(:shell) do
       desc "The user's login shell.  The shell must exist and be
-        executable."
+        executable.
+
+        This attribute cannot be managed on Windows systems."
     end
 
     newproperty(:password, :required_features => :manages_passwords) do
       desc %q{The user's password, in whatever encrypted format the local
-        machine requires. Be sure to enclose any value that includes a dollar
-        sign ($) in single quotes (') to avoid accidental variable
-        interpolation.}
+        system requires.
+
+        * Most modern Unix-like systems use salted SHA1 password hashes. You can use
+          Puppet's built-in `sha1` function to generate a hash from a password.
+        * Mac OS X 10.5 and 10.6 also use salted SHA1 hashes.
+        * Mac OS X 10.7 (Lion) uses salted SHA512 hashes. The Puppet Labs [stdlib][]
+          module contains a `str2saltedsha512` function which can generate password
+          hashes for Lion.
+        * Windows passwords can only be managed in cleartext, as there is no Windows API
+          for setting the password hash.
+
+        [stdlib]: https://github.com/puppetlabs/puppetlabs-stdlib/
+
+        Be sure to enclose any value that includes a dollar sign ($) in single
+        quotes (') to avoid accidental variable interpolation.}
 
       validate do |value|
         raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
@@ -234,13 +250,18 @@ module Puppet
           raise ArgumentError, "Group names must be provided, not GID numbers."
         end
         raise ArgumentError, "Group names must be provided as an array, not a comma-separated list." if value.include?(",")
+        raise ArgumentError, "Group names must not be empty. If you want to specify \"no groups\" pass an empty array" if value.empty?
       end
     end
 
     newparam(:name) do
       desc "The user name. While naming limitations vary by operating system,
         it is advisable to restrict names to the lowest common denominator,
-        which is a maximum of 8 characters beginning with a letter."
+        which is a maximum of 8 characters beginning with a letter.
+
+        Note that Puppet considers user names to be case-sensitive, regardless
+        of the platform's own rules; be sure to always use the same case when
+        referring to a given user."
       isnamevar
     end
 
@@ -274,7 +295,8 @@ module Puppet
 
     newparam(:managehome, :boolean => true) do
       desc "Whether to manage the home directory when managing the user.
-        Defaults to `false`."
+        This will create the home directory when `ensure => present`, and
+        delete the home directory when `ensure => absent`. Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -450,7 +472,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Key/value pairs must be seperated by an =" unless value.include?("=")
+        raise ArgumentError, "Key/value pairs must be separated by an =" unless value.include?("=")
       end
     end
 
@@ -484,7 +506,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
       end
     end
 
@@ -498,6 +520,23 @@ module Puppet
       defaultto :minimum
     end
 
+    newproperty(:salt) do
+      desc "This is the 32 byte salt used to generate the PBKDF2 password used in
+            OS X"
+    end
 
+    newproperty(:iterations) do
+      desc "This is the number of iterations of a chained computation of the
+            password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
+            is used in OS X"
+
+      munge do |value|
+        if value.is_a?(String) and value =~/^[-0-9]+$/
+          Integer(value)
+        else
+          value
+        end
+      end
+    end
   end
 end

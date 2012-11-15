@@ -1,14 +1,8 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/content'
-require 'shared_behaviours/file_serving'
 
-describe Puppet::FileServing::Content, " when finding files" do
-  it_should_behave_like "Puppet::FileServing::Files"
-
-  before do
-    @test_class = Puppet::FileServing::Content
-    @indirection = Puppet::FileServing::Content.indirection
-  end
+describe Puppet::FileServing::Content do
+  it_should_behave_like "a file_serving model"
 end

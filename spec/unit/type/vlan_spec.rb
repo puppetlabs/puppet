@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:vlan) do
@@ -12,7 +12,7 @@ describe Puppet::Type.type(:vlan) do
   end
 
   it "should be applied on device" do
-    Puppet::Type.type(:vlan).new(:name => "200").should be_appliable_to_device
+    Puppet::Type.type(:vlan).new(:name => "200").must be_appliable_to_device
   end
 
   it "should have an ensure property" do

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/device'
@@ -23,10 +23,6 @@ describe Puppet::Application::Device do
     @device.class.run_mode.name.should == :agent
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @device.should_parse_config?.should be_true
-  end
-
   it "should declare a main command" do
     @device.should respond_to(:main)
   end
@@ -44,6 +40,12 @@ describe Puppet::Application::Device do
       Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @device.preinit
+    end
+
+    it "should init waitforcert to nil" do
+      @device.preinit
+
+      @device.options[:waitforcert].should be_nil
     end
   end
 
@@ -78,6 +80,12 @@ describe Puppet::Application::Device do
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @device.setup_host
+    end
+
+    it "should use the waitforcert setting when checking for a signed certificate" do
+      Puppet[:waitforcert] = 10
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
       @device.setup_host
     end
 
@@ -163,10 +171,10 @@ describe Puppet::Application::Device do
         end
       end
 
-      it "should set syslog as the log destination if no --logdest" do
+      it "should set a default log destination if no --logdest" do
         @device.options.stubs(:[]).with(:setdest).returns(false)
 
-        Puppet::Util::Log.expects(:newdestination).with(:syslog)
+        Puppet::Util::Log.expects(:setup_default)
 
         @device.setup_logs
       end
@@ -201,22 +209,41 @@ describe Puppet::Application::Device do
       @device.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet[:catalog_terminus] = :foo
-      @device.setup
+    it "should default the catalog_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
       Puppet[:catalog_terminus].should ==  :rest
     end
 
-    it "should tell the catalog handler to use cache" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
+    it "should default the node_terminus setting to 'rest'" do
+      @device.initialize_app_defaults
+      Puppet[:node_terminus].should ==  :rest
+    end
 
+    it "has an application default :catalog_cache_terminus setting of 'json'" do
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+
+      @device.initialize_app_defaults
       @device.setup
     end
 
-    it "should change the facts_terminus setting to 'network_device'" do
-      Puppet[:facts_terminus] = :foo
+    it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
+      Puppet[:catalog_cache_terminus] = "yaml"
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
 
+      @device.initialize_app_defaults
       @device.setup
+    end
+
+    it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
+      Puppet[:catalog_cache_terminus] = nil
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+
+      @device.initialize_app_defaults
+      @device.setup
+    end
+
+    it "should default the facts_terminus setting to 'network_device'" do
+      @device.initialize_app_defaults
       Puppet[:facts_terminus].should == :network_device
     end
   end
@@ -320,22 +347,67 @@ describe Puppet::Application::Device do
 
       [:vardir, :confdir].each do |setting|
         it "should cleanup the #{setting} setting after the run" do
-          configurer = states('configurer').starts_as('notrun')
-          Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy/devices/device1"), :cli).when(configurer.is('notrun'))
-          @configurer.expects(:run).twice.then(configurer.is('run'))
-          Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy"), :cli).when(configurer.is('run'))
+          all_devices = Set.new(@device_hash.keys.map do |device_name| make_absolute("/dummy/devices/#{device_name}") end)
+          found_devices = Set.new()
+
+          # a block to use in a few places later to validate the arguments passed to "set_value"
+          p = Proc.new do |my_setting, my_value, my_type|
+            success =
+                  (my_setting == setting) &&
+                    (my_type == :cli) &&
+                    (all_devices.include?(my_value))
+                found_devices.add(my_value) if success
+                success
+          end
+
+          seq = sequence("clean up dirs")
+
+          all_devices.size.times do
+            ## one occurrence of set / run / set("/dummy") for each device
+            Puppet.settings.expects(:set_value).with(&p).in_sequence(seq)
+            @configurer.expects(:run).in_sequence(seq)
+            Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy"), :cli).in_sequence(seq)
+          end
+
 
           @device.main
+
+          # make sure that we were called with each of the defined devices
+          all_devices.should == found_devices
+
         end
       end
 
       it "should cleanup the certname setting after the run" do
-        configurer = states('configurer').starts_as('notrun')
-        Puppet.settings.expects(:set_value).with(:certname, "device1", :cli).when(configurer.is('notrun'))
-        @configurer.expects(:run).twice.then(configurer.is('run'))
-        Puppet.settings.expects(:set_value).with(:certname, "certname", :cli).when(configurer.is('run'))
+        all_devices = Set.new(@device_hash.keys)
+        found_devices = Set.new()
+
+        # a block to use in a few places later to validate the arguments passed to "set_value"
+        p = Proc.new do |my_setting, my_value, my_type|
+          success =
+              (my_setting == :certname) &&
+                  (my_type == :cli) &&
+                  (all_devices.include?(my_value))
+          found_devices.add(my_value) if success
+          success
+          #true
+        end
+
+        seq = sequence("clean up certname")
+
+        all_devices.size.times do
+          ## one occurrence of set / run / set("certname") for each device
+          Puppet.settings.expects(:set_value).with(&p).in_sequence(seq)
+          @configurer.expects(:run).in_sequence(seq)
+          Puppet.settings.expects(:set_value).with(:certname, "certname", :cli).in_sequence(seq)
+        end
+
 
         @device.main
+
+        # make sure that we were called with each of the defined devices
+        all_devices.should == found_devices
+
       end
 
       it "should expire all cached attributes" do

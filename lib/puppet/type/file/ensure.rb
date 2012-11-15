@@ -1,16 +1,21 @@
+
 module Puppet
   Puppet::Type.type(:file).ensurable do
     require 'etc'
-    desc <<-EOT
+    require 'puppet/util/symbolic_file_mode'
+    include Puppet::Util::SymbolicFileMode
+
+    desc <<-'EOT'
       Whether to create files that don't currently exist.
       Possible values are *absent*, *present*, *file*, and *directory*.
       Specifying `present` will match any form of file existence, and
       if the file is missing will create an empty file. Specifying
-      `absent` will delete the file (and directory if `recurse => true`).
+      `absent` will delete the file (or directory, if `recurse => true`).
 
-      Anything other than those values will create a symlink. In the interest
-      of readability and clarity, you should use `ensure => link` and
-      explicitly specify a target; however, if a `target` attribute isn't
+      Anything other than the above values will create a symlink; note that
+      symlinks cannot be managed on Windows. In the interest of readability
+      and clarity, symlinks should be created by setting `ensure => link` and
+      explicitly specifying a target; however, if a `target` attribute isn't
       provided, the value of the `ensure` attribute will be used as the
       symlink target. The following two declarations are equivalent:
 
@@ -63,7 +68,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path], mode.to_i(8))
+          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 755, true))
         end
       else
         Dir.mkdir(@resource[:path])

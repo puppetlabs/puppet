@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the Daemontools service Provider
 #

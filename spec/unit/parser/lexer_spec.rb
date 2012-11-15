@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parser/lexer'
@@ -10,6 +10,13 @@ RSpec::Matchers.define :be_like do |*expected|
   end
 end
 __ = nil
+
+def tokens_scanned_from(s)
+  lexer = Puppet::Parser::Lexer.new
+  lexer.string = s
+  lexer.fullscan[0..-2]
+end
+
 
 describe Puppet::Parser::Lexer do
   describe "when reading strings" do
@@ -36,6 +43,18 @@ describe Puppet::Parser::Lexer do
       @lexer.slurpstring("'")
 
       @lexer.line.should == 13
+    end
+
+    {
+      'r'  => "\r",
+      'n'  => "\n",
+      't'  => "\t",
+      's'  => " "
+    }.each do |esc, expected_result|
+      it "should recognize \\#{esc} sequence" do
+        @lexer.string = "\\#{esc}'"
+        @lexer.slurpstring("'")[0].should == expected_result
+      end
     end
   end
 end
@@ -98,7 +117,7 @@ describe Puppet::Parser::Lexer::TokenList do
 
   it "should fail to add tokens sharing a name with an existing token" do
     @list.add_token :name, "whatever"
-    lambda { @list.add_token :name, "whatever" }.should raise_error(ArgumentError)
+    expect { @list.add_token :name, "whatever" }.to raise_error(ArgumentError)
   end
 
   it "should set provided options on tokens being added" do
@@ -212,6 +231,7 @@ describe Puppet::Parser::Lexer::TOKENS do
     "false" => :FALSE,
     "true" => :TRUE,
     "in" => :IN,
+    "unless" => :UNLESS,
   }.each do |string, name|
     it "should have a keyword named #{name.to_s}" do
       Puppet::Parser::Lexer::KEYWORDS[name].should_not be_nil
@@ -406,10 +426,153 @@ describe Puppet::Parser::Lexer::TOKENS[:RETURN] do
   end
 end
 
-def tokens_scanned_from(s)
-  lexer = Puppet::Parser::Lexer.new
-  lexer.string = s
-  lexer.fullscan[0..-2]
+
+shared_examples_for "handling `-` in standard variable names" do |prefix|
+  # Watch out - a regex might match a *prefix* on these, not just the whole
+  # word, so make sure you don't have false positive or negative results based
+  # on that.
+  legal   = %w{f foo f::b foo::b f::bar foo::bar 3 foo3 3foo}
+  illegal = %w{f- f-o -f f::-o f::o- f::o-o}
+
+  ["", "::"].each do |global_scope|
+    legal.each do |name|
+      var = prefix + global_scope + name
+      it "should accept #{var.inspect} as a valid variable name" do
+        (subject.regex.match(var) || [])[0].should == var
+      end
+    end
+
+    illegal.each do |name|
+      var = prefix + global_scope + name
+      it "when `variable_with_dash` is disabled it should NOT accept #{var.inspect} as a valid variable name" do
+        Puppet[:allow_variables_with_dashes] = false
+        (subject.regex.match(var) || [])[0].should_not == var
+      end
+
+      it "when `variable_with_dash` is enabled it should NOT accept #{var.inspect} as a valid variable name" do
+        Puppet[:allow_variables_with_dashes] = true
+        (subject.regex.match(var) || [])[0].should_not == var
+      end
+    end
+  end
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:DOLLAR_VAR] do
+  its(:skip_text) { should be_false }
+  its(:incr_line) { should be_false }
+
+  it_should_behave_like "handling `-` in standard variable names", '$'
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:VARIABLE] do
+  its(:skip_text) { should be_false }
+  its(:incr_line) { should be_false }
+
+  it_should_behave_like "handling `-` in standard variable names", ''
+end
+
+describe "the horrible deprecation / compatibility variables with dashes" do
+  NamesWithDashes = %w{f- f-o -f f::-o f::o- f::o-o}
+
+  { Puppet::Parser::Lexer::TOKENS[:DOLLAR_VAR_WITH_DASH] => '$',
+    Puppet::Parser::Lexer::TOKENS[:VARIABLE_WITH_DASH]   => ''
+  }.each do |token, prefix|
+    describe token do
+      its(:skip_text) { should be_false }
+      its(:incr_line) { should be_false }
+
+      context "when compatibly is disabled" do
+        before :each do Puppet[:allow_variables_with_dashes] = false end
+        Puppet::Parser::Lexer::TOKENS.each do |name, value|
+          it "should be unacceptable after #{name}" do
+            token.acceptable?(:after => name).should be_false
+          end
+        end
+
+        # Yes, this should still *match*, just not be acceptable.
+        NamesWithDashes.each do |name|
+          ["", "::"].each do |global_scope|
+            var = prefix + global_scope + name
+            it "should match #{var.inspect}" do
+              subject.regex.match(var).to_a.should == [var]
+            end
+          end
+        end
+      end
+
+      context "when compatibility is enabled" do
+        before :each do Puppet[:allow_variables_with_dashes] = true end
+        it "should be acceptable after DQPRE" do
+          token.acceptable?(:after => :DQPRE).should be_true
+        end
+
+        NamesWithDashes.each do |name|
+          ["", "::"].each do |global_scope|
+            var = prefix + global_scope + name
+            it "should match #{var.inspect}" do
+              subject.regex.match(var).to_a.should == [var]
+            end
+          end
+        end
+      end
+    end
+  end
+
+  context "deprecation warnings" do
+    before :each do Puppet[:allow_variables_with_dashes] = true end
+
+    it "should match a top level variable" do
+      Puppet.expects(:deprecation_warning).once
+
+      tokens_scanned_from('$foo-bar').should == [
+        [:VARIABLE, { :value => 'foo-bar', :line => 1 }]
+      ]
+    end
+
+    it "does not warn about a variable without a dash" do
+      Puppet.expects(:deprecation_warning).never
+
+      tokens_scanned_from('$c').should == [
+        [:VARIABLE, { :value => "c", :line => 1 }]
+      ]
+    end
+
+    it "does not warn about referencing a class name that contains a dash" do
+      Puppet.expects(:deprecation_warning).never
+
+      tokens_scanned_from('foo-bar').should == [
+        [:NAME, { :value => "foo-bar", :line => 1 }]
+      ]
+    end
+
+    it "warns about reference to variable" do
+      Puppet.expects(:deprecation_warning).once
+
+      tokens_scanned_from('$::foo-bar::baz-quux').should == [
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }]
+      ]
+    end
+
+    it "warns about reference to variable interpolated in a string" do
+      Puppet.expects(:deprecation_warning).once
+
+      tokens_scanned_from('"$::foo-bar::baz-quux"').should == [
+        [:DQPRE,    { :value => "",                    :line => 1 }],
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }],
+        [:DQPOST,   { :value => "",                    :line => 1 }],
+      ]
+    end
+
+    it "warns about reference to variable interpolated in a string as an expression" do
+      Puppet.expects(:deprecation_warning).once
+
+      tokens_scanned_from('"${::foo-bar::baz-quux}"').should == [
+        [:DQPRE,    { :value => "",                    :line => 1 }],
+        [:VARIABLE, { :value => "::foo-bar::baz-quux", :line => 1 }],
+        [:DQPOST,   { :value => "",                    :line => 1 }],
+      ]
+    end
+  end
 end
 
 describe Puppet::Parser::Lexer,"when lexing strings" do
@@ -419,6 +582,7 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string with an escaped "\\'"'}                => [[:STRING,'single quoted string with an escaped "\'"']],
     %q{'single quoted string with an escaped "\$"'}                 => [[:STRING,'single quoted string with an escaped "\$"']],
     %q{'single quoted string with an escaped "\."'}                 => [[:STRING,'single quoted string with an escaped "\."']],
+    %q{'single quoted string with an escaped "\r\n"'}               => [[:STRING,'single quoted string with an escaped "\r\n"']],
     %q{'single quoted string with an escaped "\n"'}                 => [[:STRING,'single quoted string with an escaped "\n"']],
     %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
@@ -595,11 +759,11 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should fail usefully" do
-    lambda { tokens_scanned_from('^') }.should raise_error(RuntimeError)
+    expect { tokens_scanned_from('^') }.to raise_error(RuntimeError)
   end
 
   it "should fail if the string is not set" do
-    lambda { @lexer.fullscan }.should raise_error(Puppet::LexError)
+    expect { @lexer.fullscan }.to raise_error(Puppet::LexError)
   end
 
   it "should correctly identify keywords" do
@@ -624,7 +788,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly parse empty strings" do
-    lambda { tokens_scanned_from('$var = ""') }.should_not raise_error
+    expect { tokens_scanned_from('$var = ""') }.to_not raise_error
   end
 
   it "should correctly parse virtual resources" do
@@ -663,9 +827,14 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly lex variables" do
-    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable", "$hyphenated-variable", "$-variable-with-leading-dash"].each do |string|
+    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
       tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
     end
+  end
+
+  it "should end variables at `-`" do
+    tokens_scanned_from('$hyphenated-variable').
+      should be_like [:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable']
   end
 
   it "should not include whitespace in a variable" do
@@ -681,7 +850,7 @@ describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file
-      lambda { lexer.fullscan }.should_not raise_error
+      expect { lexer.fullscan }.to_not raise_error
     end
   end
 end

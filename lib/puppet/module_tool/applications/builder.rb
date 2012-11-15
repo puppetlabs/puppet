@@ -1,11 +1,11 @@
 require 'fileutils'
 
-module Puppet::Module::Tool
+module Puppet::ModuleTool
   module Applications
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(Puppet::Module::Tool.find_module_root(path))
+        @path = File.expand_path(path)
         @pkg_path = File.join(@path, 'pkg')
         super(options)
       end
@@ -61,7 +61,7 @@ module Puppet::Module::Tool
       def create_directory
         FileUtils.mkdir(@pkg_path) rescue nil
         if File.directory?(build_path)
-          FileUtils.rm_rf(build_path)
+          FileUtils.rm_rf(build_path, :secure => true)
         end
         FileUtils.mkdir(build_path)
       end
@@ -69,7 +69,7 @@ module Puppet::Module::Tool
       def copy_contents
         Dir[File.join(@path, '*')].each do |path|
           case File.basename(path)
-          when *Puppet::Module::Tool::ARTIFACTS
+          when *Puppet::ModuleTool::ARTIFACTS
             next
           else
             FileUtils.cp_r path, build_path

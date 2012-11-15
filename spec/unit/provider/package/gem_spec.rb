@@ -1,96 +1,155 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:gem)
 
 describe provider_class do
-  it "should have an install method" do
-    @provider = provider_class.new
-    @provider.should respond_to(:install)
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => 'myresource',
+      :ensure   => :installed
+    )
+  end
+
+  let(:provider) do
+    provider = provider_class.new
+    provider.resource = resource
+    provider
   end
 
   describe "when installing" do
-    before do
-      # Create a mock resource
-      @resource = stub 'resource'
-
-      # A catch all; no parameters set
-      @resource.stubs(:[]).returns nil
-
-      # We have to set a name, though
-      @resource.stubs(:[]).with(:name).returns "myresource"
-      @resource.stubs(:[]).with(:ensure).returns :installed
-
-      @provider = provider_class.new
-      @provider.stubs(:resource).returns @resource
-    end
-
     it "should use the path to the gem" do
       provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
-      @provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
+      provider.install
     end
 
     it "should specify that the gem is being installed" do
-      @provider.expects(:execute).with { |args| args[1] == "install" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[1] == "install" }.returns ""
+      provider.install
     end
 
     it "should specify that dependencies should be included" do
-      @provider.expects(:execute).with { |args| args[2] == "--include-dependencies" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[2] == "--include-dependencies" }.returns ""
+      provider.install
     end
 
     it "should specify that documentation should not be included" do
-      @provider.expects(:execute).with { |args| args[3] == "--no-rdoc" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[3] == "--no-rdoc" }.returns ""
+      provider.install
     end
 
     it "should specify that RI should not be included" do
-      @provider.expects(:execute).with { |args| args[4] == "--no-ri" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[4] == "--no-ri" }.returns ""
+      provider.install
     end
 
     it "should specify the package name" do
-      @provider.expects(:execute).with { |args| args[5] == "myresource" }.returns ""
-      @provider.install
+      provider.expects(:execute).with { |args| args[5] == "myresource" }.returns ""
+      provider.install
     end
 
     describe "when a source is specified" do
       describe "as a normal file" do
         it "should use the file name instead of the gem name" do
-          @resource.stubs(:[]).with(:source).returns "/my/file"
-          @provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
-          @provider.install
+          resource[:source] = "/my/file"
+          provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+          provider.install
         end
       end
       describe "as a file url" do
         it "should use the file name instead of the gem name" do
-          @resource.stubs(:[]).with(:source).returns "file:///my/file"
-          @provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
-          @provider.install
+          resource[:source] = "file:///my/file"
+          provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+          provider.install
         end
       end
       describe "as a puppet url" do
         it "should fail" do
-          @resource.stubs(:[]).with(:source).returns "puppet://my/file"
-          lambda { @provider.install }.should raise_error(Puppet::Error)
+          resource[:source] = "puppet://my/file"
+          lambda { provider.install }.should raise_error(Puppet::Error)
         end
       end
       describe "as a non-file and non-puppet url" do
         it "should treat the source as a gem repository" do
-          @resource.stubs(:[]).with(:source).returns "http://host/my/file"
-          @provider.expects(:execute).with { |args| args[3..5] == ["--source", "http://host/my/file", "myresource"] }.returns ""
-          @provider.install
+          resource[:source] = "http://host/my/file"
+          provider.expects(:execute).with { |args| args[3..5] == ["--source", "http://host/my/file", "myresource"] }.returns ""
+          provider.install
         end
       end
       describe "with an invalid uri" do
         it "should fail" do
           URI.expects(:parse).raises(ArgumentError)
-          @resource.stubs(:[]).with(:source).returns "http:::::uppet:/:/my/file"
-          lambda { @provider.install }.should raise_error(Puppet::Error)
+          resource[:source] = "http:::::uppet:/:/my/file"
+          lambda { provider.install }.should raise_error(Puppet::Error)
         end
       end
+    end
+  end
+
+  describe "#latest" do
+    it "should return a single value for 'latest'" do
+      #gemlist is used for retrieving both local and remote version numbers, and there are cases
+      # (particularly local) where it makes sense for it to return an array.  That doesn't make
+      # sense for '#latest', though.
+      provider.class.expects(:gemlist).with({ :justme => 'myresource'}).returns({
+          :name     => 'myresource',
+          :ensure   => ["3.0"],
+          :provider => :gem,
+          })
+      provider.latest.should == "3.0"
+    end
+
+    it "should list from the specified source repository" do
+      resource[:source] = "http://foo.bar.baz/gems"
+      provider.class.expects(:gemlist).
+        with({:justme => 'myresource', :source => "http://foo.bar.baz/gems"}).
+        returns({
+          :name     => 'myresource',
+          :ensure   => ["3.0"],
+          :provider => :gem,
+          })
+      provider.latest.should == "3.0"
+    end
+  end
+
+  describe "#instances" do
+    before do
+      provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+    end
+
+    it "should return an empty array when no gems installed" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns("\n")
+      provider_class.instances.should == []
+    end
+
+    it "should return ensure values as an array of installed versions" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        systemu (1.2.0)
+        vagrant (0.8.7, 0.6.9)
+      HEREDOC
+
+      provider_class.instances.map {|p| p.properties}.should == [
+        {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
+        {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
+      ]
+    end
+
+    it "should not fail when an unmatched line is returned" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).
+        returns(File.read(my_fixture('line-with-1.8.5-warning')))
+
+      provider_class.instances.map {|p| p.properties}.
+        should == [{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
+                   {:provider=>:gem, :ensure=>["1.1.3"], :name=>"diff-lcs"},
+                   {:provider=>:gem, :ensure=>["0.0.1"], :name=>"metaclass"},
+                   {:provider=>:gem, :ensure=>["0.10.5"], :name=>"mocha"},
+                   {:provider=>:gem, :ensure=>["0.8.7"], :name=>"rake"},
+                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-core"},
+                   {:provider=>:gem, :ensure=>["2.9.1"], :name=>"rspec-expectations"},
+                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-mocks"},
+                   {:provider=>:gem, :ensure=>["0.9.0"], :name=>"rubygems-bundler"},
+                   {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}]
     end
   end
 end

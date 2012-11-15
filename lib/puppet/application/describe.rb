@@ -170,8 +170,6 @@ end
 class Puppet::Application::Describe < Puppet::Application
   banner "puppet describe [options] [type]"
 
-  should_not_parse_config
-
   option("--short", "-s", "Only list parameters without detail") do |arg|
     options[:parameters] = false
   end
@@ -181,7 +179,7 @@ class Puppet::Application::Describe < Puppet::Application
   option("--meta","-m")
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-describe(8) -- Display help about resource types
 ========

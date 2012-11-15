@@ -14,7 +14,7 @@ class Puppet::Configurer
   # For benchmarking
   include Puppet::Util
 
-  attr_reader :compile_time
+  attr_reader :compile_time, :environment
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
@@ -22,20 +22,10 @@ class Puppet::Configurer
   end
 
   class << self
-    # Puppetd should only have one instance running, and we need a way
-    # to retrieve it.
+    # Puppet agent should only have one instance running, and we need a
+    # way to retrieve it.
     attr_accessor :instance
     include Puppet::Util
-  end
-
-  # How to lock instances of this class.
-  def self.lockfile_path
-    Puppet[:puppetdlockfile]
-  end
-
-  def clear
-    @catalog.clear(true) if @catalog
-    @catalog = nil
   end
 
   def execute_postrun_command
@@ -47,18 +37,17 @@ class Puppet::Configurer
   end
 
   # Initialize and load storage
-  def dostorage
+  def init_storage
       Puppet::Util::Storage.load
       @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Corrupt state file #{Puppet[:statefile]}: #{detail}"
-      begin
-        ::File.unlink(Puppet[:statefile])
-        retry
-      rescue => detail
-        raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
-      end
+    Puppet.log_exception(detail, "Removing corrupt state file #{Puppet[:statefile]}: #{detail}")
+    begin
+      ::File.unlink(Puppet[:statefile])
+      retry
+    rescue => detail
+      raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
+    end
   end
 
   # Just so we can specify that we are "the" instance.
@@ -68,15 +57,7 @@ class Puppet::Configurer
     self.class.instance = self
     @running = false
     @splayed = false
-  end
-
-  # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare(options)
-    dostorage
-
-    download_plugins unless options[:skip_plugin_download]
-
-    download_fact_plugins unless options[:skip_plugin_download]
+    @environment = Puppet[:environment]
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -106,17 +87,36 @@ class Puppet::Configurer
     catalog
   end
 
-  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
-  # the options, then apply that one, otherwise retrieve it.
-  def retrieve_and_apply_catalog(options, fact_options)
+  def get_facts(options)
+    download_plugins if options[:pluginsync]
+
+    if Puppet::Resource::Catalog.indirection.terminus_class == :rest
+      # This is a bit complicated.  We need the serialized and escaped facts,
+      # and we need to know which format they're encoded in.  Thus, we
+      # get a hash with both of these pieces of information.
+      #
+      # facts_for_uploading may set Puppet[:node_name_value] as a side effect
+      return facts_for_uploading
+    end
+  end
+
+  def prepare_and_retrieve_catalog(options, fact_options)
+    # set report host name now that we have the fact
+    options[:report].host = Puppet[:node_name_value]
+
     unless catalog = (options.delete(:catalog) || retrieve_catalog(fact_options))
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
+    catalog
+  end
 
+  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
+  # the options, then apply that one, otherwise retrieve it.
+  def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
-    report.environment = Puppet[:environment]
+    report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -132,39 +132,64 @@ class Puppet::Configurer
   def run(options = {})
     options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
+    init_storage
 
     Puppet::Util::Log.newdestination(report)
     begin
-      prepare(options)
-
-      if Puppet::Resource::Catalog.indirection.terminus_class == :rest
-        # This is a bit complicated.  We need the serialized and escaped facts,
-        # and we need to know which format they're encoded in.  Thus, we
-        # get a hash with both of these pieces of information.
-        fact_options = facts_for_uploading
+      unless Puppet[:node_name_fact].empty?
+        fact_options = get_facts(options)
       end
-
-      # set report host name now that we have the fact
-      report.host = Puppet[:node_name_value]
 
       begin
-        execute_prerun_command or return nil
-        retrieve_and_apply_catalog(options, fact_options)
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Failed to apply catalog: #{detail}"
-        return nil
-      ensure
-        execute_postrun_command or return nil
+        if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+            :environment => @environment, :ignore_cache => true)
+          if node.environment.to_s != @environment
+            Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
+            @environment = node.environment.to_s
+            fact_options = nil
+          end
+        end
+      rescue Puppet::Error, Net::HTTPError => detail
+        Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
+        Puppet.warning(detail)
       end
+
+      fact_options = get_facts(options) unless fact_options
+
+      unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+        return nil
+      end
+
+      # Here we set the local environment based on what we get from the
+      # catalog. Since a change in environment means a change in facts, and
+      # facts may be used to determine which catalog we get, we need to
+      # rerun the process if the environment is changed.
+      tries = 0
+      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
+        if tries > 3
+          raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
+        end
+        Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
+        @environment = catalog.environment
+        return nil unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+        tries += 1
+      end
+
+      execute_prerun_command or return nil
+      apply_catalog(catalog, options)
+      report.exit_status
+    rescue => detail
+      Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
+      return nil
     ensure
-      # Make sure we forget the retained module_directories of any autoload
-      # we might have used.
-      Thread.current[:env_module_directories] = nil
+      execute_postrun_command or return nil
     end
   ensure
+    # Between Puppet runs we need to forget the cached values.  This lets us
+    # pick up on new functions installed by gems or new modules being added
+    # without the daemon being restarted.
+    Thread.current[:env_module_directories] = nil
+
     Puppet::Util::Log.close(report)
     send_report(report)
   end
@@ -172,57 +197,30 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
+    Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not send report: #{detail}"
+    Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
 
   def save_last_run_summary(report)
-    last_run = Puppet.settings.setting(:lastrunfile)
-    last_run.create = true # force file creation
-
-    resource = last_run.to_resource
-    resource[:content] = YAML.dump(report.raw_summary)
-
-    catalog = Puppet::Resource::Catalog.new("last_run_file")
-    catalog.add_resource(resource)
-    ral = catalog.to_ral
-    ral.host_config = false
-    ral.apply
+    mode = Puppet.settings.setting(:lastrunfile).mode
+    Puppet::Util.replace_file(Puppet[:lastrunfile], mode) do |fh|
+      fh.print YAML.dump(report.raw_summary)
+    end
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not save last run local report: #{detail}"
+    Puppet.log_exception(detail, "Could not save last run local report: #{detail}")
   end
 
   private
-
-  def self.timeout
-    timeout = Puppet[:configtimeout]
-    case timeout
-    when String
-      if timeout =~ /^\d+$/
-        timeout = Integer(timeout)
-      else
-        raise ArgumentError, "Configuration timeout must be an integer"
-      end
-    when Integer # nothing
-    else
-      raise ArgumentError, "Configuration timeout must be an integer"
-    end
-
-    timeout
-  end
 
   def execute_from_setting(setting)
     return true if (command = Puppet[setting]) == ""
 
     begin
-      Puppet::Util.execute([command])
+      Puppet::Util::Execution.execute([command])
       true
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not run command from #{setting}: #{detail}"
+      Puppet.log_exception(detail, "Could not run command from #{setting}: #{detail}")
       false
     end
   end
@@ -230,27 +228,25 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true, :environment => @environment))
     end
     Puppet.notice "Using cached catalog"
     result
   rescue => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not retrieve catalog from cache: #{detail}"
+    Puppet.log_exception(detail, "Could not retrieve catalog from cache: #{detail}")
     return nil
   end
 
   def retrieve_new_catalog(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true, :environment => @environment))
     end
     result
   rescue SystemExit,NoMemoryError
     raise
   rescue Exception => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err "Could not retrieve catalog from remote server: #{detail}"
+    Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
   end
 end

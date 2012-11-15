@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::AST::Collection do
@@ -8,7 +8,7 @@ describe Puppet::Parser::AST::Collection do
     @environment.known_resource_types.add @mytype
 
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode", :environment => @environment))
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope = Puppet::Parser::Scope.new(@compiler)
 
     @overrides = stub_everything 'overrides'
     @overrides.stubs(:is_a?).with(Puppet::Parser::AST).returns(true)

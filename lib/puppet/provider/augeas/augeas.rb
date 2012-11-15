@@ -17,12 +17,14 @@ require 'augeas' if Puppet.features.augeas?
 require 'strscan'
 require 'puppet/util'
 require 'puppet/util/diff'
+require 'puppet/util/package'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
   include Puppet::Util::Diff
+  include Puppet::Util::Package
 
-  confine :true => Puppet.features.augeas?
+  confine :feature => :augeas
 
   has_features :parse_commands, :need_to_run?,:execute_changes
 
@@ -151,18 +153,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
 
       root = resource[:root]
-      load_path = resource[:load_path]
+      load_path = get_load_path(resource)
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
-      debug("Augeas version #{get_augeas_version} is installed") if get_augeas_version >= "0.3.6"
+      debug("Augeas version #{get_augeas_version} is installed") if versioncmp(get_augeas_version, "0.3.6") >= 0
 
+      # Optimize loading if the context is given and it's a simple path,
+      # requires the glob function from Augeas 0.8.2 or up
       glob_avail = !aug.match("/augeas/version/pathx/functions/glob").empty?
+      opt_ctx = resource[:context].match("^/files/[^'\"\\[\\]]+$") if resource[:context]
 
+      restricted = false
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
-      elsif glob_avail and resource[:context] and resource[:context].match("^/files/")
+        restricted = true
+      elsif glob_avail and opt_ctx
+        restricted = true
         # Optimize loading if the context is given, requires the glob function
         # from Augeas 0.8.2 or up
         ctx_path = resource[:context].sub(/^\/files(.*?)\/?$/, '\1/')
@@ -170,12 +178,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         if aug.match(load_path).size < aug.match("/augeas/load/*").size
           aug.rm(load_path)
+          restricted = true
         else
           # This will occur if the context is less specific than any glob
           debug("Unable to optimize files loaded by context path, no glob matches")
         end
       end
       aug.load
+      print_load_errors(:warning => restricted)
     end
     @aug
   end
@@ -271,6 +281,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     !!return_value
   end
 
+  # Generate lens load paths from user given paths and local pluginsync dir
+  def get_load_path(resource)
+    load_path = []
+
+    # Permits colon separated strings or arrays
+    if resource[:load_path]
+      load_path = [resource[:load_path]].flatten
+      load_path.map! { |path| path.split(/:/) }
+      load_path.flatten!
+    end
+
+    if File.exists?("#{Puppet[:libdir]}/augeas/lenses")
+      load_path << "#{Puppet[:libdir]}/augeas/lenses"
+    end
+
+    load_path.join(":")
+  end
+
   def get_augeas_version
     @aug.get("/augeas/version") || ""
   end
@@ -279,14 +307,29 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     @aug.set("/augeas/save", mode)
   end
 
+  def print_load_errors(args={})
+    errors = @aug.match("/augeas//error")
+    unless errors.empty?
+      if args[:warning]
+        warning("Loading failed for one or more files, see debug for /augeas//error output")
+      else
+        debug("Loading failed for one or more files, output from /augeas//error:")
+      end
+    end
+    print_errors(errors)
+  end
+
   def print_put_errors
     errors = @aug.match("/augeas//error[. = 'put_failed']")
     debug("Put failed on one or more files, output from /augeas//error:") unless errors.empty?
+    print_errors(errors)
+  end
+
+  def print_errors(errors)
     errors.each do |errnode|
       @aug.match("#{errnode}/*").each do |subnode|
-        sublabel = subnode.split("/")[-1]
         subvalue = @aug.get(subnode)
-        debug("#{sublabel} = #{subvalue}")
+        debug("#{subnode} = #{subvalue}")
       end
     end
   end
@@ -315,10 +358,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
       unless force
         # If we have a verison of augeas which is at least 0.3.6 then we
-        # can make the changes now, see if changes were made, and
-        # actually do the save.
-        if return_value and get_augeas_version >= "0.3.6"
+        # can make the changes now and see if changes were made.
+        if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
+          # Execute in NEWFILE mode so we can show a diff
           set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
@@ -330,14 +373,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           saved_files = @aug.match("/augeas/events/saved")
           if saved_files.size > 0
             root = resource[:root].sub(/^\/$/, "")
-            saved_files.each do |key|
-              saved_file = @aug.get(key).sub(/^\/files/, root)
+            saved_files.map! {|key| @aug.get(key).sub(/^\/files/, root) }
+            saved_files.uniq.each do |saved_file|
               if Puppet[:show_diff]
                 notice "\n" + diff(saved_file, saved_file + ".augnew")
               end
-              if resource.noop?
-                File.delete(saved_file + ".augnew")
-              end
+              File.delete(saved_file + ".augnew")
             end
             debug("Files changed, should execute")
             return_value = true
@@ -356,34 +397,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   end
 
   def execute_changes
-    # Re-connect to augeas, and re-execute the changes
-    begin
-      open_augeas
-      saved_files = @aug.match("/augeas/events/saved")
-      if saved_files
-        saved_files.each do |key|
-          root = resource[:root].sub(/^\/$/, "")
-          saved_file = @aug.get(key).sub(/^\/files/, root)
-          if File.exists?(saved_file + ".augnew")
-            success = File.rename(saved_file + ".augnew", saved_file)
-            debug(saved_file + ".augnew moved to " + saved_file)
-            fail("Rename failed with return code #{success}") if success != 0
-          end
-        end
-      else
-        debug("No saved files, re-executing augeas")
-        set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
-        do_execute_changes
+    # Workaround Augeas bug where changing the save mode doesn't trigger a
+    # reload of the previously saved file(s) when we call Augeas#load
+    @aug.match("/augeas/events/saved").each do |file|
+      @aug.rm("/augeas#{@aug.get(file)}/mtime")
+    end
+
+    # Reload augeas, and execute the changes for real
+    set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
+    @aug.load
+    do_execute_changes
         unless @aug.save
           print_put_errors
           fail("Save failed with return code #{success}, see debug")
         end
-      end
-    ensure
-      close_augeas
-    end
 
     :executed
+  ensure
+    close_augeas
   end
 
   # Actually execute the augeas changes.

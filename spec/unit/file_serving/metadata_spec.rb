@@ -1,10 +1,12 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/metadata'
 
 describe Puppet::FileServing::Metadata do
-  it "should should be a subclass of Base" do
+  let(:foobar) { File.expand_path('/foo/bar') }
+
+  it "should be a subclass of Base" do
     Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::Base)
   end
 
@@ -12,20 +14,16 @@ describe Puppet::FileServing::Metadata do
     Puppet::FileServing::Metadata.indirection.name.should == :file_metadata
   end
 
-  it "should should include the IndirectionHooks module in its indirection" do
-    Puppet::FileServing::Metadata.indirection.singleton_class.included_modules.should include(Puppet::FileServing::IndirectionHooks)
-  end
-
   it "should have a method that triggers attribute collection" do
-    Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:collect)
+    Puppet::FileServing::Metadata.new(foobar).should respond_to(:collect)
   end
 
   it "should support pson serialization" do
-    Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson)
+    Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson)
   end
 
   it "should support to_pson_data_hash" do
-    Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson_data_hash)
+    Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson_data_hash)
   end
 
   it "should support pson deserialization" do
@@ -33,67 +31,66 @@ describe Puppet::FileServing::Metadata do
   end
 
   describe "when serializing" do
-    before do
-      @metadata = Puppet::FileServing::Metadata.new("/foo/bar")
-    end
+    let(:metadata) { Puppet::FileServing::Metadata.new(foobar) }
+
     it "should perform pson serialization by calling to_pson on it's pson_data_hash" do
       pdh = mock "data hash"
       pdh_as_pson = mock "data as pson"
-      @metadata.expects(:to_pson_data_hash).returns pdh
+      metadata.expects(:to_pson_data_hash).returns pdh
       pdh.expects(:to_pson).returns pdh_as_pson
-      @metadata.to_pson.should == pdh_as_pson
+      metadata.to_pson.should == pdh_as_pson
     end
 
     it "should serialize as FileMetadata" do
-      @metadata.to_pson_data_hash['document_type'].should == "FileMetadata"
+      metadata.to_pson_data_hash['document_type'].should == "FileMetadata"
     end
 
     it "the data should include the path, relative_path, links, owner, group, mode, checksum, type, and destination" do
-      @metadata.to_pson_data_hash['data'].keys.sort.should == %w{ path relative_path links owner group mode checksum type destination }.sort
+      metadata.to_pson_data_hash['data'].keys.sort.should == %w{ path relative_path links owner group mode checksum type destination }.sort
     end
 
     it "should pass the path in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['path'] == @metadata.path
+      metadata.to_pson_data_hash['data']['path'] == metadata.path
     end
 
     it "should pass the relative_path in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['relative_path'] == @metadata.relative_path
+      metadata.to_pson_data_hash['data']['relative_path'] == metadata.relative_path
     end
 
     it "should pass the links in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['links'] == @metadata.links
+      metadata.to_pson_data_hash['data']['links'] == metadata.links
     end
 
     it "should pass the path owner in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['owner'] == @metadata.owner
+      metadata.to_pson_data_hash['data']['owner'] == metadata.owner
     end
 
     it "should pass the group in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['group'] == @metadata.group
+      metadata.to_pson_data_hash['data']['group'] == metadata.group
     end
 
     it "should pass the mode in the hash verbatum" do
-      @metadata.to_pson_data_hash['data']['mode'] == @metadata.mode
+      metadata.to_pson_data_hash['data']['mode'] == metadata.mode
     end
 
     it "should pass the ftype in the hash verbatum as the 'type'" do
-      @metadata.to_pson_data_hash['data']['type'] == @metadata.ftype
+      metadata.to_pson_data_hash['data']['type'] == metadata.ftype
     end
 
     it "should pass the destination verbatum" do
-      @metadata.to_pson_data_hash['data']['destination'] == @metadata.destination
+      metadata.to_pson_data_hash['data']['destination'] == metadata.destination
     end
 
     it "should pass the checksum in the hash as a nested hash" do
-      @metadata.to_pson_data_hash['data']['checksum'].should be_is_a(Hash)
+      metadata.to_pson_data_hash['data']['checksum'].should be_is_a(Hash)
     end
 
     it "should pass the checksum_type in the hash verbatum as the checksum's type" do
-      @metadata.to_pson_data_hash['data']['checksum']['type'] == @metadata.checksum_type
+      metadata.to_pson_data_hash['data']['checksum']['type'] == metadata.checksum_type
     end
 
     it "should pass the checksum in the hash verbatum as the checksum's value" do
-      @metadata.to_pson_data_hash['data']['checksum']['value'] == @metadata.checksum
+      metadata.to_pson_data_hash['data']['checksum']['value'] == metadata.checksum
     end
 
   end
@@ -115,10 +112,6 @@ describe Puppet::FileServing::Metadata do
 
         before :each do
           FileUtils.touch(path)
-        end
-
-        it "should be able to produce xmlrpc-style attribute information" do
-          metadata.should respond_to(:attributes_with_tabs)
         end
 
         it "should set the owner to the file's current owner" do
@@ -153,12 +146,6 @@ describe Puppet::FileServing::Metadata do
             metadata.collect
             metadata.checksum.should == "{mtime}#{@time}"
           end
-
-          it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
-            set_mode(0755, path)
-
-            metadata.attributes_with_tabs.should == "#{0755.to_s}\tfile\t#{owner}\t#{group}\t{md5}#{checksum}"
-          end
         end
       end
 
@@ -181,13 +168,6 @@ describe Puppet::FileServing::Metadata do
           metadata.collect
           metadata.checksum.should == "{ctime}#{time}"
         end
-
-        it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
-          set_mode(0755, path)
-          metadata.collect
-
-          metadata.attributes_with_tabs.should == "#{0755.to_s}\tdirectory\t#{owner}\t#{group}\t{ctime}#{time.to_s}"
-        end
       end
 
       describe "when managing links", :unless => Puppet.features.microsoft_windows? do
@@ -206,15 +186,6 @@ describe Puppet::FileServing::Metadata do
 
         it "should read links instead of returning their checksums" do
           metadata.destination.should == target
-        end
-
-        pending "should produce tab-separated mode, type, owner, group, and destination for xmlrpc" do
-          # "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
-          metadata.attributes_with_tabs.should == "#{0755}\tlink\t#{owner}\t#{group}\t#{target}"
-        end
-
-        it "should produce tab-separated mode, type, owner, group, checksum, and destination for xmlrpc" do
-          metadata.attributes_with_tabs.should == "#{fmode}\tlink\t#{owner}\t#{group}\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t#{target}"
         end
       end
     end

@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
 # see the bottom of the file for the rest of the inclusions
@@ -20,8 +19,18 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
+
+  ###############################
+  # Comparing type instances.
+  include Comparable
+  def <=>(other)
+    # We only order against other types, not arbitrary objects.
+    return nil unless other.is_a? Puppet::Type
+    # Our natural order is based on the reference name we use when comparing
+    # against other type instances.
+    self.ref <=> other.ref
+  end
 
   ###############################
   # Code related to resource type attributes.
@@ -31,29 +40,11 @@ class Type
     attr_reader :properties
   end
 
-  def self.states
-    warnonce "The states method is deprecated; use properties"
-    properties
-  end
-
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
   def self.allattrs
     key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
-  end
-
-  # Retrieve an attribute alias, if there is one.
-  def self.attr_alias(param)
-    @attr_aliases[symbolize(param)]
-  end
-
-  # Create an alias to an existing attribute.  This will cause the aliased
-  # attribute to be valid when setting and retrieving values on the instance.
-  def self.set_attr_alias(hash)
-    hash.each do |new, old|
-      @attr_aliases[symbolize(new)] = symbolize(old)
-    end
   end
 
   # Find the class associated with any given attribute.
@@ -112,6 +103,13 @@ class Type
     }
   end
 
+  # These `apply_to` methods are horrible.  They should really be implemented
+  # as part of the usual system of constraints that apply to a type and
+  # provider pair, but were implemented as a separate shadow system.
+  #
+  # We should rip them out in favour of a real constraint pattern around the
+  # target device - whatever that looks like - and not have this additional
+  # magic here. --daniel 2012-03-08
   def self.apply_to_device
     @apply_to = :device
   end
@@ -147,12 +145,14 @@ class Type
 
   # Is the parameter in question a meta-parameter?
   def self.metaparam?(param)
-    @@metaparamhash.include?(symbolize(param))
+    @@metaparamhash.include?(param.intern)
   end
 
   # Find the metaparameter class associated with a given metaparameter name.
+  # Must accept a `nil` name, and return nil.
   def self.metaparamclass(name)
-    @@metaparamhash[symbolize(name)]
+    return nil if name.nil?
+    @@metaparamhash[name.intern]
   end
 
   def self.metaparams
@@ -168,17 +168,15 @@ class Type
   def self.newmetaparam(name, options = {}, &block)
     @@metaparams ||= []
     @@metaparamhash ||= {}
-    name = symbolize(name)
+    name = name.intern
 
-
-      param = genclass(
-        name,
+    param = genclass(
+      name,
       :parent => options[:parent] || Puppet::Parameter,
       :prefix => "MetaParam",
       :hash => @@metaparamhash,
       :array => @@metaparams,
       :attributes => options[:attributes],
-
       &block
     )
 
@@ -201,15 +199,15 @@ class Type
   end
 
   def self.key_attributes
-    key_attribute_parameters.collect { |p| p.name }
+    # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
+    @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
   def self.title_patterns
     case key_attributes.length
     when 0; []
     when 1;
-      identity = lambda {|x| x}
-      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
@@ -244,11 +242,6 @@ class Type
     param
   end
 
-  def self.newstate(name, options = {}, &block)
-    Puppet.warning "newstate() has been deprecrated; use newproperty(#{name})"
-    newproperty(name, options, &block)
-  end
-
   # Create a new property. The first parameter must be the name of the property;
   # this is how users will refer to the property when creating new instances.
   # The second parameter is a hash of options; the options are:
@@ -256,7 +249,7 @@ class Type
   # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
   #   the provider is not set) to retrieve the current value.
   def self.newproperty(name, options = {}, &block)
-    name = symbolize(name)
+    name = name.intern
 
     # This is here for types that might still have the old method of defining
     # a parent class.
@@ -319,7 +312,7 @@ class Type
   end
 
   def self.validattr?(name)
-    name = symbolize(name)
+    name = name.intern
     return true if name == :name
     @validattrs ||= {}
 
@@ -332,7 +325,7 @@ class Type
 
   # does the name reflect a valid property?
   def self.validproperty?(name)
-    name = symbolize(name)
+    name = name.intern
     @validproperties.include?(name) && @validproperties[name]
   end
 
@@ -354,16 +347,6 @@ class Type
     validattr?(name)
   end
 
-  # Return either the attribute alias or the attribute.
-  def attr_alias(name)
-    name = symbolize(name)
-    if synonym = self.class.attr_alias(name)
-      return synonym
-    else
-      return name
-    end
-  end
-
   # Are we deleting this resource?
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
@@ -383,18 +366,18 @@ class Type
   # The name_var is the key_attribute in the case that there is only one.
   #
   def name_var
+    return @name_var_cache unless @name_var_cache.nil?
     key_attributes = self.class.key_attributes
-    (key_attributes.length == 1) && key_attributes.first
+    @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
 
-  # abstract accessing parameters and properties, and normalize
-  # access to always be symbols, not strings
-  # This returns a value, not an object.  It returns the 'is'
-  # value, but you can also specifically return 'is' and 'should'
-  # values using 'object.is(:property)' or 'object.should(:property)'.
+  # abstract accessing parameters and properties, and normalize access to
+  # always be symbols, not strings This returns a value, not an object.
+  # It returns the 'is' value, but you can also specifically return 'is' and
+  # 'should' values using 'object.is(:property)' or
+  # 'object.should(:property)'.
   def [](name)
-    name = attr_alias(name)
-
+    name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
     if name == :name && nv = name_var
@@ -414,7 +397,7 @@ class Type
   # access to always be symbols, not strings.  This sets the 'should'
   # value on properties, and otherwise just sets the appropriate parameter.
   def []=(name,value)
-    name = attr_alias(name)
+    name = name.intern
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
@@ -430,7 +413,7 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue => detail
-        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error = Puppet::Error.new("Parameter #{name} failed on #{ref}: #{detail}")
         error.set_backtrace(detail.backtrace)
         raise error
       end
@@ -442,7 +425,7 @@ class Type
   # remove a property from the object; useful in testing or in cleanup
   # when an error has been encountered
   def delete(attr)
-    attr = symbolize(attr)
+    attr = attr.intern
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
@@ -466,7 +449,7 @@ class Type
 
   # retrieve the 'should' value for a specified property
   def should(name)
-    name = attr_alias(name)
+    name = name.intern
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
@@ -485,7 +468,7 @@ class Type
 
     if provider and ! provider.class.supports_parameter?(klass)
       missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
-      info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+      debug "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
       return nil
     end
 
@@ -513,7 +496,7 @@ class Type
   # LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
   # this one should probably go away at some point.
   def property(name)
-    (obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)) ? obj : nil
+    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
   end
 
   # For any parameters or properties that have defaults and have not yet been
@@ -550,7 +533,7 @@ class Type
 
   # Return a specific value for an attribute.
   def value(name)
-    name = attr_alias(name)
+    name = name.intern
 
     (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
   end
@@ -753,115 +736,6 @@ class Type
     noop?
   end
 
-  ###############################
-  # Code related to managing resource instances.
-  require 'puppet/transportable'
-
-  # retrieve a named instance of the current type
-  def self.[](name)
-    raise "Global resource access is deprecated"
-    @objects[name] || @aliases[name]
-  end
-
-  # add an instance by name to the class list of instances
-  def self.[]=(name,object)
-    raise "Global resource storage is deprecated"
-    newobj = nil
-    if object.is_a?(Puppet::Type)
-      newobj = object
-    else
-      raise Puppet::DevError, "must pass a Puppet::Type object"
-    end
-
-    if exobj = @objects[name] and self.isomorphic?
-      msg = "Object '#{newobj.class.name}[#{name}]' already exists"
-
-      msg += ("in file #{object.file} at line #{object.line}") if exobj.file and exobj.line
-      msg += ("and cannot be redefined in file #{object.file} at line #{object.line}") if object.file and object.line
-      error = Puppet::Error.new(msg)
-      raise error
-    else
-      #Puppet.info("adding %s of type %s to class list" %
-      #    [name,object.class])
-      @objects[name] = newobj
-    end
-  end
-
-  # Create an alias.  We keep these in a separate hash so that we don't encounter
-  # the objects multiple times when iterating over them.
-  def self.alias(name, obj)
-    raise "Global resource aliasing is deprecated"
-    if @objects.include?(name)
-      unless @objects[name] == obj
-        raise Puppet::Error.new(
-          "Cannot create alias #{name}: object already exists"
-        )
-      end
-    end
-
-    if @aliases.include?(name)
-      unless @aliases[name] == obj
-        raise Puppet::Error.new(
-          "Object #{@aliases[name].name} already has alias #{name}"
-        )
-      end
-    end
-
-    @aliases[name] = obj
-  end
-
-  # remove all of the instances of a single type
-  def self.clear
-    raise "Global resource removal is deprecated"
-    if defined?(@objects)
-      @objects.each do |name, obj|
-        obj.remove(true)
-      end
-      @objects.clear
-    end
-    @aliases.clear if defined?(@aliases)
-  end
-
-  # Force users to call this, so that we can merge objects if
-  # necessary.
-  def self.create(args)
-    # LAK:DEP Deprecation notice added 12/17/2008
-    Puppet.warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
-    new(args)
-  end
-
-  # remove a specified object
-  def self.delete(resource)
-    raise "Global resource removal is deprecated"
-    return unless defined?(@objects)
-    @objects.delete(resource.title) if @objects.include?(resource.title)
-    @aliases.delete(resource.title) if @aliases.include?(resource.title)
-    if @aliases.has_value?(resource)
-      names = []
-      @aliases.each do |name, otherres|
-        if otherres == resource
-          names << name
-        end
-      end
-      names.each { |name| @aliases.delete(name) }
-    end
-  end
-
-  # iterate across each of the type's instances
-  def self.each
-    raise "Global resource iteration is deprecated"
-    return unless defined?(@objects)
-    @objects.each { |name,instance|
-      yield instance
-    }
-  end
-
-  # does the type have an object with the given name?
-  def self.has_key?(name)
-    raise "Global resource access is deprecated"
-    @objects.has_key?(name)
-  end
-
   # Retrieve all known instances.  Either requires providers or must be overridden.
   def self.instances
     raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
@@ -879,7 +753,7 @@ class Type
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
         if other = provider_instances[instance.name]
-          Puppet.warning "%s %s found in both %s and %s; skipping the %s version" %
+          Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
             [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
           next
         end
@@ -894,9 +768,10 @@ class Type
 
   # Return a list of one suitable provider per source, with the default provider first.
   def self.providers_by_source
-    # Put the default provider first, then the rest of the suitable providers.
+    # Put the default provider first (can be nil), then the rest of the suitable providers.
     sources = []
     [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
+      next if provider.nil?
       next if sources.include?(provider.source)
 
       sources << provider.source
@@ -1023,16 +898,6 @@ class Type
       else
         list = Array(list).collect { |p| p.to_sym }
       end
-    end
-  end
-
-  newmetaparam(:check) do
-    desc "Audit specified attributes of resources over time, and report if any have changed.
-      This parameter has been deprecated in favor of 'audit'."
-
-    munge do |args|
-      resource.warning "'check' attribute is deprecated; use 'audit' instead"
-      resource[:audit] = args
     end
   end
 
@@ -1247,7 +1112,7 @@ class Type
             require => File[\"/usr/local/scripts\"]
           }
 
-      Multiple dependencies can be specified by providing a comma-seperated list
+      Multiple dependencies can be specified by providing a comma-separated list
       of resources, enclosed in square brackets:
 
           require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
@@ -1413,7 +1278,7 @@ class Type
 
   # Retrieve a provider by name.
   def self.provider(name)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     # If we don't have it yet, try loading it.
     @providerloader.load(name) unless provider_hash.has_key?(name)
@@ -1426,7 +1291,7 @@ class Type
   end
 
   def self.validprovider?(name)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     (provider_hash.has_key?(name) && provider_hash[name].suitable?)
   end
@@ -1434,7 +1299,7 @@ class Type
   # Create a new provider of a type.  This method must be called
   # directly on the type that it's implementing.
   def self.provide(name, options = {}, &block)
-    name = Puppet::Util.symbolize(name)
+    name = name.intern
 
     if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"
@@ -1693,8 +1558,6 @@ class Type
     @parameters = []
     @paramhash = {}
 
-    @attr_aliases = {}
-
     @paramdoc = Hash.new { |hash,key|
       key = key.intern if key.is_a?(String)
       if hash.include?(key)
@@ -1722,6 +1585,9 @@ class Type
     define_method(:validate, &block)
     #@validate = block
   end
+
+  # Origin information.
+  attr_accessor :file, :line
 
   # The catalog that this resource is stored in.
   attr_accessor :catalog
@@ -1754,7 +1620,6 @@ class Type
 
   # initialize the type instance
   def initialize(resource)
-    raise Puppet::DevError, "Got TransObject instead of Resource or hash" if resource.is_a?(Puppet::TransObject)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
     # The list of parameter/property instances.
@@ -1861,7 +1726,9 @@ class Type
 
   # Return the "type[name]" style reference.
   def ref
-    "#{self.class.name.to_s.capitalize}[#{self.title}]"
+    # memoizing this is worthwhile ~ 3 percent of calls are the "first time
+    # around" in an average run of Puppet. --daniel 2012-07-17
+    @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
   def self_refresh?
@@ -1904,15 +1771,9 @@ class Type
     self.ref
   end
 
-  # Convert to a transportable object
-  def to_trans(ret = true)
-    trans = TransObject.new(self.title, self.class.name)
-
-    values = retrieve_resource
-    values.each do |name, value|
-      name = name.name if name.respond_to? :name
-      trans[name] = value
-    end
+  def to_resource
+    resource = self.retrieve_resource
+    resource.tag(*self.tags)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
@@ -1920,20 +1781,10 @@ class Type
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)
-      trans[name] = param.value
+      resource[name] = param.value
     end
 
-    trans.tags = self.tags
-
-    # FIXME I'm currently ignoring 'parent' and 'path'
-
-    trans
-  end
-
-  def to_resource
-    # this 'type instance' versus 'resource' distinction seems artificial
-    # I'd like to see it collapsed someday ~JW
-    self.to_trans.to_resource
+    resource
   end
 
   def virtual?;  !!@virtual;  end

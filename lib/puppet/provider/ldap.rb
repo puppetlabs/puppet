@@ -46,7 +46,11 @@ class Puppet::Provider::Ldap < Puppet::Provider
     @property_hash[:ensure] = :present
     self.class.resource_type.validproperties.each do |property|
       if val = resource.should(property)
-        @property_hash[property] = val
+        if property.to_s == 'gid'
+          self.gid = val
+        else
+          @property_hash[property] = val
+        end
       end
     end
   end

@@ -5,36 +5,45 @@ require 'uri'
 require 'fileutils'
 require 'enumerator'
 require 'pathname'
-require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
 require 'puppet/util/backups'
+require 'puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
   include Puppet::Util::MethodHelper
   include Puppet::Util::Checksums
   include Puppet::Util::Backups
-  @doc = "Manages local files, including setting ownership and
-    permissions, creation of both files and directories, and
-    retrieving entire files from remote servers.  As Puppet matures, it
-    expected that the `file` resource will be used less and less to
-    manage content, and instead native resources will be used to do so.
+  include Puppet::Util::SymbolicFileMode
 
-    If you find that you are often copying files in from a central
-    location, rather than using native resources, please contact
-    Puppet Labs and we can hopefully work with you to develop a
-    native resource to support what you are doing.
+  @doc = "Manages files, including their content, ownership, and permissions.
+
+    The `file` type can manage normal files, directories, and symlinks; the
+    type should be specified in the `ensure` attribute. Note that symlinks cannot
+    be managed on Windows systems.
+
+    File contents can be managed directly with the `content` attribute, or
+    downloaded from a remote source using the `source` attribute; the latter
+    can also be used to recursively serve directories (when the `recurse`
+    attribute is set to `true` or `local`). On Windows, note that file
+    contents are managed in binary mode; Puppet never automatically translates
+    line endings.
 
     **Autorequires:** If Puppet is managing the user or group that owns a
     file, the file resource will autorequire them. If Puppet is managing any
     parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
-    [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]
+    [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
   end
 
   newparam(:path) do
-    desc "The path to the file to manage.  Must be fully qualified."
+    desc <<-'EOT'
+      The path to the file to manage.  Must be fully qualified.
+
+      On Windows, the path should include the drive letter and should use `/` as
+      the separator character (rather than `\\`).
+    EOT
     isnamevar
 
     validate do |value|
@@ -43,20 +52,8 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    # convert the current path in an index into the collection and the last
-    # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      # We know the value is absolute, so expanding it will just standardize it.
-      path, name = ::File.split(::File.expand_path(value))
-
-      { :index => Puppet::FileCollection.collection.index(path), :name => name }
-    end
-
-    # and the reverse
-    unmunge do |value|
-      basedir = Puppet::FileCollection.collection.path(value[:index])
-
-      ::File.join( basedir, value[:name] )
+      ::File.expand_path(value)
     end
   end
 
@@ -133,14 +130,10 @@ Puppet::Type.newtype(:file) do
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
       * `false` --- Default of no recursion.
-      * `[0-9]+` --- Same as true, but limit recursion. Warning: this syntax
-        has been deprecated in favor of the `recurselimit` attribute.
     "
 
-    newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
+    newvalues(:true, :false, :inf, :remote)
 
-    # Replace the validation so that we allow numbers in
-    # addition to string representations of them.
     validate { |arg| }
     munge do |value|
       newval = super(value)
@@ -148,23 +141,6 @@ Puppet::Type.newtype(:file) do
       when :true, :inf; true
       when :false; false
       when :remote; :remote
-      when Integer, Fixnum, Bignum
-        self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
-
-        # recurse == 0 means no recursion
-        return false if value == 0
-
-        resource[:recurselimit] = value
-        true
-      when /^\d+$/
-        self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
-        value = Integer(value)
-
-        # recurse == 0 means no recursion
-        return false if value == 0
-
-        resource[:recurselimit] = value
-        true
       else
         self.fail "Invalid recurse value #{value.inspect}"
       end
@@ -188,9 +164,11 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:replace, :boolean => true) do
-    desc "Whether or not to replace a file that is
-      sourced but exists.  This is useful for using file sources
-      purely for initialization."
+    desc "Whether to replace a file that already exists on the local system but
+      whose content doesn't match what the `source` or `content` attribute
+      specifies.  Setting this to false allows file resources to initialize files
+      without overwriting future changes.  Note that this only affects content;
+      Puppet will still manage ownership and permissions. Defaults to `true`."
     newvalues(:true, :false)
     aliasvalue(:yes, :true)
     aliasvalue(:no, :false)
@@ -198,8 +176,12 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:force, :boolean => true) do
-    desc "Force the file operation.  Currently only used when replacing
-      directories with links."
+    desc "Perform the file operation even if it will destroy one or more directories.
+      You must use `force` in order to:
+
+      * `purge` subdirectories
+      * Replace directories with files or links
+      * Remove a directory when `ensure => absent`"
     newvalues(:true, :false)
     defaultto false
   end
@@ -232,14 +214,18 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:purge, :boolean => true) do
-    desc "Whether unmanaged files should be purged.  If you have a filebucket
-      configured the purged files will be uploaded, but if you do not,
-      this will destroy data.  Only use this option for generated
-      files unless you really know what you are doing.  This option only
-      makes sense when recursively managing directories.
+    desc "Whether unmanaged files should be purged. This option only makes
+      sense when managing directories with `recurse => true`.
 
-      Note that when using `purge` with `source`, Puppet will purge any files
-      that are not on the remote system."
+      * When recursively duplicating an entire directory with the `source`
+        attribute, `purge => true` will automatically purge any files
+        that are not in the source directory.
+      * When managing files in a directory as individual resources,
+        setting `purge => true` will purge any files that aren't being
+        specifically managed.
+
+      If you have a filebucket configured, the purged files will be uploaded,
+      but if you do not, this will destroy data."
 
     defaultto :false
 
@@ -248,11 +234,11 @@ Puppet::Type.newtype(:file) do
 
   newparam(:sourceselect) do
     desc "Whether to copy all valid sources, or just the first one.  This parameter
-      is only used in recursive copies; by default, the first valid source is the
-      only one used as a recursive source, but if this parameter is set to `all`,
-      then all valid sources will have all of their contents copied to the local host,
-      and for sources that have the same file, the source earlier in the list will
-      be used."
+      only affects recursive directory copies; by default, the first valid
+      source is the only one used, but if this parameter is set to `all`, then
+      all valid sources will have all of their contents copied to the local
+      system. If a given file exists in more than one source, the version from
+      the earliest source in the list will be used."
 
     defaultto :first
 
@@ -417,7 +403,7 @@ Puppet::Type.newtype(:file) do
     # from it.
     unless self[:ensure]
       if self[:target]
-        self[:ensure] = :symlink
+        self[:ensure] = :link
       elsif self[:content]
         self[:ensure] = :file
       end
@@ -501,6 +487,7 @@ Puppet::Type.newtype(:file) do
     # remote system.
     mark_children_for_purging(children) if self.purge?
 
+    # REVISIT: sort_by is more efficient?
     result = children.values.sort { |a, b| a[:path] <=> b[:path] }
     remove_less_specific_files(result)
   end
@@ -510,6 +497,7 @@ Puppet::Type.newtype(:file) do
   # not likely to have many actual conflicts, which is good, because
   # this is a pretty inefficient implementation.
   def remove_less_specific_files(files)
+    # REVISIT: is this Windows safe?  AltSeparator?
     mypath = self[:path].split(::File::Separator)
     other_paths = catalog.vertices.
       select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
@@ -570,7 +558,7 @@ Puppet::Type.newtype(:file) do
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
       break result if result and ! result.empty? and sourceselect == :first
       result
-    end.flatten
+    end.flatten.compact
 
     # This only happens if we have sourceselect == :all
     unless sourceselect == :first
@@ -604,7 +592,8 @@ Puppet::Type.newtype(:file) do
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
       :recurselimit => self[:recurselimit],
       :ignore => self[:ignore],
-      :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none
+      :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none,
+      :environment => catalog.environment
     )
   end
 
@@ -704,19 +693,18 @@ Puppet::Type.newtype(:file) do
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
       nil
+    rescue Errno::ENOTDIR => error
+      nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"
       nil
     end
   end
 
-  # We have to hack this just a little bit, because otherwise we'll get
-  # an error when the target and the contents are created as properties on
-  # the far side.
-  def to_trans(retrieve = true)
-    obj = super
-    obj.delete(:target) if obj[:target] == :notlink
-    obj
+  def to_resource
+    resource = super
+    resource.delete(:target) if resource[:target] == :notlink
+    resource
   end
 
   # Write out the file.  Requires the property name for logging.
@@ -734,7 +722,7 @@ Puppet::Type.newtype(:file) do
 
     mode = self.should(:mode) # might be nil
     umask = mode ? 000 : 022
-    mode_int = mode ? mode.to_i(8) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, 0644) : nil
 
     content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
 

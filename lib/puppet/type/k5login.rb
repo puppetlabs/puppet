@@ -1,4 +1,5 @@
 # Plug-in type for handling k5login files
+require 'puppet/util'
 
 Puppet::Type.newtype(:k5login) do
   @doc = "Manage the `.k5login` file for a user.  Specify the full path to
@@ -18,7 +19,7 @@ Puppet::Type.newtype(:k5login) do
     desc "The path to the `.k5login` file to manage.  Must be fully qualified."
 
     validate do |value|
-      unless value =~ /^#{File::SEPARATOR}/
+      unless absolute_path?(value)
         raise Puppet::Error, "File paths must be fully qualified."
       end
     end
@@ -79,8 +80,8 @@ Puppet::Type.newtype(:k5login) do
 
     private
     def write(value)
-      Puppet::Util.secure_open(@resource[:name], "w") do |f|
-        f.puts value.join("\n")
+      Puppet::Util.replace_file(@resource[:name], 0644) do |f|
+        f.puts value
       end
     end
   end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/network_device/cisco/device'
@@ -145,7 +145,7 @@ eos
     "ATM 0/1.1" => "ATM0/1.1",
     "VLAN99" => "VLAN99"
   }.each do |input,expected|
-    it "should canonicalize #{input} to #{expected}", :'fails_on_ruby_1.9.2' => true do
+    it "should canonicalize #{input} to #{expected}" do
       @cisco.canonalize_ifname(input).should == expected
     end
   end
@@ -232,7 +232,7 @@ eos
       @cisco.parse_interface("FastEthernet0/1").should == { :ensure => :absent, :duplex => :auto, :speed => :auto }
     end
 
-    it "should be able to parse the sh vlan brief command output", :'fails_on_ruby_1.9.2' => true do
+    it "should be able to parse the sh vlan brief command output" do
       @cisco.stubs(:support_vlan_brief?).returns(true)
       @transport.stubs(:command).with("sh vlan brief").returns(<<eos)
 Switch#sh vlan brief

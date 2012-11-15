@@ -1,33 +1,26 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/inventory'
 
 describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? do
+  let(:cert_inventory) { File.expand_path("/inven/tory") }
   before do
     @class = Puppet::SSL::Inventory
   end
 
-  it "should use the :certinventory setting for the path to the inventory file" do
-    Puppet.settings.expects(:value).with(:cert_inventory).returns "/inven/tory"
-
-    @class.any_instance.stubs(:rebuild)
-
-    @class.new.path.should == "/inven/tory"
-  end
-
   describe "when initializing" do
     it "should set its path to the inventory file" do
-      Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
-      @class.new.path.should == "/inven/tory"
+      Puppet[:cert_inventory] = cert_inventory
+      @class.new.path.should == cert_inventory
     end
   end
 
   describe "when managing an inventory" do
     before do
-      Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+      Puppet[:cert_inventory] = cert_inventory
 
-      FileTest.stubs(:exist?).with("/inven/tory").returns true
+      FileTest.stubs(:exist?).with(cert_inventory).returns true
 
       @inventory = @class.new
 
@@ -37,7 +30,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     describe "and creating the inventory file" do
       before do
         Puppet.settings.stubs(:write)
-        FileTest.stubs(:exist?).with("/inven/tory").returns false
+        FileTest.stubs(:exist?).with(cert_inventory).returns false
 
         Puppet::SSL::Certificate.indirection.stubs(:search).returns []
       end
@@ -77,10 +70,10 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
     describe "and adding a certificate" do
       it "should build the inventory file if one does not exist" do
-        Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+        Puppet[:cert_inventory] = cert_inventory
         Puppet.settings.stubs(:write)
 
-        FileTest.expects(:exist?).with("/inven/tory").returns false
+        FileTest.expects(:exist?).with(cert_inventory).returns false
 
         @inventory.expects(:rebuild)
 
@@ -118,7 +111,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
       end
     end
 
-    describe "and formatting a certificate", :fails_on_windows => true do
+    describe "and formatting a certificate" do
       before do
         @cert = stub 'cert', :not_before => Time.now, :not_after => Time.now, :subject => "mycert", :serial => 15
       end
@@ -159,18 +152,18 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
     describe "and finding a serial number" do
       it "should return nil if the inventory file is missing" do
-        FileTest.expects(:exist?).with("/inven/tory").returns false
+        FileTest.expects(:exist?).with(cert_inventory).returns false
         @inventory.serial(:whatever).should be_nil
       end
 
       it "should return the serial number from the line matching the provided name" do
-        File.expects(:readlines).with("/inven/tory").returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
+        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
 
         @inventory.serial("me").should == 15
       end
 
       it "should return the number as an integer" do
-        File.expects(:readlines).with("/inven/tory").returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
+        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
 
         @inventory.serial("me").should == 15
       end

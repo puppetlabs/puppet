@@ -11,7 +11,8 @@ class Puppet::Transaction::Report
   indirects :report, :terminus_class => :processor
 
   attr_accessor :configuration_version, :host, :environment
-  attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status
+  attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status,
+              :puppet_version, :report_format
 
   # This is necessary since Marshall doesn't know how to
   # dump hash with default proc (see below @records)
@@ -76,7 +77,7 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 2
+    @report_format = 3
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @environment = environment
@@ -141,7 +142,7 @@ class Puppet::Transaction::Report
   end
 
   def to_yaml_properties
-    (instance_variables - ["@external_times"]).sort
+    instance_variables - [:@external_times]
   end
 
   private

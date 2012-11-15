@@ -4,8 +4,7 @@ require 'puppet/indirector/code'
 require 'yaml'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
-  desc "Puppet's catalog compilation interface, and its back-end is
-    Puppet's compiler"
+  desc "Compiles catalogs on demand using Puppet's compiler."
 
   include Puppet::Util
 
@@ -85,12 +84,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Turn our host name into a node object.
-  def find_node(name)
+  def find_node(name, *args)
     begin
-      return nil unless node = Puppet::Node.indirection.find(name)
+      return nil unless node = Puppet::Node.indirection.find(name, *args)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Failed when searching for node #{name}: #{detail}"
+      message = "Failed when searching for node #{name}: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
 
 
@@ -115,7 +115,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf 
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name)
+    if node = find_node(name, :environment => request.environment)
       return node
     end
 

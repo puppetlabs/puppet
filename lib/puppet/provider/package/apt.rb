@@ -23,17 +23,14 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # install packages from remote sites.
 
   def checkforcdrom
-    unless defined?(@@checkedforcdrom)
-      if FileTest.exists? "/etc/apt/sources.list"
-        @@checkedforcdrom = !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
-      else
-        # This is basically a pathalogical case, but we'll just
-        # ignore it
-        @@checkedforcdrom = false
-      end
-    end
+    have_cdrom = begin
+                   !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
+                 rescue
+                   # This is basically pathological...
+                   false
+                 end
 
-    if @@checkedforcdrom and @resource[:allowcdrom] != :true
+    if have_cdrom and @resource[:allowcdrom] != :true
       raise Puppet::Error,
         "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
     end

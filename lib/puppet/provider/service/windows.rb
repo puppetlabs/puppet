@@ -1,21 +1,22 @@
 # Windows Service Control Manager (SCM) provider
 
-require 'win32/service' if Puppet.features.microsoft_windows?
-
-Puppet::Type.type(:service).provide :windows do
+Puppet::Type.type(:service).provide :windows, :parent => :service do
 
   desc <<-EOT
-    Support for Windows Service Control Manager (SCM).
+    Support for Windows Service Control Manager (SCM). This provider can
+    start, stop, enable, and disable services, and the SCM provides working
+    status methods for all services.
 
-    Services are controlled according to the capabilities of the `win32-service`
-    gem. All SCM operations (start/stop/enable/disable/query) are supported.
-    Control of service groups (dependencies) is not yet supported.
+    Control of service groups (dependencies) is not yet supported, nor is running
+    services as a specific user.
   EOT
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
 
   has_feature :refreshable
+
+  commands :net => 'net.exe'
 
   def enable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START )
@@ -72,20 +73,15 @@ Puppet::Type.type(:service).provide :windows do
       end
     end
 
-    Win32::Service.start( @resource[:name] )
-  rescue Win32::Service::Error => detail
+    net(:start, @resource[:name])
+  rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
   end
 
   def stop
-    Win32::Service.stop( @resource[:name] )
-  rescue Win32::Service::Error => detail
+    net(:stop, @resource[:name])
+  rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}" )
-  end
-
-  def restart
-    self.stop
-    self.start
   end
 
   def status

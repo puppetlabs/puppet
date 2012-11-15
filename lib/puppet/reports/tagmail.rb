@@ -113,17 +113,24 @@ Puppet::Reports.register_report(:tagmail) do
       return
     end
 
+    metrics = raw_summary['resources'] || {} rescue {}
+
+    if metrics['out_of_sync'] == 0 && metrics['changed'] == 0
+      Puppet.notice "Not sending tagmail report; no changes"
+      return
+    end
+
     taglists = parse(File.read(Puppet[:tagmap]))
 
     # Now find any appropriately tagged messages.
     reports = match(taglists)
 
-    send(reports)
+    send(reports) unless reports.empty?
   end
 
   # Send the email reports.
   def send(reports)
-    pid = fork do
+    pid = Puppet::Util.safe_posix_fork do
       if Puppet[:smtpserver] != "none"
         begin
           Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
@@ -139,9 +146,9 @@ Puppet::Reports.register_report(:tagmail) do
             end
           end
         rescue => detail
-          puts detail.backtrace if Puppet[:debug]
-          raise Puppet::Error,
-            "Could not send report emails through smtp: #{detail}"
+          message = "Could not send report emails through smtp: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
         end
       elsif Puppet[:sendmail] != ""
         begin
@@ -156,9 +163,9 @@ Puppet::Reports.register_report(:tagmail) do
             end
           end
         rescue => detail
-          puts detail.backtrace if Puppet[:debug]
-          raise Puppet::Error,
-            "Could not send report emails via sendmail: #{detail}"
+          message = "Could not send report emails via sendmail: #{detail}"
+          Puppet.log_exception(detail, message)
+          raise Puppet::Error, message
         end
       else
         raise Puppet::Error, "SMTP server is unset and could not find sendmail"

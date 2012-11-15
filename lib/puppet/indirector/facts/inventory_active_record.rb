@@ -2,8 +2,19 @@ require 'puppet/rails'
 require 'puppet/rails/inventory_node'
 require 'puppet/rails/inventory_fact'
 require 'puppet/indirector/active_record'
+require 'puppet/util/retryaction'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
+
+  desc "Medium-performance fact storage suitable for the inventory service.
+    Most users should use PuppetDB instead. Note: ActiveRecord-based storeconfigs
+    and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+
+  def initialize
+    Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+    super
+  end
+
   def find(request)
     node = Puppet::Rails::InventoryNode.find_by_name(request.key)
     return nil unless node
@@ -13,19 +24,21 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
   end
 
   def save(request)
-    facts = request.instance
-    node = Puppet::Rails::InventoryNode.find_by_name(request.key) || Puppet::Rails::InventoryNode.create(:name => request.key, :timestamp => facts.timestamp)
-    node.timestamp = facts.timestamp
+    Puppet::Util::RetryAction.retry_action :retries => 4, :retry_exceptions => {ActiveRecord::StatementInvalid => 'MySQL Error.  Retrying'} do
+      facts = request.instance
+      node = Puppet::Rails::InventoryNode.find_by_name(request.key) || Puppet::Rails::InventoryNode.create(:name => request.key, :timestamp => facts.timestamp)
+      node.timestamp = facts.timestamp
 
-    ActiveRecord::Base.transaction do
-      Puppet::Rails::InventoryFact.delete_all(:node_id => node.id)
-      # We don't want to save internal values as facts, because those are
-      # metadata that belong on the node
-      facts.values.each do |name,value|
-        next if name.to_s =~ /^_/
-        node.facts.build(:name => name, :value => value)
+      ActiveRecord::Base.transaction do
+        Puppet::Rails::InventoryFact.delete_all(:node_id => node.id)
+        # We don't want to save internal values as facts, because those are
+        # metadata that belong on the node
+        facts.values.each do |name,value|
+          next if name.to_s =~ /^_/
+          node.facts.build(:name => name, :value => value)
+        end
+        node.save
       end
-      node.save
     end
   end
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/transaction'
@@ -216,14 +216,14 @@ describe Puppet::Transaction do
       @transaction.eval_generate(resource)
 
       @filenames.each do |file|
-        @transaction.catalog.resource(:file, file).should be_a(Puppet::Type.type(:file))
+        @transaction.catalog.resource(:file, file).must be_a(Puppet::Type.type(:file))
       end
     end
 
     it "should add a sentinel whit for the resource" do
       @transaction.eval_generate(resource)
 
-      find_vertex(:whit, "completed_#{path}").should be_a(Puppet::Type.type(:whit))
+      find_vertex(:whit, "completed_#{path}").must be_a(Puppet::Type.type(:whit))
     end
 
     it "should replace dependencies on the resource with dependencies on the sentinel" do
@@ -436,6 +436,10 @@ describe Puppet::Transaction do
 
       @transaction.catalog.add_resource(dependent, dependent2)
 
+      # We enqueue them here just so we can check their blockers. This is done
+      # again in traverse.
+      graph.enqueue_roots
+
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
 
@@ -452,6 +456,8 @@ describe Puppet::Transaction do
       dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
 
       @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.enqueue_roots
 
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
@@ -510,70 +516,50 @@ describe Puppet::Transaction do
     end
   end
 
-  describe "when generating resources" do
+  describe "when generating resources before traversal" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
+    let(:generated) do
+      %w[a b c].map { |name| Puppet::Type.type(:notify).new(:name => name) }
+    end
+
+    before :each do
+      catalog.add_resource generator
+      generator.stubs(:generate).returns generated
+    end
+
     it "should call 'generate' on all created resources" do
-      first = Puppet::Type.type(:notify).new(:name => "first")
-      second = Puppet::Type.type(:notify).new(:name => "second")
-      third = Puppet::Type.type(:notify).new(:name => "third")
+      generated.each { |res| res.expects(:generate) }
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      first.expects(:generate).returns [second]
-      second.expects(:generate).returns [third]
-      third.expects(:generate)
-
-      @transaction.generate_additional_resources(first)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should finish all resources" do
-      generator = stub 'generator', :depthfirst? => true, :tags => [], :ref => "Some[resource]"
-      resource = stub 'resource', :tag => nil
+      generated.each { |res| res.expects(:finish) }
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      generator.expects(:generate).returns [resource]
-
-      @catalog.expects(:add_resource).yields(resource)
-
-      resource.expects(:finish)
-
-      @transaction.generate_additional_resources(generator)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should skip generated resources that conflict with existing resources" do
-      generator = mock 'generator', :tags => []
-      resource = stub 'resource', :tag => nil
+      duplicate = generated.first
+      catalog.add_resource(duplicate)
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
+      duplicate.expects(:finish).never
 
-      generator.expects(:generate).returns [resource]
+      duplicate.expects(:info).with { |msg| msg =~ /Duplicate generated resource/ }
 
-      @catalog.expects(:add_resource).raises(Puppet::Resource::Catalog::DuplicateResourceError.new("foo"))
-
-      resource.expects(:finish).never
-      resource.expects(:info) # log that it's skipped
-
-      @transaction.generate_additional_resources(generator)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should copy all tags to the newly generated resources" do
-      child = stub 'child', :ref => "Some[child_resource]"
-      generator = stub 'resource', :tags => ["one", "two"], :ref => "Some[resource]"
+      generator.tag('one', 'two')
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
+      transaction.add_dynamically_generated_resources
 
-      generator.stubs(:generate).returns [child]
-      @catalog.stubs(:add_resource)
-
-      child.expects(:tag).with("one", "two")
-      child.expects(:finish)
-      generator.expects(:depthfirst?)
-
-      @transaction.generate_additional_resources(generator)
+      generated.each do |res|
+        res.must be_tagged(generator.tags)
+      end
     end
   end
 
@@ -681,8 +667,8 @@ describe Puppet::Transaction do
   describe "when prefetching" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) { Puppet::Transaction.new(catalog) }
-    let(:resource) { Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
-    let(:resource2) { Puppet::Type.type(:package).create :title => "blah", :provider => "apt" }
+    let(:resource) { Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
+    let(:resource2) { Puppet::Type.type(:package).new :title => "blah", :provider => "apt" }
 
     before :each do
       catalog.add_resource resource
@@ -736,7 +722,7 @@ describe Puppet::Transaction do
     end
 
     it "should prefetch resources without a provider if prefetching the default provider" do
-      other = Puppet::Type.type(:sshkey).create :name => "other"
+      other = Puppet::Type.type(:sshkey).new :name => "other"
 
       other.instance_variable_set(:@provider, nil)
 
@@ -815,17 +801,17 @@ describe Puppet::Transaction, " when determining tags" do
   end
 
   it "should default to the tags specified in the :tags setting" do
-    Puppet.expects(:[]).with(:tags).returns("one")
+    Puppet[:tags] = "one"
     @transaction.tags.should == %w{one}
   end
 
   it "should split tags based on ','" do
-    Puppet.expects(:[]).with(:tags).returns("one,two")
+    Puppet[:tags] = "one,two"
     @transaction.tags.should == %w{one two}
   end
 
   it "should use any tags set after creation" do
-    Puppet.expects(:[]).with(:tags).never
+    Puppet[:tags] = ""
     @transaction.tags = %w{one two}
     @transaction.tags.should == %w{one two}
   end

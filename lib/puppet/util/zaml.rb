@@ -18,13 +18,35 @@
 #
 # http://github.com/hallettj/zaml
 #
-# Authors: Markus Roberts, Jesse Hallett, Ian McIntosh, Igal Koshevoy, Simon Chiang
+# ## License (from upstream)
 #
+# Copyright (c) 2008-2009 ZAML contributers
+#
+# This program is dual-licensed under the GNU General Public License
+# version 3 or later and under the Apache License, version 2.0.
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version; or under the terms of the Apache License,
+# Version 2.0.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License and the Apache License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+#
+# You may obtain a copy of the Apache License at
+# <https://www.apache.org/licenses/LICENSE-2.0.html>.
 
 require 'yaml'
 
 class ZAML
-  VERSION = "0.1.1"
+  VERSION = "0.1.3"
   #
   # Class Methods
   #
@@ -33,6 +55,7 @@ class ZAML
     stuff.to_zaml(z)
     where << z.to_s
   end
+
   #
   # Instance Methods
   #
@@ -44,12 +67,14 @@ class ZAML
     @next_free_label_number = 0
     emit('--- ')
   end
+
   def nested(tail='  ')
     old_indent = @indent
     @indent = "#{@indent || "\n"}#{tail}"
     yield
     @indent = old_indent
   end
+
   class Label
     #
     # YAML only wants objects in the datastream once; if the same object
@@ -68,51 +93,69 @@ class ZAML
     #    it can be handled).
     #
     attr_accessor :this_label_number
+
     def initialize(obj,indent)
       @indent = indent
       @this_label_number = nil
       @obj = obj # prevent garbage collection so that object id isn't reused
     end
+
     def to_s
       @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
     end
+
     def reference
       @reference         ||= '*id%03d' % @this_label_number
     end
   end
+
   def label_for(obj)
     @previously_emitted_object[obj.object_id]
   end
+
   def new_label_for(obj)
     label = Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
     @previously_emitted_object[obj.object_id] = label
     label
   end
+
   def first_time_only(obj)
     if label = label_for(obj)
       label.this_label_number ||= (@next_free_label_number += 1)
       emit(label.reference)
     else
-      if @structured_key_prefix and not obj.is_a? String
+      with_structured_prefix(obj) do
+        emit(new_label_for(obj))
+        yield
+      end
+    end
+  end
+
+  def with_structured_prefix(obj)
+    if @structured_key_prefix
+      unless obj.is_a?(String) and obj !~ /\n/
         emit(@structured_key_prefix)
         @structured_key_prefix = nil
       end
-      emit(new_label_for(obj))
-      yield
     end
+    yield
   end
+
   def emit(s)
     @result << s
     @recent_nl = false unless s.kind_of?(Label)
   end
-  def nl(s='')
+
+  def nl(s = nil)
     emit(@indent || "\n") unless @recent_nl
-    emit(s)
+    emit(s) if s
     @recent_nl = true
   end
+
   def to_s
     @result.join
   end
+
   def prefix_structured_keys(x)
     @structured_key_prefix = x
     yield
@@ -129,7 +172,7 @@ end
 
 class Object
   def to_yaml_properties
-    instance_variables.sort        # Default YAML behavior
+    instance_variables          # default YAML behaviour.
   end
   def yaml_property_munge(x)
     x
@@ -148,7 +191,7 @@ class Object
         else
           instance_variables.each { |v|
             z.nl
-            v[1..-1].to_zaml(z)       # Remove leading '@'
+            v.to_s[1..-1].to_zaml(z)       # Remove leading '@'
             z.emit(': ')
             yaml_property_munge(instance_variable_get(v)).to_zaml(z)
           }
@@ -172,7 +215,8 @@ end
 
 class Symbol
   def to_zaml(z)
-    z.emit(self.inspect)
+    z.emit("!ruby/sym ")
+    to_s.to_zaml(z)
   end
 end
 
@@ -227,62 +271,70 @@ class Exception
 end
 
 class String
-  ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
-  def escaped_for_zaml
-    # JJM (Note the trailing dots to construct a multi-line method chain.) This
-    # code is meant to escape all bytes which are not ASCII-8BIT printable
-    # characters.  Multi-byte unicode characters are handled just fine because
-    # each byte of the character results in an escaped string emitted to the
-    # YAML stream.  When the YAML is de-serialized back into a String the bytes
-    # will be reconstructed properly into the unicode character.
-    self.to_ascii8bit.gsub( /\x5C/n, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
-    gsub( /"/n, "\\\"" ).
-    gsub( /([\x00-\x1F])/n ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }.
-    gsub( /([\x80-\xFF])/n ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
-  end
+  ZAML_ESCAPES = {
+    "\a" => "\\a", "\e" => "\\e", "\f" => "\\f", "\n" => "\\n",
+    "\r" => "\\r", "\t" => "\\t", "\v" => "\\v"
+  }
+
   def to_zaml(z)
-    z.first_time_only(self) {
-      num = '[-+]?(0x)?\d+\.?\d*'
+    z.with_structured_prefix(self) do
       case
-        when self == ''
-          z.emit('""')
-        # when self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/
-        #   z.emit("!binary |\n")
-        #   z.emit([self].pack("m*"))
-        when (
-          (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
-          (self =~ /\A\n* /) or
-          (self =~ /[\s:]$/) or
-          (self =~ /^[>|][-+\d]*\s/i) or
-          (self[-1..-1] =~ /\s/) or
-          # This regular expression assumes the string is a byte sequence.
-          # It does not concern itself with characters so we convert the string
-          # to ASCII-8BIT for Ruby 1.9 to match up encodings.
-          (self.to_ascii8bit=~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/n) or
-          (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
-          (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
-          )
-          z.emit("\"#{escaped_for_zaml}\"")
-        when self =~ /\n/
-          if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
-          z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-        else
-          z.emit(self)
+      when self == ''
+        z.emit('""')
+      when self.to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
+                 [\x09\x0A\x0D\x20-\x7E]            # ASCII
+               | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
+               |  \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte
+               |  \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
+               |  \xF0[\x90-\xBF][\x80-\xBF]{2}     # planes 1-3
+               | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
+               |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
+               )*\z/mnx
+        # Emit the binary tag, then recurse. Ruby splits BASE64 output at the 60
+        # character mark when packing strings, and we can wind up a multi-line
+        # string here.  We could reimplement the multi-line string logic,
+        # but why would we - this does just as well for producing solid output.
+        z.emit("!binary ")
+        [self].pack("m*").to_zaml(z)
+
+      # Only legal UTF-8 characters can make it this far, so we are safe
+      # against emitting something dubious. That means we don't need to mess
+      # about, just emit them directly. --daniel 2012-07-14
+      when ((self =~ /\A[a-zA-Z\/][-\[\]_\/.a-zA-Z0-9]*\z/) and
+          (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
+        # simple string literal, safe to emit unquoted.
+        z.emit(self)
+      when (self =~ /\n/ and self !~ /\A\s/ and self !~ /\s\z/)
+        # embedded newline, split line-wise in quoted string block form.
+        if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
+        z.nested { split("\n",-1).each { |line| z.nl; z.emit(line) } }
+      else
+        # ...though we still have to escape unsafe characters.
+        escaped = gsub(/[\\"\x00-\x1F]/) do |c|
+          ZAML_ESCAPES[c] || "\\x#{c[0].ord.to_s(16)}"
+        end
+        z.emit("\"#{escaped}\"")
       end
-    }
+    end
   end
 
   # Return a guranteed ASCII-8BIT encoding for Ruby 1.9 This is a helper
   # method for other methods that perform regular expressions against byte
   # sequences deliberately rather than dealing with characters.
   # The method may or may not return a new instance.
-  def to_ascii8bit
-    if self.respond_to?(:encoding) and self.encoding.name != "ASCII-8BIT" then
-      str = self.dup
-      str.force_encoding("ASCII-8BIT")
-      return str
-    else
-      return self
+  if String.method_defined?(:encoding)
+    ASCII_ENCODING = Encoding.find("ASCII-8BIT")
+    def to_ascii8bit
+      if self.encoding == ASCII_ENCODING
+        self
+      else
+        self.dup.force_encoding(ASCII_ENCODING)
+      end
+    end
+  else
+    def to_ascii8bit
+      self
     end
   end
 end
@@ -323,7 +375,7 @@ end
 class Time
   def to_zaml(z)
     # 2008-12-06 10:06:51.373758 -07:00
-    ms = ("%0.6f" % (usec * 1e-6)).sub(/^\d+\./,'')
+    ms = ("%0.6f" % (usec * 1e-6))[2..-1]
     offset = "%+0.2i:%0.2i" % [utc_offset / 3600, (utc_offset / 60) % 60]
     z.emit(self.strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
   end

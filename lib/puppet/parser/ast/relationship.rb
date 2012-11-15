@@ -7,24 +7,15 @@ class Puppet::Parser::AST::Relationship < Puppet::Parser::AST::Branch
 
   attr_accessor :left, :right, :arrow, :type
 
-  def actual_left
-    chained? ? left.right : left
-  end
-
   # Evaluate our object, but just return a simple array of the type
   # and name.
   def evaluate(scope)
-    if chained?
-      real_left = left.safeevaluate(scope)
-      left_dep = left_dep.shift if left_dep.is_a?(Array)
-    else
-      real_left = left.safeevaluate(scope)
-    end
+    real_left = left.safeevaluate(scope)
     real_right = right.safeevaluate(scope)
 
     source, target = sides2edge(real_left, real_right)
-    result = Puppet::Parser::Relationship.new(source, target, type)
-    scope.compiler.add_relationship(result)
+    scope.compiler.add_relationship Puppet::Parser::Relationship.new(source, target, type)
+
     real_right
   end
 
@@ -45,10 +36,6 @@ class Puppet::Parser::AST::Relationship < Puppet::Parser::AST::Branch
   end
 
   private
-
-  def chained?
-    left.is_a?(self.class)
-  end
 
   def out_edge?
     ["->", "~>"].include?(arrow)

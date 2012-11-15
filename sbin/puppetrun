@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'puppet/application/kick'
-Puppet::Application[:kick].run
-

@@ -1,10 +1,12 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/fileset'
 
 describe Puppet::FileServing::Fileset, " when initializing" do
   include PuppetSpec::Files
+
+  let(:request) { Puppet::Indirector::Request.new(:file_serving, :find, "foo", nil) }
 
   before :each do
     @somefile = make_absolute("/some/file")
@@ -93,7 +95,6 @@ describe Puppet::FileServing::Fileset, " when initializing" do
 
   it "should support using an Indirector Request for its options" do
     File.expects(:lstat).with(@somefile).returns stub("stat")
-    request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
     lambda { Puppet::FileServing::Fileset.new(@somefile, request) }.should_not raise_error
   end
 
@@ -101,35 +102,34 @@ describe Puppet::FileServing::Fileset, " when initializing" do
     before do
       File.stubs(:lstat).returns stub("stat")
       @values = {:links => :manage, :ignore => %w{a b}, :recurse => true, :recurselimit => 1234}
-      @request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
       @myfile = make_absolute("/my/file")
     end
 
     [:recurse, :recurselimit, :ignore, :links].each do |option|
       it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present" do
-        @request.stubs(:options).returns(option => @values[option])
-        Puppet::FileServing::Fileset.new(@myfile, @request).send(option).should == @values[option]
+        request.stubs(:options).returns(option => @values[option])
+        Puppet::FileServing::Fileset.new(@myfile, request).send(option).should == @values[option]
       end
 
       it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
-        @request.stubs(:options).returns(option.to_s => @values[option])
-        Puppet::FileServing::Fileset.new(@myfile, @request).send(option).should == @values[option]
+        request.stubs(:options).returns(option.to_s => @values[option])
+        Puppet::FileServing::Fileset.new(@myfile, request).send(option).should == @values[option]
       end
     end
 
     it "should convert the integer as a string to their integer counterpart when setting options" do
-      @request.stubs(:options).returns(:recurselimit => "1234")
-      Puppet::FileServing::Fileset.new(@myfile, @request).recurselimit.should == 1234
+      request.stubs(:options).returns(:recurselimit => "1234")
+      Puppet::FileServing::Fileset.new(@myfile, request).recurselimit.should == 1234
     end
 
     it "should convert the string 'true' to the boolean true when setting options" do
-      @request.stubs(:options).returns(:recurse => "true")
-      Puppet::FileServing::Fileset.new(@myfile, @request).recurse.should == true
+      request.stubs(:options).returns(:recurse => "true")
+      Puppet::FileServing::Fileset.new(@myfile, request).recurse.should == true
     end
 
     it "should convert the string 'false' to the boolean false when setting options" do
-      @request.stubs(:options).returns(:recurse => "false")
-      Puppet::FileServing::Fileset.new(@myfile, @request).recurse.should == false
+      request.stubs(:options).returns(:recurse => "false")
+      Puppet::FileServing::Fileset.new(@myfile, request).recurse.should == false
     end
   end
 end

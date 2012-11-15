@@ -1,3 +1,0 @@
-file { "/etc/passwd":
-    fakeparam => 644
-}

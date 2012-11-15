@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_windows? do
@@ -15,36 +15,37 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
       described_class.new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe')[:command].should == 'C:\Windows\System32\notepad.exe'
     end
 
+    it 'should convert forward slashes to backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:/Windows/System32/notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
+    it 'should normalize backslashes' do
+      described_class.new(
+        :name      => 'Test Task',
+        :command   => 'C:\Windows\\System32\\\\notepad.exe'
+      )[:command].should == 'C:\Windows\System32\notepad.exe'
+    end
+
     it 'should fail if the path to the command is not absolute' do
       expect {
         described_class.new(:name => 'Test Task', :command => 'notepad.exe')
       }.to raise_error(
         Puppet::Error,
-        /Parameter command failed: Must be specified using an absolute path\./
+        /Parameter command failed on Scheduled_task\[Test Task\]: Must be specified using an absolute path\./
       )
     end
   end
 
   describe 'when setting the command arguments' do
-    it 'should fail if provided an array' do
-      expect {
-        described_class.new(
-          :name      => 'Test Task',
-          :command   => 'C:\Windows\System32\notepad.exe',
-          :arguments => ['/a', '/b', '/c']
-        )
-      }.to raise_error(
-        Puppet::Error,
-        /Parameter arguments failed: Must be specified as a single string/
-      )
-    end
-
     it 'should accept a string' do
       described_class.new(
         :name      => 'Test Task',
         :command   => 'C:\Windows\System32\notepad.exe',
         :arguments => '/a /b /c'
-      )[:arguments].should == ['/a /b /c']
+      )[:arguments].should == '/a /b /c'
     end
 
     it 'should allow not specifying any command arguments' do
@@ -76,7 +77,7 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
         )
       }.to raise_error(
         Puppet::Error,
-        /Parameter working_dir failed: Must be specified using an absolute path/
+        /Parameter working_dir failed on Scheduled_task\[Test Task\]: Must be specified using an absolute path/
       )
     end
 

@@ -1,60 +1,39 @@
 require 'fileutils'
+require 'puppet/util/lockfile'
 
 class Puppet::Util::Pidlock
-  attr_reader :lockfile
 
   def initialize(lockfile)
-    @lockfile = lockfile
+    @lockfile = Puppet::Util::Lockfile.new(lockfile)
   end
 
   def locked?
     clear_if_stale
-    File.exists? @lockfile
+    @lockfile.locked?
   end
 
   def mine?
     Process.pid == lock_pid
   end
 
-  def anonymous?
-    return false unless File.exists?(@lockfile)
-    File.read(@lockfile) == ""
+  def lock
+    return mine? if locked?
+
+    @lockfile.lock(Process.pid)
   end
 
-  def lock(opts = {})
-    opts = {:anonymous => false}.merge(opts)
-
-    if locked?
-      mine?
-    else
-      if opts[:anonymous]
-        File.open(@lockfile, 'w') { |fd| true }
-      else
-        File.open(@lockfile, "w") { |fd| fd.write(Process.pid) }
-      end
-      true
-    end
-  end
-
-  def unlock(opts = {})
-    opts = {:anonymous => false}.merge(opts)
-
-    if mine? or (opts[:anonymous] and anonymous?)
-      File.unlink(@lockfile)
-      true
+  def unlock()
+    if mine?
+      return @lockfile.unlock
     else
       false
     end
   end
 
-  private
   def lock_pid
-    if File.exists? @lockfile
-      File.read(@lockfile).to_i
-    else
-      nil
-    end
+    @lockfile.lock_data.to_i
   end
+
 
   def clear_if_stale
     return if lock_pid.nil?
@@ -66,7 +45,9 @@ class Puppet::Util::Pidlock
     begin
       Process.kill(0, lock_pid)
     rescue *errors
-      File.unlink(@lockfile)
+      @lockfile.unlock
     end
   end
+  private :clear_if_stale
+
 end

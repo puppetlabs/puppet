@@ -12,10 +12,13 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
   confine :operatingsystem => :gentoo
 
-  defaultfor :operatingsystem => :gentoo
-
   def self.defpath
     superclass.defpath
+  end
+
+  def self.instances
+    # this exclude list was found with grep -L '\/sbin\/runscript' /etc/init.d/*
+    self.get_services(self.defpath, ['functions.sh', 'reboot.sh', 'shutdown.sh'])
   end
 
   def disable

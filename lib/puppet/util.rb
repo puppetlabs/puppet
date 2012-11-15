@@ -1,20 +1,20 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/util/monkey_patches'
-require 'sync'
-require 'tempfile'
 require 'puppet/external/lock'
-require 'monitor'
+require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
+require 'sync'
+require 'monitor'
+require 'tempfile'
+require 'pathname'
+require 'ostruct'
+require 'puppet/util/platform'
 
 module Puppet
-  # A command failed to execute.
-  require 'puppet/error'
-  class ExecutionFailure < Puppet::Error
-  end
 module Util
+  require 'puppet/util/monkey_patches'
   require 'benchmark'
 
   # These are all for backward compatibility -- these are methods that used
@@ -24,6 +24,7 @@ module Util
 
   @@sync_objects = {}.extend MonitorMixin
 
+
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
@@ -31,6 +32,36 @@ module Util
       0
     end
   end
+
+
+  # Run some code with a specific environment.  Resets the environment back to
+  # what it was at the end of the code.
+  def self.withenv(hash)
+    saved = ENV.to_hash
+    hash.each do |name, val|
+      ENV[name.to_s] = val
+    end
+
+    yield
+  ensure
+    ENV.clear
+    saved.each do |name, val|
+      ENV[name] = val
+    end
+  end
+
+
+  # Execute a given chunk of code with a new umask.
+  def self.withumask(mask)
+    cur = File.umask(mask)
+
+    begin
+      yield
+    ensure
+      File.umask(cur)
+    end
+  end
+
 
   def self.synchronize_on(x,type)
     sync_object,users = 0,1
@@ -119,38 +150,6 @@ module Util
     end
   end
 
-  # XXX this should all be done using puppet objects, not using
-  # normal mkdir
-  def self.recmkdir(dir,mode = 0755)
-    if FileTest.exist?(dir)
-      return false
-    else
-      tmp = dir.sub(/^\//,'')
-      path = [File::SEPARATOR]
-      tmp.split(File::SEPARATOR).each { |dir|
-        path.push dir
-        if ! FileTest.exist?(File.join(path))
-          Dir.mkdir(File.join(path), mode)
-        elsif FileTest.directory?(File.join(path))
-          next
-        else FileTest.exist?(File.join(path))
-          raise "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-        end
-      }
-      return true
-    end
-  end
-
-  # Execute a given chunk of code with a new umask.
-  def self.withumask(mask)
-    cur = File.umask(mask)
-
-    begin
-      yield
-    ensure
-      File.umask(cur)
-    end
-  end
 
   def benchmark(*args)
     msg = args.pop
@@ -191,16 +190,33 @@ module Util
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-        dest = File.expand_path(File.join(dir, bin))
-        if Puppet.features.microsoft_windows? && File.extname(dest).empty?
-          exts = ENV['PATHEXT']
-          exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-          exts.each do |ext|
-            destext = File.expand_path(dest + ext)
-            return destext if FileTest.file? destext and FileTest.executable? destext
+        begin
+          dest = File.expand_path(File.join(dir, bin))
+        rescue ArgumentError => e
+          # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
+          # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
+          # was thrown.
+          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
+            # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
+            # ignore this path element and carry on with our lives.
+            Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
+          elsif e.to_s =~ /doesn't exist|can't find user/
+            # ...otherwise, we just skip the non-existent entry, and do nothing.
+            Puppet::Util::Warnings.warnonce("Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'.")
+          else
+            raise
           end
+        else
+          if Puppet.features.microsoft_windows? && File.extname(dest).empty?
+            exts = ENV['PATHEXT']
+            exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
+            exts.each do |ext|
+              destext = File.expand_path(dest + ext)
+              return destext if FileTest.file? destext and FileTest.executable? destext
+            end
+          end
+          return dest if FileTest.file? dest and FileTest.executable? dest
         end
-        return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end
     nil
@@ -209,18 +225,29 @@ module Util
 
   # Determine in a platform-specific way whether a path is absolute. This
   # defaults to the local platform if none is specified.
+  #
+  # Escape once for the string literal, and once for the regex.
+  slash = '[\\\\/]'
+  label = '[^\\\\/]+'
+  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
+  AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
-    # Escape once for the string literal, and once for the regex.
-    slash = '[\\\\/]'
-    name = '[^\\\\/]+'
-    regexes = {
-      :windows => %r!^(([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name}))!i,
-      :posix   => %r!^/!,
-    }
-    require 'puppet'
-    platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
+    # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
+    # library uses that to test what platform it's on.  Normally in Puppet we
+    # would use Puppet.features.microsoft_windows?, but this method needs to
+    # be called during the initialization of features so it can't depend on
+    # that.
+    platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
+    regex = case platform
+            when :windows
+              AbsolutePathWindows
+            when :posix
+              AbsolutePathPosix
+            else
+              raise Puppet::DevError, "unknown platform #{platform} in absolute_path"
+            end
 
-    !! (path =~ regexes[platform])
+    !! (path =~ regex)
   end
   module_function :absolute_path?
 
@@ -269,162 +296,24 @@ module Util
   end
   module_function :uri_to_path
 
-  # Execute the provided command in a pipe, yielding the pipe object.
-  def execpipe(command, failonfail = true)
-    if respond_to? :debug
-      debug "Executing '#{command}'"
-    else
-      Puppet.debug "Executing '#{command}'"
-    end
-
-    command_str = command.respond_to?(:join) ? command.join('') : command
-    output = open("| #{command_str} 2>&1") do |pipe|
-      yield pipe
-    end
-
-    if failonfail
-      unless $CHILD_STATUS == 0
-        raise ExecutionFailure, output
-      end
-    end
-
-    output
-  end
-
-  def execfail(command, exception)
-      output = execute(command)
-      return output
-  rescue ExecutionFailure
-      raise exception, output
-  end
-
-  def execute_posix(command, arguments, stdin, stdout, stderr)
+  def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
     child_pid = Kernel.fork do
-      # We can't just call Array(command), and rely on it returning
-      # things like ['foo'], when passed ['foo'], because
-      # Array(command) will call command.to_a internally, which when
-      # given a string can end up doing Very Bad Things(TM), such as
-      # turning "/tmp/foo;\r\n /bin/echo" into ["/tmp/foo;\r\n", " /bin/echo"]
-      command = [command].flatten
-      Process.setsid
-      begin
-        $stdin.reopen(stdin)
-        $stdout.reopen(stdout)
-        $stderr.reopen(stderr)
+      $stdin.reopen(stdin)
+      $stdout.reopen(stdout)
+      $stderr.reopen(stderr)
 
-        3.upto(256){|fd| IO::new(fd).close rescue nil}
+      3.upto(256){|fd| IO::new(fd).close rescue nil}
 
-        Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
-        Puppet::Util::SUIDManager.change_user(arguments[:uid], true)  if arguments[:uid]
-
-        ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-        Kernel.exec(*command)
-      rescue => detail
-        puts detail.to_s
-        exit!(1)
-      end
+      block.call if block
     end
     child_pid
   end
-  module_function :execute_posix
-
-  def execute_windows(command, arguments, stdin, stdout, stderr)
-    command = command.map do |part|
-      part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
-    end.join(" ") if command.is_a?(Array)
-
-    process_info = Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
-    process_info.process_id
-  end
-  module_function :execute_windows
-
-  # Execute the desired command, and return the status and output.
-  # def execute(command, failonfail = true, uid = nil, gid = nil)
-  # :combine sets whether or not to combine stdout/stderr in the output
-  # :stdinfile sets a file that can be used for stdin. Passing a string
-  # for stdin is not currently supported.
-  def execute(command, arguments = {:failonfail => true, :combine => true})
-    if command.is_a?(Array)
-      command = command.flatten.map(&:to_s)
-      str = command.join(" ")
-    elsif command.is_a?(String)
-      str = command
-    end
-
-    if respond_to? :debug
-      debug "Executing '#{str}'"
-    else
-      Puppet.debug "Executing '#{str}'"
-    end
-
-    null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
-
-    stdin = File.open(arguments[:stdinfile] || null_file, 'r')
-    stdout = arguments[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
-    stderr = arguments[:combine] ? stdout : File.open(null_file, 'w')
-
-    exec_args = [command, arguments, stdin, stdout, stderr]
-
-    if execution_stub = Puppet::Util::ExecutionStub.current_value
-      return execution_stub.call(*exec_args)
-    elsif Puppet.features.posix?
-      child_pid = execute_posix(*exec_args)
-      exit_status = Process.waitpid2(child_pid).last.exitstatus
-    elsif Puppet.features.microsoft_windows?
-      child_pid = execute_windows(*exec_args)
-      exit_status = Process.waitpid2(child_pid).last
-      # $CHILD_STATUS is not set when calling win32/process Process.create
-      # and since it's read-only, we can't set it. But we can execute a
-      # a shell that simply returns the desired exit status, which has the
-      # desired effect.
-      %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
-    end
-
-    [stdin, stdout, stderr].each {|io| io.close rescue nil}
-
-    # read output in if required
-    unless arguments[:squelch]
-      output = wait_for_output(stdout)
-      Puppet.warning "Could not get output" unless output
-    end
-
-    if arguments[:failonfail] and exit_status != 0
-      raise ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
-    end
-
-    output
-  end
-
-  module_function :execute
-
-  def wait_for_output(stdout)
-    # Make sure the file's actually been written.  This is basically a race
-    # condition, and is probably a horrible way to handle it, but, well, oh
-    # well.
-    2.times do |try|
-      if File.exists?(stdout.path)
-        output = stdout.open.read
-
-        stdout.close(true)
-
-        return output
-      else
-        time_to_sleep = try / 2.0
-        Puppet.warning "Waiting for output; will sleep #{time_to_sleep} seconds"
-        sleep(time_to_sleep)
-      end
-    end
-    nil
-  end
-  module_function :wait_for_output
+  module_function :safe_posix_fork
 
   # Create an exclusive lock.
   def threadlock(resource, type = Sync::EX)
     Puppet::Util.synchronize_on(resource,type) { yield }
   end
-
-  # Because some modules provide their own version of this method.
-  alias util_execute execute
 
   module_function :benchmark
 
@@ -439,36 +328,15 @@ module Util
     end
   end
 
-  def symbolize(value)
-    if value.respond_to? :intern
-      value.intern
-    else
-      value
-    end
-  end
-
   def symbolizehash(hash)
     newhash = {}
     hash.each do |name, val|
-      if name.is_a? String
-        newhash[name.intern] = val
-      else
-        newhash[name] = val
-      end
+      name = name.intern if name.respond_to? :intern
+      newhash[name] = val
     end
+    newhash
   end
-
-  def symbolizehash!(hash)
-    hash.each do |name, val|
-      if name.is_a? String
-        hash[name.intern] = val
-        hash.delete(name)
-      end
-    end
-
-    hash
-  end
-  module_function :symbolize, :symbolizehash, :symbolizehash!
+  module_function :symbolizehash
 
   # Just benchmark, with no logging.
   def thinmark
@@ -481,35 +349,196 @@ module Util
 
   module_function :memory, :thinmark
 
-  def secure_open(file,must_be_w,&block)
-    raise Puppet::DevError,"secure_open only works with mode 'w'" unless must_be_w == 'w'
-    raise Puppet::DevError,"secure_open only requires a block"    unless block_given?
-    Puppet.warning "#{file} was a symlink to #{File.readlink(file)}" if File.symlink?(file)
-    if File.exists?(file) or File.symlink?(file)
-      wait = File.symlink?(file) ? 5.0 : 0.1
-      File.delete(file)
-      sleep wait # give it a chance to reappear, just in case someone is actively trying something.
-    end
-    begin
-      File.open(file,File::CREAT|File::EXCL|File::TRUNC|File::WRONLY,&block)
-    rescue Errno::EEXIST
-      desc = File.symlink?(file) ? "symlink to #{File.readlink(file)}" : File.stat(file).ftype
-      puts "Warning: #{file} was apparently created by another process (as"
-      puts "a #{desc}) as soon as it was deleted by this process.  Someone may be trying"
-      puts "to do something objectionable (such as tricking you into overwriting system"
-      puts "files if you are running as root)."
-      raise
-    end
-  end
-  module_function :secure_open
-
   # Because IO#binread is only available in 1.9
   def binread(file)
     File.open(file, 'rb') { |f| f.read }
   end
   module_function :binread
+
+  # utility method to get the current call stack and format it to a human-readable string (which some IDEs/editors
+  # will recognize as links to the line numbers in the trace)
+  def self.pretty_backtrace(backtrace = caller(1))
+    backtrace.collect do |line|
+      _, path, rest = /^(.*):(\d+.*)$/.match(line).to_a
+      # If the path doesn't exist - like in one test, and like could happen in
+      # the world - we should just tolerate it and carry on. --daniel 2012-09-05
+      # Also, if we don't match, just include the whole line.
+      if path
+        path = Pathname(path).realpath rescue path
+        "#{path}:#{rest}"
+      else
+        line
+      end
+    end.join("\n")
+  end
+
+  # Replace a file, securely.  This takes a block, and passes it the file
+  # handle of a file open for writing.  Write the replacement content inside
+  # the block and it will safely replace the target file.
+  #
+  # This method will make no changes to the target file until the content is
+  # successfully written and the block returns without raising an error.
+  #
+  # As far as possible the state of the existing file, such as mode, is
+  # preserved.  This works hard to avoid loss of any metadata, but will result
+  # in an inode change for the file.
+  #
+  # Arguments: `filename`, `default_mode`
+  #
+  # The filename is the file we are going to replace.
+  #
+  # The default_mode is the mode to use when the target file doesn't already
+  # exist; if the file is present we copy the existing mode/owner/group values
+  # across.
+  def replace_file(file, default_mode, &block)
+    raise Puppet::DevError, "replace_file requires a block" unless block_given?
+
+    file     = Pathname(file)
+    tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
+
+    file_exists = file.exist?
+
+    # Set properties of the temporary file before we write the content, because
+    # Tempfile doesn't promise to be safe from reading by other people, just
+    # that it avoids races around creating the file.
+    #
+    # Our Windows emulation is pretty limited, and so we have to carefully
+    # and specifically handle the platform, which has all sorts of magic.
+    # So, unlike Unix, we don't pre-prep security; we use the default "quite
+    # secure" tempfile permissions instead.  Magic happens later.
+    unless Puppet.features.microsoft_windows?
+      # Grab the current file mode, and fall back to the defaults.
+      stat = file.lstat rescue OpenStruct.new(:mode => default_mode,
+                                              :uid  => Process.euid,
+                                              :gid  => Process.egid)
+
+      # We only care about the bottom four slots, which make the real mode,
+      # and not the rest of the platform stat call fluff and stuff.
+      tempfile.chmod(stat.mode & 07777)
+      tempfile.chown(stat.uid, stat.gid)
+    end
+
+    # OK, now allow the caller to write the content of the file.
+    yield tempfile
+
+    # Now, make sure the data (which includes the mode) is safe on disk.
+    tempfile.flush
+    begin
+      tempfile.fsync
+    rescue NotImplementedError
+      # fsync may not be implemented by Ruby on all platforms, but
+      # there is absolutely no recovery path if we detect that.  So, we just
+      # ignore the return code.
+      #
+      # However, don't be fooled: that is accepting that we are running in
+      # an unsafe fashion.  If you are porting to a new platform don't stub
+      # that out.
+    end
+
+    tempfile.close
+
+    if Puppet.features.microsoft_windows?
+      # This will appropriately clone the file, but only if the file we are
+      # replacing exists.  Which is kind of annoying; thanks Microsoft.
+      #
+      # So, to avoid getting into an infinite loop we will retry once if the
+      # file doesn't exist, but only the once...
+      have_retried = false
+
+      begin
+        # Yes, the arguments are reversed compared to the rename in the rest
+        # of the world.
+        Puppet::Util::Windows::File.replace_file(file, tempfile.path)
+      rescue Puppet::Util::Windows::Error => e
+        # This might race, but there are enough possible cases that there
+        # isn't a good, solid "better" way to do this, and the next call
+        # should fail in the same way anyhow.
+        raise if have_retried or File.exist?(file)
+        have_retried = true
+
+        # OK, so, we can't replace a file that doesn't exist, so let us put
+        # one in place and set the permissions.  Then we can retry and the
+        # magic makes this all work.
+        #
+        # This is the least-worst option for handling Windows, as far as we
+        # can determine.
+        File.open(file, 'a') do |fh|
+          # this space deliberately left empty for auto-close behaviour,
+          # append mode, and not actually changing any of the content.
+        end
+
+        # Set the permissions to what we want.
+        Puppet::Util::Windows::Security.set_mode(default_mode, file.to_s)
+
+        # ...and finally retry the operation.
+        retry
+      end
+    else
+      File.rename(tempfile.path, file)
+    end
+
+    # Ideally, we would now fsync the directory as well, but Ruby doesn't
+    # have support for that, and it doesn't matter /that/ much...
+
+    # Return something true, and possibly useful.
+    file
+  end
+  module_function :replace_file
+
+
+  # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
+  #  exit if the block throws an exception.
+  #
+  # @param [String] message a message to log if the block fails
+  # @param [Integer] code the exit code that the ruby interpreter should return if the block fails
+  # @yield
+  def exit_on_fail(message, code = 1)
+    yield
+  # First, we need to check and see if we are catching a SystemExit error.  These will be raised
+  #  when we daemonize/fork, and they do not necessarily indicate a failure case.
+  rescue SystemExit => err
+    raise err
+
+  # Now we need to catch *any* other kind of exception, because we may be calling third-party
+  #  code (e.g. webrick), and we have no idea what they might throw.
+  rescue Exception => err
+    ## NOTE: when debugging spec failures, these two lines can be very useful
+    #puts err.inspect
+    #puts Puppet::Util.pretty_backtrace(err.backtrace)
+    Puppet.log_exception(err, "Could not #{message}: #{err}")
+    Puppet::Util::Log.force_flushqueue()
+    exit(code)
+  end
+  module_function :exit_on_fail
+
+
+
+
+  #######################################################################################################
+  # Deprecated methods relating to process execution; these have been moved to Puppet::Util::Execution
+  #######################################################################################################
+
+  def execpipe(command, failonfail = true, &block)
+    Puppet.deprecation_warning("Puppet::Util.execpipe is deprecated; please use Puppet::Util::Execution.execpipe")
+    Puppet::Util::Execution.execpipe(command, failonfail, &block)
+  end
+  module_function :execpipe
+
+  def execfail(command, exception)
+    Puppet.deprecation_warning("Puppet::Util.execfail is deprecated; please use Puppet::Util::Execution.execfail")
+    Puppet::Util::Execution.execfail(command, exception)
+  end
+  module_function :execfail
+
+  def execute(command, arguments = {})
+    Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
+    Puppet::Util::Execution.execute(command, arguments)
+  end
+  module_function :execute
+
 end
 end
+
 
 require 'puppet/util/errors'
 require 'puppet/util/methodhelper'

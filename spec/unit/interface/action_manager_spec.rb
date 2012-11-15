@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 # This is entirely an internal class for Interface, so we have to load it instead of our class.
@@ -259,7 +259,7 @@ describe Puppet::Interface::ActionManager do
           when_invoked do |options| true end
           default
         }
-      }.should raise_error /cannot both be default/
+      }.to raise_error /cannot both be default/
     end
   end
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/application/cert'
 
@@ -10,10 +10,6 @@ describe Puppet::Application::Cert => true do
 
   it "should operate in master run_mode" do
     @cert_app.class.run_mode.name.should equal(:master)
-  end
-
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @cert_app.should_parse_config?.should be_true
   end
 
   it "should declare a main command" do

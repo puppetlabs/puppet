@@ -1,3 +1,4 @@
+require 'puppet/property/list'
 Puppet::Type.newtype(:zone) do
   @doc = "Manages Solaris zones.
 
@@ -5,69 +6,45 @@ Puppet::Type.newtype(:zone) do
 the zone's filesystem (with the `path` attribute), the zone resource will
 autorequire that directory."
 
-  # These properties modify the zone configuration, and they need to provide
-  # the text separately from syncing it, so all config statements can be rolled
-  # into a single creation statement.
-  class ZoneConfigProperty < Puppet::Property
-    # Perform the config operation.
-    def sync
-      provider.setconfig self.configtext
-    end
-  end
-
-  # Those properties that can have multiple instances.
-  class ZoneMultiConfigProperty < ZoneConfigProperty
-    def configtext
-      list = @should
-
-      current_value = self.retrieve
-
-      unless current_value.is_a? Symbol
-        if current_value.is_a? Array
-          list += current_value
-        else
-          list << current_value if current_value
-        end
-      end
-
-      # Some hackery so we can test whether current_value is an array or a symbol
-      if current_value.is_a? Array
-        tmpis = current_value
-      else
-        if current_value
-          tmpis = [current_value]
-        else
-          tmpis = []
-        end
-      end
-
-      rms = []
-      adds = []
-
-      # Collect the modifications to make
-      list.sort.uniq.collect do |obj|
-        # Skip objectories that are configured and should be
-        next if tmpis.include?(obj) and @should.include?(obj)
-
-        if tmpis.include?(obj)
-          rms << obj
-        else
-          adds << obj
-        end
-      end
-
-
-      # And then perform all of the removals before any of the adds.
-      (rms.collect { |o| rm(o) } + adds.collect { |o| add(o) }).join("\n")
+  class StateMachine
+    # A silly little state machine.
+    def initialize
+      @state = {}
+      @sequence = []
+      @state_aliases = {}
+      @default = nil
     end
 
-    # We want all specified directories to be included.
-    def insync?(current_value)
-      if current_value.is_a? Array and @should.is_a? Array
-        current_value.sort == @should.sort
-      else
-        current_value == @should
-      end
+    # The order of calling insert_state is important
+    def insert_state(name, transitions)
+      @sequence << name
+      @state[name] = transitions
+    end
+
+    def alias_state(state, salias)
+      @state_aliases[state] = salias
+    end
+
+    def name(n)
+      @state_aliases[n.to_sym] || n.to_sym
+    end
+
+    def index(state)
+      @sequence.index(name(state))
+    end
+
+    # return all states between fs and ss excluding fs
+    def sequence(fs, ss)
+      fi = index(fs)
+      si= index(ss)
+      (if fi > si
+        then @sequence[si .. fi].map{|i| @state[i]}.reverse
+        else @sequence[fi .. si].map{|i| @state[i]}
+      end)[1..-1]
+    end
+
+    def cmp?(a,b)
+      index(a) < index(b)
     end
   end
 
@@ -78,102 +55,66 @@ autorequire that directory."
       only then can be `running`.  Note also that `halt` is currently
       used to stop zones."
 
-    @states = {}
-    @parametervalues = []
+    def self.fsm
+      return @fsm if @fsm
+      @fsm = StateMachine.new
+    end
 
     def self.alias_state(values)
-      @state_aliases ||= {}
-      values.each do |nick, name|
-        @state_aliases[nick] = name
+      values.each do |k,v|
+        fsm.alias_state(k,v)
       end
     end
 
-    def self.newvalue(name, hash)
-      @parametervalues = [] if @parametervalues.is_a? Hash
-
-      @parametervalues << name
-
-      @states[name] = hash
-      hash[:name] = name
+    def self.seqvalue(name, hash)
+      fsm.insert_state(name, hash)
+      self.newvalue name
     end
 
-    def self.state_name(name)
-      if other = @state_aliases[name]
-        other
-      else
-        name
-      end
-    end
-
-    newvalue :absent, :down => :destroy
-    newvalue :configured, :up => :configure, :down => :uninstall
-    newvalue :installed, :up => :install, :down => :stop
-    newvalue :running, :up => :start
+    # This is seq value because the order of declaration is important.
+    # i.e we go linearly from :absent -> :configured -> :installed -> :running
+    seqvalue :absent, :down => :destroy
+    seqvalue :configured, :up => :configure, :down => :uninstall
+    seqvalue :installed, :up => :install, :down => :stop
+    seqvalue :running, :up => :start
 
     alias_state :incomplete => :installed, :ready => :installed, :shutting_down => :running
 
     defaultto :running
 
-    def self.state_index(value)
-      @parametervalues.index(state_name(value))
-    end
-
-    # Return all of the states between two listed values, exclusive
-    # of the first item.
     def self.state_sequence(first, second)
-      findex = sindex = nil
-      unless findex = @parametervalues.index(state_name(first))
-        raise ArgumentError, "'#{first}' is not a valid zone state"
-      end
-      unless sindex = @parametervalues.index(state_name(second))
-        raise ArgumentError, "'#{first}' is not a valid zone state"
-      end
-      list = nil
-
-      # Apparently ranges are unidirectional, so we have to reverse
-      # the range op twice.
-      if findex > sindex
-        list = @parametervalues[sindex..findex].collect do |name|
-          @states[name]
-        end.reverse
-      else
-        list = @parametervalues[findex..sindex].collect do |name|
-          @states[name]
-        end
-      end
-
-      # The first result is the current state, so don't return it.
-      list[1..-1]
+      fsm.sequence(first, second)
     end
 
+    # Why override it? because property/ensure.rb has a default retrieve method
+    # that knows only about :present and :absent. That method just calls
+    # provider.exists? and returns :present if a result was returned.
     def retrieve
       provider.properties[:ensure]
     end
 
+    def provider_sync_send(method)
+      warned = false
+      while provider.processing?
+        next if warned
+        info "Waiting for zone to finish processing"
+        warned = true
+        sleep 1
+      end
+      provider.send(method)
+      provider.flush()
+    end
+
     def sync
       method = nil
-      if up?
-        direction = :up
-      else
-        direction = :down
-      end
+      direction = up? ? :up : :down
 
       # We need to get the state we're currently in and just call
       # everything between it and us.
       self.class.state_sequence(self.retrieve, self.should).each do |state|
-        if method = state[direction]
-          warned = false
-          while provider.processing?
-            unless warned
-              info "Waiting for zone to finish processing"
-              warned = true
-            end
-            sleep 1
-          end
-          provider.send(method)
-        else
-          raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}"
-        end
+        method = state[direction]
+        raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}" unless method
+        provider_sync_send(method)
       end
 
       ("zone_#{self.should}").intern
@@ -181,9 +122,9 @@ autorequire that directory."
 
     # Are we moving up the property tree?
     def up?
-      current_value = self.retrieve
-      self.class.state_index(current_value) < self.class.state_index(self.should)
+      self.class.fsm.cmp?(self.retrieve, self.should)
     end
+
   end
 
   newparam(:name) do
@@ -204,139 +145,110 @@ autorequire that directory."
       zone will be used. The zone from which you clone must not be running."
   end
 
-  newproperty(:ip, :parent => ZoneMultiConfigProperty) do
+  newproperty(:ip, :parent => Puppet::Property::List) do
     require 'ipaddr'
 
     desc "The IP address of the zone.  IP addresses must be specified
       with the interface, separated by a colon, e.g.: bge0:192.168.0.1.
       For multiple interfaces, specify them in an array."
 
-    # Add an interface.
-    def add(str)
-      interface, ip, defrouter = ipsplit(str)
-      cmd = "add net\n"
-      cmd += "set physical=#{interface}\n" if interface
-      cmd += "set address=#{ip}\n" if ip
-      cmd += "set defrouter=#{defrouter}\n" if defrouter
-      #if @resource[:iptype] == :shared
-      cmd += "end\n"
+    # The default action of list should is to lst.join(' '). By specifying
+    # @should, we ensure the should remains an array. If we override should, we
+    # should also override insync?() -- property/list.rb
+    def should
+      @should
     end
 
-    # Convert a string into the component interface, address and defrouter
-    def ipsplit(str)
-      interface, address, defrouter = str.split(':')
-      return interface, address, defrouter
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
+    end
+  end
+
+  newproperty(:iptype) do
+    desc "The IP stack type of the zone."
+    defaultto :shared
+    newvalue :shared
+    newvalue :exclusive
+  end
+
+  newproperty(:autoboot, :boolean => true) do
+    desc "Whether the zone should automatically boot."
+    defaultto true
+    newvalues(:true, :false)
+  end
+
+  newproperty(:path) do
+    desc "The root of the zone's filesystem.  Must be a fully qualified
+      file name.  If you include `%s` in the path, then it will be
+      replaced with the zone's name.  Currently, you cannot use
+      Puppet to move a zone. Consequently this is a readonly property."
+
+    validate do |value|
+      raise ArgumentError, "The zone base must be fully qualified" unless value =~ /^\//
     end
 
-    # Remove an interface.
-    def rm(str)
-      interface, ip, defrouter = ipsplit(str)
-      # Reality seems to disagree with the documentation here; the docs
-      # specify that braces are required, but they're apparently only
-      # required if you're specifying multiple values.
-      if ip
-        "remove net address=#{ip}"
-      elsif interface
-        "remove net interface=#{interface}"
+    munge do |value|
+      if value =~ /%s/
+        value % @resource[:name]
       else
-        raise ArgumentError, "can not remove network based on default router"
+        value
       end
     end
   end
 
-  newproperty(:iptype, :parent => ZoneConfigProperty) do
-    desc "The IP stack type of the zone."
-
-    defaultto :shared
-
-    newvalue :shared
-    newvalue :exclusive
-
-    def configtext
-      "set ip-type=#{self.should}"
-    end
-  end
-
-  newproperty(:autoboot, :parent => ZoneConfigProperty) do
-    desc "Whether the zone should automatically boot."
-
-    defaultto true
-
-    newvalue(:true) {}
-    newvalue(:false) {}
-
-    def configtext
-      "set autoboot=#{self.should}"
-    end
-  end
-
-  newproperty(:pool, :parent => ZoneConfigProperty) do
+  newproperty(:pool) do
     desc "The resource pool for this zone."
-
-    def configtext
-      "set pool=#{self.should}"
-    end
   end
 
-  newproperty(:shares, :parent => ZoneConfigProperty) do
+  newproperty(:shares) do
     desc "Number of FSS CPU shares allocated to the zone."
-
-    def configtext
-      "add rctl\nset name=zone.cpu-shares\nadd value (priv=privileged,limit=#{self.should},action=none)\nend"
-    end
   end
 
-  newproperty(:dataset, :parent => ZoneMultiConfigProperty) do
+  newproperty(:dataset, :parent => Puppet::Property::List ) do
     desc "The list of datasets delegated to the non-global zone from the
       global zone.  All datasets must be zfs filesystem names which are
       different from the mountpoint."
+
+    def should
+      @should
+    end
+
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
+    end
 
     validate do |value|
       unless value !~ /^\//
         raise ArgumentError, "Datasets must be the name of a zfs filesystem"
       end
     end
+  end
 
-    # Add a zfs filesystem to our list of datasets.
-    def add(dataset)
-      "add dataset\nset name=#{dataset}\nend"
-    end
-
-    # Remove a zfs filesystem from our list of datasets.
-    def rm(dataset)
-      "remove dataset name=#{dataset}"
-    end
+  newproperty(:inherit, :parent => Puppet::Property::List) do
+    desc "The list of directories that the zone inherits from the global
+      zone.  All directories must be fully qualified."
 
     def should
       @should
     end
-  end
 
-
-  newproperty(:inherit, :parent => ZoneMultiConfigProperty) do
-    desc "The list of directories that the zone inherits from the global
-      zone.  All directories must be fully qualified."
+    # overridden so that we match with self.should
+    def insync?(is)
+      return true unless is
+      is = [] if is == :absent
+      is.sort == self.should.sort
+    end
 
     validate do |value|
       unless value =~ /^\//
         raise ArgumentError, "Inherited filesystems must be fully qualified"
       end
-    end
-
-    # Add a directory to our list of inherited directories.
-    def add(dir)
-      "add inherit-pkg-dir\nset dir=#{dir}\nend"
-    end
-
-    def rm(dir)
-      # Reality seems to disagree with the documentation here; the docs
-      # specify that braces are required, but they're apparently only
-      # required if you're specifying multiple values.
-      "remove inherit-pkg-dir dir=#{dir}"
-    end
-
-    def should
-      @should
     end
   end
 
@@ -374,27 +286,6 @@ autorequire that directory."
       so Puppet only checks for it at that time.}
   end
 
-  newparam(:path) do
-    desc "The root of the zone's filesystem.  Must be a fully qualified
-      file name.  If you include `%s` in the path, then it will be
-      replaced with the zone's name.  Currently, you cannot use
-      Puppet to move a zone."
-
-    validate do |value|
-      unless value =~ /^\//
-        raise ArgumentError, "The zone base must be fully qualified"
-      end
-    end
-
-    munge do |value|
-      if value =~ /%s/
-        value % @resource[:name]
-      else
-        value
-      end
-    end
-  end
-
   newparam(:create_args) do
     desc "Arguments to the `zonecfg` create command.  This can be used to create branded zones."
   end
@@ -422,54 +313,47 @@ autorequire that directory."
   # type.  We just need to autorequire the dataset zfs itself as the zfs type
   # will autorequire all of the zfs parents and zpool.
   autorequire(:zfs) do
-
-  # Check if we have datasets in our zone configuration
-    if @parameters.include? :dataset
-      reqs = []
-      # Autorequire each dataset
-      self[:dataset].each { |value|
-        reqs << value
-      }
-      reqs
-    end
+    # Check if we have datasets in our zone configuration and autorequire each dataset
+    self[:dataset] if @parameters.include? :dataset
   end
 
   def validate_ip(ip, name)
-      IPAddr.new(ip) if ip
+    IPAddr.new(ip) if ip
   rescue ArgumentError
-      self.fail "'#{ip}' is an invalid #{name}"
+    self.fail "'#{ip}' is an invalid #{name}"
+  end
+
+  def validate_exclusive(interface, address, router)
+    return if !interface.nil? and address.nil?
+    self.fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
+  end
+  def validate_shared(interface, address, router)
+    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
+    [address, router].each do |ip|
+      validate_ip(address, "IP address") unless ip.nil?
+    end
   end
 
   validate do
-    value = self[:ip]
-    interface, address, defrouter = value.split(':')
-    if self[:iptype] == :shared
-      if (interface && address && defrouter.nil?) ||
-        (interface && address && defrouter)
-        validate_ip(address, "IP address")
-        validate_ip(defrouter, "default router")
+    return unless self[:ip]
+    # self[:ip] reflects the type passed from proeprty:ip.should. If we
+    # override it and pass @should, then we get an array here back.
+    self[:ip].each do |ip|
+      interface, address, router = ip.split(':')
+      if self[:iptype] == :shared
+        validate_shared(interface, address, router)
       else
-        self.fail "ip must contain interface name and ip address separated by a \":\""
+        validate_exclusive(interface, address, router)
       end
-    else
-      self.fail "only interface may be specified when using exclusive IP stack: #{value}" unless interface && address.nil? && defrouter.nil?
     end
-
-    self.fail "zone path is required" unless self[:path]
   end
 
   def retrieve
     provider.flush
-    if hash = provider.properties and hash[:ensure] != :absent
-      result = setstatus(hash)
-      result
-    else
-      # Return all properties as absent.
-      return properties.inject({}) do | prophash, property|
-        prophash[property] = :absent
-        prophash
-      end
-    end
+    hash = provider.properties
+    return setstatus(hash) unless hash.nil? or hash[:ensure] == :absent
+    # Return all properties as absent.
+    return Hash[properties.map{|p| [p, :absent]} ]
   end
 
   # Take the results of a listing and set everything appropriately.
@@ -480,9 +364,8 @@ autorequire that directory."
       case self.class.attrtype(param)
       when :property
         # Only try to provide values for the properties we're managing
-        if prop = self.property(param)
-          prophash[prop] = value
-        end
+        prop = self.property(param)
+        prophash[prop] = value if prop
       else
         self[param] = value
       end

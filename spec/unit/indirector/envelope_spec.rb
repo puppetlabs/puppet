@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/envelope'
 
@@ -6,19 +6,6 @@ describe Puppet::Indirector::Envelope do
   before do
     @instance = Object.new
     @instance.extend(Puppet::Indirector::Envelope)
-  end
-
-  it "should have an expiration accessor" do
-    @instance.expiration = "testing"
-    @instance.expiration.should == "testing"
-  end
-
-  it "should have an expiration setter" do
-    @instance.should respond_to(:expiration=)
-  end
-
-  it "should have a means of testing whether it is expired" do
-    @instance.should respond_to(:expired?)
   end
 
   describe "when testing if it is expired" do

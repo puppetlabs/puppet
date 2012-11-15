@@ -1,0 +1,11 @@
+# Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
+
+# Start puppetmaster on boot? If you are using passenger, you should
+# have this set to "no"
+START=yes
+
+# Startup options
+DAEMON_OPTS=""
+
+# What port should the puppetmaster listen on (default: 8140).
+PORT=8140

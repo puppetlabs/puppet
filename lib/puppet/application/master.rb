@@ -2,7 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Master < Puppet::Application
 
-  should_parse_config
   run_mode :master
 
   option("--debug", "-d")
@@ -20,8 +19,7 @@ class Puppet::Application::Master < Puppet::Application
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      puts detail.backtrace if Puppet[:debug]
-      $stderr.puts detail.to_s
+      Puppet.log_exception(detail)
     end
   end
 
@@ -31,7 +29,7 @@ class Puppet::Application::Master < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-master(8) -- The puppet master daemon
 ========
@@ -112,6 +110,8 @@ following signals:
   Restart the puppet master server.
 * SIGINT and SIGTERM:
   Shut down the puppet master server.
+* SIGUSR2:
+  Close file descriptors for log files and reopen them. Used with logrotate.
 
 AUTHOR
 ------
@@ -123,6 +123,10 @@ COPYRIGHT
 Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
+  end
+
+  def app_defaults()
+    super.merge :facts_terminus => 'yaml'
   end
 
   def preinit
@@ -147,7 +151,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def compile
     Puppet::Util::Log.newdestination :console
-    raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
         raise "Could not compile catalog for #{options[:node]}"
@@ -163,12 +166,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'etc'
-    require 'puppet/file_serving/content'
-    require 'puppet/file_serving/metadata'
-
-    xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
-
-    xmlrpc_handlers << :CA if Puppet[:ca]
 
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
@@ -181,19 +178,18 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       begin
         Puppet::Util.chuser
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        $stderr.puts "Could not change user to #{Puppet[:user]}: #{detail}"
+        Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
         exit(39)
       end
     end
 
     unless options[:rack]
       require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
+      @daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
       @daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
-      @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
+      @app = Puppet::Network::HTTP::Rack.new()
     end
 
     Puppet.notice "Starting Puppet master version #{Puppet.version}"
@@ -205,9 +201,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
-  def setup
-    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
-
+  def setup_logs
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
       if options[:debug]
@@ -223,14 +217,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+  end
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+  def setup_terminuses
+    require 'puppet/file_serving/content'
+    require 'puppet/file_serving/metadata'
 
-    Puppet.settings.use :main, :master, :ssl, :metrics
+    Puppet::FileServing::Content.indirection.terminus_class = :file_server
+    Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
 
-    # Cache our nodes in yaml.  Currently not configurable.
-    Puppet::Node.indirection.cache_class = :yaml
+    Puppet::FileBucket::File.indirection.terminus_class = :file
+  end
 
+  def setup_ssl
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::SSL::Host.ca_location = :local
@@ -239,5 +238,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       Puppet::SSL::Host.ca_location = :none
     end
+  end
+
+  def setup
+    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+
+    setup_logs
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    Puppet.settings.use :main, :master, :ssl, :metrics
+
+    setup_terminuses
+
+    setup_ssl
   end
 end

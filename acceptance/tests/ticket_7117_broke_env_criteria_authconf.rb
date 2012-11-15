@@ -13,17 +13,21 @@ create_remote_file master, "/tmp/auth.conf-7117", add_2_authconf
 
 on master, "chmod 644 /tmp/auth.conf-7117"
 
-on hosts, "rm -rf /etc/puppet/ssl"
+with_master_running_on(master, "--dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --autosign true") do
+  agents.each do |agent|
+    if agent['platform'].include?('windows')
+      Log.warn("Pending: Window's doesn't support facter fqdn")
+      next
+    end
 
-with_master_running_on(master, "--dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --autosign true") do
-  # Run test on Agents
-  step "Run agent to upload facts"
-  on agents, puppet_agent("--test --server #{master}")
+    # Run test on Agents
+    step "Run agent to upload facts"
+    on agent, puppet_agent("--test --server #{master}")
+    fqdn = on(agent, facter("fqdn")).stdout
 
-  step "Fetch agent facts from Puppet Master"
-  agents.each do |host|
-    on(host, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/\`hostname -f\`") do
-      assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{host}")
+    step "Fetch agent facts from Puppet Master"
+    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{fqdn}") do
+      assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{agent}")
     end
   end
 end

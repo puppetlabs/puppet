@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
@@ -67,7 +67,7 @@ describe Puppet::Type.type(:mount)::Ensure, :unless => Puppet.features.microsoft
     provider_properties = {}
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
-    @mount = Puppet::Type.type(:mount).new(:name => "yay", :check => :ensure)
+    @mount = Puppet::Type.type(:mount).new(:name => "yay", :audit => :ensure)
 
     @ensure = @mount.property(:ensure)
   end
@@ -283,6 +283,7 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry", :u
   before do
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :remount => nil
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
+
     @mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :mounted)
 
     {:device => "/foo/bar", :blockdevice => "/other/bar", :target => "/what/ever", :fstype => 'eh', :options => "", :pass => 0, :dump => 0, :atboot => 0,
@@ -304,6 +305,8 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry", :u
   it "should use the provider to change the dump value" do
     @mount.provider.expects(:dump).returns 0
     @mount.provider.expects(:dump=).with(1)
+    @mount.provider.stubs(:respond_to?).returns(false)
+    @mount.provider.stubs(:respond_to?).with("dump=").returns(true)
 
     @mount[:dump] = 1
 
@@ -315,10 +318,15 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry", :u
     @mount.provider.expects(:options).returns 'soft'
     @mount.provider.expects(:ensure).returns :mounted
 
+    @mount.provider.stubs(:respond_to?).returns(false)
+    @mount.provider.stubs(:respond_to?).with("options=").returns(true)
+
     @mount.provider.expects(:unmount).in_sequence(syncorder)
     @mount.provider.expects(:options=).in_sequence(syncorder).with 'hard'
     @mount.expects(:flush).in_sequence(syncorder) # Call inside syncothers
     @mount.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
+
+    @mount.provider.stubs(:respond_to?).with(:options=).returns(true)
 
     @mount[:ensure] = :unmounted
     @mount[:options] = 'hard'

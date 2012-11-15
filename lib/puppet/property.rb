@@ -68,9 +68,11 @@ class Puppet::Property < Puppet::Parameter
 
   # Call the provider method.
   def call_provider(value)
-      provider.send(self.class.name.to_s + "=", value)
-  rescue NoMethodError
-      self.fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
+      method = self.class.name.to_s + "="
+      unless provider.respond_to? method
+        self.fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
+      end
+      provider.send(method, value)
   end
 
   # Call the dynamically-created method associated with our value, if
@@ -82,9 +84,9 @@ class Puppet::Property < Puppet::Parameter
       rescue Puppet::Error
         raise
       rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        error = Puppet::Error.new("Could not set '#{value} on #{self.class.name}: #{detail}", @resource.line, @resource.file)
+        error = Puppet::ResourceError.new("Could not set '#{value}' on #{self.class.name}: #{detail}", @resource.line, @resource.file, detail)
         error.set_backtrace detail.backtrace
+        Puppet.log_exception(detail, error.message)
         raise error
       end
     elsif block = self.class.value_option(name, :block)
@@ -109,8 +111,9 @@ class Puppet::Property < Puppet::Parameter
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::DevError, "Could not convert change '#{name}' to string: #{detail}"
+      message = "Could not convert change '#{name}' to string: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::DevError, message
     end
   end
 
@@ -166,22 +169,57 @@ class Puppet::Property < Puppet::Parameter
     raise "Puppet::Property#safe_insync? shouldn't be overridden; please override insync? instead" if sym == :safe_insync?
   end
 
-  # This method should be overridden by derived classes if necessary
+  # This method may be overridden by derived classes if necessary
   # to provide extra logic to determine whether the property is in
-  # sync.
+  # sync.  In most cases, however, only `property_matches?` needs to be
+  # overridden to give the correct outcome - without reproducing all the array
+  # matching logic, etc, found here.
   def insync?(is)
     self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values
     return true if @should.empty?
 
-    # Look for a matching value
-    return (is == @should or is == @should.collect { |v| v.to_s }) if match_all?
+    # Look for a matching value, either for all the @should values, or any of
+    # them, depending on the configuration of this property.
+    if match_all? then
+      # Emulate Array#== using our own comparison function.
+      # A non-array was not equal to an array, which @should always is.
+      return false unless is.is_a? Array
 
-    @should.each { |val| return true if is == val or is == val.to_s }
+      # If they were different lengths, they are not equal.
+      return false unless is.length == @should.length
 
-    # otherwise, return false
-    false
+      # Finally, are all the elements equal?  In order to preserve the
+      # behaviour of previous 2.7.x releases, we need to impose some fun rules
+      # on "equality" here.
+      #
+      # Specifically, we need to implement *this* comparison: the two arrays
+      # are identical if the is values are == the should values, or if the is
+      # values are == the should values, stringified.
+      #
+      # This does mean that property equality is not commutative, and will not
+      # work unless the `is` value is carefully arranged to match the should.
+      return (is == @should or is == @should.map(&:to_s))
+
+      # When we stop being idiots about this, and actually have meaningful
+      # semantics, this version is the thing we actually want to do.
+      #
+      # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
+    else
+      return @should.any? {|want| property_matches?(is, want) }
+    end
+  end
+
+  # Compare the current and desired value of a property in a property-specific
+  # way.  Invoked by `insync?`; this should be overridden if your property
+  # has a different comparison type but does not actually differentiate the
+  # overall insync? logic.
+  def property_matches?(current, desired)
+    # This preserves the older Puppet behaviour of doing raw and string
+    # equality comparisons for all equality.  I am not clear this is globally
+    # desirable, but at least it is not a breaking change. --daniel 2011-11-11
+    current == desired or current == desired.to_s
   end
 
   # because the @should and @is vars might be in weird formats,
@@ -194,13 +232,10 @@ class Puppet::Property < Puppet::Parameter
 
   # Send a log message.
   def log(msg)
-
-          Puppet::Util::Log.create(
-
-      :level => resource[:loglevel],
+    Puppet::Util::Log.create(
+      :level   => resource[:loglevel],
       :message => msg,
-
-      :source => self
+      :source  => self
     )
   end
 

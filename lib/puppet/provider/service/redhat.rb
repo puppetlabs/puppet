@@ -8,11 +8,11 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos, :sles, :oel, :ovm]
+  defaultfor :osfamily => [:redhat, :suse]
 
   def self.instances
     # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu
-    self.get_services(['/etc/init.d'], ['functions', 'halt', 'killall', 'single', 'linuxconf'])
+    self.get_services(['/etc/init.d'], ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot'])
   end
 
   def self.defpath
@@ -21,9 +21,12 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   # Remove the symlinks
   def disable
-      output = chkconfig(@resource[:name], :off)
+    # The off method operates on run levels 2,3,4 and 5 by default We ensure
+    # all run levels are turned off because the reset method may turn on the
+    # service in run levels 0, 1 and/or 6
+    output = chkconfig("--level", "0123456", @resource[:name], :off)
   rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Could not disable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not disable #{self.name}: #{output}"
   end
 
   def enabled?
@@ -47,7 +50,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   def enable
       output = chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
+    raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
   end
 
   def initscript
@@ -70,6 +73,4 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   def stopcmd
     [command(:service), @resource[:name], "stop"]
   end
-
 end
-

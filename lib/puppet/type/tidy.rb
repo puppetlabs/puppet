@@ -43,7 +43,7 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:matches) do
-    desc <<-EOT
+    desc <<-'EOT'
       One or more (shell type) file glob patterns, which restrict
       the list of files to be tidied to those whose basenames match
       at least one of the patterns specified. Multiple patterns can
@@ -101,17 +101,16 @@ Puppet::Type.newtype(:tidy) do
 
       Specifying 0 will remove all files."
 
-    @@ageconvertors = {
+    AgeConvertors = {
       :s => 1,
-      :m => 60
+      :m => 60,
+      :h => 60 * 60,
+      :d => 60 * 60 * 24,
+      :w => 60 * 60 * 24 * 7,
     }
 
-    @@ageconvertors[:h] = @@ageconvertors[:m] * 60
-    @@ageconvertors[:d] = @@ageconvertors[:h] * 24
-    @@ageconvertors[:w] = @@ageconvertors[:d] * 7
-
     def convert(unit, multi)
-      if num = @@ageconvertors[unit]
+      if num = AgeConvertors[unit]
         return num * multi
       else
         self.fail "Invalid age unit '#{unit}'"
@@ -148,16 +147,8 @@ Puppet::Type.newtype(:tidy) do
       Only the first character is significant, so the full word can also
       be used."
 
-    @@sizeconvertors = {
-      :b => 0,
-      :k => 1,
-      :m => 2,
-      :g => 3,
-      :t => 4
-    }
-
     def convert(unit, multi)
-      if num = @@sizeconvertors[unit]
+      if num = { :b => 0, :k => 1, :m => 2, :g => 3, :t => 4 }[unit]
         result = multi
         num.times do result *= 1024 end
         return result
@@ -187,7 +178,7 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:type) do
-    desc "Set the mechanism for determining age."
+    desc "Set the mechanism for determining age. Default: atime."
 
     newvalues(:atime, :mtime, :ctime)
 

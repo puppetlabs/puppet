@@ -1,89 +1,146 @@
 require 'puppet/provider/package'
+require 'puppet/util/windows'
 
 Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) do
-  desc "Package management by installing and removing MSIs."
+  desc "Windows package management by installing and removing MSIs.
+
+    The `msi` provider is deprecated. Use the `windows` provider instead."
 
   confine    :operatingsystem => :windows
-  defaultfor :operatingsystem => :windows
 
+  has_feature :installable
+  has_feature :uninstallable
   has_feature :install_options
+  has_feature :uninstall_options
 
-  # This is just here to make sure we can find it, and fail if we
-  # can't.  Unfortunately, we need to do "special" quoting of the
-  # install options or msiexec.exe won't know what to do with them, if
-  # the value contains a space.
-  commands :msiexec => "msiexec.exe"
+  class MsiPackage
+    extend Enumerable
+    include Puppet::Util::Windows::Registry
+    extend Puppet::Util::Windows::Registry
 
-  def self.instances
-    Dir.entries(installed_listing_dir).reject {|d| d == '.' or d == '..'}.collect do |name|
-      new(:name => File.basename(name, '.yml'), :provider => :msi, :ensure => :installed)
+    def self.installer
+      WIN32OLE.new("WindowsInstaller.Installer")
+    end
+
+    def self.each(&block)
+      inst = installer
+      inst.UILevel = 2
+
+      inst.Products.each do |guid|
+        # products may be advertised, installed in a different user
+        # context, etc, we only want to know about products currently
+        # installed in our context.
+        next unless inst.ProductState(guid) == 5
+
+        package = {
+          :name        => inst.ProductInfo(guid, 'ProductName'),
+          # although packages have a version, the provider isn't versionable,
+          # so we can't return a version
+          # :ensure      => inst.ProductInfo(guid, 'VersionString'),
+          :ensure      => :installed,
+          :provider    => :msi,
+          :productcode => guid,
+          :packagecode => inst.ProductInfo(guid, 'PackageCode')
+        }
+
+        yield package
+      end
     end
   end
 
+  def self.instances
+    []
+  end
+
+  def initialize(resource = nil)
+    Puppet.deprecation_warning "The `:msi` package provider is deprecated, use the `:windows` provider instead."
+    super(resource)
+  end
+
+  # Find first package whose PackageCode, e.g. {B2BE95D2-CD2C-46D6-8D27-35D150E58EC9},
+  # matches the resource name (case-insensitively due to hex) or the ProductName matches
+  # the resource name. The ProductName is not guaranteed to be unique, but the PackageCode
+  # should be if the package is authored correctly.
   def query
-    {:name => resource[:name], :ensure => :installed} if FileTest.exists?(state_file)
+    MsiPackage.enum_for.find do |package|
+      resource[:name].casecmp(package[:packagecode]) == 0 || resource[:name] == package[:name]
+    end
   end
 
   def install
-    properties_for_command = nil
-    if resource[:install_options]
-      properties_for_command = resource[:install_options].collect do |k,v|
-        property = shell_quote k
-        value    = shell_quote v
-
-        "#{property}=#{value}"
-      end
-    end
+    fail("The source parameter is required when using the MSI provider.") unless resource[:source]
 
     # Unfortunately, we can't use the msiexec method defined earlier,
     # because of the special quoting we need to do around the MSI
     # properties to use.
-    execute ['msiexec.exe', '/qn', '/norestart', '/i', shell_quote(msi_source), properties_for_command].flatten.compact.join(' ')
+    command = ['msiexec.exe', '/qn', '/norestart', '/i', shell_quote(resource[:source]), install_options].flatten.compact.join(' ')
+    execute(command, :combine => true)
 
-    File.open(state_file, 'w') do |f|
-      metadata = {
-        'name'            => resource[:name],
-        'install_options' => resource[:install_options],
-        'source'          => msi_source
-      }
-
-      f.puts(YAML.dump(metadata))
-    end
+    check_result(exit_status)
   end
 
   def uninstall
-    msiexec '/qn', '/norestart', '/x', msi_source
+    fail("The productcode property is missing.") unless properties[:productcode]
 
-    File.delete state_file
+    command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode], uninstall_options].flatten.compact.join(' ')
+    execute(command, :combine => true)
+
+    check_result(exit_status)
+  end
+
+  def exit_status
+    $CHILD_STATUS.exitstatus
+  end
+
+  # (Un)install may "fail" because the package requested a reboot, the system requested a
+  # reboot, or something else entirely. Reboot requests mean the package was installed
+  # successfully, but we warn since we don't have a good reboot strategy.
+  def check_result(hr)
+    operation = resource[:ensure] == :absent ? 'uninstall' : 'install'
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
+    case hr
+    when 0
+      # yeah
+    when 194
+      warning("The package requested a reboot to finish the operation.")
+    when 1641
+      warning("The package #{operation}ed successfully and the system is rebooting now.")
+    when 3010
+      warning("The package #{operation}ed successfully, but the system must be rebooted.")
+    else
+      raise Puppet::Util::Windows::Error.new("Failed to #{operation}", hr)
+    end
   end
 
   def validate_source(value)
     fail("The source parameter cannot be empty when using the MSI provider.") if value.empty?
   end
 
-  private
-
-  def msi_source
-    resource[:source] ||= YAML.load_file(state_file)['source'] rescue nil
-
-    fail("The source parameter is required when using the MSI provider.") unless resource[:source]
-
-    resource[:source]
+  def install_options
+    join_options(resource[:install_options])
   end
 
-  def self.installed_listing_dir
-    listing_dir = File.join(Puppet[:vardir], 'db', 'package', 'msi')
-
-    FileUtils.mkdir_p listing_dir unless File.directory? listing_dir
-
-    listing_dir
-  end
-
-  def state_file
-    File.join(self.class.installed_listing_dir, "#{resource[:name]}.yml")
+  def uninstall_options
+    join_options(resource[:uninstall_options])
   end
 
   def shell_quote(value)
     value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end

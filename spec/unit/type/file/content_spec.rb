@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http_pool'
 
@@ -9,7 +9,8 @@ describe content do
   include PuppetSpec::Files
   before do
     @filename = tmpfile('testfile')
-    @resource = Puppet::Type.type(:file).new :path => @filename
+    @catalog = Puppet::Resource::Catalog.new
+    @resource = Puppet::Type.type(:file).new :path => @filename, :catalog => @catalog
     File.open(@filename, 'w') {|f| f.write "initial file content"}
     content.stubs(:standalone?).returns(false)
   end
@@ -266,8 +267,9 @@ describe content do
       end
 
       it "should write to the given file handle" do
-        @fh.expects(:print).with("this is content")
-        @content.write(@fh)
+        fh = mock 'filehandle'
+        fh.expects(:print).with("this is content")
+        @content.write(fh)
       end
 
       it "should return the current checksum value" do
@@ -297,15 +299,16 @@ describe content do
         @content.resource.expects(:bucket).returns bucket
         bucket.expects(:getfile).with("foo").returns "mycontent"
 
-        @fh.expects(:print).with("mycontent")
-        @content.write(@fh)
+        fh = mock 'filehandle'
+        fh.expects(:print).with("mycontent")
+        @content.write(fh)
       end
     end
 
     describe "from local source" do
       before(:each) do
         @sourcename = tmpfile('source')
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename, :catalog => @catalog
 
         @source_content = "source file content\r\n"*10000
         @sourcefile = File.open(@sourcename, 'wb') {|f| f.write @source_content}
@@ -316,7 +319,7 @@ describe content do
 
       it "should copy content from the source to the file" do
         @resource.write(@source)
-        Puppet::Util.binread(@filename).should == @source_content
+        IO.binread(@filename).should == @source_content
       end
 
       it "should return the checksum computed" do
@@ -328,7 +331,7 @@ describe content do
 
     describe "from remote source" do
       before(:each) do
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :catalog => @catalog
         @response = stub_everything 'response', :code => "200"
         @source_content = "source file content\n"*10000
         @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
@@ -345,7 +348,7 @@ describe content do
 
       it "should write the contents to the file" do
         @resource.write(@source)
-        Puppet::Util.binread(@filename).should == @source_content
+        IO.binread(@filename).should == @source_content
       end
 
       it "should not write anything if source is not found" do
@@ -415,7 +418,7 @@ describe content do
       end
 
       it "when running as puppet apply" do
-        @content.class.expects(:standalone?).returns true
+        Puppet[:default_file_terminus] = "file_server"
         source_or_content = stubs('source_or_content')
         source_or_content.expects(:content).once.returns :whoo
         @content.each_chunk_from(source_or_content) { |chunk| chunk.should == :whoo }

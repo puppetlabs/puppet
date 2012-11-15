@@ -2,9 +2,11 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:generate) do
     summary "Generate boilerplate for a new module."
     description <<-EOT
-      Generate boilerplate for a new module by creating a directory
-      pre-populated with a directory structure and files recommended for
-      Puppet best practices.
+      Generates boilerplate for a new module by creating the directory
+      structure and files recommended for the Puppet community's best practices.
+
+      A module may need additional directories beyond this boilerplate
+      if it provides plugins, files, or templates.
     EOT
 
     returns "Array of Pathname objects representing paths of generated files."
@@ -30,7 +32,8 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     when_invoked do |name, options|
-      Puppet::Module::Tool::Applications::Generator.run(name, options)
+      Puppet::ModuleTool.set_option_defaults options
+      Puppet::ModuleTool::Applications::Generator.run(name, options)
     end
 
     when_rendering :console do |return_value|

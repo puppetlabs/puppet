@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/network_device/transport/telnet'
@@ -6,11 +6,20 @@ require 'puppet/util/network_device/transport/telnet'
 describe Puppet::Util::NetworkDevice::Transport::Telnet do
 
   before(:each) do
+    TCPSocket.stubs(:open).returns stub_everything('tcp')
     @transport = Puppet::Util::NetworkDevice::Transport::Telnet.new()
   end
 
   it "should not handle login through the transport" do
     @transport.should_not be_handles_login
+  end
+
+  it "should not open any files" do
+    File.expects(:open).never
+    @transport.host = "localhost"
+    @transport.port = 23
+
+    @transport.connect
   end
 
   it "should connect to the given host and port" do

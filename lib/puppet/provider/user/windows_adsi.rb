@@ -1,7 +1,7 @@
 require 'puppet/util/adsi'
 
 Puppet::Type.type(:user).provide :windows_adsi do
-  desc "User management for Windows."
+  desc "Local user management for Windows."
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
@@ -22,10 +22,15 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def create
     @user = Puppet::Util::ADSI::User.create(@resource[:name])
+    @user.password = @resource[:password]
     @user.commit
 
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
+    end
+
+    if @resource.managehome?
+      Puppet::Util::Windows::User.load_profile(@resource[:name], @resource[:password])
     end
   end
 
@@ -34,7 +39,14 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def delete
+    # lookup sid before we delete account
+    sid = uid if @resource.managehome?
+
     Puppet::Util::ADSI::User.delete(@resource[:name])
+
+    if sid
+      Puppet::Util::ADSI::UserProfile.delete(sid)
+    end
   end
 
   # Only flush if we created or modified a user, not deleted
@@ -67,7 +79,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def uid
-    Puppet::Util::ADSI.sid_for_account(@resource[:name])
+    Puppet::Util::Windows::Security.name_to_sid(@resource[:name])
   end
 
   def uid=(value)

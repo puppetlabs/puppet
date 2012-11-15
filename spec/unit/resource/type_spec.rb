@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/resource/type'
@@ -150,24 +150,6 @@ describe Puppet::Resource::Type do
         Puppet::Resource::Type.new(:node, "fOo").match("foO").should be_true
       end
     end
-
-    it "should return the name converted to a string when the name is not a regex" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => "foo")
-      Puppet::Resource::Type.new(:node, name).name.should == "foo"
-    end
-
-    it "should return the name converted to a string when the name is a regex" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => /regex/)
-      Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
-    end
-
-    it "should mark any created scopes as a node scope" do
-      pending "Need to define LoadedCode behaviour first"
-      name = Puppet::Parser::AST::HostName.new(:value => /regex/)
-      Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
-    end
   end
 
   describe "when initializing" do
@@ -238,7 +220,7 @@ describe Puppet::Resource::Type do
 
   describe "when setting its parameters in the scope" do
     before do
-      @scope = Puppet::Parser::Scope.new
+      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
@@ -351,7 +333,7 @@ describe Puppet::Resource::Type do
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
       @krt.add @child
 
-      @scope = Puppet::Parser::Scope.new
+      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
     end
 
     it "should be able to define a parent" do
@@ -404,7 +386,7 @@ describe Puppet::Resource::Type do
   describe "when evaluating its code" do
     before do
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-      @scope = Puppet::Parser::Scope.new :compiler => @compiler
+      @scope = Puppet::Parser::Scope.new @compiler
       @resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope)
 
       # This is so the internal resource lookup works, yo.
@@ -433,7 +415,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :dynamic => true, :namespace => 'foo', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :namespace => 'foo', :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
@@ -569,7 +551,7 @@ describe Puppet::Resource::Type do
     before do
       @node = Puppet::Node.new("foo", :environment => 'env')
       @compiler = Puppet::Parser::Compiler.new(@node)
-      @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+      @scope = Puppet::Parser::Scope.new(@compiler)
 
       @top = Puppet::Resource::Type.new :hostclass, "top"
       @middle = Puppet::Resource::Type.new :hostclass, "middle", :parent => "top"

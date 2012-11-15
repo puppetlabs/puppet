@@ -2,7 +2,7 @@
 
   Puppet::Parser::Functions::newfunction(
     :require,
-
+    :arity => -2,
     :doc =>"Evaluate one or more classes,  adding the required class as a dependency.
 
 The relationship metaparameters work well for specifying relationships
@@ -32,26 +32,22 @@ fail if used with earlier clients.
   method = Puppet::Parser::Functions.function(:include)
 
   send(method, vals)
-  if resource.metaparam_compatibility_mode?
-    warning "The 'require' function is only compatible with clients at 0.25 and above; including class but not adding dependency"
-  else
-    vals = [vals] unless vals.is_a?(Array)
+  vals = [vals] unless vals.is_a?(Array)
 
-    vals.each do |klass|
-      # lookup the class in the scopes
-      if classobj = find_hostclass(klass)
-        klass = classobj.name
-      else
-        raise Puppet::ParseError, "Could not find class #{klass}"
-      end
-
-      # This is a bit hackish, in some ways, but it's the only way
-      # to configure a dependency that will make it to the client.
-      # The 'obvious' way is just to add an edge in the catalog,
-      # but that is considered a containment edge, not a dependency
-      # edge, so it usually gets lost on the client.
-      ref = Puppet::Resource.new(:class, klass)
-      resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)
+  vals.each do |klass|
+    # lookup the class in the scopes
+    if classobj = find_hostclass(klass)
+      klass = classobj.name
+    else
+      raise Puppet::ParseError, "Could not find class #{klass}"
     end
+
+    # This is a bit hackish, in some ways, but it's the only way
+    # to configure a dependency that will make it to the client.
+    # The 'obvious' way is just to add an edge in the catalog,
+    # but that is considered a containment edge, not a dependency
+    # edge, so it usually gets lost on the client.
+    ref = Puppet::Resource.new(:class, klass)
+    resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)
   end
 end

@@ -1,3 +1,4 @@
+require 'pathname'
 require 'puppet/file_bucket'
 require 'puppet/file_bucket/file'
 require 'puppet/indirector/request'
@@ -31,7 +32,7 @@ class Puppet::FileBucket::Dipper
   # Back up a file to our bucket
   def backup(file)
     raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
-    contents = Puppet::Util.binread(file)
+    contents = IO.binread(file)
     begin
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
@@ -46,8 +47,9 @@ class Puppet::FileBucket::Dipper
 
       return file_bucket_file.checksum_data
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise Puppet::Error, "Could not back up #{file}: #{detail}"
+      message = "Could not back up #{file}: #{detail}"
+      Puppet.log_exception(detail, message)
+      raise Puppet::Error, message
     end
   end
 
@@ -64,7 +66,7 @@ class Puppet::FileBucket::Dipper
   def restore(file,sum)
     restore = true
     if FileTest.exists?(file)
-      cursum = Digest::MD5.hexdigest(Puppet::Util.binread(file))
+      cursum = Digest::MD5.hexdigest(IO.binread(file))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -99,7 +101,6 @@ class Puppet::FileBucket::Dipper
 
   private
   def absolutize_path( path )
-    require 'pathname'
     Pathname.new(path).realpath
   end
 

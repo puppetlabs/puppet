@@ -1,0 +1,8 @@
+etc/puppet
+etc/puppet/manifests
+etc/puppet/templates
+etc/puppet/modules
+usr/lib/ruby/vendor_ruby
+usr/share/puppet/ext
+var/lib/puppet
+var/log/puppet

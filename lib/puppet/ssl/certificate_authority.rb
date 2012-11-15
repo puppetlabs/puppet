@@ -1,6 +1,7 @@
 require 'monitor'
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
+require 'puppet/util'
 
 # The class that knows how to sign certificates.  It creates
 # a 'special' SSL::Host whose name is 'ca', thus indicating
@@ -92,7 +93,7 @@ class Puppet::SSL::CertificateAuthority
     return false if ['false', false].include?(auto)
     return true if ['true', true].include?(auto)
 
-    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless auto =~ /^\//
+    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless Puppet::Util.absolute_path?(auto)
     FileTest.exist?(auto) && auto
   end
 
@@ -231,6 +232,8 @@ class Puppet::SSL::CertificateAuthority
 
     if cert = Puppet::SSL::Certificate.indirection.find(name)
       serial = cert.content.serial
+    elsif name =~ /^0x[0-9A-Fa-f]+$/
+      serial = name.hex
     elsif ! serial = inventory.serial(name)
       raise ArgumentError, "Could not find a serial number for #{name}"
     end
@@ -274,7 +277,7 @@ class Puppet::SSL::CertificateAuthority
     cert = Puppet::SSL::Certificate.new(hostname)
     cert.content = Puppet::SSL::CertificateFactory.
       build(cert_type, csr, issuer, next_serial)
-    cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
+    cert.content.sign(host.key.content, OpenSSL::Digest::SHA256.new)
 
     Puppet.notice "Signed certificate request for #{hostname}"
 
@@ -303,6 +306,16 @@ class Puppet::SSL::CertificateAuthority
       raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
     end
 
+    # Do not sign misleading CSRs
+    cn = csr.content.subject.to_a.assoc("CN")[1]
+    if hostname != cn
+      raise CertificateSigningError.new(hostname), "CSR subject common name #{cn.inspect} does not match expected certname #{hostname.inspect}"
+    end
+
+    if hostname !~ Puppet::SSL::Base::VALID_CERTNAME
+      raise CertificateSigningError.new(hostname), "CSR #{hostname.inspect} subject contains unprintable or non-ASCII characters"
+    end
+
     # Wildcards: we don't allow 'em at any point.
     #
     # The stringification here makes the content visible, and saves us having
@@ -310,6 +323,10 @@ class Puppet::SSL::CertificateAuthority
     # is what we expect where we expect it.
     if csr.content.subject.to_s.include? '*'
       raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
+    end
+
+    unless csr.content.verify(csr.content.public_key)
+      raise CertificateSigningError.new(hostname), "CSR contains a public key that does not correspond to the signing key"
     end
 
     unless csr.subject_alt_names.empty?
@@ -348,7 +365,7 @@ class Puppet::SSL::CertificateAuthority
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
 
-  def fingerprint(name, md = :MD5)
+  def fingerprint(name, md = :SHA256)
     unless cert = Puppet::SSL::Certificate.indirection.find(name) || Puppet::SSL::CertificateRequest.indirection.find(name)
       raise ArgumentError, "Could not find a certificate or csr for #{name}"
     end

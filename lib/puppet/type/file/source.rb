@@ -12,56 +12,43 @@ module Puppet
     include Puppet::Util::Diff
 
     attr_accessor :source, :local
-    desc <<-EOT
-      Copy a file over the current file.  Uses `checksum` to
-      determine when a file should be copied.  Valid values are either
-      fully qualified paths to files, or URIs.  Currently supported URI
-      types are *puppet* and *file*.
+    desc <<-'EOT'
+      A source file, which will be copied into place on the local system.
+      Values can be URIs pointing to remote files, or fully qualified paths to
+      files available on the local system (including files on NFS shares or
+      Windows mapped drives). This attribute is mutually exclusive with
+      `content` and `target`.
 
-      This is one of the primary mechanisms for getting content into
-      applications that Puppet does not directly support and is very
-      useful for those configuration files that don't change much across
-      sytems.  For instance:
+      The available URI schemes are *puppet* and *file*. *Puppet*
+      URIs will retrieve files from Puppet's built-in file server, and are
+      usually formatted as:
 
-          class sendmail {
-            file { "/etc/mail/sendmail.cf":
-              source => "puppet://server/modules/module_name/sendmail.cf"
-            }
-          }
+      `puppet:///modules/name_of_module/filename`
 
-      You can also leave out the server name, in which case `puppet agent`
-      will fill in the name of its configuration server and `puppet apply`
-      will use the local filesystem.  This makes it easy to use the same
-      configuration in both local and centralized forms.
+      This will fetch a file from a module on the puppet master (or from a
+      local module when using puppet apply). Given a `modulepath` of
+      `/etc/puppetlabs/puppet/modules`, the example above would resolve to
+      `/etc/puppetlabs/puppet/modules/name_of_module/files/filename`.
 
-      Currently, only the `puppet` scheme is supported for source
-      URL's. Puppet will connect to the file server running on
-      `server` to retrieve the contents of the file. If the
-      `server` part is empty, the behavior of the command-line
-      interpreter (`puppet apply`) and the client demon (`puppet agent`) differs
-      slightly: `apply` will look such a file up on the module path
-      on the local host, whereas `agent` will connect to the
-      puppet server that it received the manifest from.
+      Unlike `content`, the `source` attribute can be used to recursively copy
+      directories if the `recurse` attribute is set to `true` or `remote`. If
+      a source directory contains symlinks, use the `links` attribute to
+      specify whether to recreate links or follow them.
 
-      See the [fileserver configuration documentation](http://docs.puppetlabs.com/guides/file_serving.html)
-      for information on how to configure and use file services within Puppet.
+      Multiple `source` values can be specified as an array, and Puppet will
+      use the first source that exists. This can be used to serve different
+      files to different system types:
 
-      If you specify multiple file sources for a file, then the first
-      source that exists will be used.  This allows you to specify
-      what amount to search paths for files:
-
-          file { "/path/to/my/file":
+          file { "/etc/nfs.conf":
             source => [
-              "/modules/nfs/files/file.$host",
-              "/modules/nfs/files/file.$operatingsystem",
-              "/modules/nfs/files/file"
+              "puppet:///modules/nfs/conf.$host",
+              "puppet:///modules/nfs/conf.$operatingsystem",
+              "puppet:///modules/nfs/conf"
             ]
           }
 
-      This will use the first found file as the source.
-
-      You cannot currently copy links using this mechanism; set `links`
-      to `follow` if any remote sources are links.
+      Alternately, when serving directories recursively, multiple sources can
+      be combined by setting the `sourceselect` attribute to `all`.
     EOT
 
     validate do |sources|
@@ -114,7 +101,7 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source)
+      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment)
         fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -167,7 +154,7 @@ module Puppet
       return nil unless value
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.indirection.find(source)
+          if data = Puppet::FileServing::Metadata.indirection.find(source, :environment => resource.catalog.environment)
             @metadata = data
             @metadata.source = source
             break
@@ -176,7 +163,7 @@ module Puppet
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless @metadata
+      fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 

@@ -3,23 +3,21 @@
 Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard `init`-style service management."
 
-  class << self
-    attr_accessor :defpath
-  end
-
-  case Facter["operatingsystem"].value
-  when "FreeBSD"
-    @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
-  when "HP-UX"
-    @defpath = "/sbin/init.d"
-  when "Archlinux"
-    @defpath = "/etc/rc.d"
-  else
-    @defpath = "/etc/init.d"
+  def self.defpath
+    case Facter.value(:operatingsystem)
+    when "FreeBSD", "DragonFly"
+      ["/etc/rc.d", "/usr/local/etc/rc.d"]
+    when "HP-UX"
+      "/sbin/init.d"
+    when "Archlinux"
+      "/etc/rc.d"
+    else
+      "/etc/init.d"
+    end
   end
 
   # We can't confine this here, because the init path can be overridden.
-  #confine :exists => @defpath
+  #confine :exists => defpath
 
   # List all services of this type.
   def self.instances
@@ -44,6 +42,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         next if name =~ /^\./
         next if exclude.include? name
         next if not FileTest.executable?(fullpath)
+        next if not is_init?(fullpath)
         instances << new(:name => name, :path => path, :hasstatus => true)
       end
     end
@@ -132,5 +131,10 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     (@resource[:hasstatus] == :true) && [initscript, :status]
   end
 
+private
+
+  def self.is_init?(script = initscript)
+    !File.symlink?(script) || File.readlink(script) != "/lib/init/upstart-job"
+  end
 end
 

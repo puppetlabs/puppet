@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
@@ -372,7 +372,7 @@ describe tidy do
 
         @tidy.parameter(:size).stubs(:tidy?).returns true
         @tidy.parameter(:age).stubs(:tidy?).returns false
-        @tidy.should be_tidy(@basepath)
+        @tidy.must be_tidy(@basepath)
       end
 
       it "should tidy a file if age and size are set but only age matches" do
@@ -381,7 +381,7 @@ describe tidy do
 
         @tidy.parameter(:size).stubs(:tidy?).returns false
         @tidy.parameter(:age).stubs(:tidy?).returns true
-        @tidy.should be_tidy(@basepath)
+        @tidy.must be_tidy(@basepath)
       end
 
       it "should tidy all files if neither age nor size is set" do

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/certificate/rest'
@@ -54,7 +54,7 @@ rn/G
     network.stubs(:verify_callback=)
     network.expects(:get).returns response
 
-    request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com")
+    request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com", nil)
     result = terminus.find(request)
     result.should_not be_nil
     result.name.should == "foo.com"

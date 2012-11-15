@@ -1,31 +1,33 @@
 test_name "tests that puppet correctly runs an exec."
 # original author: Dan Bode  --daniel 2010-12-23
 
-$touch = "/tmp/test-exec-#{Time.new.to_i}"
-
-def before
-    step "file to be touched should not exist."
-    on agents, "rm -f #{$touch}"
+def before(agent)
+  step "file to be touched should not exist."
+  touched = agent.tmpfile('test-exec')
 end
 
-def after
-    step "checking the output worked"
-    on agents, "test -f #{$touch}"
+def after(agent, touched)
+  step "checking the output worked"
+  on agent, "test -f #{touched}"
 
-    step "clean up the system"
-    on agents, "rm -f #{$touch}"
+  step "clean up the system"
+  on agent, "rm -f #{touched}"
 end
 
-before
-apply_manifest_on(agents, "exec {'test': command=>'/bin/touch #{$touch}'}") do
+agents.each do |agent|
+  touched = before(agent)
+  apply_manifest_on(agent, "exec {'test': command=>'#{agent.touch(touched)}'}") do
     fail_test "didn't seem to run the command" unless
-        stdout.include? 'executed successfully'
-end
-after
+      stdout.include? 'executed successfully'
+  end
+  after(agent, touched)
 
-before
-on(agents, puppet_resource('-d', 'exec', 'test', "command='/bin/touch #{$touch}'")) do
+  touched = before(agent)
+  on(agent, puppet_resource('-d', 'exec', 'test', "command='#{agent.touch(touched)}'}")) do
     fail_test "didn't seem to run the command" unless
-        stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully'
+  end
+  after(agent, touched)
 end
-after
+
+

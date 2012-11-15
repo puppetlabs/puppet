@@ -28,25 +28,21 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
   end
 
-  describe ".sid_for_account" do
+  describe ".sid_for_account", :if => Puppet.features.microsoft_windows? do
     it "should return nil if the account does not exist" do
-      connection.expects(:execquery).returns([])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('foobar').returns nil
 
       Puppet::Util::ADSI.sid_for_account('foobar').should be_nil
     end
 
     it "should return a SID for a passed user or group name" do
-      Puppet::Util::ADSI.expects(:execquery).with(
-        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND LocalAccount = true"
-      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns 'S-1-5-32-547'
 
       Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
     end
 
     it "should return a SID for a passed fully-qualified user or group name" do
-      Puppet::Util::ADSI.expects(:execquery).with(
-        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND Domain = 'MACHINE' AND LocalAccount = true"
-      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+      Puppet::Util::Windows::Security.expects(:name_to_sid).with('MACHINE\testers').returns 'S-1-5-32-547'
 
       Puppet::Util::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
     end
@@ -227,6 +223,25 @@ describe Puppet::Util::ADSI do
       connection.expects(:Delete).with('group', groupname)
 
       Puppet::Util::ADSI::Group.delete(groupname)
+    end
+  end
+
+  describe Puppet::Util::ADSI::UserProfile do
+    it "should be able to delete a user profile" do
+      connection.expects(:Delete).with("Win32_UserProfile.SID='S-A-B-C'")
+      Puppet::Util::ADSI::UserProfile.delete('S-A-B-C')
+    end
+
+    it "should warn on 2003" do
+      connection.expects(:Delete).raises(RuntimeError,
+ "Delete (WIN32OLERuntimeError)
+    OLE error code:80041010 in SWbemServicesEx
+      Invalid class
+    HRESULT error code:0x80020009
+      Exception occurred.")
+
+      Puppet.expects(:warning).with("Cannot delete user profile for 'S-A-B-C' prior to Vista SP1")
+      Puppet::Util::ADSI::UserProfile.delete('S-A-B-C')
     end
   end
 end

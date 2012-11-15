@@ -1,0 +1,12 @@
+compress/zip                                      3.0-0.175.0.0.0.2.537      i--
+archiver/gnu-tar                                  1.26-0.175.0.0.0.2.537     i--
+compress/bzip2                                    1.0.6-0.175.0.0.0.2.537    i--
+compress/gzip                                     1.3.5-0.175.0.0.0.2.537    i--
+compress/p7zip                                    9.20.1-0.175.0.0.0.2.537   i--
+compress/unzip                                    6.0-0.175.0.0.0.2.537      x--
+compress/zip                                      3.0-0.175.0.0.0.2.537      i--
+x11/library/toolkit/libxaw7                       1.0.9-0.175.0.0.0.0.1215   i--
+x11/library/toolkit/libxt                         1.0.9-0.175.0.0.0.0.1215   i--
+shell/bash                                        4.1.9-0.175.0.0.0.2.537    i--
+shell/zsh                                         4.3.12-0.175.0.0.0.2.537   i--
+security/sudo                                     1.8.1.2-0.175.0.0.0.2.537  i--

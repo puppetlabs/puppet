@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'tempfile'
 
@@ -10,20 +10,21 @@ describe "the extlookup function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
-    @scope.stubs(:environment).returns(Puppet::Node::Environment.new('production'))
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should exist" do
     Puppet::Parser::Functions.function("extlookup").should == "function_extlookup"
   end
 
-  it "should raise a ParseError if there is less than 1 arguments" do
-    lambda { @scope.function_extlookup([]) }.should( raise_error(Puppet::ParseError))
+  it "should raise a ArgumentError if there is less than 1 arguments" do
+    lambda { @scope.function_extlookup([]) }.should( raise_error(ArgumentError))
   end
 
-  it "should raise a ParseError if there is more than 3 arguments" do
-    lambda { @scope.function_extlookup(["foo", "bar", "baz", "gazonk"]) }.should( raise_error(Puppet::ParseError))
+  it "should raise a ArgumentError if there is more than 3 arguments" do
+    lambda { @scope.function_extlookup(["foo", "bar", "baz", "gazonk"]) }.should( raise_error(ArgumentError))
   end
 
   it "should return the default" do

@@ -10,7 +10,7 @@ class Puppet::Util::Feature
   # successfully.
   def add(name, options = {})
     method = name.to_s + "?"
-    raise ArgumentError, "Feature #{name} is already defined" if self.class.respond_to?(method)
+    @results.delete(name)
 
     if block_given?
       begin
@@ -23,7 +23,9 @@ class Puppet::Util::Feature
     end
 
     meta_def(method) do
-      @results[name] = test(name, options) unless @results.include?(name)
+      # Positive cache only, except blocks which are executed just once above
+      final = @results[name] || block_given?
+      @results[name] = test(name, options) unless final
       @results[name]
     end
   end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the Runit service Provider
 #
@@ -69,6 +69,7 @@ describe provider_class do
 
       @provider.expects(:enabled?).returns :false
       @provider.expects(:enable)
+      @provider.stubs(:sleep)
 
       @provider.start
     end

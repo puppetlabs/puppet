@@ -20,7 +20,7 @@ Puppet::Type.newtype(:augeas) do
   feature :need_to_run?, "If the command should run"
   feature :execute_changes, "Actually make the changes"
 
-  @doc = <<-EOT
+  @doc = <<-'EOT'
     Apply a change or an array of changes to the filesystem
     using the augeas tool.
 
@@ -149,7 +149,7 @@ Puppet::Type.newtype(:augeas) do
   end
 
   newparam(:load_path) do
-    desc "Optional colon-separated list of directories; these directories are searched for schema definitions."
+    desc "Optional colon-separated list or array of directories; these directories are searched for schema definitions. The agent's `$libdir/augeas/lenses` path will always be added to support pluginsync."
     defaultto ""
   end
 

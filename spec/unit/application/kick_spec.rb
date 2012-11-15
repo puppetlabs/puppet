@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/kick'
@@ -17,10 +17,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       command_line = stub_everything "command_line"
       lambda{ Puppet::Application::Kick.new( command_line ) }.should_not raise_error
     end
-  end
-
-  it "should ask Puppet::Application to not parse Puppet configuration file" do
-    @kick.should_parse_config?.should be_false
   end
 
   it "should declare a main command" do
@@ -121,9 +117,19 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.hosts = []
       @kick.stubs(:trap)
       @kick.stubs(:puts)
-      Puppet.stubs(:parse_config)
 
       @kick.options.stubs(:[]).with(any_parameters)
+    end
+
+    it "should issue a warning that kick is deprecated" do
+      Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
+      @kick.setup
+    end
+
+    it "should abort stating that kick is not supported on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+
+      expect { @kick.setup }.to raise_error(Puppet::Error, /Puppet kick is not supported on Microsoft Windows/)
     end
 
     it "should set log level to debug if --debug was passed" do
@@ -138,15 +144,9 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       Puppet::Log.level.should == :info
     end
 
-    it "should Parse puppet config" do
-      Puppet.expects(:parse_config)
-
-      @kick.setup
-    end
-
     describe "when using the ldap node terminus" do
       before :each do
-        Puppet.stubs(:[]).with(:node_terminus).returns("ldap")
+        Puppet[:node_terminus] = "ldap"
       end
 
       it "should pass the fqdn option to search" do
@@ -221,6 +221,9 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:ignoreschedules).returns(false)
         @kick.options.stubs(:[]).with(:foreground).returns(false)
         @kick.options.stubs(:[]).with(:debug).returns(false)
+        @kick.options.stubs(:[]).with(:verbose).returns(false) # needed when logging is initialized
+        @kick.options.stubs(:[]).with(:setdest).returns(false) # needed when logging is initialized
+         
         @kick.stubs(:print)
         @kick.preinit
         @kick.stubs(:parse_options)
@@ -233,14 +236,14 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.hosts = ['host1', 'host2', 'host3']
         Process.stubs(:wait).returns(1).then.returns(2).then.returns(3).then.raises(Errno::ECHILD)
 
-        @kick.expects(:fork).times(3).returns(1).then.returns(2).then.returns(3)
+        @kick.expects(:safe_posix_fork).times(3).returns(1).then.returns(2).then.returns(3)
 
         expect { @kick.main }.to raise_error SystemExit
       end
 
       it "should delegate to run_for_host per host" do
         @kick.hosts = ['host1', 'host2']
-        @kick.stubs(:fork).returns(1).yields
+        @kick.stubs(:safe_posix_fork).returns(1).yields
         Process.stubs(:wait).returns(1).then.raises(Errno::ECHILD)
 
         @kick.expects(:run_for_host).times(2)

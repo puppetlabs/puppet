@@ -1,5 +1,5 @@
 # Runs an external command and returns the results
-Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
+Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue,
     :doc => "Calls an external command on the Puppet master and returns
     the results of the command.  Any arguments are passed to the external command as
     arguments.  If the generator does not exit with return code of 0,
@@ -11,9 +11,15 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
     generators, so all shell metacharacters are passed directly to
     the generator.") do |args|
 
-      raise Puppet::ParseError, "Generators must be fully qualified" unless args[0] =~ /^#{File::SEPARATOR}/
+      raise Puppet::ParseError, "Generators must be fully qualified" unless Puppet::Util.absolute_path?(args[0])
 
-      unless args[0] =~ /^[-#{File::SEPARATOR}\w.]+$/
+      if Puppet.features.microsoft_windows?
+        valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i
+      else
+        valid = args[0] =~ /^[-\/\w.+]+$/
+      end
+
+      unless valid
         raise Puppet::ParseError,
           "Generators can only contain alphanumerics, file separators, and dashes"
       end
@@ -24,7 +30,7 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
       end
 
       begin
-        Dir.chdir(File.dirname(args[0])) { Puppet::Util.execute(args) }
+        Dir.chdir(File.dirname(args[0])) { Puppet::Util::Execution.execute(args) }
       rescue Puppet::ExecutionFailure => detail
         raise Puppet::ParseError, "Failed to execute generator #{args[0]}: #{detail}"
       end

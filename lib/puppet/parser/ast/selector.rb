@@ -38,7 +38,13 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      param.to_s + " ? { " + values.collect { |v| v.to_s }.join(', ') + " }"
+      if @values.instance_of? AST::ASTArray or @values.instance_of? Array
+        v = @values
+      else
+        v = [@values]
+      end
+
+      param.to_s + " ? { " + v.collect { |v| v.to_s }.join(', ') + " }"
     end
   end
 end

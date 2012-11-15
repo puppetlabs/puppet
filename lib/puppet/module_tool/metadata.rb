@@ -1,11 +1,13 @@
-module Puppet::Module::Tool
+require 'puppet/util/methodhelper'
 
+module Puppet::ModuleTool
   # = Metadata
   #
   # This class provides a data structure representing a module's metadata.
   # It provides some basic parsing, but other data is injected into it using
   # +annotate+ methods in other classes.
   class Metadata
+    include Puppet::Util::MethodHelper
 
     # The full name of the module, which is a dash-separated combination of the
     # +username+ and module +name+.
@@ -22,16 +24,14 @@ module Puppet::Module::Tool
 
     # Instantiate from a hash, whose keys are setters in this class.
     def initialize(settings={})
-      settings.each do |key, value|
-        send("#{key}=", value)
-      end
+      set_options(settings)
     end
 
     # Set the full name of this module, and from it, the +username+ and
     # module +name+.
     def full_module_name=(full_module_name)
       @full_module_name = full_module_name
-      @username, @name = Puppet::Module::Tool::username_and_modname_from(full_module_name)
+      @username, @name = Puppet::ModuleTool::username_and_modname_from(full_module_name)
     end
 
     # Return an array of the module's Dependency objects.

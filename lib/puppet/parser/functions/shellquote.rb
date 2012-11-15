@@ -24,12 +24,7 @@
 # other dealings in this Software without prior written authorization
 # from Thomas Bellman.
 
-module Puppet::Parser::Functions
-
-  Safe = 'a-zA-Z0-9@%_+=:,./-'    # Safe unquoted
-  Dangerous = '!"`$\\'            # Unsafe inside double quotes
-
-  newfunction(:shellquote, :type => :rvalue, :doc => "\
+Puppet::Parser::Functions.newfunction(:shellquote, :type => :rvalue, :arity => -1, :doc => "\
     Quote and concatenate arguments for use in Bourne shell.
 
     Each argument is quoted separately, and then all are concatenated
@@ -39,27 +34,28 @@ module Puppet::Parser::Functions
     shellquote instead of having to specify each argument
     individually in the call.
     ") \
-  do |args|
+do |args|
+  safe = 'a-zA-Z0-9@%_+=:,./-'    # Safe unquoted
+  dangerous = '!"`$\\'            # Unsafe inside double quotes
 
-    result = []
-    args.flatten.each do |word|
-      if word.length != 0 and word.count(Safe) == word.length
-        result << word
-      elsif word.count(Dangerous) == 0
-        result << ('"' + word + '"')
-      elsif word.count("'") == 0
-        result << ("'" + word + "'")
-      else
-        r = '"'
-        word.each_byte do |c|
-          r += "\\" if Dangerous.include?(c)
-          r += c.chr
-        end
-        r += '"'
-        result << r
+  result = []
+  args.flatten.each do |word|
+    if word.length != 0 and word.count(safe) == word.length
+      result << word
+    elsif word.count(dangerous) == 0
+      result << ('"' + word + '"')
+    elsif word.count("'") == 0
+      result << ("'" + word + "'")
+    else
+      r = '"'
+      word.each_byte do |c|
+        r += "\\" if dangerous.include?(c.chr)
+        r += c.chr
       end
+      r += '"'
+      result << r
     end
-
-    return result.join(" ")
   end
+
+  return result.join(" ")
 end

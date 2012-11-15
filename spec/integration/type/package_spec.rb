@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package), "when choosing a default package provider" do
@@ -8,7 +8,11 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
   end
 
   def provider_name(os)
-    {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :pkgdmg, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
+    if Facter.value(:operatingsystem) == 'Solaris' && Puppet::Util::Package.versioncmp(Facter.value(:kernelrelease), '5.11') >= 0
+      :pkg
+    else
+      {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :pkgdmg, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun, "DragonFly" => :pkgin}[os]
+    end
   end
 
   it "should have a default provider" do

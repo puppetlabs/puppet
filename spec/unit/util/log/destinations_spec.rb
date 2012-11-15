@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -24,13 +24,16 @@ end
 
 
 describe Puppet::Util::Log.desttypes[:file] do
+  include PuppetSpec::Files
+
   before do
     File.stubs(:open)           # prevent actually creating the file
+    File.stubs(:chown)          # prevent chown on non existing file from failing 
     @class = Puppet::Util::Log.desttypes[:file]
   end
 
   it "should default to autoflush false" do
-    @class.new('/tmp/log').autoflush.should == false
+    @class.new(tmpfile('log')).autoflush.should == true
   end
 
   describe "when matching" do
@@ -44,18 +47,14 @@ describe Puppet::Util::Log.desttypes[:file] do
       end
     end
 
-    describe "on POSIX systems" do
-      before :each do Puppet.features.stubs(:microsoft_windows?).returns false end
-
+    describe "on POSIX systems", :as_platform => :posix do
       let (:abspath) { '/tmp/log' }
       let (:relpath) { 'log' }
 
       it_behaves_like "file destination"
     end
 
-    describe "on Windows systems" do
-      before :each do Puppet.features.stubs(:microsoft_windows?).returns true end
-
+    describe "on Windows systems", :as_platform => :windows do
       let (:abspath) { 'C:\\temp\\log.txt' }
       let (:relpath) { 'log.txt' }
 
@@ -109,3 +108,43 @@ describe Puppet::Util::Log.desttypes[:syslog] do
   end
 end
 
+describe Puppet::Util::Log.desttypes[:console] do
+  let (:klass) { Puppet::Util::Log.desttypes[:console] }
+
+  describe "when color is available" do
+    before :each do
+      subject.stubs(:console_has_color?).returns(true)
+    end
+
+    it "should support color output" do
+      Puppet[:color] = true
+      subject.colorize(:red, 'version').should == "\e[0;31mversion\e[0m"
+    end
+
+    it "should withhold color output when not appropriate" do
+      Puppet[:color] = false
+      subject.colorize(:red, 'version').should == "version"
+    end
+
+    it "should handle multiple overlapping colors in a stack-like way" do
+      Puppet[:color] = true
+      vstring = subject.colorize(:red, 'version')
+      subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[0;31mversion\e[0;32m)\e[0m"
+    end
+
+    it "should handle resets in a stack-like way" do
+      Puppet[:color] = true
+      vstring = subject.colorize(:reset, 'version')
+      subject.colorize(:green, "(#{vstring})").should == "\e[0;32m(\e[mversion\e[0;32m)\e[0m"
+    end
+
+    it "should include the log message's source/context in the output when available" do
+      Puppet[:color] = false
+      $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
+
+      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
+      dest = klass.new
+      dest.handle(msg)
+    end
+  end
+end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
@@ -60,10 +60,10 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     @catalog.add_class "foo", "bar"
 
-    Puppet.settings.expects(:value).with(:classfile).returns "/class/file"
+    Puppet[:classfile] = File.expand_path("/class/file")
 
     fh = mock 'filehandle'
-    File.expects(:open).with("/class/file", "w").yields fh
+    File.expects(:open).with(Puppet[:classfile], "w").yields fh
 
     fh.expects(:puts).with "foo\nbar"
 
@@ -123,165 +123,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
   end
 
-  describe "when extracting transobjects" do
-
-    def mkscope
-      @node = Puppet::Node.new("mynode")
-      @compiler = Puppet::Parser::Compiler.new(@node)
-
-      # XXX This is ridiculous.
-      @compiler.send(:evaluate_main)
-      @scope = @compiler.topscope
-    end
-
-    def mkresource(type, name)
-      Puppet::Parser::Resource.new(type, name, :source => @source, :scope => @scope)
-    end
-
-    it "should fail if no 'main' stage can be found" do
-      lambda { Puppet::Resource::Catalog.new("mynode").extract }.should raise_error(Puppet::DevError)
-    end
-
-    it "should warn if any non-main stages are present" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @source = mock 'source'
-
-      main = mkresource("stage", "main")
-      config.add_resource(main)
-
-      other = mkresource("stage", "other")
-      config.add_resource(other)
-
-      Puppet.expects(:warning)
-
-      config.extract
-    end
-
-    it "should always create a TransBucket for the 'main' stage" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @source = mock 'source'
-
-      main = mkresource("stage", "main")
-      config.add_resource(main)
-
-      result = config.extract
-      result.type.should == "Stage"
-      result.name.should == "main"
-    end
-
-    # Now try it with a more complicated graph -- a three tier graph, each tier
-    it "should transform arbitrarily deep graphs into isomorphic trees" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @scope.stubs(:tags).returns([])
-      @source = mock 'source'
-
-      # Create our scopes.
-      top = mkresource "stage", "main"
-
-      config.add_resource top
-      topbucket = []
-      topbucket.expects(:classes=).with([])
-      top.expects(:to_trans).returns(topbucket)
-      topres = mkresource "file", "/top"
-      topres.expects(:to_trans).returns(:topres)
-      config.add_edge top, topres
-
-      middle = mkresource "class", "middle"
-      middle.expects(:to_trans).returns([])
-      config.add_edge top, middle
-      midres = mkresource "file", "/mid"
-      midres.expects(:to_trans).returns(:midres)
-      config.add_edge middle, midres
-
-      bottom = mkresource "class", "bottom"
-      bottom.expects(:to_trans).returns([])
-      config.add_edge middle, bottom
-      botres = mkresource "file", "/bot"
-      botres.expects(:to_trans).returns(:botres)
-      config.add_edge bottom, botres
-
-      toparray = config.extract
-
-      # This is annoying; it should look like:
-      #   [[[:botres], :midres], :topres]
-      # but we can't guarantee sort order.
-      toparray.include?(:topres).should be_true
-
-      midarray = toparray.find { |t| t.is_a?(Array) }
-      midarray.include?(:midres).should be_true
-      botarray = midarray.find { |t| t.is_a?(Array) }
-      botarray.include?(:botres).should be_true
-    end
-  end
-
-  describe " when converting to a Puppet::Resource catalog" do
-    before do
-      @original = Puppet::Resource::Catalog.new("mynode")
-      @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
-
-      @top            = Puppet::TransObject.new 'top', "class"
-      @topobject      = Puppet::TransObject.new '/topobject', "file"
-      @middle         = Puppet::TransObject.new 'middle', "class"
-      @middleobject   = Puppet::TransObject.new '/middleobject', "file"
-      @bottom         = Puppet::TransObject.new 'bottom', "class"
-      @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
-
-      @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
-
-      @original.add_resource(*@resources)
-
-      @original.add_edge(@top, @topobject)
-      @original.add_edge(@top, @middle)
-      @original.add_edge(@middle, @middleobject)
-      @original.add_edge(@middle, @bottom)
-      @original.add_edge(@bottom, @bottomobject)
-
-      @catalog = @original.to_resource
-    end
-
-    it "should copy over the version" do
-      @original.version = "foo"
-      @original.to_resource.version.should == "foo"
-    end
-
-    it "should convert parser resources to plain resources" do
-      resource = Puppet::Parser::Resource.new(:file, "foo", :scope => stub("scope", :environment => nil, :namespaces => nil), :source => stub("source"))
-      catalog = Puppet::Resource::Catalog.new("whev")
-      catalog.add_resource(resource)
-      new = catalog.to_resource
-      new.resource(:file, "foo").class.should == Puppet::Resource
-    end
-
-    it "should add all resources as Puppet::Resource instances" do
-      @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Resource) }
-    end
-
-    it "should copy the tag list to the new catalog" do
-      @catalog.tags.sort.should == @original.tags.sort
-    end
-
-    it "should copy the class list to the new catalog" do
-      @catalog.classes.should == @original.classes
-    end
-
-    it "should duplicate the original edges" do
-      @original.edges.each do |edge|
-        @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
-      end
-    end
-
-    it "should set itself as the catalog for each converted resource" do
-      @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
-    end
-  end
-
   describe "when converting to a RAL catalog" do
     before do
       @original = Puppet::Resource::Catalog.new("mynode")
@@ -309,7 +150,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should add all resources as RAL instances" do
-      @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Type) }
+      @resources.each do |resource|
+        # Warning: a failure here will result in "global resource iteration is
+        # deprecated" being raised, because the rspec rendering to get the
+        # result tries to call `each` on the resource, and that raises.
+        @catalog.resource(resource.ref).must be_a_kind_of(Puppet::Type)
+      end
     end
 
     it "should copy the tag list to the new catalog" do
@@ -332,7 +178,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     # This tests #931.
     it "should not lose track of resources whose names vary" do
-      changer = Puppet::TransObject.new 'changer', 'test'
+      changer = Puppet::Resource.new :file, @basepath+'/test/', :parameters => {:ensure => :directory}
 
       config = Puppet::Resource::Catalog.new('test')
       config.add_resource(changer)
@@ -340,16 +186,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       config.add_edge(@top, changer)
 
-      resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
-
-      #changer is going to get duplicated as part of a fix for aliases 1094
-      changer.expects(:dup).returns(changer)
-      changer.expects(:to_ral).returns(resource)
-
-      newconfig = nil
-
-      proc { @catalog = config.to_ral }.should_not raise_error
-      @catalog.resource("Test[changer2]").should equal(resource)
+      catalog = config.to_ral
+      catalog.resource("File[#{@basepath}/test/]").must equal(catalog.resource("File[#{@basepath}/test]"))
     end
 
     after do
@@ -367,12 +205,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @r1 = stub_everything 'r1', :ref => "File[/a]"
       @r1.stubs(:respond_to?).with(:ref).returns(true)
       @r1.stubs(:dup).returns(@r1)
-      @r1.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+      @r1.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @r2 = stub_everything 'r2', :ref => "File[/b]"
       @r2.stubs(:respond_to?).with(:ref).returns(true)
       @r2.stubs(:dup).returns(@r2)
-      @r2.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+      @r2.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @resources = [@r1,@r2]
 
@@ -416,8 +254,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should provide a method to add one or more resources" do
       @catalog.add_resource @one, @two
-      @catalog.resource(@one.ref).should equal(@one)
-      @catalog.resource(@two.ref).should equal(@two)
+      @catalog.resource(@one.ref).must equal(@one)
+      @catalog.resource(@two.ref).must equal(@two)
     end
 
     it "should add resources to the relationship graph if it exists" do
@@ -433,20 +271,18 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should make all vertices available by resource reference" do
       @catalog.add_resource(@one)
-      @catalog.resource(@one.ref).should equal(@one)
-      @catalog.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
+      @catalog.resource(@one.ref).must equal(@one)
+      @catalog.vertices.find { |r| r.ref == @one.ref }.must equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
       @catalog.add_resource(@one)
-
-      @catalog.resource("notify", "one").should equal(@one)
+      @catalog.resource("notify", "one").must equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
       @catalog.add_resource(@one)
-
-      @catalog.resource("notify[one]", nil).should equal(@one)
+      @catalog.resource("notify[one]", nil).must equal(@one)
     end
 
     it "should not allow two resources with the same resource reference" do
@@ -502,26 +338,28 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should be able to find resources by reference" do
       @catalog.add_resource @one
-      @catalog.resource(@one.ref).should equal(@one)
+      @catalog.resource(@one.ref).must equal(@one)
     end
 
     it "should be able to find resources by reference or by type/title tuple" do
       @catalog.add_resource @one
-      @catalog.resource("notify", "one").should equal(@one)
+      @catalog.resource("notify", "one").must equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
-      @catalog.add_resource @one
-      @one.expects :remove
+      @catalog.add_resource(@one)
+      @catalog.resource(@one.ref).must be
+      @catalog.vertex?(@one).must be_true
+
       @catalog.remove_resource(@one)
-      @catalog.resource(@one.ref).should be_nil
-      @catalog.vertex?(@one).should be_false
+      @catalog.resource(@one.ref).must be_nil
+      @catalog.vertex?(@one).must be_false
     end
 
     it "should have a method for creating aliases for resources" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").should equal(@one)
+      @catalog.resource("notify", "other").must equal(@one)
     end
 
     it "should ignore conflicting aliases that point to the aliased resource" do
@@ -534,7 +372,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @catalog.add_resource(resource)
 
-      @catalog.resource(:file, @basepath+"/something").should equal(resource)
+      @catalog.resource(:file, @basepath+"/something").must equal(resource)
     end
 
     it "should not create aliases for non-isomorphic resources whose names do not match their titles" do
@@ -550,7 +388,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should alias using the class name from the resource reference, not the resource class name" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @catalog.resource("notify", "other").should equal(@one)
+      @catalog.resource("notify", "other").must equal(@one)
     end
 
     it "should fail to add an alias if the aliased name already exists" do
@@ -565,13 +403,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not create aliases that point back to the resource" do
       @catalog.alias(@one, "one")
-      @catalog.resource(:notify, "one").should be_nil
+      @catalog.resource(:notify, "one").must be_nil
     end
 
     it "should be able to look resources up by their aliases" do
       @catalog.add_resource @one
       @catalog.alias @one, "two"
-      @catalog.resource(:notify, "two").should equal(@one)
+      @catalog.resource(:notify, "two").must equal(@one)
     end
 
     it "should remove resource aliases when the target resource is removed" do
@@ -579,14 +417,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.alias(@one, "other")
       @one.expects :remove
       @catalog.remove_resource(@one)
-      @catalog.resource("notify", "other").should be_nil
+      @catalog.resource("notify", "other").must be_nil
     end
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(true)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, "other").should equal(resource)
+      @catalog.resource(:file, "other").must equal(resource)
       @catalog.resource(:file, @basepath+"/something").ref.should == resource.ref
     end
 
@@ -594,7 +432,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
       resource.expects(:isomorphic?).returns(false)
       @catalog.add_resource(resource)
-      @catalog.resource(:file, resource.title).should equal(resource)
+      @catalog.resource(:file, resource.title).must equal(resource)
       # We can't use .should here, because the resources respond to that method.
       raise "Aliased non-isomorphic resource" if @catalog.resource(:file, resource.name)
     end
@@ -604,7 +442,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
-      @catalog.resource("File[/yay]").should equal(resource)
+      @catalog.resource("File[/yay]").must equal(resource)
     end
 
     describe "when adding resources with multiple namevars" do
@@ -639,7 +477,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "5")
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already declared/)
       end
 
       it "should conflict when its uniqueness key matches another resource's title" do
@@ -648,7 +486,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:file).new(:title => "another file", :path => path)
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already declared/)
       end
 
       it "should conflict when its uniqueness key matches the uniqueness key derived from another resource's title" do
@@ -656,7 +494,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "leader")
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already declared/)
       end
     end
   end
@@ -937,7 +775,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.features.pson? do
+describe Puppet::Resource::Catalog, "when converting to pson" do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
@@ -995,7 +833,7 @@ describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.fea
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting from pson", :if => Puppet.features.pson? do
+describe Puppet::Resource::Catalog, "when converting from pson" do
   def pson_result_should
     Puppet::Resource::Catalog.expects(:new).with { |hash| yield hash }
   end

@@ -8,6 +8,14 @@ describe Puppet::Interface::OptionBuilder do
       should be_an_instance_of Puppet::Interface::Option
   end
 
+  Puppet.settings.each do |name, value|
+    it "should fail when option #{name.inspect} already exists in puppet core" do
+      expect do
+        Puppet::Interface::OptionBuilder.build(face, "--#{name}")
+      end.to raise_error ArgumentError, /already defined/
+    end
+  end
+
   it "should work with an empty block" do
     option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
       # This block deliberately left blank.
@@ -72,6 +80,6 @@ describe Puppet::Interface::OptionBuilder do
       end
       opt.should_not be_required
     end
-
+    
   end
 end

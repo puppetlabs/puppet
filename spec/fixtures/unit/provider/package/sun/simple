@@ -1,0 +1,24 @@
+   PKGINST:  SUNWdummy
+      NAME:  Dummy server
+  CATEGORY:  system
+      ARCH:  i386
+   VERSION:  11.11.0,REV=2010.10.12.04.23
+   BASEDIR:  /
+    VENDOR:  Oracle Corporation
+      DESC:  Dummy server (9.6.1-P3)
+  INSTDATE:  Nov 05 2010 09:14
+   HOTLINE:  Please contact your local service provider
+    STATUS:  completely installed
+
+   PKGINST:  SUNWdummyc
+      NAME:  Dummy client
+  CATEGORY:  system
+      ARCH:  i386
+   VERSION:  11.11.0,REV=2010.10.12.04.24
+   BASEDIR:  /
+    VENDOR:  Oracle Corporation
+      DESC:  Dummy client (9.6.1-P4)
+  INSTDATE:  Nov 05 2010 09:14
+   HOTLINE:  Please contact your local service provider
+    STATUS:  completely installed
+

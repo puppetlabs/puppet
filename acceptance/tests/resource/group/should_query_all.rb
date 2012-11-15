@@ -1,30 +1,23 @@
-test_name "puppet resource should query all groups"
+test_name "should query all groups"
 
-agents.each do |host|
-    groups = {}
+agents.each do |agent|
+  step "query natively"
+  groups = agent.group_list
 
-    step "collect the list of groups on #{host} with getent group"
-    on(host, "getent group") do
-        stdout.each_line do |line| groups[line[/^[^:]+/]] = 'getent' end
+  fail_test("No groups found") unless groups
+
+  step "query with puppet"
+  on(agent, puppet_resource('group')) do
+    stdout.each_line do |line|
+      name = ( line.match(/^group \{ '([^']+)'/) or next )[1]
+
+      unless groups.delete(name)
+        fail_test "group #{name} found by puppet, not natively"
+      end
     end
+  end
 
-    step "collect the list of groups on #{host} with puppet resource"
-    on(host, puppet_resource('group')) do
-        stdout.each_line do |line|
-            match = line.match(/^group \{ '([^']+)'/)
-            if match then
-                name = match[1]
-
-                if groups.include? name then
-                    groups.delete name
-                else
-                    fail_test "group #{name} found by puppet, not getent"
-                end
-            end
-        end
-    end
-
-    groups.keys.each do |name|
-        fail_test "group #{name} found by getent, not puppet"
-    end
+  if groups.length > 0 then
+    fail_test "#{groups.length} groups found natively, not puppet: #{groups.join(', ')}"
+  end
 end

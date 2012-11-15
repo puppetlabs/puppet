@@ -3,11 +3,26 @@ require 'puppet/network/rights'
 
 module Puppet
   class ConfigurationError < Puppet::Error; end
-  class Network::AuthConfig < Puppet::Util::LoadedFile
+  class Network::AuthConfig
 
-    def self.main
-      @main ||= self.new
-    end
+    extend MonitorMixin
+    attr_accessor :rights
+
+    DEFAULT_ACL = [
+      { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      # this one will allow all file access, and thus delegate
+      # to fileserver.conf
+      { :acl => "/file" },
+      { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
+      { :acl => "/report", :method => :save, :authenticated => true },
+      # These allow `auth any`, because if you can do them anonymously you
+      # should probably also be able to do them when trusted.
+      { :acl => "/certificate/ca", :method => :find, :authenticated => :any },
+      { :acl => "/certificate/", :method => :find, :authenticated => :any },
+      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => :any },
+      { :acl => "/status", :method => [:find], :authenticated => true },
+    ]
 
     # Just proxy the setting methods to our rights stuff
     [:allow, :deny].each do |method|
@@ -16,159 +31,46 @@ module Puppet
       end
     end
 
-    # Here we add a little bit of semantics.  They can set auth on a whole
-    # namespace or on just a single method in the namespace.
-    def allowed?(request)
-      name        = request.call.intern
-      namespace   = request.handler.intern
-      method      = request.method.intern
-
-      read
-
-      if @rights.include?(name)
-        return @rights[name].allowed?(request.name, request.ip)
-      elsif @rights.include?(namespace)
-        return @rights[namespace].allowed?(request.name, request.ip)
-      end
-      false
-    end
-
-    # Does the file exist?  Puppetmasterd does not require it, but
-    # puppet agent does.
-    def exists?
-      FileTest.exists?(@file)
-    end
-
-    def initialize(file = nil, parsenow = true)
-      @file = file || Puppet[:authconfig]
-
-      raise Puppet::DevError, "No authconfig file defined" unless @file
-      return unless self.exists?
-      super(@file)
-      @rights = Puppet::Network::Rights.new
-      @configstamp = @configstatted = nil
-      @configtimeout = 60
-
-      read if parsenow
-    end
-
-    # Read the configuration file.
-    def read
-      return unless FileTest.exists?(@file)
-
-      if @configstamp
-        if @configtimeout and @configstatted
-          if Time.now - @configstatted > @configtimeout
-            @configstatted = Time.now
-            tmp = File.stat(@file).ctime
-
-            if tmp == @configstamp
-              return
-            else
-              Puppet.notice "#{tmp} vs #{@configstamp}"
-            end
-          else
-            return
-          end
-        else
-          Puppet.notice "#{@configtimeout} and #{@configstatted}"
+    # force regular ACLs to be present
+    def insert_default_acl
+      DEFAULT_ACL.each do |acl|
+        unless rights[acl[:acl]]
+          Puppet.info "Inserting default '#{acl[:acl]}' (auth #{acl[:authenticated]}) ACL"
+          mk_acl(acl)
         end
       end
-
-      parse
-
-      @configstamp = File.stat(@file).ctime
-      @configstatted = Time.now
-    end
-
-    private
-
-    def parse
-      newrights = Puppet::Network::Rights.new
-      begin
-        File.open(@file) { |f|
-          right = nil
-          count = 1
-          f.each { |line|
-            case line
-            when /^\s*#/ # skip comments
-              count += 1
-              next
-            when /^\s*$/  # skip blank lines
-              count += 1
-              next
-            when /^(?:(\[[\w.]+\])|(path)\s+((?:~\s+)?[^ ]+))\s*$/ # "namespace" or "namespace.method" or "path /path" or "path ~ regex"
-              name = $1
-              name = $3 if $2 == "path"
-              name.chomp!
-              right = newrights.newright(name, count, @file)
-            when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
-              parse_right_directive(right, $1, $2, count)
-            else
-              raise ConfigurationError, "Invalid line #{count}: #{line}"
-            end
-            count += 1
-          }
-        }
-      rescue Errno::EACCES => detail
-        Puppet.err "Configuration error: Cannot read #{@file}; cannot serve"
-        #raise Puppet::Error, "Cannot read #{@config}"
-      rescue Errno::ENOENT => detail
-        Puppet.err "Configuration error: '#{@file}' does not exit; cannot serve"
-        #raise Puppet::Error, "#{@config} does not exit"
-      #rescue FileServerError => detail
-      #    Puppet.err "FileServer error: #{detail}"
-      end
-
-      # Verify each of the rights are valid.
-      # We let the check raise an error, so that it can raise an error
-      # pointing to the specific problem.
-      newrights.each { |name, right|
-        right.valid?
-      }
-      @rights = newrights
-    end
-
-    def parse_right_directive(right, var, value, count)
-      value.strip!
-      case var
-      when "allow"
-        modify_right(right, :allow, value, "allowing %s access", count)
-      when "deny"
-        modify_right(right, :deny, value, "denying %s access", count)
-      when "method"
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'method' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
-        modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
-      when "environment"
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
-        modify_right(right, :restrict_environment, value, "adding environment %s", count)
-      when /auth(?:enticated)?/
-        unless right.acl_type == :regex
-          raise ConfigurationError, "'authenticated' directive not allowed in namespace ACL at line #{count} of #{@config}"
-        end
-        modify_right(right, :restrict_authenticated, value, "adding authentication %s", count)
-      else
-        raise ConfigurationError,
-          "Invalid argument '#{var}' at line #{count}"
+      # queue an empty (ie deny all) right for every other path
+      # actually this is not strictly necessary as the rights system
+      # denies not explicitely allowed paths
+      unless rights["/"]
+        rights.newright("/").restrict_authenticated(:any)
       end
     end
 
-    def modify_right(right, method, value, msg, count)
-      value.split(/\s*,\s*/).each do |val|
-        begin
-          val.strip!
-          right.info msg % val
-          right.send(method, val)
-        rescue AuthStoreError => detail
-          raise ConfigurationError, "#{detail} at line #{count} of #{@file}"
-        end
+    def mk_acl(acl)
+      right = @rights.newright(acl[:acl])
+      right.allow(acl[:allow] || "*")
+
+      if method = acl[:method]
+        method = [method] unless method.is_a?(Array)
+        method.each { |m| right.restrict_method(m) }
+      end
+      right.restrict_authenticated(acl[:authenticated]) unless acl[:authenticated].nil?
+    end
+
+    # check whether this request is allowed in our ACL
+    # raise an Puppet::Network::AuthorizedError if the request
+    # is denied.
+    def check_authorization(indirection, method, key, params)
+      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(indirection, method, key, params)
+        Puppet.warning("Denying access: #{authorization_failure_exception}")
+        raise authorization_failure_exception
       end
     end
 
+    def initialize(rights=nil)
+      @rights = rights || Puppet::Network::Rights.new
+      insert_default_acl
+    end
   end
 end
-

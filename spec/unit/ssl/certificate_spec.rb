@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate'
@@ -26,13 +26,13 @@ describe Puppet::SSL::Certificate do
 
   describe "when converting from a string" do
     it "should create a certificate instance with its name set to the certificate subject and its content set to the extracted certificate" do
-      cert = stub 'certificate', :subject => "/CN=Foo.madstop.com"
+      cert = stub 'certificate', :subject => "/CN=Foo.madstop.com", :is_a? => true
       OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(cert)
 
       mycert = stub 'sslcert'
       mycert.expects(:content=).with(cert)
 
-      @class.expects(:new).with("foo.madstop.com").returns mycert
+      @class.expects(:new).with("Foo.madstop.com").returns mycert
 
       @class.from_s("my certificate")
     end
@@ -149,6 +149,30 @@ describe Puppet::SSL::Certificate do
       real_certificate.expects(:to_text).returns "certificatetext"
       @certificate.content = real_certificate
       @certificate.to_text.should == "certificatetext"
+    end
+  end
+
+  describe "when checking if the certificate's expiration is approaching" do
+    before do
+      @days = 24*60*60
+      @certificate = @class.new("myname")
+      @certificate.stubs(:expiration).returns(Time.now.utc() + 30*@days)
+    end
+
+    it "should be true if the expiration is within the given interval from now" do
+      @certificate.near_expiration?(31*@days).should be_true
+    end
+
+    it "should be false if there is no expiration" do
+      @certificate.stubs(:expiration).returns(nil)
+      @certificate.near_expiration?.should be_false
+    end
+
+    it "should default to using the `certificate_expire_warning` setting as the interval" do
+      Puppet[:certificate_expire_warning] = 31*@days
+      @certificate.near_expiration?.should be_true
+      Puppet[:certificate_expire_warning] = 29*@days
+      @certificate.near_expiration?.should be_false
     end
   end
 end

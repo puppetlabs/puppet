@@ -153,8 +153,7 @@ class Puppet::Transaction
       return false if made.empty?
       made = made.inject({}) {|a,v| a.merge(v.name => v) }
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
+      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
     made.values.each do |res|
@@ -203,8 +202,7 @@ class Puppet::Transaction
     begin
       made = resource.generate
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      resource.err "Failed to generate additional resources using 'generate': #{detail}"
+      resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
     end
     return unless made
     made = [made] unless made.is_a?(Array)
@@ -227,7 +225,7 @@ class Puppet::Transaction
 
   # Should we ignore tags?
   def ignore_tags?
-    ! (@catalog.host_config? or Puppet[:name] == "puppet")
+    ! @catalog.host_config? 
   end
 
   # this should only be called by a Puppet::Type::Component resource now
@@ -235,7 +233,7 @@ class Puppet::Transaction
   def initialize(catalog, report = nil)
     @catalog = catalog
 
-    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, Puppet[:environment])
+    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
 
     @event_manager = Puppet::Transaction::EventManager.new(self)
 
@@ -285,8 +283,7 @@ class Puppet::Transaction
     begin
       provider_class.prefetch(resources)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}"
+      Puppet.log_exception(detail, "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}")
     end
     @prefetched_providers[type_name][provider_class.name] = true
   end
@@ -318,10 +315,6 @@ class Puppet::Transaction
       @blockers = {}
       @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
       @providerless_types = []
-      vertices.each do |v|
-        blockers[v] = direct_dependencies_of(v).length
-        enqueue(v) if blockers[v] == 0
-      end
     end
     def method_missing(*args,&block)
       real_graph.send(*args,&block)
@@ -335,6 +328,13 @@ class Puppet::Transaction
       ready.delete(key)
 
       real_graph.add_edge(f,t,label)
+    end
+    # Enqueue the initial set of resources, those with no dependencies.
+    def enqueue_roots
+      vertices.each do |v|
+        blockers[v] = direct_dependencies_of(v).length
+        enqueue(v) if blockers[v] == 0
+      end
     end
     # Decrement the blocker count for the resource by 1. If the number of
     # blockers is unknown, count them and THEN decrement by 1.
@@ -364,6 +364,8 @@ class Puppet::Transaction
     end
     def traverse(&block)
       real_graph.report_cycles_in_graph
+
+      enqueue_roots
 
       deferred_resources = []
 

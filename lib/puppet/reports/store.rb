@@ -1,4 +1,8 @@
 require 'puppet'
+require 'fileutils'
+require 'tempfile'
+
+SEPARATOR = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
 
 Puppet::Reports.register_report(:store) do
   desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
@@ -9,11 +13,9 @@ Puppet::Reports.register_report(:store) do
     default report)."
 
   def process
-    # We don't want any tracking back in the fs.  Unlikely, but there
-    # you go.
-    client = self.host.gsub("..",".")
+    validate_host(host)
 
-    dir = File.join(Puppet[:reportdir], client)
+    dir = File.join(Puppet[:reportdir], host)
 
     if ! FileTest.exists?(dir)
       FileUtils.mkdir_p(dir)
@@ -29,23 +31,28 @@ Puppet::Reports.register_report(:store) do
 
     file = File.join(dir, name)
 
+    f = Tempfile.new(name, dir)
     begin
-      File.open(file, "w", 0640) do |f|
+      begin
+        f.chmod(0640)
         f.print to_yaml
+      ensure
+        f.close
       end
+      FileUtils.mv(f.path, file)
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.warning "Could not write report for #{client} at #{file}: #{detail}"
+      Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
     end
 
     # Only testing cares about the return value
     file
   end
 
-  # removes all reports for a given host
+  # removes all reports for a given host?
   def self.destroy(host)
-    client = host.gsub("..",".")
-    dir = File.join(Puppet[:reportdir], client)
+    validate_host(host)
+
+    dir = File.join(Puppet[:reportdir], host)
 
     if File.exists?(dir)
       Dir.entries(dir).each do |file|
@@ -56,5 +63,11 @@ Puppet::Reports.register_report(:store) do
       Dir.rmdir(dir)
     end
   end
-end
 
+  def validate_host(host)
+    if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
+      raise ArgumentError, "Invalid node name #{host.inspect}"
+    end
+  end
+  module_function :validate_host
+end

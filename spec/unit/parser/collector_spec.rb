@@ -1,11 +1,5 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
-
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-
 require 'puppet/rails'
 require 'puppet/parser/collector'
 
@@ -59,6 +53,7 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
     @scope = mock 'scope'
     @vquery = mock 'vquery'
     @equery = mock 'equery'
+    @compiler = mock 'compiler'
 
     @collector = Puppet::Parser::Collector.new(@scope, "resource_type", @equery, @vquery, :virtual)
   end
@@ -267,12 +262,12 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
   end
 end
 
-describe Puppet::Parser::Collector, "when collecting exported resources", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe Puppet::Parser::Collector, "when collecting exported resources", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-    @scope = Puppet::Parser::Scope.new :compiler => @compiler
+    @scope = Puppet::Parser::Scope.new @compiler
     @resource_type = "notify"
     @equery = ["title", "!=", ""]
     @vquery = proc { |r| true }
@@ -287,19 +282,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   context "with storeconfigs enabled" do
     before :each do
-      ActiveRecord::Base.remove_connection
-
-      dir = Pathname(tmpdir('puppet-var'))
-      Puppet[:vardir]       = dir.to_s
-      Puppet[:dbadapter]    = 'sqlite3'
-      Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+      setup_scratch_database
       Puppet[:storeconfigs] = true
       Puppet[:environment]  = "production"
-      Puppet::Rails.init
-    end
-
-    after :each do
-      ActiveRecord::Base.remove_connection
+      Puppet[:storeconfigs_backend] = "active_record"
     end
 
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
@@ -336,7 +322,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       one.should_not be_virtual
     end
 
-    it "should convert all found resources into parser resources" do
+    it "should convert all found resources into parser resources if necessary" do
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
@@ -348,6 +334,19 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       result.first.should be_an_instance_of Puppet::Parser::Resource
       result.first.type.should == 'Notify'
       result.first.title.should == 'whammo'
+    end
+
+    it "should leave parser resources alone" do
+      resource = Puppet::Parser::Resource.new(:file, "/tmp/foo", :scope => @scope)
+      resource2 = Puppet::Parser::Resource.new(:file, "/tmp/bar", :scope => @scope)
+      resource.expects(:to_resource).never
+      resource2.expects(:to_resource).never
+
+      resources = [resource, resource2]
+
+      Puppet::Resource.indirection.stubs(:search).returns resources
+
+      @collector.evaluate.should == resources
     end
 
     it "should override all exported collected resources if collector has an override" do
@@ -408,7 +407,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @compiler.add_resource(@scope, local)
 
       expect { @collector.evaluate }.
-        to raise_error Puppet::ParseError, /cannot override local resource/
+        to raise_error Puppet::ParseError, /exists with the type and title/
     end
 
     it "should ignore exported resources that match already-collected resources" do

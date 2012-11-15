@@ -4,9 +4,15 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
   has_feature :versionable
 
   commands :zypper => "/usr/bin/zypper"
-  commands :rpm    => "rpm"
 
   confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
+
+  #on zypper versions <1.0, the version option returns 1
+  #some versions of zypper output on stderr
+  def zypper_version
+    cmd = [self.class.command(:zypper),"--version"]
+    execute(cmd, { :failonfail => false, :combine => true})
+  end
 
   # Install a package using 'zypper'.
   def install
@@ -22,7 +28,33 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       # Add the package version
       wanted = "#{wanted}-#{should}"
     end
-    output = zypper "--quiet", :install, "-l", "-y", wanted
+
+    #This has been tested with following zypper versions
+    #SLE 10.2: 0.6.104
+    #SLE 11.0: 1.0.8
+    #OpenSuse 10.2: 0.6.13
+    #OpenSuse 11.2: 1.2.8
+    #Assume that this will work on newer zypper versions
+
+    #extract version numbers and convert to integers
+    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    self.debug "Detected zypper version #{major}.#{minor}.#{patch}"
+
+    #zypper version < 1.0 does not support --quiet flag
+    quiet = "--quiet"
+    if major < 1
+      quiet = "--terse"
+    end
+
+    license = "--auto-agree-with-licenses"
+    noconfirm = "--no-confirm"
+
+    #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
+    if major < 1 and minor <= 6 and patch <= 13
+      zypper quiet, :install, noconfirm, wanted
+    else
+      zypper quiet, :install, license, noconfirm, wanted
+    end
 
     unless self.query
       raise Puppet::ExecutionFailure.new(
@@ -36,7 +68,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     #zypper can only get a list of *all* available packages?
     output = zypper "list-updates"
 
-    if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/
+    if output =~ /#{Regexp.escape @resource[:name]}\s*\|.*?\|\s*([^\s\|]+)/
       return $1
     else
       # zypper didn't find updates, pretend the current

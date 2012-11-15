@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/package'
 
@@ -322,13 +322,14 @@ describe provider_class do
         Puppet[:show_diff] = true
 
         @resource[:root] = ""
-        @provider.stubs(:get_augeas_version).returns("0.7.2")
+        @provider.stubs(:get_augeas_version).returns("0.10.0")
         @augeas.stubs(:set).returns(true)
         @augeas.stubs(:save).returns(true)
       end
 
       it "should call diff when a file is shown to have been changed" do
         file = "/etc/hosts"
+        File.stubs(:delete)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
@@ -345,6 +346,7 @@ describe provider_class do
       it "should call diff for each file thats changed" do
         file1 = "/etc/hosts"
         file2 = "/etc/resolv.conf"
+        File.stubs(:delete)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
@@ -364,6 +366,7 @@ describe provider_class do
         it "should call diff when a file is shown to have been changed" do
           root = "/tmp/foo"
           file = "/etc/hosts"
+          File.stubs(:delete)
 
           @resource[:context] = "/files"
           @resource[:changes] = ["set #{file}/foo bar"]
@@ -394,10 +397,9 @@ describe provider_class do
         @provider.should_not be_need_to_run
       end
 
-      it "should cleanup when in noop mode" do
+      it "should cleanup the .augnew file" do
         file = "/etc/hosts"
 
-        @resource[:noop] = true
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
@@ -409,6 +411,25 @@ describe provider_class do
         File.expects(:delete).with(file + ".augnew")
 
         @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("")
+        @provider.should be_need_to_run
+      end
+
+      # Workaround for Augeas bug #264 which reports filenames twice
+      it "should handle duplicate /augeas/events/saved filenames" do
+        file = "/etc/hosts"
+
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file}/foo bar"]
+
+        @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
+        @augeas.stubs(:get).with("/augeas/events/saved[1]").returns("/files#{file}")
+        @augeas.stubs(:get).with("/augeas/events/saved[2]").returns("/files#{file}")
+        @augeas.expects(:set).with("/augeas/save", "newfile")
+        @augeas.expects(:close)
+
+        File.expects(:delete).with(file + ".augnew").once()
+
+        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("").once()
         @provider.should be_need_to_run
       end
 
@@ -430,9 +451,9 @@ describe provider_class do
 
   describe "augeas execution integration" do
     before do
-      @augeas = stub("augeas")
+      @augeas = stub("augeas", :load)
       @augeas.stubs("close")
-      @augeas.stubs(:match).with("/augeas/events/saved")
+      @augeas.stubs(:match).with("/augeas/events/saved").returns([])
 
       @provider.aug = @augeas
       @provider.stubs(:get_augeas_version).returns("0.3.5")
@@ -558,14 +579,63 @@ describe provider_class do
     end
   end
 
-  describe "save failure reporting" do
+  describe "when making changes", :if => Puppet.features.augeas? do
+    include PuppetSpec::Files
+
+    it "should not clobber the file if it's a symlink" do
+      Puppet::Util::Storage.stubs(:store)
+
+      link = tmpfile('link')
+      target = tmpfile('target')
+      FileUtils.touch(target)
+      FileUtils.symlink(target, link)
+
+      resource = Puppet::Type.type(:augeas).new(
+        :name => 'test',
+        :incl => link,
+        :lens => 'Sshd.lns',
+        :changes => "set PermitRootLogin no"
+      )
+
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource resource
+
+      catalog.apply
+
+      File.ftype(link).should == 'link'
+      File.readlink(link).should == target
+      File.read(target).should =~ /PermitRootLogin no/
+    end
+  end
+
+  describe "load/save failure reporting" do
     before do
       @augeas = stub("augeas")
       @augeas.stubs("close")
       @provider.aug = @augeas
     end
 
-    it "should find errors and output to debug" do
+    describe "should find load errors" do
+      before do
+        @augeas.expects(:match).with("/augeas//error").returns(["/augeas/files/foo/error"])
+        @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+        @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
+        @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
+      end
+
+      it "and output to debug" do
+        @provider.expects(:debug).times(4)
+        @provider.print_load_errors
+      end
+
+      it "and output a warning and to debug" do
+        @provider.expects(:warning).once()
+        @provider.expects(:debug).times(3)
+        @provider.print_load_errors(:warning => true)
+      end
+    end
+
+    it "should find save errors and output to debug" do
       @augeas.expects(:match).with("/augeas//error[. = 'put_failed']").returns(["/augeas/files/foo/error"])
       @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
       @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
@@ -588,11 +658,18 @@ describe provider_class do
       aug.match("/files/etc/test").should == []
     end
 
+    it "should report load errors to debug only" do
+      @provider.expects(:print_load_errors).with(:warning => false)
+      aug = @provider.open_augeas
+      aug.should_not == nil
+    end
+
     # Only the file specified should be loaded
     it "should load one file if incl/lens used" do
       @resource[:incl] = "/etc/hosts"
       @resource[:lens] = "Hosts.lns"
 
+      @provider.expects(:print_load_errors).with(:warning => true)
       aug = @provider.open_augeas
       aug.should_not == nil
       aug.match("/files/etc/fstab").should == []
@@ -610,11 +687,22 @@ describe provider_class do
       aug.match("/files/etc/test").should == ["/files/etc/test"]
     end
 
+    it "should also load lenses from pluginsync'd path" do
+      Puppet[:libdir] = my_fixture_dir
+
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == ["/files/etc/test"]
+    end
+
     # Optimisations added for Augeas 0.8.2 or higher is available, see #7285
-    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
+    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Facter.value(:augeasversion) && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
       it "should only load one file if relevant context given" do
         @resource[:context] = "/files/etc/fstab"
 
+        @provider.expects(:print_load_errors).with(:warning => true)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
@@ -640,6 +728,47 @@ describe provider_class do
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
         aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
       end
+
+      it "should not optimise if the context is a complex path" do
+        @resource[:context] = "/files/*[label()='etc']"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      end
+    end
+  end
+
+  describe "get_load_path" do
+    it "should offer no load_path by default" do
+      @provider.get_load_path(@resource).should == ""
+    end
+
+    it "should offer one path from load_path" do
+      @resource[:load_path] = "/foo"
+      @provider.get_load_path(@resource).should == "/foo"
+    end
+
+    it "should offer multiple colon-separated paths from load_path" do
+      @resource[:load_path] = "/foo:/bar:/baz"
+      @provider.get_load_path(@resource).should == "/foo:/bar:/baz"
+    end
+
+    it "should offer multiple paths in array from load_path" do
+      @resource[:load_path] = ["/foo", "/bar", "/baz"]
+      @provider.get_load_path(@resource).should == "/foo:/bar:/baz"
+    end
+
+    it "should offer pluginsync augeas/lenses subdir" do
+      Puppet[:libdir] = my_fixture_dir
+      @provider.get_load_path(@resource).should == "#{my_fixture_dir}/augeas/lenses"
+    end
+
+    it "should offer both pluginsync and load_path paths" do
+      Puppet[:libdir] = my_fixture_dir
+      @resource[:load_path] = ["/foo", "/bar", "/baz"]
+      @provider.get_load_path(@resource).should == "/foo:/bar:/baz:#{my_fixture_dir}/augeas/lenses"
     end
   end
 end

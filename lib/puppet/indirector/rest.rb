@@ -77,50 +77,39 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def network(request)
-    Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
+    Puppet::Network::HTTP::Connection.new(request.server || self.class.server, request.port || self.class.port)
   end
 
-  [:get, :post, :head, :delete, :put].each do |method|
-    define_method "http_#{method}" do |request, *args|
-      http_request(method, request, *args)
-    end
+  def http_get(request, *args)
+    http_request(:get, request, *args)
+  end
+
+  def http_post(request, *args)
+    http_request(:post, request, *args)
+  end
+
+  def http_head(request, *args)
+    http_request(:head, request, *args)
+  end
+
+  def http_delete(request, *args)
+    http_request(:delete, request, *args)
+  end
+
+  def http_put(request, *args)
+    http_request(:put, request, *args)
   end
 
   def http_request(method, request, *args)
-    http_connection = network(request)
-    peer_certs = []
-
-    # We add the callback to collect the certificates for use in constructing
-    # the error message if the verification failed.  This is necessary since we
-    # don't have direct access to the cert that we expected the connection to
-    # use otherwise.
-    #
-    http_connection.verify_callback = proc do |preverify_ok, ssl_context|
-      peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
-      preverify_ok
-    end
-
-    http_connection.send(method, *args)
-  rescue OpenSSL::SSL::SSLError => error
-    if error.message.include? "certificate verify failed"
-      raise Puppet::Error, "#{error.message}.  This is often because the time is out of sync on the server or client"
-    elsif error.message.include? "hostname was not match"
-      raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
-
-      valid_certnames = [cert.name, *cert.subject_alt_names].uniq
-      msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
-
-      raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
-    else
-      raise
-    end
+    conn = network(request)
+    conn.send(method, *args)
   end
 
   def find(request)
     uri, body = request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
 
-    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    response = do_request(request) do |request|
       # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
       # http://redmine.ruby-lang.org/issues/show/3991
       if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
@@ -138,7 +127,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def head(request)
-    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    response = do_request(request) do |request|
       http_head(request, indirection2uri(request), headers)
     end
 
@@ -154,7 +143,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    result = request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    result = do_request(request) do |request|
       deserialize(http_get(request, indirection2uri(request), headers), true)
     end
 
@@ -165,7 +154,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    do_request(request) do |request|
       return deserialize(http_delete(request, indirection2uri(request), headers))
     end
   end
@@ -173,9 +162,19 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
 
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) do |request|
+    do_request(request) do |request|
       deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
     end
+  end
+
+  # Encapsulate call to request.do_request with the arguments from this class
+  # Then yield to the code block that was called in
+  # We certainly could have retained the full request.do_request(...) { |r| ... }
+  # but this makes the code much cleaner and we only then actually make the call
+  # to request.do_request from here, thus if we change what we pass or how we
+  # get it, we only need to change it here.
+  def do_request(request)
+    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
 
   private

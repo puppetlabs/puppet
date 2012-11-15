@@ -1,54 +1,195 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:zone).provider(:solaris)
+describe Puppet::Type.type(:zone).provider(:solaris) do
+  let(:resource) { Puppet::Type.type(:zone).new(:name => 'dummy', :path => '/', :provider => :solaris) }
+  let(:provider) { described_class.new(resource) }
 
-describe provider_class do
-  before do
-    @resource = stub("resource", :name => "mypool")
-    @resource.stubs(:[]).returns "shouldvalue"
-    @provider = provider_class.new(@resource)
-  end
-
-  describe "when calling configure" do
+  context "#configure" do
     it "should add the create args to the create str" do
-      @resource.stubs(:properties).returns([])
-      @resource.stubs(:[]).with(:create_args).returns("create_args")
-      @provider.expects(:setconfig).with("create -b create_args\nset zonepath=shouldvalue\ncommit\n")
-      @provider.configure
+      resource.stubs(:properties).returns([])
+      resource[:create_args] = "create_args"
+      provider.expects(:setconfig).with("create -b create_args")
+      provider.configure
+    end
+    it "should add the create args to the create str" do
+      iptype = stub "property"
+      iptype.stubs(:name).with().returns(:iptype)
+      iptype.stubs(:safe_insync?).with(iptype).returns(false)
+      provider.stubs(:properties).returns({:iptype => iptype})
+      resource.stubs(:properties).with().returns([iptype])
+      resource[:create_args] = "create_args"
+      provider.expects(:setconfig).with("create -b create_args\nset ip-type=shared")
+      provider.configure
     end
   end
 
-  describe "when installing" do
-    it "should call zoneadm" do
-      @provider.expects(:zoneadm)
-      @provider.install
-    end
+  context "#install" do
+    context "clone" do
+      it "should call zoneadm" do
+        provider.expects(:zoneadm).with(:install)
+        provider.install
+      end
 
-    describe "when cloning" do
-      before { @resource.stubs(:[]).with(:clone).returns(:clone_argument) }
-
-      it "sohuld clone with the resource's clone attribute" do
-        @provider.expects(:zoneadm).with(:clone, :clone_argument)
-        @provider.install
+      it "with the resource's clone attribute" do
+        resource[:clone] = :clone_argument
+        provider.expects(:zoneadm).with(:clone, :clone_argument)
+        provider.install
       end
     end
 
-    describe "when not cloning" do
-      before { @resource.stubs(:[]).with(:clone).returns(nil)}
-
+    context "not clone" do
       it "should just install if there are no install args" do
-        @resource.stubs(:[]).with(:install_args).returns(nil)
-        @provider.expects(:zoneadm).with(:install)
-        @provider.install
+        # there is a nil check in type.rb:[]= so we cannot directly set nil.
+        resource.stubs(:[]).with(:clone).returns(nil)
+        resource.stubs(:[]).with(:install_args).returns(nil)
+        provider.expects(:zoneadm).with(:install)
+        provider.install
       end
 
       it "should add the install args to the command if they exist" do
-        @resource.stubs(:[]).with(:install_args).returns("install args")
-        @provider.expects(:zoneadm).with(:install, ["install", "args"])
-        @provider.install
+        # there is a nil check in type.rb:[]= so we cannot directly set nil.
+        resource.stubs(:[]).with(:clone).returns(nil)
+        resource.stubs(:[]).with(:install_args).returns('install args')
+        provider.expects(:zoneadm).with(:install, ["install", "args"])
+        provider.install
       end
     end
   end
+  context "#instances" do
+    it "should list the instances correctly" do
+      described_class.expects(:adm).with(:list, "-cp").returns("0:dummy:running:/::native:shared")
+      instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances.size.should == 1
+      instances[0].should == {
+        :name=>"dummy",
+        :ensure=>:running,
+      }
+    end
+  end
+  context "#setconfig" do
+    it "should correctly set configuration" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set zonepath=/\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 0})
+      provider.setconfig("set zonepath=\/")
+      provider.flush
+    end
 
+    it "should correctly warn on 'not allowed'" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set zonepath=/\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>"Zone z2 already installed; set zonepath not allowed.\n", :exit => 0})
+      provider.setconfig("set zonepath=\/")
+      expect {
+        provider.flush
+      }.to raise_error(ArgumentError, /Failed to apply configuration/)
+    end
+  end
+  context "#getconfig" do
+    zone_info =<<-EOF
+zonename: dummy
+zonepath: /dummy/z
+brand: native
+autoboot: true
+bootargs:
+pool:
+limitpriv:
+scheduling-class:
+ip-type: shared
+hostid:
+net:
+        address: 1.1.1.1
+        physical: ex0001
+        defrouter not specified
+net:
+        address: 1.1.1.2
+        physical: ex0002
+        defrouter not specified
+    EOF
+    it "should correctly parse zone info" do
+      provider.expects(:zonecfg).with(:info).returns(zone_info)
+      provider.getconfig.should == {
+        :brand=>"native",
+        :autoboot=>"true",
+        :"ip-type"=>"shared",
+        :zonename=>"dummy",
+        "net"=>[{:physical=>"ex0001", :address=>"1.1.1.1"}, {:physical=>"ex0002", :address=>"1.1.1.2"}],
+        :zonepath=>"/dummy/z"
+      }
+    end
+  end
+  context "#flush" do
+    it "should correctly execute pending commands" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set iptype=shared\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 0})
+      provider.setconfig("set iptype=shared")
+      provider.flush
+    end
+
+    it "should correctly raise error on failure" do
+      provider.expects(:command).with(:cfg).returns('/usr/sbin/zonecfg')
+      provider.expects(:exec_cmd).with(:input => "set iptype=shared\ncommit\nexit", :cmd => '/usr/sbin/zonecfg -z dummy -f -').returns({:out=>'', :exit => 1})
+      provider.setconfig("set iptype=shared")
+      expect {
+        provider.flush
+      }.to raise_error(ArgumentError, /Failed to apply/)
+    end
+  end
+  context "#start" do
+    it "should not require path if sysidcfg is specified" do
+      resource[:path] = '/mypath'
+      resource[:sysidcfg] = 'dummy'
+      File.stubs(:exists?).with('/mypath/root/etc/sysidcfg').returns true
+      File.stubs(:directory?).with('/mypath/root/etc').returns true
+      provider.expects(:zoneadm).with(:boot)
+      provider.start
+    end
+
+    it "should require path if sysidcfg is specified" do
+      resource.stubs(:[]).with(:path).returns nil
+      resource.stubs(:[]).with(:sysidcfg).returns 'dummy'
+      expect {
+        provider.start
+      }.to raise_error(Puppet::Error, /Path is required/)
+    end
+  end
+  context "#line2hash" do
+    it "should parse lines correctly" do
+      described_class.line2hash('0:dummy:running:/z::native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+    end
+    it "should parse lines correctly(2)" do
+      described_class.line2hash('0:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+    end
+    it "should parse lines correctly(3)" do
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"}
+    end
+    it "should parse lines correctly(3)" do
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
+    end
+  end
+  context "#multi_conf" do
+    it "should correctly add and remove properties" do
+      provider.stubs(:properties).with().returns({:ip => ['1.1.1.1', '2.2.2.2']})
+      should = ['1.1.1.1', '3.3.3.3']
+      p = Proc.new do |a, str|
+        case a
+        when :add; 'add:' + str
+        when :rm; 'rm:' + str
+        end
+      end
+      provider.multi_conf(:ip, should, &p).should == "rm:2.2.2.2\nadd:3.3.3.3"
+    end
+  end
+  context "single props" do
+    {:iptype => /set ip-type/, :autoboot => /set autoboot/, :path => /set zonepath/, :pool => /set pool/, :shares => /add rctl/}.each do |p, v|
+      it "#{p.to_s}: should correctly return conf string" do
+        provider.send(p.to_s + '_conf', 'dummy').should =~ v
+      end
+      it "#{p.to_s}: should correctly set property string" do
+        provider.expects((p.to_s + '_conf').intern).returns('dummy')
+        provider.expects(:setconfig).with('dummy').returns('dummy2')
+        provider.send(p.to_s + '=', 'dummy').should == 'dummy2'
+      end
+
+    end
+  end
 end

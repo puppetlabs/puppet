@@ -80,13 +80,9 @@ end
 def run_spec_files(files)
   files = Array(files)
   return if files.empty?
-  if File.exist?(File.expand_path("~/.rspec")) then
-    opts = ''                   # use the user defaults
-  else
-    opts = File.readlines('spec/spec.opts').collect { |l| l.chomp }.join(" ")
-  end
   begin
-    run_spec("rspec #{opts} --tty #{files.join(' ')}")
+    # End users can put additional options into ~/.rspec
+    run_spec("rspec --tty #{files.join(' ')}")
   rescue => detail
     puts "Failed to load #{files}: #{detail}"
   end

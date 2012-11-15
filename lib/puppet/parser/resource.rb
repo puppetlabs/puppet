@@ -1,16 +1,17 @@
+require 'forwardable'
 require 'puppet/resource'
 
 # The primary difference between this class and its
 # parent is that this class has rules on who can set
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
+  extend Forwardable
+
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
-  require 'puppet/file_collection/lookup'
   require 'puppet/parser/yaml_trimmer'
   require 'puppet/resource/type_collection_helper'
 
-  include Puppet::FileCollection::Lookup
   include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
@@ -22,6 +23,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
+  attr_accessor :file, :line
 
   attr_reader :exported, :parameters
 
@@ -37,7 +39,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def evaluated?;  !!@evaluated;  end
 
   def [](param)
-    param = symbolize(param)
+    param = param.intern
     if param == :title
       return self.title
     end
@@ -48,25 +50,19 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  def []=(param, value)
-    set_parameter(param, value)
-  end
-
   def eachparam
     @parameters.each do |name, param|
       yield param
     end
   end
 
-  def environment
-    scope.environment
-  end
+  def_delegator :scope, :environment
 
   # Process the  stage metaparameter for a class.   A containment edge
   # is drawn from  the class to the stage.   The stage for containment
   # defaults to main, if none is specified.
   def add_edge_to_stage
-    return unless self.type.to_s.downcase == "class"
+    return unless self.class?
 
     unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
       raise ArgumentError, "Could not find stage #{self[:stage] || :main} specified by #{self}"
@@ -83,7 +79,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     if klass = resource_type and ! builtin_type?
       finish
       evaluated_code = klass.evaluate_code(self)
-      add_edge_to_stage
 
       return evaluated_code
     elsif builtin?
@@ -110,7 +105,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     return if finished?
     @finished = true
     add_defaults
-    add_metaparams
     add_scope_tags
     validate
   end
@@ -121,6 +115,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def initialize(*args)
+    raise ArgumentError, "Resources require a hash as last argument" unless args.last.is_a? Hash
     raise ArgumentError, "Resources require a scope" unless args.last[:scope]
     super
 
@@ -150,9 +145,12 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  # Unless we're running >= 0.25, we're in compat mode.
+  # This only mattered for clients < 0.25, which we don't support any longer.
+  # ...but, since this hasn't been deprecated, and at least some functions
+  # used it, deprecate now rather than just eliminate. --daniel 2012-07-15
   def metaparam_compatibility_mode?
-    ! (catalog and ver = (catalog.client_version||'0.0.0').split(".") and (ver[0] > "0" or ver[1].to_i >= 25))
+    Puppet.deprecation_warning "metaparam_compatibility_mode? is obsolete since < 0.25 clients are really, really not supported any more"
+    false
   end
 
   def name
@@ -160,9 +158,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.
-  def path
-    to_s
-  end
+  alias path to_s
 
   # Define a parameter in our resource.
   # if we ever receive a parameter named 'tag', set
@@ -181,6 +177,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # And store it in our parameter hash.
     @parameters[param.name] = param
   end
+  alias []= set_parameter
 
   def to_hash
     @parameters.inject({}) do |hash, ary|
@@ -215,10 +212,10 @@ class Puppet::Parser::Resource < Puppet::Resource
       # the database interaction doesn't have to worry about
       # whether it returns an array or a string.
       result[p] = if v.is_a?(Array) and v.length == 1
-        v[0]
-          else
-            v
-              end
+                    v[0]
+                  else
+                    v
+                  end
     end
 
     result.file = self.file
@@ -230,18 +227,8 @@ class Puppet::Parser::Resource < Puppet::Resource
     result
   end
 
-  # Translate our object to a transportable object.
-  def to_trans
-    return nil if virtual?
-
-    to_resource.to_trans
-  end
-
-  # Convert this resource to a RAL resource.  We hackishly go via the
-  # transportable stuff.
-  def to_ral
-    to_resource.to_ral
-  end
+  # Convert this resource to a RAL resource.
+  def_delegator :to_resource, :to_ral
 
   private
 
@@ -253,29 +240,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
         @parameters[name] = param.dup
       end
-    end
-  end
-
-  def add_backward_compatible_relationship_param(name)
-    # Skip metaparams for which we get no value.
-    return unless scope.include?(name.to_s)
-    val = scope[name.to_s]
-
-    # The default case: just set the value
-    set_parameter(name, val) and return unless @parameters[name]
-
-    # For relationship params, though, join the values (a la #446).
-    @parameters[name].value = [@parameters[name].value, val].flatten
-  end
-
-  # Add any metaparams defined in our scope. This actually adds any metaparams
-  # from any parent scope, and there's currently no way to turn that off.
-  def add_metaparams
-    compat_mode = metaparam_compatibility_mode?
-
-    Puppet::Type.eachmetaparam do |name|
-      next unless self.class.relationship_parameter?(name)
-      add_backward_compatible_relationship_param(name) if compat_mode
     end
   end
 
@@ -293,7 +257,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source)
-      puts caller if Puppet[:trace]
       msg = "Parameter '#{param.name}' is already set on #{self}"
       msg += " by #{current.source}" if current.source.to_s != ""
       if current.file or current.line
@@ -303,6 +266,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         msg += " at #{fields.join(":")}"
       end
       msg += "; cannot redefine"
+      Puppet.log_exception(ArgumentError.new(), msg)
       raise Puppet::ParseError.new(msg, param.line, param.file)
     end
 
@@ -330,8 +294,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   rescue => detail
     fail Puppet::ParseError, detail.to_s
   end
-
-  private
 
   def extract_parameters(params)
     params.each do |param|

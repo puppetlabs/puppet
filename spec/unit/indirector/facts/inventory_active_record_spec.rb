@@ -1,24 +1,18 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
-begin
-  require 'sqlite3'
-rescue LoadError
-end
-require 'tempfile'
 require 'puppet/rails'
 
-describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
+describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_database? do
+  include PuppetSpec::Files
+
   let(:terminus) { Puppet::Node::Facts::InventoryActiveRecord.new }
 
   before :all do
     require 'puppet/indirector/facts/inventory_active_record'
-    @dbfile = Tempfile.new("testdb")
-    @dbfile.close
   end
 
-  after :all do
+  after :each do
     Puppet::Node::Facts.indirection.reset_terminus_class
-    @dbfile.unlink
   end
 
   before :each do
@@ -26,22 +20,31 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     Puppet::Node.indirection.cache_class = nil
 
     Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
-    Puppet[:dbadapter]  = 'sqlite3'
-    Puppet[:dblocation] = @dbfile.path
-    Puppet[:railslog] = "/dev/null"
-    Puppet::Rails.init
+    setup_scratch_database
   end
 
-  after :each do
-    Puppet::Rails.teardown
-    ActiveRecord::Base.remove_connection
+  it "should issue a deprecation warning" do
+    Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
+    terminus
   end
 
   describe "#save" do
+    let(:node) {
+      Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
+    }
+
+    let(:facts) {
+      Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
+    }
+
+    it "should retry on ActiveRecord error" do
+      Puppet::Rails::InventoryNode.expects(:create).twice.raises(ActiveRecord::StatementInvalid).returns node
+
+      Puppet::Node::Facts.indirection.save(facts)
+    end
+
     it "should use an existing node if possible" do
-      node = Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
       node.save
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryNode.count.should == 1
@@ -52,7 +55,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
       # This test isn't valid if there are nodes to begin with
       Puppet::Rails::InventoryNode.count.should == 0
 
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryNode.count.should == 1
@@ -60,7 +62,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     end
 
     it "should save the facts" do
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       Puppet::Node::Facts.indirection.save(facts)
 
       Puppet::Rails::InventoryFact.all.map{|f| [f.name,f.value]}.should =~ [["uptime_days","60"],["kernel","Darwin"]]
@@ -99,7 +100,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
 
   describe "#search" do
     def search_request(conditions)
-      Puppet::Indirector::Request.new(:facts, :search, nil, conditions)
+      Puppet::Indirector::Request.new(:facts, :search, nil, nil, conditions)
     end
 
     before :each do

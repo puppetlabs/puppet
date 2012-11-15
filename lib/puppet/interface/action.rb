@@ -1,9 +1,11 @@
 require 'puppet/interface'
 require 'puppet/interface/documentation'
+require 'puppet/util/methodhelper'
 require 'prettyprint'
 
 class Puppet::Interface::Action
-  extend Puppet::Interface::DocGen
+  include Puppet::Util::MethodHelper
+  extend  Puppet::Interface::DocGen
   include Puppet::Interface::FullDocs
 
   def initialize(face, name, attrs = {})
@@ -17,11 +19,12 @@ class Puppet::Interface::Action
     @authors = []
     @license  = 'All Rights Reserved'
 
-    attrs.each do |k, v| send("#{k}=", v) end
+    set_options(attrs)
 
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.
     @options        = []
+    @display_global_options = []
     @options_hash   = {}
     @when_rendering = {}
   end
@@ -74,8 +77,12 @@ class Puppet::Interface::Action
       msg += ", not #{proc.class.name}" unless proc.nil?
       raise ArgumentError, msg
     end
-    if proc.arity != 1 then
-      msg = "when_rendering methods take one argument, the result, not "
+
+    if proc.arity != 1 and proc.arity != (@positional_arg_count + 1)
+      msg =  "the when_rendering method for the #{@face.name} face #{name} action "
+      msg += "takes either just one argument, the result of when_invoked, "
+      msg += "or the result plus the #{@positional_arg_count} arguments passed "
+      msg += "to the when_invoked block, not "
       if proc.arity < 0 then
         msg += "a variable number"
       else
@@ -208,7 +215,7 @@ WRAPPER
 
     if @face.is_a?(Class)
       @face.class_eval do eval wrapper, nil, file, line end
-      @face.define_method(internal_name, &block)
+      @face.send(:define_method, internal_name, &block)
       @when_invoked = @face.instance_method(name)
     else
       @face.instance_eval do eval wrapper, nil, file, line end
@@ -242,7 +249,22 @@ WRAPPER
   def options
     @face.options + @options
   end
-
+  
+  def add_display_global_options(*args)
+    @display_global_options ||= []
+    [args].flatten.each do |refopt|
+      raise ArgumentError, "Global option #{refopt} does not exist in Puppet.settings" unless Puppet.settings.include? refopt
+      @display_global_options << refopt
+    end
+    @display_global_options.uniq!
+    @display_global_options
+  end
+  
+  def display_global_options(*args)
+    args ? add_display_global_options(args) : @display_global_options + @face.display_global_options 
+  end
+  alias :display_global_option :display_global_options
+  
   def get_option(name, with_inherited_options = true)
     option = @options_hash[name.to_sym]
     if option.nil? and with_inherited_options

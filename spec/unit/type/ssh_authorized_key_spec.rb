@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
@@ -71,21 +71,10 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
 
     describe "for type" do
 
-
-      it "should support ssh-dss" do
-        proc { @class.new(:name => "whev", :type => "ssh-dss", :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support ssh-rsa" do
-        proc { @class.new(:name => "whev", :type => "ssh-rsa", :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support :dsa" do
-        proc { @class.new(:name => "whev", :type => :dsa, :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support :rsa" do
-        proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody") }.should_not raise_error
+      [:'ssh-dss', :'ssh-rsa', :rsa, :dsa, :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'].each do |keytype|
+        it "should support #{keytype}" do
+          proc { @class.new(:name => "whev", :type => keytype, :user => "nobody") }.should_not raise_error
+        end
       end
 
       it "should alias :rsa to :ssh-rsa" do
@@ -234,7 +223,7 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
   describe "when user is specified" do
 
     it "should determine target" do
-      resource = @class.create(
+      resource = @class.new(
         :name   => "Test",
         :user   => "root"
       )
@@ -254,7 +243,7 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
   describe "when calling validate" do
 
     it "should not crash on a non-existant user" do
-      resource = @class.create(
+      resource = @class.new(
         :name   => "Test",
         :user   => "ihopesuchuserdoesnotexist"
       )

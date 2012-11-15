@@ -1,9 +1,11 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::AST::ASTHash do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should have a merge functionality" do
@@ -91,7 +93,6 @@ describe Puppet::Parser::AST::ASTHash do
 
   it "should return a valid string with to_s" do
     hash = Puppet::Parser::AST::ASTHash.new(:value => { "a" => "b", "c" => "d" })
-
-    hash.to_s.should == '{a => b, c => d}'
+    ["{a => b, c => d}", "{c => d, a => b}"].should be_include hash.to_s
   end
 end

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/configurer'
 
@@ -6,7 +6,7 @@ describe Puppet::Configurer do
   before do
     Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
-    @agent.stubs(:dostorage)
+    @agent.stubs(:init_storage)
     Puppet::Util::Storage.stubs(:store)
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
@@ -20,11 +20,6 @@ describe Puppet::Configurer do
     Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::FactHandler)
   end
 
-  it "should use the puppetdlockfile as its lockfile path" do
-    Puppet.settings.expects(:value).with(:puppetdlockfile).returns("/my/lock")
-    Puppet::Configurer.lockfile_path.should == "/my/lock"
-  end
-
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
       Puppet.settings[:prerun_command] = ""
@@ -35,14 +30,14 @@ describe Puppet::Configurer do
 
     it "should execute any pre-run command provided via the 'prerun_command' setting" do
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_prerun_command
     end
 
     it "should fail if the command fails" do
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_prerun_command.should be_false
     end
@@ -58,14 +53,14 @@ describe Puppet::Configurer do
 
     it "should execute any post-run command provided via the 'postrun_command' setting" do
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_postrun_command
     end
 
     it "should fail if the command fails" do
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.execute_postrun_command.should be_false
     end
@@ -74,7 +69,7 @@ describe Puppet::Configurer do
   describe "when executing a catalog run" do
     before do
       Puppet.settings.stubs(:use).returns(true)
-      @agent.stubs(:prepare)
+      @agent.stubs(:download_plugins)
       Puppet::Node::Facts.indirection.terminus_class = :memory
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
@@ -94,10 +89,25 @@ describe Puppet::Configurer do
       Puppet::Resource::Catalog.indirection.reset_terminus_class
     end
 
-    it "should prepare for the run" do
-      @agent.expects(:prepare)
-
+    it "should initialize storage" do
+      Puppet::Util::Storage.expects(:load)
       @agent.run
+    end
+
+    it "downloads plugins when told" do
+      @agent.expects(:download_plugins)
+      @agent.run(:pluginsync => true)
+    end
+
+    it "does not download plugins when told" do
+      @agent.expects(:download_plugins).never
+      @agent.run(:pluginsync => false)
+    end
+
+    it "should carry on when it can't fetch it's node definition" do
+      error = Net::HTTPError.new(400, 'dummy server communication error')
+      Puppet::Node.indirection.expects(:find).raises(error)
+      @agent.run.should == 0
     end
 
     it "should initialize a transaction report if one is not provided" do
@@ -111,7 +121,10 @@ describe Puppet::Configurer do
       Puppet[:node_name_fact] = 'my_name_fact'
       @facts.values = {'my_name_fact' => 'node_name_from_fact'}
 
-      @agent.run.host.should == 'node_name_from_fact'
+      report = Puppet::Transaction::Report.new("apply")
+
+      @agent.run(:report => report)
+      report.host.should == 'node_name_from_fact'
     end
 
     it "should pass the new report to the catalog" do
@@ -220,11 +233,12 @@ describe Puppet::Configurer do
       Puppet::Util::Log.destinations.should_not include(report)
     end
 
-    it "should return the report as the result of the run" do
+    it "should return the report exit_status as the result of the run" do
       report = Puppet::Transaction::Report.new("apply")
       Puppet::Transaction::Report.expects(:new).returns(report)
+      report.expects(:exit_status).returns(1234)
 
-      @agent.run.should equal(report)
+      @agent.run.should == 1234
     end
 
     it "should send the transaction report even if the pre-run command fails" do
@@ -232,7 +246,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
@@ -243,11 +257,10 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
-
-      report.expects(:<<).with { |log| log.message.include?("Could not run command from prerun_command") }
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @agent.run.should be_nil
+      report.logs.find { |x| x.message =~ /Could not run command from prerun_command/ }.should be
     end
 
     it "should send the transaction report even if the post-run command fails" do
@@ -255,7 +268,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
@@ -266,7 +279,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       report.expects(:<<).with { |log| log.message.include?("Could not run command from postrun_command") }
 
@@ -276,8 +289,8 @@ describe Puppet::Configurer do
     it "should execute post-run command even if the pre-run command fails" do
       Puppet.settings[:prerun_command] = "/my/precommand"
       Puppet.settings[:postrun_command] = "/my/postcommand"
-      Puppet::Util.expects(:execute).with(["/my/precommand"]).raises(Puppet::ExecutionFailure, "Failed")
-      Puppet::Util.expects(:execute).with(["/my/postcommand"])
+      Puppet::Util::Execution.expects(:execute).with(["/my/precommand"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/postcommand"])
 
       @agent.run.should be_nil
     end
@@ -295,7 +308,7 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @catalog.expects(:apply).never()
       @agent.expects(:send_report)
@@ -308,12 +321,35 @@ describe Puppet::Configurer do
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
-      Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
       @catalog.expects(:apply)
       @agent.expects(:send_report)
 
       @agent.run.should be_nil
+    end
+
+    it "should refetch the catalog if the server specifies a new environment in the catalog" do
+      @catalog.stubs(:environment).returns("second_env")
+      @agent.expects(:retrieve_catalog).returns(@catalog).twice
+
+      @agent.run
+    end
+
+    it "should change the environment setting if the server specifies a new environment in the catalog" do
+      @catalog.stubs(:environment).returns("second_env")
+
+      @agent.run
+
+      @agent.environment.should == "second_env"
+    end
+
+    it "should clear the thread local caches" do
+      Thread.current[:env_module_directories] = false
+
+      @agent.run
+
+      Thread.current[:env_module_directories].should == nil
     end
 
     describe "when not using a REST terminus for catalogs" do
@@ -371,14 +407,14 @@ describe Puppet::Configurer do
     it "should save the report if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report)
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash))
       @configurer.send_report(@report)
     end
 
     it "should not save the report if reporting is disabled" do
       Puppet.settings[:report] = false
 
-      Puppet::Transaction::Report.indirection.expects(:save).with(@report).never
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, instance_of(Hash)).never
       @configurer.send_report(@report)
     end
 
@@ -430,9 +466,18 @@ describe Puppet::Configurer do
     end
 
     it "should log but not fail if saving the last run summary fails" do
-      Puppet[:lastrunfile] = "/dev/null/inexistant"
+      # The mock will raise an exception on any method used.  This should
+      # simulate a nice hard failure from the underlying OS for us.
+      fh = Class.new(Object) do
+        def method_missing(*args)
+          raise "failed to do #{args[0]}"
+        end
+      end.new
+
+      Puppet::Util.expects(:replace_file).yields(fh)
+
       Puppet.expects(:err)
-      lambda { @configurer.save_last_run_summary(@report) }.should_not raise_error
+      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
     end
   end
 
@@ -513,8 +558,7 @@ describe Puppet::Configurer do
     end
 
     it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
-      Puppet.stubs(:[])
-      Puppet.expects(:[]).with(:usecacheonfailure).returns false
+      Puppet[:usecacheonfailure] = false
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
 
       Puppet.expects(:warning)
@@ -579,33 +623,6 @@ describe Puppet::Configurer do
       @catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(@oldcatalog, 10)
-    end
-  end
-
-  describe "when preparing for a run" do
-    before do
-      Puppet.settings.stubs(:use).returns(true)
-      @agent.stubs(:download_fact_plugins)
-      @agent.stubs(:download_plugins)
-      @facts = {"one" => "two", "three" => "four"}
-    end
-
-    it "should initialize the metadata store" do
-      @agent.class.stubs(:facts).returns(@facts)
-      @agent.expects(:dostorage)
-      @agent.prepare({})
-    end
-
-    it "should download fact plugins" do
-      @agent.expects(:download_fact_plugins)
-
-      @agent.prepare({})
-    end
-
-    it "should download plugins" do
-      @agent.expects(:download_plugins)
-
-      @agent.prepare({})
     end
   end
 end

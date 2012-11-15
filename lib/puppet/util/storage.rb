@@ -1,7 +1,6 @@
 require 'yaml'
 require 'sync'
-
-require 'puppet/util/file_locking'
+require 'singleton'
 
 # a class for storing state
 class Puppet::Util::Storage
@@ -45,27 +44,26 @@ class Puppet::Util::Storage
 
   def self.load
     Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
+    filename = Puppet[:statefile]
 
-    unless File.exists?(Puppet[:statefile])
+    unless File.exists?(filename)
       self.init unless !@@state.nil?
       return
     end
-    unless File.file?(Puppet[:statefile])
-      Puppet.warning("Checksumfile #{Puppet[:statefile]} is not a file, ignoring")
+    unless File.file?(filename)
+      Puppet.warning("Checksumfile #{filename} is not a file, ignoring")
       return
     end
     Puppet::Util.benchmark(:debug, "Loaded state") do
-      Puppet::Util::FileLocking.readlock(Puppet[:statefile]) do |file|
+      begin
+        @@state = YAML.load(::File.read(filename))
+      rescue => detail
+        Puppet.err "Checksumfile #{filename} is corrupt (#{detail}); replacing"
+
         begin
-          @@state = YAML.load(file)
-        rescue => detail
-          Puppet.err "Checksumfile #{Puppet[:statefile]} is corrupt (#{detail}); replacing"
-          begin
-            File.rename(Puppet[:statefile], Puppet[:statefile] + ".bad")
-          rescue
-            raise Puppet::Error,
-              "Could not rename corrupt #{Puppet[:statefile]}; remove manually"
-          end
+          File.rename(filename, filename + ".bad")
+        rescue
+          raise Puppet::Error, "Could not rename corrupt #{filename}; remove manually"
         end
       end
     end
@@ -74,8 +72,6 @@ class Puppet::Util::Storage
       Puppet.err "State got corrupted"
       self.init
     end
-
-    #Puppet.debug "Loaded state is #{@@state.inspect}"
   end
 
   def self.stateinspect
@@ -88,8 +84,8 @@ class Puppet::Util::Storage
     Puppet.info "Creating state file #{Puppet[:statefile]}" unless FileTest.exist?(Puppet[:statefile])
 
     Puppet::Util.benchmark(:debug, "Stored state") do
-      Puppet::Util::FileLocking.writelock(Puppet[:statefile], 0660) do |file|
-        file.print YAML.dump(@@state)
+      Puppet::Util.replace_file(Puppet[:statefile], 0660) do |fh|
+        fh.print YAML.dump(@@state)
       end
     end
   end

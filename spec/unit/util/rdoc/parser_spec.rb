@@ -1,13 +1,15 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/resource/type_collection'
-require 'puppet/util/rdoc/parser'
-require 'puppet/util/rdoc/code_objects'
-require 'rdoc/options'
-require 'rdoc/rdoc'
+describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
+  before :all do
+    require 'puppet/resource/type_collection'
+    require 'puppet/util/rdoc/parser'
+    require 'puppet/util/rdoc/code_objects'
+    require 'rdoc/options'
+    require 'rdoc/rdoc'
+  end
 
-describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
   include PuppetSpec::Files
 
   before :each do
@@ -75,11 +77,35 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
     end
 
     it "should read any present README as module documentation" do
-      FileTest.stubs(:readable?).returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(true)
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(false)
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
       @module.expects(:comment=).with("readme")
+
+      @parser.scan_top_level(@topcontainer)
+    end
+
+    it "should read any present README.rdoc as module documentation" do
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(false)
+      File.stubs(:open).returns("readme")
+      @parser.stubs(:parse_elements)
+
+      @module.expects(:comment=).with("readme")
+
+      @parser.scan_top_level(@topcontainer)
+    end
+
+    it "should prefer README.rdoc over README as module documentation" do
+      FileTest.stubs(:readable?).with("module/README.rdoc").returns(true)
+      FileTest.stubs(:readable?).with("module/README").returns(true)
+      File.stubs(:open).with("module/README", "r").returns("readme")
+      File.stubs(:open).with("module/README.rdoc", "r").returns("readme.rdoc")
+      @parser.stubs(:parse_elements)
+
+      @module.expects(:comment=).with("readme.rdoc")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -135,7 +161,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
 
   describe "when finding modules from filepath" do
     before :each do
-      Puppet::Module.stubs(:modulepath).returns("/path/to/modules")
+      Puppet::Node::Environment.any_instance.stubs(:modulepath).returns("/path/to/modules")
     end
 
     it "should return the module name for modulized puppet manifests" do
@@ -300,7 +326,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
     end
 
     it "should scan for resources if needed" do
-      Puppet.settings.stubs(:[]).with(:document_all).returns(true)
+      Puppet[:document_all] = true
       @parser.expects(:scan_for_resource).with(@rdoc_node, @code)
       @parser.document_node("mynode", @node, @class)
     end
@@ -344,7 +370,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
     end
 
     it "should scan for resources if needed" do
-      Puppet.settings.stubs(:[]).with(:document_all).returns(true)
+      Puppet[:document_all] = true
       @parser.expects(:scan_for_resource).with(@rdoc_class, @code)
       @parser.document_class("mynode", @class, @module)
     end

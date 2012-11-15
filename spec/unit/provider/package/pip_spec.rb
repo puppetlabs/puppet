@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:pip)
@@ -8,10 +8,10 @@ describe provider_class do
   before do
     @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = provider_class.new(@resource)
-    client = stub_everything('client')
-    client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
-    client.stubs(:call).with('package_releases', 'fake_package').returns([])
-    XMLRPC::Client.stubs(:new2).returns(client)
+    @client = stub_everything('client')
+    @client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
+    @client.stubs(:call).with('package_releases', 'fake_package').returns([])
+    XMLRPC::Client.stubs(:new2).returns(@client)
   end
 
   describe "parse" do
@@ -86,6 +86,12 @@ describe provider_class do
       @provider.latest.should == nil
     end
 
+    it "should handle a timeout gracefully" do
+      @resource[:name] = "fake_package"
+      @client.stubs(:call).raises(Timeout::Error)
+      lambda { @provider.latest }.should raise_error(Puppet::Error)
+    end
+
   end
 
   describe "install" do
@@ -103,11 +109,21 @@ describe provider_class do
       @provider.install
     end
 
+    it "omits the -e flag (GH-1256)" do
+      # The -e flag makes the provider non-idempotent
+      @resource[:ensure] = :installed
+      @resource[:source] = @url
+      @provider.expects(:lazy_pip).with() do |*args|
+        not args.include?("-e")
+      end
+      @provider.install
+    end
+
     it "should install from SCM" do
       @resource[:ensure] = :installed
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", '-q', '-e', "#{@url}#egg=fake_package")
+        with("install", '-q', "#{@url}#egg=fake_package")
       @provider.install
     end
 
@@ -115,7 +131,7 @@ describe provider_class do
       @resource[:ensure] = "0123456"
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", "-q", "-e", "#{@url}@0123456#egg=fake_package")
+        with("install", "-q", "#{@url}@0123456#egg=fake_package")
       @provider.install
     end
 
@@ -173,6 +189,13 @@ describe provider_class do
       @provider.expects(:pip).with('freeze').raises(NoMethodError)
       @provider.expects(:which).with('pip').returns(nil)
       expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
+    end
+
+    it "should output a useful error message if pip is missing" do
+      @provider.expects(:pip).with('freeze').raises(NoMethodError)
+      @provider.expects(:which).with('pip').returns(nil)
+      expect { @provider.method(:lazy_pip).call("freeze") }.
+        to raise_error(NoMethodError, 'Could not locate the pip command.')
     end
 
   end

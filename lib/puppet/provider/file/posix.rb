@@ -1,5 +1,5 @@
 Puppet::Type.type(:file).provide :posix do
-  desc "Uses POSIX functionality to manage file's users and rights."
+  desc "Uses POSIX functionality to manage file ownership and permissions."
 
   confine :feature => :posix
 

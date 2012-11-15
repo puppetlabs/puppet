@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the debian service provider
 #
@@ -86,6 +86,21 @@ describe provider_class do
       @provider.stubs(:system)
       $CHILD_STATUS.stubs(:exitstatus).returns(106)
       @provider.enabled?.should == :true
+    end
+
+    context "when invoke-rc.d exits with 105 status" do
+      it "links count is 4" do
+        @provider.stubs(:system)
+        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        @provider.stubs(:get_start_link_count).returns(4)
+        @provider.enabled?.should == :true
+      end
+      it "links count is less than 4" do
+        @provider.stubs(:system)
+        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        @provider.stubs(:get_start_link_count).returns(3)
+        @provider.enabled?.should == :false
+      end
     end
 
     # pick a range of non-[104.106] numbers, strings and booleans to test with.

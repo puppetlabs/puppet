@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/file'
@@ -32,7 +32,7 @@ describe Puppet::FileBucketFile::File do
         it "should store the path if not already stored" do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
           dir_path = "#{Puppet[:bucketdir]}/f/c/7/7/7/c/0/b/fc777c0bc467e1ab98b4c6915af802ec"
-          Puppet::Util.binread("#{dir_path}/contents").should == "stuff\r\n"
+          IO.binread("#{dir_path}/contents").should == "stuff\r\n"
           File.read("#{dir_path}/paths").should == "foo/bar\n"
         end
 
@@ -188,7 +188,7 @@ HERE
                 key += "/path/to/file"
               end
 
-              @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, request_options)
+              @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, nil, request_options)
             end
 
             def make_bucketed_file

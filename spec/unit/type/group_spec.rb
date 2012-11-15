@@ -1,18 +1,9 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:group) do
   before do
-    ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @class = Puppet::Type.type(:group)
-  end
-
-  it "should have a default provider" do
-    @class.defaultprovider.should_not be_nil
-  end
-
-  it "should have a default provider inheriting from Puppet::Provider" do
-    @class.defaultprovider.ancestors.should be_include(Puppet::Provider)
   end
 
   it "should have a system_groups feature" do
@@ -41,12 +32,12 @@ describe Puppet::Type.type(:group) do
     end
   end
 
-  it "should have a boolean method for determining if duplicates are allowed", :'fails_on_ruby_1.9.2' => true do
-    @class.new(:name => "foo").methods.should be_include("allowdupe?")
+  it "should have a boolean method for determining if duplicates are allowed" do
+    @class.new(:name => "foo").must respond_to "allowdupe?"
   end
 
-  it "should have a boolean method for determining if system groups are allowed", :'fails_on_ruby_1.9.2' => true do
-    @class.new(:name => "foo").methods.should be_include("system?")
+  it "should have a boolean method for determining if system groups are allowed" do
+    @class.new(:name => "foo").must respond_to "system?"
   end
 
   it "should call 'create' to create the group" do

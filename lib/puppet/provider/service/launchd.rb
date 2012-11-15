@@ -1,6 +1,6 @@
 require 'facter/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
-  desc <<-EOT
+  desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 
@@ -34,6 +34,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     Note that this allows you to do something `launchctl` can't do, which is to
     be in a state of "stopped/enabled" or "running/disabled".
+
+    Note that this provider does not support overriding 'restart' or 'status'.
 
   EOT
 
@@ -132,6 +134,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
     @product_version ||= self.class.get_macosx_version_major
+    # (#11593) Remove support for OS X 10.4 & earlier
+    # leaving this as is because 10.5 still didn't have plist support
     return true unless /^10\.[0-5]/.match(@product_version)
     return false
   end
@@ -157,16 +161,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       # Make sure we've loaded all of the facts
       Facter.loadfacts
-      if Facter.value(:macosx_productversion_major)
-        product_version_major = Facter.value(:macosx_productversion_major)
-      else
-        # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-        warnonce("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
-        product_version = Facter.value(:macosx_productversion)
-        fail("Could not determine OS X version from Facter") if product_version.nil?
-        product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
-      end
-      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+
+      product_version_major = Facter.value(:macosx_productversion_major)
+
+      fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
@@ -192,11 +190,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # conditionally enable at load, then disable by modifying the plist file
   # directly.
   def start
+    return ucommand(:start) if resource[:start]
     job_path, job_plist = plist_from_label(resource[:name])
     did_enable_job = false
     cmds = []
     cmds << :launchctl << :load
-    if self.enabled? == :false  # launchctl won't load disabled jobs
+    if self.enabled? == :false  || self.status == :stopped # launchctl won't load disabled jobs
       cmds << "-w"
       did_enable_job = true
     end
@@ -212,6 +211,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def stop
+    return ucommand(:stop) if resource[:stop]
     job_path, job_plist = plist_from_label(resource[:name])
     did_disable_job = false
     cmds = []

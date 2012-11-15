@@ -74,10 +74,22 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       user.stubs(:groups).returns(['group2', 'group3'])
 
       create = sequence('create')
+      user.expects(:password=).in_sequence(create)
       user.expects(:commit).in_sequence(create)
       user.expects(:set_groups).with('group1,group2', false).in_sequence(create)
       user.expects(:[]=).with('Description', 'a test user')
       user.expects(:[]=).with('HomeDirectory', 'C:\Users\testuser')
+
+      provider.create
+    end
+
+    it "should load the profile if managehome is set", :if => Puppet.features.microsoft_windows? do
+      resource[:password] = '0xDeadBeef'
+      resource[:managehome] = true
+
+      user = stub_everything 'user'
+      Puppet::Util::ADSI::User.expects(:create).with('testuser').returns user
+      Puppet::Util::Windows::User.expects(:load_profile).with('testuser', '0xDeadBeef')
 
       provider.create
     end
@@ -124,14 +136,25 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.delete
   end
 
+  it 'should delete the profile if managehome is set', :if => Puppet.features.microsoft_windows? do
+    resource[:managehome] = true
+
+    sid = 'S-A-B-C'
+    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns(sid)
+    Puppet::Util::ADSI::UserProfile.expects(:delete).with(sid)
+    connection.expects(:Delete).with('user', 'testuser')
+
+    provider.delete
+  end
+
   it "should commit the user when flushed" do
     provider.user.expects(:commit)
 
     provider.flush
   end
 
-  it "should return the user's SID as uid" do
-    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
+  it "should return the user's SID as uid", :if => Puppet.features.microsoft_windows? do
+    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
 
     provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
   end

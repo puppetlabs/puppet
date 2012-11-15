@@ -4,27 +4,17 @@ require 'optparse'
 require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
-  should_parse_config
-  run_mode :agent
-
   option("--debug", "-d") do |arg|
     Puppet::Util::Log.level = :debug
   end
 
-  option("--verbose", "-v") do
+  option("--verbose", "-v") do |_|
     Puppet::Util::Log.level = :info
   end
 
   option("--render-as FORMAT") do |format|
     self.render_as = format.to_sym
   end
-
-  option("--mode RUNMODE", "-r") do |arg|
-    raise "Invalid run mode #{arg}; supported modes are user, agent, master" unless %w{user agent master}.include?(arg)
-    self.class.run_mode(arg.to_sym)
-    set_run_mode self.class.run_mode
-  end
-
 
   attr_accessor :face, :action, :type, :arguments, :render_as
 
@@ -37,10 +27,17 @@ class Puppet::Application::FaceBase < Puppet::Application
     @render_as or raise ArgumentError, "I don't know how to render '#{format}'"
   end
 
-  def render(result)
-    # Invoke the rendering hook supplied by the user, if appropriate.
-    if hook = action.when_rendering(render_as.name)
-      result = hook.call(result)
+  def render(result, args_and_options)
+    hook = action.when_rendering(render_as.name)
+
+    if hook
+      # when defining when_rendering on your action you can optionally
+      # include arguments and options
+      if hook.arity > 1
+        result = hook.call(result, *args_and_options)
+      else
+        result = hook.call(result)
+      end
     end
 
     render_as.render(result)
@@ -60,7 +57,7 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @type = Puppet::Util::ConstantInflector.constant2file(self.class.name.to_s.sub(/.+:/, '')).to_sym
     @face = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
@@ -88,7 +85,9 @@ class Puppet::Application::FaceBase < Puppet::Application
           unless Puppet.settings.boolean? option.name then
             # As far as I can tell, we treat non-bool options as always having
             # a mandatory argument. --daniel 2011-04-05
-            index += 1          # ...so skip the argument.
+            # ... But, the mandatory argument will not be the next item if an = is
+            # employed in the long form of the option. --jeffmccune 2012-09-18
+            index += 1 unless item =~ /^--#{option.name}=/
           end
         elsif option = find_application_argument(item) then
           index += 1 if (option[:argument] and not option[:optional])
@@ -109,17 +108,12 @@ class Puppet::Application::FaceBase < Puppet::Application
       if @action = @face.get_default_action() then
         @is_default_action = true
       else
-        # REVISIT: ...and this horror thanks to our log setup, which doesn't
-        # initialize destinations until the setup method, which we will never
-        # reach.  We could also just print here, but that is actually a little
-        # uglier and nastier in the long term, in which we should do log setup
-        # earlier if at all possible. --daniel 2011-05-31
-        Puppet::Util::Log.newdestination(:console)
-
         face   = @face.name
         action = action_name.nil? ? 'default' : "'#{action_name}'"
         msg = "'#{face}' has no #{action} action.  See `puppet help #{face}`."
+
         Puppet.err(msg)
+        Puppet::Util::Log.force_flushqueue()
 
         exit false
       end
@@ -233,12 +227,21 @@ class Puppet::Application::FaceBase < Puppet::Application
     end
 
     result = @face.send(@action.name, *arguments)
-    puts render(result) unless result.nil?
+    puts render(result, arguments) unless result.nil?
     status = true
 
+  # We need an easy way for the action to set a specific exit code, so we
+  # rescue SystemExit here; This allows each action to set the desired exit
+  # code by simply calling Kernel::exit.  eg:
+  #
+  #   exit(2)
+  #
+  # --kelsey 2012-02-14
+  rescue SystemExit => detail
+    status = detail.status
+
   rescue Exception => detail
-    puts detail.backtrace if Puppet[:trace]
-    Puppet.err detail.to_s
+    Puppet.log_exception(detail)
     Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
 
   ensure

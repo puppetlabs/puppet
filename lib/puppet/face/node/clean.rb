@@ -1,27 +1,32 @@
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
     option "--[no-]unexport" do
-      summary "Unexport exported resources"
+      summary "Whether to remove this node's exported resources from other nodes"
     end
 
-    summary "Clean up everything a puppetmaster knows about a node"
+    summary "Clean up everything a puppetmaster knows about a node."
     arguments "<host1> [<host2> ...]"
-    description <<-EOT
-      This includes
+    description <<-'EOT'
+      Clean up everything a puppet master knows about a node, including certificates
+      and storeconfigs data.
+      
+      The full list of info cleaned by this action is:
 
-       * Signed certificates ($vardir/ssl/ca/signed/node.domain.pem)
-       * Cached facts ($vardir/yaml/facts/node.domain.yaml)
-       * Cached node stuff ($vardir/yaml/node/node.domain.yaml)
-       * Reports ($vardir/reports/node.domain)
-       * Stored configs: it can either remove all data from an host in your
-       storedconfig database, or with --unexport turn every exported resource
-       supporting ensure to absent so that any other host checking out their
-       config can remove those exported configurations.
-
-      This will unexport exported resources of a
-      host, so that consumers of these resources can remove the exported
-      resources and we will safely remove the node from our
-      infrastructure.
+      <Signed certificates> - ($vardir/ssl/ca/signed/node.domain.pem)
+      
+      <Cached facts> - ($vardir/yaml/facts/node.domain.yaml)
+      
+      <Cached node objects> - ($vardir/yaml/node/node.domain.yaml)
+      
+      <Reports> - ($vardir/reports/node.domain)
+      
+      <Stored configs> - (in database) The clean action can either remove all
+      data from a host in your storeconfigs database, or, with the
+      <--unexport> option, turn every exported resource supporting ensure to
+      absent so that any other host that collected those resources can remove
+      them. Without unexporting, a removed node's exported resources become
+      unmanaged by Puppet, and may linger as cruft unless you are purging
+      that resource type.
     EOT
 
     when_invoked do |*args|
@@ -29,10 +34,13 @@ Puppet::Face.define(:node, '0.0.1') do
       options = args.last
       raise "At least one node should be passed" if nodes.empty? || nodes == options
 
-      # TODO: this is a hack and should be removed if faces provide the proper
-      # infrastructure to set the run mode.
-      require 'puppet/util/run_mode'
-      $puppet_application_mode = Puppet::Util::RunMode[:master]
+      # This seems really bad; run_mode should be set as part of a class
+      # definition, and should not be modifiable beyond that.  This is one of
+      # the only places left in the code that tries to manipulate it. Other
+      # parts of code that handle certificates behave differently if the the
+      # run_mode is master. Those other behaviors are needed for cleaning the
+      # certificates correctly.
+      Puppet.settings.preferred_run_mode = "master"
 
       if Puppet::SSL::CertificateAuthority.ca?
         Puppet::SSL::Host.ca_location = :local
@@ -54,10 +62,7 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_cached_facts(node)
     clean_cached_node(node)
     clean_reports(node)
-
-    # This is roughly functional, but seems to introduce order-dependent test
-    # failures; this can be re-added when those issues are resolved.
-    # clean_storeconfigs(node, unexport)
+    clean_storeconfigs(node, unexport)
   end
 
   # clean signed cert for +host+

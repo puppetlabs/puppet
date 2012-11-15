@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/report/processor'
@@ -29,7 +29,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     Puppet::Reports.expects(:report).never
     Puppet[:reports] = 'none'
 
-    request = Puppet::Indirector::Request.new(:indirection_name, :head, "key")
+    request = Puppet::Indirector::Request.new(:indirection_name, :head, "key", nil)
     report = Puppet::Transaction::Report.new('apply')
     request.instance = report
 
@@ -37,7 +37,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
   end
 
   it "should save the report with each configured report type" do
-    Puppet.settings.stubs(:value).with(:reports).returns("one,two")
+    Puppet[:reports] = "one,two"
     @reporter.send(:reports).should == %w{one two}
 
     Puppet::Reports.expects(:report).with('one')
@@ -47,7 +47,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
   end
 
   it "should destroy reports for each processor that responds to destroy" do
-    Puppet.settings.stubs(:value).with(:reports).returns("http,store")
+    Puppet[:reports] = "http,store"
     http_report = mock()
     store_report = mock()
     store_report.expects(:destroy).with(@request.key)

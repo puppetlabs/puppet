@@ -1,19 +1,17 @@
-# Try to load rubygems.  Hey rubygems, I hate you.
-begin
-  require 'rubygems'
-rescue LoadError
-end
+require 'puppet/version'
 
 # see the bottom of the file for further inclusions
-require 'singleton'
 require 'facter'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'
-require 'puppet/util/settings'
+require 'puppet/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
+require 'puppet/external/pson/common'
+require 'puppet/external/pson/version'
+require 'puppet/external/pson/pure'
 
 #------------------------------------------------------------
 # the top-level module
@@ -24,12 +22,6 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '2.7.9'
-
-  def Puppet.version
-    PUPPETVERSION
-  end
-
   class << self
     include Puppet::Util
     attr_reader :features
@@ -37,7 +29,7 @@ module Puppet
   end
 
   # the hash that determines how our system behaves
-  @@settings = Puppet::Util::Settings.new
+  @@settings = Puppet::Settings.new
 
   # The services running in this process.
   @services ||= []
@@ -53,8 +45,8 @@ module Puppet
   require 'puppet/feature/base'
 
   # Store a new default value.
-  def self.setdefaults(section, hash)
-    @@settings.setdefaults(section, hash)
+  def self.define_settings(section, hash)
+    @@settings.define_settings(section, hash)
   end
 
   # configuration parameter access and stuff
@@ -87,12 +79,19 @@ module Puppet
     @@settings
   end
 
-  def self.run_mode
-    $puppet_application_mode || Puppet::Util::RunMode[:user]
-  end
 
-  def self.application_name
-    $puppet_application_name ||= "apply"
+  def self.run_mode
+    # This sucks (the existence of this method); there are a lot of places in our code that branch based the value of
+    # "run mode", but there used to be some really confusing code paths that made it almost impossible to determine
+    # when during the lifecycle of a puppet application run the value would be set properly.  A lot of the lifecycle
+    # stuff has been cleaned up now, but it still seems frightening that we rely so heavily on this value.
+    #
+    # I'd like to see about getting rid of the concept of "run_mode" entirely, but there are just too many places in
+    # the code that call this method at the moment... so I've settled for isolating it inside of the Settings class
+    # (rather than using a global variable, as we did previously...).  Would be good to revisit this at some point.
+    #
+    # --cprice 2012-03-16
+    Puppet::Util::RunMode[@@settings.preferred_run_mode]
   end
 
   # Load all of the configuration parameters.
@@ -106,39 +105,35 @@ module Puppet
   end
 
   # Parse the config file for this process.
-  def self.parse_config
-    Puppet.settings.parse
+  def self.parse_config()
+    Puppet.deprecation_warning("Puppet.parse_config is deprecated; please use Faces API (which will handle settings and state management for you), or (less desirable) call Puppet.initialize_settings")
+    Puppet.initialize_settings
   end
 
-  # XXX this should all be done using puppet objects, not using
-  # normal mkdir
-  def self.recmkdir(dir,mode = 0755)
-    if FileTest.exist?(dir)
-      return false
-    else
-      tmp = dir.sub(/^\//,'')
-      path = [File::SEPARATOR]
-      tmp.split(File::SEPARATOR).each { |dir|
-        path.push dir
-        if ! FileTest.exist?(File.join(path))
-          begin
-            Dir.mkdir(File.join(path), mode)
-          rescue Errno::EACCES => detail
-            Puppet.err detail.to_s
-            return false
-          rescue => detail
-            Puppet.err "Could not create #{path}: #{detail}"
-            return false
-          end
-        elsif FileTest.directory?(File.join(path))
-          next
-        else FileTest.exist?(File.join(path))
-          raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-        end
-      }
-      return true
-    end
+  # Initialize puppet's settings.  This is intended only for use by external tools that are not
+  #  built off of the Faces API or the Puppet::Util::Application class.  It may also be used
+  #  to initialize state so that a Face may be used programatically, rather than as a stand-alone
+  #  command-line tool.
+  #
+  # Note that this API may be subject to change in the future.
+  def self.initialize_settings()
+    do_initialize_settings_for_run_mode(:user)
   end
+
+  # Initialize puppet's settings for a specified run_mode.  This
+  def self.initialize_settings_for_run_mode(run_mode)
+    Puppet.deprecation_warning("initialize_settings_for_run_mode may be removed in a future release, as may run_mode itself")
+    do_initialize_settings_for_run_mode(run_mode)
+  end
+
+  # private helper method to provide the implementation details of initializing for a run mode,
+  #  but allowing us to control where the deprecation warning is issued
+  def self.do_initialize_settings_for_run_mode(run_mode)
+    Puppet.settings.initialize_global_settings
+    run_mode = Puppet::Util::RunMode[run_mode]
+    Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
+  end
+  private_class_method :do_initialize_settings_for_run_mode
 
   # Create a new type.  Just proxy to the Type class.  The mirroring query
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
@@ -148,12 +143,17 @@ module Puppet
   end
 end
 
+# This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
+#  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
+#  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
+
 require 'puppet/type'
 require 'puppet/parser'
 require 'puppet/resource'
 require 'puppet/network'
 require 'puppet/ssl'
 require 'puppet/module'
+require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'

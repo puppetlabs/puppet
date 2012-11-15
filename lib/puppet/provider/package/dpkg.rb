@@ -17,14 +17,14 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     # list out all of the packages
     cmd = "#{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'"
     Puppet.debug "Executing '#{cmd}'"
-    execpipe(cmd) do |process|
+    Puppet::Util::Execution.execpipe(cmd) do |process|
       # our regex for matching dpkg output
       regex = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
       fields = [:desired, :error, :status, :name, :ensure]
       hash = {}
 
       # now turn each returned line into a package object
-      process.each { |line|
+      process.each_line { |line|
         if hash = parse_line(line)
           packages << new(hash)
         end

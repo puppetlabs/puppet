@@ -7,9 +7,11 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     pkgutil_bin = "/opt/csw/bin/pkgutil"
   end
 
-  confine :operatingsystem => :solaris
+  confine :osfamily => :solaris
 
-  commands :pkguti => pkgutil_bin
+  has_command(:pkguti, pkgutil_bin) do
+    environment :HOME => ENV['HOME']
+  end
 
   def self.healthcheck()
     unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
@@ -20,7 +22,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     correct_wgetopts = false
     [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
       File.open(confpath) do |conf|
-        conf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+        conf.each_line {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end
     if ! correct_wgetopts
@@ -39,7 +41,8 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     # The -c pkglist lists installed packages
     pkginsts = []
-    pkglist(hash).each do |pkg|
+    output = pkguti(["-c"])
+    parse_pkglist(output).each do |pkg|
       pkg.delete(:avail)
       pkginsts << new(pkg)
 
@@ -72,19 +75,17 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end.reject { |h| h.nil? }
   end
 
+  # Turn our pkgutil -c listing into a hash for a single package.
+  def pkgsingle(resource)
+    # The --single option speeds up the execution, because it queries
+    # the package managament system for one package only.
+    command = ["-c", "--single", resource[:name]]
+    self.class.parse_pkglist(run_pkgutil(resource, command), { :justme => resource[:name] })
+  end
+
   # Turn our pkgutil -c listing into a bunch of hashes.
-  # Supports :justme => packagename, which uses the optimised --single arg
-  def self.pkglist(hash)
-    command = ["-c"]
-
-    if hash[:justme]
-      # The --single option speeds up the execution, because it queries
-      # the package managament system for one package only.
-      command << "--single"
-      command << hash[:justme]
-    end
-
-    output = pkguti(command).split("\n")
+  def self.parse_pkglist(output, hash = {})
+    output = output.split("\n")
 
     if output[-1] == "Not in catalog"
       Puppet.warning "Package not in pkgutil catalog: %s" % hash[:justme]
@@ -146,18 +147,29 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end
   end
 
+  def run_pkgutil(resource, *args)
+    # Allow source to be one or more URLs pointing to a repository that all
+    # get passed to pkgutil via one or more -t options
+    if resource[:source]
+      sources = [resource[:source]].flatten
+      pkguti *[sources.map{|src| [ "-t", src ]}, *args].flatten
+    else
+      pkguti *args.flatten
+    end
+  end
+
   def install
-    pkguti "-y", "-i", @resource[:name]
+    run_pkgutil @resource, "-y", "-i", @resource[:name]
   end
 
   # Retrieve the version from the current package file.
   def latest
-    hash = self.class.pkglist(:justme => @resource[:name])
+    hash = pkgsingle(@resource)
     hash[:avail] if hash
   end
 
   def query
-    if hash = self.class.pkglist(:justme => @resource[:name])
+    if hash = pkgsingle(@resource)
       hash
     else
       {:ensure => :absent}
@@ -165,10 +177,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def update
-    pkguti "-y", "-u", @resource[:name]
+    run_pkgutil @resource, "-y", "-u", @resource[:name]
   end
 
   def uninstall
-    pkguti "-y", "-r", @resource[:name]
+    run_pkgutil @resource, "-y", "-r", @resource[:name]
   end
 end

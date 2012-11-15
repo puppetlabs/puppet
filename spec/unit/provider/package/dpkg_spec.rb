@@ -1,5 +1,6 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
+require 'stringio'
 
 provider = Puppet::Type.type(:package).provider(:dpkg)
 
@@ -23,15 +24,16 @@ describe provider do
 
     it "should use dpkg-query" do
       provider.expects(:command).with(:dpkgquery).returns "myquery"
-      provider.expects(:execpipe).with("myquery -W --showformat '${Status} ${Package} ${Version}\\n'").returns @fakeresult
+      Puppet::Util::Execution.expects(:execpipe).with("myquery -W --showformat '${Status} ${Package} ${Version}\\n'").yields StringIO.new(@fakeresult)
 
       provider.instances
     end
 
     it "should create and return an instance with each parsed line from dpkg-query" do
       pipe = mock 'pipe'
-      pipe.expects(:each).yields @fakeresult
-      provider.expects(:execpipe).yields pipe
+      pipe.expects(:each).never
+      pipe.expects(:each_line).yields @fakeresult
+      Puppet::Util::Execution.expects(:execpipe).yields pipe
 
       asdf = mock 'pkg1'
       provider.expects(:new).with(:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :provider => :dpkg).returns asdf
@@ -41,8 +43,9 @@ describe provider do
 
     it "should warn on and ignore any lines it does not understand" do
       pipe = mock 'pipe'
-      pipe.expects(:each).yields "foobar"
-      provider.expects(:execpipe).yields pipe
+      pipe.expects(:each).never
+      pipe.expects(:each_line).yields "foobar"
+      Puppet::Util::Execution.expects(:execpipe).yields pipe
 
       Puppet.expects(:warning)
       provider.expects(:new).never

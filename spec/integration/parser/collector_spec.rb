@@ -1,11 +1,11 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parser/collector'
 
 describe Puppet::Parser::Collector do
   before do
-    @scope = Puppet::Parser::Scope.new(:compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("mynode")))
+    @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("mynode")))
 
     @resource = Puppet::Parser::Resource.new("file", "/tmp/testing", :scope => @scope, :source => "fakesource")
     {:owner => "root", :group => "bin", :mode => "644"}.each do |param, value|

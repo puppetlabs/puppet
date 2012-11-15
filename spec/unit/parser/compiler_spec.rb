@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 class CompilerTestResource
@@ -30,6 +30,14 @@ class CompilerTestResource
     @virtual
   end
 
+  def class?
+    false
+  end
+
+  def stage?
+    false
+  end
+
   def evaluate
   end
 
@@ -57,10 +65,10 @@ describe Puppet::Parser::Compiler do
     now = Time.now
     Time.stubs(:now).returns(now)
 
-    @node = Puppet::Node.new "testnode"
+    @node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
     @known_resource_types = Puppet::Resource::TypeCollection.new "development"
     @compiler = Puppet::Parser::Compiler.new(@node)
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => stub('source'))
+    @scope = Puppet::Parser::Scope.new(@compiler, :source => stub('source'))
     @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
     @scope.resource = @scope_resource
     @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
@@ -96,6 +104,24 @@ describe Puppet::Parser::Compiler do
     @compiler.add_class "two"
 
     @compiler.classlist.sort.should == %w{one two}.sort
+  end
+
+  it "should clear the thread local caches before compile" do
+    compiler = stub 'compiler'
+    Puppet::Parser::Compiler.expects(:new).with(@node).returns compiler
+    catalog = stub 'catalog'
+    compiler.expects(:compile).returns catalog
+    catalog.expects(:to_resource)
+
+    [:known_resource_types, :env_module_directories].each do |var|
+      Thread.current[var] = "rspec"
+    end
+
+    Puppet::Parser::Compiler.compile(@node)
+
+    [:known_resource_types, :env_module_directories].each do |var|
+      Thread.current[var].should == nil
+    end
   end
 
   describe "when initializing" do
@@ -416,8 +442,8 @@ describe Puppet::Parser::Compiler do
 
     it "should fail to add resources that conflict with existing resources" do
       path = make_absolute("/foo")
-      file1 = Puppet::Type.type(:file).new :path => path
-      file2 = Puppet::Type.type(:file).new :path => path
+      file1 = resource(:file, path)
+      file2 = resource(:file, path)
 
       @compiler.add_resource(@scope, file1)
       lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
@@ -543,14 +569,14 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should raise an error if a class is not found" do
-      @scope.expects(:find_hostclass).with("notfound").returns(nil)
+      @scope.expects(:find_hostclass).with("notfound", {:assume_fqname => false}).returns(nil)
       lambda{ @compiler.evaluate_classes(%w{notfound}, @scope) }.should raise_error(Puppet::Error, /Could not find class/)
     end
 
     it "should raise an error when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
-      @compiler.topscope.stubs(:find_hostclass).with('foo').returns(nil)
+      @compiler.topscope.stubs(:find_hostclass).with('foo', {:assume_fqname => false}).returns(nil)
       lambda{ @compiler.compile }.should raise_error(Puppet::Error, /Could not find class foo for testnode/)
     end
   end
@@ -558,8 +584,9 @@ describe Puppet::Parser::Compiler do
   describe "when evaluating found classes" do
 
     before do
+      Puppet.settings[:data_binding_terminus] = "none"
       @class = stub 'class', :name => "my::class"
-      @scope.stubs(:find_hostclass).with("myclass").returns(@class)
+      @scope.stubs(:find_hostclass).with("myclass", {:assume_fqname => false}).returns(@class)
 
       @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
     end
@@ -616,7 +643,7 @@ describe Puppet::Parser::Compiler do
         @catalog.resource(:class, 'Foo')['2'].should == "foo"
       end
 
-      it "should ensure each node class is in catalog and has appropriate tags", :'fails_on_ruby_1.9.2' => true do
+      it "should ensure each node class is in catalog and has appropriate tags" do
         klasses = ['bar::foo']
         @node.classes = klasses
         ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
@@ -691,7 +718,7 @@ describe Puppet::Parser::Compiler do
 
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
-      @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
+      @scope.stubs(:find_hostclass).with("MyClass",{:assume_fqname => false}).returns(@class)
       @scope.stubs(:class_scope).with(@class).returns("something")
       @compiler.expects(:add_resource).never
       @resource.expects(:evaluate).never
@@ -760,23 +787,6 @@ describe Puppet::Parser::Compiler do
       node_resource.expects(:evaluate)
 
       @compiler.send(:evaluate_ast_node)
-    end
-
-    it "should set the node's scope as the top scope" do
-      node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-      node_class = stub 'node', :name => "c", :ensure_in_catalog => node_resource
-
-      @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
-
-      # The #evaluate method normally does this.
-      scope = stub 'scope', :source => "mysource"
-      @compiler.topscope.expects(:class_scope).with(node_class).returns(scope)
-      node_resource.stubs(:evaluate)
-      @compiler.stubs :create_settings_scope
-
-      @compiler.compile
-
-      @compiler.topscope.should equal(scope)
     end
   end
 

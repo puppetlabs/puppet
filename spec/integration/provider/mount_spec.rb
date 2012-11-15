@@ -5,6 +5,8 @@ require 'puppet/file_bucket/dipper'
 describe "mount provider (integration)", :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
+  family = Facter.value(:osfamily)
+
   def create_fake_fstab(initially_contains_entry)
     File.open(@fake_fstab, 'w') do |f|
       if initially_contains_entry
@@ -19,6 +21,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
     @current_device = "/dev/disk1s1"
     Puppet::Type.type(:mount).defaultprovider.stubs(:default_target).returns(@fake_fstab)
     Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
+    Facter.stubs(:value).with(:osfamily).returns('Darwin')
     Puppet::Util::ExecutionStub.set do |command, options|
       case command[0]
       when %r{/s?bin/mount}
@@ -107,6 +110,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
               ["local", "journaled"].each do |options_setting|
                 describe "When setting options => #{options_setting}" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
+                    pending("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb", :if => family == "Solaris")
                     @desired_options = options_setting
                     run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
                     @mounted.should == expected_final_state

@@ -176,6 +176,14 @@ class Puppet::Resource
     end
   end
 
+  def class?
+    @is_class ||= @type == "Class"
+  end
+
+  def stage?
+    @is_stage ||= @type.to_s.downcase == "stage"
+  end
+
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
@@ -190,7 +198,7 @@ class Puppet::Resource
 
     @type = munge_type_name(@type)
 
-    if @type == "Class"
+    if self.class?
       @title = :main if @title == ""
       @title = munge_type_name(@title)
     end
@@ -204,7 +212,7 @@ class Puppet::Resource
 
     @reference = self # for serialization compatibility with 0.25.x
     if strict? and ! resource_type
-      if @type == 'Class'
+      if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
         raise ArgumentError, "Invalid resource type #{type}"
@@ -218,15 +226,15 @@ class Puppet::Resource
 
   # Find our resource.
   def resolve
-    return(catalog ? catalog.resource(to_s) : nil)
+    catalog ? catalog.resource(to_s) : nil
   end
 
   def resource_type
-    case type
+    @rstype ||= case type
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else
-      Puppet::Type.type(type.to_s.downcase.to_sym) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || known_resource_types.definition(type)
     end
   end
 
@@ -248,7 +256,7 @@ class Puppet::Resource
   end
 
   def key_attributes
-    return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
+    resource_type.respond_to?(:key_attributes) ? resource_type.key_attributes : [:name]
   end
 
   # Convert our resource to Puppet code.
@@ -285,54 +293,6 @@ class Puppet::Resource
     end
   end
 
-  # Translate our object to a backward-compatible transportable object.
-  def to_trans
-    if builtin_type? and type.downcase.to_s != "stage"
-      result = to_transobject
-    else
-      result = to_transbucket
-    end
-
-    result.file = self.file
-    result.line = self.line
-
-    result
-  end
-
-  def to_trans_ref
-    [type.to_s, title.to_s]
-  end
-
-  # Create an old-style TransObject instance, for builtin resource types.
-  def to_transobject
-    # Now convert to a transobject
-    result = Puppet::TransObject.new(title, type)
-    to_hash.each do |p, v|
-      if v.is_a?(Puppet::Resource)
-        v = v.to_trans_ref
-      elsif v.is_a?(Array)
-        v = v.collect { |av|
-          av = av.to_trans_ref if av.is_a?(Puppet::Resource)
-          av
-        }
-      end
-
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p.to_s] = if v.is_a?(Array) and v.length == 1
-        v[0]
-          else
-            v
-              end
-    end
-
-    result.tags = self.tags
-
-    result
-  end
-
   def name
     # this is potential namespace conflict
     # between the notion of an "indirector name"
@@ -340,24 +300,56 @@ class Puppet::Resource
     [ type, title ].join('/')
   end
 
+  def missing_arguments
+    resource_type.arguments.select do |param, default|
+      param = param.to_sym
+      parameters[param].nil? || parameters[param].value == :undef
+    end
+  end
+  private :missing_arguments
+
+  # Consult external data bindings for class parameter values which must be
+  # namespaced in the backend.
+  #
+  # Example:
+  #
+  #   class foo($port){ ... }
+  #
+  # We make a request to the backend for the key 'foo::port' not 'foo'
+  #
+  def lookup_external_default_for(param, scope)
+    if resource_type.type == :hostclass
+      Puppet::DataBinding.indirection.find(
+        "#{resource_type.name}::#{param}",
+        :environment => scope.environment.to_s,
+        :variables => Puppet::DataBinding::Variables.new(scope))
+    else
+      nil
+    end
+  end
+  private :lookup_external_default_for
+
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
-    result = []
+    unless is_a?(Puppet::Parser::Resource)
+      fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+    end
 
-    resource_type.arguments.each do |param, default|
-      param = param.to_sym
-      next if parameters.include?(param)
-      unless is_a?(Puppet::Parser::Resource)
-        fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+    missing_arguments.collect do |param, default|
+      external_value = lookup_external_default_for(param, scope)
+
+      if external_value.nil? && default.nil?
+        next
+      elsif external_value.nil?
+        value = default.safeevaluate(scope)
+      else
+        value = external_value
       end
 
-      next if default.nil?
-
-      self[param] = default.safeevaluate(scope)
-      result << param
-    end
-    result
+      self[param.to_sym] = value
+      param
+    end.compact
   end
 
   def to_resource
@@ -422,17 +414,6 @@ class Puppet::Resource
     end
   end
 
-  # Create an old-style TransBucket instance, for non-builtin resource types.
-  def to_transbucket
-    bucket = Puppet::TransBucket.new([])
-
-    bucket.type = self.type
-    bucket.name = self.title
-
-    # TransBuckets don't support parameters, which is why they're being deprecated.
-    bucket
-  end
-
   def extract_parameters(params)
     params.each do |param, value|
       validate_parameter(param) if strict?
@@ -464,14 +445,29 @@ class Puppet::Resource
     if type.respond_to? :title_patterns
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)
-          symbols_and_lambdas.zip(captures[1..-1]).each { |symbol_and_lambda,capture|
-            sym, lam = symbol_and_lambda
-            #self[sym] = lam.call(capture)
-            h[sym] = lam.call(capture)
-          }
+          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
+            symbol, proc = symbol_and_lambda
+            # Many types pass "identity" as the proc; we might as well give
+            # them a shortcut to delivering that without the extra cost.
+            #
+            # Especially because the global type defines title_patterns and
+            # uses the identity patterns.
+            #
+            # This was worth about 8MB of memory allocation saved in my
+            # testing, so is worth the complexity for the API.
+            if proc then
+              h[symbol] = proc.call(capture)
+            else
+              h[symbol] = capture
+            end
+          end
           return h
         end
       }
+      # If we've gotten this far, then none of the provided title patterns
+      # matched. Since there's no way to determine the title then the
+      # resource should fail here.
+      raise Puppet::Error, "No set of title patterns matched the title \"#{title}\"."
     else
       return { :name => title.to_s }
     end

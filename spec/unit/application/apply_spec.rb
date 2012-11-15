@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/apply'
@@ -36,10 +36,6 @@ describe Puppet::Application::Apply do
     @apply.send("handle_execute".to_sym, 'arg')
   end
 
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @apply.should_parse_config?.should be_true
-  end
-
   describe "when applying options" do
 
     it "should set the log destination with --logdest" do
@@ -53,23 +49,11 @@ describe Puppet::Application::Apply do
 
       @apply.handle_logdest("console")
     end
-
-    it "should deprecate --apply" do
-      Puppet.expects(:warning).with do |arg|
-        arg.match(/--apply is deprecated/)
-      end
-
-      command_line = Puppet::Util::CommandLine.new('puppet', ['apply', '--apply', 'catalog.json'])
-      apply = Puppet::Application::Apply.new(command_line)
-      apply.stubs(:run_command)
-      apply.run
-    end
   end
 
   describe "during setup" do
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)
@@ -116,6 +100,10 @@ describe Puppet::Application::Apply do
       Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
 
       @apply.setup
+    end
+
+    it "should set default_file_terminus to `file_server` to be local" do
+      @apply.app_defaults[:default_file_terminus].should == :file_server
     end
   end
 
@@ -210,55 +198,17 @@ describe Puppet::Application::Apply do
         @apply.command_line.stubs(:args).returns([manifest, 'starwarsI', 'starwarsII'])
 
         Puppet.expects(:[]=).with(:manifest,manifest)
-        Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
-
-        expect { @apply.main }.to exit_with 0
-      end
-
-      it "should set the facts name based on the node_name_fact" do
-        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(@facts)
-
-        node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
-
-        Puppet[:node_name_fact] = 'my_name_fact'
-
         expect { @apply.main }.to exit_with 0
 
-        @facts.name.should == 'other_node_name'
-      end
-
-      it "should set the node_name_value based on the node_name_fact" do
-        facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(facts)
-        node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
-        Puppet[:node_name_fact] = 'my_name_fact'
-
-        expect { @apply.main }.to exit_with 0
-
-        Puppet[:node_name_value].should == 'other_node_name'
-      end
-
-      it "should raise an error if we can't find the facts" do
-        Puppet::Node::Facts.indirection.expects(:find).returns(nil)
-
-        lambda { @apply.main }.should raise_error
+        msg = @logs.find {|m| m.message =~ /Only one file can be applied per run/ }
+        msg.message.should == 'Only one file can be applied per run.  Skipping starwarsI, starwarsII'
+        msg.level.should == :warning
       end
 
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
-      end
-
-      it "should merge in our node the loaded facts" do
-        @facts.values = {'key' => 'value'}
-
-        expect { @apply.main }.to exit_with 0
-
-        @node.parameters['key'].should == 'value'
       end
 
       it "should load custom classes if loadclasses" do
@@ -313,6 +263,40 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
+      describe "when using node_name_fact" do
+        before :each do
+          @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+          Puppet::Node::Facts.indirection.save(@facts)
+          @node = Puppet::Node.new('other_node_name')
+          Puppet::Node.indirection.save(@node)
+          Puppet[:node_name_fact] = 'my_name_fact'
+        end
+
+        it "should set the facts name based on the node_name_fact" do
+          expect { @apply.main }.to exit_with 0
+          @facts.name.should == 'other_node_name'
+        end
+
+        it "should set the node_name_value based on the node_name_fact" do
+          expect { @apply.main }.to exit_with 0
+          Puppet[:node_name_value].should == 'other_node_name'
+        end
+
+        it "should merge in our node the loaded facts" do
+          @facts.values.merge!('key' => 'value')
+
+          expect { @apply.main }.to exit_with 0
+
+          @node.parameters['key'].should == 'value'
+        end
+
+        it "should raise an error if we can't find the facts" do
+          Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+
+          lambda { @apply.main }.should raise_error
+        end
+      end
+
       describe "with detailed_exitcodes" do
         before :each do
           @apply.options[:detailed_exitcodes] = true
@@ -351,55 +335,70 @@ describe Puppet::Application::Apply do
     end
 
     describe "the 'apply' command" do
+      # We want this memoized, and to be able to adjust the content, so we
+      # have to do it ourselves.
+      def temporary_catalog(content = '"something"')
+        @tempfile = Tempfile.new('catalog.pson')
+        @tempfile.write(content)
+        @tempfile.close
+        @tempfile.path
+      end
+
       it "should read the catalog in from disk if a file name is provided" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.expects(:read).with("/my/catalog.pson").returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
+        @apply.options[:catalog] = temporary_catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).
+          with(:pson,'"something"').returns(Puppet::Resource::Catalog.new)
         @apply.apply
       end
 
       it "should read the catalog in from stdin if '-' is provided" do
         @apply.options[:catalog] = "-"
-        $stdin.expects(:read).returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
+        $stdin.expects(:read).returns '"something"'
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns Puppet::Resource::Catalog.new
         @apply.apply
       end
 
       it "should deserialize the catalog from the default format" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
+        @apply.options[:catalog] = temporary_catalog
         Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'something').returns Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'"something"').returns Puppet::Resource::Catalog.new
         @apply.apply
       end
 
       it "should fail helpfully if deserializing fails" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something syntacically invalid"
+        @apply.options[:catalog] = temporary_catalog('something syntactically invalid')
         lambda { @apply.apply }.should raise_error(Puppet::Error)
       end
 
       it "should convert plain data structures into a catalog if deserialization does not do so" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,"something").returns({:foo => "bar"})
+        @apply.options[:catalog] = temporary_catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns({:foo => "bar"})
         Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
         @apply.apply
       end
 
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
-        @apply.options[:catalog] = "/my/catalog.pson"
-        File.stubs(:read).with("/my/catalog.pson").returns "something"
+        @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns catalog
         catalog.expects(:to_ral).returns "mycatalog"
 
         configurer = stub 'configurer'
         Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:run).with(:catalog => "mycatalog")
+        configurer.expects(:run).
+          with(:catalog => "mycatalog", :pluginsync => false)
 
         @apply.apply
       end
+    end
+  end
+
+  describe "apply_catalog" do
+    it "should call the configurer with the catalog" do
+      catalog = "I am a catalog"
+      Puppet::Configurer.any_instance.expects(:run).
+        with(:catalog => catalog, :pluginsync => false)
+      @apply.send(:apply_catalog, catalog)
     end
   end
 end

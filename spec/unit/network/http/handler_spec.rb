@@ -1,7 +1,8 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http/handler'
-require 'puppet/network/rest_authorization'
+require 'puppet/network/authorization'
+require 'puppet/network/authentication'
 
 class HttpHandled
   include Puppet::Network::HTTP::Handler
@@ -17,7 +18,7 @@ describe Puppet::Network::HTTP::Handler do
   end
 
   it "should include the Rest Authorization system" do
-    Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::RestAuthorization)
+    Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::Authorization)
   end
 
   it "should have a method for initializing" do
@@ -51,6 +52,7 @@ describe Puppet::Network::HTTP::Handler do
       @result = stub 'result', :render => "mytext"
 
       @handler.stubs(:check_authorization)
+      @handler.stubs(:warn_if_near_expiration)
 
       stub_server_interface
     end
@@ -66,6 +68,16 @@ describe Puppet::Network::HTTP::Handler do
       @handler.stubs(:http_method        ).returns("GET")
       @handler.stubs(:params             ).returns({})
       @handler.stubs(:content_type       ).returns("text/plain")
+      @handler.stubs(:client_cert        ).returns(nil)
+    end
+
+    it "should check the client certificate for upcoming expiration" do
+      cert = mock 'cert'
+      @handler.stubs(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
+      @handler.expects(:client_cert).returns(cert).with(@request)
+      @handler.expects(:warn_if_near_expiration).with(cert)
+
+      @handler.process(@request, @response)
     end
 
     it "should create an indirection request from the path, parameters, and http method" do
@@ -80,7 +92,7 @@ describe Puppet::Network::HTTP::Handler do
       @handler.process(@request, @response)
     end
 
-    it "should call the 'do' method and delegate authorization to the RestAuthorization layer" do
+    it "should call the 'do' method and delegate authorization to the authorization layer" do
       @handler.expects(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
 
       @handler.expects(:do_mymethod).with("facts", "key", {:node => "name"}, @request, @response)

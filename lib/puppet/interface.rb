@@ -59,9 +59,10 @@ class Puppet::Interface
         if current = Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"
         else
-          raise Puppet::Error, "Could not find Puppet Face #{name.inspect}"
+          raise Puppet::Error, "Could not find Puppet Face #{name.to_s}"
         end
       end
+
       face
     end
 
@@ -69,11 +70,6 @@ class Puppet::Interface
       Puppet::Interface::FaceCollection.get_action_for_face(name, action, version)
     end
   end
-
-  def set_default_format(format)
-    Puppet.warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
-  end
-
 
   ########################################################################
   # Documentation.  We currently have to rewrite both getters because we share
@@ -86,7 +82,8 @@ class Puppet::Interface
 
 
   ########################################################################
-  attr_reader :name, :version
+  attr_reader :name, :version, :loader
+  private :loader
 
   def initialize(name, version, &block)
     unless SemVer.valid?(version)
@@ -102,18 +99,13 @@ class Puppet::Interface
     @authors  = []
     @license  = 'All Rights Reserved'
 
+    @loader = Puppet::Util::Autoload.new(@name, "puppet/face/#{@name}")
     instance_eval(&block) if block_given?
   end
 
   # Try to find actions defined in other files.
   def load_actions
-    Puppet::Interface.autoloader.search_directories.each do |dir|
-      Dir.glob(File.join(dir, "puppet/face/#{name}", "*.rb")).each do |file|
-        action = file.sub(dir, '').sub(/^[\\\/]/, '').sub(/\.rb/, '')
-        Puppet.debug "Loading action '#{action}' for '#{name}' from '#{dir}/#{action}.rb'"
-        require(action)
-      end
-    end
+    loader.loadall
   end
 
   def to_s

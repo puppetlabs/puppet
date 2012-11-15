@@ -1,7 +1,7 @@
 require 'puppet/util/adsi'
 
 Puppet::Type.type(:group).provide :windows_adsi do
-  desc "Group management for Windows"
+  desc "Local group management for Windows. Nested groups are not supported."
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
@@ -41,7 +41,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def gid
-    Puppet::Util::ADSI.sid_for_account(@resource[:name])
+    Puppet::Util::Windows::Security.name_to_sid(@resource[:name])
   end
 
   def gid=(value)

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -14,9 +14,35 @@ describe Puppet::Util::Log do
     message.should == "foo"
   end
 
+  describe ".setup_default" do
+    it "should default to :syslog" do
+      Puppet.features.stubs(:syslog?).returns(true)
+      Puppet::Util::Log.expects(:newdestination).with(:syslog)
+
+      Puppet::Util::Log.setup_default
+    end
+
+    it "should fall back to :eventlog" do
+      Puppet.features.stubs(:syslog?).returns(false)
+      Puppet.features.stubs(:eventlog?).returns(true)
+      Puppet::Util::Log.expects(:newdestination).with(:eventlog)
+
+      Puppet::Util::Log.setup_default
+    end
+
+    it "should fall back to :file" do
+      Puppet.features.stubs(:syslog?).returns(false)
+      Puppet.features.stubs(:eventlog?).returns(false)
+      Puppet::Util::Log.expects(:newdestination).with(Puppet[:puppetdlog])
+
+      Puppet::Util::Log.setup_default
+    end
+  end
+
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new
+      @console.stubs(:console_has_color?).returns(true)
     end
 
     it "should colorize if Puppet[:color] is :ansi" do
@@ -34,7 +60,7 @@ describe Puppet::Util::Log do
     it "should htmlize if Puppet[:color] is :html" do
       Puppet[:color] = :html
 
-      @console.colorize(:alert, "abc").should == "<span style=\"color: FFA0A0\">abc</span>"
+      @console.colorize(:alert, "abc").should == "<span style=\"color: #FFA0A0\">abc</span>"
     end
 
     it "should do nothing if Puppet[:color] is false" do
@@ -53,6 +79,44 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestSyslog do
     before do
       @syslog = Puppet::Util::Log::DestSyslog.new
+    end
+  end
+
+  describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
+    before :each do
+      Win32::EventLog.stubs(:open).returns(mock 'mylog')
+      Win32::EventLog.stubs(:report_event)
+      Win32::EventLog.stubs(:close)
+      Puppet.features.stubs(:eventlog?).returns(true)
+    end
+
+    it "should restrict its suitability" do
+      Puppet.features.expects(:eventlog?).returns(false)
+
+      Puppet::Util::Log::DestEventlog.suitable?('whatever').should == false
+    end
+
+    it "should open the 'Application' event log" do
+      Win32::EventLog.expects(:open).with('Application')
+
+      Puppet::Util::Log.newdestination(:eventlog)
+    end
+
+    it "should close the event log" do
+      log = mock('myeventlog')
+      log.expects(:close)
+      Win32::EventLog.expects(:open).returns(log)
+
+      Puppet::Util::Log.newdestination(:eventlog)
+      Puppet::Util::Log.close(:eventlog)
+    end
+
+    it "should handle each puppet log level" do
+      log = Puppet::Util::Log::DestEventlog.new
+
+      Puppet::Util::Log.eachlevel do |level|
+        log.to_native(level).should be_is_a(Array)
+      end
     end
   end
 
@@ -101,7 +165,7 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.new(:level => "notice", :message => :foo).level.should == :notice
     end
 
-    it "should fail if the level is not a symbol or string", :'fails_on_ruby_1.9.2' => true do
+    it "should fail if the level is not a symbol or string" do
       lambda { Puppet::Util::Log.new(:level => 50, :message => :foo) }.should raise_error(ArgumentError)
     end
 
@@ -216,14 +280,14 @@ describe Puppet::Util::Log do
 
     describe "when setting the source as a non-RAL object" do
       it "should not try to copy over file, version, line, or tag information" do
-        source = Puppet::Module.new("foo")
+        source = mock
         source.expects(:file).never
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
     end
   end
 
-  describe "to_yaml", :'fails_on_ruby_1.9.2' => true do
+  describe "to_yaml" do
     it "should not include the @version attribute" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
       log.to_yaml_properties.should_not include('@version')
@@ -231,13 +295,13 @@ describe Puppet::Util::Log do
 
     it "should include attributes @level, @message, @source, @tags, and @time" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      log.to_yaml_properties.should == %w{@level @message @source @tags @time}
+      log.to_yaml_properties.should =~ [:@level, :@message, :@source, :@tags, :@time]
     end
 
     it "should include attributes @file and @line if specified" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
-      log.to_yaml_properties.should include('@file')
-      log.to_yaml_properties.should include('@line')
+      log.to_yaml_properties.should include(:@file)
+      log.to_yaml_properties.should include(:@line)
     end
   end
 end

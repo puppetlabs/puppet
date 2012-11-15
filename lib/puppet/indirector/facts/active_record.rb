@@ -6,6 +6,14 @@ require 'puppet/indirector/active_record'
 class Puppet::Node::Facts::ActiveRecord < Puppet::Indirector::ActiveRecord
   use_ar_model Puppet::Rails::Host
 
+  desc "A component of ActiveRecord storeconfigs and inventory. ActiveRecord-based storeconfigs
+    and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+
+  def initialize
+    Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
+    super
+  end
+
   # Find the Rails host and pull its facts as a Facts instance.
   def find(request)
     return nil unless host = ar_model.find_by_name(request.key, :include => {:fact_values => :fact_name})

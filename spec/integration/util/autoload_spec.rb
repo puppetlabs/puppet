@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/autoload'
@@ -61,7 +61,7 @@ describe Puppet::Util::Autoload do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:mything, dir, "mything.rb") {
         loader.load(:mything).should be_true
-        loader.should be_loaded(:mything)
+        loader.class.should be_loaded("bar/mything")
         AutoloadIntegrator.should be_thing(:mything)
       }
     }
@@ -71,7 +71,7 @@ describe Puppet::Util::Autoload do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:noext, dir, "noext.rb") {
         loader.load(:noext)
-        loader.should be_loaded(:noext)
+        loader.class.should be_loaded("bar/noext")
       }
     }
   end
@@ -80,21 +80,15 @@ describe Puppet::Util::Autoload do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:noext, dir, "withext.rb") {
         loader.load(:withext)
-        loader.should be_loaded("withext.rb")
-      }
-    }
-  end
-
-  it "should register the fact that the instance is loaded with the Autoload base class" do
-    with_loader("foo", "bar") { |dir,loader|
-      with_file(:baseload, dir, "baseload.rb") {
-        loader.load(:baseload)
-        Puppet::Util::Autoload.should be_loaded("bar/withext.rb")
+        loader.class.should be_loaded("bar/withext.rb")
       }
     }
   end
 
   it "should be able to load files directly from modules" do
+    ## modulepath can't be used until after app settings are initialized, so we need to simulate that:
+    Puppet.settings.expects(:app_defaults_initialized?).returns(true).at_least_once
+
     modulepath = tmpfile("autoload_module_testing")
     libdir = File.join(modulepath, "mymod", "lib", "foo")
     FileUtils.mkdir_p(libdir)
@@ -106,7 +100,7 @@ describe Puppet::Util::Autoload do
     with_loader("foo", "foo") do |dir, loader|
       with_file(:plugin, file.split("/")) do
         loader.load(:plugin)
-        loader.should be_loaded("plugin.rb")
+        loader.class.should be_loaded("foo/plugin.rb")
       end
     end
   end

@@ -17,27 +17,31 @@ describe Puppet::Interface::Option do
 
     [:foo, 12, nil, {}, []].each do |input|
       it "should fail sensible when given #{input.inspect}" do
-        expect { Puppet::Interface::Option.new(face, input) }.
-          should raise_error ArgumentError, /is not valid for an option argument/
+        expect {
+          Puppet::Interface::Option.new(face, input)
+        }.to raise_error ArgumentError, /is not valid for an option argument/
       end
     end
 
     ["-foo", "-foo=BAR", "-foo BAR"].each do |input|
       it "should fail with a single dash for long option #{input.inspect}" do
-        expect { Puppet::Interface::Option.new(face, input) }.
-          should raise_error ArgumentError, /long options need two dashes \(--\)/
+        expect {
+          Puppet::Interface::Option.new(face, input)
+        }.to raise_error ArgumentError, /long options need two dashes \(--\)/
       end
     end
   end
 
   it "requires a face when created" do
-    expect { Puppet::Interface::Option.new }.
-      should raise_error ArgumentError, /wrong number of arguments/
+    expect {
+      Puppet::Interface::Option.new
+    }.to raise_error ArgumentError, /wrong number of arguments/
   end
 
   it "also requires some declaration arguments when created" do
-    expect { Puppet::Interface::Option.new(face) }.
-      should raise_error ArgumentError, /No option declarations found/
+    expect {
+      Puppet::Interface::Option.new(face)
+    }.to raise_error ArgumentError, /No option declarations found/
   end
 
   it "should infer the name from an optparse string" do
@@ -58,6 +62,14 @@ describe Puppet::Interface::Option do
   it "should create an instance when given a face and name" do
     Puppet::Interface::Option.new(face, "--foo").
       should be_instance_of Puppet::Interface::Option
+  end
+
+  Puppet.settings.each do |name, value|
+    it "should fail when option #{name.inspect} already exists in puppet core" do
+      expect do
+        Puppet::Interface::Option.new(face, "--#{name}")
+      end.to raise_error ArgumentError, /already defined/
+    end
   end
 
   describe "#to_s" do
@@ -113,7 +125,7 @@ describe Puppet::Interface::Option do
       its :default do should be_nil end
 
       it "should set a proc as default" do
-        expect { subject.default = proc { 12 } }.should_not raise_error
+        expect { subject.default = proc { 12 } }.to_not raise_error
       end
 
       [1, {}, [], Object.new, "foo"].each do |input|

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the RedHat service Provider
 #
@@ -6,11 +6,9 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:redhat)
 
-describe provider_class do
+describe provider_class, :as_platform => :posix do
 
   before :each do
-    Puppet.features.stubs(:posix?).returns(true)
-    Puppet.features.stubs(:microsoft_windows?).returns(false)
     @class = Puppet::Type.type(:service).provider(:redhat)
     @resource = stub 'resource'
     @resource.stubs(:[]).returns(nil)
@@ -23,11 +21,20 @@ describe provider_class do
     FileTest.stubs(:executable?).with('/sbin/service').returns true
   end
 
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      provider_class.default?.should be_true
+    end
+  end
+
   # test self.instances
   describe "when getting all service instances" do
     before :each do
-      @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf']
-      @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf']
+      @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf', 'boot', 'reboot']
+      @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot']
       Dir.stubs(:entries).returns @services
       FileTest.stubs(:directory?).returns(true)
       FileTest.stubs(:executable?).returns(true)
@@ -45,6 +52,16 @@ describe provider_class do
       @provider.expects(:execute).with{|command, *args| command == ['/sbin/service', 'myservice', 'status']}
       @provider.send(:status)
     end
+  end
+
+  it "(#15797) should use 'on' when calling enable" do
+    provider_class.expects(:chkconfig).with(@resource[:name], :on)
+    @provider.enable
+  end
+
+  it "(#15797) should explicitly turn off the service in all run levels" do
+    provider_class.expects(:chkconfig).with("--level", "0123456", @resource[:name], :off)
+    @provider.disable
   end
 
   it "should have an enabled? method" do

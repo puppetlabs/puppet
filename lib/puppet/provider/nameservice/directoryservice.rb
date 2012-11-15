@@ -1,11 +1,9 @@
 require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
-require 'cgi'
+require 'fileutils'
 
-
-class Puppet::Provider::NameService
-class DirectoryService < Puppet::Provider::NameService
+class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameService
   # JJM: Dive into the singleton_class
   class << self
     # JJM: This allows us to pass information when calling
@@ -21,6 +19,7 @@ class DirectoryService < Puppet::Provider::NameService
   commands :dscl => "/usr/bin/dscl"
   commands :dseditgroup => "/usr/sbin/dseditgroup"
   commands :sw_vers => "/usr/bin/sw_vers"
+  commands :plutil => '/usr/bin/plutil'
   confine :operatingsystem => :darwin
   defaultfor :operatingsystem => :darwin
 
@@ -31,35 +30,36 @@ class DirectoryService < Puppet::Provider::NameService
   # JJM: Note, this is de-coupled from the Puppet::Type, and must
   #     be actively maintained.  There may also be collisions with different
   #     types (Users, Groups, Mounts, Hosts, etc...)
-  @@ds_to_ns_attribute_map = {
-    'RecordName' => :name,
-    'PrimaryGroupID' => :gid,
-    'NFSHomeDirectory' => :home,
-    'UserShell' => :shell,
-    'UniqueID' => :uid,
-    'RealName' => :comment,
-    'Password' => :password,
-    'GeneratedUID' => :guid,
-    'IPAddress'    => :ip_address,
-    'ENetAddress'  => :en_address,
-    'GroupMembership' => :members,
-  }
-  # JJM The same table as above, inverted.
-  @@ns_to_ds_attribute_map = {
-    :name => 'RecordName',
-    :gid => 'PrimaryGroupID',
-    :home => 'NFSHomeDirectory',
-    :shell => 'UserShell',
-    :uid => 'UniqueID',
-    :comment => 'RealName',
-    :password => 'Password',
-    :guid => 'GeneratedUID',
-    :en_address => 'ENetAddress',
-    :ip_address => 'IPAddress',
-    :members => 'GroupMembership',
-  }
+  def ds_to_ns_attribute_map; self.class.ds_to_ns_attribute_map; end
+  def self.ds_to_ns_attribute_map
+    {
+      'RecordName' => :name,
+      'PrimaryGroupID' => :gid,
+      'NFSHomeDirectory' => :home,
+      'UserShell' => :shell,
+      'UniqueID' => :uid,
+      'RealName' => :comment,
+      'Password' => :password,
+      'GeneratedUID' => :guid,
+      'IPAddress'    => :ip_address,
+      'ENetAddress'  => :en_address,
+      'GroupMembership' => :members,
+    }
+  end
 
-  @@password_hash_dir = "/var/db/shadow/hash"
+  # JJM The same table as above, inverted.
+  def ns_to_ds_attribute_map; self.class.ns_to_ds_attribute_map end
+  def self.ns_to_ds_attribute_map
+    @ns_to_ds_attribute_map ||= ds_to_ns_attribute_map.invert
+  end
+
+  def self.password_hash_dir
+    '/var/db/shadow/hash'
+  end
+
+  def self.users_plist_dir
+    '/var/db/dslocal/nodes/Default/users'
+  end
 
   def self.instances
     # JJM Class method that provides an array of instance objects of this
@@ -93,16 +93,9 @@ class DirectoryService < Puppet::Provider::NameService
       # Make sure we've loaded all of the facts
       Facter.loadfacts
 
-      if Facter.value(:macosx_productversion_major)
-        product_version_major = Facter.value(:macosx_productversion_major)
-      else
-        # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-        Puppet.warning("DEPRECATION WARNING: Future versions of the directoryservice provider will require Facter 1.5.5 or newer.")
-        product_version = Facter.value(:macosx_productversion)
-        fail("Could not determine OS X version from Facter") if product_version.nil?
-        product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
-      end
-      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+      product_version_major = Facter.value(:macosx_productversion_major)
+
+      fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
@@ -121,46 +114,6 @@ class DirectoryService < Puppet::Provider::NameService
     dscl_output.split("\n")
   end
 
-  def self.parse_dscl_url_data(dscl_output)
-    # we need to construct a Hash from the dscl -url output to match
-    # that returned by the dscl -plist output for 10.5+ clients.
-    #
-    # Nasty assumptions:
-    #   a) no values *end* in a colon ':', only keys
-    #   b) if a line ends in a colon and the next line does start with
-    #      a space, then the second line is a value of the first.
-    #   c) (implied by (b)) keys don't start with spaces.
-
-    dscl_plist = {}
-    dscl_output.split("\n").inject([]) do |array, line|
-      if line =~ /^\s+/   # it's a value
-        array[-1] << line # add the value to the previous key
-      else
-        array << line
-      end
-      array
-    end.compact
-
-    dscl_output.each do |line|
-      # This should be a 'normal' entry. key and value on one line.
-      # We split on ': ' to deal with keys/values with a colon in them.
-      split_array = line.split(/:\s+/)
-      key = split_array.first
-      value = CGI::unescape(split_array.last.strip.chomp)
-      # We need to treat GroupMembership separately as it is currently
-      # the only attribute we care about multiple values for, and
-      # the values can never contain spaces (shortnames)
-      # We also make every value an array to be consistent with the
-      # output of dscl -plist under 10.5
-      if key == "GroupMembership"
-        dscl_plist[key] = value.split(/\s/)
-      else
-        dscl_plist[key] = [value]
-      end
-    end
-    dscl_plist
-  end
-
   def self.parse_dscl_plist_data(dscl_output)
     Plist.parse_xml(dscl_output)
   end
@@ -169,9 +122,9 @@ class DirectoryService < Puppet::Provider::NameService
     attribute_hash = {}
     input_hash.keys.each do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
-      next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
+      next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
       ds_value = input_hash[key]
-      case @@ds_to_ns_attribute_map[ds_attribute]
+      case ds_to_ns_attribute_map[ds_attribute]
         when :members
           ds_value = ds_value # only members uses arrays so far
         when :gid, :uid
@@ -186,14 +139,14 @@ class DirectoryService < Puppet::Provider::NameService
           end
         else ds_value = ds_value[0]
       end
-      attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value
+      attribute_hash[ds_to_ns_attribute_map[ds_attribute]] = ds_value
     end
 
     # NBK: need to read the existing password here as it's not actually
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
     attribute_hash
   end
 
@@ -217,19 +170,15 @@ class DirectoryService < Puppet::Provider::NameService
       fail("Could not get report.  command execution failed.")
     end
 
-    # Two code paths is ugly, but until we can drop 10.4 support we don't
-    # have a lot of choice. Ultimately this should all be done using Ruby
-    # to access the DirectoryService APIs directly, but that's simply not
-    # feasible for a while yet.
-    if self.get_macosx_version_major > "10.4"
-      dscl_plist = self.parse_dscl_plist_data(dscl_output)
-    elsif self.get_macosx_version_major == "10.4"
-      dscl_plist = self.parse_dscl_url_data(dscl_output)
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    dscl_plist = self.parse_dscl_plist_data(dscl_output)
 
     self.generate_attribute_hash(dscl_plist, *type_properties)
+  end
+
+  def self.fail_if_wrong_version
+    fail("Puppet does not support OS X versions < 10.5") unless self.get_macosx_version_major >= "10.5"
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -240,17 +189,9 @@ class DirectoryService < Puppet::Provider::NameService
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-    # 10.4 doesn't support the -plist option for dscl, and 10.5 has a
-    # different format for the -url output with objects with spaces in
-    # their values. *sigh*. Use -url for 10.4 in the hope this can be
-    # deprecated one day, and use -plist for 10.5 and higher.
-    if self.get_macosx_version_major > "10.4"
-      command_vector = [ command(:dscl), "-plist", "." ]
-    elsif self.get_macosx_version_major == "10.4"
-      command_vector = [ command(:dscl), "-url", "." ]
-    else
-      fail("Puppet does not support OS X versions < 10.4")
-    end
+    # (#11593) Remove support for OS X 10.4 and earlier
+    fail_if_wrong_version
+    command_vector = [ command(:dscl), "-plist", "." ]
 
     # JJM: The actual action to perform.  See "man dscl"
     #      Common actiosn: -create, -delete, -merge, -append, -passwd
@@ -268,46 +209,150 @@ class DirectoryService < Puppet::Provider::NameService
   end
 
   def self.set_password(resource_name, guid, password_hash)
-    password_hash_file = "#{@@password_hash_dir}/#{guid}"
-    begin
-      File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
-    rescue Errno::EACCES => detail
-      fail("Could not write to password hash file: #{detail}")
-    end
+    # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
+    # version '10.10' would be < '10.7' with simple string comparison. This
+    # if-statement only executes if the current version is less-than 10.7
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
+      password_hash_file = "#{password_hash_dir}/#{guid}"
+      begin
+        File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
+      rescue Errno::EACCES => detail
+        fail("Could not write to password hash file: #{detail}")
+      end
 
-    # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
-    # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
-    # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
-    # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
-    # we can do this with the merge command. This allows people to continue to
-    # use other custom AuthenticationAuthority attributes without stomping on them.
-    #
-    # There is a potential problem here in that we're only doing this when setting
-    # the password, and the attribute could get modified at other times while the
-    # hash doesn't change and so this doesn't get called at all... but
-    # without switching all the other attributes to merge instead of create I can't
-    # see a simple enough solution for this that doesn't modify the user record
-    # every single time. This should be a rather rare edge case. (famous last words)
+      # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
+      # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
+      # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
+      # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
+      # we can do this with the merge command. This allows people to continue to
+      # use other custom AuthenticationAuthority attributes without stomping on them.
+      #
+      # There is a potential problem here in that we're only doing this when setting
+      # the password, and the attribute could get modified at other times while the
+      # hash doesn't change and so this doesn't get called at all... but
+      # without switching all the other attributes to merge instead of create I can't
+      # see a simple enough solution for this that doesn't modify the user record
+      # every single time. This should be a rather rare edge case. (famous last words)
 
-    dscl_vector = self.get_exec_preamble("-merge", resource_name)
-    dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
-    begin
-      dscl_output = execute(dscl_vector)
-    rescue Puppet::ExecutionFailure => detail
-      fail("Could not set AuthenticationAuthority.")
+      dscl_vector = self.get_exec_preamble("-merge", resource_name)
+      dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
+      begin
+        dscl_output = execute(dscl_vector)
+      rescue Puppet::ExecutionFailure => detail
+        fail("Could not set AuthenticationAuthority.")
+      end
+    else
+      # 10.7 uses salted SHA512 password hashes which are 128 characters plus
+      # an 8 character salt. Previous versions used a SHA1 hash padded with
+      # zeroes. If someone attempts to use a password hash that worked with
+      # a previous version of OX X, we will fail early and warn them.
+      if password_hash.length != 136
+        fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
+             Please check your password and try again.")
+      end
+
+      if File.exists?("#{users_plist_dir}/#{resource_name}.plist")
+        # If a plist already exists in /var/db/dslocal/nodes/Default/users, then
+        # we will need to extract the binary plist from the 'ShadowHashData'
+        # key, log the new password into the resultant plist's 'SALTED-SHA512'
+        # key, and then save the entire structure back.
+        users_plist = Plist::parse_xml(plutil( '-convert', 'xml1', '-o', '/dev/stdout', \
+                                       "#{users_plist_dir}/#{resource_name}.plist"))
+
+        # users_plist['ShadowHashData'][0].string is actually a binary plist
+        # that's nested INSIDE the user's plist (which itself is a binary
+        # plist). If we encounter a user plist that DOESN'T have a
+        # ShadowHashData field, create one.
+        if users_plist['ShadowHashData']
+          password_hash_plist = users_plist['ShadowHashData'][0].string
+          converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+        else
+          users_plist['ShadowHashData'] = [StringIO.new]
+          converted_hash_plist = {'SALTED-SHA512' => StringIO.new}
+        end
+
+        # converted_hash_plist['SALTED-SHA512'].string expects a Base64 encoded
+        # string. The password_hash provided as a resource attribute is a
+        # hex value. We need to convert the provided hex value to a Base64
+        # encoded string to nest it in the converted hash plist.
+        converted_hash_plist['SALTED-SHA512'].string = \
+          password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
+
+        # Finally, we can convert the nested plist back to binary, embed it
+        # into the user's plist, and convert the resultant plist back to
+        # a binary plist.
+        changed_plist = convert_xml_to_binary(converted_hash_plist)
+        users_plist['ShadowHashData'][0].string = changed_plist
+        Plist::Emit.save_plist(users_plist, "#{users_plist_dir}/#{resource_name}.plist")
+        plutil('-convert', 'binary1', "#{users_plist_dir}/#{resource_name}.plist")
+      end
     end
   end
 
-  def self.get_password(guid)
-    password_hash = nil
-    password_hash_file = "#{@@password_hash_dir}/#{guid}"
-    if File.exists?(password_hash_file) and File.file?(password_hash_file)
-      fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
-      f = File.new(password_hash_file)
-      password_hash = f.read
-      f.close
+  def self.get_password(guid, username)
+    # Use Puppet::Util::Package.versioncmp() to catch the scenario where a
+    # version '10.10' would be < '10.7' with simple string comparison. This
+    # if-statement only executes if the current version is less-than 10.7
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
+      password_hash = nil
+      password_hash_file = "#{password_hash_dir}/#{guid}"
+      if File.exists?(password_hash_file) and File.file?(password_hash_file)
+        fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
+        f = File.new(password_hash_file)
+        password_hash = f.read
+        f.close
+      end
+      password_hash
+    else
+      if File.exists?("#{users_plist_dir}/#{username}.plist")
+        # If a plist exists in /var/db/dslocal/nodes/Default/users, we will
+        # extract the binary plist from the 'ShadowHashData' key, decode the
+        # salted-SHA512 password hash, and then return it.
+        users_plist = Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{username}.plist"))
+        if users_plist['ShadowHashData']
+          # users_plist['ShadowHashData'][0].string is actually a binary plist
+          # that's nested INSIDE the user's plist (which itself is a binary
+          # plist).
+          password_hash_plist = users_plist['ShadowHashData'][0].string
+          converted_hash_plist = convert_binary_to_xml(password_hash_plist)
+
+          # converted_hash_plist['SALTED-SHA512'].string is a Base64 encoded
+          # string. The password_hash provided as a resource attribute is a
+          # hex value. We need to convert the Base64 encoded string to a
+          # hex value and provide it back to Puppet.
+          password_hash = converted_hash_plist['SALTED-SHA512'].string.unpack("H*")[0]
+          password_hash
+        end
+      end
     end
-    password_hash
+  end
+
+  # This method will accept a hash that has been returned from Plist::parse_xml
+  # and convert it to a binary plist (string value).
+  def self.convert_xml_to_binary(plist_data)
+    Puppet.debug('Converting XML plist to binary')
+    Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
+    IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
+      io.write plist_data.to_plist
+      io.close_write
+      @converted_plist = io.read
+    end
+    @converted_plist
+  end
+
+  # This method will accept a binary plist (as a string) and convert it to a
+  # hash via Plist::parse_xml.
+  def self.convert_binary_to_xml(plist_data)
+    Puppet.debug('Converting binary plist to XML')
+    Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
+    IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
+      io.write plist_data
+      io.close_write
+      @converted_plist = io.read
+    end
+    Puppet.debug('Converting XML values to a hash.')
+    @plist_hash = Plist::parse_xml(@converted_plist)
+    @plist_hash
   end
 
   # Unlike most other *nixes, OS X doesn't provide built in functionality
@@ -360,14 +405,14 @@ class DirectoryService < Puppet::Provider::NameService
 
   def password=(passphrase)
     exec_arg_vector = self.class.get_exec_preamble("-read", @resource.name)
-    exec_arg_vector << @@ns_to_ds_attribute_map[:guid]
+    exec_arg_vector << ns_to_ds_attribute_map[:guid]
     begin
       guid_output = execute(exec_arg_vector)
       guid_plist = Plist.parse_xml(guid_output)
       # Although GeneratedUID like all DirectoryService values can be multi-valued
       # according to the schema, in practice user accounts cannot have multiple UUIDs
       # otherwise Bad Things Happen, so we just deal with the first value.
-      guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
+      guid = guid_plist["dsAttrTypeStandard:#{ns_to_ds_attribute_map[:guid]}"][0]
       self.class.set_password(@resource.name, guid, passphrase)
     rescue Puppet::ExecutionFailure => detail
       fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
@@ -393,7 +438,7 @@ class DirectoryService < Puppet::Provider::NameService
       exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
       # JJM: The following line just maps the NS name to the DS name
       #      e.g. { :uid => 'UniqueID' }
-      exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(param)]
+      exec_arg_vector << ns_to_ds_attribute_map[param.intern]
       # JJM: The following line sends the actual value to set the property to
       exec_arg_vector << value.to_s
       begin
@@ -422,7 +467,7 @@ class DirectoryService < Puppet::Provider::NameService
     guid = %x{/usr/bin/uuidgen}.chomp
 
     exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-    exec_arg_vector << @@ns_to_ds_attribute_map[:guid] << guid
+    exec_arg_vector << ns_to_ds_attribute_map[:guid] << guid
     begin
       execute(exec_arg_vector)
     rescue Puppet::ExecutionFailure => detail
@@ -448,7 +493,7 @@ class DirectoryService < Puppet::Provider::NameService
           add_members(nil, value)
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-          exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
+          exec_arg_vector << ns_to_ds_attribute_map[property.intern]
           next if property == :password  # skip setting the password here
           exec_arg_vector << value.to_s
           begin
@@ -468,7 +513,14 @@ class DirectoryService < Puppet::Provider::NameService
         begin
           execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-          fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          # TODO: We're falling back to removing the member using dscl due to rdar://8481241
+          # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
+          cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
+          begin
+            execute(cmd)
+          rescue Puppet::ExecutionFailure => detail
+            fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          end
         end
       end
     end
@@ -534,4 +586,4 @@ class DirectoryService < Puppet::Provider::NameService
     @property_value_cache_hash
   end
 end
-end
+

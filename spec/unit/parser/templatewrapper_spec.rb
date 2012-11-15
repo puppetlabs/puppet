@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/parser/templatewrapper'
 
@@ -7,7 +7,7 @@ describe Puppet::Parser::TemplateWrapper do
     @known_resource_types = Puppet::Resource::TypeCollection.new("env")
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
-    @scope = Puppet::Parser::Scope.new :compiler => @compiler
+    @scope = Puppet::Parser::Scope.new @compiler
 
     @file = "fake_template"
     Puppet::Parser::Files.stubs(:find_template).returns("/tmp/fake_template")

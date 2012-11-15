@@ -22,20 +22,13 @@ class Puppet::Parser::AST
   # The boolean class.  True or false.  Converts the string it receives
   # to a Ruby boolean.
   class Boolean < AST::Leaf
-
-    # Use the parent method, but then convert to a real boolean.
     def initialize(hash)
       super
 
       unless @value == true or @value == false
-        raise Puppet::DevError,
-          "'#{@value}' is not a boolean"
+        raise Puppet::DevError, "'#{@value}' is not a boolean"
       end
       @value
-    end
-
-    def to_s
-      @value ? "true" : "false"
     end
   end
 
@@ -46,7 +39,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      "\"#{@value}\""
+      @value.inspect
     end
   end
 
@@ -57,7 +50,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      "\"#{@value}\""
+      @value.inspect
     end
   end
 
@@ -94,10 +87,10 @@ class Puppet::Parser::AST
       super
 
       # Note that this is an AST::Regex, not a Regexp
-      @value = @value.to_s.downcase unless @value.is_a?(Regex)
-      if @value =~ /[^-\w.]/
-        raise Puppet::DevError,
-          "'#{@value}' is not a valid hostname"
+      unless @value.is_a?(Regex)
+        @value = @value.to_s.downcase
+        @value =~ /[^-\w.]/ and
+          raise Puppet::DevError, "'#{@value}' is not a valid hostname"
       end
     end
 
@@ -111,10 +104,6 @@ class Puppet::Parser::AST
     def hash
       @value.hash
     end
-
-    def to_s
-      @value.to_s
-    end
   end
 
   # A simple variable.  This object is only used during interpolation;
@@ -124,10 +113,10 @@ class Puppet::Parser::AST
     # not include syntactical constructs, like '$' and '{}').
     def evaluate(scope)
       parsewrap do
-        if ! scope.include?(@value)
-          :undef
-        else
+        if scope.include?(@value)
           scope[@value, {:file => file, :line => line}]
+        else
+          :undef
         end
       end
     end
@@ -203,7 +192,7 @@ class Puppet::Parser::AST
     end
 
     def evaluate_match(value, scope, options = {})
-      value = value.is_a?(String) ? value : value.to_s
+      value = value == :undef ? '' : value.to_s
 
       if matched = @value.match(value)
         scope.ephemeral_from(matched, options[:file], options[:line])

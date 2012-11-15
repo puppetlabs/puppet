@@ -15,7 +15,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     File.open(self.file) { |f|
       mount = nil
-      f.each { |line|
+      f.each_line { |line|
         # Have the count increment at the top, in case we throw exceptions.
         @count += 1
 
@@ -99,7 +99,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
       begin
         mount.path = value
       rescue ArgumentError => detail
-        Puppet.err "Removing mount #{mount.name}: #{detail}"
+        Puppet.log_exception(detail, "Removing mount \"#{mount.name}\": #{detail}")
         @mounts.delete(mount.name)
       end
     else

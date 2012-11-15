@@ -16,15 +16,14 @@ class Puppet::Indirector::Request
 
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
-  # Load json before trying to register.
-  Puppet.features.pson? and ::PSON.register_document_type('IndirectorRequest',self)
+  ::PSON.register_document_type('IndirectorRequest',self)
 
   def self.from_pson(json)
     raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
     raise ArgumentError, "No method name provided in json data" unless method = json['method']
     raise ArgumentError, "No key provided in json data" unless key = json['key']
 
-    request = new(indirection_name, method, key, json['attributes'])
+    request = new(indirection_name, method, key, nil, json['attributes'])
 
     if instance = json['instance']
       klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
@@ -99,14 +98,9 @@ class Puppet::Indirector::Request
     ignore_terminus
   end
 
-  def initialize(indirection_name, method, key_or_instance, options_or_instance = {})
-    if options_or_instance.is_a? Hash
-      options = options_or_instance
-      @instance = nil
-    else
-      options  = {}
-      @instance = options_or_instance
-    end
+  def initialize(indirection_name, method, key, instance, options = {})
+    @instance = instance
+    options ||= {}
 
     self.indirection_name = indirection_name
     self.method = method
@@ -116,12 +110,6 @@ class Puppet::Indirector::Request
     set_attributes(options)
 
     @options = options
-
-    if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
-      key = key_or_instance
-    else
-      @instance ||= key_or_instance
-    end
 
     if key
       # If the request key is a URI, then we need to treat it specially,
@@ -206,14 +194,14 @@ class Puppet::Indirector::Request
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file
     # source using a puppet:// URI with a specific server.
-    return yield self if !self.server.nil?
+    return yield(self) if !self.server.nil?
 
     if Puppet.settings[:use_srv_records]
       Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
         begin
           self.server = srv_server
           self.port   = srv_port
-          return yield self
+          return yield(self)
         rescue SystemCallError => e
           Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
         end
@@ -224,7 +212,11 @@ class Puppet::Indirector::Request
     Puppet.debug "No more servers left, falling back to #{default_server}:#{default_port}" if Puppet.settings[:use_srv_records]
     self.server = default_server
     self.port   = default_port
-    return yield self
+    return yield(self)
+  end
+
+  def remote?
+    self.node or self.ip
   end
 
   private

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:freebsd)
@@ -33,6 +33,14 @@ ntpd_enable="YES"
 #   (default: "")
 OUTPUT
     @provider.rcvar.should == ['# ntpd', 'ntpd_enable="YES"', '#   (default: "")']
+  end
+
+  it "should correctly parse rcvar for DragonFly BSD" do
+    @provider.stubs(:execute).returns <<OUTPUT
+# ntpd
+$ntpd=YES
+OUTPUT
+    @provider.rcvar.should == ['# ntpd', 'ntpd=YES']
   end
 
   it "should find the right rcvar_value for FreeBSD < 7" do

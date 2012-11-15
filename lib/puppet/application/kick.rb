@@ -2,8 +2,6 @@ require 'puppet/application'
 
 class Puppet::Application::Kick < Puppet::Application
 
-  should_not_parse_config
-
   attr_accessor :hosts, :tags, :classes
 
   option("--all","-a")
@@ -38,7 +36,7 @@ class Puppet::Application::Kick < Puppet::Application
   end
 
   def help
-    <<-HELP
+    <<-'HELP'
 
 puppet-kick(8) -- Remotely control puppet agent
 ========
@@ -76,16 +74,30 @@ copy things like LDAP settings.
 
 USAGE NOTES
 -----------
-Puppet kick is useless unless puppet agent is listening for incoming
-connections and allowing access to the `run` endpoint. This entails
-starting the agent with `listen = true` in its puppet.conf file, and
-allowing access to the `/run` path in its auth.conf file; see
-`http://docs.puppetlabs.com/guides/rest_auth_conf.html` for more
-details.
+Puppet kick needs the puppet agent on the target machine to be running as a
+daemon, be configured to listen for incoming network connections, and have an
+appropriate security configuration.
 
-Additionally, due to a known bug, you must make sure a
-namespaceauth.conf file exists in puppet agent's $confdir. This file
-will not be consulted, and may be left empty.  
+The specific changes required are:
+
+* Set `listen = true` in the agent's `puppet.conf` file (or `--listen` on the
+  command line)
+* Configure the node's firewall to allow incoming connections on port 8139
+* Insert the following stanza at the top of the node's `auth.conf` file:
+
+        # Allow puppet kick access
+        path    /run
+        method  save
+        auth    any
+        allow   workstation.example.com
+
+This example would allow the machine `workstation.example.com` to trigger a
+Puppet run; adjust the "allow" directive to suit your site. You may also use
+`allow *` to allow anyone to trigger a Puppet run, but that makes it possible
+to interfere with your site by triggering excessive Puppet runs.
+
+See `http://docs.puppetlabs.com/guides/rest_auth_conf.html` for more details
+about security settings.
 
 OPTIONS
 -------
@@ -187,7 +199,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       # do, then do the next host.
       if @children.length < options[:parallel] and ! todo.empty?
         host = todo.shift
-        pid = fork do
+        pid = safe_posix_fork do
           run_for_host(host)
         end
         @children[pid] = host
@@ -248,8 +260,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       result = run.status
       puts "status is #{result}"
     rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Host #{host} failed: #{detail}\n"
+      Puppet.log_exception(detail, "Host #{host} failed: #{detail}\n")
       exit(2)
     end
 
@@ -287,16 +298,17 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    super()
+    raise Puppet::Error.new("Puppet kick is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+    Puppet.warning "Puppet kick is deprecated. See http://links.puppetlabs.com/puppet-kick-deprecation"
+
     if options[:debug]
       Puppet::Util::Log.level = :debug
     else
       Puppet::Util::Log.level = :info
     end
 
-    # Now parse the config
-    Puppet.parse_config
-
-    if Puppet[:node_terminus] == "ldap" and (options[:all] or @classes)
+    if Puppet[:node_terminus] == :ldap and (options[:all] or @classes)
       if options[:all]
         @hosts = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
         puts "all: #{@hosts.join(", ")}"

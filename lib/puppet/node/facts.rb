@@ -15,8 +15,8 @@ class Puppet::Node::Facts
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer
-    def save(instance, key = nil)
-      Puppet::Node.indirection.expire(instance.name)
+    def save(instance, key = nil, options={})
+      Puppet::Node.indirection.expire(instance.name, options)
       super
     end
   end
@@ -28,7 +28,6 @@ class Puppet::Node::Facts
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s
-    values["environment"] ||= Puppet.settings[:environment]
   end
 
   def initialize(name, values = {})
@@ -36,15 +35,6 @@ class Puppet::Node::Facts
     @values = values
 
     add_timestamp
-  end
-
-  def downcase_if_necessary
-    return unless Puppet.settings[:downcasefacts]
-
-    Puppet.warning "DEPRECATION NOTICE: Fact downcasing is deprecated; please disable (20080122)"
-    values.each do |fact, value|
-      values[fact] = value.downcase if value.is_a?(String)
-    end
   end
 
   # Convert all fact values into strings.

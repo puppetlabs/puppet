@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::AST::ResourceOverride do
@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::ResourceOverride do
 
   before :each do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-    @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
+    @scope = Puppet::Parser::Scope.new(@compiler)
     @params = ast::ASTArray.new({})
     @compiler.stubs(:add_override)
   end

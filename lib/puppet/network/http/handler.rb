@@ -2,13 +2,15 @@ module Puppet::Network::HTTP
 end
 
 require 'puppet/network/http/api/v1'
-require 'puppet/network/rest_authorization'
+require 'puppet/network/authorization'
+require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::HTTP::API::V1
-  include Puppet::Network::RestAuthorization
+  include Puppet::Network::Authorization
+  include Puppet::Network::Authentication
 
   attr_reader :server, :handler
 
@@ -64,6 +66,7 @@ module Puppet::Network::HTTP::Handler
     indirection, method, key, params = uri2indirection(http_method(request), path(request), params(request))
 
     check_authorization(indirection, method, key, params)
+    warn_if_near_expiration(client_cert(request))
 
     send("do_#{method}", indirection, key, params, request, response)
   rescue SystemExit,NoMemoryError
@@ -89,8 +92,7 @@ module Puppet::Network::HTTP::Handler
       status = 403 if status == 400
     end
     if exception.is_a?(Exception)
-      puts exception.backtrace if Puppet[:trace]
-      Puppet.err(exception)
+      Puppet.log_exception(exception)
     end
     set_content_type(response, "text/plain")
     set_response(response, exception.to_s, status)
@@ -214,6 +216,11 @@ module Puppet::Network::HTTP::Handler
   end
 
   def params(request)
+    raise NotImplementedError
+  end
+
+  # Retrieve the client certificate from the request if possible
+  def client_cert(request)
     raise NotImplementedError
   end
 

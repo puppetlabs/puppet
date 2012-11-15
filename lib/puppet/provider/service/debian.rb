@@ -33,7 +33,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def enabled?
-    # TODO: Replace system call when Puppet::Util.execute gives us a way
+    # TODO: Replace system call when Puppet::Util::Execution.execute gives us a way
     # to determine exit status.  http://projects.reductivelabs.com/issues/2538
     system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
 
@@ -42,9 +42,23 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     # See x-man-page://invoke-rc.d
     if [104, 106].include?($CHILD_STATUS.exitstatus)
       return :true
+    elsif [105].include?($CHILD_STATUS.exitstatus)
+      # 105 is unknown, which generally means the the iniscript does not support query
+      # The debian policy states that the initscript should support methods of query
+      # For those that do not, peform the checks manually
+      # http://www.debian.org/doc/debian-policy/ch-opersys.html
+      if get_start_link_count >= 4
+        return :true
+      else
+        return :false
+      end
     else
       return :false
     end
+  end
+
+  def get_start_link_count
+    Dir.glob("/etc/rc*.d/S*#{@resource[:name]}").length
   end
 
   def enable

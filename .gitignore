@@ -1,3 +1,14 @@
 .rspec
 results
+tags
 .*.sw[op]
+ext/packaging
+pkg
+test.pp
+# YARD generated documentation
+.yardoc
+doc
+# Now that there is a gemfile, RVM ignores rvmrc in parent directories, so a local one is required
+# to work around that.  Which we don't want committed, so we can ignore it here.
+/.rvmrc
+Gemfile.lock

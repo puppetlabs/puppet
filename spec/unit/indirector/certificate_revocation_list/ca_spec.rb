@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/certificate_revocation_list/ca'
@@ -9,9 +9,8 @@ describe Puppet::SSL::CertificateRevocationList::Ca do
   end
 
   it "should use the :cacrl setting as the crl location" do
-    Puppet.settings.stubs(:value).returns "whatever"
     Puppet.settings.stubs(:use)
-    Puppet.settings.stubs(:value).with(:cacrl).returns "/request/dir"
-    Puppet::SSL::CertificateRevocationList::Ca.new.path("whatever").should == "/request/dir"
+    Puppet[:cacrl] = File.expand_path("/request/dir")
+    Puppet::SSL::CertificateRevocationList::Ca.new.path("whatever").should == Puppet[:cacrl]
   end
 end

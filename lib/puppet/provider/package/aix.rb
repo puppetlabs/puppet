@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     updates = {}
     sources.each do |source|
-      execute(self.srclistcmd(source)).each do |line|
+      execute(self.srclistcmd(source)).each_line do |line|
         if line =~ /^[^#][^:]*:([^:]*):([^:]*)/
           current = {}
           current[:name]    = $1

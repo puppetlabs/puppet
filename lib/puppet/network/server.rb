@@ -1,8 +1,12 @@
 require 'puppet/network/http'
 require 'puppet/util/pidlock'
+require 'puppet/network/http/webrick'
 
 class Puppet::Network::Server
-  attr_reader :server_type, :protocols, :address, :port
+  attr_reader :address, :port
+
+  # TODO: does anything actually call this?  It seems like it's a duplicate of
+  # the code in Puppet::Daemon, but that it's not actually called anywhere.
 
   # Put the daemon into the background.
   def daemonize
@@ -16,32 +20,24 @@ class Puppet::Network::Server
 
     Process.setsid
     Dir.chdir("/")
-    begin
-      $stdin.reopen "/dev/null"
-      $stdout.reopen "/dev/null", "a"
-      $stderr.reopen $stdout
-      Puppet::Util::Log.reopen
-    rescue => detail
-      Puppet::Util.secure_open("/tmp/daemonout", "w") { |f|
-        f.puts "Could not start #{Puppet[:name]}: #{detail}"
-      }
-      raise "Could not start #{Puppet[:name]}: #{detail}"
-    end
+  end
+
+  def close_streams()
+    Puppet::Daemon.close_streams()
   end
 
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
       raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
     end
   end
 
   # Remove the pid file for our daemon.
   def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
-      locker = Puppet::Util::Pidlock.new(pidfile)
-      locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked?
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
+      Puppet::Util::Pidlock.new(pidfile).unlock
     end
   end
 
@@ -50,25 +46,17 @@ class Puppet::Network::Server
     Puppet[:pidfile]
   end
 
-  def initialize(args = {})
-    valid_args = [:handlers, :xmlrpc_handlers, :port]
-    bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
-    raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
-    @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
-    http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
+  def initialize(address, port, handlers = nil)
+    @port = port
+    @address = address
+    @http_server = Puppet::Network::HTTP::WEBrick.new
 
-    @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-    @address = determine_bind_address
-
-    @protocols = [ :rest, :xmlrpc ]
     @listening = false
     @routes = {}
-    @xmlrpc_routes = {}
-    self.register(args[:handlers]) if args[:handlers]
-    self.register_xmlrpc(args[:xmlrpc_handlers]) if args[:xmlrpc_handlers]
+    self.register(handlers) if handlers
 
     # Make sure we have all of the directories we need to function.
-    Puppet.settings.use(:main, :ssl, Puppet[:name])
+    Puppet.settings.use(:main, :ssl, :application)
   end
 
   # Register handlers for REST networking, based on the Indirector.
@@ -94,29 +82,6 @@ class Puppet::Network::Server
     end
   end
 
-  # Register xmlrpc handlers for backward compatibility.
-  def register_xmlrpc(*namespaces)
-    raise ArgumentError, "XMLRPC namespaces are required." if namespaces.empty?
-    namespaces.flatten.each do |name|
-      Puppet::Network::Handler.handler(name) || raise(ArgumentError, "Cannot locate XMLRPC handler for namespace '#{name}'.")
-      @xmlrpc_routes[name.to_sym] = true
-    end
-  end
-
-  # Unregister xmlrpc handlers.
-  def unregister_xmlrpc(*namespaces)
-    raise "Cannot unregister xmlrpc handlers while server is listening." if listening?
-    namespaces = @xmlrpc_routes.keys if namespaces.empty?
-
-    namespaces.flatten.each do |i|
-      raise(ArgumentError, "XMLRPC handler '#{i}' is unknown.") unless @xmlrpc_routes[i.to_sym]
-    end
-
-    namespaces.flatten.each do |i|
-      @xmlrpc_routes.delete(i.to_sym)
-    end
-  end
-
   def listening?
     @listening
   end
@@ -124,42 +89,23 @@ class Puppet::Network::Server
   def listen
     raise "Cannot listen -- already listening." if listening?
     @listening = true
-    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :xmlrpc_handlers => @xmlrpc_routes.keys, :protocols => protocols)
+    @http_server.listen(address, port)
   end
 
   def unlisten
     raise "Cannot unlisten -- not currently listening." unless listening?
-    http_server.unlisten
+    @http_server.unlisten
     @listening = false
-  end
-
-  def http_server_class
-    http_server_class_by_type(@server_type)
   end
 
   def start
     create_pidfile
+    close_streams if Puppet[:daemonize]
     listen
   end
 
   def stop
     unlisten
     remove_pidfile
-  end
-
-  private
-
-  def http_server
-    @http_server ||= http_server_class.new
-  end
-
-  def http_server_class_by_type(kind)
-    Puppet::Network::HTTP.server_class_by_type(kind)
-  end
-
-  def determine_bind_address
-    tmp = Puppet[:bindaddress]
-    return tmp if tmp != ""
-    server_type.to_s == "webrick" ? "0.0.0.0" : "127.0.0.1"
   end
 end

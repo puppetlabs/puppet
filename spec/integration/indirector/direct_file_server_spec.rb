@@ -1,9 +1,9 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_content/file'
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model", :fails_on_windows => true do
+describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model" do
   include PuppetSpec::Files
 
   before do
@@ -14,19 +14,23 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 
   it "should return an instance of the model" do
-    FileTest.expects(:exists?).with(@filepath).returns(true)
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      FileTest.expects(:exists?).with(@filepath).returns(true)
 
-    @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}")).should be_instance_of(Puppet::FileServing::Content)
+      @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}", nil)).should be_instance_of(Puppet::FileServing::Content)
+    end
   end
 
   it "should return an instance capable of returning its content" do
-    FileTest.expects(:exists?).with(@filepath).returns(true)
-    File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
-    File.expects(:read).with(@filepath).returns("my content")
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      FileTest.expects(:exists?).with(@filepath).returns(true)
+      File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
+      IO.expects(:binread).with(@filepath).returns("my content")
 
-    instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}"))
+      instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}", nil))
 
-    instance.content.should == "my content"
+      instance.content.should == "my content"
+    end
   end
 end
 
@@ -41,7 +45,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
     File.open(File.join(path, "one"), "w") { |f| f.print "one content" }
     File.open(File.join(path, "two"), "w") { |f| f.print "two content" }
 
-    @request = @terminus.indirection.request(:search, "file:///#{path}", :recurse => true)
+    @request = @terminus.indirection.request(:search, "file:///#{path}", nil, :recurse => true)
   end
 
   it "should return an instance for every file in the fileset" do

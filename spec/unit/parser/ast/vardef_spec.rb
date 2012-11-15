@@ -1,19 +1,21 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::AST::VarDef do
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   describe "when evaluating" do
 
     it "should evaluate arguments" do
-      name = mock 'name'
-      value = mock 'value'
+      name  = Puppet::Parser::AST::String.new :value => 'name'
+      value = Puppet::Parser::AST::String.new :value => 'value'
 
-      name.expects(:safeevaluate).with(@scope)
-      value.expects(:safeevaluate).with(@scope)
+      name.expects(:safeevaluate).with(@scope).returns('name')
+      value.expects(:safeevaluate).with(@scope).returns('value')
 
       vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil, :line => nil
       vardef.evaluate(@scope)

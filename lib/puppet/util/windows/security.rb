@@ -72,13 +72,15 @@ require 'windows/memory'
 require 'windows/volume'
 
 module Puppet::Util::Windows::Security
-  include Windows::File
-  include Windows::Handle
-  include Windows::Security
-  include Windows::Process
-  include Windows::Memory
-  include Windows::MSVCRT::Buffer
-  include Windows::Volume
+  include ::Windows::File
+  include ::Windows::Handle
+  include ::Windows::Security
+  include ::Windows::Process
+  include ::Windows::Memory
+  include ::Windows::MSVCRT::Buffer
+  include ::Windows::Volume
+
+  include Puppet::Util::Windows::SID
 
   extend Puppet::Util::Windows::Security
 
@@ -369,13 +371,15 @@ module Puppet::Util::Windows::Security
       #puts "ace: nobody #{well_known_nobody_sid}, mask 0x#{nobody_allow.to_s(16)}"
       add_access_allowed_ace(acl, nobody_allow, well_known_nobody_sid)
 
-      # add inheritable aces for child dirs and files that are created within the dir
+      # add inherit-only aces for child dirs and files that are created within the dir
       if isdir
-        inherit = INHERIT_ONLY_ACE | OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE
-
+        inherit = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE
         add_access_allowed_ace(acl, owner_allow, Win32::Security::SID::CreatorOwner, inherit)
         add_access_allowed_ace(acl, group_allow, Win32::Security::SID::CreatorGroup, inherit)
-        add_access_allowed_ace(acl, other_allow, well_known_world_sid, inherit)
+
+        inherit = INHERIT_ONLY_ACE |  OBJECT_INHERIT_ACE
+        add_access_allowed_ace(acl, owner_allow & ~FILE_EXECUTE, Win32::Security::SID::CreatorOwner, inherit)
+        add_access_allowed_ace(acl, group_allow & ~FILE_EXECUTE, Win32::Security::SID::CreatorGroup, inherit)
       end
     end
 
@@ -548,45 +552,6 @@ module Puppet::Util::Windows::Security
       return sid_ptr_to_string(sid.unpack('L')[0])
     ensure
       LocalFree(sd.unpack('L')[0])
-    end
-  end
-
-  # Convert a SID pointer to a string, e.g. "S-1-5-32-544".
-  def sid_ptr_to_string(psid)
-    sid_buf = 0.chr * 256
-    str_ptr = 0.chr * 4
-
-    raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(psid)
-
-    raise Puppet::Util::Windows::Error.new("Failed to convert binary SID") unless ConvertSidToStringSid(psid, str_ptr)
-
-    begin
-      strncpy(sid_buf, str_ptr.unpack('L')[0], sid_buf.size - 1)
-      sid_buf[sid_buf.size - 1] = 0.chr
-      return sid_buf.strip
-    ensure
-      LocalFree(str_ptr.unpack('L')[0])
-    end
-  end
-
-  # Convert a SID string, e.g. "S-1-5-32-544" to a pointer (containing the
-  # address of the binary SID structure). The returned value can be used in
-  # Win32 APIs that expect a PSID, e.g. IsValidSid.
-  def string_to_sid_ptr(string)
-    sid_buf = 0.chr * 80
-    string_addr = [string].pack('p*').unpack('L')[0]
-
-    raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string}") unless ConvertStringSidToSid(string_addr, sid_buf)
-
-    sid_ptr = sid_buf.unpack('L')[0]
-    begin
-      if block_given?
-        yield sid_ptr
-      else
-        true
-      end
-    ensure
-      LocalFree(sid_ptr)
     end
   end
 

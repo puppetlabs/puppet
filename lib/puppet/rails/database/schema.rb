@@ -1,10 +1,13 @@
+require 'stringio'
+
 class Puppet::Rails::Schema
   def self.init
     oldout = nil
+    text = ''
     Puppet::Util.benchmark(Puppet, :notice, "Initialized database") do
       # We want to rewrite stdout, so we don't get migration messages.
       oldout = $stdout
-      $stdout = File.open("/dev/null", "w")
+      $stdout = StringIO.new(text, 'w')
       ActiveRecord::Schema.define do
         create_table :resources do |t|
           t.column :title, :text, :null => false
@@ -113,7 +116,7 @@ class Puppet::Rails::Schema
 
         add_index :inventory_nodes, :name, :unique => true
 
-        create_table :inventory_facts, :id => false do |t|
+        create_table :inventory_facts do |t|
           t.column :node_id, :integer, :null => false
           t.column :name, :string, :null => false
           t.column :value, :text, :null => false
@@ -122,10 +125,12 @@ class Puppet::Rails::Schema
         add_index :inventory_facts, [:node_id, :name], :unique => true
       end
     end
+  rescue Exception => e
+    $stderr.puts e
+    $stderr.puts "The output from running the code was:", text
+    raise e
   ensure
-    $stdout.close
     $stdout = oldout if oldout
-    oldout = nil
   end
 end
 

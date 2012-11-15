@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/master'
@@ -23,10 +23,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
   it "should operate in master run_mode" do
     @master.class.run_mode.name.should equal(:master)
-  end
-
-  it "should ask Puppet::Application to parse Puppet configuration file" do
-    @master.should_parse_config?.should be_true
   end
 
   it "should declare a main command" do
@@ -103,6 +99,17 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       @master.parse_options
     end
+
+    it "should support dns alt names from ARGV" do
+      Puppet.settings.initialize_global_settings(["--dns_alt_names", "foo,bar,baz"])
+
+      @master.preinit
+      @master.parse_options
+
+      Puppet[:dns_alt_names].should == "foo,bar,baz"
+    end
+
+
   end
 
   describe "during setup" do
@@ -173,12 +180,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       @master.setup
     end
 
-    it "should cache class in yaml" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
-
-      @master.setup
-    end
-
     describe "with no ca" do
 
       it "should set the ca_location to none" do
@@ -238,16 +239,9 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
     describe "the compile command" do
       before do
-        Puppet.stubs(:[]).with(:environment)
-        Puppet.stubs(:[]).with(:manifest).returns("site.pp")
+        Puppet[:manifest] = "site.pp"
         Puppet.stubs(:err)
         @master.stubs(:jj)
-        Puppet.features.stubs(:pson?).returns true
-      end
-
-      it "should fail if pson isn't available" do
-        Puppet.features.expects(:pson?).returns false
-        lambda { @master.compile }.should raise_error
       end
 
       it "should compile a catalog for the specified node" do
@@ -295,7 +289,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         Puppet::SSL::CertificateAuthority.stubs(:ca?)
         Process.stubs(:uid).returns(1000)
         Puppet.stubs(:service)
-        Puppet.stubs(:[])
+        Puppet[:daemonize] = false
         Puppet.stubs(:notice)
         Puppet.stubs(:start)
       end
@@ -308,19 +302,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       it "should give the server to the daemon" do
         @daemon.expects(:server=).with(@server)
-
-        @master.main
-      end
-
-      it "should create the server with the right XMLRPC handlers" do
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Status, :FileServer, :Master, :Report, :Filebucket]}
-
-        @master.main
-      end
-
-      it "should create the server with a :ca xmlrpc handler if needed" do
-        Puppet.stubs(:[]).with(:ca).returns(true)
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers].include?(:CA) }
 
         @master.main
       end
@@ -348,7 +329,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       end
 
       it "should daemonize if needed" do
-        Puppet.stubs(:[]).with(:daemonize).returns(true)
+        Puppet[:daemonize] = true
 
         @daemon.expects(:daemonize)
 
@@ -365,17 +346,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         before do
           require 'puppet/network/http/rack'
           Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
-        end
-
-        it "it should create the app with REST and XMLRPC support" do
-          @master.options.stubs(:[]).with(:rack).returns(:true)
-
-          Puppet::Network::HTTP::Rack.expects(:new).with { |args|
-            args[:xmlrpc_handlers] == [:Status, :FileServer, :Master, :Report, :Filebucket] and
-            args[:protocols] == [:rest, :xmlrpc]
-          }
-
-          @master.main
         end
 
         it "it should not start a daemon" do

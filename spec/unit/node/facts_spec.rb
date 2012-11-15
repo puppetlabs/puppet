@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/node/facts'
@@ -24,44 +24,15 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["clientversion"].should == Puppet.version.to_s
   end
 
-  it "should add the current environment as a fact if one is not set when adding local facts" do
+  it "should not add the current environment" do
     @facts.add_local_facts
-    @facts.values["environment"].should == Puppet[:environment]
+    @facts.values.should_not include("environment")
   end
 
   it "should not replace any existing environment fact when adding local facts" do
     @facts.values["environment"] = "foo"
     @facts.add_local_facts
     @facts.values["environment"].should == "foo"
-  end
-
-  it "should be able to downcase fact values" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
-
-    @facts.values["one"] = "Two"
-
-    @facts.downcase_if_necessary
-    @facts.values["one"].should == "two"
-  end
-
-  it "should only try to downcase strings" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns true
-
-    @facts.values["now"] = Time.now
-
-    @facts.downcase_if_necessary
-    @facts.values["now"].should be_instance_of(Time)
-  end
-
-  it "should not downcase facts if not configured to do so" do
-    Puppet.settings.stubs(:value).returns "eh"
-    Puppet.settings.expects(:value).with(:downcasefacts).returns false
-
-    @facts.values["one"] = "Two"
-    @facts.downcase_if_necessary
-    @facts.values["one"].should == "Two"
   end
 
   describe "when indirecting" do

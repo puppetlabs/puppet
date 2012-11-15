@@ -1,0 +1,10 @@
+bash-3.1.17         GNU Bourne Again Shell
+bzip2-1.0.3         block-sorting file compressor, unencumbered
+expat-2.0.0         XML 1.0 parser written in C
+gettext-0.14.5p1    GNU gettext
+libiconv-1.9.2p3    character set conversion library
+lzo-1.08p1          portable speedy lossless data compression library
+openvpn-2.0.6       easy-to-use, robust, and highly configurable VPN
+python-2.4.3p0      interpreted object-oriented programming language
+vim-7.0.42-no_x11   vi clone, many additional features
+wget-1.10.2p0       retrieve files from the web via HTTP, HTTPS and FTP

@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the sprintf function" do
@@ -7,15 +7,17 @@ describe "the sprintf function" do
   end
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    node     = Puppet::Node.new('localhost')
+    compiler = Puppet::Parser::Compiler.new(node)
+    @scope   = Puppet::Parser::Scope.new(compiler)
   end
 
   it "should exist" do
     Puppet::Parser::Functions.function("sprintf").should == "function_sprintf"
   end
 
-  it "should raise a ParseError if there is less than 1 argument" do
-    lambda { @scope.function_sprintf([]) }.should( raise_error(Puppet::ParseError))
+  it "should raise a ArgumentError if there is less than 1 argument" do
+    lambda { @scope.function_sprintf([]) }.should( raise_error(ArgumentError))
   end
 
   it "should format integers" do
