@@ -262,7 +262,8 @@ class String
           # to ASCII-8BIT for Ruby 1.9 to match up encodings.
           (self.to_ascii8bit=~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/n) or
           (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
-          (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
+          (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/) or
+          (self =~ /^\d{4}-\d{2}-\d{2}$/)
           )
           z.emit("\"#{escaped_for_zaml}\"")
         when self =~ /\n/
