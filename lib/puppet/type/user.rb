@@ -33,6 +33,10 @@ module Puppet
       "The provider can set age requirements and restrictions for
       passwords."
 
+    feature :manages_password_salt,
+      "The provider can set a password salt. This is for providers that
+       implement PBKDF2 passwords with salt properties."
+
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
 
@@ -520,7 +524,7 @@ module Puppet
       defaultto :minimum
     end
 
-    newproperty(:salt) do
+    newproperty(:salt, :required_features => :manages_password_salt) do
       desc "This is the 32 byte salt used to generate the PBKDF2 password used in
             OS X"
     end
