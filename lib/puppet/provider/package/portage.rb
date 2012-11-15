@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :LASTVERSION => version_format do
-        search_output = eix *(self.eix_search_arguments.push+search_format)
+        search_output = eix *(self.eix_search_arguments + [search_format,"--installed"])
       end
 
       packages = []
