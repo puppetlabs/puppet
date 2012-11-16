@@ -509,4 +509,21 @@ describe Puppet::Util do
         should == "C:/work/puppet/c.rb:12:in `foo'"
     end
   end
+
+  describe "#execute" do
+    let(:command) { 'mycommand' }
+
+    it "should pass arguments through" do
+      arguments = 'myarg'
+      Puppet::Util::Execution.expects(:execute).with(command, arguments)
+
+      subject.execute(command, arguments)
+    end
+
+    it "should not supply default arguments" do
+      Puppet::Util::Execution.expects(:execute).with(command)
+
+      subject.execute(command)
+    end
+  end
 end

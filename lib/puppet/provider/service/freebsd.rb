@@ -16,7 +16,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   # Executing an init script with the 'rcvar' argument returns
   # the service name, rcvar name and whether it's enabled/disabled
   def rcvar
-    rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
+    rcvar = execute([self.initscript, :rcvar], :failonfail => true, :combine => false, :squelch => false)
     rcvar = rcvar.split("\n")
     rcvar.delete_if {|str| str =~ /^#\s*$/}
     rcvar[1] = rcvar[1].gsub(/^\$/, '')

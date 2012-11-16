@@ -8,7 +8,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
   let (:packagecode) { '{5A6FD560-763A-4BC1-9E03-B18DFFB7C72C}' }
   let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :msi, :source => source) }
   let (:provider)    { resource.provider }
-  let (:execute_options) do {:combine => true} end
+  let (:execute_options) do {:failonfail => false, :combine => true} end
 
   def installer(productcodes)
     installer = mock
