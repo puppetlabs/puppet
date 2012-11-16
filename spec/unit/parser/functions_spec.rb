@@ -64,6 +64,44 @@ describe Puppet::Parser::Functions do
     end
   end
 
+  describe "when calling function to test arity" do
+    before :each do
+      Puppet::Node::Environment.stubs(:current).returns(nil)
+      @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      @scope = Puppet::Parser::Scope.new(@compiler)
+    end
+
+    it "should raise an error if the function is called with too many arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
+      lambda { @scope.function_name([1,2,3]) }.should raise_error ArgumentError
+    end
+
+    it "should raise an error if the function is called with too few arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
+      lambda { @scope.function_name([1]) }.should raise_error ArgumentError
+    end
+
+    it "should not raise an error if the function is called with correct number of arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
+      lambda { @scope.function_name([1,2]) }.should_not raise_error ArgumentError
+    end
+
+    it "should raise an error if the variable arg function is called with too few arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
+      lambda { @scope.function_name([1]) }.should raise_error ArgumentError
+    end
+
+    it "should not raise an error if the variable arg function is called with correct number of arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
+      lambda { @scope.function_name([1,2]) }.should_not raise_error ArgumentError
+    end
+
+    it "should not raise an error if the variable arg function is called with more number of arguments" do
+      Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
+      lambda { @scope.function_name([1,2,3]) }.should_not raise_error ArgumentError
+    end
+  end
+
   describe "::get_function" do
     it "can retrieve a function defined on the *root* environment" do
       Thread.current[:environment] = nil

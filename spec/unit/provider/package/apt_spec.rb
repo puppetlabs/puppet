@@ -76,8 +76,6 @@ Version table:
     @provider.run_preseed
   end
 
-  it "should fail if a cdrom is listed in the sources list and :allowcdrom is not specified"
-
   describe "when installing" do
     it "should preseed if a responsefile is provided" do
       @resource.expects(:[]).with(:responsefile).returns "/my/file"

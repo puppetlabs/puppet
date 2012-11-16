@@ -24,7 +24,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util::Diff
   include Puppet::Util::Package
 
-  confine :true => Puppet.features.augeas?
+  confine :feature => :augeas
 
   has_features :parse_commands, :need_to_run?,:execute_changes
 

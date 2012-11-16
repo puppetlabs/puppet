@@ -1282,12 +1282,6 @@ describe Puppet::Settings do
       @settings.use(:main, :other)
     end
 
-    it "should ignore tags and schedules when creating files and directories"
-
-    it "should be able to provide all of its parameters in a format compatible with GetOpt::Long" do
-      pending "Not converted from test/unit yet"
-    end
-
     it "should convert the created catalog to a RAL catalog" do
       @catalog = Puppet::Resource::Catalog.new("foo")
       @settings.expects(:to_catalog).with(:main).returns @catalog
@@ -1403,8 +1397,6 @@ describe Puppet::Settings do
           @settings.print_configs
         end
 
-        it "should print a whole bunch of stuff if :configprint = all"
-
         it "should return true after printing" do
           @settings.stubs(:value).with(:configprint).returns("something")
           @settings.stubs(:include?).with("something").returns(true)
@@ -1487,8 +1479,6 @@ describe Puppet::Settings do
 
       settings.should be_service_user_available
     end
-
-    it "should cache the result"
   end
 
   describe "#writesub" do
@@ -1538,6 +1528,22 @@ describe Puppet::Settings do
 
     it "should transform boolean option to no- form" do
       Puppet::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
+    end
+
+    it "should set preferred run mode from --run_mode <foo> string without error" do
+      args = ["--run_mode", "master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
+    end
+
+    it "should set preferred run mode from --run_mode=<foo> string without error" do
+      args = ["--run_mode=master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
     end
   end
 

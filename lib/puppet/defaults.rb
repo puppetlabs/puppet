@@ -1474,14 +1474,27 @@ database from within the Puppet Master process."
     }
   )
 
-  # This doesn't actually work right now.
-
   define_settings(:parser,
     :templatedir => {
         :default  => "$vardir/templates",
         :type     => :directory,
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
       directories.",
+    },
+
+    :allow_variables_with_dashes => {
+      :default => false,
+      :desc    => <<-'EOT'
+Permit hyphens (`-`) in variable names and issue deprecation warnings about
+them. This setting **should always be `false`;** setting it to `true`
+will cause subtle and wide-ranging bugs. It will be removed in a future version.
+
+Hyphenated variables caused major problems in the language, but were allowed
+between Puppet 2.7.3 and 2.7.14. If you used them during this window, we
+apologize for the inconvenience --- you can temporarily set this to `true`
+in order to upgrade, and can rename your variables at your leisure. Please
+revert it to `false` after you have renamed all affected variables.
+EOT
     }
   )
   define_settings(:puppetdoc,

@@ -11,7 +11,8 @@ class Puppet::Run
   attr_reader :status, :background, :options
 
   def agent
-    Puppet::Agent.new(Puppet::Configurer)
+    # Forking disabled for "puppet kick" runs
+    Puppet::Agent.new(Puppet::Configurer, false)
   end
 
   def background?

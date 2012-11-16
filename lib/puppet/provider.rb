@@ -164,7 +164,7 @@ class Puppet::Provider
         @confiner.confine :exists => @path, :for_binary => true
       end
 
-      Puppet::Provider::Command.new(@name, @path, Puppet::Util, Puppet::Util::Execution, { :custom_environment => @custom_environment })
+      Puppet::Provider::Command.new(@name, @path, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
     end
   end
 

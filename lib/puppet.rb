@@ -9,6 +9,9 @@ require 'puppet/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
+require 'puppet/external/pson/common'
+require 'puppet/external/pson/version'
+require 'puppet/external/pson/pure'
 
 #------------------------------------------------------------
 # the top-level module

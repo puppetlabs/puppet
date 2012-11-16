@@ -313,9 +313,11 @@ module Puppet
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
       desc <<-'EOT'
-        A file that this command creates.  If this
-        parameter is provided, then the command will only be run
-        if the specified file does not exist.
+        A file to look for before running the command. The command will
+        only run if the file **doesn't exist.**
+
+        This parameter doesn't cause Puppet to create a file; it is only
+        useful if **the command itself** creates a file.
 
             exec { "tar -xf /Volumes/nfs02/important.tar":
               cwd     => "/var/tmp",
@@ -323,8 +325,11 @@ module Puppet
               path    => ["/usr/bin", "/usr/sbin"]
             }
 
-        In this example, if `/var/tmp/myfile` is ever deleted, the exec
-        will bring it back by re-extracting the tarball.
+        In this example, `myfile` is assumed to be a file inside
+        `important.tar`. If it is ever deleted, the exec will bring it
+        back by re-extracting the tarball. If `important.tar` does **not**
+        actually contain `myfile`, the exec will keep running every time
+        Puppet runs.
       EOT
 
       accept_arrays

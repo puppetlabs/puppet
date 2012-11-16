@@ -64,7 +64,6 @@ Puppet::Type.type(:package).provide :pip,
   def install
     args = %w{install -q}
     if @resource[:source]
-      args << "-e"
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
           @resource[:name]}"

@@ -52,18 +52,17 @@ module Util::Execution
   end
 
 
-
   # Execute the desired command, and return the status and output.
   # def execute(command, options)
   # [command] an Array or String representing the command to execute. If it is
   #   an Array the first element should be the executable and the rest of the
   #   elements should be the individual arguments to that executable.
   # [options] a Hash optionally containing any of the following keys:
-  #   :failonfail (default true) -- if this value is set to true, then this method will raise an error if the
+  #   :failonfail (see below) -- if this value is set to true, then this method will raise an error if the
   #      command is not executed successfully.
   #   :uid (default nil) -- the user id of the user that the process should be run as
   #   :gid (default nil) -- the group id of the group that the process should be run as
-  #   :combine (default true) -- sets whether or not to combine stdout/stderr in the output
+  #   :combine (see below) -- sets whether or not to combine stdout/stderr in the output
   #   :stdinfile (default nil) -- sets a file that can be used for stdin. Passing a string for stdin is not currently
   #      supported.
   #   :squelch (default false) -- if true, ignore stdout / stderr completely
@@ -73,14 +72,22 @@ module Util::Execution
   #     Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
   #     of the command
-  def self.execute(command, options = {})
+  #
+  # Unfortunately, the default behavior for failonfail and combine (since
+  # 0.22.4 and 0.24.7, respectively) depend on whether options are specified
+  # or not. If specified, then failonfail and combine default to false (even
+  # when the options specified are neither failonfail nor combine). If no
+  # options are specified, then failonfail and combine default to true. See
+  # commits efe9a833c and d32d7f30
+  NoOptionsSpecified = {}
+  def self.execute(command, options = NoOptionsSpecified)
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
-        :failonfail => true,
+        :failonfail => NoOptionsSpecified.equal?(options),
         :uid => nil,
         :gid => nil,
-        :combine => true,
+        :combine => NoOptionsSpecified.equal?(options),
         :stdinfile => nil,
         :squelch => false,
         :override_locale => true,

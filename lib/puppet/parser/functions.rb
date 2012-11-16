@@ -40,12 +40,80 @@ module Puppet::Parser::Functions
     }
   end
 
-  # Create a new function type.
+  ##
+  # {newfunction} creates a new Puppet DSL function.
+  #
+  # **The {newfunction} method provides a public API.**
+  #
+  # @api public_api
+  #
+  # This method is used both internally inside of Puppet to define parser
+  # functions.  For example, template() is defined in
+  # {file:lib/puppet/parser/functions/template.rb template.rb} using the
+  # {newfunction} method.  Third party Puppet modules such as
+  # [stdlib](https://forge.puppetlabs.com/puppetlabs/stdlib) use this method to
+  # extend the behavior and functionality of Puppet.
+  #
+  # See also [Docs: Custom
+  # Functions](http://docs.puppetlabs.com/guides/custom_functions.html)
+  #
+  # @example Define a new Puppet DSL Function
+  #     >> Puppet::Parser::Functions.newfunction(:double, :arity => 1,
+  #          :doc => "Doubles an object, typically a number or string.",
+  #          :type => :rvalue) {|i| i[0]*2 }
+  #     => {:arity=>1, :type=>:rvalue,
+  #         :name=>"function_double",
+  #         :doc=>"Doubles an object, typically a number or string."}
+  #
+  # @example Invoke the double function from irb as is done in RSpec examples:
+  #     >> scope = Puppet::Parser::Scope.new_for_test_harness('example')
+  #     => Scope()
+  #     >> scope.function_double([2])
+  #     => 4
+  #     >> scope.function_double([4])
+  #     => 8
+  #     >> scope.function_double([])
+  #     ArgumentError: double(): Wrong number of arguments given (0 for 1)
+  #     >> scope.function_double([4,8])
+  #     ArgumentError: double(): Wrong number of arguments given (2 for 1)
+  #     >> scope.function_double(["hello"])
+  #     => "hellohello"
+  #
+  # @param [Symbol] name the name of the function represented as a ruby Symbol.
+  #   The {newfunction} method will define a Ruby method based on this name on
+  #   the parser scope instance.
+  #
+  # @param [Proc] block the block provided to the {newfunction} method will be
+  #   executed when the Puppet DSL function is evaluated during catalog
+  #   compilation.  The arguments to the function will be passed as an array to
+  #   the first argument of the block.  The return value of the block will be
+  #   the return value of the Puppet DSL function for `:rvalue` functions.
+  #
+  # @option options [:rvalue, :statement] :type (:statement) the type of function.
+  #   Either `:rvalue` for functions that return a value, or `:statement` for
+  #   functions that do not return a value.
+  #
+  # @option options [String] :doc ('') the documentation for the function.
+  #   This string will be extracted by documentation generation tools.
+  #
+  # @option options [Integer] :arity (-1) the
+  #   [arity](http://en.wikipedia.org/wiki/Arity) of the function.  When
+  #   specified as a positive integer the function is expected to receive
+  #   _exactly_ the specified number of arguments.  When specified as a
+  #   negative number, the function is expected to receive _at least_ the
+  #   absolute value of the specified number of arguments incremented by one.
+  #   For example, a function with an arity of `-4` is expected to receive at
+  #   minimum 3 arguments.  A function with the default arity of `-1` accepts
+  #   zero or more arguments.  A function with an arity of 2 must be provided
+  #   with exactly two arguments, no more and no less.  Added in Puppet 3.1.0.
+  #
+  # @return [Hash] describing the function.
   def self.newfunction(name, options = {}, &block)
     name = name.intern
 
     Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name)
 
+    arity = options[:arity] || -1
     ftype = options[:type] || :statement
 
     unless ftype == :statement or ftype == :rvalue
@@ -60,15 +128,18 @@ module Puppet::Parser::Functions
     fname = "function_#{name}"
     environment_module.send(:define_method, fname) do |*args|
       if args[0].is_a? Array
+        if arity >= 0 and args[0].size != arity
+          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
+        elsif arity < 0 and args[0].size < (arity+1).abs
+          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
+        end
         self.send(real_fname, args[0])
       else
         raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
       end
     end
 
-    # Someday we'll support specifying an arity, but for now, nope
-    #functions[name] = {:arity => arity, :type => ftype}
-    func = {:type => ftype, :name => fname}
+    func = {:arity => arity, :type => ftype, :name => fname}
     func[:doc] = options[:doc] if options[:doc]
 
     add_function(name, func)
@@ -139,6 +210,11 @@ module Puppet::Parser::Functions
         @functions[Environment.current][name] = func
       }
     end
+  end
+
+  # Return the arity of a function
+  def self.arity(name)
+    (functions[symbolize(name)] || {})[:arity] || -1
   end
 
   reset  # initialize the class instance variables

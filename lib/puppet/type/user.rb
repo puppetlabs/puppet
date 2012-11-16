@@ -33,6 +33,10 @@ module Puppet
       "The provider can set age requirements and restrictions for
       passwords."
 
+    feature :manages_password_salt,
+      "The provider can set a password salt. This is for providers that
+       implement PBKDF2 passwords with salt properties."
+
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
 
@@ -295,7 +299,8 @@ module Puppet
 
     newparam(:managehome, :boolean => true) do
       desc "Whether to manage the home directory when managing the user.
-        Defaults to `false`."
+        This will create the home directory when `ensure => present`, and
+        delete the home directory when `ensure => absent`. Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -519,6 +524,23 @@ module Puppet
       defaultto :minimum
     end
 
+    newproperty(:salt, :required_features => :manages_password_salt) do
+      desc "This is the 32 byte salt used to generate the PBKDF2 password used in
+            OS X"
+    end
 
+    newproperty(:iterations, :required_features => :manages_password_salt) do
+      desc "This is the number of iterations of a chained computation of the
+            password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
+            is used in OS X"
+
+      munge do |value|
+        if value.is_a?(String) and value =~/^[-0-9]+$/
+          Integer(value)
+        else
+          value
+        end
+      end
+    end
   end
 end
