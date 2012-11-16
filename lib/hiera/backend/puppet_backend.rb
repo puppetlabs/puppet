@@ -95,8 +95,6 @@ class Hiera
           end
         end
 
-        answer = nil if answer == :undefined
-
         answer
       end
     end
