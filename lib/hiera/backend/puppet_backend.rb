@@ -1,3 +1,5 @@
+require 'hiera/backend'
+
 class Hiera
   module Backend
     class Puppet_backend
