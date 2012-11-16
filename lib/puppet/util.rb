@@ -530,9 +530,10 @@ module Util
   end
   module_function :execfail
 
-  def execute(command, arguments = {})
+  def execute(*args)
     Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
-    Puppet::Util::Execution.execute(command, arguments)
+
+    Puppet::Util::Execution.execute(*args)
   end
   module_function :execute
 

@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     cmd = [command(:pkginfo), '-l']
     cmd << '-d' << device if device
     cmd << @resource[:name]
-    pkgs = self.class.parse_pkginfo(execute(cmd, :failonfail => false))
+    pkgs = self.class.parse_pkginfo(execute(cmd, :failonfail => false, :combine => false))
     errmsg = case pkgs.size
              when 0; 'No message'
              when 1; pkgs[0]['ERROR']

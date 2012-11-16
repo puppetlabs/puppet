@@ -13,7 +13,7 @@ module Puppet::Util::Diff
       command << args
     end
     command << old << new
-    Puppet::Util::Execution.execute(command, :failonfail => false)
+    Puppet::Util::Execution.execute(command, :failonfail => false, :combine => false)
   end
 
   module_function :diff
