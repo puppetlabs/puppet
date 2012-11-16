@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'hiera/backend/puppet_backend'
-
+require 'hiera/scope'
 
 describe Hiera::Backend::Puppet_backend do
   before do
@@ -94,6 +94,20 @@ describe Hiera::Backend::Puppet_backend do
       @backend.lookup("key", @scope, "override", nil).should == "rspec"
     end
 
+    it "should consider a value of false to be a real value" do
+      expected_answer = false
+
+      Hiera::Backend.expects(:parse_answer).with(expected_answer, @scope).returns(expected_answer)
+      catalog = mock
+      catalog.expects(:classes).returns(["rspec", "override"])
+      @mockscope.expects(:catalog).returns(catalog)
+      @mockscope.expects(:lookupvar).with("override::key").returns(expected_answer)
+      @mockscope.expects(:lookupvar).with("rspec::key").never
+      @backend.expects(:hierarchy).with(@scope, "override").returns(["override", "rspec"])
+
+      @backend.lookup("key", @scope, "override", nil).should == expected_answer
+    end
+
     it "should return an array of found data for array searches" do
       Hiera::Backend.expects(:parse_answer).with("rspec::key", @scope).returns("rspec::key")
       Hiera::Backend.expects(:parse_answer).with("test::key", @scope).returns("test::key")
@@ -107,7 +121,6 @@ describe Hiera::Backend::Puppet_backend do
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
       @backend.lookup("key", @scope, nil, :array).should == ["rspec::key", "test::key"]
     end
-
 
     it "should return a hash of found data for hash searches" do
       Hiera::Backend.expects(:parse_answer).with("rspec::key", @scope).returns({'rspec'=>'key'})
