@@ -18,7 +18,6 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     result_fields = self.eix_result_fields
 
     version_format = self.eix_version_format
-    search_format  = self.eix_search_format
 
     begin
       eix_file = File.directory?("/var/cache/eix") ? "/var/cache/eix/portage.eix" : "/var/cache/eix"
@@ -26,7 +25,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :LASTVERSION => version_format do
-        search_output = eix *(self.eix_search_arguments + [search_format,"--installed"])
+        search_output = eix *(self.eix_search_arguments + ["--installed"])
       end
 
       packages = []
@@ -77,8 +76,6 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     result_fields = self.class.eix_result_fields
 
     version_format = self.class.eix_version_format
-    search_format  = self.class.eix_search_format
-
 
     search_field = package_name.count('/') > 0 ? "--category-name" : "--name"
     search_value = package_name
@@ -90,7 +87,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       search_output = nil
 
       Puppet::Util.withenv :LASTVERSION => version_format do
-        search_output = eix *(self.class.eix_search_arguments + [search_format,"--exact",search_field,search_value])
+        search_output = eix *(self.class.eix_search_arguments + ["--exact",search_field,search_value])
       end
 
       packages = []
@@ -117,6 +114,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
           raise Puppet::Error.new("More than one package with the specified name [#{search_value}], please use the category parameter to disambiguate")
       end
     rescue Puppet::ExecutionFailure => detail
+
       raise Puppet::Error.new(detail)
     end
   end
@@ -144,6 +142,6 @@ private
   end
 
   def self.eix_search_arguments
-    ["--nocolor", "--pure-packages", "--installed", "--format"]
+    ["--nocolor", "--pure-packages", "--exact", "--format",self.eix_search_format]
   end
 end
