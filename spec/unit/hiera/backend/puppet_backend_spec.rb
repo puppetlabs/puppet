@@ -3,6 +3,7 @@ require 'hiera/backend/puppet_backend'
 require 'hiera/scope'
 
 describe Hiera::Backend::Puppet_backend do
+
   before do
     Hiera.stubs(:warn)
     Hiera.stubs(:debug)
@@ -22,33 +23,24 @@ describe Hiera::Backend::Puppet_backend do
 
   describe "#hierarchy" do
     it "should use the configured datasource" do
-      Hiera::Config.expects("[]").with(:puppet).returns({:datasource => "rspec"})
-      Hiera::Config.expects("[]").with(:hierarchy)
-
-      ["ntp", "ntp::config"].each do |klass|
-        Hiera::Backend.expects(:parse_string).with(klass, @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns(klass)
-      end
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => nil)
 
       @backend.hierarchy(@scope, nil).should == ["rspec::ntp::config", "rspec::ntp", "ntp::config::rspec", "ntp::rspec"]
     end
 
     it "should not include empty class names" do
-      Hiera::Config.expects("[]").with(:puppet).returns({:datasource => "rspec"})
-      Hiera::Config.expects("[]").with(:hierarchy).returns(["%{foo}", "common"])
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => ["%{foo}", "common"])
 
-      Hiera::Backend.expects(:parse_string).with("common", @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns("common")
-      Hiera::Backend.expects(:parse_string).with("%{foo}", @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns("")
+      @mockscope.expects(:lookupvar).with("foo").returns(nil)
 
       @backend.hierarchy(@scope, nil).should == ["rspec::common", "ntp::config::rspec", "ntp::rspec"]
     end
 
     it "should allow for an override data source" do
-      Hiera::Config.expects("[]").with(:puppet).returns({:datasource => "rspec"})
-      Hiera::Config.expects("[]").with(:hierarchy)
-
-      ["ntp", "ntp::config"].each do |klass|
-        Hiera::Backend.expects(:parse_string).with(klass, @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns(klass)
-      end
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => nil)
 
       @backend.hierarchy(@scope, "override").should == ["rspec::override", "rspec::ntp::config", "rspec::ntp", "ntp::config::rspec", "ntp::rspec"]
     end
@@ -56,61 +48,61 @@ describe Hiera::Backend::Puppet_backend do
 
   describe "#lookup" do
     it "should attempt to load data from unincluded classes" do
-      Hiera::Backend.expects(:parse_answer).with("rspec", @scope).returns("rspec")
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => ["rspec"])
 
       catalog = mock
       catalog.expects(:classes).returns([])
 
-      @scope.expects(:catalog).returns(catalog)
-      @scope.expects(:function_include).with(["rspec"])
-      @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec")
+      @mockscope.expects(:catalog).returns(catalog)
+      @mockscope.expects(:function_include).with(["rspec::rspec"])
+      @mockscope.expects(:lookupvar).with("rspec::rspec::key").returns("rspec")
 
-      @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec"])
       @backend.lookup("key", @scope, nil, nil).should == "rspec"
     end
 
     it "should not load loaded classes" do
-      Hiera::Backend.expects(:parse_answer).with("rspec", @scope).returns("rspec")
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => ["rspec"])
+
       catalog = mock
-      catalog.expects(:classes).returns(["rspec"])
+      catalog.expects(:classes).returns(["rspec::rspec"])
       @mockscope.expects(:catalog).returns(catalog)
       @mockscope.expects(:function_include).never
-      @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec")
+      @mockscope.expects(:lookupvar).with("rspec::rspec::key").returns("rspec")
 
-      @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec"])
       @backend.lookup("key", @scope, nil, nil).should == "rspec"
     end
 
     it "should return the first found data" do
-      Hiera::Backend.expects(:parse_answer).with("rspec", @scope).returns("rspec")
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => ["override", "rspec"])
+
       catalog = mock
-      catalog.expects(:classes).returns(["rspec", "override"])
+      catalog.expects(:classes).returns(["rspec::override", "override::override"])
       @mockscope.expects(:catalog).returns(catalog)
       @mockscope.expects(:function_include).never
-      @mockscope.expects(:lookupvar).with("override::key").returns("rspec")
-      @mockscope.expects(:lookupvar).with("rspec::key").never
+      @mockscope.expects(:lookupvar).with("rspec::override::key").returns("rspec")
+      @mockscope.expects(:lookupvar).with("rspec::rspec::key").never
 
-      @backend.expects(:hierarchy).with(@scope, "override").returns(["override", "rspec"])
       @backend.lookup("key", @scope, "override", nil).should == "rspec"
     end
 
     it "should consider a value of false to be a real value" do
+      with_config(:puppet => {:datasource => "rspec"},
+                  :hierarchy => ["override", "rspec"])
       expected_answer = false
 
-      Hiera::Backend.expects(:parse_answer).with(expected_answer, @scope).returns(expected_answer)
       catalog = mock
-      catalog.expects(:classes).returns(["rspec", "override"])
+      catalog.expects(:classes).returns(["rspec::override", "override::override"])
       @mockscope.expects(:catalog).returns(catalog)
-      @mockscope.expects(:lookupvar).with("override::key").returns(expected_answer)
-      @mockscope.expects(:lookupvar).with("rspec::key").never
-      @backend.expects(:hierarchy).with(@scope, "override").returns(["override", "rspec"])
+      @mockscope.expects(:lookupvar).with("rspec::override::key").returns(expected_answer)
+      @mockscope.expects(:lookupvar).with("rspec::rspec::key").never
 
       @backend.lookup("key", @scope, "override", nil).should == expected_answer
     end
 
     it "should return an array of found data for array searches" do
-      Hiera::Backend.expects(:parse_answer).with("rspec::key", @scope).returns("rspec::key")
-      Hiera::Backend.expects(:parse_answer).with("test::key", @scope).returns("test::key")
       catalog = mock
       catalog.expects(:classes).returns(["rspec", "test"])
       @mockscope.expects(:catalog).returns(catalog)
@@ -123,31 +115,33 @@ describe Hiera::Backend::Puppet_backend do
     end
 
     it "should return a hash of found data for hash searches" do
-      Hiera::Backend.expects(:parse_answer).with("rspec::key", @scope).returns({'rspec'=>'key'})
-      Hiera::Backend.expects(:parse_answer).with("test::key", @scope).returns({'test'=>'key'})
       catalog = mock
       catalog.expects(:classes).returns(["rspec", "test"])
       @mockscope.expects(:catalog).returns(catalog)
       @mockscope.expects(:function_include).never
-      @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec::key")
-      @mockscope.expects(:lookupvar).with("test::key").returns("test::key")
+      @mockscope.expects(:lookupvar).with("rspec::key").returns({'rspec'=>'key'})
+      @mockscope.expects(:lookupvar).with("test::key").returns({'test'=>'key'})
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
       @backend.lookup("key", @scope, nil, :hash).should == {'rspec'=>'key', 'test'=>'key'}
     end
 
     it "should return a merged hash of found data for hash searches" do
-      Hiera::Backend.expects(:parse_answer).with("rspec::key", @scope).returns({'rspec'=>'key', 'common'=>'rspec'})
-      Hiera::Backend.expects(:parse_answer).with("test::key", @scope).returns({'test'=>'key', 'common'=>'rspec'})
       catalog = mock
       catalog.expects(:classes).returns(["rspec", "test"])
       @mockscope.expects(:catalog).returns(catalog)
       @mockscope.expects(:function_include).never
-      @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec::key")
-      @mockscope.expects(:lookupvar).with("test::key").returns("test::key")
+      @mockscope.expects(:lookupvar).with("rspec::key").returns({'rspec'=>'key', 'common'=>'rspec'})
+      @mockscope.expects(:lookupvar).with("test::key").returns({'test'=>'key', 'common'=>'rspec'})
 
       @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
       @backend.lookup("key", @scope, nil, :hash).should == {'rspec'=>'key', 'common'=>'rspec', 'test'=>'key'}
+    end
+  end
+
+  def with_config(config)
+    config.each do |key, value|
+      Hiera::Config.expects("[]").with(key).returns(value)
     end
   end
 end
