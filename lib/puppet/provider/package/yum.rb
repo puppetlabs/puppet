@@ -133,7 +133,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     installed_versions = self.current_versions
     latest_version = self.latest_installed_version(installed_versions)
     raise Puppet::Error, "Could not find package #{self.name}" unless installed_versions
-    if (should && installed_versions.member?({:name => @resource[:name],:version => should}))
+    if (should && installed_versions.member?({:name => @resource[:name],:version => should})) || (['present','installed','latest'].member?(@resource[:ensure].to_s))
       # We have what we came for, good to go
       return
     else
