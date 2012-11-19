@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def query
-    result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :combine => false))
+    result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :failonfail => false, :combine => false))
     return {} if result.nil?
     return result
   end
@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     # We need both the version and the revision to be confident
     # we've got the latest revision of a specific version
     # Note we're still not doing anything with variants here.
-    info_line = execute([command(:port), "-q", :info, "--line", "--version", "--revision", @resource[:name]], :combine => false)
+    info_line = execute([command(:port), "-q", :info, "--line", "--version", "--revision", @resource[:name]], :failonfail => false, :combine => false)
     return nil if info_line == ""
 
     if newest = self.class.parse_info_query_line(info_line)
