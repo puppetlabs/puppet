@@ -10,6 +10,7 @@ if not defined? ::Bundler
 end
 
 require 'puppet'
+require 'puppet/util'
 require "puppet/util/plugins"
 require "puppet/util/rubygems"
 
@@ -102,7 +103,6 @@ module Puppet
       def execute_external_subcommand
         external_command = "puppet-#{subcommand_name}"
 
-        require 'puppet/util'
         path_to_subcommand = Puppet::Util.which(external_command)
         return false unless path_to_subcommand
 
