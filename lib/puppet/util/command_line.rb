@@ -67,7 +67,7 @@ module Puppet
       def execute
         # Build up our settings - we don't need that until after version check.
         Puppet::Util.exit_on_fail("intialize global default settings") do
-          Puppet.settings.initialize_global_settings(args)
+          Puppet.initialize_settings(args)
         end
 
         # OK, now that we've processed the command line options and the config
