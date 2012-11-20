@@ -63,22 +63,19 @@ module Puppet
           Puppet.initialize_settings(args)
         end
 
-        if subcommand_name and available_subcommands.include?(subcommand_name) then
-          app = Puppet::Application.find(subcommand_name).new(self)
-          Puppet::Plugins.on_application_initialization(:application_object => self)
+        if subcommand_name
+          if available_subcommands.include?(subcommand_name) then
+            app = Puppet::Application.find(subcommand_name).new(self)
+            Puppet::Plugins.on_application_initialization(:application_object => self)
 
-          app.run
-        elsif ! execute_external_subcommand then
-          unless subcommand_name.nil? then
+            app.run
+          elsif ! execute_external_subcommand then
             puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
           end
-
-          # If the user is just checking the version, print that and exit
-          if @argv.include? "--version" or @argv.include? "-V"
-            puts Puppet.version
-          else
-            puts "See 'puppet help' for help on available puppet subcommands"
-          end
+        elsif @argv.include? "--version" or @argv.include? "-V"
+          puts Puppet.version
+        else
+          puts "See 'puppet help' for help on available puppet subcommands"
         end
       end
 
