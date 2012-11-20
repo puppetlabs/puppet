@@ -30,10 +30,6 @@ module Puppet
       attr :subcommand_name
       attr :args
 
-      def appdir
-        File.join('puppet', 'application')
-      end
-
       def self.available_subcommands
         # Eventually we probably want to replace this with a call to the
         # autoloader.  however, at the moment the autoloader considers the
@@ -58,10 +54,6 @@ module Puppet
         self.class.available_subcommands
       end
 
-      def require_application(application)
-        require File.join(appdir, application)
-      end
-
       # This is the main entry point for all puppet applications / faces; it
       # is basically where the bootstrapping process / lifecycle of an app
       # begins.
@@ -77,7 +69,6 @@ module Puppet
         # applications / subcommands / faces.
 
         if subcommand_name and available_subcommands.include?(subcommand_name) then
-          require_application subcommand_name
           # This will need to be cleaned up to do something that is not so
           #  application-specific (i.e.. so that we can load faces).
           #  Longer-term, use the autoloader.  See comments in
