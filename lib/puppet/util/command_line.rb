@@ -46,6 +46,7 @@ module Puppet
           commands + Dir[File.join(dir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
         end.uniq
       end
+
       # available_subcommands was previously an instance method, not a class
       # method, and we have an unknown number of user-implemented applications
       # that depend on that behaviour.  Forwarding allows us to preserve a
@@ -58,21 +59,11 @@ module Puppet
       # is basically where the bootstrapping process / lifecycle of an app
       # begins.
       def execute
-        # Build up our settings - we don't need that until after version check.
         Puppet::Util.exit_on_fail("intialize global default settings") do
           Puppet.initialize_settings(args)
         end
 
-        # OK, now that we've processed the command line options and the config
-        # files, we should be able to say that we definitively know where the
-        # libdir is... which means that we can now look for our available
-        # applications / subcommands / faces.
-
         if subcommand_name and available_subcommands.include?(subcommand_name) then
-          # This will need to be cleaned up to do something that is not so
-          #  application-specific (i.e.. so that we can load faces).
-          #  Longer-term, use the autoloader.  See comments in
-          #  #available_subcommands method above.  --cprice 2012-03-06
           app = Puppet::Application.find(subcommand_name).new(self)
           Puppet::Plugins.on_application_initialization(:application_object => self)
 
