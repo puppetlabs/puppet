@@ -19,11 +19,7 @@ module Puppet
     class CommandLine
 
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
-        @zero  = zero
-        @argv  = argv.dup
-        @stdin = stdin
-
-        @subcommand_name, @args = subcommand_and_args(@zero, @argv, @stdin)
+        @subcommand_name, @args = subcommand_and_args(zero, argv)
         Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
@@ -65,7 +61,7 @@ module Puppet
 
         if subcommand = find_subcommand
           subcommand.run
-        elsif @argv.include? "--version" or @argv.include? "-V"
+        elsif args.include? "--version" or args.include? "-V"
           puts Puppet.version
         else
           puts "See 'puppet help' for help on available puppet subcommands"
@@ -90,7 +86,7 @@ module Puppet
         end
       end
 
-      def subcommand_and_args(zero, argv, stdin)
+      def subcommand_and_args(zero, argv)
         zero = File.basename(zero, '.rb')
 
         if zero == 'puppet'
