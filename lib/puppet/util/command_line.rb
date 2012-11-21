@@ -17,6 +17,7 @@ require "puppet/util/rubygems"
 module Puppet
   module Util
     class CommandLine
+      OPTION_OR_MANIFEST_FILE = /^-|\.pp$|\.rb$/
 
       # @param [String] the name of the executable
       # @param [Array<String>] the arguments passed on the command line
@@ -93,14 +94,10 @@ module Puppet
         zero = File.basename(zero, '.rb')
 
         if zero == 'puppet'
-          case argv.first
-            # if they didn't pass a command, or passed a help flag, we will
-            # fall back to showing a usage message.  we no longer default to
-            # 'apply'
-            when nil, "--help", "-h", /^-|\.pp$|\.rb$/
-              [nil, argv]
-            else
-              [argv.first, argv[1..-1]]
+          if argv.empty? or argv.first =~ OPTION_OR_MANIFEST_FILE
+            [nil, argv]
+          else
+            [argv.first, argv[1..-1]]
           end
         else
           [zero, argv]
