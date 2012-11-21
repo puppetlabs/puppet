@@ -23,12 +23,34 @@ module Puppet
       # @param [Array<String>] the arguments passed on the command line
       # @param [IO] (unused)
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
-        @subcommand_name, @args = subcommand_and_args(zero, argv)
+        @command = File.basename(zero, '.rb')
+        @argv = argv
         Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
-      attr :subcommand_name
-      attr :args
+      # @return [String] name of the subcommand is being executed
+      # @api public
+      def subcommand_name
+        return @command if @command != 'puppet'
+
+        if @argv.first =~ OPTION_OR_MANIFEST_FILE
+          nil
+        else
+          @argv.first
+        end
+      end
+
+      # @return [Array<String>] the command line arguments being passed to the subcommand
+      # @api public
+      def args
+        return @argv if @command != 'puppet'
+
+        if subcommand_name.nil?
+          @argv
+        else
+          @argv[1..-1]
+        end
+      end
 
       def self.available_subcommands
         # Eventually we probably want to replace this with a call to the
@@ -87,20 +109,6 @@ module Puppet
           ExternalSubcommand.new(path_to_subcommand, self)
         else
           UnknownSubcommand.new(subcommand_name)
-        end
-      end
-
-      def subcommand_and_args(zero, argv)
-        zero = File.basename(zero, '.rb')
-
-        if zero == 'puppet'
-          if argv.empty? or argv.first =~ OPTION_OR_MANIFEST_FILE
-            [nil, argv]
-          else
-            [argv.first, argv[1..-1]]
-          end
-        else
-          [zero, argv]
         end
       end
 
