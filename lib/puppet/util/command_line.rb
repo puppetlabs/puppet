@@ -63,15 +63,8 @@ module Puppet
           Puppet.initialize_settings(args)
         end
 
-        if subcommand_name
-          if available_subcommands.include?(subcommand_name) then
-            app = Puppet::Application.find(subcommand_name).new(self)
-            Puppet::Plugins.on_application_initialization(:application_object => self)
-
-            app.run
-          elsif ! execute_external_subcommand then
-            puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
-          end
+        if subcommand = find_subcommand
+          subcommand.run
         elsif @argv.include? "--version" or @argv.include? "-V"
           puts Puppet.version
         else
@@ -79,16 +72,23 @@ module Puppet
         end
       end
 
-      def execute_external_subcommand
-        external_command = "puppet-#{subcommand_name}"
-
-        path_to_subcommand = Puppet::Util.which(external_command)
-        return false unless path_to_subcommand
-
-        exec(path_to_subcommand, *args)
+      def external_subcommand
+        Puppet::Util.which("puppet-#{subcommand_name}")
       end
 
       private
+
+      def find_subcommand
+        if subcommand_name.nil?
+          nil
+        elsif available_subcommands.include?(subcommand_name) then
+          ApplicationSubcommand.new(subcommand_name, self)
+        elsif path_to_subcommand = external_subcommand then
+          ExternalSubcommand.new(path_to_subcommand, self)
+        else
+          UnknownSubcommand.new(subcommand_name)
+        end
+      end
 
       def subcommand_and_args(zero, argv, stdin)
         zero = File.basename(zero, '.rb')
@@ -108,6 +108,40 @@ module Puppet
         end
       end
 
+      class ApplicationSubcommand
+        def initialize(subcommand_name, command_line)
+          @subcommand_name = subcommand_name
+          @command_line = command_line
+        end
+
+        def run
+          app = Puppet::Application.find(@subcommand_name).new(@command_line)
+          Puppet::Plugins.on_application_initialization(:application_object => @command_line)
+
+          app.run
+        end
+      end
+
+      class ExternalSubcommand
+        def initialize(path_to_subcommand, command_line)
+          @path_to_subcommand = path_to_subcommand
+          @command_line = command_line
+        end
+
+        def run
+          Kernel.exec(@path_to_subcommand, *@command_line.args)
+        end
+      end
+
+      class UnknownSubcommand
+        def initialize(subcommand_name)
+          @subcommand_name = subcommand_name
+        end
+
+        def run
+          puts "Error: Unknown Puppet subcommand '#{@subcommand_name}'"
+        end
+      end
     end
   end
 end

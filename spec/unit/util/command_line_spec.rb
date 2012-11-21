@@ -89,17 +89,9 @@ describe Puppet::Util::CommandLine do
         Puppet::Util.expects(:which).with('puppet-whatever').
           returns('/dev/null/puppet-whatever')
 
-        # It is important that we abort at the point exec is called, because
-        # the code (reasonably) assumes that if `exec` is called processing
-        # immediately terminates, and we are replaced by the executed process.
-        #
-        # This raise isn't a perfect simulation of that, but it is enough to
-        # validate that the system works, and ... well, if exec is broken we
-        # have two problems, y'know.
-        commandline.expects(:exec).with('/dev/null/puppet-whatever', 'argument').
-          raises(SystemExit)
+        Kernel.expects(:exec).with('/dev/null/puppet-whatever', 'argument')
 
-        expect { commandline.execute }.to raise_error SystemExit
+        commandline.execute
       end
 
       describe "and an external implementation cannot be found" do
