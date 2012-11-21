@@ -122,6 +122,7 @@ class Application
   include Puppet::Util
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
+  CommandLineArgs = Struct.new(:subcommand_name, :args)
 
 
   class << self
@@ -325,12 +326,9 @@ class Application
   def preinit
   end
 
-  def initialize(command_line = nil)
-
-    require 'puppet/util/command_line'
-    @command_line = command_line || Puppet::Util::CommandLine.new
+  def initialize(command_line = Puppet::Util::CommandLine.new)
+    @command_line = CommandLineArgs.new(command_line.subcommand_name, command_line.args)
     @options = {}
-
   end
 
   # Execute the application.
