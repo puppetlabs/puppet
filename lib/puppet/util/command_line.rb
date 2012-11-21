@@ -18,6 +18,9 @@ module Puppet
   module Util
     class CommandLine
 
+      # @param [String] the name of the executable
+      # @param [Array<String>] the arguments passed on the command line
+      # @param [IO] (unused)
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @subcommand_name, @args = subcommand_and_args(zero, argv)
         Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
