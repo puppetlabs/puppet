@@ -16,12 +16,15 @@ require "puppet/util/rubygems"
 
 module Puppet
   module Util
+    # This is the main entry point for all puppet applications / faces; it
+    # is basically where the bootstrapping process / lifecycle of an app
+    # begins.
     class CommandLine
       OPTION_OR_MANIFEST_FILE = /^-|\.pp$|\.rb$/
 
-      # @param [String] the name of the executable
-      # @param [Array<String>] the arguments passed on the command line
-      # @param [IO] (unused)
+      # @param zero [String] the name of the executable
+      # @param argv [Array<String>] the arguments passed on the command line
+      # @param stdin [IO] (unused)
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @command = File.basename(zero, '.rb')
         @argv = argv
@@ -52,6 +55,7 @@ module Puppet
         end
       end
 
+      # @api private
       def self.available_subcommands
         # Eventually we probably want to replace this with a call to the
         # autoloader.  however, at the moment the autoloader considers the
@@ -73,13 +77,16 @@ module Puppet
       # method, and we have an unknown number of user-implemented applications
       # that depend on that behaviour.  Forwarding allows us to preserve a
       # backward compatible API. --daniel 2011-04-11
+      # @api private
       def available_subcommands
         self.class.available_subcommands
       end
 
-      # This is the main entry point for all puppet applications / faces; it
-      # is basically where the bootstrapping process / lifecycle of an app
-      # begins.
+      # Run the puppet subcommand. If the subcommand is determined to be an
+      # external executable, this method will never return and the current
+      # process will be replaced via {Kernel#exec}.
+      #
+      # @return [void]
       def execute
         Puppet::Util.exit_on_fail("intialize global default settings") do
           Puppet.initialize_settings(args)
@@ -94,6 +101,7 @@ module Puppet
         end
       end
 
+      # @api private
       def external_subcommand
         Puppet::Util.which("puppet-#{subcommand_name}")
       end
@@ -112,6 +120,7 @@ module Puppet
         end
       end
 
+      # @api private
       class ApplicationSubcommand
         def initialize(subcommand_name, command_line)
           @subcommand_name = subcommand_name
@@ -126,6 +135,7 @@ module Puppet
         end
       end
 
+      # @api private
       class ExternalSubcommand
         def initialize(path_to_subcommand, command_line)
           @path_to_subcommand = path_to_subcommand
@@ -137,6 +147,7 @@ module Puppet
         end
       end
 
+      # @api private
       class UnknownSubcommand
         def initialize(subcommand_name)
           @subcommand_name = subcommand_name

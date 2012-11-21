@@ -219,6 +219,16 @@ class Application
       @option_parser_commands
     end
 
+    # Finds the class for a given application and loads the class. This does
+    # not create an instance of the application, it only gets a handle to the
+    # class. The code for the application is expected to live in a ruby file
+    # `puppet/application/#{name}.rb` that is available on the `$LOAD_PATH`.
+    #
+    # @param file_name [String] the name of the application to find (eg. "apply").
+    # @return [Class] the Class instance of the application that was found.
+    # @raise [Puppet::Error] if the application class was not found.
+    # @raise [LoadError] if there was a problem loading the application file.
+    # @api public
     def find(file_name)
       # This should probably be using the autoloader, but due to concerns about the fact that
       #  the autoloader currently considers the modulepath when looking for things to load,
@@ -323,7 +333,9 @@ class Application
 
   end
 
-  # This is the main application entry point
+  # Execute the application.
+  # @api public
+  # @return [void]
   def run
 
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
