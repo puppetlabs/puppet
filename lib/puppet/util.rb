@@ -185,6 +185,13 @@ module Util
     end
   end
 
+  # Resolve a path for an executable to the absolute path. This tries to behave
+  # in the same manner as the unix `which` command and uses the `PATH`
+  # environment variable.
+  #
+  # @api public
+  # @param bin [String] the name of the executable to find.
+  # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
@@ -489,6 +496,7 @@ module Util
   # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
   #  exit if the block throws an exception.
   #
+  # @api public
   # @param [String] message a message to log if the block fails
   # @param [Integer] code the exit code that the ruby interpreter should return if the block fails
   # @yield
