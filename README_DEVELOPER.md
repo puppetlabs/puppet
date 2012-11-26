@@ -434,4 +434,18 @@ checksum representing the content.  When managing an out of sync file resource,
 the real contents should be fetched from the server instead of the
 clientbucket.
 
+Package Maintainers
+=====
+
+Software Version API
+-----
+
+Please see the public API regarding the software version as described in
+`lib/puppet/version.rb`.  Puppet provides the means to easily specify the exact
+version of the software packaged using the VERSION file, for example:
+
+    $ git describe --match "3.0.*" > lib/puppet/VERSION
+    $ ruby -r puppet/version -e 'puts Puppet.version'
+    3.0.1-260-g9ca4e54
+
 EOF
