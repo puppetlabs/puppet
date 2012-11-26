@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
 private
   def self.eix_search_format
-    "<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>\n"
+    "'<category> <name> [<installedversions:LASTVERSION>] [<bestversion:LASTVERSION>] <homepage> <description>'"
   end
 
   def self.eix_result_format
@@ -142,6 +142,6 @@ private
   end
 
   def self.eix_search_arguments
-    ["--nocolor", "--pure-packages", "--exact", "--format",self.eix_search_format]
+    ["--nocolor", "--pure-packages", "--format",self.eix_search_format]
   end
 end

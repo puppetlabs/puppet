@@ -39,8 +39,11 @@ describe provider do
     @provider.query
   end
 
-  it "eix arguments do not include --stable" do
+  it "eix arguments must not include --stable" do
     @provider.class.eix_search_arguments.should_not include("--stable")
+  end
+  it "eix arguments must not include --exact" do
+    @provider.class.eix_search_arguments.should_not include("--exact")
   end
 
   it "query uses default arguments" do
