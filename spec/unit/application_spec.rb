@@ -103,19 +103,6 @@ describe Puppet::Application do
     end
   end
 
-
-  it "it should not allow initialize_app_defaults to be called multiple times" do
-    app = Puppet::Application.new
-    expect {
-      app.initialize_app_defaults
-    }.to_not raise_error
-
-    expect {
-      app.initialize_app_defaults
-    }.to raise_error
-  end
-
-
   it "should explode when an invalid run mode is set at runtime, for great victory" do
     expect {
       class InvalidRunModeTestApp < Puppet::Application

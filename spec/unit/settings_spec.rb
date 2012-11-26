@@ -85,14 +85,6 @@ describe Puppet::Settings do
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
     end
 
-    it "should fail if someone attempts to initialize app defaults more than once" do
-      @settings.initialize_app_defaults(default_values)
-
-      expect {
-        @settings.initialize_app_defaults(default_values)
-      }.to raise_error(Puppet::DevError)
-    end
-
     it "should fail if the app defaults hash is missing any required values" do
       incomplete_default_values = default_values.reject { |key, _| key == :confdir }
       expect {
