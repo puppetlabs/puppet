@@ -70,7 +70,7 @@ describe Puppet::Util::CommandLine do
       it "should print the version and exit if #{arg} is given" do
         expect do
           described_class.new("puppet", [arg]).execute
-        end.to have_printed(Puppet.version)
+        end.to have_printed(/^#{Puppet.version}$/)
       end
     end
   end
@@ -102,8 +102,31 @@ describe Puppet::Util::CommandLine do
             commandline.execute
           }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
         end
+
+        it "should abort and show the help message" do
+          commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'])
+          Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+          commandline.expects(:exec).never
+
+          expect {
+            commandline.execute
+          }.to have_printed(/See 'puppet help' for help on available puppet subcommands/)
+        end
+
+        %w{--version -V}.each do |arg|
+          it "should abort and display #{arg} information" do
+            commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', arg])
+            Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
+            commandline.expects(:exec).never
+
+            expect {
+              commandline.execute
+            }.to have_printed(/^#{Puppet.version}$/)
+          end
+        end
       end
     end
+
     describe 'when loading commands' do
       let :core_apps do
         %w{describe filebucket kick queue resource agent cert apply doc master}
