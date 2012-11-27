@@ -195,8 +195,15 @@ module Puppet
 
     newparam(:name) do
       desc "The mount path for the mount."
-
       isnamevar
+      # if name contains symlink munge method returns real path
+      munge do |value|
+        if File.exist? value
+          Pathname(value).realpath.to_s
+        else
+          value
+        end
+      end
     end
 
     newparam(:remounts) do
