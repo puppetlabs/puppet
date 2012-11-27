@@ -92,13 +92,7 @@ module Puppet
           Puppet.initialize_settings(args)
         end
 
-        if subcommand = find_subcommand
-          subcommand.run
-        elsif args.include? "--version" or args.include? "-V"
-          puts Puppet.version
-        else
-          puts "See 'puppet help' for help on available puppet subcommands"
-        end
+        find_subcommand.run
       end
 
       # @api private
@@ -110,13 +104,13 @@ module Puppet
 
       def find_subcommand
         if subcommand_name.nil?
-          nil
+          NilSubcommand.new(self)
         elsif available_subcommands.include?(subcommand_name) then
           ApplicationSubcommand.new(subcommand_name, self)
         elsif path_to_subcommand = external_subcommand then
           ExternalSubcommand.new(path_to_subcommand, self)
         else
-          UnknownSubcommand.new(subcommand_name)
+          UnknownSubcommand.new(subcommand_name, self)
         end
       end
 
@@ -148,13 +142,30 @@ module Puppet
       end
 
       # @api private
-      class UnknownSubcommand
-        def initialize(subcommand_name)
+      class NilSubcommand
+        def initialize(command_line)
+          @command_line = command_line
+        end
+
+        def run
+          if @command_line.args.include? "--version" or @command_line.args.include? "-V"
+            puts Puppet.version
+          else
+            puts "See 'puppet help' for help on available puppet subcommands"
+          end
+        end
+      end
+
+      # @api private
+      class UnknownSubcommand < NilSubcommand
+        def initialize(subcommand_name, command_line)
           @subcommand_name = subcommand_name
+          super(command_line)
         end
 
         def run
           puts "Error: Unknown Puppet subcommand '#{@subcommand_name}'"
+          super
         end
       end
     end
