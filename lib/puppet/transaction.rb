@@ -151,7 +151,7 @@ class Puppet::Transaction
     begin
       made = resource.eval_generate.uniq
       return false if made.empty?
-      made = made.inject({}) {|a,v| a.merge(v.name => v) }
+      made = made.inject({}) {|a,v| a[v.name] = v; a}
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
