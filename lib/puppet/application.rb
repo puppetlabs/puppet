@@ -1,4 +1,5 @@
 require 'optparse'
+require 'puppet/util/command_line'
 require 'puppet/util/plugins'
 require 'puppet/util/constant_inflector'
 require 'puppet/error'
@@ -123,7 +124,6 @@ class Application
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
   CommandLineArgs = Struct.new(:subcommand_name, :args)
-
 
   class << self
     include Puppet::Util
@@ -327,7 +327,7 @@ class Application
   end
 
   def initialize(command_line = Puppet::Util::CommandLine.new)
-    @command_line = CommandLineArgs.new(command_line.subcommand_name, command_line.args)
+    @command_line = CommandLineArgs.new(command_line.subcommand_name, command_line.args.dup)
     @options = {}
   end
 

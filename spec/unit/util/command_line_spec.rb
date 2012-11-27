@@ -56,6 +56,13 @@ describe Puppet::Util::CommandLine do
       command_line.subcommand_name.should == nil
       command_line.args.should            == []
     end
+
+    it "should pick up changes to the array of arguments" do
+      args = %w{subcommand}
+      command_line = Puppet::Util::CommandLine.new("puppet", args)
+      args[0] = 'different_subcommand'
+      command_line.subcommand_name.should == 'different_subcommand'
+    end
   end
 
   context "#execute" do

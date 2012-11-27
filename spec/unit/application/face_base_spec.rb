@@ -162,12 +162,18 @@ describe Puppet::Application::FaceBase do
 
     it "does not skip when a puppet global setting is given as one item" do
       app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     it "does not skip when a puppet global setting is given as two items" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     { "boolean options before" => %w{--trace foo},
