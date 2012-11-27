@@ -138,7 +138,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     ################################
     # Get Password/Salt/Iterations #
     ################################
-    if (Puppet::Util::Package.versioncmp(Facter.value(:macosx_productversion_major), '10.7') == -1)
+    if (Puppet::Util::Package.versioncmp(get_os_version, '10.7') == -1)
       attribute_hash[:password] = get_sha1(attribute_hash[:guid])
     else
       if attribute_hash[:shadowhashdata].empty?
@@ -156,6 +156,10 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
 
     attribute_hash
+  end
+
+  def self.get_os_version
+    @os_version ||= Facter.value(:macosx_productversion_major)
   end
 
   def self.get_list_of_groups
@@ -355,10 +359,10 @@ Puppet::Type.type(:user).provide :directoryservice do
     # password hash, and serializing it back to disk. The problems with THIS
     # method revolve around dscl. Any time you directly modify a user's plist,
     # you need to flush the cache that dscl maintains.
-    if (Puppet::Util::Package.versioncmp(Facter.value(:macosx_productversion_major), '10.7') == -1)
+    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') == -1)
       write_sha1_hash(value)
     else
-      if Facter.value(:macosx_productversion_major) == '10.7'
+      if self.class.get_os_version == '10.7'
         if value.length != 136
           raise Puppet::Error, "OS X 10.7 requires a Salted SHA512 hash password of 136 characters.  Please check your password and try again."
         end
@@ -400,7 +404,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # be modified by directly changing the user's plist. Because of this fact,
     # we have to treat the ds cache just like you would in the password=
     # method.
-    if (Puppet::Util::Package.versioncmp(Facter.value(:macosx_productversion_major), '10.7') > 0)
+    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
       users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
@@ -415,7 +419,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # be modified by directly changing the user's plist. Because of this fact,
     # we have to treat the ds cache just like you would in the password=
     # method.
-    if (Puppet::Util::Package.versioncmp(Facter.value(:macosx_productversion_major), '10.7') > 0)
+    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
       users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
@@ -514,7 +518,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   #  # a 10.8-style PBKDF2 password.
     users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
     shadow_hash_data = get_shadow_hash_data(users_plist)
-    if Facter.value(:macosx_productversion_major) == '10.7'
+    if self.class.get_os_version == '10.7'
       set_salted_sha512(users_plist, shadow_hash_data, value)
     else
       shadow_hash_data.delete('SALTED-SHA512') if shadow_hash_data['SALTED-SHA512']

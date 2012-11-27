@@ -379,7 +379,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      Facter.expects(:value).with(:macosx_productversion_major).twice.returns('10.7')
+      provider.class.expects(:get_os_version).twice.returns('10.7')
       provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Users').returns(testuser_plist)
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(sha512_shadowhashdata_hash).twice
       provider.class.expects(:get_list_of_groups).returns(group_plist_hash_guid).twice
@@ -469,7 +469,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     before :each do
       provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Users').returns(testuser_plist)
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.7')
+      provider.class.expects(:get_os_version).returns('10.7')
     end
 
     it "should return a list of groups if the user's name matches GroupMembership" do
@@ -528,7 +528,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should call dscl to add necessary groups' do
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.7')
+      provider.class.expects(:get_os_version).returns('10.7')
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistant_user']})
       provider.expects(:groups).returns('two,three')
@@ -541,7 +541,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     #describe how passwords are fetched in 10.5 and 10.6
     ['10.5', '10.6'].each do |os_ver|
       it "should call the get_sha1 method on #{os_ver}" do
-        Facter.expects(:value).with(:macosx_productversion_major).returns(os_ver)
+        provider.class.expects(:get_os_version).returns(os_ver)
         provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
         provider.class.expects(:get_sha1).with('0A7D5B63-3AD4-4CA7-B03E-85876F1D1FB3').returns('password')
         provider.class.prefetch({}).first.password.should == 'password'
@@ -549,14 +549,14 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should call the get_salted_sha512 method on 10.7 and return the correct hash' do
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.7')
+      provider.class.expects(:get_os_version).returns('10.7')
       provider.class.expects(:convert_binary_to_xml).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(sha512_shadowhashdata_hash)
       provider.class.prefetch({}).first.password.should == sha512_password_hash
     end
 
     it 'should call the get_salted_sha512_pbkdf2 method on 10.8 and return the correct hash' do
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.8')
+      provider.class.expects(:get_os_version).returns('10.8')
       provider.class.expects(:get_attribute_from_dscl).with('Users', username,'ShadowHashData').returns(pbkdf2_shadowhashdata_hash)
       provider.class.expects(:convert_binary_to_xml).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
       provider.class.prefetch({}).first.password.should == pbkdf2_password_hash
@@ -567,33 +567,33 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   describe '#password=' do
     ['10.5', '10.6'].each do |os_ver|
       it "should call write_sha1_hash when setting the password on #{os_ver}" do
-        Facter.expects(:value).with(:macosx_productversion_major).returns(os_ver)
+        provider.class.expects(:get_os_version).returns(os_ver)
         provider.expects(:write_sha1_hash).with('password')
         provider.password = 'password'
       end
     end
 
     it 'should call write_password_to_users_plist when setting the password on 10.7' do
-      Facter.expects(:value).with(:macosx_productversion_major).twice.returns('10.7')
+      provider.class.expects(:get_os_version).twice.returns('10.7')
       provider.expects(:write_password_to_users_plist).with(sha512_password_hash)
       provider.expects(:flush_dscl_cache).twice
       provider.password = sha512_password_hash
     end
 
     it 'should call write_password_to_users_plist when setting the password on 10.8' do
-      Facter.expects(:value).with(:macosx_productversion_major).twice.returns('10.8')
+      provider.class.expects(:get_os_version).twice.returns('10.8')
       provider.expects(:write_password_to_users_plist).with(pbkdf2_password_hash)
       provider.expects(:flush_dscl_cache).twice
       provider.password = pbkdf2_password_hash
     end
 
     it "should raise an error on 10.7 if a password hash that doesn't contain 136 characters is passed" do
-      Facter.expects(:value).with(:macosx_productversion_major).twice.returns('10.7')
+      provider.class.expects(:get_os_version).twice.returns('10.7')
       expect { provider.password = 'password' }.to raise_error Puppet::Error, /OS X 10\.7 requires a Salted SHA512 hash password of 136 characters\.  Please check your password and try again/
     end
 
     it "should raise an error on 10.8 if a password hash that doesn't contain 256 characters is passed" do
-      Facter.expects(:value).with(:macosx_productversion_major).twice.returns('10.8')
+      provider.class.expects(:get_os_version).twice.returns('10.8')
       expect { provider.password = 'password' }.to raise_error Puppet::Error, /OS X versions > 10\.7 require a Salted SHA512 PBKDF2 password hash of 256 characters\. Please check your password and try again\./
     end
   end
@@ -809,7 +809,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should call set_salted_sha512 on 10.7 when given a a salted-SHA512 password hash' do
       provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/nonexistant_user.plist").returns(sha512_plist_xml)
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.7')
+      provider.class.expects(:get_os_version).returns('10.7')
       # The below line is not as tight as I would like. It would be
       # nice to set the expectation using .with and passing the hash
       # we're expecting, but there are several StringIO objects that
@@ -824,7 +824,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should call set_salted_pbkdf2 on 10.8 when given a PBKDF2 password hash' do
       provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/nonexistant_user.plist").returns(pbkdf2_plist_xml)
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.8')
+      provider.class.expects(:get_os_version).returns('10.8')
       # See comment in previous test...
       provider.expects(:set_salted_pbkdf2)
       provider.class.expects(:convert_binary_to_xml).returns(pbkdf2_embedded_bplist_hash)
@@ -834,7 +834,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it "should delete the SALTED-SHA512 key in the shadow_hash_data hash if it exists on a 10.8 system and write_password_to_users_plist has been called to set the user's password" do
       provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/nonexistant_user.plist").returns('xml_data')
       Plist.expects(:parse_xml).with('xml_data').returns('ruby_hash')
-      Facter.expects(:value).with(:macosx_productversion_major).returns('10.8')
+      provider.class.expects(:get_os_version).returns('10.8')
       provider.expects(:get_shadow_hash_data).with('ruby_hash').returns(stub_shadowhashdata)
       stub_shadowhashdata.expects(:[]).with('SALTED-SHA512').returns(true)
       stub_shadowhashdata.expects(:delete).with('SALTED-SHA512')
