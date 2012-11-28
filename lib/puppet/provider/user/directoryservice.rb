@@ -407,7 +407,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
-      users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
+      users_plist = get_users_plist(@resource.name)
       shadow_hash_data = get_shadow_hash_data(users_plist)
       set_salted_pbkdf2(users_plist, shadow_hash_data, 'iterations', value)
       flush_dscl_cache
@@ -422,7 +422,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
-      users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
+      users_plist = get_users_plist(@resource.name)
       shadow_hash_data = get_shadow_hash_data(users_plist)
       set_salted_pbkdf2(users_plist, shadow_hash_data, 'salt', value)
       flush_dscl_cache
@@ -516,7 +516,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   #  # who have upgraded from 10.7 and thus have a salted-SHA512 password hash.
   #  # If we encounter this, do what 10.8 does - remove that key and give them
   #  # a 10.8-style PBKDF2 password.
-    users_plist = Plist::parse_xml(plutil '-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{@resource.name}.plist")
+    users_plist = get_users_plist(@resource.name)
     shadow_hash_data = get_shadow_hash_data(users_plist)
     if self.class.get_os_version == '10.7'
       set_salted_sha512(users_plist, shadow_hash_data, value)
@@ -528,6 +528,12 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   def flush_dscl_cache
     dscacheutil '-flushcache'
+  end
+
+  def get_users_plist(username)
+    # This method will retrieve the data stored in a user's plist and
+    # return it as a native Ruby hash.
+    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{username}.plist"))
   end
 
   def get_shadow_hash_data(users_plist)
