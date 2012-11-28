@@ -7,7 +7,7 @@ step 'Search results should line up by column'
 on master, puppet("module search apache") do
   assert_equal('', stderr)
 
-  assert_equal "Searching https://forge.puppetlabs.com ...\n", stdout.lines.first
+  assert_equal "\e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m\n", stdout.lines.first
   columns = stdout.lines.to_a[1].split(/\s{2}(?=\S)/)
   pattern = /^#{ columns.map { |c| c.chomp.gsub(/./, '.') }.join('  ') }$/
 

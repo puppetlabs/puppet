@@ -37,7 +37,7 @@ on master, '[ -d /etc/puppet/modules2/absolute ]'
 step "Try to uninstall the module jimmy-crakorn using relative modulepath"
 on master, 'cd /etc/puppet/modules2 && puppet module uninstall jimmy-crakorn --modulepath=.' do
   assert_output <<-OUTPUT
-    Preparing to uninstall 'jimmy-crakorn' ...
+    \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
     Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from /etc/puppet/modules2
   OUTPUT
 end
@@ -46,7 +46,7 @@ on master, '[ ! -d /etc/puppet/modules2/crakorn ]'
 step "Try to uninstall the module jimmy-absolute using an absolute modulepath"
 on master, 'cd /etc/puppet/modules2 && puppet module uninstall jimmy-absolute --modulepath=/etc/puppet/modules2' do
   assert_output <<-OUTPUT
-    Preparing to uninstall 'jimmy-absolute' ...
+    \e[mNotice: Preparing to uninstall 'jimmy-absolute' ...\e[0m
     Removed 'jimmy-absolute' (\e[0;36mv0.4.0\e[0m) from /etc/puppet/modules2
   OUTPUT
 end
