@@ -521,7 +521,18 @@ Puppet::Type.type(:user).provide :directoryservice do
     if self.class.get_os_version == '10.7'
       set_salted_sha512(users_plist, shadow_hash_data, value)
     else
-      shadow_hash_data.delete('SALTED-SHA512') if shadow_hash_data['SALTED-SHA512']
+      # It's possible that a user could exist on the system and NOT have
+      # a ShadowHashData key (especially if the system was upgraded from
+      # 10.6). In this case, a conditional check is needed to determine
+      # if the shadow_hash_data variable is a Hash (it would be false
+      # if the key didn't exist for this user on the system) and if
+      # that hash contains the 'SALTED-SHA512' key. In the event that
+      # this key exists (indicating a 10.7-style password hash), it will
+      # be deleted and a newer 10.8-style (PBKDF2) password hash will
+      # be generated.
+      if (shadow_hash_data.class == Hash) && (shadow_hash_data.has_key?('SALTED-SHA512'))
+        shadow_hash_data.delete('SALTED-SHA512')
+      end
       set_salted_pbkdf2(users_plist, shadow_hash_data, 'entropy', value)
     end
   end
