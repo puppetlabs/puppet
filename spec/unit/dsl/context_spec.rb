@@ -644,17 +644,17 @@ describe Puppet::DSL::Context do
       end
     end
 
-    describe "#my" do
+    describe "#ruby_eval" do
       it "should fail when called without block" do
         lambda do; evaluate_in_context do
-          my
+          ruby_eval
         end; end.should raise_error
       end
 
       it "should be able to call methods from Object in the block" do
         Object.any_instance.expects(:puts).with "hello world"
         evaluate_in_context do
-          my { puts "hello world" }
+          ruby_eval { puts "hello world" }
         end
       end
     end

@@ -90,7 +90,7 @@ module Puppet
       # the context of Object instead of BasicObject. This adds access to
       # methods defined in global scope (like +require+).
       ##
-      def my(&block)
+      def ruby_eval(&block)
         @object ||= ::Object.new
         @object.instance_eval &block
       end
