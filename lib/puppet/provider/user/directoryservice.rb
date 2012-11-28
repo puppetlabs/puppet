@@ -541,19 +541,30 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  def set_shadow_hash_data(users_plist, binary_plist)
+    # This method will embed the binary plist data comprising the user's
+    # password hash (and Salt/Iterations value if the OS is 10.8 or greater)
+    # into the ShadowHashData key of the user's plist.
+    if users_plist.has_key?('ShadowHashData')
+      users_plist['ShadowHashData'][0].string = binary_plist
+    else
+      users_plist['ShadowHashData'] = [StringIO.new(binary_plist)]
+    end
+    write_users_plist_to_disk(users_plist)
+  end
+
   def set_salted_sha512(users_plist, shadow_hash_data, value)
     # Puppet requires a salted-sha512 password hash for 10.7 users to be passed
     # in Hex, but the embedded plist stores that value as a Base64 encoded
     # string. This method converts the string and calls the
-    # write_users_plist_to_disk method to serialize and write the plist to disk.
+    # set_shadow_hash_data method to serialize and write the plist to disk.
     unless shadow_hash_data
       shadow_hash_data = Hash.new
       shadow_hash_data['SALTED-SHA512'] = StringIO.new
     end
     shadow_hash_data['SALTED-SHA512'].string = Base64.decode64([[value].pack("H*")].pack("m").strip)
     binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
-    users_plist['ShadowHashData'][0].string = binary_plist
-    write_users_plist_to_disk(users_plist)
+    set_shadow_hash_data(users_plist, binary_plist)
   end
 
   def set_salted_pbkdf2(users_plist, shadow_hash_data, field, value)
@@ -581,11 +592,11 @@ Puppet::Type.type(:user).provide :directoryservice do
     # fail.
     users_plist['passwd'] = ('*' * 8)
 
-    # Convert shadow_hash_data to a binary plist, write that value to the
-    # users_plist hash, and write the users_plist back to disk.
+    # Convert shadow_hash_data to a binary plist, and call the
+    # set_shadow_hash_data method to serialize and write the data
+    # back to the user's plist.
     binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
-    users_plist['ShadowHashData'][0].string = binary_plist
-    write_users_plist_to_disk(users_plist)
+    set_shadow_hash_data(users_plist, binary_plist)
   end
 
   def write_users_plist_to_disk(users_plist)
