@@ -46,9 +46,6 @@ module Puppet::Util::MethodHelper
         raise ArgumentError, "unrecognized option #{k}"
       end
     end
-  rescue Exception => e
-    e.set_backtrace e.backtrace[1..-1]
-    raise e
   end
 
 end
