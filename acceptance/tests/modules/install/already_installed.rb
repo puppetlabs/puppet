@@ -31,7 +31,7 @@ PP
 step "Try to install a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest)
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
     STDERR>     Use `puppet module upgrade` to install a different version
@@ -43,7 +43,7 @@ on master, '[ -d /etc/puppet/modules/nginx ]'
 step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install pmtacceptance-nginx --version 1.x"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (v1.x)
     STDERR>   Module 'pmtacceptance-nginx' (v0.0.1) is already installed
     STDERR>     Use `puppet module upgrade` to install a different version
@@ -55,9 +55,9 @@ on master, '[ -d /etc/puppet/modules/nginx ]'
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install pmtacceptance-nginx --force") do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT

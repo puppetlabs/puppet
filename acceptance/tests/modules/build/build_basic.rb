@@ -24,7 +24,7 @@ PP
 step "Try to build a module with an absolute path"
 on master, puppet("module build /etc/puppet/modules/nginx") do
   assert_output <<-OUTPUT
-    Building /etc/puppet/modules/nginx for release
+    \e[mNotice: Building /etc/puppet/modules/nginx for release\e[0m
     Module built: /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz
   OUTPUT
 end
@@ -34,7 +34,7 @@ on master, '[ -f /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz ]'
 step "Try to build a module without providing a path"
 on master, ("cd /etc/puppet/modules/nginx && puppet module build") do
   assert_output <<-OUTPUT
-    Building /etc/puppet/modules/nginx for release
+    \e[mNotice: Building /etc/puppet/modules/nginx for release\e[0m
     Module built: /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz
   OUTPUT
 end

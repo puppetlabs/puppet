@@ -8,7 +8,7 @@ stub_hosts_on(master, 'forge.puppetlabs.com' => '127.0.0.2')
 step "Search against a non-existent Forge"
 on master, puppet("module search yup"), :acceptable_exit_codes => [1] do
   assert_match <<-STDOUT, stdout
-Searching https://forge.puppetlabs.com ...
+\e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m
 STDOUT
   assert_match <<-STDERR.chomp, stderr
 Error: Could not connect to https://forge.puppetlabs.com

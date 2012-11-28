@@ -26,7 +26,7 @@ end
 step "Try to uninstall a module that exists multiple locations in the module path"
 on master, puppet("module uninstall pmtacceptance-java"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to uninstall 'pmtacceptance-java' ...
+    STDOUT> \e[mNotice: Preparing to uninstall 'pmtacceptance-java' ...\e[0m
     STDERR> \e[1;31mError: Could not uninstall module 'pmtacceptance-java'
     STDERR>   Module 'pmtacceptance-java' appears multiple places in the module path
     STDERR>     'pmtacceptance-java' (v1.6.0) was found in /etc/puppet/modules
@@ -38,7 +38,7 @@ end
 step "Uninstall a module that exists multiple locations by restricting the --modulepath"
 on master, puppet("module uninstall pmtacceptance-java --modulepath /etc/puppet/modules") do
   assert_output <<-OUTPUT
-    Preparing to uninstall 'pmtacceptance-java' ...
+    \e[mNotice: Preparing to uninstall 'pmtacceptance-java' ...\e[0m
     Removed 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) from /etc/puppet/modules
   OUTPUT
 end

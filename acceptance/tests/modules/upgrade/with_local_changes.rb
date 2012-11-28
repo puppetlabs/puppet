@@ -39,8 +39,8 @@ PP
 step "Try to upgrade a module with local changes"
 on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to upgrade 'pmtacceptance-java' ...
-    STDOUT> Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) in /etc/puppet/modules ...
+    STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
+    STDOUT> \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in /etc/puppet/modules ...\e[0m
     STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> latest)
     STDERR>   Installed module has had changes made locally
     STDERR>     Use `puppet module upgrade --force` to upgrade this module anyway\e[0m
@@ -52,10 +52,10 @@ on master, '[ -f /etc/puppet/modules/java/NEWFILE ]'
 step "Upgrade a module with local changes with --force"
 on master, puppet("module upgrade pmtacceptance-java --force") do
   assert_output <<-OUTPUT
-    Preparing to upgrade 'pmtacceptance-java' ...
-    Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) in /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Upgrading -- do not interrupt ...
+    \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
+    \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.1\e[0m)
   OUTPUT
