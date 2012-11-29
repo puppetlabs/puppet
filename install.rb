@@ -14,20 +14,17 @@
 #
 #   bin/    # executable files -- "commands"
 #   lib/    # the source of the library
-#   tests/  # unit tests
 #
 # The default behaviour:
-# 1) Run all unit test files (ending in .rb) found in all directories under
-#    tests/.
-# 2) Build Rdoc documentation from all files in bin/ (excluding .bat and .cmd),
+# 1) Build Rdoc documentation from all files in bin/ (excluding .bat and .cmd),
 #    all .rb files in lib/, ./README, ./ChangeLog, and ./Install.
-# 3) Build ri documentation from all files in bin/ (excluding .bat and .cmd),
+# 2) Build ri documentation from all files in bin/ (excluding .bat and .cmd),
 #    and all .rb files in lib/. This is disabled by default on Microsoft Windows.
-# 4) Install commands from bin/ into the Ruby bin directory. On Windows, if a
+# 3) Install commands from bin/ into the Ruby bin directory. On Windows, if a
 #    if a corresponding batch file (.bat or .cmd) exists in the bin directory,
 #    it will be copied over as well. Otherwise, a batch file (always .bat) will
 #    be created to run the specified command.
-# 5) Install all library files ending in .rb from lib/ into Ruby's
+# 4) Install all library files ending in .rb from lib/ into Ruby's
 #    site_lib/version directory.
 #
 #++
@@ -356,25 +353,6 @@ def build_ri(files)
   end
 end
 
-def run_tests(test_list)
-    require 'test/unit/ui/console/testrunner'
-    $LOAD_PATH.unshift "lib"
-    test_list.each do |test|
-      next if File.directory?(test)
-      require test
-    end
-
-    tests = []
-    ObjectSpace.each_object { |o| tests << o if o.kind_of?(Class) }
-    tests.delete_if { |o| !o.ancestors.include?(Test::Unit::TestCase) }
-    tests.delete_if { |o| o == Test::Unit::TestCase }
-
-    tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
-    $LOAD_PATH.shift
-rescue LoadError
-    puts "Missing testrunner library; skipping tests"
-end
-
 ##
 # Install file(s) from ./bin to RbConfig::CONFIG['bindir']. Patch it on the way
 # to insert a #! line; on a Unix install, the command is named as expected
@@ -440,12 +418,10 @@ FileUtils.cd File.dirname(__FILE__) do
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
-  tests = glob(%w{test/**/*.rb})
 
   check_prereqs
   prepare_installation
 
-  #run_tests(tests) if InstallOptions.tests
   #build_rdoc(rdoc) if InstallOptions.rdoc
   #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
