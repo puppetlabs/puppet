@@ -58,12 +58,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     python("#{YUM_INSTALLONLY}","#{@resource[:name]}").each_line do |line|
       line.chomp!
       next if line.empty?
-      if line[0,4] == "_pkg"
-        # yum_installonly does: print "_pkg %s %s %s %s %s" % ( pkg.name, pkg.version, pkg.release, pkg.arch, my.tsInfo._allowedMultipleInstalls( pkg ) )
-        return true if((line.split[2] == @resource.should(:ensure) || "#{line.split[2]}-#{line.split[3]}" == @resource.should(:ensure)) && line.split.last)
+      # yum_installonly does: print "_pkg %s %s %s %s %s" % ( pkg.name, pkg.version, pkg.release, pkg.arch, my.tsInfo._allowedMultipleInstalls( pkg ) )
+      if (line[0,4] == "_pkg" && (line.split[2] == @resource.should(:ensure) || "#{line.split[2]}-#{line.split[3]}" == @resource.should(:ensure)) && line.split.last == "True")
+        return true
       end
     end
-    false
+    return false
   end
 
   def current_versions
