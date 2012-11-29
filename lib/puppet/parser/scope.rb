@@ -9,7 +9,7 @@ require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
-# It is passed between the various classes that participate in evaluation. 
+# It is passed between the various classes that participate in evaluation.
 # None of its methods are API except those that are clearly marked as such.
 #
 # @api private
@@ -62,7 +62,7 @@ class Puppet::Parser::Scope
   # Initialize a new scope suitable for parser function testing.  This method
   # should be considered a public API for external modules.  A shared spec
   # helper should consume this API method.
-  # 
+  #
   # @api protected
   #
   def self.new_for_test_harness(node_name)
@@ -276,14 +276,14 @@ class Puppet::Parser::Scope
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
   # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
   # or in a specific visible named scope.
-  # 
+  #
   # @param varname [String] the name of the variable (may be a qualified name using `(ns'::')*varname`
   # @return [Object] the value assigned to the given varname
   # @see #[]=
-  # @api 
+  # @api
   #
-  def [] varname 
-    lookupvar varname
+  def [](varname, options={})
+    lookupvar(varname, options)
   end
 
   def qualified_scope(classname)
@@ -374,20 +374,20 @@ class Puppet::Parser::Scope
       table[name] = value
     end
   end
-  
+
   # Sets the variable value of the name given as an argument to the given value. The value is
   # set in the current scope and may shadow a variable with the same name in a visible outer scope.
   # It is illegal to re-assign a variable in the same scope. It is illegal to set a variable in some other
   # scope/namespace than the scope passed to a method.
-  # 
+  #
   # @param varname [String] The variable name to which the value is assigned. Must not contain `::`
   # @param value [String] The value to assign to the given variable name.
-  # 
+  #
   # @api
   #
-  def []= varname, value
-    setvar varname, value
-  end  
+  def []=(varname, value, option = {})
+    setvar(varname, value, options = {})
+  end
 
   def append_value(bound_value, new_value)
     case new_value
