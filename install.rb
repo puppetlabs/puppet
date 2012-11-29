@@ -414,7 +414,7 @@ FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
   configs = glob(%w{conf/auth.conf})
   bins  = glob(%w{bin/*})
-  rdoc  = glob(%w{bin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+  rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
