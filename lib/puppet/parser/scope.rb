@@ -278,6 +278,7 @@ class Puppet::Parser::Scope
   # or in a specific visible named scope.
   #
   # @param varname [String] the name of the variable (may be a qualified name using `(ns'::')*varname`
+  # @param options [Hash] Additional options, not part of api.
   # @return [Object] the value assigned to the given varname
   # @see #[]=
   # @api
@@ -382,10 +383,11 @@ class Puppet::Parser::Scope
   #
   # @param varname [String] The variable name to which the value is assigned. Must not contain `::`
   # @param value [String] The value to assign to the given variable name.
+  # @param options [Hash] Additional options, not part of api.
   #
   # @api
   #
-  def []=(varname, value, option = {})
+  def []=(varname, value, options = {})
     setvar(varname, value, options = {})
   end
 
