@@ -198,8 +198,9 @@ module Puppet
     newparam :hasrestart do
       desc "Specify that an init script has a `restart` command.  If this is
         false and you do not specify a command in the `restart` attribute,
-        the init script's `stop` and `start` commands will be used. Defaults
-        to true; note that this is a change from earlier versions of Puppet."
+        the init script's `stop` and `start` commands will be used.
+
+        Defaults to false."
       newvalues(:true, :false)
     end
 
