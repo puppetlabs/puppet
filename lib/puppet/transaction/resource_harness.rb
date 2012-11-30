@@ -123,7 +123,7 @@ class Puppet::Transaction::ResourceHarness
     event.message = "change from #{property.is_to_s(current_value)} to #{property.should_to_s(property.should)} failed: #{detail}"
     event
   ensure
-    event.send_log
+    event.send_log if event.message
   end
 
   def evaluate(resource)
