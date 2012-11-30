@@ -2,7 +2,7 @@ require 'puppet/dsl/blank_slate'
 require 'puppet/dsl/resource_reference'
 
 module Puppet
-  # @since 3.0.x EXPERIMENTAL
+  # @since 3.1 EXPERIMENTAL
   module DSL
     ##
     # Thin decorator layer for accessing attributes of array/hash-like objects.

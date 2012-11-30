@@ -4,7 +4,7 @@ require 'puppet/parser/resource/param'
 require 'puppet/parser/resource'
 
 module Puppet
-  # @since 3.0.x EXPERIMENTAL
+  # @since 3.1 EXPERIMENTAL
   module DSL
     ##
     # ResourceReference is a thin wrapper for assigning references to the

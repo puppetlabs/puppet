@@ -3,7 +3,7 @@ require 'puppet/dsl/type_reference'
 require 'puppet/util/methodhelper'
 
 module Puppet
-  # @since 3.0.x EXPERIMENTAL
+  # @since 3.1 EXPERIMENTAL
   module DSL
 
     ##
