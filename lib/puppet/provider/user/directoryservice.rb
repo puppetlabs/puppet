@@ -565,11 +565,19 @@ Puppet::Type.type(:user).provide :directoryservice do
     if users_plist.has_key?('ShadowHashData')
       users_plist['ShadowHashData'][0].string = binary_plist
     else
-      users_plist['ShadowHashData'] = [StringIO.new(binary_plist)]
+      users_plist['ShadowHashData'] = [new_stringio_object(binary_plist)]
     end
     write_users_plist_to_disk(users_plist)
   end
 
+  def new_stringio_object(value = '')
+    # This method returns a new StringIO object. Why does it exist?
+    # Well, StringIO objects have their own 'serial number', so when
+    # writing rspec tests it's difficult to compare StringIO objects
+    # due to this serial number. If this action is wrapped in its own
+    # method, it can be mocked for easier testing.
+    StringIO.new(value)
+  end
   def set_salted_sha512(users_plist, shadow_hash_data, value)
     # Puppet requires a salted-sha512 password hash for 10.7 users to be passed
     # in Hex, but the embedded plist stores that value as a Base64 encoded
@@ -577,7 +585,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # set_shadow_hash_data method to serialize and write the plist to disk.
     unless shadow_hash_data
       shadow_hash_data = Hash.new
-      shadow_hash_data['SALTED-SHA512'] = StringIO.new
+      shadow_hash_data['SALTED-SHA512'] = new_stringio_object
     end
     shadow_hash_data['SALTED-SHA512'].string = Base64.decode64([[value].pack("H*")].pack("m").strip)
     binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
@@ -597,8 +605,8 @@ Puppet::Type.type(:user).provide :directoryservice do
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] =  StringIO.new unless shadow_hash_data['SALTED-SHA512-PBKDF2'][field]
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field].string = Base64.decode64([[value].pack("H*")].pack("m").strip)
+      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] =  new_stringio_object unless shadow_hash_data['SALTED-SHA512-PBKDF2'][field]
     when 'iterations'
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Integer(value)
     else
