@@ -510,26 +510,25 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   def write_password_to_users_plist(value)
-  #  # This method is only called on version 10.7 or greater. On 10.7 machines,
-  #  # passwords are set using a salted-SHA512 hash, and on 10.8 machines,
-  #  # passwords are set using PBKDF2. It's possible to have users on 10.8
-  #  # who have upgraded from 10.7 and thus have a salted-SHA512 password hash.
-  #  # If we encounter this, do what 10.8 does - remove that key and give them
-  #  # a 10.8-style PBKDF2 password.
+    # This method is only called on version 10.7 or greater. On 10.7 machines,
+    # passwords are set using a salted-SHA512 hash, and on 10.8 machines,
+    # passwords are set using PBKDF2. It's possible to have users on 10.8
+    # who have upgraded from 10.7 and thus have a salted-SHA512 password hash.
+    # If we encounter this, do what 10.8 does - remove that key and give them
+    # a 10.8-style PBKDF2 password.
     users_plist = get_users_plist(@resource.name)
     shadow_hash_data = get_shadow_hash_data(users_plist)
     if self.class.get_os_version == '10.7'
       set_salted_sha512(users_plist, shadow_hash_data, value)
     else
       # It's possible that a user could exist on the system and NOT have
-      # a ShadowHashData key (especially if the system was upgraded from
-      # 10.6). In this case, a conditional check is needed to determine
-      # if the shadow_hash_data variable is a Hash (it would be false
-      # if the key didn't exist for this user on the system) and if
-      # that hash contains the 'SALTED-SHA512' key. In the event that
-      # this key exists (indicating a 10.7-style password hash), it will
-      # be deleted and a newer 10.8-style (PBKDF2) password hash will
-      # be generated.
+      # a ShadowHashData key (especially if the system was upgraded from 10.6).
+      # In this case, a conditional check is needed to determine if the
+      # shadow_hash_data variable is a Hash (it would be false if the key
+      # didn't exist for this user on the system). If the shadow_hash_data
+      # variable IS a Hash and contains the 'SALTED-SHA512' key (indicating an
+      # older 10.7-style password hash), it will be deleted and a newer
+      # 10.8-style (PBKDF2) password hash will be generated.
       if (shadow_hash_data.class == Hash) && (shadow_hash_data.has_key?('SALTED-SHA512'))
         shadow_hash_data.delete('SALTED-SHA512')
       end
