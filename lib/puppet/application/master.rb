@@ -240,6 +240,16 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
+  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
+  # but never finds or reads anything (this since a real cache causes stale data to be served
+  # in circumstances when the cache can not be cleared).
+  # @see puppet issue 16753
+  # @see Puppet::Node::Woy
+  # @return [void]
+  def setup_node_cache
+    Puppet::Node.indirection.cache_class = :woy
+  end
+
   def setup
     raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
 
@@ -250,6 +260,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     setup_terminuses
+
+    setup_node_cache
 
     setup_ssl
   end
