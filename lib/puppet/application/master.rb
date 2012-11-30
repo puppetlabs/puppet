@@ -129,6 +129,18 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     super.merge :facts_terminus => 'yaml'
   end
 
+  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :woy.
+  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
+  # @see Puppet::Node::Woy
+  # @see #setup_node_cache
+  # @see puppet issue 16753
+  #
+  def app_defaults
+    super.merge({
+      :node_cache_terminus => :woy,
+    })
+  end
+
   def preinit
     Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
@@ -247,7 +259,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   # @see Puppet::Node::Woy
   # @return [void]
   def setup_node_cache
-    Puppet::Node.indirection.cache_class = :woy
+    Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
   end
 
   def setup
