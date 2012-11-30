@@ -578,6 +578,14 @@ Puppet::Type.type(:user).provide :directoryservice do
     # method, it can be mocked for easier testing.
     StringIO.new(value)
   end
+
+  def base64_decode_string(value)
+    # This method accepts an argument of a hex password hash, and base64
+    # decodes it into a format that OS X 10.7 and 10.8 will store
+    # in the user's plist.
+    Base64.decode64([[value].pack("H*")].pack("m").strip)
+  end
+
   def set_salted_sha512(users_plist, shadow_hash_data, value)
     # Puppet requires a salted-sha512 password hash for 10.7 users to be passed
     # in Hex, but the embedded plist stores that value as a Base64 encoded
@@ -587,7 +595,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       shadow_hash_data = Hash.new
       shadow_hash_data['SALTED-SHA512'] = new_stringio_object
     end
-    shadow_hash_data['SALTED-SHA512'].string = Base64.decode64([[value].pack("H*")].pack("m").strip)
+    shadow_hash_data['SALTED-SHA512'].string = base64_decode_string(value)
     binary_plist = self.class.convert_xml_to_binary(shadow_hash_data)
     set_shadow_hash_data(users_plist, binary_plist)
   end
@@ -605,8 +613,8 @@ Puppet::Type.type(:user).provide :directoryservice do
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field].string = Base64.decode64([[value].pack("H*")].pack("m").strip)
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] =  new_stringio_object unless shadow_hash_data['SALTED-SHA512-PBKDF2'][field]
+      shadow_hash_data['SALTED-SHA512-PBKDF2'][field].string = base64_decode_string(value)
     when 'iterations'
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Integer(value)
     else
