@@ -206,7 +206,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/log/puppet
+%attr(0750, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
 %{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/puppet.8.gz
@@ -385,6 +385,9 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Sat Dec 1 2012 Ryan Uber <ryuber@cisco.com>
+- Fix for logdir perms regression (#17866)
 
 * Wed Aug 29 2012 Moses Mendoza <moses@puppetlabs.com> - 3.0.0-0.1rc5
 - Update for 3.0.0 rc5
