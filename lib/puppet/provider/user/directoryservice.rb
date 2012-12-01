@@ -34,10 +34,10 @@ Puppet::Type.type(:user).provide :directoryservice do
 ## Class Methods ##
 ##               ##
 
+  # This method exists to map the dscl values to the correct Puppet
+  # properties. This stays relatively consistent, but who knows what
+  # Apple will do next year...
   def self.ds_to_ns_attribute_map
-    # This method exists to map the dscl values to the correct Puppet
-    # properties. This stays relatively consistent, but who knows what
-    # Apple will do next year...
     {
       'RecordName'       => :name,
       'PrimaryGroupID'   => :gid,
@@ -57,16 +57,16 @@ Puppet::Type.type(:user).provide :directoryservice do
     @ns_to_ds_attribute_map ||= ds_to_ns_attribute_map.invert
   end
 
+  # Prefetching is necessary to use @property_hash inside any setter methods.
+  # self.prefetch uses self.instances to gather an array of user instances
+  # on the system, and then populates the @property_hash instance variable
+  # with attribute data for the specific instance in question (i.e. it
+  # gathers the 'is' values of the resource into the @property_hash instance
+  # variable so you don't have to read from the system every time you need
+  # to gather the 'is' values for a resource. The downside here is that
+  # populating this instance variable for every resource on the system
+  # takes time and front-loads your Puppet run.
   def self.prefetch(resources)
-    # Prefetching is necessary to use @property_hash inside any setter methods.
-    # self.prefetch uses self.instances to gather an array of user instances
-    # on the system, and then populates the @property_hash instance variable
-    # with attribute data for the specific instance in question (i.e. it
-    # gathers the 'is' values of the resource into the @property_hash instance
-    # variable so you don't have to read from the system every time you need
-    # to gather the 'is' values for a resource. The downside here is that
-    # populating this instance variable for every resource on the system
-    # takes time and front-loads your Puppet run.
     instances.each do |prov|
       if resource = resources[prov.name]
         resource.provider = prov
@@ -74,28 +74,28 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # This method assembles an array of provider instances containing
+  # information about every instance of the user type on the system (i.e.
+  # every user and its attributes). The `puppet resource` command relies
+  # on self.instances to gather an array of user instances in order to
+  # display its output.
   def self.instances
-    # This method assembles an array of provider instances containing
-    # information about every instance of the user type on the system (i.e.
-    # every user and its attributes). The `puppet resource` command relies
-    # on self.instances to gather an array of user instances in order to
-    # display its output.
     get_all_users.collect do |user|
       self.new(generate_attribute_hash(user))
     end
   end
 
+  # Return an array of hashes containing information about every user on
+  # the system.
   def self.get_all_users
-    # Return an array of hashes containing information about every user on
-    # the system.
     Plist.parse_xml(dscl '-plist', '.', 'readall', '/Users')
   end
 
+  # This method accepts an individual user plist, passed as a hash, and
+  # strips the dsAttrTypeStandard: prefix that dscl adds for each key.
+  # An attribute hash is assembled and returned from the properties
+  # supported by the user type.
   def self.generate_attribute_hash(input_hash)
-    # This method accepts an individual user plist, passed as a hash, and
-    # strips the dsAttrTypeStandard: prefix that dscl adds for each key.
-    # An attribute hash is assembled and returned from the properties
-    # supported by the user type.
     attribute_hash = {}
     input_hash.keys.each do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
@@ -162,30 +162,30 @@ Puppet::Type.type(:user).provide :directoryservice do
     @os_version ||= Facter.value(:macosx_productversion_major)
   end
 
+  # Use dscl to retrieve an array of hashes containing attributes about all
+  # of the local groups on the machine.
   def self.get_list_of_groups
-    # Use dscl to retrieve an array of hashes containing attributes about all
-    # of the local groups on the machine.
     @groups ||= Plist.parse_xml(dscl '-plist', '.', 'readall', '/Groups')
   end
 
+  # Perform a dscl lookup at the path specified for the specific keyname
+  # value. The value returned is the first item within the array returned
+  # from dscl
   def self.get_attribute_from_dscl(path, username, keyname)
-    # Perform a dscl lookup at the path specified for the specific keyname
-    # value. The value returned is the first item within the array returned
-    # from dscl
     Plist.parse_xml(dscl '-plist', '.', 'read', "/#{path}/#{username}", keyname)
   end
 
+  # The plist embedded in the ShadowHashData key is a binary plist. The
+  # facter/util/plist library doesn't read binary plists, so we need to
+  # extract the binary plist, convert it to XML, and return it.
   def self.get_embedded_binary_plist(shadow_hash_data)
-    # The plist embedded in the ShadowHashData key is a binary plist. The
-    # facter/util/plist library doesn't read binary plists, so we need to
-    # extract the binary plist, convert it to XML, and return it.
     embedded_binary_plist = Array(shadow_hash_data['dsAttrTypeNative:ShadowHashData'][0].delete(' ')).pack('H*')
     convert_binary_to_xml(embedded_binary_plist)
   end
 
+  # This method will accept a hash that has been returned from Plist::parse_xml
+  # and convert it to a binary plist (string value).
   def self.convert_xml_to_binary(plist_data)
-    # This method will accept a hash that has been returned from Plist::parse_xml
-    # and convert it to a binary plist (string value).
     Puppet.debug('Converting XML plist to binary')
     Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
     IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
@@ -196,9 +196,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     @converted_plist
   end
 
+  # This method will accept a binary plist (as a string) and convert it to a
+  # hash via Plist::parse_xml.
   def self.convert_binary_to_xml(plist_data)
-    # This method will accept a binary plist (as a string) and convert it to a
-    # hash via Plist::parse_xml.
     Puppet.debug('Converting binary plist to XML')
     Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
     IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
@@ -210,17 +210,17 @@ Puppet::Type.type(:user).provide :directoryservice do
     Plist::parse_xml(@converted_plist)
   end
 
+  # The salted-SHA512 password hash in 10.7 is stored in the 'SALTED-SHA512'
+  # key as binary data. That data is extracted and converted to a hex string.
   def self.get_salted_sha512(embedded_binary_plist)
-    # The salted-SHA512 password hash in 10.7 is stored in the 'SALTED-SHA512'
-    # key as binary data. That data is extracted and converted to a hex string.
     embedded_binary_plist['SALTED-SHA512'].string.unpack("H*")[0]
   end
 
+  # This method reads the passed embedded_binary_plist hash and returns values
+  # according to which field is passed.  Arguments passed are the hash
+  # containing the value read from the 'ShadowHashData' key in the User's
+  # plist, and the field to be read (one of 'entropy', 'salt', or 'iterations')
   def self.get_salted_sha512_pbkdf2(field, embedded_binary_plist)
-    # This method reads the passed embedded_binary_plist hash and returns values
-    # according to which field is passed.  Arguments passed are the hash
-    # containing the value read from the 'ShadowHashData' key in the User's
-    # plist, and the field to be read (one of 'entropy', 'salt', or 'iterations')
     case field
     when 'salt', 'entropy'
       embedded_binary_plist['SALTED-SHA512-PBKDF2'][field].string.unpack('H*').first
@@ -233,9 +233,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # In versions 10.5 and 10.6 of OS X, the password hash is stored in a file
+  # in the /var/db/shadow/hash directory that matches the GUID of the user.
   def self.get_sha1(guid)
-    # In versions 10.5 and 10.6 of OS X, the password hash is stored in a file
-    # in the /var/db/shadow/hash directory that matches the GUID of the user.
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
     if File.exists?(password_hash_file) and File.file?(password_hash_file)
@@ -262,10 +262,10 @@ Puppet::Type.type(:user).provide :directoryservice do
     true
   end
 
+  # This method is called if ensure => present is passed and the exists?
+  # method returns false. Dscl will directly set most values, but the
+  # setter methods will be used for any exceptions.
   def create
-    # This method is called if ensure => present is passed and the exists?
-    # method returns false. Dscl will directly set most values, but the
-    # setter methods will be used for any exceptions.
     create_new_user(@resource.name)
 
     # Retrieve the user's GUID
@@ -327,9 +327,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # This method is called when ensure => absent has been set.
+  # Deleting a user is handled by dscl
   def delete
-    # This method is called when ensure => absent has been set.
-    # Deleting a user is handled by dscl
     dscl '.', '-delete', "/Users/#{@resource.name}"
   end
 
@@ -337,9 +337,9 @@ Puppet::Type.type(:user).provide :directoryservice do
 ## Getter/Setter Methods ##
 ##                       ##
 
+  # In the setter method we're only going to take action on groups for which
+  # the user is not currently a member.
   def groups=(value)
-    # In the setter method we're only going to take action on groups for which
-    # the user is not currently a member.
     guid = self.class.get_attribute_from_dscl('Users', @resource.name, 'GeneratedUID')['dsAttrTypeStandard:GeneratedUID'][0]
     groups_to_add = value.split(',') - groups.split(',')
     groups_to_add.each do |group|
@@ -348,17 +348,17 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # If you thought GETTING a password was bad, try SETTING it. This method
+  # makes me want to cry. A thousand tears...
+  #
+  # I've been unsuccessful in tracking down a way to set the password for
+  # a user using dscl that DOESN'T require passing it as plaintext. We were
+  # also unable to get dsimport to work like this. Due to these downfalls,
+  # the sanest method requires opening the user's plist, dropping in the
+  # password hash, and serializing it back to disk. The problems with THIS
+  # method revolve around dscl. Any time you directly modify a user's plist,
+  # you need to flush the cache that dscl maintains.
   def password=(value)
-    # If you thought GETTING a password was bad, try SETTING it. This method
-    # makes me want to cry. A thousand tears...
-    #
-    # I've been unsuccessful in tracking down a way to set the password for
-    # a user using dscl that DOESN'T require passing it as plaintext. We were
-    # also unable to get dsimport to work like this. Due to these downfalls,
-    # the sanest method requires opening the user's plist, dropping in the
-    # password hash, and serializing it back to disk. The problems with THIS
-    # method revolve around dscl. Any time you directly modify a user's plist,
-    # you need to flush the cache that dscl maintains.
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') == -1)
       write_sha1_hash(value)
     else
@@ -399,11 +399,11 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # The iterations and salt properties, like the password property, can only
+  # be modified by directly changing the user's plist. Because of this fact,
+  # we have to treat the ds cache just like you would in the password=
+  # method.
   def iterations=(value)
-    # The iterations and salt properties, like the password property, can only
-    # be modified by directly changing the user's plist. Because of this fact,
-    # we have to treat the ds cache just like you would in the password=
-    # method.
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
@@ -414,11 +414,11 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # The iterations and salt properties, like the password property, can only
+  # be modified by directly changing the user's plist. Because of this fact,
+  # we have to treat the ds cache just like you would in the password=
+  # method.
   def salt=(value)
-    # The iterations and salt properties, like the password property, can only
-    # be modified by directly changing the user's plist. Because of this fact,
-    # we have to treat the ds cache just like you would in the password=
-    # method.
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       sleep 2
       flush_dscl_cache
@@ -481,8 +481,8 @@ Puppet::Type.type(:user).provide :directoryservice do
     '/var/db/shadow/hash'
   end
 
+  # This method will merge in a given value using dscl
   def merge_attribute_with_dscl(path, username, keyname, value)
-    # This method will merge in a given value using dscl
     begin
       dscl '.', '-merge', "/#{path}/#{username}", keyname, value
     rescue Puppet::ExecutionFailure => detail
@@ -490,14 +490,14 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # Create the new user with dscl
   def create_new_user(username)
-    # Create the new user with dscl
     dscl '.', '-create',  "/Users/#{username}"
   end
 
+  # Get the next available uid on the system by getting a list of user ids,
+  # sorting them, grabbing the last one, and adding a 1. Scientific stuff here.
   def next_system_id(min_id=20)
-    # Get the next available uid on the system by getting a list of user ids,
-    # sorting them, grabbing the last one, and adding a 1. Scientific stuff here.
     dscl_output = dscl '.', '-list', '/Users', 'uid'
     # We're ok with throwing away negative uids here. Also, remove nil values.
     user_ids = dscl_output.split.compact.collect { |l| l.to_i if l.match(/^\d+$/) }
@@ -509,13 +509,13 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # This method is only called on version 10.7 or greater. On 10.7 machines,
+  # passwords are set using a salted-SHA512 hash, and on 10.8 machines,
+  # passwords are set using PBKDF2. It's possible to have users on 10.8
+  # who have upgraded from 10.7 and thus have a salted-SHA512 password hash.
+  # If we encounter this, do what 10.8 does - remove that key and give them
+  # a 10.8-style PBKDF2 password.
   def write_password_to_users_plist(value)
-    # This method is only called on version 10.7 or greater. On 10.7 machines,
-    # passwords are set using a salted-SHA512 hash, and on 10.8 machines,
-    # passwords are set using PBKDF2. It's possible to have users on 10.8
-    # who have upgraded from 10.7 and thus have a salted-SHA512 password hash.
-    # If we encounter this, do what 10.8 does - remove that key and give them
-    # a 10.8-style PBKDF2 password.
     users_plist = get_users_plist(@resource.name)
     shadow_hash_data = get_shadow_hash_data(users_plist)
     if self.class.get_os_version == '10.7'
@@ -546,9 +546,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', "#{users_plist_dir}/#{username}.plist"))
   end
 
+  # This method will return the binary plist that's embedded in the
+  # ShadowHashData key of a user's plist, or false if it doesn't exist.
   def get_shadow_hash_data(users_plist)
-    # This method will return the binary plist that's embedded in the
-    # ShadowHashData key of a user's plist, or false if it doesn't exist.
     if users_plist['ShadowHashData']
       password_hash_plist  = users_plist['ShadowHashData'][0].string
       self.class.convert_binary_to_xml(password_hash_plist)
@@ -557,10 +557,10 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
+  # This method will embed the binary plist data comprising the user's
+  # password hash (and Salt/Iterations value if the OS is 10.8 or greater)
+  # into the ShadowHashData key of the user's plist.
   def set_shadow_hash_data(users_plist, binary_plist)
-    # This method will embed the binary plist data comprising the user's
-    # password hash (and Salt/Iterations value if the OS is 10.8 or greater)
-    # into the ShadowHashData key of the user's plist.
     if users_plist.has_key?('ShadowHashData')
       users_plist['ShadowHashData'][0].string = binary_plist
     else
@@ -569,27 +569,27 @@ Puppet::Type.type(:user).provide :directoryservice do
     write_users_plist_to_disk(users_plist)
   end
 
+  # This method returns a new StringIO object. Why does it exist?
+  # Well, StringIO objects have their own 'serial number', so when
+  # writing rspec tests it's difficult to compare StringIO objects
+  # due to this serial number. If this action is wrapped in its own
+  # method, it can be mocked for easier testing.
   def new_stringio_object(value = '')
-    # This method returns a new StringIO object. Why does it exist?
-    # Well, StringIO objects have their own 'serial number', so when
-    # writing rspec tests it's difficult to compare StringIO objects
-    # due to this serial number. If this action is wrapped in its own
-    # method, it can be mocked for easier testing.
     StringIO.new(value)
   end
 
+  # This method accepts an argument of a hex password hash, and base64
+  # decodes it into a format that OS X 10.7 and 10.8 will store
+  # in the user's plist.
   def base64_decode_string(value)
-    # This method accepts an argument of a hex password hash, and base64
-    # decodes it into a format that OS X 10.7 and 10.8 will store
-    # in the user's plist.
     Base64.decode64([[value].pack("H*")].pack("m").strip)
   end
 
+  # Puppet requires a salted-sha512 password hash for 10.7 users to be passed
+  # in Hex, but the embedded plist stores that value as a Base64 encoded
+  # string. This method converts the string and calls the
+  # set_shadow_hash_data method to serialize and write the plist to disk.
   def set_salted_sha512(users_plist, shadow_hash_data, value)
-    # Puppet requires a salted-sha512 password hash for 10.7 users to be passed
-    # in Hex, but the embedded plist stores that value as a Base64 encoded
-    # string. This method converts the string and calls the
-    # set_shadow_hash_data method to serialize and write the plist to disk.
     unless shadow_hash_data
       shadow_hash_data = Hash.new
       shadow_hash_data['SALTED-SHA512'] = new_stringio_object
@@ -599,15 +599,15 @@ Puppet::Type.type(:user).provide :directoryservice do
     set_shadow_hash_data(users_plist, binary_plist)
   end
 
+  # This method accepts a passed value and one of three fields: 'salt',
+  # 'entropy', or 'iterations'.  These fields correspond with the fields
+  # utilized in a PBKDF2 password hashing system
+  # (see http://en.wikipedia.org/wiki/PBKDF2 ) where 'entropy' is the
+  # password hash, 'salt' is the password hash salt value, and 'iterations'
+  # is an integer recommended to be > 10,000. The remaining arguments are
+  # the user's plist itself, and the shadow_hash_data hash containing the
+  # existing PBKDF2 values.
   def set_salted_pbkdf2(users_plist, shadow_hash_data, field, value)
-    # This method accepts a passed value and one of three fields: 'salt',
-    # 'entropy', or 'iterations'.  These fields correspond with the fields
-    # utilized in a PBKDF2 password hashing system
-    # (see http://en.wikipedia.org/wiki/PBKDF2 ) where 'entropy' is the
-    # password hash, 'salt' is the password hash salt value, and 'iterations'
-    # is an integer recommended to be > 10,000. The remaining arguments are
-    # the user's plist itself, and the shadow_hash_data hash containing the
-    # existing PBKDF2 values.
     shadow_hash_data = Hash.new unless shadow_hash_data
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
@@ -631,15 +631,15 @@ Puppet::Type.type(:user).provide :directoryservice do
     set_shadow_hash_data(users_plist, binary_plist)
   end
 
+  # This method will accept a plist in XML format, save it to disk, convert
+  # the plist to a binary format, and flush the dscl cache.
   def write_users_plist_to_disk(users_plist)
-    # This method will accept a plist in XML format, save it to disk, convert
-    # the plist to a binary format, and flush the dscl cache.
     Plist::Emit.save_plist(users_plist, "#{users_plist_dir}/#{@resource.name}.plist")
     plutil'-convert', 'binary1', "#{users_plist_dir}/#{@resource.name}.plist"
   end
 
+  # This is a simple wrapper method for writing values to a file.
   def write_to_file(filename, value)
-    # This is a simple wrapper method for writing values to a file.
     begin
       File.open(filename, 'w') { |f| f.write(value)}
     rescue Errno::EACCES => detail
