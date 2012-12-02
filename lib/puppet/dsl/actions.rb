@@ -6,38 +6,34 @@ module Puppet
   # @since 3.1 EXPERIMENTAL
   module DSL
 
-    ##
-    # This class is created for ease of debugging.
-    # Unlike Puppet::DSL::Context it inherits from Object and works fine with
-    # pry, a very useful debugging tool.
-    # Puppet::DSL::Context forwards all the calls to Actions instance.
-    # This also allows to limit the number of methods existing in that class.
+    # {Puppet::DSL::Context} delegates most calls to this class since itself is based
+    # on {BlankSlate}. This simplifies the implementation and makes debugging easier.
     ##
     class Actions
       include Puppet::Util::MethodHelper
 
-      ##
-      # Initializes Puppet::DSL::Actions instance.
       # The filename argument is only used when creating new nodes, definitions
       # or classes.
-      ##
+      # @overload initialize()
+      # @overload initialize(filename)
+      #   @param filename [String] required when creating nodes, definitions and classes
+      #
       def initialize(filename)
         @filename     = filename
         @exporting    = false
         @virtualizing = false
       end
 
-      ##
-      # Returns type reference of a given type.
-      # It expects to be called with a type name string.
-      ##
+      # Returns type reference to the given type.
+      # @param name [String] a type name string
+      # @return [TypeReference] to the type of the given name
       def type_reference(name)
         TypeReference.new name
       end
 
-      ##
       # Checks whether resource type exists
-      ##
+      # @param name [String] the name of the type
+      #
       def is_resource_type?(name)
         type = Puppet::Resource.canonicalize_type(name)
         !!(["Node", "Class"].include? type or
@@ -46,28 +42,33 @@ module Puppet
            Parser.known_resource_types.find_hostclass  '', type)
       end
 
-      ##
       # Checks whether Puppet function exists
-      ##
+      # @param [String] the name of the function
       def is_function?(name)
         !!Puppet::Parser::Functions.function(name)
       end
 
-      ##
-      # Returns object for accessing params hash
+      # Returns object for accessing params hash (an object that responds to #[]).
       # All keys will be stringified
-      ##
+      # @return [#[]] object for looking up parameters
+      #
       def params
         Parser.current_scope
       end
 
-      ##
       # Creates a new Puppet node. All arguments have to be passed.
       # Nesting is the number of nested blocks in Ruby DSL (this can be
-      # basically 0 or 1). Nodes can be only created on the top level scope
-      # Options is a hash with parameters provided for the node.
-      # Code is a ruby block that will be evaluated as the body of the node
-      ##
+      # basically 0 or 1). Nodes can be only created in the top level scope
+      # 
+      # @param name [String, Regexp] the name match for hostname
+      # @option options [String] :inherits name of parent/super node
+      # @param nesting [Fixnum] 0 if topscope else > 0
+      # @param code [Proc] the body of the created node, evaluated later as Ruby DSL
+      # 
+      # @return [void]
+      # @raise [NoMethodError] if nesting > 0
+      # @raise [ArgumentError] if block is missing
+      #
       def create_node(name, options, nesting, &code)
         raise NoMethodError, "nodes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
@@ -82,13 +83,20 @@ module Puppet
         Parser.known_resource_types.add_node node
       end
 
-      ##
       # Creates a new hostclass. All arguments are required.
       # Nesting is the number of nested blocks in Ruby DSL (this can be
-      # basically 0 or 1). Classes can be only created on the top level scope.
-      # Options is a hash with parameters provided for the node.
-      # Code is a ruby block that will be evaluated as the body of the node.
-      ##
+      # basically 0 or 1). Classes can be only created in the top level scope.
+      # 
+      # @param name [String] the name of the class
+      # @option options [String] :inherits name of parent/super class
+      # @option options [Hash] :arguments map of parameter name to value
+      # @param nesting [Fixnum] 0 if topscope else > 0
+      # @param code [Proc] the body of the created hostclass, evaluated later as Ruby DSL
+      # 
+      # @return [void]
+      # @raise [NoMethodError] if nesting > 0
+      # @raise [ArgumentError] if block is missing
+      #
       def create_hostclass(name, options, nesting, &code)
         raise NoMethodError, "classes can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
@@ -101,13 +109,19 @@ module Puppet
         Parser.known_resource_types.add_hostclass hostclass
       end
 
-      ##
-      # Creates new definition. All arguments are required.
+      # Creates a new definition. All arguments are required.
       # Nesting is the number of nested blocks in Ruby DSL (this can be
-      # basically 0 or 1). Definitions can be only created on the top level scope.
-      # Options is a hash with parameters provided for the node.
-      # Code is a ruby block that will be evaluated as the body of the node
-      ##
+      # basically 0 or 1). Definitions can be only created in the top level scope.
+      # 
+      # @param name [String] the name of the definition
+      # @option options [Hash] :arguments map of parameter name to value
+      # @param nesting [Fixnum] 0 if topscope else > 0
+      # @param code [Proc] the body of the created definition, evaluated later as Ruby DSL
+      # 
+      # @return [void]
+      # @raise [NoMethodError] if nesting > 0
+      # @raise [ArgumentError] if block is missing
+      #
       def create_definition(name, options, nesting, &code)
         raise NoMethodError, "definitions can be only created in top level scope" if nesting > 0
         raise ArgumentError, "no block supplied" if code.nil?
@@ -120,13 +134,21 @@ module Puppet
         Parser.known_resource_types.add_definition definition
       end
 
-      ##
-      # Creates a definition, all arguments are required.
+      # Creates a resource, all arguments are required.
       # Type is a Puppet Type of a resource,
-      # Args can be an Array or a single object containing name of a resource,
-      # Options is a hash of parameters for that resource,
       # Code is a proc that will set additional parameters, can be nil.
-      ##
+      #
+      # @overload create_resource(type, args, options, {|r| block})
+      # @param type [Symbol] name of resource type
+      # @param args [String, Array<String>] one or several instance names
+      # @param options [Hash] mapping from resource attribute name to value, including mapping of 
+      #   non attribute names :export and :virtual. The set of valid names is determined by the resource type.
+      # @yieldparam r [ResourceDecorator] allows manipulating the created resource
+      # @param block [ruby] evaluated immediately to allow further manipulation of parameters (can be nil)
+      # @return [Puppet::Parser::Resource] the created resource
+      # 
+      # @raise [NoMethodError] if attempt is made to create resource while manifest is imported
+      #
       def create_resource(type, args, options, code)
         # when performing type import the scope is nil
         raise NoMethodError, "resources can't be created in top level scope when importing a manifest" if Parser.current_scope.nil?
@@ -134,10 +156,9 @@ module Puppet
         ResourceDecorator.new(options, &code) if code
 
         Array(args).flatten.map do |name|
-          ##
           # Implementation based on
           # lib/puppet/parser/functions/create_resources.rb
-          ##
+          #
           name  = name.to_s
           scope = Parser.current_scope
 
@@ -165,49 +186,58 @@ module Puppet
         end
       end
 
-      ##
-      # Calls a puppet function. It behaves exactly the same way as
-      # call_function method in Puppet::DSL::Context.
-      ##
+      # Calls a puppet function.
+      # It does not validate arguments to the function.
+      #
+      # @example
+      #   call_function :notice, "foo"
+      #
+      # @param name [Symbol] the name of the function
+      # @param *args arguments passed to the called function
+      # @return [Object, void] what the function returns, or void if function does not produce a r-value.
+      #
+      # @raise [NoMethodError] if function is not found
+      #
       def call_function(name, *args)
         # when performing type import the scope is nil
         raise NoMethodError, "functions can't be called in top level scope when importing a manifest" if Parser.current_scope.nil?
         Parser.current_scope.send name, *args
       end
 
-      ##
-      # Accessors for changing the exporting/virtualizing state
-      ##
-      attr_accessor :exporting, :virtualizing
 
-      ##
+      # @return [Boolean] flag indicating the _export_ state of a resource
+      attr_accessor :exporting
+      # @return [Boolean] flag indicating the _virtual_ state of a resource
+      attr_accessor :virtualizing
+
       # Predicate accessor for :exporting
-      ##
+      # @return [Boolean] true of resource is _export_ state, false otherwise
+      #
       def exporting?
         !!@exporting
       end
 
-      ##
       # Predicate accessor for :virtualizing
-      ##
+      # @return [Boolean] true of resource is _virtual_ state, false otherwise
       def virtualizing?
         !!@virtualizing
       end
 
-      ##
-      # Exports resources passed in as an array. It also allows resource
-      # references.
-      ##
+      # Exports given resources. Resource references can be used.
+      # @see #get_resource #get_resource for what can be passed as a reference
+      # @param resources [Array<Object>] resources (via reference) to set in _export_ state.
+      # @return [void]
+      #
       def export_resources(resources)
         resources.flatten.each do |r|
           get_resource(r).exported = true
         end
       end
 
-      ##
-      # Virtualizes resources passed in as an array. It also allows resource
-      # references and string references.
-      ##
+      # Virtualizes resources passed in as an array. Resource references can be used.
+      # @param resources [Array<Puppet::Parser::Resource] resources to set in _virtual_ state.
+      # @return [void]
+      #
       def virtualize_resources(resources)
         resources.flatten.each do |r|
           get_resource(r).virtual = true
@@ -216,9 +246,20 @@ module Puppet
 
       private
 
-      ##
       # Returns a resource for the passed reference
-      ##
+      # @todo the return of o.to_s is somewhat mysterious and needs an explanation
+      #
+      # @overload get_resource(resource)
+      #   @param resource [Puppet::Resource] a resource
+      # @overload get_resource(reference)
+      #   @param reference [ResourceReference] a reference to a resource
+      # @overload get_resource(name)
+      #   @param name [String] a resource name
+      # @overload get_resource(o)
+      #   @param o [#to_s] ???
+      # @return [Puppet::Resource] the dereferenced resource
+      # @return [String] if reference can not be dereferenced, or not Resource, ResourceReference or String
+      #
       def get_resource(reference)
         case reference
         when Puppet::Resource
@@ -239,4 +280,3 @@ module Puppet
     end
   end
 end
-
