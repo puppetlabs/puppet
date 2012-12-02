@@ -661,6 +661,15 @@ EOT
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
         uses that configuration file to determine which keys to sign."},
+    :allow_csr_attributes => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Whether to allow CSR attributes.",
+    },
+    :csr_attributes_file => { :default => "$confdir/csrattributes.yaml",
+      :type => :file,
+      :mode => 0644,
+      :desc => "YAML File to hold any attributes that should be added to the CSR."},
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
