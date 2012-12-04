@@ -55,7 +55,8 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     require 'open-uri'
     require 'facter/util/plist'
     cached_source = source
-    tmpdir = Dir.mktmpdir
+    tmpdir = '/tmp/' + rand(36**8).to_s(36)
+    Dir.mkdir(tmpdir)
     begin
       if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
         cached_source = File.join(tmpdir, name)
