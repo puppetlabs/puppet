@@ -96,6 +96,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   # This method will return a list of files in the passed directory. This method
   # does not go recursively down the tree and does not return directories
+  #
+  # @param path [String] The directory to glob
+  #
+  # @api private
+  #
+  # @return [Array] of String instances modeling file paths
   def self.return_globbed_list_of_file_paths(path)
     array_of_files = Dir.glob(File.join(path, '*')).collect do |filepath|
       File.file?(filepath) ? filepath : nil
