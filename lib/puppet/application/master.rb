@@ -140,7 +140,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def preinit
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling startup"
+      $stderr.puts "Canceling startup"
       exit(0)
     end
 
