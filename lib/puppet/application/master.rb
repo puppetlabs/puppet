@@ -125,10 +125,6 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
-  def app_defaults()
-    super.merge :facts_terminus => 'yaml'
-  end
-
   # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
   # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
   # @see Puppet::Node::WriteOnlyYaml
@@ -138,6 +134,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def app_defaults
     super.merge({
       :node_cache_terminus => :write_only_yaml,
+      :facts_terminus => 'yaml'
     })
   end
 
