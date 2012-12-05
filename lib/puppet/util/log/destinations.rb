@@ -106,27 +106,23 @@ Puppet::Util::Log.newdesttype :console do
   end
 
   def handle(msg)
-    error_levels = {
-      :warning => 'Warning',
-      :err     => 'Error',
-      :alert   => 'Alert',
-      :emerg   => 'Emergency',
-      :crit    => 'Critical'
+    levels = {
+      :emerg   => { :name => 'Emergency', :color => :hred,  :stream => $stderr },
+      :alert   => { :name => 'Alert',     :color => :hred,  :stream => $stderr },
+      :crit    => { :name => 'Critical',  :color => :hred,  :stream => $stderr },
+      :err     => { :name => 'Error',     :color => :hred,  :stream => $stderr },
+      :warning => { :name => 'Warning',   :color => :hred,  :stream => $stderr },
+
+      :notice  => { :name => 'Notice',    :color => :reset, :stream => $stdout },
+      :info    => { :name => 'Info',      :color => :green, :stream => $stdout },
+      :debug   => { :name => 'Debug',     :color => :cyan,  :stream => $stdout },
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
     str = msg.source == "Puppet" ? str : "#{msg.source}: #{str}"
 
-    case msg.level
-    when *error_levels.keys
-      $stderr.puts colorize(:hred, "#{error_levels[msg.level]}: #{str}")
-    when :info
-      $stdout.puts "#{colorize(:green, 'Info')}: #{str}"
-    when :debug
-      $stdout.puts "#{colorize(:cyan, 'Debug')}: #{str}"
-    else
-      $stdout.puts str
-    end
+    level = levels[msg.level]
+    level[:stream].puts colorize(level[:color], "#{level[:name]}: #{str}")
   end
 end
 

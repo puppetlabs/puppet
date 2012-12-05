@@ -39,7 +39,7 @@ on master, '[ -d /etc/puppet/modules/appleseed ]'
 step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to uninstall 'jimmy-crakorn' ...
+    STDOUT> \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
     STDERR> \e[1;31mError: Could not uninstall module 'jimmy-crakorn'
     STDERR>   Other installed modules have dependencies on 'jimmy-crakorn' (v0.4.0)
     STDERR>     'jimmy/appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
@@ -52,7 +52,7 @@ on master, '[ -d /etc/puppet/modules/appleseed ]'
 step "Try to uninstall the module jimmy-crakorn with a version range"
 on master, puppet('module uninstall jimmy-crakorn --version 0.x'), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to uninstall 'jimmy-crakorn' (\e[0;36mv0.x\e[0m) ...
+    STDOUT> \e[mNotice: Preparing to uninstall 'jimmy-crakorn' (\e[0;36mv0.x\e[m) ...\e[0m
     STDERR> \e[1;31mError: Could not uninstall module 'jimmy-crakorn' (v0.x)
     STDERR>   Other installed modules have dependencies on 'jimmy-crakorn' (v0.4.0)
     STDERR>     'jimmy/appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
@@ -65,7 +65,7 @@ on master, '[ -d /etc/puppet/modules/appleseed ]'
 step "Uninstall the module jimmy-crakorn forcefully"
 on master, puppet('module uninstall jimmy-crakorn --force') do
   assert_output <<-OUTPUT
-    Preparing to uninstall 'jimmy-crakorn' ...
+    \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
     Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from /etc/puppet/modules
   OUTPUT
 end

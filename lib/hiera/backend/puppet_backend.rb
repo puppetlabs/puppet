@@ -1,3 +1,5 @@
+require 'hiera/backend'
+
 class Hiera
   module Backend
     class Puppet_backend
@@ -71,9 +73,10 @@ class Hiera
             temp_answer = scope[varname]
           end
 
-          next if temp_answer == :undefined
-
-          if temp_answer
+          # Note that temp_answer might be define but false.
+          if temp_answer.nil?
+            next
+          else
             # For array resolution we just append to the array whatever we
             # find, we then go onto the next file and keep adding to the array.
             #
@@ -91,8 +94,6 @@ class Hiera
             end
           end
         end
-
-        answer = nil if answer == :undefined
 
         answer
       end

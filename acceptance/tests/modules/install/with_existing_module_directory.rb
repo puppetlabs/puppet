@@ -36,8 +36,8 @@ PP
 step "Try to install an module with a name collision"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest: v0.0.1)
     STDERR>   Installation would overwrite /etc/puppet/modules/nginx
     STDERR>     Currently, 'notpmtacceptance-nginx' (v0.0.3) is installed to that directory
@@ -50,8 +50,8 @@ on master, '[ -f /etc/puppet/modules/nginx/extra.json ]'
 step "Try to install an module with a path collision"
 on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-apache' (latest: v0.0.1)
     STDERR>   Installation would overwrite /etc/puppet/modules/apache
     STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
@@ -63,8 +63,8 @@ on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 step "Try to install an module with a dependency that has collides"
 on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-php' (v0.0.1)
     STDERR>   Dependency 'pmtacceptance-apache' (v0.0.1) would overwrite /etc/puppet/modules/apache
     STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
@@ -76,9 +76,9 @@ on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 step "Install an module with a name collision by using --force"
 on master, puppet("module install pmtacceptance-nginx --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
@@ -88,9 +88,9 @@ on master, '[ ! -f /etc/puppet/modules/nginx/extra.json ]'
 step "Install an module with a name collision by using --force"
 on master, puppet("module install pmtacceptance-apache --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-apache (\e[0;36mv0.0.1\e[0m)
   OUTPUT

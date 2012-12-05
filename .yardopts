@@ -3,4 +3,8 @@
 --verbose
 --markup markdown
 --readme README_DEVELOPER.md
+--tag status
+--transitive-tag status
+--tag comment
+--hide-tag comment
 lib/**/*.rb

@@ -105,31 +105,36 @@ module Puppet
   end
 
   # Parse the config file for this process.
+  # @deprecated Use {#initialize_settings}
   def self.parse_config()
     Puppet.deprecation_warning("Puppet.parse_config is deprecated; please use Faces API (which will handle settings and state management for you), or (less desirable) call Puppet.initialize_settings")
     Puppet.initialize_settings
   end
 
-  # Initialize puppet's settings.  This is intended only for use by external tools that are not
-  #  built off of the Faces API or the Puppet::Util::Application class.  It may also be used
+  # Initialize puppet's settings. This is intended only for use by external tools that are not
+  #  built off of the Faces API or the Puppet::Util::Application class. It may also be used
   #  to initialize state so that a Face may be used programatically, rather than as a stand-alone
   #  command-line tool.
   #
-  # Note that this API may be subject to change in the future.
-  def self.initialize_settings()
-    do_initialize_settings_for_run_mode(:user)
+  # @api public
+  # @param args [Array<String>] the command line arguments to use for initialization
+  # @return [void]
+  def self.initialize_settings(args = [])
+    do_initialize_settings_for_run_mode(:user, args)
   end
 
-  # Initialize puppet's settings for a specified run_mode.  This
+  # Initialize puppet's settings for a specified run_mode.
+  #
+  # @deprecated Use {#initialize_settings}
   def self.initialize_settings_for_run_mode(run_mode)
     Puppet.deprecation_warning("initialize_settings_for_run_mode may be removed in a future release, as may run_mode itself")
-    do_initialize_settings_for_run_mode(run_mode)
+    do_initialize_settings_for_run_mode(run_mode, [])
   end
 
   # private helper method to provide the implementation details of initializing for a run mode,
   #  but allowing us to control where the deprecation warning is issued
-  def self.do_initialize_settings_for_run_mode(run_mode)
-    Puppet.settings.initialize_global_settings
+  def self.do_initialize_settings_for_run_mode(run_mode, args)
+    Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
   end
@@ -143,9 +148,11 @@ module Puppet
   end
 end
 
-# This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
-#  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
-#  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
+# This feels weird to me; I would really like for us to get to a state where
+# there is never a "require" statement anywhere besides the very top of a
+# file. That would not be possible at the moment without a great deal of
+# effort, but I think we should strive for it and revisit this at some point.
+# --cprice 2012-03-16
 
 require 'puppet/type'
 require 'puppet/parser'

@@ -36,10 +36,10 @@ end
 step "Upgrade a module that has a more recent version published"
 on master, puppet("module upgrade pmtacceptance-postgresql --version 0.0.2") do
   assert_output <<-OUTPUT
-    Preparing to upgrade 'pmtacceptance-postgresql' ...
-    Found 'pmtacceptance-postgresql' (\e[0;36mv0.0.1\e[0m) in /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Upgrading -- do not interrupt ...
+    \e[mNotice: Preparing to upgrade 'pmtacceptance-postgresql' ...\e[0m
+    \e[mNotice: Found 'pmtacceptance-postgresql' (\e[0;36mv0.0.1\e[m) in /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └─┬ pmtacceptance-postgresql (\e[0;36mv0.0.1 -> v0.0.2\e[0m)
       ├─┬ pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.0\e[0m)

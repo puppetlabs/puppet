@@ -209,7 +209,6 @@ class Puppet::Settings
   end
 
   def initialize_app_defaults(app_defaults)
-    raise Puppet::DevError, "Attempting to initialize application default settings more than once!" if app_defaults_initialized?
     REQUIRED_APP_SETTINGS.each do |key|
       raise SettingsError, "missing required app default setting '#{key}'" unless app_defaults.has_key?(key)
     end
@@ -859,6 +858,8 @@ Every section can specify three special parameters: owner, group, and mode.
 These parameters affect the required permissions of any files specified after
 their specification.  Puppet will sometimes use these parameters to check its
 own configured state, so they can be used to make Puppet a bit more self-managing.
+
+The file format supports octothorpe-commented lines, but not partial-line comments.
 
 Generated on #{Time.now}.
 

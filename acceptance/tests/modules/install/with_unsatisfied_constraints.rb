@@ -33,8 +33,8 @@ PP
 step "Try to install a module that has an unsatisfiable dependency"
 on master, puppet("module install pmtacceptance-git"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-git' (latest: v0.0.1)
     STDERR>   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     STDERR>     'jimmy-crakorn' (v0.0.1) requires 'pmtacceptance-stdlib' (v1.x)
@@ -47,9 +47,9 @@ on master, '[ ! -d /etc/puppet/modules/git ]'
 step "Install the module with an unsatisfiable dependency"
 on master, puppet("module install pmtacceptance-git --ignore-dependencies") do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-git (\e[0;36mv0.0.1\e[0m)
   OUTPUT
@@ -59,8 +59,8 @@ on master, '[ -d /etc/puppet/modules/git ]'
 step "Try to install a specific version of the unsatisfiable dependency"
 on master, puppet("module install pmtacceptance-stdlib --version 1.x"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-stdlib' (v1.x)
     STDERR>   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     STDERR>     You specified 'pmtacceptance-stdlib' (v1.x)
@@ -74,8 +74,8 @@ on master, '[ ! -d /etc/puppet/modules/stdlib ]'
 step "Try to install any version of the unsatisfiable dependency"
 on master, puppet("module install pmtacceptance-stdlib"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-stdlib' (best: v1.0.0)
     STDERR>   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     STDERR>     You specified 'pmtacceptance-stdlib' (best: v1.0.0)
@@ -89,9 +89,9 @@ on master, '[ ! -d /etc/puppet/modules/stdlib ]'
 step "Install the unsatisfiable dependency with --force"
 on master, puppet("module install pmtacceptance-stdlib --force") do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
   OUTPUT

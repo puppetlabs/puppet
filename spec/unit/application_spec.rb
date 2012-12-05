@@ -17,6 +17,20 @@ describe Puppet::Application do
 
   end
 
+  describe "application commandline" do
+    it "should not pick up changes to the array of arguments" do
+      args = %w{subcommand --arg}
+      command_line = Puppet::Util::CommandLine.new('puppet', args)
+      app = Puppet::Application.new(command_line)
+
+      args[0] = 'different_subcommand'
+      args[1] = '--other-arg'
+
+      app.command_line.subcommand_name.should == 'subcommand'
+      app.command_line.args.should == ['--arg']
+    end
+  end
+
   describe "application defaults" do
     it "should fail if required app default values are missing" do
       @app.stubs(:app_defaults).returns({ :foo => 'bar' })
@@ -102,19 +116,6 @@ describe Puppet::Application do
       Puppet.run_mode.should be_master
     end
   end
-
-
-  it "it should not allow initialize_app_defaults to be called multiple times" do
-    app = Puppet::Application.new
-    expect {
-      app.initialize_app_defaults
-    }.to_not raise_error
-
-    expect {
-      app.initialize_app_defaults
-    }.to raise_error
-  end
-
 
   it "should explode when an invalid run mode is set at runtime, for great victory" do
     expect {
