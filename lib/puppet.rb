@@ -12,6 +12,7 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
+require 'puppet/vendor'
 
 #------------------------------------------------------------
 # the top-level module
