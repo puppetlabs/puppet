@@ -262,4 +262,10 @@ describe Puppet::Util::Autoload do
       end
     end
   end
+
+  describe "#expand" do
+    it "should expand relative to the autoloader's prefix" do
+      @autoload.expand('bar').should == 'tmp/bar'
+    end
+  end
 end
