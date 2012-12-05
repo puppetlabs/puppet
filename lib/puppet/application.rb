@@ -125,6 +125,8 @@ class Application
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
   CommandLineArgs = Struct.new(:subcommand_name, :args)
 
+  @loader = Puppet::Util::Autoload.new(self, 'puppet/application')
+
   class << self
     include Puppet::Util
 
@@ -220,27 +222,32 @@ class Application
       @option_parser_commands
     end
 
+    # @return [Array<String>] the names of available applications
+    # @api public
+    def available_application_names
+      @loader.files_to_load.map do |fn|
+        ::File.basename(fn, '.rb')
+      end.uniq
+    end
+
     # Finds the class for a given application and loads the class. This does
     # not create an instance of the application, it only gets a handle to the
     # class. The code for the application is expected to live in a ruby file
     # `puppet/application/#{name}.rb` that is available on the `$LOAD_PATH`.
     #
-    # @param file_name [String] the name of the application to find (eg. "apply").
+    # @param application_name [String] the name of the application to find (eg. "apply").
     # @return [Class] the Class instance of the application that was found.
     # @raise [Puppet::Error] if the application class was not found.
     # @raise [LoadError] if there was a problem loading the application file.
     # @api public
-    def find(file_name)
-      # This should probably be using the autoloader, but due to concerns about the fact that
-      #  the autoloader currently considers the modulepath when looking for things to load,
-      #  we're delaying that for now.
+    def find(application_name)
       begin
-        require ::File.join('puppet', 'application', file_name.to_s.downcase)
+        require @loader.expand(application_name.to_s.downcase)
       rescue LoadError => e
-        Puppet.log_and_raise(e, "Unable to find application '#{file_name}'.  #{e}")
+        Puppet.log_and_raise(e, "Unable to find application '#{application_name}'. #{e}")
       end
 
-      class_name = Puppet::Util::ConstantInflector.file2constant(file_name.to_s)
+      class_name = Puppet::Util::ConstantInflector.file2constant(application_name.to_s)
 
       clazz = try_load_class(class_name)
 
@@ -250,7 +257,7 @@ class Application
       ####  and then get rid of this stanza in a subsequent release.
       ################################################################
       if (clazz.nil?)
-        class_name = file_name.capitalize
+        class_name = application_name.capitalize
         clazz = try_load_class(class_name)
       end
       ################################################################
@@ -258,7 +265,7 @@ class Application
       ################################################################
 
       if clazz.nil?
-        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{file_name}.rb'")
+        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{application_name}.rb'")
       end
 
       return clazz

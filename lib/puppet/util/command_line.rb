@@ -56,21 +56,10 @@ module Puppet
       end
 
       # @api private
+      # @deprecated
       def self.available_subcommands
-        # Eventually we probably want to replace this with a call to the
-        # autoloader.  however, at the moment the autoloader considers the
-        # module path when loading, and we don't want to allow apps / faces to
-        # load from there.  Once that is resolved, this should be replaced.
-        # --cprice 2012-03-06
-        #
-        # But we do want to load from rubygems --hightower
-        search_path = Puppet::Util::RubyGems::Source.new.directories + $LOAD_PATH
-        absolute_appdirs = search_path.uniq.collect do |x|
-          File.join(x,'puppet','application')
-        end.select{ |x| File.directory?(x) }
-        absolute_appdirs.inject([]) do |commands, dir|
-          commands + Dir[File.join(dir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
-        end.uniq
+        Puppet.deprecation_warning('Puppet::Util::CommandLine.available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.')
+        Puppet::Application.available_application_names
       end
 
       # available_subcommands was previously an instance method, not a class
@@ -78,8 +67,10 @@ module Puppet
       # that depend on that behaviour.  Forwarding allows us to preserve a
       # backward compatible API. --daniel 2011-04-11
       # @api private
+      # @deprecated
       def available_subcommands
-        self.class.available_subcommands
+        Puppet.deprecation_warning('Puppet::Util::CommandLine#available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.')
+        Puppet::Application.available_application_names
       end
 
       # Run the puppet subcommand. If the subcommand is determined to be an
@@ -105,9 +96,9 @@ module Puppet
       def find_subcommand
         if subcommand_name.nil?
           NilSubcommand.new(self)
-        elsif available_subcommands.include?(subcommand_name) then
+        elsif Puppet::Application.available_application_names.include?(subcommand_name)
           ApplicationSubcommand.new(subcommand_name, self)
-        elsif path_to_subcommand = external_subcommand then
+        elsif path_to_subcommand = external_subcommand
           ExternalSubcommand.new(path_to_subcommand, self)
         else
           UnknownSubcommand.new(subcommand_name, self)
