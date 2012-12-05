@@ -217,8 +217,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
 
     it "[17624] should warn that the plist in question is being skipped" do
-      provider.expects(:launchd_paths).returns('/Library/LaunchAgents')
-      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns(busted_plist_path)
+      provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
+      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
       provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
       Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
       provider.jobsearch
