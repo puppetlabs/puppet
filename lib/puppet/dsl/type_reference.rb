@@ -5,7 +5,8 @@ require 'puppet/dsl/resource_decorator'
 require 'puppet/dsl/parser'
 
 module Puppet
-  # @since 3.1 EXPERIMENTAL
+  # @since 3.1 
+  # @status EXPERIMENTAL
   module DSL
 
     # TypeReference object is returned by `Context#const_missing`.

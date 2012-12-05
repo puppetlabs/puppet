@@ -1,5 +1,6 @@
 module Puppet
-  # @since 3.1 EXPERIMENTAL
+  # @since 3.1 
+  # @status EXPERIMENTAL
   module DSL
 
     # See documentation below where the class is reopened

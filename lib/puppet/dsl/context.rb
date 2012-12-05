@@ -2,7 +2,9 @@ require 'puppet/dsl/actions'
 require 'puppet/dsl/blank_slate'
 
 module Puppet
-  # @since 3.1 EXPERIMENTAL
+  # @since 3.1 
+  # @status
+  #   EXPERIMENTAL
   module DSL
 
     ##
