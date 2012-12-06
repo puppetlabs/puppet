@@ -120,7 +120,7 @@ Luke Kanies
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
+Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
   end
@@ -129,15 +129,15 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     super.merge :facts_terminus => 'yaml'
   end
 
-  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :woy.
+  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
   # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
-  # @see Puppet::Node::Woy
+  # @see Puppet::Node::WriteOnlyYaml
   # @see #setup_node_cache
   # @see puppet issue 16753
   #
   def app_defaults
     super.merge({
-      :node_cache_terminus => :woy,
+      :node_cache_terminus => :write_only_yaml,
     })
   end
 
@@ -256,7 +256,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   # but never finds or reads anything (this since a real cache causes stale data to be served
   # in circumstances when the cache can not be cleared).
   # @see puppet issue 16753
-  # @see Puppet::Node::Woy
+  # @see Puppet::Node::WriteOnlyYaml
   # @return [void]
   def setup_node_cache
     Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
