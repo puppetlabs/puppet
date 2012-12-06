@@ -1,26 +1,31 @@
 test_name "ticket #16753 node data should be cached in yaml to allow it to be queried"
 
+require 'securerandom'
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 
-authfile = "/tmp/auth.conf-2128-#{$$}"
-create_remote_file master, authfile, <<AUTHCONF
-path /catalog/woy_node_name
+node_name = "woy_node_#{SecureRandom.hex}"
+auth_contents = <<AUTHCONF
+path /catalog/#{node_name}
 auth yes
 allow *
 
-path /node/woy_node_name
+path /node/#{node_name}
 auth yes
 allow *
 AUTHCONF
 
+initialize_temp_dirs
+create_test_file master, "auth.conf", auth_contents, {}
+
+authfile = get_test_file_path master, "auth.conf"
+
 on master, "chmod 644 #{authfile}"
-# This runs one agent, and checks that the data is written in yaml where expected
 with_master_running_on(master, "--rest_authconfig #{authfile} --daemonize --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --autosign true") do
-  run_agent_on(agents[0], "--no-daemonize --verbose --onetime  --node_name_value woy_node_name --server #{master}") do
-    # Only check that the file is actually there
-    # Could be paranoid and also check that it is valid yaml for the node in question
-    #
-    assert(file_exists?(master, "#{master["puppetvardir"]}/yaml/node/woy_node_name.yaml"))
-  end
+
+  # only one agent is needed because we only care about the file written on the master
+  run_agent_on(agents[0], "--no-daemonize --verbose --onetime --node_name_value #{node_name} --server #{master}")
+
+  assert_match(/name:\s*#{node_name}/, file_contents(master, "#{master["puppetvardir"]}/yaml/node/#{node_name}.yaml"),
+               "Expect node name '#{node_name}' to be present in node yaml file content written by the WriteOnlyYaml terminus")
 end
