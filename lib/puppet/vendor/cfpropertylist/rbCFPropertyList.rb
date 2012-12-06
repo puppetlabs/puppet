@@ -152,8 +152,11 @@ module Puppet::Vendor::CFPropertyList
     when Float                 then CFReal.new(object)
     when TrueClass, FalseClass then CFBoolean.new(object)
 
+    when Puppet::Vendor::CFPropertyList::Blob
+      CFData.new(object, CFData::DATA_RAW)
+
     when String
-      object.blob? ? CFData.new(object, CFData::DATA_RAW) : CFString.new(object)
+      CFString.new(object)
 
     when Time, DateTime, Date  then CFDate.new(object)
 

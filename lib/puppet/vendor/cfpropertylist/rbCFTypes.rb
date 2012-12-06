@@ -10,6 +10,16 @@
 require 'base64'
 
 module Puppet::Vendor::CFPropertyList
+  ##
+  # Blob is intended to distinguish between a Ruby String instance that should
+  # be converted to a CFString type and a Ruby String instance that should be
+  # converted to a CFData type.
+  class Blob < String
+    def blob?
+      true
+    end
+  end
+
   # This class defines the base class for all CFType classes
   #
   class CFType
