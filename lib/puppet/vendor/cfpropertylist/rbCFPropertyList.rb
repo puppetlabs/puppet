@@ -102,7 +102,11 @@ require 'iconv' unless "".respond_to?("encode")
 
 begin
   Enumerable::Enumerator.new([])
-rescue NameError => e
+
+# PUPPET-SPECIFIC: We're rescuing the ArgumentError in the event that
+#                  Enumerable::Enumerator has been loaded before in a
+#                  previous require in Puppet.
+rescue NameError, ArgumentError => e
   module Enumerable
     class Enumerator
     end
