@@ -72,27 +72,6 @@ module Puppet::Vendor::CFPropertyList
   end
 end
 
-class String
-  unless("".respond_to?(:blob) && "".respond_to?(:blob=)) then
-    # The blob status of this string (to set to true if a binary string)
-    attr_accessor :blob
-  end
-
-  unless("".respond_to?(:blob?)) then
-    # Returns whether or not +str+ is a blob.
-    # @return [true,false] If true, this string contains binary data. If false, its a regular string
-    def blob?
-      blob
-    end
-  end
-
-  unless("".respond_to?(:bytesize)) then
-    def bytesize
-      self.length
-    end
-  end
-end
-
 dirname = File.dirname(__FILE__)
 require dirname + '/rbCFPlistError.rb'
 require dirname + '/rbCFTypes.rb'
@@ -105,7 +84,8 @@ begin
 
 # PUPPET-SPECIFIC: We're rescuing the ArgumentError in the event that
 #                  Enumerable::Enumerator has been loaded before in a
-#                  previous require in Puppet.
+#                  previous require in Puppet. This needs to be discoverd
+#                  and fixed.
 rescue NameError, ArgumentError => e
   module Enumerable
     class Enumerator
@@ -152,7 +132,7 @@ module Puppet::Vendor::CFPropertyList
     when Float                 then CFReal.new(object)
     when TrueClass, FalseClass then CFBoolean.new(object)
 
-    when Puppet::Vendor::CFPropertyList::Blob
+    when Blob
       CFData.new(object, CFData::DATA_RAW)
 
     when String

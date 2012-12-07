@@ -3,6 +3,10 @@
 module Puppet::Vendor::CFPropertyList
   # Binary PList parser class
   class Binary
+    def bytesize(object)
+      object.length
+    end
+
     # Read a binary plist file
     def load(opts)
       @unique_table = {}
@@ -33,7 +37,7 @@ module Puppet::Vendor::CFPropertyList
       # after that, get the offset table
       fd.seek(table_offset, IO::SEEK_SET)
       coded_offset_table = fd.read(number_of_objects * offset_size)
-      raise CFFormatError.new("#{file}: Format error!") unless coded_offset_table.bytesize == number_of_objects * offset_size
+      raise CFFormatError.new("#{file}: Format error!") unless bytesize(coded_offset_table) == number_of_objects * offset_size
 
       @count_objects = number_of_objects
 
@@ -72,7 +76,7 @@ module Puppet::Vendor::CFPropertyList
       next_offset = 8
       offsets = @object_table.map do |object|
         offset = next_offset
-        next_offset += object.bytesize
+        next_offset += bytesize(object)
         offset
       end
       binary_str << @object_table.join
@@ -445,7 +449,7 @@ module Puppet::Vendor::CFPropertyList
           val.force_encoding("ASCII-8BIT") if val.respond_to?("encode")
           @object_table[@written_object_count] = bdata << val
         else
-          bdata = Binary.type_bytes(0b0101,val.bytesize)
+          bdata = Binary.type_bytes(0b0101,bytesize(val))
           @object_table[@written_object_count] = bdata << val
         end
 
@@ -518,7 +522,7 @@ module Puppet::Vendor::CFPropertyList
     # Convert data value to binary format and add it to the object table
     def data_to_binary(val)
       @object_table[@written_object_count] =
-        (Binary.type_bytes(0b0100, val.bytesize) << val)
+        (Binary.type_bytes(0b0100, bytesize(val)) << val)
 
       @written_object_count += 1
       @written_object_count - 1

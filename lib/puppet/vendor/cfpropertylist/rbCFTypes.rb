@@ -173,7 +173,6 @@ module Puppet::Vendor::CFPropertyList
     def initialize(value=nil,format=DATA_BASE64)
       if(format == DATA_RAW)
         @raw_value = value
-        @raw_value.blob = true
       else
         @value = value
       end
@@ -187,8 +186,6 @@ module Puppet::Vendor::CFPropertyList
     # get base64 decoded value
     def decoded_value
       @raw_value ||= String.new(Base64.decode64(@value))
-      @raw_value.blob = true
-      @raw_value
     end
 
     # convert to XML
