@@ -13,6 +13,7 @@ require 'puppet/util/tagging'
 
 # see the bottom of the file for the rest of the inclusions
 
+
 module Puppet
 class Type
   include Puppet::Util

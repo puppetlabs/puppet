@@ -21,6 +21,9 @@ require 'puppet/external/pson/pure'
 #
 # it's also a place to find top-level commands like 'debug'
 
+# The main Puppet class. Everything is contained here.
+#
+# @api public
 module Puppet
   class << self
     include Puppet::Util
@@ -49,7 +52,11 @@ module Puppet
     @@settings.define_settings(section, hash)
   end
 
-  # configuration parameter access and stuff
+  # Get the value for a setting
+  #
+  # @param [Symbol] param the setting to retrieve
+  #
+  # @api public
   def self.[](param)
     if param == :debug
       return Puppet::Util::Log.level == :debug

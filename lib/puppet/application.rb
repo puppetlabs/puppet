@@ -4,6 +4,8 @@ require 'puppet/util/plugins'
 require 'puppet/util/constant_inflector'
 require 'puppet/error'
 
+module Puppet
+
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
 # * setting up logs
@@ -117,7 +119,6 @@ require 'puppet/error'
 #          process_member(member)
 #      end
 #  end
-module Puppet
 class Application
   require 'puppet/util'
   include Puppet::Util
