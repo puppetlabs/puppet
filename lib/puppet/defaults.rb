@@ -209,6 +209,13 @@ module Puppet
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
     },
+    :node_cache_terminus => {
+      :type       => :terminus,
+      :default    => nil,
+      :desc       => "How to store cached nodes. 
+      Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
+      The master application defaults to 'write_only_yaml', all others to none.",
+    },
     :data_binding_terminus => {
       :type    => :terminus,
       :default => "hiera",
