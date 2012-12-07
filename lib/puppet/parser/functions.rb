@@ -51,8 +51,7 @@ module Puppet::Parser::Functions
     }
   end
 
-  ##
-  # {newfunction} creates a new Puppet DSL function.
+  # Create a new Puppet DSL function.
   #
   # **The {newfunction} method provides a public API.**
   #
@@ -157,7 +156,14 @@ module Puppet::Parser::Functions
     func
   end
 
-  # Determine if a given name is a function
+  # Determine if a function is defined
+  #
+  # @param [Symbol] name the function
+  #
+  # @return [Symbol, false] The name of the function if it's defined,
+  #   otherwise false.
+  #
+  # @api public
   def self.function(name)
     name = name.intern
 
@@ -195,7 +201,11 @@ module Puppet::Parser::Functions
     ret
   end
 
-  # Determine if a given function returns a value or not.
+  # Determine whether a given function returns a value.
+  #
+  # @param [Symbol] name the function
+  #
+  # @api public
   def self.rvalue?(name)
     func = get_function(name)
     func ? func[:type] == :rvalue : false
