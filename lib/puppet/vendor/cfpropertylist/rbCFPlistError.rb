@@ -12,15 +12,15 @@
 # License::   MIT License
 
 # general plist error. All exceptions thrown are derived from this class.
-class Puppet::Vendor::CFPlistError < Exception
+class Puppet::Vendor::CFPropertyList::CFPlistError < Exception
 end
 
 # Exception thrown when format errors occur
-class Puppet::Vendor::CFFormatError < Puppet::Vendor::CFPlistError
+class Puppet::Vendor::CFPropertyList::CFFormatError < Puppet::Vendor::CFPropertyList::CFPlistError
 end
 
 # Exception thrown when type errors occur
-class Puppet::Vendor::CFTypeError < Puppet::Vendor::CFPlistError
+class Puppet::Vendor::CFPropertyList::CFTypeError < Puppet::Vendor::CFPropertyList::CFPlistError
 end
 
 # eof
