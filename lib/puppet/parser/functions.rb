@@ -201,6 +201,18 @@ module Puppet::Parser::Functions
     func ? func[:type] == :rvalue : false
   end
 
+  # Return the number of arguments a function expects.
+  #
+  # @param [Symbol] name the function
+  # @return [Integer] The arity of the function. See {newfunction} for
+  #   the meaning of negative values.
+  #
+  # @api public
+  def self.arity(name)
+    func = get_function(name)
+    func ? func[:arity] : -1
+  end
+
   class << self
     private
 
@@ -221,11 +233,6 @@ module Puppet::Parser::Functions
         @functions[Environment.current][name] = func
       }
     end
-  end
-
-  # Return the arity of a function
-  def self.arity(name)
-    (functions[symbolize(name)] || {})[:arity] || -1
   end
 
   reset  # initialize the class instance variables
