@@ -14,11 +14,16 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
 
   confine :feature => :ldap, :false => (Puppet[:ldapuser] == "")
 
+  objectclasses = Puppet[:ldapgroupobjectclasses].split(/\s*,\s*/).map { |c| c.to_sym}
+  objectclasses << :posixGroup
+
+  member_attr = Puppet[:ldapgroupmemberattr]
+
   # We're mapping 'members' here because we want to make it
   # easy for the ldap user provider to manage groups.  This
   # way it can just use the 'update' method in the group manager,
   # whereas otherwise it would need to replicate that code.
-  manages(:posixGroup).at("ou=Groups").and.maps :name => :cn, :gid => :gidNumber, :members => :memberUid
+  manages(*objectclasses).at("ou=Groups").and.maps :name => :cn, :gid => :gidNumber, :members => member_attr
 
   # Find the next gid after the current largest gid.
   provider = self

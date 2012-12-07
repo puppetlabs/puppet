@@ -855,6 +855,15 @@ Whether TLS should be used when searching for nodes\. Defaults to false because 
 .SS "ldapuser"
 The user to use to connect to LDAP\. Must be specified as a full DN\.
 .
+.SS "ldapgroupobjectclasses"
+Objectclasses to create groups with (in addition to posixGroup)
+.
+.SS "ldapgroupmemberattr"
+The name of the attribute to use for group membership.
+.
+.IP "\(bu" 4
+\fIDefault\fR: memberUid.  Note values for the group's member attribute must conform to the LDAP specification for the attribute named in this parameter.  So if ldapgroupmemberattr = memberUid, then members would be specified as ["foo", "bar"]; whereas if ldapgroupmemberattr = uniqueMember, then members would be specified as ["uid=foo, ou=People, o=$organisation", "uid=bar, ou=People, o=$organisation"]
+.
 .SS "lexical"
 Whether to use lexical scoping (vs\. dynamic)\.
 .

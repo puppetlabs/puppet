@@ -1434,6 +1434,14 @@ EOT
             a meaningful default here, although the LDAP libraries might
             have one already set.  Generally, it should be the 'ou=Hosts'
             branch under your main directory.",
+    },
+    :ldapgroupobjectclasses => {
+        :default => "",
+        :desc    => "objectclasses to create group objects with in additional to posixGroup",
+    },
+    :ldapgroupmemberattr => {
+        :default => "memberUid",
+        :desc    => "The attribute to use to store members of group objects",
     }
   )
 
