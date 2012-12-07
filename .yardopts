@@ -7,4 +7,5 @@
 --transitive-tag status
 --tag comment
 --hide-tag comment
+--no-transitive-tag api
 lib/**/*.rb

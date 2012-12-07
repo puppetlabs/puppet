@@ -5,6 +5,8 @@ require 'monitor'
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
 # class.
+#
+# @api public
 module Puppet::Parser::Functions
   Environment = Puppet::Node::Environment
 
@@ -12,7 +14,9 @@ module Puppet::Parser::Functions
     include Puppet::Util
   end
 
-  # This is used by tests
+  # Reset the list of loaded functions.
+  #
+  # @api private
   def self.reset
     @functions = Hash.new { |h,k| h[k] = {} }.extend(MonitorMixin)
     @modules = Hash.new.extend(MonitorMixin)
@@ -25,12 +29,19 @@ module Puppet::Parser::Functions
     end
   end
 
+  # Accessor for singleton autoloader
+  #
+  # @api private
   def self.autoloader
     @autoloader ||= Puppet::Util::Autoload.new(
       self, "puppet/parser/functions", :wrap => false
     )
   end
 
+  # Get the module that functions are mixed into corresponding to an
+  # environment
+  #
+  # @api private
   def self.environment_module(env = nil)
     if env and ! env.is_a?(Puppet::Node::Environment)
       env = Puppet::Node::Environment.new(env)
@@ -44,8 +55,6 @@ module Puppet::Parser::Functions
   # {newfunction} creates a new Puppet DSL function.
   #
   # **The {newfunction} method provides a public API.**
-  #
-  # @api public_api
   #
   # This method is used both internally inside of Puppet to define parser
   # functions.  For example, template() is defined in
@@ -108,6 +117,8 @@ module Puppet::Parser::Functions
   #   with exactly two arguments, no more and no less.  Added in Puppet 3.1.0.
   #
   # @return [Hash] describing the function.
+  #
+  # @api public
   def self.newfunction(name, options = {}, &block)
     name = name.intern
 

@@ -6,6 +6,7 @@
 # IMPORTANT NOTE: In order for this property to work there must also be a 'membership' parameter
 # The class that inherits from property should override that method with the symbol for the membership
 
+
 require 'puppet/property'
 
 module Puppet
