@@ -73,7 +73,6 @@ describe Puppet::Util::RunMode do
     before do
       if not Dir.const_defined? :COMMON_APPDATA
         Dir.const_set :COMMON_APPDATA, "/CommonFakeBase"
-        Dir.const_set :LOCAL_APPDATA, "/LocalFakeBase"
         @remove_const = true
       end
       @run_mode = Puppet::Util::WindowsRunMode.new('fake')
@@ -82,7 +81,6 @@ describe Puppet::Util::RunMode do
     after do
       if @remove_const
         Dir.send :remove_const, :COMMON_APPDATA
-        Dir.send :remove_const, :LOCAL_APPDATA
       end
     end
 
@@ -91,8 +89,8 @@ describe Puppet::Util::RunMode do
         as_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")) }
       end
 
-      it "has confdir in the local appdata when run as non-root" do
-        as_non_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet")) }
+      it "has confdir in ~/.puppet when run as non-root" do
+        as_non_root { @run_mode.conf_dir.should == File.expand_path("~/.puppet") }
       end
     end
 
@@ -101,8 +99,8 @@ describe Puppet::Util::RunMode do
         as_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")) }
       end
 
-      it "has vardir local appdata when run as non-root" do
-        as_non_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet", "var")) }
+      it "has vardir in ~/.puppet/var when run as non-root" do
+        as_non_root { @run_mode.var_dir.should == File.expand_path("~/.puppet/var") }
       end
     end
   end
