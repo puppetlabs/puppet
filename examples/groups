@@ -1,7 +1,0 @@
-# $Id$
-
-# there need to be two forms of adding to groups:
-# add the current host to a group, and add a list of hosts to a
-# group by name
-
-$group = "crap"

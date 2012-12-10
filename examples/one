@@ -1,8 +1,0 @@
-# $Id$
-
-# this service doesn't actually exist, so we noop it
-# and this way, we can test noop :)
-service { "funtest":
-    running => "0",
-    noop => true
-}
