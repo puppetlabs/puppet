@@ -31,6 +31,7 @@ module Manager
   end
 
   # Define a new type.
+  # @api public
   def newtype(name, options = {}, &block)
     # Handle backward compatibility
     unless options.is_a?(Hash)
