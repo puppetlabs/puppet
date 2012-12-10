@@ -231,6 +231,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
         case $1
         when "dot1q","isl"
           trunking[:encapsulation] = $1.to_sym if trunking[:mode] == :trunk
+        when "negotiate"
         else
           raise "Unknown switchport encapsulation: #{$1} for #{interface}"
         end

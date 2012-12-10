@@ -342,6 +342,43 @@ eos
       @cisco.parse_trunking("FastEthernet0/1").should == { :mode => :access, :native_vlan => "100" }
     end
 
+    it "should parse access switchport information with negotiate as trunking encapsulation" do
+      @transport.stubs(:command).with("sh interface FastEthernet0/1 switchport").returns(<<eos)
+Switch#sh interfaces FastEthernet 0/1 switchport
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: static access
+Operational Mode: down
+Administrative Trunking Encapsulation: negotiate
+Negotiation of Trunking: Off
+Access Mode VLAN: 100 (something)
+Trunking Native Mode VLAN: 1 (default)
+Administrative Native VLAN tagging: enabled
+Voice VLAN: none
+Administrative private-vlan host-association: none
+Administrative private-vlan mapping: none
+Administrative private-vlan trunk native VLAN: none
+Administrative private-vlan trunk Native VLAN tagging: enabled
+Administrative private-vlan trunk encapsulation: dot1q
+Administrative private-vlan trunk normal VLANs: none
+Administrative private-vlan trunk associations: none
+Administrative private-vlan trunk mappings: none
+Operational private-vlan: none
+Trunking VLANs Enabled: ALL
+Pruning VLANs Enabled: 2-1001
+Capture Mode Disabled
+Capture VLANs Allowed: ALL
+
+Protected: false
+Unknown unicast blocked: disabled
+Unknown multicast blocked: disabled
+Appliance trust: none
+Switch#
+eos
+
+      @cisco.parse_trunking("FastEthernet0/1").should == { :mode => :access, :native_vlan => "100" }
+    end
+
     it "should parse ip addresses" do
       @transport.stubs(:command).with("sh running-config interface Vlan 1 | begin interface").returns(<<eos)
 router#sh running-config interface Vlan 1 | begin interface
