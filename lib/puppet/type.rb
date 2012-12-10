@@ -15,6 +15,8 @@ require 'puppet/util/tagging'
 
 
 module Puppet
+# The base class for all Puppet types
+# @api public
 class Type
   include Puppet::Util
   include Puppet::Util::Errors
