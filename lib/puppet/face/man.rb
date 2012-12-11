@@ -59,7 +59,13 @@ Puppet::Face.define(:man, '0.0.1') do
       # OK, if we have Ronn on the path we can delegate to it and override the
       # normal output process.  Otherwise delegate to a pager on the raw text,
       # otherwise we finally just delegate to our parent.  Oh, well.
-      ENV['LESS'] ||= 'FRSX'    # emulate git...
+
+      # These are the same options for less that git normally uses.
+      # -R : Pass through color control codes (allows display of colors)
+      # -X : Don't init/deinit terminal (leave display on screen on exit)
+      # -F : automatically exit if display fits entirely on one screen
+      # -S : don't wrap long lines
+      ENV['LESS'] ||= 'FRSX'
 
       ronn  = Puppet::Util.which('ronn')
       pager = [ENV['MANPAGER'], ENV['PAGER'], 'less', 'most', 'more'].
