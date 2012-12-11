@@ -72,7 +72,7 @@ describe Puppet::Face[:help, '0.0.1'] do
       #  that can't be run from the command line, so, rather than iterating
       #  over all available faces, we need to iterate over the subcommands
       #  that are available from the command line.
-      Puppet::Util::CommandLine.available_subcommands.each do |name|
+      Puppet::Application.available_application_names.each do |name|
         next unless help_face.is_face_app?(name)
         next if help_face.exclude_from_docs?(name)
         face = Puppet::Face[name, :current]
@@ -84,12 +84,10 @@ describe Puppet::Face[:help, '0.0.1'] do
     end
 
     context "face summaries" do
-      # we need to set a bunk module path here, because without doing so,
-      #  the autoloader will try to use it before it is initialized.
-      Puppet[:modulepath] = "/dev/null"
-
-      Puppet::Face.faces.each do |name|
-        it "has a summary for #{name}" do
+      it "can generate face summaries" do
+        faces = Puppet::Face.faces
+        faces.length.should > 0
+        faces.each do |name|
           Puppet::Face[name, :current].should have_a_summary
         end
       end

@@ -128,40 +128,19 @@ describe Puppet::Util::CommandLine do
     end
 
     describe 'when loading commands' do
-      let :core_apps do
-        %w{describe filebucket kick queue resource agent cert apply doc master}
+      it "should deprecate the available_subcommands instance method" do
+        Puppet::Application.expects(:available_application_names)
+        Puppet.expects(:deprecation_warning).with("Puppet::Util::CommandLine#available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.")
+
+        command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp })
+        command_line.available_subcommands
       end
 
-      let :command_line do
-        Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp })
-      end
+      it "should deprecate the available_subcommands class method" do
+        Puppet::Application.expects(:available_application_names)
+        Puppet.expects(:deprecation_warning).with("Puppet::Util::CommandLine.available_subcommands is deprecated; please use Puppet::Application.available_application_names instead.")
 
-      it "should expose available_subcommands as a class method" do
-        core_apps.each do |command|
-          command_line.available_subcommands.should include command
-        end
-      end
-      it 'should be able to find all existing commands' do
-        core_apps.each do |command|
-          command_line.available_subcommands.should include command
-        end
-      end
-      describe 'when multiple paths have applications' do
-        before do
-          @dir=tmpdir('command_line_plugin_test')
-          @appdir="#{@dir}/puppet/application"
-          FileUtils.mkdir_p(@appdir)
-          FileUtils.touch("#{@appdir}/foo.rb")
-          $LOAD_PATH.unshift(@dir) # WARNING: MUST MATCH THE AFTER ACTIONS!
-        end
-        it 'should be able to find commands from both paths' do
-          found = command_line.available_subcommands
-          found.should include 'foo'
-          core_apps.each { |cmd| found.should include cmd }
-        end
-        after do
-          $LOAD_PATH.shift        # WARNING: MUST MATCH THE BEFORE ACTIONS!
-        end
+        Puppet::Util::CommandLine.available_subcommands
       end
     end
   end
