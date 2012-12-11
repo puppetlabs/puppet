@@ -1,24 +1,12 @@
 test_name "Exercise loading a face from a module"
 
+require 'puppet/acceptance/temp_file_utils'
+extend Puppet::Acceptance::TempFileUtils
+initialize_temp_dirs
+
 agents.each do |agent|
-  testdir = agent.tmpdir('face_helloworld')
-  puppetconf = "#{testdir}/puppet.conf"
-  basedir = "#{testdir}/dev/modules/helloworld/lib/puppet"
-
-  on(agent, "mkdir -p #{basedir}/{application,face}")
-
-  # make sure that we use the modulepath from the dev environment
-  create_remote_file(agent, puppetconf, <<END)
-[user]
-environment=dev
-modulepath=#{testdir}/user/modules
-
-[dev]
-modulepath=#{testdir}/dev/modules
-END
-
   # copy application, face, and utility module
-  create_remote_file(agent, "#{basedir}/application/helloworld.rb", <<EOM)
+  create_test_file(agent, "dev/modules/helloworld/lib/puppet/application/helloworld.rb", <<'EOM', :mkdirs => true)
 require 'puppet/face'
 require 'puppet/application/face_base'
 
@@ -26,7 +14,7 @@ class Puppet::Application::Helloworld < Puppet::Application::FaceBase
 end
 EOM
 
-  create_remote_file(agent, "#{basedir}/face/helloworld.rb", <<EOM)
+  create_test_file(agent, "dev/modules/helloworld/lib/puppet/face/helloworld.rb", <<'EOM', :mkdirs => true)
 Puppet::Face.define(:helloworld, '0.0.1') do
   summary "Hello world face"
   description "This is the hello world face"
@@ -48,7 +36,7 @@ Puppet::Face.define(:helloworld, '0.0.1') do
 end
 EOM
 
-  create_remote_file(agent, "#{basedir}/helloworld.rb", <<EOM)
+  create_test_file(agent, "dev/modules/helloworld/lib/puppet/helloworld.rb", <<'EOM', :mkdirs => true)
 module Puppet::Helloworld
   def print
     puts "Hello world from a required module"
@@ -56,6 +44,20 @@ module Puppet::Helloworld
   module_function :print
 end
 EOM
+
+  dev_modulepath = get_test_file_path(agent, 'dev/modules')
+  user_modulepath = get_test_file_path(agent, 'user/modules')
+
+  # make sure that we use the modulepath from the dev environment
+  create_test_file(agent, 'puppet.conf', <<"END")
+[user]
+environment=dev
+modulepath=#{user_modulepath}
+
+[dev]
+modulepath=#{dev_modulepath}
+END
+  puppetconf = get_test_file_path(agent, 'puppet.conf')
 
   on(agent, puppet('help', '--config', puppetconf)) do
     assert_match(/helloworld\s*Hello world face/, stdout, "Face missing from list of available subcommands")
