@@ -18,6 +18,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def initvars
       @checks = {}
+      @options = {}
       super
     end
 
@@ -76,10 +77,9 @@ class Puppet::Provider::NameService < Puppet::Provider
     # This is annoying, but there really aren't that many options,
     # and this *is* built into Ruby.
     def section
-      unless defined?(@resource_type)
+      unless resource_type
         raise Puppet::DevError,
           "Cannot determine Etc section without a resource type"
-
       end
 
       if @resource_type.name == :group
