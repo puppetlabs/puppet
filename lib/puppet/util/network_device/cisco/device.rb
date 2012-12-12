@@ -22,17 +22,25 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     return $1 if query =~ /enable=(.*)/
   end
 
-  def command(cmd = nil)
-    Puppet.debug("command #{cmd}")
+  def connect
     transport.connect
     login
     transport.command("terminal length 0") do |out|
       enable if out =~ />\s?\z/n
     end
     find_capabilities
+  end
+
+  def disconnect
+    transport.close
+  end
+
+  def command(cmd = nil)
+    Puppet.debug("command #{cmd}")
+    connect
     out = execute(cmd) if cmd
     yield self if block_given?
-    transport.close
+    disconnect
     out
   end
 
