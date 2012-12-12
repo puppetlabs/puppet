@@ -205,7 +205,7 @@ class Puppet::Util::Autoload
   end
 
   def load(name, env=nil)
-    self.class.load_file(File.join(@path, name.to_s), env)
+    self.class.load_file(expand(name), env)
   end
 
   # Load all instances that we can.  This uses require, rather than load,
@@ -215,14 +215,18 @@ class Puppet::Util::Autoload
   end
 
   def loaded?(name)
-    self.class.loaded?(File.join(@path, name.to_s))
+    self.class.loaded?(expand(name))
   end
 
   def changed?(name)
-    self.class.changed?(File.join(@path, name.to_s))
+    self.class.changed?(expand(name))
   end
 
   def files_to_load
     self.class.files_to_load(@path)
+  end
+
+  def expand(name)
+    ::File.join(@path, name.to_s)
   end
 end

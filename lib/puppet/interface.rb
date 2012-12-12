@@ -20,10 +20,9 @@ class Puppet::Interface
   include Puppet::Util
 
   class << self
-    # This is just so we can search for actions.  We only use its
-    # list of directories to search.
-    # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
+    # @deprecated
     def autoloader
+      Puppet.deprecation_warning("Puppet::Interface.autoloader is deprecated; please use Puppet::Interface#loader instead")
       @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/face")
     end
 
@@ -56,6 +55,7 @@ class Puppet::Interface
 
     def [](name, version)
       unless face = Puppet::Interface::FaceCollection[name, version]
+        # REVISIT (#18042) no sense in rechecking if version == :current -- josh
         if current = Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"
         else

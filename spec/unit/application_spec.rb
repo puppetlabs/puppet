@@ -62,13 +62,36 @@ describe Puppet::Application do
           value =~ /no such file to load|cannot load such file/
       end
 
-      expect { @klass.find("ThisShallNeverEverEverExist") }.to raise_error(LoadError)
+      expect {
+        @klass.find("ThisShallNeverEverEverExist")
+      }.to raise_error(LoadError)
     end
 
     it "#12114: should prevent File namespace collisions" do
       # have to require the file face once, then the second time around it would fail
       @klass.find("File").should == Puppet::Application::File
       @klass.find("File").should == Puppet::Application::File
+    end
+  end
+
+  describe "#available_application_names" do
+    it 'should be able to find available application names' do
+      apps =  %w{describe filebucket kick queue resource agent cert apply doc master}
+      Puppet::Util::Autoload.expects(:files_to_load).returns(apps)
+
+      Puppet::Application.available_application_names.should =~ apps
+    end
+
+    it 'should find applications from multiple paths' do
+      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/bar.rb })
+
+      Puppet::Application.available_application_names.should =~ %w{ foo bar }
+    end
+
+    it 'should return unique application names' do
+      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/foo.rb })
+
+      Puppet::Application.available_application_names.should == %w{ foo }
     end
   end
 
