@@ -7,7 +7,7 @@ require 'puppet/util/network_device/transport/base'
 # a sane interface to Net::SSH. Credits goes to net-ssh-telnet authors
 class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice::Transport::Base
 
-  attr_accessor :buf, :ssh, :channel, :verbose
+  attr_accessor :buf, :ssh, :channel
 
   def initialize
     super
@@ -100,12 +100,12 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
         break
       end
     end
-    Puppet.debug("ssh: expected #{line}") if @verbose
+    Puppet.debug("ssh: expected #{line}")
     line
   end
 
   def send(line)
-    Puppet.debug("ssh: send #{line}") if @verbose
+    Puppet.debug("ssh: send #{line}")
     @channel.send_data(line + "\n")
   end
 
