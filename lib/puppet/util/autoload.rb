@@ -19,13 +19,6 @@ class Puppet::Util::Autoload
       @gem_source ||= Puppet::Util::RubyGems::Source.new
     end
 
-    # List all loaded files.
-    def list_loaded
-      loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
-        "#{path}: #{hash[:file]}"
-      end
-    end
-
     # Has a given path been loaded?  This is used for testing whether a
     # changed file should be loaded or just ignored.  This is only
     # used in network/client/master, when downloading plugins, to
