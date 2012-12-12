@@ -1,5 +1,5 @@
-
 require 'puppet/util/network_device'
+
 module Puppet::Util::NetworkDevice::IPCalc
 
   # This is a rip-off of authstore

@@ -37,6 +37,7 @@ class Puppet::Util::NetworkDevice::Transport::Telnet < Puppet::Util::NetworkDevi
     end
 
     def send(line)
+      Puppet.debug("telnet: send #{line}")
       @telnet.puts(line)
     end
 end

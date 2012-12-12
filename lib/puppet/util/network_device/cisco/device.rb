@@ -36,7 +36,6 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def command(cmd = nil)
-    Puppet.debug("command #{cmd}")
     connect
     out = execute(cmd) if cmd
     yield self if block_given?
@@ -45,7 +44,6 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def execute(cmd)
-    Puppet.debug("Executing: #{cmd}")
     transport.command(cmd)
   end
 
