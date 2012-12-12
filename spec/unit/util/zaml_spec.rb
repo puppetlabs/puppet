@@ -69,27 +69,43 @@ describe "Pure ruby yaml implementation" do
     end
 
     it "serializes a time in UTC" do
-      the_time_in("Europe/London").should be_equivalent_to(the_time_in_yaml_offset_by("+00:00"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("Europe/London").should be_equivalent_to(the_time_in_yaml_offset_by("+00:00"))
+      end
     end
 
     it "serializes a time behind UTC" do
-      the_time_in("America/Chicago").should be_equivalent_to(the_time_in_yaml_offset_by("-06:00"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("America/Chicago").should be_equivalent_to(the_time_in_yaml_offset_by("-06:00"))
+      end
     end
 
     it "serializes a time behind UTC that is not a complete hour (Bug #15496)" do
-      the_time_in("America/Caracas").should be_equivalent_to(the_time_in_yaml_offset_by("-04:30"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("America/Caracas").should be_equivalent_to(the_time_in_yaml_offset_by("-04:30"))
+      end
     end
 
     it "serializes a time ahead of UTC" do
-      the_time_in("Europe/Berlin").should be_equivalent_to(the_time_in_yaml_offset_by("+01:00"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("Europe/Berlin").should be_equivalent_to(the_time_in_yaml_offset_by("+01:00"))
+      end
     end
 
     it "serializes a time ahead of UTC that is not a complete hour" do
-      the_time_in("Asia/Kathmandu").should be_equivalent_to(the_time_in_yaml_offset_by("+05:45"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("Asia/Kathmandu").should be_equivalent_to(the_time_in_yaml_offset_by("+05:45"))
+      end
     end
 
     it "serializes a time more than 12 hours ahead of UTC" do
-      the_time_in("Pacific/Kiritimati").should be_equivalent_to(the_time_in_yaml_offset_by("+14:00"))
+      pending("not supported on Windows", :if => Puppet.features.microsoft_windows?) do
+        the_time_in("Pacific/Kiritimati").should be_equivalent_to(the_time_in_yaml_offset_by("+14:00"))
+      end
+    end
+
+    it "should roundtrip Time.now" do
+      Time.now.should round_trip_through_yaml
     end
   end
 
