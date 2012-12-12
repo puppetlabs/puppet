@@ -34,7 +34,7 @@ describe "Pure ruby yaml implementation" do
     []           => "--- []",
     :symbol      => "--- !ruby/sym symbol",
     {:a => "A"}  => "--- \n  !ruby/sym a: A",
-    {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y"
+    {:a => "x\ny"} => "--- \n  !ruby/sym a: |-\n    x\n    y",
   }.each do |data, serialized|
     it "should convert the #{data.class} #{data.inspect} to yaml" do
       data.to_yaml.should == serialized
@@ -42,6 +42,22 @@ describe "Pure ruby yaml implementation" do
 
     it "should produce yaml for the #{data.class} #{data.inspect} that can be reconstituted" do
       can_round_trip data
+    end
+  end
+
+  # This arose from redmine #15496. These comparisons are inline
+  # due to the lack of $TZ's staying power passing around Time objects.
+  { "America/Caracas" => "--- 2012-12-12 12:12:00.000000 -04:30",
+    "Asia/Kathmandu"  => "--- 2012-12-12 12:12:00.000000 +05:45"
+  }.each do |zone, serialized|
+    t = Puppet::Util.withenv("TZ" => zone) { Time.local("2012", "dec", 12,12,12).to_yaml }
+
+    it "should correctly serialize Time objects, even in oddball timezones" do
+     t.should == serialized
+    end
+
+    it "should produce yaml for the date #{t.class} #{t.inspect} that can be reconstituted" do
+      can_round_trip t
     end
   end
 
