@@ -1,5 +1,8 @@
 test_name "Exercise loading a face from a module"
 
+# Because the module tool does not work on windows, we can't run this test there
+confine :except, :platform => 'windows'
+
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
