@@ -37,6 +37,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def execute(cmd)
+    Puppet.debug("Executing: #{cmd}")
     transport.command(cmd)
   end
 
@@ -61,7 +62,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def find_capabilities
-    out = transport.command("sh vlan brief")
+    out = execute("sh vlan brief")
     lines = out.split("\n")
     lines.shift; lines.pop
 
@@ -116,7 +117,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
   def parse_interface(name)
     resource = {}
-    out = transport.command("sh interface #{name}")
+    out = execute("sh interface #{name}")
     lines = out.split("\n")
     lines.shift; lines.pop
     lines.each do |l|
@@ -144,7 +145,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
   def parse_interface_config(name)
     resource = Hash.new { |hash, key| hash[key] = Array.new ; }
-    out = transport.command("sh running-config interface #{name} | begin interface")
+    out = execute("sh running-config interface #{name} | begin interface")
     lines = out.split("\n")
     lines.shift; lines.pop
     lines.each do |l|
@@ -166,7 +167,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
   def parse_vlans
     vlans = {}
-    out = transport.command(support_vlan_brief? ? "sh vlan brief" : "sh vlan-switch brief")
+    out = execute(support_vlan_brief? ? "sh vlan brief" : "sh vlan-switch brief")
     lines = out.split("\n")
     lines.shift; lines.shift; lines.shift; lines.pop
     vlan = nil
@@ -193,27 +194,27 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   def update_vlan(id, is = {}, should = {})
     if should[:ensure] == :absent
       Puppet.info "Removing #{id} from device vlan"
-      transport.command("conf t")
-      transport.command("no vlan #{id}")
-      transport.command("exit")
+      execute("conf t")
+      execute("no vlan #{id}")
+      execute("exit")
       return
     end
 
     # We're creating or updating an entry
-    transport.command("conf t")
-    transport.command("vlan #{id}")
+    execute("conf t")
+    execute("vlan #{id}")
     [is.keys, should.keys].flatten.uniq.each do |property|
       Puppet.debug("trying property: #{property}: #{should[property]}")
       next if property != :description
-      transport.command("name #{should[property]}")
+      execute("name #{should[property]}")
     end
-    transport.command("exit")
-    transport.command("exit")
+    execute("exit")
+    execute("exit")
   end
 
   def parse_trunking(interface)
     trunking = {}
-    out = transport.command("sh interface #{interface} switchport")
+    out = execute("sh interface #{interface} switchport")
     lines = out.split("\n")
     lines.shift; lines.pop
     lines.each do |l|
