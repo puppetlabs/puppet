@@ -58,7 +58,7 @@ module HieraPuppet
   end
 
   def hiera_config
-    config = {}
+    config = {:backends => []}
 
     if config_file = hiera_config_file
       config = Hiera::Config.load(config_file)
