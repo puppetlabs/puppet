@@ -376,7 +376,7 @@ class Time
   def to_zaml(z)
     # 2008-12-06 10:06:51.373758 -07:00
     ms = ("%0.6f" % (usec * 1e-6))[2..-1]
-    offset = "%+0.2i:%0.2i" % [utc_offset / 3600, (utc_offset / 60) % 60]
+    offset = "%+0.2i:%0.2i" % [utc_offset / 3600.0, (utc_offset / 60) % 60]
     z.emit(self.strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
   end
 end
