@@ -45,19 +45,53 @@ describe "Pure ruby yaml implementation" do
     end
   end
 
-  # This arose from redmine #15496. These comparisons are inline
-  # due to the lack of $TZ's staying power passing around Time objects.
-  { "America/Caracas" => "--- 2012-12-12 12:12:00.000000 -04:30",
-    "Asia/Kathmandu"  => "--- 2012-12-12 12:12:00.000000 +05:45"
-  }.each do |zone, serialized|
-    t = Puppet::Util.withenv("TZ" => zone) { Time.local("2012", "dec", 12,12,12).to_yaml }
-
-    it "should correctly serialize Time objects, even in oddball timezones" do
-     t.should == serialized
+  context Time do
+    def the_time_in(timezone)
+      Puppet::Util.withenv("TZ" => timezone) do
+        Time.local(2012, "dec", 11, 15, 59, 2)
+      end
     end
 
-    it "should produce yaml for the date #{t.class} #{t.inspect} that can be reconstituted" do
-      can_round_trip t
+    def the_time_in_yaml_offset_by(offset)
+      "--- 2012-12-11 15:59:02.000000 #{offset}"
+    end
+
+    RSpec::Matchers.define :be_equivalent_to do |expected_yaml|
+      match do |object|
+        object.to_yaml == expected_yaml and YAML.load(expected_yaml) == object
+      end
+
+      failure_message_for_should do |object|
+        if object.to_yaml != expected_yaml
+          "#{object} serialized to #{object.to_yaml}"
+        else
+          "#{expected_yaml} deserialized as #{YAML.load(expected_yaml)}"
+        end
+      end
+    end
+
+    it "serializes a time in UTC" do
+      the_time_in("Europe/London").should be_equivalent_to(the_time_in_yaml_offset_by("+00:00"))
+    end
+
+    it "serializes a time behind UTC" do
+      the_time_in("America/Chicago").should be_equivalent_to(the_time_in_yaml_offset_by("-06:00"))
+    end
+
+    it "serializes a time behind UTC that is not a complete hour (Bug #15496)" do
+      the_time_in("America/Caracas").should be_equivalent_to(the_time_in_yaml_offset_by("-04:30"))
+    end
+
+    it "serializes a time ahead of UTC" do
+      the_time_in("Europe/Berlin").should be_equivalent_to(the_time_in_yaml_offset_by("+01:00"))
+    end
+
+    it "serializes a time ahead of UTC that is not a complete hour" do
+      the_time_in("Asia/Kathmandu").should be_equivalent_to(the_time_in_yaml_offset_by("+05:45"))
+    end
+
+    it "serializes a time more than 12 hours ahead of UTC" do
+      the_time_in("Pacific/Kiritimati").should be_equivalent_to(the_time_in_yaml_offset_by("+14:00"))
     end
   end
 
