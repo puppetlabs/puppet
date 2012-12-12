@@ -22,7 +22,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     return $1 if query =~ /enable=(.*)/
   end
 
-  def command(cmd=nil)
+  def command(cmd = nil)
     Puppet.debug("command #{cmd}")
     transport.connect
     login
@@ -69,7 +69,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     @support_vlan_brief = ! (lines.first =~ /^%/)
   end
 
-  IF={
+  IF = {
     :FastEthernet => %w{FastEthernet FastEth Fast FE Fa F},
     :GigabitEthernet => %w{GigabitEthernet GigEthernet GigEth GE Gi G},
     :TenGigabitEthernet => %w{TenGigabitEthernet TE Te},
