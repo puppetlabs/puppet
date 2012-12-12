@@ -1,7 +1,13 @@
 require 'puppet/interface/option_builder'
 
+# This class is not actually public API, but the method
+# {Puppet::Interface::OptionManager#option option} is public when used
+# as part of the Faces DSL (i.e. from within a
+# {Puppet::Interface.define define} block).
+# @api public
 module Puppet::Interface::OptionManager
-  
+
+  # @api private
   def display_global_options(*args)
     @display_global_options ||= []
     [args].flatten.each do |refopt|
@@ -12,11 +18,12 @@ module Puppet::Interface::OptionManager
     @display_global_options
   end
   alias :display_global_option :display_global_options
-  
+
   def all_display_global_options
     walk_inheritance_tree(@display_global_options, :all_display_global_options)
   end
-  
+
+  # @api private
   def walk_inheritance_tree(start, sym)
     result = (start ||= [])
     if self.is_a?(Class) and superclass.respond_to?(sym)
@@ -26,13 +33,18 @@ module Puppet::Interface::OptionManager
     end
     return result
   end
-  
-  # Declare that this app can take a specific option, and provide
-  # the code to do so.
+
+  # Declare that this app can take a specific option, and provide the
+  # code to do so. See {Puppet::Interface::ActionBuilder#option} for
+  # details.
+  #
+  # @api public
+  # @dsl Faces
   def option(*declaration, &block)
     add_option Puppet::Interface::OptionBuilder.build(self, *declaration, &block)
   end
 
+  # @api private
   def add_option(option)
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.
@@ -61,10 +73,12 @@ module Puppet::Interface::OptionManager
     return option
   end
 
+  # @api private
   def options
     walk_inheritance_tree(@options, :options)
   end
 
+  # @api private
   def get_option(name, with_inherited_options = true)
     @options_hash ||= {}
 
@@ -80,6 +94,7 @@ module Puppet::Interface::OptionManager
     return result
   end
 
+  # @api private
   def option?(name)
     options.include? name.to_sym
   end
