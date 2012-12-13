@@ -1,25 +1,42 @@
 require 'puppet/parameter/value_collection'
 
-# An individual Value class.
+# Describes an acceptable value for a parameter or property.
+# An acceptable value is either specified as a literal value or a regular expression.
+# @note this class should be used via the api methods in {Puppet::Parameter} and {Puppet::Property}
+# @api private
+#
 class Puppet::Parameter::Value
   attr_reader :name, :options, :event
   attr_accessor :block, :call, :method, :required_features
 
-  # Add an alias for this value.
+  # Adds an alias for this value.
+  # Makes the given _name_ be an alias for this acceptable value.
+  # @param name [Symbol] the additonal alias this value should be known as
+  # @api private
+  #
   def alias(name)
     @aliases << convert(name)
   end
 
-  # Return all aliases.
+  # @return [Array<Symbol>] Returns all aliases (or an empty array).
+  # @api private
+  #
   def aliases
     @aliases.dup
   end
 
-  # Store the event that our value generates, if it does so.
+  # Stores the event that our value generates, if it does so.
+  # @api private
+  #
   def event=(value)
     @event = convert(value)
   end
 
+  # Initializes the instance with a literal accepted value, or a regular expression.
+  # If anything else is passed, it is turned into a String, and then made into a Symbol.
+  # @param [Symbol, Regexp, Object] the value to accept, Symbol, a regular expression, or object to convert.
+  # @api private
+  #
   def initialize(name)
     if name.is_a?(Regexp)
       @name = name
@@ -34,7 +51,10 @@ class Puppet::Parameter::Value
     @call = :instead
   end
 
-  # Does a provided value match our value?
+  # Checks if the given value matches the acceptance rules (literal value, regular expression, or one
+  # of the aliases.
+  # @api private
+  #
   def match?(value)
     if regex?
       return true if name =~ value.to_s
@@ -43,7 +63,9 @@ class Puppet::Parameter::Value
     end
   end
 
-  # Is our value a regex?
+  # @return [Boolean] whether the accepted value is a regular expression or not.
+  # @api private
+  #
   def regex?
     @name.is_a?(Regexp)
   end
@@ -52,6 +74,8 @@ class Puppet::Parameter::Value
 
   # A standard way of converting all of our values, so we're always
   # comparing apples to apples.
+  # @api private
+  #
   def convert(value)
     case value
     when Symbol, ''             # can't intern an empty string
