@@ -100,12 +100,12 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
         break
       end
     end
-    Puppet.debug("ssh: expected #{line}")
+    # Puppet.debug("ssh: expected #{line}")
     line
   end
 
   def send(line)
-    Puppet.debug("ssh: send #{line}")
+    # Puppet.debug("ssh: send #{line}")
     @channel.send_data(line + "\n")
   end
 
