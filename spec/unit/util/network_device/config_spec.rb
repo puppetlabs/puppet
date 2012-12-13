@@ -105,6 +105,20 @@ describe Puppet::Util::NetworkDevice::Config do
       @config.read
       @config.devices['router.puppetlabs.com'].url.should == 'ssh://test/'
     end
+
+    it "should parse the debug mode" do
+      @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/', 'debug')
+
+      @config.read
+      @config.devices['router.puppetlabs.com'].options.should == { :debug => true }
+    end
+
+    it "should set the debug mode to false by default" do
+      @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', 'type cisco', 'url ssh://test/')
+
+      @config.read
+      @config.devices['router.puppetlabs.com'].options.should == { :debug => false }
+    end
   end
 
 end

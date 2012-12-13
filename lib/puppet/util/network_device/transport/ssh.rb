@@ -9,8 +9,9 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
 
   attr_accessor :buf, :ssh, :channel
 
-  def initialize
-    super
+  def initialize(verbose = false)
+    super()
+    @verbose = verbose
     unless Puppet.features.ssh?
       raise 'Connecting with ssh to a network device requires the \'net/ssh\' ruby library'
     end
@@ -100,12 +101,12 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
         break
       end
     end
-    # Puppet.debug("ssh: expected #{line}")
+    Puppet.debug("ssh: expected #{line}") if @verbose
     line
   end
 
   def send(line)
-    # Puppet.debug("ssh: send #{line}")
+    Puppet.debug("ssh: send #{line}") if @verbose
     @channel.send_data(line + "\n")
   end
 
