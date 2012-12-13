@@ -8,9 +8,9 @@ describe Puppet::Parser::Collector do
     @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("mynode")))
 
     @resource = Puppet::Parser::Resource.new("file", "/tmp/testing", :scope => @scope, :source => "fakesource")
-    {:owner => "root", :group => "bin", :mode => "644"}.each do |param, value|
-      @resource[param] = value
-    end
+    @resource[:owner] = "root"
+    @resource[:group] = "bin"
+    @resource[:mode] = "644"
   end
 
   def query(text)
@@ -19,12 +19,19 @@ describe Puppet::Parser::Collector do
     return parser.parse(code).code[0].query
   end
 
-  {true => [%{title == "/tmp/testing"}, %{(title == "/tmp/testing")}, %{group == bin},
-    %{title == "/tmp/testing" and group == bin}, %{title == bin or group == bin},
-    %{title == "/tmp/testing" or title == bin}, %{title == "/tmp/testing"},
-    %{(title == "/tmp/testing" or title == bin) and group == bin}],
-  false => [%{title == bin}, %{title == bin or (title == bin and group == bin)},
-    %{title != "/tmp/testing"}, %{title != "/tmp/testing" and group != bin}]
+  {
+    true => [%{title == "/tmp/testing"},
+             %{(title == "/tmp/testing")},
+             %{group == bin},
+             %{title == "/tmp/testing" and group == bin},
+             %{title == bin or group == bin},
+             %{title == "/tmp/testing" or title == bin},
+             %{title == "/tmp/testing"},
+             %{(title == "/tmp/testing" or title == bin) and group == bin}],
+    false => [%{title == bin},
+              %{title == bin or (title == bin and group == bin)},
+              %{title != "/tmp/testing"},
+              %{title != "/tmp/testing" and group != bin}]
   }.each do |result, ary|
     ary.each do |string|
       it "should return '#{result}' when collecting resources with '#{string}'" do
