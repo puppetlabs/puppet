@@ -1,44 +1,89 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 require 'puppet/parser/collector'
 
 describe Puppet::Parser::Collector do
-  before do
-    @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("mynode")))
+  include PuppetSpec::Compiler
 
-    @resource = Puppet::Parser::Resource.new("file", "/tmp/testing", :scope => @scope, :source => "fakesource")
-    @resource[:owner] = "root"
-    @resource[:group] = "bin"
-    @resource[:mode] = "644"
+  def expect_the_message_to_be(expected_messages, code, node = Puppet::Node.new('the node'))
+    catalog = compile_to_catalog(code, node)
+    messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }
+                                .collect { |notify| notify[:message] }
+    messages.should include(*expected_messages)
   end
 
-  def query(text)
-    code = "File <| #{text} |>"
-    parser = Puppet::Parser::Parser.new(@scope.compiler)
-    return parser.parse(code).code[0].query
+  it "matches on title" do
+    expect_the_message_to_be(["the message"], <<-MANIFEST)
+      @notify { "testing": message => "the message" }
+
+      Notify <| title == "testing" |>
+    MANIFEST
   end
 
-  {
-    true => [%{title == "/tmp/testing"},
-             %{(title == "/tmp/testing")},
-             %{group == bin},
-             %{title == "/tmp/testing" and group == bin},
-             %{title == bin or group == bin},
-             %{title == "/tmp/testing" or title == bin},
-             %{title == "/tmp/testing"},
-             %{(title == "/tmp/testing" or title == bin) and group == bin}],
-    false => [%{title == bin},
-              %{title == bin or (title == bin and group == bin)},
-              %{title != "/tmp/testing"},
-              %{title != "/tmp/testing" and group != bin}]
-  }.each do |result, ary|
-    ary.each do |string|
-      it "should return '#{result}' when collecting resources with '#{string}'" do
-        str, code = query(string).evaluate @scope
-        code.should be_instance_of(Proc)
-        code.call(@resource).should == result
-      end
-    end
+  it "matches on other parameters" do
+    expect_the_message_to_be(["the message"], <<-MANIFEST)
+      @notify { "testing": message => "the message" }
+      @notify { "other testing": message => "the wrong message" }
+
+      Notify <| message == "the message" |>
+    MANIFEST
+  end
+
+  it "allows criteria to be combined with 'and'" do
+    expect_the_message_to_be(["the message"], <<-MANIFEST)
+      @notify { "testing": message => "the message" }
+      @notify { "other": message => "the message" }
+
+      Notify <| title == "testing" and message == "the message" |>
+    MANIFEST
+  end
+
+  it "allows criteria to be combined with 'or'" do
+    expect_the_message_to_be(["the message", "other message"], <<-MANIFEST)
+      @notify { "testing": message => "the message" }
+      @notify { "other": message => "other message" }
+      @notify { "yet another": message => "different message" }
+
+      Notify <| title == "testing" or message == "other message" |>
+    MANIFEST
+  end
+
+  it "allows criteria to be combined with 'or'" do
+    expect_the_message_to_be(["the message", "other message"], <<-MANIFEST)
+      @notify { "testing": message => "the message" }
+      @notify { "other": message => "other message" }
+      @notify { "yet another": message => "different message" }
+
+      Notify <| title == "testing" or message == "other message" |>
+    MANIFEST
+  end
+
+  it "allows criteria to be grouped with parens" do
+    expect_the_message_to_be(["the message", "different message"], <<-MANIFEST)
+      @notify { "testing":     message => "different message", withpath => true }
+      @notify { "other":       message => "the message" }
+      @notify { "yet another": message => "the message",       withpath => true } 
+
+      Notify <| (title == "testing" or message == "the message") and withpath == true |>
+    MANIFEST
+  end
+
+  it "does not do anything if nothing matches" do
+    expect_the_message_to_be([], <<-MANIFEST)
+      @notify { "testing": message => "different message" }
+
+      Notify <| title == "does not exist" |>
+    MANIFEST
+  end
+
+  it "excludes items with inequalities" do
+    expect_the_message_to_be(["good message"], <<-MANIFEST)
+      @notify { "testing": message => "good message" }
+      @notify { "the wrong one": message => "bad message" }
+
+      Notify <| title != "the wrong one" |>
+    MANIFEST
   end
 end
