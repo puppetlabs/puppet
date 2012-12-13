@@ -15,8 +15,41 @@ require 'puppet/util/tagging'
 
 
 module Puppet
-# The base class for all Puppet types
+# The base class for all Puppet types.
+# @todo Is something missing from this overview of Type?
+#
+# A type describes:
+#--
+# * **Attributes** - properties, parameters, and meta-parameters are different types of attributes of a type.
+#   * **Properties** - these are the properties of the managed resource (attributes of the entity being managed; like
+#     a file's owner, group and mode). A property describes two states; the 'is' (current state) and the 'should' wanted
+#     state).
+#       * **Ensurable** - a set of traits that control the lifecycle (create, remove, etc.) of a managed resource.
+#       * **Name/Identity** - one property is the name/identity of a resource, the _namevar_ that uniquely identifies
+#         one instance of a type from all others.
+#   * **Parameters** - additional attributes of the type (that does not directly related to an instance of the managed
+#     resource; if an operation is recursive or not, where to look for things, etc.). A Parameter (in contrast to Property)
+#     has one current value where a Property has two (current-state and wanted-state).
+#   * **Meta-Parameters** - parameters that are available across all types. A meta-parameter typically has 
+#     additional semantics; like the `require` meta-parameter. A new type typically does not add new meta-parameters,
+#     but you need to be aware of their existence so you do not inadvertently shadow an existing meta-parameters.
+# * **Parent** - a type can have a super type (that it inherits from).
+# * **Validation** - If not just a basic data type, or an enumeration of symbolic values, it is possible to provide
+#     validation logic for a type, properties and parameters.
+# * **Munging** - munging/unmunging is the process of turning a value in external representation into an internal
+#     representation and vice versa. A Type supports adding custom logic for these.
+# * **Auto Requirements** - a type can specify automatic relationships to resources to ensure that if they are being
+#     managed, they will be processed before this type.
+# * **Providers** - a provider is an implementation of a type's behavior - the management of a resource in the 
+#     system being managed. A provider is often platform specific and is selected at runtime based on
+#     criteria/predicates specified in the configured providers. See {Puppet::Provider} for details.
+# 
+# @todo is Type like a factory for creating subclasses of Type?; one per resource type?
+#
+# @todo The logic intermixes the terms "property", "parameter", and "attribute" in a very confusing way; sometimes they
+#   seem to be the same, other times not. Please review language with care for these concepts.
 # @api public
+#
 class Type
   include Puppet::Util
   include Puppet::Util::Errors
@@ -24,9 +57,15 @@ class Type
   include Puppet::Util::Logging
   include Puppet::Util::Tagging
 
-  ###############################
   # Comparing type instances.
   include Comparable
+  
+  # Compares this type against the given _other_ (type) and returns -1, 0, or +1 depending on the order.
+  # @param other [Object] the object to compare against (produces nil, if not kind of Type}
+  # @return [-1, 0, +1, nil] produces -1 if this type is before the given _other_ type, 0 if equals, and 1 if after.
+  #   Returns nil, if the given _other_ is not a kind of Type.
+  # @see Comparable
+  #
   def <=>(other)
     # We only order against other types, not arbitrary objects.
     return nil unless other.is_a? Puppet::Type
@@ -35,22 +74,30 @@ class Type
     self.ref <=> other.ref
   end
 
-  ###############################
   # Code related to resource type attributes.
   class << self
     include Puppet::Util::ClassGen
     include Puppet::Util::Warnings
+    # @todo The properties of WHAT, and what is the type. The comment says "Code related to resource type attributes"
+    # @return {???] Array? Hash? what???
+    #
     attr_reader :properties
   end
 
-  # All parameters, in the appropriate order.  The key_attributes come first, then
-  # the provider, then the properties, and finally the params and metaparams
-  # in the order they were specified in the files.
+  # Returns all the attribute names of the type in the appropriate order.
+  # The {key_attributes} come first, then the {provider}, then the {properties}, and finally
+  # the {parameters} and {metaparams},
+  # all in the order they were specified in the respective files.
+  # @return [Array<String>] all type attribute names in a defined order.
+  #
   def self.allattrs
     key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
   end
 
-  # Find the class associated with any given attribute.
+  # Returns the class associated with the given attribute name.
+  # @param name [String] the name of the attribute to obtain the class for
+  # @return [Class, nil] the class for the given attribute, or nil if the name does not refer to an existing attribute
+  #
   def self.attrclass(name)
     @attrclasses ||= {}
 
@@ -66,8 +113,11 @@ class Type
     @attrclasses[name]
   end
 
-  # What type of parameter are we dealing with? Cache the results, because
-  # this method gets called so many times.
+  # Returns the attribute type (`:property`, `;param`, `:meta`).
+  # @comment What type of parameter are we dealing with? Cache the results, because
+  #   this method gets called so many times.
+  # @return [Symbol] a symbol describing the type of attribute (`:property`, `;param`, `:meta`)
+  #
   def self.attrtype(attr)
     @attrtypes ||= {}
     unless @attrtypes.include?(attr)
@@ -80,13 +130,27 @@ class Type
 
     @attrtypes[attr]
   end
-
+  
+  # Provides iteration over meta-parameters.
+  # @yieldparam p [Puppet::Parameter] each meta parameter
+  # @return [void]
+  #
   def self.eachmetaparam
     @@metaparams.each { |p| yield p.name }
   end
 
-  # Create the 'ensure' class.  This is a separate method so other types
+  # @todo Decipher the comment & document - how is this used?, what is the block, what
+  #  parameters should it have?
+  #
+  # Creates a new `:ensure` property with configured default values or with configuration by optional block.
+  # the 'ensure' class.  This is a separate method so other types
   # can easily call it and create their own 'ensure' values.
+  # @todo how are 'ensure values easily created'?
+  # @overload ensurable()
+  # @overload ensurable({||...})
+  #   @yieldreturn [void]
+  # @return [void] 
+  #
   def self.ensurable(&block)
     if block_given?
       self.newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
@@ -97,7 +161,12 @@ class Type
     end
   end
 
-  # Should we add the 'ensure' property to this class?
+  # Returns true if the type is _ensurable_. A type is _ensurable_ if it responds to `:exists`, `:create`, and
+  # `:destroy`.
+  # @todo What does this mean: "Should we add the 'ensure' property to this class?" (is a property added?, or
+  #   does it just mean that this method returns true? If not, where is this property added?
+  # @return [Boolean] if the type is _ensurable_ or not
+  #
   def self.ensurable?
     # If the class has all three of these methods defined, then it's
     # ensurable.
@@ -106,34 +175,55 @@ class Type
     }
   end
 
-  # These `apply_to` methods are horrible.  They should really be implemented
-  # as part of the usual system of constraints that apply to a type and
-  # provider pair, but were implemented as a separate shadow system.
+  # @comment These `apply_to` methods are horrible.  They should really be implemented
+  #   as part of the usual system of constraints that apply to a type and
+  #   provider pair, but were implemented as a separate shadow system.
   #
-  # We should rip them out in favour of a real constraint pattern around the
-  # target device - whatever that looks like - and not have this additional
-  # magic here. --daniel 2012-03-08
+  # @comment We should rip them out in favour of a real constraint pattern around the
+  #   target device - whatever that looks like - and not have this additional
+  #   magic here. --daniel 2012-03-08
+  #
+  # This method is undocumented - implementors: see comments in code.
+  # @api private
+  #
   def self.apply_to_device
     @apply_to = :device
   end
 
+  # (see apply_to_device)
+  # @api private
+  #
   def self.apply_to_host
     @apply_to = :host
   end
 
+  # (see apply_to_device)
+  # @api private
+  #
   def self.apply_to_all
     @apply_to = :both
   end
 
+  # (see apply_to_device)
+  # @api private
+  #
   def self.apply_to
     @apply_to ||= :host
   end
 
+  # (see apply_to_device)
+  # @api private
+  #
   def self.can_apply_to(target)
     [ target == :device ? :device : :host, :both ].include?(apply_to)
   end
 
-  # Deal with any options passed into parameters.
+  # Processes the options for a named parameter.
+  # @param name [String] the name of a parameter
+  # @param options [Hash] a hash of options
+  # @option options [Boolean] :boolean if option set to true, an access method on the form _name_? is added for the param
+  # @return [void]
+  #
   def self.handle_param_options(name, options)
     # If it's a boolean parameter, create a method to test the value easily
     if options[:boolean]
@@ -146,28 +236,57 @@ class Type
     end
   end
 
-  # Is the parameter in question a meta-parameter?
+  # Is the given parameter a meta-parameter?
+  # @return [Boolean] true if the given parameter is a meta-parameter.
+  #
   def self.metaparam?(param)
     @@metaparamhash.include?(param.intern)
   end
 
-  # Find the metaparameter class associated with a given metaparameter name.
-  # Must accept a `nil` name, and return nil.
+  # Returns the meta-parameter class associated with the given meta-parameter name.
+  # Accepts a `nil` name, and return nil.
+  # @param name [String, nil] the name of a meta-parameter
+  # @return [Class,nil] the class for the given meta-parameter, or `nil` if no such meta-parameter exists, (or if
+  #   the given meta-parameter name is `nil`.
+  #
   def self.metaparamclass(name)
     return nil if name.nil?
     @@metaparamhash[name.intern]
   end
 
+  # Returns all meta-parameter names.
+  # @return [Array<String>] all meta-parameter names
+  #
   def self.metaparams
     @@metaparams.collect { |param| param.name }
   end
 
+  # Returns the documentation for a given meta-parameter of this type.
+  # @todo the type for the param metaparam
+  # @param metaparam [??? TYPE] the meta-parameter to get documentation for.
+  # @return [String] the documentation associated with the given meta-parameter, or nil of not such documentation
+  #   exists.
+  # @raises [?] if the given metaparam is not a meta-parameter in this type
+  #
   def self.metaparamdoc(metaparam)
     @@metaparamhash[metaparam].doc
   end
 
-  # Create a new metaparam.  Requires a block and a name, stores it in the
+  # Creates a new meta-parameter.
+  # @todo What does that mean? Does that mean a parameter that works across all types?
+  # @todo what does the options :attributes, and :parent do?
+  # @todo what are the parameters to the required block?
+  # @param name
+  # @param options [Hash]
+  # @param block [Proc] required block
+  # @option options [???] :parent
+  # @option options [Array<String>] :attributes  list if WHAT?
+  # @option options [Array<String>] :required_features list of required provider features
+  # @option options [Boolean] :boolean if the parameter is boolean  
+  # Requires a block and a name, stores it in the
   # @parameters array, and does some basic checking on it.
+  # @return [???] What is the type of the return param?
+  #
   def self.newmetaparam(name, options = {}, &block)
     @@metaparams ||= []
     @@metaparamhash ||= {}
@@ -193,6 +312,11 @@ class Type
     param
   end
 
+  # Returns parameters that act as a key.
+  # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result. 
+  # @todo would like a better explanation
+  # @return Array<??? Param>
+  #
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
       params = @parameters.find_all { |param|
@@ -201,11 +325,20 @@ class Type
     )
   end
 
+  # Returns cached {key_attribute_parameter} names
+  # @todo what is a 'key_attribute' ?
+  # @return [Array<String>] cached key_attribute names
+  #
   def self.key_attributes
     # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
+  # @todo what does this do? What is the relationship between title/title_patterns and key_attributes?
+  # @todo what does this return? (A nesdted array structure)
+  # @raise [Puppet::DevError] if there is no title pattern and there are two or more key attributes
+  # @return [nil, Array<Array<Regexp, Array<Array ???>>>>] a structure with a regexp and the first key_attribute ???
+  #
   def self.title_patterns
     case key_attributes.length
     when 0; []
@@ -216,12 +349,25 @@ class Type
     end
   end
 
+  # Produces a _uniqueness_key_
+  # @todo Explain what a uniqueness_key is
+  # @return [Object] an object that is a _uniqueness_key_ for this object
+  #
   def uniqueness_key
     self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
   end
 
-  # Create a new parameter.  Requires a block and a name, stores it in the
-  # @parameters array, and does some basic checking on it.
+  # Creates a new parameter.
+  # @param name
+  # @param options [Hash] 
+  # @param block [Proc] a required block
+  # @option options [???] :parent  TODO 
+  # @option options [???] :attributes [???] TODO
+  # @option options [Boolean] :boolean specifies if this is a boolean parameter
+  # @option options [Boolean] :namevar TODO boolean ? specifies if this parameter is a namevar
+  # @option options [Array<String>] :required_features  specifies required provider features by name TODO: IS TYPE CORRECT? 
+  # @return [??? Param type ???] the created parameter
+  #
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
 
@@ -245,12 +391,17 @@ class Type
     param
   end
 
-  # Create a new property. The first parameter must be the name of the property;
-  # this is how users will refer to the property when creating new instances.
-  # The second parameter is a hash of options; the options are:
-  # * <tt>:parent</tt>: The parent class for the property.  Defaults to Puppet::Property.
-  # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
-  #   the provider is not set) to retrieve the current value.
+  # Creates a new property.
+  # @todo Is parent a super class, or the class for the property? What are the parameters to the block, if any?
+  # @param name [String] the name of the property as used when users refer to it
+  # @param options [Hash] a hash of options
+  # @param block [Proc] optional block that is evaluated MORE DETAIL WANTED ???
+  # @option options [Class<Puppet::Property>] `:parent` the parent (super class) for the Property, the default
+  #   if unspecified is {Puppet::Property}.
+  # @option options [Symbol] :retrieve The method to call on the provider (or `parent` if `provider` is not set)
+  #   to retrieve the current value of this property.
+  # @return [Puppet::Property] the created property
+  #
   def self.newproperty(name, options = {}, &block)
     name = name.intern
 
@@ -298,22 +449,25 @@ class Type
     @paramhash[param].doc
   end
 
-  # Return the parameter names
+  # @return [Array<String>] Returns the parameter names
   def self.parameters
     return [] unless defined?(@parameters)
     @parameters.collect { |klass| klass.name }
   end
 
-  # Find the parameter class associated with a given parameter name.
+  # @return [Puppet::Parameter] Returns the parameter class associated with the given parameter name.
   def self.paramclass(name)
     @paramhash[name]
   end
 
-  # Return the property class associated with a name
+  # @return [Puppet::Property] Returns the property class ??? associated with the given property name
   def self.propertybyname(name)
     @validproperties[name]
   end
 
+  # Returns whether or not the given name is the name of a property, parameter or meta-parameter
+  # @return [Boolean] true if the given attribute name is the name of an existing property, parameter or meta-parameter
+  #
   def self.validattr?(name)
     name = name.intern
     return true if name == :name
@@ -326,37 +480,43 @@ class Type
     @validattrs[name]
   end
 
-  # does the name reflect a valid property?
+  # @return [Boolean] Returns true if the given name is the name of an existing property
   def self.validproperty?(name)
     name = name.intern
     @validproperties.include?(name) && @validproperties[name]
   end
 
-  # Return the list of validproperties
+  # @return [Array<???>, Hash<empty>] Returns a list of valid properties, or an empty hash if there are none.
+  # @todo What is @validproperties.keys
+  # @todo This is most likely a bug - an empty hash is returned if there are not defined parameters (not an empty array).
+  #
   def self.validproperties
     return {} unless defined?(@parameters)
 
     @validproperties.keys
   end
 
-  # does the name reflect a valid parameter?
+  # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
     raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
     !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
   end
 
-  # This is a forward-compatibility method - it's the validity interface we'll use in Puppet::Resource.
+  # (see validattr?)
+  # @note see comment in code - how should this be documented? Are some of the other query methods deprecated?
+  #   (or should be).
+  # @comment This is a forward-compatibility method - it's the validity interface we'll use in Puppet::Resource.
   def self.valid_parameter?(name)
     validattr?(name)
   end
 
-  # Are we deleting this resource?
+  # @return [Boolean] Returns true if the wanted state of the resoure is that it should be absent (i.e. to be deleted).
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
   end
 
-  # Create a new property if it is valid but doesn't exist
-  # Returns: true if a new parameter was added, false otherwise
+  # Creates a new property if it is valid and does not already exist
+  # @return [Boolean] true if a new parameter was added, false otherwise
   def add_property_parameter(prop_name)
     if self.class.validproperty?(prop_name) && !@parameters[prop_name]
       self.newattr(prop_name)
@@ -365,8 +525,9 @@ class Type
     false
   end
 
-  #
   # The name_var is the key_attribute in the case that there is only one.
+  # @todo And what is it otherwise? false ????
+  # @return [???] BAFFLEGAB !
   #
   def name_var
     return @name_var_cache unless @name_var_cache.nil?
@@ -374,11 +535,11 @@ class Type
     @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
 
-  # abstract accessing parameters and properties, and normalize access to
-  # always be symbols, not strings This returns a value, not an object.
-  # It returns the 'is' value, but you can also specifically return 'is' and
-  # 'should' values using 'object.is(:property)' or
-  # 'object.should(:property)'.
+  # Gets the 'is' (current state) value of a parameter or property by name.
+  # To explicitly get the 'is' value use `o.is(:name)`, and to get the 'should' value
+  # use `o.should(:name)`
+  # @param name [String] the name of the attribute to obtain the 'is' value for.
+  # @return [Object] current value of the given attribute
   def [](name)
     name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
@@ -396,9 +557,9 @@ class Type
     end
   end
 
-  # Abstract setting parameters and properties, and normalize
-  # access to always be symbols, not strings.  This sets the 'should'
-  # value on properties, and otherwise just sets the appropriate parameter.
+  # Sets the 'should' (wanted state) value of a property, or the value of a parameter.
+  # @return 
+  # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
   def []=(name,value)
     name = name.intern
 
@@ -425,8 +586,15 @@ class Type
     nil
   end
 
-  # remove a property from the object; useful in testing or in cleanup
+  # Removes a property from the object; useful in testing or in cleanup
   # when an error has been encountered
+  # @todo GOBBLEDYGOOK - the comment says "Remove a property", the code refers to @parameters, and
+  #   the method parameter is called "attr" - What is it property, parameter, both (i.e attribute) or what?
+  # @todo Don't know what the attr is (name or Property/Parameter?). Gussing it is a String name...
+  # @todo Can you delete a meta-parameter? 
+  # @todo What does delete mean? Is it deleted from the type or is its value state 'is'/'should' deleted? 
+  # @param attr [String] the attribute to delete from this object. WHAT IS THE TYPE?
+  # @raise [Puppet::DecError] when an attempt is made to delete an attribute that does not exists.
   def delete(attr)
     attr = attr.intern
     if @parameters.has_key?(attr)
@@ -436,7 +604,11 @@ class Type
     end
   end
 
-  # iterate across the existing properties
+  # Iterates over the existing properties.
+  # @todo what does this mean? As opposed to iterating over the "non existing properties" ??? Is it an
+  #   iteration over those properties that have state? CONFUSED.
+  # @yieldparam property [Puppet::Property] each property
+  # @return [void]
   def eachproperty
     # properties is a private method
     properties.each { |property|
@@ -444,21 +616,37 @@ class Type
     }
   end
 
-  # Create a transaction event.  Called by Transaction or by
-  # a property.
+  # Creates a transaction event.
+  # Called by Transaction or by a property.
+  # Merges the given options with the options `:resource`, `:file`, `:line`, and `:tags`, initialized from
+  # values in this object. For possible options to pass (if any ????) see {Puppet::Transaction::Event}.
+  # @todo Needs a better explanation "Why should I care who is calling this method?", What do I need to know
+  #   about events and how they work? Where can I read about them?
+  # @param options [Hash] options merged with a fixed set of options defined by this method, passed on to {Puppet::Transaction::Event}.
+  # @return [Puppet::Transaction::Event] the created event 
   def event(options = {})
     Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
-  # retrieve the 'should' value for a specified property
+  # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the
+  #   given attribute name is not a property (i.e. if it is a parameter, meta-parameter, or does not exist). 
   def should(name)
     name = name.intern
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
-  # Create the actual attribute instance.  Requires either the attribute
-  # name or class as the first argument, then an optional hash of
+  # Creates the actual attribute instance.
+  # Requires either the attribute name or class as the first argument, then an optional hash of
   # attributes to set during initialization.
+  # @todo The comment is just wrong - the method does not accept a hash of options
+  # @todo Do not understand; this interacts with provider to ask if it supports a parameter of the given class.
+  #  it then returns the parameter if it exists, otherwise creates a parameter with its :resource => self.
+  # @overload newattr(name)
+  #   @param name [String] 
+  # @overload newattr(klass)
+  #   @param klass [Class] a class supported as an attribute class - WHAT IS THAT?
+  # @return [???] WHAT?
+  #
   def newattr(name)
     if name.is_a?(Class)
       klass = name
@@ -480,31 +668,46 @@ class Type
     @parameters[name] = klass.new(:resource => self)
   end
 
-  # return the value of a parameter
+  # Returns the value of this object's parameter given by name
+  # @param name [String] the name of the parameter
+  # @return [Object] the value
   def parameter(name)
     @parameters[name.to_sym]
   end
 
+  # Returns a shallow copy of this object's hash of parameters.
+  # @todo Add that this is not only "parameters", but also "properties" and "meta-parameters" ?
+  # Changes to the contained parameters will have an effect on the parameters of this type, but changes to
+  # the returned hash does not.
+  # @return [Hash<{String => Puppet:???Parameter}>] a new hash being a shallow copy of the parameters map name to parameter
   def parameters
     @parameters.dup
   end
 
-  # Is the named property defined?
+  # @return [Boolean] Returns whether the property given by name is defined or not.
+  # @todo what does it mean to be defined?
   def propertydefined?(name)
     name = name.intern unless name.is_a? Symbol
     @parameters.include?(name)
   end
 
-  # Return an actual property instance by name; to return the value, use 'resource[param]'
-  # LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
-  # this one should probably go away at some point.
+  # Returns a {Puppet::Property} instance by name.
+  # To return the value, use 'resource[param]'
+  # @todo LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
+  #   this one should probably go away at some point. - Does this mean it should be deprecated ?
+  # @return [Puppet::Property] the property with the given name, or nil if not a property or does not exist.
   def property(name)
     (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
   end
 
-  # For any parameters or properties that have defaults and have not yet been
-  # set, set them now.  This method can be handed a list of attributes,
-  # and if so it will only set defaults for those attributes.
+  # @todo comment says "For any parameters or properties that have defaults and have not yet been
+  #   set, set them now.  This method can be handed a list of attributes,
+  #   and if so it will only set defaults for those attributes."
+  # @todo Needs a better explanation, and investigation about the claim an array can be passed (it is passed
+  #   to self.class.attrclass to produce a class on which a check is made if it has a method class :default (does
+  #   not seem to support an array...
+  # @return [void]
+  # 
   def set_default(attr)
     return unless klass = self.class.attrclass(attr)
     return unless klass.method_defined?(:default)
@@ -519,7 +722,14 @@ class Type
     end
   end
 
-  # Convert our object to a hash.  This just includes properties.
+  # @todo the comment says: "Convert our object to a hash.  This just includes properties."
+  # @todo this is confused, again it is the @parameters instance variable that is consulted, and
+  #   each value is copied - does it contain "properties" and "parameters" or both? Does it contain 
+  #   meta-parameters?
+  #
+  # @return [Hash<{ ??? => ??? }>] a hash of WHAT?. The hash is a shallow copy, any changes to the
+  #  objects returned in this hash will be reflected in the original resource having these attributes.
+  #
   def to_hash
     rethash = {}
 
@@ -530,24 +740,38 @@ class Type
     rethash
   end
 
+  # @return [String] the name of this object's class
+  # @todo Would that be "file" for the "File" resource type? of "File" or something else?
+  #
   def type
     self.class.name
   end
 
-  # Return a specific value for an attribute.
+  # @todo Comment says "Return a specific value for an attribute.", as opposed to what "An upspecific value"???
+  # @todo is this the 'is' or the 'should' value?
+  # @todo why is the return restricted to things that respond to :value? (Only non structural basic data types
+  #   supported?
+  #
+  # @return [Object, nil] the value of the attribute having the given name, or nil if the given name is not
+  #   an attribute, or the referenced attribute does not respond to `:value`.
   def value(name)
     name = name.intern
 
     (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
   end
 
+  # @todo What is this used for? Needs a better explanation.
+  # @return [???] the version of the catalog or 0 if there is no catalog.
   def version
     return 0 unless catalog
     catalog.version
   end
 
-  # Return all of the property objects, in the order specified in the
-  # class.
+  # @return [Array<Puppet::Property>] Returns all of the property objects, in the order specified in the
+  #   class.
+  # @todo "what does the 'order specified in the class' mean? The order the properties where added in the
+  #   ruby file adding a new type with new properties?
+  #
   def properties
     self.class.properties.collect { |prop| @parameters[prop.name] }.compact
   end
@@ -555,6 +779,10 @@ class Type
   # Is this type's name isomorphic with the object?  That is, if the
   # name conflicts, does it necessarily mean that the objects conflict?
   # Defaults to true.
+  # @todo What does this really mean? Is it that the puppet DSL name e.g. "file" is also the name of the
+  #   type/class i.e. "File" ?
+  #
+  # @return [Boolan] true, if this type's name is isomorphic with the object
   def self.isomorphic?
     if defined?(@isomorphic)
       return @isomorphic
@@ -563,14 +791,18 @@ class Type
     end
   end
 
+  # @todo check that this gets documentation (it is at the class level as well as instance).
+  # (see isomorphic?)
   def isomorphic?
     self.class.isomorphic?
   end
 
-  # is the instance a managed instance?  A 'yes' here means that
-  # the instance was created from the language, vs. being created
-  # in order resolve other questions, such as finding a package
-  # in a list
+  # Returns true if the instance is a managed instance.
+  # A 'yes' here means that the instance was created from the language, vs. being created
+  # in order resolve other questions, such as finding a package in a list.
+  # @note An object that is managed always stays managed, but an object that is not managed
+  #   may become managed later in its lifecycle.
+  # @return [Boolean] true if the object is managed
   def managed?
     # Once an object is managed, it always stays managed; but an object
     # that is listed as unmanaged might become managed later in the process,
@@ -593,12 +825,25 @@ class Type
   ###############################
   # Code related to the container behaviour.
 
+  
+  # Returns true if the search should be done in depth-first order.
+  # This implementation always returns false.
+  # @todo What is this used for?
+  #
+  # @return [Boolean] true if the search should be done in depth first order.
+  #
   def depthfirst?
     false
   end
 
-  # Remove an object.  The argument determines whether the object's
-  # subscriptions get eliminated, too.
+  # Removes this object (FROM WHERE?)
+  # @todo removes if from where?
+  # @overload remove(rmdeps)
+  #   @deprecated Use remove()
+  #   @param rmdeps [Boolean] intended to indicate that all subscriptions should also be removed, ignored.
+  # @overload remove()
+  # @return [void]
+  #
   def remove(rmdeps = true)
     # This is hackish (mmm, cut and paste), but it works for now, and it's
     # better than warnings.
@@ -619,19 +864,32 @@ class Type
   ###############################
   # Code related to evaluating the resources.
 
+  
+  # Returns the ancestors - WHAT?
+  # This implementation always returns an empty list.
+  # @todo WHAT IS THIS ?
+  # @return [Array<???>] returns a list of ancestors.
   def ancestors
     []
   end
 
-  # Flush the provider, if it supports it.  This is called by the
-  # transaction.
+  # Flushes the provider if supported by the provider, else no action.
+  # This is called by the transaction.
+  # @todo What does Flushing the provider mean? Why is it interesting to know that this is
+  #   called by the transaction? (It is not explained anywhere what a transaction is).
+  #
+  # @return [???, nil] WHAT DOES IT RETURN? GUESS IS VOID
   def flush
     self.provider.flush if self.provider and self.provider.respond_to?(:flush)
   end
 
-  # if all contained objects are in sync, then we're in sync
-  # FIXME I don't think this is used on the type instances any more,
-  # it's really only used for testing
+  # Returns true if all contained objects are in sync.
+  # @todo "contained in what?" in the given "in" parameter?
+  #
+  # @todo deal with the comment _"FIXME I don't think this is used on the type instances any more,
+  #   it's really only used for testing"_
+  # @return [Boolean] true if in sync, false otherwise.
+  #
   def insync?(is)
     insync = true
 
@@ -665,7 +923,12 @@ class Type
     insync
   end
 
-  # retrieve the current value of all contained properties
+  # Retrieves the current value of all contained properties.
+  # Parameters and meta-parameters are not included in the result.
+  # @todo As oposed to all non contained properties? How is this different than any of the other
+  #   methods that also "gets" properties/parameters/etc. ?
+  # @return [Array<Object>] array of all property values (mix of types)
+  # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
     fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and ! provider.class.suitable?
 
@@ -692,15 +955,22 @@ class Type
     result
   end
 
+  # ???
+  # @todo what does this do? It seems to create a new Resource based on the result of calling #retrieve
+  #  and if that is a Hash, else this method produces nil.
+  # @return [Puppet::Resource, nil] a new Resource, or nil, if this object did not produce a Hash as the
+  #   result from #retrieve
+  #
   def retrieve_resource
     resource = retrieve
     resource = Resource.new(type, title, :parameters => resource) if resource.is_a? Hash
     resource
   end
 
-  # Get a hash of the current properties.  Returns a hash with
-  # the actual property instance as the key and the current value
-  # as the, um, value.
+  # Returns a hash of the current properties and their values.
+  # If a resource is absent, it's value is the symbol `:absent`
+  # @return [Hash<{Puppet::Property => Object}>] mapping of property instance to its value
+  #
   def currentpropvalues
     # It's important to use the 'properties' method here, as it follows the order
     # in which they're defined in the class.  It also guarantees that 'ensure'
@@ -722,7 +992,8 @@ class Type
     end
   end
 
-  # Are we running in noop mode?
+  # Returns the `noop` run mode status of this. 
+  # @return [Boolean] true if running in noop mode.
   def noop?
     # If we're not a host_config, we're almost certainly part of
     # Settings, and we want to ignore 'noop'
@@ -735,11 +1006,15 @@ class Type
     end
   end
 
+  # (see #noop?)
   def noop
     noop?
   end
 
-  # Retrieve all known instances.  Either requires providers or must be overridden.
+  # Retrieves all known instances.
+  # @todo Retrieves them from where? Known to whom? 
+  # Either requires providers or must be overridden.
+  # @raise [Puppet::DevError] when there are no providers and the implementation has not overridded this method.
   def self.instances
     raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
 
@@ -769,7 +1044,10 @@ class Type
     end.flatten.compact
   end
 
-  # Return a list of one suitable provider per source, with the default provider first.
+  # Returns a list of one suitable provider per source, with the default provider first.
+  # @todo Needs better explanation; what does "source" mean in this context?
+  # @return [Array<Puppet::Provider>] list of providers
+  #
   def self.providers_by_source
     # Put the default provider first (can be nil), then the rest of the suitable providers.
     sources = []
@@ -782,7 +1060,11 @@ class Type
     end.compact
   end
 
-  # Convert a simple hash into a Resource instance.
+  # Converts a simple hash into a Resource instance.
+  # @todo as opposed to a complex hash? Other raised exceptions?
+  # @param [Hash<{Symbol, String => Object}>] resource attribute to value map to initialize the created resource from
+  # @return [Puppet::Resource] the resource created from the hash
+  # @raise [Puppet::Error] if a title is missing in the given hash
   def self.hash2resource(hash)
     hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; result }
 
@@ -807,7 +1089,10 @@ class Type
     resource
   end
 
-  # Create the path for logging and such.
+  # Creates the path for logging and such.
+  # @todo "and such?", what?
+  # @api private
+  #
   def pathbuilder
     if p = parent
       [p.pathbuilder, self.ref].flatten
@@ -817,7 +1102,7 @@ class Type
   end
 
   ###############################
-  # Add all of the meta parameters.
+  # Add all of the meta-parameters.
   newmetaparam(:noop) do
     desc "Boolean flag indicating whether work should actually
       be done."
@@ -1012,6 +1297,10 @@ class Type
     end
   end
 
+  # RelationshipMetaparam is an implementation supporting the meta-parameters `:require`, `:subscribe`,
+  # `:notify`, and `:before`.
+  # 
+  #
   class RelationshipMetaparam < Puppet::Parameter
     class << self
       attr_accessor :direction, :events, :callback, :subclasses
@@ -1023,6 +1312,7 @@ class Type
       @subclasses << sub
     end
 
+    # @return [Array<Puppet::Resource>] turns attribute value(s) into list of resources
     def munge(references)
       references = [references] unless references.is_a?(Array)
       references.collect do |ref|
@@ -1034,6 +1324,10 @@ class Type
       end
     end
 
+    # Checks each reference to assert that what it references exists in the catalog.
+    #
+    # @raise [???fail] if the referenced resource can not be found
+    # @return [void]
     def validate_relationship
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
@@ -1043,14 +1337,19 @@ class Type
       end
     end
 
-    # Create edges from each of our relationships.    :in
-    # relationships are specified by the event-receivers, and :out
-    # relationships are specified by the event generator.  This
-    # way 'source' and 'target' are consistent terms in both edges
-    # and events -- that is, an event targets edges whose source matches
-    # the event's source.  The direction of the relationship determines
+    # Creates edges for all relationships.
+    # The `:in` relationships are specified by the event-receivers, and `:out`
+    # relationships are specified by the event generator.
+    # @todo references to "event-receivers" and "event generator" means in this context - are those just
+    #   the resources at the two ends of the relationship? 
+    # This way 'source' and 'target' are consistent terms in both edges
+    # and events, i.e. an event targets edges whose source matches
+    # the event's source. The direction of the relationship determines
     # which resource is applied first and which resource is considered
     # to be the event generator.
+    # @return [Array<Puppet::Relationship>] 
+    # @raise [???fail] when a reference can not be resolved
+    #
     def to_edges
       @value.collect do |reference|
         reference.catalog = resource.catalog
@@ -1089,6 +1388,8 @@ class Type
     end
   end
 
+  # @todo document this, have no clue what this does... it retuns "RelationshipMetaparam.subclasses"
+  # 
   def self.relationship_params
     RelationshipMetaparam.subclasses
   end
@@ -1239,15 +1540,30 @@ class Type
   # Add the feature handling module.
   extend Puppet::Util::ProviderFeatures
 
+  # The provider that  ___ (The selected provider???) WHAT?
+  # @todo WHAT is this provider for? The one selected for an instance of the type?
+  #   CONFUSED.
+  # @return [Puppet::Provider] the what??? or nil ??? - set where, by whom?
+  #
   attr_reader :provider
 
   # the Type class attribute accessors
   class << self
+    # @return [???] The loader of providers to use when loading providers from disk.
     attr_accessor :providerloader
+    
+    # @todo Don't know if this is a name, or a reference to a Provider instance (now marked up as an instance
+    #   of Provider.
+    # @return [Puppet::Provider, nil] The default provider for this type, or nil if non is defines
+    #
     attr_writer :defaultprovider
   end
 
-  # Find the default provider.
+  # The default provider, or the most suitable provider if no default provider was set.
+  # @note a warning will be issued if no default provider has been configured and a search for the most
+  #   suitable provider returns more than one equally suitable provider.
+  # @return [Puppet::Provider, nil] the default or most suitable provider, or nil if no provider was found
+  #
   def self.defaultprovider
     return @defaultprovider if @defaultprovider
 
@@ -1270,16 +1586,26 @@ class Type
     @defaultprovider = defaults.shift unless defaults.empty?
   end
 
+  # @return [Hash<{??? => Puppet::Provider}>] Returns a hash of WHAT EXACTLY for the given type
+  # @todo what goes into this hash?
   def self.provider_hash_by_type(type)
     @provider_hashes ||= {}
     @provider_hashes[type] ||= {}
   end
 
+  # @return [Hash<{ ??? => Puppet::Provider}>] Returns a hash of WHAT EXACTLY for this type.
+  # @see provider_hash_by_type method to get the same for some other type
   def self.provider_hash
     Puppet::Type.provider_hash_by_type(self.name)
   end
 
-  # Retrieve a provider by name.
+  # Returns the provider having the given name.
+  # This will load a provider if it is not already loaded. The returned provider is the first found provider
+  # having the given name, where "first found" semantics is defined by the {providerloader} in use.
+  #
+  # @param name [String] the name of the provider to get
+  # @return [Puppet::Provider, nil] the found provider, or nil if no provider of the given name was found
+  #
   def self.provider(name)
     name = name.intern
 
@@ -1288,19 +1614,41 @@ class Type
     provider_hash[name]
   end
 
-  # Just list all of the providers.
+  # Returns a list of loaded providers by name.
+  # This method will not load/search for available providers.
+  # @return [Array<String>] list of loaded provider names
+  #
   def self.providers
     provider_hash.keys
   end
 
+  # Returns true if the given name is a reference to a provider and if this is a suitable provider for
+  # this type.
+  # @todo How does the provider know if it is suitable for the type? Is it just suitable for the platform/
+  #   environment where this method is executing?
+  # @param name [String] the name of the provider for which validity is checked 
+  # @return [Boolean] true if the given name references a provider that is suitable
+  #
   def self.validprovider?(name)
     name = name.intern
 
     (provider_hash.has_key?(name) && provider_hash[name].suitable?)
   end
 
-  # Create a new provider of a type.  This method must be called
-  # directly on the type that it's implementing.
+  # Creates a new provider of a type.
+  # This method must be called directly on the type that it's implementing.
+  # @todo WAT ??? GOBBLEDYGOOK ! BAFFLEGAB !
+  #   Is this a new provider of a Type (metatype), or a provider of an instance of Type (a resource), or
+  #   a Provider (the implementation of a Type's behavior). CONFUSED. It calls magically named methods like
+  #   "providify" ...
+  # @param name [String, Symbol] the name of the WHAT? provider? type? 
+  # @param options [Hash<{Symbol => Object}>] a hash of options, used by this method, and passed on to {#genclass}, (see
+  #   it for additional options to pass).
+  # @option options [Puppet::Provider] :parent the parent provider (what is this?)
+  # @option options [Puppet::Type] :resource_type the resource type, defaults to this type if unspecified
+  # @return [Puppet::Provider] a provider ??? 
+  # @raise [Puppet::DevError] when the parent provider could not be found.
+  #
   def self.provide(name, options = {}, &block)
     name = name.intern
 
@@ -1342,8 +1690,9 @@ class Type
     provider
   end
 
-  # Make sure we have a :provider parameter defined.  Only gets called if there
-  # are providers.
+  # Ensures there is a `:provider` parameter defined.
+  # Should only be called if there are providers.
+  # @return [void]
   def self.providify
     return if @paramhash.has_key? :provider
 
@@ -1361,10 +1710,14 @@ class Type
       # This is so we can refer back to the type to get a list of
       # providers for documentation.
       class << self
+        # The reference to a parent type for the parameter `:provider` used to get a list of
+        # providers for documentation purposes.
+        #
         attr_accessor :parenttype
       end
 
-      # We need to add documentation for each provider.
+      # Provides the ability to add documentation to a provider.
+      #
       def self.doc
         # Since we're mixing @doc with text from other sources, we must normalize
         # its indentation with scrub. But we don't need to manually scrub the
@@ -1376,6 +1729,8 @@ class Type
         }.join
       end
 
+      # @todo this does what? where and how?
+      # @returns [String] the name of the provider
       defaultto {
         prov = @resource.class.defaultprovider
         prov.name if prov
@@ -1404,6 +1759,9 @@ class Type
     end.parenttype = self
   end
 
+  # @todo this needs a better explanation
+  # Removes the implementation class of a given provider.
+  # @return [Object] returns what {rmclass} returns
   def self.unprovide(name)
     if @defaultprovider and @defaultprovider.name == name
       @defaultprovider = nil
@@ -1412,7 +1770,12 @@ class Type
     rmclass(name, :hash => provider_hash, :prefix => "Provider")
   end
 
-  # Return an array of all of the suitable providers.
+  # Returns a list of suitable providers for the given type. 
+  # A call to this method will load all providers if not already loaded and ask each if it is
+  # suitable - those that are are included in the result.
+  # @note This method also does some special processing which rejects a provider named `:fake` (for testing purposes).
+  # @return [Array<Puppet::Provider>] Returns an array of all suitable providers.
+  #
   def self.suitableprovider
     providerloader.loadall if provider_hash.empty?
     provider_hash.find_all { |name, provider|
@@ -1422,6 +1785,9 @@ class Type
     }.reject { |p| p.name == :fake } # For testing
   end
 
+  # @return [Boolean] Returns true if this is something else than a `:provider`, or if it
+  #   is a provider and it is suitable, or if there is a default provider. Otherwise, false is returned.
+  # 
   def suitable?
     # If we don't use providers, then we consider it suitable.
     return true unless self.class.paramclass(:provider)
@@ -1440,6 +1806,14 @@ class Type
     false
   end
 
+  # Sets the provider to the given provider/name.
+  # @overload provider=(name)
+  #   @param name [String] the name of the provider
+  # @overload provider=(provider)
+  #   @param provider [Puppet::Provider] the provider to set
+  # @return [Puppet::Provider the provider set
+  # @raise [ArgumentError] if the provider could not be found/resolved.
+  #
   def provider=(name)
     if name.is_a?(Puppet::Provider)
       @provider = name
@@ -1454,15 +1828,26 @@ class Type
   ###############################
   # All of the relationship code.
 
-  # Specify a block for generating a list of objects to autorequire.  This
-  # makes it so that you don't have to manually specify things that you clearly
-  # require.
+  
+  # Adds a block producing a single name (or list of names) of the given resource type name to autorequire.
+  # @example Autorequire the files File['foo', 'bar']
+  #   autorequire( 'file', {|| ['foo', 'bar'] })
+  # 
+  # @todo original = _"Specify a block for generating a list of objects to autorequire.
+  #   This makes it so that you don't have to manually specify things that you clearly require."_
+  # @param name [String] the name of a type of which one or several resources should be autorequired e.g. "file"
+  # @yieldreturn [String, Array<String>] one or several resource names for the named type
+  # @return [void]
   def self.autorequire(name, &block)
     @autorequires ||= {}
     @autorequires[name] = block
   end
 
-  # Yield each of those autorequires in turn, yo.
+  # Provides iteration over added auto-requirements (see {autorequire}).
+  # @yieldparam type [String] the name of the type to autoriquire an instance of
+  # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autorequire}).
+  # @yieldreturn [void]
+  # @return [void]
   def self.eachautorequire
     @autorequires ||= {}
     @autorequires.each { |type, block|
@@ -1470,8 +1855,13 @@ class Type
     }
   end
 
-  # Figure out of there are any objects we can automatically add as
-  # dependencies.
+  # Adds dependencies to the catalog from added autorequirements.
+  # See {autorequire} for how to add an auto-requirement.
+  # @todo needs details - see the param rel_catalog, and type of this param
+  # @param rel_catalog [Puppet::Catalog, nil] the catalog to add dependencies to. Defaults to the
+  #   WHAT??? catalog 
+  # @raise [Puppet::DevError] if there is no catalog
+  # 
   def autorequire(rel_catalog = nil)
     rel_catalog ||= catalog
     raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
@@ -1502,7 +1892,12 @@ class Type
     reqs
   end
 
-  # Build the dependencies associated with an individual object.
+  # Builds the dependencies associated with an individual object.
+  # @todo Which object is the "individual object", as opposed to "object as a group?" or should it simply
+  #   be "this object" as in "this resource" ?
+  # @todo Does this method "build dependencies" or "build what it depends on" ... CONFUSING
+  #
+  # @return [Array<???>] list of WHAT? resources? edges?
   def builddepends
     # Handle the requires
     self.class.relationship_params.collect do |klass|
@@ -1512,21 +1907,40 @@ class Type
     end.flatten.reject { |r| r.nil? }
   end
 
-  # Define the initial list of tags.
+  # Sets the initial list of tags...
+  # @todo The initial list of tags, that ... that what?
+  # @return [void] ???
   def tags=(list)
     tag(self.class.name)
     tag(*list)
   end
 
-  # Types (which map to resources in the languages) are entirely composed of
-  # attribute value pairs.  Generally, Puppet calls any of these things an
-  # 'attribute', but these attributes always take one of three specific
-  # forms:  parameters, metaparams, or properties.
+  # @comment - these two comments were floating around here, and turned up as documentation
+  #  for the attribute "title", much to my surprise and amusement. Clearly these comments
+  #  are orphaned ... I think they can just be removed as what they say should be covered
+  #  by the now added yardoc. <irony>(Yo! to quote some of the other actual awsome specific comments applicable
+  #  to objects called from elsewhere, or not. ;-)</irony>
+  # 
+  # @comment Types (which map to resources in the languages) are entirely composed of
+  #   attribute value pairs.  Generally, Puppet calls any of these things an
+  #   'attribute', but these attributes always take one of three specific
+  #   forms:  parameters, metaparams, or properties.
 
-  # In naming methods, I have tried to consistently name the method so
-  # that it is clear whether it operates on all attributes (thus has 'attr' in
-  # the method name, or whether it operates on a specific type of attributes.
+  # @comment In naming methods, I have tried to consistently name the method so
+  #   that it is clear whether it operates on all attributes (thus has 'attr' in
+  #   the method name, or whether it operates on a specific type of attributes.
+  
+  
+  # The title attribute of WHAT ???
+  # @todo Figure out what this is the title attribute of (it appears on line 1926 currently).
+  # @return [String] the title
   attr_writer :title
+  
+  # The noop attribute of WHAT ??? does WHAT???
+  # @todo Figure out what this is the noop attribute of (it appears on line 1931 currently).
+  # @return [???] the noop WHAT ??? (mode? if so of what, or noop for an instance of the type, or for all
+  #   instances of a type, or for what???
+  #
   attr_writer :noop
 
   include Enumerable
@@ -1535,9 +1949,16 @@ class Type
 
   public
 
-  # the Type class attribute accessors
+  # The Type class attribute accessors
   class << self
+    # @todo What is this the name of? - the name of the defined type (i.e. "file", or is it "File") ???
+    # @return [String] the name of WHAT???
+    #
     attr_reader :name
+    
+    # @todo What is this?
+    # @return [???] What?
+    #
     attr_accessor :self_refresh
     include Enumerable, Puppet::Util::ClassGen
     include Puppet::MetaType::Manager
@@ -1546,7 +1967,9 @@ class Type
     include Puppet::Util::Logging
   end
 
-  # all of the variables that must be initialized for each subclass
+  # Initializes all of the variables that must be initialized for each subclass.
+  # @todo Does the explanation make sense? 
+  # @return [void]
   def self.initvars
     # all of the instances of this class
     @objects = Hash.new
@@ -1574,6 +1997,11 @@ class Type
 
   end
 
+  # Returns the name of this type (if specified) or the parent type #to_s.
+  # The returned name is on the form "Puppet::Type::<name>", where the first letter of name is
+  # capitalized.
+  # @return [String] the fully qualified name Puppet::Type::<name> where the first letter of name is captialized
+  # 
   def self.to_s
     if defined?(@name)
       "Puppet::Type::#{@name.to_s.capitalize}"
@@ -1582,26 +2010,34 @@ class Type
     end
   end
 
-  # Create a block to validate that our object is set up entirely.  This will
-  # be run before the object is operated on.
+  # Creates a `validate` method that is used to validate an instance before it is operated on.
+  # @param block [Proc] required code block that is the body of the created validate method
+  # @todo Does the block have parameters.
   def self.validate(&block)
     define_method(:validate, &block)
     #@validate = block
   end
 
-  # Origin information.
-  attr_accessor :file, :line
+  # @return [String] The file from which this type originates from
+  attr_accessor :file
+  
+  # @return [Integer] The line in {#file} from which this type originates from
+  attr_accessor :line
 
-  # The catalog that this resource is stored in.
+  # @todo what does this mean "this resource" (sounds like this if for an instance of the type, not the meta Type),
+  #   but not sure if this is about the catalog where the meta Type is included)
+  # @return [??? TODO] The catalog that this resource is stored in.
   attr_accessor :catalog
 
-  # is the resource exported
+  # @return [Boolean] Flag indicating if this type is exported
   attr_accessor :exported
 
-  # is the resource virtual (it should not :-))
+  # @return [Boolean] Flag indicating if the type is virtual (it should not be).
   attr_accessor :virtual
 
-  # create a log at specified level
+  # Creates a log entry with the given message at the log level specified by the parameter `loglevel`
+  # @return [void]
+  #
   def log(msg)
 
     Puppet::Util::Log.create(
@@ -1619,9 +2055,26 @@ class Type
 
   public
 
+  # @todo what are the original parameters? As opposed to what parameters? (what about origina properties? does
+  #   such a thing exists?)
+  #
+  # @return [???] what ???
   attr_reader :original_parameters
 
-  # initialize the type instance
+  # Creates an instance of Type from a hash or a {Puppet::Resource}.
+  # @todo Unclear if this is a new Type or a new instance of a given type (the initialization ends
+  #   with calling validate - which seems like validation of an instance of a given type, not a new
+  #   meta type.
+  #
+  # @todo Explain what the Hash and Resource are. There seems to be two different types of
+  #   resources; one that causes the title to be set to resource.title, and one that
+  #   causes the title to be resource.ref ("for components") - what is a component?
+  #
+  # @overaload initialize(hsh)
+  #   @param hsh [Hash] 
+  # @overload initialize(resource)
+  #   @param resource [Puppet:Resource]
+  #
   def initialize(resource)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
@@ -1658,12 +2111,32 @@ class Type
 
   private
 
-  # Set our resource's name.
+  # Sets the name of the resource from a hash containing a mapping of `name_var` to value.
+  # Sets the value of the property/parameter appointed by the `name_var` (if it is defined). The value set is
+  # given by the corresponding entry in the given hash - e.g. if name_var appoints the name `:path` the value
+  # of `:path` is set to the value at the key `:path` in the given hash. As a side effect this key/value is then
+  # removed from the given hash.
+  # 
+  # @note This method mutates the given hash by removing the entry with a key equal to the value
+  #   returned from name_var! 
+  # @param hash [Hash] a hash of what
+  # @return [void]
   def set_name(hash)
     self[name_var] = hash.delete(name_var) if name_var
   end
 
-  # Set all of the parameters from a hash, in the appropriate order.
+  # Sets parameters from the given hash.
+  # Values are set in _attribute order_ i.e. higher priority attributes before others, otherwise in 
+  # the order they were specified (as opposed to just setting them in the order they happen to appear in
+  # when iterating over the given hash).
+  #
+  # Attributes that are not included in the given hash are set to their default value.
+  #
+  # @todo Is this description accurate? Is "ensure" an example of such a higher priority attribute?
+  # @return [void]
+  # @raise [Puppet::DevError] when impossible to set the value due to some problem
+  # @raise [ArgumentError, TypeError, Puppet::Error] when faulty arguments have been passed
+  #
   def set_parameters(hash)
     # Use the order provided by allattrs, but add in any
     # extra attributes from the resource so we get failures
@@ -1694,7 +2167,14 @@ class Type
 
   public
 
-  # Set up all of our autorequires.
+  # Finishes any outstanding processing.
+  # This method should be called as a final step in setup, 
+  # to allow the parameters that have associated auto-require needs to be processed.
+  # 
+  # @todo what is the expected sequence here - who is responsible for calling this? When?
+  #   Is the returned type correct?
+  # @return [Array<Puppet::Parameter>] the validated list/set of attributes 
+  #
   def finish
     # Make sure all of our relationships are valid.  Again, must be done
     # when the entire catalog is instantiated.
@@ -1705,13 +2185,22 @@ class Type
     end.flatten.reject { |r| r.nil? }
   end
 
-  # For now, leave the 'name' method functioning like it used to.  Once 'title'
-  # works everywhere, I'll switch it.
+  # @comment For now, leave the 'name' method functioning like it used to.  Once 'title'
+  #   works everywhere, I'll switch it.
+  # Returns the resource's name
+  # @todo There is a comment in source that this is not quite the same as ':title' and that a switch should
+  #   be made...
+  # @return [String] the name of a resource
   def name
     self[:name]
   end
 
-  # Look up our parent in the catalog, if we have one.
+  # Returns the parent of this in the catalog.
+  # In case of an erroneous catalog where multiple parents have been produced, the first found (non deterministic)
+  # parent is returned.
+  # @return [???, nil] WHAT (which types can be the parent of a resource in a catalog?), or nil if there
+  #   is no catalog.
+  #
   def parent
     return nil unless catalog
 
@@ -1727,24 +2216,36 @@ class Type
     @parent
   end
 
-  # Return the "type[name]" style reference.
+  # Returns a reference to this as a string in "Type[name]" format.
+  # @return [String] a reference to this object on the form 'Type[name]'
+  #
   def ref
     # memoizing this is worthwhile ~ 3 percent of calls are the "first time
     # around" in an average run of Puppet. --daniel 2012-07-17
     @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
+  # (see {self_refresh)
+  # @todo check that meaningful yardoc is produced - this method delegates to "self.class.self_refresh"
+  # @return [Boolean] - ??? returns true when ... what?
+  #
   def self_refresh?
     self.class.self_refresh
   end
 
-  # Mark that we're purging.
+  # Marks the object as "being purged".
+  # This method is used by transactions to forbid deletion when there are dependencies.
+  # @todo what does this mean; "mark that we are purging" (purging what from where). How to use/when?
+  #   Is this internal API in transactions?
+  # @see purging?
   def purging
     @purging = true
   end
 
-  # Is this resource being purged?  Used by transactions to forbid
-  # deletion when there are dependencies.
+  # Returns whether this resource is being purged or not.
+  # This method is used by transactions to forbid deletion when there are dependencies.
+  # @return [Boolean] the current "purging" state
+  #
   def purging?
     if defined?(@purging)
       @purging
@@ -1753,8 +2254,7 @@ class Type
     end
   end
 
-  # Retrieve the title of an object.  If no title was set separately,
-  # then use the object's name.
+  # @return [String] Returns the title of this object, or it's name if title was not explicetly set. 
   def title
     unless @title
       if self.class.validparameter?(name_var)
@@ -1769,11 +2269,16 @@ class Type
     @title
   end
 
-  # convert to a string
+  # Produces a reference to this in reference format.
+  # @see #ref
+  #
   def to_s
     self.ref
   end
 
+  # @todo What to resource? Which one of the resource forms is prroduced? returned here?
+  # @return [??? Resource] a resource that WHAT???
+  # 
   def to_resource
     resource = self.retrieve_resource
     resource.tag(*self.tags)
@@ -1790,13 +2295,19 @@ class Type
     resource
   end
 
+  # @return [Boolean] Returns whether the resource is virtual or not
   def virtual?;  !!@virtual;  end
+  # @return [Boolean] Returns whether the resource is exported or not
   def exported?; !!@exported; end
 
+  # @return [Boolean] Returns whether the resource is applicable to `:device`
+  # @todo Explain what this means
   def appliable_to_device?
     self.class.can_apply_to(:device)
   end
 
+  # @return [Boolean] Returns whether the resource is applicable to `:host`
+  # @todo Explain what this means
   def appliable_to_host?
     self.class.can_apply_to(:host)
   end
