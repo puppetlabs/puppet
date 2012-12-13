@@ -31,7 +31,7 @@ class Hiera
               Hiera.debug("Reading config from %s file" % module_config)
               config = load_data(module_config)
             rescue => e
-              Hiera.debug("Failed to parse config file %s: %s: %s" % [module_config, e.class, e.to_s])
+              Hiera.warn("Failed to parse config file %s: %s: %s" % [module_config, e.class, e.to_s])
             end
           end
 
