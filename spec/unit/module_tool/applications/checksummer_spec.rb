@@ -9,6 +9,12 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
   let(:module_install_path) { 'foo' }
   let(:module_metadata_file) { 'metadata.json' }
 
+  let(:module_install_pathname) {
+    module_install_pathname = mock()
+    Pathname.expects(:new).with(module_install_path).returns(module_install_pathname)
+    module_install_pathname
+  }
+
   def stub_module_file_pathname(relative_path, content, count = 1)
     module_install_pathname.expects(:+).\
       with(relative_path).\
@@ -26,12 +32,6 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
   end
 
   context %q{when metadata.json doesn't exist in the specified path} do
-    let(:module_install_pathname) {
-      module_install_pathname = mock()
-      Pathname.expects(:new).with(module_install_path).returns(module_install_pathname)
-      module_install_pathname
-    }
-
     it 'throws an exception' do
       stub_module_file_pathname(module_metadata_file, nil)
 
@@ -53,14 +53,8 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
       }
     }
 
-    let(:module_install_pathname) {
-      module_install_pathname = mock()
-      Pathname.expects(:new).with(module_install_path).returns(module_install_pathname)
-      Pathname.expects(:new).with(module_install_pathname).returns(module_install_pathname)
-      module_install_pathname
-    }
-
     before(:each) do
+      Pathname.expects(:new).with(module_install_pathname).returns(module_install_pathname)
       stub_module_file_pathname(module_metadata_file, PSON.dump(module_metadata), 2)
     end
 
