@@ -22,7 +22,7 @@ module Puppet::ModuleTool
             next if File.basename(child_path) == "metadata.json"
 
             path = @path + child_path
-            if !File.exist?(path) || canonical_checksum != sums.checksum(path)
+            unless path.exist? && canonical_checksum == sums.checksum(path)
               changes << child_path
             end
           end
