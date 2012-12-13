@@ -105,7 +105,12 @@ describe "Pure ruby yaml implementation" do
     end
 
     it "should roundtrip Time.now" do
-      Time.now.should round_trip_through_yaml
+      tm = Time.now
+      # yaml only emits 6 digits of precision, but on some systems with ruby 1.9
+      # the original time object may contain nanoseconds, which will cause
+      # the equality check to fail. So truncate the time object to only microsecs
+      tm = Time.at(tm.to_i, tm.usec)
+      tm.should round_trip_through_yaml
     end
   end
 
