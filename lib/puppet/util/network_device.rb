@@ -5,7 +5,7 @@ class Puppet::Util::NetworkDevice
 
   def self.init(device)
     require "puppet/util/network_device/#{device.provider}/device"
-    @current = Puppet::Util::NetworkDevice.const_get(device.provider.capitalize).const_get(:Device).new(device.url)
+    @current = Puppet::Util::NetworkDevice.const_get(device.provider.capitalize).const_get(:Device).new(device.url, device.options)
   rescue => detail
     raise "Can't load #{device.provider} for #{device.name}: #{detail}"
   end

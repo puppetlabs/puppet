@@ -59,10 +59,11 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
             device = OpenStruct.new
             device.name = name
             device.line = count
+            device.options = { :debug => false }
             Puppet.debug "found device: #{device.name} at #{device.line}"
             devices[name] = device
-          when /^\s*(type|url)\s+(.+)$/
-            parse_directive(device, $1, $2, count)
+          when /^\s*(type|url|debug)(\s+(.+))*$/
+            parse_directive(device, $1, $3, count)
           else
             raise Puppet::Error, "Invalid line #{count}: #{line}"
           end
@@ -85,6 +86,8 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
       device.provider = value
     when "url"
       device.url = value
+    when "debug"
+      device.options[:debug] = true
     else
       raise Puppet::Error, "Invalid argument '#{var}' at line #{count}"
     end

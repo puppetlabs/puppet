@@ -13,7 +13,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   attr_accessor :enable_password
 
   def initialize(url, options = {})
-    super(url)
+    super(url, options)
     @enable_password = options[:enable_password] || parse_enable(@url.query)
     transport.default_prompt = /[#>]\s?\z/n
   end
