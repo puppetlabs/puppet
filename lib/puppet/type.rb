@@ -44,7 +44,30 @@ module Puppet
 #     system being managed. A provider is often platform specific and is selected at runtime based on
 #     criteria/predicates specified in the configured providers. See {Puppet::Provider} for details.
 # 
-# @todo is Type like a factory for creating subclasses of Type?; one per resource type?
+# Additional Concepts:
+# --
+# * **Resource-type** - A _resource type_ is a term used to denote the type of a resource; internally a resource
+#     is really an instance of a Ruby class i.e. {Puppet::Resource} which defines its behavior as "resource data".
+#     Conceptually however, a resource is an instance of a subclass of Type (e.g. File), where such a class describes
+#     its interface (what can be said/what is known about a resource of this type),
+# * **Managed Entity** - This is not a term in general use, but is used here when there is a need to make
+#     a distinction between a resource (a description of what/how something should be managed), and what it is
+#     managing (a file in the file system). The term _managed entity_ is a reference to the "file in the file system" 
+# * **Isomorphism** - the quality of being _isomorphic_ means that two resource instances with the same name
+#     refers to the same managed entity. Or put differently; _an isomorphic name is the identity of a resource_.
+#     As an example, `exec` resources (that executes some command) have the command (i.e. the command line string) as
+#     their name, and these resources are said to be non-isomorphic.
+# 
+# @note The Type class deals with multiple concerns; some methods provide an internal DSL for convenient definition
+#   of types, other methods deal with various aspects while running; wiring up a resource (expressed in Puppet DSL
+#   or Ruby DSL) with its _resource type_ (i.e. an instance of Type) to enable validation, transformation of values
+#   (munge/unmunge), etc. Lastly, Type is also responsible for dealing with Providers; the concrete implementations
+#   of the behavior that constitutes how a particular Type behaves on a particular type of system (e.g. how
+#   commands are executed on a flavor of Linux, on Windows, etc.). This means that as you are reading through the
+#   documentation of this class, you will be switching between these concepts, as well as switching between
+#   the conceptual level "a resource is an instance of a resource-type" and the actual implementation classes
+#   (Type, Resource, Provider, and various utility and helper classes).
+# 
 #
 # @todo The logic intermixes the terms "property", "parameter", and "attribute" in a very confusing way; sometimes they
 #   seem to be the same, other times not. Please review language with care for these concepts.
@@ -1951,8 +1974,7 @@ class Type
 
   # The Type class attribute accessors
   class << self
-    # @todo What is this the name of? - the name of the defined type (i.e. "file", or is it "File") ???
-    # @return [String] the name of WHAT???
+    # @return [String] the name of the resource type; e.g. "File"
     #
     attr_reader :name
     
