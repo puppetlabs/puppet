@@ -9,8 +9,8 @@ describe Puppet::Parser::Collector do
 
   def expect_the_message_to_be(expected_messages, code, node = Puppet::Node.new('the node'))
     catalog = compile_to_catalog(code, node)
-    messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }
-                                .collect { |notify| notify[:message] }
+    messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }.
+                                 collect { |notify| notify[:message] }
     messages.should include(*expected_messages)
   end
 
@@ -85,5 +85,33 @@ describe Puppet::Parser::Collector do
 
       Notify <| title != "the wrong one" |>
     MANIFEST
+  end
+
+  context "issue #10963" do
+    it "collects with override when inside a class" do
+      expect_the_message_to_be(["overridden message"], <<-MANIFEST)
+        @notify { "testing": message => "original message" }
+
+        include collector_test
+        class collector_test {
+          Notify <| |> {
+            message => "overridden message"
+          }
+        }
+      MANIFEST
+    end
+
+    it "collects with override when inside a define" do
+      expect_the_message_to_be(["overridden message"], <<-MANIFEST)
+        @notify { "testing": message => "original message" }
+
+        collector_test { testing: }
+        define collector_test() {
+          Notify <| |> {
+            message => "overridden message"
+          }
+        }
+      MANIFEST
+    end
   end
 end
