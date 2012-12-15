@@ -658,7 +658,7 @@ class Type
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
-  # Creates the actual attribute instance.
+  # Creates an instance to represent/manage the given attribute.
   # Requires either the attribute name or class as the first argument, then an optional hash of
   # attributes to set during initialization.
   # @todo The comment is just wrong - the method does not accept a hash of options
@@ -2247,7 +2247,7 @@ class Type
     @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
   end
 
-  # (see {self_refresh)
+  # (see self_refresh)
   # @todo check that meaningful yardoc is produced - this method delegates to "self.class.self_refresh"
   # @return [Boolean] - ??? returns true when ... what?
   #
