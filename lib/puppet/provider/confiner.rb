@@ -1,10 +1,14 @@
 require 'puppet/provider/confine_collection'
 
+# The Confiner module contains methods for managing a Provider's confinement (suitability under given
+# conditions). The intent is to include this module in an object where confinement management is wanted.
+# It lazily adds an instance variable `@confine_collection` to the object where it is included.
+#
 module Puppet::Provider::Confiner
   # Confines a provider to be suitable only under the given conditions.
   # The hash describes a confine using mapping from symbols to values or predicate code.
   #
-  # * _fact_name_ => value of fact
+  # * _fact_name_ => value of fact (or array of facts)
   # * `:exists` => the path to an existing file
   # * `:true` => a predicate code block returning true
   # * `:false` => a predicate code block returning false
@@ -24,13 +28,14 @@ module Puppet::Provider::Confiner
 
   # @return [Puppet::Provider::ConfineCollection] the collection of confines
   # @api private
+  #
   def confine_collection
     @confine_collection ||= Puppet::Provider::ConfineCollection.new(self.to_s)
   end
 
   # Checks whether this implementation is suitable for the current platform (or returns a summary
   # of all confines if short == false).
-  # @return [Boolean. Hash] Returns whether the confines are all valid (if short = true), or a hash of all confines
+  # @return [Boolean. Hash] Returns whether the confines are all valid (if short == true), or a hash of all confines
   #   if short == false. 
   # @api public
   #
