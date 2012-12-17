@@ -120,18 +120,27 @@ Luke Kanies
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
+Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
   end
 
-  def app_defaults()
-    super.merge :facts_terminus => 'yaml'
+  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
+  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
+  # @see Puppet::Node::WriteOnlyYaml
+  # @see #setup_node_cache
+  # @see puppet issue 16753
+  #
+  def app_defaults
+    super.merge({
+      :node_cache_terminus => :write_only_yaml,
+      :facts_terminus => 'yaml'
+    })
   end
 
   def preinit
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling startup"
+      $stderr.puts "Canceling startup"
       exit(0)
     end
 
@@ -240,6 +249,16 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
+  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
+  # but never finds or reads anything (this since a real cache causes stale data to be served
+  # in circumstances when the cache can not be cleared).
+  # @see puppet issue 16753
+  # @see Puppet::Node::WriteOnlyYaml
+  # @return [void]
+  def setup_node_cache
+    Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
+  end
+
   def setup
     raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
 
@@ -250,6 +269,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     setup_terminuses
+
+    setup_node_cache
 
     setup_ssl
   end

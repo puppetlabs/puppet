@@ -90,6 +90,17 @@ class Puppet::Node::Environment
     }
   end
 
+  # Yields each modules' plugin directory.
+  #
+  # @yield [String] Yields the plugin directory from each module to the block.
+  # @api public
+  def each_plugin_directory(&block)
+    modules.map(&:plugin_directory).each do |lib|
+      lib = Puppet::Util::Autoload.cleanpath(lib)
+      yield lib if File.directory?(lib)
+    end
+  end
+
   def module(name)
     modules.find {|mod| mod.name == name}
   end

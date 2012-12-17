@@ -10,6 +10,7 @@ module Puppet::Interface::ActionManager
 
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
 
+    # REVISIT: (#18042) doesn't this mean we can't redefine the default action? -- josh
     if action.default and current = get_default_action
       raise "Actions #{current.name} and #{name} cannot both be default"
     end
@@ -21,7 +22,9 @@ module Puppet::Interface::ActionManager
   # builder, just creates the action directly from the block.
   def script(name, &block)
     @actions ||= {}
-    raise "Action #{name} already defined for #{self}" if action?(name)
+    Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
+
+    # REVISIT: (#18048) it's possible to create multiple default actions
     @actions[name] = Puppet::Interface::Action.new(self, name, :when_invoked => block)
   end
 

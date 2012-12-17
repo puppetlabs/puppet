@@ -12,6 +12,7 @@ require 'puppet/settings/boolean_setting'
 require 'puppet/settings/terminus_setting'
 require 'puppet/settings/duration_setting'
 require 'puppet/settings/config_file'
+require 'puppet/settings/value_translator'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -60,6 +61,32 @@ class Puppet::Settings
 
   def self.default_config_file_name
     "puppet.conf"
+  end
+
+  # Create a new collection of config settings.
+  def initialize
+    @config = {}
+    @shortnames = {}
+
+    @created = []
+    @searchpath = nil
+
+    # Mutex-like thing to protect @values
+    @sync = Sync.new
+
+    # Keep track of set values.
+    @values = Hash.new { |hash, key| hash[key] = {} }
+
+    # And keep a per-environment cache
+    @cache = Hash.new { |hash, key| hash[key] = {} }
+
+    # The list of sections we've used.
+    @used = []
+
+    @hooks_to_call_on_application_initialization = []
+
+    @translate = Puppet::Settings::ValueTranslator.new
+    @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
   # Retrieve a config value
@@ -301,7 +328,7 @@ class Puppet::Settings
       value = "true"
     end
 
-    value &&= munge_value(value)
+    value &&= @translate[value]
     str = opt.sub(/^--/,'')
 
     bool = true
@@ -330,31 +357,6 @@ class Puppet::Settings
   def shortinclude?(short)
     short = short.intern if name.is_a? String
     @shortnames.include?(short)
-  end
-
-  # Create a new collection of config settings.
-  def initialize
-    @config = {}
-    @shortnames = {}
-
-    @created = []
-    @searchpath = nil
-
-    # Mutex-like thing to protect @values
-    @sync = Sync.new
-
-    # Keep track of set values.
-    @values = Hash.new { |hash, key| hash[key] = {} }
-
-    # And keep a per-environment cache
-    @cache = Hash.new { |hash, key| hash[key] = {} }
-
-    # The list of sections we've used.
-    @used = []
-
-    @hooks_to_call_on_application_initialization = []
-
-    @config_file_parser = Puppet::Settings::ConfigFile.new(method(:munge_value))
   end
 
   # Prints the contents of a config file with the available config settings, or it
@@ -467,19 +469,8 @@ class Puppet::Settings
 
   # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
-    # we are able to support multiple config files; the "main" config file will
-    # be the one located in /etc/puppet (or overridden $confdir)... but we can
-    # also look for a config file in the user's home directory.  We only load
-    # one configuration file in order to present a simple and consistent
-    # configuration model to the end user.  It should also be noted we decided
-    # to merge in the user puppet.conf with the system puppet.conf for a time
-    # (e.g. load two configuration files) as a small part of #7749 but then
-    # decided to reverse this decision in #15337 to return to a disjoint
-    # configuration file model.
-    config_files = [which_configuration_file]
-
     @sync.synchronize do
-      unsafe_parse(config_files)
+      unsafe_parse(which_configuration_file)
     end
 
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
@@ -520,13 +511,10 @@ class Puppet::Settings
   private :config_file_name
 
   # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
-  def unsafe_parse(files)
-    raise Puppet::DevError unless files.length > 0
-
+  def unsafe_parse(file)
     # build up a single data structure that contains the values from all of the parsed files.
     data = {}
-    files.each do |file|
-      next unless FileTest.exist?(file)
+    if FileTest.exist?(file)
       begin
         file_data = parse_file(file)
 
@@ -539,7 +527,6 @@ class Puppet::Settings
             data[key] = file_data[key]
           end
         end
-
       rescue => detail
         Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
         return
@@ -1098,20 +1085,6 @@ Generated on #{Time.now}.
   # we can call them after parsing the configuration file.
   def settings_with_hooks
     @config.values.find_all { |setting| setting.has_hook? }
-  end
-
-  # Convert arguments into booleans, integers, or whatever.
-  def munge_value(value)
-    # Handle different data types correctly
-    return case value
-      when /^false$/i; false
-      when /^true$/i; true
-      when /^\d+$/i; Integer(value)
-      when true; true
-      when false; false
-      else
-        value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
-    end
   end
 
   # This method just turns a file in to a hash of hashes.
