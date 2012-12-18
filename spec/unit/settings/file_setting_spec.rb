@@ -94,7 +94,7 @@ describe Puppet::Settings::FileSetting do
 
       it "does not allow other groups" do
         expect { FileSetting.new(:settings => settings(), :group => "invalid", :name => 'testing', :desc => "a setting") }.
-          to raise_error(FileSetting::SettingError, /The :group parameter for the setting 'testing' must be 'service'/)
+          to raise_error(FileSetting::SettingError, /The :group parameter for the setting 'testing' must be either 'root' or 'service'/)
       end
     end
   end

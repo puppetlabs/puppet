@@ -16,7 +16,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   def group=(value)
     unless AllowedGroups.include?(value)
-      raise SettingError, "The :group parameter for the setting '#{name}' must be 'service', not '#{value}'"
+      raise SettingError, "The :group parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
     end
     @group = value
   end
