@@ -32,6 +32,12 @@ describe Puppet::Node::Environment do
     Puppet::Node::Environment.new("one").should equal(Puppet::Node::Environment.new("one"))
   end
 
+  it "should treat environment instances as singletons only until cleared" do
+    before = Puppet::Node::Environment.new("one")
+    Puppet::Node::Environment.clear
+    before.should_not equal(Puppet::Node::Environment.new("one"))
+  end
+
   it "should treat an environment specified as names or strings as equivalent" do
     Puppet::Node::Environment.new(:one).should equal(Puppet::Node::Environment.new("one"))
   end
@@ -43,6 +49,32 @@ describe Puppet::Node::Environment do
   it "should just return any provided environment if an environment is provided as the name" do
     one = Puppet::Node::Environment.new(:one)
     Puppet::Node::Environment.new(one).should equal(one)
+  end
+
+  it "should return the *root* environment as the current env by default" do
+    Puppet::Node::Environment.current.name.to_s.should == '*root*'
+  end
+
+  it "should treat the *root* instance as a singleton only until cleared" do
+    before = Puppet::Node::Environment.current
+    Puppet::Node::Environment.clear
+    before.should_not equal(Puppet::Node::Environment.current)
+  end
+
+  it "should change the current environment" do
+    Puppet::Node::Environment.current.name.to_s.should == '*root*'
+    one = Puppet::Node::Environment.new(:one)
+    Puppet::Node::Environment.current = one
+    Puppet::Node::Environment.current.should equal(one)
+  end
+
+  it "should change the current environment only until cleared" do
+    Puppet::Node::Environment.current.name.to_s.should == '*root*'
+    one = Puppet::Node::Environment.new(:one)
+    Puppet::Node::Environment.current = one
+    Puppet::Node::Environment.current.should equal(one)
+    Puppet::Node::Environment.clear
+    Puppet::Node::Environment.current.name.to_s.should == '*root*'
   end
 
   describe "when managing known resource types" do
