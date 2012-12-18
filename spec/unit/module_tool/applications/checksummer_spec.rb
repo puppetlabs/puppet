@@ -27,28 +27,27 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
     module_file_pathname
   end
 
-  context %q{when metadata.json doesn't exist in the specified path} do
+  context %q{when metadata.json doesn't exist in the specified module installation path} do
     before(:each) do
       stub_module_file_pathname(module_metadata_file, false)
       subject.expects(:metadata_file).with().\
         returns(module_install_pathname + module_metadata_file)
     end
 
-    it 'throws an exception' do
+    it 'raises an ArgumentError exception' do
       lambda {
         subject.run
       }.should raise_error(ArgumentError, 'No metadata.json found.')
     end
   end
 
-  context 'when metadata.json exists in the specified path' do
-    let(:module_files) {
-      {
-        'README'     => '1',
-        'CHANGELOG'  => '2',
-        'Modulefile' => '3',
-      }
+  context 'when metadata.json exists in the specified module installation path' do
+    module_files = {
+      'README'     => '1',
+      'CHANGELOG'  => '2',
+      'Modulefile' => '3',
     }
+    let(:module_files) { module_files }
     let(:checksum_computer) {
       checksums = mock()
       Puppet::ModuleTool::Checksums.\
@@ -56,9 +55,14 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
         returns(checksums)
       checksums
     }
+    # all possible combinations (of all lengths) of the module files
+    module_files_combination =
+      1.upto(module_files.size()).inject([]) { |module_files_combination, n|
+        module_files_combination.concat(module_files.keys.combination(n).to_a)
+      }
 
     def stub_module_file_pathname_with_checksum(relative_path, checksum)
-      module_file_pathname = 
+      module_file_pathname =
         stub_module_file_pathname(relative_path, present = !checksum.nil?)
       # mock the call of Puppet::ModuleTool::Checksums#checksum
       expectation = checksum_computer.\
@@ -74,13 +78,12 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
     end
 
     def stub_module_files(overrides = {})
-      module_files.merge(overrides).each do |relative_path, checksum|
+      overrides.reject! { |key, value|
+        !module_files.include?(key)
+      }
+      module_files.merge(overrides).each { |relative_path, checksum|
         stub_module_file_pathname_with_checksum(relative_path, checksum)
-      end
-    end
-
-    def get_random_module_file()
-      module_files.keys[rand(module_files.size)]
+      }
     end
 
     before(:each) do
@@ -91,20 +94,32 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
         returns({ 'checksums' => module_files })
     end
 
-    it 'reports removed files' do
-      removed_file = get_random_module_file()
+    module_files_combination.each do |removed_files|
+      it "reports removed file(s) #{removed_files.inspect}" do
+        stub_module_files(
+          removed_files.inject({}) { |overrides, removed_file|
+            overrides[removed_file] = nil
+            overrides
+          }
+        )
 
-      stub_module_files(removed_file => nil)
-
-      subject.run.should == [removed_file]
+        subject.run.should == removed_files
+      end
     end
 
-    it 'reports changed files' do
-      changed_file = get_random_module_file()
+    module_files_combination.each do |changed_files|
+      it "reports changed file(s) #{changed_files.inspect}" do
+        stub_module_files(
+          changed_files.inject({}) { |overrides, changed_file|
+            changed_checksum = module_files[changed_file].to_s.succ
+            changed_checksum = ' ' if changed_checksum.empty?
+            overrides[changed_file] = changed_checksum
+            overrides
+          }
+        )
 
-      stub_module_files(changed_file => '1' << module_files[changed_file])
-
-      subject.run.should == [changed_file]
+        subject.run.should == changed_files
+      end
     end
 
     it 'does not report unchanged files' do
