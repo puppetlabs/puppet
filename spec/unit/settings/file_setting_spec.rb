@@ -38,10 +38,11 @@ describe Puppet::Settings::FileSetting do
     end
   end
 
-  describe "when controlling the owner" do
+  describe "when controlling permissions" do
     def settings(wanted_values = {})
        real_values = {
         :user => 'root',
+        :group => 'root',
         :mkusers => false,
         :service_user_available? => false
       }.merge(wanted_values)
@@ -49,77 +50,73 @@ describe Puppet::Settings::FileSetting do
       settings = mock("settings")
 
       settings.stubs(:[]).with(:user).returns real_values[:user]
+      settings.stubs(:[]).with(:group).returns real_values[:group]
       settings.stubs(:[]).with(:mkusers).returns real_values[:mkusers]
       settings.stubs(:service_user_available?).returns real_values[:service_user_available?]
 
       settings
     end
 
-    it "can always be root" do
-      setting = FileSetting.new(:settings => settings(), :owner => "root", :desc => "a setting")
+    context "owner" do
+      it "can always be root" do
+        setting = FileSetting.new(:settings => settings(), :owner => "root", :desc => "a setting")
 
-      setting.owner.should == "root"
+        setting.owner.should == "root"
+      end
+
+      it "is the service user if we are making users" do
+        settings = settings(:user => "the_service", :mkusers => true)
+
+        setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+
+        setting.owner.should == "the_service"
+      end
+
+      it "is the service user if the user is available on the system" do
+        settings = settings(:user => "the_service", :mkusers => false, :service_user_available? => true)
+
+        setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+
+        setting.owner.should == "the_service"
+      end
+
+      it "is root when the setting specifies service and the user is not available on the system" do
+        settings = settings(:user => "the_service", :mkusers => false, :service_user_available? => false)
+
+        setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+
+        setting.owner.should == "root"
+      end
+
+      it "is nil when the owner is unspecified" do
+        FileSetting.new(:settings => settings(), :desc => "a setting").owner.should be_nil
+      end
+
+      it "does not allow other owners" do
+        expect { FileSetting.new(:settings => settings(), :owner => "invalid", :desc => "a setting") }.to
+          raise_error(FileSetting::SettingError, /The :owner setting mst be either 'root' or 'service'/)
+      end
     end
 
-    it "is the service user if we are making users" do
-      settings = settings(:user => "the_service", :mkusers => true)
+    context "group" do
+      it "is nil when the group is unspecified" do
+        setting = FileSetting.new(:settings => settings(), :desc => "a setting")
 
-      setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+        setting.group.should be_nil
+      end
 
-      setting.owner.should == "the_service"
-    end
+      it "is always the service group if any group is given" do
+        settings = settings(:group => "the_group")
 
-    it "is the service user if the user is available on the system" do
-      settings = settings(:user => "the_service", :mkusers => false, :service_user_available? => true)
+        setting = FileSetting.new(:settings => settings, :group => "root", :desc => "a setting")
 
-      setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+        setting.group.should == "the_group"
+      end
 
-      setting.owner.should == "the_service"
-    end
-
-    it "is root when the setting specifies service and the user is not available on the system" do
-      settings = settings(:user => "the_service", :mkusers => false, :service_user_available? => false)
-
-      setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
-
-      setting.owner.should == "root"
-    end
-
-    it "is nil when the owner is unspecified" do
-      FileSetting.new(:settings => settings(), :desc => "a setting").owner.should be_nil
-    end
-
-    it "does allow other owners" do
-      expect { FileSetting.new(:settings => settings(), :owner => "invalid", :desc => "a setting") }.to
-        raise_error(FileSetting::SettingError, /The :owner setting mst be either 'root' or 'service'/)
-    end
-  end
-
-  describe "when setting the group" do
-    it "should allow the group to be service" do
-      service_group = lambda { FileSetting.new(:settings => mock("settings"), :group => "service", :desc => "a setting") }
-      service_group.should_not raise_error
-    end
-
-    it "should allow the group to be unspecified" do
-      no_group = lambda { FileSetting.new(:settings => mock("settings"), :desc => "a setting") }
-      no_group.should_not raise_error
-    end
-
-    it "should not allow invalid groups" do
-      invalid_group = lambda { FileSetting.new(:settings => mock("settings"), :group => "invalid", :desc => "a setting") }
-      invalid_group.should raise_error(FileSetting::SettingError)
-    end
-  end
-
-  describe "when reading the group" do
-    it "should be service when the setting specifies service" do
-      setting = FileSetting.new(:settings => mock("settings", :[] => "the_service"), :group => "service", :desc => "a setting")
-      setting.group.should == "the_service"
-    end
-
-    it "should be nil when the group is unspecified" do
-      FileSetting.new(:settings => mock("settings"), :desc => "a setting").group.should be_nil
+      it "does not allow other groups" do
+        expect { FileSetting.new(:settings => settings(), :group => "invalid", :desc => "a setting") }.to
+          raise_error(FileSetting::SettingError, /The :group setting mst be 'service'/)
+      end
     end
   end
 
