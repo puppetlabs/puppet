@@ -101,11 +101,10 @@ for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
 
-find examples/ -type f -empty | xargs rm
-find examples/ -type f | xargs chmod a-x
+find examples/ -type f | xargs --no-run-if-empty chmod a-x
 
 # puppet-queue.conf is more of an example, used for stompserver
-mv conf/puppet-queue.conf examples/etc/puppet/
+mv conf/puppet-queue.conf examples/
 
 %install
 rm -rf %{buildroot}
@@ -380,7 +379,7 @@ rm -rf %{buildroot}
 - Build for <%= @version %>
 
 * Tue Dec 18 2012 Matthaus Owens <matthaus@puppetlabs.com>
-- Remove for loop on examples/ code which no longer exists.
+- Remove for loop on examples/ code which no longer exists. Add --no-run-if-empty to xargs invocations.
 
 * Sat Dec 1 2012 Ryan Uber <ryuber@cisco.com>
 - Fix for logdir perms regression (#17866)
