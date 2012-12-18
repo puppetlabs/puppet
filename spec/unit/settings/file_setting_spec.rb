@@ -9,10 +9,6 @@ describe Puppet::Settings::FileSetting do
 
   include PuppetSpec::Files
 
-  before do
-    @basepath = make_absolute("/somepath")
-  end
-
   describe "when determining whether the service user should be used" do
     before do
       @settings = mock 'settings'
@@ -126,6 +122,7 @@ describe Puppet::Settings::FileSetting do
 
   describe "when being converted to a resource" do
     before do
+      @basepath = make_absolute("/somepath")
       @settings = mock 'settings'
       @file = Puppet::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
       @file.stubs(:create_files?).returns true
