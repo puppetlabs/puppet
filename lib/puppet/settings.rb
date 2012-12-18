@@ -706,6 +706,16 @@ class Puppet::Settings
     @service_user_available = user.exists?
   end
 
+  def service_group_available?
+    return @service_group_available if defined?(@service_group_available)
+
+    return @service_group_available = false unless group_name = self[:group]
+
+    group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
+
+    @service_group_available = group.exists?
+  end
+
   # Allow later inspection to determine if the setting was set on the
   # command line, or through some other code path.  Used for the
   # `dns_alt_names` option during cert generate. --daniel 2011-10-18

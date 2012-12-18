@@ -15,7 +15,8 @@ describe Puppet::Settings::FileSetting do
         :user => 'root',
         :group => 'root',
         :mkusers => false,
-        :service_user_available? => false
+        :service_user_available? => false,
+        :service_group_available? => false
       }.merge(wanted_values)
 
       settings = mock("settings")
@@ -24,6 +25,7 @@ describe Puppet::Settings::FileSetting do
       settings.stubs(:[]).with(:group).returns real_values[:group]
       settings.stubs(:[]).with(:mkusers).returns real_values[:mkusers]
       settings.stubs(:service_user_available?).returns real_values[:service_user_available?]
+      settings.stubs(:service_group_available?).returns real_values[:service_group_available?]
 
       settings
     end
@@ -84,12 +86,28 @@ describe Puppet::Settings::FileSetting do
         setting.group.should == "root"
       end
 
-      it "is always the service group if service is requested" do
-        settings = settings(:group => "the_group")
+      it "is the service group if we are making users" do
+        settings = settings(:group => "the_service", :mkusers => true)
 
         setting = FileSetting.new(:settings => settings, :group => "service", :desc => "a setting")
 
-        setting.group.should == "the_group"
+        setting.group.should == "the_service"
+      end
+
+      it "is the service user if the group is available on the system" do
+        settings = settings(:group => "the_service", :mkusers => false, :service_group_available? => true)
+
+        setting = FileSetting.new(:settings => settings, :group => "service", :desc => "a setting")
+
+        setting.group.should == "the_service"
+      end
+
+      it "is unspecified when the setting specifies service and the group is not available on the system" do
+        settings = settings(:group => "the_service", :mkusers => false, :service_group_available? => false)
+
+        setting = FileSetting.new(:settings => settings, :group => "service", :desc => "a setting")
+
+        setting.group.should be_nil
       end
 
       it "does not allow other groups" do

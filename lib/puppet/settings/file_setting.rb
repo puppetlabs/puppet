@@ -19,9 +19,13 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def group
-    return unless @group
-    return "root" if @group == "root"
-    @settings[:group]
+    if @group == "root"
+      "root"
+    elsif !@group or !(@settings[:mkusers] or @settings.service_group_available?)
+      nil
+    else
+      @settings[:group]
+    end
   end
 
   def owner=(value)

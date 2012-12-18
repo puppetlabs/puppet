@@ -145,5 +145,10 @@ module Puppet
 
       defaultto false
     end
+
+    # Provide an external hook.  Yay breaking out of APIs.
+    def exists?
+      provider.exists?
+    end
   end
 end
