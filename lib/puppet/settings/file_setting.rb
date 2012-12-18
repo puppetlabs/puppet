@@ -16,8 +16,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   def group=(value)
     unless AllowedGroups.include?(value)
-      identifying_fields = [desc,name,default].compact.join(': ')
-      raise SettingError, "Internal error: The :group setting for #{identifying_fields} must be 'service', not '#{value}'"
+      raise SettingError, "The :group parameter for the setting '#{name}' must be 'service', not '#{value}'"
     end
     @group = value
   end
@@ -29,8 +28,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   def owner=(value)
     unless AllowedOwners.include?(value)
-      identifying_fields = [desc,name,default].compact.join(': ')
-      raise SettingError, "Internal error: The :owner setting for #{identifying_fields} must be either 'root' or 'service', not '#{value}'"
+      raise SettingError, "The :owner parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
     end
     @owner = value
   end

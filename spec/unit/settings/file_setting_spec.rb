@@ -64,8 +64,8 @@ describe Puppet::Settings::FileSetting do
       end
 
       it "does not allow other owners" do
-        expect { FileSetting.new(:settings => settings(), :owner => "invalid", :desc => "a setting") }.to
-          raise_error(FileSetting::SettingError, /The :owner setting mst be either 'root' or 'service'/)
+        expect { FileSetting.new(:settings => settings(), :desc => "a setting", :name => "testing", :default => "the default", :owner => "invalid") }.
+          to raise_error(FileSetting::SettingError, /The :owner parameter for the setting 'testing' must be either 'root' or 'service'/)
       end
     end
 
@@ -93,8 +93,8 @@ describe Puppet::Settings::FileSetting do
       end
 
       it "does not allow other groups" do
-        expect { FileSetting.new(:settings => settings(), :group => "invalid", :desc => "a setting") }.to
-          raise_error(FileSetting::SettingError, /The :group setting mst be 'service'/)
+        expect { FileSetting.new(:settings => settings(), :group => "invalid", :name => 'testing', :desc => "a setting") }.
+          to raise_error(FileSetting::SettingError, /The :group parameter for the setting 'testing' must be 'service'/)
       end
     end
   end
