@@ -97,16 +97,9 @@ patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build
-# Fix some rpmlint complaints
-for f in mac_dscl.pp mac_dscl_revert.pp \
-         mac_pkgdmg.pp ; do
-  sed -i -e'1d' examples/$f
-  chmod a-x examples/$f
-done
 for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
-#chmod +x ext/puppetstoredconfigclean.rb
 
 find examples/ -type f -empty | xargs rm
 find examples/ -type f | xargs chmod a-x
@@ -385,6 +378,9 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Tue Dec 18 2012 Matthaus Owens <matthaus@puppetlabs.com>
+- Remove for loop on examples/ code which no longer exists.
 
 * Sat Dec 1 2012 Ryan Uber <ryuber@cisco.com>
 - Fix for logdir perms regression (#17866)
