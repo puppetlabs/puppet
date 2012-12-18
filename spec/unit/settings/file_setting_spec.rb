@@ -9,31 +9,6 @@ describe Puppet::Settings::FileSetting do
 
   include PuppetSpec::Files
 
-  describe "when determining whether the service user should be used" do
-    before do
-      @settings = mock 'settings'
-      @settings.stubs(:[]).with(:mkusers).returns false
-      @settings.stubs(:service_user_available?).returns true
-    end
-
-    it "should be true if the service user is available" do
-      @settings.expects(:service_user_available?).returns true
-      setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
-      setting.should be_use_service_user
-    end
-
-    it "should be true if 'mkusers' is set" do
-      @settings.expects(:[]).with(:mkusers).returns true
-      setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
-      setting.should be_use_service_user
-    end
-
-    it "should be false if the service user is not available and 'mkusers' is unset" do
-      setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
-      setting.should be_use_service_user
-    end
-  end
-
   describe "when controlling permissions" do
     def settings(wanted_values = {})
        real_values = {
@@ -84,7 +59,7 @@ describe Puppet::Settings::FileSetting do
         setting.owner.should == "root"
       end
 
-      it "is nil when the owner is unspecified" do
+      it "is unspecified when no specific owner is wanted" do
         FileSetting.new(:settings => settings(), :desc => "a setting").owner.should be_nil
       end
 
@@ -95,16 +70,24 @@ describe Puppet::Settings::FileSetting do
     end
 
     context "group" do
-      it "is nil when the group is unspecified" do
+      it "is unspecified when no specific group is wanted" do
         setting = FileSetting.new(:settings => settings(), :desc => "a setting")
 
         setting.group.should be_nil
       end
 
-      it "is always the service group if any group is given" do
+      it "is always the service group if root is requested" do
         settings = settings(:group => "the_group")
 
         setting = FileSetting.new(:settings => settings, :group => "root", :desc => "a setting")
+
+        setting.group.should == "the_group"
+      end
+
+      it "is always the service group if service is requested" do
+        settings = settings(:group => "the_group")
+
+        setting = FileSetting.new(:settings => settings, :group => "service", :desc => "a setting")
 
         setting.group.should == "the_group"
       end
