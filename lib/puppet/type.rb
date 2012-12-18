@@ -799,11 +799,9 @@ class Type
     self.class.properties.collect { |prop| @parameters[prop.name] }.compact
   end
 
-  # Is this type's name isomorphic with the object?  That is, if the
-  # name conflicts, does it necessarily mean that the objects conflict?
+  # Returns true if the type's notion of name is the identity of a resource.
+  # See the overview of this class for a longer explanation of the concept _isomorphism_.
   # Defaults to true.
-  # @todo What does this really mean? Is it that the puppet DSL name e.g. "file" is also the name of the
-  #   type/class i.e. "File" ?
   #
   # @return [Boolan] true, if this type's name is isomorphic with the object
   def self.isomorphic?
