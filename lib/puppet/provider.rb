@@ -1,22 +1,38 @@
+# A Provider is an implementation of the actions that manage resources (of some type) on a system.
 # This class is the base class for all implementation of a Puppet Provider.
+#
 # Concepts:
 #--
-# * **Ancestors** - what are they ?
-# * **Default Requirements** - what are they?
-# * **Confinement** - it is possible to confine a provider several different ways
-#    * the {confine} method which provides filtering on fact, feature, existence of files, or a free form
+# * **Confinement** - confinement restricts providers to only be applicable under certain conditions.
+#    It is possible to confine a provider several different ways:
+#    * the included {#confine} method which provides filtering on fact, feature, existence of files, or a free form
 #      predicate.
-#    * the {commands} method that filters on available system commands
-# * **Property hash** - this important instance variable `@property_hash` contains all current state values
+#    * the {commands} method that filters on the availability of given system commands
+# * **Property hash** - the important instance variable `@property_hash` contains all current state values
 #   for properties (it is lazily built). It is important that these values are managed appropriately in the
 #   methods {instances}, {prefetch}, and in methods that alters the current state (those that change the
 #   lifecycle (creates, destroyes), or alters some value reflected backed by a property).
-# * **Flush** - is a hook that is called after all 
+# * **Flush** - is a hook that is called once per resource when everything has been applied. The intent is
+#   that an implementation may defer modification of the current state typically done in property setters
+#   and instead record information that allows flush to perform the changes more efficiently.  
+# * **Execution Methods** -  The execution methods provides access to execution of arbitrary commands.
+#   As a convenience execution methods are available on both the instance and the class of a provider since a
+#   lot of provider logic switch between these contexts fairly freely.
+# * **System Entity/Resource** - this documentation uses the term "system entity" for system resources to make
+#   it clear if talking about a resource on the system being managed (e.g. a file in the file system)
+#   or about a description of such a resource (e.g. a Puppet Resource).
+# * **Resource Type** - this is an instance of Type that describes a classification of instances of Resource (e.g.
+#   the `File` resource type describes all instances of `file` resources).
+#   (The term is used to contrast with "type" in general, and specifically to contrast with the implementation
+#   class of Resource or a specific Type).
+#
+# @note An instance of a Provider is associated with one resource.
 #
 # @note Class level methods are only called once to configure the provider (when the type is created), and not
 #   for each resource the provider is operating on.
 #   The instance methods are however called for each resource. 
 # 
+#
 # @api public
 #
 class Puppet::Provider
@@ -43,13 +59,18 @@ class Puppet::Provider
     # 
     # @todo Original = _"The source parameter exists so that providers using the same
     #   source can specify this, so reading doesn't attempt to read the
-    #   same package multiple times."_
+    #   same package multiple times."_ This seems to be a package type specific attribute. Is this really
+    #   used?
+    #
     # @return [???] The source is WHAT?
     attr_writer :source
 
     # @todo Original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_
+    #   Is this really needed? The comment about backwards compatibility was made in 2007.
+    #
     # @return [???] A model kept for backwards compatibility.
-    # 
+    # @api private
+    # @deprecated This attribute is available for backwards compatibility reasons.
     attr_reader :model
     
     # @todo What is this type? A reference to a Puppet::Type ?
@@ -58,11 +79,13 @@ class Puppet::Provider
     attr_accessor :resource_type
     
     # @return [String] Returns the documentation for the provider.
+    # @todo This is puzzling ... a write only doc attribute. How is the documentation read? An instance
+    #   gets #doc and #nodoc from Util::Docs - but this attribute is at the class level... Confused...
     attr_writer :doc
   end
 
   # @todo original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_, why is it
-  #   both her (instance) and at class level? Is this a different model?
+  #   both here (instance) and at class level? Is this a different model?
   # @return [???] model is WHAT?
   attr_reader :model
   
@@ -70,37 +93,38 @@ class Puppet::Provider
   #
   attr_accessor :resource
 
-  # Provides access to execution of arbitrary commands.
-  # As a convenience execution methods are
-  # available on both the instance and the class of a provider since a lot of provider logic
-  # switch between these contexts fairly freely.
-  #
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # Convenience methods - see class method with the same name.
+  # @see execute
+  # @return (see execute)
   def execute(*args)
     Puppet::Util::Execution.execute(*args)
   end
 
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # (see Puppet::Util::Execution.execute)
   def self.execute(*args)
     Puppet::Util::Execution.execute(*args)
   end
 
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # Convenience methods - see class method with the same name.
+  # @see execpipe
+  # @return (see execpipe)
   def execpipe(*args, &block)
     Puppet::Util::Execution.execpipe(*args, &block)
   end
 
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # (see Puppet::Util::Execution.execpipe)
   def self.execpipe(*args, &block)
     Puppet::Util::Execution.execpipe(*args, &block)
   end
 
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # Convenience methods - see class method with the same name.
+  # @see execfail
+  # @return (see execfail)
   def execfail(*args)
     Puppet::Util::Execution.execfail(*args)
   end
 
-  # @see Puppet::Util::Execution Puppet::Util::Execution for how to use this method
+  # (see Puppet::Util::Execution.execfail)
   def self.execfail(*args)
     Puppet::Util::Execution.execfail(*args)
   end
@@ -123,7 +147,7 @@ class Puppet::Provider
     which(command)
   end
 
-  # Defines commands that must be present on the host for this provider to be suitable.
+  # Confines this provider to be suitable only on hosts where the given commands are present.
   # Also see {confines} for other types of confinement of a provider by use of other types of
   # predicates.
   # 
@@ -134,6 +158,7 @@ class Puppet::Provider
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # @return [void]
   # @see optional_commands
+  #
   def self.commands(command_specs)
     command_specs.each do |name, path|
       has_command(name, path)
@@ -157,11 +182,11 @@ class Puppet::Provider
     end
   end
 
-  # Defines a single command
+  # Creates a convenience method for invocation of a command.
   #
-  # A method will be generated on the provider that allows easy execution of the command. The generated 
-  # method can take arguments that will be passed through to the executable as the command line arguments 
-  # when it is run.
+  # This generates a Provider method that allows easy execution of the command. The generated 
+  # method may take arguments that will be passed through to the executable as the command line arguments 
+  # when it is invoked.
   #
   # @example Use it like this:
   #   has_command(:echo, "/bin/echo")
@@ -178,7 +203,9 @@ class Puppet::Provider
   # @param name [Symbol] The name of the command (will become the name of the generated method that executes the command)
   # @param path [String] The path to the executable for the command
   # @yield [ ] A block that configures the command (see {Puppet::Provider::Command})
-  # @comment a yield [ ] produces {|| ...} in the signature, do not remove the space. 
+  # @comment a yield [ ] produces {|| ...} in the signature, do not remove the space.
+  # @note the name ´has_command´ looks odd in an API context, but makes more sense when seen in the internal
+  #   DSL context where a Provider is declaratively defined. 
   #
   def self.has_command(name, path, &block)
     name = name.intern
@@ -235,6 +262,7 @@ class Puppet::Provider
 
   # @return [Boolean] Returns whether this implementation satisfies all of the default requirements or not.
   #   Returns false If defaults are empty.
+  # @see defaultfor
   #
   def self.default?
     return false if @defaults.empty?
@@ -261,8 +289,10 @@ class Puppet::Provider
 
   # Sets a facts filter that determine which of several suitable providers should be picked by default.
   # This selection only kicks in if there is more than one suitable provider.
-  # The given hash may contain more than one fact value entry to filter on multiple facts. 
-  # @param hash [Hash<{String => Object}>] hash of fact name to fact value.  
+  # To filter on multiple facts the given hash may contain more than one fact name/value entry.
+  # The filter picks the provider if all the fact/value entries match the current set of facts. (In case
+  # there are still more than one provider after this filtering, the first found is picked).
+  # @param hash [Hash<{String => Object}>] hash of fact name to fact value.
   # @return [void]
   #
   def self.defaultfor(hash)
@@ -272,9 +302,20 @@ class Puppet::Provider
   end
 
   # @return [Integer] Returns a numeric specificity for this provider based on how many requirements it has
-  #  and number of ancestors.
+  #  and number of _ancestors_. The higher the number the more specific the provider.
+  # The number of requirements is based on the number of defaults set up with {defaultsfor}.
+  #
+  # The _ancestors_ is the Ruby Module::ancestors method and the number of classes returned is used
+  # to boost the score. The intent is that if two providers are equal, but one is more "derived" than the other
+  # (i.e. includes more classes), it should win because it is more specific). 
+  # @note Because of how this value is
+  #   calculated there could be surprising side effects if a provider included an excessive amount of classes. 
   #
   def self.specificity
+    # This strange piece of logic attempts to figure out how many parent providers there
+    # are to increase the score. What is will actually do is count all classes that Ruby Module::ancestors
+    # returns (which can be other classes than those the parent chain) - in a way, an odd measure of the
+    # complexity of a provider).
     (@defaults.length * 100) + ancestors.select { |a| a.is_a? Class }.length
   end
 
@@ -285,7 +326,7 @@ class Puppet::Provider
     @commands = {}
   end
 
-  # Returns a list of managed entities this provider can manage.
+  # Returns a list of system resources (entities) this provider may/can manage.
   # This is a query mechanism that lists entities that the provider may manage on a given system. It is
   # is directly used in query services, but is also the foundation for other services; prefetching, and
   # purging.
@@ -308,7 +349,7 @@ class Puppet::Provider
   # of all non managed entities.
   #
   # @note The returned instances are instance of some subclass of Provider, not resources.
-  # @return [Array<Puppet::Provider>] a list of providers referencing the managed entities
+  # @return [Array<Puppet::Provider>] a list of providers referencing the system entities
   # @abstract this method must be implemented by a subclass and this super method should never be called as it raises an exception.
   # @raise [Puppet::DevError] Error indicating that the method should have been implemented by subclass.
   # @see prefetch 
@@ -369,11 +410,10 @@ class Puppet::Provider
 
   self.initvars
 
-  # @todo Unclear what the intent of this method is. It calls meta_def(name, block) unless a method
-  #   of the given name is defined, and it calls define_method to define a method that seems to call
-  #   the just defined method unless this method is already defined. ???
+  # This method is used to generate a method for a command.
   # @return [void]
-  # 
+  # @api private
+  #
   def self.create_class_and_instance_method(name, &block)
     unless singleton_class.method_defined?(name)
       meta_def(name, &block)
@@ -388,12 +428,17 @@ class Puppet::Provider
   private_class_method :create_class_and_instance_method
 
   # @return [String] Returns the data source, which is the provider name if no other source has been set.
+  # @todo Unclear what "the source" is used for? 
   def self.source
     @source ||= self.name
   end
 
+  # Returns true if the given attribute/parameter is supported by the provider.
+  # The check is made that the paramter is a valid parameter for the resource type, and then
+  # if all its required features (if any) are supported by the provider.
+  #
   # @param param [Class, Puppet::Parameter] the parameter class, or a parameter instance
-  # @return [Boolean] Returns wheather this provider support the given parameter.
+  # @return [Boolean] Returns whether this provider supports the given parameter or not.
   # @raise [Puppet::DevError] if the given parameter is not valid for the resource type
   #
   def self.supports_parameter?(param)
@@ -450,9 +495,7 @@ class Puppet::Provider
     @model = nil
   end
 
-  # Returns a command given its name
-  # @param name [String] the name of a command
-  # @return [???] the command
+  # (see command)
   def command(name)
     self.class.command(name)
   end
@@ -465,8 +508,8 @@ class Puppet::Provider
     @property_hash[param.intern] || :absent
   end
 
-  # A Provider may optionally be initialized from a resource or a hash of properties.
-  # If no parameter is specified, a new non specific provider is initialized. If a resource is given
+  # Creates a new provider that is optionally initialized from a resource or a hash of properties.
+  # If no argument is specified, a new non specific provider is initialized. If a resource is given
   # it is remembered for further operations. If a hash is used it becomes the internal `@property_hash`
   # structure of the provider - this hash holds the current state property values of system entities
   # as they are being discovered by querying or other operations (typically getters).
@@ -535,13 +578,20 @@ class Puppet::Provider
     return self.class.name <=> other.class.name
   end
   
-  # @comment Document prefetch here as it does not exists anywhere else (called from transaction if implemented)
+  # @comment Document prefetch here as it does not exist anywhere else (called from transaction if implemented)
   # @!method self.prefetch(resource_hash)
   # @abstract A subclass may implement this - it is not implemented in the Provider class
   # This method may be implemented by a provider in order to pre-fetch resource properties.
   # If implemented it should set the provider instance of the managed resources to a provider with the
   # fetched state (i.e. what is returned from the {instances} method).
   # @param resources_hash [Hash<{String => Puppet::Resource}>] map from name to resource of resources to prefetch
+  # @return [void]
+  
+  # @comment Document flush here as it does not exist anywhere (called from transaction if implemented)
+  # @!method flush()
+  # @abstract A subclass may implement this - it is not implemented in the Provider class
+  # This method may be implemented by a provider in order to flush properties that has not been individually
+  # applied to the managed entity's current state.
   # @return [void]
 
 end
