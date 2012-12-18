@@ -2,8 +2,7 @@ require 'puppet/settings/string_setting'
 
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
-  AllowedOwners = %w{root service}
-  AllowedGroups = %w{root service}
+  Allowed = %w{root service}
 
   class SettingError < StandardError; end
 
@@ -15,9 +14,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def group=(value)
-    unless AllowedGroups.include?(value)
-      raise SettingError, "The :group parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
-    end
+    assert_allowed_value(':group', value)
     @group = value
   end
 
@@ -27,9 +24,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def owner=(value)
-    unless AllowedOwners.include?(value)
-      raise SettingError, "The :owner parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
-    end
+    assert_allowed_value(':owner', value)
     @owner = value
   end
 
@@ -113,5 +108,13 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
           "Settings parameter '#{name}' is undefined"
       end
     }
+  end
+
+private
+
+  def assert_allowed_value(parameter, value)
+    if not Allowed.include?(value)
+      raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
+    end
   end
 end
