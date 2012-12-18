@@ -20,7 +20,7 @@ module Manager
     }
   end
 
-  # Iterates over all defined Type subclasses.
+  # Iterates over all already loaded Type subclasses.
   # @yield [t] a block receiving each type
   # @yieldparam t [Puppet::Type] each defined type
   # @yieldreturn [Object] the last returned object is also returned from this method
@@ -57,7 +57,8 @@ module Manager
   #   that class.
   # @return [Class<inherits Puppet::Type>] the created subclass
   # @see Puppet::Util::ClassGen.genclass
-  # 
+  #
+  # @dsl type
   # @api public
   def newtype(name, options = {}, &block)
     # Handle backward compatibility
@@ -166,6 +167,7 @@ module Manager
   # Creates a loader for Puppet types.
   # Defaults to an instance of {Puppet::Util::Autoload} if no other auto loader has been set.
   # @return [Puppet::Util::Autoload] the loader to use.
+  # @api private
   def typeloader
     unless defined?(@typeloader)
       @typeloader = Puppet::Util::Autoload.new(self, "puppet/type", :wrap => false)
