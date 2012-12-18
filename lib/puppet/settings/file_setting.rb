@@ -20,6 +20,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   def group
     return unless @group
+    return "root" if @group == "root"
     @settings[:group]
   end
 

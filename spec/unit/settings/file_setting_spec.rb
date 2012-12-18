@@ -76,12 +76,12 @@ describe Puppet::Settings::FileSetting do
         setting.group.should be_nil
       end
 
-      it "is always the service group if root is requested" do
+      it "is root if root is requested" do
         settings = settings(:group => "the_group")
 
         setting = FileSetting.new(:settings => settings, :group => "root", :desc => "a setting")
 
-        setting.group.should == "the_group"
+        setting.group.should == "root"
       end
 
       it "is always the service group if service is requested" do
