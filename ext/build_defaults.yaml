@@ -9,8 +9,8 @@ gpg_name: 'info@puppetlabs.com'
 gpg_key: '4BD6EC30'
 sign_tar: FALSE
 # a space separated list of mock configs
-final_mocks: 'pl-5-i386 pl-6-i386 fedora-15-i386 fedora-16-i386 fedora-17-i386'
-rc_mocks: 'pl-5-i386-dev pl-6-i386-dev fedora-15-i386-dev fedora-16-i386-dev fedora-17-i386-dev'
+final_mocks: 'pl-5-i386 pl-6-i386 fedora-16-i386 fedora-17-i386'
+rc_mocks: 'pl-5-i386-dev pl-6-i386-dev fedora-16-i386-dev fedora-17-i386-dev'
 yum_host: 'burji.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
 build_gem: TRUE
