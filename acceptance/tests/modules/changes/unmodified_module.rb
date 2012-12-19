@@ -15,8 +15,8 @@ on master, puppet('module install pmtacceptance-nginx')
 
 step 'Run module changes to check an unmodified module'
 on master, puppet('module changes /etc/puppet/modules/nginx'), :acceptable_exit_codes => [0] do
-  assert_output <<-OUTPUT
-    STDOUT> No modified files
-    STDOUT> 
+  assert_equal <<-OUTPUT, stdout
+No modified files
+
   OUTPUT
 end

@@ -16,8 +16,10 @@ on master, 'echo >> /etc/puppet/modules/nginx/README'
 
 step 'Run module changes to check a module with a modified file'
 on master, puppet('module changes /etc/puppet/modules/nginx'), :acceptable_exit_codes => [0] do
-  assert_output <<-OUTPUT
-    STDERR> \e[1;31mWarning: 1 files modified\e[0m
-    STDOUT> README
+  assert_equal <<-STDERR, stderr
+\e[1;31mWarning: 1 files modified\e[0m
+  STDERR
+  assert_equal <<-OUTPUT, stdout
+README
   OUTPUT
 end

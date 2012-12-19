@@ -13,8 +13,8 @@ end
 
 step 'Run module changes on an invalid module install path'
 on master, puppet('module changes /etc/puppet/modules/nginx'), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDERR> \e[1;31mError: Could not find a valid module at "/etc/puppet/modules/nginx"\e[0m
-    STDERR> \e[1;31mError: Try 'puppet help module changes' for usage\e[0m
-  OUTPUT
+  assert_equal <<-STDERR, stderr
+\e[1;31mError: Could not find a valid module at "/etc/puppet/modules/nginx"\e[0m
+\e[1;31mError: Try 'puppet help module changes' for usage\e[0m
+  STDERR
 end
