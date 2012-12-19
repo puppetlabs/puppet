@@ -71,4 +71,53 @@ describe Puppet::Type::File::Ensure do
       property.should_not be_safe_insync(:directory)
     end
   end
+
+  describe "#sync" do
+    context "directory" do
+      before :each do
+        resource[:ensure] = :directory
+      end
+
+      it "should raise if the parent directory doesn't exist" do
+        newpath = File.join(path, 'nonexistentparent', 'newdir')
+        resource[:path] = newpath
+
+        expect {
+          property.sync
+        }.to raise_error(Puppet::Error, /Cannot create #{newpath}; parent directory #{File.dirname(newpath)} does not exist/)
+      end
+
+      it "should accept octal mode as fixnum" do
+        resource[:mode] = 0700
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept octal mode as string" do
+        resource[:mode] = "700"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept octal mode as string with leading zero" do
+        resource[:mode] = "0700"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept symbolic mode" do
+        resource[:mode] = "u=rwx,go=x"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0711)
+
+        property.sync
+      end
+    end
+  end
 end
