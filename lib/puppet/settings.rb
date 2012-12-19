@@ -699,21 +699,25 @@ class Puppet::Settings
   def service_user_available?
     return @service_user_available if defined?(@service_user_available)
 
-    return @service_user_available = false unless user_name = self[:user]
+    if self[:user]
+      user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
 
-    user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
-
-    @service_user_available = user.exists?
+      @service_user_available = user.exists?
+    else
+      @service_user_available = false
+    end
   end
 
   def service_group_available?
     return @service_group_available if defined?(@service_group_available)
 
-    return @service_group_available = false unless group_name = self[:group]
+    if self[:group]
+      group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
 
-    group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
-
-    @service_group_available = group.exists?
+      @service_group_available = group.exists?
+    else
+      @service_group_available = false
+    end
   end
 
   # Allow later inspection to determine if the setting was set on the
