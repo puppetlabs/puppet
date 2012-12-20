@@ -100,7 +100,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which('pip')
+    if pathname = which('pip') or pathname = which('pip-python')
       self.class.commands :pip => pathname
       pip *args
     else
