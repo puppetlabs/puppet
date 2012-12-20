@@ -58,7 +58,10 @@ describe Puppet::ModuleTool::Applications::Checksummer, :fails_on_windows => tru
     # all possible combinations (of all lengths) of the module files
     module_files_combination =
       1.upto(module_files.size()).inject([]) { |module_files_combination, n|
-        module_files_combination.concat(module_files.keys.combination(n).to_a)
+        module_files.keys.combination(n) { |combination|
+          module_files_combination << combination
+        }
+        module_files_combination
       }
 
     def stub_module_file_pathname_with_checksum(relative_path, checksum)
