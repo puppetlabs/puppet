@@ -198,6 +198,12 @@ describe provider_class do
         to raise_error(NoMethodError, 'Could not locate the pip command.')
     end
 
+    it "should use pip-python when ran on a RedHat system", :if => Facter.value(:osfamily) == 'RedHat' do
+      @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+      @provider.expects(:which).with('pip-python').returns("/fake/bin/pip-python")
+      @provider.method(:lazy_pip).call "freeze"
+    end
+
   end
 
 end
