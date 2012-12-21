@@ -30,6 +30,20 @@ describe provider_class do
 
   end
 
+  describe "cmd" do
+
+    it "should return pip-python on RedHat systems" do
+      Facter.stubs(:value).with(:osfamily).returns("RedHat")
+      provider_class.cmd.should == 'pip-python'
+    end
+
+    it "should return pip by default" do
+      Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
+      provider_class.cmd.should == 'pip'
+    end
+
+  end
+
   describe "instances" do
 
     it "should return an array when pip is present" do
