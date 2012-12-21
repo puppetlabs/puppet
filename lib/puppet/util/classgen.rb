@@ -14,8 +14,9 @@ module Puppet::Util::ClassGen
   # @param name [String] the name of the generated class
   # @param options [Hash] a hash of options
   # @option options [Array<Class>] :array if specified, the generated class is appended to this array
-  # @option options [Hash<{String => Object}>] :attributes a hash of attributes to set before the 
-  #   given block is evaluated.
+  # @option options [Hash<{String => Object}>] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
   # @option options [Proc] :block a block to evaluate in the context of the class (this block can be provided
   #   this way, or as a normal yield block).
   # @option options [String] :constant (name with first letter capitalized) what to set the constant that references
@@ -37,8 +38,9 @@ module Puppet::Util::ClassGen
   # @param name [String] the name of the generated module
   # @param optinos [Hash] hash with options
   # @option options [Array<Class>] :array if specified, the generated class is appended to this array
-  # @option options [Hash<{String => Object}>] :attributes a hash of attributes to set before the 
-  #   given block is evaluated.
+  # @option options [Hash<{String => Object}>] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
   # @option options [Proc] :block a block to evaluate in the context of the class (this block can be provided
   #   this way, or as a normal yield block).
   # @option options [String] :constant (name with first letter capitalized) what to set the constant that references

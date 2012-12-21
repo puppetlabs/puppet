@@ -16,15 +16,15 @@ require 'puppet/util/tagging'
 
 module Puppet
 # The base class for all Puppet types.
-# @todo Is something missing from this overview of Type?
-#
+#  
 # A type describes:
 #--
 # * **Attributes** - properties, parameters, and meta-parameters are different types of attributes of a type.
 #   * **Properties** - these are the properties of the managed resource (attributes of the entity being managed; like
-#     a file's owner, group and mode). A property describes two states; the 'is' (current state) and the 'should' wanted
+#     a file's owner, group and mode). A property describes two states; the 'is' (current state) and the 'should' (wanted
 #     state).
-#       * **Ensurable** - a set of traits that control the lifecycle (create, remove, etc.) of a managed resource.
+#       * **Ensurable** - a set of traits that control the lifecycle (create, remove, etc.) of a managed entity.
+#         There is a default set of operations associated with being _ensurable_, but this can be changed.
 #       * **Name/Identity** - one property is the name/identity of a resource, the _namevar_ that uniquely identifies
 #         one instance of a type from all others.
 #   * **Parameters** - additional attributes of the type (that does not directly related to an instance of the managed
@@ -36,14 +36,17 @@ module Puppet
 # * **Parent** - a type can have a super type (that it inherits from).
 # * **Validation** - If not just a basic data type, or an enumeration of symbolic values, it is possible to provide
 #     validation logic for a type, properties and parameters.
-# * **Munging** - munging/unmunging is the process of turning a value in external representation into an internal
-#     representation and vice versa. A Type supports adding custom logic for these.
+# * **Munging** - munging/unmunging is the process of turning a value in external representation (as used
+#     by a provider) into an internal representation and vice versa. A Type supports adding custom logic for these.
 # * **Auto Requirements** - a type can specify automatic relationships to resources to ensure that if they are being
 #     managed, they will be processed before this type.
 # * **Providers** - a provider is an implementation of a type's behavior - the management of a resource in the 
 #     system being managed. A provider is often platform specific and is selected at runtime based on
 #     criteria/predicates specified in the configured providers. See {Puppet::Provider} for details.
-# 
+# * **Device Support** - A type has some support for being applied to a device; i.e. something that is managed
+#     by running logic external to the device itself. There are several methods that deals with type
+#     applicability for these special cases such as {apply_to_device}.
+#
 # Additional Concepts:
 # --
 # * **Resource-type** - A _resource type_ is a term used to denote the type of a resource; internally a resource
@@ -68,10 +71,8 @@ module Puppet
 #   the conceptual level "a resource is an instance of a resource-type" and the actual implementation classes
 #   (Type, Resource, Provider, and various utility and helper classes).
 # 
-#
-# @todo The logic intermixes the terms "property", "parameter", and "attribute" in a very confusing way; sometimes they
-#   seem to be the same, other times not. Please review language with care for these concepts.
 # @api public
+#
 #
 class Type
   include Puppet::Util
@@ -101,9 +102,9 @@ class Type
   class << self
     include Puppet::Util::ClassGen
     include Puppet::Util::Warnings
-    # @todo The properties of WHAT, and what is the type. The comment says "Code related to resource type attributes"
-    # @return {???] Array? Hash? what???
-    #
+    
+    # @return [Array<Puppet::Property>] The list of declared properties for the resource type.
+    # The returned lists contains instances if Puppet::Property or its subclasses.
     attr_reader :properties
   end
 
@@ -162,18 +163,26 @@ class Type
     @@metaparams.each { |p| yield p.name }
   end
 
-  # @todo Decipher the comment & document - how is this used?, what is the block, what
-  #  parameters should it have?
+  # Creates a new `ensure` property with configured default values or with configuration by an optional block.
+  # This method is a convenience method for creating a property `ensure` with default accepted values.
+  # If no block is specified, the new `ensure` property will accept the default symbolic
+  # values `:present`, and `:absent` - see {Puppet::Property::Ensure}.
+  # If something else is wanted, pass a block and make calls to {Puppet::Property.newvalue} from this block
+  # to define each possible value. If a block is passed, the defaults are not automatically added to the set of
+  # valid values.
   #
-  # Creates a new `:ensure` property with configured default values or with configuration by optional block.
-  # the 'ensure' class.  This is a separate method so other types
-  # can easily call it and create their own 'ensure' values.
-  # @todo how are 'ensure values easily created'?
+  # @note This method will be automatically called without a block if the type implements the methods
+  #   specified by {ensurable?}. It is recommended to always call this method and not rely on this automatic
+  #   specification to clearly state that the type is ensurable.
+  #
   # @overload ensurable()
-  # @overload ensurable({||...})
-  #   @yieldreturn [void]
+  # @overload ensurable({|| ... })
+  # @yield [ ] A block evaluated in scope of the new Parameter
+  # @yieldreturn [void]
   # @return [void] 
-  #
+  # @dsl type
+  # @api public
+  # 
   def self.ensurable(&block)
     if block_given?
       self.newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
@@ -184,11 +193,11 @@ class Type
     end
   end
 
-  # Returns true if the type is _ensurable_. A type is _ensurable_ if it responds to `:exists`, `:create`, and
-  # `:destroy`.
-  # @todo What does this mean: "Should we add the 'ensure' property to this class?" (is a property added?, or
-  #   does it just mean that this method returns true? If not, where is this property added?
-  # @return [Boolean] if the type is _ensurable_ or not
+  # Returns true if the type implements the default behavior expected by being _ensurable_ "by default". 
+  # A type is _ensurable_ by default if it responds to `:exists`, `:create`, and `:destroy`.
+  # If a type implements these methods and have not already specified that it is _ensurable_, it will be
+  # made so with the defaults specified in {ensurable}.
+  # @return [Boolean] whether the type is _ensurable_ or not.
   #
   def self.ensurable?
     # If the class has all three of these methods defined, then it's
@@ -206,35 +215,40 @@ class Type
   #   target device - whatever that looks like - and not have this additional
   #   magic here. --daniel 2012-03-08
   #
-  # This method is undocumented - implementors: see comments in code.
+  # Makes this type applicable to `:device`.
+  # @return [Symbol] Returns `:device`
   # @api private
   #
   def self.apply_to_device
     @apply_to = :device
   end
 
-  # (see apply_to_device)
+  # Makes this type applicable to `:host`.
+  # @return [Symbol] Returns `:host`
   # @api private
   #
   def self.apply_to_host
     @apply_to = :host
   end
 
-  # (see apply_to_device)
+  # Makes this type applicable to `:both` (i.e. `:host` and `:device`).
+  # @return [Symbol] Returns `:both`
   # @api private
   #
   def self.apply_to_all
     @apply_to = :both
   end
 
-  # (see apply_to_device)
+  # Makes this type apply to `:host` if not already applied to something else.
+  # @return [Symbol] a `:device`, `:host`, or `:both` enumeration
   # @api private
-  #
   def self.apply_to
     @apply_to ||= :host
   end
 
-  # (see apply_to_device)
+  # Returns true if this type is applicable to the given target.
+  # @param target [Symbol] should be :device, :host or :target, if anything else, :host is enforced
+  # @return [Boolean] true  
   # @api private
   #
   def self.can_apply_to(target)
@@ -296,19 +310,21 @@ class Type
   end
 
   # Creates a new meta-parameter.
-  # @todo What does that mean? Does that mean a parameter that works across all types?
-  # @todo what does the options :attributes, and :parent do?
-  # @todo what are the parameters to the required block?
-  # @param name
-  # @param options [Hash]
-  # @param block [Proc] required block
-  # @option options [???] :parent
-  # @option options [Array<String>] :attributes  list if WHAT?
-  # @option options [Array<String>] :required_features list of required provider features
-  # @option options [Boolean] :boolean if the parameter is boolean  
-  # Requires a block and a name, stores it in the
-  # @parameters array, and does some basic checking on it.
-  # @return [???] What is the type of the return param?
+  # This creates a new meta-parameter that is added to all types.
+  # @param name [Symbol] the name of the parameter
+  # @param options [Hash] a hash with options.
+  # @option options [Class<inherits Puppet::Parameter>] :parent (Puppet::Parameter) the super class of this parameter 
+  # @option options [Hash{String => Object}] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Boolean] :boolean (false) specifies if this is a boolean parameter
+  # @option options [Boolean] :namevar  (false) specifies if this parameter is the namevar
+  # @option options [Symbol, Array<Symbol>] :required_features  specifies required provider features by name
+  # @return [Class<inherits Puppet::Parameter>] the created parameter
+  # @yield [ ] a required block that is evaluated in the scope of the new meta-parameter
+  # @api public
+  # @dsl type
+  # @todo Verify that this description is ok
   #
   def self.newmetaparam(name, options = {}, &block)
     @@metaparams ||= []
@@ -357,10 +373,33 @@ class Type
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
-  # @todo what does this do? What is the relationship between title/title_patterns and key_attributes?
-  # @todo what does this return? (A nesdted array structure)
+  # Returns a mapping from the title string to setting of attribute value(s).
+  # This default implementation provides a mapping of title to the one and only _namevar_ present
+  # in the type's definition.
+  # @note Advanced: some logic requires this mapping to be done differently, using a different
+  #   validation/pattern, breaking up the title
+  #   into several parts assigning each to an individual attribute, or even use a composite identity where
+  #   all namevars are seen as part of the unique identity (such computation is done by the {uniqueness} method.
+  #   These advanced options are rarely used (only one of the built in puppet types use this, and then only
+  #   a small part of the available functionality), and the support for these advanced mappings is not
+  #   implemented in a straight forward way. For these reasons, this method has been marked as private).
+  #  
   # @raise [Puppet::DevError] if there is no title pattern and there are two or more key attributes
-  # @return [nil, Array<Array<Regexp, Array<Array ???>>>>] a structure with a regexp and the first key_attribute ???
+  # @return [Array<Array<Regexp, Array<Array <Symbol, Proc>>>>, nil] a structure with a regexp and the first key_attribute ???
+  # @comment This wonderful piece of logic creates a structure used by Resource.parse_title which 
+  #   has the capability to assign parts of the title to one or more attributes; It looks like an implementation
+  #   of a composite identity key (all parts of the key_attributes array are in the key). This can also
+  #   be seen in the method uniqueness_key.
+  #   The implementation in this method simply assigns the title to the one and only namevar (which is name
+  #   or a variable marked as namevar).
+  #   If there are multiple namevars (any in addition to :name?) then this method MUST be implemented
+  #   as it raises an exception if there is more than 1. Note that in puppet, it is only File that uses this
+  #   to create a different pattern for assigning to the :path attribute
+  #   This requires further digging.
+  #   The entire construct is somewhat strange, since resource checks if the method "title_patterns" is 
+  #   implemented (it seems it always is) - why take this more expensive regexp mathching route for all
+  #   other types?
+  # @api private
   #
   def self.title_patterns
     case key_attributes.length
@@ -381,15 +420,19 @@ class Type
   end
 
   # Creates a new parameter.
-  # @param name
-  # @param options [Hash] 
-  # @param block [Proc] a required block
-  # @option options [???] :parent  TODO 
-  # @option options [???] :attributes [???] TODO
-  # @option options [Boolean] :boolean specifies if this is a boolean parameter
-  # @option options [Boolean] :namevar TODO boolean ? specifies if this parameter is a namevar
-  # @option options [Array<String>] :required_features  specifies required provider features by name TODO: IS TYPE CORRECT? 
-  # @return [??? Param type ???] the created parameter
+  # @param name [Symbol] the name of the parameter
+  # @param options [Hash] a hash with options.
+  # @option options [Class<inherits Puppet::Parameter>] :parent (Puppet::Parameter) the super class of this parameter 
+  # @option options [Hash{String => Object}] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Boolean] :boolean (false) specifies if this is a boolean parameter
+  # @option options [Boolean] :namevar  (false) specifies if this parameter is the namevar
+  # @option options [Symbol, Array<Symbol>] :required_features  specifies required provider features by name
+  # @return [Class<inherits Puppet::Parameter>] the created parameter
+  # @yield [ ] a required block that is evaluated in the scope of the new parameter
+  # @api public
+  # @dsl type
   #
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
@@ -415,16 +458,23 @@ class Type
   end
 
   # Creates a new property.
-  # @todo Is parent a super class, or the class for the property? What are the parameters to the block, if any?
-  # @param name [String] the name of the property as used when users refer to it
-  # @param options [Hash] a hash of options
-  # @param block [Proc] optional block that is evaluated MORE DETAIL WANTED ???
-  # @option options [Class<Puppet::Property>] `:parent` the parent (super class) for the Property, the default
-  #   if unspecified is {Puppet::Property}.
-  # @option options [Symbol] :retrieve The method to call on the provider (or `parent` if `provider` is not set)
+  # @param name [Symbol] the name of the property
+  # @param options [Hash] a hash with options.
+  # @option options [Symbol] :array_matching (:first) specifies how the current state is matched against
+  #   the wanted state. Use `:first` if the property is single valued, and (`:all`) otherwise.
+  # @option options [Class<inherits Puppet::Property>] :parent (Puppet::Property) the super class of this property 
+  # @option options [Hash{String => Object}] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Boolean] :boolean (false) specifies if this is a boolean parameter
+  # @option options [Symbol] :retrieve the method to call on the provider (or `parent` if `provider` is not set)
   #   to retrieve the current value of this property.
-  # @return [Puppet::Property] the created property
-  #
+  # @option options [Symbol, Array<Symbol>] :required_features  specifies required provider features by name
+  # @return [Class<inherits Puppet::Property>] the created property
+  # @yield [ ] a required block that is evaluated in the scope of the new property
+  # @api public
+  # @dsl type
+  #  
   def self.newproperty(name, options = {}, &block)
     name = name.intern
 
@@ -509,9 +559,9 @@ class Type
     @validproperties.include?(name) && @validproperties[name]
   end
 
-  # @return [Array<???>, Hash<empty>] Returns a list of valid properties, or an empty hash if there are none.
-  # @todo What is @validproperties.keys
-  # @todo This is most likely a bug - an empty hash is returned if there are not defined parameters (not an empty array).
+  # @return [Array<Symbol>, {}] Returns a list of valid property names, or an empty hash if there are none.
+  # @todo An empty hash is returned if there are no defined parameters (not an empty array). This looks like
+  #   a bug.
   #
   def self.validproperties
     return {} unless defined?(@parameters)
@@ -538,7 +588,7 @@ class Type
     obj = @parameters[:ensure] and obj.should == :absent
   end
 
-  # Creates a new property if it is valid and does not already exist
+  # Creates a new property value holder for the resource if it is valid and does not already exist
   # @return [Boolean] true if a new parameter was added, false otherwise
   def add_property_parameter(prop_name)
     if self.class.validproperty?(prop_name) && !@parameters[prop_name]
@@ -548,10 +598,13 @@ class Type
     false
   end
 
-  # The name_var is the key_attribute in the case that there is only one.
-  # @todo And what is it otherwise? false ????
-  # @return [???] BAFFLEGAB !
-  #
+  # @return [Symbol, Boolean] Returns the name of the namevar if there is only one or false otherwise.
+  # @comment This is really convoluted and part of the support for multiple namevars (?).
+  #   If there is only one namevar, the produced value is naturally this namevar, but if there are several?
+  #   The logic caches the name of the namevar if it is a single name, but otherwise always
+  #   calls key_attributes, and then caches the first if there was only one, otherwise it returns
+  #   false and caches this (which is then subsequently returned as a cache hit).
+  # 
   def name_var
     return @name_var_cache unless @name_var_cache.nil?
     key_attributes = self.class.key_attributes
@@ -702,7 +755,7 @@ class Type
   # @todo Add that this is not only "parameters", but also "properties" and "meta-parameters" ?
   # Changes to the contained parameters will have an effect on the parameters of this type, but changes to
   # the returned hash does not.
-  # @return [Hash<{String => Puppet:???Parameter}>] a new hash being a shallow copy of the parameters map name to parameter
+  # @return [Hash{String => Puppet:???Parameter}] a new hash being a shallow copy of the parameters map name to parameter
   def parameters
     @parameters.dup
   end
@@ -750,7 +803,7 @@ class Type
   #   each value is copied - does it contain "properties" and "parameters" or both? Does it contain 
   #   meta-parameters?
   #
-  # @return [Hash<{ ??? => ??? }>] a hash of WHAT?. The hash is a shallow copy, any changes to the
+  # @return [Hash{ ??? => ??? }] a hash of WHAT?. The hash is a shallow copy, any changes to the
   #  objects returned in this hash will be reflected in the original resource having these attributes.
   #
   def to_hash
@@ -990,7 +1043,7 @@ class Type
 
   # Returns a hash of the current properties and their values.
   # If a resource is absent, it's value is the symbol `:absent`
-  # @return [Hash<{Puppet::Property => Object}>] mapping of property instance to its value
+  # @return [Hash{Puppet::Property => Object}] mapping of property instance to its value
   #
   def currentpropvalues
     # It's important to use the 'properties' method here, as it follows the order
@@ -1083,7 +1136,7 @@ class Type
 
   # Converts a simple hash into a Resource instance.
   # @todo as opposed to a complex hash? Other raised exceptions?
-  # @param [Hash<{Symbol, String => Object}>] resource attribute to value map to initialize the created resource from
+  # @param [Hash{Symbol, String => Object}] resource attribute to value map to initialize the created resource from
   # @return [Puppet::Resource] the resource created from the hash
   # @raise [Puppet::Error] if a title is missing in the given hash
   def self.hash2resource(hash)
@@ -1561,16 +1614,19 @@ class Type
   # Add the feature handling module.
   extend Puppet::Util::ProviderFeatures
 
-  # The provider that  ___ (The selected provider???) WHAT?
-  # @todo WHAT is this provider for? The one selected for an instance of the type?
-  #   CONFUSED.
-  # @return [Puppet::Provider] the what??? or nil ??? - set where, by whom?
+  # The provider that has been selected for the instance of the resource type.
+  # @return [Puppet::Provider,nil] the selected provider or nil, if none has been selected
   #
   attr_reader :provider
 
   # the Type class attribute accessors
   class << self
-    # @return [???] The loader of providers to use when loading providers from disk.
+    # The loader of providers to use when loading providers from disk.
+    # Although it looks like this attribute provides a way to operate with different loaders of
+    # providers that is not the case; the attribute is written when a new type is created,
+    # and should not be changed thereafter.
+    # @api private
+    #
     attr_accessor :providerloader
     
     # @todo Don't know if this is a name, or a reference to a Provider instance (now marked up as an instance
@@ -1607,14 +1663,14 @@ class Type
     @defaultprovider = defaults.shift unless defaults.empty?
   end
 
-  # @return [Hash<{??? => Puppet::Provider}>] Returns a hash of WHAT EXACTLY for the given type
+  # @return [Hash{??? => Puppet::Provider}] Returns a hash of WHAT EXACTLY for the given type
   # @todo what goes into this hash?
   def self.provider_hash_by_type(type)
     @provider_hashes ||= {}
     @provider_hashes[type] ||= {}
   end
 
-  # @return [Hash<{ ??? => Puppet::Provider}>] Returns a hash of WHAT EXACTLY for this type.
+  # @return [Hash{ ??? => Puppet::Provider}] Returns a hash of WHAT EXACTLY for this type.
   # @see provider_hash_by_type method to get the same for some other type
   def self.provider_hash
     Puppet::Type.provider_hash_by_type(self.name)
@@ -1663,7 +1719,7 @@ class Type
   #   a Provider (the implementation of a Type's behavior). CONFUSED. It calls magically named methods like
   #   "providify" ...
   # @param name [String, Symbol] the name of the WHAT? provider? type? 
-  # @param options [Hash<{Symbol => Object}>] a hash of options, used by this method, and passed on to {#genclass}, (see
+  # @param options [Hash{Symbol => Object}] a hash of options, used by this method, and passed on to {#genclass}, (see
   #   it for additional options to pass).
   # @option options [Puppet::Provider] :parent the parent provider (what is this?)
   # @option options [Puppet::Type] :resource_type the resource type, defaults to this type if unspecified
@@ -1829,10 +1885,12 @@ class Type
 
   # Sets the provider to the given provider/name.
   # @overload provider=(name)
+  #   Sets the provider to the result of resolving the name to an instance of Provider.
   #   @param name [String] the name of the provider
   # @overload provider=(provider)
+  #   Sets the provider to the given instances of Provider.
   #   @param provider [Puppet::Provider] the provider to set
-  # @return [Puppet::Provider the provider set
+  # @return [Puppet::Provider] the provider set
   # @raise [ArgumentError] if the provider could not be found/resolved.
   #
   def provider=(name)
@@ -1857,8 +1915,12 @@ class Type
   # @todo original = _"Specify a block for generating a list of objects to autorequire.
   #   This makes it so that you don't have to manually specify things that you clearly require."_
   # @param name [String] the name of a type of which one or several resources should be autorequired e.g. "file"
+  # @yield [ ] a block returning list of names of given type to auto require
   # @yieldreturn [String, Array<String>] one or several resource names for the named type
   # @return [void]
+  # @dsl type
+  # @api public
+  #
   def self.autorequire(name, &block)
     @autorequires ||= {}
     @autorequires[name] = block
@@ -1972,12 +2034,11 @@ class Type
 
   # The Type class attribute accessors
   class << self
-    # @return [String] the name of the resource type; e.g. "File"
+    # @return [String] the name of the resource type; e.g., "File"
     #
     attr_reader :name
     
-    # @todo What is this?
-    # @return [???] What?
+    # @return [Boolean] true if the type should send itself a refresh event on change.
     #
     attr_accessor :self_refresh
     include Enumerable, Puppet::Util::ClassGen
@@ -2030,9 +2091,17 @@ class Type
     end
   end
 
-  # Creates a `validate` method that is used to validate an instance before it is operated on.
-  # @param block [Proc] required code block that is the body of the created validate method
-  # @todo Does the block have parameters.
+  # Creates a `validate` method that is used to validate a resource before it is operated on.
+  # The validation should raise exceptions if the validation finds errors. (It is not recommended to
+  # issue warnings as this typically just ends up in a logfile - you should fail if a validation fails).
+  # The easiest way to raise an appropriate exception is to call the method {Puppet::Util::Errors.fail} with
+  # the message as an argument.
+  #
+  # @yield [ ] a required block called with self set to the instance of a Type class representing a resource.
+  # @return [void]
+  # @dsl type
+  # @api public
+  #
   def self.validate(&block)
     define_method(:validate, &block)
     #@validate = block
@@ -2075,10 +2144,8 @@ class Type
 
   public
 
-  # @todo what are the original parameters? As opposed to what parameters? (what about origina properties? does
-  #   such a thing exists?)
-  #
-  # @return [???] what ???
+  # @return [Hash] hash of parameters originally defined
+  # @api private
   attr_reader :original_parameters
 
   # Creates an instance of Type from a hash or a {Puppet::Resource}.
@@ -2274,7 +2341,15 @@ class Type
     end
   end
 
-  # @return [String] Returns the title of this object, or it's name if title was not explicetly set. 
+  # Returns the title of this object, or it's name if title was not explicetly set.
+  # If the title is not already set, it will be computed by looking up the {name_var} and using
+  # that value as the title.
+  # @todo it is somewhat confusing that if the name_var is a valid parameter, it is assumed to
+  #  be the name_var called :name, but if it is a property, it uses the name_var.
+  #  It is further confusing as Type in some respects supports multiple namevars.
+  #  
+  # @return [String] Returns the title of this object, or it's name if title was not explicetly set.
+  # @raise [??? devfail] if title is not set, and name_var can not be found. 
   def title
     unless @title
       if self.class.validparameter?(name_var)
@@ -2322,12 +2397,14 @@ class Type
 
   # @return [Boolean] Returns whether the resource is applicable to `:device`
   # @todo Explain what this means
+  # @api private
   def appliable_to_device?
     self.class.can_apply_to(:device)
   end
 
   # @return [Boolean] Returns whether the resource is applicable to `:host`
   # @todo Explain what this means
+  # @api private
   def appliable_to_host?
     self.class.can_apply_to(:host)
   end
