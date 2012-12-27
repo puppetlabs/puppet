@@ -55,4 +55,26 @@ describe "the fqdn_rand function" do
     val2 = @scope.function_fqdn_rand([10000000,42])
     val1.should_not eql(val2)
   end
+
+  it "should not fiddle with future rand calls" do
+    @scope.function_fqdn_rand([20])
+    rand_one = rand()
+    @scope.function_fqdn_rand([20])
+    rand().should_not eql(rand_one)
+  end
+
+  if RUBY_VERSION > '1.9.1'
+    it "should not fiddle with the global seed" do
+      srand(1234)
+      @scope.function_fqdn_rand([20])
+      srand().should eql(1234)
+    end
+  # ruby below 1.9.2 variant
+  else
+    it "should set a new global seed" do
+      srand(1234)
+      @scope.function_fqdn_rand([20])
+      srand().should_not eql(1234)
+    end
+  end
 end

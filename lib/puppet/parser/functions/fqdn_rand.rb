@@ -8,6 +8,13 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
       $random_number = fqdn_rand(30)
       $random_number_seed = fqdn_rand(30,30)") do |args|
     max = args.shift.to_i
-    srand(Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex)
-    rand(max).to_s
+    seed = Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex
+    if RUBY_VERSION > '1.9.1'
+      Random.new(seed).rand(max).to_s
+    else
+      srand(seed)
+      result = rand(max).to_s
+      srand()
+      result
+    end
 end
