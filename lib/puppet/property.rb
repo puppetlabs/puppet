@@ -4,6 +4,15 @@
 require 'puppet'
 require 'puppet/parameter'
 
+# A Property is a specialized Resource Type Parameter that has both an 'is' (current) state, and
+# a 'should' (wanted state).
+# A Property (also in contrast to a parameter) is intended to describe a managed attribute of
+# some system entity, such as the name or mode of a file.
+#
+# All properties in the puppet system are derived from this class.
+#
+# The intention is that new parameters are created by using the DSL method {Puppet::Type.newproperty}. 
+# 
 class Puppet::Property < Puppet::Parameter
   require 'puppet/property/ensure'
 
@@ -59,6 +68,8 @@ class Puppet::Property < Puppet::Parameter
   #   provider.  You can also specify `before` or `after`, which will
   #   call both the block and the provider, according to the order you specify
   #   (the `first` refers to when the block is called, not the provider).
+  # @dsl type
+  # @api public
   def self.newvalue(name, options = {}, &block)
     value = value_collection.newvalue(name, options, &block)
 
