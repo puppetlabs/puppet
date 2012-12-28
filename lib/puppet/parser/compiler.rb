@@ -5,7 +5,6 @@ require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 require 'puppet/util/manifest_filetype_helper'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
@@ -16,7 +15,6 @@ class Puppet::Parser::Compiler
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
-  include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
     # We get these from the environment and only cache them in a thread
@@ -74,6 +72,10 @@ class Puppet::Parser::Compiler
     unless resource.class?
       return @catalog.add_edge(scope.resource, resource)
     end
+  end
+
+  def known_resource_types
+    environment.known_resource_types
   end
 
   # Do we use nodes found in the code, vs. the external node sources?
@@ -455,9 +457,9 @@ class Puppet::Parser::Compiler
   end
 
   def create_settings_scope
-    unless settings_type = environment.known_resource_types.hostclass("settings")
+    unless settings_type = known_resource_types.hostclass("settings")
       settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-      environment.known_resource_types.add(settings_type)
+      known_resource_types.add(settings_type)
     end
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)

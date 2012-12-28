@@ -8,13 +8,10 @@ class Puppet::Parser::Parser
   require 'puppet/parser/functions'
   require 'puppet/parser/files'
   require 'puppet/resource/type_collection'
-  require 'puppet/resource/type_collection_helper'
   require 'puppet/resource/type'
   require 'monitor'
 
   AST = Puppet::Parser::AST
-
-  include Puppet::Resource::TypeCollectionHelper
 
   attr_reader :version, :environment
   attr_accessor :files
@@ -86,6 +83,10 @@ class Puppet::Parser::Parser
 
     watch_file(file)
     @lexer.file = file
+  end
+
+  def known_resource_types
+    environment.known_resource_types
   end
 
   def_delegators :known_resource_types, :hostclass, :definition, :node, :nodes?
