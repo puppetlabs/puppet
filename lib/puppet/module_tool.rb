@@ -104,20 +104,32 @@ module Puppet
 
     def self.set_option_defaults(options)
       sep = File::PATH_SEPARATOR
-      if options[:target_dir]
-        options[:target_dir] = File.expand_path(options[:target_dir])
+
+      if options[:environment]
+        Puppet.settings[:environment] = options[:environment]
+      else
+        options[:environment] = Puppet.settings[:environment]
       end
 
-      prepend_target_dir = !! options[:target_dir]
+      if options[:modulepath]
+        Puppet.settings[:modulepath] = options[:modulepath]
+      else
+        # (#14872) make sure the module path of the desired environment is used
+        # when determining the default value of the --target-dir option
+        Puppet.settings[:modulepath] = options[:modulepath] =
+          Puppet.settings.value(:modulepath, options[:environment])
+      end
 
-      options[:modulepath] ||= Puppet.settings[:modulepath]
-      options[:environment] ||= Puppet.settings[:environment]
-      options[:modulepath] = "#{options[:target_dir]}#{sep}#{options[:modulepath]}" if prepend_target_dir
-      Puppet[:modulepath] = options[:modulepath]
-      Puppet[:environment] = options[:environment]
-
-      options[:target_dir] = options[:modulepath].split(sep).first
-      options[:target_dir] = File.expand_path(options[:target_dir])
+      if options[:target_dir]
+        options[:target_dir] = File.expand_path(options[:target_dir])
+        # prepend the target dir to the module path
+        Puppet.settings[:modulepath] = options[:modulepath] =
+          options[:target_dir] + sep + options[:modulepath]
+      else
+        # default to the first component of the module path
+        options[:target_dir] =
+          File.expand_path(options[:modulepath].split(sep).first)
+      end
     end
   end
 end
