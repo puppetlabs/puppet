@@ -152,93 +152,234 @@ TREE
 TREE
     end
   end
+
   describe '.set_option_defaults' do
-    include PuppetSpec::Files
-    let (:setting) { {:environment => "foo", :modulepath => make_absolute("foo")} }
+    let (:puppet_settings) {
+      puppet_settings = mock('Puppet::Settings')
 
-    [:environment, :modulepath].each do |value|
-      describe "if #{value} is part of options" do
-        let (:options) { {} }
+      puppet_settings.stubs(:clear_everything_for_tests)
 
-        before(:each) do
-          options[value] = setting[value]
-          Puppet[value] = "bar"
-        end
+      Puppet.stubs(:settings).with().returns(puppet_settings)
 
-        it "should set Puppet[#{value}] to the options[#{value}]" do
-          subject.set_option_defaults options
-          Puppet[value].should == options[value]
-        end
+      puppet_settings
+    }
 
-        it "should not override options[#{value}]" do
-          subject.set_option_defaults options
-          options[value].should == setting[value]
-        end
+    let (:setting_values) {
+      {
+        # this is the default environment
+        nil => {
+          :environment => mock(),
+          :modulepath => PuppetSpec::Files.make_absolute('/foo'),
+        }
+      }
+    }
 
+    def stub_puppet_settings(
+      setting_values,
+      default_expectations = {},
+      &additional_expectations
+    )
+      {
+        :value => true,
+        :set_value => true,
+      }.merge(default_expectations).each_pair do |method, flag|
+        puppet_settings.stubs(method) if flag
       end
 
-      describe "if #{value} is not part of options" do
-        let (:options) { {} }
+      yield puppet_settings if block_given?
 
-        before(:each) do
-          Puppet[value] = setting[value]
+      # add helper methods and setup initial setting values
+      puppet_settings.instance_exec(setting_values) do |setting_values|
+        @settings = setting_values
+
+        def [](*args)
+          value(*args)
         end
 
-        it "should populate options[#{value}] with the value of Puppet[#{value}]" do
-          subject.set_option_defaults options
-          Puppet[value].should == options[value]
+        def []=(*args)
+          set_value(*args)
         end
 
-        it "should not override Puppet[#{value}]" do
-          subject.set_option_defaults options
-          Puppet[value].should == setting[value]
+        def value(param, *args)
+          # let mocha check the invocation against the expectations
+          method_missing(:value, param, *args)
+          unless args.empty? || param == :environment
+            environment = args.first
+            return @settings[environment][param] if
+              @settings.include?(environment) &&
+              @settings[environment].include?(param)
+          end
+          @settings[nil][param]
+        end
+
+        def set_value(param, value, *args)
+          # let mocha check the invocation against the expectations
+          method_missing(:set_value, param, value, *args)
+          @settings[nil][param] = value
         end
       end
     end
 
-    describe ':target_dir' do
-      let (:sep) { File::PATH_SEPARATOR }
+    describe 'option :environment' do
+      context 'passed:' do
+        let (:environment) { mock() }
+        let (:options) { {:environment => environment} }
 
-      let (:my_fake_path) {
-          ["/my/fake/dir", "/my/other/dir"].collect { |dir| make_absolute(dir) } .join(sep)
-      }
-      let (:options) { {:modulepath => my_fake_path}}
+        it 'Puppet[:environment] should be set to the value of the option' do
+          stub_puppet_settings(setting_values) do |puppet_settings|
+            puppet_settings.expects(:set_value).with { |param, *args|
+              param == :environment
+            }
+          end
 
-      describe "when not specified" do
-
-        it "should set options[:target_dir]" do
           subject.set_option_defaults options
-          options[:target_dir].should_not be_nil
+
+          setting_values[nil][:environment].should === environment
         end
 
-        it "should be the first path of options[:modulepath]" do
+        it 'the option value should not be overridden' do
+          stub_puppet_settings(setting_values)
+
           subject.set_option_defaults options
-          options[:target_dir].should == my_fake_path.split(sep).first
+
+          options[:environment].should === environment
         end
       end
 
-      describe "when specified" do
-        let (:my_target_dir) { make_absolute("/foo/bar") }
-        before(:each) do
-          options[:target_dir] = my_target_dir
+      context 'NOT passed:' do
+        let (:options) { {} }
+
+        it 'Puppet[:environment] should NOT be overridden' do
+          stub_puppet_settings(setting_values, :set_value => false) do |puppet_settings|
+            puppet_settings.stubs(:set_value).with { |param, *args|
+              param != :environment
+            }
+          end
+
+          subject.set_option_defaults options
         end
 
-        it "should not be overridden" do
+        it 'the option should be set to the value of Puppet[:environment]' do
+          stub_puppet_settings(setting_values)
+
           subject.set_option_defaults options
-          options[:target_dir].should == my_target_dir
+
+          options[:environment].should === setting_values[nil][:environment]
+        end
+      end
+    end
+
+    describe 'option :modulepath' do
+      context 'passed:' do
+        let (:modulepath) { PuppetSpec::Files.make_absolute('/bar') }
+        let (:options) { {:modulepath => modulepath} }
+
+        it 'Puppet[:modulepath] should be set to the value of the option' do
+          stub_puppet_settings(setting_values) do |puppet_settings|
+            puppet_settings.stubs(:set_value).with { |param, *args|
+              param == :modulepath
+            }
+          end
+
+          subject.set_option_defaults options
+
+          setting_values[nil][:modulepath] === options[:modulepath]
         end
 
-        it "should be prepended to options[:modulepath]" do
-          subject.set_option_defaults options
-          options[:modulepath].split(sep).first.should == my_target_dir
-        end
+        it 'the option value should not be overridden' do
+          stub_puppet_settings(setting_values)
 
-        it "should leave the remainder of options[:modulepath] untouched" do
           subject.set_option_defaults options
-          options[:modulepath].split(sep).drop(1).join(sep).should == my_fake_path
+
+          options[:modulepath].should === modulepath
         end
       end
 
+      context 'NOT passed:' do
+        let (:environment_settings) {
+          {
+            mock() => {
+              :modulepath => PuppetSpec::Files.make_absolute('/bar')
+            }
+          }
+        }
+        let (:environment) { environment_settings.keys.first }
+        let (:options) { {:environment => environment} }
+
+        before :each do
+          setting_values.merge!(environment_settings)
+        end
+
+        it 'Puppet[:modulepath] should be reset to the module path of the current environment' do
+          stub_puppet_settings(setting_values) do |puppet_settings|
+            puppet_settings.expects(:value).with(:modulepath, environment)
+            puppet_settings.expects(:set_value).with { |param, *args|
+              param == :modulepath
+            }
+          end
+
+          subject.set_option_defaults options
+
+          setting_values[nil][:modulepath] === environment_settings[environment][:modulepath]
+        end
+
+        it 'the option should be set to the module path of the current environment' do
+          stub_puppet_settings(setting_values)
+
+          subject.set_option_defaults options
+
+          options[:modulepath].should === environment_settings[environment][:modulepath]
+        end
+      end
+    end
+
+    describe 'option :target_dir' do
+      let (:target_dir) { 'boo' }
+
+      context 'passed:' do
+        let (:options) { {:target_dir => target_dir} }
+
+        it 'the option value should be prepended to the Puppet[:modulepath]' do
+          stub_puppet_settings(setting_values, :set_value => false) do |puppet_settings|
+            puppet_settings.stubs(:set_value).with { |param, *args|
+              param != :modulepath
+            }
+            puppet_settings.expects(:set_value).with { |param, *args|
+              param == :modulepath
+            }.twice
+          end
+
+          original_modulepath = setting_values[nil][:modulepath]
+
+          subject.set_option_defaults options
+
+          setting_values[nil][:modulepath].should == options[:target_dir] + File::PATH_SEPARATOR + original_modulepath
+        end
+
+        it 'the option value should be turned into an absolute path' do
+          stub_puppet_settings(setting_values)
+
+          subject.set_option_defaults options
+
+          options[:target_dir].should == File.expand_path(target_dir)
+        end
+      end
+
+      describe 'NOT passed:' do
+        let (:options) { {} }
+
+        before :each do
+          setting_values[nil][:modulepath] = 'foo' + File::PATH_SEPARATOR + 'bar'
+        end
+
+        it 'the option should be set to the first component of Puppet[:modulepath] turned into an absolute path' do
+          stub_puppet_settings(setting_values)
+
+          subject.set_option_defaults options
+
+          options[:target_dir].should == File.expand_path(setting_values[nil][:modulepath].split(File::PATH_SEPARATOR).first)
+        end
+      end
     end
   end
 end
