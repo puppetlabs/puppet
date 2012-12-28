@@ -133,7 +133,7 @@ Puppet::Reports.register_report(:tagmail) do
     pid = Puppet::Util.safe_posix_fork do
       if Puppet[:smtpserver] != "none"
         begin
-          Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
+          Net::SMTP.start(Puppet[:smtpserver], Puppet[:smtpport], Puppet[:smtphelo]) do |smtp|
             reports.each do |emails, messages|
               smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
                 p.puts "From: #{Puppet[:reportfrom]}"
