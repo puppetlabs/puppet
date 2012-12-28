@@ -208,7 +208,7 @@ class Puppet::Network::Handler
         client = nil
         clientip = nil
       end
-      unless mount.allowed?(client, clientip)
+      unless mount.allowed?(client, clientip) == true
         mount.warning "#{client} cannot access #{file}"
         raise Puppet::AuthorizationError, "Cannot access #{mount}"
       end

@@ -45,8 +45,8 @@ module Puppet
         return decl.result
       end
 
-      info "defaulting to no access for #{name}"
-      false
+      info "no declaration matches #{name}, defaulting to :dunno"
+      :dunno
     end
 
     # Deny a given pattern.
