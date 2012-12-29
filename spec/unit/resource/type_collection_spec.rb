@@ -393,7 +393,7 @@ describe Puppet::Resource::TypeCollection do
   describe "when managing files" do
     before do
       @loader = Puppet::Resource::TypeCollection.new("env")
-      Puppet::Util::LoadedFile.stubs(:new).returns stub("watched_file")
+      Puppet::Util::WatchedFile.stubs(:new).returns stub("watched_file")
     end
 
     it "should have a method for specifying a file should be watched" do
@@ -405,15 +405,15 @@ describe Puppet::Resource::TypeCollection do
       @loader.should be_watching_file("/foo/bar")
     end
 
-    it "should use LoadedFile to watch files" do
-      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
+    it "should use WatchedFile to watch files" do
+      Puppet::Util::WatchedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
       @loader.watch_file("/foo/bar")
     end
 
     it "should be considered stale if any files have changed" do
       file1 = stub 'file1', :changed? => false
       file2 = stub 'file2', :changed? => true
-      Puppet::Util::LoadedFile.expects(:new).times(2).returns(file1).then.returns(file2)
+      Puppet::Util::WatchedFile.expects(:new).times(2).returns(file1).then.returns(file2)
       @loader.watch_file("/foo/bar")
       @loader.watch_file("/other/bar")
 
@@ -423,7 +423,7 @@ describe Puppet::Resource::TypeCollection do
     it "should not be considered stable if no files have changed" do
       file1 = stub 'file1', :changed? => false
       file2 = stub 'file2', :changed? => false
-      Puppet::Util::LoadedFile.expects(:new).times(2).returns(file1).then.returns(file2)
+      Puppet::Util::WatchedFile.expects(:new).times(2).returns(file1).then.returns(file2)
       @loader.watch_file("/foo/bar")
       @loader.watch_file("/other/bar")
 

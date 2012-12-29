@@ -2,16 +2,16 @@
 require 'spec_helper'
 
 require 'tempfile'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 
-describe Puppet::Util::LoadedFile do
+describe Puppet::Util::WatchedFile do
   include PuppetSpec::Files
   before(:each) do
     @f = Tempfile.new('loadedfile_test')
     @f.puts "yayness"
     @f.flush
 
-    @loaded = Puppet::Util::LoadedFile.new(@f.path)
+    @loaded = Puppet::Util::WatchedFile.new(@f.path)
 
     fake_ctime = Time.now - (2 * Puppet[:filetimeout])
     @stat = stub('stat', :ctime => fake_ctime)
@@ -21,7 +21,7 @@ describe Puppet::Util::LoadedFile do
   it "should accept files that don't exist" do
     nofile = tmpfile('testfile')
     File.exists?(nofile).should == false
-    lambda{ Puppet::Util::LoadedFile.new(nofile) }.should_not raise_error
+    lambda{ Puppet::Util::WatchedFile.new(nofile) }.should_not raise_error
   end
 
   it "should recognize when the file has not changed" do
@@ -38,7 +38,7 @@ describe Puppet::Util::LoadedFile do
     # Use fake "now" so that we can be sure changed? actually checks, without sleeping
     # for Puppet[:filetimeout] seconds.
     Time.stubs(:now).returns(@fake_now)
-    @loaded.changed?.should be_an_instance_of(Time)
+    @loaded.changed?.should == true
   end
 
   it "should not catch a change until the timeout has elapsed" do
