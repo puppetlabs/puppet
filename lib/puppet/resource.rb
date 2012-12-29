@@ -13,9 +13,6 @@ class Puppet::Resource
 
   include Puppet::Util::Tagging
 
-  require 'puppet/resource/type_collection_helper'
-  include Puppet::Resource::TypeCollectionHelper
-
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
@@ -258,10 +255,10 @@ class Puppet::Resource
 
   def resource_type
     @rstype ||= case type
-    when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
-    when "Node"; known_resource_types.node(title)
+    when "Class"; environment.known_resource_types.hostclass(title == :main ? "" : title)
+    when "Node"; environment.known_resource_types.node(title)
     else
-      Puppet::Type.type(type) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || environment.known_resource_types.definition(type)
     end
   end
 

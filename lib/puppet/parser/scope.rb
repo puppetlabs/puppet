@@ -5,7 +5,6 @@ require 'forwardable'
 require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
@@ -18,7 +17,6 @@ class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
 
-  include Puppet::Resource::TypeCollectionHelper
   require 'puppet/parser/resource'
 
   AST = Puppet::Parser::AST
@@ -133,11 +131,11 @@ class Puppet::Parser::Scope
   end
 
   def find_hostclass(name, options = {})
-    known_resource_types.find_hostclass(namespaces, name, options)
+    environment.known_resource_types.find_hostclass(namespaces, name, options)
   end
 
   def find_definition(name)
-    known_resource_types.find_definition(namespaces, name)
+    environment.known_resource_types.find_definition(namespaces, name)
   end
 
   # This just delegates directly.

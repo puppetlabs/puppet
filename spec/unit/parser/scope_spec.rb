@@ -79,10 +79,6 @@ describe Puppet::Parser::Scope do
     }.to raise_error(Puppet::DevError, /you must pass a compiler instance/)
   end
 
-  it "should use the resource type collection helper to find its known resource types" do
-    Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   describe "when custom functions are called" do
     before :each do
       @env      = Puppet::Node::Environment.new('testing')

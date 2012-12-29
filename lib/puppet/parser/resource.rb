@@ -10,9 +10,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/parser/yaml_trimmer'
-  require 'puppet/resource/type_collection_helper'
-
-  include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
   include Puppet::Util::MethodHelper

@@ -94,10 +94,6 @@ describe Puppet::Parser::Compiler do
     @compiler.environment.should equal(@node.environment)
   end
 
-  it "should include the resource type collection helper" do
-    Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   it "should be able to return a class list containing all added classes" do
     @compiler.add_class ""
     @compiler.add_class "one"
