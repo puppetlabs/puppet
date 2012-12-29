@@ -1,7 +1,7 @@
 require 'puppet'
 require 'sync'
 require 'getoptlong'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
 require 'puppet/settings/errors'
 require 'puppet/settings/string_setting'
@@ -648,7 +648,7 @@ class Puppet::Settings
     @files = []
     [main_config_file, user_config_file].each do |path|
       if FileTest.exist?(path)
-        @files << Puppet::Util::LoadedFile.new(path)
+        @files << Puppet::Util::WatchedFile.new(path)
       end
     end
     @files
