@@ -201,6 +201,22 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.evaluate(@scope).should == "45"
     end
 
+    it "should be able to return a hash value of false" do
+      @scope["a"] = { "key1" => false, "key2" => true  }
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key1" )
+
+      access.evaluate(@scope).should be_false
+    end
+
+    it "should be able to return a hash value of true" do
+      @scope["a"] = { "key1" => false, "key2" => true  }
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
+
+      access.evaluate(@scope).should be_true
+    end
+
     it "should raise an error if the variable lookup didn't return an hash or an array" do
       @scope["a"] = "I'm a string"
 
