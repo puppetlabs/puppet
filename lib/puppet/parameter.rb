@@ -45,7 +45,7 @@ class Puppet::Parameter
     #
     attr_reader :munger
     
-    # @return [String] The parameter name as given when it was created.
+    # @return [Symbol] The parameter name as given when it was created.
     attr_reader :name
     
     # @return [Object] The default value of the parameter as determined by the {defaultto} method, or nil if no
@@ -73,7 +73,7 @@ class Puppet::Parameter
     #
     attr_reader :required_features
     
-    # @return [Puppet::Parameter::ValueCollection] The set of valid values (or none)
+    # @return [Puppet::Parameter::ValueCollection] The set of valid values (or an empty set that accepts any value).
     # @api private
     #
     attr_reader :value_collection
@@ -90,6 +90,8 @@ class Puppet::Parameter
     #   Defines the default value to be produced by the given block
     #   @yield [ ] The block that produces the default value
     #   @yieldreturn [Object] The default value for the parameter
+    # @raise [Puppet::DevError] if value is nil, and no block is given.
+    # @return [void]
     # @dsl type
     # @api public
     # 
@@ -106,7 +108,8 @@ class Puppet::Parameter
     end
 
     # Produces a documentation string. 
-    # If an enumeration of _valid values_ has been defined, it is included in the returned string.
+    # If an enumeration of _valid values_ has been defined, it is appended to the documentation
+    # for this parameter specified with the {desc} method.
     # @return [String] Returns a documentation string.
     # @api public
     #
@@ -132,6 +135,7 @@ class Puppet::Parameter
     # a default value method).
     #
     # @return [void]
+    # @see desc
     # @api public
     # @dsl type
     #
@@ -142,6 +146,7 @@ class Puppet::Parameter
     # Sets the documentation for this parameter.
     # @param str [String] The documentation string to set
     # @return [String] the given `str` parameter
+    # @see doc
     # @dsl type
     # @api public
     #
@@ -158,6 +163,7 @@ class Puppet::Parameter
       @value_collection = ValueCollection.new
     end
 
+    # @overload munge {|| ... }
     # Defines an optional method used to convert the parameter value from DSL/string form to an internal form.
     # If a munge method is not defined, the DSL/string value is used as is.
     # @note This adds a method with the name `unsafe_munge` in the created parameter class. Later this method is
@@ -173,6 +179,7 @@ class Puppet::Parameter
       define_method(:unsafe_munge, &block)
     end
 
+    # @overload unmunge {|| ... }
     # Defines an optional method used to convert the parameter value to DSL/string form from an internal form.
     # If an `unmunge` method is not defined, the internal form is used.
     # @see munge
@@ -223,16 +230,19 @@ class Puppet::Parameter
       @required_features = args.flatten.collect { |a| a.to_s.downcase.intern }
     end
 
-    # @return [Boolean] whether this parameter is required or not.
+    # Returns whether this parameter is required or not.
     # A parameter is required if a call has been made to the DSL method {isrequired}.
+    # @return [Boolean] Returns whether this parameter is required or not.
+    # @api public
     #
     def required?
       @required
     end
 
-    # Defines a method that is used to validate the parameter's value.
+    # @overload validate {|| ... }
+    # Defines an optional method that is used to validate the parameter's value.
     # Validation should raise appropriate exceptions, the return value of the given block is ignored.
-    # @yield [ ] the validation block
+    # @return [void]
     # @dsl type
     # @api public
     #
@@ -245,6 +255,7 @@ class Puppet::Parameter
     # regular expression patterns.
     # @note Each call to this method adds to the set of valid values
     # @param names [Symbol, Regexp] The set of valid literal values and/or patterns for the parameter.
+    # @return [void] 
     # @dsl type
     # @api public
     #
@@ -252,7 +263,7 @@ class Puppet::Parameter
       @value_collection.newvalues(*names)
     end
 
-    # Makes the given `name` and alias for the given `other` name.
+    # Makes the given `name` an alias for the given `other` name.
     # Or said differently, the valid value `other` can now also be referred to via the given `name`.
     # Aliasing may affect how the parameter's value is serialized/stored (it may store the `other` value
     # instead of the alias).
@@ -282,7 +293,7 @@ class Puppet::Parameter
   #
   proxymethods("required?", "isnamevar?")
 
-  # @return [Puppet::Resource] A reference to the resource this parameter is an attribute of.
+  # @return [Puppet::Resource] A reference to the resource this parameter is an attribute of (the _associated resource_).
   attr_accessor :resource
 
   # @comment LAK 2007-05-09: Keep the @parent around for backward compatibility.
@@ -304,7 +315,6 @@ class Puppet::Parameter
     end
   end
 
-  # Basic parameter initialization.
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed
   # are used to initialize the attributes of this parameter by treating each key in the `options` hash as 
@@ -341,7 +351,8 @@ class Puppet::Parameter
     self.class.metaparam
   end
 
-  # @return [Symbol] The parameter's name.
+  # @!attribute [r] name
+  # @return [Symbol] The parameter's name as given when it was created.
   # @note Since a Parameter defines the name at the class level, each Parameter class must be 
   #  unique within a type.
   # @comment each parameter class must define the name method, and parameter
@@ -482,7 +493,8 @@ class Puppet::Parameter
   end
 
   # @return [Array<Symbol>] Returns an array of the associated resource's symbolic tags (including the parameter itself).
-  # At a minimun, an array with the name of the parameter is returned. If the associated resource
+  # Returns an array of the associated resource's symbolic tags (including the parameter itself).
+  # At a minimun, the array contains the name of the parameter. If the associated resource
   # has tags, these tags are also included in the array.
   # @todo The original comment says = _"The properties need to return tags so that logs correctly
   #   collect them."_ what if anything of that is of interest to document. Should tags and their relationship
@@ -511,7 +523,7 @@ class Puppet::Parameter
   # each produced value is separated by a comma.
   # 
   # A **Hash** value is output with keys in sorted order enclosed in `{}` with each entry formatted
-  # on the form `'k' => _format of value_` where
+  # on the form `'k' => format of value` where
   # `k` is the key in string form and _format of value_ is a recursive call to this method
   # (possibly producing a nested array or hash value). Hash entries are separated by a comma.
   # 
