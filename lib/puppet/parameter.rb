@@ -86,10 +86,9 @@ class Puppet::Parameter
     # @overload defaultto(value)
     #   Defines the default value with a literal value
     #   @param value [Object] the literal value to use as the default value
-    # @overload defaultto(&block)
-    #   Defines the default value to be produced by the given block
-    #   @yield [ ] The block that produces the default value
-    #   @yieldreturn [Object] The default value for the parameter
+    # @overload defaultto({|| ... })
+    #   Defines that the default value is produced by the given block. The given block
+    #   should produce the default value.
     # @raise [Puppet::DevError] if value is nil, and no block is given.
     # @return [void]
     # @dsl type
@@ -354,7 +353,7 @@ class Puppet::Parameter
   # @!attribute [r] name
   # @return [Symbol] The parameter's name as given when it was created.
   # @note Since a Parameter defines the name at the class level, each Parameter class must be 
-  #  unique within a type.
+  #  unique within a type's inheritance chain.
   # @comment each parameter class must define the name method, and parameter
   #   instances do not change that name this implicitly means that a given
   #   object can only have one parameter instance of a given parameter
@@ -388,6 +387,7 @@ class Puppet::Parameter
 
   # This is the default implementation of `munge` that simply produces the value (if it is valid).
   # The DSL method {munge} should be used to define an overriding method if munging is required.
+  #
   # @api private
   #
   def unsafe_munge(value)
@@ -516,18 +516,23 @@ class Puppet::Parameter
   end
 
   # Produces a String with the value formatted for display to a human.
-  # If the parameter value is a **single valued parameter value** the result is produced on the
-  # form `'value'` where _value_ is the string form of the parameter's value. 
-  #
-  # If the value is an **Array** the list of values is enclosed in `[]`, and 
-  # each produced value is separated by a comma.
+  # When the parameter value is a:
   # 
-  # A **Hash** value is output with keys in sorted order enclosed in `{}` with each entry formatted
-  # on the form `'k' => format of value` where
-  # `k` is the key in string form and _format of value_ is a recursive call to this method
-  # (possibly producing a nested array or hash value). Hash entries are separated by a comma.
+  # * **single valued parameter value** the result is produced on the
+  #   form `'value'` where _value_ is the string form of the parameter's value. 
+  #
+  # * **Array** the list of values is enclosed in `[]`, and 
+  #   each produced value is separated by a comma.
+  # 
+  # * **Hash** value is output with keys in sorted order enclosed in `{}` with each entry formatted
+  #   on the form `'k' => v` where
+  #   `k` is the key in string form and _v_ is the value of the key. Entries are comma separated.
+  #
+  # For both Array and Hash this method is called recursively to format contained values.
+  # @note this method does not protect against infinite structures.
   # 
   # @return [String] The formatted value in string form.
+  #
   def self.format_value_for_display(value)
     if value.is_a? Array
       formatted_values = value.collect {|value| format_value_for_display(value)}.join(', ')
