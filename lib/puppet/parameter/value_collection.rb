@@ -122,6 +122,9 @@ class Puppet::Parameter::ValueCollection
   #   means that the block should be called instead of the provider. A value of `:before` or `:after` will call
   #   both the block and the provider (it is the block that is called before or after in accordance with
   #   the option.
+  # @option options [Object] _any_ Any other option is treated as a call to a setter having the given
+  #   option name (e.g. `:required_features` calls `required_features=` with the option's value as an
+  #   argument).
   # @api private
   #
   def newvalue(name, options = {}, &block)
