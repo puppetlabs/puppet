@@ -21,7 +21,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
-  defaultfor :operatingsystem => [:fedora, :centos, :redhat]
+  defaultfor :osfamily => :redhat
 
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
