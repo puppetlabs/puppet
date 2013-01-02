@@ -1,4 +1,5 @@
 require 'puppet/indirector/terminus'
+require 'hiera_puppet'
 
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
@@ -9,31 +10,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    hiera.lookup(request.key, nil, request.options[:variables], nil, nil)
-  end
-
-  private
-
-  def self.hiera_config
-    hiera_config = Puppet.settings[:hiera_config]
-    config = {}
-
-    if File.exist?(hiera_config)
-      config = Hiera::Config.load(hiera_config)
-    else
-      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
-    end
-
-    config[:logger] = 'puppet'
-    config
-  end
-
-  def self.hiera
-    @hiera ||= Hiera.new(:config => hiera_config)
-  end
-
-  def hiera
-    self.class.hiera
+    HieraPuppet.lookup(request.key, nil, request.options[:variables], nil, nil)
   end
 end
 

@@ -58,13 +58,19 @@ module HieraPuppet
   end
 
   def hiera_config
-    config = {}
+    config = {:backends => []}
 
     if config_file = hiera_config_file
       config = Hiera::Config.load(config_file)
     end
 
     config[:logger] = 'puppet'
+
+    # we want the module_data backend to always be present, usually as the least
+    # significant backend but we do not want to force the decision onto our users
+    # so if they specifically put it somewhere in the hierarchy we respect that decision
+    config[:backends] << "module_data" unless config[:backends].include?("module_data")
+
     config
   end
 
