@@ -32,13 +32,15 @@ describe Puppet::Settings::FileSetting do
 
     context "owner" do
       it "can always be root" do
-        setting = FileSetting.new(:settings => settings(), :owner => "root", :desc => "a setting")
+        settings = settings(:user => "the_service", :mkusers => true)
+
+        setting = FileSetting.new(:settings => settings, :owner => "root", :desc => "a setting")
 
         setting.owner.should == "root"
       end
 
       it "is the service user if we are making users" do
-        settings = settings(:user => "the_service", :mkusers => true)
+        settings = settings(:user => "the_service", :mkusers => true, :service_user_available? => false)
 
         setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
 
