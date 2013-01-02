@@ -34,7 +34,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd = []
     if @resource.managehome?
       cmd << "-m"
-    elsif %w{RedHat}.include?(Facter.value(:osfamily))
+    elsif Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
     cmd
