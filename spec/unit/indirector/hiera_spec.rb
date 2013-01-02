@@ -78,6 +78,7 @@ describe Puppet::Indirector::Hiera do
   describe "the behavior of the hiera_config method", :if => Puppet.features.hiera? do
     let(:default_hiera_config) do
       {
+        :merge_behavior => :native,
         :logger    => "puppet",
         :backends  => ["yaml"],
         :yaml      => { :datadir => datadir },
