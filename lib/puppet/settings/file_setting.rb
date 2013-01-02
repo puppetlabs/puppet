@@ -5,6 +5,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   class SettingError < StandardError; end
 
   # An unspecified user or group
+  #
   # @api private
   class Unspecified
     def value
@@ -13,6 +14,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   # A "root" user or group
+  #
   # @api private
   class Root
     def value
@@ -20,10 +22,18 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     end
   end
 
-  # A "service" user or group, which means to use
-  # the value in settings, if it is safe to do so.
+  # A "service" user or group that picks up values from settings when the
+  # referenced user or group is safe to use (it exists or will be created), and
+  # uses the given fallback value when not safe.
+  #
   # @api private
   class Service
+    # @param name [Symbol] the name of the setting to use as the service value
+    # @param fallback [String, nil] the value to use when the service value cannot be used
+    # @param settings [Puppet::Settings] the puppet settings object
+    # @param available_method [Symbol] the name of the method to call on
+    #   settings to determine if the value in settings is available on the system
+    #
     def initialize(name, fallback, settings, available_method)
       @settings = settings
       @available_method = available_method
@@ -58,17 +68,23 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     create
   end
 
+  # @param value [String] the group to use on the created file (can only be "root" or "service")
+  # @api public
   def group=(value)
     @group = case value
              when "root"
                Root.new
              when "service"
+               # Group falls back to `nil` because we cannot assume that a "root" group exists.
+               # Some systems have root group, others have wheel, others have something else.
                Service.new(:group, nil, @settings, :service_group_available?)
              else
                unknown_value(':group', value)
              end
   end
 
+  # @param value [String] the owner to use on the created file (can only be "root" or "service")
+  # @api public
   def owner=(value)
     @owner = case value
              when "root"
@@ -80,10 +96,14 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
              end
   end
 
+  # @return [String, nil] the name of the group to use for the file or nil if the group should not be managed
+  # @api public
   def group
     @group.value
   end
 
+  # @return [String, nil] the name of the user to use for the file or nil if the user should not be managed
+  # @api public
   def owner
     @owner.value
   end

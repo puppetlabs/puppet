@@ -146,7 +146,14 @@ module Puppet
       defaultto false
     end
 
-    # Provide an external hook.  Yay breaking out of APIs.
+    # This method has been exposed for puppet to manage users and groups of
+    # files in its settings and should not be considered available outside of
+    # puppet.
+    #
+    # (see Puppet::Settings#service_group_available?)
+    #
+    # @returns [Boolean] if the group exists on the system
+    # @api private
     def exists?
       provider.exists?
     end
