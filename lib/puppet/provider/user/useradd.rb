@@ -80,7 +80,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += check_system_users
     cmd << @resource[:name]
   end
-  
+
   def deletecmd
     cmd = [command(:delete)]
     cmd += @resource.managehome? ? ['-r'] : []
@@ -124,4 +124,3 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     :absent
   end
 end
-
