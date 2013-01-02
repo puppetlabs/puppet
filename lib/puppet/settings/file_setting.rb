@@ -2,11 +2,56 @@ require 'puppet/settings/string_setting'
 
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
-  Allowed = %w{root service}
-
   class SettingError < StandardError; end
 
+  # An unspecified user or group
+  # @api private
+  class Unspecified
+    def value
+      nil
+    end
+  end
+
+  # A "root" user or group
+  # @api private
+  class Root
+    def value
+      "root"
+    end
+  end
+
+  # A "service" user or group, which means to use
+  # the value in settings, if it is safe to do so.
+  # @api private
+  class Service
+    def initialize(name, fallback, settings, available_method)
+      @settings = settings
+      @available_method = available_method
+      @name = name
+      @fallback = fallback
+    end
+
+    def value
+      if safe_to_use_settings_value?
+        @settings[@name]
+      else
+        @fallback
+      end
+    end
+
+  private
+    def safe_to_use_settings_value?
+      @settings[:mkusers] or @settings.send(@available_method)
+    end
+  end
+
   attr_accessor :mode, :create
+
+  def initialize(args)
+    @group = Unspecified.new
+    @owner = Unspecified.new
+    super(args)
+  end
 
   # Should we create files, rather than just directories?
   def create_files?
@@ -14,33 +59,33 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def group=(value)
-    assert_allowed_value(':group', value)
-    @group = value
-  end
-
-  def group
-    if @group == "root"
-      "root"
-    elsif !@group or !(@settings[:mkusers] or @settings.service_group_available?)
-      nil
-    else
-      @settings[:group]
-    end
+    @group = case value
+             when "root"
+               Root.new
+             when "service"
+               Service.new(:group, nil, @settings, :service_group_available?)
+             else
+               unknown_value(':group', value)
+             end
   end
 
   def owner=(value)
-    assert_allowed_value(':owner', value)
-    @owner = value
+    @owner = case value
+             when "root"
+               Root.new
+             when "service"
+               Service.new(:user, "root", @settings, :service_user_available?)
+             else
+               unknown_value(':owner', value)
+             end
+  end
+
+  def group
+    @group.value
   end
 
   def owner
-    return unless @owner
-    return "root" if @owner == "root" or ! use_service_user?
-    @settings[:user]
-  end
-
-  def use_service_user?
-    @settings[:mkusers] or @settings.service_user_available?
+    @owner.value
   end
 
   def munge(value)
@@ -116,10 +161,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
 private
-
-  def assert_allowed_value(parameter, value)
-    if not Allowed.include?(value)
-      raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
-    end
+  def unknown_value(parameter, value)
+    raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
   end
 end
