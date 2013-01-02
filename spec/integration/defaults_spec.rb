@@ -87,6 +87,7 @@ describe "Puppet defaults" do
 
   it "should use the service user and group for the yamldir" do
     Puppet.settings.stubs(:service_user_available?).returns true
+    Puppet.settings.stubs(:service_group_available?).returns true
     Puppet.settings.setting(:yamldir).owner.should == Puppet.settings[:user]
     Puppet.settings.setting(:yamldir).group.should == Puppet.settings[:group]
   end
