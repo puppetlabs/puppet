@@ -394,13 +394,16 @@ class Puppet::Parameter
     self.class.value_collection.munge(value)
   end
 
+  # Unmunges the value by transforming it from internal form to DSL form.
   # This is the default implementation of `unmunge` that simply returns the value without processing.
   # The DSL method {unmunge} should be used to define an overriding method if required.
+  # @return [Object] the unmunged value
   #
   def unmunge(value)
     value
   end
 
+  # Munges the value to internal form.
   # This implementation of `munge` provides exception handling around the specified munging of this parameter.
   # @note This method should not be overridden. Use the DSL method {munge} to define a munging method
   #   if required.
