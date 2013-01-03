@@ -15,17 +15,15 @@ end
 
 group(:development, :test) do
   gem "puppet", *location_for('file://.')
-  gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6.4')
-  gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0.0')
-  gem "rack", "~> 1.4.1", :require => false
+  gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
+  gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
+  gem "rack", "~> 1.4", :require => false
   gem "rake", "~> 0.9.2", :require => false
-  gem "rspec", "~> 2.10.0", :require => false
+  gem "rspec", "~> 2.11.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
 end
 
 platforms :mswin, :mingw do
-  # See http://jenkins.puppetlabs.com/ for current Gem listings for the Windows
-  # CI Jobs.
   gem "sys-admin", "~> 1.5.6", :require => false
   gem "win32-api", "~> 1.4.8", :require => false
   gem "win32-dir", "~> 0.3.7", :require => false
