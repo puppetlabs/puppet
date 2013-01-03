@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   commands :zypper => "/usr/bin/zypper"
 
-  confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
+  confine :osfamily => :suse
 
   #on zypper versions <1.0, the version option returns 1
   #some versions of zypper output on stderr
