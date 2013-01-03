@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
       end
   end
 
-  defaultfor :operatingsystem => [:mandriva, :mandrake]
+  defaultfor :osfamily => :mandrake
 
   has_feature :versionable
 
