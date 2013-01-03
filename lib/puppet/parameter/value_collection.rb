@@ -119,9 +119,10 @@ class Puppet::Parameter::ValueCollection
   # @todo Option :event original comment says "event should be returned...", is "returned" the correct word
   #   to use?
   # @option options [Symbol] :call When to call any associated block. The default value is `:instead` which
-  #   means that the block should be called instead of the provider. A value of `:before` or `:after` will call
-  #   both the block and the provider (it is the block that is called before or after in accordance with
-  #   the option.
+  #   means that the block should be called instead of the provider. In earlier versions (before 20081031) it
+  #   was possible to specify a value of `:before` or `:after` for the purpose of calling
+  #   both the block and the provider. Use of these deprecated options will now raise an exception later
+  #   in the process when the _is_ value is set (see Puppet::Property#set).
   # @option options [Object] _any_ Any other option is treated as a call to a setter having the given
   #   option name (e.g. `:required_features` calls `required_features=` with the option's value as an
   #   argument).

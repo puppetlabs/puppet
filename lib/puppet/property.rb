@@ -4,6 +4,7 @@
 require 'puppet'
 require 'puppet/parameter'
 
+# The Property class is the implementation of a resource's attributes of _property_ kind.
 # A Property is a specialized Resource Type Parameter that has both an 'is' (current) state, and
 # a 'should' (wanted state).
 # A Property (also in contrast to a parameter) is intended to describe a managed attribute of
@@ -13,7 +14,7 @@ require 'puppet/parameter'
 # value _(should)_ is read and written with the methods {#value} and {#value=} which delegate to
 # {#should} and {#should=}.
 # 
-# All properties in the puppet system are derived from this class.
+# All resource type properties in the puppet system are derived from this class.
 #
 # The intention is that new parameters are created by using the DSL method {Puppet::Type.newproperty}.
 # 
@@ -26,6 +27,12 @@ require 'puppet/parameter'
 #   A Property class may server as the superclass _(parent)_ of another; e.g. a Size property that describes
 #   handling of measurements such as kb, mb, gb. If a type requires two different size measurements it requires
 #   one concrete class per such measure; e.g. MinSize (:parent => Size), and MaxSize (:parent => Size).
+#
+# @todo Describe meta-parameter shadowing. This concept can not be understood by just looking at the descriptions
+#   of the methods involved.
+# 
+# @see Puppet::Type
+# @see Puppet::Parameter
 #
 # @api public
 # 
@@ -70,11 +77,13 @@ class Puppet::Property < Puppet::Parameter
     #     `should` values, the size of `is` and `should` must be the same, and all values in `is` must match
     #     a value in `should`.
     #
-    # @note The semantics of these modes are implemented by the method {#insync?}, which in the default
-    #   implementation in this class has a backwards compatible behavior that imposes additional constraints
-    #   on what constitutes a positive match. 
+    # @note The semantics of these modes are implemented by the method {#insync?}. That method is the default
+    #   implementation and it has a backwards compatible behavior that imposes additional constraints
+    #   on what constitutes a positive match. A derived property may override that method.
     # @return [Symbol] (:first) the mode in which matching is performed
     # @see #insync?
+    # @dsl type
+    # @api public
     #
     def array_matching
       @array_matching ||= :first
@@ -91,7 +100,9 @@ class Puppet::Property < Puppet::Parameter
 
   # Looks up a value's name among valid values, to enable option lookup with result as a key.
   # @param name [Object] the parameter value to match against valid values (names). 
-  # @return {Symbol, Regexp} a value matching predicate  
+  # @return {Symbol, Regexp} a value matching predicate
+  # @api private
+  #
   def self.value_name(name)
     if value = value_collection.match?(name)
       value.name
@@ -104,6 +115,7 @@ class Puppet::Property < Puppet::Parameter
   # @return [Object] value of the option
   # @raise [NoMethodError] if the option is not supported
   # @todo Guessing on result of passing a non supported option (it performs send(option)).
+  # @api private
   #
   def self.value_option(name, option)
     if value = value_collection.value(name)
@@ -113,7 +125,7 @@ class Puppet::Property < Puppet::Parameter
 
   # Defines a new valid value for this property.
   # A valid value is specified as a literal (typically a Symbol), but can also be
-  # specified with a regexp.
+  # specified with a Regexp.
   #
   # @param name [Symbol, Regexp] a valid literal value, or a regexp that matches a value
   # @param options [Hash] a hash with options
@@ -121,15 +133,18 @@ class Puppet::Property < Puppet::Parameter
   # @todo Option :event original comment says "event should be returned...", is "returned" the correct word
   #   to use?
   # @option options [Symbol] :call When to call any associated block. The default value is `:instead` which
-  #   means that the block should be called instead of the provider. A value of `:before` or `:after` will call
-  #   both the block and the provider (it is the block that is called before or after in accordance with
-  #   the option.
+  #   means that the block should be called instead of the provider. In earlier versions (before 20081031) it
+  #   was possible to specify a value of `:before` or `:after` for the purpose of calling
+  #   both the block and the provider. Use of these deprecated options will now raise an exception later
+  #   in the process when the _is_ value is set (see #set).
   # @option options [Object] any Any other option is treated as a call to a setter having the given
   #   option name (e.g. `:required_features` calls `required_features=` with the option's value as an
   #   argument).
   # @todo The original documentation states that the option `:method` will set the name of the generated
   #   setter method, but this is not implemented. Is the documentatin or the implementation in error?
   #   (The implementation is in Puppet::Parameter::ValueCollection#new_value).
+  # @todo verify that the use of :before and :after have been deprecated (or rather - never worked, and
+  #   was never in use. (This means, that the option :call could be removed since calls are always :instead).
   #
   # @dsl type
   # @api public
@@ -140,10 +155,11 @@ class Puppet::Property < Puppet::Parameter
     value
   end
 
-  # Calls the provider setter method for this property with the given value as argument.
+  # Calls the provider setter method for this property with the given value as argument.  
   # @return [Object] what the provider returns when calling a setter for this property's name
   # @raise [Puppet::Error] when the provider can not handle this property.
-  # @todo What is the intent of this method?
+  # @see #set
+  # @api private
   #
   def call_provider(value)
       method = self.class.name.to_s + "="
@@ -163,7 +179,9 @@ class Puppet::Property < Puppet::Parameter
   # @todo The check for a valid value option called `:method` does not seem to be fully supported
   #   as it seems that this option is never consulted when the method is dynamically created. Needs to
   #   be investigated. (Bug, or documentation needs to be changed).
-  # 
+  # @see #set
+  # @api private
+  #
   def call_valuemethod(name, value)
     if method = self.class.value_option(name, :method) and self.respond_to?(method)
       begin
@@ -255,7 +273,7 @@ class Puppet::Property < Puppet::Parameter
   #   setup_shadow is performed for that class.
   # 
   # @param hash [Hash] options passed to the super initializer {Puppet::Parameter.initialize}
-  # @note New properties of a type should be created via the DSL method `newproperty`.
+  # @note New properties of a type should be created via the DSL method {Puppet::Type.newproperty}.
   # @see Puppet::Parameter#initialize description of Parameter initialize options.
   # @api private
   def initialize(hash = {})
