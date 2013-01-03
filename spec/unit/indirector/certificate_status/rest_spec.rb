@@ -11,4 +11,8 @@ describe "Puppet::CertificateStatus::Rest" do
   it "should be a terminus on Puppet::SSL::Host" do
     @terminus.should be_instance_of(Puppet::Indirector::CertificateStatus::Rest)
   end
+
+  it "should use the :ca SRV service" do
+    Puppet::Indirector::CertificateStatus::Rest.srv_service.should == :ca
+  end
 end
