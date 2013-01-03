@@ -6,13 +6,18 @@ require 'puppet/parameter'
 
 # The Property class is the implementation of a resource's attributes of _property_ kind.
 # A Property is a specialized Resource Type Parameter that has both an 'is' (current) state, and
-# a 'should' (wanted state).
+# a 'should' (wanted state). However, even if this is conceptually true, the current _is_ value is
+# obtained by asking the associated provider for the value, and hence it is not actually part of a
+# property's state, and only available when a provider has been selected and can obtain the value (i.e. when
+# running on an agent).
+#
 # A Property (also in contrast to a parameter) is intended to describe a managed attribute of
 # some system entity, such as the name or mode of a file.
 #
 # The current value _(is)_ is read and written with the methods {#retrieve} and {#set}, and the wanted
 # value _(should)_ is read and written with the methods {#value} and {#value=} which delegate to
-# {#should} and {#should=}.
+# {#should} and {#should=}, i.e. when a property is used like any other parameter, it is the _should_ value
+# that is operated on.
 # 
 # All resource type properties in the puppet system are derived from this class.
 #
@@ -535,7 +540,7 @@ class Puppet::Property < Puppet::Parameter
 
   # Sets the wanted _(should)_ value of this property.
   # If the given value is not already an Array, it will be wrapped in one before being set.
-  # This method also sets the cached original should values returned by {#shouldorig}.
+  # This method also sets the cached original _should_ values returned by {#shouldorig}.
   #
   # @param values [Array<Object>, Object] the value(s) to set as the wanted value(s)
   # @raise [StandardError] when validation of a value fails (see {#validate}).
