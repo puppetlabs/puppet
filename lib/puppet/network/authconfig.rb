@@ -1,4 +1,3 @@
-require 'puppet/util/loadedfile'
 require 'puppet/network/rights'
 
 module Puppet
