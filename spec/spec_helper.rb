@@ -60,6 +60,8 @@ RSpec.configure do |config|
     config.formatters.each { |f| f.instance_variable_set(:@output, $stdout) }
   end
 
+  Puppet::Test::TestHelper.initialize
+
   config.before :all do
     Puppet::Test::TestHelper.before_all_tests()
   end
