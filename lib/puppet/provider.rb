@@ -7,11 +7,11 @@
 #    It is possible to confine a provider several different ways:
 #    * the included {#confine} method which provides filtering on fact, feature, existence of files, or a free form
 #      predicate.
-#    * the {commands} method that filters on the availability of given system commands
+#    * the {commands} method that filters on the availability of given system commands.
 # * **Property hash** - the important instance variable `@property_hash` contains all current state values
 #   for properties (it is lazily built). It is important that these values are managed appropriately in the
 #   methods {instances}, {prefetch}, and in methods that alters the current state (those that change the
-#   lifecycle (creates, destroyes), or alters some value reflected backed by a property).
+#   lifecycle (creates, destroys), or alters some value reflected backed by a property).
 # * **Flush** - is a hook that is called once per resource when everything has been applied. The intent is
 #   that an implementation may defer modification of the current state typically done in property setters
 #   and instead record information that allows flush to perform the changes more efficiently.  
@@ -78,10 +78,28 @@ class Puppet::Provider
     #
     attr_accessor :resource_type
     
-    # @return [String] Returns the documentation for the provider.
-    # @todo This is puzzling ... a write only doc attribute. How is the documentation read? An instance
-    #   gets #doc and #nodoc from Util::Docs - but this attribute is at the class level... Confused...
+    # @!attribute [r] doc
+    #   The (full) documentation for this provider class. The documentation for the provider class itself
+    #   should be set with the DSL method {desc=}. Setting the documentation with with {doc=} has the same effect
+    #   as setting it with {desc=} (only the class documentation part is set). In essence this means that
+    #   there is no getter for the class documentation part (since the getter returns the full
+    #   documentation when there are additional contributors).
+    #   
+    #   @return [String] Returns the full documentation for the provider.
+    # @see Puppet::Utils::Docs
+    # @comment This is puzzling ... a write only doc attribute??? The generated setter never seems to be
+    #   used, instead the instance variable @doc is set in the `desc` method. This seems wrong. It is instead
+    #   documented as a read only attribute (to get the full documentation). Also see doc below for
+    #   desc.
+    # @!attribute [w] desc
+    #   Sets the documentation of this provider class. (The full documentation is read via the
+    #   {doc} attribute).
+    #
+    #   @dsl type
+    # 
+    #
     attr_writer :doc
+    
   end
 
   # @todo original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_, why is it
@@ -148,7 +166,7 @@ class Puppet::Provider
   end
 
   # Confines this provider to be suitable only on hosts where the given commands are present.
-  # Also see {confines} for other types of confinement of a provider by use of other types of
+  # Also see {Puppet::Provider::Confiner#confine} for other types of confinement of a provider by use of other types of
   # predicates.
   # 
   # @note It is preferred if the commands are not entered with absolute paths as this allows puppet
@@ -262,7 +280,7 @@ class Puppet::Provider
 
   # @return [Boolean] Returns whether this implementation satisfies all of the default requirements or not.
   #   Returns false If defaults are empty.
-  # @see defaultfor
+  # @see Provider.defaultfor
   #
   def self.default?
     return false if @defaults.empty?
@@ -303,7 +321,7 @@ class Puppet::Provider
 
   # @return [Integer] Returns a numeric specificity for this provider based on how many requirements it has
   #  and number of _ancestors_. The higher the number the more specific the provider.
-  # The number of requirements is based on the number of defaults set up with {defaultsfor}.
+  # The number of requirements is based on the number of defaults set up with {Provider.defaultfor}.
   #
   # The _ancestors_ is the Ruby Module::ancestors method and the number of classes returned is used
   # to boost the score. The intent is that if two providers are equal, but one is more "derived" than the other
@@ -387,11 +405,12 @@ class Puppet::Provider
   # resource type. These simple accessors lookup and sets values in the property hash.
   # The generated methods may be overridden by more advanced implementations if something
   # else than a straight forward getter/setter pair of methods is required.
-  # (i.e. defined such overriding methods after this method has been called)
+  # (i.e. define such overriding methods after this method has been called)
   # 
-  # @note original comment = _"I They all get stored in @property_hash.  This method is useful
-  #   for those providers that use prefetch and flush.#_
-  # @todo Don't know if the note with the original comment is of any value...
+  # An implementor of a provider that makes use of `prefetch` and `flush` can use this method since it uses
+  # the internal `@property_hash` variable to store values. An implementation would then update the system
+  # state on a call to `flush` based on the current values in the `@property_hash`.
+  #
   # @return [void]
   #
   def self.mk_resource_methods
@@ -434,7 +453,7 @@ class Puppet::Provider
   end
 
   # Returns true if the given attribute/parameter is supported by the provider.
-  # The check is made that the paramter is a valid parameter for the resource type, and then
+  # The check is made that the parameter is a valid parameter for the resource type, and then
   # if all its required features (if any) are supported by the provider.
   #
   # @param param [Class, Puppet::Parameter] the parameter class, or a parameter instance
