@@ -11,6 +11,9 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
 
   def find(request)
     HieraPuppet.lookup(request.key, nil, request.options[:variables], nil, nil)
+  rescue Puppet::ParseError
+    Puppet.debug("Hiera did not find any data, returning nil from the hiera data backend")
+    nil
   end
 end
 
