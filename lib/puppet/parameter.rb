@@ -81,8 +81,9 @@ class Puppet::Parameter
     # @return [Boolean] Flag indicating whether this parameter is a meta-parameter or not.
     attr_accessor :metaparam
 
-    # Defines the `default` method of a parameter.
-    # A default method is defined by providing a value or a block. A default of `nil` can not be used.
+    # Defines how the `default` value of a parameter is computed.
+    # The computation of the parameter's default value is defined by providing a value or a block. 
+    # A default of `nil` can not be used.
     # @overload defaultto(value)
     #   Defines the default value with a literal value
     #   @param value [Object] the literal value to use as the default value
@@ -91,6 +92,7 @@ class Puppet::Parameter
     #   should produce the default value.
     # @raise [Puppet::DevError] if value is nil, and no block is given.
     # @return [void]
+    # @see Parameter.default
     # @dsl type
     # @api public
     # 
