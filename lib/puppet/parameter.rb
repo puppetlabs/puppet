@@ -440,7 +440,7 @@ class Puppet::Parameter
   # Performs validation of the given value against the rules defined by this parameter.
   # @return [void]
   # @todo Better description of when the various exceptions are raised.ArgumentError is rescued and
-  #   changed into what {fail} raises.
+  #   changed into Puppet::Error.
   # @raise [ArgumentError, TypeError, Puppet::DevError, Puppet::Error] under various conditions 
   # A protected validation method that only ever raises useful exceptions.
   # @api public

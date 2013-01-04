@@ -18,7 +18,7 @@ module Puppet::Util::ProviderFeatures
     attr_accessor :name, :docs, :methods
 
     # Are all of the requirements met?
-    # Requirements are checked by checking if feature predicate methods have been generated - see {#methods_available}.
+    # Requirements are checked by checking if feature predicate methods have been generated - see {#methods_available?}.
     # @param obj [Object, Class] the object or class to check if requirements are met
     # @return [Boolean] whether all requirements for this feature are met or not.
     def available?(obj)
