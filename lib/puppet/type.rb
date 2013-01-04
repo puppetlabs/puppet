@@ -364,7 +364,7 @@ class Type
     )
   end
 
-  # Returns cached {key_attribute_parameter} names
+  # Returns cached {key_attribute_parameters} names
   # @todo what is a 'key_attribute' ?
   # @return [Array<String>] cached key_attribute names
   #
@@ -379,7 +379,7 @@ class Type
   # @note Advanced: some logic requires this mapping to be done differently, using a different
   #   validation/pattern, breaking up the title
   #   into several parts assigning each to an individual attribute, or even use a composite identity where
-  #   all namevars are seen as part of the unique identity (such computation is done by the {uniqueness} method.
+  #   all namevars are seen as part of the unique identity (such computation is done by the {#uniqueness} method.
   #   These advanced options are rarely used (only one of the built in puppet types use this, and then only
   #   a small part of the available functionality), and the support for these advanced mappings is not
   #   implemented in a straight forward way. For these reasons, this method has been marked as private).
@@ -1838,7 +1838,7 @@ class Type
 
   # @todo this needs a better explanation
   # Removes the implementation class of a given provider.
-  # @return [Object] returns what {rmclass} returns
+  # @return [Object] returns what {Puppet::Util::ClassGen#rmclass} returns
   def self.unprovide(name)
     if @defaultprovider and @defaultprovider.name == name
       @defaultprovider = nil
@@ -2342,7 +2342,7 @@ class Type
   end
 
   # Returns the title of this object, or it's name if title was not explicetly set.
-  # If the title is not already set, it will be computed by looking up the {name_var} and using
+  # If the title is not already set, it will be computed by looking up the {#name_var} and using
   # that value as the title.
   # @todo it is somewhat confusing that if the name_var is a valid parameter, it is assumed to
   #  be the name_var called :name, but if it is a property, it uses the name_var.
