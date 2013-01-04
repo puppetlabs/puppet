@@ -68,7 +68,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 755, true))
+          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 0755, true))
         end
       else
         Dir.mkdir(@resource[:path])
