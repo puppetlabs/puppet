@@ -7,7 +7,7 @@ module FileModeAssertions
 
   def assert_create(agent, manifest, path, expected_mode)
     testcase.apply_manifest_on(agent, manifest) do
-      assert_match(/File\[#{path}\]\/ensure: created/, testcase.stdout, "Failed to create #{path}")
+      assert_match(/File\[#{Regexp.escape(path)}\]\/ensure: created/, testcase.stdout, "Failed to create #{path}")
     end
 
     assert_mode(agent, path, expected_mode)
@@ -45,8 +45,10 @@ class ActionModeTest
     @basedir = basedir
     @symbolic_mode = symbolic_mode
 
-    @file = "#{basedir}/symbolic-mode-file"
-    @dir =  "#{basedir}/symbolic-mode-dir"
+    @file = "#{basedir}/file"
+    @dir =  "#{basedir}/dir"
+
+    testcase.on(agent, "rm -rf #{@file} #{@dir}")
   end
 
   def get_manifest(path, type, symbolic_mode)
@@ -57,8 +59,6 @@ end
 class CreatesModeTest < ActionModeTest
   def initialize(testcase, agent, basedir, symbolic_mode)
     super(testcase, agent, basedir, symbolic_mode)
-
-    testcase.on(agent, "rm -rf #{@file} #{@dir}")
   end
 
   def assert_file_mode(expected_mode)
@@ -141,6 +141,14 @@ end
 # 0001    For files, allow execution by others.  For directories allow others
 #         to search in the directory.
 #
+# On Solaris 11 (from man chmod):
+#
+# 20#0    Set group ID on execution if # is 7, 5, 3, or 1.
+#         Enable mandatory locking if # is 6, 4, 2, or 0.
+#         ...
+#         For directories, the set-gid bit can
+#         only be set or cleared by using symbolic mode.
+
 # From http://www.gnu.org/software/coreutils/manual/html_node/Symbolic-Modes.html#Symbolic-Modes
 # Users
 # u  the user who owns the file;
@@ -163,12 +171,17 @@ end
 #     to set both user and group-id-on-execution, omit the users part of the symbolic mode (or use 'a') and use 's' in the permissions part.
 # t the restricted deletion flag (sticky bit), omit the users part of the symbolic mode (or use 'a') and use 't' in the permissions part.
 # X execute/search permission is affected only if the file is a directory or already had execute permission.
-
+#
+# Note we do not currently support the Solaris (l) permission:
+# l mandatory file and record locking refers to a file's ability to have its reading or writing
+#     permissions locked while a program is accessing that file.
+#
 agents.each do |agent|
   if agent['platform'].include?('windows')
     Log.warn("Pending: this does not currently work on Windows")
     next
   end
+  is_solaris = agent['platform'].include?('solaris')
 
   basedir = agent.tmpdir('symbolic-modes')
   on(agent, "mkdir -p #{basedir}")
@@ -217,6 +230,10 @@ agents.each do |agent|
   test.assert_modifies('u+X',           00400, 00500, 00500)
   test.assert_modifies('a+X',           00700, 00711, 00711)
 
+  test.assert_modifies('u+s',           00744, 04744, 04744)
+  test.assert_modifies('g+s',           00744, 02744, 02744)
+  test.assert_modifies('u+t',           00744, 01744, 01744)
+
   test.assert_modifies('u-r',           00200, 00200, 00200)
   test.assert_modifies('u-r',           00600, 00200, 00200)
   test.assert_modifies('u-w',           00500, 00500, 00500)
@@ -225,7 +242,8 @@ agents.each do |agent|
   test.assert_modifies('u-x',           00600, 00600, 00600)
 
   test.assert_modifies('u-s',           04744, 00744, 00744)
-  test.assert_modifies('g-s',           02744, 00744, 00744)
+  # using chmod 2744 on a directory to set the startmode fails on Solaris
+  test.assert_modifies('g-s',           02744, 00744, 00744) unless is_solaris
   test.assert_modifies('u-t',           01744, 00744, 00744)
 
   # these raise
@@ -233,6 +251,8 @@ agents.each do |agent|
   # test.assert_raises(' ')
   # test.assert_raises('u=X')
   # test.assert_raises('u-X')
+  # test.assert_raises('+l')
+  # test.assert_raises('-l')
 
   step "clean up old test things"
   on agent, "rm -rf #{basedir}"
