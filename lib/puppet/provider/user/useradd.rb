@@ -34,7 +34,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd = []
     if @resource.managehome?
       cmd << "-m"
-    elsif %w{Fedora RedHat CentOS OEL OVS}.include?(Facter.value(:operatingsystem))
+    elsif Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
     cmd
@@ -80,7 +80,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += check_system_users
     cmd << @resource[:name]
   end
-  
+
   def deletecmd
     cmd = [command(:delete)]
     cmd += @resource.managehome? ? ['-r'] : []
@@ -124,4 +124,3 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     :absent
   end
 end
-

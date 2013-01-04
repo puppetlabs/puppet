@@ -77,6 +77,9 @@ class Puppet::Settings
     # Keep track of set values.
     @values = Hash.new { |hash, key| hash[key] = {} }
 
+    # Hold parsed metadata until run_mode is known
+    @metas = {}
+
     # And keep a per-environment cache
     @cache = Hash.new { |hash, key| hash[key] = {} }
 
@@ -247,6 +250,7 @@ class Puppet::Settings
         set_value(key, value, :application_defaults)
       end
     end
+    apply_metadata
     call_hooks_deferred_to_application_initialization
 
     @app_defaults_initialized = true
@@ -541,9 +545,8 @@ class Puppet::Settings
     unsafe_clear(false, false)
 
     # And now we can repopulate with the values from our last parsing of the config files.
-    metas = {}
     data.each do |area, values|
-      metas[area] = values.delete(:_meta)
+      @metas[area] = values.delete(:_meta)
       values.each do |key,value|
         set_value(key, value, area, :dont_trigger_handles => true, :ignore_bad_settings => true )
       end
@@ -571,19 +574,24 @@ class Puppet::Settings
       end
     end
 
+    # Take a best guess at metadata based on uninitialized run_mode
+    apply_metadata
+  end
+  private :unsafe_parse
+
+  def apply_metadata
     # We have to do it in the reverse of the search path,
     # because multiple sections could set the same value
     # and I'm too lazy to only set the metadata once.
     searchpath.reverse.each do |source|
       source = preferred_run_mode if source == :run_mode
       source = @name if (@name && source == :name)
-      if meta = metas[source]
+      if meta = @metas[source]
         set_metadata(meta)
       end
     end
   end
-  private :unsafe_parse
-
+  private :apply_metadata
 
   # Create a new setting.  The value is passed in because it's used to determine
   # what kind of setting we're creating, but the value itself might be either
@@ -699,11 +707,25 @@ class Puppet::Settings
   def service_user_available?
     return @service_user_available if defined?(@service_user_available)
 
-    return @service_user_available = false unless user_name = self[:user]
+    if self[:user]
+      user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
 
-    user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
+      @service_user_available = user.exists?
+    else
+      @service_user_available = false
+    end
+  end
 
-    @service_user_available = user.exists?
+  def service_group_available?
+    return @service_group_available if defined?(@service_group_available)
+
+    if self[:group]
+      group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
+
+      @service_group_available = group.exists?
+    else
+      @service_group_available = false
+    end
   end
 
   # Allow later inspection to determine if the setting was set on the
@@ -1107,7 +1129,9 @@ Generated on #{Time.now}.
   def set_metadata(meta)
     meta.each do |var, values|
       values.each do |param, value|
-        @config[var].send(param.to_s + "=", value)
+        @sync.synchronize do # yay, thread-safe
+          @config[var].send(param.to_s + "=", value)
+        end
       end
     end
   end

@@ -668,6 +668,7 @@ describe Puppet::Settings do
     before do
       @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
+      @settings.stubs(:service_group_available?).returns true
       @file = make_absolute("/some/file")
       @userconfig = make_absolute("/test/userconfigfile")
       @settings.define_settings :section, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
@@ -775,6 +776,33 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
+    end
+
+    it "should support loading metadata (owner, group, or mode) from a run_mode section in the configuration file" do
+      default_values = {}
+      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+        default_values[key] = 'default value'
+      end
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.define_settings :master, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
+
+      otherfile = make_absolute("/other/file")
+      text = "[master]
+      myfile = #{otherfile} {mode = 664}
+      "
+      @settings.expects(:read_file).returns(text)
+
+      # will start initialization as user
+      @settings.preferred_run_mode.should == :user
+      @settings.send(:parse_config_files)
+
+      # change app run_mode to master
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
+      @settings.preferred_run_mode.should == :master
+
+      # initializing the app should have reloaded the metadata based on run_mode
+      @settings[:myfile].should == otherfile
+      @settings.metadata(:myfile).should == {:mode => "664"}
     end
 
     it "should call hooks associated with values set in the configuration file" do
@@ -1237,6 +1265,7 @@ describe Puppet::Settings do
     before do
       @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
+      @settings.stubs(:service_group_available?).returns true
       @settings.define_settings :main, :noop => { :default => false, :desc => "", :type => :boolean }
       @settings.define_settings :main,
           :maindir => { :type => :directory, :default => make_absolute("/maindir"), :desc => "a" },
@@ -1444,32 +1473,88 @@ describe Puppet::Settings do
   end
 
   describe "when determining if the service user is available" do
+    let(:settings) do
+      settings = Puppet::Settings.new
+      settings.define_settings :main, :user => { :default => nil, :desc => "doc" }
+      settings
+    end
+
+    def a_user_type_for(username)
+      user = mock 'user'
+      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == username }.returns user
+      user
+    end
+
     it "should return false if there is no user setting" do
-      Puppet::Settings.new.should_not be_service_user_available
+      settings.should_not be_service_user_available
     end
 
     it "should return false if the user provider says the user is missing" do
-      settings = Puppet::Settings.new
-      settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
+      settings[:user] = "foo"
 
-      user = mock 'user'
-      user.expects(:exists?).returns false
-
-      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+      a_user_type_for("foo").expects(:exists?).returns false
 
       settings.should_not be_service_user_available
     end
 
     it "should return true if the user provider says the user is present" do
-      settings = Puppet::Settings.new
-      settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
+      settings[:user] = "foo"
 
-      user = mock 'user'
-      user.expects(:exists?).returns true
-
-      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+      a_user_type_for("foo").expects(:exists?).returns true
 
       settings.should be_service_user_available
+    end
+
+    it "caches the result of determining if the user is present" do
+      settings[:user] = "foo"
+
+      a_user_type_for("foo").expects(:exists?).returns true
+      settings.should be_service_user_available
+
+      settings.should be_service_user_available
+    end
+  end
+
+  describe "when determining if the service group is available" do
+    let(:settings) do
+      settings = Puppet::Settings.new
+      settings.define_settings :main, :group => { :default => nil, :desc => "doc" }
+      settings
+    end
+
+    def a_group_type_for(groupname)
+      group = mock 'group'
+      Puppet::Type.type(:group).expects(:new).with { |args| args[:name] == groupname }.returns group
+      group
+    end
+
+    it "should return false if there is no group setting" do
+      settings.should_not be_service_group_available
+    end
+
+    it "should return false if the group provider says the group is missing" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns false
+
+      settings.should_not be_service_group_available
+    end
+
+    it "should return true if the group provider says the group is present" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns true
+
+      settings.should be_service_group_available
+    end
+
+    it "caches the result of determining if the group is present" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns true
+      settings.should be_service_group_available
+
+      settings.should be_service_group_available
     end
   end
 
