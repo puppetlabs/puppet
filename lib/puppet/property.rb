@@ -277,7 +277,7 @@ class Puppet::Property < Puppet::Parameter
   #   Puppet::Type.metaparamclass(for this class's name) is not nil - if that is the case a 
   #   setup_shadow is performed for that class.
   # 
-  # @param hash [Hash] options passed to the super initializer {Puppet::Parameter.initialize}
+  # @param hash [Hash] options passed to the super initializer {Puppet::Parameter#initialize}
   # @note New properties of a type should be created via the DSL method {Puppet::Type.newproperty}.
   # @see Puppet::Parameter#initialize description of Parameter initialize options.
   # @api private
@@ -316,9 +316,9 @@ class Puppet::Property < Puppet::Parameter
   # Checks if the current _(is)_ value is in sync with the wanted _(should)_ value.
   # The check if the two values are in sync is controlled by the result of {#match_all?} which
   # specifies a match of `:first` or `:all`). The matching of the _is_ value against the entire _should_ value
-  # or each of the _should_ values (as controlled by {#match_all?} is performed by #{property_matches?}.
+  # or each of the _should_ values (as controlled by {#match_all?} is performed by {#property_matches?}.
   #
-  # A derived property typically only needs to override the #{property_matches?} method, but may also
+  # A derived property typically only needs to override the {#property_matches?} method, but may also
   # override this method if there is a need to have more control over the array matching logic.
   #
   # @note The array matching logic in this method contains backwards compatible logic that performs the
