@@ -7,7 +7,7 @@ module FileModeAssertions
 
   def assert_create(agent, manifest, path, expected_mode)
     testcase.apply_manifest_on(agent, manifest) do
-      assert_match(/File\[#{path}\]\/ensure: created/, testcase.stdout, "Failed to create #{path}")
+      assert_match(/File\[#{Regexp.escape(path)}\]\/ensure: created/, testcase.stdout, "Failed to create #{path}")
     end
 
     assert_mode(agent, path, expected_mode)
@@ -45,8 +45,10 @@ class ActionModeTest
     @basedir = basedir
     @symbolic_mode = symbolic_mode
 
-    @file = "#{basedir}/symbolic-mode-file"
-    @dir =  "#{basedir}/symbolic-mode-dir"
+    @file = "#{basedir}/file"
+    @dir =  "#{basedir}/dir"
+
+    testcase.on(agent, "rm -rf #{@file} #{@dir}")
   end
 
   def get_manifest(path, type, symbolic_mode)
@@ -57,8 +59,6 @@ end
 class CreatesModeTest < ActionModeTest
   def initialize(testcase, agent, basedir, symbolic_mode)
     super(testcase, agent, basedir, symbolic_mode)
-
-    testcase.on(agent, "rm -rf #{@file} #{@dir}")
   end
 
   def assert_file_mode(expected_mode)
