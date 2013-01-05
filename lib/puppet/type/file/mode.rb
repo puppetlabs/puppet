@@ -1,6 +1,8 @@
 # Manage file modes.  This state should support different formats
 # for specification (e.g., u+rwx, or -0011), but for now only supports
 # specifying the full mode.
+
+
 module Puppet
   Puppet::Type.type(:file).newproperty(:mode) do
     require 'puppet/util/symbolic_file_mode'

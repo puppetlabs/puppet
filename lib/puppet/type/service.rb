@@ -4,6 +4,7 @@
 # can only be managed through the interface of an init script
 # which is why they have a search path for initscripts and such
 
+
 module Puppet
 
   newtype(:service) do

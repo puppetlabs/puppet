@@ -12,8 +12,7 @@ require 'puppet/util/methodhelper'
 # It is passed between the various classes that participate in evaluation.
 # None of its methods are API except those that are clearly marked as such.
 #
-# @api private
-#
+# @api public
 class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
@@ -244,6 +243,15 @@ class Puppet::Parser::Scope
     end
   end
 
+  # Lookup a variable within this scope using the Puppet language's
+  # scoping rules. Variables can be qualified using just as in a
+  # manifest.
+  #
+  # @param [String] name the variable name to lookup
+  #
+  # @return Object the value of the variable, or nil if it's not found
+  #
+  # @api public
   def lookupvar(name, options = {})
     unless name.is_a? String
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
