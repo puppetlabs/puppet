@@ -39,7 +39,7 @@ describe Puppet::Parser::Functions do
     end
   end
 
-  describe "when calling function to test function existance" do
+  describe "when calling function to test function existence" do
     before do
       @module = Module.new
       Puppet::Parser::Functions.stubs(:environment_module).returns @module
@@ -99,6 +99,18 @@ describe Puppet::Parser::Functions do
     it "should not raise an error if the variable arg function is called with more number of arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
       lambda { @scope.function_name([1,2,3]) }.should_not raise_error ArgumentError
+    end
+  end
+
+  describe "::arity" do
+    it "returns the given arity of a function" do
+      Puppet::Parser::Functions.newfunction("name", :arity => 4) { |args| }
+      Puppet::Parser::Functions.arity(:name).should == 4
+    end
+
+    it "returns -1 if no arity is given" do
+      Puppet::Parser::Functions.newfunction("name") { |args| }
+      Puppet::Parser::Functions.arity(:name).should == -1
     end
   end
 

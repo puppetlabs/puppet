@@ -7,4 +7,7 @@
 --transitive-tag status
 --tag comment
 --hide-tag comment
+--tag dsl:"DSL"
+--no-transitive-tag api
+--template-path yardoc/templates
 lib/**/*.rb

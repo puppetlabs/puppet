@@ -1,15 +1,16 @@
-#This subclass of property manages string key value pairs.
-
-#In order to use this property:
-# - the @should value must be an array of keyvalue pairs separated by the 'separator'
-# - the retrieve method should return a hash with the keys as symbols
-# IMPORTANT NOTE: In order for this property to work there must also be a 'membership' parameter
-# The class that inherits from property should override that method with the symbol for the membership
-
 require 'puppet/property'
 
 module Puppet
   class Property
+    # This subclass of {Puppet::Property} manages string key value pairs.
+    # In order to use this property:
+    #
+    # * the _should_ value must be an array of key-value pairs separated by the 'separator'
+    # * the retrieve method should return a hash with the keys as symbols
+    # @note **IMPORTANT**: In order for this property to work there must also be a 'membership' parameter
+    #   The class that inherits from property should override that method with the symbol for the membership
+    # @todo The node with an important message is not very clear.
+    #
     class KeyValue < Property
 
       def hash_to_key_value_s(hash)
@@ -59,14 +60,19 @@ module Puppet
         current.merge(members)
       end
 
+      # @return [String] Returns a default separator of "="
       def separator
         "="
       end
 
+      # @return [String] Returns a default delimiter of ";"
       def delimiter
         ";"
       end
 
+      # Retrieves the key-hash from the provider by invoking it's method named the same as this property.
+      # @return [Hash] the hash from the provider, or `:absent`
+      #
       def retrieve
         #ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
         if key_hash = provider.send(name) and key_hash != :absent
@@ -76,6 +82,9 @@ module Puppet
         end
       end
 
+      # Returns true if there is no _is_ value, else returns if _is_ is equal to _should_ using == as comparison.
+      # @return [Boolean] whether the property is in sync or not.
+      #
       def insync?(is)
         return true unless is
 
