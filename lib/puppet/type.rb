@@ -300,7 +300,7 @@ class Type
 
   # Returns the documentation for a given meta-parameter of this type.
   # @todo the type for the param metaparam
-  # @param metaparam [??? TYPE] the meta-parameter to get documentation for.
+  # @param metaparam [??? Puppet::Parameter] the meta-parameter to get documentation for.
   # @return [String] the documentation associated with the given meta-parameter, or nil of not such documentation
   #   exists.
   # @raises [?] if the given metaparam is not a meta-parameter in this type
@@ -354,7 +354,7 @@ class Type
   # Returns parameters that act as a key.
   # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result. 
   # @todo would like a better explanation
-  # @return Array<??? Param>
+  # @return Array<??? Puppet::Parameter>
   #
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
@@ -664,13 +664,14 @@ class Type
 
   # Removes a property from the object; useful in testing or in cleanup
   # when an error has been encountered
-  # @todo GOBBLEDYGOOK - the comment says "Remove a property", the code refers to @parameters, and
-  #   the method parameter is called "attr" - What is it property, parameter, both (i.e attribute) or what?
-  # @todo Don't know what the attr is (name or Property/Parameter?). Gussing it is a String name...
-  # @todo Can you delete a meta-parameter? 
+  # @todo Incomprehensible - the comment says "Remove a property", the code refers to @parameters, and
+  #   the method parameter is called "attr" - What is it, property, parameter, both (i.e an attribute) or what?
+  # @todo Don't know what the attr is (name or Property/Parameter?). Guessing it is a String name...
+  # @todo Is it possible to delete a meta-parameter? 
   # @todo What does delete mean? Is it deleted from the type or is its value state 'is'/'should' deleted? 
   # @param attr [String] the attribute to delete from this object. WHAT IS THE TYPE?
   # @raise [Puppet::DecError] when an attempt is made to delete an attribute that does not exists.
+  #
   def delete(attr)
     attr = attr.intern
     if @parameters.has_key?(attr)
@@ -682,7 +683,7 @@ class Type
 
   # Iterates over the existing properties.
   # @todo what does this mean? As opposed to iterating over the "non existing properties" ??? Is it an
-  #   iteration over those properties that have state? CONFUSED.
+  #   iteration over those properties that have state? CONFUSING.
   # @yieldparam property [Puppet::Property] each property
   # @return [void]
   def eachproperty
@@ -714,14 +715,15 @@ class Type
   # Creates an instance to represent/manage the given attribute.
   # Requires either the attribute name or class as the first argument, then an optional hash of
   # attributes to set during initialization.
-  # @todo The comment is just wrong - the method does not accept a hash of options
-  # @todo Do not understand; this interacts with provider to ask if it supports a parameter of the given class.
-  #  it then returns the parameter if it exists, otherwise creates a parameter with its :resource => self.
+  # @todo The original comment is just wrong - the method does not accept a hash of options
+  # @todo Detective work required; this method interacts with provider to ask if it supports a parameter of
+  #   the given class. it then returns the parameter if it exists, otherwise creates a parameter
+  #    with its :resource => self.
   # @overload newattr(name)
-  #   @param name [String] 
+  #   @param name [String] Unclear what name is (probably a symbol) - Needs investigation.
   # @overload newattr(klass)
-  #   @param klass [Class] a class supported as an attribute class - WHAT IS THAT?
-  # @return [???] WHAT?
+  #   @param klass [Class] a class supported as an attribute class - Needs clarification what that means.
+  # @return [???] Probably returns a new instance of the class - Needs investigation.
   #
   def newattr(name)
     if name.is_a?(Class)
@@ -1714,7 +1716,7 @@ class Type
 
   # Creates a new provider of a type.
   # This method must be called directly on the type that it's implementing.
-  # @todo WAT ??? GOBBLEDYGOOK ! BAFFLEGAB !
+  # @todo Fix Confusing Explanations!
   #   Is this a new provider of a Type (metatype), or a provider of an instance of Type (a resource), or
   #   a Provider (the implementation of a Type's behavior). CONFUSED. It calls magically named methods like
   #   "providify" ...
@@ -1942,7 +1944,7 @@ class Type
   # See {autorequire} for how to add an auto-requirement.
   # @todo needs details - see the param rel_catalog, and type of this param
   # @param rel_catalog [Puppet::Catalog, nil] the catalog to add dependencies to. Defaults to the
-  #   WHAT??? catalog 
+  #   catalog (TODO: what is the type of the catalog). 
   # @raise [Puppet::DevError] if there is no catalog
   # 
   def autorequire(rel_catalog = nil)

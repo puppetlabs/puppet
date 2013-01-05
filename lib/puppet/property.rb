@@ -61,7 +61,7 @@ class Puppet::Property < Puppet::Parameter
   class << self
     # @todo Figure out what this is used for. Can not find any logic in the puppet code base that
     #   reads or writes this attribute.
-    # ??? Unused
+    # ??? Probably Unused
     attr_accessor :unmanaged
     
     # @return [Symbol] The name of the property as given when the property was created.
@@ -416,7 +416,7 @@ class Puppet::Property < Puppet::Parameter
 
   # (see Puppet::Parameter#munge)
   # If this property is a meta-parameter shadow, the shadow's munge is also called.
-  # @todo BAFFLEGAB ! The concept of "meta-parameter-shadowing" needs to be explained.
+  # @todo Incomprehensible ! The concept of "meta-parameter-shadowing" needs to be explained.
   #
   def munge(value)
     self.shadow.munge(value) if self.shadow
