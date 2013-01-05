@@ -12,6 +12,12 @@ describe provider_class do
     Puppet::Type.type(:package).new(defaults.merge(args))
   end
 
+  def expect_read_from_pkgconf(lines)
+    pkgconf = stub(:readlines => lines)
+    File.expects(:exist?).with('/etc/pkg.conf').returns(true)
+    File.expects(:open).with('/etc/pkg.conf', 'rb').returns(pkgconf)
+  end
+
   before :each do
     # Stub some provider methods to avoid needing the actual software
     # installed, so we can test on whatever platform we want.
@@ -42,8 +48,21 @@ describe provider_class do
   context "#install" do
     it "should fail if the resource doesn't have a source" do
       provider = subject.new(package())
-      expect { provider.install }.
-        to raise_error Puppet::Error, /must specify a package source/
+
+      File.expects(:exist?).with('/etc/pkg.conf').returns(false)
+
+      expect {
+        provider.install
+      }.to raise_error Puppet::Error, /must specify a package source/
+    end
+
+    it "should fail if /etc/pkg.conf exists, but there is no installpath" do
+      provider = subject.new(package())
+
+      expect_read_from_pkgconf([])
+      expect {
+        provider.install
+      }.to raise_error Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/
     end
 
     it "should install correctly when given a directory-unlike source" do
@@ -75,6 +94,54 @@ describe provider_class do
 
       provider.install
       ENV.should_not be_key 'PKG_PATH'
+    end
+
+    it "should install correctly when given a CDROM installpath" do
+      ENV.should_not be_key 'PKG_PATH'
+
+      provider = subject.new(package())
+
+      dir = '/mnt/cdrom/5.2/packages/amd64/'
+      expect_read_from_pkgconf(["installpath = #{dir}"])
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == dir
+      end
+
+      provider.install
+      ENV.should_not be_key 'PKG_PATH'
+    end
+
+    it "should install correctly when given a ftp mirror" do
+      ENV.should_not be_key 'PKG_PATH'
+
+      provider = subject.new(package())
+
+      url =  'ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/'
+      expect_read_from_pkgconf(["installpath = #{url}"])
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == url
+      end
+
+      provider.install
+      ENV.should_not be_key 'PKG_PATH'
+    end
+
+    it "should chomp whitespace in installpath" do
+      provider = subject.new(package())
+
+      dir = '/one/'
+      lines = ["# Notice the extra spaces after the ='s\n",
+               "installpath =   #{dir}\n",
+               "# And notice how each line ends with a newline\n"]
+      expect_read_from_pkgconf(lines)
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == dir
+      end
+
+      provider.install
     end
   end
 
