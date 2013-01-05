@@ -1,7 +1,12 @@
 require 'puppet/property'
 
-# This property will get automatically added to any type that responds
+# This property is automatically added to any {Puppet::Type} that responds
 # to the methods 'exists?', 'create', and 'destroy'.
+#
+# Ensure defaults to having the wanted _(should)_ value `:present`.
+#
+# @api public
+#
 class Puppet::Property::Ensure < Puppet::Property
   @name = :ensure
 
@@ -58,6 +63,14 @@ class Puppet::Property::Ensure < Puppet::Property
     end
   end
 
+  # Retrieves the _is_ value for the ensure property.
+  # The existence of the resource is checked by first consulting the provider (if it responds to
+  # `:exists`), and secondly the resource. A a value of `:present` or `:absent` is returned
+  # depending on if the managed entity exists or not.
+  # 
+  # @return [Symbol] a value of `:present` or `:absent` depending on if it exists or not
+  # @raise [Puppet::DevError] if neither the provider nor the resource responds to `:exists`
+  # 
   def retrieve
     # XXX This is a problem -- whether the object exists or not often
     # depends on the results of other properties, yet we're the first property

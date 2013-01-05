@@ -1,4 +1,6 @@
 # The majority of Puppet's configuration settings are set in this file.
+
+
 module Puppet
 
   ############################################################################################
