@@ -291,11 +291,6 @@ describe Puppet::Network::AuthStore::Declaration do
     end unless ip =~ /:.*\./ # Hybrid IPs aren't supported by ruby's ipaddr
   }
 
-  # These IP addresses are affected by Ruby bug https://bugs.ruby-lang.org/issues/7477
-  # As a result, we exclude the examples on specific versions of Ruby that
-  # improperly handle these addresses.
-  ruby_version = "#{RUBY_VERSION}-p#{RbConfig::CONFIG['PATCHLEVEL']}"
-  ruby_bug_7477 = ("1.9.3-p327" == ruby_version)
   [
     "::2:3:4:5:6:7:8",
   ].each { |ip|
@@ -304,12 +299,14 @@ describe Puppet::Network::AuthStore::Declaration do
         Puppet::Network::AuthStore::Declaration.new(:allow_ip,ip)
       end
 
+      issue_7477 = !(IPAddr.new(ip) rescue false)
+
       it "should match the specified IP" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => ruby_bug_7477
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
         declaration.should be_match('www.testsite.org',ip)
       end
       it "should not match other IPs" do
-        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => ruby_bug_7477
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
         declaration.should_not be_match('www.testsite.org','200.101.99.98')
       end
     end
