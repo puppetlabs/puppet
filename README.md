@@ -1,6 +1,8 @@
 Puppet
 ======
 
+[![Build Status](https://travis-ci.org/puppetlabs/puppet.png?branch=master)](https://travis-ci.org/puppetlabs/puppet)
+
 Puppet, an automated administrative engine for your Linux and Unix systems, performs
 administrative tasks (such as adding users, installing packages, and updating server
 configurations) based on a centralized specification.
