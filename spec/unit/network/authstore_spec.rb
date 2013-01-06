@@ -299,14 +299,16 @@ describe Puppet::Network::AuthStore::Declaration do
   [
     "::2:3:4:5:6:7:8",
   ].each { |ip|
-    describe "when the pattern is a valid IP such as #{ip}", :broken => ruby_bug_7477 do
+    describe "when the pattern is a valid IP such as #{ip}" do
       before :each do
         @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,ip)
       end
       it "should match the specified IP" do
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => ruby_bug_7477
         @declaration.should be_match('www.testsite.org',ip)
       end
       it "should not match other IPs" do
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => ruby_bug_7477
         @declaration.should_not be_match('www.testsite.org','200.101.99.98')
       end
     end
