@@ -5,4 +5,9 @@
 # https://projects.puppetlabs.com/issues/2776
 # https://bugzilla.redhat.com/532085
 
-[[ $2 =~ ^(up|down)$ ]] && /sbin/service puppet condrestart || :
+
+if [ -f "/bin/systemctl" ]  ; then
+  [[ $2 =~ ^(up|down)$ ]] && /bin/systemctl try-restart puppet.service || :
+else
+  [[ $2 =~ ^(up|down)$ ]] && /sbin/service puppet condrestart || :
+fi
