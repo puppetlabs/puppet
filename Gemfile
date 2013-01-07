@@ -1,13 +1,10 @@
 source :rubygems
 
-# This is a fake version just to make bundler happy during development
-FAKE_VERSION = '9999.0.0'
-
 def location_for(place)
   if place =~ /^(git:[^#]*)#(.*)/
     [{ :git => $1, :branch => $2, :require => false }]
   elsif place =~ /^file:\/\/(.*)/
-    [FAKE_VERSION, { :path => File.expand_path($1), :require => false }]
+    ['>= 0', { :path => File.expand_path($1), :require => false }]
   else
     [place, { :require => false }]
   end
@@ -18,9 +15,16 @@ group(:development, :test) do
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
   gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
   gem "rack", "~> 1.4", :require => false
-  gem "rake", "~> 0.9.2", :require => false
+  gem "rake", :require => false
   gem "rspec", "~> 2.11.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
+  gem "activerecord", *location_for('~> 3.0.7')
+  gem "couchrest", *location_for('~> 1.0')
+  gem "net-ssh", *location_for('~> 2.1')
+  gem "puppetlabs_spec_helper"
+  gem "sqlite3"
+  gem "stomp"
+  gem "tzinfo"
 end
 
 platforms :mswin, :mingw do
