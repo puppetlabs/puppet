@@ -1,8 +1,15 @@
 # -*- encoding: utf-8 -*-
 
+require File.expand_path("../lib/puppet/version", __FILE__)
+
 Gem::Specification.new do |s|
   s.name = "puppet"
-  s.version = "2.7.19"
+  version = Puppet.version
+  if mdata = version.match(/(\d+\.\d+\.\d+)/)
+    s.version = mdata[1]
+  else
+    s.version = version
+  end
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Puppet Labs"]
