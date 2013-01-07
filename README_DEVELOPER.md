@@ -3,28 +3,6 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
-# Use of RVM considered dangerous #
-
-Use of RVM in production situations, e.g. running CI tests against this
-repository, is considered dangerous.  The reason we consider RVM to be
-dangerous is because the default behavior of RVM is to hijack the builtin
-behavior of the shell, causing Gemfile files to be loaded and evaluated when
-the shell changes directories into the project root.
-
-This behavior causes the CI Job execution environment that runs with `set -e`
-to be incompatible with RVM.
-
-We work around this issue by disabling the per-project RC file parsing using
-
-    if ! grep -qx rvm_project_rvmrc=0 ~/.rvmrc; then
-      echo rvm_project_rvmrc=0 >> ~/.rvmrc
-    fi
-
-When we setup CI nodes, but this is not standard or expected behavior.
-
-Please consider rbenv instead of rvm.  The default behavior of rvm is difficult
-to maintain with `set -e` shell environments.
-
 # Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
