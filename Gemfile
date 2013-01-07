@@ -1,20 +1,10 @@
 source :rubygems
 
-puppet_version_lib = File.expand_path("../lib/puppet/version", __FILE__)
-require puppet_version_lib
-
 def location_for(place)
   if place =~ /^(git:[^#]*)#(.*)/
     [{ :git => $1, :branch => $2, :require => false }]
   elsif place =~ /^file:\/\/(.*)/
-    path = $1
-    puppet_version = Puppet.version
-    if match_data = puppet_version.match(/(\d+\.\d+\.\d+)/)
-      gem_puppet_version = match_data[1]
-    else
-      gem_puppet_version = puppet_version
-    end
-    [gem_puppet_version, { :path => File.expand_path(path), :require => false }]
+    ['>= 0', { :path => File.expand_path($1), :require => false }]
   else
     [place, { :require => false }]
   end
