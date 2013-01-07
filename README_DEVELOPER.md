@@ -3,7 +3,9 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
-# Two Types of Catalog
+# Internal Structures
+
+## Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
 to be aware of the two different types of Catalog.  Developers will often find
@@ -23,7 +25,7 @@ is used to apply the configuration model to the system.
 Resource dependency information is most easily obtained from a RAL catalog by
 walking the graph instance produced by the `relationship_graph` method.
 
-## Resource Catalog
+### Resource Catalog
 
 If you're writing spec tests for something that deals with a catalog "server
 side," a new catalog terminus for example, then you'll be dealing with a
@@ -48,7 +50,7 @@ Resource dependencies are not easily walked using a resource catalog however.
 To walk the dependency tree convert the catalog to a RAL catalog as described
 in
 
-## RAL Catalog
+### RAL Catalog
 
 The resource catalog may be converted to a RAL catalog using `catalog.to_ral`.
 The RAL catalog contains `Puppet::Type` instances instead of `Puppet::Resource`
@@ -378,7 +380,7 @@ This special filebucket resource named "puppet" will cause the agent to fetch
 file contents specified by checksum from the remote filebucket instead of the
 default clientbucket.
 
-## Quick start
+## Trying out the Static Compiler
 
 Create a module that recursively downloads something.  The jeffmccune-filetest
 module will recursively copy the rubygems source tree.
