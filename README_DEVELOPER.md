@@ -3,36 +3,13 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
-# Use of RVM considered dangerous #
+# Internal Structures
 
-Use of RVM in production situations, e.g. running CI tests against this
-repository, is considered dangerous.  The reason we consider RVM to be
-dangerous is because the default behavior of RVM is to hijack the builtin
-behavior of the shell, causing Gemfile files to be loaded and evaluated when
-the shell changes directories into the project root.
-
-This behavior causes the CI Job execution environment that runs with `set -e`
-to be incompatible with RVM.
-
-We work around this issue by disabling the per-project RC file parsing using
-
-    if ! grep -qx rvm_project_rvmrc=0 ~/.rvmrc; then
-      echo rvm_project_rvmrc=0 >> ~/.rvmrc
-    fi
-
-When we setup CI nodes, but this is not standard or expected behavior.
-
-Please consider rbenv instead of rvm.  The default behavior of rvm is difficult
-to maintain with `set -e` shell environments.
-
-# Two Types of Catalog
+## Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
-to be aware of the two different types of Catalog.  I often ran into this when
-working in Professional Services when I built a small tool to diff two catalogs
-to determine if an upgrade in Puppet produces the same configuration catalogs.
-As a developer I've run into this difference while working on spec tests for
-the static compiler and working on spec tests for types and providers.
+to be aware of the two different types of Catalog.  Developers will often find
+this difference while working on the static compiler and types and providers.
 
 The two different types of catalog becomes relevant when writing spec tests
 because we frequently need to wire up a fake catalog so that we can exercise
@@ -48,7 +25,7 @@ is used to apply the configuration model to the system.
 Resource dependency information is most easily obtained from a RAL catalog by
 walking the graph instance produced by the `relationship_graph` method.
 
-## Resource Catalog
+### Resource Catalog
 
 If you're writing spec tests for something that deals with a catalog "server
 side," a new catalog terminus for example, then you'll be dealing with a
@@ -73,7 +50,7 @@ Resource dependencies are not easily walked using a resource catalog however.
 To walk the dependency tree convert the catalog to a RAL catalog as described
 in
 
-## RAL Catalog
+### RAL Catalog
 
 The resource catalog may be converted to a RAL catalog using `catalog.to_ral`.
 The RAL catalog contains `Puppet::Type` instances instead of `Puppet::Resource`
@@ -403,7 +380,7 @@ This special filebucket resource named "puppet" will cause the agent to fetch
 file contents specified by checksum from the remote filebucket instead of the
 default clientbucket.
 
-## Quick start
+## Trying out the Static Compiler
 
 Create a module that recursively downloads something.  The jeffmccune-filetest
 module will recursively copy the rubygems source tree.

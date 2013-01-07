@@ -2,7 +2,7 @@
 --private
 --verbose
 --markup markdown
---readme README_DEVELOPER.md
+--readme README.md
 --tag status
 --transitive-tag status
 --tag comment
