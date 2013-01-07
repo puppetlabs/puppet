@@ -46,4 +46,8 @@ See LICENSE file.
 Support
 -------
 
-Please log tickets and issues at our [Projects site](http://projects.puppetlabs.com)
+Please log tickets and issues at our [Projects
+site](http://projects.puppetlabs.com). A [mailing
+list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
+available for asking questions and getting help from others. In addition there
+is an active #puppet channel on Freenode.
