@@ -77,6 +77,8 @@ puser_exists=$?
 echo "Looking for Puppet Group"
 "${dscl}" -f "${dspath}" localonly -read /Local/Target/Groups/puppet
 pgroup_exists=$?
+# exit status 56 indicates user/group not found
+# exit status 0 indicates user/group does exist
 
 if [ $pgroup_exists == '0' ] && [ $puser_exists == '0' ]; then
   #Puppet user and group already exist
@@ -90,6 +92,12 @@ elif [ $pgroup_exists == '0' ] && [ $puser_exists == '56' ]; then
   scan_users
   echo "Creating Puppet User (uid: $last_user_id) in existing Puppet Group (gid: $last_group_id)"
   create_puser $last_user_id $last_group_id
+elif [ $pgroup_exists == '56' ] && [ $puser_exists == '0' ]; then
+  #puppet user exists, but group does not
+  last_user_id=`"${dscl}" -f "${dspath}" localonly -read /Local/Target/Users/puppet UniqueID | awk '{print $2}'`
+  scan_groups
+  echo "Creating Puppet Group (gid: $last_group_id), Puppet User exists (uid: $last_user_id)"
+  create_pgroup $last_group_id
 elif [ $pgroup_exists == '56' ] && [ $puser_exists == '56' ]; then
   scan_users
   scan_groups
