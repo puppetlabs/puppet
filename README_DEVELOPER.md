@@ -6,11 +6,8 @@ document what other developers need to know about changes made to Puppet.
 # Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
-to be aware of the two different types of Catalog.  I often ran into this when
-working in Professional Services when I built a small tool to diff two catalogs
-to determine if an upgrade in Puppet produces the same configuration catalogs.
-As a developer I've run into this difference while working on spec tests for
-the static compiler and working on spec tests for types and providers.
+to be aware of the two different types of Catalog.  Developers will often find
+this difference while working on the static compiler and types and providers.
 
 The two different types of catalog becomes relevant when writing spec tests
 because we frequently need to wire up a fake catalog so that we can exercise
