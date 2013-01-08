@@ -311,6 +311,10 @@ describe "Puppet Network Format" do
       end
     end
 
+    it "should render empty hashes as empty strings" do
+      subject.render({}).should == ''
+    end
+
     it "should render a non-trivially-keyed Hash as JSON" do
       hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
       subject.render(hash).should == json.render(hash).chomp
