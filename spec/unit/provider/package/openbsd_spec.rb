@@ -143,6 +143,17 @@ describe provider_class do
 
       provider.install
     end
+
+    %w{ installpath installpath= installpath=/path }.each do |line|
+      it "should reject '#{line}'" do
+        provider = subject.new(package())
+
+        expect_read_from_pkgconf([line])
+        expect {
+          provider.install
+        }.to raise_error(Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/)
+      end
+    end
   end
 
   context "#get_version" do

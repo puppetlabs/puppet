@@ -57,13 +57,14 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     unless @resource[:source]
       if File.exist?("/etc/pkg.conf")
-        pkgconf = File.open("/etc/pkg.conf", "rb").readlines
-        installpath = pkgconf.grep(/^installpath/).first
-        if (installpath)
-          installpath.sub!(/installpath\s+=\s+/, '')
-          installpath.sub!(/\n/, '')
-          @resource[:source] = installpath
-        else
+        File.open("/etc/pkg.conf", "rb").readlines.each do |line|
+          if matchdata = line.match(/^installpath\s+=\s+(.*)/)
+            @resource[:source] = matchdata[1]
+            break
+          end
+        end
+
+        unless @resource[:source]
           raise Puppet::Error,
           "No valid installpath found in /etc/pkg.conf and no source was set"
         end
