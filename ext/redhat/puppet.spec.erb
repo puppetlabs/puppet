@@ -103,9 +103,6 @@ done
 
 find examples/ -type f | xargs --no-run-if-empty chmod a-x
 
-# puppet-queue.conf is more of an example, used for stompserver
-mv conf/puppet-queue.conf examples/
-
 %install
 rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
