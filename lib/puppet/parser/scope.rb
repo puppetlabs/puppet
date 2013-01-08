@@ -289,7 +289,7 @@ class Puppet::Parser::Scope
   # @param options [Hash] Additional options, not part of api.
   # @return [Object] the value assigned to the given varname
   # @see #[]=
-  # @api
+  # @api public
   #
   def [](varname, options={})
     lookupvar(varname, options)
@@ -393,7 +393,7 @@ class Puppet::Parser::Scope
   # @param value [String] The value to assign to the given variable name.
   # @param options [Hash] Additional options, not part of api.
   #
-  # @api
+  # @api public
   #
   def []=(varname, value, options = {})
     setvar(varname, value, options = {})

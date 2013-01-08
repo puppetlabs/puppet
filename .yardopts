@@ -10,6 +10,7 @@
 --tag dsl:"DSL"
 --no-transitive-tag api
 --template-path yardoc/templates
---query has_tag?(:api)
+--api public
+--api private
 --hide-void-return
 lib/**/*.rb
