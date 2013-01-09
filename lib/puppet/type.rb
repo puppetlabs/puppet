@@ -611,11 +611,11 @@ class Type
     @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
 
-  # Gets the 'is' (current state) value of a parameter or property by name.
-  # To explicitly get the 'is' value use `o.is(:name)`, and to get the 'should' value
+  # Gets the 'should' (wanted state) value of a parameter or property by name.
+  # To explicitly get the 'is' (current state) value use `o.is(:name)`, and to explicitly get the 'should' value
   # use `o.should(:name)`
-  # @param name [String] the name of the attribute to obtain the 'is' value for.
-  # @return [Object] current value of the given attribute
+  # @param name [String] the name of the attribute to obtain the 'should' value for.
+  # @return [Object] 'should'/wanted value of the given attribute
   def [](name)
     name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
