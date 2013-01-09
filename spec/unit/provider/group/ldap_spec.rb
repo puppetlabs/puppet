@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+Puppet[:ldapgroupobjectclasses] = 'groupOfUniqueNames, groupOfNames'
 provider_class = Puppet::Type.type(:group).provider(:ldap)
 
 describe provider_class do
@@ -8,8 +9,8 @@ describe provider_class do
     provider_class.superclass.should equal(Puppet::Provider::Ldap)
   end
 
-  it "should manage :posixGroup objectclass" do
-    provider_class.manager.objectclasses.should == [:posixGroup]
+  it "should manage the :posixGroup objectclass together with the additional ones configured" do
+    provider_class.manager.objectclasses.should == [:groupOfUniqueNames, :groupOfNames, :posixGroup]
   end
 
   it "should use 'ou=Groups' as its relative base" do
@@ -28,7 +29,7 @@ describe provider_class do
     provider_class.manager.ldap_name(:gid).should == 'gidNumber'
   end
 
-  it "should map :members to 'memberUid', to be used by the user ldap provider" do
+  it "should map :members by default to 'memberUid', to be used by the user ldap provider" do
     provider_class.manager.ldap_name(:members).should == 'memberUid'
   end
 
