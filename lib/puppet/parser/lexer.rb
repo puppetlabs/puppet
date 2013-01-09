@@ -205,7 +205,7 @@ class Puppet::Parser::Lexer
       other = lexer.scan_until(%r{/})
       value += other
     end
-    regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
+    regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').to_s.gsub("\\/", "/")
     [self, Regexp.new(regex)]
   end
 

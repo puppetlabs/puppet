@@ -200,7 +200,7 @@ module Puppet
         clone = dup
         if @name == :dynamic
           clone.pattern = clone.pattern.reverse.collect do |p|
-            p.gsub(/\$(\d)/) { |m| match[$1.to_i] }
+            p.to_s.gsub(/\$(\d)/) { |m| match[$1.to_i] }
           end.join(".")
         end
         clone
@@ -239,9 +239,9 @@ module Puppet
       IPv6_full    = "_:_:_:_:_:_:_:_|_:_:_:_:_:_::_?|_:_:_:_:_::((_:)?_)?|_:_:_:_::((_:){0,2}_)?|_:_:_::((_:){0,3}_)?|_:_::((_:){0,4}_)?|_::((_:){0,5}_)?|::((_:){0,6}_)?"
       IPv6_partial = "_:_:_:_:_:_:|_:_:_:_::(_:)?|_:_::(_:){0,2}|_::(_:){0,3}"
       # It should be:
-      #     IP = "#{IPv4}|#{IPv6_full}|(#{IPv6_partial}#{IPv4})".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
+      #     IP = "#{IPv4}|#{IPv6_full}|(#{IPv6_partial}#{IPv4})".to_s.gsub(/_/,'([0-9a-fA-F]{1,4})').to_s.gsub(/\(/,'(?:')
       # but ruby's ipaddr lib doesn't support the hybrid format
-      IP = "#{IPv4}|#{IPv6_full}".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
+      IP = "#{IPv4}|#{IPv6_full}".to_s.gsub(/_/,'([0-9a-fA-F]{1,4})').to_s.gsub(/\(/,'(?:')
 
       def parse_ip(value)
         @name = :ip

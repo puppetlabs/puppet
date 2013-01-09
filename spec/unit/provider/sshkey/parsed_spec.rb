@@ -57,14 +57,14 @@ describe "sshkey parsed provider" do
       subject.prefetch
       records = subject.target_records(fixture)
 
-      text = subject.to_file(records).gsub(/^# HEADER.+\n/, '')
+      text = subject.to_file(records).to_s.gsub(/^# HEADER.+\n/, '')
 
       oldlines = File.readlines(fixture).map(&:chomp)
       newlines = text.chomp.split("\n")
       oldlines.length.should == newlines.length
 
       oldlines.zip(newlines).each do |old, new|
-        old.gsub(/\s+/, '').should == new.gsub(/\s+/, '')
+        old.to_s.gsub(/\s+/, '').should == new.to_s.gsub(/\s+/, '')
       end
     end
   end

@@ -50,7 +50,7 @@ module PSON
     end
   else
     def utf8_to_pson(string) # :nodoc:
-      string.gsub(/["\\\x0-\x1f]/n) { MAP[$MATCH] }
+      string.to_s.gsub(/["\\\x0-\x1f]/n) { MAP[$MATCH] }
     end
   end
   module_function :utf8_to_pson

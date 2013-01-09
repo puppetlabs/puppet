@@ -15,7 +15,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
   # Throw some facts in there, so we know where the report is from.
   ["Ruby Version", "Puppet Version", "Operating System", "Operating System Release"].each do |label|
-    name = label.gsub(/\s+/, '')
+    name = label.to_s.gsub(/\s+/, '')
     value = Facter.value(name)
     ret << option(label, value)
   end

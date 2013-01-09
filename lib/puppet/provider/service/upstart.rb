@@ -271,15 +271,15 @@ private
   end
 
   def uncomment(line)
-    line.gsub(/^(\s*)#+/, '\1')
+    line.to_s.gsub(/^(\s*)#+/, '\1')
   end
 
   def remove_trailing_comments_from_commented_line_of(line)
-    line.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
+    line.to_s.gsub(/^(\s*#+\s*[^#]*).*/, '\1')
   end
 
   def remove_trailing_comments_from(line)
-    line.gsub(/^(\s*[^#]*).*/, '\1')
+    line.to_s.gsub(/^(\s*[^#]*).*/, '\1')
   end
 
   def unbalanced_parens_on(line)

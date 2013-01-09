@@ -306,7 +306,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           end
 
           it "should convert backslashes to forward slashes" do
-            resource[:source] = "#{prefix}#{sourcepath.gsub(/\\/, '/')}"
+            resource[:source] = "#{prefix}#{sourcepath.to_s.gsub(/\\/, '/')}"
           end
         end
 

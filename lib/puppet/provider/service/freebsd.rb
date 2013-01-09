@@ -23,7 +23,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     rcvar = execute([self.initscript, :rcvar], :failonfail => true, :combine => false, :squelch => false)
     rcvar = rcvar.split("\n")
     rcvar.delete_if {|str| str =~ /^#\s*$/}
-    rcvar[1] = rcvar[1].gsub(/^\$/, '')
+    rcvar[1] = rcvar[1].to_s.gsub(/^\$/, '')
     rcvar
   end
 

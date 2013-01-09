@@ -38,7 +38,7 @@ module Puppet::ModuleTool
             @version     = parsed[:version]
           else
             @source = :repository
-            @module_name = @name.gsub('/', '-')
+            @module_name = @name.to_s.gsub('/', '-')
             @version = options[:version]
           end
 
@@ -138,7 +138,7 @@ module Puppet::ModuleTool
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
               metadata = {
-                :name    => mod.forge_name.gsub('/', '-'),
+                :name    => mod.forge_name.to_s.gsub('/', '-'),
                 :version => mod.version
               }
               next if release[:module] == metadata[:name]

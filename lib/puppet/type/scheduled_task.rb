@@ -37,7 +37,7 @@ Puppet::Type.newtype(:scheduled_task) do
       # windows converts slashes to backslashes, so the *is* value
       # has backslashes. Do the same for the *should* value, so that
       # we are slash-insensitive. See #13009
-      File.expand_path(value).gsub(/\//, '\\')
+      File.expand_path(value).to_s.gsub(/\//, '\\')
     end
   end
 

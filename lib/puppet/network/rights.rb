@@ -130,7 +130,7 @@ class Rights
       when /^\//
         @key = Regexp.new("^" + Regexp.escape(name))
       when /^~/ # this is a regex
-        @name = name.gsub(/^~\s+/,'')
+        @name = name.to_s.gsub(/^~\s+/,'')
         @key = Regexp.new(@name)
       else
         raise ArgumentError, "Unknown right type '#{name}'"
@@ -212,7 +212,7 @@ class Rights
     end
 
     def ==(name)
-      self.name == name.gsub(/^~\s+/,'')
+      self.name == name.to_s.gsub(/^~\s+/,'')
     end
   end
 end

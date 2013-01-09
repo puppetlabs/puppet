@@ -66,7 +66,7 @@ end
 def do_configs(configs, target, strip = 'conf/')
   Dir.mkdir(target) unless File.directory? target
   configs.each do |cf|
-    ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
+    ocf = File.join(InstallOptions.config_dir, cf.to_s.gsub(/#{strip}/, ''))
     if $haveftools
       File.install(cf, ocf, 0644, true)
     else
@@ -100,14 +100,14 @@ end
 def do_bins(bins, target, strip = 's?bin/')
   Dir.mkdir(target) unless File.directory? target
   bins.each do |bf|
-    obf = bf.gsub(/#{strip}/, '')
+    obf = bf.to_s.gsub(/#{strip}/, '')
     install_binfile(bf, obf, target)
   end
 end
 
 def do_libs(libs, strip = 'lib/')
   libs.each do |lf|
-    olf = File.join(InstallOptions.site_dir, lf.gsub(/#{strip}/, ''))
+    olf = File.join(InstallOptions.site_dir, lf.to_s.gsub(/#{strip}/, ''))
     op = File.dirname(olf)
     if $haveftools
       File.makedirs(op, true)
@@ -123,7 +123,7 @@ end
 
 def do_man(man, strip = 'man/')
   man.each do |mf|
-    omf = File.join(InstallOptions.man_dir, mf.gsub(/#{strip}/, ''))
+    omf = File.join(InstallOptions.man_dir, mf.to_s.gsub(/#{strip}/, ''))
     om = File.dirname(omf)
     if $haveftools
       File.makedirs(om, true)

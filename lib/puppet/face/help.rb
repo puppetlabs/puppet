@@ -33,7 +33,7 @@ Puppet::Face.define(:help, '0.0.1') do
       if options.nil? or args.length > 2 then
         if args.select { |x| x == 'help' }.length > 2 then
           c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
-          i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
+          i = <<-'EOT'.to_s.gsub(/\s*/, '').to_i(36)
             3he6737w1aghshs6nwrivl8mz5mu9nywg9tbtlt081uv6fq5kvxse1td3tj1wvccmte806nb
             cy6de2ogw0fqjymbfwi6a304vd56vlq71atwmqsvz3gpu0hj42200otlycweufh0hylu79t3
             gmrijm6pgn26ic575qkexyuoncbujv0vcscgzh5us2swklsp5cqnuanlrbnget7rt3956kam

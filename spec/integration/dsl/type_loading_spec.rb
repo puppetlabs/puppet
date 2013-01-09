@@ -9,7 +9,7 @@ include PuppetSpec::Files
 
 describe Puppet::DSL do
   def mk_manifest(file, content)
-    name = self.module.name + "::" + file.gsub("/", "::").split(".")[0]
+    name = self.module.name + "::" + file.to_s.gsub("/", "::").split(".")[0]
     path = File.join(modulebase, self.module.name, "manifests", file)
     FileUtils.mkdir_p(File.split(path)[0])
 

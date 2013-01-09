@@ -8,12 +8,12 @@ module Puppet::ModuleTool::Shared
     @installed  = Hash.new { |h,k| h[k] = [] }
 
     @environment.modules_by_path.values.flatten.each do |mod|
-      mod_name = (mod.forge_name || mod.name).gsub('/', '-')
+      mod_name = (mod.forge_name || mod.name).to_s.gsub('/', '-')
       @installed[mod_name] << mod
       d = @local["#{mod_name}@#{mod.version}"]
       (mod.dependencies || []).each do |hash|
         name, conditions = hash['name'], hash['version_requirement']
-        name = name.gsub('/', '-')
+        name = name.to_s.gsub('/', '-')
         d[name] = conditions
         @conditions[name] << {
           :module => mod_name,
@@ -34,7 +34,7 @@ module Puppet::ModuleTool::Shared
     info = forge.remote_dependency_info(author, modname, @options[:version])
     info.each do |pair|
       mod_name, releases = pair
-      mod_name = mod_name.gsub('/', '-')
+      mod_name = mod_name.to_s.gsub('/', '-')
       releases.each do |rel|
         semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer.MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
@@ -42,7 +42,7 @@ module Puppet::ModuleTool::Shared
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
         d = @remote["#{mod_name}@#{rel['version']}"]
         (rel['dependencies'] || []).each do |name, conditions|
-          d[name.gsub('/', '-')] = conditions
+          d[name.to_s.gsub('/', '-')] = conditions
         end
       end
     end

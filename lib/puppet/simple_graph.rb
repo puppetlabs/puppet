@@ -426,7 +426,7 @@ class Puppet::SimpleGraph
   # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
   # which match +dot+ properties will be used as well.
   def to_dot_graph (params = {})
-    params['name'] ||= self.class.name.gsub(/:/,'_')
+    params['name'] ||= self.class.name.to_s.gsub(/:/,'_')
     fontsize   = params['fontsize'] ? params['fontsize'] : '8'
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge

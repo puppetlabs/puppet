@@ -79,7 +79,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       highlight = proc do |s|
         s = s.gsub(term, colorize(:green, term))
-        s = s.gsub(term.gsub('/', '-'), colorize(:green, term.gsub('/', '-'))) if term =~ /\//
+        s = s.gsub(term.to_s.gsub('/', '-'), colorize(:green, term.to_s.gsub('/', '-'))) if term =~ /\//
         s
       end
 

@@ -14,7 +14,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
 
     # Print the doc string itself
     begin
-      str << object.desc.gsub(/\n/, " ")
+      str << object.desc.to_s.gsub(/\n/, " ")
     rescue => detail
       Puppet.log_exception(detail)
     end

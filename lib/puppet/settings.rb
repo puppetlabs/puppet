@@ -48,7 +48,7 @@ class Puppet::Settings
     else
       fqdn = hostname
     end
-    fqdn.gsub(/\.$/, '')
+    fqdn.to_s.gsub(/\.$/, '')
   end
 
   def self.hostname_fact()
@@ -273,7 +273,7 @@ class Puppet::Settings
   def convert(value, environment = nil)
     return nil if value.nil?
     return value unless value.is_a? String
-    newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+    newval = value.to_s.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
       varname = $2 || $1
       if varname == "environment" and environment
         environment
@@ -872,7 +872,7 @@ The file format supports octothorpe-commented lines, but not partial-line commen
 
 Generated on #{Time.now}.
 
-}.gsub(/^/, "# ")
+}.to_s.gsub(/^/, "# ")
 
 #         Add a section heading that matches our name.
     str += "[#{preferred_run_mode}]\n"

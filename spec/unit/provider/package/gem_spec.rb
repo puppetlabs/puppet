@@ -124,7 +124,7 @@ describe provider_class do
     end
 
     it "should return ensure values as an array of installed versions" do
-      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.to_s.gsub(/        /, '')
         systemu (1.2.0)
         vagrant (0.8.7, 0.6.9)
       HEREDOC

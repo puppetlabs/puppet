@@ -67,7 +67,7 @@ class Puppet::FileServing::Configuration
       path = nil
     elsif path
       # Remove any double slashes that might have occurred
-      path = path.gsub(/\/+/, "/")
+      path = path.to_s.gsub(/\/+/, "/")
     end
 
     return mount, path

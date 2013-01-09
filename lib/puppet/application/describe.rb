@@ -69,7 +69,7 @@ class TypeDoc
       a.to_s <=> b.to_s
     }.each do |name|
       type = @types[name]
-      s = type.doc.gsub(/\s+/, " ")
+      s = type.doc.to_s.gsub(/\s+/, " ")
       n = s.index(".")
       if n.nil?
         s = ".. no documentation .."

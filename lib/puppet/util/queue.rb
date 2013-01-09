@@ -76,7 +76,7 @@ module Puppet::Util::Queue
   # a flat namespace of symbols is reasonably safe.
   def self.queue_type_from_class(klass)
     # convert last segment of classname from studly caps to lower case with underscores, and symbolize
-    klass.name.split('::').pop.sub(/^[A-Z]/) {|c| c.downcase}.gsub(/[A-Z]/) {|c| '_' + c.downcase }.intern
+    klass.name.split('::').pop.sub(/^[A-Z]/) {|c| c.downcase}.to_s.gsub(/[A-Z]/) {|c| '_' + c.downcase }.intern
   end
 
   # The class object for the client to be used, determined by queue configuration

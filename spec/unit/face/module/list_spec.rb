@@ -102,7 +102,7 @@ describe "puppet module list" do
       Puppet::Face[:module, :current].list_when_rendering_console(
         { empty_modpath => [] },
         {:modulepath => empty_modpath}
-      ).should == <<-HEREDOC.gsub('        ', '')
+      ).should == <<-HEREDOC.to_s.gsub('        ', '')
         #{empty_modpath} (no modules installed)
       HEREDOC
     end
@@ -118,7 +118,7 @@ describe "puppet module list" do
       output = Puppet::Face[:module, :current].
         list_when_rendering_console(dependency_tree, {})
 
-      output.should == <<-HEREDOC.gsub('        ', '')
+      output.should == <<-HEREDOC.to_s.gsub('        ', '')
         #{modpath}
         ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
         └── nometadata (\e[0;36m???\e[0m)
@@ -140,7 +140,7 @@ describe "puppet module list" do
           path1 => [],
         },
         {}
-      ).should == <<-HEREDOC.gsub('        ', '')
+      ).should == <<-HEREDOC.to_s.gsub('        ', '')
         #{path1} (no modules installed)
         #{path2} (no modules installed)
         #{path3} (no modules installed)
@@ -168,7 +168,7 @@ describe "puppet module list" do
         {:tree => true}
       )
 
-      output.should == <<-HEREDOC.gsub('        ', '')
+      output.should == <<-HEREDOC.to_s.gsub('        ', '')
         #{@modpath1}
         └─┬ puppetlabs-other_mod (\e[0;36mv1.0.0\e[0m)
           └── puppetlabs-dependable (\e[0;36mv0.0.5\e[0m)

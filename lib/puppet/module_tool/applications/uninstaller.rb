@@ -47,7 +47,7 @@ module Puppet::ModuleTool
 
       def find_installed_module
         @environment.modules_by_path.values.flatten.each do |mod|
-          mod_name = (mod.forge_name || mod.name).gsub('/', '-')
+          mod_name = (mod.forge_name || mod.name).to_s.gsub('/', '-')
           if mod_name == @name
             @unfiltered << {
               :name    => mod_name,
@@ -89,14 +89,14 @@ module Puppet::ModuleTool
         if !@options[:force] && mod.has_metadata? && mod.has_local_changes?
           raise LocalChangesError,
             :action            => :uninstall,
-            :module_name       => (mod.forge_name || mod.name).gsub('/', '-'),
+            :module_name       => (mod.forge_name || mod.name).to_s.gsub('/', '-'),
             :requested_version => @options[:version],
             :installed_version => mod.version
         end
 
         if !@options[:force] && !mod.required_by.empty?
           raise ModuleIsRequiredError,
-            :module_name       => (mod.forge_name || mod.name).gsub('/', '-'),
+            :module_name       => (mod.forge_name || mod.name).to_s.gsub('/', '-'),
             :required_by       => mod.required_by,
             :requested_version => @options[:version],
             :installed_version => mod.version

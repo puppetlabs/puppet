@@ -65,7 +65,7 @@ class Puppet::Provider::Package::Windows
     end
 
     def self.quote(value)
-      value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+      value.include?(' ') ? %Q["#{value.to_s.gsub(/"/, '\"')}"] : value
     end
 
     def initialize(name, version)

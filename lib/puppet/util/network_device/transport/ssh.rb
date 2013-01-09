@@ -87,7 +87,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       # at this point we have accumulated some data in @buf
       # or the channel has been closed
       if @buf != ""
-        line += @buf.gsub(/\r\n/no, "\n")
+        line += @buf.to_s.gsub(/\r\n/no, "\n")
         @buf = ''
         yield line if block_given?
       elsif @eof

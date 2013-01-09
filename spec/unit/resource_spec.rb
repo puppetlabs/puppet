@@ -665,7 +665,7 @@ type: File
     end
 
     it "should align, sort and add trailing commas to attributes with ensure first" do
-      @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+      @resource.to_manifest.should == <<-HEREDOC.to_s.gsub(/^\s{8}/, '').to_s.gsub(/\n$/, '')
         one::two { '/my/file':
           ensure => 'present',
           foo    => ['one', 'two'],

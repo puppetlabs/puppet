@@ -105,7 +105,7 @@ class Puppet::Module
 
   def load_metadata
     data = PSON.parse File.read(metadata_file)
-    @forge_name = data['name'].gsub('-', '/') if data['name']
+    @forge_name = data['name'].to_s.gsub('-', '/') if data['name']
 
     [:source, :author, :version, :license, :puppetversion, :dependencies].each do |attr|
       unless value = data[attr.to_s]
@@ -231,10 +231,10 @@ class Puppet::Module
 
       error_details = {
         :name => forge_name,
-        :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
+        :version_constraint => version_string.to_s.gsub(/^(?=\d)/, "v"),
         :parent => {
           :name => self.forge_name,
-          :version => self.version.gsub(/^(?=\d)/, "v")
+          :version => self.version.to_s.gsub(/^(?=\d)/, "v")
         },
         :mod_details => {
           :installed_version => dep_mod.nil? ? nil : dep_mod.version

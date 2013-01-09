@@ -30,12 +30,12 @@ Puppet::Util::Log.newdesttype :syslog do
     # of them.
     if msg.source == "Puppet"
       msg.to_s.split("\n").each do |line|
-        @syslog.send(msg.level, line.gsub("%", '%%'))
+        @syslog.send(msg.level, line.to_s.gsub("%", '%%'))
       end
     else
       msg.to_s.split("\n").each do |line|
         @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
-            line.gsub("%", '%%')
+            line.to_s.gsub("%", '%%')
           ]
         )
       end

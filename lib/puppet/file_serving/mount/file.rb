@@ -94,7 +94,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
       map = localmap
     end
 
-    path.gsub(/%(.)/) do |v|
+    path.to_s.gsub(/%(.)/) do |v|
       key = $1
       if key == "%"
         "%"

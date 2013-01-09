@@ -54,7 +54,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      name = name.gsub('/', '-')
+      name = name.to_s.gsub('/', '-')
       Puppet.notice "Preparing to upgrade '#{name}' ..."
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Upgrader.new(name, Puppet::Forge.new("PMT", self.version), options).run

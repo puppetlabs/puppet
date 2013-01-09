@@ -24,14 +24,14 @@ class Nagios::Base
 
   # Convert a parameter to camelcase
   def self.camelcase(param)
-    param.gsub(/_./) do |match|
+    param.to_s.gsub(/_./) do |match|
       match.sub(/_/,'').capitalize
     end
   end
 
   # Uncamelcase a parameter.
   def self.decamelcase(param)
-    param.gsub(/[A-Z]/) do |match|
+    param.to_s.gsub(/[A-Z]/) do |match|
       "_#{match.downcase}"
     end
   end
@@ -250,7 +250,7 @@ class Nagios::Base
     if map.include?(param)
       return map[param]
     else
-      return "nagios-" + param.id2name.gsub(/_/,'-')
+      return "nagios-" + param.id2name.to_s.gsub(/_/,'-')
     end
   end
 
