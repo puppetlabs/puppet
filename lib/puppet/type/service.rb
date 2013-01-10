@@ -193,7 +193,7 @@ module Puppet
       desc "The control variable used to manage services (originally for HP-UX).
         Defaults to the upcased service name plus `START` replacing dots with
         underscores, for those providers that support the `controllable` feature."
-      defaultto { resource.name.gsub(".","_").upcase + "_START" if resource.provider.controllable? }
+      defaultto { resource.name.to_s.gsub(".","_").upcase + "_START" if resource.provider.controllable? }
     end
 
     newparam :hasrestart do

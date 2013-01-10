@@ -303,7 +303,7 @@ Puppet::Type.newtype(:file) do
 
   def self.[](path)
     return nil unless path
-    super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
+    super(path.to_s.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
   def self.instances

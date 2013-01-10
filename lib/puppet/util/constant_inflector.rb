@@ -12,12 +12,12 @@ module Puppet
     module ConstantInflector
       def file2constant(file)
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-        x = file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |term| $1.capitalize }
+        x = file.split("/").collect { |name| name.capitalize }.join("::").to_s.gsub(/_+(.)/) { |term| $1.capitalize }
       end
       module_function :file2constant
 
       def constant2file(constant)
-        constant.to_s.gsub(/([a-z])([A-Z])/) { |term| $1 + "_#{$2}" }.gsub("::", "/").downcase
+        constant.to_s.gsub(/([a-z])([A-Z])/) { |term| $1 + "_#{$2}" }.to_s.gsub("::", "/").downcase
       end
       module_function :constant2file
     end

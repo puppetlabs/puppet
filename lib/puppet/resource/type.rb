@@ -247,7 +247,7 @@ class Puppet::Resource::Type
 
   def name
     return @name unless @name.is_a?(Regexp)
-    @name.source.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')
+    @name.source.downcase.to_s.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')
   end
 
   def name_is_regex?

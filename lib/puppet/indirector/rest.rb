@@ -50,7 +50,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     when /^2/
       raise "No content type in http response; cannot parse" unless response['content-type']
 
-      content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
+      content_type = response['content-type'].to_s.gsub(/\s*;.*$/,'') # strip any appended charset
 
       body = uncompress_body(response)
 

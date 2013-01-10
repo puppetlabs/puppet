@@ -89,13 +89,13 @@ Puppet::Type.newtype(:interface) do
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each do |value|
-          self.fail "Invalid interface ip address" unless parse(value.gsub(/\s*(eui-64|link-local)\s*$/,''))
+          self.fail "Invalid interface ip address" unless parse(value.to_s.gsub(/\s*(eui-64|link-local)\s*$/,''))
         end
       end
 
       munge do |value|
-        option = value =~ /eui-64|link-local/i ? value.gsub(/^.*?\s*(eui-64|link-local)\s*$/,'\1') : nil
-        [parse(value.gsub(/\s*(eui-64|link-local)\s*$/,'')), option].flatten
+        option = value =~ /eui-64|link-local/i ? value.to_s.gsub(/^.*?\s*(eui-64|link-local)\s*$/,'\1') : nil
+        [parse(value.to_s.gsub(/\s*(eui-64|link-local)\s*$/,'')), option].flatten
       end
 
       def value_to_s(value)

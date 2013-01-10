@@ -10,7 +10,7 @@ class Puppet::Settings::BaseSetting
   end
 
   def desc=(value)
-    @desc = value.gsub(/^\s*/, '')
+    @desc = value.to_s.gsub(/^\s*/, '')
   end
 
   def call_on_define
@@ -130,7 +130,7 @@ class Puppet::Settings::BaseSetting
 
   # Convert the object to a config statement.
   def to_config
-    str = @desc.gsub(/^/, "# ") + "\n"
+    str = @desc.to_s.gsub(/^/, "# ") + "\n"
 
     # Add in a statement about the default.
     str += "# The default value is '#{default(true)}'.\n" if default(true)

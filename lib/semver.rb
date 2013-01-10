@@ -22,7 +22,7 @@ class SemVer < Numeric
   end
 
   def self.[](range)
-    range.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
+    range.to_s.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
       case r
       when SemVer::VERSION
         SemVer.new(pre(r)) .. SemVer.new(r)

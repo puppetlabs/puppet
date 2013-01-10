@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   end
 
   def shell_quote(value)
-    value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+    value.include?(' ') ? %Q["#{value.to_s.gsub(/"/, '\"')}"] : value
   end
 
   def join_options(options)

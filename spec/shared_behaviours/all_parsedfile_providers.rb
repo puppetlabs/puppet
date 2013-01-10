@@ -14,7 +14,7 @@ shared_examples_for "all parsedfile providers" do |provider, *files|
       oldlines = File.readlines(file)
       newlines = text.chomp.split "\n"
       oldlines.zip(newlines).each do |old, new|
-        new.gsub(/\s+/, '').should == old.chomp.gsub(/\s+/, '')
+        new.to_s.gsub(/\s+/, '').should == old.chomp.to_s.gsub(/\s+/, '')
       end
     end
   end

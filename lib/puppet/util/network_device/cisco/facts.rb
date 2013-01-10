@@ -59,7 +59,7 @@ class Puppet::Util::NetworkDevice::Cisco::Facts
   end
 
   def ios_major_version(version)
-    version.gsub(/^(\d+)\.(\d+)\(.+\)([A-Z]+)([\da-z]+)?/, '\1.\2\3')
+    version.to_s.gsub(/^(\d+)\.(\d+)\(.+\)([A-Z]+)([\da-z]+)?/, '\1.\2\3')
   end
 
   def uptime_to_seconds(uptime)

@@ -90,14 +90,14 @@ class Puppet::Util::Reference
 
     # Now handle the defaults
     @title ||= "#{@name.to_s.capitalize} Reference"
-    @page ||= @title.gsub(/\s+/, '')
+    @page ||= @title.to_s.gsub(/\s+/, '')
     @depth ||= 2
     @header ||= ""
   end
 
   # Indent every line in the chunk except those which begin with '..'.
   def indent(text, tab)
-    text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
+    text.gsub(/(^|\A)/, tab).to_s.gsub(/^ +\.\./, "..")
   end
 
   def option(name, value)

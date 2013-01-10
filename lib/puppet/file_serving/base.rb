@@ -25,7 +25,7 @@ class Puppet::FileServing::Base
        path
      else
        File.join(path, relative_path)
-     end).gsub(%r{//+}, "/")
+     end).to_s.gsub(%r{//+}, "/")
   end
 
   def initialize(path, options = {})

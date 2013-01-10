@@ -50,7 +50,7 @@ task :gen_manpages do
   # Create LEGACY binary man pages (i.e. delete me for 2.8.0)
   binary = bins + sbins
   binary.each do |bin|
-    b = bin.gsub( /^s?bin\//, "")
+    b = bin.to_s.gsub( /^s?bin\//, "")
     %x{RUBYLIB=./lib:$RUBYLIB #{bin} --help > ./man/man8/#{b}.8.ronn}
     %x{#{ronn} #{ronn_args} ./man/man8/#{b}.8.ronn}
     FileUtils.rm("./man/man8/#{b}.8.ronn")

@@ -44,7 +44,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
   # Handle the parsing of the reports attribute.
   def reports
     # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
+    x = Puppet[:reports].to_s.gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
   end
 
   def processors(&blk)

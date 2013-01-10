@@ -15,7 +15,7 @@ require 'puppet/provider/parsedfile'
     def post_parse(record)
       # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
       # It's not sufficient to assign to an existing hash.
-      recipient = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
+      recipient = record[:recipient].split(/\s*,\s*/).collect { |d| d.to_s.gsub(/^['"]|['"]$/, '') }
       record[:recipient] = recipient
       record
     end

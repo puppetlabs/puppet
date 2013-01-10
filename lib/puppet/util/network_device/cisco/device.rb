@@ -87,7 +87,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     IF.each do |k,ifnames|
       if found = ifnames.find { |ifname| interface =~ /^#{ifname}\s*\d/i }
         found = /^#{found}(.+)\Z/i.match(interface)
-        return "#{k.to_s}#{found[1]}".gsub(/\s+/,'')
+        return "#{k.to_s}#{found[1]}".to_s.gsub(/\s+/,'')
       end
     end
     interface

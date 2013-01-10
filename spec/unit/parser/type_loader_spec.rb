@@ -130,7 +130,7 @@ describe Puppet::Parser::TypeLoader do
     def mk_manifests(base, mod, type, files)
       exts = {"ruby" => ".rb", "puppet" => ".pp"}
       files.collect do |file|
-        name = mod.name + "::" + file.gsub("/", "::")
+        name = mod.name + "::" + file.to_s.gsub("/", "::")
         path = File.join(base, mod.name, "manifests", file + exts[type])
         FileUtils.mkdir_p(File.split(path)[0])
 
