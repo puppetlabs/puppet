@@ -192,11 +192,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_datadir}/emacs
 %{_datadir}/vim
 %{_datadir}/%{name}
-# These need to be owned by puppet so the server can
-# write to them
-%attr(-, puppet, puppet) %{_localstatedir}/run/puppet
-%attr(0750, puppet, puppet) %{_localstatedir}/log/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+# man pages
 %{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/puppet.8.gz
 %{_mandir}/man8/puppet-agent.8.gz
@@ -232,6 +228,14 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_mandir}/man8/puppet-resource_type.8.gz
 %{_mandir}/man8/puppet-secret_agent.8.gz
 %{_mandir}/man8/puppet-status.8.gz
+# These need to be owned by puppet so the server can
+# write to them. The separate %defattr's are required
+# to work around RH Bugzilla 681540
+%defattr(-, puppet, puppet, 0755)
+%{_localstatedir}/run/puppet
+%defattr(-, puppet, puppet, 0750)
+%{_localstatedir}/log/puppet
+%{_localstatedir}/lib/puppet
 
 %files server
 %defattr(-, root, root, 0755)
@@ -374,6 +378,9 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Wed Jan 9  2013 Ryan Uber <ru@ryanuber.com> - 3.1.0-0.1rc1
+- Work-around for RH Bugzilla 681540
 
 * Tue Dec 18 2012 Matthaus Owens <matthaus@puppetlabs.com>
 - Remove for loop on examples/ code which no longer exists. Add --no-run-if-empty to xargs invocations.
