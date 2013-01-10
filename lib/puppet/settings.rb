@@ -48,7 +48,7 @@ class Puppet::Settings
     else
       fqdn = hostname
     end
-    fqdn.gsub(/\.$/, '')
+    fqdn.to_s.gsub(/\.$/, '')
   end
 
   def self.hostname_fact()
