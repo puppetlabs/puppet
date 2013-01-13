@@ -216,6 +216,28 @@ describe Puppet::Provider::NameService do
     end
   end
 
+  describe "munge" do
+    it "should return the input value if no munge method has be defined" do
+      provider.munge(:foo, 100).should == 100
+    end
+
+    it "should return the munged value otherwise" do
+      described_class.options(:foo, :munge => proc { |x| x*2 })
+      provider.munge(:foo, 100).should == 200
+    end
+  end
+
+  describe "unmunge" do
+    it "should return the input value if no unmunge method has been defined" do
+      provider.unmunge(:foo, 200).should == 200
+    end
+
+    it "should return the unmunged value otherwise" do
+      described_class.options(:foo, :unmunge => proc { |x| x/2 })
+      provider.unmunge(:foo, 200).should == 100
+    end
+  end
+
 
   describe "exists?" do
     it "should return true if we can retrieve anything" do
@@ -236,10 +258,17 @@ describe Puppet::Provider::NameService do
       provider.get(:bar).should == 'barval'
     end
 
+    it "should unmunge the value first" do
+      described_class.options(:bar, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
+      provider.expects(:getinfo).with(false).returns(:foo => 200, :bar => 500)
+      provider.get(:bar).should == 250
+    end
+
     it "should return nil if getinfo cannot retrieve the value" do
       provider.expects(:getinfo).with(false).returns(:foo => 'fooval', :bar => 'barval')
       provider.get(:no_such_key).should be_nil
     end
+
   end
 
   describe "set" do
@@ -255,6 +284,13 @@ describe Puppet::Provider::NameService do
     it "should execute the modify command on valid values" do
       provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
       provider.expects(:execute).with ['/bin/modify', '-f', '100']
+      provider.set(:foo, 100)
+    end
+
+    it "should munge the value first" do
+      described_class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
+      provider.expects(:modifycmd).with(:foo, 200).returns ['/bin/modify', '-f', '200' ]
+      provider.expects(:execute).with ['/bin/modify', '-f', '200']
       provider.set(:foo, 100)
     end
 

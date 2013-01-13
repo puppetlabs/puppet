@@ -56,7 +56,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
-        cmd << flag(property) << value
+        cmd << flag(property) << munge(property, value)
       end
     end
     cmd
