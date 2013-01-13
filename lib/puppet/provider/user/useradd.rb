@@ -12,6 +12,27 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :groups, :flag => "-G"
   options :password_min_age, :flag => "-m"
   options :password_max_age, :flag => "-M"
+  options :expiry,
+    :munge => proc { |value|
+      if value == :absent
+        case Facter.value(:operatingsystem)
+        when 'Solaris'
+          ' '
+        else
+          ''
+        end
+      else
+        value
+      end
+    },
+    :unmunge => proc { |value|
+      if value == -1
+        :absent
+      else
+        # Expiry is days after 1970-01-01
+        Date.new(1970).next_day(value).strftime('%Y-%m-%d')
+      end
+    }
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -109,6 +130,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     if Puppet.features.libshadow?
       if ent = Shadow::Passwd.getspnam(@resource.name)
         return ent.sp_pwdp
+      end
+    end
+    :absent
+  end
+
+  def expiry
+    if Puppet.features.libshadow?
+      if ent = Shadow::Passwd.getspnam(@resource.name)
+        return unmunge(:expiry, ent.sp_expire)
       end
     end
     :absent
