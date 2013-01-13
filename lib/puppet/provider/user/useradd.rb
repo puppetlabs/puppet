@@ -10,9 +10,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
-  options :password_min_age, :flag => "-m"
-  options :password_max_age, :flag => "-M"
-  options :expiry,
+  options :password_min_age, :flag => "-m", :method => :sp_min
+  options :password_max_age, :flag => "-M", :method => :sp_max
+  options :password, :method => :sp_pwdp
+  options :expiry, :method => :sp_expire,
     :munge => proc { |value|
       if value == :absent
         case Facter.value(:operatingsystem)
@@ -107,41 +108,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
   end
 
-  def password_min_age
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_min
+  [:expiry, :password_min_age, :password_max_age, :password].each do |shadow_property|
+    define_method(shadow_property) do
+      if Puppet.features.libshadow?
+        if ent = Shadow::Passwd.getspnam(@resource.name)
+          method = self.class.option(shadow_property, :method)
+          return unmunge(shadow_property, ent.send(method))
+        end
       end
+      :absent
     end
-    :absent
   end
-
-  def password_max_age
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_max
-      end
-    end
-    :absent
-  end
-
-  # Retrieve the password using the Shadow Password library
-  def password
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_pwdp
-      end
-    end
-    :absent
-  end
-
-  def expiry
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return unmunge(:expiry, ent.sp_expire)
-      end
-    end
-    :absent
-  end
-
 end
