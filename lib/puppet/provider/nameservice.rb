@@ -202,7 +202,23 @@ class Puppet::Provider::NameService < Puppet::Provider
 
   # Retrieve a specific value by name.
   def get(param)
-    (hash = getinfo(false)) ? hash[param] : nil
+    (hash = getinfo(false)) ? unmunge(param, hash[param]) : nil
+  end
+
+  def munge(name, value)
+    if block = self.class.option(name, :munge) and block.is_a? Proc
+      block.call(value)
+    else
+      value
+    end
+  end
+
+  def unmunge(name, value)
+    if block = self.class.option(name, :unmunge) and block.is_a? Proc
+      block.call(value)
+    else
+      value
+    end
   end
 
   # Retrieve what we can about our object
@@ -264,7 +280,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
   def set(param, value)
     self.class.validate(param, value)
-    cmd = modifycmd(param, value)
+    cmd = modifycmd(param, munge(param, value))
     raise Puppet::DevError, "Nameservice command must be an array" unless cmd.is_a?(Array)
     begin
       execute(cmd)
