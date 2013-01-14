@@ -1,10 +1,8 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Util::Execution do
   include Puppet::Util::Execution
-
-
   # utility method to help deal with some windows vs. unix differences
   def process_status(exitstatus)
     return exitstatus if Puppet.features.microsoft_windows?
@@ -19,7 +17,6 @@ describe Puppet::Util::Execution do
   def call_exec_windows(command, arguments, stdin, stdout, stderr)
     Puppet::Util::Execution.send(:execute_windows, command, arguments, stdin, stdout, stderr)
   end
-
 
   describe "execution methods" do
     let(:pid) { 5501 }
@@ -254,6 +251,50 @@ describe Puppet::Util::Execution do
 
             Puppet::Util::Execution.execute('test command', :squelch => false, :combine => false)
           end
+
+          it "should combine stdout and stderr if combine is true" do
+            outfile = Tempfile.new('stdout')
+            Tempfile.stubs(:new).returns(outfile)
+
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == outfile.path
+            end.returns(rval)
+
+            Puppet::Util::Execution.execute('test command', :combine => true)
+          end
+
+          it "should default combine to true when no options are specified" do
+            outfile = Tempfile.new('stdout')
+            Tempfile.stubs(:new).returns(outfile)
+
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == outfile.path
+            end.returns(rval)
+
+            Puppet::Util::Execution.execute('test command')
+          end
+
+          it "should default combine to false when options are specified, but combine is not" do
+            outfile = Tempfile.new('stdout')
+            Tempfile.stubs(:new).returns(outfile)
+
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == null_file
+            end.returns(rval)
+
+            Puppet::Util::Execution.execute('test command', :failonfail => false)
+          end
+
+          it "should default combine to false when an empty hash of options is specified" do
+            outfile = Tempfile.new('stdout')
+            Tempfile.stubs(:new).returns(outfile)
+
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == null_file
+            end.returns(rval)
+
+            Puppet::Util::Execution.execute('test command', {})
+          end
         end
       end
 
@@ -483,40 +524,59 @@ describe Puppet::Util::Execution do
         Tempfile.stubs(:new).returns(stdout)
         file = File.new(stdout.path, 'r')
 
-        expect {
-          Puppet::Util.execute('test command')
-        }.to_not raise_error
+        Puppet::Util.execute('test command')
       end
 
       it "should raise an error if failonfail is true and the child failed" do
         stub_process_wait(1)
 
         expect {
-          Puppet::Util::Execution.execute('fail command', :failonfail => true)
+          subject.execute('fail command', :failonfail => true)
         }.to raise_error(Puppet::ExecutionFailure, /Execution of 'fail command' returned 1/)
       end
 
       it "should not raise an error if failonfail is false and the child failed" do
         stub_process_wait(1)
 
-        expect {
-          Puppet::Util::Execution.execute('fail command', :failonfail => false)
-        }.not_to raise_error
+        subject.execute('fail command', :failonfail => false)
       end
 
       it "should not raise an error if failonfail is true and the child succeeded" do
-        expect {
-          Puppet::Util::Execution.execute('fail command', :failonfail => true)
-        }.not_to raise_error
+        stub_process_wait(0)
+
+        subject.execute('fail command', :failonfail => true)
       end
 
-      it "should respect default values for args that aren't overridden if a partial arg list is passed in" do
+      it "should not raise an error if failonfail is false and the child succeeded" do
+        stub_process_wait(0)
+
+        subject.execute('fail command', :failonfail => false)
+      end
+
+      it "should default failonfail to true when no options are specified" do
         stub_process_wait(1)
+
         expect {
-          # here we are passing in a non-nil value for "arguments", but we aren't specifying a value for
-          # :failonfail.  We expect it to be set to its normal default value (true).
-          Puppet::Util::Execution.execute('fail command', { :squelch => true })
+          subject.execute('fail command')
         }.to raise_error(Puppet::ExecutionFailure, /Execution of 'fail command' returned 1/)
+      end
+
+      it "should default failonfail to false when options are specified, but failonfail is not" do
+        stub_process_wait(1)
+
+        subject.execute('fail command', { :combine => true })
+      end
+
+      it "should default failonfail to false when an empty hash of options is specified" do
+        stub_process_wait(1)
+
+        subject.execute('fail command', {})
+      end
+
+      it "should raise an error if a nil option is specified" do
+        expect {
+          Puppet::Util::Execution.execute('fail command', nil)
+        }.to raise_error(TypeError, /can\'t convert nil into Hash/)
       end
     end
   end
@@ -544,9 +604,7 @@ describe Puppet::Util::Execution do
     it "should not fail if asked not to fail, and the child does" do
       Puppet::Util::Execution.stubs(:open).returns('error message')
       $CHILD_STATUS.stubs(:==).with(0).returns(false)
-      expect do
-        Puppet::Util::Execution.execpipe('echo hello', false).should == 'error message'
-      end.not_to raise_error
+      Puppet::Util::Execution.execpipe('echo hello', false).should == 'error message'
     end
   end
 end

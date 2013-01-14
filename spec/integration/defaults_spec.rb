@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/defaults'
@@ -87,6 +87,7 @@ describe "Puppet defaults" do
 
   it "should use the service user and group for the yamldir" do
     Puppet.settings.stubs(:service_user_available?).returns true
+    Puppet.settings.stubs(:service_group_available?).returns true
     Puppet.settings.setting(:yamldir).owner.should == Puppet.settings[:user]
     Puppet.settings.setting(:yamldir).group.should == Puppet.settings[:group]
   end
@@ -162,8 +163,8 @@ describe "Puppet defaults" do
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :store_configs" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
+    it "does not change the Node cache" do
+      Puppet::Node.indirection.expects(:cache_class=).never
       Puppet.settings[:storeconfigs] = true
     end
   end
@@ -191,8 +192,8 @@ describe "Puppet defaults" do
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :store_configs" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
+    it "does not change the Node cache" do
+      Puppet::Node.indirection.expects(:cache_class=).never
       Puppet.settings[:storeconfigs] = true
     end
   end
@@ -308,6 +309,13 @@ describe "Puppet defaults" do
 
     it "should be set to hiera by default" do
       Puppet.settings[:data_binding_terminus].should == :hiera
+    end
+  end
+
+  describe "agent_catalog_run_lockfile" do
+    it "(#2888) is not a file setting so it is absent from the Settings catalog" do
+      Puppet.settings.setting(:agent_catalog_run_lockfile).should_not be_a_kind_of Puppet::Settings::FileSetting
+      Puppet.settings.setting(:agent_catalog_run_lockfile).should be_a Puppet::Settings::StringSetting
     end
   end
 end

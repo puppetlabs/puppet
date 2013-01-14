@@ -185,6 +185,13 @@ module Util
     end
   end
 
+  # Resolve a path for an executable to the absolute path. This tries to behave
+  # in the same manner as the unix `which` command and uses the `PATH`
+  # environment variable.
+  #
+  # @api public
+  # @param bin [String] the name of the executable to find.
+  # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
@@ -232,10 +239,6 @@ module Util
   AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
   AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
-    # Due to weird load order issues, I was unable to remove this require.
-    # This is fixed in Telly so it can be removed there.
-    require 'puppet' unless defined?(Puppet)
-
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
     # would use Puppet.features.microsoft_windows?, but this method needs to
@@ -493,6 +496,7 @@ module Util
   # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
   #  exit if the block throws an exception.
   #
+  # @api public
   # @param [String] message a message to log if the block fails
   # @param [Integer] code the exit code that the ruby interpreter should return if the block fails
   # @yield
@@ -534,9 +538,10 @@ module Util
   end
   module_function :execfail
 
-  def execute(command, arguments = {})
+  def execute(*args)
     Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
-    Puppet::Util::Execution.execute(command, arguments)
+
+    Puppet::Util::Execution.execute(*args)
   end
   module_function :execute
 

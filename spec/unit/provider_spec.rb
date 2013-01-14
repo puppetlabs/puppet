@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 def existing_command
@@ -657,7 +657,7 @@ describe Puppet::Provider do
   end
 
   def allow_creation_of(command, environment = {})
-      Puppet::Provider::Command.stubs(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :custom_environment => environment }).returns(command)
+      Puppet::Provider::Command.stubs(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => environment }).returns(command)
   end
 
   def file_exists_and_is_executable(path)

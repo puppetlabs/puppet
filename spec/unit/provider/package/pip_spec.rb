@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:pip)
@@ -109,11 +109,21 @@ describe provider_class do
       @provider.install
     end
 
+    it "omits the -e flag (GH-1256)" do
+      # The -e flag makes the provider non-idempotent
+      @resource[:ensure] = :installed
+      @resource[:source] = @url
+      @provider.expects(:lazy_pip).with() do |*args|
+        not args.include?("-e")
+      end
+      @provider.install
+    end
+
     it "should install from SCM" do
       @resource[:ensure] = :installed
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", '-q', '-e', "#{@url}#egg=fake_package")
+        with("install", '-q', "#{@url}#egg=fake_package")
       @provider.install
     end
 
@@ -121,7 +131,7 @@ describe provider_class do
       @resource[:ensure] = "0123456"
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", "-q", "-e", "#{@url}@0123456#egg=fake_package")
+        with("install", "-q", "#{@url}@0123456#egg=fake_package")
       @provider.install
     end
 

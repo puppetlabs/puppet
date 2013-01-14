@@ -1,28 +1,32 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/key'
 
 describe Puppet::SSL::CertificateRequest do
-  before do
-    @class = Puppet::SSL::CertificateRequest
-  end
+  let(:request) { described_class.new("myname") }
+  let(:key) {
+    k = Puppet::SSL::Key.new("myname")
+    k.generate
+    k
+  }
+
 
   it "should be extended with the Indirector module" do
-    @class.singleton_class.should be_include(Puppet::Indirector)
+    described_class.singleton_class.should be_include(Puppet::Indirector)
   end
 
   it "should indirect certificate_request" do
-    @class.indirection.name.should == :certificate_request
+    described_class.indirection.name.should == :certificate_request
   end
 
   it "should use any provided name as its name" do
-    @class.new("myname").name.should == "myname"
+    described_class.new("myname").name.should == "myname"
   end
 
   it "should only support the text format" do
-    @class.supported_formats.should == [:s]
+    described_class.supported_formats.should == [:s]
   end
 
   describe "when converting from a string" do
@@ -33,115 +37,78 @@ describe Puppet::SSL::CertificateRequest do
       mycsr = stub 'sslcsr'
       mycsr.expects(:content=).with(csr)
 
-      @class.expects(:new).with("Foo.madstop.com").returns mycsr
+      described_class.expects(:new).with("Foo.madstop.com").returns mycsr
 
-      @class.from_s("my csr")
+      described_class.from_s("my csr")
     end
   end
 
   describe "when managing instances" do
-    before do
-      @request = @class.new("myname")
-    end
-
     it "should have a name attribute" do
-      @request.name.should == "myname"
+      request.name.should == "myname"
     end
 
     it "should downcase its name" do
-      @class.new("MyName").name.should == "myname"
+      described_class.new("MyName").name.should == "myname"
     end
 
     it "should have a content attribute" do
-      @request.should respond_to(:content)
+      request.should respond_to(:content)
     end
 
     it "should be able to read requests from disk" do
       path = "/my/path"
       File.expects(:read).with(path).returns("my request")
-      request = mock 'request'
-      OpenSSL::X509::Request.expects(:new).with("my request").returns(request)
-      @request.read(path).should equal(request)
-      @request.content.should equal(request)
+      my_req = mock 'request'
+      OpenSSL::X509::Request.expects(:new).with("my request").returns(my_req)
+      request.read(path).should equal(my_req)
+      request.content.should equal(my_req)
     end
 
     it "should return an empty string when converted to a string with no request" do
-      @request.to_s.should == ""
+      request.to_s.should == ""
     end
 
     it "should convert the request to pem format when converted to a string" do
-      request = mock 'request', :to_pem => "pem"
-      @request.content = request
-      @request.to_s.should == "pem"
+      request.generate(key)
+      request.to_s.should == request.content.to_pem
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
       real_request = mock 'request'
       real_request.expects(:to_text).returns "requesttext"
-      @request.content = real_request
-      @request.to_text.should == "requesttext"
+      request.content = real_request
+      request.to_text.should == "requesttext"
     end
   end
 
   describe "when generating" do
-    before do
-      @instance = @class.new("myname")
-
-      key = Puppet::SSL::Key.new("myname")
-      @key = key.generate
-
-      @request = OpenSSL::X509::Request.new
-      OpenSSL::X509::Request.expects(:new).returns(@request)
-
-      @request.stubs(:verify).returns(true)
-    end
-
     it "should use the content of the provided key if the key is a Puppet::SSL::Key instance" do
-      key = Puppet::SSL::Key.new("test")
-      key.expects(:content).returns @key
-
-      @request.expects(:sign).with{ |key, digest| key == @key }
-      @instance.generate(key)
-    end
-
-    it "should log that it is creating a new certificate request" do
-      Puppet.expects(:info).twice
-      @instance.generate(@key)
+      request.generate(key)
+      request.content.verify(key.content.public_key).should be_true
     end
 
     it "should set the subject to [CN, name]" do
-      subject = mock 'subject'
-      OpenSSL::X509::Name.expects(:new).with([["CN", @instance.name]]).returns(subject)
-      @request.expects(:subject=).with(subject)
-      @instance.generate(@key)
-    end
-
-    it "should set the CN to the CSR name when the CSR is not for a CA" do
-      subject = mock 'subject'
-      OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == @instance.name }.returns(subject)
-      @request.expects(:subject=).with(subject)
-      @instance.generate(@key)
+      request.generate(key)
+      # OpenSSL::X509::Name only implements equality as `eql?`
+      request.content.subject.should eql OpenSSL::X509::Name.new([['CN', key.name]])
     end
 
     it "should set the CN to the :ca_name setting when the CSR is for a CA" do
-      subject = mock 'subject'
       Puppet[:ca_name] = "mycertname"
-      OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == "mycertname" }.returns(subject)
-      @request.expects(:subject=).with(subject)
-      Puppet::SSL::CertificateRequest.new(Puppet::SSL::CA_NAME).generate(@key)
+      request = described_class.new(Puppet::SSL::CA_NAME).generate(key)
+      request.subject.should eql OpenSSL::X509::Name.new([['CN', Puppet[:ca_name]]])
     end
 
     it "should set the version to 0" do
-      @request.expects(:version=).with(0)
-      @instance.generate(@key)
+      request.generate(key)
+      request.content.version.should == 0
     end
 
     it "should set the public key to the provided key's public key" do
-      # Yay, the private key extracts a new key each time.
-      pubkey = @key.public_key
-      @key.stubs(:public_key).returns pubkey
-      @request.expects(:public_key=).with(@key.public_key)
-      @instance.generate(@key)
+      request.generate(key)
+      # The openssl bindings do not define equality on keys so we use to_s
+      request.content.public_key.to_s.should == key.content.public_key.to_s
     end
 
     context "without subjectAltName / dns_alt_names" do
@@ -151,14 +118,15 @@ describe Puppet::SSL::CertificateRequest do
 
       ["extreq", "msExtReq"].each do |name|
         it "should not add any #{name} attribute" do
-          @request.expects(:add_attribute).never
-          @request.expects(:attributes=).never
-          @instance.generate(@key)
+          request.generate(key)
+          request.content.attributes.find do |attr|
+            attr.oid == name
+          end.should_not be
         end
 
         it "should return no subjectAltNames" do
-          @instance.generate(@key)
-          @instance.subject_alt_names.should be_empty
+          request.generate(key)
+          request.subject_alt_names.should be_empty
         end
       end
     end
@@ -170,14 +138,15 @@ describe Puppet::SSL::CertificateRequest do
 
       ["extreq", "msExtReq"].each do |name|
         it "should not add any #{name} attribute" do
-          @request.expects(:add_attribute).never
-          @request.expects(:attributes=).never
-          @instance.generate(@key)
+          request.generate(key)
+          request.content.attributes.find do |attr|
+            attr.oid == name
+          end.should_not be
         end
 
         it "should return no subjectAltNames" do
-          @instance.generate(@key)
-          @instance.subject_alt_names.should be_empty
+          request.generate(key)
+          request.subject_alt_names.should be_empty
         end
       end
     end
@@ -188,61 +157,59 @@ describe Puppet::SSL::CertificateRequest do
       end
 
       it "should add an extreq attribute" do
-        @request.expects(:add_attribute).with do |arg|
-          arg.value.value.all? do |x|
-            x.value.all? do |y|
-              y.value[0].value == "subjectAltName"
-            end
-          end
+        request.generate(key, :dns_alt_names => 'one, two')
+        extReq = request.content.attributes.find do |attr|
+          attr.oid == 'extReq'
         end
 
-        @instance.generate(@key, :dns_alt_names => 'one, two')
+        extReq.should be
+        extReq.value.value.all? do |x|
+          x.value.all? do |y|
+            y.value[0].value.should == "subjectAltName"
+          end
+        end
       end
 
       it "should return the subjectAltName values" do
-        @instance.generate(@key, :dns_alt_names => 'one,two')
-        @instance.subject_alt_names.should =~ ["DNS:myname", "DNS:one", "DNS:two"]
+        request.generate(key, :dns_alt_names => 'one,two')
+        request.subject_alt_names.should =~ ["DNS:myname", "DNS:one", "DNS:two"]
       end
     end
 
-    it "should sign the csr with the provided key and a digest" do
-      digest = mock 'digest'
-      OpenSSL::Digest::SHA256.expects(:new).returns(digest)
-      @request.expects(:sign).with(@key, digest)
-      @instance.generate(@key)
+    it "should sign the csr with the provided key" do
+      request.generate(key)
+      request.content.verify(key.content.public_key).should be_true
     end
 
     it "should verify the generated request using the public key" do
       # Stupid keys don't have a competent == method.
-      @request.expects(:verify).with { |public_key| public_key.to_s == @key.public_key.to_s }.returns true
-      @instance.generate(@key)
+      OpenSSL::X509::Request.any_instance.expects(:verify).with { |public_key|
+        public_key.to_s == key.content.public_key.to_s
+      }.returns true
+      request.generate(key)
     end
 
     it "should fail if verification fails" do
-      @request.expects(:verify).returns false
+      OpenSSL::X509::Request.any_instance.expects(:verify).with { |public_key|
+        public_key.to_s == key.content.public_key.to_s
+      }.returns false
 
-      lambda { @instance.generate(@key) }.should raise_error(Puppet::Error)
+      expect {
+        request.generate(key)
+      }.to raise_error(Puppet::Error, /CSR sign verification failed/)
     end
 
-    it "should fingerprint the request" do
-      @instance.expects(:fingerprint)
-      @instance.generate(@key)
-    end
-
-    it "should display the fingerprint" do
+    it "should log the fingerprint" do
+      Puppet::SSL::Digest.any_instance.stubs(:to_hex).returns("FINGERPRINT")
       Puppet.stubs(:info)
-      @instance.stubs(:fingerprint).returns("FINGERPRINT")
       Puppet.expects(:info).with { |s| s =~ /FINGERPRINT/ }
-      @instance.generate(@key)
+      request.generate(key)
     end
 
     it "should return the generated request" do
-      @instance.generate(@key).should equal(@request)
-    end
-
-    it "should set its content to the generated request" do
-      @instance.generate(@key)
-      @instance.content.should equal(@request)
+      generated = request.generate(key)
+      generated.should be_a(OpenSSL::X509::Request)
+      generated.should be(request.content)
     end
   end
 

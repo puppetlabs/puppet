@@ -4,7 +4,6 @@ require 'pathname'
 require 'fileutils'
 require 'puppet/util/colors'
 
-# Define tool
 module Puppet
   module ModuleTool
     extend Puppet::Util::Colors

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/agent'
 
@@ -20,7 +20,7 @@ end
 
 describe Puppet::Agent do
   before do
-    @agent = Puppet::Agent.new(AgentTestClient)
+    @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # So we don't actually try to hit the filesystem.
     @agent.stubs(:lock).yields
@@ -43,7 +43,7 @@ describe Puppet::Agent do
   end
 
   it "should set its client class at initialization" do
-    Puppet::Agent.new("foo").client_class.should == "foo"
+    Puppet::Agent.new("foo", false).client_class.should == "foo"
   end
 
   it "should include the Locker module" do
@@ -181,7 +181,11 @@ describe Puppet::Agent do
 
     describe "when should_fork is true" do
       before do
-        @agent.should_fork = true
+        @agent = Puppet::Agent.new(AgentTestClient, true)
+
+        # So we don't actually try to hit the filesystem.
+        @agent.stubs(:lock).yields
+
         Kernel.stubs(:fork)
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 0)]
         @agent.stubs(:exit)

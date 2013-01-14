@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/autoload'
@@ -260,6 +260,12 @@ describe Puppet::Util::Autoload do
       it "should convert c:\ to c:/" do
         Puppet::Util::Autoload.cleanpath('c:\\').should == 'c:/'
       end
+    end
+  end
+
+  describe "#expand" do
+    it "should expand relative to the autoloader's prefix" do
+      @autoload.expand('bar').should == 'tmp/bar'
     end
   end
 end

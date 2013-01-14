@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/diff'
 require 'puppet/util/execution'
@@ -9,7 +9,7 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = 'bar'
 
-      Puppet::Util::Execution.expects(:execute).with(['foo', 'bar', 'a', 'b'], {:failonfail => false}).returns('baz')
+      Puppet::Util::Execution.expects(:execute).with(['foo', 'bar', 'a', 'b'], {:failonfail => false, :combine => false}).returns('baz')
       subject.diff('a', 'b').should == 'baz'
     end
 
@@ -17,7 +17,7 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = ''
 
-      Puppet::Util::Execution.expects(:execute).with(['foo', 'a', 'b'], {:failonfail => false}).returns('baz')
+      Puppet::Util::Execution.expects(:execute).with(['foo', 'a', 'b'], {:failonfail => false, :combine => false}).returns('baz')
       subject.diff('a', 'b').should == 'baz'
     end
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/relationship'
 
@@ -151,7 +151,7 @@ describe Puppet::Relationship, " when matching edges with a non-standard event" 
   end
 end
 
-describe Puppet::Relationship, "when converting to pson", :if => Puppet.features.pson? do
+describe Puppet::Relationship, "when converting to pson" do
   before do
     @edge = Puppet::Relationship.new(:a, :b, :event => :random, :callback => :whatever)
   end
@@ -184,7 +184,7 @@ describe Puppet::Relationship, "when converting to pson", :if => Puppet.features
   end
 end
 
-describe Puppet::Relationship, "when converting from pson", :if => Puppet.features.pson? do
+describe Puppet::Relationship, "when converting from pson" do
   before do
     @event = "random"
     @callback = "whatever"

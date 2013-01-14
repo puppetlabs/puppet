@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 
@@ -82,6 +82,8 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   end
 
   context "#fingerprint" do
+    let(:fingerprint_re) { /^\([0-9A-Z]+\) [0-9A-F:]+$/ }
+
     it "should be nil if there is no certificate" do
       subject.fingerprint('random-host').should be_nil
     end
@@ -89,27 +91,20 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     it "should fingerprint a CSR" do
       given_certificate_requests_for('random-host')
 
-      subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
+      subject.fingerprint('random-host').should =~ fingerprint_re
     end
 
     it "should fingerprint a certificate" do
       given_certificates_for('random-host')
 
-      subject.fingerprint('random-host').should =~ /^[0-9A-F:]+$/
+      subject.fingerprint('random-host').should =~ fingerprint_re
     end
 
-    %w{md5 MD5 sha1 ShA1 SHA1 RIPEMD160 sha256 sha512}.each do |digest|
+    %w{md5 MD5 sha1 SHA1 RIPEMD160 sha256 sha512}.each do |digest|
       it "should fingerprint with #{digest.inspect}" do
         given_certificates_for('random-host')
 
-        subject.fingerprint('random-host', :digest => digest).should =~ /^[0-9A-F:]+$/
-      end
-
-      it "should fingerprint with #{digest.to_sym} as a symbol" do
-        given_certificates_for('random-host')
-
-        subject.fingerprint('random-host', :digest => digest.to_sym).
-          should =~ /^[0-9A-F:]+$/
+        subject.fingerprint('random-host', :digest => digest).should =~ fingerprint_re
       end
     end
   end
@@ -228,8 +223,8 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       subject.revoke('random-host')
 
       found = subject.list(:all => true, :subject => 'random-host')
-      subject.get_action(:list).when_rendering(:console).call(found).
-        should =~ /^- random-host  \([:0-9A-F]+\) \(certificate revoked\)/
+      subject.get_action(:list).when_rendering(:console).call(found, {}).
+        should =~ /^- random-host  \(\w+\) [:0-9A-F]+ \(certificate revoked\)/
     end
   end
 
@@ -260,7 +255,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       subject.list(:signed => true, :subject => 'random-host').should_not == []
 
       subject.destroy('random-host').
-        should == "Deleted for random-host: Puppet::SSL::Certificate, Puppet::SSL::Key"
+        should == "Deleted for random-host: Puppet::SSL::Certificate"
     end
   end
 
@@ -282,7 +277,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
 
         context "when_rendering :console" do
           it "should return nothing for #{type.inspect}" do
-            subject.get_action(:list).when_rendering(:console).call(subject.list(type)).should == ""
+            subject.get_action(:list).when_rendering(:console).call(subject.list(type), {}).should == ""
           end
         end
       end
@@ -330,7 +325,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
             given_certificate_requests_for(*input[0])
             given_certificates_for(*input[1])
 
-            text = subject.get_action(:list).when_rendering(:console).call(subject.list(:all => true))
+            text = subject.get_action(:list).when_rendering(:console).call(subject.list(:all => true), {})
 
             pattern.each do |item|
               text.should =~ item

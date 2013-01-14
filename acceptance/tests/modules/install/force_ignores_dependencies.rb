@@ -14,8 +14,8 @@ end
 step "Try to install an unsatisfiable module"
 on master, puppet("module install pmtacceptance-php"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to install into /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-php' (latest: v0.0.2)
     STDERR>   No version of 'pmtacceptance-php' will satisfy dependencies
     STDERR>     You specified 'pmtacceptance-php' (latest: v0.0.2),
@@ -30,9 +30,9 @@ on master, '[ ! -d /etc/puppet/modules/apache ]'
 step "Install an unsatisfiable module with force"
 on master, puppet("module install pmtacceptance-php --force") do
   assert_output <<-OUTPUT
-    Preparing to install into /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Installing -- do not interrupt ...
+    \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-php (\e[0;36mv0.0.2\e[0m)
   OUTPUT

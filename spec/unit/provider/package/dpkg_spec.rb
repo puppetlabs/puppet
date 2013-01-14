@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'stringio'
 
@@ -178,13 +178,13 @@ describe provider do
 
     it "should execute dpkg --set-selections when holding" do
       @provider.stubs(:install)
-      @provider.expects(:execute).with([:dpkg, '--set-selections'], {:stdinfile => @tempfile.path}).once
+      @provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => @tempfile.path}).once
       @provider.hold
     end
 
     it "should execute dpkg --set-selections when unholding" do
       @provider.stubs(:install)
-      @provider.expects(:execute).with([:dpkg, '--set-selections'], {:stdinfile => @tempfile.path}).once
+      @provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => @tempfile.path}).once
       @provider.hold
     end
   end

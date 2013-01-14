@@ -7,11 +7,10 @@
 INSTALL=install -Dp
 
 prefix := $(CURDIR)/debian/tmp
-bindir := $(prefix)/usr/bin
-sbindir := $(prefix)/usr/sbin
+bindir := $(prefix)/$(shell /usr/bin/ruby -rrbconfig -e 'puts RbConfig::CONFIG["bindir"]')
 libdir := $(prefix)/usr/lib
 localstatedir := $(prefix)/var
-rubylibdir := $(libdir)/ruby/1.8
+rubylibdir := $(shell /usr/bin/ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendordir"]')
 sysconfdir := $(prefix)/etc
 pkgconfdir := $(sysconfdir)/puppet
 
@@ -48,15 +47,12 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	# Note sbindir does nothing right now. Leaving in for future
-	# puppet versions where it is respected.
-	$(CURDIR)/install.rb --destdir=debian/tmp --bindir=/usr/bin \
-          --sbindir=/usr/sbin --sitelibdir=/usr/lib/ruby/1.8
+	$(CURDIR)/install.rb --destdir=debian/tmp --bindir=/usr/bin --sitelibdir=$(rubylibdir) --ruby=/usr/bin/ruby
 
 	# strip executable bit from all the non-executable files.
-	find debian/tmp/usr/lib/ruby/1.8 -type f -perm /u+x,g+x,o+x -exec chmod a-x {} \;
+	find $(prefix)/$(rubylibdir) -type f -perm /u+x,g+x,o+x -exec chmod a-x {} \;
 	# fix the permissions on all of the directories
-	find debian/tmp/usr/lib/ruby/1.8 -type d -exec chmod 755 {} \;
+	find $(prefix)/$(rubylibdir) -type d -exec chmod 755 {} \;
 
 	# Vim auto-syntax-highlighting stuff
 	$(INSTALL) -m0644 ext/vim/syntax/puppet.vim				\
@@ -111,7 +107,6 @@ binary-indep: build install
 	dh_testdir
 	dh_testroot
 	dh_install -i
-	dh_installchangelogs -i CHANGELOG
 	dh_installdocs -i
 	dh_installemacsen
 	dh_installlogcheck

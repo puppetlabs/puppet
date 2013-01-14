@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/exec'
@@ -15,6 +15,7 @@ describe Puppet::Indirector::Exec do
   end
 
   let(:path) { File.expand_path('/echo') }
+  let(:arguments) { {:failonfail => true, :combine => false } }
 
   before :each do
     @searcher = @exec_class.new
@@ -34,23 +35,24 @@ describe Puppet::Indirector::Exec do
   end
 
   it "should execute the command with the object name as the only argument" do
-    @searcher.expects(:execute).with([path, 'foo'], :combine => false)
+    @searcher.expects(:execute).with([path, 'foo'], arguments)
     @searcher.find(@request)
   end
 
   it "should return the output of the script" do
-    @searcher.expects(:execute).with([path, 'foo'], :combine => false).returns("whatever")
+    @searcher.expects(:execute).with([path, 'foo'], arguments).returns("whatever")
     @searcher.find(@request).should == "whatever"
   end
 
   it "should return nil when the command produces no output" do
-    @searcher.expects(:execute).with([path, 'foo'], :combine => false).returns(nil)
+    @searcher.expects(:execute).with([path, 'foo'], arguments).returns(nil)
     @searcher.find(@request).should be_nil
   end
 
   it "should raise an exception if there's an execution failure" do
-    @searcher.expects(:execute).with([path, 'foo'], :combine => false).raises(Puppet::ExecutionFailure.new("message"))
-
-    lambda {@searcher.find(@request)}.should raise_exception(Puppet::Error, 'Failed to find foo via exec: message')
+    @searcher.expects(:execute).with([path, 'foo'], arguments).raises(Puppet::ExecutionFailure.new("message"))
+    expect {
+      @searcher.find(@request)
+    }.to raise_exception(Puppet::Error, 'Failed to find foo via exec: message')
   end
 end

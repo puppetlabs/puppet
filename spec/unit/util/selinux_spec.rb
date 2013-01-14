@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'pathname'
@@ -127,6 +127,26 @@ describe Puppet::Util::SELinux do
       self.expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
       get_selinux_default_context("/foo").should == "user_u:role_r:type_t:s0"
+    end
+
+    it "handles permission denied errors by issuing a warning" do
+      self.stubs(:selinux_support?).returns true
+      self.stubs(:selinux_label_support?).returns true
+      Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
+
+      self.expects(:warning).with("Could not stat; Permission denied - /root/chuj")
+      get_selinux_default_context("/root/chuj").should be_nil
+    end
+
+    it "handles no such file or directory errors by issuing a warning" do
+      self.stubs(:selinux_support?).returns true
+      self.stubs(:selinux_label_support?).returns true
+      Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
+
+      self.expects(:warning).with("Could not stat; No such file or directory - /root/chuj")
+      get_selinux_default_context("/root/chuj").should be_nil
     end
 
     it "should return nil if matchpathcon returns failure" do

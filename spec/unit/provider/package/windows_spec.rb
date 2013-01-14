@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:windows) do
@@ -6,7 +6,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
   let (:source)      { 'E:\mysql-5.1.58-win-x64.msi' }
   let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
   let (:provider)    { resource.provider }
-  let (:execute_options) do {:combine => true} end
+  let (:execute_options) do {:failonfail => false, :combine => true} end
 
   before :each do
     # make sure we never try to execute anything

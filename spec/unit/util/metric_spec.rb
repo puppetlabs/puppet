@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/metric'
@@ -83,13 +83,4 @@ describe Puppet::Util::Metric do
   it "should return nil if the named value cannot be found" do
     @metric["foo"].should == 0
   end
-
-  # LAK: I'm not taking the time to develop these tests right now.
-  # I expect they should actually be extracted into a separate class
-  # anyway.
-  it "should be able to graph metrics using RRDTool"
-
-  it "should be able to create a new RRDTool database"
-
-  it "should be able to store metrics into an RRDTool database"
 end

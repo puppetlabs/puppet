@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet/application/apply'
@@ -6,7 +6,7 @@ require 'puppet/application/apply'
 describe "apply" do
   include PuppetSpec::Files
 
-  describe "when applying provided catalogs", :if => Puppet.features.pson? do
+  describe "when applying provided catalogs" do
     it "should be able to apply catalogs provided in a file in pson" do
       file_to_create = tmpfile("pson_catalog")
       catalog = Puppet::Resource::Catalog.new

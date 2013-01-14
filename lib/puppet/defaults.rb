@@ -1,4 +1,6 @@
 # The majority of Puppet's configuration settings are set in this file.
+
+
 module Puppet
 
   ############################################################################################
@@ -155,12 +157,6 @@ module Puppet
             "all files referenced with `import` statements to exist. This setting was primarily\n" +
             "designed for use with commit hooks for parse-checking.",
     },
-    :authconfig => {
-        :default  => "$confdir/namespaceauth.conf",
-        :desc     => "The configuration file that defines the rights to the different\n" +
-            "namespaces and methods.  This can be used as a coarse-grained\n" +
-            "authorization system for both `puppet agent` and `puppet master`.",
-    },
     :environment => {
         :default  => "production",
         :desc     => "The environment Puppet is running in.  For clients\n" +
@@ -214,6 +210,13 @@ module Puppet
       :type       => :terminus,
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
+    },
+    :node_cache_terminus => {
+      :type       => :terminus,
+      :default    => nil,
+      :desc       => "How to store cached nodes. 
+      Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
+      The master application defaults to 'write_only_yaml', all others to none.",
     },
     :data_binding_terminus => {
       :type    => :terminus,
@@ -676,7 +679,8 @@ EOT
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
-      :desc       => "The default TTL for new certificates. Can be specified as a duration."
+      :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
+      Can be specified as a duration."
     },
     :ca_md => {
       :default    => "md5",
@@ -716,7 +720,10 @@ EOT
       :pidfile => {
           :type => :file,
           :default  => "$rundir/${run_mode}.pid",
-          :desc     => "The pid file",
+          :desc     => "The file containing the PID of a running process.  " <<
+                       "This file is intended to be used by service management " <<
+                       "frameworks and monitoring systems to determine if a " <<
+                       "puppet process is still in the process table.",
       },
       :bindaddress => {
         :default    => "0.0.0.0",
@@ -1046,10 +1053,11 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
-    :agent_pidfile => {
-      :default    => "$statedir/agent.pid",
-    :type         => :file,
-      :desc       => "A lock file to indicate that a puppet agent run is currently in progress.  File contains the pid of the running process.",
+    :agent_catalog_run_lockfile => {
+      :default    => "$statedir/agent_catalog_run.lock",
+      :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.
+      :desc       => "A lock file to indicate that a puppet agent catalog run is currently in progress.  " +
+                     "The file contains the pid of the process that holds the lock on the catalog run.",
     },
     :agent_disabled_lockfile => {
         :default    => "$statedir/agent_disabled.lock",
@@ -1371,12 +1379,6 @@ EOT
 
         define_settings(
         :ldap,
-    :ldapnodes => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to search for node configurations in LDAP.  See
-      http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes for more information.",
-    },
     :ldapssl => {
       :default  => false,
       :type   => :boolean,
@@ -1393,11 +1395,11 @@ EOT
     },
     :ldapserver => {
       :default  => "ldap",
-      :desc     => "The LDAP server.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP server.  Only used if `node_terminus` is set to `ldap`.",
     },
     :ldapport => {
       :default  => 389,
-      :desc     => "The LDAP port.  Only used if `ldapnodes` is enabled.",
+      :desc     => "The LDAP port.  Only used if `node_terminus` is set to `ldap`.",
     },
 
     :ldapstring => {
@@ -1467,7 +1469,6 @@ You can adjust the backend using the storeconfigs_backend setting.",
             Puppet.settings[:catalog_cache_terminus] = :store_configs
           end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
-          Puppet::Node.indirection.cache_class = :store_configs
 
           Puppet::Resource.indirection.terminus_class = :store_configs
         end
@@ -1482,25 +1483,30 @@ database from within the Puppet Master process."
     }
   )
 
-  # This doesn't actually work right now.
-
-    define_settings(
-    :parser,
-
-    :lexical => {
-      :default  => false,
-      :type     => :boolean,
-      :desc     => "Whether to use lexical scoping (vs. dynamic).",
-    },
+  define_settings(:parser,
     :templatedir => {
         :default  => "$vardir/templates",
         :type     => :directory,
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
       directories.",
+    },
+
+    :allow_variables_with_dashes => {
+      :default => false,
+      :desc    => <<-'EOT'
+Permit hyphens (`-`) in variable names and issue deprecation warnings about
+them. This setting **should always be `false`;** setting it to `true`
+will cause subtle and wide-ranging bugs. It will be removed in a future version.
+
+Hyphenated variables caused major problems in the language, but were allowed
+between Puppet 2.7.3 and 2.7.14. If you used them during this window, we
+apologize for the inconvenience --- you can temporarily set this to `true`
+in order to upgrade, and can rename your variables at your leisure. Please
+revert it to `false` after you have renamed all affected variables.
+EOT
     }
   )
-  define_settings(
-    :puppetdoc,
+  define_settings(:puppetdoc,
     :document_all => {
         :default  => false,
         :type     => :boolean,

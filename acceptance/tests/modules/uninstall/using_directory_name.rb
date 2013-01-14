@@ -28,7 +28,7 @@ on master, '[ -d /etc/puppet/modules/crakorn ]'
 step "Try to uninstall the module apache"
 on master, puppet('module uninstall apache') do
   assert_output <<-OUTPUT
-    Preparing to uninstall 'apache' ...
+    \e[mNotice: Preparing to uninstall 'apache' ...\e[0m
     Removed 'apache' from /etc/puppet/modules
   OUTPUT
 end
@@ -37,7 +37,7 @@ on master, '[ ! -d /etc/puppet/modules/apache ]'
 step "Try to uninstall the module crakorn"
 on master, puppet('module uninstall crakorn'), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to uninstall 'crakorn' ...
+    STDOUT> \e[mNotice: Preparing to uninstall 'crakorn' ...\e[0m
     STDERR> \e[1;31mError: Could not uninstall module 'crakorn'
     STDERR>   Module 'crakorn' is not installed
     STDERR>     You may have meant `puppet module uninstall jimmy-crakorn`\e[0m

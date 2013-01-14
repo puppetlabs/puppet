@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the RedHat service Provider
 #
@@ -15,14 +15,6 @@ describe provider_class do
     @provider = provider_class.new
     @resource.stubs(:provider).returns @provider
     @provider.resource = @resource
-  end
-
-  osfamily = [ 'redhat', 'suse' ]
-
-  osfamily.each do |osfamily|
-    it "should be the default provider on #{osfamily}" do
-      pending "This test is pending the change in RedHat-related Linuxes to systemd for service management"
-    end
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|

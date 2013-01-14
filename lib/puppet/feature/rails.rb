@@ -1,7 +1,5 @@
 require 'puppet/util/feature'
 
-Puppet.features.rubygems?
-
 Puppet.features.add(:rails) do
   begin
     # Turn off the constant watching parts of ActiveSupport, which have a huge
@@ -13,9 +11,10 @@ Puppet.features.add(:rails) do
     # that it offers. --daniel 2012-07-16
     require 'active_support'
     begin
+      require 'active_support/dependencies'
       ActiveSupport::Dependencies.unhook!
       ActiveSupport::Dependencies.mechanism = :require
-    rescue ScriptError, StandardError => e
+    rescue LoadError, ScriptError, StandardError => e
       # ignore any failure - worst case we run without disabling the CPU
       # sucking features, so are slower but ... not actually failed, just
       # because some random future version of ActiveRecord changes.

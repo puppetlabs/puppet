@@ -1,6 +1,9 @@
 require 'puppet/indirector/instrumentation_listener'
 
 class Puppet::Indirector::InstrumentationListener::Local < Puppet::Indirector::Code
+
+  desc "Undocumented."
+
   def find(request)
     Puppet::Util::Instrumentation[request.key]
   end

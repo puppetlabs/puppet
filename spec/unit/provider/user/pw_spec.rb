@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:user).provider(:pw)
@@ -36,6 +36,12 @@ describe provider_class do
     it "should use -e with the correct argument when the expiry property is set" do
       resource[:expiry] = "2010-02-19"
       provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2010")))
+      provider.create
+    end
+
+    it "should use -e 00-00-0000 if the expiry property has to be removed" do
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(all_of(includes("-e"), includes("00-00-0000")))
       provider.create
     end
 
@@ -148,6 +154,12 @@ describe provider_class do
       resource[:expiry] = "2010-02-19"
       provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2011")))
       provider.expiry = "2011-02-19"
+    end
+
+    it "should use -e with the correct argument when the expiry property is removed" do
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(all_of(includes("-e"), includes("00-00-0000")))
+      provider.expiry = :absent
     end
 
     it "should use -g with the correct argument when the gid property is changed" do

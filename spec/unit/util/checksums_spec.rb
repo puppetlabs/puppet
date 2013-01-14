@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/checksums'
@@ -92,11 +92,10 @@ describe Puppet::Util::Checksums do
         klass.expects(:new).returns digest
         digest.expects(:hexdigest).returns :mydigest
 
-        @summer.send(sum.to_s + "_stream") do |sum|
-          sum.should == digest
+        @summer.send(sum.to_s + "_stream") do |checksum|
+          checksum.should == digest
         end.should == :mydigest
       end
-
     end
   end
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/kick'
@@ -14,8 +14,11 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
   describe ".new" do
     it "should take a command-line object as an argument" do
-      command_line = stub_everything "command_line"
-      lambda{ Puppet::Application::Kick.new( command_line ) }.should_not raise_error
+      command_line = Puppet::Util::CommandLine.new("puppet", ['kick', 'myhost'])
+      app = Puppet::Application::Kick.new(command_line)
+
+      app.command_line.subcommand_name.should == "kick"
+      app.command_line.args.should == ['myhost']
     end
   end
 

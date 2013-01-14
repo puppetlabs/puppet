@@ -34,6 +34,10 @@ Puppet::Face.define(:ca, '0.1.0') do
       summary "Include signed certificates."
     end
 
+    option "--digest ALGORITHM" do
+      summary "The hash algorithm to use when displaying the fingerprint"
+    end
+
     option "--subject PATTERN" do
       summary "Only list if the subject matches PATTERN."
 
@@ -50,6 +54,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       pattern = options[:subject].nil? ? nil :
         Regexp.new(options[:subject], Regexp::IGNORECASE)
@@ -70,7 +75,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       hosts.sort.map {|host| Puppet::SSL::Host.new(host) }
     end
 
-    when_rendering :console do |hosts|
+    when_rendering :console do |hosts, options|
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
@@ -80,13 +85,13 @@ Puppet::Face.define(:ca, '0.1.0') do
       hosts.map do |host|
         name = host.name.ljust(length)
         if host.certificate_request then
-          "  #{name} (#{host.certificate_request.fingerprint})"
+          "  #{name} #{host.certificate_request.digest(options[:digest])}"
         else
           begin
             ca.verify(host.name)
-            "+ #{name} (#{host.certificate.fingerprint})"
+            "+ #{name} #{host.certificate.digest(options[:digest])}"
           rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => e
-            "- #{name} (#{host.certificate.fingerprint}) (#{e.to_s})"
+            "- #{name} #{host.certificate.digest(options[:digest])} (#{e.to_s})"
           end
         end
       end.join("\n")
@@ -99,6 +104,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :local
 
       ca.destroy host
     end
@@ -110,6 +116,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.revoke host
@@ -134,6 +141,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :local
 
       begin
         ca.generate(host, :dns_alt_names => options[:dns_alt_names])
@@ -163,6 +171,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.sign(host, options[:allow_dns_alt_names])
@@ -182,6 +191,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       ca.print host
     end
@@ -197,17 +207,11 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
-      begin
-        # I want the default from the CA, not to duplicate it, but passing
-        # 'nil' explicitly means that we don't get that.  This works...
-        if options.has_key? :digest
-          ca.fingerprint host, options[:digest]
-        else
-          ca.fingerprint host
-        end
-      rescue ArgumentError => e
-        raise unless e.to_s =~ /Could not find a certificate or csr for/
+      if cert = (Puppet::SSL::Certificate.indirection.find(host) || Puppet::SSL::CertificateRequest.indirection.find(host))
+        cert.digest(options[:digest]).to_s
+      else
         nil
       end
     end
@@ -219,6 +223,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       unless ca = Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
+      Puppet::SSL::Host.ca_location = :only
 
       begin
         ca.verify host

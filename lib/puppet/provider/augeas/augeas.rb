@@ -24,7 +24,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util::Diff
   include Puppet::Util::Package
 
-  confine :true => Puppet.features.augeas?
+  confine :feature => :augeas
 
   has_features :parse_commands, :need_to_run?,:execute_changes
 
@@ -38,6 +38,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "setm" => [ :path, :string, :string ],
     "rm" => [ :path ],
     "clear" => [ :path ],
+    "clearm" => [ :path, :string ],
     "mv" => [ :path, :path ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
@@ -431,9 +432,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             rv = aug.set(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           when "setm"
-            debug("sending command '#{command}' with params #{cmd_array.inspect}")
-            rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            if aug.respond_to?(command)
+              debug("sending command '#{command}' with params #{cmd_array.inspect}")
+              rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            else
+              fail("command '#{command}' not supported in installed version of ruby-augeas")
+            end
           when "rm", "remove"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rm(cmd_array[0])
@@ -442,6 +447,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.clear(cmd_array[0])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "clearm"
+            # Check command exists ... doesn't currently in ruby-augeas 0.4.1
+            if aug.respond_to?(command)
+              debug("sending command '#{command}' with params #{cmd_array.inspect}")
+              rv = aug.clearm(cmd_array[0], cmd_array[1])
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            else
+              fail("command '#{command}' not supported in installed version of ruby-augeas")
+            end
           when "insert", "ins"
             label = cmd_array[0]
             where = cmd_array[1]

@@ -1,7 +1,4 @@
 #!/sbin/sh
-# It needs the smf property puppet-agent/server to be set to where the server is.
-# svccfg -s svc:/network/puppet/agent setprop server/name=asstring:localhost
-
 
 . /lib/svc/share/smf_include.sh
 
@@ -11,12 +8,10 @@ typeset -r CONF_FILE=/etc/puppet/puppet.conf
 [[ ! -f "${CONF_FILE}" ]] && exit $SMF_EXIT_ERR_CONFIG
 
 typeset -r PUPPET=/usr/bin/puppet
-typeset -r PUPPET_SERVER=$(svcprop -p server/name $SMF_FMRI)
-[[ -z "${PUPPET_SERVER}" ]] && exit $SMF_EXIT_ERR_CONFIG
 
 case "$1" in
 start)
-  exec $PUPPET agent --daemonize --server $PUPPET_SERVER
+  exec $PUPPET agent
   ;;
 
 stop)

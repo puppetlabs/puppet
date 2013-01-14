@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 #
 # Unit testing for the AIX System Resource Controller (src) provider
 #
@@ -35,12 +35,12 @@ describe provider_class do
   end
 
   it "should execute the startsrc command" do
-    @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
+    @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => true, :failonfail => true})
     @provider.start
   end
 
   it "should execute the stopsrc command" do
-    @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
+    @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => true, :failonfail => true})
     @provider.stop
   end
 
@@ -90,8 +90,8 @@ _EOF_
 myservice::--no-daemonize:/usr/sbin/puppetd:0:0:/dev/null:/var/log/puppet.log:/var/log/puppet.log:-O:-Q:-S:0:0:20:15:9:-d:20::"
 _EOF_
     @provider.expects(:execute).with(['/usr/bin/lssrc', '-Ss', "myservice"]).returns sample_output
-    @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
-    @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
+    @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => true, :failonfail => true})
+    @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => true, :failonfail => true})
     @provider.restart
   end
 end

@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -28,6 +28,7 @@ describe Puppet::Util::Log.desttypes[:file] do
 
   before do
     File.stubs(:open)           # prevent actually creating the file
+    File.stubs(:chown)          # prevent chown on non existing file from failing 
     @class = Puppet::Util::Log.desttypes[:file]
   end
 

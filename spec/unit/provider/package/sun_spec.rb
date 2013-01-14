@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:sun) do
@@ -35,7 +35,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
     it "should install a package if it is not present on update" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false}).returns File.read(my_fixture('dummy.server'))
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns File.read(my_fixture('dummy.server'))
       provider.expects(:pkgrm).with(['-n', 'dummy'])
       provider.expects(:install)
       provider.update
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
 
   context '#query' do
     it "should find the package on query" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false}).returns File.read(my_fixture('dummy.server'))
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns File.read(my_fixture('dummy.server'))
       provider.query.should == {
         :name     => 'SUNWdummy',
         :category=>"system",
@@ -87,12 +87,12 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
     it "shouldn't find the package on query if it is not present" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false}).returns 'ERROR: information for "dummy" not found.'
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns 'ERROR: information for "dummy" not found.'
       provider.query.should == {:ensure => :absent}
     end
 
     it "unknown message should raise error." do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false}).returns 'RANDOM'
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns 'RANDOM'
       lambda { provider.query }.should raise_error(Puppet::Error)
     end
   end

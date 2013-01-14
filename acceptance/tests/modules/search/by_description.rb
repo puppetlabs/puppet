@@ -8,7 +8,7 @@ on master, puppet("module search dummy") do
   assert_equal '', stderr
   # FIXME: The Forge does not presently match against description.
 #   assert_equal <<-STDOUT, stdout
-# Searching https://forge.puppetlabs.com ...
+# \e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m
 # NAME                  DESCRIPTION                  AUTHOR          KEYWORDS
 # pmtacceptance-nginx   This is a dummy nginx mo...  @pmtacceptance  nginx
 # pmtacceptance-thin    This is a dummy thin mod...  @pmtacceptance  ruby thin

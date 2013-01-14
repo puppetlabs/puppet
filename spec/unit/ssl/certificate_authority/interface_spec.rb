@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
@@ -44,11 +44,6 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       interface = @class.new(:generate, :to => :all, :digest => :digest)
       interface.digest.should == :digest
     end
-
-    it "should set the digest to SHA256 if none given" do
-      interface = @class.new(:generate, :to => :all)
-      interface.digest.should == :SHA256
-    end
   end
 
   describe "when setting the method" do
@@ -85,24 +80,6 @@ describe Puppet::SSL::CertificateAuthority::Interface do
     before do
       # We use a real object here, because :verify can't be stubbed, apparently.
       @ca = Object.new
-    end
-
-    it "should raise InterfaceErrors" do
-      @applier = @class.new(:revoke, :to => :all)
-
-      @ca.expects(:list).raises Puppet::SSL::CertificateAuthority::Interface::InterfaceError
-
-      lambda { @applier.apply(@ca) }.should raise_error(Puppet::SSL::CertificateAuthority::Interface::InterfaceError)
-    end
-
-    it "should log non-Interface failures" do
-      @applier = @class.new(:revoke, :to => :all)
-
-      @ca.expects(:list).raises ArgumentError
-
-      Puppet.expects(:err)
-
-      lambda { @applier.apply(@ca) }.should raise_error
     end
 
     describe "with an empty array specified and the method is not list" do
@@ -205,9 +182,12 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
         Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns @csr
 
+        @digest = mock("digest")
+        @digest.stubs(:to_s).returns("(fingerprint)")
         @ca.expects(:waiting?).returns %w{host1 host2 host3}
         @ca.expects(:list).returns %w{host4 host5 host6}
-        @ca.stubs(:fingerprint).returns "fingerprint"
+        @csr.stubs(:digest).returns @digest
+        @cert.stubs(:digest).returns @digest
         @ca.stubs(:verify)
       end
 
@@ -331,10 +311,19 @@ describe Puppet::SSL::CertificateAuthority::Interface do
     end
 
     describe ":fingerprint" do
-      it "should fingerprint with the set digest algorithm" do
-        @applier = @class.new(:fingerprint, :to => %w{host1}, :digest => :digest)
+      before(:each) do
+        @cert = Puppet::SSL::Certificate.new 'foo'
+        @csr = Puppet::SSL::CertificateRequest.new 'bar'
+        Puppet::SSL::Certificate.indirection.stubs(:find)
+        Puppet::SSL::CertificateRequest.indirection.stubs(:find)
+        Puppet::SSL::Certificate.indirection.stubs(:find).with('host1').returns(@cert)
+        Puppet::SSL::CertificateRequest.indirection.stubs(:find).with('host2').returns(@csr)
+      end
 
-        @ca.expects(:fingerprint).with("host1", :digest).returns "fingerprint1"
+      it "should fingerprint with the set digest algorithm" do
+        @applier = @class.new(:fingerprint, :to => %w{host1}, :digest => :shaonemillion)
+        @cert.expects(:digest).with(:shaonemillion).returns("fingerprint1")
+
         @applier.expects(:puts).with "host1 fingerprint1"
 
         @applier.apply(@ca)
@@ -347,10 +336,10 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
           @applier = @class.new(:fingerprint, :to => :all)
 
-          @ca.expects(:fingerprint).with("host1", :SHA256).returns "fingerprint1"
+          @cert.expects(:digest).returns("fingerprint1")
           @applier.expects(:puts).with "host1 fingerprint1"
 
-          @ca.expects(:fingerprint).with("host2", :SHA256).returns "fingerprint2"
+          @csr.expects(:digest).returns("fingerprint2")
           @applier.expects(:puts).with "host2 fingerprint2"
 
           @applier.apply(@ca)
@@ -361,10 +350,10 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should print each named certificate if found" do
           @applier = @class.new(:fingerprint, :to => %w{host1 host2})
 
-          @ca.expects(:fingerprint).with("host1", :SHA256).returns "fingerprint1"
+          @cert.expects(:digest).returns("fingerprint1")
           @applier.expects(:puts).with "host1 fingerprint1"
 
-          @ca.expects(:fingerprint).with("host2", :SHA256).returns "fingerprint2"
+          @csr.expects(:digest).returns("fingerprint2")
           @applier.expects(:puts).with "host2 fingerprint2"
 
           @applier.apply(@ca)

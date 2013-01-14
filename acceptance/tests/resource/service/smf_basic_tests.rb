@@ -1,4 +1,4 @@
-test_name "SMF: configuration"
+test_name "SMF: basic tests"
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'
@@ -35,6 +35,6 @@ agents.each do |agent|
   end
   step "SMF: stop the service"
   apply_manifest_on(agent, 'service {tstapp : ensure=>stopped}') do
-    assert_match( /.*/, result.stdout, "err: #{agent}")
+    assert_match( /changed 'running' to 'stopped'/, result.stdout, "err: #{agent}")
   end
 end

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/master'
@@ -242,12 +242,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         Puppet[:manifest] = "site.pp"
         Puppet.stubs(:err)
         @master.stubs(:jj)
-        Puppet.features.stubs(:pson?).returns true
-      end
-
-      it "should fail if pson isn't available" do
-        Puppet.features.expects(:pson?).returns false
-        lambda { @master.compile }.should raise_error
       end
 
       it "should compile a catalog for the specified node" do

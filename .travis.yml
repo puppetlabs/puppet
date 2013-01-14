@@ -1,0 +1,12 @@
+language: ruby
+bundler_args: --without development
+script: "bundle exec rake spec SPEC_OPTS='--color --format documentation'"
+notifications:
+  email: false
+rvm:
+  - 1.9.3
+  - 1.8.7
+  - ruby-head
+matrix:
+  allow_failures:
+    - rvm: ruby-head

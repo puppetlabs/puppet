@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser do
@@ -46,20 +46,6 @@ describe Puppet::Parser do
       @parser.known_resource_types.loader.expects(:import).with('one', nil)
       @parser.known_resource_types.loader.expects(:import).with('two', nil)
       @parser.parse("import 'one', 'two'")
-    end
-  end
-
-  describe "when parsing files" do
-    before do
-      FileTest.stubs(:exist?).returns true
-      File.stubs(:read).returns ""
-      @parser.stubs(:watch_file)
-    end
-
-    it "should treat files ending in 'rb' as ruby files" do
-      @parser.expects(:parse_ruby_file)
-      @parser.file = "/my/file.rb"
-      @parser.parse
     end
   end
 

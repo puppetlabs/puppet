@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'tmpdir'
@@ -439,6 +439,19 @@ describe Puppet::Node::Environment do
       @parser.expects(:file=).never
       @parser.expects(:parse).never
       env.instance_eval { perform_initial_import }
+    end
+
+    it "should not do anything when using ruby dsl" do
+      Puppet[:manifest] = "test.rb"
+      @parser.expects(:parse).never
+      env.instance_eval { perform_initial_import }
+    end
+
+    it "returns empty hostclass when using Ruby DSL" do
+      Puppet[:manifest] = "test.rb"
+      env.instance_eval { perform_initial_import }.tap {|c|
+        c.should be_a Puppet::Parser::AST::Hostclass
+      }.code.should be nil
     end
 
     it "should mark the type collection as needing a reparse when there is an error parsing" do

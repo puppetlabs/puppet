@@ -1,4 +1,4 @@
-module Puppet # :nodoc:
+module Puppet
   # The base class for all Puppet errors. It can wrap another exception
   class Error < RuntimeError
     attr_reader :original

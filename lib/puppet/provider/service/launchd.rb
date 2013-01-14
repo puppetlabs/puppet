@@ -51,13 +51,26 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   has_feature :enableable
   mk_resource_methods
 
-  Launchd_Paths = [ "/Library/LaunchAgents",
-                    "/Library/LaunchDaemons",
-                    "/System/Library/LaunchAgents",
-                    "/System/Library/LaunchDaemons"]
+  # These are the paths in OS X where a launchd service plist could
+  # exist. This is a helper method, versus a constant, for easy testing
+  # and mocking
+  def self.launchd_paths
+    [
+      "/Library/LaunchAgents",
+      "/Library/LaunchDaemons",
+      "/System/Library/LaunchAgents",
+      "/System/Library/LaunchDaemons"
+    ]
+  end
+  private_class_method :launchd_paths
 
-  Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-  
+  # This is the path to the overrides plist file where service enabling
+  # behavior is defined in 10.6 and greater
+  def self.launchd_overrides
+    "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+  end
+  private_class_method :launchd_overrides
+
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
   # clear out our cache when we're done.
@@ -81,6 +94,22 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
+  # This method will return a list of files in the passed directory. This method
+  # does not go recursively down the tree and does not return directories
+  #
+  # @param path [String] The directory to glob
+  #
+  # @api private
+  #
+  # @return [Array] of String instances modeling file paths
+  def self.return_globbed_list_of_file_paths(path)
+    array_of_files = Dir.glob(File.join(path, '*')).collect do |filepath|
+      File.file?(filepath) ? filepath : nil
+    end
+    array_of_files.compact
+  end
+  private_class_method :return_globbed_list_of_file_paths
+
   # Sets a class instance variable with a hash of all launchd plist files that
   # are found on the system. The key of the hash is the job id and the value
   # is the path to the file. If a label is passed, we return the job id and
@@ -88,14 +117,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def self.jobsearch(label=nil)
     @label_to_path_map ||= {}
     if @label_to_path_map.empty?
-      Launchd_Paths.each do |path|
-        Dir.glob(File.join(path,'*')).each do |filepath|
-          next if ! File.file?(filepath)
+      launchd_paths.each do |path|
+        return_globbed_list_of_file_paths(path).each do |filepath|
           job = read_plist(filepath)
-          if job.has_key?("Label") and job["Label"] == label
-            return { label => filepath }
+          next if job.nil?
+          if job.has_key?("Label")
+            if job["Label"] == label
+              return { label => filepath }
+            else
+              @label_to_path_map[job["Label"]] = filepath
+            end
           else
-            @label_to_path_map[job["Label"]] = filepath
+            Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
+                         "Puppet is skipping it")
+            next
           end
         end
       end
@@ -143,7 +178,13 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+    begin
+      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+    rescue Puppet::ExecutionFailure => detail
+      Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
+                     "Details: #{detail}")
+      return nil
+    end
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -245,7 +286,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if has_macosx_plist_overrides?
-      if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
+      if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
         end
@@ -270,9 +311,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
     if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(Launchd_Overrides)
+      overrides = self.class.read_plist(self.class.launchd_overrides)
       overrides[resource[:name]] = { "Disabled" => false }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
@@ -285,9 +326,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   def disable
     if has_macosx_plist_overrides?
-      overrides = self.class.read_plist(Launchd_Overrides)
+      overrides = self.class.read_plist(self.class.launchd_overrides)
       overrides[resource[:name]] = { "Disabled" => true }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      Plist::Emit.save_plist(overrides, self.class.launchd_overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true

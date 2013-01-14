@@ -5,9 +5,10 @@ require 'uri'
 Puppet::Reports.register_report(:http) do
 
   desc <<-DESC
-  Send report information via HTTP to the `reporturl`. Each host sends
-  its report as a YAML dump and this sends this YAML to a client via HTTP POST.
-  The YAML is the body of the request.
+    Send reports via HTTP or HTTPS. This report processor submits reports as
+    POST requests to the address in the `reporturl` setting. The body of each POST
+    request is the YAML dump of a Puppet::Transaction::Report object, and the
+    Content-Type is set as `application/x-yaml`.
   DESC
 
   def process

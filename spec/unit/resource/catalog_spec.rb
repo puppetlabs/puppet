@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
@@ -775,7 +775,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.features.pson? do
+describe Puppet::Resource::Catalog, "when converting to pson" do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
@@ -833,7 +833,7 @@ describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.fea
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting from pson", :if => Puppet.features.pson? do
+describe Puppet::Resource::Catalog, "when converting from pson" do
   def pson_result_should
     Puppet::Resource::Catalog.expects(:new).with { |hash| yield hash }
   end

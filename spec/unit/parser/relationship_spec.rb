@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parser/relationship'
@@ -7,6 +7,8 @@ describe Puppet::Parser::Relationship do
   before do
     @source = Puppet::Resource.new(:mytype, "source")
     @target = Puppet::Resource.new(:mytype, "target")
+    @extra_resource  = Puppet::Resource.new(:mytype, "extra")
+    @extra_resource2 = Puppet::Resource.new(:mytype, "extra2")
     @dep = Puppet::Parser::Relationship.new(@source, @target, :relationship)
   end
 
@@ -15,6 +17,8 @@ describe Puppet::Parser::Relationship do
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource(@source)
       @catalog.add_resource(@target)
+      @catalog.add_resource(@extra_resource)
+      @catalog.add_resource(@extra_resource2)
     end
 
     it "should fail if the source resource cannot be found" do
@@ -44,8 +48,28 @@ describe Puppet::Parser::Relationship do
     it "should supplement rather than clobber existing relationship values" do
       @source[:before] = "File[/bar]"
       @dep.evaluate(@catalog)
+      # this test did not work before. It was appending the resources
+      # together as a string
+      (@source[:before].class == Array).should be_true
       @source[:before].should be_include("Mytype[target]")
       @source[:before].should be_include("File[/bar]")
+    end
+
+    it "should supplement rather than clobber existing resource relationships" do
+      @source[:before] = @extra_resource
+      @dep.evaluate(@catalog)
+      (@source[:before].class == Array).should be_true
+      @source[:before].should be_include("Mytype[target]")
+      @source[:before].should be_include(@extra_resource)
+    end
+
+    it "should supplement rather than clobber multiple existing resource relationships" do
+      @source[:before] = [@extra_resource, @extra_resource2]
+      @dep.evaluate(@catalog)
+      (@source[:before].class == Array).should be_true
+      @source[:before].should be_include("Mytype[target]")
+      @source[:before].should be_include(@extra_resource)
+      @source[:before].should be_include(@extra_resource2)
     end
 
     it "should use the collected retargets if the target is a Collector" do

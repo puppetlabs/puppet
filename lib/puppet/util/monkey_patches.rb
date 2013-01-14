@@ -81,6 +81,14 @@ if RUBY_VERSION == '1.8.1' || RUBY_VERSION == '1.8.2'
   }
 end
 
+class Fixnum
+  # Returns the int itself. This method is intended for compatibility to
+  # character constant in Ruby 1.9.  1.8.5 is missing it; add it.
+  def ord
+    self
+  end unless method_defined? 'ord'
+end
+
 class Array
   # Ruby < 1.8.7 doesn't have this method but we use it in tests
   def combination(num)
@@ -300,5 +308,51 @@ if RUBY_VERSION == '1.8.5'
 
     alias move mv
     module_function :move
+  end
+end
+
+# Ruby 1.8.6 doesn't have it either
+# From https://github.com/puppetlabs/hiera/pull/47/files:
+# In ruby 1.8.5 Dir does not have mktmpdir defined, so this monkey patches
+# Dir to include the 1.8.7 definition of that method if it isn't already defined.
+# Method definition borrowed from ruby-1.8.7-p357/lib/ruby/1.8/tmpdir.rb
+unless Dir.respond_to?(:mktmpdir)
+  def Dir.mktmpdir(prefix_suffix=nil, tmpdir=nil)
+    case prefix_suffix
+    when nil
+      prefix = "d"
+      suffix = ""
+    when String
+      prefix = prefix_suffix
+      suffix = ""
+    when Array
+      prefix = prefix_suffix[0]
+      suffix = prefix_suffix[1]
+    else
+      raise ArgumentError, "unexpected prefix_suffix: #{prefix_suffix.inspect}"
+    end
+    tmpdir ||= Dir.tmpdir
+    t = Time.now.strftime("%Y%m%d")
+    n = nil
+    begin
+      path = "#{tmpdir}/#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}"
+      path << "-#{n}" if n
+      path << suffix
+      Dir.mkdir(path, 0700)
+    rescue Errno::EEXIST
+      n ||= 0
+      n += 1
+      retry
+    end
+
+    if block_given?
+      begin
+        yield path
+      ensure
+        FileUtils.remove_entry_secure path
+      end
+    else
+      path
+    end
   end
 end

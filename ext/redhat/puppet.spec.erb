@@ -9,9 +9,15 @@
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
 %endif
 
+%if 0%{?fedora} >= 17
+%global _with_systemd 1
+%else
+%global _with_systemd 0
+%endif
+
 # VERSION is subbed out during rake srpm process
-# %global realversion <%= @version %>
-# %global rpmversion <%= @rpmversion %>
+%global realversion <%= @version %>
+%global rpmversion <%= @rpmversion %>
 
 %global confdir ext/redhat
 
@@ -23,14 +29,14 @@ Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{realversion}.tar.gz.asc
 
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  facter < 1:2.0
-BuildRequires:  ruby >= 1.8.5
+# Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
+BuildRequires:  ruby >= 1.8.7
 
 BuildArch:      noarch
 Requires:       ruby(abi) >= 1.8
@@ -46,17 +52,26 @@ Requires:       ruby-shadow
 %endif
 
 Requires:       facter >= 1.6.11
-Requires:       ruby >= 1.8.5
+# Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
+# Ruby 1.8.7 available for el5 at: yum.puppetlabs.com/el/5/devel/$ARCH
+Requires:       ruby >= 1.8.7
 Requires:       hiera >= 1.0.0
-Obsoletes:      hiera-puppet <= 1.0.0
+Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
 
-Requires(pre):  shadow-utils
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# Required for %%pre
+Requires:       shadow-utils
+
+%if 0%{?_with_systemd}
+# Required for %%post, %%preun, %%postun
+Requires:       systemd
+%else
+# Required for %%post and %%preun
+Requires:       chkconfig
+# Required for %%preun and %%postun
+Requires:       initscripts
+%endif
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a
@@ -68,10 +83,9 @@ along with obviously discrete elements like packages, services, and files.
 Group:          System Environment/Base
 Summary:        Server for the puppet system management tool
 Requires:       puppet = %{version}-%{release}
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+# chkconfig (%%post, %%preun) and initscripts (%%preun %%postun) are required for non systemd
+# and systemd (%%post, %%preun, and %%postun) are required for systems with systemd as default
+# They come along transitively with puppet-%{version}-%{release}.
 
 %description server
 Provides the central puppet server daemon which provides manifests to clients.
@@ -83,22 +97,11 @@ patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build
-# Fix some rpmlint complaints
-for f in mac_dscl.pp mac_dscl_revert.pp \
-         mac_pkgdmg.pp ; do
-  sed -i -e'1d' examples/$f
-  chmod a-x examples/$f
-done
 for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
-#chmod +x ext/puppetstoredconfigclean.rb
 
-find examples/ -type f -empty | xargs rm
-find examples/ -type f | xargs chmod a-x
-
-# puppet-queue.conf is more of an example, used for stompserver
-mv conf/puppet-queue.conf examples/etc/puppet/
+find examples/ -type f | xargs --no-run-if-empty chmod a-x
 
 %install
 rm -rf %{buildroot}
@@ -108,12 +111,24 @@ install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
+
+# As per redhat bz #495096
 install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
+
+%if 0%{?_with_systemd}
+# Systemd for fedora >= 17
+%{__install} -d -m0755  %{buildroot}%{_unitdir}
+install -Dp -m0644 ext/systemd/puppetagent.service %{buildroot}%{_unitdir}/puppetagent.service
+install -Dp -m0644 ext/systemd/puppetmaster.service %{buildroot}%{_unitdir}/puppetmaster.service
+%else
+# Otherwise init.d for fedora < 17 or el 5, 6
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0755 %{confdir}/queue.init %{buildroot}%{_initrddir}/puppetqueue
+%endif
+
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
@@ -125,7 +140,12 @@ cp -a ext/ %{buildroot}%{_datadir}/%{name}
 rm -rf %{buildroot}%{_datadir}/%{name}/ext/{emacs,vim}
 # remove misc packaging artifacts not applicable to rpms
 rm -rf %{buildroot}%{_datadir}/%{name}/ext/{gentoo,freebsd,solaris,suse,windows,osx,ips,debian}
+rm -f %{buildroot}%{_datadir}/%{name}/ext/redhat/*.init
 rm -f %{buildroot}%{_datadir}/%{name}/ext/{build_defaults.yaml,project_data.yaml}
+
+# Rpmlint fixup
+chmod 755 %{buildroot}%{_datadir}/%{name}/ext/regexp_nodes/regexp_nodes.rb
+chmod 755 %{buildroot}%{_datadir}/%{name}/ext/puppet-load.rb
 
 # Install emacs mode files
 emacsdir=%{buildroot}%{_datadir}/emacs/site-lisp
@@ -150,17 +170,21 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG LICENSE README.md examples
+%doc LICENSE README.md examples
 %{_bindir}/puppet
 %{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
+%if 0%{?_with_systemd}
+%{_unitdir}/puppetagent.service
+%else
 %{_initrddir}/puppet
+%config(noreplace) %{_sysconfdir}/sysconfig/puppet
+%endif
 %dir %{_sysconfdir}/puppet
 %dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
-%config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -171,7 +195,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/log/puppet
+%attr(0750, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
 %{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/puppet.8.gz
@@ -211,11 +235,15 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
 %files server
 %defattr(-, root, root, 0755)
+%if 0%{?_with_systemd}
+%{_unitdir}/puppetmaster.service
+%else
 %{_initrddir}/puppetmaster
 %{_initrddir}/puppetqueue
+%config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
+%endif
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
-%config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
 %{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-master.8.gz
 
@@ -233,6 +261,19 @@ fi
 exit 0
 
 %post
+%if 0%{?_with_systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /bin/systemctl start puppetagent.service) >/dev/null 2>&1 || :
+  fi
+fi
+%else
 /sbin/chkconfig --add puppet || :
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
@@ -244,8 +285,22 @@ if [ "$1" -ge 1 ]; then
       /sbin/service puppet start) >/dev/null 2>&1 || :
   fi
 fi
+%endif
 
 %post server
+%if 0%{?_with_systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
+  newpid="%{_localstatedir}/run/puppet/master.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /bin/systemctl start puppetmaster.service) > /dev/null 2>&1 || :
+  fi
+fi
+%else
 /sbin/chkconfig --add puppetmaster || :
 if [ "$1" -ge 1 ]; then
   # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
@@ -257,28 +312,61 @@ if [ "$1" -ge 1 ]; then
       /sbin/service puppetmaster start) >/dev/null 2>&1 || :
   fi
 fi
+%endif
 
 %preun
-if [ "$1" = 0 ] ; then
-  /sbin/service puppet stop >/dev/null 2>&1
-  /sbin/chkconfig --del puppet || :
+%if 0%{?_with_systemd}
+if [ "$1" -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable puppetagent.service > /dev/null 2>&1 || :
+    /bin/systemctl stop puppetagent.service > /dev/null 2>&1 || :
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" = 0 ] ; then
+    /sbin/service puppet stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppet || :
+fi
+%endif
 
 %preun server
-if [ "$1" = 0 ] ; then
-  /sbin/service puppetmaster stop >/dev/null 2>&1
-  /sbin/chkconfig --del puppetmaster || :
+%if 0%{?_with_systemd}
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable puppetmaster.service > /dev/null 2>&1 || :
+    /bin/systemctl stop puppetmaster.service > /dev/null 2>&1 || :
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" = 0 ] ; then
+    /sbin/service puppetmaster stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppetmaster || :
+fi
+%endif
 
 %postun
-if [ "$1" -ge 1 ]; then
-  /sbin/service puppet condrestart >/dev/null 2>&1 || :
+%if 0%{?_with_systemd}
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart puppetagent.service >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" -ge 1 ]; then
+    /sbin/service puppet condrestart >/dev/null 2>&1 || :
+fi
+%endif
 
 %postun server
-if [ "$1" -ge 1 ]; then
-  /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
+%if 0%{?_with_systemd}
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart puppetmaster.service >/dev/null 2>&1 || :
 fi
+%else
+if [ "$1" -ge 1 ]; then
+    /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
+fi
+%endif
 
 %clean
 rm -rf %{buildroot}
@@ -286,6 +374,12 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Tue Dec 18 2012 Matthaus Owens <matthaus@puppetlabs.com>
+- Remove for loop on examples/ code which no longer exists. Add --no-run-if-empty to xargs invocations.
+
+* Sat Dec 1 2012 Ryan Uber <ryuber@cisco.com>
+- Fix for logdir perms regression (#17866)
 
 * Wed Aug 29 2012 Moses Mendoza <moses@puppetlabs.com> - 3.0.0-0.1rc5
 - Update for 3.0.0 rc5

@@ -26,10 +26,6 @@
 
     <exec_method type="method" name="stop" exec="/lib/svc/method/puppet-agent stop" timeout_seconds="60"/>
 
-    <property_group name='server' type='framework'>
-      <propval name='name' type='astring' value='puppet' />
-    </property_group>
-
     <stability value="Evolving"/>
 
     <template>

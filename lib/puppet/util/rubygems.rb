@@ -2,18 +2,23 @@ require 'puppet/util'
 
 module Puppet::Util::RubyGems
 
-  #Base/factory class for rubygems source
+  # Base/factory class for rubygems source. These classes introspec into
+  # rubygems to in order to list where the rubygems system will look for files
+  # to load.
   class Source
     class << self
+      # @api private
       def has_rubygems?
-        begin
-          require 'rubygems'
-          true
-        rescue LoadError
-          false
-        end
+        # Gems are not actually available when Bundler is loaded, even
+        # though the Gem constant is defined. This is because Bundler
+        # loads in rubygems, but then removes the custom require that
+        # rubygems installs. So when Bundler is around we have to act
+        # as though rubygems is not, e.g. we shouldn't be able to load
+        # a gem that Bundler doesn't want us to see.
+        defined? ::Gem and not defined? ::Bundler
       end
 
+      # @api private
       def source
         if has_rubygems?
           Gem::Specification.respond_to?(:latest_specs) ? Gems18Source : OldGemsSource
@@ -31,6 +36,7 @@ module Puppet::Util::RubyGems
   end
 
   # For RubyGems >= 1.8.0
+  # @api private
   class Gems18Source < Source
     def directories
       Gem::Specification.latest_specs.collect do |spec|
@@ -40,12 +46,14 @@ module Puppet::Util::RubyGems
   end
 
   # RubyGems < 1.8.0
+  # @api private
   class OldGemsSource < Source
     def directories
       @paths ||= Gem.latest_load_paths
     end
   end
 
+  # @api private
   class NoGemsSource < Source
     def directories
       []

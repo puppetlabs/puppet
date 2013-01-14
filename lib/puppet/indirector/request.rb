@@ -16,8 +16,7 @@ class Puppet::Indirector::Request
 
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
-  # Load json before trying to register.
-  Puppet.features.pson? and ::PSON.register_document_type('IndirectorRequest',self)
+  ::PSON.register_document_type('IndirectorRequest',self)
 
   def self.from_pson(json)
     raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
@@ -214,6 +213,10 @@ class Puppet::Indirector::Request
     self.server = default_server
     self.port   = default_port
     return yield(self)
+  end
+
+  def remote?
+    self.node or self.ip
   end
 
   private

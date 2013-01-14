@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:rpm)
@@ -16,7 +16,7 @@ describe provider_class do
 
   describe "self.instances" do
     it "returns an array of packages" do
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:custom_environment => {}}).returns("RPM version 5.x")
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("RPM version 5.x")
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       subject.stubs(:which).with("rpm").returns("/bin/rpm")
       Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)

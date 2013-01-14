@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 # Encoding: UTF-8
 require 'spec_helper'
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 
 require 'spec_helper'
 
@@ -72,12 +72,12 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   describe "#start" do
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
       provider.start
     end
     it "should start the service with <initscript> start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :override_locale => false, :squelch => true)
       provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.start
     end
@@ -86,12 +86,12 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
       provider.stop
     end
     it "should stop the service with <initscript> stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :override_locale => false, :squelch => true)
       provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
       provider.stop
     end
@@ -153,23 +153,23 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     describe "when a special status command is specified" do
       it "should use the status command from the resource" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
         provider.status
       end
 
       it "should return :stopped when the status command returns with a non-zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
         provider.status.should == :stopped
       end
 
       it "should return :running when the status command returns with a zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.status.should == :running
       end
@@ -178,14 +178,14 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     describe "when hasstatus is false" do
       it "should return running if a pid can be found" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true).never
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true).never
         provider.expects(:getpid).returns 1000
         provider.status.should == :running
       end
 
       it "should return stopped if no pid can be found" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true).never
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true).never
         provider.expects(:getpid).returns nil
         provider.status.should == :stopped
       end
@@ -195,7 +195,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       it "should return running if <initscript> status exits with a zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.status.should == :running
       end
@@ -203,7 +203,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       it "should return stopped if <initscript> status exits with a non-zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
-        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
         provider.status.should == :stopped
       end
@@ -213,24 +213,24 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :squelch => true).never
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :override_locale => false, :squelch => true).never
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
       provider.restart
     end
 
     it "should restart the service with <initscript> restart if hasrestart is true" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
       provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
-      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :override_locale => false, :squelch => true)
       provider.restart
     end
 
     it "should restart the service with <initscript> stop/start if hasrestart is false" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
       provider.expects(:search).with('sshd').returns('/etc/init.d/sshd')
-      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :squelch => true).never
-      provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :squelch => true)
-      provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:restart], :failonfail => true, :override_locale => false, :squelch => true).never
+      provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :override_locale => false, :squelch => true)
       provider.restart
     end
   end

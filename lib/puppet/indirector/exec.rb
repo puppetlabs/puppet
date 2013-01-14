@@ -16,7 +16,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
     # Add our name to it.
     external_command << name
     begin
-      output = execute(external_command, :combine => false)
+      output = execute(external_command, :failonfail => true, :combine => false)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Failed to find #{name} via exec: #{detail}"
     end

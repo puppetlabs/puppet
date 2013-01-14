@@ -53,9 +53,9 @@ end
 step "Try to upgrade a module with constraints on its dependencies that cannot be met"
 on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> Preparing to upgrade 'pmtacceptance-java' ...
-    STDOUT> Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) in /etc/puppet/modules ...
-    STDOUT> Downloading from https://forge.puppetlabs.com ...
+    STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
+    STDOUT> \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> latest: v1.7.1)
     STDERR>   No version of 'pmtacceptance-stdlib' will satisfy dependencies
     STDERR>     'notpmtacceptance-unicorns' (v0.0.3) requires 'pmtacceptance-stdlib' (v0.0.2)
@@ -78,10 +78,10 @@ end
 step "Upgrade a single module, ignoring its dependencies"
 on master, puppet("module upgrade pmtacceptance-java --version 1.7.0 --ignore-dependencies") do
   assert_output <<-OUTPUT
-    Preparing to upgrade 'pmtacceptance-java' ...
-    Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[0m) in /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Upgrading -- do not interrupt ...
+    \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
+    \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.0\e[0m)
   OUTPUT
@@ -90,10 +90,10 @@ end
 step "Upgrade a module with constraints on its dependencies that can be met"
 on master, puppet("module upgrade pmtacceptance-java") do
   assert_output <<-OUTPUT
-    Preparing to upgrade 'pmtacceptance-java' ...
-    Found 'pmtacceptance-java' (\e[0;36mv1.7.0\e[0m) in /etc/puppet/modules ...
-    Downloading from https://forge.puppetlabs.com ...
-    Upgrading -- do not interrupt ...
+    \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
+    \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.7.0\e[m) in /etc/puppet/modules ...\e[0m
+    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └─┬ pmtacceptance-java (\e[0;36mv1.7.0 -> v1.7.1\e[0m)
       └── pmtacceptance-stdlib (\e[0;36mv0.0.2 -> v1.0.0\e[0m)

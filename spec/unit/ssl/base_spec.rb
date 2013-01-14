@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate'
@@ -11,36 +11,6 @@ describe Puppet::SSL::Certificate do
   before :each do
     @base = TestCertificate.new("name")
     @class = TestCertificate
-  end
-
-  describe "when fingerprinting content" do
-    before :each do
-      @cert = stub 'cert', :to_der => "DER"
-      @base.stubs(:content).returns(@cert)
-      OpenSSL::Digest.stubs(:constants).returns ["MD5", "SHA1", "SHA256", "SHA512", "DIGEST"]
-      @digest = stub_everything
-      OpenSSL::Digest.stubs(:const_get).returns @digest
-    end
-
-    it "should digest the certificate DER value and return a ':' seperated nibblet string" do
-      @cert.expects(:to_der).returns("DER")
-      @digest.expects(:hexdigest).with("DER").returns "digest"
-
-      @base.fingerprint.should == "DI:GE:ST"
-    end
-
-    it "should raise an error if the digest algorithm is not defined" do
-      OpenSSL::Digest.expects(:constants).returns []
-
-      lambda { @base.fingerprint }.should raise_error
-    end
-
-    it "should use the given digest algorithm" do
-      OpenSSL::Digest.stubs(:const_get).with("DIGEST").returns @digest
-      @digest.expects(:hexdigest).with("DER").returns "digest"
-
-      @base.fingerprint(:digest).should == "DI:GE:ST"
-    end
   end
 
   describe "when creating new instances" do
@@ -78,6 +48,44 @@ describe Puppet::SSL::Certificate do
     it "should strip the prefix" do
       subject = '/CN=foo'
       @class.name_from_subject(subject).should == 'foo'
+    end
+  end
+
+  describe "#digest_algorithm" do
+    let(:content) { stub 'content' }
+    let(:base) {
+      b = Puppet::SSL::Base.new('base')
+      b.content = content
+      b
+    }
+
+    # Some known signature algorithms taken from RFC 3279, 5758, and browsing
+    # objs_dat.h in openssl
+    {
+      'md5WithRSAEncryption' => 'md5',
+      'sha1WithRSAEncryption' => 'sha1',
+      'md4WithRSAEncryption' => 'md4',
+      'sha256WithRSAEncryption' => 'sha256',
+      'ripemd160WithRSA' => 'ripemd160',
+      'ecdsa-with-SHA1' => 'sha1',
+      'ecdsa-with-SHA224' => 'sha224',
+      'ecdsa-with-SHA256' => 'sha256',
+      'ecdsa-with-SHA384' => 'sha384',
+      'ecdsa-with-SHA512' => 'sha512',
+      'dsa_with_SHA224' => 'sha224',
+      'dsaWithSHA1' => 'sha1',
+    }.each do |signature, digest|
+      it "returns '#{digest}' for signature algorithm '#{signature}'" do
+        content.stubs(:signature_algorithm).returns(signature)
+        base.digest_algorithm.should == digest
+      end
+    end
+
+    it "raises an error on an unknown signature algorithm" do
+      content.stubs(:signature_algorithm).returns("nonsense")
+      expect {
+        base.digest_algorithm
+      }.to raise_error(Puppet::Error, "Unknown signature algorithm 'nonsense'")
     end
   end
 end

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/posix'
@@ -247,9 +247,5 @@ describe Puppet::Util::POSIX do
 
   it "should be able to iteratively search for posix values" do
     @posix.should respond_to(:search_posix_field)
-  end
-
-  describe "when searching for posix values iteratively" do
-    it "should iterate across all of the structs returned by Etc and return the appropriate field from the first matching value"
   end
 end

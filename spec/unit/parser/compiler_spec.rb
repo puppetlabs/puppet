@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 class CompilerTestResource
@@ -243,6 +243,32 @@ describe Puppet::Parser::Compiler do
       main_class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
       main_class.expects(:evaluate_code).with { |r| r.is_a?(Puppet::Parser::Resource) }
       @compiler.topscope.expects(:source=).with(main_class)
+
+      @compiler.compile
+    end
+
+    it "should evaluate ruby code on main object when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      Puppet::Util::ManifestFiletypeHelper.expects(:is_ruby_filename?).at_least_once.returns true
+      @compiler.expects :assign_ruby_code
+
+      @compiler.compile
+    end
+
+    it "should create a new Puppet::DSL::Parser when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      File.stubs(:read).returns("test code")
+      Puppet[:manifest] = "test.rb"
+      Puppet::DSL::Parser.expects(:prepare_for_evaluation).with {|main, code, filename| code == "test code" and main.is_a? Puppet::Resource::Type}.returns stub(:evaluate)
+
+      @compiler.compile
+    end
+
+    it "should call evaluate on DSL Parser instance when using ruby dsl" do
+      compile_stub(:evaluate_main)
+      Puppet::Util::ManifestFiletypeHelper.expects(:is_ruby_filename?).at_least_once.returns true
+      File.stubs(:read).returns("")
+      Puppet::DSL::Parser.expects :prepare_for_evaluation
 
       @compiler.compile
     end

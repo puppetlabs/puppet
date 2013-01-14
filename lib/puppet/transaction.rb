@@ -12,8 +12,7 @@ class Puppet::Transaction
   require 'puppet/transaction/resource_harness'
   require 'puppet/resource/status'
 
-  attr_accessor :component, :catalog, :ignoreschedules, :for_network_device
-  attr_accessor :configurator
+  attr_accessor :catalog, :ignoreschedules, :for_network_device
 
   # The report, once generated.
   attr_reader :report
@@ -151,7 +150,7 @@ class Puppet::Transaction
     begin
       made = resource.eval_generate.uniq
       return false if made.empty?
-      made = made.inject({}) {|a,v| a.merge(v.name => v) }
+      made = Hash[made.map(&:name).zip(made)]
     rescue => detail
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false

@@ -1,9 +1,9 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:zone).provider(:solaris) do
   let(:resource) { Puppet::Type.type(:zone).new(:name => 'dummy', :path => '/', :provider => :solaris) }
-  let(:provider) { resource.provider }
+  let(:provider) { described_class.new(resource) }
 
   context "#configure" do
     it "should add the create args to the create str" do

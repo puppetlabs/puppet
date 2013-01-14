@@ -155,7 +155,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # paranoid given the low cost of quering the db once more.
     cmds = []
     cmds << :security << "authorizationdb" << "read" << resource[:name]
-    output = execute(cmds, :combine => false)
+    output = execute(cmds, :failonfail => false, :combine => false)
     current_values = Plist::parse_xml(output)
     current_values ||= {}
     specified_values = convert_plist_to_native_attributes(@property_hash)
@@ -186,11 +186,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       Plist::Emit.save_plist(values, tmp.path)
       cmds = []
       cmds << :security << "authorizationdb" << "write" << name
-
-        output = execute(
-          cmds, :combine => false,
-
-            :stdinfile => tmp.path.to_s)
+      output = execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
     rescue Errno::EACCES => e
       raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}")
     ensure

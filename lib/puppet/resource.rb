@@ -90,6 +90,34 @@ class Puppet::Resource
     end
   end
 
+  def self.canonicalize_type(type)
+    type, _ = get_type_and_title type, ""
+    type
+  end
+
+  def self.get_type_and_title(type, title)
+    type, title = extract_type_and_title(type, title)
+    [munge_type_name(type), title]
+  end
+
+  def self.extract_type_and_title(argtype, argtitle)
+    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
+    elsif argtitle                                         then [ argtype,            argtitle      ]
+    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+    elsif argtype.is_a?(Hash)                              then
+      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
+        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
+    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+    end
+  end
+
+  def self.munge_type_name(value)
+    return :main if value == :main
+    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
+
+    value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+  end
+
   def yaml_property_munge(x)
     case x
     when Hash
@@ -194,13 +222,12 @@ class Puppet::Resource
       send(attr.to_s + "=", value)
     end
 
-    @type, @title = extract_type_and_title(type, title)
+    @type, @title = self.class.get_type_and_title(type, title)
 
-    @type = munge_type_name(@type)
 
     if self.class?
       @title = :main if @title == ""
-      @title = munge_type_name(@title)
+      @title = self.class.munge_type_name(@title)
     end
 
     if params = attributes[:parameters]
@@ -300,45 +327,60 @@ class Puppet::Resource
     [ type, title ].join('/')
   end
 
+  def missing_arguments
+    resource_type.arguments.select do |param, default|
+      param = param.to_sym
+      parameters[param].nil? || parameters[param].value == :undef
+    end
+  end
+  private :missing_arguments
+
+  # Consult external data bindings for class parameter values which must be
+  # namespaced in the backend.
+  #
+  # Example:
+  #
+  #   class foo($port){ ... }
+  #
+  # We make a request to the backend for the key 'foo::port' not 'foo'
+  #
+  def lookup_external_default_for(param, scope)
+    if resource_type.type == :hostclass
+      Puppet::DataBinding.indirection.find(
+        "#{resource_type.name}::#{param}",
+        :environment => scope.environment.to_s,
+        :variables => Puppet::DataBinding::Variables.new(scope))
+    else
+      nil
+    end
+  end
+  private :lookup_external_default_for
+
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
-    result = []
+    unless is_a?(Puppet::Parser::Resource)
+      fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+    end
 
-    resource_type.arguments.each do |param, default|
-      param = param.to_sym
-      next if parameters.include?(param)
-      unless is_a?(Puppet::Parser::Resource)
-        fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
-      end
-
-      # Consult external data bindings for class parameter values which must be
-      # namespaced in the backend.
-      #
-      # Example:
-      #
-      #   class foo($port){ ... }
-      #
-      # We make a request to the backend for the key 'foo::port' not 'foo'
-      #
-      external_value = nil
-      if resource_type.type == :hostclass
-        namespaced_param = "#{resource_type.name}::#{param}"
-        external_value = Puppet::DataBinding.indirection.find(
-          namespaced_param, :host => scope.host, :environment => scope.environment.to_s, :facts => scope.facts.values)
-      end
+    missing_arguments.collect do |param, default|
+      external_value = lookup_external_default_for(param, scope)
 
       if external_value.nil?
         next if default.nil?
-        value = default.safeevaluate(scope)
+
+        value = if default.respond_to? :safeevaluate
+                  default.safeevaluate(scope)
+                else
+                  default
+                end
       else
         value = external_value
       end
 
-      self[param] = value
-      result << param
-    end
-    result
+      self[param.to_sym] = value
+      param
+    end.compact
   end
 
   def to_resource
@@ -408,24 +450,6 @@ class Puppet::Resource
       validate_parameter(param) if strict?
       self[param] = value
     end
-  end
-
-  def extract_type_and_title(argtype, argtitle)
-    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
-    elsif argtitle                                         then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
-    elsif argtype.is_a?(Hash)                              then
-      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
-        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
-    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
-    end
-  end
-
-  def munge_type_name(value)
-    return :main if value == :main
-    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
-
-    value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end
 
   def parse_title

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/modules'
@@ -521,7 +521,7 @@ describe Puppet::Module do
     mod
   end
 
-  describe "when loading the metadata file", :if => Puppet.features.pson? do
+  describe "when loading the metadata file" do
     before do
       @data = {
         :license       => "GPL2",

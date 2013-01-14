@@ -85,7 +85,9 @@ class Puppet::Application::FaceBase < Puppet::Application
           unless Puppet.settings.boolean? option.name then
             # As far as I can tell, we treat non-bool options as always having
             # a mandatory argument. --daniel 2011-04-05
-            index += 1          # ...so skip the argument.
+            # ... But, the mandatory argument will not be the next item if an = is
+            # employed in the long form of the option. --jeffmccune 2012-09-18
+            index += 1 unless item =~ /^--#{option.name}=/
           end
         elsif option = find_application_argument(item) then
           index += 1 if (option[:argument] and not option[:optional])

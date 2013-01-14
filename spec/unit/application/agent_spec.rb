@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/agent'
@@ -70,10 +70,10 @@ describe Puppet::Application::Agent do
       @puppetd.options[:serve].should == []
     end
 
-    it "should use MD5 as default digest algorithm" do
+    it "should use SHA256 as default digest algorithm" do
       @puppetd.preinit
 
-      @puppetd.options[:digest].should == :MD5
+      @puppetd.options[:digest].should == 'SHA256'
     end
 
     it "should not fingerprint by default" do
@@ -455,7 +455,6 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet[:authconfig] = 'auth'
         FileTest.stubs(:exists?).with('auth').returns(true)
         File.stubs(:exist?).returns(true)
         @puppetd.options.stubs(:[]).with(:serve).returns([])
@@ -506,6 +505,19 @@ describe Puppet::Application::Agent do
 
       it "should setup our certificate host" do
         @puppetd.expects(:setup_host)
+        @puppetd.setup
+      end
+    end
+
+    describe "when configuring agent for catalog run" do
+      it "should set should_fork as true when running normally" do
+        Puppet::Agent.expects(:new).with(anything, true)
+        @puppetd.setup
+      end
+
+      it "should not set should_fork as false for --onetime" do
+        Puppet[:onetime] = true
+        Puppet::Agent.expects(:new).with(anything, false)
         @puppetd.setup
       end
     end
@@ -560,11 +572,6 @@ describe Puppet::Application::Agent do
         expect { @puppetd.onetime }.to exit_with 0
       end
 
-      it "should not let the agent fork" do
-        @agent.expects(:should_fork=).with(false)
-        expect { @puppetd.onetime }.to exit_with 0
-      end
-
       it "should let the agent run" do
         @agent.expects(:run).returns(:report)
         expect { @puppetd.onetime }.to exit_with 0
@@ -611,20 +618,20 @@ describe Puppet::Application::Agent do
 
       it "should fingerprint the certificate if it exists" do
         @host.expects(:certificate).returns(@cert)
-        @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
+        @cert.expects(:digest).with('MD5').returns "fingerprint"
         @puppetd.fingerprint
       end
 
       it "should fingerprint the certificate request if no certificate have been signed" do
         @host.expects(:certificate).returns(nil)
         @host.expects(:certificate_request).returns(@cert)
-        @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
+        @cert.expects(:digest).with('MD5').returns "fingerprint"
         @puppetd.fingerprint
       end
 
       it "should display the fingerprint" do
         @host.stubs(:certificate).returns(@cert)
-        @cert.stubs(:fingerprint).with(:MD5).returns("DIGEST")
+        @cert.stubs(:digest).with('MD5').returns("DIGEST")
 
         @puppetd.expects(:puts).with "DIGEST"
 

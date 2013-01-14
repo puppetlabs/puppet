@@ -6,16 +6,31 @@ module Puppet
   class ExecutionFailure < Puppet::Error
   end
 
+# This module defines methods for execution of system commands. It is intented for inclusion
+# in classes that needs to execute system commands.
+# @api public
 module Util::Execution
 
-  # Execute the provided command with STDIN connected to a pipe, yielding the
-  # pipe object.  That allows data to be fed to that subprocess.
+  # Executes the provided command with STDIN connected to a pipe, yielding the
+  # pipe object.
+  # This allows data to be fed to the subprocess.
   #
   # The command can be a simple string, which is executed as-is, or an Array,
-  # which is treated as a set of command arguments to pass through.#
+  # which is treated as a set of command arguments to pass through.
   #
   # In all cases this is passed directly to the shell, and STDOUT and STDERR
   # are connected together during execution.
+  # @param command [String, Array<String>] the command to execute as one string, or as parts in an array.
+  #   the parts of the array are joined with one separating space between each entry when converting to
+  #   the command line string to execute.
+  # @param failonfail [Boolean] (true) if the execution should fail with Exception on failure or not.
+  # @yield [pipe] to a block executing a subprocess
+  # @yieldparam pipe [IO] the opened pipe
+  # @yieldreturn [String] the output to return
+  # @raise [ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  #   `true`.
+  # @return [String] a string with the output from the subprocess executed by the given block
+  #
   def self.execpipe(command, failonfail = true)
     if respond_to? :debug
       debug "Executing '#{command}'"
@@ -44,6 +59,9 @@ module Util::Execution
     output
   end
 
+  # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
+  # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
+  # @return (see execute)
   def self.execfail(command, exception)
     output = execute(command)
     return output
@@ -51,36 +69,45 @@ module Util::Execution
     raise exception, output
   end
 
+  # Default empty options for {execute}
+  NoOptionsSpecified = {}
 
-
-  # Execute the desired command, and return the status and output.
+  # Executes the desired command, and return the status and output.
   # def execute(command, options)
-  # [command] an Array or String representing the command to execute. If it is
+  # @param command [Array<String>, String] the command to execute. If it is
   #   an Array the first element should be the executable and the rest of the
   #   elements should be the individual arguments to that executable.
-  # [options] a Hash optionally containing any of the following keys:
-  #   :failonfail (default true) -- if this value is set to true, then this method will raise an error if the
-  #      command is not executed successfully.
-  #   :uid (default nil) -- the user id of the user that the process should be run as
-  #   :gid (default nil) -- the group id of the group that the process should be run as
-  #   :combine (default true) -- sets whether or not to combine stdout/stderr in the output
-  #   :stdinfile (default nil) -- sets a file that can be used for stdin. Passing a string for stdin is not currently
-  #      supported.
-  #   :squelch (default false) -- if true, ignore stdout / stderr completely
-  #   :override_locale (default true) -- by default (and if this option is set to true), we will temporarily override
-  #     the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
-  #     This ensures that the output of the command will be formatted consistently, making it predictable for parsing.
-  #     Passing in a value of false for this option will allow the command to be executed using the user/system locale.
-  #   :custom_environment (default {}) -- a hash of key/value pairs to set as environment variables for the duration
-  #     of the command
-  def self.execute(command, options = {})
+  # @param options [Hash] a Hash of options
+  # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
+  #   command is not executed successfully.
+  # @option options [?] :uid (nil) the user id of the user that the process should be run as
+  # @option options [?] :gid (nil) the group id of the group that the process should be run as
+  # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output
+  # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
+  #   supported.
+  # @option options [Boolean] :squelch (true) if true, ignore stdout / stderr completely.
+  # @option options [Boolean] :override_locale (true) by default (and if this option is set to true), we will temporarily override
+  #   the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
+  #   This ensures that the output of the command will be formatted consistently, making it predictable for parsing.
+  #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
+  # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
+  #   of the command.
+  # @return [String] output as specified by options
+  # @note Unfortunately, the default behavior for failonfail and combine (since
+  #   0.22.4 and 0.24.7, respectively) depend on whether options are specified
+  #   or not. If specified, then failonfail and combine default to false (even
+  #   when the options specified are neither failonfail nor combine). If no
+  #   options are specified, then failonfail and combine default to true.
+  # @comment See commits efe9a833c and d32d7f30
+  #
+  def self.execute(command, options = NoOptionsSpecified)
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
-        :failonfail => true,
+        :failonfail => NoOptionsSpecified.equal?(options),
         :uid => nil,
         :gid => nil,
-        :combine => true,
+        :combine => NoOptionsSpecified.equal?(options),
         :stdinfile => nil,
         :squelch => false,
         :override_locale => true,
@@ -140,9 +167,10 @@ module Util::Execution
     output
   end
 
-  # get the path to the ruby executable (available via Config object, even if
-  # it's not in the PATH... so this is slightly safer than just using
-  # Puppet::Util.which)
+  # Returns the path to the ruby executable (available via Config object, even if
+  # it's not in the PATH... so this is slightly safer than just using Puppet::Util.which)
+  # @return [String] the path to the Ruby executable
+  #
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
               RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT']).
@@ -155,7 +183,10 @@ module Util::Execution
   end
 
 
-  # this is private method, see call to private_class_method after method definition
+  # This is private method.
+  # @comment see call to private_class_method after method definition
+  # @api private
+  #
   def self.execute_posix(command, options, stdin, stdout, stderr)
     child_pid = Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
 
@@ -201,7 +232,10 @@ module Util::Execution
   private_class_method :execute_posix
 
 
-  # this is private method, see call to private_class_method after method definition
+  # This is private method.
+  # @comment see call to private_class_method after method definition
+  # @api private
+  #
   def self.execute_windows(command, options, stdin, stdout, stderr)
     command = command.map do |part|
       part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
@@ -215,7 +249,10 @@ module Util::Execution
   private_class_method :execute_windows
 
 
-  # this is private method, see call to private_class_method after method definition
+  # This is private method.
+  # @comment see call to private_class_method after method definition
+  # @api private
+  #
   def self.wait_for_output(stdout)
     # Make sure the file's actually been written.  This is basically a race
     # condition, and is probably a horrible way to handle it, but, well, oh

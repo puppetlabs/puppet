@@ -25,8 +25,8 @@
 # Note that the instance variables are local to this Puppet::Plugin (and so may be used
 #   for maintaining state, etc.) but the plugin system does not provide any thread safety
 #   assurances, so they may not be adequate for some complex use cases.
-#
-#
+
+
 module Puppet
   class Plugins
     Paths  = [] # Where we might find plugin initialization code

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 
 shared_examples_for "Puppet::FileServing::Files" do |indirection|
   %w[find search].each do |method|

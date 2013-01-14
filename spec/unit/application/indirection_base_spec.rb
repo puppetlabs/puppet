@@ -1,5 +1,6 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/util/command_line'
 require 'puppet/application/indirection_base'
 require 'puppet/indirector/face'
 
@@ -20,8 +21,6 @@ Puppet::Face.register(face)
 ########################################################################
 
 describe Puppet::Application::IndirectionBase do
-  subject { Puppet::Application::TestIndirection.new }
-
   it "should accept a terminus command line option" do
     # It would be nice not to have to stub this, but whatever... writing an
     # entire indirection stack would cause us more grief. --daniel 2011-03-31
@@ -35,14 +34,11 @@ describe Puppet::Application::IndirectionBase do
     Puppet::Indirector::Indirection.expects(:instance).
       with(:test_indirection).returns(terminus)
 
-    subject.command_line.instance_variable_set('@args', %w{--terminus foo save bar})
-
-    # Not a very nice thing. :(
-    $stderr.stubs(:puts)
-    Puppet.stubs(:err)
+    command_line = Puppet::Util::CommandLine.new("puppet", %w{test_indirection --terminus foo save bar})
+    application = Puppet::Application::TestIndirection.new(command_line)
 
     expect {
-      subject.run
+      application.run
     }.to exit_with 0
   end
 end

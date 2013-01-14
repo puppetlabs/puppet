@@ -5,8 +5,7 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 3.0.0
-Release:        0.1rc4%{?dist}
-#Release: 1%{?dist}
+Release: 1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
 
@@ -14,11 +13,14 @@ URL: http://puppetlabs.com/projects/puppet/
 Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
-Requires: ruby >= 1.8.2
+Requires: ruby >= 1.8.7
 Requires: facter >= 1.6.11
 Requires: cron
+Requires: logrotate
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: ruby >= 1.8.2
+BuildRequires: ruby >= 1.8.7
+BuildRequires: klogd
+BuildRequires: sysconfig
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a 
@@ -39,12 +41,11 @@ The server can also function as a certificate authority and file server.
 %setup -q -n %{name}-%{version}
 
 %build
-for f in bin/* sbin/*; do
+for f in bin/*; do
  sed -i -e '1s,^#!.*ruby$,#!/usr/bin/ruby,' $f
 done
 
 %install
-%{__install} -d -m0755 %{buildroot}%{_sbindir}
 %{__install} -d -m0755 %{buildroot}%{_bindir}
 %{__install} -d -m0755 %{buildroot}%{_confdir}
 %{__install} -d -m0755 %{buildroot}%{ruby_sitelibdir}
@@ -54,39 +55,30 @@ done
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
 %{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_bindir}
-%{__install} -Dp -m0755 %{pbuild}/sbin/* %{buildroot}%{_sbindir}
 %{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 %{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
 find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
-%{__cp} -a %{pbuild}/conf/redhat/client.sysconfig %{buildroot}%{_confdir}/client.sysconfig
+%{__cp} -a %{pbuild}/ext/redhat/client.sysconfig %{buildroot}%{_confdir}/client.sysconfig
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/client.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppet
-%{__cp} -a %{pbuild}/conf/redhat/server.sysconfig %{buildroot}%{_confdir}/server.sysconfig
+%{__cp} -a %{pbuild}/ext/redhat/server.sysconfig %{buildroot}%{_confdir}/server.sysconfig
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/server.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppetmaster
-%{__cp} -a %{pbuild}/conf/redhat/fileserver.conf %{buildroot}%{_confdir}/fileserver.conf
+%{__cp} -a %{pbuild}/ext/redhat/fileserver.conf %{buildroot}%{_confdir}/fileserver.conf
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-%{__cp} -a %{pbuild}/conf/redhat/puppet.conf %{buildroot}%{_confdir}/puppet.conf
+%{__cp} -a %{pbuild}/ext/redhat/puppet.conf %{buildroot}%{_confdir}/puppet.conf
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
-%{__cp} -a %{pbuild}/conf/redhat/logrotate %{buildroot}%{_confdir}/logrotate
+%{__cp} -a %{pbuild}/ext/redhat/logrotate %{buildroot}%{_confdir}/logrotate
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 %{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 %{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
-%{__ln_s}  %{_initrddir}/puppet %{buildroot}%{_sbindir}/rcpuppet
-%{__ln_s}  %{_initrddir}/puppetmaster %{buildroot}%{_sbindir}/rcpuppetmaster
 
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
-%{_bindir}/puppetdoc
-%{_bindir}/filebucket
-%{_bindir}/ralsh
-%{_bindir}/pi
-%{_sbindir}/puppetd
-%{_sbindir}/rcpuppet
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 /var/adm/fillup-templates/sysconfig.puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
-%doc CHANGELOG COPYING LICENSE README examples
+%doc COPYING LICENSE README examples
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 %dir %{_sysconfdir}/puppet
 # These need to be owned by puppet so the server can
@@ -97,11 +89,6 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 
 %files server
 %defattr(-, root, root, 0755)
-%{_sbindir}/puppetmasterd
-%{_sbindir}/rcpuppetmaster
-%{_sbindir}/puppetqd
-%{_sbindir}/puppetrun
-%{_sbindir}/puppetca
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
 %exclude %{_sysconfdir}/puppet/puppet.conf
@@ -137,6 +124,9 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Oct 08 2012 Matthaus Owens <matthaus@puppetlabs.com> - 3.0.0-1
+- Update for deprecated binary removal, ruby version requirements
+
 * Fri Aug 24 2012 Eric Sorenson <eric0@puppetlabs.com> - 3.0.0-0.1rc4
 - Update facter version dependency
 - Update for 3.0.0-0.1rc4

@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby -S rspec
+#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/queue'
 
@@ -25,7 +25,7 @@ class FooExampleData
   end
 end
 
-describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
+describe Puppet::Indirector::Queue do
   before :each do
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :my_queue, :register_terminus_type => nil, :model => @model
@@ -44,12 +44,6 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
     Puppet::Util::Queue.stubs(:queue_type_to_class).with(:test_client).returns(Puppet::Indirector::Queue::TestClient)
 
     @request = stub 'request', :key => :me, :instance => @subject
-  end
-
-  it "should require PSON" do
-    Puppet.features.expects(:pson?).returns false
-
-    expect { @store_class.new }.to raise_error(ArgumentError)
   end
 
   it 'should use the correct client type and queue' do
