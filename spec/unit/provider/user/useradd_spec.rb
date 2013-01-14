@@ -231,7 +231,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.expects(:system_users?).returns true
       resource[:expiry] = "2012-08-18"
 
-      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', '2012-08-18', '-o', '-m', '-r', 'myuser']
+      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '2012-08-18', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
     end
 
     it "should return an array without -e if expiry is undefined full command" do
@@ -244,7 +244,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.expects(:system_users?).returns true
       resource[:expiry] = :absent
 
-      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', ' ', '-o', '-m', '-r', 'myuser']
+      provider.addcmd.must == ['/usr/sbin/useradd', '-e', ' ','-G', 'somegroup', '-o', '-m', '-r', 'myuser']
     end
 
     it "should pass -e \"\" on other systems if the expiry has to be removed" do
@@ -252,7 +252,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.expects(:system_users?).returns true
       resource[:expiry] = :absent
 
-      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', '', '-o', '-m', '-r', 'myuser']
+      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
     end
   end
 
