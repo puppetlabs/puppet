@@ -58,6 +58,21 @@ if RUBY_VERSION == '1.8.7'
   end
 end
 
+class NilClass
+  # Just in case something else monkey-patches this into place later...
+  method_defined?('method_missing') and fail "NilClass already has method_missing!"
+  def method_missing(name, *args)
+    msg = <<EOT
+NoMethodError: undefined method `#{name}' called for nil:NilClass
+This means that Puppet encountered a `nil` value where an object
+was expected, which is typically a missing internal type check.
+Please report this internal error to our bug tracker at
+https://projects.puppetlabs.com/projects/puppet/new_issue
+EOT
+    raise NoMethodError.new(msg, name, args)
+  end
+end
+
 class Object
   # ActiveSupport 2.3.x mixes in a dangerous method
   # that can cause rspec to fork bomb
