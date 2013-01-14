@@ -72,7 +72,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def add_properties
     cmd = []
-    Puppet::Type.type(:user).validproperties.each do |property|
+    # validproperties is a list of properties in undefined order
+    # sort them to have a predictable command line in tests
+    Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
       # the value needs to be quoted, mostly because -c might
