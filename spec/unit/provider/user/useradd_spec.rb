@@ -21,10 +21,26 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   let(:provider) { described_class.new(:name => 'myuser') }
 
+
+  let(:shadow_entry) {
+    return unless Puppet.features.libshadow?
+    Struct::PasswdEntry.new(
+      'myuser', # login name
+      '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0', # encrypted password
+      15573, # date of last password change
+      10,    # minimum password age
+      20,    # maximum password age
+      7,     # password warning period
+      -1,    # password inactivity period
+      15706, # account expiration date
+      -1     # reserved field
+    )
+  }
+
   describe "#create" do
 
     it "should add -o when allowdupe is enabled and the user is being created" do
-      resource[:allowdupe] = true
+      resource[:allowdupe] = :true
       provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
       provider.create
     end
@@ -62,6 +78,26 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:allowdupe] = :true
       provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, '-o', 'myuser'])
       provider.uid = 150
+    end
+  end
+
+  describe "#expiry=" do
+    it "should use -e with the correct argument when the expiry property is changed" do
+      resource[:expiry] = '2012-10-31'
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '2012-10-31', 'myuser'])
+      provider.expiry = '2012-10-31'
+    end
+    it "should use -e with the correct argument when the expiry property is removed and on solaris" do
+      Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', ' ', 'myuser'])
+      provider.expiry = :absent
+    end
+    it "should use -e with the correct argument when the expiry property is removed and on other os" do
+      Facter.stubs(:value).with(:operatingsystem).returns("some_os")
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'])
+      provider.expiry = :absent
     end
   end
 
@@ -143,6 +179,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:allowdupe] = :true
       resource[:managehome] = :true
       resource[:system] = :true
+      resource[:groups] = [ 'somegroup' ]
     end
 
     it "should call command with :add" do
@@ -192,16 +229,85 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return an array with full command" do
       described_class.expects(:system_users?).returns true
-      provider.stubs(:add_properties).returns(["-G", "somegroup"])
       resource[:expiry] = "2012-08-18"
 
-      provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", '-e 2012-08-18', "-r", "myuser"]
+      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', '2012-08-18', '-o', '-m', '-r', 'myuser']
     end
 
     it "should return an array without -e if expiry is undefined full command" do
       described_class.expects(:system_users?).returns true
-      provider.stubs(:add_properties).returns(["-G", "somegroup"])
       provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
+    end
+
+    it "should pass -e \" \" on solaris if the expiry has to be removed" do
+      Facter.expects(:value).with(:operatingsystem).returns 'Solaris'
+      described_class.expects(:system_users?).returns true
+      resource[:expiry] = :absent
+
+      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', ' ', '-o', '-m', '-r', 'myuser']
+    end
+
+    it "should pass -e \"\" on other systems if the expiry has to be removed" do
+      Facter.expects(:value).with(:operatingsystem).returns 'some_os'
+      described_class.expects(:system_users?).returns true
+      resource[:expiry] = :absent
+
+      provider.addcmd.must == ['/usr/sbin/useradd', '-G', 'somegroup', '-e', '', '-o', '-m', '-r', 'myuser']
+    end
+  end
+
+  {
+    :password_min_age => 10,
+    :password_max_age => 20,
+    :password         => '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0'
+  }.each_pair do |property, expected_value|
+    describe "##{property}" do
+      before :each do
+        resource # just to link the resource to the provider
+      end
+
+      it "should return absent if libshadow feature is not present" do
+        Puppet.features.stubs(:libshadow?).returns false
+        # Shadow::Passwd.expects(:getspnam).never # if we really don't have libshadow we dont have Shadow::Passwd either
+        provider.send(property).should == :absent
+      end
+
+      it "should return absent if user cannot be found", :if => Puppet.features.libshadow? do
+        Shadow::Passwd.expects(:getspnam).with('myuser').returns nil
+        provider.send(property).should == :absent
+      end
+
+      it "should return the correct value if libshadow is present", :if => Puppet.features.libshadow? do
+        Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+        provider.send(property).should == expected_value
+      end
+    end
+  end
+
+  describe '#expiry' do
+    before :each do
+      resource # just to link the resource to the provider
+    end
+
+    it "should return absent if libshadow feature is not present" do
+      Puppet.features.stubs(:libshadow?).returns false
+      provider.expiry.should == :absent
+    end
+
+    it "should return absent if user cannot be found", :if => Puppet.features.libshadow? do
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns nil
+      provider.expiry.should == :absent
+    end
+
+    it "should return absent if expiry is -1", :if => Puppet.features.libshadow? do
+      shadow_entry.sp_expire = -1
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+      provider.expiry.should == :absent
+    end
+
+    it "should convert to YYYY-MM-DD", :if => Puppet.features.libshadow? do
+      Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
+      provider.expiry.should == '2013-01-01'
     end
   end
 
