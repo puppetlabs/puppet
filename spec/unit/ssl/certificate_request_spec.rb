@@ -211,6 +211,24 @@ describe Puppet::SSL::CertificateRequest do
       generated.should be_a(OpenSSL::X509::Request)
       generated.should be(request.content)
     end
+
+    it "should use SHA1 to sign the csr when SHA256 isn't available" do
+      csr = OpenSSL::X509::Request.new
+      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
+      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(true)
+      signer = Puppet::SSL::CertificateSigner.new
+      signer.sign(csr, key.content)
+      csr.verify(key.content).should be_true
+    end
+
+    it "should raise an error if neither SHA256 nor SHA1 are available" do
+      csr = OpenSSL::X509::Request.new
+      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
+      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
+      expect {
+        signer = Puppet::SSL::CertificateSigner.new
+      }.to raise_error(Puppet::Error)
+    end
   end
 
   describe "when a CSR is saved" do
