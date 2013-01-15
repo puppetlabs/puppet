@@ -1085,9 +1085,14 @@ EOT
     },
     :dynamicfacts => {
       :default    => "memorysize,memoryfree,swapsize,swapfree",
-      :desc       => "Facts that are dynamic; these facts will be ignored when deciding whether
+      :desc       => "(Deprecated) Facts that are dynamic; these facts will be ignored when deciding whether
       changed facts should result in a recompile.  Multiple facts should be
       comma-separated.",
+      :hook => proc { |value|
+        if value
+          Puppet.deprecation_warning "The dynamicfacts setting is deprecated and will be ignored."
+        end
+      }
     },
     :splaylimit => {
       :default    => "$runinterval",
