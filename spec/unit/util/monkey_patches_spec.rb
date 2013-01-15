@@ -254,3 +254,47 @@ describe Object, "#instance_variables" do
     o.instance_variables.should =~ [:@foo, :@bar, :@baz]
   end
 end
+
+
+describe nil, "missing methods" do
+  binops = %w[+ - / * << %]
+  methods = %w[
+    [] close collect content controllable? dir downcase each
+    each_pair exists? exit_status fact_merge generate_report gsub
+    gsub! info join keys match name= new notice owner= parent path
+    provide ref relative_path render resources safeevaluate scope
+    send_log source split status string strip sub sub! synchronize
+    to_sym tr validate
+  ].sort.uniq
+
+  ['nil', 'foo = nil; foo'].each do |what|
+    context what do
+      (methods + binops).each do |method|
+        it "should not respond_to? bad method `#{method}`" do
+          nil.should_not respond_to method
+        end
+
+        it "should still match the classic error message for `#{method}`" do
+          begin
+            eval "nil.#{method}(12)"
+          rescue NoMethodError => e
+            e.to_s.should =~ /NoMethodError: .* method `#{Regexp.escape(method)}' called for nil:NilClass/
+          end
+        end
+
+        it "should raise a descriptive error about `#{method}`" do
+          begin
+            # 1.8.7 has gsub on nil when :send is called, but fails correctly
+            # when you write it out.  Since we care mostly about the "write it
+            # out" case, this is truer to life. --daniel 2013-01-14
+            binops.include?(method) and eval "#{what} #{method} 12"
+            eval "#{what}.#{method}(12)"
+          rescue NoMethodError => e
+            e.to_s.should =~ /This means that Puppet encountered a `nil` value where an object/
+          end
+        end
+      end
+    end
+  end
+end
+
