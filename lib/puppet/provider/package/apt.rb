@@ -10,7 +10,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   commands :aptcache => "/usr/bin/apt-cache"
   commands :preseed => "/usr/bin/debconf-set-selections"
 
-  defaultfor :operatingsystem => [:debian, :ubuntu]
+  defaultfor :osfamily => :debian
 
   ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
