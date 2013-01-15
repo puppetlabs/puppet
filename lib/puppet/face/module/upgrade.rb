@@ -54,10 +54,9 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      name = name.gsub('/', '-')
-      Puppet.notice "Preparing to upgrade '#{name}' ..."
       Puppet::ModuleTool.set_option_defaults options
-      Puppet::ModuleTool::Applications::Upgrader.new(name, Puppet::Forge.new("PMT", self.version), options).run
+      forge = Puppet::Forge.new("PMT", self.version)
+      Puppet::ModuleTool::Applications::Upgrader.new(name, forge, options).run
     end
 
     when_rendering :console do |return_value|
@@ -68,8 +67,8 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 0
       else
-        tree = Puppet::ModuleTool.build_tree(return_value[:affected_modules], return_value[:base_dir])
-        return_value[:base_dir] + "\n" +
+        tree = Puppet::ModuleTool.build_tree(return_value[:affected_modules], return_value[:install_dir])
+        return_value[:install_dir] + "\n" +
         Puppet::ModuleTool.format_tree(tree)
       end
     end

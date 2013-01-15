@@ -1,24 +1,21 @@
-require 'fileutils'
+require 'zlib'
+require 'puppet/util/archive/tar/minitar'
+require 'pathname'
 
 module Puppet::ModuleTool
   module Applications
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(path)
-        @pkg_path = File.join(@path, 'pkg')
+        @path = Pathname.new(File.expand_path(path))
         super(options)
       end
 
       def run
         load_modulefile!
-        create_directory
-        copy_contents
-        add_metadata
         Puppet.notice "Building #{@path} for release"
-        tar
-        gzip
-        relative = Pathname.new(File.join(@pkg_path, filename('tar.gz'))).relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
+        module_tar_gz = @path.join('pkg', metadata.release_name + '.tar.gz')
+        create_module_tar_gz module_tar_gz
 
         # Return the Pathname object representing the path to the release
         # archive just created. This return value is used by the module_tool
@@ -29,62 +26,75 @@ module Puppet::ModuleTool
         #
         #   <Pathname:puppetlabs-apache/pkg/puppetlabs-apache-0.0.1.tar.gz>
         #
-        relative
+        module_tar_gz.relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
       end
 
       private
 
-      def filename(ext)
-        ext.sub!(/^\./, '')
-        "#{metadata.release_name}.#{ext}"
+      def self.default_user_and_group(opts = {})
+        opts = Hash[opts]
+        opts[:uname] ||= 'puppet'
+        opts[:uid]   ||= 5000
+        opts[:gname] ||= 'puppet'
+        opts[:gid]   ||= 5000
+        opts
       end
 
-      def tar
-        tar_name = filename('tar')
-        Dir.chdir(@pkg_path) do
-          FileUtils.rm tar_name rescue nil
-          unless system "tar -cf #{tar_name} #{metadata.release_name}"
-            raise RuntimeError, "Could not create #{tar_name}"
+      def create_module_tar_gz(module_tar_gz)
+        module_tar_gz.dirname.mkdir rescue nil
+        Zlib::GzipWriter.open(module_tar_gz) do |gzip|
+          Puppet::Util::Archive::Tar::Minitar::Writer.open(gzip) do |tar|
+            add_metadata(tar)
+            Dir.foreach(@path) do |file|
+              case File.basename(file)
+                when *Puppet::ModuleTool::ARTIFACTS
+                  next
+                else
+                  add_artifact(tar, @path + file)
+              end
+            end
           end
         end
       end
 
-      def gzip
-        Dir.chdir(@pkg_path) do
-          FileUtils.rm filename('tar.gz') rescue nil
-          unless system "gzip #{filename('tar')}"
-            raise RuntimeError, "Could not compress #{filename('tar')}"
-          end
-        end
-      end
-
-      def create_directory
-        FileUtils.mkdir(@pkg_path) rescue nil
-        if File.directory?(build_path)
-          FileUtils.rm_rf(build_path, :secure => true)
-        end
-        FileUtils.mkdir(build_path)
-      end
-
-      def copy_contents
-        Dir[File.join(@path, '*')].each do |path|
-          case File.basename(path)
-          when *Puppet::ModuleTool::ARTIFACTS
-            next
+      def add_artifact(tar, artifact)
+        relative_path = metadata.release_name + '/' + artifact.relative_path_from(@path).to_s
+        stat = artifact.lstat
+        case
+          when stat.directory?
+            tar.mkdir(relative_path,
+              self.class.default_user_and_group(:mode => stat.mode, :mtime => stat.mtime)
+            )
+            Dir.foreach(artifact) do |file|
+              next if (file == '.' || file == '..')
+              add_artifact(tar, artifact + file)
+            end
+          when stat.file?
+            tar.add_file_simple(relative_path,
+              self.class.default_user_and_group(:mode => stat.mode, :size => stat.size, :mtime => stat.mtime)
+            ) do |entry|
+              File.open(artifact, 'rb') do |f|
+                while data = f.read(8192)
+                  entry.write(data)
+                end
+              end
+            end
+          when stat.symlink?
+            tar.add_symlink(relative_path, File.readlink(artifact),
+              self.class.default_user_and_group(:mode => stat.mode, :mtime => stat.mtime)
+            )
           else
-            FileUtils.cp_r path, build_path
-          end
+            raise ArgumentError, "unsupported file type: #{stat.ftype}"
         end
       end
 
-      def add_metadata
-        File.open(File.join(build_path, 'metadata.json'), 'w') do |f|
-          f.write(PSON.pretty_generate(metadata))
+      def add_metadata(tar)
+        serialized_metadata = PSON.pretty_generate(metadata)
+        tar.add_file_simple(metadata.release_name + '/' + 'metadata.json',
+          self.class.default_user_and_group(:mode => 0644, :size => serialized_metadata.bytesize, :mtime => Time.now.to_i)
+        ) do |entry|
+          entry.write(serialized_metadata)
         end
-      end
-
-      def build_path
-        @build_path ||= File.join(@pkg_path, metadata.release_name)
       end
     end
   end

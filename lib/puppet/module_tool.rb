@@ -33,7 +33,7 @@ module Puppet
       if matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
         return matcher.captures
       else
-        raise ArgumentError, "Not a valid full name: #{full_module_name}"
+        raise ArgumentError, "Not a valid full module name: #{full_module_name}"
       end
     end
 
@@ -88,17 +88,23 @@ module Puppet
     end
 
     def self.build_tree(mods, dir)
-      mods.each do |mod|
-        version_string = mod[:version][:vstring].sub(/^(?!v)/, 'v')
+      mods.each do |resolution|
+        release = resolution[:release]
+        version_string = release[:version].sub(/^(?!v)/, 'v')
 
-        if mod[:action] == :upgrade
-          previous_version = mod[:previous_version].sub(/^(?!v)/, 'v')
+        if previous = release[:previous]
+          previous_version = previous[:version].sub(/^(?!v)/, 'v')
           version_string = "#{previous_version} -> #{version_string}"
         end
 
-        mod[:text] = "#{mod[:module]} (#{colorize(:cyan, version_string)})"
-        mod[:text] += " [#{mod[:path]}]" unless mod[:path] == dir
-        build_tree(mod[:dependencies], dir)
+        resolution[:text] = "#{release[:module_name]} (#{colorize(:cyan, version_string)})"
+        if release[:module]
+          # this is an already installed module release
+          resolution[:text] = '(' << resolution[:text] << ')'
+        else
+          resolution[:text] += " [#{resolution[:path]}]" unless resolution[:path] == dir
+        end
+        build_tree(resolution[:dependencies], dir)
       end
     end
 

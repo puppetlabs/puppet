@@ -120,13 +120,8 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
-      Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
-
       forge = Puppet::Forge.new("PMT", self.version)
-      install_dir = Puppet::ModuleTool::InstallDirectory.new(Pathname.new(options[:target_dir]))
-      installer = Puppet::ModuleTool::Applications::Installer.new(name, forge, install_dir, options)
-
-      installer.run
+      Puppet::ModuleTool::Applications::Installer.new(name, forge, options).run
     end
 
     when_rendering :console do |return_value, name, options|
@@ -134,7 +129,7 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.err(return_value[:error][:multiline])
         exit 1
       else
-        tree = Puppet::ModuleTool.build_tree(return_value[:installed_modules], return_value[:install_dir])
+        tree = Puppet::ModuleTool.build_tree(return_value[:affected_modules], return_value[:install_dir])
         return_value[:install_dir] + "\n" +
         Puppet::ModuleTool.format_tree(tree)
       end

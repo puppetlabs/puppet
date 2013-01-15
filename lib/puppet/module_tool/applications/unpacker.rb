@@ -1,5 +1,6 @@
+require 'zlib'
+require 'puppet/util/archive/tar/minitar'
 require 'pathname'
-require 'tmpdir'
 
 module Puppet::ModuleTool
   module Applications
@@ -35,18 +36,44 @@ module Puppet::ModuleTool
         build_dir.mkpath
         begin
           begin
-            if Facter.value('osfamily') == "Solaris"
-              # Solaris tar is not as safe and works differently, so we prefer
-              # gnutar instead.
-              if Puppet::Util.which('gtar')
-                Puppet::Util::Execution.execute("gtar xzf #{@filename} -C #{build_dir}")
-              else
-                raise RuntimeError, "Cannot find the command 'gtar'. Make sure GNU tar is installed, and is in your PATH."
+            Zlib::GzipReader.open(@filename) do |gzip|
+              Puppet::Util::Archive::Tar::Minitar::Reader.open(gzip) do |tar|
+                tar.each do |entry|
+                  destination_file = Pathname.new(entry.full_name).cleanpath
+                  if destination_file.absolute? ||
+                    (destination_file_path = destination_file.to_s).start_with?('..') &&
+                    (destination_file_path.length == 2 || destination_file_path[2..2] == '/')
+                  then
+                    raise ArgumentError, "tar entry outside of the module directory: #{entry.full_name}"
+                  end
+                  destination_file = build_dir + destination_file
+                  destination_directory = destination_file.dirname
+                  destination_directory.mkpath() unless destination_directory.directory?
+
+                  mode = entry.mode
+                  case
+                    when entry.directory?
+                      destination_file.mkdir(mode) unless destination_file.directory?
+                      destination_file.chmod(mode)
+                    when entry.file?
+                      destination_file.unlink() if (destination_file.exist? || destination_file.symlink?)
+                      destination_file.open(File::WRONLY|File::CREAT|File::EXCL, mode) do |f|
+                        # fix the mode as it was probably influenced by umask
+                        f.chmod(mode)
+                        f.binmode()
+                        while data = entry.read(8192)
+                          f.write(data)
+                        end
+                      end
+                    when entry.symlink?
+                      File.symlink(entry.linkname, destination_file)
+                    else
+                      raise ArgumentError, "unsupported tar entry type: #{entry.typeflag}"
+                  end
+                end
               end
-            else
-              Puppet::Util::Execution.execute("tar xzf #{@filename} -C #{build_dir}")
             end
-          rescue Puppet::ExecutionFailure => e
+          rescue => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end
 

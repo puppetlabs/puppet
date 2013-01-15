@@ -15,7 +15,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << "Could not install module '#{@module_name}' (#{@requested_version})"
       message << "  Module '#{@module_name}' (#{@installed_version}) is already installed"
-      message << "    Installed module has had changes made locally" unless @local_changes.empty?
+      message << "    Installed module has had changes made locally" if @local_changes
       message << "    Use `puppet module upgrade` to install a different version"
       message << "    Use `puppet module install --force` to re-install only this module"
       message.join("\n")
@@ -55,20 +55,6 @@ module Puppet::ModuleTool::Errors
       end
 
       message.join("\n")
-    end
-  end
-
-  class MissingPackageError < InstallError
-    def initialize(options)
-      @requested_package = options[:requested_package]
-      super "#{@requested_package} requested; Package #{@requested_package} does not exist"
-    end
-
-    def multiline
-      <<-MSG.strip
-Could not install package #{@requested_package}
-  Package #{@requested_package} does not exist
-      MSG
     end
   end
 
