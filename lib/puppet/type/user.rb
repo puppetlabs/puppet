@@ -315,16 +315,11 @@ module Puppet
 
     newproperty(:expiry, :required_features => :manages_expiry) do
       desc "The expiry date for this user. Must be provided in
-           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19.
-           If you want to make sure the user account does never
-           expire, you can pass the special value `absent`."
-
-      newvalues :absent
-      newvalues /^\d{4}-\d{2}-\d{2}$/
+           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19."
 
       validate do |value|
-        if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
-          raise ArgumentError, "Expiry dates must be YYYY-MM-DD or the string \"absent\""
+        if value !~ /^\d{4}-\d{2}-\d{2}$/
+          raise ArgumentError, "Expiry dates must be YYYY-MM-DD"
         end
       end
     end

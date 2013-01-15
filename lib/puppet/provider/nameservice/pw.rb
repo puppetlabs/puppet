@@ -12,7 +12,7 @@ class PW < ObjectAdd
       "#{@resource.class.name.to_s}mod",
       @resource[:name],
       flag(param),
-      munge(param, value)
+      value
     ]
     cmd
   end
