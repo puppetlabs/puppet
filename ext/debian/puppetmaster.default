@@ -1,7 +1,10 @@
 # Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
 
-# Start puppetmaster on boot? If you are using passenger, you should
-# have this set to "no"
+# Enable puppetmaster? 
+# Setting this to yes allows puppet to start.
+# Setting to no stops the puppet service from being started.
+#
+# If you are using passenger, you should have this set to "no"
 START=yes
 
 # Startup options

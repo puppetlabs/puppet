@@ -1,6 +1,8 @@
 # Defaults for puppet - sourced by /etc/init.d/puppet
 
-# Start puppet on boot?
+# Enable puppet?
+# Setting this to yes allows puppet to start.
+# Setting to no stops the puppet service from being started.
 START=no
 
 # Startup options
