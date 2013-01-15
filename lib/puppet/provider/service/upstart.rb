@@ -64,7 +64,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def upstart_version
-    @@upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
+    @upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
   end
 
   # Where is our override script?
