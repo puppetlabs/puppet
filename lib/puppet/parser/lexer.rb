@@ -40,6 +40,7 @@ class Puppet::Parser::Lexer
       end
 
       set_options(options)
+      @acceptable_when = Proc.new { |context| true }
     end
 
     def to_s
@@ -47,8 +48,15 @@ class Puppet::Parser::Lexer
     end
 
     def acceptable?(context={})
-      # By default tokens are aceeptable in any context
-      true
+      @acceptable_when.call(context)
+    end
+
+    # Define when the token is able to match.
+    # This provides context that cannot be expressed otherwise, such as feature flags.
+    #
+    # @param block [Proc] a proc that given a context returns a boolean
+    def acceptable_when(&block)
+      @acceptable_when = block
     end
   end
 
@@ -161,11 +169,9 @@ class Puppet::Parser::Lexer
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:NUMBER]).acceptable?(context={})
+  TOKENS[:NUMBER].acceptable_when do |context|
     ![:DQPRE,:DQMID].include? context[:after]
   end
-  #:startdoc:
 
   TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     string_token = self
@@ -179,13 +185,11 @@ class Puppet::Parser::Lexer
     end
     [string_token, value]
   end
-  [:NAME, :CLASSREF].each { |name_token|
-    #:stopdoc: # Issue #4161
-    def (TOKENS[name_token]).acceptable?(context={})
+  [:NAME, :CLASSREF].each do |name_token|
+    TOKENS[name_token].acceptable_when do |context|
       ![:DQPRE,:DQMID].include? context[:after]
     end
-    #:startdoc:
-  }
+  end
 
   TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
     value.sub!(/# ?/,'')
@@ -208,12 +212,9 @@ class Puppet::Parser::Lexer
     regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
     [self, Regexp.new(regex)]
   end
-
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:REGEX]).acceptable?(context={})
+  TOKENS[:REGEX].acceptable_when do |context|
     [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
   end
-  #:startdoc:
 
   TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
@@ -231,18 +232,16 @@ class Puppet::Parser::Lexer
   TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
     lexer.tokenize_interpolated_string(DQ_continuation_token_types)
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:DQCONT]).acceptable?(context={})
+  TOKENS[:DQCONT].acceptable_when do |context|
     context[:string_interpolation_depth] > 0
   end
-  #:startdoc:
 
   TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
 
     [TOKENS[:VARIABLE], value[1..-1]]
   end
-  def (TOKENS[:DOLLAR_VAR_WITH_DASH]).acceptable?(context = {})
+  TOKENS[:DOLLAR_VAR_WITH_DASH].acceptable_when do |context|
     Puppet[:allow_variables_with_dashes]
   end
 
@@ -255,18 +254,14 @@ class Puppet::Parser::Lexer
 
     [TOKENS[:VARIABLE], value]
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:VARIABLE_WITH_DASH]).acceptable?(context={})
+  TOKENS[:VARIABLE_WITH_DASH].acceptable_when do |context|
     Puppet[:allow_variables_with_dashes] and TOKENS[:VARIABLE].acceptable?(context)
   end
-  #:startdoc:
 
   TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:VARIABLE]).acceptable?(context={})
+  TOKENS[:VARIABLE].acceptable_when do |context|
     [:DQPRE,:DQMID].include? context[:after]
   end
-  #:startdoc:
 
 
   TOKENS.sort_tokens
