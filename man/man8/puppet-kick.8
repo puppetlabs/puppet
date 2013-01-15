@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-KICK" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-KICK" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-kick\fR \- Remotely control puppet agent
@@ -99,6 +99,10 @@ Whether the client should ignore schedules when running its configuration\. This
 .TP
 \-\-parallel
 How parallel to make the connections\. Parallelization is provided by forking for each client to which to connect\. The default is 1, meaning serial execution\.
+.
+.TP
+\-\-puppetport
+Use the specified TCP port to connect to agents\. Defaults to 8139\.
 .
 .TP
 \-\-tag
