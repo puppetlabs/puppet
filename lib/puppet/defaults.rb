@@ -682,10 +682,6 @@ EOT
       :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
       Can be specified as a duration."
     },
-    :ca_md => {
-      :default    => "md5",
-      :desc       => "The type of hash used in certificates.",
-    },
     :req_bits => {
       :default    => 4096,
       :desc       => "The bit length of the certificates.",
