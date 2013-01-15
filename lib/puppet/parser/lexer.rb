@@ -179,7 +179,7 @@ class Puppet::Parser::Lexer
     end
     [string_token, value]
   end
-  [:NAME,:CLASSNAME,:CLASSREF].each { |name_token|
+  [:NAME, :CLASSREF].each { |name_token|
     #:stopdoc: # Issue #4161
     def (TOKENS[name_token]).acceptable?(context={})
       ![:DQPRE,:DQMID].include? context[:after]
