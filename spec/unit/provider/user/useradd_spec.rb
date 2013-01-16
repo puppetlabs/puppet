@@ -25,17 +25,15 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
-      provider.stubs(:check_manage_home).returns([]) 
-      provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
+      provider.expects(:execute).with(includes('-o'))
       provider.create
     end
 
     describe "on systems that support has_system", :if => described_class.system_users? do
       it "should add -r when system is enabled" do
         resource[:system] = :true
-        provider.stubs(:check_manage_home).returns([]) 
         provider.should be_system_users
-        provider.expects(:execute).with(['/usr/sbin/useradd', '-r', 'myuser'])
+        provider.expects(:execute).with(includes('-r'))
         provider.create
       end
     end
@@ -53,8 +51,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.has_feature :manages_password_age
       resource[:password_min_age] = 5
       resource[:password_max_age] = 10
-      provider.stubs(:check_manage_home).returns([]) 
-      provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'])
+      provider.expects(:execute).with(includes('/usr/sbin/useradd'))
       provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, 'myuser'])
       provider.create
     end
@@ -112,32 +109,32 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#check_manage_home" do
-    it "should check manage home" do
-      resource.expects(:managehome?)
-      provider.check_manage_home
-    end
-
     it "should return an array with -m flag if home is managed" do
       resource[:managehome] = :true
-      provider.check_manage_home.must == ["-m"]
+      provider.expects(:execute).with(includes('-m'))
+      provider.create
     end
 
     it "should return an array with -r flag if home is managed" do
       resource[:managehome] = :true
       resource[:ensure] = :absent
-      provider.deletecmd.must == ['/usr/sbin/userdel', '-r', 'myuser']
+      provider.stubs(:exists?).returns(true)
+      provider.expects(:execute).with(includes('-r'))
+      provider.delete
     end
 
-    it "should return an array with -M if home is not managed and on Redhat" do
+    it "should use -M flag if home is not managed and on Redhat" do
       Facter.stubs(:value).with(:osfamily).returns("RedHat")
       resource[:managehome] = :false
-      provider.check_manage_home.must == ["-M"]
+      provider.expects(:execute).with(includes('-M'))
+      provider.create
     end
 
-    it "should return an empty array if home is not managed and not on Redhat" do
+    it "should not use -M flag if home is not managed and not on Redhat" do
       Facter.stubs(:value).with(:osfamily).returns("not RedHat")
       resource[:managehome] = :false
-      provider.check_manage_home.must == []
+      provider.expects(:execute).with(Not(includes('-M')))
+      provider.create
     end
   end
 
