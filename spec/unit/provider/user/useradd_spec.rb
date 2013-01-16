@@ -25,7 +25,11 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
-      provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
+      if Facter.value(:osfamily) == 'RedHat'
+        provider.expects(:execute).with(['/usr/sbin/useradd', '-o', '-M', 'myuser'])
+      else
+        provider.expects(:execute).with(['/usr/sbin/useradd', '-o', 'myuser'])
+      end
       provider.create
     end
 
@@ -33,7 +37,12 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should add -r when system is enabled" do
         resource[:system] = :true
         provider.should be_system_users
-        provider.expects(:execute).with(['/usr/sbin/useradd', '-r', 'myuser'])
+        if Facter.value(:osfamily) == 'RedHat'
+          provider.expects(:execute).with(['/usr/sbin/useradd', '-M', '-r', 'myuser'])
+        else
+          provider.expects(:execute).with(['/usr/sbin/useradd', '-r', 'myuser'])
+        end
+
         provider.create
       end
     end
@@ -51,7 +60,11 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.has_feature :manages_password_age
       resource[:password_min_age] = 5
       resource[:password_max_age] = 10
-      provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'])
+      if Facter.value(:osfamily) == 'RedHat'
+        provider.expects(:execute).with(['/usr/sbin/useradd', '-M', 'myuser'])
+      else
+        provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'])
+      end
       provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, 'myuser'])
       provider.create
     end
