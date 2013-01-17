@@ -31,6 +31,22 @@ Generally, you need the following things installed:
 
 * Facter => 1.6.11 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter)).
 
+Building the puppet gem
+-----------------------
+
+Install the required dependencies with bundler and build the gem with the rake
+tasks from https://github.com/puppetlabs/packaging.
+
+```bash
+bundle install
+# Clones https://github.com/puppetlabs/packaging
+rake package:bootstrap
+cd ext/
+rake package:gem
+```
+
+The generated gem can be found in the ../pkg directory.
+
 Contributions
 ------
 Please see our [Contibution
