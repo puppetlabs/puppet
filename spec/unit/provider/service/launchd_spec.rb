@@ -7,8 +7,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
   let (:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
-  let(:resource) { Puppet::Type.type(:service).new(:name => joblabel) }
-  subject { Puppet::Type.type(:service).provider(:launchd).new(resource) }
+  let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
+  subject { resource.provider }
 
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
