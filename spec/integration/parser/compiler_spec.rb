@@ -15,9 +15,9 @@ describe Puppet::Parser::Compiler do
 
   it "should be able to determine the configuration version from a local version control repository" do
     pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows", :if => Puppet.features.microsoft_windows?) do
-      # This should always work, because we should always be
-      # in the puppet repo when we run this.
-      version = %x{git rev-parse HEAD}.chomp
+      version = %x{git rev-parse HEAD 2> /dev/null}.chomp
+
+      pending "git is not available or not in a git repo" if version.empty?
 
       Puppet.settings[:config_version] = 'git rev-parse HEAD'
 
