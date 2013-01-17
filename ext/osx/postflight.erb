@@ -1,0 +1,109 @@
+#!/bin/bash
+
+#by doing the below, we are ensuring we are modifying the target system the package is being installed on,
+#not the OS running the installer
+declare -x dest_vol="${3}"
+declare -x dscl="${dest_vol}/usr/bin/dscl"
+declare -x dspath="${dest_vol}/var/db/dslocal/nodes/Default/"
+declare -x scripts_dir="${1}/Contents/Resources/"
+declare -x awk="/usr/bin/awk"
+declare -x last_user_id='-1'
+declare -x last_group_id='-1'
+
+function idFree() {
+  declare -a idArray=("${!2}")
+  for inc in ${idArray[@]}
+  do
+    if  [ $inc == $1 ]
+    then
+      return 1
+    fi
+  done
+
+  return 0
+
+}
+
+function create_puser () {
+  "${dscl}" -f "${dspath}" localonly -create /Local/Target/Users/puppet
+  "${dscl}" -f "${dspath}" localonly -create /Local/Target/Users/puppet UniqueID $1
+  "${dscl}" -f "${dspath}" localonly -create /Local/Target/Users/puppet PrimaryGroupID $2
+}
+
+function create_pgroup () {
+  "${dscl}" -f "${dspath}" localonly -create /Local/Target/Groups/puppet
+  "${dscl}" -f "${dspath}" localonly -create /Local/Target/Groups/puppet PrimaryGroupID $1
+}
+
+function scan_users () {
+  UniqueIDS=(`"${dscl}" -f "${dspath}" localonly  list /Local/Target/Users UniqueID | $awk '{print $2}'`);
+
+  #first just check for UID 52
+  if idFree '52' UniqueIDS[@]
+  then
+    last_user_id='52'
+  else
+    for possibleUID in {450..495}
+    do
+      if idFree $possibleUID UniqueIDS[@]
+      then
+        last_user_id=$possibleUID
+        #echo $last_good_id
+      fi
+    done
+  fi
+}
+
+function scan_groups () {
+  GroupIDS=(`"${dscl}" -f "${dspath}" localonly list /Local/Target/Groups PrimaryGroupID | $awk '{print $2}'`);
+  #check for 52 for group, if it's free, take it, don't bother doing the big search
+  if idFree '52' GroupIDS[@]
+  then
+    last_group_id='52'
+  else
+   for groupID in {450..495}
+    do
+     if idFree $groupID GroupIDS[@]
+     then
+        last_group_id=$groupID
+      fi
+    done
+  fi
+}
+
+echo "looking for Puppet User"
+"${dscl}" -f "${dspath}" localonly -read /Local/Target/Users/puppet
+puser_exists=$?
+echo "Looking for Puppet Group"
+"${dscl}" -f "${dspath}" localonly -read /Local/Target/Groups/puppet
+pgroup_exists=$?
+# exit status 56 indicates user/group not found
+# exit status 0 indicates user/group does exist
+
+if [ $pgroup_exists == '0' ] && [ $puser_exists == '0' ]; then
+  #Puppet user and group already exist
+  echo "Puppet User / Group already exist, not adding anything"
+  #storing the existing UID/GID to set permissions for /var/lib/puppet and /etc/puppet/puppet.conf
+  last_group_id=`"${dscl}" -f "${dspath}" localonly -read /Local/Target/Groups/puppet PrimaryGroupID | awk '{print $2}'`
+  last_user_id=`"${dscl}" -f "${dspath}" localonly -read /Local/Target/Users/puppet UniqueID | awk '{print $2}'`
+elif [ $pgroup_exists == '0' ] && [ $puser_exists == '56' ]; then
+  #puppet group exists, but user does not
+  last_group_id=`"${dscl}" -f "${dspath}" localonly -read /Local/Target/Groups/puppet PrimaryGroupID | awk '{print $2}'`
+  scan_users
+  echo "Creating Puppet User (uid: $last_user_id) in existing Puppet Group (gid: $last_group_id)"
+  create_puser $last_user_id $last_group_id
+elif [ $pgroup_exists == '56' ] && [ $puser_exists == '0' ]; then
+  #puppet user exists, but group does not
+  last_user_id=`"${dscl}" -f "${dspath}" localonly -read /Local/Target/Users/puppet UniqueID | awk '{print $2}'`
+  scan_groups
+  echo "Creating Puppet Group (gid: $last_group_id), Puppet User exists (uid: $last_user_id)"
+  create_pgroup $last_group_id
+elif [ $pgroup_exists == '56' ] && [ $puser_exists == '56' ]; then
+  scan_users
+  scan_groups
+  echo "Creating Puppet User (uid: $last_user_id) in new Puppet Group (gid: $last_group_id)"
+  create_pgroup $last_group_id
+  create_puser $last_user_id $last_group_id
+else
+  echo "Something went wrong and user creation will need to be done manually"
+fi

@@ -58,9 +58,10 @@ describe Puppet::Application::FaceBase do
 
     it "should stop if the first thing found is not an action" do
       app.command_line.stubs(:args).returns %w{banana count_args}
+
       expect { app.run }.to exit_with 1
-      @logs.first.should_not be_nil
-      @logs.first.message.should =~ /has no 'banana' action/
+
+      @logs.map(&:message).should == ["'basetest' has no 'banana' action.  See `puppet help basetest`."]
     end
 
     it "should use the default action if not given any arguments" do
@@ -161,12 +162,18 @@ describe Puppet::Application::FaceBase do
 
     it "does not skip when a puppet global setting is given as one item" do
       app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     it "does not skip when a puppet global setting is given as two items" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     { "boolean options before" => %w{--trace foo},

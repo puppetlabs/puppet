@@ -3,51 +3,66 @@ module Puppet
   class SubclassAlreadyDefined < Error; end
 end
 
+# This is a utility module for generating classes.
+# @api public
+#
 module Puppet::Util::ClassGen
   include Puppet::Util::MethodHelper
   include Puppet::Util
 
-  # Create a new subclass.  Valid options are:
-  # * <tt>:array</tt>: An array of existing classes.  If specified, the new
-  #   class is added to this array.
-  # * <tt>:attributes</tt>: A hash of attributes to set before the block is
-  #   evaluated.
-  # * <tt>:block</tt>: The block to evaluate in the context of the class.
-  #   You can also just pass the block normally, but it will still be evaluated
-  #   with <tt>class_eval</tt>.
-  # * <tt>:constant</tt>: What to set the constant as.  Defaults to the
-  #   capitalized name.
-  # * <tt>:hash</tt>: A hash of existing classes.  If specified, the new
-  #   class is added to this hash, and it is also used for overwrite tests.
-  # * <tt>:overwrite</tt>: Whether to overwrite an existing class.
-  # * <tt>:parent</tt>: The parent class for the generated class.  Defaults to
-  #   self.
-  # * <tt>:prefix</tt>: The constant prefix.  Default to nothing; if specified,
-  #   the capitalized name is appended and the result is set as the constant.
+  # Create a new class.
+  # @param name [String] the name of the generated class
+  # @param options [Hash] a hash of options
+  # @option options [Array<Class>] :array if specified, the generated class is appended to this array
+  # @option options [Hash<{String => Object}>] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Proc] :block a block to evaluate in the context of the class (this block can be provided
+  #   this way, or as a normal yield block).
+  # @option options [String] :constant (name with first letter capitalized) what to set the constant that references
+  #   the generated class to.
+  # @option options [Hash] :hash a hash of existing classes that this class is appended to (name => class).
+  #   This hash must be specified if the `:overwrite` option is set to `true`.
+  # @option options [Boolean] :overwrite whether an overwrite of an existing class should be allowed (requires also
+  #   defining the `:hash` with existing classes as the test is based on the content of this hash).
+  # @option options [Class] :parent (self) the parent class of the generated class.
+  # @option options [String] ('') :prefix the constant prefix to prepend to the constant name referencing the
+  #   generated class.
+  # @return [Class] the generated class
+  #
   def genclass(name, options = {}, &block)
     genthing(name, Class, options, block)
   end
 
-  # Create a new module.  Valid options are:
-  # * <tt>:array</tt>: An array of existing classes.  If specified, the new
-  #   class is added to this array.
-  # * <tt>:attributes</tt>: A hash of attributes to set before the block is
-  #   evaluated.
-  # * <tt>:block</tt>: The block to evaluate in the context of the class.
-  #   You can also just pass the block normally, but it will still be evaluated
-  #   with <tt>class_eval</tt>.
-  # * <tt>:constant</tt>: What to set the constant as.  Defaults to the
-  #   capitalized name.
-  # * <tt>:hash</tt>: A hash of existing classes.  If specified, the new
-  #   class is added to this hash, and it is also used for overwrite tests.
-  # * <tt>:overwrite</tt>: Whether to overwrite an existing class.
-  # * <tt>:prefix</tt>: The constant prefix.  Default to nothing; if specified,
+  # Creates a new module.  
+  # @param name [String] the name of the generated module
+  # @param optinos [Hash] hash with options
+  # @option options [Array<Class>] :array if specified, the generated class is appended to this array
+  # @option options [Hash<{String => Object}>] :attributes a hash that is applied to the generated class
+  #   by calling setter methods corresponding to this hash's keys/value pairs. This is done before the given
+  #   block is evaluated.
+  # @option options [Proc] :block a block to evaluate in the context of the class (this block can be provided
+  #   this way, or as a normal yield block).
+  # @option options [String] :constant (name with first letter capitalized) what to set the constant that references
+  #   the generated class to.
+  # @option options [Hash] :hash a hash of existing classes that this class is appended to (name => class).
+  #   This hash must be specified if the `:overwrite` option is set to `true`.
+  # @option options [Boolean] :overwrite whether an overwrite of an existing class should be allowed (requires also
+  #   defining the `:hash` with existing classes as the test is based on the content of this hash).
   #   the capitalized name is appended and the result is set as the constant.
+  # @option options [String] ('') :prefix the constant prefix to prepend to the constant name referencing the
+  #   generated class.
+  # @return [Module] the generated Module
   def genmodule(name, options = {}, &block)
     genthing(name, Module, options, block)
   end
 
-  # Remove an existing class
+  # Removes an existing class.
+  # @param name [String] the name of the class to remove
+  # @param options [Hash] options
+  # @option options [Hash] :hash a hash of existing classes from which the class to be removed is also removed
+  # @return [Boolean] whether the class was removed or not
+  #
   def rmclass(name, options)
     options = symbolize_options(options)
     const = genconst_string(name, options)
@@ -68,7 +83,8 @@ module Puppet::Util::ClassGen
 
   private
 
-  # Generate the constant to create or remove.
+  # Generates the constant to create or remove.
+  # @api private
   def genconst_string(name, options)
     unless const = options[:constant]
       prefix = options[:prefix] || ""
@@ -80,6 +96,7 @@ module Puppet::Util::ClassGen
 
   # This does the actual work of creating our class or module.  It's just a
   # slightly abstract version of genclass.
+  # @api private
   def genthing(name, type, options, block)
     options = symbolize_options(options)
 
@@ -128,6 +145,8 @@ module Puppet::Util::ClassGen
   # of which class hierarchy it polls for nested namespaces
   #
   # See http://redmine.ruby-lang.org/issues/show/1915
+  # @api private
+  #
   def is_constant_defined?(const)
     if ::RUBY_VERSION =~ /1.9/
       const_defined?(const, false)
@@ -137,6 +156,8 @@ module Puppet::Util::ClassGen
   end
 
   # Handle the setting and/or removing of the associated constant.
+  # @api private
+  #
   def handleclassconst(klass, name, options)
     const = genconst_string(name, options)
 
@@ -155,6 +176,8 @@ module Puppet::Util::ClassGen
   end
 
   # Perform the initializations on the class.
+  # @api private
+  #
   def initclass(klass, options)
     klass.initvars if klass.respond_to? :initvars
 
@@ -178,11 +201,13 @@ module Puppet::Util::ClassGen
   end
 
   # Convert our name to a constant.
+  # @api private
   def name2const(name)
     name.to_s.capitalize
   end
 
   # Store the class in the appropriate places.
+  # @api private
   def storeclass(klass, klassname, options)
     if hash = options[:hash]
       if hash.include? klassname and ! options[:overwrite]

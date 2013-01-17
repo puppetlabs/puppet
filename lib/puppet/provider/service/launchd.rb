@@ -54,6 +54,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # These are the paths in OS X where a launchd service plist could
   # exist. This is a helper method, versus a constant, for easy testing
   # and mocking
+  #
+  # @api private
   def self.launchd_paths
     [
       "/Library/LaunchAgents",
@@ -62,14 +64,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       "/System/Library/LaunchDaemons"
     ]
   end
-  private_class_method :launchd_paths
 
-  # This is the path to the overrides plist file where service enabling
-  # behavior is defined in 10.6 and greater
+  # Defines the path to the overrides plist file where service enabling
+  # behavior is defined in 10.6 and greater.
+  #
+  # @api private
   def self.launchd_overrides
     "/var/db/launchd.db/com.apple.launchd/overrides.plist"
   end
-  private_class_method :launchd_overrides
 
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
@@ -108,7 +110,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
     array_of_files.compact
   end
-  private_class_method :return_globbed_list_of_file_paths
 
   # Sets a class instance variable with a hash of all launchd plist files that
   # are found on the system. The key of the hash is the job id and the value

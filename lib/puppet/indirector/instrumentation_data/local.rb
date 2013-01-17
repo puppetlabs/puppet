@@ -1,6 +1,9 @@
 require 'puppet/indirector/instrumentation_data'
 
 class Puppet::Indirector::InstrumentationData::Local < Puppet::Indirector::Code
+
+  desc "Undocumented."
+
   def find(request)
     model.new(request.key)
   end

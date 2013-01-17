@@ -13,7 +13,7 @@ module Puppet
       # * :owner (default 'root') the username of the user that the file should be owned by
       # * :group (default 'puppet') the name of the group that the file should be owned by
       # * :mode (default '644') the mode (file permissions) that the file should be created with
-      def create_test_file(host, file_rel_path, file_content, options)
+      def create_test_file(host, file_rel_path, file_content, options = {})
 
         # set default options
         options[:mkdirs] ||= false

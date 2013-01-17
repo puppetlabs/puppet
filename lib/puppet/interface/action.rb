@@ -3,11 +3,17 @@ require 'puppet/interface/documentation'
 require 'puppet/util/methodhelper'
 require 'prettyprint'
 
+# This represents an action that is attached to a face. Actions should
+# be constructed by calling {Puppet::Interface::ActionManager#action},
+# which is available on {Puppet::Interface}, and then calling methods of
+# {Puppet::Interface::ActionBuilder} in the supplied block.
+# @api private
 class Puppet::Interface::Action
   include Puppet::Util::MethodHelper
   extend  Puppet::Interface::DocGen
   include Puppet::Interface::FullDocs
 
+  # @api private
   def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
@@ -32,6 +38,9 @@ class Puppet::Interface::Action
   # This is not nice, but it is the easiest way to make us behave like the
   # Ruby Method object rather than UnboundMethod.  Duplication is vaguely
   # annoying, but at least we are a shallow clone. --daniel 2011-04-12
+
+  # @return [void]
+  # @api private
   def __dup_and_rebind_to(to)
     bound_version = self.dup
     bound_version.instance_variable_set(:@face, to)
@@ -40,8 +49,17 @@ class Puppet::Interface::Action
 
   def to_s() "#{@face}##{@name}" end
 
+  # The name of this action
+  # @return [Symbol]
   attr_reader   :name
+
+  # The face this action is attached to
+  # @return [Puppet::Interface]
   attr_reader   :face
+
+  # Whether this is the default action for the face
+  # @return [Boolean]
+  # @api private
   attr_accessor :default
   def default?
     !!@default
@@ -57,6 +75,9 @@ class Puppet::Interface::Action
 
   ########################################################################
   # Support for rendering formats and all.
+
+
+  # @api private
   def when_rendering(type)
     unless type.is_a? Symbol
       raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
@@ -71,6 +92,8 @@ class Puppet::Interface::Action
     # Guess not, nothing to run.
     return nil
   end
+
+  # @api private
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc
       msg = "The second argument to set_rendering_method_for must be a Proc"
@@ -103,12 +126,16 @@ class Puppet::Interface::Action
       @face.__send__( :__add_method, __render_method_name_for(type), proc)
   end
 
+  # @return [void]
+  # @api private
   def __render_method_name_for(type)
     :"#{name}_when_rendering_#{type}"
   end
   private :__render_method_name_for
 
 
+  # @api private
+  # @return [Symbol]
   attr_accessor :render_as
   def render_as=(value)
     @render_as = value.to_sym
@@ -169,7 +196,14 @@ class Puppet::Interface::Action
   # this stuff work, because it would have been cleaner.  Which gives you an
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
+
+
+  # The arity of the action
+  # @return [Integer]
   attr_reader   :positional_arg_count
+
+  # The block that is executed when the action is invoked
+  # @return [block]
   attr_accessor :when_invoked
   def when_invoked=(block)
 
@@ -249,7 +283,7 @@ WRAPPER
   def options
     @face.options + @options
   end
-  
+
   def add_display_global_options(*args)
     @display_global_options ||= []
     [args].flatten.each do |refopt|
@@ -259,12 +293,12 @@ WRAPPER
     @display_global_options.uniq!
     @display_global_options
   end
-  
+
   def display_global_options(*args)
     args ? add_display_global_options(args) : @display_global_options + @face.display_global_options 
   end
   alias :display_global_option :display_global_options
-  
+
   def get_option(name, with_inherited_options = true)
     option = @options_hash[name.to_sym]
     if option.nil? and with_inherited_options
@@ -334,6 +368,8 @@ WRAPPER
   # Support code for action decoration; see puppet/interface.rb for the gory
   # details of why this is hidden away behind private. --daniel 2011-04-15
   private
+  # @return [void]
+  # @api private
   def __add_method(name, proc)
     @face.__send__ :__add_method, name, proc
   end

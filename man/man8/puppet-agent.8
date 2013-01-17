@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-AGENT" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-AGENT" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-agent\fR \- The puppet agent daemon
@@ -61,7 +61,7 @@ Provide transaction information via exit codes\. If this is enabled, an exit cod
 .
 .TP
 \-\-digest
-Change the certificate fingerprinting digest algorithm\. The default is MD5\. Valid values depends on the version of OpenSSL installed, but should always at least contain MD5, MD2, SHA1 and SHA256\.
+Change the certificate fingerprinting digest algorithm\. The default is SHA256\. Valid values depends on the version of OpenSSL installed, but will likely contain MD5, MD2, SHA1 and SHA256\.
 .
 .TP
 \-\-disable
@@ -97,7 +97,7 @@ Where to send messages\. Choose between syslog, the console, and a log file\. De
 .
 .TP
 \-\-no\-client
-Do not create a config client\. This will cause the daemon to run without ever checking for its configuration automatically, and only makes sense when puppet agent is being run with listen = true in puppet\.conf or was started with the \fB\-\-listen\fR option\.
+Do not create a config client\. This will cause the daemon to start but not check configuration unless it is triggered with \fBpuppet kick\fR\. This only makes sense when puppet agent is being run with listen = true in puppet\.conf or was started with the \fB\-\-listen\fR option\.
 .
 .TP
 \-\-noop

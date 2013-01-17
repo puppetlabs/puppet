@@ -521,7 +521,7 @@ describe Puppet::Module do
     mod
   end
 
-  describe "when loading the metadata file", :if => Puppet.features.pson? do
+  describe "when loading the metadata file" do
     before do
       @data = {
         :license       => "GPL2",

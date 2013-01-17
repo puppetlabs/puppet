@@ -11,7 +11,7 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     if Facter.value(:operatingsystem) == 'Solaris' && Puppet::Util::Package.versioncmp(Facter.value(:kernelrelease), '5.11') >= 0
       :pkg
     else
-      {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :pkgdmg, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
+      {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :pkgdmg, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun, "DragonFly" => :pkgin}[os]
     end
   end
 

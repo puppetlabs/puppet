@@ -1,8 +1,15 @@
 require 'puppet/interface'
 
+# This represents an option on an action or face (to be globally applied
+# to its actions). Options should be constructed by calling
+# {Puppet::Interface::OptionManager#option}, which is available on
+# {Puppet::Interface}, and then calling methods of
+# {Puppet::Interface::OptionBuilder} in the supplied block.
+# @api public
 class Puppet::Interface::Option
   include Puppet::Interface::TinyDocs
 
+  # @api private
   def initialize(parent, *declaration, &block)
     @parent   = parent
     @optparse = []
@@ -69,18 +76,20 @@ class Puppet::Interface::Option
   # to_s and optparse_to_name are roughly mirrored, because they are used to
   # transform options to name symbols, and vice-versa.  This isn't a full
   # bidirectional transformation though. --daniel 2011-04-07
+
   def to_s
     @name.to_s.tr('_', '-')
   end
 
+  # @api private
   def optparse_to_optionname(declaration)
     unless found = declaration.match(/^-+(?:\[no-\])?([^ =]+)/) then
       raise ArgumentError, "Can't find a name in the declaration #{declaration.inspect}"
     end
     name = found.captures.first
   end
-    
 
+  # @api private
   def optparse_to_name(declaration)
     name = optparse_to_optionname(declaration).tr('-', '_')
     raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/

@@ -23,7 +23,7 @@ Puppet::Type.type(:service).provide :service do
   def texecute(type, command, fof = true)
     begin
       # #565: Services generally produce no output, so squelch them.
-      execute(command, :failonfail => fof, :squelch => true)
+      execute(command, :failonfail => fof, :override_locale => false, :squelch => true)
     rescue Puppet::ExecutionFailure => detail
       @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
     end

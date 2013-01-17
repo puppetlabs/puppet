@@ -208,7 +208,7 @@ describe Puppet::Application::Apply do
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 
-        lambda { @apply.main }.should raise_error
+        lambda { @apply.main }.should raise_error(RuntimeError, /Could not find node/)
       end
 
       it "should load custom classes if loadclasses" do

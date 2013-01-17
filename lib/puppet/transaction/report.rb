@@ -1,34 +1,119 @@
 require 'puppet'
 require 'puppet/indirector'
 
-# A class for reporting what happens on each client.  Reports consist of
-# two types of data:  Logs and Metrics.  Logs are the output that each
-# change produces, and Metrics are all of the numerical data involved
-# in the transaction.
+# This class is used to report what happens on a client.
+# There are two types of data in a report; _Logs_ and _Metrics_.
+# 
+# * **Logs** - are the output that each change produces.
+# * **Metrics** - are all of the numerical data involved in the transaction.
+# 
+# Use {Puppet::Reports} class to create a new custom report type. This class is indirectly used
+# as a source of data to report in such a registered report.
+# 
+# ##Metrics
+# There are three types of metrics in each report, and each type of metric has one or more values.
+# 
+# * Time: Keeps track of how long things took.
+#   * Total: Total time for the configuration run
+#   * File:
+#   * Exec:
+#   * User:
+#   * Group:
+#   * Config Retrieval: How long the configuration took to retrieve
+#   * Service:
+#   * Package:
+# * Resources: Keeps track of the following stats:
+#   * Total: The total number of resources being managed
+#   * Skipped: How many resources were skipped, because of either tagging or scheduling restrictions
+#   * Scheduled: How many resources met any scheduling restrictions
+#   * Out of Sync: How many resources were out of sync
+#   * Applied: How many resources were attempted to be fixed
+#   * Failed: How many resources were not successfully fixed
+#   * Restarted: How many resources were restarted because their dependencies changed
+#   * Failed Restarts: How many resources could not be restarted
+# * Changes: The total number of changes in the transaction.
+#
+# @api public
 class Puppet::Transaction::Report
   extend Puppet::Indirector
 
   indirects :report, :terminus_class => :processor
 
-  attr_accessor :configuration_version, :host, :environment
-  attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status,
-              :puppet_version, :report_format
+  # The version of the configuration
+  # @todo Uncertain what this is?
+  # @return [???] the configuration version
+  attr_accessor :configuration_version 
+  
+  # The host name for which the report is generated
+  # @return [String] the host name
+  attr_accessor :host
+  
+  # The name of the environment the host is in
+  # @return [String] the environment name
+  attr_accessor :environment
+  
+  # A hash with a map from resource to status
+  # @return [Hash<{String => String}>] Resource name to status string.
+  # @todo Uncertain if the types in the hash are correct...
+  attr_reader :resource_statuses
+  
+  # A list of log messages.
+  # @return [Array<String>] logged messages
+  attr_reader :logs
+  
+  # A hash of metric name to metric value.
+  # @return [Hash<{String => Object}>] A map of metric name to value.
+  # @todo Uncertain if all values are numbers - now marked as Object.
+  #
+  attr_reader :metrics
+  
+  # The time when the report data was generated.
+  # @return [Time] A time object indicating when the report data was generated
+  #
+  attr_reader :time
+  
+  # The 'kind' of report is the name of operation that triggered the report to be produced.
+  # Typically "apply".
+  # @return [String] the kind of operation that triggered the generation of the report.
+  #
+  attr_reader :kind
 
-  # This is necessary since Marshall doesn't know how to
-  # dump hash with default proc (see below @records)
+  # The status of the client run is an enumeration: 'failed', 'changed' or 'unchanged'
+  # @return [String] the status of the run - one of the values 'failed', 'changed', or 'unchanged'
+  # 
+  attr_reader :status
+  
+  # @return [String] The Puppet version in String form.
+  # @see Puppet::version()
+  #
+  attr_reader :puppet_version
+  
+  # @return [Integer] (3) a report format version number
+  # @todo Unclear what this is - a version?
+  #
+  attr_reader :report_format
+
+  # This is necessary since Marshal doesn't know how to
+  # dump hash with default proc (see below "@records") ?
+  # @todo there is no "@records" to see below, uncertain what this is for.
+  # @api private
+  #
   def self.default_format
     :yaml
   end
 
+  # @api private
   def <<(msg)
     @logs << msg
     self
   end
 
+  # @api private
   def add_times(name, value)
     @external_times[name] = value
   end
 
+  # @api private
   def add_metric(name, hash)
     metric = Puppet::Util::Metric.new(name)
 
@@ -40,10 +125,12 @@ class Puppet::Transaction::Report
     metric
   end
 
+  # @api private
   def add_resource_status(status)
     @resource_statuses[status.resource] = status
   end
 
+  # @api private
   def compute_status(resource_metrics, change_metric)
     if (resource_metrics["failed"] || 0) > 0
       'failed'
@@ -54,10 +141,12 @@ class Puppet::Transaction::Report
     end
   end
 
+  # @api private
   def prune_internal_data
     resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
   end
 
+  # @api private
   def finalize_report
     prune_internal_data
 
@@ -69,6 +158,7 @@ class Puppet::Transaction::Report
     @status = compute_status(resource_metrics, change_metric)
   end
 
+  # @api private
   def initialize(kind, configuration_version=nil, environment=nil)
     @metrics = {}
     @logs = []
@@ -84,11 +174,18 @@ class Puppet::Transaction::Report
     @status = 'failed' # assume failed until the report is finalized
   end
 
+  # @return [String] the host name
+  # @api public
+  #
   def name
     host
   end
 
   # Provide a human readable textual summary of this report.
+  # @note This is intended for debugging purposes
+  # @return [String] A string with a textual summary of this report.
+  # @api public
+  #
   def summary
     report = raw_summary
 
@@ -115,7 +212,10 @@ class Puppet::Transaction::Report
     ret
   end
 
-  # Provide a raw hash summary of this report.
+  # Provides a raw hash summary of this report.
+  # @return [Hash<{String => Object}>] A hash with metrics key to value map
+  # @api public
+  #
   def raw_summary
     report = { "version" => { "config" => configuration_version, "puppet" => Puppet.version  } }
 
@@ -131,9 +231,16 @@ class Puppet::Transaction::Report
     report
   end
 
-  # Based on the contents of this report's metrics, compute a single number
-  # that represents the report. The resulting number is a bitmask where
+  # Computes a single number that represents the report's status.
+  # The computation is based on the contents of this report's metrics.
+  # The resulting number is a bitmask where
   # individual bits represent the presence of different metrics.
+  #
+  # * 0x2 set if there are changes
+  # * 0x4 set if there are failures
+  # @return [Integer] A bitmask where 0x2 is set if there are changes, and 0x4 is set of there are failures.
+  # @api public
+  #
   def exit_status
     status = 0
     status |= 2 if @metrics["changes"]["total"] > 0
@@ -141,6 +248,8 @@ class Puppet::Transaction::Report
     status
   end
 
+  # @api private
+  #
   def to_yaml_properties
     instance_variables - [:@external_times]
   end

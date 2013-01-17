@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'rbconfig'
 
 require 'puppet/network/authconfig'
 
@@ -214,7 +215,6 @@ describe Puppet::Network::AuthStore::Declaration do
     "1::2:3:4",
     "1::2:3",
     "1::8",
-    "::2:3:4:5:6:7:8",
     "::2:3:4:5:6:7",
     "::2:3:4:5:6",
     "::2:3:4:5",
@@ -289,6 +289,27 @@ describe Puppet::Network::AuthStore::Declaration do
         @declaration.should_not be_match('www.testsite.org','200.101.99.98')
       end
     end unless ip =~ /:.*\./ # Hybrid IPs aren't supported by ruby's ipaddr
+  }
+
+  [
+    "::2:3:4:5:6:7:8",
+  ].each { |ip|
+    describe "when the pattern is a valid IP such as #{ip}" do
+      let(:declaration) do
+        Puppet::Network::AuthStore::Declaration.new(:allow_ip,ip)
+      end
+
+      issue_7477 = !(IPAddr.new(ip) rescue false)
+
+      it "should match the specified IP" do
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
+        declaration.should be_match('www.testsite.org',ip)
+      end
+      it "should not match other IPs" do
+        pending "resolution of ruby issue [7477](http://goo.gl/Bb1LU)", :if => issue_7477
+        declaration.should_not be_match('www.testsite.org','200.101.99.98')
+      end
+    end
   }
 
   {

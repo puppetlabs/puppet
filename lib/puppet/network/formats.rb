@@ -101,8 +101,6 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
 end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method]) do
-  confine :true => Puppet.features.pson?
-
   def intern(klass, text)
     data_to_instance(klass, PSON.parse(text))
   end
@@ -150,7 +148,7 @@ Puppet::Network::FormatHandler.create(:console,
     # Simple hash to table
     if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
       output = ''
-      column_a = datum.map do |k,v| k.to_s.length end.max + 2
+      column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
       column_b = 79 - column_a
       datum.sort_by { |k,v| k.to_s } .each do |key, value|
         output << key.to_s.ljust(column_a)

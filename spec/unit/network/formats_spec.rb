@@ -220,7 +220,7 @@ describe "Puppet Network Format" do
     Puppet::Network::FormatHandler.format(:pson).should_not be_nil
   end
 
-  describe "pson", :if => Puppet.features.pson? do
+  describe "pson" do
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
     end
@@ -309,6 +309,10 @@ describe "Puppet Network Format" do
       it "should render #{input.inspect} as JSON" do
         subject.render(input).should == json.render(input).chomp
       end
+    end
+
+    it "should render empty hashes as empty strings" do
+      subject.render({}).should == ''
     end
 
     it "should render a non-trivially-keyed Hash as JSON" do

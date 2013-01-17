@@ -1,4 +1,6 @@
 # The majority of Puppet's configuration settings are set in this file.
+
+
 module Puppet
 
   ############################################################################################
@@ -155,12 +157,6 @@ module Puppet
             "all files referenced with `import` statements to exist. This setting was primarily\n" +
             "designed for use with commit hooks for parse-checking.",
     },
-    :authconfig => {
-        :default  => "$confdir/namespaceauth.conf",
-        :desc     => "The configuration file that defines the rights to the different\n" +
-            "namespaces and methods.  This can be used as a coarse-grained\n" +
-            "authorization system for both `puppet agent` and `puppet master`.",
-    },
     :environment => {
         :default  => "production",
         :desc     => "The environment Puppet is running in.  For clients\n" +
@@ -214,6 +210,13 @@ module Puppet
       :type       => :terminus,
       :default    => "plain",
       :desc       => "Where to find information about nodes.",
+    },
+    :node_cache_terminus => {
+      :type       => :terminus,
+      :default    => nil,
+      :desc       => "How to store cached nodes. 
+      Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
+      The master application defaults to 'write_only_yaml', all others to none.",
     },
     :data_binding_terminus => {
       :type    => :terminus,
@@ -676,11 +679,8 @@ EOT
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
-      :desc       => "The default TTL for new certificates. Can be specified as a duration."
-    },
-    :ca_md => {
-      :default    => "md5",
-      :desc       => "The type of hash used in certificates.",
+      :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
+      Can be specified as a duration."
     },
     :req_bits => {
       :default    => 4096,
@@ -1085,9 +1085,14 @@ EOT
     },
     :dynamicfacts => {
       :default    => "memorysize,memoryfree,swapsize,swapfree",
-      :desc       => "Facts that are dynamic; these facts will be ignored when deciding whether
+      :desc       => "(Deprecated) Facts that are dynamic; these facts will be ignored when deciding whether
       changed facts should result in a recompile.  Multiple facts should be
       comma-separated.",
+      :hook => proc { |value|
+        if value
+          Puppet.deprecation_warning "The dynamicfacts setting is deprecated and will be ignored."
+        end
+      }
     },
     :splaylimit => {
       :default    => "$runinterval",
