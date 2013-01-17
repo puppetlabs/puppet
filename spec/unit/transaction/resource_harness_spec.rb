@@ -104,11 +104,26 @@ describe Puppet::Transaction::ResourceHarness do
           false
         end
       end
+
+      newproperty(:baz) do
+        desc "A property that raises an Exception (not StandardError) when you try to change it"
+        def sync
+          raise Exception.new('baz')
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          false
+        end
+      end
     end
     stubProvider
   end
 
-  describe "when an error occurs" do
+  describe "when a caught error occurs" do
     before :each do
       stub_provider = make_stub_provider
       resource = stub_provider.new :name => 'name', :foo => 1, :bar => 2
@@ -124,6 +139,15 @@ describe Puppet::Transaction::ResourceHarness do
     it "should record a failure event" do
       @status.events[1].property.should == 'bar'
       @status.events[1].status.should == 'failure'
+    end
+  end
+
+  describe "when an Exception occurs" do
+    it "should pass the exception through during sync" do
+      stub_provider = make_stub_provider
+      resource = stub_provider.new :name => 'name', :baz => 1
+      resource.expects(:err).never
+      lambda { @harness.evaluate(resource) }.should raise_error(Exception, /baz/)
     end
   end
 
