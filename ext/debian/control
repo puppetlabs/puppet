@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Puppet Labs <info@puppetlabs.com>
 Uploaders: Micah Anderson <micah@debian.org>, Andrew Pollock <apollock@debian.org>, Nigel Kersten <nigel@explanatorygap.net>, Stig Sandbeck Mathisen <ssm@debian.org>
-Build-Depends-Indep: ruby (>= 1.8.1), libopenssl-ruby, facter (>= 1.5), facter (<< 2.0)
+Build-Depends-Indep: ruby1.8, libopenssl-ruby, facter (>= 1.5), facter (<< 2.0)
 Build-Depends: debhelper (>= 7.0.0), openssl
 Standards-Version: 3.9.1
 Vcs-Git: git://git.debian.org/git/pkg-puppet/puppet.git
