@@ -19,9 +19,9 @@ module PSON
     begin
       old_verbose, $VERBSOSE = $VERBOSE, nil
       # An iconv instance to convert from UTF8 to UTF16 Big Endian.
-      UTF16toUTF8 = Iconv.new('utf-8', 'utf-16') # :nodoc:
+      UTF16toUTF8 = Iconv.new('UTF-8', 'UTF-16') # :nodoc:
       # An iconv instance to convert from UTF16 Big Endian to UTF8.
-      UTF8toUTF16 = Iconv.new('utf-16', 'utf-8') # :nodoc:
+      UTF8toUTF16 = Iconv.new('UTF-16', 'UTF-8') # :nodoc:
       UTF8toUTF16.iconv('no bom')
       if UTF8toUTF16.iconv("\xe2\x82\xac") == "\xac\x20"
         swapper = Class.new do
