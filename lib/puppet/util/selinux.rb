@@ -43,13 +43,8 @@ module Puppet::Util::SELinux
     # matching.  If not, we can pass a mode of 0.
     begin
       filestat = file_lstat(file)
-    rescue Errno::EACCES, Errno::ENOENT => detail
-      warning "Could not stat; #{detail}"
-    end
-
-    if filestat
       mode = filestat.mode
-    else
+    rescue Errno::EACCES, Errno::ENOENT
       mode = 0
     end
 

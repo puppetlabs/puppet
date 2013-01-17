@@ -135,7 +135,6 @@ describe Puppet::Util::SELinux do
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
       self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
 
-      self.expects(:warning).with("Could not stat; Permission denied - /root/chuj")
       get_selinux_default_context("/root/chuj").should be_nil
     end
 
@@ -145,7 +144,6 @@ describe Puppet::Util::SELinux do
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
       self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
 
-      self.expects(:warning).with("Could not stat; No such file or directory - /root/chuj")
       get_selinux_default_context("/root/chuj").should be_nil
     end
 
