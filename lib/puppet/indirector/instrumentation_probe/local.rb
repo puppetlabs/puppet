@@ -3,6 +3,9 @@ require 'puppet/indirector/code'
 require 'puppet/util/instrumentation/indirection_probe'
 
 class Puppet::Indirector::InstrumentationProbe::Local < Puppet::Indirector::Code
+
+  desc "Undocumented."
+
   def find(request)
   end
 

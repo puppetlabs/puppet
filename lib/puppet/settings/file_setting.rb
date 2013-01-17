@@ -2,47 +2,110 @@ require 'puppet/settings/string_setting'
 
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
-  AllowedOwners = %w{root service}
-  AllowedGroups = %w{root service}
-
   class SettingError < StandardError; end
 
+  # An unspecified user or group
+  #
+  # @api private
+  class Unspecified
+    def value
+      nil
+    end
+  end
+
+  # A "root" user or group
+  #
+  # @api private
+  class Root
+    def value
+      "root"
+    end
+  end
+
+  # A "service" user or group that picks up values from settings when the
+  # referenced user or group is safe to use (it exists or will be created), and
+  # uses the given fallback value when not safe.
+  #
+  # @api private
+  class Service
+    # @param name [Symbol] the name of the setting to use as the service value
+    # @param fallback [String, nil] the value to use when the service value cannot be used
+    # @param settings [Puppet::Settings] the puppet settings object
+    # @param available_method [Symbol] the name of the method to call on
+    #   settings to determine if the value in settings is available on the system
+    #
+    def initialize(name, fallback, settings, available_method)
+      @settings = settings
+      @available_method = available_method
+      @name = name
+      @fallback = fallback
+    end
+
+    def value
+      if safe_to_use_settings_value?
+        @settings[@name]
+      else
+        @fallback
+      end
+    end
+
+  private
+    def safe_to_use_settings_value?
+      @settings[:mkusers] or @settings.send(@available_method)
+    end
+  end
+
   attr_accessor :mode, :create
+
+  def initialize(args)
+    @group = Unspecified.new
+    @owner = Unspecified.new
+    super(args)
+  end
 
   # Should we create files, rather than just directories?
   def create_files?
     create
   end
 
+  # @param value [String] the group to use on the created file (can only be "root" or "service")
+  # @api public
   def group=(value)
-    unless AllowedGroups.include?(value)
-      identifying_fields = [desc,name,default].compact.join(': ')
-      raise SettingError, "Internal error: The :group setting for #{identifying_fields} must be 'service', not '#{value}'"
-    end
-    @group = value
+    @group = case value
+             when "root"
+               Root.new
+             when "service"
+               # Group falls back to `nil` because we cannot assume that a "root" group exists.
+               # Some systems have root group, others have wheel, others have something else.
+               Service.new(:group, nil, @settings, :service_group_available?)
+             else
+               unknown_value(':group', value)
+             end
   end
 
-  def group
-    return unless @group
-    @settings[:group]
-  end
-
+  # @param value [String] the owner to use on the created file (can only be "root" or "service")
+  # @api public
   def owner=(value)
-    unless AllowedOwners.include?(value)
-      identifying_fields = [desc,name,default].compact.join(': ')
-      raise SettingError, "Internal error: The :owner setting for #{identifying_fields} must be either 'root' or 'service', not '#{value}'"
-    end
-    @owner = value
+    @owner = case value
+             when "root"
+               Root.new
+             when "service"
+               Service.new(:user, "root", @settings, :service_user_available?)
+             else
+               unknown_value(':owner', value)
+             end
   end
 
+  # @return [String, nil] the name of the group to use for the file or nil if the group should not be managed
+  # @api public
+  def group
+    @group.value
+  end
+
+  # @return [String, nil] the name of the user to use for the file or nil if the user should not be managed
+  # @api public
   def owner
-    return unless @owner
-    return "root" if @owner == "root" or ! use_service_user?
-    @settings[:user]
-  end
-
-  def use_service_user?
-    @settings[:mkusers] or @settings.service_user_available?
+    @owner.value
   end
 
   def munge(value)
@@ -115,5 +178,10 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
           "Settings parameter '#{name}' is undefined"
       end
     }
+  end
+
+private
+  def unknown_value(parameter, value)
+    raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
   end
 end

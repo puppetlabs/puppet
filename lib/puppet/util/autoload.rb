@@ -19,13 +19,6 @@ class Puppet::Util::Autoload
       @gem_source ||= Puppet::Util::RubyGems::Source.new
     end
 
-    # List all loaded files.
-    def list_loaded
-      loaded.keys.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
-        "#{path}: #{hash[:file]}"
-      end
-    end
-
     # Has a given path been loaded?  This is used for testing whether a
     # changed file should be loaded or just ignored.  This is only
     # used in network/client/master, when downloading plugins, to
@@ -205,7 +198,7 @@ class Puppet::Util::Autoload
   end
 
   def load(name, env=nil)
-    self.class.load_file(File.join(@path, name.to_s), env)
+    self.class.load_file(expand(name), env)
   end
 
   # Load all instances that we can.  This uses require, rather than load,
@@ -215,14 +208,18 @@ class Puppet::Util::Autoload
   end
 
   def loaded?(name)
-    self.class.loaded?(File.join(@path, name.to_s))
+    self.class.loaded?(expand(name))
   end
 
   def changed?(name)
-    self.class.changed?(File.join(@path, name.to_s))
+    self.class.changed?(expand(name))
   end
 
   def files_to_load
     self.class.files_to_load(@path)
+  end
+
+  def expand(name)
+    ::File.join(@path, name.to_s)
   end
 end

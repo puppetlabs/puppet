@@ -1,5 +1,5 @@
 # Runs an external command and returns the results
-Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
+Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue,
     :doc => "Calls an external command on the Puppet master and returns
     the results of the command.  Any arguments are passed to the external command as
     arguments.  If the generator does not exit with return code of 0,

@@ -142,18 +142,6 @@ describe Puppet::Util::RDoc do
         # any other output must fail
         Puppet::Util::RDoc.manifestdoc([my_fixture('basic.pp')])
       end
-
-      it "should output resource documentation if needed" do
-        pending "#6634 being fixed"
-        Puppet.settings[:document_all] = true
-        byline = sequence('documentation outputs in line order')
-        Puppet::Util::RDoc.expects(:puts).with("im a class\n").in_sequence(byline)
-        Puppet::Util::RDoc.expects(:puts).with("im a node\n").in_sequence(byline)
-        Puppet::Util::RDoc.expects(:puts).with("im a define\n").in_sequence(byline)
-        Puppet::Util::RDoc.expects(:puts).with("im a resource\n").in_sequence(byline)
-        # any other output must fail
-        Puppet::Util::RDoc.manifestdoc([my_fixture('basic.pp')])
-      end
     end
   end
 end

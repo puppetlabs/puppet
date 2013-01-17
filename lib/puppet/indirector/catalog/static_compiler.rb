@@ -3,6 +3,36 @@ require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
 
 class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
+
+  desc %q{Compiles catalogs on demand using the optional static compiler. This
+    functions similarly to the normal compiler, but it replaces puppet:/// file
+    URLs with explicit metadata and file content hashes, expecting puppet agent
+    to fetch the exact specified content from the filebucket. This guarantees
+    that a given catalog will always result in the same file states. It also
+    decreases catalog application time and fileserver load, at the cost of
+    increased compilation time.
+
+    This terminus works today, but cannot be used without additional
+    configuration. Specifically:
+
+    You must create a `Filebucket['puppet']` resource in site.pp (or somewhere
+    else where it will be added to every node's catalog). The title of this
+    resource **MUST** be "puppet"; the static compiler treats this title as magical.
+
+        # Note: the special $servername var always contains the master's FQDN,
+        # even if it was reached at a different name.
+        filebucket { puppet:
+          server => $servername,
+          path   => false,
+        }
+
+    You must set `catalog_terminus = static_compiler` in the puppet master's puppet.conf.
+
+    If you are using multiple puppet masters, you must configure load balancer
+    affinity for agent nodes. This is because puppet masters other than the one
+    that compiled a given catalog may not have stored the required file contents
+    in their filebuckets.}
+
   def compiler
     @compiler ||= indirection.terminus(:compiler)
   end

@@ -8,6 +8,11 @@ require 'puppet/parser/templatewrapper'
 require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
+# This class is part of the internal parser/evaluator/compiler functionality of Puppet.
+# It is passed between the various classes that participate in evaluation.
+# None of its methods are API except those that are clearly marked as such.
+#
+# @api public
 class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
@@ -56,6 +61,9 @@ class Puppet::Parser::Scope
   # Initialize a new scope suitable for parser function testing.  This method
   # should be considered a public API for external modules.  A shared spec
   # helper should consume this API method.
+  #
+  # @api protected
+  #
   def self.new_for_test_harness(node_name)
     node = Puppet::Node.new(node_name)
     compiler = Puppet::Parser::Compiler.new(node)
@@ -235,6 +243,15 @@ class Puppet::Parser::Scope
     end
   end
 
+  # Lookup a variable within this scope using the Puppet language's
+  # scoping rules. Variables can be qualified using just as in a
+  # manifest.
+  #
+  # @param [String] name the variable name to lookup
+  #
+  # @return Object the value of the variable, or nil if it's not found
+  #
+  # @api public
   def lookupvar(name, options = {})
     unless name.is_a? String
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
@@ -263,7 +280,20 @@ class Puppet::Parser::Scope
       nil
     end
   end
-  alias [] lookupvar
+
+  # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
+  # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
+  # or in a specific visible named scope.
+  #
+  # @param varname [String] the name of the variable (may be a qualified name using `(ns'::')*varname`
+  # @param options [Hash] Additional options, not part of api.
+  # @return [Object] the value assigned to the given varname
+  # @see #[]=
+  # @api public
+  #
+  def [](varname, options={})
+    lookupvar(varname, options)
+  end
 
   def qualified_scope(classname)
     raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
@@ -349,11 +379,25 @@ class Puppet::Parser::Scope
 
     if options[:append]
       table[name] = append_value(undef_as('', self[name]), value)
-    else 
+    else
       table[name] = value
     end
   end
-  alias []= setvar
+
+  # Sets the variable value of the name given as an argument to the given value. The value is
+  # set in the current scope and may shadow a variable with the same name in a visible outer scope.
+  # It is illegal to re-assign a variable in the same scope. It is illegal to set a variable in some other
+  # scope/namespace than the scope passed to a method.
+  #
+  # @param varname [String] The variable name to which the value is assigned. Must not contain `::`
+  # @param value [String] The value to assign to the given variable name.
+  # @param options [Hash] Additional options, not part of api.
+  #
+  # @api public
+  #
+  def []=(varname, value, options = {})
+    setvar(varname, value, options = {})
+  end
 
   def append_value(bound_value, new_value)
     case new_value
@@ -363,7 +407,7 @@ class Puppet::Parser::Scope
       bound_value.merge(new_value)
     else
       if bound_value.is_a?(Hash)
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" 
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported"
       end
       bound_value + new_value
     end

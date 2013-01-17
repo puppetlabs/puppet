@@ -1,6 +1,7 @@
-# NOTE: a lot of the stuff in this file is duplicated in the "puppet_spec_helper" in the project
-#  puppetlabs_spec_helper.  We should probably eat our own dog food and get rid of most of this from here,
-#  and have the puppet core itself use puppetlabs_spec_helper
+# NOTE: a lot of the stuff in this file is duplicated in the
+# "puppet_spec_helper" in the project puppetlabs_spec_helper. We should
+# probably eat our own dog food and get rid of most of this from here, and
+# have the puppet core itself use puppetlabs_spec_helper
 
 dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift File.join(dir, 'lib')
@@ -47,6 +48,17 @@ end
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
+  # Examples or groups can selectively tag themselves as broken.
+  # For example;
+  #
+  # rbv = "#{RUBY_VERSION}-p#{RbConfig::CONFIG['PATCHLEVEL']}"
+  # describe "mostly working", :broken => false unless rbv == "1.9.3-p327" do
+  #  it "parses a valid IP" do
+  #    IPAddr.new("::2:3:4:5:6:7:8")
+  #  end
+  # end
+  config.filter_run_excluding :broken => true
+
   config.mock_with :mocha
 
   tmpdir = Dir.mktmpdir("rspecrun")
@@ -58,6 +70,8 @@ RSpec.configure do |config|
     config.error_stream = $stderr
     config.formatters.each { |f| f.instance_variable_set(:@output, $stdout) }
   end
+
+  Puppet::Test::TestHelper.initialize
 
   config.before :all do
     Puppet::Test::TestHelper.before_all_tests()

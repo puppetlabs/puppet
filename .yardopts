@@ -2,5 +2,15 @@
 --private
 --verbose
 --markup markdown
---readme README_DEVELOPER.md
+--readme README.md
+--tag status
+--transitive-tag status
+--tag comment
+--hide-tag comment
+--tag dsl:"DSL"
+--no-transitive-tag api
+--template-path yardoc/templates
+--api public
+--api private
+--hide-void-return
 lib/**/*.rb

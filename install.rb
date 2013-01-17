@@ -179,8 +179,6 @@ def prepare_installation
   end
 
 
-  InstallOptions.tests = true
-
   ARGV.options do |opts|
     opts.banner = "Usage: #{File.basename($0)} [options]"
     opts.separator ""
@@ -190,8 +188,9 @@ def prepare_installation
     opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
       InstallOptions.ri = onri
     end
-    opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
+    opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default off.') do |ontest|
       InstallOptions.tests = ontest
+      warn "The tests flag is no longer functional in Puppet and is deprecated as of Dec 19, 2012. It will be removed in a future version of Puppet."
     end
     opts.on('--[no-]configs', 'Prevents the installation of config files', 'Default off.') do |ontest|
       InstallOptions.configs = ontest
@@ -217,13 +216,11 @@ def prepare_installation
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
       InstallOptions.rdoc    = false
       InstallOptions.ri      = false
-      InstallOptions.tests   = false
       InstallOptions.configs = true
     end
     opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
       InstallOptions.rdoc    = true
       InstallOptions.ri      = true
-      InstallOptions.tests   = true
       InstallOptions.configs = true
     end
     opts.separator("")

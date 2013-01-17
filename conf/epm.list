@@ -1,8 +1,0 @@
-%product Puppet
-%copyright 2004-2005 by Reductive Labs, All Rights Reserved
-%vendor Reductive Labs
-%license COPYING
-%readme README
-%description System Automation and Configuration Management Software
-%version 0.15.0
-%requires facter 1.1

@@ -1,5 +1,5 @@
 module Puppet::Parser::Functions
-  newfunction(:hiera_include) do |*args|
+  newfunction(:hiera_include, :arity => -2) do |*args|
     require 'hiera_puppet'
     key, default, override = HieraPuppet.parse_args(args)
     if answer = HieraPuppet.lookup(key, default, self, override, :array)

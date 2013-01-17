@@ -15,6 +15,7 @@ describe Puppet::Resource do
     end
   end
 
+
   it "should have a :title attribute" do
     Puppet::Resource.new(:user, "foo").title.should == "foo"
   end
@@ -304,6 +305,33 @@ describe Puppet::Resource do
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
       resource.set_default_parameters(@scope).should == ["a"]
     end
+
+    it "doesn't call safeevaluate on default value when it doesn't respond to safeevaluate" do
+      Puppet[:manifest] = "test.rb"
+      value = mock
+      value.stubs(:respond_to?).with(:safeevaluate).returns false
+      value.expects(:safeevaluate).never
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
+      )
+
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
+      resource.set_default_parameters @scope
+    end
+
+
+    it "calls safeevaluate on default when it responds to safeevaluate" do
+      value = mock
+      value.expects(:safeevaluate).returns 42
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new :definition, "default_param", :arguments => {"a" => value}
+      )
+
+      resource = Puppet::Parser::Resource.new "default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
+      resource.set_default_parameters @scope
+    end
+
+
 
     describe "when the resource type is :hostclass" do
       let(:environment_name) { "testing env" }
@@ -647,7 +675,7 @@ type: File
     end
   end
 
-  describe "when converting to pson", :if => Puppet.features.pson? do
+  describe "when converting to pson" do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }
     end
@@ -726,7 +754,7 @@ type: File
     end
   end
 
-  describe "when converting from pson", :if => Puppet.features.pson? do
+  describe "when converting from pson" do
     def pson_result_should
       Puppet::Resource.expects(:new).with { |hash| yield hash }
     end
@@ -964,5 +992,9 @@ type: File
         :friends         => ['Oprah'],
       })
     end
+  end
+
+  it "should be able to return canonical type name" do
+    Puppet::Resource.canonicalize_type("foo").should == "Foo"
   end
 end

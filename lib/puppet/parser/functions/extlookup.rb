@@ -3,6 +3,7 @@ require 'csv'
 module Puppet::Parser::Functions
   newfunction(:extlookup,
   :type => :rvalue,
+  :arity => -2,
   :doc => "This is a parser function to read data from external files, this version
 uses CSV files but the concept can easily be adjust for databases, yaml
 or any other queryable data source.
@@ -89,7 +90,7 @@ This is for back compatibility to interpolate variables with %. % interpolation 
   default  = args[1]
   datafile = args[2]
 
-  raise Puppet::ParseError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
+  raise ArgumentError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
 
   extlookup_datadir = undef_as('',self['::extlookup_datadir'])
 

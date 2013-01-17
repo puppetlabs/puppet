@@ -1,6 +1,7 @@
-# This isn't usable outside Puppet::Interface; don't load it alone.
 class Puppet::Interface
+  # @api private
   module DocGen
+    # @api private
     def self.strip_whitespace(text)
       text.gsub!(/[ \t\f]+$/, '')
 
@@ -25,6 +26,8 @@ class Puppet::Interface
     #
     # This feels a bit like overkill, but at least the common code is common
     # now. --daniel 2011-04-29
+
+    # @api private
     def attr_doc(name, &validate)
       # Now, which form of the setter do we want, validated or not?
       get_arg = "value.to_s"
@@ -51,17 +54,30 @@ class Puppet::Interface
     end
   end
 
+  # This module can be mixed in to provide a minimal set of
+  # documentation attributes.
+  # @api public
   module TinyDocs
     extend Puppet::Interface::DocGen
 
+    # @!method summary(summary)
+    # Sets a summary of this object.
+    # @api public
+    # @dsl Faces
     attr_doc :summary do |value|
       value =~ /\n/ and
         raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
       value
     end
 
+    # @!method description(description)
+    # Sets the long description of this object.
+    # @param description [String] The description of this object.
+    # @api public
+    # @dsl Faces
     attr_doc :description
 
+    # @api private
     def build_synopsis(face, action = nil, arguments = nil)
       output = PrettyPrint.format do |s|
         s.text("puppet #{face}")
@@ -85,13 +101,13 @@ class Puppet::Interface
 
           s.breakable
         end
-        
+
         display_global_options.sort.each do |option|
           wrap = %w{ [ ] }
           s.group(0, *wrap) do
-        		desc = Puppet.settings.setting(option).desc
-        		type = Puppet.settings.setting(option).default
-        		type ||= Puppet.settings.setting(option).type.to_s.upcase
+            desc = Puppet.settings.setting(option).desc
+            type = Puppet.settings.setting(option).default
+            type ||= Puppet.settings.setting(option).type.to_s.upcase
             s.text "--#{option} #{type}"
             s.breakable
           end
@@ -106,15 +122,68 @@ class Puppet::Interface
 
   end
 
+  # This module can be mixed in to provide a full set of documentation
+  # attributes. It is intended to be used for {Puppet::Interface}.
+  # @api public
   module FullDocs
     extend Puppet::Interface::DocGen
     include TinyDocs
 
+    # @!method examples
+    # @overload examples(text)
+    #   Sets examples.
+    #   @param text [String] Example text
+    #   @api public
+    #   @returns [void]
+    #   @dsl Faces
+    # @overload examples
+    #   Returns documentation of examples
+    #   @returns [String] The examples
+    #   @api private
     attr_doc :examples
+
+    # @!method notes(text)
+    # @overload notes(text)
+    #   Sets optional notes.
+    #   @param text [String] The notes
+    #   @api public
+    #   @returns [void]
+    #   @dsl Faces
+    # @overload notes
+    #   Returns any optional notes
+    #   @returns [String] The notes
+    #   @api private
     attr_doc :notes
+
+    # @!method license(text)
+    # @overload license(text)
+    #   Sets the license text
+    #   @param text [String] the license text
+    #   @api public
+    #   @returns [void]
+    #   @dsl Faces
+    # @overload license
+    #   Returns the license
+    #   @returns [String] The license
+    #   @api private
     attr_doc :license
 
     attr_doc :short_description
+    # @overload short_description(value)
+    #   Sets a short description for this object.
+    #   @param value [String, nil] A short description (about a paragraph)
+    #     of this component. If `value` is `nil` the short_description
+    #     will be set to the shorter of the first paragraph or the first
+    #     five lines of {description}.
+    #   @return [void]
+    #   @api public
+    #   @dsl Faces
+    # @overload short_description
+    #   Get the short description for this object
+    #   @return [String, nil] The short description of this object. If none is
+    #     set it will be derived from {description}. Returns `nil` if
+    #     {description} is `nil`.
+    #   @api private
     def short_description(value = nil)
       self.short_description = value unless value.nil?
       if @short_description.nil? then
@@ -128,6 +197,17 @@ class Puppet::Interface
       @short_description
     end
 
+    # @overload author(value)
+    #   Adds an author to the documentation for this object. To set
+    #   multiple authors, call this once for each author.
+    #   @param value [String] the name of the author
+    #   @api public
+    #   @dsl Faces
+    # @overload author
+    #   Returns a list of authors
+    #   @return [String, nil] The names of all authors separated by
+    #     newlines, or `nil` if no authors have been set.
+    #   @api private
     def author(value = nil)
       unless value.nil? then
         unless value.is_a? String
@@ -141,10 +221,18 @@ class Puppet::Interface
       end
       @authors.empty? ? nil : @authors.join("\n")
     end
+
+    # Returns a list of authors. See {author}.
+    # @return [String] The list of authors, separated by newlines.
+    # @api private
     def authors
       @authors
     end
+
+    # @api private
     def author=(value)
+      # I think it's a bug that this ends up being the exposed
+      # version of `author` on ActionBuilder
       if Array(value).any? {|x| x =~ /\n/ } then
         raise ArgumentError, 'author should be a single line; use multiple statements'
       end
@@ -152,6 +240,18 @@ class Puppet::Interface
     end
     alias :authors= :author=
 
+    # Sets the copyright owner and year. This returns the copyright
+    # string, so it can be called with no arguments retrieve that string
+    # without side effects.
+    # @param owner [String, Array<String>] The copyright owner or an
+    #   array of owners
+    # @param years [Integer, Range<Integer>, Array<Integer,Range<Integer>>]
+    #   The copyright year or years. Years can be specified with integers,
+    #   a range of integers, or an array of integers and ranges of
+    #   integers.
+    # @return [String] A string describing the copyright on this object.
+    # @api public
+    # @dsl Faces
     def copyright(owner = nil, years = nil)
       if years.nil? and not owner.nil? then
         raise ArgumentError, 'copyright takes the owners names, then the years covered'
@@ -166,6 +266,11 @@ class Puppet::Interface
       end
     end
 
+    # Sets the copyright owner
+    # @param value [String, Array<String>] The copyright owner or
+    #   owners.
+    # @return [String] Comma-separated list of copyright owners
+    # @api private
     attr_accessor :copyright_owner
     def copyright_owner=(value)
       case value
@@ -177,6 +282,11 @@ class Puppet::Interface
       @copyright_owner
     end
 
+    # Sets the copyright year
+    # @param value [Integer, Range<Integer>, Array<Integer, Range>] The
+    #   copyright year or years.
+    # @return [String]
+    # @api private
     attr_accessor :copyright_years
     def copyright_years=(value)
       years = munge_copyright_year value
@@ -192,6 +302,7 @@ class Puppet::Interface
       end.join(", ")
     end
 
+    # @api private
     def munge_copyright_year(input)
       case input
       when Range then input

@@ -2,10 +2,15 @@
 require 'puppet/util/methodhelper'
 require 'puppet/util/docs'
 require 'puppet/util'
+# This module models provider features and handles checking whether the features
+# are present.
+# @todo Unclear what is api and what is private in this module.
+#
 module Puppet::Util::ProviderFeatures
   include Puppet::Util::Docs
-  # The class that models the features and handles checking whether the features
+  # This class models provider features and handles checking whether the features
   # are present.
+  # @todo Unclear what is api and what is private in this class
   class ProviderFeature
     include Puppet::Util
     include Puppet::Util::MethodHelper
@@ -13,6 +18,9 @@ module Puppet::Util::ProviderFeatures
     attr_accessor :name, :docs, :methods
 
     # Are all of the requirements met?
+    # Requirements are checked by checking if feature predicate methods have been generated - see {#methods_available?}.
+    # @param obj [Object, Class] the object or class to check if requirements are met
+    # @return [Boolean] whether all requirements for this feature are met or not.
     def available?(obj)
       if self.methods
         return !!methods_available?(obj)
@@ -33,7 +41,9 @@ module Puppet::Util::ProviderFeatures
 
     private
 
-    # Are all of the required methods available?
+    # Checks whether all feature predicate methods are available.
+    # @param obj [Object, Class] the object or class to check if feature predicates are available or not.
+    # @return [Boolean] Returns whether all of the required methods are available or not in the given object.
     def methods_available?(obj)
       methods.each do |m|
         if obj.is_a?(Class)
@@ -46,9 +56,11 @@ module Puppet::Util::ProviderFeatures
     end
   end
 
-  # Define one or more features.  At a minimum, features require a name
+  # Defines one feature.
+  # At a minimum, a feature requires a name
   # and docs, and at this point they should also specify a list of methods
   # required to determine if the feature is present.
+  # @todo How methods that determine if the feature is present are specified.
   def feature(name, docs, hash = {})
     @features ||= {}
     raise(Puppet::DevError, "Feature #{name} is already defined") if @features.include?(name)
@@ -64,7 +76,7 @@ module Puppet::Util::ProviderFeatures
     end
   end
 
-  # Return a hash of all feature documentation.
+  # @return [String] Returns a string with documentation covering all features.
   def featuredocs
     str = ""
     @features ||= {}
@@ -94,14 +106,14 @@ module Puppet::Util::ProviderFeatures
     str
   end
 
-  # Return a list of features.
+  # @return [Array<String>] Returns a list of features.
   def features
     @features ||= {}
     @features.keys
   end
 
-  # Generate a module that sets up the boolean methods to test for given
-  # features.
+  # Generates a module that sets up the boolean predicate methods to test for given features.
+  # 
   def feature_module
     unless defined?(@feature_module)
       @features ||= {}
@@ -158,7 +170,11 @@ module Puppet::Util::ProviderFeatures
     @feature_module
   end
 
-  # Return the actual provider feature instance.  Really only used for testing.
+  # @return [ProviderFeature] Returns a provider feature instance by name.
+  # @param name [String] the name of the feature to return
+  # @note Should only be used for testing.
+  # @api private
+  #
   def provider_feature(name)
     return nil unless defined?(@features)
 

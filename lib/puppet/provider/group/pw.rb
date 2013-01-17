@@ -1,12 +1,12 @@
 require 'puppet/provider/nameservice/pw'
 
 Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService::PW do
-  desc "Group management via `pw` on FreeBSD."
+  desc "Group management via `pw` on FreeBSD and DragonFly BSD."
 
   commands :pw => "pw"
   has_features :manages_members
 
-  defaultfor :operatingsystem => :freebsd
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
 
   options :members, :flag => "-M", :method => :mem
 

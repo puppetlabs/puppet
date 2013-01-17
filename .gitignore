@@ -16,3 +16,5 @@ ext/packaging/
 pkg/
 vendor/
 Gemfile.lock
+vendor/
+.bundle/

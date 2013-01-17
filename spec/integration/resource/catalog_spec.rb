@@ -2,10 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog do
-  describe "when pson is available", :if => Puppet.features.pson? do
-    it "should support pson" do
-      Puppet::Resource::Catalog.supported_formats.should be_include(:pson)
-    end
+  it "should support pson" do
+    Puppet::Resource::Catalog.supported_formats.should be_include(:pson)
   end
 
   describe "when using the indirector" do

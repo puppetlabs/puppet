@@ -1,6 +1,6 @@
 #
 # Manage a router abstraction
-#
+
 
 module Puppet
   newtype(:router) do

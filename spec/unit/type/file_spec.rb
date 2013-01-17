@@ -194,32 +194,6 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#asuser" do
-    before :each do
-      # Mocha won't let me just stub SUIDManager.asuser to yield and return,
-      # but it will do exactly that if we're not root.
-      Puppet.features.stubs(:root?).returns false
-    end
-
-    it "should return the desired owner if they can write to the parent directory" do
-      file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns true
-
-      file.asuser.should == 1001
-    end
-
-    it "should return nil if the desired owner can't write to the parent directory" do
-      file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns false
-
-      file.asuser.should == nil
-    end
-
-    it "should return nil if not managing owner" do
-      file.asuser.should == nil
-    end
-  end
-
   describe "#bucket" do
     it "should return nil if backup is off" do
       file[:backup] = false
@@ -285,48 +259,6 @@ describe Puppet::Type.type(:file) do
 
     it "should return nil if not managing owner" do
       file.asuser.should == nil
-    end
-  end
-
-  describe "#bucket" do
-    it "should return nil if backup is off" do
-      file[:backup] = false
-      file.bucket.should == nil
-    end
-
-    it "should return nil if using a file extension for backup" do
-      file[:backup] = '.backup'
-
-      file.bucket.should == nil
-    end
-
-    it "should return the default filebucket if using the 'puppet' filebucket" do
-      file[:backup] = 'puppet'
-      bucket = stub('bucket')
-      file.stubs(:default_bucket).returns bucket
-
-      file.bucket.should == bucket
-    end
-
-    it "should fail if using a remote filebucket and no catalog exists" do
-      file.catalog = nil
-      file[:backup] = 'my_bucket'
-
-      expect { file.bucket }.to raise_error(Puppet::Error, "Can not find filebucket for backups without a catalog")
-    end
-
-    it "should fail if the specified filebucket isn't in the catalog" do
-      file[:backup] = 'my_bucket'
-
-      expect { file.bucket }.to raise_error(Puppet::Error, "Could not find filebucket my_bucket specified in backup")
-    end
-
-    it "should use the specified filebucket if it is in the catalog" do
-      file[:backup] = 'my_bucket'
-      filebucket = Puppet::Type.type(:filebucket).new(:name => 'my_bucket')
-      catalog.add_resource(filebucket)
-
-      file.bucket.should == filebucket.bucket
     end
   end
 

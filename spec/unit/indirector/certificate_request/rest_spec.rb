@@ -19,4 +19,8 @@ describe Puppet::SSL::CertificateRequest::Rest do
   it "should set port_setting to :ca_port" do
     Puppet::SSL::CertificateRequest::Rest.port_setting.should == :ca_port
   end
+
+  it "should use the :ca SRV service" do
+    Puppet::SSL::CertificateRequest::Rest.srv_service.should == :ca
+  end
 end

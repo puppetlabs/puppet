@@ -34,7 +34,7 @@ describe Puppet::Parser::Collector, "when initializing" do
     @collector.equery.should equal(@equery)
   end
 
-  it "should canonize the type name" do
+  it "should canonicalize the type name" do
     @collector = Puppet::Parser::Collector.new(@scope, "resource::type", @equery, @vquery, @form)
     @collector.type.should == "Resource::Type"
   end
