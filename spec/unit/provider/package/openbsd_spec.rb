@@ -56,6 +56,17 @@ describe provider_class do
       }.to raise_error Puppet::Error, /must specify a package source/
     end
 
+    it "should fail if /etc/pkg.conf exists, but is not readable" do
+      provider = subject.new(package())
+
+      File.expects(:exist?).with('/etc/pkg.conf').returns(true)
+      File.expects(:open).with('/etc/pkg.conf', 'rb').raises(Errno::EACCES)
+
+      expect {
+        provider.install
+      }.to raise_error Errno::EACCES, /Permission denied/
+    end
+
     it "should fail if /etc/pkg.conf exists, but there is no installpath" do
       provider = subject.new(package())
 
@@ -72,7 +83,7 @@ describe provider_class do
       provider = subject.new(package(:source => source))
       provider.expects(:pkgadd).with do |name|
         ENV.should_not be_key 'PKG_PATH'
-        name == source
+        name.should == source
       end
 
       provider.install
@@ -88,7 +99,7 @@ describe provider_class do
         ENV.should be_key 'PKG_PATH'
         ENV['PKG_PATH'].should == source
 
-        name == provider.resource[:name]
+        name.should == provider.resource[:name]
       end
       provider.expects(:execpipe).with(%w{/bin/pkg_info -I bash}).yields('')
 
@@ -106,6 +117,8 @@ describe provider_class do
       provider.expects(:pkgadd).with do |name|
         ENV.should be_key 'PKG_PATH'
         ENV['PKG_PATH'].should == dir
+
+        name.should == provider.resource[:name]
       end
 
       provider.install
@@ -117,18 +130,20 @@ describe provider_class do
 
       provider = subject.new(package())
 
-      url =  'ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/'
+      url = 'ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/'
       expect_read_from_pkgconf(["installpath = #{url}"])
       provider.expects(:pkgadd).with do |name|
         ENV.should be_key 'PKG_PATH'
         ENV['PKG_PATH'].should == url
+
+        name.should == provider.resource[:name]
       end
 
       provider.install
       ENV.should_not be_key 'PKG_PATH'
     end
 
-    it "should chomp whitespace in installpath" do
+    it "should strip leading whitespace in installpath" do
       provider = subject.new(package())
 
       dir = '/one/'
@@ -139,12 +154,77 @@ describe provider_class do
       provider.expects(:pkgadd).with do |name|
         ENV.should be_key 'PKG_PATH'
         ENV['PKG_PATH'].should == dir
+
+        name.should == provider.resource[:name]
       end
 
       provider.install
     end
 
-    %w{ installpath installpath= installpath=/path }.each do |line|
+    it "should not require spaces around the equals" do
+      provider = subject.new(package())
+
+      dir = '/one/'
+      lines = ["installpath=#{dir}"]
+      expect_read_from_pkgconf(lines)
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == dir
+
+        name.should == provider.resource[:name]
+      end
+
+      provider.install
+    end
+
+    it "should be case-insensitive" do
+      provider = subject.new(package())
+
+      dir = '/one/'
+      lines = ["INSTALLPATH = #{dir}"]
+      expect_read_from_pkgconf(lines)
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == dir
+
+        name.should == provider.resource[:name]
+      end
+
+      provider.install
+    end
+
+    it "should ignore unknown keywords" do
+      provider = subject.new(package())
+
+      dir = '/one/'
+      lines = ["foo = bar\n",
+               "installpath = #{dir}\n"]
+      expect_read_from_pkgconf(lines)
+      provider.expects(:pkgadd).with do |name|
+        ENV.should be_key 'PKG_PATH'
+        ENV['PKG_PATH'].should == dir
+
+        name.should == provider.resource[:name]
+      end
+
+      provider.install
+    end
+
+    it "should preserve trailing spaces" do
+      provider = subject.new(package())
+
+      dir = '/one/   '
+      lines = ["installpath = #{dir}"]
+      expect_read_from_pkgconf(lines)
+      provider.expects(:pkgadd).with do |name|
+        ENV.should_not be_key 'PKG_PATH'
+        name.should == dir
+      end
+
+      provider.install
+    end
+
+    %w{ installpath installpath= }.each do |line|
       it "should reject '#{line}'" do
         provider = subject.new(package())
 
