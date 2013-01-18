@@ -69,9 +69,15 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     pkg = @resource[:name]
 
-    pkg << " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
+    pkg += " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
 
-    installp "-acgwXY", "-d", source, pkg
+    output = installp "-acgwXY", "-d", source, pkg
+
+    # If the package is superseded, it means we're trying to downgrade and we
+    # can't do that.
+    if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
+      self.fail "aix package provider is unable to downgrade packages"
+    end
   end
 
   def self.pkglist(hash = {})
