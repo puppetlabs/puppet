@@ -37,7 +37,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       it "should use lgroupadd instead of groupadd" do
-        provider.stubs(:feature?).with(:libuser).returns(true)
+        described_class.has_feature(:libuser)
         resource[:forcelocal] = :true
         provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'))
         provider.create
