@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     unless @resource[:source]
       if File.exist?("/etc/pkg.conf")
         File.open("/etc/pkg.conf", "rb").readlines.each do |line|
-          if matchdata = line.match(/^installpath\s+=\s+(.*)/)
+          if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
             @resource[:source] = matchdata[1]
             break
           end
@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         end
       else
         raise Puppet::Error,
-        "You must specify a package source or configure an installpath in pkg.conf"
+        "You must specify a package source or configure an installpath in /etc/pkg.conf"
       end
     end
 
