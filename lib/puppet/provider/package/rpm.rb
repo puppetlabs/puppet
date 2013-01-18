@@ -33,9 +33,15 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       sig = ""
     end
 
+    # rpm < 4.0.2 don't support --nodigest
+    nodigest = "--nodigest"
+    if output =~ /RPM version (([123].*)|(4\.0\.[01].*))/
+      nodigest = ""
+    end
+
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{sig} --nodigest --qf '#{NEVRAFORMAT}\n'") { |process|
+      execpipe("#{command(:rpm)} -qa #{sig} #{nodigest} --qf '#{NEVRAFORMAT}\n'") { |process|
         # now turn each returned line into a package object
         process.each_line { |line|
           hash = nevra_to_hash(line)
