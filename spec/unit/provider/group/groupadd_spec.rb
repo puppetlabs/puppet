@@ -6,6 +6,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     described_class.stubs(:command).with(:add).returns '/usr/sbin/groupadd'
     described_class.stubs(:command).with(:delete).returns '/usr/sbin/groupdel'
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/groupmod'
+    described_class.stubs(:command).with(:localadd).returns '/usr/sbin/lgroupadd'
   end
 
   let(:resource) { Puppet::Type.type(:group).new(:name => 'mygroup', :provider => provider) }
@@ -33,6 +34,23 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         provider.create
       end
     end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      it "should use lgroupadd instead of groupadd" do
+        provider.stubs(:feature?).with(:libuser).returns(true)
+        resource[:forcelocal] = :true
+        provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'))
+        provider.create
+      end
+
+      it "should NOT pass -o to lgroupadd" do
+        resource[:forcelocal] = :true
+        resource[:allowdupe] = :true
+        provider.expects(:execute).with(Not(includes('-o')))
+        provider.create
+      end
+    end
+
   end
 
   describe "#gid=" do

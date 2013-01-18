@@ -13,17 +13,49 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     value.is_a? Integer
   end
 
+  optional_commands :localadd => "lgroupadd"
+  has_feature :libuser if Puppet.features.libuser?
+
+  def exists?
+    return !!localgid if @resource.forcelocal?
+    super
+  end
+
+  def localgid
+    group_file = "/etc/group"
+    File.open(group_file) do |f|
+      f.each_line do |line|
+         group = line.split(":")
+         if group[0] == resource[:name]
+             f.close
+             return group[2]
+         end
+      end
+    end
+    false
+  end 
+
+  def libuser_conf
+    File.expand_path("../libuser.conf", __FILE__)
+  end 
+
   def addcmd
-    cmd = [command(:add)]
+    if @resource.forcelocal?
+      ENV['LIBUSER_CONF'] = libuser_conf
+      cmd = [command(:localadd)]
+    else 
+      cmd = [command(:add)]
+    end
+
     if gid = @resource.should(:gid)
       unless gid == :absent
         cmd << flag(:gid) << gid
       end
     end
-    cmd << "-o" if @resource.allowdupe?
+    cmd << "-o" if @resource.allowdupe? and ! @resource.forcelocal?
     cmd << "-r" if @resource.system? and self.class.system_groups?
     cmd << @resource[:name]
-
+    puts "running " + cmd.to_s
     cmd
   end
 end
