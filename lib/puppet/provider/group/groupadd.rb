@@ -36,10 +36,6 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     false
   end 
 
-  def libuser_conf
-    File.expand_path("../libuser.conf", __FILE__)
-  end 
-
   def addcmd
     if @resource.forcelocal?
       Puppet::Util::Libuser.setupenv
