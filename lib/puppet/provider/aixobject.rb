@@ -252,14 +252,17 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # List all elements of given type. It works for colon separated commands and
   # list commands.
   # It returns a list of names.
-  def list_all
+  def self.list_all
     names = []
     begin
-      output = execute(self.lsallcmd()).split('\n')
-      (output.select{ |l| l != /^#/ }).each { |v|
-        name = v.split(/[ :]/)
+      output = execute([self.command(:list), 'ALL'])
+
+      output = output.split("\n").select{ |line| line != /^#/ }
+
+      output.each do |line|
+        name = line.split(/[ :]/)[0]
         names << name if not name.empty?
-      }
+      end
     rescue Puppet::ExecutionFailure => detail
       # Print error if needed
       Puppet.debug "aix.list_all(): Could not get all resources of type #{@resource.class.name}: #{detail}" 
@@ -288,7 +291,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # providers, preferably with values already filled in, not resources.
   def self.instances
     objects=[]
-    self.list_all().each { |entry|
+    self.list_all.each { |entry|
       objects << new(:name => entry, :ensure => :present)
     }
     objects
