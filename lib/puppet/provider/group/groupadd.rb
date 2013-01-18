@@ -1,4 +1,5 @@
 require 'puppet/provider/nameservice/objectadd'
+require 'puppet/util/libuser'
 
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "Group management via `groupadd` and its ilk. The default for most platforms.
@@ -41,7 +42,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   def addcmd
     if @resource.forcelocal?
-      ENV['LIBUSER_CONF'] = libuser_conf
+      Puppet::Util::Libuser.setupenv
       cmd = [command(:localadd)]
     else 
       cmd = [command(:add)]
@@ -55,7 +56,6 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     cmd << "-o" if @resource.allowdupe? and ! @resource.forcelocal?
     cmd << "-r" if @resource.system? and self.class.system_groups?
     cmd << @resource[:name]
-    puts "running " + cmd.to_s
     cmd
   end
 end

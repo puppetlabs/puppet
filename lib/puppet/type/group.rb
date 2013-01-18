@@ -152,11 +152,9 @@ module Puppet
 
     newparam(:forcelocal, :boolean => true, :required_features => :libuser ) do
       desc "Forces the mangement of local accounts when accounts are also
-        being managed by some other NSS"
-
+            being managed by some other NSS"
       newvalues(:true, :false)
       defaultto false
-
     end
 
     # This method has been exposed for puppet to manage users and groups of
