@@ -17,7 +17,7 @@ module Puppet
         attr_accessor :known_resource_types
       end
 
-      # Creates a new Puppet::DSL::Context and assings it as _ruby_code_ to the
+      # Creates a new Puppet::DSL::Context and assigns it as _ruby_code_ to the
       # main object.
       # @param main [#ruby_code] where the ruby _code_ is set
       # @param code [{|| block}] the ruby code to prepare for evaluation
