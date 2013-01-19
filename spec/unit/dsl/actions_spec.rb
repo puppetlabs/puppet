@@ -359,7 +359,7 @@ describe Puppet::DSL::Actions do
     end
 
     it "calls the function and passes the array of arguments when it exists" do
-      scope.expects(:notice).with(["foo", "bar"])
+      scope.expects(:function_notice).with([["foo", "bar"]])
       evaluate_in_scope do
         subject.call_function "notice", ["foo", "bar"]
       end

@@ -205,7 +205,6 @@ module Puppet
       def respond_to?(name)
         valid_type? name or valid_function? name
       end
-
       # Provides syntax sugar for creating resources and calling functions.
       # A cached version of the generated method is created on first use.
       #

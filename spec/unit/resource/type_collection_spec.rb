@@ -406,7 +406,7 @@ describe Puppet::Resource::TypeCollection do
     end
 
     it "should use LoadedFile to watch files" do
-      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
+      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar", false).returns stub("watched_file")
       @loader.watch_file("/foo/bar")
     end
 
