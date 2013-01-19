@@ -96,6 +96,14 @@ class Puppet::Parser::TypeLoader
 
           type = Puppet::Resource::Type.new(:hostclass, '')
           begin
+            # watch (with always stale mode) if not already being watched
+            # Something is not working right - if an environment is re-used to avoid reparsing
+            # The startup sequence will re-evaluate the code prepared for evaluation again. This does not
+            # happen for a site.pp, but for a ruby.pp (which will fail with an error). The use of
+            # always stale is a workaround for this problem while it is being investitaged.
+            # TODO: Make it work without having to use always_stale mode for the wanted file.
+            krt = known_resource_types
+            krt.watch_file(file, true) unless krt.watching_file?(file)
             Puppet::DSL::Parser.prepare_for_evaluation type, File.read(file), file
           rescue => e
             raise Puppet::ParseError, e.message

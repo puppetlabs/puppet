@@ -2,6 +2,7 @@
 # should reload it
 
 require 'puppet'
+require 'puppet/util/manifest_filetype_helper'
 
 module Puppet
   class NoSuchFile < Puppet::Error; end
@@ -12,11 +13,13 @@ module Puppet
     # have to depend on the granularity of the filesystem.
     attr_writer :tstamp
 
-    # Determine whether the file has changed and thus whether it should
+    # Determine whether the file has changed (or considered to always be "changed") and thus whether it should
     # be reparsed.
+    #
     def changed?
       # Allow the timeout to be disabled entirely.
-      return true if Puppet[:filetimeout] < 0
+      # Always trigger reparse of ruby files
+      return true if Puppet[:filetimeout] < 0 || @always_stale
       tmp = stamp
 
       # We use a different internal variable than the stamp method
@@ -32,11 +35,15 @@ module Puppet
     end
 
     # Create the file.  Must be passed the file path.
-    def initialize(file)
+    # @param file [String] the path to watch
+    # @param always_stale [Boolean] whether the file should be considered to always be changed
+    # 
+    def initialize(file, always_stale = false)
       @file = file
       @statted = 0
       @stamp = nil
       @tstamp = stamp
+      @always_stale = always_stale
     end
 
     # Retrieve the filestamp, but only refresh it if we're beyond our

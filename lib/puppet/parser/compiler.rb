@@ -92,7 +92,6 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
-
     set_node_parameters
     create_settings_scope
 
@@ -114,6 +113,16 @@ class Puppet::Parser::Compiler
   def_delegator :@collections, :delete, :delete_collection
 
   def assign_ruby_code(file)
+    # watch (with always stale mode) if not already being watched
+    # Something is not working right - if an environment is re-used to avoid reparsing
+    # The startup sequence will re-evaluate the code prepared for evaluation again. This does not
+    # happen for a site.pp, but for a ruby.pp (which will fail with an error). The use of
+    # always stale is a workaround for this problem while it is being investitaged.
+    # TODO: Make it work without having to use always_stale mode for the wanted file.
+    krt = environment.known_resource_types
+    krt.watch_file(file, true) unless krt.watching_file?(file)
+    # Prepare for evaluation. TODO: Is it assigning the code to the right thing? See comment above?
+    #
     Puppet::DSL::Parser.prepare_for_evaluation @main, File.read(file), file
   end
 
