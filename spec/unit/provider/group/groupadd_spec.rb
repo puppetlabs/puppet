@@ -13,6 +13,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
   let(:provider) { described_class.new(:name => 'mygroup') }
 
   describe "#create" do
+    before do
+       provider.stubs(:exists?).returns(false)
+    end
+
     it "should add -o when allowdupe is enabled and the group is being created" do
       resource[:allowdupe] = :true
       provider.expects(:execute).with(['/usr/sbin/groupadd', '-o', 'mygroup'])
@@ -36,19 +40,27 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
 
     describe "on systems with the libuser and forcelocal=true" do
-      it "should use lgroupadd instead of groupadd" do
+      before do
         described_class.has_feature(:libuser)
         resource[:forcelocal] = :true
+      end
+ 
+      it "should use lgroupadd instead of groupadd" do
         provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'))
         provider.create
       end
 
       it "should NOT pass -o to lgroupadd" do
-        resource[:forcelocal] = :true
         resource[:allowdupe] = :true
         provider.expects(:execute).with(Not(includes('-o')))
         provider.create
       end
+
+      it "should raise a DuplicateGID exception if allowdupe is not set and duplicate GIDs exist" do
+        resource[:gid] = 505
+        provider.stubs(:findgroup).returns(true)
+        lambda { provider.create }.should raise_error(Puppet::DuplicateGID)
+     end
     end
 
   end

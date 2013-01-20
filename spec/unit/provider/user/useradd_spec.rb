@@ -40,6 +40,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   describe "#create" do
 
+    before do
+      provider.stubs(:exists?).returns(false)
+    end
+
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
       provider.expects(:execute).with(includes('-o'))
@@ -74,18 +78,44 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     describe "on systems with the libuser and forcelocal=true" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = true
+      end
       it "should use luseradd instead of useradd" do
-        described_class.has_feature :libuser
-        resource[:forcelocal] = :true
         provider.expects(:execute).with(includes('/usr/sbin/luseradd'))
         provider.create
       end
  
       it "should NOT use -o when allowdupe=true" do
-        described_class.has_feature :libuser
-        resource[:forcelocal] = :true
         resource[:allowdupe] = :true 
         provider.expects(:execute).with(Not(includes('-o')))
+        provider.create
+      end
+
+      it "should raise an exception for duplicate UIDs" do
+        resource[:uid] = 505
+        provider.stubs(:finduser).returns(true)
+        lambda { provider.create }.should raise_error(Puppet::DuplicateUID)
+      end
+
+      it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
+        resource[:groups] = ['group1', 'group2']
+        provider.expects(:execute).with(Not(includes('-G')))
+        provider.expects(:execute).with(includes('/usr/sbin/usermod'))
+        provider.create 
+      end
+
+      it "should not use -m when managehome set" do
+        resource[:managehome] = :true
+        provider.expects(:execute).with(Not(includes('-m')))
+        provider.create 
+      end
+
+      it "should not use -e with luseradd, should call usermod with -e after luseradd when expiry is set" do
+        resource[:expiry] = '2038-01-24'
+        provider.expects(:execute).with() {|args| args.include?('/usr/sbin/luseradd') and not args.include?('-e')}
+        provider.expects(:execute).with() {|args| args.include?('/usr/sbin/usermod') and args.include?('-e') }
         provider.create
       end
     end
@@ -123,10 +153,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#check_allow_dup" do
-    it "should check allow dup" do
-      resource.expects(:allowdupe?)
-      provider.check_allow_dup
-    end
 
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true

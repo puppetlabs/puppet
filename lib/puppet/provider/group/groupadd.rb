@@ -1,6 +1,11 @@
 require 'puppet/provider/nameservice/objectadd'
 require 'puppet/util/libuser'
 
+module Puppet
+  class DuplicateGID < Puppet::Error
+  end
+end
+
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "Group management via `groupadd` and its ilk. The default for most platforms.
 
@@ -22,20 +27,48 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     super
   end
 
-  def localgid
+  def gid
+    return localgid if @resource.forcelocal?
+    get(:gid)
+  end
+
+  def findgroup(key, value)
     group_file = "/etc/group"
+    group_keys = ['group_name', 'password', 'gid', 'user_list']
+    index = group_keys.index(key)
     File.open(group_file) do |f|
       f.each_line do |line|
          group = line.split(":")
-         if group[0] == resource[:name]
+         if group[index] == value
              f.close
-             return group[2]
+             return group
          end
       end
     end
     false
+  end
+
+  def localgid
+    group = findgroup('group_name', resource[:name])
+    return group[2] if group
+    false
   end 
 
+  def check_allow_dup
+    # We have to manually check for duplicates when using libuser
+    # because by default duplicates are allowed.  This check is
+    # to ensure consistent behaviour of the useradd provider when
+    # using both useradd and luseradd
+    if not @resource.allowdupe? and @resource.forcelocal?
+       if @resource.should(:gid) and findgroup('gid', @resource.should(:gid).to_s)
+           raise(Puppet::DuplicateGID, "GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation")
+       end
+    elsif @resource.allowdupe? and not @resource.forcelocal?
+       return ["-o"]
+    end
+    []
+  end
+  
   def addcmd
     if @resource.forcelocal?
       Puppet::Util::Libuser.setupenv
@@ -49,7 +82,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
         cmd << flag(:gid) << gid
       end
     end
-    cmd << "-o" if @resource.allowdupe? and ! @resource.forcelocal?
+    cmd += check_allow_dup
     cmd << "-r" if @resource.system? and self.class.system_groups?
     cmd << @resource[:name]
     cmd
