@@ -146,6 +146,7 @@ class Puppet::Parser::Parser
     except.file ||= @lexer.file
     raise except
   rescue => except
+    except.backtrace.inspect
     raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
   ensure
     @lexer.clear

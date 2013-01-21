@@ -121,7 +121,7 @@ class Puppet::Parser::Lexer
   TOKENS.add_tokens(
     '['   => :LBRACK,
     ']'   => :RBRACK,
-    '{'   => :LBRACE,
+#    '{'   => :LBRACE, # Specialized to handle lambda
     '}'   => :RBRACE,
     '('   => :LPAREN,
     ')'   => :RPAREN,
@@ -138,6 +138,7 @@ class Puppet::Parser::Lexer
     '.'   => :DOT,
     ':'   => :COLON,
     '@'   => :AT,
+    '|'   => :PIPE,
     '<<|' => :LLCOLLECT,
     '|>>' => :RRCOLLECT,
     '->'  => :IN_EDGE,
@@ -164,7 +165,8 @@ class Puppet::Parser::Lexer
     "<dqstring up to first interpolation>" => :DQPRE,
     "<dqstring between two interpolations>" => :DQMID,
     "<dqstring after final interpolation>" => :DQPOST,
-    "<boolean>" => :BOOLEAN
+    "<boolean>" => :BOOLEAN,
+    "<lambda start>" => :LAMBDA # A LBRACE followed by '|'
   )
 
   module Contextual
@@ -196,6 +198,17 @@ class Puppet::Parser::Lexer
     end
   end
 
+  # LBRACE needs look ahead to differentiate between '{' and a '{' followed by a '|' (start of lambda)
+  # The racc grammar can only do one token lookahead.
+  #
+  TOKENS.add_token :LBRACE, /\{/ do | lexer, value |
+    if lexer.match?(/[ \t\r]*\|/)
+      [TOKENS[:LAMBDA], value]
+    else    
+      [TOKENS[:LBRACE], value]
+    end
+  end
+  
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]
@@ -517,6 +530,10 @@ class Puppet::Parser::Lexer
     @scanner.skip(@skip)
   end
 
+  def match? r
+    @scanner.match?(r)
+  end
+  
   # Provide some limited access to the scanner, for those
   # tokens that need it.
   def_delegator :@scanner, :scan_until
