@@ -210,7 +210,6 @@ class Puppet::Parser::Lexer
     end
   end
   
-  #:stopdoc: # Issue #4161 - this method declaration made RDoc have a hissy fit in year 2000
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]

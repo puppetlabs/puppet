@@ -40,11 +40,9 @@ Puppet::Parser::Functions::newfunction(
       raise ArgumentError, "Array size #{o.size} is not an even multiple of the block's parameter count #{serving_size}."
     end
     enumerator = o.each_slice(serving_size)
-    result = nil
     (o.size/serving_size).times do
-      result = pblock.call(scope, *enumerator.next)
+      pblock.call(scope, *enumerator.next)
     end
-    result
   end
 
   def foreach_Hash(o, scope, pblock)
@@ -59,11 +57,9 @@ Puppet::Parser::Functions::newfunction(
       raise ArgumentError, "Block must define at most two parameters (for hash entry key and value)."
     end
     enumerator = serving_size == 1 ? o.each_key : o.each_pair
-    result = nil
     (o.size).times do
-      result = pblock.call(scope, *enumerator.next)
+      pblock.call(scope, *enumerator.next)
     end
-    result
   end
 
   raise ArgumentError, ("foreach(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2

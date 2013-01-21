@@ -12,7 +12,6 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-
 token IN UNLESS MODULO PIPE
 token LAMBDA
 
@@ -182,8 +181,7 @@ lambda
 #
 statements_or_expression
   : statements
-  | statements EQUALS expression { result = val[0].push(val[2]) }
-  | EQUALS expression {result = ast AST::ASTArray, :children => [val[1]] }
+  | EQUALS expression {result = val[1] }
   
 # Produces Array<Model::Parameter>
 lambda_parameter_list
