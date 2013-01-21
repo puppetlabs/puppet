@@ -136,23 +136,18 @@ class Puppet::Parser::Parser
 
   # how should I do error handling here?
   def parse(string = nil)
-    if self.file =~ /\.rb$/
-      main = parse_ruby_file
-    else
-      self.string = string if string
-      begin
-        @yydebug = false
-        main = yyparse(@lexer,:scan)
-      rescue Puppet::ParseError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-      rescue => except
-        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
-      end
-    end
-    # Store the results as the top-level class.
-    return Puppet::Parser::AST::Hostclass.new('', :code => main)
+    self.string = string if string
+
+    @yydebug = false
+    code = yyparse(@lexer, :scan)
+    Puppet::Parser::AST::Hostclass.new('', :code => code)
+  rescue Puppet::ParseError => except
+    except.line ||= @lexer.line
+    except.file ||= @lexer.file
+    raise except
+  rescue => except
+    except.backtrace.inspect
+    raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
   ensure
     @lexer.clear
   end

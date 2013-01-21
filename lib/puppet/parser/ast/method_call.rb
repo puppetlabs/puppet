@@ -16,7 +16,7 @@ class Puppet::Parser::AST
     attr_accessor :name
     
     # The arguments to evaluate as arguments to the method.
-    # @return [Array<Puppet::Parser::AST>]
+    # @return [Array<Puppet::Parser::AST]
     attr_accessor :arguments
     
     # An optional lambda/block that will be yielded to by the called method (if it supports this)
@@ -65,6 +65,7 @@ class Puppet::Parser::AST
     
     # Sets this method call in statement mode where a produced rvalue is ignored.
     # @return [void]
+    #
     def ignore_rvalue
       @ftype = :statement
     end
