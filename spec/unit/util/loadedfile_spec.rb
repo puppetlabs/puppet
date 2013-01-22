@@ -65,6 +65,12 @@ describe Puppet::Util::LoadedFile do
     @loaded.changed?.should_not be(false)
   end
 
+  it "should report a non stale file to be stale when asked to do so" do
+    @loaded = Puppet::Util::LoadedFile.new(@f.path, true)
+    Time.stubs(:now).returns(@fake_now)
+    @loaded.changed?.should_not == false
+  end
+
   after(:each) do
     @f.close
   end
