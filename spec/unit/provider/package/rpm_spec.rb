@@ -15,7 +15,7 @@ describe provider_class do
   end
 
   describe "self.instances" do
-    let(:rpm_version) { 'RPM version 5.0.0' }
+    let(:rpm_version) { "RPM version 5.0.0\n" }
     before(:each) do
       Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "--version"]).returns(rpm_version)
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
@@ -30,7 +30,7 @@ describe provider_class do
     end
 
     describe "with a version of RPM < 4.1" do
-      let(:rpm_version) { 'RPM version 4.0.2' }
+      let(:rpm_version) { "RPM version 4.0.2\n" }
       it "should exclude the --nosignature flag" do
         Puppet::Type::Package::ProviderRpm.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
 
@@ -39,7 +39,7 @@ describe provider_class do
     end
 
     describe "with a version of RPM < 4.0.2" do
-      let(:rpm_version) { 'RPM version 3.0.5' }
+      let(:rpm_version) { "RPM version 3.0.5\n" }
       it "should exclude the --nodigest flag" do
         Puppet::Type::Package::ProviderRpm.expects(:execpipe).with("/bin/rpm -qa   --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
 
