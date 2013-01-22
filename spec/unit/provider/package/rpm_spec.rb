@@ -15,10 +15,40 @@ describe provider_class do
   end
 
   describe "self.instances" do
-    it "returns an array of packages" do
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("RPM version 5.0.0")
+    let(:rpm_version) { 'RPM version 5.0.0' }
+    before(:each) do
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns(rpm_version)
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       subject.stubs(:which).with("rpm").returns("/bin/rpm")
+    end
+
+    describe "with a modern version of RPM" do
+      it "should include all the modern flags" do
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+
+        installed_packages = subject.instances
+      end
+    end
+
+    describe "with a version of RPM < 4.1" do
+      let(:rpm_version) { 'RPM version 4.0.2' }
+      it "should exclude the --nosignature flag" do
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+
+        installed_packages = subject.instances
+      end
+    end
+
+    describe "with a version of RPM < 4.0.2" do
+      let(:rpm_version) { 'RPM version 3.0.5' }
+      it "should exclude the --nodigest flag" do
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+
+        installed_packages = subject.instances
+      end
+    end
+
+    it "returns an array of packages" do
       Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
 
       installed_packages = subject.instances
