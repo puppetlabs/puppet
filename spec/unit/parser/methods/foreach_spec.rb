@@ -3,9 +3,6 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'rubygems'
 
-require 'ruby-debug'
-Debugger.start
-
 describe 'methods' do
   include PuppetSpec::Compiler
 
