@@ -30,13 +30,13 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     ver402 = SemVer.new '4.0.2'
 
     output = rpm "--version"
-    current_version = SemVer.new(output.gsub('RPM version ', ''))
+    current_version = SemVer.new(output.gsub('RPM version ', '').strip)
 
     # rpm < 4.1 don't support --nosignature
-    sig = current_version < ver410 ? '' : '--nosignature'
+    sig = '--nosignature' unless current_version < ver410
 
     # rpm < 4.0.2 don't support --nodigest
-    nodigest = current_version < ver402 ? '': '--nodigest'
+    nodigest = '--nodigest' unless current_version < ver402
 
     # list out all of the packages
     begin
