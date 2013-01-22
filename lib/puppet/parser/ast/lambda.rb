@@ -44,8 +44,10 @@ class Puppet::Parser::AST
         optional = parameters.count { |p| p.size == 2 }
         raise Puppet::ParseError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
       end
+
       evaluated = merged.collect do |m|
-        n = m[0][0]
+        # Ruby 1.8.7 zip seems to produce a different result than Ruby 1.9.3 in some situations
+        n = m[0].is_a?(Array) ? m[0][0] : m[0]
         v = m[1] || (m[0][1]).safeevaluate(scope) # given value or default expression value
         [n, v]
       end 
