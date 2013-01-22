@@ -16,13 +16,18 @@ class Puppet::Parser::AST
     attr_accessor :name
     
     # The arguments to evaluate as arguments to the method.
-    # @return [Array<Puppet::Parser::AST]
+    # @return [Array<Puppet::Parser::AST>]
     attr_accessor :arguments
     
     # An optional lambda/block that will be yielded to by the called method (if it supports this)
     # @return [Puppet::Parser::AST::Lambda]
     attr_accessor :lambda
 
+    # Evaluates the method call and returns what the called method/function returns.
+    # The evaluation evaluates all arguments in the calling scope and then delegates
+    # to a "method" instance produced by Puppet::Parser::Methods for this method call.
+    # @see Puppet::Parser::Methods
+    # @return [Object] what the called method/function returns
     def evaluate(scope)
       # Make sure it's a defined method for the receiver 
       r = @receiver.evaluate(scope)
@@ -58,15 +63,15 @@ class Puppet::Parser::AST
       # Lastly, check the parity
     end
     
-    # 
+    # Sets this method call in statement mode where a produced rvalue is ignored.
+    # @return [void]
     def ignore_rvalue
       @ftype = :statement
     end
     
     def to_s
       args = arguments.is_a?(ASTArray) ? arguments.to_s.gsub(/\[(.*)\]/,'\1') : arguments
-      "#{@receiver.to_s}.#{name} (#{args})"
-      # TODO Add Block to output
+      "#{@receiver.to_s}.#{name} (#{args})" + (@lambda ? " #{@lambda.to_s}" : '')
     end
   end
 end
