@@ -1,6 +1,7 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'rubygems'
 
 describe 'methods' do
   include PuppetSpec::Compiler
