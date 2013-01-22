@@ -14,11 +14,11 @@ class Puppet::Parser::AST
     # The value expression is the default value for the parameter. All default values must be
     # at the end of the parameter list.
     #
-    # @return [Array<Array<String,String>] list of parameter names with optional value expression
+    # @return [Array<Array<String,String>>] list of parameter names with optional value expression
     attr_accessor :parameters
 
 
-    # Evaluate each expression/statement and produce the last expression evaluation result
+    # Evaluates each expression/statement and produce the last expression evaluation result
     # @return [Object] what the last expression evaluated to
     def evaluate(scope)
       if @expressions.is_a? Puppet::Parser::AST::ASTArray
@@ -67,7 +67,7 @@ class Puppet::Parser::AST
       result
     end
 
-    # Validate the lambda.
+    # Validates the lambda.
     # Validation checks if parameters with default values are at the end of the list. (It is illegal
     # to have a parameter with default value followed by one without).
     #
@@ -80,13 +80,13 @@ class Puppet::Parser::AST
       raise Puppet::ParseError, "Lambda parameters with default values must be placed last" unless trailing.empty?
     end
 
-    # Produces the number of parameters (required and optional)
+    # Returns the number of parameters (required and optional)
     # @return [Integer] the total number of accepted parameters
     def parameter_count
       @parameters.size
     end
 
-    # Produces the number of optional parameters.
+    # Returns the number of optional parameters.
     # @return [Integer] the number of optional accepted parameters
     def optional_parameter_count
       @parameters.count {|p| p.size == 2 }
@@ -97,6 +97,13 @@ class Puppet::Parser::AST
       # ensure there is an empty parameters structure if not given by creator
       @parameters = [] unless options[:parameters]
       validate
+    end
+    
+    def to_s
+      result = ["{|"]
+      result += @parameters.collect {|p| "#{p[0]}" + (p.size == 2 && p[1]) ? p[1].to_s() : '' }.join(', ')
+      result << "| ... }"
+      result.join('')  
     end
   end
 end
