@@ -21,7 +21,13 @@ class Puppet::Parser::AST
     # Evaluate each expression/statement and produce the last expression evaluation result
     # @return [Object] what the last expression evaluated to
     def evaluate(scope)
-      @expressions.evaluate(scope)
+      if @expressions.is_a? Puppet::Parser::AST::ASTArray
+        result = nil
+        @expressions.each {|expr| result = expr.evaluate(scope) }
+        result
+      else
+        @expressions.evaluate(scope)
+      end
     end
 
     # Calls the lambda.

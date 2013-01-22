@@ -181,7 +181,8 @@ lambda
 #
 statements_or_expression
   : statements
-  | EQUALS expression {result = val[1] }
+  | statements EQUALS expression { result = val[0].push(val[2]) }
+  | EQUALS expression {result = ast AST::ASTArray, :children => [val[1]] }
   
 # Produces Array<Model::Parameter>
 lambda_parameter_list
