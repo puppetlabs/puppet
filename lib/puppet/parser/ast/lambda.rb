@@ -98,7 +98,7 @@ class Puppet::Parser::AST
       @parameters = [] unless options[:parameters]
       validate
     end
-
+    
     def to_s
       result = ["{|"]
       result += @parameters.collect {|p| "#{p[0]}" + (p.size == 2 && p[1]) ? p[1].to_s() : '' }.join(', ')
