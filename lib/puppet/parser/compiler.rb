@@ -114,10 +114,13 @@ class Puppet::Parser::Compiler
 
   def assign_ruby_code(file)
     # watch (with always stale mode) if not already being watched
-    # Something is not working right - if an environment is re-used to avoid reparsing
+    # Something is not working right - if an environment is re-used to avoid re-parsing
     # The startup sequence will re-evaluate the code prepared for evaluation again. This does not
-    # happen for a site.pp, but for a ruby.pp (which will fail with an error). The use of
-    # always stale is a workaround for this problem while it is being investitaged.
+    # happen for a site.pp, but for a site.rb (which will fail with an error). The use of
+    # always stale is a workaround for this problem while it is being investigated.
+    #
+    # See TypeLoader#import where always stale is also used.
+    #
     # TODO: Make it work without having to use always_stale mode for the wanted file.
     krt = environment.known_resource_types
     krt.watch_file(file, true) unless krt.watching_file?(file)

@@ -2,7 +2,6 @@
 # should reload it
 
 require 'puppet'
-require 'puppet/util/manifest_filetype_helper'
 
 module Puppet
   class NoSuchFile < Puppet::Error; end
