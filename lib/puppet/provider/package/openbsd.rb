@@ -56,8 +56,22 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     should = @resource.should(:ensure)
 
     unless @resource[:source]
-      raise Puppet::Error,
-      "You must specify a package source for BSD packages"
+      if File.exist?("/etc/pkg.conf")
+        File.open("/etc/pkg.conf", "rb").readlines.each do |line|
+          if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
+            @resource[:source] = matchdata[1]
+            break
+          end
+        end
+
+        unless @resource[:source]
+          raise Puppet::Error,
+          "No valid installpath found in /etc/pkg.conf and no source was set"
+        end
+      else
+        raise Puppet::Error,
+        "You must specify a package source or configure an installpath in /etc/pkg.conf"
+      end
     end
 
     if @resource[:source][-1,1] == ::File::SEPARATOR
