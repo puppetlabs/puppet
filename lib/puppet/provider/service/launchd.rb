@@ -49,6 +49,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   confine :operatingsystem    => :darwin
 
   has_feature :enableable
+  has_feature :refreshable
   mk_resource_methods
 
   # These are the paths in OS X where a launchd service plist could
@@ -272,6 +273,13 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     self.enable if did_disable_job and resource[:enable] == :true
   end
 
+  def restart
+    Puppet.debug("A restart has been triggered for the #{resource[:name]} service")
+    Puppet.debug("Stopping the #{resource[:name]} service")
+    self.stop
+    Puppet.debug("Starting the #{resource[:name]} service")
+    self.start
+  end
 
   # launchd jobs are enabled by default. They are only disabled if the key
   # "Disabled" is set to true, but it can also be set to false to enable it.
