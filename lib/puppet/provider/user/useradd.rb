@@ -17,14 +17,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
       if value == :absent
+        ''
+      else
         case Facter.value(:operatingsystem)
         when 'Solaris'
-          ' '
+          # Solaris uses %m/%d/%Y for useradd/usermod
+          expiry_year, expiry_month, expiry_day = value.split('-')
+          [expiry_month, expiry_day, expiry_year].join('/')
         else
-          ''
+          value
         end
-      else
-        value
       end
     },
     :unmunge => proc { |value|
