@@ -1,4 +1,5 @@
 require 'puppet/provider/nameservice/objectadd'
+require 'date'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to
@@ -31,7 +32,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         :absent
       else
         # Expiry is days after 1970-01-01
-        Date.new(1970).next_day(value).strftime('%Y-%m-%d')
+        (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
       end
     }
 
