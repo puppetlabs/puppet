@@ -25,6 +25,12 @@ describe provider do
   end
 
   describe 'when installing' do
+    before(:each) do
+      Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
+      provider.stubs(:which).with("rpm").returns("/bin/rpm")
+      Puppet::Type::Package::ProviderYum.expects(:execute).with(["/bin/rpm", "--version"]).returns("4.10.1\n").at_most_once
+    end
+
     it 'should call yum install for :installed' do
       @resource.stubs(:should).with(:ensure).returns :installed
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
@@ -55,11 +61,6 @@ describe provider do
     it 'should use erase to purge' do
       @provider.expects(:yum).with('-y', :erase, 'mypackage')
       @provider.purge
-    end
-
-    it 'should use rpm to uninstall' do
-      @provider.expects(:rpm).with('-e', 'mypackage-1-1.i386')
-      @provider.uninstall
     end
   end
 
