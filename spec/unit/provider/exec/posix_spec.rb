@@ -86,7 +86,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
     end
 
     it "should not be able to execute shell builtins" do
-      provider.resource[:path] = ['/bin']
+      provider.resource[:path] = ['/bogus/bin']
       expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
     end
 
