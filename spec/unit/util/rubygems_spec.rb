@@ -37,7 +37,7 @@ describe Puppet::Util::RubyGems::Source do
     before(:each) { described_class.stubs(:source).returns(Puppet::Util::RubyGems::Gems18Source) }
 
     it "#directories returns the lib subdirs of Gem::Specification.latest_specs" do
-      Gem::Specification.expects(:latest_specs).returns([fake_gem])
+      Gem::Specification.expects(:latest_specs).with(true).returns([fake_gem])
 
       described_class.new.directories.should == [gem_lib]
     end
