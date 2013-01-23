@@ -25,6 +25,8 @@ class Puppet::Parser::Lexer
   end
 
   class Token
+    ALWAYS_ACCEPTABLE = Proc.new { |context| true }
+
     include Puppet::Util::MethodHelper
 
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
@@ -40,7 +42,7 @@ class Puppet::Parser::Lexer
       end
 
       set_options(options)
-      @acceptable_when = Proc.new { |context| true }
+      @acceptable_when = ALWAYS_ACCEPTABLE
     end
 
     def to_s
