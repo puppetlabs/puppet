@@ -25,6 +25,8 @@ class Puppet::Parser::Lexer
   end
 
   class Token
+    ALWAYS_ACCEPTABLE = Proc.new { |context| true }
+
     include Puppet::Util::MethodHelper
 
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
@@ -40,6 +42,7 @@ class Puppet::Parser::Lexer
       end
 
       set_options(options)
+      @acceptable_when = ALWAYS_ACCEPTABLE
     end
 
     def to_s
@@ -47,8 +50,15 @@ class Puppet::Parser::Lexer
     end
 
     def acceptable?(context={})
-      # By default tokens are aceeptable in any context
-      true
+      @acceptable_when.call(context)
+    end
+
+    # Define when the token is able to match.
+    # This provides context that cannot be expressed otherwise, such as feature flags.
+    #
+    # @param block [Proc] a proc that given a context returns a boolean
+    def acceptable_when(block)
+      @acceptable_when = block
     end
   end
 
@@ -157,15 +167,40 @@ class Puppet::Parser::Lexer
     "<boolean>" => :BOOLEAN
   )
 
+  module Contextual
+    QUOTE_TOKENS = [:DQPRE,:DQMID]
+    REGEX_INTRODUCING_TOKENS = [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA]
+
+    NOT_INSIDE_QUOTES = Proc.new do |context|
+      !QUOTE_TOKENS.include? context[:after]
+    end
+
+    INSIDE_QUOTES = Proc.new do |context|
+      QUOTE_TOKENS.include? context[:after]
+    end
+
+    IN_REGEX_POSITION = Proc.new do |context|
+      REGEX_INTRODUCING_TOKENS.include? context[:after]
+    end
+
+    IN_STRING_INTERPOLATION = Proc.new do |context|
+      context[:string_interpolation_depth] > 0
+    end
+
+    DASHED_VARIABLES_ALLOWED = Proc.new do |context|
+      Puppet[:allow_variables_with_dashes]
+    end
+
+    VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
+      Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+    end
+  end
+
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:NUMBER]).acceptable?(context={})
-    ![:DQPRE,:DQMID].include? context[:after]
-  end
-  #:startdoc:
+  TOKENS[:NUMBER].acceptable_when Contextual::NOT_INSIDE_QUOTES
 
   TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     string_token = self
@@ -179,13 +214,9 @@ class Puppet::Parser::Lexer
     end
     [string_token, value]
   end
-  [:NAME,:CLASSNAME,:CLASSREF].each { |name_token|
-    #:stopdoc: # Issue #4161
-    def (TOKENS[name_token]).acceptable?(context={})
-      ![:DQPRE,:DQMID].include? context[:after]
-    end
-    #:startdoc:
-  }
+  [:NAME, :CLASSREF].each do |name_token|
+    TOKENS[name_token].acceptable_when Contextual::NOT_INSIDE_QUOTES
+  end
 
   TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
     value.sub!(/# ?/,'')
@@ -208,12 +239,7 @@ class Puppet::Parser::Lexer
     regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
     [self, Regexp.new(regex)]
   end
-
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:REGEX]).acceptable?(context={})
-    [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
-  end
-  #:startdoc:
+  TOKENS[:REGEX].acceptable_when Contextual::IN_REGEX_POSITION
 
   TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
@@ -231,20 +257,14 @@ class Puppet::Parser::Lexer
   TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
     lexer.tokenize_interpolated_string(DQ_continuation_token_types)
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:DQCONT]).acceptable?(context={})
-    context[:string_interpolation_depth] > 0
-  end
-  #:startdoc:
+  TOKENS[:DQCONT].acceptable_when Contextual::IN_STRING_INTERPOLATION
 
   TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
 
     [TOKENS[:VARIABLE], value[1..-1]]
   end
-  def (TOKENS[:DOLLAR_VAR_WITH_DASH]).acceptable?(context = {})
-    Puppet[:allow_variables_with_dashes]
-  end
+  TOKENS[:DOLLAR_VAR_WITH_DASH].acceptable_when Contextual::DASHED_VARIABLES_ALLOWED
 
   TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?(\w+::)*\w+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
@@ -255,19 +275,10 @@ class Puppet::Parser::Lexer
 
     [TOKENS[:VARIABLE], value]
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:VARIABLE_WITH_DASH]).acceptable?(context={})
-    Puppet[:allow_variables_with_dashes] and TOKENS[:VARIABLE].acceptable?(context)
-  end
-  #:startdoc:
+  TOKENS[:VARIABLE_WITH_DASH].acceptable_when Contextual::VARIABLE_AND_DASHES_ALLOWED
 
   TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:VARIABLE]).acceptable?(context={})
-    [:DQPRE,:DQMID].include? context[:after]
-  end
-  #:startdoc:
-
+  TOKENS[:VARIABLE].acceptable_when Contextual::INSIDE_QUOTES
 
   TOKENS.sort_tokens
 
