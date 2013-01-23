@@ -10,8 +10,30 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
-  options :password_min_age, :flag => "-m"
-  options :password_max_age, :flag => "-M"
+  options :password_min_age, :flag => "-m", :method => :sp_min
+  options :password_max_age, :flag => "-M", :method => :sp_max
+  options :password, :method => :sp_pwdp
+  options :expiry, :method => :sp_expire,
+    :munge => proc { |value|
+      if value == :absent
+        case Facter.value(:operatingsystem)
+        when 'Solaris'
+          ' '
+        else
+          ''
+        end
+      else
+        value
+      end
+    },
+    :unmunge => proc { |value|
+      if value == -1
+        :absent
+      else
+        # Expiry is days after 1970-01-01
+        Date.new(1970).next_day(value).strftime('%Y-%m-%d')
+      end
+    }
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -40,15 +62,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
-  def check_manage_expiry
-    cmd = []
-    if @resource[:expiry]
-      cmd << "-e #{@resource[:expiry]}"
-    end
-
-    cmd
-  end
-
   def check_system_users
     if self.class.system_users? and resource.system?
       ["-r"]
@@ -59,13 +72,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def add_properties
     cmd = []
-    Puppet::Type.type(:user).validproperties.each do |property|
+    # validproperties is a list of properties in undefined order
+    # sort them to have a predictable command line in tests
+    Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
-        cmd << flag(property) << value
+        cmd << flag(property) << munge(property, value)
       end
     end
     cmd
@@ -76,7 +91,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += add_properties
     cmd += check_allow_dup
     cmd += check_manage_home
-    cmd += check_manage_expiry
     cmd += check_system_users
     cmd << @resource[:name]
   end
@@ -96,31 +110,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
   end
 
-  def password_min_age
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_min
+  [:expiry, :password_min_age, :password_max_age, :password].each do |shadow_property|
+    define_method(shadow_property) do
+      if Puppet.features.libshadow?
+        if ent = Shadow::Passwd.getspnam(@resource.name)
+          method = self.class.option(shadow_property, :method)
+          return unmunge(shadow_property, ent.send(method))
+        end
       end
+      :absent
     end
-    :absent
-  end
-
-  def password_max_age
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_max
-      end
-    end
-    :absent
-  end
-
-  # Retrieve the password using the Shadow Password library
-  def password
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return ent.sp_pwdp
-      end
-    end
-    :absent
   end
 end
