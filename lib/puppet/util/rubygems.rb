@@ -39,7 +39,9 @@ module Puppet::Util::RubyGems
   # @api private
   class Gems18Source < Source
     def directories
-      Gem::Specification.latest_specs.collect do |spec|
+      # `require 'mygem'` will consider and potentally load
+      # prerelease gems, so we need to match that behavior.
+      Gem::Specification.latest_specs(true).collect do |spec|
         File.join(spec.full_gem_path, 'lib')
       end
     end
