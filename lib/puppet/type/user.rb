@@ -49,6 +49,10 @@ module Puppet
     feature :manages_aix_lam,
       "The provider can manage AIX Loadable Authentication Module (LAM) system."
 
+    feature :libuser,
+      "Allows local users to be managed on systems that also use some other
+       remote NSS method of managing accounts."
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -548,6 +552,13 @@ module Puppet
           value
         end
       end
+    end
+
+    newparam(:forcelocal, :boolean => true, :required_features => :libuser ) do
+      desc "Forces the mangement of local accounts when accounts are also
+            being managed by some other NSS"
+      newvalues(:true, :false)
+      defaultto false
     end
   end
 end

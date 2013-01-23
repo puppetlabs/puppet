@@ -6,6 +6,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   before :each do
     described_class.stubs(:command).with(:password).returns '/usr/bin/chage'
     described_class.stubs(:command).with(:add).returns '/usr/sbin/useradd'
+    described_class.stubs(:command).with(:localadd).returns '/usr/sbin/luseradd'
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/usermod'
     described_class.stubs(:command).with(:delete).returns '/usr/sbin/userdel'
   end
@@ -55,6 +56,24 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, 'myuser'])
       provider.create
     end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      it "should use luseradd instead of useradd" do
+        described_class.has_feature :libuser
+        resource[:forcelocal] = :true
+        provider.expects(:execute).with(includes('/usr/sbin/luseradd'))
+        provider.create
+      end
+ 
+      it "should NOT use -o when allowdupe=true" do
+        described_class.has_feature :libuser
+        resource[:forcelocal] = :true
+        resource[:allowdupe] = :true 
+        provider.expects(:execute).with(Not(includes('-o')))
+        provider.create
+      end
+    end
+
   end
 
   describe "#uid=" do

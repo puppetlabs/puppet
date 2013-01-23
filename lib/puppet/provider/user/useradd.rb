@@ -1,4 +1,5 @@
 require 'puppet/provider/nameservice/objectadd'
+require 'puppet/util/libuser'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to
@@ -13,6 +14,28 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :password_min_age, :flag => "-m"
   options :password_max_age, :flag => "-M"
 
+  optional_commands :localadd => "luseradd"
+  has_feature :libuser if Puppet.features.libuser?
+
+  def exists?
+    return !!localuid if @resource.forcelocal?
+    super
+  end
+
+  def localuid
+    passwd_file = "/etc/passwd"
+    File.open(passwd_file) do |f|
+      f.each_line do |line|
+         user = line.split(":")
+         if user[0] == resource[:name]
+             f.close
+             return user[2]
+         end
+      end
+    end
+    false
+  end
+ 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -72,9 +95,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def addcmd
-    cmd = [command(:add)]
+    if @resource.forcelocal?
+      Puppet::Util::Libuser.setupenv
+      cmd = [command(:localadd)]  
+    else
+      cmd = [command(:add)]
+    end
     cmd += add_properties
-    cmd += check_allow_dup
+    cmd += check_allow_dup if ! @resource.forcelocal?
     cmd += check_manage_home
     cmd += check_manage_expiry
     cmd += check_system_users
