@@ -82,19 +82,21 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#expiry=" do
-    it "should use -e with the correct argument when the expiry property is changed" do
+    it "should pass expiry to usermod as MM/DD/YY when on Solaris" do
+      Facter.expects(:value).with(:operatingsystem).returns 'Solaris'
+      resource[:expiry] = '2012-10-31'
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '10/31/2012', 'myuser'])
+      provider.expiry = '2012-10-31'
+    end
+
+    it "should pass expiry to usermod as YYYY-MM-DD when not on Solaris" do
+      Facter.expects(:value).with(:operatingsystem).returns 'not_solaris'
       resource[:expiry] = '2012-10-31'
       provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '2012-10-31', 'myuser'])
       provider.expiry = '2012-10-31'
     end
-    it "should use -e with the correct argument when the expiry property is removed and on solaris" do
-      Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
-      resource[:expiry] = :absent
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', ' ', 'myuser'])
-      provider.expiry = :absent
-    end
-    it "should use -e with the correct argument when the expiry property is removed and on other os" do
-      Facter.stubs(:value).with(:operatingsystem).returns("some_os")
+
+    it "should use -e with an empty string when the expiry property is removed" do
       resource[:expiry] = :absent
       provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'])
       provider.expiry = :absent
@@ -227,10 +229,17 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
     end
 
-    it "should return an array with full command" do
+    it "should return an array with the full command and expiry as MM/DD/YY when on Solaris" do
+      Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
       described_class.expects(:system_users?).returns true
       resource[:expiry] = "2012-08-18"
+      provider.addcmd.must == ['/usr/sbin/useradd', '-e', '08/18/2012', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
+    end
 
+    it "should return an array with the full command and expiry as YYYY-MM-DD when not on Solaris" do
+      Facter.stubs(:value).with(:operatingsystem).returns 'not_solaris'
+      described_class.expects(:system_users?).returns true
+      resource[:expiry] = "2012-08-18"
       provider.addcmd.must == ['/usr/sbin/useradd', '-e', '2012-08-18', '-G', 'somegroup', '-o', '-m', '-r', 'myuser']
     end
 
@@ -239,16 +248,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.addcmd.must == ["/usr/sbin/useradd", "-G", "somegroup", "-o", "-m", "-r", "myuser"]
     end
 
-    it "should pass -e \" \" on solaris if the expiry has to be removed" do
-      Facter.expects(:value).with(:operatingsystem).returns 'Solaris'
-      described_class.expects(:system_users?).returns true
-      resource[:expiry] = :absent
-
-      provider.addcmd.must == ['/usr/sbin/useradd', '-e', ' ','-G', 'somegroup', '-o', '-m', '-r', 'myuser']
-    end
-
-    it "should pass -e \"\" on other systems if the expiry has to be removed" do
-      Facter.expects(:value).with(:operatingsystem).returns 'some_os'
+    it "should pass -e \"\" if the expiry has to be removed" do
       described_class.expects(:system_users?).returns true
       resource[:expiry] = :absent
 
