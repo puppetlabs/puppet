@@ -96,6 +96,17 @@ class Puppet::Parser::TypeLoader
 
           type = Puppet::Resource::Type.new(:hostclass, '')
           begin
+            # watch (with always stale mode) if not already being watched.
+            # (See compiler#assign_ruby_code for more information on why this is done).
+            #
+            # It is not known if always stale is required here (it is currently required
+            # for the use case when a site.rb file is loaded). Later when the problem
+            # regarding site.rb loading is fixed, the always stale mode should be removed
+            # here as well).
+            #
+            # TODO: Make it work without having to use always_stale mode for the wanted file.
+            krt = known_resource_types
+            krt.watch_file(file, true) unless krt.watching_file?(file)
             Puppet::DSL::Parser.prepare_for_evaluation type, File.read(file), file
           rescue => e
             raise Puppet::ParseError, e.message
