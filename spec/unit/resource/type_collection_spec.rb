@@ -389,7 +389,8 @@ describe Puppet::Resource::TypeCollection do
       @loader.node("foo").should equal(node2)
     end
   end
-
+  
+  
   describe "when managing files" do
     before do
       @loader = Puppet::Resource::TypeCollection.new("env")
@@ -405,9 +406,14 @@ describe Puppet::Resource::TypeCollection do
       @loader.should be_watching_file("/foo/bar")
     end
 
-    it "should use LoadedFile to watch files" do
-      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar", false).returns stub("watched_file")
+    it "should use LoadedFile to watch files by default" do
+      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
       @loader.watch_file("/foo/bar")
+    end
+
+    it "should use LoadedFile to watch files if asked to not use always-false" do
+      Puppet::Util::LoadedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
+      @loader.watch_file("/foo/bar", false)
     end
 
     it "should be considered stale if any files have changed" do
@@ -459,4 +465,14 @@ describe Puppet::Resource::TypeCollection do
 
   end
 
+  describe "when managing files that require always stale" do
+    before do
+      @loader = Puppet::Resource::TypeCollection.new("env")
+      Puppet::Util::LoadedFileAlwaysStale.stubs(:new).returns stub("watched_file")
+    end
+    it "should use LoadedFileAlwaysStale to watch always-stale files" do
+      Puppet::Util::LoadedFileAlwaysStale.expects(:new).with("/foo/bar").returns stub("watched_file")
+      @loader.watch_file("/foo/bar", true)
+    end  
+  end
 end

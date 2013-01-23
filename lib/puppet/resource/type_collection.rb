@@ -1,4 +1,5 @@
 require 'puppet/parser/type_loader'
+require 'puppet/util/loadedfile_always_stale'
 
 class Puppet::Resource::TypeCollection
   attr_reader :environment
@@ -154,7 +155,8 @@ class Puppet::Resource::TypeCollection
   # @param always_stale [Boolean] whether the file should be consider stale at all times or not (defaults to false).
   # @return [Puppet::Util::LoadedFile] the entry for the file
   def watch_file(file, always_stale = false)
-    @watched_files[file] = Puppet::Util::LoadedFile.new(file, always_stale)
+    watchertype = always_stale ? Puppet::Util::LoadedFileAlwaysStale : Puppet::Util::LoadedFile
+    @watched_files[file] = watchertype.new(file)
   end
 
   def watching_file?(file)

@@ -18,7 +18,7 @@ module Puppet
     def changed?
       # Allow the timeout to be disabled entirely.
       # Always trigger reparse of ruby files
-      return true if Puppet[:filetimeout] < 0 || @always_stale
+      return true if Puppet[:filetimeout] < 0
       tmp = stamp
 
       # We use a different internal variable than the stamp method
@@ -37,12 +37,11 @@ module Puppet
     # @param file [String] the path to watch
     # @param always_stale [Boolean] whether the file should be considered to always be changed
     # 
-    def initialize(file, always_stale = false)
+    def initialize(file)
       @file = file
       @statted = 0
       @stamp = nil
       @tstamp = stamp
-      @always_stale = always_stale
     end
 
     # Retrieve the filestamp, but only refresh it if we're beyond our
