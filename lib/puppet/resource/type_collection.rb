@@ -152,7 +152,7 @@ class Puppet::Resource::TypeCollection
   # watch is replaced. The optional `always_stale` parameter will ensure that
   # a re-parse always takes place if set to true.
   # @param file [String] the file (path) to watch
-  # @param always_stale [Boolean] whether the file should be consider stale at all times or not (defaults to false).
+  # @param always_stale [Boolean] whether the file should be considered stale at all times or not (defaults to false).
   # @return [Puppet::Util::LoadedFile] the entry for the file
   def watch_file(file, always_stale = false)
     watchertype = always_stale ? Puppet::Util::LoadedFileAlwaysStale : Puppet::Util::LoadedFile
