@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'semver'
 
 # RPM packaging.  Should work anywhere that has rpm installed.
 Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do
@@ -25,17 +26,21 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   def self.instances
     packages = []
+    ver410 = SemVer.new '4.1.0'
+    ver402 = SemVer.new '4.0.2'
+
+    output = rpm "--version"
+    current_version = SemVer.new(output.gsub('RPM version ', '').strip)
 
     # rpm < 4.1 don't support --nosignature
-    output = rpm "--version"
-    sig = "--nosignature"
-    if output =~ /RPM version (([123].*)|(4\.0.*))/
-      sig = ""
-    end
+    sig = '--nosignature' unless current_version < ver410
+
+    # rpm < 4.0.2 don't support --nodigest
+    nodigest = '--nodigest' unless current_version < ver402
 
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{sig} --nodigest --qf '#{NEVRAFORMAT}\n'") { |process|
+      execpipe("#{command(:rpm)} -qa #{sig} #{nodigest} --qf '#{NEVRAFORMAT}\n'") { |process|
         # now turn each returned line into a package object
         process.each_line { |line|
           hash = nevra_to_hash(line)
