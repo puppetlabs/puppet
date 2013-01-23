@@ -1,6 +1,7 @@
 require 'monitor'
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
+require 'puppet/ssl/certificate_signer'
 require 'puppet/util'
 
 # The class that knows how to sign certificates.  It creates
@@ -277,7 +278,9 @@ class Puppet::SSL::CertificateAuthority
     cert = Puppet::SSL::Certificate.new(hostname)
     cert.content = Puppet::SSL::CertificateFactory.
       build(cert_type, csr, issuer, next_serial)
-    cert.content.sign(host.key.content, OpenSSL::Digest::SHA256.new)
+
+    signer = Puppet::SSL::CertificateSigner.new
+    signer.sign(cert.content, host.key.content)
 
     Puppet.notice "Signed certificate request for #{hostname}"
 
