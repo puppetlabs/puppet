@@ -3,7 +3,6 @@ require 'puppet/dsl/type_reference'
 require 'puppet/util/methodhelper'
 
 module Puppet
-  # @since 3.0.x EXPERIMENTAL
   module DSL
 
     # {Puppet::DSL::Context} delegates most calls to this class since itself is based
