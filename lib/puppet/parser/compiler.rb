@@ -3,10 +3,8 @@ require 'forwardable'
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
-require 'puppet/util/manifest_filetype_helper'
 
 require 'puppet/resource/type_collection_helper'
-require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -92,7 +90,6 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
-
     set_node_parameters
     create_settings_scope
 
@@ -112,10 +109,6 @@ class Puppet::Parser::Compiler
   end
 
   def_delegator :@collections, :delete, :delete_collection
-
-  def assign_ruby_code(file)
-    Puppet::DSL::Parser.prepare_for_evaluation @main, File.read(file), file
-  end
 
   # Return the node's environment.
   def environment
@@ -285,9 +278,6 @@ class Puppet::Parser::Compiler
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
-
-    file = Puppet.settings.value :manifest, environment
-    assign_ruby_code file if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
 
     @main_resource.evaluate
   end
