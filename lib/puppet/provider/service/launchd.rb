@@ -49,6 +49,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   confine :operatingsystem    => :darwin
 
   has_feature :enableable
+  has_feature :refreshable
   mk_resource_methods
 
   # These are the paths in OS X where a launchd service plist could
@@ -272,13 +273,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     self.enable if did_disable_job and resource[:enable] == :true
   end
 
+  def restart
+    Puppet.debug("A restart has been triggered for the #{resource[:name]} service")
+    Puppet.debug("Stopping the #{resource[:name]} service")
+    self.stop
+    Puppet.debug("Starting the #{resource[:name]} service")
+    self.start
+  end
 
   # launchd jobs are enabled by default. They are only disabled if the key
   # "Disabled" is set to true, but it can also be set to false to enable it.
-  # Starting in 10.6, the Disabled key in the job plist is consulted, but only 
-  # if there is no entry in the global overrides plist.
-  # We need to draw a distinction between undefined, true and false for both
-  # locations where the Disabled flag can be defined.
+  # Starting in 10.6, the Disabled key in the job plist is consulted, but only
+  # if there is no entry in the global overrides plist.  We need to draw a
+  # distinction between undefined, true and false for both locations where the
+  # Disabled flag can be defined.
   def enabled?
     job_plist_disabled = nil
     overrides_disabled = nil
@@ -304,11 +312,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     :false
   end
 
-
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # Starting in 10.6 we need to write out a disabled key to the global 
+  # Starting in 10.6 we need to write out a disabled key to the global
   # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
     if has_macosx_plist_overrides?
@@ -324,7 +331,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
-
   def disable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(self.class.launchd_overrides)
@@ -336,6 +342,4 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       Plist::Emit.save_plist(job_plist, job_path)
     end
   end
-
-
 end
