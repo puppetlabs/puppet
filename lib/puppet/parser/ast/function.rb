@@ -6,7 +6,7 @@ class Puppet::Parser::AST
 
     associates_doc
 
-    attr_accessor :name, :arguments
+    attr_accessor :name, :arguments, :pblock
 
     def evaluate(scope)
       # Make sure it's a defined function
@@ -16,8 +16,16 @@ class Puppet::Parser::AST
       case @ftype
       when :rvalue
         raise Puppet::ParseError, "Function '#{@name}' does not return a value" unless Puppet::Parser::Functions.rvalue?(@name)
+
       when :statement
-        if Puppet::Parser::Functions.rvalue?(@name)
+        # It is harmless to produce an ignored rvalue, the alternative is to mark functions
+        # as appropriate for both rvalue and statements
+        # Keeping the old behavior when a pblock is not present. This since it is not known
+        # if the lambda contains a statement or not (at least not without a costly search).
+        # The purpose of the check is to protect a user for producing a meaningless rvalue where the
+        # operation has no side effects.
+        #
+        if !pblock && Puppet::Parser::Functions.rvalue?(@name)
           raise Puppet::ParseError,
             "Function '#{@name}' must be the value of a statement"
         end
@@ -27,6 +35,9 @@ class Puppet::Parser::AST
 
       # We don't need to evaluate the name, because it's plaintext
       args = @arguments.safeevaluate(scope).map { |x| x == :undef ? '' : x }
+      
+      # append a puppet lambda (unevaluated) if it is defined
+      args << pblock if pblock
 
       scope.send("function_#{@name}", args)
     end
