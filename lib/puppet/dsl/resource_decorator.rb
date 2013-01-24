@@ -3,33 +3,39 @@ require 'puppet/dsl/resource_reference'
 
 module Puppet
   module DSL
+    ##
     # Thin decorator layer for accessing attributes of array/hash-like objects.
-    # @see Puppet::DSL::Context#create_resource  Context#create_resource for examples of usage
+    # Example usage of this class can be found in
+    # Puppet::DSL::Context#create_resource method.
     #
+    # This class inherits from BlankSlate
+    ##
     class ResourceDecorator < BlankSlate
 
+      ##
       # Initializes new object.
-      # @overload initialize(resource, {|r| block})
-      # @param resource [#[], #[]=] any object responding to these methods
-      # @yieldparam r [ResourceDecorator] the `self` when evaluating the ruby block
-      # @param block [ruby] the Ruby DSL statements to evaluate.
-      #
+      # +resource+ can be any object that responds to +[]+ and +[]=+ methods.
+      # +block+ can be any kind of object that responds to +call+ methods.
+      ##
       def initialize(resource, &block)
         @resource = resource
         block.call self
       end
 
-      # A proxy method allowing direct access to resource parameters instead of
-      # having to use `#[]` or `#[]=`
+      ##
+      # It is a proxy method that allows to access resource parameters using
+      # methods +[]+ and +[]=+.
       #
-      # After a first call it creates a cached version of the created access method.
+      # After a first call it creates a cached version of a method.
       #
-      # @example
-      #   # allows using this
+      # Example:
+      #
+      #   # use this
       #   r.title = "I am a resource"
       #   # instead of this
       #   r[:title] = "I am a resource"
       #
+      ##
       def method_missing(name, *args)
         if name.to_s =~ /\A(.*)=\z/
           define_singleton_method name do |*a|
@@ -52,3 +58,4 @@ module Puppet
     end
   end
 end
+
