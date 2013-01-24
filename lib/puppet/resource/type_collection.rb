@@ -1,5 +1,4 @@
 require 'puppet/parser/type_loader'
-require 'puppet/util/loadedfile_always_stale'
 
 class Puppet::Resource::TypeCollection
   attr_reader :environment
@@ -148,15 +147,8 @@ class Puppet::Resource::TypeCollection
     raise Puppet::ParseError, "Unable to set config_version: #{e.message}"
   end
 
-  # Add file to set of watched files (if already being watched, the old
-  # watch is replaced. The optional `always_stale` parameter will ensure that
-  # a re-parse always takes place if set to true.
-  # @param file [String] the file (path) to watch
-  # @param always_stale [Boolean] whether the file should be considered stale at all times or not (defaults to false).
-  # @return [Puppet::Util::LoadedFile] the entry for the file
-  def watch_file(file, always_stale = false)
-    watchertype = always_stale ? Puppet::Util::LoadedFileAlwaysStale : Puppet::Util::LoadedFile
-    @watched_files[file] = watchertype.new(file)
+  def watch_file(file)
+    @watched_files[file] = Puppet::Util::LoadedFile.new(file)
   end
 
   def watching_file?(file)
