@@ -27,6 +27,18 @@ describe 'methods' do
       catalog.resource(:file, "/file_2")['ensure'].should == 'present'
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
+    it 'foreach on an array selecting each value - function call style' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1,2,3]
+        foreach ($a) {|$v| 
+          file { "/file_$v": ensure => present }
+        }
+      MANIFEST
+  
+      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+    end
     
     it 'foreach on an array selecting pairs' do
       catalog = compile_to_catalog(<<-MANIFEST)

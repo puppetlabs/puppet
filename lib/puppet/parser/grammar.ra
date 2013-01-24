@@ -64,7 +64,7 @@ statement_or_declaration:    resource
   | ifstatement_begin
   | unlessstatement
   | import
-  | fstatement
+  | function_call_statement
   | definition
   | hostclass
   | nodedef
@@ -108,33 +108,48 @@ relationship_side: resource
 
 edge: IN_EDGE | OUT_EDGE | IN_EDGE_SUB | OUT_EDGE_SUB
 
-fstatement:   NAME LPAREN expressions RPAREN {
-  result = ast AST::Function,
-    :name => val[0][:value],
-    :line => val[0][:line],
-    :arguments => val[2],
-    :ftype => :statement
-}
-| NAME LPAREN expressions COMMA RPAREN {
-  result = ast AST::Function,
-    :name => val[0][:value],
-    :line => val[0][:line],
-    :arguments => val[2],
-    :ftype => :statement
-}            | NAME LPAREN RPAREN {
-  result = ast AST::Function,
-    :name => val[0][:value],
-    :line => val[0][:line],
-    :arguments => AST::ASTArray.new({}),
-    :ftype => :statement
-}
+#function_call_statement
+#  : fstatement
+#  | fstatement lambda { result = val[0]; val[0].pblock val[1] }
+
+optional_lambda
+  : 
+  | lambda
+ 
+function_call_statement    
+# fstatement
+  : NAME LPAREN expressions RPAREN optional_lambda {
+      result = ast AST::Function,
+        :name => val[0][:value],
+        :line => val[0][:line],
+        :arguments => val[2],
+        :ftype => :statement,
+        :pblock => val[4]
+    }
+  | NAME LPAREN expressions COMMA RPAREN optional_lambda {
+      result = ast AST::Function,
+        :name => val[0][:value],
+        :line => val[0][:line],
+        :arguments => val[2],
+        :ftype => :statement,
+        :pblock => val[4]
+    } 
+  | NAME LPAREN RPAREN optional_lambda {
+      result = ast AST::Function,
+        :name => val[0][:value],
+        :line => val[0][:line],
+        :arguments => AST::ASTArray.new({}),
+        :ftype => :statement,
+        :pblock => val[4]
+      }
   | NAME funcvalues {
-    result = ast AST::Function,
-    :name => val[0][:value],
-    :line => val[0][:line],
-    :arguments => val[1],
-    :ftype => :statement
-}
+      result = ast AST::Function,
+        :name => val[0][:value],
+        :line => val[0][:line],
+        :arguments => val[1],
+        :ftype => :statement,
+        :pblock => val[4]
+    }
 
 ##
 call_method_with_lambda
@@ -158,7 +173,7 @@ named_access_lval
   | hasharrayaccesses
   | selector
   | quotedtext
-  | funcrvalue
+  | function_call_expression
   | call_method_with_lambda
     
 lambda
@@ -189,13 +204,14 @@ lambda_parameter_list
   : PIPE nothing PIPE             { result = val[1] }
   | PIPE arguments endcomma PIPE  { result = val[1] }
 
-
-funcvalues: rvalue { result = aryfy(val[0]) }
-# This rvalue could be an expression
+funcvalues
+  : rvalue { result = aryfy(val[0]) }
+    # This rvalue could be an expression
+  | lambda { result = val[0] }
   | funcvalues COMMA rvalue {
-    val[0].push(val[2])
-    result = val[0]
-}
+      val[0].push(val[2])
+      result = val[0]
+    }
 
 expressions: expression               { result = aryfy(val[0]) }
        | expressions comma expression { result = val[0].push(val[2]) }
@@ -209,7 +225,7 @@ rvalue:       quotedtext
   | array
   | hasharrayaccesses
   | resourceref
-  | funcrvalue
+  | function_call_expression
   | undef
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
@@ -422,18 +438,25 @@ anyparams:   # nothing
     result = val[0]
 }
 
+#function_call_expression
+#  : funcrvalue
+#  | funcrvalue lambda { result = val[0] ; val[0].pblock = lambda }
+  
 # We currently require arguments in these functions.
-funcrvalue:   NAME LPAREN expressions RPAREN {
-  result = ast AST::Function,
-    :name => val[0][:value], :line => val[0][:line],
-    :arguments => val[2],
-    :ftype => :rvalue
-}           | NAME LPAREN RPAREN {
-  result = ast AST::Function,
-    :name => val[0][:value], :line => val[0][:line],
-    :arguments => AST::ASTArray.new({}),
-    :ftype => :rvalue
-}
+function_call_expression
+  : NAME LPAREN expressions RPAREN optional_lambda {
+      result = ast AST::Function,
+        :name => val[0][:value], :line => val[0][:line],
+        :arguments => val[2],
+        :ftype => :rvalue,
+        :pblock => val[4]
+    }
+  | NAME LPAREN RPAREN optional_lambda {
+      result = ast AST::Function,
+        :name => val[0][:value], :line => val[0][:line],
+        :arguments => AST::ASTArray.new({}),
+        :ftype => :rvalue
+    }
 
 quotedtext: STRING       { result = ast AST::String, :value => val[0][:value],                  :line => val[0][:line] }
   | DQPRE dqrval { result = ast AST::Concat, :value => [ast(AST::String,val[0])]+val[1], :line => val[0][:line] }
@@ -652,7 +675,7 @@ selectlhand:  name
   | type
   | quotedtext
   | variable
-  | funcrvalue
+  | function_call_expression
   | boolean
   | undef
   | hasharrayaccess
