@@ -3,10 +3,8 @@ require 'forwardable'
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
-require 'puppet/util/manifest_filetype_helper'
 
 require 'puppet/resource/type_collection_helper'
-require 'puppet/dsl/parser'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
@@ -111,23 +109,6 @@ class Puppet::Parser::Compiler
   end
 
   def_delegator :@collections, :delete, :delete_collection
-
-  def assign_ruby_code(file)
-    # watch (with always stale mode) if not already being watched
-    # Something is not working right - if an environment is re-used to avoid re-parsing
-    # The startup sequence will re-evaluate the code prepared for evaluation again. This does not
-    # happen for a site.pp, but for a site.rb (which will fail with an error). The use of
-    # always stale is a workaround for this problem while it is being investigated.
-    #
-    # See TypeLoader#import where always stale is also used.
-    #
-    # TODO: Make it work without having to use always_stale mode for the wanted file.
-    krt = environment.known_resource_types
-    krt.watch_file(file, true) unless krt.watching_file?(file)
-    # Prepare for evaluation. TODO: Is it assigning the code to the right thing? See comment above?
-    #
-    Puppet::DSL::Parser.prepare_for_evaluation @main, File.read(file), file
-  end
 
   # Return the node's environment.
   def environment
@@ -297,9 +278,6 @@ class Puppet::Parser::Compiler
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
-
-    file = Puppet.settings.value :manifest, environment
-    assign_ruby_code file if Puppet::Util::ManifestFiletypeHelper.is_ruby_filename? file
 
     @main_resource.evaluate
   end

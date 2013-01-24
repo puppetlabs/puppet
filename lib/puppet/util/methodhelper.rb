@@ -1,7 +1,5 @@
 # Where we store helper methods related to, um, methods.
 module Puppet::Util::MethodHelper
-  extend self
-
   def requiredopts(*names)
     names.each do |name|
       devfail("#{name} is a required option for #{self.class}") if self.send(name).nil?
@@ -31,21 +29,4 @@ module Puppet::Util::MethodHelper
       hash
     end
   end
-
-  ##
-  # Helper to validate options. Example:
-  #
-  #   validate_options [:arguments, :inherits], options
-  #
-  # It expects list of valid options and a hash to validate as a last
-  # argument.
-  ##
-  def validate_options(allow, options = {})
-    options.each do |k, _|
-      unless Array(allow).include? k
-        raise ArgumentError, "unrecognized option #{k}"
-      end
-    end
-  end
-
 end

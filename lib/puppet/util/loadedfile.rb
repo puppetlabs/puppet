@@ -1,19 +1,19 @@
+# A simple class that tells us when a file has changed and thus whether we
+# should reload it
+
 require 'puppet'
 
 module Puppet
   class NoSuchFile < Puppet::Error; end
-  # A simple class that tells us when a file has changed and thus whether we
-  # should reload it
   class Util::LoadedFile
     attr_reader :file, :statted
 
-    # Provides a hook for setting the timestamp during testing, so we don't
+    # Provide a hook for setting the timestamp during testing, so we don't
     # have to depend on the granularity of the filesystem.
     attr_writer :tstamp
 
-    # Determines whether the file has changed and thus whether it should
+    # Determine whether the file has changed and thus whether it should
     # be reparsed.
-    #
     def changed?
       # Allow the timeout to be disabled entirely.
       return true if Puppet[:filetimeout] < 0
@@ -31,11 +31,7 @@ module Puppet
       end
     end
 
-    # Creates the file.
-    # Must be passed the file path.
-    # @param file [String] the path to watch
-    # @param always_stale [Boolean] whether the file should be considered to always be changed
-    # 
+    # Create the file.  Must be passed the file path.
     def initialize(file)
       @file = file
       @statted = 0
@@ -43,7 +39,7 @@ module Puppet
       @tstamp = stamp
     end
 
-    # Retrieves the filestamp, but only refresh it if we're beyond our
+    # Retrieve the filestamp, but only refresh it if we're beyond our
     # filetimeout
     def stamp
       if @stamp.nil? or (Time.now.to_i - @statted >= Puppet[:filetimeout])

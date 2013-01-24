@@ -90,34 +90,6 @@ class Puppet::Resource
     end
   end
 
-  def self.canonicalize_type(type)
-    type, _ = get_type_and_title type, ""
-    type
-  end
-
-  def self.get_type_and_title(type, title)
-    type, title = extract_type_and_title(type, title)
-    [munge_type_name(type), title]
-  end
-
-  def self.extract_type_and_title(argtype, argtitle)
-    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
-    elsif argtitle                                         then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
-    elsif argtype.is_a?(Hash)                              then
-      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
-        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
-    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
-    end
-  end
-
-  def self.munge_type_name(value)
-    return :main if value == :main
-    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
-
-    value.to_s.split("::").collect { |s| s.capitalize }.join("::")
-  end
-
   def yaml_property_munge(x)
     case x
     when Hash
@@ -222,12 +194,13 @@ class Puppet::Resource
       send(attr.to_s + "=", value)
     end
 
-    @type, @title = self.class.get_type_and_title(type, title)
+    @type, @title = extract_type_and_title(type, title)
 
+    @type = munge_type_name(@type)
 
     if self.class?
       @title = :main if @title == ""
-      @title = self.class.munge_type_name(@title)
+      @title = munge_type_name(@title)
     end
 
     if params = attributes[:parameters]
@@ -366,14 +339,10 @@ class Puppet::Resource
     missing_arguments.collect do |param, default|
       external_value = lookup_external_default_for(param, scope)
 
-      if external_value.nil?
-        next if default.nil?
-
-        value = if default.respond_to? :safeevaluate
-                  default.safeevaluate(scope)
-                else
-                  default
-                end
+      if external_value.nil? && default.nil?
+        next
+      elsif external_value.nil?
+        value = default.safeevaluate(scope)
       else
         value = external_value
       end
@@ -450,6 +419,24 @@ class Puppet::Resource
       validate_parameter(param) if strict?
       self[param] = value
     end
+  end
+
+  def extract_type_and_title(argtype, argtitle)
+    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
+    elsif argtitle                                         then [ argtype,            argtitle      ]
+    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+    elsif argtype.is_a?(Hash)                              then
+      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
+        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
+    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+    end
+  end
+
+  def munge_type_name(value)
+    return :main if value == :main
+    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
+
+    value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end
 
   def parse_title

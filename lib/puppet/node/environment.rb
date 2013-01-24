@@ -1,8 +1,6 @@
 require 'puppet/util'
 require 'puppet/util/cacher'
-require 'puppet/util/manifest_filetype_helper'
 require 'monitor'
-
 
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node
@@ -218,7 +216,7 @@ class Puppet::Node::Environment
   private
 
   def perform_initial_import
-    return empty_parse_result if Puppet.settings[:ignoreimport] or Puppet::Util::ManifestFiletypeHelper.is_ruby_filename?(Puppet.settings.value(:manifest, name))
+    return empty_parse_result if Puppet.settings[:ignoreimport]
     parser = Puppet::Parser::Parser.new(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code
