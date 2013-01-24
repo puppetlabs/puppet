@@ -1,5 +1,4 @@
 module Puppet
-  # @since 3.0.x EXPERIMENTAL
   module DSL
     # Initializes evaluation of Ruby based manifests.
     module Parser
