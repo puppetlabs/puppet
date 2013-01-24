@@ -1,7 +1,6 @@
-# NOTE: a lot of the stuff in this file is duplicated in the
-# "puppet_spec_helper" in the project puppetlabs_spec_helper. We should
-# probably eat our own dog food and get rid of most of this from here, and
-# have the puppet core itself use puppetlabs_spec_helper
+# NOTE: a lot of the stuff in this file is duplicated in the "puppet_spec_helper" in the project
+#  puppetlabs_spec_helper.  We should probably eat our own dog food and get rid of most of this from here,
+#  and have the puppet core itself use puppetlabs_spec_helper
 
 dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift File.join(dir, 'lib')

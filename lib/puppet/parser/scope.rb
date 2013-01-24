@@ -379,7 +379,7 @@ class Puppet::Parser::Scope
 
     if options[:append]
       table[name] = append_value(undef_as('', self[name]), value)
-    else
+    else 
       table[name] = value
     end
   end
@@ -407,7 +407,7 @@ class Puppet::Parser::Scope
       bound_value.merge(new_value)
     else
       if bound_value.is_a?(Hash)
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported"
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" 
       end
       bound_value + new_value
     end
