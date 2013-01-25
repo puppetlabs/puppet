@@ -126,7 +126,7 @@ describe provider_class do
      end
 
      it "should include the '-U --oldpackage' flags" do
-        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "-U --oldpackage", '/path/to/package'])
+        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", ["-U", "--oldpackage"], '/path/to/package'])
         provider.install
      end
    end 
