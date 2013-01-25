@@ -11,15 +11,33 @@ describe provider_class do
     cracklib-dicts 0 2.8.9 3.3 x86_64
     basesystem 0 8.0 5.1.1.el5.centos noarch
     chkconfig 0 1.3.30.2 2.el5 x86_64
+    myresource 0 1.2.3.4 5.el4 noarch
     RPM_OUTPUT
+  end
+
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => 'myresource',
+      :ensure   => :installed
+    )
+  end
+
+  let(:provider) do
+    provider = provider_class.new
+    provider.resource = resource
+    provider
+  end
+
+  before(:each) do
+    Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
+    subject.stubs(:which).with("rpm").returns("/bin/rpm")
+    subject.instance_variable_set("@current_version", nil)
+    Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "--version"]).returns(rpm_version).at_most_once
   end
 
   describe "self.instances" do
     let(:rpm_version) { "RPM version 5.0.0\n" }
     before(:each) do
-      Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "--version"]).returns(rpm_version)
-      Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
-      subject.stubs(:which).with("rpm").returns("/bin/rpm")
     end
     describe "with a modern version of RPM" do
       it "should include all the modern flags" do
@@ -83,5 +101,41 @@ describe provider_class do
           :ensure => "1.3.30.2-2.el5"
         }
     end
+  end
+
+  describe "#uninstall" do
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name     => 'myresource',
+        :ensure   => :installed
+      )
+    end
+
+    describe "on a modern RPM" do
+      before(:each) do 
+        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n"]).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+      end
+
+      let(:rpm_version) { "RPM version 4.10.0\n" }
+
+      it "should include the architecture in the package name" do
+        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "-e", 'myresource-1.2.3.4-5.el4.noarch']).returns('').at_most_once
+        provider.uninstall
+      end
+    end
+
+    describe "on an ancient RPM" do
+      before(:each) do 
+        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n"]).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+      end
+
+      let(:rpm_version) { "RPM version 3.0.6\n" }
+
+      it "should exclude the architecture from the package name" do
+        Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "-e", 'myresource-1.2.3.4-5.el4']).returns('').at_most_once
+        provider.uninstall
+      end
+    end
+    
   end
 end
