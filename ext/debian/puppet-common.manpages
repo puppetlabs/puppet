@@ -1,2 +1,3 @@
 man/man5/puppet.conf.5
 man/man8/puppet.8
+man/man8/extlookup2hiera.8
