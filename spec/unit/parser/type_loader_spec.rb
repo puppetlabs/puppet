@@ -11,6 +11,7 @@ describe Puppet::Parser::TypeLoader do
 
   before do
     @loader = Puppet::Parser::TypeLoader.new(:myenv)
+    Puppet.expects(:deprecation_warning).never
   end
 
   it "should support an environment" do
@@ -146,6 +147,8 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should load all ruby manifests from all modules in the specified environment" do
+      Puppet.expects(:deprecation_warning).at_least(1)
+
       @module1 = mk_module(@modulebase1, "one")
       @module2 = mk_module(@modulebase2, "two")
 

@@ -158,6 +158,8 @@ class Puppet::Parser::Parser
   end
 
   def parse_ruby_file
+    Puppet.deprecation_warning("Use of the Ruby DSL is deprecated.")
+
     # Execute the contents of the file inside its own "main" object so
     # that it can call methods in the resource type API.
     main_object = Puppet::DSL::ResourceTypeAPI.new
