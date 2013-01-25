@@ -146,7 +146,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # Get the groupname from its id
-  def self.groupname_by_id(gid)
+  def groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
@@ -166,7 +166,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # Check that a group exists and is valid
   def verify_group(value)
     if value.is_a? Integer or value.is_a? Fixnum
-      groupname = self.groupname_by_id(value)
+      groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else
       raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
