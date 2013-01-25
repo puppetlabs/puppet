@@ -1,5 +1,4 @@
 require 'puppet/provider/package'
-require 'semver'
 
 # RPM packaging.  Should work anywhere that has rpm installed.
 Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do
@@ -27,19 +26,17 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   def self.current_version
     return @current_version unless @current_version.nil?
     output = rpm "--version"
-    @current_version = SemVer.new(output.gsub('RPM version ', '').strip)
+    @current_version = output.gsub('RPM version ', '').strip
   end
 
   # rpm < 4.1 don't support --nosignature
   def self.nosignature
-    ver410 = SemVer.new '4.1.0'
-    '--nosignature' unless current_version < ver410
+    '--nosignature' unless Puppet::Util::Package.versioncmp(current_version, '4.1') < 0
   end
 
   # rpm < 4.0.2 don't support --nodigest
   def self.nodigest
-    ver402 = SemVer.new '4.0.2'
-    '--nodigest' unless current_version < ver402
+    '--nodigest' unless Puppet::Util::Package.versioncmp(current_version, '4.0.2') < 0
   end
 
   def self.instances
@@ -124,8 +121,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     # version of RPM prior to 4.2.1 can't accept the architecture as
     # part of the package name.
-    ver421 = SemVer.new '4.2.1'
-    unless self.class.current_version < ver421
+    unless Puppet::Util::Package.versioncmp(self.class.current_version, '4.2.1') < 0
       if @resource[:name][-arch.size, arch.size] == arch
         nvr += arch
       else
