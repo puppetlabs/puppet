@@ -1,11 +1,7 @@
 require 'puppet'
-require 'puppet/dsl/parser'
-require 'puppet/dsl/context'
 
-module Puppet
-  # @since 3.1
-  # @status EXPERIMENTALx
-  module DSL
-  end
+module Puppet::DSL
 end
 
+require 'puppet/dsl/resource_type_api'
+require 'puppet/dsl/resource_api'

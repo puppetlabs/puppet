@@ -8,28 +8,12 @@ describe Puppet::Resource::Type do
     Puppet::Resource::Type.new(:hostclass, "foo").name.should == "foo"
   end
 
-  [:code, :doc, :line, :file, :resource_type_collection].each do |attr|
+  [:code, :doc, :line, :file, :resource_type_collection, :ruby_code].each do |attr|
     it "should have a '#{attr}' attribute" do
       type = Puppet::Resource::Type.new(:hostclass, "foo")
       type.send(attr.to_s + "=", "yay")
       type.send(attr).should == "yay"
     end
-  end
-
-  it "returns array when calling ruby_code" do
-    Puppet::Resource::Type.new(:hostclass, "foo").ruby_code.should be_an Array
-  end
-
-  it "assignment operator should append to ruby_code" do
-    type = Puppet::Resource::Type.new :hostclass, 'foo'
-    type.ruby_code << "code"
-    type.ruby_code << "more code"
-    type.ruby_code.should == ["code", "more code"]
-  end
-
-  it "has ruby_code attribute" do
-    type = Puppet::Resource::Type.new(:hostclass, "foo")
-    type.ruby_code.should == []
   end
 
   [:hostclass, :node, :definition].each do |type|
@@ -467,10 +451,12 @@ describe Puppet::Resource::Type do
     end
 
     describe "and ruby code is provided" do
-      it "should evaluate ruby code" do
-        code = stub 'code'
-        code.expects(:evaluate).with {|scope, type_collection| scope.is_a? Puppet::Parser::Scope and type_collection.is_a? Puppet::Resource::TypeCollection }
-        @type.stubs(:ruby_code).returns(Array(code))
+      it "should create a DSL Resource API and evaluate it" do
+        @type.stubs(:ruby_code).returns(proc { "foo" })
+        @api = stub 'api'
+        Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
+        @api.expects(:evaluate)
+
         @type.evaluate_code(@resource)
       end
     end
@@ -727,34 +713,6 @@ describe Puppet::Resource::Type do
       dest.merge(source)
 
       dest.doc.should == "foonessyayness"
-    end
-
-    it "copies other's ruby code if it has no ruby code" do
-      dest   = Puppet::Resource::Type.new :hostclass, "bar"
-      source = Puppet::Resource::Type.new :hostclass, "foo"
-      source.ruby_code << "bar"
-
-      dest.merge source
-      dest.ruby_code.should == ["bar"]
-    end
-
-    it "appends other's ruby code if it has ruby code" do
-      dest   = Puppet::Resource::Type.new :hostclass, "bar"
-      source = Puppet::Resource::Type.new :hostclass, "foo"
-      dest.ruby_code   << "foo"
-      source.ruby_code << "bar"
-
-      dest.merge source
-      dest.ruby_code.should == ["foo", "bar"]
-    end
-
-    it "returns own ruby code if the other has no ruby code" do
-      dest   = Puppet::Resource::Type.new :hostclass, "bar", :ruby_code => "foo"
-      source = Puppet::Resource::Type.new :hostclass, "foo"
-      dest.ruby_code << "foo"
-
-      dest.merge source
-      dest.ruby_code.should == ["foo"]
     end
 
     it "should turn its code into an ASTArray if necessary" do

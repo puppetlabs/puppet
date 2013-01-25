@@ -49,6 +49,20 @@ describe Puppet::Parser do
     end
   end
 
+  describe "when parsing files" do
+    before do
+      FileTest.stubs(:exist?).returns true
+      File.stubs(:read).returns ""
+      @parser.stubs(:watch_file)
+    end
+
+    it "should treat files ending in 'rb' as ruby files" do
+      @parser.expects(:parse_ruby_file)
+      @parser.file = "/my/file.rb"
+      @parser.parse
+    end
+  end
+
   describe "when parsing append operator" do
 
     it "should not raise syntax errors" do

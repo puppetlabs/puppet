@@ -27,7 +27,7 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
-  attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
+  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
   # This should probably be renamed to 'kind' eventually, in accordance with the changes
@@ -135,11 +135,7 @@ class Puppet::Resource::Type
 
     code.safeevaluate(scope) if code
 
-    evaluate_ruby_code(scope) unless ruby_code.empty?
-  end
-
-  def ruby_code
-    @ruby_code ||= []
+    evaluate_ruby_code(resource, scope) if ruby_code
   end
 
   def initialize(type, name, options = {})
@@ -184,10 +180,6 @@ class Puppet::Resource::Type
     if other.doc
       self.doc ||= ""
       self.doc += other.doc
-    end
-
-    other.ruby_code.each do |c|
-      self.ruby_code << c
     end
 
     # This might just be an empty, stub class.
@@ -268,10 +260,10 @@ class Puppet::Resource::Type
 
   # MQR TODO:
   #
-  # The change(s) introduced by the fix for #4270 are mostly silly & should be
+  # The change(s) introduced by the fix for #4270 are mostly silly & should be 
   # removed, though we didn't realize it at the time.  If it can be established/
   # ensured that nodes never call parent_type and that resource_types are always
-  # (as they should be) members of exactly one resource_type_collection the
+  # (as they should be) members of exactly one resource_type_collection the 
   # following method could / should be replaced with:
   #
   # def parent_type
@@ -369,8 +361,8 @@ class Puppet::Resource::Type
     parent_scope(resource.scope, klass)
   end
 
-  def evaluate_ruby_code(scope)
-    ruby_code.each { |c| c.evaluate(scope, scope.known_resource_types) }
+  def evaluate_ruby_code(resource, scope)
+    Puppet::DSL::ResourceAPI.new(resource, scope, ruby_code).evaluate
   end
 
   # Split an fq name into a namespace and name
