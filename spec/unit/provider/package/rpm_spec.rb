@@ -167,4 +167,37 @@ describe provider_class do
     end
     
   end
+
+  describe ".nodigest" do
+    { '4.0'   => nil,
+      '4.0.1' => nil,
+      '4.0.2' => '--nodigest',
+      '4.0.3' => '--nodigest',
+      '4.1'   => '--nodigest',
+      '5'     => '--nodigest',
+    }.each do |version, expected|
+      describe "when current version is #{version}" do
+        it "should return #{expected.inspect}" do
+          subject.stubs(:current_version).returns(version)
+          subject.nodigest.should == expected
+        end
+      end
+    end
+  end
+
+  describe ".nosignature" do
+    { '4.0.3' => nil,
+      '4.1'   => '--nosignature',
+      '4.1.1' => '--nosignature',
+      '4.2'   => '--nosignature',
+      '5'     => '--nosignature',
+    }.each do |version, expected|
+      describe "when current version is #{version}" do
+        it "should return #{expected.inspect}" do
+          subject.stubs(:current_version).returns(version)
+          subject.nosignature.should == expected
+        end
+      end
+    end
+  end
 end
