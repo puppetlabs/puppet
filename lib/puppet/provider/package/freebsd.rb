@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
 
     if @resource[:source] =~ /\/$/
       if @resource[:source] =~ /^(ftp|https?):/
-        Puppet::Util.withenv :PACKAGESITE => @resource[:source] do
+        Puppet::Util.withenv :PACKAGEROOT => @resource[:source] do
           pkgadd "-r", @resource[:name]
         end
       else
