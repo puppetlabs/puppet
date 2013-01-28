@@ -6,7 +6,6 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     :portuninstall => "/usr/local/sbin/pkg_deinstall",
     :portinfo => "/usr/sbin/pkg_info"
 
-  # I hate ports
   %w{INTERACTIVE UNAME}.each do |var|
     ENV.delete(var) if ENV.include?(var)
   end
