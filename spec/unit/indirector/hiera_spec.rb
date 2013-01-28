@@ -75,54 +75,6 @@ describe Puppet::Indirector::Hiera do
       "Hiera terminus not supported without hiera library"
   end
 
-  describe "the behavior of the hiera_config method", :if => Puppet.features.hiera? do
-    let(:default_hiera_config) do
-      {
-        :logger    => "puppet",
-        :backends  => ["yaml"],
-        :yaml      => { :datadir => datadir },
-        :hierarchy => ["global"]
-      }
-    end
-
-    it "should load the hiera config file by delegating to Hiera" do
-      Hiera::Config.expects(:load).with(hiera_config_file).returns({})
-      @hiera_class.hiera_config
-    end
-
-    it "should override the logger and set it to puppet" do
-      @hiera_class.hiera_config[:logger].should == "puppet"
-    end
-
-    it "should return a hiera configuration hash" do
-      results = @hiera_class.hiera_config
-      default_hiera_config.each do |key,value|
-        results[key].should == value
-      end
-      results.should be_a_kind_of Hash
-    end
-
-    context "when the Hiera configuration file does not exist" do
-      let(:path) { File.expand_path('/doesnotexist') }
-
-      before do
-        Puppet.settings[:hiera_config] = path
-      end
-
-      it "should log a warning" do
-        Puppet.expects(:warning).with(
-         "Config file #{path} not found, using Hiera defaults")
-        @hiera_class.hiera_config
-      end
-
-      it "should only configure the logger and set it to puppet" do
-        Puppet.expects(:warning).with(
-         "Config file #{path} not found, using Hiera defaults")
-        @hiera_class.hiera_config.should == { :logger => 'puppet' }
-      end
-    end
-  end
-
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
 
     let(:data_binder) { @hiera_class.new }
