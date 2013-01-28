@@ -18,56 +18,11 @@ package = 'sudo.rte'
 version1 = '1.7.10.4'
 version2 = '1.8.6.4'
 
-toc_file = File.join(dir, '.toc')
-
 step "download packages to use for test"
 
 on hosts, "mkdir -p #{dir}"
 on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version1}.aix51.lam.bff > #{dir}/sudo.#{version1}.aix51.lam.bff"
 on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version2}.aix51.lam.bff > #{dir}/sudo.#{version2}.aix51.lam.bff"
-
-create_remote_file hosts, toc_file, <<-TOC
-0 011720232713 2
-sudo.1.8.6.4.aix51.lam.bff 4 R I sudo {
-sudo.rte 01.08.0006.0004 1 N B en_US Configurable super-user privileges runtime
-[
-%
-/opt/freeware/bin 4096
-/opt/freeware/include 16
-/opt/freeware/libexec 4080
-/opt/freeware/man/man5 168
-/opt/freeware/man/man8 216
-/opt/freeware/sbin 2120
-/opt/freeware/share/doc/sudo 1960
-/usr/lpp/sudo/inst_root/etc 8
-%
-%
-%
-%
-%
-%
-]
-}
-sudo.1.7.10.4.aix51.lam.bff 4 R I sudo {
-sudo.rte 01.07.0010.0004 1 N B en_US Configurable super-user privileges runtime
-[
-%
-/opt/freeware/bin 5064
-/opt/freeware/libexec 56
-/opt/freeware/man/man5 128
-/opt/freeware/man/man8 120
-/opt/freeware/sbin 1792
-/opt/freeware/share/doc/sudo 1520
-/usr/lpp/sudo/inst_root/etc 8
-%
-%
-%
-%
-%
-%
-]
-}
-TOC
 
 step "setup manifests for testing"
 
