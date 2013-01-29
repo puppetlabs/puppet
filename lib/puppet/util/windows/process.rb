@@ -1,4 +1,7 @@
 require 'puppet/util/windows'
+require 'windows/process'
+require 'windows/handle'
+require 'windows/synchronize'
 
 module Puppet::Util::Windows::Process
   extend ::Windows::Process
