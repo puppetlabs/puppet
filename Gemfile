@@ -51,6 +51,7 @@ platforms :mswin, :mingw do
   gem "win32console", "~> 1.3.2", :require => false
   gem "windows-api", "~> 0.4.2", :require => false
   gem "windows-pr", "~> 1.2.1", :require => false
+  gem "minitar", "~> 0.5.4", :require => false
 end
 
 if File.exists? "#{__FILE__}.local"
