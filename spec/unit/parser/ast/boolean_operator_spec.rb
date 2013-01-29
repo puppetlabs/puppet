@@ -51,4 +51,20 @@ describe Puppet::Parser::AST::BooleanOperator do
     ast::BooleanOperator.new(:rval => @true_ast, :operator => "and", :lval => @true_ast ).evaluate(@scope).should be_true
   end
 
+  it "should return true for true XOR false" do
+    ast::BooleanOperator.new(:rval => @false_ast, :operator => "xor", :lval => @true_ast ).evaluate(@scope).should be_true
+  end
+
+  it "should return true for false XOR true" do
+    ast::BooleanOperator.new(:rval => @true_ast, :operator => "xor", :lval => @false_ast ).evaluate(@scope).should be_true
+  end
+
+  it "should return false for false XOR false" do
+    ast::BooleanOperator.new(:rval => @false_ast, :operator => "xor", :lval => @false_ast ).evaluate(@scope).should be_false
+  end
+
+  it "should return false for true XOR true" do
+    ast::BooleanOperator.new(:rval => @true_ast, :operator => "xor", :lval => @true_ast ).evaluate(@scope).should be_false
+  end
+
 end
