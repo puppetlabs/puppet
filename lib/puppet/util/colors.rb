@@ -83,6 +83,61 @@ module Puppet::Util::Colors
     # We're on windows, need win32console for color to work
     begin
       require 'win32console'
+      require 'windows/wide_string'
+
+      # The win32console gem uses ANSI functions for writing to the console
+      # which doesn't work for unicode strings, e.g. module tool. Ruby 1.9
+      # does the same thing, but doesn't account for ANSI escape sequences
+      class WideConsole < Win32::Console
+        WriteConsole                = Win32API.new( "kernel32", "WriteConsoleW", ['l', 'p', 'l', 'p', 'p'], 'l' )
+        WriteConsoleOutputCharacter = Win32API.new( "kernel32", "WriteConsoleOutputCharacterW", ['l', 'p', 'l', 'l', 'p'], 'l' )
+
+        def initialize(t = nil)
+          super(t)
+        end
+
+        def WriteChar(str, col, row)
+          dwWriteCoord = (row << 16) + col
+          lpNumberOfCharsWritten = ' ' * 4
+          utf16, nChars = string_encode(str)
+          WriteConsoleOutputCharacter.call(@handle, utf16, nChars, dwWriteCoord, lpNumberOfCharsWritten)
+          lpNumberOfCharsWritten.unpack('L')
+        end
+
+        def Write(str)
+          written = 0.chr * 4
+          reserved = 0.chr * 4
+          utf16, nChars = string_encode(str)
+          WriteConsole.call(@handle, utf16, nChars, written, reserved)
+        end
+
+        if String.method_defined?("encode")
+          def string_encode(str)
+            wstr = str.encode('UTF-16LE')
+            [wstr, wstr.length]
+          end
+        else
+          require 'iconv'
+          def string_encode(str)
+            wstr = Iconv.conv('UTF-16LE', 'UTF-8', str)
+            [wstr, wstr.length/2]
+          end
+        end
+      end
+
+      # Override the win32console's IO class so we can supply
+      # our own Console class
+      class WideIO < Win32::Console::ANSI::IO
+        def initialize(fd_std = :stdout)
+          super(fd_std)
+
+          handle = FD_STD_MAP[fd_std][1]
+          @Out = WideConsole.new(handle)
+        end
+      end
+
+      $stdout = WideIO.new(:stdout)
+      $stderr = WideIO.new(:stderr)
     rescue LoadError
       def console_has_color?
         false
