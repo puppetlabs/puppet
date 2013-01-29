@@ -16,7 +16,10 @@ module HieraPuppet
       raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied")
     end
 
-    answer
+    # The result of the hiera.lookup can be a ruby template ( <% ... %> )
+    # and will be parsed just like the puppet template() and inline_template() functions
+    recursive_parsing(scope, answer)
+
   end
 
   def parse_args(args)
@@ -85,5 +88,33 @@ module HieraPuppet
 
     config_file
   end
+
+  def recursive_parsing(scope, question)
+
+    if scope.class == Puppet::DataBinding::Variables
+      scope = scope.get_scope
+    end
+
+    if not question.nil?
+      wrapper = Puppet::Parser::TemplateWrapper.new(scope)
+      case question
+      when Array
+        answer = question.collect { |x| x = recursive_parsing(scope, x)  }
+      when Hash
+        answer = question.inject({}) { |h, (k, v)| h[k] = recursive_parsing(scope, v); h }
+      else
+        begin
+          answer = wrapper.result("#{question}")
+        rescue => detail
+          raise Puppet::ParseError,
+            "Failed to parse inline template (#{question}): #{detail}"
+        end
+      end
+      return answer
+    end
+    return nil
+
+  end
+
 end
 

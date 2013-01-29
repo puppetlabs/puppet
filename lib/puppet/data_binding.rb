@@ -36,5 +36,9 @@ class Puppet::DataBinding
     def function_include(name)
       # noop
     end
+
+    def get_scope
+      @variable_bindings
+    end
   end
 end
