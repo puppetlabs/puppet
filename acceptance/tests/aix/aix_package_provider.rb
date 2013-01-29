@@ -2,6 +2,12 @@ test_name "aix package provider should work correctly"
 
 confine :to, :platform => /aix/
 
+dir = "/tmp/aix-packages-#{$$}"
+
+teardown do
+  on hosts, "rm -rf #{dir}"
+end
+
 def assert_package_version(package, expected_version)
   # The output of lslpp is a colon-delimited list like:
   # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
@@ -11,8 +17,6 @@ def assert_package_version(package, expected_version)
     assert_equal(expected_version, actual_version, "Installed package version #{actual_version} does not match expected version #{expected_version}")
   end
 end
-
-dir = "/tmp/aix-packages-#{$$}"
 
 package = 'sudo.rte'
 version1 = '1.7.10.4'
