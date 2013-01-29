@@ -24,7 +24,7 @@ describe Puppet::Parser::AST::ArithmeticOperator do
   end
 
   it "should fail for an unknown operator" do
-    lambda { operator = ast::ArithmeticOperator.new :lval => @one, :operator => "%", :rval => @two }.should raise_error
+    lambda { operator = ast::ArithmeticOperator.new :lval => @one, :operator => "^", :rval => @two }.should raise_error
   end
 
   it "should call Puppet::Parser::Scope.number?" do
@@ -35,7 +35,7 @@ describe Puppet::Parser::AST::ArithmeticOperator do
   end
 
 
-  %w{ + - * / << >>}.each do |op|
+  %w{ + - * / % << >>}.each do |op|
     it "should call ruby Numeric '#{op}'" do
       one = stub 'one'
       two = stub 'two'
