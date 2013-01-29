@@ -82,4 +82,4 @@ apply_manifest_on hosts, absent_manifest
 
 step "verify the package is gone"
 
-on hosts, "lslpp -qLc PACKAGE_NAME", :acceptable_exit_codes => [1]
+on hosts, "lslpp -qLc #{package}", :acceptable_exit_codes => [1]
