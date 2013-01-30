@@ -12,7 +12,11 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
-  options :expiry, :method => :expire
+  options :expiry, :method => :expire, :munge => proc { |value|
+    value = '0000-00-00' if value == :absent
+    value.split("-").reverse.join("-")
+  }
+
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -26,21 +30,13 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     cmd = [command(:pw), "useradd", @resource[:name]]
     @resource.class.validproperties.each do |property|
       next if property == :ensure or property == :password
-      # the value needs to be quoted, mostly because -c might
-      # have spaces in it
       if value = @resource.should(property) and value != ""
-        if property == :expiry
-          # FreeBSD uses DD-MM-YYYY rather than YYYY-MM-DD
-          value = value.split("-").reverse.join("-")
-        end
-        cmd << flag(property) << value
+        cmd << flag(property) << munge(property,value)
       end
     end
 
     cmd << "-o" if @resource.allowdupe?
-
     cmd << "-m" if @resource.managehome?
-
     cmd
   end
 
