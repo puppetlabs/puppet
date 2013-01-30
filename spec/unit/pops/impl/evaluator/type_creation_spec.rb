@@ -44,7 +44,10 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
   context "When the evaluator deals with type creation" do
     context "it should handle" do
       it "A simple type with one attribute" do
+        pending "Test is UNFINISHED"    
+
         type_expr = TYPE('MyType').attributes(ATTR('name'))
+        puts "type_creation_spec.rb UNFINISHED"
         puts evaluate(type_expr)
       end
 #      it "local scope shadows top scope and fqn set in top scope" do

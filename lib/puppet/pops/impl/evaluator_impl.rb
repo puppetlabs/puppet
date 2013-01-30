@@ -278,7 +278,7 @@ module Puppet; module Pops; module Impl
     # Evaluates x[key]
     #
     def eval_AccessExpression(o, scope)
-      left, right = eval_BinaryExpression(o, scope)
+      left = evaluate(o.left_expr, scope)
       container = if o.left_expr.is_a?(Puppet::Pops::API::Model::QualifiedName)
         begin
           scope.get_data_entry(left.value, right)
@@ -292,7 +292,16 @@ module Puppet; module Pops; module Impl
         fail "The operator [] is not applicable to the left expression.", o, scope
       end  
       # Result is the looked up key
-      container[right]
+      case o.keys.size
+      when 0
+        nil # or issue error
+      when 1
+        # single value result
+        container[evaluate(o.keys()[0], scope)]
+      else
+        # multiple keys, result is an array
+        o.keys.collect {|k| container[evaluate(k, scope)] }
+      end
     end
     
     # Evaluates <, <=, >, >=, and ==

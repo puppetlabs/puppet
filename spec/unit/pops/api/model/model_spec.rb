@@ -29,11 +29,11 @@ describe Puppet::Pops::Impl::Model::Factory do
   
   it "should be easy to compare using a model tree dumper" do
     x = Factory.literal(10) + Factory.literal(20)
-    Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "(+ 10 20)"
+    Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x.current).should == "(+ 10 20)"
   end
 
   it "builder should apply precedence" do
     x = Factory.literal(2) * Factory.literal(10) + Factory.literal(20)
-    Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "(+ (* 2 10) 20)"
+    Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x.current).should == "(+ (* 2 10) 20)"
   end
 end
