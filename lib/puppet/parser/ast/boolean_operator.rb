@@ -34,16 +34,13 @@ class Puppet::Parser::AST
           rval = @rval.safeevaluate(scope)
           Puppet::Parser::Scope.true?(rval)
         end
-      when "xor"
-        rval = @rval.safeevaluate(scope)
-        Puppet::Parser::Scope.true?(lval) ^ Puppet::Parser::Scope.true?(rval)
       end
     end
 
     def initialize(hash)
       super
 
-      raise ArgumentError, "Invalid boolean operator #{@operator}" unless %w{and or xor}.include?(@operator)
+      raise ArgumentError, "Invalid boolean operator #{@operator}" unless %w{and or}.include?(@operator)
     end
   end
 end

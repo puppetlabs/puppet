@@ -304,7 +304,6 @@ class Puppet::Parser::Lexer
     "node"     => :NODE,
     "and"      => :AND,
     "or"       => :OR,
-    "xor"      => :XOR,
     "undef"    => :UNDEF,
     "false"    => :FALSE,
     "true"     => :TRUE,
