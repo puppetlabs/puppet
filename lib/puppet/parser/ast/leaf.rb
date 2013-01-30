@@ -159,12 +159,12 @@ class Puppet::Parser::AST
       object = evaluate_container(scope)
       accesskey = evaluate_key(scope)
 
-      if object.is_a?(Hash) and object.include?(accesskey)
-        raise Puppet::ParseError, "Assigning to the hash '#{variable}' with an existing key '#{accesskey}' is forbidden"
-      end
-
       # assign to hash or array
-      object[array_index_or_key(object, accesskey)] = value
+      begin
+        object[array_index_or_key(object, accesskey)] = value
+      rescue TypeError
+        raise Puppet::ParseError, "Cannot modify existing #{object.class.to_s.downcase} '#{variable}'"
+      end
     end
 
     def to_s

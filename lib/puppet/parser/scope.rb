@@ -382,6 +382,10 @@ class Puppet::Parser::Scope
     else 
       table[name] = value
     end
+
+    # We freeze the variable to avoid any modification of it
+    # as variables are immutable within a scope.
+    table[name].freeze
   end
 
   # Sets the variable value of the name given as an argument to the given value. The value is
