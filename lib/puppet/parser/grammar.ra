@@ -12,7 +12,7 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-token IN UNLESS XOR
+token IN UNLESS
 
 prechigh
   right NOT
@@ -24,7 +24,7 @@ prechigh
   left  NOTEQUAL ISEQUAL
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
   left  AND
-  left  OR XOR
+  left  OR
 preclow
 
 rule
@@ -83,7 +83,6 @@ keyword: AND
  | INHERITS
  | NODE
  | OR
- | XOR
  | UNDEF
  | UNLESS
 
@@ -524,9 +523,6 @@ expression:   rvalue
     result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
   | expression OR expression {
-    result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
-}
-  | expression XOR expression {
     result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
   | LPAREN expression RPAREN {
