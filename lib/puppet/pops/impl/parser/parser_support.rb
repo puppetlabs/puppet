@@ -4,6 +4,8 @@
 #
 class Puppet::Pops::Impl::Parser::Parser
 
+  require 'puppet/pops/api/model/model'
+  require 'puppet/pops/impl/model/factory'
   require 'puppet/parser/functions'
   require 'puppet/parser/files'
   require 'puppet/resource/type_collection'
@@ -12,6 +14,12 @@ class Puppet::Pops::Impl::Parser::Parser
   require 'monitor'
   
   # Simplify access to the Model factory
+  Factory = Puppet::Pops::Impl::Model::Factory
+  
+  # Simplify access to Model (not terribly thrilled about making parser depend on model,
+  # but would otherwise require depending on something else that knows about semnatics
+  #
+  Model = Puppet::Pops::API::Model
   Factory = Puppet::Pops::Impl::Model::Factory
 
   include Puppet::Resource::TypeCollectionHelper
@@ -37,11 +45,12 @@ class Puppet::Pops::Impl::Parser::Parser
 
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
-    if t
-      t[:value]
-    else
-      nil
-    end
+    return t if t.nil?
+    t = t.current if t.respond_to?(:current)
+    return t.value if t.is_a? Model::QualifiedName
+
+    # else it is a lexer token
+    t[:value]
   end
   
   # The fully qualified name, with the full namespace.
@@ -178,6 +187,32 @@ class Puppet::Pops::Impl::Parser::Parser
     end
   end
   
+  def aryfy(o)
+    o = [o] unless o.is_a?(Array)
+    o
+  end
+
+  # Transforms an array of expressions containing literal name expressions to calls if followed by an
+  # expression, or expression list
+  #
+  def transform_calls(expressions)
+    expressions.reduce([]) do |memo, expr|
+      expr = expr.current if expr.respond_to?(:current)
+      name = memo[-1]
+      if name.is_a? Model::QualifiedName
+        memo[-1] = Factory.CALL_NAMED(name, false, aryfy(expr))
+      else
+        memo << expr
+      end
+      if expr.is_a?(Model::CallNamedFunctionExpression)
+        # patch expression function call to statement style
+        # TODO: This is kind of meaningless, but to make it compatible...
+        expr.rval_required = false
+      end
+      memo
+    end
+    
+  end
   # Performs the parsing and returns the resulting model.
   # The lexer holds state, and this is setup with {#parse_string}, or {#parse_file}.
   #

@@ -7,7 +7,7 @@ require 'puppet/pops/impl/model/factory'
 require 'puppet/pops/impl/model/model_tree_dumper'
 require 'puppet/pops/impl/evaluator_impl'
 require 'puppet/pops/impl/base_scope'
-require 'puppet/pops/impl/parser/parser'
+require 'puppet/pops/impl/parser/eparser'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
@@ -63,11 +63,11 @@ describe Puppet::Pops::Impl::Parser::Parser do
   end
   context "When parsing resource defaults" do
     it "File {  }" do
-      dump(parse("File { }")).should == "(resource-defaults File)"
+      dump(parse("File { }")).should == "(resource-defaults file)"
     end
     it "File { mode => 0777 }" do
       dump(parse("File { mode => 0777}")).should == [
-        "(resource-defaults File",
+        "(resource-defaults file",
         "  (mode => 0777))"
         ].join("\n")
       end
@@ -75,16 +75,16 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
   context "When parsing resource override" do
     it "File['x'] {  }" do
-      dump(parse("File['x'] { }")).should == "(override (File 'x'))"
+      dump(parse("File['x'] { }")).should == "(override (slice file 'x'))"
     end
     it "File['x'] { x => 1 }" do
-      dump(parse("File['x'] { x => 1}")).should == "(override (File 'x')\n  (x => 1))"
+      dump(parse("File['x'] { x => 1}")).should == "(override (slice file 'x')\n  (x => 1))"
     end
     it "File['x'] { x => 1, y => 2 }" do
-      dump(parse("File['x'] { x => 1, y=> 2}")).should == "(override (File 'x')\n  (x => 1)\n  (y => 2))"
+      dump(parse("File['x'] { x => 1, y=> 2}")).should == "(override (slice file 'x')\n  (x => 1)\n  (y => 2))"
     end
     it "File['x'] { x +> 1 }" do
-      dump(parse("File['x'] { x +> 1}")).should == "(override (File 'x')\n  (x +> 1))"
+      dump(parse("File['x'] { x +> 1}")).should == "(override (slice file 'x')\n  (x +> 1))"
     end
   end
 

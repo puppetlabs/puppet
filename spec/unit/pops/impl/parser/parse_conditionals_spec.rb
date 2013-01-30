@@ -7,7 +7,7 @@ require 'puppet/pops/impl/model/factory'
 require 'puppet/pops/impl/model/model_tree_dumper'
 require 'puppet/pops/impl/evaluator_impl'
 require 'puppet/pops/impl/base_scope'
-require 'puppet/pops/impl/parser/parser'
+require 'puppet/pops/impl/parser/eparser'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
@@ -19,6 +19,7 @@ end
 # Tests containers (top level in file = expr or a block), class, define, and node  
 describe Puppet::Pops::Impl::Parser::Parser do
   EvaluationError = Puppet::Pops::EvaluationError
+  Model = Puppet::Pops::API::Model
 
   context "When running these examples, the setup" do
 
@@ -75,6 +76,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
   end
 
   context "When parsing selector expressions" do
+    it "$a = $b ? banana => fruit " do
+      dump(parse("$a = $b ? banana => fruit")).should == 
+        "(= $a (? $b (banana => fruit)))"
+    end
+    it "$a = $b ? { banana => fruit}" do
+      dump(parse("$a = $b ? { banana => fruit }")).should == 
+        "(= $a (? $b (banana => fruit)))"
+    end
     it "$a = $b ? { banana => fruit, grape => berry }" do
       dump(parse("$a = $b ? {banana => fruit, grape => berry}")).should == 
         "(= $a (? $b (banana => fruit) (grape => berry)))"

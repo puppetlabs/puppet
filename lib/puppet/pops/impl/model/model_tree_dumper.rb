@@ -42,9 +42,9 @@ module Puppet; module Pops; module Impl; module Model
     def dump_LiteralValue o
       o.value.to_s
     end
-
+    
     def dump_Factory o
-      dump o.current
+      do_dump(o.current)
     end
 
     def dump_ArithmeticExpression o
@@ -53,7 +53,11 @@ module Puppet; module Pops; module Impl; module Model
 
     # x[y] prints as (slice x y)
     def dump_AccessExpression o
-      ["slice", do_dump(o.left_expr), do_dump(o.right_expr)] 
+      if o.keys.size <= 1
+        ["slice", do_dump(o.left_expr), do_dump(o.keys[0])]
+      else
+        ["slice", do_dump(o.left_expr), do_dump(o.keys)]
+      end
     end
 
     def dump_MatchesExpression o       
@@ -102,7 +106,7 @@ module Puppet; module Pops; module Impl; module Model
     end
     
     def dump_InstanceReferences o
-      [do_dump(o.type_name)] + o.names.collect {|n| do_dump(n) }
+      ["instances", do_dump(o.type_name)] + o.names.collect {|n| do_dump(n) }
     end
 
     def dump_AssignmentExpression o
@@ -281,11 +285,11 @@ module Puppet; module Pops; module Impl; module Model
       result
     end
 
-    def dump_CallNamedFunctionExpression o
-      result = [o.rval_required ? "call" : "invoke", do_dump(o.functor_expr)]
-      o.arguments.collect {|a| result << do_dump(a) }
-      result
-    end
+#    def dump_CallNamedFunctionExpression o
+#      result = [o.rval_required ? "call" : "invoke", do_dump(o.functor_expr)]
+#      o.arguments.collect {|a| result << do_dump(a) }
+#      result
+#    end
     
     def dump_CallMethodExpression o
       result = [o.rval_required ? "call-method" : "invoke-method", do_dump(o.functor_expr)]
@@ -308,7 +312,7 @@ module Puppet; module Pops; module Impl; module Model
       result << ["then", do_dump(o.then_expr) ]
       result
     end
-
+    
     def dump_ResourceBody o
       result = [do_dump(o.title), :indent]
       o.operations.each do |p|

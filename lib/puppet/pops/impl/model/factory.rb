@@ -29,7 +29,12 @@ class Factory
 
   # Polymorphic build
   def build(o, *args)
+    begin
     @@build_visitor.visit_this(self, o, *args)
+    rescue =>e
+      require 'debugger'; debugger # TODO: remove this
+      raise e
+    end
   end
   
   # Building of Model classes
@@ -51,6 +56,12 @@ class Factory
     o
   end
 
+  def build_AccessExpression(o, left, *keys)
+    o.left_expr = to_ops(left)
+    keys.each {|expr| o.addKeys(to_ops(expr)) }
+    o
+  end
+
   def build_BinaryExpression(o, left, right)
     o.left_expr = to_ops(left)
     o.right_expr = to_ops(right)
@@ -58,12 +69,12 @@ class Factory
   end
 
   def build_BlockExpression(o, *args)
-    args.each {|expr| o.addStatements(build(expr)) }
+    args.each {|expr| o.addStatements(to_ops(expr)) }
     o  
   end
   
   def build_CollectExpression(o, type_expr, query_expr, attribute_operations)
-    o.type_expr = build(type_expr)
+    o.type_expr = to_ops(type_expr)
     o.query = build(query_expr)
     attribute_operations.each {|op| o.addOperations(build(op)) }
     o
@@ -216,13 +227,8 @@ class Factory
     o
   end
 
-  def build_QualifiedName(o, name)
-    o.value = name.to_s
-    o
-  end
-
   def build_QualifiedReference(o, name)
-    o.value = name.to_s
+    o.value = name.to_s.downcase
     o
   end
 
@@ -284,6 +290,9 @@ class Factory
   def f_build_binary(klazz, left, right)
     Factory.new(build(klazz.new, left, right))
   end  
+  def f_build_vararg(klazz, left, *arg)
+    Factory.new(build(klazz.new, left, *arg))
+  end  
   
   def f_arithmetic(op, r)
     f_build_binary_op(Model::ArithmeticExpression, op, current, r)
@@ -305,7 +314,7 @@ class Factory
   def minus();  f_build_unary(Model::UnaryMinusExpression, self);         end
   def text();   f_build_unary(Model::TextExpression, self);               end
   def var();    f_build_unary(Model::VariableExpression, self);           end
-  def [](r);    f_build_binary(Model::AccessExpression, current, r);      end
+  def [](*r);   f_build_vararg(Model::AccessExpression, current, *r);     end
   def dot r;    f_build_binary(Model::NamedAccessExpression, current, r); end
   def + r;      f_arithmetic(:+, r);                                      end
   def - r;      f_arithmetic(:-, r);                                      end
@@ -385,12 +394,33 @@ class Factory
     [a.start_line, a.end_line]
   end
   
+  # Returns symbolic information about a expected share of a resource expression given the LHS of a resource expr.
+  #
+  # * `name { }` => `:resource`,  create a resource of the given type
+  # * `Name { }` => ':defaults`, set defauls for the referenced type
+  # * `Name[] { }` => `:override`, ioverrides nstances referenced by LHS
+  # * _any other_ => ':error', all other are considered illegal
+  #  
+  def Factory.resource_shape(expr)
+    expr = expr.current if expr.is_a?(Factory)
+    case expr
+    when Model::QualifiedName
+      :resource
+    when Model::QualifiedReference
+      :defaults
+    when Model::AccessExpression
+      :override
+    when 'class'
+      :class
+    else
+      :error
+    end
+  end
   # Factory starting points
   
   def Factory.literal(o);                   new(o);                                                 end  
   def Factory.minus(o);                     new(o).minus;                                           end
   def Factory.var(o);                       new(o).var;                                             end
-  def Factory.fqn(o);                       new(Model::QualifiedName, o);                           end
   def Factory.block(*args);                 new(Model::BlockExpression, *args);                     end
   def Factory.string(*args);                new(Model::ConcatenatedString, *args);                  end
   def Factory.text(o);                      new(o).text;                                            end
@@ -409,6 +439,23 @@ class Factory
   def Factory.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
   def Factory.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
 
+  # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
+  # case it is returned.
+  #
+  def Factory.fqn(o)
+    o = o.current if o.is_a?(Factory)
+    o = new(Model::QualifiedName, o) unless o.is_a? Model::QualifiedName
+    o
+  end
+  # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
+  # case it is returned.
+  #
+  def Factory.fqr(o)
+    o = o.current if o.is_a?(Factory)
+    o = new(Model::QualifiedReference, o) unless o.is_a? Model::QualifiedReference
+    o
+  end
+  
   def Factory.TEXT(expr)
     new(Model::TextExpression, expr) 
   end
@@ -451,7 +498,10 @@ class Factory
   end
 
   def Factory.CALL_NAMED(name, rval_required, argument_list)
-    new(Model::CallNamedFunctionExpression, Factory.fqn(name), rval_required, *argument_list)
+    unless name.kind_of?(Model::PopsObject)
+      name = Factory.fqn(name) unless name.is_a?(Factory)
+    end    
+    new(Model::CallNamedFunctionExpression, name, rval_required, *argument_list)
   end
 
   def Factory.CALL_METHOD(functor, argument_list)
@@ -459,7 +509,7 @@ class Factory
   end
 
   def Factory.COLLECT(type_expr, query_expr, attribute_operations)
-    new(Model::CollectExpression, fqn(type_expr), query_expr, attribute_operations)
+    new(Model::CollectExpression, Factory.fqr(type_expr), query_expr, attribute_operations)
   end
   
   def Factory.NAMED_ACCESS(type_name, bodies)
@@ -586,9 +636,9 @@ class Factory
 
   # @param rval_required [Boolean] if the call must produce a value
   def build_CallExpression(o, functor, rval_required, *args)
-    o.functor_expr = build(functor)
+    o.functor_expr = to_ops(functor)
     o.rval_required = rval_required
-    args.each {|x| o.addArguments(build(x)) }
+    args.each {|x| o.addArguments(to_ops(x)) }
     o
   end
   

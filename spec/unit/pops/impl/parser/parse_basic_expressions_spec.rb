@@ -7,7 +7,7 @@ require 'puppet/pops/impl/model/factory'
 require 'puppet/pops/impl/model/model_tree_dumper'
 require 'puppet/pops/impl/evaluator_impl'
 require 'puppet/pops/impl/base_scope'
-require 'puppet/pops/impl/parser/parser'
+require 'puppet/pops/impl/parser/eparser'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
@@ -18,6 +18,7 @@ end
   
 describe Puppet::Pops::Impl::Parser::Parser do
   EvaluationError = Puppet::Pops::EvaluationError
+  Model = Puppet::Pops::API::Model
   
   context "When running these examples, the setup" do
     
@@ -113,13 +114,13 @@ describe Puppet::Pops::Impl::Parser::Parser do
     # Possibly change to check of literal expressions   
     context "on values requiring boxing to Boolean" do
       it "'x'            == true" do
-        evaluate(literal('x').not()).should == false
+        dump(parse("! 'x'")).should == "(! 'x')"
       end
       it "''             == false" do
-        evaluate(literal('').not()).should == true
+        dump(parse("! ''")).should == "(! '')"
       end
       it ":undef         == false" do
-        evaluate(literal(:undef).not()).should == true
+        dump(parse("! undef")).should == "(! :undef)"
       end
     end    
   end

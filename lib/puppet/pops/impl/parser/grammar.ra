@@ -152,7 +152,7 @@ lambda
     }
 # Produces Array<Model::Parameter>
 lambda_parameter_list
-  : PIPE nothing PIPE             { result = val[1] }
+  : PIPE PIPE             { result = [] }
   | PIPE parameters endcomma PIPE { result = val[1] }
   
 # Produces Array<Model::Expression>
@@ -165,18 +165,6 @@ expressions
   : expression                   { result = [val[0]] }
   | expressions comma expression { result = val[0].push(val[2]) }
 
-rvalue
-  : quotedtext
-  | name
-  | type
-  | boolean
-  | selector
-  | variable
-  | array
-  | hasharrayaccesses
-  | resourceref
-  | call_named_rval_function
-  | undef
 
 # Produces [Model::ResourceExpression, Model::ResourceDefaultsExpression]
 resource
@@ -275,15 +263,6 @@ resourceinstances
   : resourceinst                         { result = [val[0]] }
   | resourceinstances SEMIC resourceinst { result = val[0].push val[2] }
 
-endsemi
-  : # 
-  | SEMIC
-
-undef
-  : UNDEF { result = Factory.literal(:undef); loc result, val[0] }
-
-name : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
-type : CLASSREF { result = Factory.QREF(val[0][:value])  ; loc result, val[0] }
 
 resourcename
   : quotedtext
@@ -298,7 +277,7 @@ resourcename
 # enable a better error message
 assignment
   : VARIABLE EQUALS expression { result = Factory.var(Factory.fqn(val[0][:value])).set(val[2]) ; loc result, val[1] }
-  | hasharrayaccess EQUALS expression { result val[0].set(val[2]); local result, val[1] }
+  | hasharrayaccess EQUALS expression { result val[0].set(val[2]); loc result, val[1] }
 
 append
   : VARIABLE APPENDS expression { result = Factory.var(val[0][:value]).plus_set(val[1]) ; loc result, val[1] }
@@ -352,9 +331,6 @@ dqtail
   : dqpost       { result = [val[0]] }
   | dqmid dqrval  { result = [val[0]] + val[1] }
 
-boolean
-  # Assumes lexer produces a Boolean value for booleans, or this will go wrong (e.g. produce. LiteralString)
-  : BOOLEAN { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 
 # Reference to Resource (future also reference to other instances of other types than Resources).
 # First form (lower case name) is deprecated (deprecation message handled in validation). Note that
@@ -530,9 +506,16 @@ selectable
   | default
   | regex
 
-default
-  : DEFAULT { result = Factory.literal(:default); loc result, val[0] }
   
+
+# Produces nil (noop)
+import
+  : IMPORT strings {
+      error "Import not supported in this version of the parser", \
+          :line => stmt.context[:line], :file => stmt.context[:file]
+      result = nil
+  }
+
 # IMPORT (T.B DEPRECATED IN PUPPET WHEN IT HAS BEEN FIGURED OUT HOW TO SUPPORT
 # THE THINGS IMPORTS ARE USED FOR.
 # BOLDLY DECIDED TO SKIP THIS COMPLETELY IN THIS IMPLEMENTATION - will trigger an error
@@ -544,14 +527,6 @@ string
 strings
   :  string
   |  strings COMMA string { result = val[0].push val[2] }
-
-# Produces nil (noop)
-import
-  : IMPORT strings {
-      error "Import not supported in this version of the parser", \
-          :line => stmt.context[:line], :file => stmt.context[:file]
-      result = nil
-  }
 
 # Produces Model::Definition
 definition
@@ -628,17 +603,11 @@ hostname
   | DEFAULT { result = Factory.literal(:default); loc result, val[0] }
   | regex
 
-nil
-  : { result = nil}
-
-# Empty list - not really needed? TODO: Check if this can be removed
-nothing
-  : { result = [] }
 
 # Produces Array<Model::Parameter>
 parameter_list
-  : nil                              { result = [] }
-  | LPAREN nothing RPAREN            { result = val[1] }
+  : nil                               { result = [] }
+  | LPAREN  RPAREN                    { result = [] }
   | LPAREN parameters endcomma RPAREN { result = val[1] }
 
 # Produces Array<Model::Parameter>
@@ -670,27 +639,24 @@ classnameordefault
   : classname
   | DEFAULT
 
-# Produces Model::VariableExpression
-variable
-  : VARIABLE { result = Factory.fqn(val[0][:value]).var ; loc result, val[0] }
+rvalue
+  : quotedtext
+  | name
+  | type
+  | boolean
+  | selector
+  | variable
+  | array
+  | hasharrayaccesses
+  | resourceref
+  | call_named_rval_function
+  | undef
 
 array
   : LBRACK expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
   | LBRACK expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
   | LBRACK                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
 
-# WAT !!!! this means array can be [1=>2=>3], func (1=>2=>3), and other retarded constructs
-# TODO: Remove the FARROW (investigate if there is any validity)
-comma
-  : FARROW
-  | COMMA
-
-endcomma
-  : # nothing
-  | COMMA { result = nil }
-
-regex
-  : REGEX { result = Factory.literal(val[0][:value]); loc result, val[0] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
@@ -718,7 +684,47 @@ hasharrayaccesses
   : hasharrayaccess
   | hasharrayaccesses LBRACK expression RBRACK { result = val[0][val[2]] ; loc result, val[1], val[3] }
 
+# Produces Model::VariableExpression
+variable : VARIABLE { result = Factory.fqn(val[0][:value]).var ; loc result, val[0] }
+undef    : UNDEF    { result = Factory.literal(:undef); loc result, val[0] }
+name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
+type     : CLASSREF { result = Factory.QREF(val[0][:value])  ; loc result, val[0] }
+
+default
+  : DEFAULT { result = Factory.literal(:default); loc result, val[0] }
+
+boolean
+  # Assumes lexer produces a Boolean value for booleans, or this will go wrong (e.g. produce. LiteralString)
+  : BOOLEAN { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+
+regex
+  : REGEX { result = Factory.literal(val[0][:value]); loc result, val[0] }
+
+# ---Special markers & syntactic sugar
+
+# WAT !!!! this means array can be [1=>2=>3], func (1=>2=>3), and other retarded constructs
+# TODO: Remove the FARROW (investigate if there is any validity)
+comma
+  : FARROW
+  | COMMA
+
+endcomma
+  : #
+  | COMMA { result = nil }
+
+endsemi
+  : #
+  | SEMIC
+
+nil
+  : { result = nil}
+
+## Empty list - not really needed? TODO: Check if this can be removed
+#empty_list
+#  : { result = [] }
+
 end
+
 ---- header ----
 require 'puppet'
 require 'puppet/util/loadedfile'

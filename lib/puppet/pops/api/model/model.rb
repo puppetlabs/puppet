@@ -124,9 +124,12 @@ module Puppet; module Pops; module API; module Model
   # A binary expression, that accesses the value denoted by right in left. i.e. typically
   # expressed concretely in a language as left[right].
   #--
-  # Corresponds to HashOrArrayAccess
+  # Corresponds somewhat to HashOrArrayAccess, but allows multiple keys (producing an array)
   #
-  class AccessExpression < BinaryExpression; end
+  class AccessExpression < Expression
+    contains_one_uni 'left_expr', Expression, :lowerBound => 1
+    contains_many_uni 'keys', Expression, :lowerBound => 1
+  end
 
 
   # A comparison expression compares left and right using a comparison operator.
@@ -507,7 +510,7 @@ module Puppet; module Pops; module API; module Model
   # Corresponds to ResourceOverride
   #
   class ResourceOverrideExpression < Expression
-    contains_one_uni 'resources', InstanceReferences
+    contains_one_uni 'resources', Expression, :lowerBound => 1
     contains_many_uni 'operations', AttributeOperation
   end
 
