@@ -14,8 +14,8 @@ describe Puppet::Provider::NameService do
   # These are values getpwent might give you
   let :users do
     [
-      Struct::Passwd.new('root', 'x', 0, 0, 'root', '/root', '/bin/zsh'),
-      Struct::Passwd.new('foo', 'x', 1000, 2000, 'some comment', '/home/foo', '/bin/bash'),
+      Struct::Passwd.new('root', 'x', 0, 0),
+      Struct::Passwd.new('foo', 'x', 1000, 2000),
       nil
     ]
   end
@@ -129,7 +129,7 @@ describe Puppet::Provider::NameService do
       described_class.listbyname.should == %w{root foo}
     end
 
-    it "should return a list of groups if resource_type is group" do
+    it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
       Etc.expects(:setgrent)
       Etc.stubs(:getgrent).returns *groups
