@@ -41,7 +41,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when setting signal traps" do
     signals = {:INT => :stop, :TERM => :stop }
-    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}) unless Puppet.features.microsoft_windows?
+    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs, :ALRM => :reload_now}) unless Puppet.features.microsoft_windows?
     signals.each do |signal, method|
       it "should log and call #{method} when it receives #{signal}" do
         Signal.expects(:trap).with(signal).yields
@@ -208,6 +208,29 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
       @daemon.agent = @agent
 
       @daemon.reload
+    end
+  end
+
+  describe "when reloading now" do
+    it "should do nothing if no agent is configured" do
+      @daemon.reload
+    end
+
+    it "should do nothing if the agent is running" do
+      @agent.expects(:running?).returns true
+
+      @daemon.agent = @agent
+
+      @daemon.reload_now
+    end
+
+    it "should run the agent if one is available and it is not running" do
+      @agent.expects(:running?).returns false
+      @agent.expects(:run).with({:splay => false})
+
+      @daemon.agent = @agent
+
+      @daemon.reload_now
     end
   end
 
