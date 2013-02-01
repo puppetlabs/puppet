@@ -1944,9 +1944,9 @@ class Type
   # See {autorequire} for how to add an auto-requirement.
   # @todo needs details - see the param rel_catalog, and type of this param
   # @param rel_catalog [Puppet::Catalog, nil] the catalog to add dependencies to. Defaults to the
-  #   catalog (TODO: what is the type of the catalog).
+  #   catalog (TODO: what is the type of the catalog). 
   # @raise [Puppet::DevError] if there is no catalog
-  #
+  # 
   def autorequire(rel_catalog = nil)
     rel_catalog ||= catalog
     raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
