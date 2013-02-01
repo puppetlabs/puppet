@@ -28,13 +28,13 @@ describe provider_class do
   describe "when installing" do
     it "should install a package" do
       @resource.stubs(:should).with(:ensure).returns(:installed)
-      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets='mypackage'")
+      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage")
       @provider.install
     end
 
     it "should install a versioned package" do
       @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets='mypackage 1.2.3.4'")
+      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage 1.2.3.4")
       @provider.install
     end
   end
