@@ -33,7 +33,7 @@ class Puppet::Parser::AST
     def initialize(hash)
       super
 
-      raise ArgumentError, "Invalid arithmetic operator #{@operator}" unless %w{+ - * / << >>}.include?(@operator)
+      raise ArgumentError, "Invalid arithmetic operator #{@operator}" unless %w{+ - * / % << >>}.include?(@operator)
     end
   end
 end
