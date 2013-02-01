@@ -155,6 +155,7 @@ class Puppet::Parser::Lexer
     '-'   => :MINUS,
     '/'   => :DIV,
     '*'   => :TIMES,
+    '%'   => :MODULO,
     '<<'  => :LSHIFT,
     '>>'  => :RSHIFT,
     '=~'  => :MATCH,
