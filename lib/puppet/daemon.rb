@@ -72,14 +72,21 @@ class Puppet::Daemon
     exec(command)
   end
 
-  def reload
+  def reload_now()
+    reload(true)
+  end
+
+  def reload(now = false)
     return unless agent
     if agent.running?
       Puppet.notice "Not triggering already-running agent"
       return
     end
-
-    agent.run
+    if (now) then
+      agent.run({:splay => false})
+    else
+      agent.run
+    end
   end
 
   # Remove the pid file for our daemon.
@@ -103,7 +110,7 @@ class Puppet::Daemon
   def set_signal_traps
     signals = {:INT => :stop, :TERM => :stop }
     # extended signals not supported under windows
-    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
+    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs, :ALRM => :reload_now }) unless Puppet.features.microsoft_windows?
     signals.each do |signal, method|
       Signal.trap(signal) do
         Puppet.notice "Caught #{signal}; calling #{method}"
