@@ -91,4 +91,45 @@ describe Puppet::Provider::ParsedFile do
       @class.flush_target("/my/file")
     end
   end
+
+  describe "when writing file contents back to disk" do
+    before do
+      # convert the fixture to text - we will use this
+      # to build our test criteria
+      input = YAML.load(File.read(my_fixture('simple_header.yaml')))
+      lines = input.collect { |r| r[:line] }
+      @text = lines.join("\n")
+
+      # uh oh - cargo cultist ahoy
+      # I took this from an above example in good faith
+      @class.stubs(:retrieve).returns [ ]
+      @class.default_target = "/my/file"
+      @class.initvars
+      @class.prefetch
+
+      # this is how the fixture is actually used (I'm proud ;-)
+      @class.expects(:target_records).with("/my/file").returns input
+
+      # this is also lent from an existing example
+      # it's needed for catching the provider's output
+      @filetype = Puppet::Util::FileType.filetype(:flat).new("/my/file")
+      Puppet::Util::FileType.filetype(:flat).stubs(:new).with("/my/file").returns @filetype
+      @filetype.stubs(:write)
+    end
+
+    it "should not change anything apart from adding a header" do
+      # this might be error prone on slow systems i fear - should probably
+      # stub the header method too
+      # note: the expecation even works - when not supplying the fixture,
+      # one can expect "header + \n" successfully
+      @filetype.expects(:write).with(@class.header + @text + "\n")
+      @class.flush_target("/my/file")
+    end
+
+    it "should move an intermittent vendor header to the top" do
+      true # NYI - gotta make step 1 work first
+    end
+
+    # TBI: it should drop a vendor header if so configured
+  end
 end
