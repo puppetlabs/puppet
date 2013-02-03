@@ -299,6 +299,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     targets.uniq.compact
   end
 
+  # Convert and return the current set of records to text content
+  # as it should look in the actual file on disk.
   def self.to_file(records)
     text = super
     header + text
