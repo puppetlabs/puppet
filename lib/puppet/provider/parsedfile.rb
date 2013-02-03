@@ -324,9 +324,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     text = super
     if native_header_regex and text =~ native_header_regex then
       if drop_native_header then
-	return header + $` + $'
+        return header + $` + $'
       else
-	return nheader + header + $` + $'
+        native_header = $&
+        return native_header + header + $` + $'
       end
     end
     header + text
