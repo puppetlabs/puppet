@@ -323,6 +323,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.to_file(records)
     text = super
     if native_header_regex and text =~ native_header_regex then
+      # if the regex matched, concatenate the unmatched parts of text
+      # using the special variables $` and $'
       if drop_native_header then
         return header + $` + $'
       else
