@@ -314,6 +314,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Convert and return the current set of records to text content
   # as it should look in the actual file on disk.
+  #
+  # If self.native_header_regex is not nil, possible vendor headers are
+  # identified by matching the return value against the expression.
+  # If one (or several consecutive) such headers, are found, they are
+  # either moved in front of the self.header if self.drop_native_header
+  # is false (this is the default), or removed from the return value otherwise.
   def self.to_file(records)
     text = super
     if native_header_regex and text =~ native_header_regex then
