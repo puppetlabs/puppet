@@ -65,6 +65,11 @@ describe "the template function" do
     end
   end
 
+  it "is not interfered with by having a variable named 'string' (#14094)" do
+    scope['string'] = "this output should not be seen"
+    eval_template("some text that is static").should == "some text that is static"
+  end
+
   it "does not have direct access to Scope#lookupvar" do
     expect {
       eval_template("<%= lookupvar('myvar') %>")
