@@ -103,15 +103,30 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 # HEADER: is definitely not recommended.\n}
   end
 
-  # A regular expression object for finding a vendor header in a file's
-  # content. Useful for filtering e.g. the vixie cron header.
+  # An optional regular expression matched by third party headers.
+  # @api private
+  # @abstract Providers based on ParsedFile may implement this to make it
+  #   possible to identify a header maintained by a third party tool.
+  #   The provider can then allow that header to remain near the top of the
+  #   written file, or remove it before output.
+  #   If implemented, the function must return a Regex object.
+  #   The expression should match one third party header, but it's acceptable
+  #   to match several consecutive ones.
+  # @note For example, this can be used to filter the vixie cron headers as
+  #   erronously exported by older cron versions.
+  # @see drop_native_header
+  # @todo can this approach even distinguish between non-/consecutive blocks?
   def self.native_header_regex
     nil
   end
 
-  # Whether a parsed vendor header should be removed before emitting
-  # the generated content. This is a good idea for e.g. vixie cron.
-  # Defaults to false.
+  # How to handle third party headers.
+  # @api private
+  # @abstract Providers based on ParsedFile that make use of the support for
+  #   third party headers may override this method to return +true+.
+  #   When this is done, headers that are matched by the native_header_regex
+  #   are not written back to disk.
+  # @see native_header_regex
   def self.drop_native_header
     false
   end
