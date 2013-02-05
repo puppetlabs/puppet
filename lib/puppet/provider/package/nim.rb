@@ -118,7 +118,13 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       pkg += version_separator + version
     end
 
-    nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
+    output = nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
+
+    # If the package is superseded, it means we're trying to downgrade and we
+    # can't do that.
+    if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
+      self.fail "NIM package provider is unable to downgrade packages"
+    end
   end
 
 
