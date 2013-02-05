@@ -115,7 +115,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
         version_separator = " "
       end
 
-      pkg << version_separator << version
+      pkg += version_separator + version
     end
 
     nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
