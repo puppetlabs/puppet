@@ -9,22 +9,8 @@
   :ensure: :present
   :target: ffrank
   :record_type: :comment
-- :environment: :absent
-  :month: :absent
-  :minute: :absent
-  :on_disk: true
-  :hour: :absent
-  :weekday: :absent
-  :ensure: :present
-  :name: foo
-  :command: echo bar
-  :target: ffrank
-  :monthday: :absent
-  :record_type: :crontab
 - :on_disk: true
   :ensure: :present
-  :user: ffrank
-  :name: foobar
-  :command: echo foobar
+  :line: "echo bar"
   :target: ffrank
-  :record_type: :crontab
+  :record_type: :content

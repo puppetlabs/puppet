@@ -107,8 +107,11 @@ describe Puppet::Provider::ParsedFile do
       @class.initvars
       @class.prefetch
 
+      @class.text_line :content, :match => %r{^\s*[^#]}
+      @class.text_line :comment, :match => %r{^\s*#}
+
       # this is how the fixture is actually used (I'm proud ;-)
-      @class.expects(:target_records).with("/my/file").returns input
+      @class.stubs(:target_records).with("/my/file").returns input
 
       # this is also lent from an existing example
       # it's needed for catching the provider's output
