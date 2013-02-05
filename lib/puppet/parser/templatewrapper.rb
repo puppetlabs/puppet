@@ -91,11 +91,7 @@ class Puppet::Parser::TemplateWrapper
     # to the regular methods.
     benchmark(:debug, "Bound template variables for #{template_source}") do
       scope.to_hash.each do |name, value|
-        if name.kind_of?(String)
-          realname = name.gsub(/[^\w]/, "_")
-        else
-          realname = name
-        end
+        realname = name.gsub(/[^\w]/, "_")
         instance_variable_set("@#{realname}", value)
       end
     end
