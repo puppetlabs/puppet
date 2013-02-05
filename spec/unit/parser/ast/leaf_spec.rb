@@ -240,7 +240,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
   end
 
   describe "when assigning" do
-    it "should add a new key and value" do
+    it "should raise an error when adding a new key and value" do
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)
@@ -248,9 +248,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       scope['a'] = { 'a' => 'b' }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "b")
-      access.assign(scope, "c" )
-
-      scope['a'].should be_include("b")
+      lambda { access.assign(scope, "c" ) }.should raise_error
     end
 
     it "should raise an error when assigning an array element with a key" do
@@ -266,12 +264,11 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)
 
-      scope['a'] = []
+      scope['a'] = ["val2"]
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "0" )
 
-      access.assign(scope, "val2")
-      scope['a'].should == ["val2"]
+      access.evaluate(scope).should == "val2"
     end
 
     it "should raise an error when trying to overwrite an hash value" do
