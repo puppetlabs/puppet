@@ -1,6 +1,10 @@
 Puppet
 ======
 
+This is just a test to see if the card due date is added, the card is archived
+when the pull request is closed, and the puppet-facter board is searched if the
+card is not found on the puppet-dev-community board.
+
 [![Build Status](https://travis-ci.org/puppetlabs/puppet.png?branch=master)](https://travis-ci.org/puppetlabs/puppet)
 
 Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs
