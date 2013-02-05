@@ -87,11 +87,6 @@ describe Puppet::Parser::TemplateWrapper do
     tw.result("<%= @one %>").should == "foo"
   end
 
-  it "should not error out if one of the variables is a symbol" do
-    scope.expects(:to_hash).returns(:_timestamp => "1234")
-    tw.result("<%= @_timestamp %>").should == "1234"
-  end
-
   %w{! . ; :}.each do |badchar|
     it "translates #{badchar} to _ in instance variables" do
       scope["one#{badchar}"] = "foo"
