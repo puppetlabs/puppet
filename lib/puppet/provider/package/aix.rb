@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
   commands    :lslpp => "/usr/bin/lslpp",
-        :installp => "/usr/sbin/installp"
+              :installp => "/usr/sbin/installp"
 
   # AIX supports versionable packages with and without a NIM server
   has_feature :versionable
@@ -60,6 +60,12 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # Automatically process dependencies when installing/uninstalling
     # with the -g option to installp.
     installp "-gu", @resource[:name]
+
+    # installp will return an exit code of zero even if it didn't uninstall
+    # anything... so let's make sure it worked.
+    unless query().nil?
+      self.fail "Failed to uninstall package '#{@resource[:name]}'"
+    end
   end
 
   def install(useversion = true)
