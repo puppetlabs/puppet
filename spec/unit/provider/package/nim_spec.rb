@@ -151,8 +151,45 @@ END
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").in_sequence(nimclient_sequence)
         @provider.install
       end
-
     end
+
+    it "should fail if the specified version of a RPM package is superseded" do
+      nimclient_sequence = sequence('nimclient')
+
+      nimclient_showres_output = <<END
+mypackage.foo                                                                ALL  @@R:mypackage.foo _all_filesets
+ @@R:mypackage.foo-1.2.3-1 1.2.3-1
+ @@R:mypackage.foo-1.2.3-4 1.2.3-4
+ @@R:mypackage.foo-1.2.3-8 1.2.3-8
+
+END
+
+      install_output = <<OUTPUT
+
+
+Validating RPM package selections ...
+
+Please wait...
++-----------------------------------------------------------------------------+
+                          RPM  Error Summary:
++-----------------------------------------------------------------------------+
+The following RPM packages were requested for installation
+but they are already installed or superseded by a package installed
+at a higher level:
+mypackage.foo-1.2.3-1 is superseded by mypackage.foo-1.2.3-4
+
+
+OUTPUT
+
+      @resource.stubs(:should).with(:ensure).returns("1.2.3-1")
+      Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(nimclient_showres_output).in_sequence(nimclient_sequence)
+      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").in_sequence(nimclient_sequence).returns(install_output)
+
+      expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
+    end
+
+
+
   end
 
   context "when uninstalling" do

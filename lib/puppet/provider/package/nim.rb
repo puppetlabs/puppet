@@ -122,8 +122,15 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     # If the package is superseded, it means we're trying to downgrade and we
     # can't do that.
-    if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
-      self.fail "NIM package provider is unable to downgrade packages"
+    case package_type
+    when :installp
+      if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
+        self.fail "NIM package provider is unable to downgrade packages"
+      end
+    when :rpm
+      if output =~ /^#{Regexp.escape(@resource[:name])}.* is superseded by.*$/
+        self.fail "NIM package provider is unable to downgrade packages"
+      end
     end
   end
 
