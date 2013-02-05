@@ -54,33 +54,59 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     pkg = @resource[:name]
 
-    if (useversion and (! @resource.should(:ensure).is_a? Symbol))
+    version_specified = (useversion and (! @resource.should(:ensure).is_a? Symbol))
+
+    # This is unfortunate for a couple of reasons.  First, because of a subtle
+    # difference in the command-line syntax for installing an RPM vs an
+    # installp/BFF package, we need to know ahead of time which type of
+    # package we're trying to install.  This means we have to execute an
+    # extra command.
+    #
+    # Second, the command is easiest to deal with and runs fastest if we
+    # pipe it through grep on the shell.  Unfortunately, the way that
+    # the provider `make_command_methods` metaprogramming works, we can't
+    # use that code path to execute the command (because it treats the arguments
+    # as an array of args that all apply to `nimclient`, which fails when you
+    # hit the `|grep`.)  So here we just call straight through to P::U.execute
+    # with a single string argument for the full command, rather than going
+    # through the metaprogrammed layer.  We could get rid of the grep and
+    # switch back to the metaprogrammed stuff, and just parse all of the output
+    # in Ruby... but we'd be doing an awful lot of unnecessary work.
+    showres_command = "nimclient -o showres -a resource=#{source} |grep -p -E "
+    if (version_specified)
       version = @resource.should(:ensure)
-      # This is unfortunate for a couple of reasons.  First, because of a subtle
-      # difference in the command-line syntax for installing an RPM vs an
-      # installp/BFF package, we need to know ahead of time which type of
-      # package we're trying to install.  This means we have to execute an
-      # extra command.
-      #
-      # Second, the command is easiest to deal with and runs fastest if we
-      # pipe it through grep on the shell.  Unfortunately, the way that
-      # the provider `make_command_methods` metaprogramming works, we can't
-      # use that code path to execute the command (because it treats the arguments
-      # as an array of args that all apply to `nimclient`, which fails when you
-      # hit the `|grep`.)  So here we just call straight through to P::U.execute
-      # with a single string argument for the full command, rather than going
-      # through the metaprogrammed layer.  We could get rid of the grep and
-      # switch back to the metaprogrammed stuff, and just parse all of the output
-      # in Ruby... but we'd be doing an awful lot of unnecessary work.
-      output = Puppet::Util.execute("nimclient -o showres -a resource=#{source} |grep -p -E '#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'")
+      showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
+    else
+      version = nil
+      showres_command << "'#{Regexp.escape(pkg)}'"
+    end
+    output = Puppet::Util.execute(showres_command)
 
+
+    if (version_specified)
       package_type = determine_package_type(output, pkg, version)
+    else
+      package_type, version = determine_latest_version(output, pkg)
+    end
 
+    if (package_type == nil)
+      errmsg = "Unable to find package '#{pkg}' "
+      if (version_specified)
+        errmsg << "with version '#{version}' "
+      end
+      errmsg << "on lpp_source '#{source}'"
+      self.fail errmsg
+    end
+
+    # This part is a bit tricky.  If there are multiple versions of the
+    # package available, then `version` will be set to a value, and we'll need
+    # to add that value to our installation command.  However, if there is only
+    # one version of the package available, `version` will be set to `nil`, and
+    # we don't need to add the version string to the command.
+    if (version)
       # Now we know if the package type is RPM or not, and we can adjust our
       # `pkg` string for passing to the install command accordingly.
-      if (package_type == nil)
-        self.fail "Unable to find package '#{pkg}' with version '#{version}' on lpp_source '#{source}'"
-      elsif (package_type == :rpm)
+      if (package_type == :rpm)
         # RPM's expect a hyphen between the package name and the version number
         version_separator = "-"
       else
@@ -175,6 +201,29 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
   end
 
+  # Given a blob of output from `nimclient -o showres` and a package name,
+  # this method checks to see if there are multiple versions of the package
+  # available on the lpp_source.  If there are, the method returns
+  # [package_type, latest_version] (where package_type is one of :installp or :rpm).
+  # If there is only one version of the package available, it returns
+  # [package_type, nil], because the caller doesn't need to pass the version
+  # string to the command-line command if there is only one version available.
+  # If the package is not available at all, the method simply returns nil (instead
+  # of a tuple).
+  def determine_latest_version(showres_output, package_name)
+    packages = parse_showres_output(showres_output)
+    unless packages.has_key?(package_name)
+      return nil
+    end
+    if (packages[package_name].count == 1)
+      version = packages[package_name].keys[0]
+      return packages[package_name][version], nil
+    else
+      versions = packages[package_name].keys
+      latest_version = (versions.sort { |a, b| Puppet::Util::Package.versioncmp(b, a) })[0]
+      return packages[package_name][latest_version], latest_version
+    end
+  end
 
   def determine_package_type(showres_output, package_name, version)
     packages = parse_showres_output(showres_output)
