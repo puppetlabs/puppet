@@ -55,9 +55,9 @@ END
       end
 
       it "should succeed if a BFF/installp package is available on the lpp source" do
-          nimclient_sequence = sequence('nimclient')
+        nimclient_sequence = sequence('nimclient')
 
-          nimclient_showres_output = <<END
+        nimclient_showres_output = <<END
 mypackage.foo                                                           ALL  @@I:mypackage.foo _all_filesets
  @ 1.2.3.1  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.1
  + 1.2.3.4  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.4
@@ -65,13 +65,77 @@ mypackage.foo                                                           ALL  @@I
 
 END
 
-          @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-          Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output).in_sequence(nimclient_sequence)
-          @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
-          @provider.install
-        end
+        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output).in_sequence(nimclient_sequence)
+        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
+        @provider.install
+      end
 
-      it "should succeed if an RPM package is available on the lpp source" do
+      it "should fail if the specified version of a BFF package is superseded" do
+        nimclient_sequence = sequence('nimclient')
+
+        nimclient_showres_output = <<END
+mypackage.foo                                                           ALL  @@I:mypackage.foo _all_filesets
+ @ 1.2.3.1  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.1
+ + 1.2.3.4  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.4
+ + 1.2.3.8  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.8
+
+END
+
+        install_output = <<OUTPUT
++-----------------------------------------------------------------------------+
+                    Pre-installation Verification...
++-----------------------------------------------------------------------------+
+Verifying selections...done
+Verifying requisites...done
+Results...
+
+WARNINGS
+--------
+  Problems described in this section are not likely to be the source of any
+  immediate or serious failures, but further actions may be necessary or
+  desired.
+
+  Already Installed
+  -----------------
+  The number of selected filesets that are either already installed
+  or effectively installed through superseding filesets is 1.  See
+  the summaries at the end of this installation for details.
+
+  NOTE:  Base level filesets may be reinstalled using the "Force"
+  option (-F flag), or they may be removed, using the deinstall or
+  "Remove Software Products" facility (-u flag), and then reinstalled.
+
+  << End of Warning Section >>
+
++-----------------------------------------------------------------------------+
+                   BUILDDATE Verification ...
++-----------------------------------------------------------------------------+
+Verifying build dates...done
+FILESET STATISTICS
+------------------
+    1  Selected to be installed, of which:
+        1  Already installed (directly or via superseding filesets)
+  ----
+    0  Total to be installed
+
+
+Pre-installation Failure/Warning Summary
+----------------------------------------
+Name                      Level           Pre-installation Failure/Warning
+-------------------------------------------------------------------------------
+mypackage.foo              1.2.3.1         Already superseded by 1.2.3.4
+OUTPUT
+
+        @resource.stubs(:should).with(:ensure).returns("1.2.3.1")
+        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(nimclient_showres_output).in_sequence(nimclient_sequence)
+        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").in_sequence(nimclient_sequence).returns(install_output)
+
+        expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
+    end
+
+
+    it "should succeed if an RPM package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')
 
         nimclient_showres_output = <<END
@@ -93,7 +157,6 @@ END
 
   context "when uninstalling" do
     it "should call installp to uninstall a bff package" do
-      #@resource.stubs(:should).with(:ensure).returns(:installed)
       @provider.expects(:lslpp).with("-qLc", "mypackage.foo").returns("#bos.atm:bos.atm.atmle:7.1.2.0: : :C: :ATM LAN Emulation Client Support : : : : : : :0:0:/:1241")
       @provider.expects(:installp).with("-gu", "mypackage.foo")
       @provider.uninstall
