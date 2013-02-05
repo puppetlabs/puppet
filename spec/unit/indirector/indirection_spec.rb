@@ -217,6 +217,11 @@ describe Puppet::Indirector::Indirection do
         @indirection.find("me").should equal(@instance)
       end
 
+      it "should return false if the instance is false" do
+        @terminus.expects(:find).returns(false)
+        @indirection.find("me").should equal(false)
+      end
+
       it "should set the expiration date on any instances without one set" do
         @terminus.stubs(:find).returns(@instance)
 
