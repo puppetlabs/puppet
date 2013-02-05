@@ -6,7 +6,9 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
-  commands    :nimclient => "/usr/sbin/nimclient"
+  commands    :nimclient  => "/usr/sbin/nimclient",
+              :lslpp      => "/usr/bin/lslpp",
+              :rpm        => "rpm"
 
   # If NIM has not been configured, /etc/niminfo will not be present.
   # However, we have no way of knowing if the NIM server is not configured
@@ -21,6 +23,28 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
   def self.srclistcmd(source)
     [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
+  end
+
+  def uninstall
+    output = lslpp("-qLc", @resource[:name]).split(':')
+    # the 6th index in the colon-delimited output contains a " " for installp/BFF
+    # packages, and an "R" for RPMS.  (duh.)
+    pkg_type = output[6]
+
+    case pkg_type
+    when " "
+      installp "-gu", @resource[:name]
+    when "R"
+      rpm "-e", @resource[:name]
+    else
+      self.fail("Unrecognized AIX package type identifier: '#{pkg_type}'")
+    end
+
+    # installp will return an exit code of zero even if it didn't uninstall
+    # anything... so let's make sure it worked.
+    unless query().nil?
+      self.fail "Failed to uninstall package '#{@resource[:name]}'"
+    end
   end
 
   def install(useversion = true)
@@ -45,7 +69,9 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       # as an array of args that all apply to `nimclient`, which fails when you
       # hit the `|grep`.)  So here we just call straight through to P::U.execute
       # with a single string argument for the full command, rather than going
-      # through the metaprogrammed layer.
+      # through the metaprogrammed layer.  We could get rid of the grep and
+      # switch back to the metaprogrammed stuff, and just parse all of the output
+      # in Ruby... but we'd be doing an awful lot of unnecessary work.
       output = Puppet::Util.execute("nimclient -o showres -a resource=#{source} |grep -p -E '#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'")
 
       package_type = determine_package_type(output, pkg, version)
