@@ -183,22 +183,29 @@ class Puppet::Indirector::Indirection
     request = request(:find, key, nil, options)
     terminus = prepare(request)
 
-    if result = find_in_cache(request)
-      return result
-    end
+    result = find_in_cache(request)
+    if not result.nil?
+      result
+    elsif request.ignore_terminus?
+      nil
+    else
+      # Otherwise, return the result from the terminus, caching if
+      # appropriate.
+      result = terminus.find(request)
+      if not result.nil?
+        result.expiration ||= self.expiration if result.respond_to?(:expiration)
+        if cache? and request.use_cache?
+          Puppet.info "Caching #{self.name} for #{request.key}"
+          cache.save request(:save, nil, result, options)
+        end
 
-    # Otherwise, return the result from the terminus, caching if appropriate.
-    if ! request.ignore_terminus? and result = terminus.find(request)
-      result.expiration ||= self.expiration if result.respond_to?(:expiration)
-      if cache? and request.use_cache?
-        Puppet.info "Caching #{self.name} for #{request.key}"
-        cache.save request(:save, nil, result, options)
+        if terminus.respond_to?(:filter)
+          terminus.filter(result)
+        else
+          result
+        end
       end
-
-      return terminus.respond_to?(:filter) ? terminus.filter(result) : result
     end
-
-    nil
   end
 
   # Search for an instance in the appropriate terminus, and return a
