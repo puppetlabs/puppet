@@ -26,18 +26,14 @@ class Puppet::Parser::TemplateWrapper
     @__scope__
   end
 
-  # Find which line in the template (if any) we were called from
-  # but defer to when necessary since fetching the caller information on
-  # every variable lookup can be quite time consuming.
-  # @return [Proc]
+  # Find which line in the template (if any) we were called from.
+  # @return [String] the line number
   # @api private
-  def script_line_proc
-    Proc.new { (caller.find { |l| l =~ /#{@__file__}:/ }||"")[/:(\d+):/,1] }
-  end
-
   def script_line
-    script_line_proc.call
+    identifier = Regexp.escape(@__file__ || "(erb)")
+    (caller.find { |l| l =~ /#{identifier}:/ }||"")[/:(\d+):/,1]
   end
+  private :script_line
 
   # Should return true if a variable is defined, false if it is not
   # @api public
@@ -76,12 +72,14 @@ class Puppet::Parser::TemplateWrapper
   # the missing_method definition here until we declare the syntax finally
   # dead.
   def method_missing(name, *args)
+    line_number = script_line
     if scope.include?(name.to_s)
-      return scope[name.to_s, {:file => @__file__, :lineproc => script_line_proc}]
+      Puppet.deprecation_warning("Variable access via '#{name}' is deprecated. Use '@#{name}' instead. #{to_s}:#{line_number}")
+      return scope[name.to_s, { :file => @__file__, :line => line_number }]
     else
       # Just throw an error immediately, instead of searching for
       # other missingmethod things or whatever.
-      raise Puppet::ParseError.new("Could not find value for '#{name}'", @__file__, script_line)
+      raise Puppet::ParseError.new("Could not find value for '#{name}'", @__file__, line_number)
     end
   end
 
