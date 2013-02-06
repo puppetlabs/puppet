@@ -4,11 +4,6 @@ require 'puppet/util/libuser'
 require 'time'
 require 'puppet/error'
 
-module Puppet
-  class DuplicateUID < Puppet::Error
-  end
-end
-
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to
     install Ruby's shadow password library (often known as `ruby-libshadow`)
@@ -106,7 +101,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
        if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
-           raise(Puppet::DuplicateUID, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
+           raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
        return ["-o"] 

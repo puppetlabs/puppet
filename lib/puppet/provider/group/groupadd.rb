@@ -1,11 +1,6 @@
 require 'puppet/provider/nameservice/objectadd'
 require 'puppet/util/libuser'
 
-module Puppet
-  class DuplicateGID < Puppet::Error
-  end
-end
-
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "Group management via `groupadd` and its ilk. The default for most platforms.
 
@@ -61,7 +56,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
        if @resource.should(:gid) and findgroup('gid', @resource.should(:gid).to_s)
-           raise(Puppet::DuplicateGID, "GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation")
+           raise(Puppet::Error, "GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
        return ["-o"]

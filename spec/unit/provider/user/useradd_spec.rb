@@ -96,7 +96,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should raise an exception for duplicate UIDs" do
         resource[:uid] = 505
         provider.stubs(:finduser).returns(true)
-        lambda { provider.create }.should raise_error(Puppet::DuplicateUID)
+        lambda { provider.create }.should raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
       end
 
       it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
