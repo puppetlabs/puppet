@@ -313,7 +313,7 @@ class Puppet::Resource
   #
   # Example:
   #
-  #   class foo($port){ ... }
+  #   class foo($port=0){ ... }
   #
   # We make a request to the backend for the key 'foo::port' not 'foo'
   #
