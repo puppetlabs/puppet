@@ -1,7 +1,7 @@
 # vim: syntax=ruby
 class Nagios::Parser
 
-token DEFINE NAME STRING PARAM LCURLY RCURLY VALUE RETURN COMMENT INLINECOMMENT
+token DEFINE NAME PARAM LCURLY RCURLY VALUE RETURN
 
 rule
 decls: decl { return val[0] if val[0] }
@@ -20,13 +20,9 @@ decls: decl { return val[0] if val[0] }
 
 decl: object { result = [val[0]] }
     | RETURN { result = nil }
-    | comment
     ;
 
-comment: COMMENT RETURN { result = nil }
-    ;
-
-object: DEFINE NAME LCURLY RETURN vars RCURLY {
+object: DEFINE NAME LCURLY returns vars RCURLY {
         result = Nagios::Base.create(val[1],val[4])
     }
     ;
@@ -40,32 +36,32 @@ vars: var
     }
     ;
 
-var: PARAM VALUE icomment returns { result = {val[0],val[1]} }
+var: PARAM VALUE returns { result = { val[0] => val[1] } }
     ;
 
-returns:      RETURN
-            | returns RETURN
-            ;
-
-icomment: # nothing
-    | INLINECOMMENT
+returns: RETURN
+    | RETURN returns
     ;
 
 end
 
 ----inner
+require 'strscan'
 
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
-    @src = src
+    if src.respond_to?("force_encoding") then
+        src.force_encoding("ASCII-8BIT")
+    end
+    @ss = StringScanner.new(src)
 
     # state variables
     @invar = false
     @inobject = false
     @done = false
 
-    @line = 0
+    @line = 1
     @yydebug = true
 
     do_parse
@@ -73,90 +69,129 @@ end
 
 # The lexer.  Very simple.
 def token
-    @src.sub!(/\A\n/,'')
-    if $&
-        @line += 1
-        return [ :RETURN, "\n" ]
-    end
+    text = @ss.peek(1)
+    @line  +=  1  if text == "\n"
 
-    if @done
-        return nil
-    end
-    yytext = String.new
+    token = case @inobject
+        when false  # @inobject == false
+          case
+              when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                ;
 
+              when (text = @ss.scan(/\#.*$/))               # ignore comments
+                ;
 
-    # remove comments from this line
-    @src.sub!(/\A[ \t]*;.*\n/,"\n")
-    if $&
-        return [:INLINECOMMENT, ""]
-    end
+              when (text = @ss.scan(/;.*$/))               # ignore inline comments
+                ;
 
-    @src.sub!(/\A#.*\n/,"\n")
-    if $&
-        return [:COMMENT, ""]
-    end
+              when (text = @ss.scan(/\n/))                  # newline
+                action { [:RETURN, text] }
 
-    @src.sub!(/#.*/,'')
+              when (text = @ss.scan(/\b(define)\b/))
+                action { [:DEFINE, text] }
 
-    if @src.length == 0
-        @done = true
-        return [false, '$']
-    end
+              when (text = @ss.scan(/[^{ \t\n]+/))
+                action { [:NAME, text] }
 
-    if @invar
-        @src.sub!(/\A[ \t]+/,'')
-        @src.sub!(/\A([^;\n]+)(\n|;)/,'\2')
-        if $1
-            yytext += $1
-        end
-        @invar = false
-        return [:VALUE, yytext]
-    else
-        @src.sub!(/\A[\t ]*(\S+)([\t ]*|$)/,'')
-        if $1
-            yytext = $1
-            case yytext
-            when 'define'
-                #puts "got define"
-                return [:DEFINE, yytext]
-            when '{'
-                #puts "got {"
+              when (text = @ss.scan(/\{/))
                 @inobject = true
-                return [:LCURLY, yytext]
-            else
-                unless @inobject
-                    #puts "got type: #{yytext}"
-                    if yytext =~ /\W/
-                        giveback = yytext.dup
-                        giveback.sub!(/^\w+/,'')
-                        #puts "giveback " + giveback
-                        #puts "yytext " + yytext
-                        yytext.sub!(/\W.*$/,'')
-                        #puts "yytext " + yytext
-                        #puts "all [#{giveback} #{yytext} #{orig}]"
-                        @src = giveback + @src
-                    end
-                    return [:NAME, yytext]
-                else
-                    if yytext == '}'
-                        #puts "got closure: #{yytext}"
-                        @inobject = false
-                        return [:RCURLY, '}']
-                    end
+                action { [:LCURLY, text] }
 
-                    unless @invar
+              else
+                text = @ss.string[@ss.pos .. -1]
+                raise  ScanError, "can not match: '" + text + "'"
+              end  # if
+        when true   # @inobject == true
+            case @invar
+                when true                # @invar == true
+                    case
+                      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                        ;
+
+                      when (text = @ss.scan(/\#.*$/))               # ignore comments
+                        ;
+
+                      when (text = @ss.scan(/\n/))                  # newline
+                        action { [:RETURN, text] }
+
+                      when (text = @ss.scan(/.+$/))                 # Value of parameter
+                        @invar = false
+
+                        # Special handling of inline comments (;) and escaped semicolons (\;)
+
+                        # We split the string on escaped semicolons (\;),
+                        # Then we rebuild it as long as there are no inline comments (;)
+                        # We join the rebuilt string with unescaped semicolons (on purpose)
+                        array = text.split('\;', 0)
+
+                        text = ""
+
+                        array.each do |elt|
+
+                            # Now we split at inline comments. If we have more than 1 element in the array
+                            # it means we have an inline comment, so we are able to stop parsing
+                            # However we still want to reconstruct the string with its first part (before the comment)
+                            linearray = elt.split(';', 0)
+
+                            # Let's reconstruct the string with a (unescaped) semicolon
+                            if text != "" then
+                                text += ';'
+                            end
+                            text += linearray[0]
+
+                            # Now we can stop
+                            if linearray.length > 1 then
+                                break                                
+                            end
+                        end
+
+
+                        # We strip the text to remove spaces between end of string and beginning of inline comment
+                        action { [:VALUE, text.strip] }
+
+                      else
+                        text = @ss.string[@ss.pos .. -1]
+                        raise  ScanError, "can not match: '" + text + "'"
+                      end  # if
+                when false              # @invar == false
+                    case
+                      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                        ;
+
+                      when (text = @ss.scan(/\#.*$/))               # ignore comments
+                        ;
+
+                      when (text = @ss.scan(/;.*$/))               # ignore inline comments
+                        ;
+
+                      when (text = @ss.scan(/\n/))                  # newline
+                        action { [:RETURN, text] }
+
+                      when (text = @ss.scan(/\}/))
+                        @inobject = false
+                        action { [:RCURLY, text] }
+
+                      when (not @invar and (text = @ss.scan(/\S+/)))
                         @invar = true
-                        return [:PARAM, $1]
-                    else
-                    end
-                end
+                        action { [:PARAM, text] }
+
+                      else
+                        text = @ss.string[@ss.pos .. -1]
+                        raise  ScanError, "can not match: '" + text + "'"
+                      end  # if
             end
-        end
-    end
+        else
+          raise  ScanError, "undefined state: '" + state.to_s + "'"
+    end  # case state
+    token
 end
 
 def next_token
-    token
+    return if @ss.eos?
+
+    # skips empty actions
+    until _next_token = token or @ss.eos?; end
+    _next_token
 end
 
 def yydebug
@@ -167,14 +202,20 @@ def yywrap
     0
 end
 
+def action
+    yield
+end
+
 def on_error(token, value, vstack )
+#    text = @ss.string[@ss.pos .. -1]
+    text = @ss.peek(20)
     msg = ""
     unless value.nil?
-        msg = "line #{@line}: syntax error at '#{value}'"
+        msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
     else
-        msg = "line #{@line}: syntax error at '#{token}'"
+        msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
     end
-    unless @src.size > 0
+    if @ss.eos?
         msg = "line #{@line}: Unexpected end of file"
     end
     if token == '$end'.intern

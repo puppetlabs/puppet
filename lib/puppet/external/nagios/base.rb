@@ -215,7 +215,7 @@ class Nagios::Base
       # Now access the parameters directly, to make it at least less
       # likely we'll end up in an infinite recursion.
       if mname.to_s =~ /=$/
-        @parameters[pname] = *args
+        @parameters[pname] = args[0]
       else
         return @parameters[mname]
       end
@@ -301,9 +301,9 @@ class Nagios::Base
     self.each { |param,value|
       str += %{\t%-30s %s\n} % [ param,
         if value.is_a? Array
-          value.join(",")
+          value.join(",").sub(';', '\;')
         else
-          value
+          value.sub(';', '\;')
         end
         ]
     }
