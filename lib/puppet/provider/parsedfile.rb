@@ -278,6 +278,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @target = path
         return self.parse(text)
       rescue Puppet::Error => detail
+        # FIXME No record types defined in the test.
+        require 'pry'; binding.pry
         detail.file = @target
         raise detail
       ensure

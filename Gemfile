@@ -10,6 +10,10 @@ def location_for(place)
   end
 end
 
+group :development do
+  gem 'pry'
+end
+
 group(:development, :test) do
   gem "puppet", *location_for('file://.')
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
