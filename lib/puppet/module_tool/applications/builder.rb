@@ -18,7 +18,7 @@ module Puppet::ModuleTool
         Puppet.notice "Building #{@path} for release"
         tar
         gzip
-        relative = Pathname.new(File.join(@pkg_path, filename('tar.gz'))).relative_path_from(Pathname.new(Dir.pwd))
+        relative = Pathname.new(File.join(@pkg_path, filename('tar.gz'))).relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
 
         # Return the Pathname object representing the path to the release
         # archive just created. This return value is used by the module_tool
