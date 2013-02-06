@@ -136,3 +136,46 @@ describe Puppet::Provider::ParsedFile do
     # TBI: it should drop a vendor header if so configured
   end
 end
+
+describe Puppet::Provider::ParsedFile, :focus => true do
+  before :all do
+    @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
+  end
+
+  def target
+    File.expand_path("/path/to/my/vixie/crontab")
+  end
+
+  def stub_target_file_type
+    flat_file = Puppet::Util::FileType.filetype(:flat).new(target)
+    Puppet::Util::FileType.filetype(:flat).
+      stubs(:new).with(target).returns(flat_file)
+    flat_file.stubs(:read).returns(@example_crontab)
+    flat_file.stubs(:write)
+  end
+
+  subject do
+    stub_target_file_type
+    example_provider_class = Class.new(Puppet::Provider::ParsedFile)
+    example_provider_class.default_target = target
+    # Setup some record rules
+    example_provider_class.instance_eval do
+      text_line :comment, :match => %r{^\s*#}, :post_parse => proc { |record|
+        record[:name] = $1 if record[:line] =~ /Puppet Name: (.+)\s*$/
+      }
+      record_line :key_val,
+        :fields => %w{key val},
+        :match => %r{^\s*(\S+)\s*=\s*(.*)}
+    end
+    example_provider_class.initvars
+    example_provider_class.prefetch
+    example_provider_class
+  end
+
+  context "writing file contents to disk" do
+    it "should not change anything except from adding a header" do
+      @output.expects(:write).with("foobar")
+      subject.flush_target(target)
+    end
+  end
+end
