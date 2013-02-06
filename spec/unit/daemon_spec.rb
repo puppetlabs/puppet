@@ -203,7 +203,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
     it "should run the agent if one is available and it is not running" do
       @agent.expects(:running?).returns false
-      @agent.expects :run
+      @agent.expects(:run).with({:splay => false})
 
       @daemon.agent = @agent
 
