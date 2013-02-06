@@ -170,7 +170,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
         restricted = true
       elsif glob_avail and opt_ctx
-        restricted = true
         # Optimize loading if the context is given, requires the glob function
         # from Augeas 0.8.2 or up
         ctx_path = resource[:context].sub(/^\/files(.*?)\/?$/, '\1/')
