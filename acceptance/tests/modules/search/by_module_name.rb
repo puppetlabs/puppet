@@ -9,7 +9,7 @@ on master, puppet("module search geordi") do
   assert_equal <<-STDOUT, stdout
 \e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m
 NAME                  DESCRIPTION                  AUTHOR          KEYWORDS     
-pmtacceptance-\e[0;32mgeordi\e[0m  This is a module that do...  @pmtacceptance  star trek    
+pmtacceptance-\e[0;32mgeordi\e[0m  UNKNOWN                      @pmtacceptance  star trek    
 STDOUT
 end
 
