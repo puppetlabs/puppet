@@ -10,7 +10,7 @@ on master, puppet("module search github") do
   assert_equal <<-STDOUT, stdout
 \e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m
 NAME               DESCRIPTION                    AUTHOR          KEYWORDS      
-pmtacceptance-git  This is a dummy git module...  @pmtacceptance  git \e[0;32mgithub\e[0m    
+pmtacceptance-git  UNKNOWN                        @pmtacceptance  git \e[0;32mgithub\e[0m    
   STDOUT
 end
 
