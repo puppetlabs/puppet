@@ -16,7 +16,7 @@ module Puppet::ModuleTool
 
     # Return checksum for the +Pathname+.
     def checksum(pathname)
-      return Digest::MD5.hexdigest(pathname.read)
+      return Digest::MD5.hexdigest(IO.binread(pathname))
     end
 
     # Return checksums for object's +Pathname+, generate if it's needed.
