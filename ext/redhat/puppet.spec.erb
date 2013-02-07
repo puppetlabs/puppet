@@ -191,12 +191,14 @@ cp -pr ext/puppet-nm-dispatcher \
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %endif
 %dir %{_sysconfdir}/puppet
+%dir %{_sysconfdir}/puppet/provider
 %dir %{_sysconfdir}/%{name}/modules
 %if 0%{?fedora} >= 15
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %config(noreplace) %{_sysconfdir}/puppet/auth.conf
+%config(noreplace) %{_sysconfdir}/puppet/provider/libuser.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # We don't want to require emacs or vim, so we need to own these dirs
 %{_datadir}/emacs

@@ -66,7 +66,7 @@ end
 def do_configs(configs, target, strip = 'conf/')
   Dir.mkdir(target) unless File.directory? target
   configs.each do |cf|
-    ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
+    ocf = File.join(target, cf.gsub(/#{strip}/, ''))
     if $haveftools
       File.install(cf, ocf, 0644, true)
     else
@@ -306,6 +306,7 @@ def prepare_installation
 
   InstallOptions.site_dir = sitelibdir
   InstallOptions.config_dir = configdir
+  InstallOptions.provider_config_dir = File.join(configdir, "provider/")
   InstallOptions.bin_dir  = bindir
   InstallOptions.lib_dir  = libdir
   InstallOptions.man_dir  = mandir
@@ -409,12 +410,13 @@ end
 # Change directory into the puppet root so we don't get the wrong files for install.
 FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
-  configs = glob(%w{conf/auth.conf})
-  bins  = glob(%w{bin/*})
-  rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
-  ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
-  man   = glob(%w{man/man[0-9]/*})
-  libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
+  configs          = glob(%w{conf/auth.conf})
+  provider_configs = glob(%w{conf/provider/*.conf})
+  bins             = glob(%w{bin/*})
+  rdoc             = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
+  ri               = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
+  man              = glob(%w{man/man[0-9]/*})
+  libs             = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 
   check_prereqs
   prepare_installation
@@ -422,6 +424,7 @@ FileUtils.cd File.dirname(__FILE__) do
   #build_rdoc(rdoc) if InstallOptions.rdoc
   #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
+  do_configs(provider_configs, InstallOptions.provider_config_dir, "conf/provider") if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
   do_libs(libs)
   do_man(man) unless $operatingsystem == "windows"
