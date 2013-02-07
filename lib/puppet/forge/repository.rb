@@ -75,7 +75,7 @@ class Puppet::Forge
 
     # Return a Net::HTTPResponse read for this +request_path+.
     def make_http_request(request_path)
-      request = Net::HTTP::Get.new(request_path, { "User-Agent" => user_agent })
+      request = Net::HTTP::Get.new(URI.escape(request_path), { "User-Agent" => user_agent })
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
