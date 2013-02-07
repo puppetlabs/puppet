@@ -123,6 +123,10 @@ class Puppet::Parameter::ValueCollection
   #   was possible to specify a value of `:before` or `:after` for the purpose of calling
   #   both the block and the provider. Use of these deprecated options will now raise an exception later
   #   in the process when the _is_ value is set (see Puppet::Property#set).
+  # @option options [Symbol] :invalidate_refreshes True if a change on this property should invalidate and
+  #   remove any scheduled refreshes (from notify or subscribe) targeted at the same resource. For example, if
+  #   a change in this property takes into account any changes that a scheduled refresh would have performed,
+  #   then the scheduled refresh would be deleted.
   # @option options [Object] _any_ Any other option is treated as a call to a setter having the given
   #   option name (e.g. `:required_features` calls `required_features=` with the option's value as an
   #   argument).
