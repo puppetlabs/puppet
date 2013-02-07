@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/util/network_device/cisco/device'
+require 'puppet/util/network_device/transport/telnet'
 
 describe Puppet::Util::NetworkDevice::Cisco::Device do
   before(:each) do
@@ -19,6 +20,16 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
     it "should find the enable password from the options" do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password", :enable_password => "mypass")
       cisco.enable_password.should == "mypass"
+    end
+
+    it "should find the debug mode from the options" do
+      Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(true).returns(@transport)
+      cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23", :debug => true)
+    end
+
+    it "should set the debug mode to false by default" do
+      Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(false).returns(@transport)
+      cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23")
     end
   end
 
