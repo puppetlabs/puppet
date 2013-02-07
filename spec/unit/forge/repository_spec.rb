@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 require 'net/http'
 require 'puppet/forge/repository'
@@ -98,6 +99,15 @@ describe Puppet::Forge::Repository do
       end
 
       repository.make_http_request("the_path")
+    end
+
+    it "escapes the received URI" do
+      unescaped_uri = "héllo world !! ç à"
+      performs_an_http_request do |http|
+        http.expects(:request).with(responds_with(:path, URI.escape(unescaped_uri)))
+      end
+
+      repository.make_http_request(unescaped_uri)
     end
 
     def performs_an_http_request(result = nil, &block)
