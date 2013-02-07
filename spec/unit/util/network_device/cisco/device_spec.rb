@@ -27,8 +27,8 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23", :debug => true)
     end
 
-    it "should set the debug mode to false by default" do
-      Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(false).returns(@transport)
+    it "should set the debug mode to nil by default" do
+      Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(nil).returns(@transport)
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23")
     end
   end
