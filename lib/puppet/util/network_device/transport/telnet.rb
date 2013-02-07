@@ -4,8 +4,9 @@ require 'puppet/util/network_device/transport/base'
 require 'net/telnet'
 
 class Puppet::Util::NetworkDevice::Transport::Telnet < Puppet::Util::NetworkDevice::Transport::Base
-    def initialize
-      super
+    def initialize(verbose = false)
+      super()
+      @verbose = verbose
     end
 
     def handles_login?
@@ -37,6 +38,7 @@ class Puppet::Util::NetworkDevice::Transport::Telnet < Puppet::Util::NetworkDevi
     end
 
     def send(line)
+      Puppet.debug("telnet: send #{line}") if @verbose
       @telnet.puts(line)
     end
 end
