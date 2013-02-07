@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # through the metaprogrammed layer.  We could get rid of the grep and
     # switch back to the metaprogrammed stuff, and just parse all of the output
     # in Ruby... but we'd be doing an awful lot of unnecessary work.
-    showres_command = "nimclient -o showres -a resource=#{source} |grep -p -E "
+    showres_command = "nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
     if (version_specified)
       version = @resource.should(:ensure)
       showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
