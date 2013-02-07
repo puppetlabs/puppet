@@ -30,6 +30,6 @@ on master, puppet("module search tance/ge") do
   assert_equal <<-STDOUT, stdout
 Searching http://forge.puppetlabs.com ...
 NAME                  DESCRIPTION                  AUTHOR          KEYWORDS     
-pmtaccep\e[0;32mtance-ge\e[0mordi  This is a module that do...  @pmtacceptance  star trek    
+pmtaccep\e[0;32mtance-ge\e[0mordi  UNKNOWN                      @pmtacceptance  star trek    
 STDOUT
 end
