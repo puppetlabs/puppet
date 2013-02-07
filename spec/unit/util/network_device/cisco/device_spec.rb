@@ -16,6 +16,11 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
       cisco.enable_password.should == "enable_password"
     end
 
+    it "should find the enable password from the url with a sharp" do
+      cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password#with_a_sharp")
+      cisco.enable_password.should == "enable_password#with_a_sharp"
+    end
+
     it "should find the enable password from the options" do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password", :enable_password => "mypass")
       cisco.enable_password.should == "mypass"
