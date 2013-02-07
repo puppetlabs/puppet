@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 require 'net/http'
 require 'puppet/forge/repository'
