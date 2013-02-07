@@ -156,8 +156,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def addcmd
     if @resource.forcelocal?
-      Puppet::Util::Libuser.setupenv
-      cmd = [command(:localadd)]  
+      cmd = [command(:localadd)]
+      @custom_environment = Puppet::Util::Libuser.getenv
     else
       cmd = [command(:add)]
     end

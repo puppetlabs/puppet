@@ -164,7 +164,8 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.addcmd)
+      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      #execute(self.addcmd)
       if feature?(:manages_password_age) && (cmd = passcmd)
         execute(cmd)
       end
@@ -274,7 +275,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
   def initialize(resource)
     super
-
+    @custom_environment = {}
     @objectinfo = nil
   end
 
