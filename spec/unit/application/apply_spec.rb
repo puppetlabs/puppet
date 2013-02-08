@@ -20,7 +20,7 @@ describe Puppet::Application::Apply do
     Puppet::Node.indirection.cache_class = nil
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
+  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -237,6 +237,21 @@ describe Puppet::Application::Apply do
 
       it "should finalize the catalog" do
         @catalog.expects(:finalize)
+
+        expect { @apply.main }.to exit_with 0
+      end
+
+      it "should not save the classes or resource file by default" do
+        @catalog.expects(:write_class_file).never
+        @catalog.expects(:write_resource_file).never
+        expect { @apply.main }.to exit_with 0
+      end
+
+      it "should save the classes and resources files when requested" do
+        @apply.options[:write_catalog_summary] = true
+
+        @catalog.expects(:write_class_file).once
+        @catalog.expects(:write_resource_file).once
 
         expect { @apply.main }.to exit_with 0
       end
