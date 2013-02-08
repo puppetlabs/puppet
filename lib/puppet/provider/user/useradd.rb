@@ -213,12 +213,4 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     !!@resource[:groups]
   end
 
-  def expiry
-    if Puppet.features.libshadow?
-      if ent = Shadow::Passwd.getspnam(@resource.name)
-        return Time.at(ent.sp_expire * 86400).getgm.strftime("%Y-%m-%d")
-      end
-    end
-    :absent
-  end
 end

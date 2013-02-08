@@ -19,14 +19,14 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     it "should add -o when allowdupe is enabled and the group is being created" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupadd', '-o', 'mygroup'])
+      provider.expects(:execute).with(['/usr/sbin/groupadd', '-o', 'mygroup'], kind_of(Hash))
       provider.create
     end
 
     describe "on system that feature system_groups", :if => described_class.system_groups? do
       it "should add -r when system is enabled and the group is being created" do
         resource[:system] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'], kind_of(Hash))
         provider.create
       end
     end
@@ -34,7 +34,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     describe "on system that do not feature system_groups", :unless => described_class.system_groups? do
       it "should not add -r when system is enabled and the group is being created" do
         resource[:system] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupadd', 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/groupadd', 'mygroup'], kind_of(Hash))
         provider.create
       end
     end
@@ -46,13 +46,13 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
  
       it "should use lgroupadd instead of groupadd" do
-        provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'))
+        provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 
       it "should NOT pass -o to lgroupadd" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(Not(includes('-o')))
+        provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 

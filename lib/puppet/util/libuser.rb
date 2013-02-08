@@ -1,6 +1,6 @@
 module Puppet::Util::Libuser
    def self.getconf
-     File.expand_path("../../feature/libuser.conf", __FILE__)
+     File.join(Puppet.settings[:confdir], "provider", "libuser.conf")
    end
 
    def self.getenv
