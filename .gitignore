@@ -18,3 +18,4 @@ vendor/
 Gemfile.lock
 vendor/
 .bundle/
+puppet-acceptance/
