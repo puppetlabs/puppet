@@ -83,21 +83,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          resource[:forcelocal] = true
       end
       it "should use luseradd instead of useradd" do
-        provider.expects(:execute).with() { |args| 
-             args[0].include?("/usr/sbin/luseradd")  and
-             args[1].has_key?(:custom_environment) and
-             args[1][:custom_environment].has_key?("LIBUSER_CONF") 
-        }
+        provider.expects(:execute).with(includes('/usr/sbin/luseradd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
  
       it "should NOT use -o when allowdupe=true" do
         resource[:allowdupe] = :true 
-        provider.expects(:execute).with() { |args|
-          not args[0].include?('-o') and
-          args[1].has_key?(:custom_environment) and
-          args[1][:custom_environment].has_key?("LIBUSER_CONF") 
-        }
+        provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 
