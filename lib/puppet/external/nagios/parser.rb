@@ -257,37 +257,36 @@ Racc_debug_parser = false
 
 module_eval(<<'.,.,', 'grammar.ry', 6)
   def _reduce_1(val, _values, result)
-     return val[0] if val[0] 
+     return val[0] if val[0]
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 8)
   def _reduce_2(val, _values, result)
-            if val[1].nil?
-            result = val[0]
-        else
-            if val[0].nil?
-                result = val[1]
-            else
-                result = [ val[0], val[1] ].flatten
-            end
-        end
-    
+    if val[1].nil?
+      result = val[0]
+    else
+      if val[0].nil?
+        result = val[1]
+      else
+        result = [ val[0], val[1] ].flatten
+      end
+    end
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 20)
   def _reduce_3(val, _values, result)
-     result = [val[0]] 
+    result = [val[0]]
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 21)
   def _reduce_4(val, _values, result)
-     result = nil 
+    result = nil
     result
   end
 .,.,
@@ -296,15 +295,14 @@ module_eval(<<'.,.,', 'grammar.ry', 21)
 
 module_eval(<<'.,.,', 'grammar.ry', 25)
   def _reduce_6(val, _values, result)
-     result = nil 
+    result = nil
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 29)
   def _reduce_7(val, _values, result)
-            result = Nagios::Base.create(val[1],val[4])
-    
+    result = Nagios::Base.create(val[1],val[4])
     result
   end
 .,.,
@@ -313,18 +311,17 @@ module_eval(<<'.,.,', 'grammar.ry', 29)
 
 module_eval(<<'.,.,', 'grammar.ry', 35)
   def _reduce_9(val, _values, result)
-            val[1].each {|p,v|
-            val[0][p] = v
-        }
-        result = val[0]
-    
+    val[1].each {|p,v|
+      val[0][p] = v
+    }
+    result = val[0]
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 42)
   def _reduce_10(val, _values, result)
-     result = {val[0] => val[1]} 
+    result = {val[0] => val[1]}
     result
   end
 .,.,
