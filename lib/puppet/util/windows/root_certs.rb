@@ -7,8 +7,8 @@ require 'openssl'
 class Puppet::Util::Windows::RootCerts
   include Enumerable
 
-  CertOpenSystemStore         = Win32API.new('crypt32', 'CertOpenSystemStore', ['L','P'], 'L'),
-  CertEnumCertificatesInStore = Win32API.new('crypt32', 'CertEnumCertificatesInStore', ['L', 'L'], 'L'),
+  CertOpenSystemStore         = Win32API.new('crypt32', 'CertOpenSystemStore', ['L','P'], 'L')
+  CertEnumCertificatesInStore = Win32API.new('crypt32', 'CertEnumCertificatesInStore', ['L', 'L'], 'L')
   CertCloseStore              = Win32API.new('crypt32', 'CertCloseStore', ['L', 'L'], 'B')
 
   def initialize(roots)
