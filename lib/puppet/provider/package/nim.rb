@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # through the metaprogrammed layer.  We could get rid of the grep and
     # switch back to the metaprogrammed stuff, and just parse all of the output
     # in Ruby... but we'd be doing an awful lot of unnecessary work.
-    showres_command = "nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
+    showres_command = "/usr/sbin/nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
     if (version_specified)
       version = @resource.should(:ensure)
       showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
@@ -118,6 +118,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       pkg += version_separator + version
     end
 
+    # NOTE: the installp flags here are ignored (but harmless) for RPMs
     output = nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
 
     # If the package is superseded, it means we're trying to downgrade and we
@@ -148,13 +149,29 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+) \2$/
   INSTALLP_PACKAGE_REGEX = /^(.*) (.*)$/
 
+  # Here is some sample output that shows what the above regexes will be up
+  # against:
+  # FOR AN INSTALLP PACKAGE:
+  #
+  #    mypackage.foo                                                           ALL  @@I:mypackage.foo _all_filesets
+  #    @ 1.2.3.1  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.1
+  #    + 1.2.3.4  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.4
+  #    + 1.2.3.8  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.8
+  #
+  # FOR AN RPM PACKAGE:
+  #
+  # mypackage.foo                                                                ALL  @@R:mypackage.foo _all_filesets
+  #   @@R:mypackage.foo-1.2.3-1 1.2.3-1
+  #   @@R:mypackage.foo-1.2.3-4 1.2.3-4
+  #   @@R:mypackage.foo-1.2.3-8 1.2.3-8
+
 
   # Parse the output of a `nimclient -o showres` command.  Returns a two-dimensional
   # hash, where the first-level keys are package names, the second-level keys are
   # version number strings for all of the available version numbers for a package,
   # and the values indicate the package type (:rpm / :installp)
   def parse_showres_output(showres_output)
-    paragraphs = showres_output.split(/^\s*$/).map { |p| p.strip! }
+    paragraphs = split_into_paragraphs(showres_output)
     packages = {}
     paragraphs.each do |para|
       lines = para.split(/$/)
@@ -166,6 +183,14 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       end
     end
     packages
+  end
+
+  # This method basically just splits the multi-line input string into chunks
+  # based on lines that contain nothing but whitespace.  It also strips any
+  # leading or trailing whitespace (including newlines) from the resulting
+  # strings and then returns them as an array.
+  def split_into_paragraphs(showres_output)
+    showres_output.split(/^\s*$/).map { |p| p.strip! }
   end
 
   def parse_showres_header_line(line)

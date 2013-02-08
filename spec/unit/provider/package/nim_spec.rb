@@ -50,7 +50,7 @@ END
     it "should install a package" do
 
       @resource.stubs(:should).with(:ensure).returns(:installed)
-      Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo'").returns(bff_showres_output)
+      Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").returns(bff_showres_output)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
       @provider.install
     end
@@ -61,7 +61,7 @@ END
         nimclient_showres_output = ""
 
         @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output)
+        Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output)
         expect {
           @provider.install
         }.to raise_error(Puppet::Error, "Unable to find package 'mypackage.foo' with version '1.2.3.4' on lpp_source 'mysource'")
@@ -71,7 +71,7 @@ END
         nimclient_sequence = sequence('nimclient')
 
         @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
+        Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
         @provider.install
       end
@@ -125,7 +125,7 @@ mypackage.foo              1.2.3.1         Already superseded by 1.2.3.4
 OUTPUT
 
         @resource.stubs(:should).with(:ensure).returns("1.2.3.1")
-        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(bff_showres_output).in_sequence(nimclient_sequence)
+        Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").in_sequence(nimclient_sequence).returns(install_output)
 
         expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
@@ -136,7 +136,7 @@ OUTPUT
         nimclient_sequence = sequence('nimclient')
 
         @resource.stubs(:should).with(:ensure).returns("1.2.3-4")
-        Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
+        Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").in_sequence(nimclient_sequence)
         @provider.install
       end
@@ -163,7 +163,7 @@ mypackage.foo-1.2.3-1 is superseded by mypackage.foo-1.2.3-4
 OUTPUT
 
       @resource.stubs(:should).with(:ensure).returns("1.2.3-1")
-      Puppet::Util.expects(:execute).with("nimclient -o showres -a resource=mysource |grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
+      Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").in_sequence(nimclient_sequence).returns(install_output)
 
       expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
