@@ -21,31 +21,31 @@ describe provider_class do
 
     it "should run pw with no additional flags when no properties are given" do
       provider.addcmd.must == [provider_class.command(:pw), "groupadd", "testgroup"]
-      provider.expects(:execute).with([provider_class.command(:pw), "groupadd", "testgroup"])
+      provider.expects(:execute).with([provider_class.command(:pw), "groupadd", "testgroup"], kind_of(Hash))
       provider.create
     end
 
     it "should use -o when allowdupe is enabled" do
       resource[:allowdupe] = true
-      provider.expects(:execute).with(includes("-o"))
+      provider.expects(:execute).with(includes("-o"), kind_of(Hash))
       provider.create
     end
 
     it "should use -g with the correct argument when the gid property is set" do
       resource[:gid] = 12345
-      provider.expects(:execute).with(all_of(includes("-g"), includes(12345)))
+      provider.expects(:execute).with(all_of(includes("-g"), includes(12345)), kind_of(Hash))
       provider.create
     end
 
     it "should use -M with the correct argument when the members property is set" do
       resource[:members] = "user1"
-      provider.expects(:execute).with(all_of(includes("-M"), includes("user1")))
+      provider.expects(:execute).with(all_of(includes("-M"), includes("user1")), kind_of(Hash))
       provider.create
     end
 
     it "should use -M with all the given users when the members property is set to an array" do
       resource[:members] = ["user1", "user2"]
-      provider.expects(:execute).with(all_of(includes("-M"), includes("user1,user2")))
+      provider.expects(:execute).with(all_of(includes("-M"), includes("user1,user2")), kind_of(Hash))
       provider.create
     end
   end
