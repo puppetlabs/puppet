@@ -40,7 +40,7 @@ vars: var
     }
     ;
 
-var: PARAM VALUE icomment returns { result = {val[0],val[1]} }
+var: PARAM VALUE icomment returns { result = {val[0] => val[1]} }
     ;
 
 returns:      RETURN
