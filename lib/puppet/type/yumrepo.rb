@@ -198,6 +198,21 @@ module Puppet
       self.class.store
     end
 
+    ensurable do
+      desc "Possible values are *present*, *absent*, *installed*."
+
+      newvalue(:absent) do
+        provider.destroy
+      end
+
+      newvalue(:present) do
+        provider.create
+      end 
+
+      aliasvalue(:installed, :present)
+    end
+
+
     newparam(:name) do
       desc "The name of the repository.  This corresponds to the
         `repositoryid` parameter in `yum.conf(5)`."
