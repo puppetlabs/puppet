@@ -10,13 +10,6 @@ def location_for(place)
   end
 end
 
-# The YARD dependencies are only needed when developing the documentation, not
-# when testing or deploying.
-group :development do
-  gem "yard"
-  gem "redcarpet"
-end
-
 group(:development, :test) do
   gem "puppet", *location_for('file://.')
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
