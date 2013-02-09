@@ -2,7 +2,19 @@ require 'puppet/provider/package'
 require 'puppet/util/package'
 
 Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package do
-  desc "Installation from the AIX software directory."
+  desc "Installation from an AIX software directory, using the AIX `installp`
+       command.  The `source` parameter is required for this provider, and should
+       be set to the absolute path (on the puppet agent machine) of a directory
+       containing one or more BFF package files.
+
+       The `installp` command will generate a table of contents file (named `.toc`)
+       in this directory, and the `name`/`title` parameter that you specify for
+       your `package` resource must match a package name that exists in the `.toc`
+       file.
+
+       Note that package downgrades are *not* supported; if your resource specifies
+       a specific version number and there is already a newer version of the package
+       installed on the machine, the resource will fail with an error message."
 
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
