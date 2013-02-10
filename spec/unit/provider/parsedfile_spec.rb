@@ -139,9 +139,9 @@ end
 
 describe "A very basic provider based on ParsedFile", :focus => true do
   before :all do
-    @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
-    @sorted_crontab = File.read(my_fixture('vixie_crontab_sorted.txt'))
-    @cleaned_crontab = File.read(my_fixture('vixie_crontab_clean.txt'))
+    @example_crontab = File.read(my_fixture('simple.txt'))
+    @sorted_crontab = File.read(my_fixture('simple_sorted.txt'))
+    @cleaned_crontab = File.read(my_fixture('simple_clean.txt'))
     @output = Puppet::Util::FileType.filetype(:flat).new(target)
   end
 
