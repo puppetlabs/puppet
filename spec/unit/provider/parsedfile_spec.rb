@@ -159,22 +159,18 @@ describe Puppet::Provider::ParsedFile, :focus => true do
     example_provider_class.default_target = target
     # Setup some record rules
     example_provider_class.instance_eval do
-      text_line :comment, :match => %r{^\s*#}, :post_parse => proc { |record|
-        record[:name] = $1 if record[:line] =~ /Puppet Name: (.+)\s*$/
-      }
-      record_line :key_val,
-        :fields => %w{key val},
-        :match => %r{^\s*(\S+)\s*=\s*(.*)}
+      text_line :text, :match => %r{.}
     end
     example_provider_class.initvars
     example_provider_class.prefetch
+    # evade a race between multiple invocations of the header method
+    example_provider_class.stubs(:header).returns("# HEADER As added by puppet.\n")
     example_provider_class
   end
 
   context "writing file contents to disk" do
     it "should not change anything except from adding a header" do
-      #@output.expects(:write).with("foobar")
-      @output.expects(:write)
+      @output.expects(:write).with(subject.header + @example_crontab)
       subject.flush_target(target)
     end
   end
