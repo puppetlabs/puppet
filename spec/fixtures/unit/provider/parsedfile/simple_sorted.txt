@@ -1,6 +1,0 @@
-# HEADER As added by software from a third party.
-# HEADER As added by puppet.
-# This is a sample fixture for the parsedfile provider.
-# Puppet Name: websync
-key1=value1
-key2 = value2

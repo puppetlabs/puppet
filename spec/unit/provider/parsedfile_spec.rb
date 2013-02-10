@@ -140,8 +140,6 @@ end
 describe "A very basic provider based on ParsedFile", :focus => true do
   before :all do
     @example_crontab = File.read(my_fixture('simple.txt'))
-    @sorted_crontab = File.read(my_fixture('simple_sorted.txt'))
-    @cleaned_crontab = File.read(my_fixture('simple_clean.txt'))
     @output = Puppet::Util::FileType.filetype(:flat).new(target)
   end
 
@@ -149,14 +147,7 @@ describe "A very basic provider based on ParsedFile", :focus => true do
     File.expand_path("/path/to/my/vixie/crontab")
   end
 
-  def stub_target_file_type
-    Puppet::Util::FileType.filetype(:flat).
-      stubs(:new).with(target).returns(@output)
-    @output.stubs(:read).returns(@example_crontab)
-  end
-
   subject do
-    stub_target_file_type
     example_provider_class = Class.new(Puppet::Provider::ParsedFile)
     example_provider_class.default_target = target
     # Setup some record rules
@@ -166,33 +157,34 @@ describe "A very basic provider based on ParsedFile", :focus => true do
     example_provider_class.initvars
     example_provider_class.prefetch
     # evade a race between multiple invocations of the header method
-    example_provider_class.stubs(:header).returns("# HEADER As added by puppet.\n")
+    example_provider_class.stubs(:header).
+      returns("# HEADER As added by puppet.\n")
     example_provider_class
   end
 
-  context "writing file contents to disk" do
+  context "writing file contents back to disk" do
     it "should not change anything except from adding a header" do
-      @output.expects(:write).with(subject.header + @example_crontab)
-      subject.flush_target(target)
+      input_records = subject.parse(@example_crontab)
+      subject.to_file(input_records).should match subject.header +
+        @example_crontab
     end
   end
 
   context "rewriting a file containing a native header" do
+    regex = /^# HEADER.*third party\.\n/
     it "should move the native header to the top" do
-      regex = /^# HEADER.*third party\.\n/
+      input_records = subject.parse(@example_crontab)
       subject.stubs(:native_header_regex).returns(regex)
-      @output.expects(:write).with(@sorted_crontab)
-      subject.flush_target(target)
+      subject.to_file(input_records).should_not match /\A#{subject.header}/
     end
-  end
 
-  context "dropping native headers found in input" do
-    it "should not include the native header in the output" do
-      regex = /^# HEADER.*third party\.\n/
-      subject.stubs(:native_header_regex).returns(regex)
-      subject.stubs(:drop_native_header).returns(true)
-      @output.expects(:write).with(@cleaned_crontab)
-      subject.flush_target(target)
+    context "and dropping native headers found in input" do
+      it "should not include the native header in the output" do
+        input_records = subject.parse(@example_crontab)
+        subject.stubs(:native_header_regex).returns(regex)
+        subject.stubs(:drop_native_header).returns(true)
+        subject.to_file(input_records).should_not match regex
+      end
     end
   end
 end
