@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby -S rspec
+# encoding: ASCII-8BIT
 require 'spec_helper'
 require 'facter/util/plist'
 
