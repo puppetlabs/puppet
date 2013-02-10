@@ -137,7 +137,7 @@ describe Puppet::Provider::ParsedFile do
   end
 end
 
-describe Puppet::Provider::ParsedFile, :focus => true do
+describe "A very basic provider based on ParsedFile", :focus => true do
   before :all do
     @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
     @output = Puppet::Util::FileType.filetype(:flat).new(target)
