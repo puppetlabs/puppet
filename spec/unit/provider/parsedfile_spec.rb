@@ -140,6 +140,7 @@ end
 describe Puppet::Provider::ParsedFile, :focus => true do
   before :all do
     @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
+    @output = Puppet::Util::FileType.filetype(:flat).new(target)
   end
 
   def target
@@ -147,11 +148,9 @@ describe Puppet::Provider::ParsedFile, :focus => true do
   end
 
   def stub_target_file_type
-    flat_file = Puppet::Util::FileType.filetype(:flat).new(target)
     Puppet::Util::FileType.filetype(:flat).
-      stubs(:new).with(target).returns(flat_file)
-    flat_file.stubs(:read).returns(@example_crontab)
-    flat_file.stubs(:write)
+      stubs(:new).with(target).returns(@output)
+    @output.stubs(:read).returns(@example_crontab)
   end
 
   subject do
@@ -174,7 +173,8 @@ describe Puppet::Provider::ParsedFile, :focus => true do
 
   context "writing file contents to disk" do
     it "should not change anything except from adding a header" do
-      @output.expects(:write).with("foobar")
+      #@output.expects(:write).with("foobar")
+      @output.expects(:write)
       subject.flush_target(target)
     end
   end
