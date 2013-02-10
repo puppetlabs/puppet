@@ -141,6 +141,7 @@ describe "A very basic provider based on ParsedFile", :focus => true do
   before :all do
     @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
     @sorted_crontab = File.read(my_fixture('vixie_crontab_sorted.txt'))
+    @cleaned_crontab = File.read(my_fixture('vixie_crontab_clean.txt'))
     @output = Puppet::Util::FileType.filetype(:flat).new(target)
   end
 
@@ -181,6 +182,16 @@ describe "A very basic provider based on ParsedFile", :focus => true do
       regex = /^# HEADER.*third party\.\n/
       subject.stubs(:native_header_regex).returns(regex)
       @output.expects(:write).with(@sorted_crontab)
+      subject.flush_target(target)
+    end
+  end
+
+  context "dropping native headers found in input" do
+    it "should not include the native header in the output" do
+      regex = /^# HEADER.*third party\.\n/
+      subject.stubs(:native_header_regex).returns(regex)
+      subject.stubs(:drop_native_header).returns(true)
+      @output.expects(:write).with(@cleaned_crontab)
       subject.flush_target(target)
     end
   end
