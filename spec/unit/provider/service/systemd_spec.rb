@@ -31,4 +31,9 @@ describe provider_class do
     provider_class.instances.map {|provider| provider.name}.should =~ ["my_service","my_other_service"]
   end
 
+  it "(#16451) has command systemctl without being fully qualified" do
+    provider_class.instance_variable_get(:@commands).
+      should include(:systemctl => 'systemctl')
+  end
+
 end
