@@ -140,6 +140,7 @@ end
 describe "A very basic provider based on ParsedFile", :focus => true do
   before :all do
     @example_crontab = File.read(my_fixture('vixie_crontab.txt'))
+    @sorted_crontab = File.read(my_fixture('vixie_crontab_sorted.txt'))
     @output = Puppet::Util::FileType.filetype(:flat).new(target)
   end
 
@@ -171,6 +172,15 @@ describe "A very basic provider based on ParsedFile", :focus => true do
   context "writing file contents to disk" do
     it "should not change anything except from adding a header" do
       @output.expects(:write).with(subject.header + @example_crontab)
+      subject.flush_target(target)
+    end
+  end
+
+  context "rewriting a file containing a native header" do
+    it "should move the native header to the top" do
+      regex = /^# HEADER.*third party\.\n/
+      subject.stubs(:native_header_regex).returns(regex)
+      @output.expects(:write).with(@sorted_crontab)
       subject.flush_target(target)
     end
   end
