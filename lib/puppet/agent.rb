@@ -37,7 +37,7 @@ class Puppet::Agent
 
     result = nil
     block_run = Puppet::Application.controlled_run do
-      splay
+      splay client_options.fetch :splay, Puppet[:splay]
       result = run_in_fork(should_fork) do
         with_client do |client|
           begin
@@ -66,8 +66,8 @@ class Puppet::Agent
   end
 
   # Sleep when splay is enabled; else just return.
-  def splay
-    return unless Puppet[:splay]
+  def splay(do_splay = Puppet[:splay])
+    return unless do_splay
     return if splayed?
 
     time = rand(Puppet[:splaylimit] + 1)
