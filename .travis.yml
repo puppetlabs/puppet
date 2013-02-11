@@ -4,6 +4,7 @@ script: "bundle exec rake spec SPEC_OPTS='--color --format documentation'"
 notifications:
   email: false
 rvm:
+  - 2.0.0
   - 1.9.3
   - 1.8.7
   - ruby-head
