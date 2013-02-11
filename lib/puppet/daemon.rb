@@ -79,7 +79,7 @@ class Puppet::Daemon
       return
     end
 
-    agent.run
+    agent.run({:splay => false})
   end
 
   # Remove the pid file for our daemon.
