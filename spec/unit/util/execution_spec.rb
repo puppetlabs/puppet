@@ -576,7 +576,7 @@ describe Puppet::Util::Execution do
       it "should raise an error if a nil option is specified" do
         expect {
           Puppet::Util::Execution.execute('fail command', nil)
-        }.to raise_error(TypeError, /can\'t convert nil into Hash/)
+        }.to raise_error(TypeError, /(can\'t convert|no implicit conversion of) nil into Hash/)
       end
     end
   end

@@ -3,10 +3,19 @@ require 'spec_helper'
 
 require 'puppet/transaction/event'
 
+class TestResource
+  def to_s
+    "Foo[bar]"
+  end
+  def [](v)
+    nil
+  end
+end
+
 describe Puppet::Transaction::Event do
   include PuppetSpec::Files
 
-  [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags, :audited].each do |attr|
+  [:previous_value, :desired_value, :property, :name, :message, :file, :line, :tags, :audited].each do |attr|
     it "should support #{attr}" do
       event = Puppet::Transaction::Event.new
       event.send(attr.to_s + "=", "foo")
@@ -14,12 +23,18 @@ describe Puppet::Transaction::Event do
     end
   end
 
+  it "should support resource" do
+    event = Puppet::Transaction::Event.new
+    event.resource = TestResource.new
+    event.resource.should == "Foo[bar]"
+  end
+
   it "should always convert the property to a string" do
     Puppet::Transaction::Event.new(:property => :foo).property.should == "foo"
   end
 
   it "should always convert the resource to a string" do
-    Puppet::Transaction::Event.new(:resource => :foo).resource.should == "foo"
+    Puppet::Transaction::Event.new(:resource => TestResource.new).resource.should == "Foo[bar]"
   end
 
   it "should produce the message when converted to a string" do
@@ -99,17 +114,17 @@ describe Puppet::Transaction::Event do
 
     it "should use the source description as the source if one is set" do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "/my/param" }
-      Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => "Foo[bar]", :property => "foo").send_log
+      Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no source description is set" do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "foo" }
-      Puppet::Transaction::Event.new(:resource => "Foo[bar]", :property => "foo").send_log
+      Puppet::Transaction::Event.new(:resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no property or source description is set" do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
-      Puppet::Transaction::Event.new(:resource => "Foo[bar]").send_log
+      Puppet::Transaction::Event.new(:resource => TestResource.new).send_log
     end
   end
 
