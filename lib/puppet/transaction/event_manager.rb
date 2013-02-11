@@ -59,6 +59,13 @@ class Puppet::Transaction::EventManager
 
       queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and ! resource.deleting?
     end
+
+    dequeue_events_for_resource(resource, :refresh) if events.detect { |e| e.invalidate_refreshes }
+  end
+
+  def dequeue_events_for_resource(target, callback)
+    target.info "Unscheduling #{callback} on #{target}"
+    @event_queues[target][callback] = {}
   end
 
   def queue_events_for_resource(source, target, callback, events)
@@ -83,7 +90,7 @@ class Puppet::Transaction::EventManager
   def queued_events(resource)
     return unless callbacks = @event_queues[resource]
     callbacks.each do |callback, events|
-      yield callback, events
+      yield callback, events unless events.empty?
     end
   end
 
