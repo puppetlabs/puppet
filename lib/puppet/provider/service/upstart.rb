@@ -33,7 +33,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   # eventually explain how to use this service or perhaps why it should remain
   # excluded. When that bug is adddressed this should be reexamined.
   def self.instances
-    self.get_services(['wait-for-state'])
+    self.get_services(['wait-for-state','portmap-wait'])
   end
 
   def self.get_services(exclude=[])
