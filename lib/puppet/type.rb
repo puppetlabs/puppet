@@ -1953,8 +1953,9 @@ class Type
 
     reqs = []
     self.class.eachautorequire { |type, block|
-      # Ignore any types we can't find, although that would be a bit odd.
-      next unless typeobj = Puppet::Type.type(type)
+      # If the type is :class/'class', we allow it as it there is no
+      # Puppet::Type::Class type. Otherwise, we ignore any types we can't find.
+      next unless type.to_s == 'class' || typeobj = Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
       next unless list = self.instance_eval(&block)
