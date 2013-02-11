@@ -142,6 +142,10 @@ class Puppet::Property < Puppet::Parameter
   #   was possible to specify a value of `:before` or `:after` for the purpose of calling
   #   both the block and the provider. Use of these deprecated options will now raise an exception later
   #   in the process when the _is_ value is set (see #set).
+  # @option options [Symbol] :invalidate_refreshes Indicates a change on this property should invalidate and
+  #   remove any scheduled refreshes (from notify or subscribe) targeted at the same resource. For example, if
+  #   a change in this property takes into account any changes that a scheduled refresh would have performed,
+  #   then the scheduled refresh would be deleted.
   # @option options [Object] any Any other option is treated as a call to a setter having the given
   #   option name (e.g. `:required_features` calls `required_features=` with the option's value as an
   #   argument).
@@ -259,13 +263,18 @@ class Puppet::Property < Puppet::Parameter
   # * `:desired_value` - a.k.a _should_ or _wanted value_
   # * `:property` - reference to this property
   # * `:source_description` - the _path_ (?? See todo)
+  # * `:invalidate_refreshes` - if scheduled refreshes should be invalidated
   #
   # @todo What is the intent of this method? What is the meaning of the :source_description passed in the
   #   options to the created event?
   # @return [Puppet::Transaction::Event] the created event 
   # @see Puppet::Type#event
   def event
-    resource.event :name => event_name, :desired_value => should, :property => self, :source_description => path
+    attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }
+    if should and value = self.class.value_collection.match?(should)
+      attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
+    end
+    resource.event attrs
   end
 
   # @todo What is this?

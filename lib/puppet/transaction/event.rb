@@ -9,7 +9,7 @@ class Puppet::Transaction::Event
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes]
   YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
   attr_writer :tags
