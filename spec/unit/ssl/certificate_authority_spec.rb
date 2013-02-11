@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# encoding: ASCII-8BIT
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'

@@ -11,6 +11,7 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
     and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
 
   def initialize
+    raise Puppet::Error, "ActiveRecords-based inventory is unsupported with Ruby 2 and Rails 3.0" if RUBY_VERSION[0] == '2'
     Puppet.deprecation_warning "ActiveRecord-based storeconfigs and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"
     super
   end
