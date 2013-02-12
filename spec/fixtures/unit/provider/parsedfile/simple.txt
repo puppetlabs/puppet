@@ -1,0 +1,5 @@
+# This is a sample fixture for the parsedfile provider.
+# HEADER As added by software from a third party.
+# Puppet Name: websync
+key1=value1
+key2 = value2

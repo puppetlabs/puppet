@@ -91,4 +91,100 @@ describe Puppet::Provider::ParsedFile do
       @class.flush_target("/my/file")
     end
   end
+
+  describe "when writing file contents back to disk" do
+    before do
+      # convert the fixture to text - we will use this
+      # to build our test criteria
+      input = YAML.load(File.read(my_fixture('simple_header.yaml')))
+      lines = input.collect { |r| r[:line] }
+      @text = lines.join("\n")
+
+      # uh oh - cargo cultist ahoy
+      # I took this from an above example in good faith
+      @class.stubs(:retrieve).returns [ ]
+      @class.default_target = "/my/file"
+      @class.initvars
+      @class.prefetch
+
+      @class.text_line :content, :match => %r{^\s*[^#]}
+      @class.text_line :comment, :match => %r{^\s*#}
+
+      # this is how the fixture is actually used (I'm proud ;-)
+      @class.stubs(:target_records).with("/my/file").returns input
+
+      # this is also lent from an existing example
+      # it's needed for catching the provider's output
+      @filetype = Puppet::Util::FileType.filetype(:flat).new("/my/file")
+      Puppet::Util::FileType.filetype(:flat).stubs(:new).with("/my/file").returns @filetype
+      @filetype.stubs(:write)
+    end
+
+    it "should not change anything apart from adding a header" do
+      # this might be error prone on slow systems i fear - should probably
+      # stub the header method too
+      # note: the expecation even works - when not supplying the fixture,
+      # one can expect "header + \n" successfully
+      @filetype.expects(:write).with(@class.header + @text + "\n")
+      @class.flush_target("/my/file")
+    end
+
+    it "should move an intermittent vendor header to the top" do
+      true # NYI - gotta make step 1 work first
+    end
+
+    # TBI: it should drop a vendor header if so configured
+  end
+end
+
+describe "A very basic provider based on ParsedFile", :focus => true do
+  before :all do
+    @example_crontab = File.read(my_fixture('simple.txt'))
+    @output = Puppet::Util::FileType.filetype(:flat).new(target)
+  end
+
+  def target
+    File.expand_path("/path/to/my/vixie/crontab")
+  end
+
+  subject do
+    example_provider_class = Class.new(Puppet::Provider::ParsedFile)
+    example_provider_class.default_target = target
+    # Setup some record rules
+    example_provider_class.instance_eval do
+      text_line :text, :match => %r{.}
+    end
+    example_provider_class.initvars
+    example_provider_class.prefetch
+    # evade a race between multiple invocations of the header method
+    example_provider_class.stubs(:header).
+      returns("# HEADER As added by puppet.\n")
+    example_provider_class
+  end
+
+  context "writing file contents back to disk" do
+    it "should not change anything except from adding a header" do
+      input_records = subject.parse(@example_crontab)
+      subject.to_file(input_records).should match subject.header +
+        @example_crontab
+    end
+  end
+
+  context "rewriting a file containing a native header" do
+    regex = /^# HEADER.*third party\.\n/
+    it "should move the native header to the top" do
+      input_records = subject.parse(@example_crontab)
+      subject.stubs(:native_header_regex).returns(regex)
+      subject.to_file(input_records).should_not match /\A#{subject.header}/
+    end
+
+    context "and dropping native headers found in input" do
+      it "should not include the native header in the output" do
+        input_records = subject.parse(@example_crontab)
+        subject.stubs(:native_header_regex).returns(regex)
+        subject.stubs(:drop_native_header).returns(true)
+        subject.to_file(input_records).should_not match regex
+      end
+    end
+  end
 end
