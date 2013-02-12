@@ -8,9 +8,9 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
        containing one or more BFF package files.
 
        The `installp` command will generate a table of contents file (named `.toc`)
-       in this directory, and the `name`/`title` parameter that you specify for
-       your `package` resource must match a package name that exists in the `.toc`
-       file.
+       in this directory, and the `name` parameter (or resource title) that you
+       specify for your `package` resource must match a package name that exists
+       in the `.toc` file.
 
        Note that package downgrades are *not* supported; if your resource specifies
        a specific version number and there is already a newer version of the package
