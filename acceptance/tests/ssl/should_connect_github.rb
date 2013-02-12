@@ -1,6 +1,6 @@
-test_name "puppet should be able to authenticate a well-known SSL server"
+test_name "puppet should be able to authenticate to a well-known SSL server"
 
-script <<EOM
+script = <<EOM
 #! /usr/bin/env ruby
 require 'rubygems'
 require 'openssl'
