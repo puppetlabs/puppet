@@ -25,12 +25,17 @@ describe Puppet::Type.type(:service).provider(:init) do
     ["/service/path","/alt/service/path"]
   end
 
+  let :excludes do
+    # Taken from redhat, gentoo, and debian
+    %w{functions.sh reboot.sh shutdown.sh functions halt killall single linuxconf reboot boot wait-for-state}
+  end
+
   describe "when getting all service instances" do
     before :each do
       described_class.stubs(:defpath).returns('tmp')
 
       @services = ['one', 'two', 'three', 'four']
-      Dir.expects(:entries).with('tmp').returns @services
+      Dir.stubs(:entries).with('tmp').returns @services
       FileTest.expects(:directory?).with('tmp').returns(true)
       FileTest.stubs(:executable?).returns(true)
     end
@@ -64,6 +69,13 @@ describe Puppet::Type.type(:service).provider(:init) do
       File.stubs(:readlink).with("tmp/#{not_init_service}").returns("/lib/init/upstart-job")
 
       described_class.instances.map(&:name).should == valid_services
+    end
+
+    it "should discard non-initscript scripts" do
+      valid_services = @services
+      all_services = valid_services + excludes
+      Dir.expects(:entries).with('tmp').returns all_services
+      described_class.instances.map(&:name).should =~ valid_services
     end
   end
 
