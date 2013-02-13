@@ -7,10 +7,6 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:init) do
 
-  before :each do
-    File.stubs(:directory?).returns(true)
-  end
-
   let :provider do
     provider = described_class.new(:name => 'myservice')
     provider.resource = resource
@@ -21,17 +17,22 @@ describe Puppet::Type.type(:service).provider(:init) do
     Puppet::Type.type(:service).new(
       :name     => 'myservice',
       :ensure   => :running,
-      :path     => ["/service/path","/alt/service/path"]
+      :path     => paths
     )
+  end
+
+  let :paths do
+    ["/service/path","/alt/service/path"]
   end
 
   describe "when getting all service instances" do
     before :each do
-      @services = ['one', 'two', 'three', 'four']
-      Dir.stubs(:entries).returns @services
-      FileTest.stubs(:directory?).returns(true)
-      FileTest.stubs(:executable?).returns(true)
       described_class.stubs(:defpath).returns('tmp')
+
+      @services = ['one', 'two', 'three', 'four']
+      Dir.expects(:entries).with('tmp').returns @services
+      FileTest.expects(:directory?).with('tmp').returns(true)
+      FileTest.stubs(:executable?).returns(true)
     end
 
     it "should return instances for all services" do
@@ -95,36 +96,61 @@ describe Puppet::Type.type(:service).provider(:init) do
     end
   end
 
-  describe "when searching for the init script" do
+  describe "when checking valid paths" do
     it "should discard paths that do not exist" do
-      File.stubs(:exist?).returns(false)
-      File.stubs(:directory?).returns(false)
-      provider.paths.should be_empty
+      File.expects(:directory?).with(paths[0]).returns false
+      File.expects(:exist?).with(paths[0]).returns false
+      File.expects(:directory?).with(paths[1]).returns true
+
+      provider.paths.should == [paths[1]]
     end
 
     it "should discard paths that are not directories" do
-      File.stubs(:exist?).returns(true)
-      File.stubs(:directory?).returns(false)
+      paths.each do |path|
+        File.expects(:exist?).with(path).returns true
+        File.expects(:directory?).with(path).returns false
+      end
       provider.paths.should be_empty
+    end
+  end
+
+  describe "when searching for the init script" do
+    before :each do
+      paths.each {|path| File.expects(:directory?).with(path).returns true }
     end
 
     it "should be able to find the init script in the service path" do
-      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
-      File.expects(:stat).with("/service/path/myservice").returns true
+      File.expects(:stat).with("#{paths[0]}/myservice").returns true
+      File.expects(:stat).with("#{paths[1]}/myservice").never # first one wins
       provider.initscript.should == "/service/path/myservice"
     end
-    it "should be able to find the init script in the service path" do
-      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
-      File.expects(:stat).with("/alt/service/path/myservice").returns true
+
+    it "should be able to find the init script in an alternate service path" do
+      File.expects(:stat).with("#{paths[0]}/myservice").raises Errno::ENOENT, "No such file or directory - #{paths[0]}/myservice"
+      File.expects(:stat).with("#{paths[1]}/myservice").returns true
       provider.initscript.should == "/alt/service/path/myservice"
     end
+
+    it "should be able to find the init script if it ends with .sh" do
+      File.expects(:stat).with("#{paths[0]}/myservice").raises Errno::ENOENT, "No such file or directory - #{paths[0]}/myservice"
+      File.expects(:stat).with("#{paths[1]}/myservice").raises Errno::ENOENT, "No such file or directory - #{paths[1]}/myservice"
+      File.expects(:stat).with("#{paths[0]}/myservice.sh").returns true
+      provider.initscript.should == "/service/path/myservice.sh"
+    end
+
     it "should fail if the service isn't there" do
+      paths.each do |path|
+        File.expects(:stat).with("#{path}/myservice").raises Errno::ENOENT, "No such file or directory - #{path}/myservice"
+        File.expects(:stat).with("#{path}/myservice.sh").raises Errno::ENOENT, "No such file or directory - #{path}/myservice.sh"
+      end
       expect { provider.initscript }.to raise_error(Puppet::Error, "Could not find init script for 'myservice'")
     end
   end
 
   describe "if the init script is present" do
     before :each do
+      File.stubs(:directory?).with("/service/path").returns true
+      File.stubs(:directory?).with("/alt/service/path").returns true
       File.stubs(:stat).with("/service/path/myservice").returns true
     end
 
