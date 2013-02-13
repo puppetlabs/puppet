@@ -10,6 +10,13 @@ def location_for(place)
   end
 end
 
+# C Ruby (MRI) or Rubinius, but NOT Windows
+platforms :ruby do
+  gem 'pry', :group => :development
+  gem 'yard', :group => :development
+  gem 'redcarpet', :group => :development
+end
+
 group(:development, :test) do
   gem "puppet", *location_for('file://.')
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
