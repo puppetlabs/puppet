@@ -146,5 +146,17 @@ describe Puppet::Util::Log.desttypes[:console] do
       dest = klass.new
       dest.handle(msg)
     end
+
+    it "should colorize notice-level output" do
+      Puppet[:color] = true
+      cyan = Puppet::Util::Colors::CYAN[:console]
+      reset = Puppet::Util::Colors::RESET[:console]
+
+      $stdout.expects(:puts).with("#{cyan}Notice: I'm cyan#{reset}")
+
+      msg = Puppet::Util::Log.new(:level => :notice, :message => "I'm cyan")
+      dest = klass.new
+      dest.handle(msg)
+    end
   end
 end
