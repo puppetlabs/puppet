@@ -1,0 +1,18 @@
+UNIT                                                                                      LOAD   ACTIVE   SUB       DESCRIPTION
+auditd.service                                                                            loaded active   running   Security Auditing Service
+crond.service                                                                             loaded active   running   Command Scheduler
+dbus.service                                                                              loaded active   running   D-Bus System Message Bus
+display-manager.service                                                                   error  inactive dead      display-manager.service
+ebtables.service                                                                          loaded inactive dead      SYSV: Ethernet Bridge filtering tables
+fedora-readonly.service                                                                   loaded active   exited    Configure read-only root support
+initrd-switch-root.service                                                                loaded inactive dead      Switch Root
+ip6tables.service                                                                         error  inactive dead      ip6tables.service
+puppet.service                                                                            loaded inactive dead      SYSV: Enables periodic system configuration checks through puppet.
+sshd.service                                                                              loaded failed   failed    OpenSSH server daemon
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+
+155 loaded units listed.
+To show all installed unit files use 'systemctl list-unit-files'.
