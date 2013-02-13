@@ -36,63 +36,34 @@ describe Puppet::Type.type(:service).provider(:init) do
     end
 
     it "should return instances for all services" do
-      @services.each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst}.returns("#{inst}_instance")
-      end
-      results = @services.collect {|x| "#{x}_instance"}
-
-      described_class.instances.should == results
+      described_class.instances.map(&:name).should == @services
     end
 
     it "should omit an array of services from exclude list" do
       exclude = ['two', 'four']
-      (@services - exclude).each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst}.returns("#{inst}_instance")
-      end
-      results = (@services-exclude).collect {|x| "#{x}_instance"}
-
-      described_class.get_services(described_class.defpath, exclude).should == results
+      described_class.get_services(described_class.defpath, exclude).map(&:name).should == (@services - exclude)
     end
 
     it "should omit a single service from the exclude list" do
       exclude = 'two'
-      (@services - [exclude]).each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst}.returns("#{inst}_instance")
-      end
-      results = @services.reject{|x| x == exclude }.collect {|x| "#{x}_instance"}
-
-      described_class.get_services(described_class.defpath, exclude).should == results
+      described_class.get_services(described_class.defpath, exclude).map(&:name).should == @services - [exclude]
     end
 
     it "should use defpath" do
-      @services.each do |inst|
-        described_class.expects(:new).with{|hash| hash[:path] == described_class.defpath}.returns("#{inst}_instance")
-      end
-      results = @services.sort.collect {|x| "#{x}_instance"}
-
-      described_class.instances.sort.should == results
+      described_class.instances.should be_all { |provider| provider.get(:path) == described_class.defpath }
     end
 
     it "should set hasstatus to true for providers" do
-      @services.each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst && hash[:hasstatus] == true}.returns("#{inst}_instance")
-      end
-      results = @services.collect {|x| "#{x}_instance"}
-
-      described_class.instances.should == results
+      described_class.instances.should be_all { |provider| provider.get(:hasstatus) == true }
     end
 
     it "should discard upstart jobs" do
       not_init_service, *valid_services = @services
-      valid_services.each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst && hash[:hasstatus] == true}.returns("#{inst}_instance")
-      end
-      File.stubs(:symlink?).returns(false)
+      File.stubs(:symlink?).returns false
       File.stubs(:symlink?).with("tmp/#{not_init_service}").returns(true)
       File.stubs(:readlink).with("tmp/#{not_init_service}").returns("/lib/init/upstart-job")
 
-      results = valid_services.collect {|x| "#{x}_instance"}
-      described_class.instances.should == results
+      described_class.instances.map(&:name).should == valid_services
     end
   end
 
