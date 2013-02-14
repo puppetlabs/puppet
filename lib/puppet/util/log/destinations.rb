@@ -114,8 +114,8 @@ Puppet::Util::Log.newdesttype :console do
       :warning => { :name => 'Warning',   :color => :hred,   :stream => $stderr },
 
       :notice  => { :name => 'Notice',    :color => :notice, :stream => $stdout },
-      :info    => { :name => 'Info',      :color => :green,  :stream => $stdout },
-      :debug   => { :name => 'Debug',     :color => :cyan,   :stream => $stdout },
+      :info    => { :name => 'Info',      :color => :info,   :stream => $stdout },
+      :debug   => { :name => 'Debug',     :color => :debug,  :stream => $stdout },
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
