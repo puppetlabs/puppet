@@ -29,7 +29,7 @@ describe Puppet::Application::Describe do
 
 
   describe "in preinit" do
-    it "should set options[:parameteers] to true" do
+    it "should set options[:parameters] to true" do
       @describe.preinit
 
       @describe.options[:parameters].should be_true
