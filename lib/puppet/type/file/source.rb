@@ -1,4 +1,3 @@
-
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 
@@ -117,7 +116,7 @@ module Puppet
         param_name = (metadata_method == :checksum) ? :content : metadata_method
         next if metadata_method == :owner and !Puppet.features.root?
         next if metadata_method == :checksum and metadata.ftype == "directory"
-        next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
+        next if metadata_method == :checksum and metadata.ftype == "link" and resource[:links] == :manage
 
         if Puppet.features.microsoft_windows?
           next if [:owner, :group].include?(metadata_method) and !local?
