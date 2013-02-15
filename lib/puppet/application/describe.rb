@@ -70,7 +70,7 @@ class TypeDoc
     }.each do |name|
       type = @types[name]
       s = type.doc.gsub(/\s+/, " ")
-      n = s.index(".")
+      n = s.index(". ")
       if n.nil?
         s = ".. no documentation .."
       elsif n > 45
