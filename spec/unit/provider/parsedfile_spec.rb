@@ -92,3 +92,54 @@ describe Puppet::Provider::ParsedFile do
     end
   end
 end
+
+describe "A very basic provider based on ParsedFile" do
+  before :all do
+    @input_text = File.read(my_fixture('simple.txt'))
+  end
+
+  def target
+    File.expand_path("/tmp/test")
+  end
+
+  subject do
+    example_provider_class = Class.new(Puppet::Provider::ParsedFile)
+    example_provider_class.default_target = target
+    # Setup some record rules
+    example_provider_class.instance_eval do
+      text_line :text, :match => %r{.}
+    end
+    example_provider_class.initvars
+    example_provider_class.prefetch
+    # evade a race between multiple invocations of the header method
+    example_provider_class.stubs(:header).
+      returns("# HEADER As added by puppet.\n")
+    example_provider_class
+  end
+
+  context "writing file contents back to disk" do
+    it "should not change anything except from adding a header" do
+      input_records = subject.parse(@input_text)
+      subject.to_file(input_records).
+        should match subject.header + @input_text
+    end
+  end
+
+  context "rewriting a file containing a native header" do
+    regex = /^# HEADER.*third party\.\n/
+    it "should move the native header to the top" do
+      input_records = subject.parse(@input_text)
+      subject.stubs(:native_header_regex).returns(regex)
+      subject.to_file(input_records).should_not match /\A#{subject.header}/
+    end
+
+    context "and dropping native headers found in input" do
+      it "should not include the native header in the output" do
+        input_records = subject.parse(@input_text)
+        subject.stubs(:native_header_regex).returns(regex)
+        subject.stubs(:drop_native_header).returns(true)
+        subject.to_file(input_records).should_not match regex
+      end
+    end
+  end
+end

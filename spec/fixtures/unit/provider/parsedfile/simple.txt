@@ -1,0 +1,4 @@
+# This is a sample fixture for the parsedfile provider.
+# HEADER As added by software from a third party.
+# Another inconspicuous comment.
+A generic content line with: a value.

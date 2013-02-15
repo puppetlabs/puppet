@@ -8,6 +8,12 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     provider
   end
 
+  def compare_crontab_text(have, want)
+    # We should have four header lines, and then the text...
+    have.lines.to_a[0..3].should be_all {|x| x =~ /^# / }
+    have.lines.to_a[4..-1].join('').should == want
+  end
+
   context "with the simple samples" do
     FIELDS = {
       :crontab => %w{command minute hour month monthday weekday}.collect { |o| o.intern },
@@ -26,12 +32,6 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       (FIELDS[have[:record_type]] - want.keys).each do |name|
         have[name].should == :absent
       end
-    end
-
-    def compare_crontab_text(have, want)
-      # We should have four header lines, and then the text...
-      have.lines.to_a[0..3].should be_all {|x| x =~ /^# / }
-      have.lines.to_a[4..-1].join('').should == want
     end
 
     ########################################################################
@@ -111,6 +111,14 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       it "should regenerate the whole text from the set of all records" do
         compare_crontab_text subject.to_file(all_records), all_text
       end
+    end
+  end
+
+  context "when receiving a vixie cron header from the cron interface" do
+    it "should not write that header back to disk" do
+      vixie_header = File.read(my_fixture('vixie_header.txt'))
+      vixie_records = subject.parse(vixie_header)
+      compare_crontab_text subject.to_file(vixie_records), ""
     end
   end
 end
