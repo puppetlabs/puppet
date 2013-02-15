@@ -1,5 +1,8 @@
 require 'puppet/provider/nameservice/objectadd'
 require 'date'
+require 'puppet/util/libuser'
+require 'time'
+require 'puppet/error'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to
@@ -38,6 +41,46 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       end
     }
 
+  optional_commands :localadd => "luseradd"
+  has_feature :libuser if Puppet.features.libuser?
+
+  def exists?
+    return !!localuid if @resource.forcelocal?
+    super
+  end
+
+  def uid
+     return localuid if @resource.forcelocal?
+     get(:uid)
+  end
+
+  def finduser(key, value)
+    passwd_file = "/etc/passwd"
+    passwd_keys = ['account', 'password', 'uid', 'gid', 'gecos', 'directory', 'shell']
+    index = passwd_keys.index(key)
+    File.open(passwd_file) do |f|
+      f.each_line do |line|
+         user = line.split(":")
+         if user[index] == value
+             f.close
+             return user
+         end
+      end
+    end
+    false
+  end
+
+  def local_username
+    user = finduser('uid', @resource.uid)
+    
+  end 
+
+  def localuid
+    user = finduser('account', resource[:name])
+    return user[2] if user
+    false
+  end
+ 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -52,16 +95,36 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
 
   def check_allow_dup
-    @resource.allowdupe? ? ["-o"] : []
+    # We have to manually check for duplicates when using libuser
+    # because by default duplicates are allowed.  This check is
+    # to ensure consistent behaviour of the useradd provider when
+    # using both useradd and luseradd
+    if not @resource.allowdupe? and @resource.forcelocal?
+       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
+           raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
+       end
+    elsif @resource.allowdupe? and not @resource.forcelocal?
+       return ["-o"] 
+    end
+    []
   end
 
   def check_manage_home
     cmd = []
-    if @resource.managehome?
+    if @resource.managehome? and not @resource.forcelocal?
       cmd << "-m"
-    elsif Facter.value(:osfamily) == 'RedHat'
+    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
+    cmd
+  end
+
+  def check_manage_expiry
+    cmd = []
+    if @resource[:expiry] and not @resource.forcelocal?
+      cmd << "-e #{@resource[:expiry]}"
+    end
+
     cmd
   end
 
@@ -80,6 +143,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
+      next if property == :groups and @resource.forcelocal?
+      next if property == :expiry and @resource.forcelocal?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
@@ -90,7 +155,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def addcmd
-    cmd = [command(:add)]
+    if @resource.forcelocal?
+      cmd = [command(:localadd)]
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(:add)]
+    end
     cmd += add_properties
     cmd += check_allow_dup
     cmd += check_manage_home
@@ -99,7 +169,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def deletecmd
-    cmd = [command(:delete)]
+    if @resource.forcelocal?
+       cmd = [command(:localdelete)] 
+    else
+       cmd = [command(:delete)]
+    end
     cmd += @resource.managehome? ? ['-r'] : []
     cmd << @resource[:name]
   end
@@ -124,4 +198,19 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       :absent
     end
   end
+
+  def create
+     super
+     if @resource.forcelocal? and self.groups?
+       set(:groups, @resource[:groups])
+     end
+     if @resource.forcelocal? and @resource[:expiry]
+       set(:expiry, @resource[:expiry])
+     end 
+  end
+ 
+  def groups?
+    !!@resource[:groups]
+  end
+
 end

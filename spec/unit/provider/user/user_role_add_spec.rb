@@ -116,7 +116,7 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
 
   describe "with :allow_duplicates" do
     before do
-      resource.expects(:allowdupe?).returns true
+      resource.stubs(:allowdupe?).returns true
       provider.stubs(:is_role?).returns(false)
       provider.stubs(:execute)
       resource.stubs(:system?).returns false

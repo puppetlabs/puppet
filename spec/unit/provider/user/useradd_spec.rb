@@ -6,6 +6,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   before :each do
     described_class.stubs(:command).with(:password).returns '/usr/bin/chage'
     described_class.stubs(:command).with(:add).returns '/usr/sbin/useradd'
+    described_class.stubs(:command).with(:localadd).returns '/usr/sbin/luseradd'
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/usermod'
     described_class.stubs(:command).with(:delete).returns '/usr/sbin/userdel'
   end
@@ -39,9 +40,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   describe "#create" do
 
+    before do
+      provider.stubs(:exists?).returns(false)
+    end
+
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
-      provider.expects(:execute).with(includes('-o'))
+      provider.expects(:execute).with(includes('-o'), kind_of(Hash))
       provider.create
     end
 
@@ -49,7 +54,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should add -r when system is enabled" do
         resource[:system] = :true
         provider.should be_system_users
-        provider.expects(:execute).with(includes('-r'))
+        provider.expects(:execute).with(includes('-r'), kind_of(Hash))
         provider.create
       end
     end
@@ -58,7 +63,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should not add -r when system is enabled" do
         resource[:system] = :true
         provider.should_not be_system_users
-        provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/useradd', 'myuser'], kind_of(Hash))
         provider.create
       end
     end
@@ -67,10 +72,54 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.has_feature :manages_password_age
       resource[:password_min_age] = 5
       resource[:password_max_age] = 10
-      provider.expects(:execute).with(includes('/usr/sbin/useradd'))
+      provider.expects(:execute).with(includes('/usr/sbin/useradd'), kind_of(Hash))
       provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, 'myuser'])
       provider.create
     end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = true
+      end
+      it "should use luseradd instead of useradd" do
+        provider.expects(:execute).with(includes('/usr/sbin/luseradd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.create
+      end
+ 
+      it "should NOT use -o when allowdupe=true" do
+        resource[:allowdupe] = :true 
+        provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.create
+      end
+
+      it "should raise an exception for duplicate UIDs" do
+        resource[:uid] = 505
+        provider.stubs(:finduser).returns(true)
+        lambda { provider.create }.should raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
+      end
+
+      it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
+        resource[:groups] = ['group1', 'group2']
+        provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(includes('/usr/sbin/usermod'))
+        provider.create 
+      end
+
+      it "should not use -m when managehome set" do
+        resource[:managehome] = :true
+        provider.expects(:execute).with(Not(includes('-m')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.create 
+      end
+
+      it "should not use -e with luseradd, should call usermod with -e after luseradd when expiry is set" do
+        resource[:expiry] = '2038-01-24'
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-e'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-e')))
+        provider.create
+      end
+    end
+
   end
 
   describe "#uid=" do
@@ -104,10 +153,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#check_allow_dup" do
-    it "should check allow dup" do
-      resource.expects(:allowdupe?)
-      provider.check_allow_dup
-    end
 
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true
@@ -149,7 +194,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   describe "#check_manage_home" do
     it "should return an array with -m flag if home is managed" do
       resource[:managehome] = :true
-      provider.expects(:execute).with(includes('-m'))
+      provider.expects(:execute).with(includes('-m'), kind_of(Hash))
       provider.create
     end
 
@@ -164,14 +209,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     it "should use -M flag if home is not managed and on Redhat" do
       Facter.stubs(:value).with(:osfamily).returns("RedHat")
       resource[:managehome] = :false
-      provider.expects(:execute).with(includes('-M'))
+      provider.expects(:execute).with(includes('-M'), kind_of(Hash))
       provider.create
     end
 
     it "should not use -M flag if home is not managed and not on Redhat" do
       Facter.stubs(:value).with(:osfamily).returns("not RedHat")
       resource[:managehome] = :false
-      provider.expects(:execute).with(Not(includes('-M')))
+      provider.expects(:execute).with(Not(includes('-M')), kind_of(Hash))
       provider.create
     end
   end
