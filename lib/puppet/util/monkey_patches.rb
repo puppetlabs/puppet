@@ -356,3 +356,26 @@ unless Dir.respond_to?(:mktmpdir)
     end
   end
 end
+
+# (#19151) Reject all SSLv2 ciphers and handshakes
+require 'openssl'
+class OpenSSL::SSL::SSLContext
+  if DEFAULT_PARAMS[:options]
+    DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2
+  else
+    DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2
+  end
+  DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+
+  alias __original_initialize initialize
+  private :__original_initialize
+
+  def initialize(*args)
+    __original_initialize(*args)
+    params = {
+      :options => DEFAULT_PARAMS[:options],
+      :ciphers => DEFAULT_PARAMS[:ciphers],
+    }
+    set_params(params)
+  end
+end
