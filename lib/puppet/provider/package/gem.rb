@@ -124,4 +124,28 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   def update
     self.install(false)
   end
+
+  # Override default `execute` to run super method in a clean
+  # environment without Bundler, if Bundler is present
+  def execute(*args)
+    if Puppet.features.bundled_environment?
+      Bundler.with_clean_env do
+        super
+      end
+    else
+      super
+    end
+  end
+
+  # Override default `execute` to run super method in a clean
+  # environment without Bundler, if Bundler is present
+  def self.execute(*args)
+    if Puppet.features.bundled_environment?
+      Bundler.with_clean_env do
+        super
+      end
+    else
+      super
+    end
+  end
 end
