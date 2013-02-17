@@ -632,6 +632,48 @@ module Util
     file
   end
   module_function :replace_file
+
+  if defined?(Bundler) && Bundler.respond_to?(:with_clean_env)
+
+    def execpipe_with_bundler_clean_env(command, failonfail = true)
+      if respond_to? :debug
+        debug "Cleaning bundler environment to execute '#{command}'"
+      else
+        Puppet.debug "Cleaning bundler environment to execute '#{command}'"
+      end
+      Bundler.with_clean_env do
+        execpipe_without_bundler_clean_env(command, failonfail)
+      end
+    end
+
+    # don't need to do execfail, since it just calls execute
+    def execute_with_bundler_clean_env(command, arguments = {:failonfail => true, :combine => true})
+      if command.is_a?(Array)
+        command = command.flatten.map(&:to_s)
+        str = command.join(" ")
+      elsif command.is_a?(String)
+        str = command
+      end
+
+      if respond_to? :debug
+        debug "Cleaning bundler environment to execute '#{str}'"
+      else
+        Puppet.debug "Cleaning bundler environment to execute '#{str}'"
+      end
+      Bundler.with_clean_env do
+        execute_without_bundler_clean_env(command, arguments)
+      end
+    end
+
+    alias_method :execpipe_without_bundler_clean_env, :execpipe
+    alias_method :execpipe, :execpipe_with_bundler_clean_env
+
+    alias_method :execute_without_bundler_clean_env, :execute
+    alias_method :execute, :execute_with_bundler_clean_env
+
+  end
+
+
 end
 end
 
