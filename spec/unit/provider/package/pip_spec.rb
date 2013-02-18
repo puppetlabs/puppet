@@ -31,36 +31,35 @@ describe provider_class do
 
   end
 
-  describe "cmd" do
-    it "should return pip-python on RedHat systems" do
-      Facter.stubs(:value).with(:osfamily).returns("RedHat")
-      provider_class.cmd.should == 'pip-python'
-    end
-
-    it "should return pip by default" do
-      Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
-      provider_class.cmd.should == 'pip'
-    end
-
-  end
-
   describe "instances" do
 
-    osfamilies.each do |osfamily, pip_cmd|
-      it "should return an array on #{osfamily} when #{pip_cmd} is present" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily)
-        provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
-        p = stub("process")
-        p.expects(:collect).yields("real_package==1.2.5")
-        provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
-        provider_class.instances
-      end
-
-      it "should return an empty array on #{osfamily} when #{pip_cmd} is missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily)
-        provider_class.expects(:which).with(pip_cmd).returns nil
-        provider_class.instances.should == []
-      end
+    it "should return an array when pip is present" do
+      provider_class.expects(:which).with('pip').returns("/fake/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("real_package==1.2.5")
+      provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+      provider_class.instances
+    end
+    it "should propote pip as a command instead of other pip_commands e.g. pip-python" do
+      provider_class.expects(:which).with('pip').returns("/fake/bin/pip")
+      provider_class.expects(:which).with('pip-python').never
+      p = stub("process")
+      p.expects(:collect).yields("real_package==1.2.5")
+      provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+      provider_class.instances
+    end
+    it "should return an array when pip-python is present and other pip_commands are missing" do
+      provider_class.expects(:which).with('pip').returns(nil)
+      provider_class.expects(:which).with('pip-python').returns("/fake/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("real_package==1.2.5")
+      provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+      provider_class.instances
+    end
+    it "should return an empty array when all pip_commands are missing" do
+      provider_class.expects(:which).with('pip').returns(nil)
+      provider_class.expects(:which).with('pip-python').returns(nil)
+      provider_class.instances.should == []
     end
 
   end
@@ -197,29 +196,33 @@ describe provider_class do
       @provider.method(:lazy_pip).call "freeze"
     end
 
-    osfamilies.each do |osfamily, pip_cmd|
-      it "should retry on #{osfamily} if #{pip_cmd} has not yet been found" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily)
-        @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
-        @provider.expects(:which).with(pip_cmd).returns("/fake/bin/pip")
-        @provider.method(:lazy_pip).call "freeze"
-      end
+    it "should retry if pip has not yet been found" do
+      @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+      @provider.expects(:which).with('pip').returns("/fake/bin/pip")
+      @provider.expects(:which).with('pip-python').never
+      @provider.method(:lazy_pip).call "freeze"
+    end
 
-      it "should fail on #{osfamily} if #{pip_cmd} is missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily)
-        @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        @provider.expects(:which).with(pip_cmd).returns(nil)
-        expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
-      end
+    it "should retry if pip-python has not yet been found" do
+      @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+      @provider.expects(:which).with('pip').returns(nil)
+      @provider.expects(:which).with('pip-python').returns("/fake/bin/pip")
+      @provider.method(:lazy_pip).call "freeze"
+    end
 
-      it "should output a useful error message on #{osfamily} if #{pip_cmd} is missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily)
-        @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        @provider.expects(:which).with(pip_cmd).returns(nil)
-        expect { @provider.method(:lazy_pip).call("freeze") }.
-          to raise_error(NoMethodError, 'Could not locate the pip command.')
-      end
+    it "should fail if all pip commands are missing" do
+      @provider.expects(:pip).with('freeze').raises(NoMethodError)
+      @provider.expects(:which).with('pip').returns(nil)
+      @provider.expects(:which).with('pip-python').returns(nil)
+      expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
+    end
 
+    it "should output a useful error message if all pip commands are missing" do
+      @provider.expects(:pip).with('freeze').raises(NoMethodError)
+      @provider.expects(:which).with('pip').returns(nil)
+      @provider.expects(:which).with('pip-python').returns(nil)
+      expect { @provider.method(:lazy_pip).call("freeze") }.
+        to raise_error(NoMethodError, 'Could not locate the pip command.')
     end
 
   end

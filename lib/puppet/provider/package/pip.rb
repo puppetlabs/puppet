@@ -25,7 +25,9 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    pip_cmd = which(cmd) or return []
+    pip_cmd ||= which('pip')
+    pip_cmd ||= which('pip-python')
+    pip_cmd or return []
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -33,15 +35,6 @@ Puppet::Type.type(:package).provide :pip,
       end
     end
     packages
-  end
-
-  def self.cmd
-    case Facter.value(:osfamily)
-      when "RedHat"
-        "pip-python"
-      else
-        "pip"
-    end
   end
 
   # Return structured information about a particular package or `nil` if
@@ -109,7 +102,9 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which(self.class.cmd)
+    pathname ||= which('pip')
+    pathname ||= which('pip-python')
+    if pathname
       self.class.commands :pip => pathname
       pip *args
     else
