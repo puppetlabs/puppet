@@ -73,7 +73,7 @@ module Puppet::Network::HTTP
         msg << ": [" + verify_errors.join('; ') + "]"
         raise Puppet::Error, msg
       elsif error.message =~ /hostname (was )?not match/
-        raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
+        cert = peer_certs.last
 
         valid_certnames = [cert.name, *cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
