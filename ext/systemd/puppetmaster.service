@@ -5,9 +5,9 @@ After=basic.target network.target
 
 [Service]
 Type=forking
+EnvironmentFile=-/etc/sysconfig/puppetmaster
 PIDFile=/run/puppet/master.pid
-ExecStartPre=/usr/bin/install -d -o puppet -m 755 /run/puppet
-ExecStart=/usr/bin/puppet master
+ExecStart=/usr/bin/puppet master $PUPPETMASTER_EXTRA_OPTS
 
 [Install]
 WantedBy=multi-user.target
