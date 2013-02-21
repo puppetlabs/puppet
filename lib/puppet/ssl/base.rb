@@ -49,7 +49,23 @@ class Puppet::SSL::Base
 
   # Method to extract a 'name' from the subject of a certificate
   def self.name_from_subject(subject)
-    subject.to_s.sub(/\/CN=/i, '')
+    # It's not safe to assume anything. Usually, subject is a OpenSSL::X509::Name, but sometimes, it's a String.
+    case subject
+    when String
+      if md = subject.to_s.match(%r{\bCN=([^/\+]+)}i)
+        md.to_a[1]
+      else
+        raise Puppet::Error, "Supplied SSL certificate contains invalid CN"
+      end
+    when ::OpenSSL::X509::Name
+      if triplet = subject.to_a.find {|name, *_| name == 'CN' }
+        triplet[1].to_s
+      else
+        raise Puppet::Error, "Supplied SSL certificate doesn't contain commonName attribute"
+      end
+    else
+      raise Puppet::Error, "Supplied SSL certificate contains unparseable subject name"
+    end
   end
 
   # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class
