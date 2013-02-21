@@ -158,6 +158,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
   end
 
+  def validate_key(request)
+    # Validation happens on the remote end
+  end
+
   private
 
   def environment

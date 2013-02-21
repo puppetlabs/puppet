@@ -308,6 +308,7 @@ class Puppet::Indirector::Indirection
 
     dest_terminus = terminus(terminus_name)
     check_authorization(request, dest_terminus)
+    dest_terminus.validate(request)
 
     dest_terminus
   end
