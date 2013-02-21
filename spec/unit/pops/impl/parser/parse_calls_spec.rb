@@ -77,7 +77,8 @@ describe Puppet::Pops::Impl::Parser::Parser do
       dump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
     it "$a.foo {|| }" do
-      dump(parse("$a.foo {|| }")).should == "(call-method (. $a foo) (lambda ()))"
+#      dump(parse("$a.foo {|| }")).should == "(call-method (. $a foo) (lambda ()))"
+      dump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
     it "$a.foo {|$x| }" do
       dump(parse("$a.foo {|$x| }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"

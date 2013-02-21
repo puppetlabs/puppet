@@ -20,6 +20,7 @@ prechigh
   left  HIGH
   left  LPAREN
   left  RPAREN
+  left  PIPE
   left  AT
   left  DOT
   left  CALL
@@ -165,8 +166,8 @@ call_function_expression
 #---CALL METHOD 
 #
 call_method_with_lambda_expression
-  : call_method_expression        { result = val[0] }
-  | call_method_expression lambda { result = val[0]; val[0].lambda = val[1] }
+  : call_method_expression         =LOW { result = val[0] }
+  | call_method_expression lambda  { result = val[0]; val[0].lambda = val[1] }
   
   call_method_expression
     : named_access LPAREN expressions RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
@@ -181,8 +182,31 @@ call_method_with_lambda_expression
       }
   
 #---LAMBDA
-#    
-lambda
+#
+# This is a temporary switch while experimenting with concrete syntax
+# One should be picked for inclusion in puppet.
+lambda 
+  : lambda_j8
+  | lambda_ruby
+
+# Java8-like lambda with parameters to the left of the body  
+lambda_j8 
+  : lambda_parameter_list optional_farrow lambda_rest {
+      result = Factory.LAMBDA(val[0], val[2])
+#      loc result, val[1] # TODO
+    }
+  
+lambda_rest  
+  : LBRACE statements RBRACE { result = val[1] }
+  | LBRACE RBRACE { result = nil }
+
+optional_farrow
+  : nil
+  | FARROW
+  
+# Ruby-like lambda with parameters inside the body
+#
+lambda_ruby
   : LAMBDA lambda_parameter_list statements RBRACE {
       result = Factory.LAMBDA(val[1], val[2])
       loc result, val[0], val[3]
@@ -192,10 +216,10 @@ lambda
       loc result, val[0], val[2]
     }
     
-  # Produces Array<Model::Parameter>
-  lambda_parameter_list
-    : PIPE PIPE             { result = [] }
-    | PIPE parameters endcomma PIPE { result = val[1] }
+# Produces Array<Model::Parameter>
+lambda_parameter_list
+: PIPE PIPE                     { result = [] }
+| PIPE parameters endcomma PIPE { result = val[1] }
 
 #---CONDITIONALS
 #
@@ -593,7 +617,7 @@ parameter_list
 
 # Produces Array<Model::Parameter>
 parameters
-  : parameter                 { result = [val[0]] }
+  : parameter                  { result = [val[0]] }
   | parameters COMMA parameter { result = val[0].push(val[2]) }
 
 # Produces Model::Parameter
