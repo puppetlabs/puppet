@@ -1,12 +1,11 @@
-# A simple wrapper for templates, so they don't have full access to
-# the scope objects.
 require 'puppet/parser/files'
 require 'erb'
 
+# A simple wrapper for templates, so they don't have full access to
+# the scope objects.
+#
+# @api private
 class Puppet::Parser::TemplateWrapper
-  attr_writer :scope
-  attr_reader :file
-  attr_accessor :string
   include Puppet::Util
   Puppet::Util.logmethods(self)
 
@@ -14,15 +13,25 @@ class Puppet::Parser::TemplateWrapper
     @__scope__ = scope
   end
 
+  # @return [String] The full path name of the template that is being executed
+  # @api public
+  def file
+    @__file__
+  end
+
+  # @return [Puppet::Parser::Scope] The scope in which the template is evaluated
+  # @api public
   def scope
     @__scope__
   end
 
+  # Find which line in the template (if any) we were called from
+  # but defer to when necessary since fetching the caller information on
+  # every variable lookup can be quite time consuming.
+  # @return [Proc]
+  # @api private
   def script_line_proc
-    # find which line in the template (if any) we were called from
-    # but defer to when necessary since fetching the caller information on
-    # every variable lookup can be quite time consuming
-    Proc.new { (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1] }
+    Proc.new { (caller.find { |l| l =~ /#{@__file__}:/ }||"")[/:(\d+):/,1] }
   end
 
   def script_line
@@ -30,21 +39,25 @@ class Puppet::Parser::TemplateWrapper
   end
 
   # Should return true if a variable is defined, false if it is not
+  # @api public
   def has_variable?(name)
     scope.include?(name.to_s)
   end
 
-  # Allow templates to access the defined classes
+  # @return [Array<String>] The list of defined classes
+  # @api public
   def classes
     scope.catalog.classes
   end
 
-  # Allow templates to access the tags defined in the current scope
+  # @return [Array<String>] The tags defined in the current scope
+  # @api public
   def tags
     scope.tags
   end
 
-  # Allow templates to access the all the defined tags
+  # @return [Array<String>] All the defined tags
+  # @api public
   def all_tags
     scope.catalog.tags
   end
@@ -63,51 +76,47 @@ class Puppet::Parser::TemplateWrapper
   # dead.
   def method_missing(name, *args)
     if scope.include?(name.to_s)
-      return scope[name.to_s, {:file => file,:lineproc => script_line_proc}]
+      return scope[name.to_s, {:file => @__file__, :lineproc => script_line_proc}]
     else
       # Just throw an error immediately, instead of searching for
       # other missingmethod things or whatever.
-      raise Puppet::ParseError.new("Could not find value for '#{name}'",@file,script_line)
+      raise Puppet::ParseError.new("Could not find value for '#{name}'", @__file__, script_line)
     end
   end
 
+  # @api private
   def file=(filename)
-    unless @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
+    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
       raise Puppet::ParseError, "Could not find template '#{filename}'"
     end
 
     # We'll only ever not have a parser in testing, but, eh.
-    scope.known_resource_types.watch_file(file)
-
-    @string = File.read(file)
+    scope.known_resource_types.watch_file(@__file__)
   end
 
+  # @api private
   def result(string = nil)
     if string
-      self.string = string
       template_source = "inline template"
     else
-      template_source = file
+      string = File.read(@__file__)
+      template_source = @__file__
     end
 
     # Expose all the variables in our scope as instance variables of the
     # current object, making it possible to access them without conflict
     # to the regular methods.
     benchmark(:debug, "Bound template variables for #{template_source}") do
-      scope.to_hash.each { |name, value|
-        if name.kind_of?(String)
-          realname = name.gsub(/[^\w]/, "_")
-        else
-          realname = name
-        end
+      scope.to_hash.each do |name, value|
+        realname = name.gsub(/[^\w]/, "_")
         instance_variable_set("@#{realname}", value)
-      }
+      end
     end
 
     result = nil
     benchmark(:debug, "Interpolated template #{template_source}") do
-      template = ERB.new(self.string, 0, "-")
-      template.filename = file
+      template = ERB.new(string, 0, "-")
+      template.filename = @__file__
       result = template.result(binding)
     end
 
@@ -115,6 +124,6 @@ class Puppet::Parser::TemplateWrapper
   end
 
   def to_s
-    "template[#{(file ? file : "inline")}]"
+    "template[#{(@__file__ ? @__file__ : "inline")}]"
   end
 end
