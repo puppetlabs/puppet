@@ -69,7 +69,7 @@ class Puppet::Network::Handler
         Puppet.debug "Our client is remote"
 
         begin
-          facts = YAML.load(CGI.unescape(facts))
+          facts = YAML.safely_load(CGI.unescape(facts))
         rescue => detail
           raise XMLRPC::FaultException.new(
             1, "Could not rebuild facts"

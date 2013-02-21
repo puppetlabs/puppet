@@ -45,7 +45,7 @@ class Puppet::Network::Handler
 
       # First convert the report to real objects
       begin
-        report = YAML.load(yaml)
+        report = YAML.safely_load(yaml)
       rescue => detail
         Puppet.warning "Could not load report: #{detail}"
         return
