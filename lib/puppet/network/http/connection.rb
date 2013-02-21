@@ -48,14 +48,18 @@ module Puppet::Network::HTTP
       verify_errors = []
 
       connection.verify_callback = proc do |preverify_ok, ssl_context|
-        # We use the callback to collect the certificates for use in
-        # constructing the error message if the verification failed.
-        # This is necessary since we don't have direct access to the
-        # cert that we expected the connection to use otherwise.
-        peer_certs << Puppet::SSL::Certificate.from_instance(ssl_context.current_cert)
-        # And also keep the detailed verification error if such an error occurs
-        if ssl_context.error_string and not preverify_ok
-          verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
+        begin
+          # We use the callback to collect the certificates for use in
+          # constructing the error message if the verification failed.
+          # This is necessary since we don't have direct access to the
+          # cert that we expected the connection to use otherwise.
+          peer_certs << Puppet::SSL::Certificate.from_instance(ssl_context.current_cert)
+          # And also keep the detailed verification error if such an error occurs
+          if ssl_context.error_string and not preverify_ok
+            verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
+          end
+        rescue Exception => exc
+          verify_errors << "Serious error in SSL verification: #{exc.message}"	
         end
         preverify_ok
       end
