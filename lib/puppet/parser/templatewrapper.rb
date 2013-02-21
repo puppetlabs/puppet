@@ -6,7 +6,6 @@ require 'erb'
 #
 # @api private
 class Puppet::Parser::TemplateWrapper
-  attr_writer :scope
   include Puppet::Util
   Puppet::Util.logmethods(self)
 
