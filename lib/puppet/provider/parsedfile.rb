@@ -341,13 +341,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # @api private
   def self.to_file(records)
     text = super
-    if native_header_regex and text =~ native_header_regex
+    if native_header_regex and (match = text.match(native_header_regex))
       if drop_native_header
         # concatenate the text in front of and after the native header
-        text = $` + $'
+        text = match.pre_match + match.post_match
       else
-        native_header = $&
-        return native_header + header + $` + $'
+        native_header = match[0]
+        return native_header + header + match.pre_match + match.post_match
       end
     end
     header + text
