@@ -1,4 +1,8 @@
+require 'puppet/indirector/resource/validator'
+
 class Puppet::Resource::Ral < Puppet::Indirector::Code
+  include Puppet::Resource::Validator
+
   def find( request )
     # find by name
     res   = type(request).instances.find { |o| o.name == resource_name(request) }

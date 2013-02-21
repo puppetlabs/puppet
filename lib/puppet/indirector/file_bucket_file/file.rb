@@ -48,6 +48,10 @@ module Puppet::FileBucketFile
       instance.to_s
     end
 
+    def validate_key(request)
+      # There are no ACLs on filebucket files so validating key is not important
+    end
+
     private
 
     def path_match(dir_path, files_original_path)

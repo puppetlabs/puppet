@@ -131,7 +131,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "requires `facts_format` option if facts are passed in" do
       facts = Puppet::Node::Facts.new("mynode", :afact => "avalue")
-      request = Puppet::Indirector::Request.new(:catalog, :find, "mynode", nil, :facts => facts)
+      request = Puppet::Indirector::Request.new(:catalog, :find, "mynode", :facts => facts)
       expect {
         @compiler.find(request)
       }.to raise_error ArgumentError, /no fact format provided for mynode/
@@ -140,7 +140,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "rejects facts in the request from a different node" do
       facts = Puppet::Node::Facts.new("differentnode", :afact => "avalue")
       request = Puppet::Indirector::Request.new(
-        :catalog, :find, "mynode", nil, :facts => facts, :facts_format => "unused"
+        :catalog, :find, "mynode", :facts => facts, :facts_format => "unused"
       )
       expect {
         @compiler.find(request)
@@ -181,9 +181,9 @@ describe Puppet::Resource::Catalog::Compiler do
     before do
       Facter.stubs(:value).returns "something"
       @compiler = Puppet::Resource::Catalog::Compiler.new
-      @request = stub 'request', :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
 
-      @facts = stub 'facts', :save => nil
+      @facts = stub 'facts', :save => nil, :name => "hostname"
     end
 
     it "should do nothing if no facts are provided" do
