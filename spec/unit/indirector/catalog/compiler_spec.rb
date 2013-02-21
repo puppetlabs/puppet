@@ -53,11 +53,20 @@ describe Puppet::Resource::Catalog::Compiler do
       @request = stub 'request', :key => @name, :node => @name, :options => {}
     end
 
-    it "should directly use provided nodes" do
+    it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
       @compiler.expects(:compile).with(@node)
       @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
+    end
+
+    it "rejects a provided node if the request is remote" do
+      @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(true)
+      expect {
+        @compiler.find(@request)
+      }.to raise_error Puppet::Error, /invalid option use_node/i
     end
 
     it "should use the authenticated node name if no request key is provided" do
@@ -97,6 +106,24 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.expects(:extract_facts_from_request).with(@request)
       Puppet::Parser::Compiler.stubs(:compile)
       @compiler.find(@request)
+    end
+
+    it "requires `facts_format` option if facts are passed in" do
+      facts = Puppet::Node::Facts.new("mynode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(:catalog, :find, "mynode", nil, :facts => facts)
+      expect {
+        @compiler.find(request)
+      }.to raise_error ArgumentError, /no fact format provided for mynode/
+    end
+
+    it "rejects facts in the request from a different node" do
+      facts = Puppet::Node::Facts.new("differentnode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(
+        :catalog, :find, "mynode", nil, :facts => facts, :facts_format => "unused"
+      )
+      expect {
+        @compiler.find(request)
+      }.to raise_error Puppet::Error, /fact definition for the wrong node/i
     end
 
     it "should return the results of compiling as the catalog" do
