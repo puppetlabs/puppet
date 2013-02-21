@@ -160,7 +160,7 @@ describe Puppet::Resource::Catalog::Compiler do
     before do
       Facter.stubs(:value).returns "something"
       @compiler = Puppet::Resource::Catalog::Compiler.new
-      @request = stub 'request', :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
 
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
       Puppet::Node::Facts.indirection.stubs(:save).returns(nil)
