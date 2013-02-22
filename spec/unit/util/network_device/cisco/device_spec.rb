@@ -17,6 +17,32 @@ describe Puppet::Util::NetworkDevice::Cisco::Device do
       cisco.enable_password.should == "enable_password"
     end
 
+    describe "decoding the enable password" do
+      it "should not parse a password if no query is given" do
+        cisco = described_class.new("telnet://user:password@localhost:23")
+        cisco.enable_password.should be_nil
+      end
+
+      it "should not parse a password if no enable param is given" do
+        cisco = described_class.new("telnet://user:password@localhost:23/?notenable=notapassword")
+        cisco.enable_password.should be_nil
+      end
+      it "should decode sharps" do
+        cisco = described_class.new("telnet://user:password@localhost:23/?enable=enable_password%23with_a_sharp")
+        cisco.enable_password.should == "enable_password#with_a_sharp"
+      end
+
+      it "should decode spaces" do
+        cisco = described_class.new("telnet://user:password@localhost:23/?enable=enable_password%20with_a_space")
+        cisco.enable_password.should == "enable_password with_a_space"
+      end
+
+      it "should only use the query parameter" do
+        cisco = described_class.new("telnet://enable=:password@localhost:23/?enable=enable_password&notenable=notapassword")
+        cisco.enable_password.should == "enable_password"
+      end
+    end
+
     it "should find the enable password from the options" do
       cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/?enable=enable_password", :enable_password => "mypass")
       cisco.enable_password.should == "mypass"
