@@ -39,4 +39,44 @@ Could not connect to http://fake.com:1111
     end
   end
 
+  describe 'ResponseError' do
+    subject { Puppet::Forge::Errors::ResponseError }
+    let(:response) { stub(:body => '{}', :code => '404', :message => "not found") }
+
+    context 'without message' do
+      let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module') }
+
+      it 'should return a valid single line error' do
+        exception.message.should == 'Could not execute operation for \'user/module\'. Detail: 404 not found.'
+      end
+
+      it 'should return a valid multiline error' do
+        exception.multiline.should == <<-eos.chomp
+Could not execute operation for 'user/module'
+  The server being queried was http://fake.com:1111
+  The HTTP response we received was '404 not found'
+    Check the author and module names are correct.
+        eos
+      end
+    end
+
+    context 'with message' do
+      let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module', :message => 'no such module') }
+
+      it 'should return a valid single line error' do
+        exception.message.should == 'Could not execute operation for \'user/module\'. Detail: no such module / 404 not found.'
+      end
+
+      it 'should return a valid multiline error' do
+        exception.multiline.should == <<-eos.chomp
+Could not execute operation for 'user/module'
+  The server being queried was http://fake.com:1111
+  The HTTP response we received was '404 not found'
+  The message we received said 'no such module'
+    Check the author and module names are correct.
+        eos
+      end
+    end
+  end
+
 end

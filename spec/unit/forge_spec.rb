@@ -36,15 +36,25 @@ describe Puppet::Forge do
 
   context "when the connection to the forge fails" do
     before :each do
-      repository_responds_with(stub(:body => '{}', :code => '404'))
+      repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
     end
 
     it "raises an error for search" do
-      expect { forge.search('bacula') }.to raise_error RuntimeError
+      expect { forge.search('bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'bacula'. Detail: 404 not found."
     end
 
     it "raises an error for remote_dependency_info" do
-      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.to raise_error RuntimeError
+      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'puppetlabs/bacula'. Detail: 404 not found."
+    end
+  end
+
+  context "when the API responses with an error" do
+    before :each do
+      repository_responds_with(stub(:body => '{"error":"invalid module"}', :code => '410', :message => "Gone"))
+    end
+
+    it "raises an error for remote_dependency_info" do
+      expect { forge.remote_dependency_info('puppetlabs', 'bacula', '0.0.1') }.to raise_error Puppet::Forge::Errors::ResponseError, "Could not execute operation for 'puppetlabs/bacula'. Detail: invalid module / 410 Gone."
     end
   end
 end
