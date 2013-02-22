@@ -9,16 +9,7 @@ class Hiera
 
     def [](key)
       if key == "calling_class"
-        def recurse_for_hostclass(scope)
-          if scope.source and scope.source.type == :hostclass
-            return scope.source.name
-          elsif scope.parent
-            return recurse_for_hostclass(scope.parent)
-          else
-            return nil
-          end
-        end
-        ans = recurse_for_hostclass(@real)
+        ans = find_hostclass(@real)
       elsif key == "calling_module"
         ans = @real.source.module_name
       else
@@ -47,6 +38,17 @@ class Hiera
     def compiler
       @real.compiler
     end
+
+    def find_hostclass(scope)
+      if scope.source and scope.source.type == :hostclass
+        return scope.source.name
+      elsif scope.parent
+        return find_hostclass(scope.parent)
+      else
+        return nil
+      end
+    end
+    private :find_hostclass
   end
 end
 
