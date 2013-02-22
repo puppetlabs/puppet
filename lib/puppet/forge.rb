@@ -7,6 +7,8 @@ require 'puppet/forge/repository'
 require 'puppet/forge/errors'
 
 class Puppet::Forge
+  include Puppet::Forge::Errors
+
   # +consumer_name+ is a name to be used for identifying the consumer of the
   # forge and +consumer_semver+ is a SemVer object to identify the version of
   # the consumer
@@ -40,6 +42,8 @@ class Puppet::Forge
   #   related error
   # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
   #   verifying the remote SSL certificate
+  # @raise [Puppet::Forge::Errors::ResponseError] if the repository returns a
+  #   bad HTTP response
   def search(term)
     server = Puppet.settings[:module_repository]
     Puppet.notice "Searching #{server} ..."
@@ -49,7 +53,7 @@ class Puppet::Forge
     when "200"
       matches = PSON.parse(response.body)
     else
-      raise RuntimeError, "Could not execute search (HTTP #{response.code})"
+      raise ResponseError.new(:uri => uri.to_s, :input => term, :response => response)
     end
 
     matches
@@ -66,6 +70,8 @@ class Puppet::Forge
   #   related error
   # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
   #   verifying the remote SSL certificate
+  # @raise [Puppet::Forge::Errors::ResponseError] if the repository returns
+  #   an error in its API response or a bad HTTP response
   def remote_dependency_info(author, mod_name, version)
     version_string = version ? "&version=#{version}" : ''
     response = repository.make_http_request("/api/v1/releases.json?module=#{author}/#{mod_name}#{version_string}")
@@ -74,11 +80,11 @@ class Puppet::Forge
     when "200"
       return json
     else
-      error = json['error'] || ''
-      if error =~ /^Module #{author}\/#{mod_name} has no release/
+      error = json['error']
+      if error && error =~ /^Module #{author}\/#{mod_name} has no release/
         return []
       else
-        raise RuntimeError, "Could not find release information for this module (#{author}/#{mod_name}) (HTTP #{response.code})"
+        raise ResponseError.new(:uri => uri.to_s, :input => "#{author}/#{mod_name}", :message => error, :response => response)
       end
     end
   end
@@ -91,7 +97,7 @@ class Puppet::Forge
         begin
           cache_path = repository.retrieve(file)
         rescue OpenURI::HTTPError => e
-          raise RuntimeError, "Could not download module: #{e.message}"
+          raise HttpResponseError.new(:uri => uri.to_s, :input => modname, :message => e.message)
         end
       else
         raise RuntimeError, "Malformed response from module repository."
