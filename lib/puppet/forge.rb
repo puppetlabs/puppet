@@ -34,6 +34,12 @@ class Puppet::Forge
   #   }
   # ]
   #
+  # @param term [String] search term
+  # @return [Array] modules found
+  # @raise [Puppet::Forge::Errors::CommunicationError] if there is a network
+  #   related error
+  # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
+  #   verifying the remote SSL certificate
   def search(term)
     server = Puppet.settings[:module_repository]
     Puppet.notice "Searching #{server} ..."
@@ -49,6 +55,17 @@ class Puppet::Forge
     matches
   end
 
+  # Return a list of module metadata hashes for the module requested and all
+  # of its dependencies.
+  #
+  # @param author [String] module's author name
+  # @param mod_name [String] module name
+  # @param version [String] optional module version number
+  # @return [Array] module and dependency metadata
+  # @raise [Puppet::Forge::Errors::CommunicationError] if there is a network
+  #   related error
+  # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
+  #   verifying the remote SSL certificate
   def remote_dependency_info(author, mod_name, version)
     version_string = version ? "&version=#{version}" : ''
     response = repository.make_http_request("/api/v1/releases.json?module=#{author}/#{mod_name}#{version_string}")
