@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'hiera/backend/puppet_backend'
 require 'hiera/scope'
+require 'hiera/config'
 
 describe Hiera::Backend::Puppet_backend do
 
