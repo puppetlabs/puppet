@@ -19,7 +19,9 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def parse_enable(query)
-    return $1 if query =~ /enable=(.*)/
+    if query and (match = query.match(/enable=(.*)/))
+      URI.decode(match[1])
+    end
   end
 
   def connect
