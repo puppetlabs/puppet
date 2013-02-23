@@ -126,19 +126,23 @@ describe "A very basic provider based on ParsedFile" do
   end
 
   context "rewriting a file containing a native header" do
-    regex = /^# HEADER.*third party\.\n/
+    before :each do
+      @regex = /^# HEADER.*third party\.\n/
+      @input_records = subject.parse(@input_text)
+      subject.stubs(:native_header_regex).returns(@regex)
+    end
+
     it "should move the native header to the top" do
-      input_records = subject.parse(@input_text)
-      subject.stubs(:native_header_regex).returns(regex)
-      subject.to_file(input_records).should_not match /\A#{subject.header}/
+      subject.to_file(@input_records).should_not match /\A#{subject.header}/
     end
 
     context "and dropping native headers found in input" do
-      it "should not include the native header in the output" do
-        input_records = subject.parse(@input_text)
-        subject.stubs(:native_header_regex).returns(regex)
+      before :each do
         subject.stubs(:drop_native_header).returns(true)
-        subject.to_file(input_records).should_not match regex
+      end
+
+      it "should not include the native header in the output" do
+        subject.to_file(@input_records).should_not match @regex
       end
     end
   end
