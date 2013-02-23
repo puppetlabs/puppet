@@ -29,14 +29,18 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{functions.sh reboot.sh shutdown.sh}
     # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu
     excludes += %w{functions halt killall single linuxconf reboot boot}
-    # 'wait-for-state' is excluded from instances here because it takes
-    # parameters that have unclear meaning. It looks like 'wait-for-state' is
-    # mainly used internally for other upstart services as a 'sleep until something happens'
-    # (http://lists.debian.org/debian-devel/2012/02/msg01139.html). There is an open launchpad bug
+    # 'wait-for-state' and 'portmap-wait' are excluded from instances here
+    # because they take parameters that have unclear meaning. It looks like
+    # 'wait-for-state' is a generic waiter mainly used internally for other
+    # upstart services as a 'sleep until something happens'
+    # (http://lists.debian.org/debian-devel/2012/02/msg01139.html), while
+    # 'portmap-wait' is a specific instance of a waiter. There is an open
+    # launchpad bug
     # (https://bugs.launchpad.net/ubuntu/+source/upstart/+bug/962047) that may
-    # eventually explain how to use this service or perhaps why it should remain
-    # excluded. When that bug is adddressed this should be reexamined.
-    excludes += %w{wait-for-state}
+    # eventually explain how to use the wait-for-state service or perhaps why
+    # it should remain excluded. When that bug is adddressed this should be
+    # reexamined.
+    excludes += %w{wait-for-state portmap-wait}
     excludes
   end
 
