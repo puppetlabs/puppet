@@ -13,7 +13,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   def extract_facts_from_request(request)
     return unless text_facts = request.options[:facts]
-    raise ArgumentError, "Facts but no fact format provided for #{request.name}" unless format = request.options[:facts_format]
+    unless format = request.options[:facts_format]
+      raise ArgumentError, "Facts but no fact format provided for #{request.key}"
+    end
 
     # If the facts were encoded as yaml, then the param reconstitution system
     # in Network::HTTP::Handler will automagically deserialize the value.
@@ -22,6 +24,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     else
       facts = Puppet::Node::Facts.convert_from(format, text_facts)
     end
+
+    unless facts.name == request.key
+      raise Puppet::Error, "Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect})."
+    end
+
     facts.add_timestamp
     Puppet::Node::Facts.indirection.save(facts)
   end
@@ -104,7 +111,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # to find the node.
   def node_from_request(request)
     if node = request.options[:use_node]
-      return node
+      if request.remote?
+        raise Puppet::Error, "Invalid option use_node for a remote request"
+      else
+        return node
+      end
     end
 
     # We rely on our authorization system to determine whether the connected

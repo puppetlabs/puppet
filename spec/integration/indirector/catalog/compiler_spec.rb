@@ -11,6 +11,7 @@ describe Puppet::Resource::Catalog::Compiler do
     @catalog = Puppet::Resource::Catalog.new
     @catalog.add_resource(@one = Puppet::Resource.new(:file, "/one"))
     @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))
+    Puppet::Resource::Catalog.indirection.terminus.stubs(:validate)
   end
 
   after { Puppet.settings.clear }
