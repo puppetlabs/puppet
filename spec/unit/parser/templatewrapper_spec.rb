@@ -25,16 +25,14 @@ describe Puppet::Parser::TemplateWrapper do
 
   it "should check template file existance and read its content" do
     Puppet::Parser::Files.expects(:find_template).with("fake_template", @scope.environment.to_s).returns("/tmp/fake_template")
-    File.expects(:read).with("/tmp/fake_template").returns("template content")
 
     @tw.file = @file
   end
 
   it "should mark the file for watching" do
-    Puppet::Parser::Files.expects(:find_template).returns("/tmp/fake_template")
-    File.stubs(:read)
+    full_file_name = given_a_template_file("fake_template", "content")
 
-    @known_resource_types.expects(:watch_file).with("/tmp/fake_template")
+    @known_resource_types.expects(:watch_file).with(full_file_name)
     @tw.file = @file
   end
 
@@ -54,7 +52,7 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should return the processed template contents with a call to result" do
-    template_mock = mock("template", :result => "woot!")
+    template_mock = mock("template", :result => "woot!", :filename= => nil)
     File.expects(:read).with("/tmp/fake_template").returns("template contents")
     ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
@@ -62,8 +60,15 @@ describe Puppet::Parser::TemplateWrapper do
     @tw.result.should eql("woot!")
   end
 
+  it "provides access to the name of the template via #file" do
+    full_file_name = given_a_template_file("fake_template", "<%= file %>")
+
+    @tw.file = "fake_template"
+    @tw.result.should == full_file_name
+  end
+
   it "should return the processed template contents with a call to result and a string" do
-    template_mock = mock("template", :result => "woot!")
+    template_mock = mock("template", :result => "woot!", :filename= => nil)
     ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
     @tw.result("template contents").should eql("woot!")
@@ -114,7 +119,7 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should set all of the scope's variables as instance variables" do
-    template_mock = mock("template", :result => "woot!")
+    template_mock = mock("template", :result => "woot!", :filename= => nil)
     ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
     @scope.expects(:to_hash).returns("one" => "foo")
@@ -124,7 +129,7 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should not error out if one of the variables is a symbol" do
-    template_mock = mock("template", :result => "woot!")
+    template_mock = mock("template", :result => "woot!", :filename= => nil)
     ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
     @scope.expects(:to_hash).returns(:_timestamp => "1234")
@@ -133,7 +138,7 @@ describe Puppet::Parser::TemplateWrapper do
 
   %w{! . ; :}.each do |badchar|
     it "should translate #{badchar} to _ when setting the instance variables" do
-    template_mock = mock("template", :result => "woot!")
+    template_mock = mock("template", :result => "woot!", :filename= => nil)
     ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
     @scope.expects(:to_hash).returns("one#{badchar}" => "foo")
@@ -141,5 +146,15 @@ describe Puppet::Parser::TemplateWrapper do
 
     @tw.instance_variable_get("@one_").should == "foo"
   end
+  end
+
+  def given_a_template_file(name, contents)
+    full_name = "/full/path/to/#{name}"
+    Puppet::Parser::Files.stubs(:find_template).
+      with(name, anything()).
+      returns(full_name)
+    File.stubs(:read).with(full_name).returns(contents)
+
+    full_name
   end
 end
