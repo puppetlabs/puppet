@@ -30,14 +30,12 @@ describe Puppet::Parser::TemplateWrapper do
 
   it "should check template file existance and read its content" do
     Puppet::Parser::Files.expects(:find_template).with("fake_template", @scope.environment.to_s).returns("/tmp/fake_template")
-    File.expects(:read).with("/tmp/fake_template").returns("template content")
 
     @tw.file = @file
   end
 
   it "should mark the file for watching" do
     Puppet::Parser::Files.expects(:find_template).returns("/tmp/fake_template")
-    File.stubs(:read)
 
     @known_resource_types.expects(:watch_file).with("/tmp/fake_template")
     @tw.file = @file

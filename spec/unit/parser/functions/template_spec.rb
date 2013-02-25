@@ -58,6 +58,16 @@ describe "the template function", :'fails_on_ruby_1.9.2' => true do
     @scope.function_template(["1","2"]).should == "result1result2"
   end
 
+  it "is not interfered with by having a variable named 'string' (#14093)" do
+    @scope.setvar('string', "this output should not be seen")
+    eval_template("some text that is static").should == "some text that is static"
+  end
+
+  it "has access to a variable named 'string' (#14093)" do
+    @scope.setvar('string', "the string value")
+    eval_template("string was: <%= @string %>").should == "string was: the string value"
+  end
+
   it "should raise an error if the template raises an error" do
     tw = stub_everything 'template_wrapper'
     Puppet::Parser::TemplateWrapper.stubs(:new).returns(tw)
@@ -66,4 +76,9 @@ describe "the template function", :'fails_on_ruby_1.9.2' => true do
     lambda { @scope.function_template("1") }.should raise_error(Puppet::ParseError)
   end
 
+  def eval_template(content)
+    File.stubs(:read).with("template").returns(content)
+    Puppet::Parser::Files.stubs(:find_template).returns("template")
+    @scope.function_template(['template'])
+  end
 end
