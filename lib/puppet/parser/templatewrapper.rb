@@ -5,13 +5,15 @@ require 'erb'
 
 class Puppet::Parser::TemplateWrapper
   attr_writer :scope
-  attr_reader :file
-  attr_accessor :string
   include Puppet::Util
   Puppet::Util.logmethods(self)
 
   def initialize(scope)
     @__scope__ = scope
+  end
+
+  def file
+    @__file__
   end
 
   def scope
@@ -20,12 +22,12 @@ class Puppet::Parser::TemplateWrapper
 
   def script_line
     # find which line in the template (if any) we were called from
-    (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1]
+    (caller.find { |l| l =~ /#{@__file__}:/ }||"")[/:(\d+):/,1]
   end
 
   # Should return true if a variable is defined, false if it is not
   def has_variable?(name)
-    scope.lookupvar(name.to_s, :file => file, :line => script_line) != :undefined
+    scope.lookupvar(name.to_s, :file => @__file__, :line => script_line) != :undefined
   end
 
   # Allow templates to access the defined classes
@@ -56,53 +58,51 @@ class Puppet::Parser::TemplateWrapper
   # the missing_method definition here until we declare the syntax finally
   # dead.
   def method_missing(name, *args)
-    value = scope.lookupvar(name.to_s,:file => file,:line => script_line)
+    value = scope.lookupvar(name.to_s,:file => @__file__,:line => script_line)
     if value != :undefined
       return value
     else
       # Just throw an error immediately, instead of searching for
       # other missingmethod things or whatever.
-      raise Puppet::ParseError.new("Could not find value for '#{name}'",@file,script_line)
+      raise Puppet::ParseError.new("Could not find value for '#{name}'", @__file__, script_line)
     end
   end
 
   def file=(filename)
-    unless @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
+    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
       raise Puppet::ParseError, "Could not find template '#{filename}'"
     end
 
     # We'll only ever not have a parser in testing, but, eh.
-    scope.known_resource_types.watch_file(file)
-
-    @string = File.read(file)
+    scope.known_resource_types.watch_file(@__file__)
   end
 
   def result(string = nil)
     if string
-      self.string = string
       template_source = "inline template"
     else
-      template_source = file
+      string = File.read(@__file__)
+      template_source = @__file__
     end
 
     # Expose all the variables in our scope as instance variables of the
     # current object, making it possible to access them without conflict
     # to the regular methods.
     benchmark(:debug, "Bound template variables for #{template_source}") do
-      scope.to_hash.each { |name, value|
+      scope.to_hash.each do |name, value|
         if name.kind_of?(String)
           realname = name.gsub(/[^\w]/, "_")
         else
           realname = name
         end
         instance_variable_set("@#{realname}", value)
-      }
+      end
     end
 
     result = nil
     benchmark(:debug, "Interpolated template #{template_source}") do
-      template = ERB.new(self.string, 0, "-")
-      template.filename = file
+      template = ERB.new(string, 0, "-")
+      template.filename = @__file__
       result = template.result(binding)
     end
 
@@ -110,6 +110,6 @@ class Puppet::Parser::TemplateWrapper
   end
 
   def to_s
-    "template[#{(file ? file : "inline")}]"
+    "template[#{(@__file__ ? @__file__ : "inline")}]"
   end
 end
