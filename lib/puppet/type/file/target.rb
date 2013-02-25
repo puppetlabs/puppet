@@ -32,8 +32,6 @@ module Puppet
 
     # Create our link.
     def mklink
-      raise Puppet::Error, "Cannot symlink on Microsoft Windows" if Puppet.features.microsoft_windows?
-
       target = self.should
 
       # Clean up any existing objects.  The argument is just for logging,
@@ -47,16 +45,25 @@ module Puppet
           mode = @resource.should(:mode)
           if mode
             Puppet::Util.withumask(000) do
-              File.symlink(target, @resource[:path])
+              symlink @resource[:path], target
             end
           else
-            File.symlink(target, @resource[:path])
+            symlink @resource[:path], target
           end
         end
 
         @resource.send(:property_fix)
 
         :link_created
+      end
+    end
+
+    def symlink src, targ
+      unless Puppet.features.microsoft_windows?
+        File.symlink(targ, src)
+      else
+        # on Windows, it's the other way around. Confusion abounds.
+        system %Q[cmd /c mklink "#{src}" "#{targ}"]
       end
     end
 
