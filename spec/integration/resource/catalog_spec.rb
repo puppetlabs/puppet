@@ -53,6 +53,7 @@ describe Puppet::Resource::Catalog do
       Puppet::Resource::Catalog.indirection.stubs(:terminus).returns terminus
 
       node = mock 'node'
+      terminus.stubs(:validate)
       terminus.expects(:find).with { |request| request.options[:use_node] == node }
       Puppet::Resource::Catalog.find("me", :use_node => node)
     end
