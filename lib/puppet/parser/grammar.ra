@@ -34,7 +34,7 @@ program:    statements_and_declarations
   | nil
 
   statements_and_declarations:   statement_or_declaration {
-    result = ast AST::ASTArray, :children => (val[0] ? [val[0]] : [])
+    result = ast AST::BlockExpression, :children => (val[0] ? [val[0]] : [])
   }
   | statements_and_declarations statement_or_declaration {
     if val[1]
@@ -637,7 +637,7 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
     AST::CaseOpt,
     :value => val[0],
 
-    :statements => ast(AST::ASTArray)
+    :statements => ast(AST::BlockExpression)
   )
 }
 

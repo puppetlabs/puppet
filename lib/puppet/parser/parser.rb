@@ -1169,7 +1169,7 @@ Racc_debug_parser = false
 
 module_eval(<<'.,.,', 'grammar.ra', 36)
   def _reduce_3(val, _values, result)
-        result = ast AST::ASTArray, :children => (val[0] ? [val[0]] : [])
+        result = ast AST::BlockExpression, :children => (val[0] ? [val[0]] : [])
   
     result
   end
@@ -2299,7 +2299,7 @@ module_eval(<<'.,.,', 'grammar.ra', 633)
     AST::CaseOpt,
     :value => val[0],
 
-    :statements => ast(AST::ASTArray)
+    :statements => ast(AST::BlockExpression)
   )
 
     result
