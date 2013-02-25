@@ -56,4 +56,17 @@ describe "the inline_template function" do
     lambda { @scope.function_inline_template("1") }.should raise_error(Puppet::ParseError)
   end
 
+  it "is not interfered with by a variable called 'string' (#14093)" do
+    @scope.setvar("string", "this is a variable")
+    inline_template("this is a template").should == "this is a template"
+  end
+
+  it "has access to a variable called 'string' (#14093)" do
+    @scope.setvar('string', "this is a variable")
+    inline_template("string was: <%= @string %>").should == "string was: this is a variable"
+  end
+
+  def inline_template(*templates)
+    @scope.function_inline_template(templates)
+  end
 end

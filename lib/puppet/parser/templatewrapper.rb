@@ -5,8 +5,6 @@ require 'erb'
 
 class Puppet::Parser::TemplateWrapper
   attr_writer :scope
-  attr_reader :file
-  attr_accessor :string
   include Puppet::Util
   Puppet::Util.logmethods(self)
 
@@ -68,41 +66,40 @@ class Puppet::Parser::TemplateWrapper
   end
 
   def file=(filename)
-    unless @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
+    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
       raise Puppet::ParseError, "Could not find template '#{filename}'"
     end
 
     # We'll only ever not have a parser in testing, but, eh.
-    scope.known_resource_types.watch_file(file)
-
-    @string = File.read(file)
+    scope.known_resource_types.watch_file(@__file__)
   end
 
   def result(string = nil)
     if string
-      self.string = string
       template_source = "inline template"
     else
-      template_source = file
+      string = File.read(@__file__)
+      template_source = @__file__
     end
 
     # Expose all the variables in our scope as instance variables of the
     # current object, making it possible to access them without conflict
     # to the regular methods.
     benchmark(:debug, "Bound template variables for #{template_source}") do
-      scope.to_hash.each { |name, value|
+      scope.to_hash.each do |name, value|
         if name.kind_of?(String)
           realname = name.gsub(/[^\w]/, "_")
         else
           realname = name
         end
         instance_variable_set("@#{realname}", value)
-      }
+      end
     end
 
     result = nil
     benchmark(:debug, "Interpolated template #{template_source}") do
-      template = ERB.new(self.string, 0, "-")
+      template = ERB.new(string, 0, "-")
+      template.filename = @__file__
       result = template.result(binding)
     end
 
@@ -110,6 +107,6 @@ class Puppet::Parser::TemplateWrapper
   end
 
   def to_s
-    "template[#{(file ? file : "inline")}]"
+    "template[#{(@__file__ ? @__file__ : "inline")}]"
   end
 end
