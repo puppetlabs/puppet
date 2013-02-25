@@ -35,9 +35,9 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should mark the file for watching" do
-    Puppet::Parser::Files.expects(:find_template).returns("/tmp/fake_template")
+    full_file_name = given_a_template_file("fake_template", "content")
 
-    @known_resource_types.expects(:watch_file).with("/tmp/fake_template")
+    @known_resource_types.expects(:watch_file).with(full_file_name)
     @tw.file = @file
   end
 
@@ -62,6 +62,13 @@ describe Puppet::Parser::TemplateWrapper do
 
     @tw.file = @file
     @tw.result.should eql("woot!")
+  end
+
+  it "provides access to the name of the template via #file" do
+    full_file_name = given_a_template_file("fake_template", "<%= file %>")
+
+    @tw.file = "fake_template"
+    @tw.result.should == full_file_name
   end
 
   it "should return the processed template contents with a call to result and a string" do
@@ -136,5 +143,15 @@ describe Puppet::Parser::TemplateWrapper do
 
       @tw.instance_variable_get("@one_").should == "foo"
     end
+  end
+
+  def given_a_template_file(name, contents)
+    full_name = "/full/path/to/#{name}"
+    Puppet::Parser::Files.stubs(:find_template).
+      with(name, anything()).
+      returns(full_name)
+    File.stubs(:read).with(full_name).returns(contents)
+
+    full_name
   end
 end

@@ -12,6 +12,10 @@ class Puppet::Parser::TemplateWrapper
     @__scope__ = scope
   end
 
+  def file
+    @__file__
+  end
+
   def scope
     @__scope__
   end
