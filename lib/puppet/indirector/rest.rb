@@ -108,6 +108,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
 
       raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
+    elsif error.message.empty?
+      # This may be because the server is speaking SSLv2 and we
+      # monkey patch OpenSSL::SSL:SSLContext to reject SSLv2.
+      raise error.exception("#{error.class} with no message")
     else
       raise
     end

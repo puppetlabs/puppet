@@ -79,7 +79,6 @@ describe Puppet::Network::HttpPool do
 
       it                { should be_use_ssl }
       its(:cert)        { should be_nil }
-      its(:cert_store)  { should be_nil }
       its(:ca_file)     { should be_nil }
       its(:key)         { should be_nil }
       its(:verify_mode) { should == OpenSSL::SSL::VERIFY_NONE }
