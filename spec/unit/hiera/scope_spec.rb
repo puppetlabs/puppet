@@ -22,10 +22,16 @@ describe Hiera::Scope do
       scope["foo"].should == nil
     end
 
-    it "sould return found data" do
+    it "should return found data" do
       real["foo"] = "bar"
 
       scope["foo"].should == "bar"
+    end
+
+    it "preserves the case of a string that is found" do
+      real["foo"] = "CAPITAL!"
+
+      scope["foo"].should == "CAPITAL!"
     end
 
     it "uses the module of the scope's class as the calling_module" do
@@ -36,12 +42,28 @@ describe Hiera::Scope do
       scope["calling_module"].should == "the_module"
     end
 
+    it "downcases the calling_module" do
+      real.source = Puppet::Resource::Type.new(:hostclass,
+                                               "testing",
+                                               :module_name => "UPPER CASE")
+
+      scope["calling_module"].should == "upper case"
+    end
+
     it "uses the name of the of the scope's class as the calling_class" do
       real.source = Puppet::Resource::Type.new(:hostclass,
                                                "testing",
                                                :module_name => "the_module")
 
       scope["calling_class"].should == "testing"
+    end
+
+    it "downcases the calling_class" do
+      real.source = Puppet::Resource::Type.new(:hostclass,
+                                               "UPPER CASE",
+                                               :module_name => "the_module")
+
+      scope["calling_class"].should == "upper case"
     end
 
     it "looks for the class which includes the defined type as the calling_class" do

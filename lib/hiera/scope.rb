@@ -11,14 +11,14 @@ class Hiera
       if key == "calling_class"
         ans = find_hostclass(@real)
       elsif key == "calling_module"
-        ans = @real.source.module_name
+        ans = @real.source.module_name.downcase
       else
         ans = @real.lookupvar(key)
       end
 
       # damn you puppet visual basic style variables.
       return nil if ans.nil? or ans == ""
-      return ans.downcase
+      return ans
     end
 
     def include?(key)
@@ -41,7 +41,7 @@ class Hiera
 
     def find_hostclass(scope)
       if scope.source and scope.source.type == :hostclass
-        return scope.source.name
+        return scope.source.name.downcase
       elsif scope.parent
         return find_hostclass(scope.parent)
       else
