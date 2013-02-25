@@ -138,3 +138,46 @@ class IO
     lines
   end
 end
+
+# (#19151) Reject all SSLv2 ciphers and handshakes
+require 'openssl'
+class OpenSSL::SSL::SSLContext
+  if match = /^1\.8\.(\d+)/.match(RUBY_VERSION)
+    older_than_187 = match[1].to_i < 7
+  else
+    older_than_187 = false
+  end
+
+  alias __original_initialize initialize
+  private :__original_initialize
+
+  if older_than_187
+    def initialize(*args)
+      __original_initialize(*args)
+      if bitmask = self.options
+        self.options = bitmask | OpenSSL::SSL::OP_NO_SSLv2
+      else
+        self.options = OpenSSL::SSL::OP_NO_SSLv2
+      end
+      # These are the default ciphers in recent MRI versions.  See
+      # https://github.com/ruby/ruby/blob/v1_9_3_392/ext/openssl/lib/openssl/ssl-internal.rb#L26
+      self.ciphers = "ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW"
+    end
+  else
+    if DEFAULT_PARAMS[:options]
+      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2
+    else
+      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2
+    end
+    DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+
+    def initialize(*args)
+      __original_initialize(*args)
+      params = {
+        :options => DEFAULT_PARAMS[:options],
+        :ciphers => DEFAULT_PARAMS[:ciphers],
+      }
+      set_params(params)
+    end
+  end
+end
