@@ -59,9 +59,14 @@ class Puppet::Pops::Impl::Parser::Parser
   #  have been fully implemented and tested.
   # @todo This may also make it possible to relieve the lexer from keeping track of namespace
   #
+  # Aaaaargh!!! This is needed because class bodies are lazily evaluated and an inner class may not
+  # have been evaluated before some external reference is made to it; it must know its complete name.
+  # What a joke!
+  #
   def classname(name)
-    name
-    # [@lexer.namespace, name].join("::").sub(/^::/, '')
+      [@lexer.namespace, name].join("::").sub(/^::/, '')
+#    name
+#    # [@lexer.namespace, name].join("::").sub(/^::/, '')
   end
 
   # Reinitializes variables (i.e. creates a new lexer instance

@@ -330,6 +330,7 @@ class Factory
   def ne r;     f_comparison(:'!=', r);                                   end
   def =~ r;     f_match(:'=~', r);                                        end
   def mne r;    f_match(:'!~', r);                                        end
+  def paren();  f_build_unary(Model::ParenthesizedExpression, current);   end
 
   def relop op, r
     f_build_binary_op(Model::RelationshipExpression, op.to_sym, current, r)
@@ -489,6 +490,9 @@ class Factory
     new(Model::ExportedQuery, query_expr)
   end
 
+  # Used by regular grammar, egrammar creates an AccessExpression instead, and evaluation determines 
+  # if access is to instances or something else.
+  #
   def Factory.INSTANCE(type_name, name_expressions)
     new(Model::InstanceReferences, type_name, name_expressions)
   end

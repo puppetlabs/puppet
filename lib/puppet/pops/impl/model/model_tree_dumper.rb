@@ -256,6 +256,10 @@ module Puppet; module Pops; module Impl; module Model
       end
     end
     
+    def dump_ParenthesizedExpression o
+      [do_dump(o.expr)]  
+    end
+    
     def dump_IfExpression o
       result = ["if", do_dump(o.test), :indent, :break,
         ["then", :indent, do_dump(o.then_expr), :dedent]]

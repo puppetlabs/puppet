@@ -110,7 +110,7 @@ expression
   | expression OR           expression                 { result = val[0].or  val[2] ; loc result, val[1] }
   | expression EQUALS       expression                 { result = val[0].set(val[2]); loc result, val[1] }
   | expression APPENDS      expression                 { result = val[0].plus_set(val[2]); loc result, val[1] }
-  |            LPAREN       expression RPAREN          { result = val[1]            ;                    }
+  |            LPAREN       expression RPAREN          { result = val[1].paren()    ;                    }
 
 #---EXPRESSIONS
 #   (e.g. argument list)

@@ -37,6 +37,11 @@ class Puppet::Parser::Parser
   def aryfy(arg)
     ast AST::ASTArray, :children => [arg]
   end
+  
+  # Create an AST block containing a single element
+  def block(arg)
+    ast AST::BlockExpression, :children => [arg]
+  end
 
   # Create an AST object, and automatically add the file and line information if
   # available.
@@ -160,6 +165,6 @@ class Puppet::Parser::Parser
     main_object.instance_eval(File.read(self.file))
 
     # Then extract any types that were created.
-    Puppet::Parser::AST::ASTArray.new :children => main_object.instance_eval { @__created_ast_objects__ }
+    Puppet::Parser::AST::BlockExpression.new :children => main_object.instance_eval { @__created_ast_objects__ }
   end
 end

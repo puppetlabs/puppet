@@ -85,6 +85,13 @@ module Puppet; module Pops; module API; module Model
     contains_one_uni 'expr', Expression, :lowerBound => 1
   end
 
+  # A class that simply evaluates to the contained expression.
+  # It is of value in order to preserve user entered parentheses in transformations, and
+  # transformations from model to source.
+  #
+  class ParenthesizedExpression < UnaryExpression
+  end
+  
   # A boolean not expression, reversing the truth of the unary expr.
   #--
   # Corresponds to Not
@@ -382,7 +389,7 @@ module Puppet; module Pops; module API; module Model
   # determined by the concrete subclass.
   #--
   # Corresponds somewhat to Leaf which has value and type
-  class LiteralValue < Expression
+  class LiteralValue < Literal
     abstract
     has_attr 'value', Object, :lowerBound => 1
   end

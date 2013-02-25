@@ -48,7 +48,15 @@ module FactoryRspecHelper
   def WHEN(values, block)
     Puppet::Pops::Impl::Model::Factory.WHEN(values, block)
   end
-  
+
+  def respond_to? method
+    if Puppet::Pops::Impl::Model::Factory.respond_to? method
+      true
+    else
+      super
+    end
+  end
+
   def method_missing(method, *args, &block)
     if Puppet::Pops::Impl::Model::Factory.respond_to? method
       Puppet::Pops::Impl::Model::Factory.send(method, *args, &block) 
