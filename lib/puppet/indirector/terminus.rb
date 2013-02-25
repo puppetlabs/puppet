@@ -1,4 +1,5 @@
 require 'puppet/indirector'
+require 'puppet/indirector/errors'
 require 'puppet/indirector/indirection'
 require 'puppet/util/instance_loader'
 
@@ -141,5 +142,24 @@ class Puppet::Indirector::Terminus
 
   def terminus_type
     self.class.terminus_type
+  end
+
+  def validate(request)
+    if request.instance
+      validate_model(request)
+      validate_key(request)
+    end
+  end
+
+  def validate_key(request)
+    unless request.key == request.instance.name
+      raise Puppet::Indirector::ValidationError, "Instance name #{request.instance.name.inspect} does not match requested key #{request.key.inspect}"
+    end
+  end
+
+  def validate_model(request)
+    unless model === request.instance
+      raise Puppet::Indirector::ValidationError, "Invalid instance type #{request.instance.class.inspect}, expected #{model.inspect}"
+    end
   end
 end

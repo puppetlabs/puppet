@@ -44,6 +44,10 @@ module Puppet::FileBucketFile
         true
       end
     end
+
+    def validate_key(request)
+      get_terminus(request).validate(request)
+    end
   end
 end
 
