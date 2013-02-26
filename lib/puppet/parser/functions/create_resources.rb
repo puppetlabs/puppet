@@ -70,6 +70,9 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
   # iterate through the resources to create
   defaults = args[2] || {}
   args[1].each do |title, params|
+    if !params
+        params = {}
+    end
     params = Puppet::Util.symbolizehash(defaults.merge(params))
     raise ArgumentError, 'params should not contain title' if(params[:title])
     case type_of_resource
