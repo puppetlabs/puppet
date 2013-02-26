@@ -257,10 +257,12 @@ ERROR_STRING
       # a lookup in the middle of setting our ssl connection.
       @ssl_store.add_file(Puppet[:localcacert])
 
-      # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
-        @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
-        @ssl_store.add_crl(crl.content)
+      # If we're doing revocation and there's a CRL, add it to our store.
+      if Puppet.settings[:certificate_revocation]
+        if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+          @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+          @ssl_store.add_crl(crl.content)
+        end
       end
       return @ssl_store
     end
