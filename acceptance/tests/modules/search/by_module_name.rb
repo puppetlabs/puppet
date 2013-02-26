@@ -9,7 +9,7 @@ on master, puppet("module search geordi") do
   assert_equal <<-STDOUT, stdout
 Searching http://forge.puppetlabs.com ...
 NAME                  DESCRIPTION                  AUTHOR          KEYWORDS     
-pmtacceptance-\e[0;32mgeordi\e[0m  This is a module that do...  @pmtacceptance  star trek    
+pmtacceptance-\e[0;32mgeordi\e[0m  UNKNOWN                      @pmtacceptance  star trek    
 STDOUT
 end
 
@@ -30,6 +30,6 @@ on master, puppet("module search tance/ge") do
   assert_equal <<-STDOUT, stdout
 Searching http://forge.puppetlabs.com ...
 NAME                  DESCRIPTION                  AUTHOR          KEYWORDS     
-pmtaccep\e[0;32mtance-ge\e[0mordi  This is a module that do...  @pmtacceptance  star trek    
+pmtaccep\e[0;32mtance-ge\e[0mordi  UNKNOWN                      @pmtacceptance  star trek    
 STDOUT
 end
