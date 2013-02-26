@@ -1,4 +1,4 @@
-source :rubygems
+source "https://rubygems.org"
 
 def location_for(place)
   if place =~ /^(git:[^#]*)#(.*)/
