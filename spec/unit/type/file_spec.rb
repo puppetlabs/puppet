@@ -860,7 +860,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if it can't backup the file" do
-      file.stubs(:stat).returns stub('stat')
+      file.stubs(:stat).returns stub('stat', :ftype => 'file')
       file.stubs(:perform_backup).returns false
 
       expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not replace/)
