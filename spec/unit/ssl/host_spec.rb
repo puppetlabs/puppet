@@ -721,6 +721,18 @@ describe Puppet::SSL::Host do
         @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
         @host.ssl_store
       end
+
+      it "should not add the CRL when certificate_revocation setting is false" do
+        Puppet.settings[:certificate_revocation] = false
+        @store.expects(:add_crl).never
+        @host.ssl_store
+      end
+
+      it "should not set the flags when certificate_revocation setting is false" do
+        Puppet.settings[:certificate_revocation] = false
+        @store.expects(:flags=).never
+        @host.ssl_store
+      end
     end
   end
 
