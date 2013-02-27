@@ -149,13 +149,20 @@ with the following actions.  The trick is to symlink `gems` to `src`.
     $ cd /workspace
     $ ln -s src gems
     $ mkdir specifications
-    $ pushd specifications; ln -s ../gems/puppet/puppet.gemspec; popd
+    $ pushd specifications; ln -s ../gems/puppet/puppet.gemspec; ln -s ../gems/puppet/lib; popd
     $ export GEM_PATH="/workspace:${GEM_PATH}"
     $ gem list puppet
 
 This should list out
 
     puppet (2.7.19)
+
+The final directory structure should look like this:
+
+    /workspace/src --- git working directory
+              /gems -> src
+              /specifications/puppet.gemspec -> ../gems/puppet/puppet.gemspec
+                             /lib -> ../gems/puppet/lib
 
 ## Bundler ##
 
