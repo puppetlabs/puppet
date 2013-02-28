@@ -199,11 +199,14 @@ class Puppet::Indirector::Indirection
           cache.save request(:save, key, result, options)
         end
 
+        filtered = result
         if terminus.respond_to?(:filter)
-          terminus.filter(result)
-        else
-          result
+          Puppet::Util.benchmark(:notice, "Filtered result for #{self.name} #{request.key}") do
+            filtered = terminus.filter(result)
+          end
         end
+
+        filtered
       end
     end
   end

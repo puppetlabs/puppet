@@ -63,12 +63,14 @@ module Puppet::Network::HTTP::Handler
 
   # handle an HTTP request
   def process(request, response)
-    indirection, method, key, params = uri2indirection(http_method(request), path(request), params(request))
+    Puppet::Util.benchmark(:notice, "Processed request #{http_method(request)} #{path(request)}") do
+      indirection, method, key, params = uri2indirection(http_method(request), path(request), params(request))
 
-    check_authorization(indirection, method, key, params)
-    warn_if_near_expiration(client_cert(request))
+      check_authorization(indirection, method, key, params)
+      warn_if_near_expiration(client_cert(request))
 
-    send("do_#{method}", indirection, key, params, request, response)
+      send("do_#{method}", indirection, key, params, request, response)
+    end
   rescue SystemExit,NoMemoryError
     raise
   rescue Exception => e
@@ -118,10 +120,15 @@ module Puppet::Network::HTTP::Handler
     format = format_to_use(request)
     set_content_type(response, format)
 
+    rendered_result = result
     if result.respond_to?(:render)
-      set_response(response, result.render(format))
-    else
-      set_response(response, result)
+      Puppet::Util.benchmark(:notice, "Rendered result in #{format}") do
+       rendered_result = result.render(format)
+      end
+    end
+
+    Puppet::Util.benchmark(:notice, "Sent response") do
+      set_response(response, rendered_result)
     end
   end
 

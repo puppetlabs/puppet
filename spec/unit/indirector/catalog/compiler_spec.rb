@@ -34,11 +34,6 @@ describe Puppet::Resource::Catalog::Compiler do
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
     end
-
-    it "should provide a method for determining if the catalog is networked" do
-      compiler = Puppet::Resource::Catalog::Compiler.new
-      compiler.should respond_to(:networked?)
-    end
   end
 
   describe "when finding catalogs" do
@@ -134,26 +129,6 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.expects(:compile).returns result
       @compiler.find(@request).should equal(result)
     end
-
-    it "should benchmark the compile process" do
-      Puppet::Node.indirection.stubs(:find).returns(@node)
-      @compiler.stubs(:networked?).returns(true)
-      @compiler.expects(:benchmark).with do |level, message|
-        level == :notice and message =~ /^Compiled catalog/
-      end
-      Puppet::Parser::Compiler.stubs(:compile)
-      @compiler.find(@request)
-    end
-
-    it "should log the benchmark result" do
-      Puppet::Node.indirection.stubs(:find).returns(@node)
-      @compiler.stubs(:networked?).returns(true)
-      Puppet::Parser::Compiler.stubs(:compile)
-
-      Puppet.expects(:notice).with { |msg| msg =~ /Compiled catalog/ }
-
-      @compiler.find(@request)
-    end
   end
 
   describe "when extracting facts from the request" do
@@ -180,7 +155,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
       @facts.timestamp = Time.parse('2010-11-01')
       @now = Time.parse('2010-11-02')
-      Time.expects(:now).returns(@now)
+      Time.stubs(:now).returns(@now)
 
       @compiler.extract_facts_from_request(@request)
       @facts.timestamp.should == @now

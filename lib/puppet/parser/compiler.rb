@@ -90,18 +90,19 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
-    set_node_parameters
-    create_settings_scope
+    Puppet::Util.benchmark(:notice, "Compile: Set node parameters") { set_node_parameters }
 
-    evaluate_main
+    Puppet::Util.benchmark(:notice, "Compile: Created settings scope") { create_settings_scope }
 
-    evaluate_ast_node
+    Puppet::Util.benchmark(:notice, "Compile: Evaluated main") { evaluate_main }
 
-    evaluate_node_classes
+    Puppet::Util.benchmark(:notice, "Compile: Evaluated AST node") { evaluate_ast_node }
 
-    evaluate_generators
+    Puppet::Util.benchmark(:notice, "Compile: Evaluated node classes") { evaluate_node_classes }
 
-    finish
+    Puppet::Util.benchmark(:notice, "Compile: Evaluated generators") { evaluate_generators }
+
+    Puppet::Util.benchmark(:notice, "Compile: Finished catalog") { finish }
 
     fail_on_unevaluated
 
@@ -231,8 +232,10 @@ class Puppet::Parser::Compiler
       # We have to iterate over a dup of the array because
       # collections can delete themselves from the list, which
       # changes its length and causes some collections to get missed.
-      @collections.dup.each do |collection|
-        found_something = true if collection.evaluate
+      Puppet::Util.benchmark(:notice, "Evaluated collections") do
+        @collections.dup.each do |collection|
+          found_something = true if collection.evaluate
+        end
       end
     end
 
@@ -244,7 +247,15 @@ class Puppet::Parser::Compiler
   # evaluate_generators loop.
   def evaluate_definitions
     exceptwrap do
-      !unevaluated_resources.each { |resource| resource.evaluate }.empty?
+      more = nil
+      Puppet::Util.benchmark(:notice, "Evaluated definitions") do
+        more = !unevaluated_resources.each { |resource|
+          Puppet::Util.benchmark(:notice, "Evaluated resource #{resource}") do
+            resource.evaluate
+          end
+        }.empty?
+      end
+      more
     end
   end
 
@@ -257,9 +268,12 @@ class Puppet::Parser::Compiler
     loop do
       done = true
 
-      # Call collections first, then definitions.
-      done = false if evaluate_collections
-      done = false if evaluate_definitions
+      Puppet::Util.benchmark(:notice, "Iterated (#{count + 1}) on generators") do
+        # Call collections first, then definitions.
+        done = false if evaluate_collections
+        done = false if evaluate_definitions
+      end
+
       break if done
 
       count += 1

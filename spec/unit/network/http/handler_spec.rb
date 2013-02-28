@@ -81,9 +81,9 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should create an indirection request from the path, parameters, and http method" do
-      @handler.expects(:path).with(@request).returns "mypath"
-      @handler.expects(:http_method).with(@request).returns "mymethod"
-      @handler.expects(:params).with(@request).returns "myparams"
+      @handler.stubs(:path).with(@request).returns "mypath"
+      @handler.stubs(:http_method).with(@request).returns "mymethod"
+      @handler.stubs(:params).with(@request).returns "myparams"
 
       @handler.expects(:uri2indirection).with("mymethod", "mypath", "myparams").returns stub("request", :method => :find)
 
