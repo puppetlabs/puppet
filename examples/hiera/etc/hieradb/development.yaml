@@ -1,2 +1,7 @@
 ---
 classes: users::development
+resources:
+  apache::site:
+    www.example.com:
+      ip: 127.0.0.1
+  
