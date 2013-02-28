@@ -179,11 +179,25 @@ installed using [Bundler](http://gembundler.com/)
 
 # Running Tests #
 
-Puppet's tests use `rspec`.  To run all of them, use 'rspec':
+Puppet Labs projects use a common convention of using Rake to run unit tests.
+The tests can be run with the following rake task:
+
+    rake spec
+    # Or if using Bundler
+    bundle exec rake spec
+
+This allows the Rakefile to set up the environment beforehand if needed. This
+method is how the unit tests are run in [Jenkins](https://jenkins.puppetlabs.com).
+
+Under the hood Puppet's tests use `rspec`.  To run all of them, you can directly
+use 'rspec':
 
     rspec
+    # Or if using Bundler
+    bundle exec rspec
 
-To run a single file's worth of tests (much faster!), give the filename, and use the nested format to see the descriptions:
+To run a single file's worth of tests (much faster!), give the filename, and use
+the nested format to see the descriptions:
 
     rspec spec/unit/ssl/host_spec.rb --format nested
 
