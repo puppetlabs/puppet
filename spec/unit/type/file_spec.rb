@@ -866,6 +866,15 @@ describe Puppet::Type.type(:file) do
       expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not replace/)
     end
 
+    it "should not backup directories unless force is true" do
+      file.stat
+      file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+
+      file.expects(:perform_backup).never
+
+      file.remove_existing(:file)
+    end
+
     it "should not do anything if the file is already the right type and not a link" do
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
