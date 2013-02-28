@@ -184,6 +184,16 @@ installed using [Bundler](http://gembundler.com/)
     Using bundler (1.1.5)
     Your bundle is complete! Use `bundle show [gemname]` to see where a bundled gem is installed.
 
+# Running Tests #
+
+Puppet's tests use `rspec`.  To run all of them, use 'rspec':
+
+    rspec
+
+To run a single file's worth of tests (much faster!), give the filename, and use the nested format to see the descriptions:
+
+    rspec spec/unit/ssl/host_spec.rb --format nested
+
 # UTF-8 Handling #
 
 As Ruby 1.9 becomes more commonly used with Puppet, developers should be aware
