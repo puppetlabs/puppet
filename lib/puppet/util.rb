@@ -178,7 +178,7 @@ module Util
       seconds = Benchmark.realtime {
         yield
       }
-      object.send(level, "BENCHMARK: " + msg + (" in %0.2f seconds" % seconds))
+      object.send(level, msg + (" in %0.2f seconds" % seconds))
       return seconds
     else
       yield
