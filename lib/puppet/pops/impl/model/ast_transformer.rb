@@ -4,37 +4,39 @@ require 'puppet/parser/ast'
 
 module Puppet; module Pops; module Impl; module Model
 
+  AST = Puppet::Parser::AST
+  
   # Transforms a Pops::Model to classic Puppet AST.
   # TODO: Location not handled yet
   # TODO: Documentation is currently skipped completely (it is only used for Rdoc)
   #
-  class ToAstTransformer
+  class AstTransformer
     
     def initialize
-      @transform_visitor = Puppet::Pops::API::Visitor.new(self,"transform",0,0)
-      @query_transform_visitor = Puppet::Pops::API::Visitor.new(self,"query",0,0)
-      @hostname_transform_visitor = Puppet::Pops::API::Visitor.new(self,"hostname",0,0)
+      @@transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"transform",0,0)
+      @@query_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"query",0,0)
+      @@hostname_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"hostname",0,0)
     end
      
     # Initialize klass from o and hash    
-    def ast klass, o, hash 
+    def ast klass, hash 
       # TODO: Pick up generic file and line from o
       klass.new hash
     end
     
     # Transforms pops expressions into AST 3.1 statements/expressions
     def transform(o)
-      @transform_visitor.visit(o)
+      @@transform_visitor.visit(o)
     end
     
     # Transforms pops expressions into AST 3.1 query expressions
     def query(o)
-      @query_transform_visitor.visit(o)
+      @@query_transform_visitor.visit(o)
     end
 
     # Transforms pops expressions into AST 3.1 hostnames
     def hostname(o)
-      @hostname_transform_visitor.visit(o)
+      @@hostname_transform_visitor.visit(o)
     end
     
     def transform_LiteralNumber o
@@ -64,7 +66,8 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_ArithmeticExpression o
-      ast AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), :operator => o.operator
+      ast AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), 
+        :operator => o.operator.to_s
     end
     
     def transform_Array o
