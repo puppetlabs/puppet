@@ -46,7 +46,7 @@ module Puppet::ModuleTool::Errors
         message << "    Currently, '#{@metadata[:name]}' (#{v(@metadata[:version])}) is installed to that directory"
       end
 
-      message << "    Use `puppet module install --dir <DIR>` to install modules elsewhere"
+      message << "    Use `puppet module install --target-dir <DIR>` to install modules elsewhere"
 
       if @dependency
         message << "    Use `puppet module install --ignore-dependencies` to install only this module"
