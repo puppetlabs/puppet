@@ -16,13 +16,14 @@ RSpec.configure do |c|
   c.include ParserRspecHelper
 end
   
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "Puppet::Pops::Impl::Parser::Parser" do
   EvaluationError = Puppet::Pops::EvaluationError
     
-  context "When parsing Lists" do
-    it "$a = [1, 2, 3][2]" do
-      pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference"
-      dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
-    end
-  end
+# With egrammar this is now supported (it was only a grammar restriction), AST evaluation is ok.  
+#  context "When parsing Lists" do
+#    it "$a = [1, 2, 3][2]" do
+#      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference"
+#      dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
+#    end
+#  end
 end
