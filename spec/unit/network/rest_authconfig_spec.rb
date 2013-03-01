@@ -12,7 +12,7 @@ describe Puppet::Network::RestAuthConfig do
     # to fileserver.conf
     { :acl => "/file" },
     { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-    { :acl => "/report", :method => :save, :authenticated => true },
+    { :acl => "~ ^\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
     { :acl => "/certificate/ca", :method => :find, :authenticated => false },
     { :acl => "/certificate/", :method => :find, :authenticated => false },
     { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
@@ -104,6 +104,18 @@ describe Puppet::Network::RestAuthConfig do
     end
   end
 
+  it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do
+    acl = {
+      :acl => "~ ^\/report\/([^\/]+)$",
+      :method => :save,
+      :allow => '$1',
+      :authenticated => true
+    }
+    @authconfig.stubs(:mk_acl)
+    @authconfig.expects(:mk_acl).with(acl)
+    @authconfig.insert_default_acl
+  end
+
   it "should create default ACL entries if no file have been read" do
     Puppet::Network::RestAuthConfig.any_instance.stubs(:exists?).returns(false)
 
@@ -141,7 +153,5 @@ describe Puppet::Network::RestAuthConfig do
 
       @authconfig.insert_default_acl
     end
-
   end
-
 end
