@@ -12,45 +12,45 @@ describe Puppet::Util::Profiler::Measuring do
     retval.should == "the return value"
   end
 
-  it "logs at debug level the number of seconds it took to execute the block" do
+  it "logs the number of seconds it took to execute the block" do
     profiler.profile("Testing") { }
 
-    logger.debugs.first.should =~ /in \d\.\d{4} seconds$/
+    logger.messages.first.should =~ /in \d\.\d{4} seconds$/
   end
 
   it "describes the profiled segment" do
     profiler.profile("Tested measurement") { }
 
-    logger.debugs.first.should =~ /\[#{identifier}\] Tested measurement/
+    logger.messages.first.should =~ /\[#{identifier}\] \d Tested measurement/
   end
 
   it "indicates the order in which segments are profiled" do
     profiler.profile("Measurement") { }
     profiler.profile("Another measurement") { }
 
-    logger.debugs[0].should =~ /^1 \[#{identifier}\] Measurement/
-    logger.debugs[1].should =~ /^2 \[#{identifier}\] Another measurement/
+    logger.messages[0].should =~ /1 Measurement/
+    logger.messages[1].should =~ /2 Another measurement/
   end
 
   it "indicates the nesting of profiled segments" do
     profiler.profile("Measurement") { profiler.profile("Nested measurement") { } }
     profiler.profile("Another measurement") { profiler.profile("Another nested measurement") { } }
 
-    logger.debugs[0].should =~ /^1.1 \[#{identifier}\] Nested measurement/
-    logger.debugs[1].should =~ /^1 \[#{identifier}\] Measurement/
-    logger.debugs[2].should =~ /^2.1 \[#{identifier}\] Another nested measurement/
-    logger.debugs[3].should =~ /^2 \[#{identifier}\] Another measurement/
+    logger.messages[0].should =~ /1.1 Nested measurement/
+    logger.messages[1].should =~ /1 Measurement/
+    logger.messages[2].should =~ /2.1 Another nested measurement/
+    logger.messages[3].should =~ /2 Another measurement/
   end
 
   class SimpleLog
-    attr_reader :debugs
+    attr_reader :messages
 
     def initialize
-      @debugs = []
+      @messages = []
     end
 
-    def debug(msg)
-      @debugs << msg
+    def call(msg)
+      @messages << msg
     end
   end
 end

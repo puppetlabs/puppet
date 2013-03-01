@@ -271,7 +271,7 @@ module Puppet::Network::HTTP::Handler
   def configure_profiler(request_params)
     Puppet.debug(request_params.to_yaml)
     if request_params.include?(:profile)
-      Puppet::Util::Profiler.current = Puppet::Util::Profiler::Measuring.new(Puppet, request_params.object_id)
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::Measuring.new(Puppet.method(:debug), request_params.object_id)
     else
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::NONE
     end
