@@ -14,16 +14,29 @@ class Puppet::Util::Profiler::Measuring
     retval = nil
     @sequence.next
     @sequence.down
-    start = Time.now
+    timer = Timer.new
     begin
       retval = yield
     ensure
-      finish = Time.now
+      timer.stop
       @sequence.up
-      elapsed = finish - start
-      @logger.call("[#{@identifier}] #{@sequence} #{description} in #{format('%0.4f', elapsed)} seconds")
+      @logger.call("[#{@identifier}] #{@sequence} #{description} in #{timer} seconds")
     end
     retval
+  end
+
+  class Timer
+    def initialize
+      @start = Time.now
+    end
+
+    def stop
+      @finish = Time.now
+    end
+
+    def to_s
+      format('%0.4f', @finish - @start)
+    end
   end
 
   class Sequence
