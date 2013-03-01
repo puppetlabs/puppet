@@ -122,6 +122,18 @@ describe Puppet::Network::RestAuthConfig do
       @authconfig.insert_default_acl
     end
 
-  end
+    it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do
+      acl = {
+        :acl => "~ ^\/report\/([^\/]+)$",
+        :method => :save,
+        :allow => '$1',
+        :authenticated => true
+      }
+      @authconfig.rights.stubs(:[]).returns(true)
+      @authconfig.rights.stubs(:[]).with(acl[:acl]).returns(nil)
 
+      @authconfig.expects(:mk_acl).with(acl)
+      @authconfig.insert_default_acl
+    end
+  end
 end
