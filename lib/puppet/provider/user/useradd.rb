@@ -81,6 +81,13 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd << @resource[:name]
   end
 
+  def modifycmd(param, value)
+    cmd = super(param, value)
+    cmd += check_manage_home if param == :home
+
+    cmd
+  end
+
   def deletecmd
     cmd = [command(:delete)]
     cmd += @resource.managehome? ? ['-r'] : []
