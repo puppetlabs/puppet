@@ -12,7 +12,7 @@ module Puppet
       # to fileserver.conf
       { :acl => "/file" },
       { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-      { :acl => "/report", :method => :save, :authenticated => true },
+      { :acl => "~ ^\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
       { :acl => "/certificate/ca", :method => :find, :authenticated => false },
       { :acl => "/certificate/", :method => :find, :authenticated => false },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
