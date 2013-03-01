@@ -9,6 +9,10 @@ module Puppet; module Pops; module Impl; module Model
   #
   class ModelTreeDumper < TreeDumper
     
+    def dump_Array o
+      o.collect {|e| do_dump(e) }
+    end
+    
     def dump_LiteralNumber o
       case o.radix
       when 10
