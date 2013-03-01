@@ -6,16 +6,30 @@ describe Puppet::Util::Profiler::Measuring do
   let(:identifier) { "Profiling ID" }
   let(:profiler) { Puppet::Util::Profiler::Measuring.new(logger, identifier) }
 
-  it "returns the value of the profiled block" do
+  it "returns the value of the profiled segment" do
     retval = profiler.profile("Testing") { "the return value" }
 
     retval.should == "the return value"
   end
 
-  it "logs the number of seconds it took to execute the block" do
+  it "propogates any errors raised in the profiled segment" do
+    expect do
+      profiler.profile("Testing") { raise "a problem" }
+    end.to raise_error("a problem")
+  end
+
+  it "logs the number of seconds it took to execute the segment" do
     profiler.profile("Testing") { }
 
     logger.messages.first.should =~ /in \d\.\d{4} seconds$/
+  end
+
+  it "logs the number of seconds even when an error is raised" do
+    begin
+      profiler.profile("Testing") { raise "a problem" }
+    rescue
+      logger.messages.first.should =~ /in \d\.\d{4} seconds$/
+    end
   end
 
   it "describes the profiled segment" do

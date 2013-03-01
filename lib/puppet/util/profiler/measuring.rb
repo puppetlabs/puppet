@@ -14,9 +14,15 @@ class Puppet::Util::Profiler::Measuring
     retval = nil
     @sequence.next
     @sequence.down
-    time = Benchmark.measure { retval = yield }
-    @sequence.up
-    @logger.call("[#{@identifier}] #{@sequence} #{description} in #{format('%0.4f', time.real)} seconds")
+    start = Time.now
+    begin
+      retval = yield
+    ensure
+      finish = Time.now
+      @sequence.up
+      elapsed = finish - start
+      @logger.call("[#{@identifier}] #{@sequence} #{description} in #{format('%0.4f', elapsed)} seconds")
+    end
     retval
   end
 
