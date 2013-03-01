@@ -60,12 +60,28 @@ describe Puppet::Network::HTTP::Handler do
       handler.process(request, response)
     end
 
+    it "should setup a profiler when the profile parameter exists" do
+      request[:params] = { :profile => "" }
+
+      handler.process(request, response)
+
+      Puppet::Util::Profiler.current.should be_kind_of(Puppet::Util::Profiler::Measuring)
+    end
+
+    it "should not setup profiler when the profile parameter is missing" do
+      request[:params] = { }
+
+      handler.process(request, response)
+
+      Puppet::Util::Profiler.current.should == Puppet::Util::Profiler::NONE
+    end
+
     it "should create an indirection request from the path, parameters, and http method" do
       request[:path] = "mypath"
       request[:http_method] = "mymethod"
-      request[:params] = "myparams"
+      request[:params] = { :params => "mine" }
 
-      handler.expects(:uri2indirection).with("mymethod", "mypath", "myparams").returns stub("request", :method => :find)
+      handler.expects(:uri2indirection).with("mymethod", "mypath", { :params => "mine" }).returns stub("request", :method => :find)
 
       handler.stubs(:do_find)
 

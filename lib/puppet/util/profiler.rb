@@ -13,4 +13,8 @@ module Puppet::Util::Profiler
   def self.current=(profiler)
     Thread.current[:profiler] = profiler
   end
+
+  def self.profile(message, &block)
+    current.profile(message, &block)
+  end
 end

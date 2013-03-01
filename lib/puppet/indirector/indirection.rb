@@ -1,4 +1,5 @@
 require 'puppet/util/docs'
+require 'puppet/util/profiler'
 require 'puppet/util/methodhelper'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
@@ -201,7 +202,7 @@ class Puppet::Indirector::Indirection
 
         filtered = result
         if terminus.respond_to?(:filter)
-          Puppet::Util.benchmark(:notice, "Filtered result for #{self.name} #{request.key}") do
+          Puppet::Util::Profiler.profile("Filtered result for #{self.name} #{request.key}") do
             filtered = terminus.filter(result)
           end
         end
