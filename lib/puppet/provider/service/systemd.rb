@@ -5,6 +5,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
+  def fqname
+    return @resource[:name].match(/\./) ? @resource[:name] : @resource[:name] + ".service"
+  end
+
   #defaultfor :osfamily => [:redhat, :suse]
 
   def self.instances
@@ -19,14 +23,14 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def disable
-    output = systemctl(:disable, @resource[:name])
+    output = systemctl(:disable, fqname)
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not disable #{self.name}: #{output}"
   end
 
   def enabled?
     begin
-      systemctl("is-enabled", @resource[:name])
+      systemctl("is-enabled", fqname)
     rescue Puppet::ExecutionFailure
       return :false
     end
@@ -36,7 +40,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def status
     begin
-      output = systemctl("is-active", @resource[:name])
+      output = systemctl("is-active", fqname)
     rescue Puppet::ExecutionFailure
       return :stopped
     end
@@ -44,21 +48,21 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def enable
-    output = systemctl("enable", @resource[:name])
+    output = systemctl("enable", fqname)
   rescue Puppet::ExecutionFailure
     raise Puppet::Error, "Could not enable #{self.name}: #{output}"
   end
 
   def restartcmd
-    [command(:systemctl), "restart", @resource[:name]]
+    [command(:systemctl), "restart", fqname]
   end
 
   def startcmd
-    [command(:systemctl), "start", @resource[:name]]
+    [command(:systemctl), "start", fqname]
   end
 
   def stopcmd
-    [command(:systemctl), "stop", @resource[:name]]
+    [command(:systemctl), "stop", fqname]
   end
 end
 
