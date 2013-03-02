@@ -24,6 +24,8 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   class Token
+    ALWAYS_ACCEPTABLE = Proc.new { |context| true }
+
     include Puppet::Util::MethodHelper
 
     attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
@@ -44,6 +46,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       end
 
       set_options(options)
+      @acceptable_when = ALWAYS_ACCEPTABLE
     end
 
     # @return [String] human readable token reference; the String if literal, else the token name
@@ -56,8 +59,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     # @param context [Hash] ? ? ? 
     #
     def acceptable?(context={})
-      # By default tokens are acceptable in any context
-      true
+      @acceptable_when.call(context)
     end
     
     def assert_numeric(value)
@@ -70,6 +72,13 @@ class Puppet::Pops::Impl::Parser::Lexer
       end
     end
 
+    # Defines when the token is able to match.
+    # This provides context that cannot be expressed otherwise, such as feature flags.
+    #
+    # @param block [Proc] a proc that given a context returns a boolean
+    def acceptable_when(block)
+      @acceptable_when = block
+    end
   end
 
   # Maintains a list of tokens.
@@ -135,6 +144,11 @@ class Puppet::Pops::Impl::Parser::Lexer
     def sort_tokens
       @string_tokens.sort! { |a, b| b.string.length <=> a.string.length }
     end
+
+    # Yield each token name and value in turn.
+    def each
+      @tokens.each {|name, value| yield name, value }
+    end
   end
 
   TOKENS = TokenList.new
@@ -190,6 +204,35 @@ class Puppet::Pops::Impl::Parser::Lexer
     "<select start>" => :SELBRACE # A QMARK followed by '{'
   )
 
+  module Contextual
+    QUOTE_TOKENS = [:DQPRE,:DQMID]
+    REGEX_INTRODUCING_TOKENS = [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA]
+
+    NOT_INSIDE_QUOTES = Proc.new do |context|
+      !QUOTE_TOKENS.include? context[:after]
+    end
+
+    INSIDE_QUOTES = Proc.new do |context|
+      QUOTE_TOKENS.include? context[:after]
+    end
+
+    IN_REGEX_POSITION = Proc.new do |context|
+      REGEX_INTRODUCING_TOKENS.include? context[:after]
+    end
+
+    IN_STRING_INTERPOLATION = Proc.new do |context|
+      context[:string_interpolation_depth] > 0
+    end
+
+    DASHED_VARIABLES_ALLOWED = Proc.new do |context|
+      Puppet[:allow_variables_with_dashes]
+    end
+
+    VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
+      Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+    end
+  end
+
   # LBRACE needs look ahead to differentiate between '{' and a '{' followed by a '|' (start of lambda)
   # The racc grammar can only do one token lookahead.
   #
@@ -203,19 +246,12 @@ class Puppet::Pops::Impl::Parser::Lexer
     end
   end
   
-  #:stopdoc: # Issue #4161 - this method declaration made RDoc have a hissy fit in year 2000
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     assert_numeric(value)
     [TOKENS[:NAME], value]
   end
-  #:startdoc:
-  
-  #:stopdoc: # Issue #4161 - this method declaration made RDoc have a hissy fit in year 2000
-  def (TOKENS[:NUMBER]).acceptable?(context={})
-    ![:DQPRE,:DQMID].include? context[:after]
-  end
-  #:startdoc:
+  TOKENS[:NUMBER].acceptable_when Contextual::NOT_INSIDE_QUOTES
 
   TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     # A name starting with a number must be a valid numeric string (not that
@@ -235,13 +271,9 @@ class Puppet::Pops::Impl::Parser::Lexer
     end
     [string_token, value]
   end
-  [:NAME,:CLASSNAME,:CLASSREF].each { |name_token|
-    #:stopdoc: # Issue #4161
-    def (TOKENS[name_token]).acceptable?(context={})
-      ![:DQPRE,:DQMID].include? context[:after]
-    end
-    #:startdoc:
-  }
+  [:NAME, :CLASSREF].each do |name_token|
+    TOKENS[name_token].acceptable_when Contextual::NOT_INSIDE_QUOTES
+  end
 
   TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
     value.sub!(/# ?/,'')
@@ -264,12 +296,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
     [self, Regexp.new(regex)]
   end
-
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:REGEX]).acceptable?(context={})
-    [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
-  end
-  #:startdoc:
+  TOKENS[:REGEX].acceptable_when Contextual::IN_REGEX_POSITION
 
   TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
@@ -287,23 +314,28 @@ class Puppet::Pops::Impl::Parser::Lexer
   TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
     lexer.tokenize_interpolated_string(DQ_continuation_token_types)
   end
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:DQCONT]).acceptable?(context={})
-    context[:string_interpolation_depth] > 0
+  TOKENS[:DQCONT].acceptable_when Contextual::IN_STRING_INTERPOLATION
+
+  TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
+    lexer.warn_if_variable_has_hyphen(value)
+
+    [TOKENS[:VARIABLE], value[1..-1]]
   end
-  #:startdoc:
+  TOKENS[:DOLLAR_VAR_WITH_DASH].acceptable_when Contextual::DASHED_VARIABLES_ALLOWED
 
   TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?(\w+::)*\w+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
 
-  TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
-  #:stopdoc: # Issue #4161
-  def (TOKENS[:VARIABLE]).acceptable?(context={})
-    [:DQPRE,:DQMID].include? context[:after]
-  end
-  #:startdoc:
+  TOKENS.add_token :VARIABLE_WITH_DASH, %r{(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
+    lexer.warn_if_variable_has_hyphen(value)
 
+    [TOKENS[:VARIABLE], value]
+  end
+  TOKENS[:VARIABLE_WITH_DASH].acceptable_when Contextual::VARIABLE_AND_DASHES_ALLOWED
+
+  TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
+  TOKENS[:VARIABLE].acceptable_when Contextual::INSIDE_QUOTES
 
   TOKENS.sort_tokens
 
@@ -579,9 +611,15 @@ class Puppet::Pops::Impl::Parser::Lexer
   def tokenize_interpolated_string(token_type,preamble='')
     value,terminator = slurpstring('"$')
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
+    variable_regex = if Puppet[:allow_variables_with_dashes]
+                       TOKENS[:VARIABLE_WITH_DASH].regex
+                     else
+                       TOKENS[:VARIABLE].regex
+                     end
     if terminator != '$' or @scanner.scan(/\{/)
       token_queue.shift
-    elsif var_name = @scanner.scan(TOKENS[:VARIABLE].regex)
+    elsif var_name = @scanner.scan(variable_regex)
+      warn_if_variable_has_hyphen(var_name)
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
     else
@@ -613,4 +651,9 @@ class Puppet::Pops::Impl::Parser::Lexer
     @commentstack.push(['', @line])
   end
 
+  def warn_if_variable_has_hyphen(var_name)
+    if var_name.include?('-')
+      Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/puppet-hyphenated-variable-deprecation")
+    end
+  end
 end
