@@ -2161,8 +2161,12 @@ class Type
   #
   # @overaload initialize(hsh)
   #   @param hsh [Hash] 
+  #   @raise [Puppet::ResourceError] when the type validation raises
+  #     Puppet::Error or ArgumentError
   # @overload initialize(resource)
   #   @param resource [Puppet:Resource]
+  #   @raise [Puppet::ResourceError] when the type validation raises
+  #     Puppet::Error or ArgumentError
   #
   def initialize(resource)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
@@ -2195,7 +2199,13 @@ class Type
 
     set_parameters(@original_parameters)
 
-    self.validate if self.respond_to?(:validate)
+    begin
+      self.validate if self.respond_to?(:validate)
+    rescue Puppet::Error, ArgumentError => detail
+      error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
+      adderrorcontext(error, detail)
+      raise error
+    end
   end
 
   private

@@ -419,6 +419,35 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     it "should delete the name via the namevar from the originally provided parameters" do
       Puppet::Type.type(:file).new(:name => make_absolute('/foo')).original_parameters[:path].should be_nil
     end
+
+    context "when validating the resource" do
+      it "should call the type's validate method if present" do
+        Puppet::Type.type(:file).any_instance.expects(:validate)
+        Puppet::Type.type(:file).new(:name => make_absolute('/foo'))
+      end
+
+      it "should raise Puppet::ResourceError with resource name when Puppet::Error raised" do
+        expect do
+          Puppet::Type.type(:file).new(
+            :name => make_absolute('/foo'),
+            :source => "puppet:///",
+            :content => "foo"
+          )
+        end.to raise_error(Puppet::ResourceError, /Validation of File\[.*foo.*\]/)
+      end
+
+      it "should raise Puppet::ResourceError with manifest file and line on failure" do
+        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
+        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        expect do
+          Puppet::Type.type(:file).new(
+            :name => make_absolute('/foo'),
+            :source => "puppet:///",
+            :content => "foo"
+          )
+        end.to raise_error(Puppet::ResourceError, /Validation.*example.pp:42/)
+      end
+    end
   end
 
   it "should have a class method for converting a hash into a Puppet::Resource instance" do
