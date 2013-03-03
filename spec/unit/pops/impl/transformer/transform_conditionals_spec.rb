@@ -131,4 +131,13 @@ describe Puppet::Pops::Impl::Parser::Parser do
           ].join("\n")
     end
   end
+  context "When parsing imports" do
+    it "import 'foo'" do
+      astdump(parse("import 'foo'")).should == ":nop"
+    end
+    it "import 'foo', 'bar'" do
+      astdump(parse("import 'foo', 'bar'")).should == ":nop"
+    end
+  end
+
 end

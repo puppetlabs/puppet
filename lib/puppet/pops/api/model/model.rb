@@ -71,9 +71,14 @@ module Puppet; module Pops; module API; module Model
   # It is of value in order to preserve user entered parentheses in transformations, and
   # transformations from model to source.
   #
-  class ParenthesizedExpression < UnaryExpression
-  end
+  class ParenthesizedExpression < UnaryExpression; end
 
+  # An import of one or several files.
+  #
+  class ImportExpression < Expression
+    contains_many_uni 'files', Expression, :lowerBound => 1
+  end
+  
   # A boolean not expression, reversing the truth of the unary expr.
   #
   class NotExpression < UnaryExpression; end

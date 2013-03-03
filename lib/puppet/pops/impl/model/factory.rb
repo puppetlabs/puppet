@@ -168,6 +168,12 @@ class Factory
     o
   end
 
+  def build_ImportExpression(o, files)
+    # The argument files has already been built
+    files.each {|f| o.addFiles(to_ops(f)) }
+    o
+  end
+
   def build_IfExpression(o, t, ift, els)
     o.test = build(t)
     o.then_expr = build(ift)
@@ -516,6 +522,10 @@ class Factory
     new(Model::CollectExpression, Factory.fqr(type_expr), query_expr, attribute_operations)
   end
   
+  def Factory.IMPORT(files)
+    new(Model::ImportExpression, files)
+  end
+
   def Factory.NAMED_ACCESS(type_name, bodies)
     new(Model::NamedAccessExpression, type_name, bodies)
   end
@@ -560,6 +570,32 @@ class Factory
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
   
+  # Transforms an array of expressions containing literal name expressions to calls if followed by an
+  # expression, or expression list. Also transforms a "call" to `import` into an ImportExpression.
+  #
+  def Factory.transform_calls(expressions)
+    expressions.reduce([]) do |memo, expr|
+      expr = expr.current if expr.is_a?(Factory)
+      name = memo[-1]
+      if name.is_a? Model::QualifiedName
+        if name.value() == 'import'
+          memo[-1] = Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
+        else  
+          memo[-1] = Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+        end
+      else
+        memo << expr
+      end
+      if expr.is_a?(Model::CallNamedFunctionExpression)
+        # patch expression function call to statement style
+        # TODO: This is kind of meaningless, but to make it compatible...
+        expr.rval_required = false
+      end
+      memo
+    end
+    
+  end
+
   # Building model equivalences of Ruby objects
   # Allows passing regular ruby objects to the factory to produce instructions
   # that when evaluated produce the same thing.

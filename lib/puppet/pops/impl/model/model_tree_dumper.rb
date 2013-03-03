@@ -91,7 +91,11 @@ module Puppet; module Pops; module Impl; module Model
     def dump_InExpression o       
       ["in", do_dump(o.left_expr), do_dump(o.right_expr)]       
     end
-    
+
+    def dump_ImportExpression o
+      ["import"] + o.files.collect {|f| do_dump(f) }
+    end
+
     def dump_InstanceReferences o
       ["instances", do_dump(o.type_name)] + o.names.collect {|n| do_dump(n) }
     end

@@ -353,7 +353,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     "class"    => :CLASS,
     "default"  => :DEFAULT,
     "define"   => :DEFINE,
-    "import"   => :IMPORT,
+#    "import"   => :IMPORT,
     "if"       => :IF,
     "elsif"    => :ELSIF,
     "else"     => :ELSE,

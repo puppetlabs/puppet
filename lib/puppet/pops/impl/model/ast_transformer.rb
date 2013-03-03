@@ -230,6 +230,13 @@ module Puppet; module Pops; module Impl; module Model
       ast AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
+    def transform_ImportExpression o
+      # Crazy stuff
+      # Transformation of "import" needs to parse the other files at the time of transformation.
+      # Then produce a :nop, since nothing should be evaluated.
+      ast AST::Nop, {}
+    end
+    
     def transform_InstanceReferences o
       ast AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
     end
