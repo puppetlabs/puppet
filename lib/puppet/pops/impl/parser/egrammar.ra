@@ -8,7 +8,8 @@ token STRING DQPRE DQMID DQPOST
 token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
-token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
+token IF ELSE
+token DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
@@ -136,7 +137,6 @@ primary_expression
   | definition_expression
   | hostclass_expression
   | node_definition_expression
-
     
 # Aleways have the same value
 literal_expression
@@ -351,26 +351,9 @@ selector_expression
   selector_entry
     : expression FARROW expression { result = Factory.MAP(val[0], val[2]) ; loc result, val[1] }
 
-##---IMPORT (TB Decided
-## Produces nil (noop)
-#import
-#  : IMPORT literal_strings {
-#      error "Import not supported in this version of the parser", \
-#          :line => stmt.context[:line], :file => stmt.context[:file]
-#      result = nil
-#  }
-#
-# IMPORT (T.B DEPRECATED IN PUPPET WHEN IT HAS BEEN FIGURED OUT HOW TO SUPPORT
-# THE THINGS IMPORTS ARE USED FOR.
-# BOLDLY DECIDED TO SKIP THIS COMPLETELY IN THIS IMPLEMENTATION - will trigger an error
-#
-# These are only used for importing, no interpolation
-#literal_string
-#  : STRING       { result = [val[0][:value]] }
-#
-#literal_strings
-#  :  literal_string
-#  |  literal_strings COMMA literal_string { result = val[0].push val[2] }
+# --- IMPORT
+#     IMPORT is handled as a non parenthesized call and is transformed to an ImportExpression.
+#     i.e. there is no special grammar for it - it is just a "call statement".
 
 #---RESOURCE
 #
@@ -715,7 +698,6 @@ keyword
  | ELSIF
  | IF
  | IN
- | IMPORT
  | INHERITS
  | NODE
  | OR
