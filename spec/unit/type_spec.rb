@@ -356,7 +356,19 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should fail if any invalid attributes have been provided" do
-      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error, /Invalid parameter/)
+    end
+
+    context "when an attribute fails validation" do
+      it "should fail with Puppet::ResourceError" do
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /Parameter source failed on File\[.*foo\]/)
+      end
+
+      it "should include the file/line in the error" do
+        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
+        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /example.pp:42/)
+      end
     end
 
     it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
