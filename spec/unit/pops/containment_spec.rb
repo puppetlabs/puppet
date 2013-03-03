@@ -3,6 +3,7 @@ require 'puppet/pops/api/containment'
 
 require File.join(File.dirname(__FILE__), '/impl/factory_rspec_helper')
 
+require 'debugger'
 describe Puppet::Pops::API::Containment do
   include FactoryRspecHelper
   
@@ -20,9 +21,9 @@ describe Puppet::Pops::API::Containment do
     right = literal(2)
     op = left + right
 
-    pending "eContainingFeature does not work on _uni containments"    
-    left.current.eContainingFeature.name.should == 'left_expr'
-    right.current.eContainingFeature.name.should == 'right_expr'
+    #pending "eContainingFeature does not work on _uni containments"    
+    left.current.eContainingFeature.should == :left_expr
+    right.current.eContainingFeature.should == :right_expr
     
   end
 end
