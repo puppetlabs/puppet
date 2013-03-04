@@ -243,6 +243,9 @@ class Puppet::Parameter
     # @overload validate {|| ... }
     # Defines an optional method that is used to validate the parameter's value.
     # Validation should raise appropriate exceptions, the return value of the given block is ignored.
+    # The easiest way to raise an appropriate exception is to call the method {Puppet::Util::Errors.fail} with
+    # the message as an argument.
+    #
     # @return [void]
     # @dsl type
     # @api public

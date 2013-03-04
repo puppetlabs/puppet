@@ -636,6 +636,8 @@ class Type
   # Sets the 'should' (wanted state) value of a property, or the value of a parameter.
   # @return 
   # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
+  # @raise [Puppet::ResourceError] when the parameter validation raises Puppet::Error or
+  #   ArgumentError
   def []=(name,value)
     name = name.intern
 
@@ -652,7 +654,7 @@ class Type
       begin
         # make sure the parameter doesn't have any errors
         property.value = value
-      rescue => detail
+      rescue Puppet::Error, ArgumentError => detail
         error = Puppet::ResourceError.new("Parameter #{name} failed on #{ref}: #{detail}")
         adderrorcontext(error, detail)
         raise error

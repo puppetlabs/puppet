@@ -360,8 +360,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     context "when an attribute fails validation" do
-      it "should fail with Puppet::ResourceError" do
+      it "should fail with Puppet::ResourceError when PuppetError raised" do
         expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /Parameter source failed on File\[.*foo\]/)
+      end
+
+      it "should fail with Puppet::ResourceError when ArgumentError raised" do
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :mode => "abcdef") }.to raise_error(Puppet::ResourceError, /Parameter mode failed on File\[.*foo\]/)
       end
 
       it "should include the file/line in the error" do
