@@ -102,7 +102,7 @@ module Puppet; module Pops; module Impl; module Model
     #
     def dump_VarDef o
       operator = o.append ? "+=" : "="
-      [operator, '$' + o.name, do_dump(o.value)]       
+      [operator, '$' + do_dump(o.name), do_dump(o.value)]       
     end
 
     # Produces (name => expr) or (name +> expr)
@@ -296,6 +296,7 @@ module Puppet; module Pops; module Impl; module Model
       # somewhat ugly as Function hides its "ftype" instance variable
       result = [o.instance_variable_get("@ftype") == :rvalue ? "call" : "invoke", do_dump(o.name)]
       o.arguments.collect {|a| result << do_dump(a) }
+      result << do_dump(o.pblock) if o.pblock
       result
     end
 
