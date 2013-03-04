@@ -2,7 +2,7 @@
 # such.
 require 'forwardable'
 
-require 'puppet/parser/parser'
+require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 
 require 'puppet/resource/type_collection_helper'
