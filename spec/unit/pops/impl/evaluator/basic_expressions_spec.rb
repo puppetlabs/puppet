@@ -16,7 +16,7 @@ RSpec.configure do |c|
 end
 
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  EvaluationError = Puppet::Pops::EvaluationError
+  EvaluationError ||= Puppet::Pops::EvaluationError
   
   context "When running these examples, the setup" do
     

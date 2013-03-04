@@ -18,7 +18,7 @@ end
 
 # Tests calls  
 describe Puppet::Pops::Impl::Parser::Parser do
-  Model = Puppet::Pops::API::Model
+  Model ||= Puppet::Pops::API::Model
   context "When running these examples, the setup" do
 
     it "should include a ModelTreeDumper for convenient string comparisons" do

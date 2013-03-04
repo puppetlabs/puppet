@@ -17,7 +17,7 @@ RSpec.configure do |c|
 end
   
 describe "Puppet::Pops::Impl::Parser::Parser" do
-  EvaluationError = Puppet::Pops::EvaluationError
+  EvaluationError ||= Puppet::Pops::EvaluationError
     
 # With egrammar this is now supported (it was only a grammar restriction), AST evaluation is ok.  
 #  context "When parsing Lists" do

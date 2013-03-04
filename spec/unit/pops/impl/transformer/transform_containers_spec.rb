@@ -18,7 +18,7 @@ end
 
 # Tests containers (top level in file = expr or a block), class, define, and node  
 describe Puppet::Pops::Impl::Parser::Parser do
-  EvaluationError = Puppet::Pops::EvaluationError
+  EvaluationError ||= Puppet::Pops::EvaluationError
 
   context "When running these examples, the setup" do
 
