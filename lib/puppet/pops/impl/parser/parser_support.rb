@@ -21,6 +21,7 @@ class Puppet::Pops::Impl::Parser::Parser
   # All model construction/manipulation is made by the Factory.
   #
   Factory = Puppet::Pops::Impl::Model::Factory
+  Model = Puppet::Pops::API::Model
   
   include Puppet::Resource::TypeCollectionHelper
 

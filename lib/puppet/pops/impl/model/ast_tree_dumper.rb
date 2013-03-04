@@ -201,7 +201,7 @@ module Puppet; module Pops; module Impl; module Model
       parent = context[:parent]
       result = ["class", o.name]
       result << ["inherits", parent] if parent
-      result << ["parameters"] + args.collect {|p| _dump_ParameterArray(p) } if args.size() > 0
+      result << ["parameters"] + args.collect {|p| _dump_ParameterArray(p) } if args && args.size() > 0
       if is_nop?(o.code)
         result << []
       else
