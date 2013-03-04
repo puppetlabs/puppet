@@ -104,7 +104,8 @@ module Puppet; module Pops; module Impl; module Model
         ast AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
 
       when Model::VariableExpression
-        ast AST::HashOrArrayAccess, :variable => o.left_expr.expr.value(), :key => transform(o.keys()[0])
+#        ast AST::HashOrArrayAccess, :variable => o.left_expr.expr.value(), :key => transform(o.keys()[0])
+         ast AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
 
       #when Model::AccessExpression
       else
@@ -248,7 +249,7 @@ module Puppet; module Pops; module Impl; module Model
 
       args[:name] = case o.left_expr
       when Model::VariableExpression
-        o.left_expr.expr.value
+        ast AST::Name, {:value => o.left_expr.expr.value }
       when Model::AccessExpression
         transform(o.left_expr)
       else
@@ -517,10 +518,13 @@ module Puppet; module Pops; module Impl; module Model
     def transform_CallNamedFunctionExpression o
       name = o.functor_expr
       raise "Unacceptable expression for name of function" unless name.is_a? Model::QualifiedName
-      ast AST::Function,
-          :name => name.value,
-          :arguments => transform(o.arguments),
-          :ftype => o.rval_required ? :rvalue : :statement          
+      args = { 
+        :name => name.value,
+        :arguments => transform(o.arguments),
+        :ftype => o.rval_required ? :rvalue : :statement
+      }
+      args[:pblock] = transform(o.lambda) if o.lambda          
+      ast AST::Function, args
     end
 
     # Transformation of CallMethodExpression handles a NamedAccessExpression functor and

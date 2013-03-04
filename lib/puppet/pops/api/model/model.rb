@@ -300,6 +300,7 @@ module Puppet; module Pops; module API; module Model
     has_attr 'rval_required', Boolean, :defaultValueLiteral => "false"
     contains_one_uni 'functor_expr', Expression, :lowerBound => 1
     contains_many_uni 'arguments', Expression
+    contains_one_uni 'lambda', Expression
   end
 
   # A function call where the functor_expr should evaluate to something callable.
@@ -315,7 +316,6 @@ module Puppet; module Pops; module API; module Model
   # an optional lambda block
   #
   class CallMethodExpression < CallExpression
-    contains_one_uni 'lambda', Expression
   end
 
   # Abstract base class for literals.
