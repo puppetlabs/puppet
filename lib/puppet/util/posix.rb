@@ -31,7 +31,7 @@ module Puppet::Util::POSIX
 
     begin
       return Etc.send(method, id).send(field)
-    rescue ArgumentError => detail
+    rescue NoMethodError, ArgumentError => detail
       # ignore it; we couldn't find the object
       return nil
     end
