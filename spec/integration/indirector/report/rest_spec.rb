@@ -47,7 +47,7 @@ describe "Report REST Terminus" do
     # passed through REST; otherwise we'd be stubbing 'save', which would cause an immediate
     # return.
     @report = stub_everything 'report'
-    @mock_model = stub_everything 'faked model', :name => "report", :convert_from => @report
+    @mock_model = stub_everything 'faked model', :name => "report", :convert_from => @report, :=== => true
     Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
     Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:check_authorization)

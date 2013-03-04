@@ -50,7 +50,7 @@ describe "Certificate Request REST Terminus" do
     # LAK:NOTE We need to have a fake model here so that our indirected methods get
     # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
     # return.
-    @mock_model = stub('faked model', :name => "certificate request")
+    @mock_model = stub('faked model', :name => "certificate request", :=== => true)
     Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
     Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:check_authorization).returns(true)
