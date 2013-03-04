@@ -19,6 +19,7 @@ token LOW
 
 prechigh
   left  HIGH
+  left  SEMIC
   left  LPAREN
   left  RPAREN
   left  PIPE
@@ -66,8 +67,9 @@ statements
 # Simplified from original which had validation for top level constructs - see statement rule
 # Produces Array<Model::Expression>
 syntactic_statements
-  : syntactic_statement                      { result = [val[0]]}
-  | syntactic_statements syntactic_statement { result = val[0].push val[1] }
+  : syntactic_statement                            { result = [val[0]]}
+  | syntactic_statements SEMIC syntactic_statement { result = val[0].push val[2] }
+  | syntactic_statements syntactic_statement       { result = val[0].push val[1] }
 
 # Produce a single expression or Array of expression
 syntactic_statement
@@ -157,12 +159,22 @@ text_or_name
 #---CALL FUNCTION
 #
 # Produces Model::CallNamedFunction
+  
 call_function_expression
   : primary_expression LPAREN expressions RPAREN { result = Factory.CALL_NAMED(val[0], true, val[2]) ; loc result, val[0], val[3] }
-  | primary_expression LPAREN RPAREN             { result = Factory.CALL_NAMED(val[0], true, []) ; loc result, val[0], val[2] }
+  | primary_expression LPAREN RPAREN             { result = Factory.CALL_NAMED(val[0], true, [])     ; loc result, val[0], val[2] }
+  | primary_expression LPAREN expressions RPAREN lambda { 
+      result = Factory.CALL_NAMED(val[0], true, val[2])
+      loc result, val[0], val[3]
+      result.lambda = val[4]
+    }
+  | primary_expression LPAREN RPAREN  lambda     {
+      result = Factory.CALL_NAMED(val[0], true, [])
+      loc result, val[0], val[2]
+      result.lambda = val[3]
+    }
   | primary_expression = LOW { result = val[0] }
 
-    
 #---CALL METHOD 
 #
 call_method_with_lambda_expression
@@ -180,7 +192,7 @@ call_method_with_lambda_expression
         result = val[0].dot(Factory.fqn(val[2][:value]))
         loc result, val[1], val[2]
       }
-  
+
 #---LAMBDA
 #
 # This is a temporary switch while experimenting with concrete syntax
