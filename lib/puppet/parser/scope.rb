@@ -408,6 +408,7 @@ class Puppet::Parser::Scope
     else 
       table[name] = value
     end
+    table[name]
   end
 
   # Return the effective "table" for setting variables.
