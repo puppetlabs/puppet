@@ -18,8 +18,8 @@ end
 # This file contains testing of variables in a top scope and named scopes.
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  EvaluationError = Puppet::Pops::EvaluationError
-  Model = Puppet::Pops::API::Model
+  EvaluationError ||= Puppet::Pops::EvaluationError
+  Model ||= Puppet::Pops::API::Model
   
   context "(selftest)" do
     it "factory should return a CreateTypeExpression" do

@@ -17,8 +17,8 @@ RSpec.configure do |c|
 end
   
 describe Puppet::Pops::Impl::Parser::Parser do
-  EvaluationError = Puppet::Pops::EvaluationError
-  Model = Puppet::Pops::API::Model
+  EvaluationError ||= Puppet::Pops::EvaluationError
+  Model ||= Puppet::Pops::API::Model
   
   context "When running these examples, the setup" do
     

@@ -9,7 +9,6 @@ require 'puppet/pops/impl/evaluator_impl'
 require 'puppet/pops/impl/base_scope'
 require 'puppet/pops/impl/parser/eparser'
 
-require 'debugger'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
@@ -20,7 +19,7 @@ end
 
 # Tests calls  
 describe Puppet::Pops::Impl::Parser::Parser do
-  Model = Puppet::Pops::API::Model
+  Model ||= Puppet::Pops::API::Model
   context "When running these examples, the setup" do
 
     it "should include a ModelTreeDumper for convenient string comparisons" do

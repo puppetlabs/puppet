@@ -19,9 +19,9 @@ RSpec.configure do |c|
 end
   
 describe Puppet::Pops::Impl::Parser::Parser do
-  EvaluationError = Puppet::Pops::EvaluationError
-  Model = Puppet::Pops::API::Model
-  AST = Puppet::Parser::AST
+  EvaluationError ||= Puppet::Pops::EvaluationError
+  Model ||= Puppet::Pops::API::Model
+  AST ||= Puppet::Parser::AST
   
   context "When running these transformation examples, the setup" do
     it "should be able to transform a model" do

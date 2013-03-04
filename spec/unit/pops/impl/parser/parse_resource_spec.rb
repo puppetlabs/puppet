@@ -21,7 +21,7 @@ end
 # @todo Add tests for related syntax parse errors
 #  
 describe Puppet::Pops::Impl::Parser::Parser do
-  Model = Puppet::Pops::API::Model
+  Model ||= Puppet::Pops::API::Model
   
   context "When running these examples, the setup" do
 

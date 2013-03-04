@@ -12,7 +12,7 @@ require File.join(File.dirname(__FILE__), '/factory_rspec_helper')
 
 RSpec.configure do |c|
   c.include FactoryRspecHelper
-  Model = Puppet::Pops::API::Model
+  Model ||= Puppet::Pops::API::Model
 end
 
 describe Puppet::Pops::Impl::Model::Factory do
