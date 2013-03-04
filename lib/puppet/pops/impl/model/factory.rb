@@ -32,7 +32,7 @@ class Factory
     begin
     @@build_visitor.visit_this(self, o, *args)
     rescue =>e
-      require 'debugger'; debugger # TODO: remove this
+      # require 'debugger'; debugger # enable this when in trouble...
       raise e
     end
   end
@@ -562,6 +562,7 @@ class Factory
   def Factory.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
   end 
+
   def Factory.LAMBDA(parameters, body)
     new(Model::LambdaExpression, parameters, body)
   end 
