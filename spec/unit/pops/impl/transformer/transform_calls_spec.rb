@@ -12,15 +12,12 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-RSpec.configure do |c|
-  c.include TransformerRspecHelper
-end
-
 # Tests calls  
 describe Puppet::Pops::Impl::Parser::Parser do
   Model ||= Puppet::Pops::API::Model
+  include TransformerRspecHelper
   context "When running these examples, the setup" do
-
+    
     it "should include a ModelTreeDumper for convenient string comparisons" do
       x = literal(10) + literal(20)
       astdump(x).should == "(+ 10 20)"

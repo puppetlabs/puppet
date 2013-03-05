@@ -44,8 +44,11 @@ describe Puppet::Parser::TypeLoader do
   describe "when importing" do
     before do
       Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", %w{file}]
-      Puppet::Parser::Parser.any_instance.stubs(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
-      Puppet::Parser::Parser.any_instance.stubs(:file=)
+#      Puppet::Parser::Parser.any_instance.stubs(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
+      Puppet::Parser::PopsParserAdapter.any_instance.stubs(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
+
+#      Puppet::Parser::Parser.any_instance.stubs(:file=)
+      Puppet::Parser::PopsParserAdapter.any_instance.stubs(:file=)
     end
 
     it "should return immediately when imports are being ignored" do

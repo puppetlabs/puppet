@@ -12,16 +12,13 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-RSpec.configure do |c|
-  c.include TransformerRspecHelper
-end
-
 # Tests resource parsing.
 # @todo Add more tests for variations on end comma and end semicolon.
 # @todo Add tests for related syntax parse errors
 #  
 describe Puppet::Pops::Impl::Parser::Parser do
-
+  include TransformerRspecHelper
+  
   context "When running these examples, the setup" do
 
     it "should include a AstTreeDumper for convenient string comparisons" do

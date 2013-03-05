@@ -3,6 +3,7 @@ require 'puppet/pops/api/visitor'
 require 'puppet/parser/ast'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/api/adapters'
+require 'puppet/pops/api/utils'
 
 module Puppet; module Pops; module Impl; module Model
 
@@ -18,6 +19,8 @@ module Puppet; module Pops; module Impl; module Model
   #
   class AstTransformer
 
+    attr_reader :importer
+    
     def initialize(source_file = "unknown-file", importer=nil)
       @@transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"transform",0,0)
       @@query_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"query",0,0)
@@ -26,7 +29,12 @@ module Puppet; module Pops; module Impl; module Model
       @source_file = source_file
     end
 
-    # Initialize klass from o and hash    
+    # Initialize klass from o and hash
+    # TODO: The signature should change to ast o, klass, hash, but this requires all calls to ast
+    # to pass a suitable o (or nil). This is now just POC, and o is passed in only a couple of places
+    # for testing.
+    # All calls to this method should be update to the changed signature (they are all in this file.
+    #    
     def ast klass, hash, o = nil
       # create and pass hash with file and line information
       klass.new(merge_location(hash, o))
@@ -35,7 +43,7 @@ module Puppet; module Pops; module Impl; module Model
     def merge_location hash, o
       if o
         pos = {}
-        source_pos = find_source_pos(o)
+        source_pos = Puppet::Pops::API::Utils.find_adapter(o, Puppet::Pops::API::Adapters::SourcePosAdapter)
         pos[:line] = source_pos.start_line if source_pos
         pos[:file] = @file if @file
         hash = hash.merge(pos)
@@ -253,12 +261,12 @@ module Puppet; module Pops; module Impl; module Model
     # When testing syntax, the @importer does not have to be set, but it is not possible to check
     # the actual import without inventing a new AST::ImportExpression with nop effect when evaluating.
     def transform_ImportExpression o
-      if @importer
+      if importer
         o.files.each {|f|
           unless f.is_a? Model::LiteralString 
             raise "Illegal import file expression. Must be a single quoted string"
           end
-          @importer.import(f.value)
+          importer.import(f.value)
         } 
       end
       # Crazy stuff
@@ -625,17 +633,6 @@ module Puppet; module Pops; module Impl; module Model
     #    
     def is_nop? o
       o.nil? || o.is_a?(Model::Nop)
-    end
-    
-    # Finds source position closest to given object (going up the containment hierarchy)
-    def find_source_pos o
-      x = o
-      loop do 
-        if source_pos = Puppet::Pops::API::Adapters::SourcePosAdapter.get(x)
-          return source_pos
-        end
-        return nil unless x = x.eContainer
-      end
     end
     
   end
