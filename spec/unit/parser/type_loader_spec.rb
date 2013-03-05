@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/parser/type_loader'
+require 'puppet/parser/parser_factory'
 require 'puppet_spec/modules'
 require 'puppet_spec/files'
 
@@ -87,7 +88,8 @@ describe Puppet::Parser::TypeLoader do
 
     it "should not attempt to import files that have already been imported" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      Puppet::Parser::Parser.any_instance.expects(:parse).once.returns(Puppet::Parser::AST::Hostclass.new(''))
+      Puppet::Parser::PopsParserAdapter.any_instance.expects(:parse).once.returns(Puppet::Parser::AST::Hostclass.new(''))
+#      Puppet::Parser::Parser.any_instance.expects(:parse).once.returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.import("myfile")
 
       # This will fail if it tries to reimport the file.
@@ -191,14 +193,17 @@ describe Puppet::Parser::TypeLoader do
 
   describe "when parsing a file" do
     before do
-      @parser = Puppet::Parser::Parser.new(@loader.environment)
+#      @parser = Puppet::Parser::Parser.new(@loader.environment)
+      @parser = Puppet::Parser::PopsParserAdapter.new(Puppet::Parser::Parser.new(@loader.environment))
       @parser.stubs(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
       @parser.stubs(:file=)
-      Puppet::Parser::Parser.stubs(:new).with(@loader.environment).returns @parser
+      Puppet::Parser::ParserFactory.stubs(:parser).with(@loader.environment).returns @parser
+#      Puppet::Parser::Parser.stubs(:new).with(@loader.environment).returns @parser
     end
 
     it "should create a new parser instance for each file using the current environment" do
-      Puppet::Parser::Parser.expects(:new).with(@loader.environment).returns @parser
+      Puppet::Parser::ParserFactory.expects(:parser).with(@loader.environment).returns @parser
+#      Puppet::Parser::Parser.expects(:new).with(@loader.environment).returns @parser
       @loader.parse_file("/my/file")
     end
 

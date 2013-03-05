@@ -6,6 +6,7 @@ require 'tmpdir'
 require 'puppet/node/environment'
 require 'puppet/util/execution'
 require 'puppet_spec/modules'
+require 'puppet/parser/parser_factory'
 
 describe Puppet::Node::Environment do
   let(:env) { Puppet::Node::Environment.new("testing") }
@@ -396,8 +397,8 @@ describe Puppet::Node::Environment do
 
   describe "when performing initial import" do
     before do
-      @parser = Puppet::Parser::Parser.new("test")
-      Puppet::Parser::Parser.stubs(:new).returns @parser
+      @parser = Puppet::Parser::PopsParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
+      Puppet::Parser::ParserFactory.stubs(:parser).returns @parser
     end
 
     it "should set the parser's string to the 'code' setting and parse if code is available" do

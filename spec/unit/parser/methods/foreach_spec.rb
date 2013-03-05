@@ -82,7 +82,7 @@ describe 'methods' do
     it 'foreach checking produced value using single expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| = $x }
+        $b = $a.foreach {|$x| $x }
         file { "/file_$b":
           ensure => present
         }
@@ -95,7 +95,7 @@ describe 'methods' do
         $a = [1, 2, 3]
         $b = $a.foreach {|$x| 
           $y = 2 * $x 
-          = $y 
+          $y 
         }
         file { "/file_$b":
           ensure => present
@@ -104,11 +104,12 @@ describe 'methods' do
       catalog.resource(:file, "/file_6")['ensure'].should == 'present'
     end
     it 'foreach checking produced value using final expression' do
+      # semic required to protect array result from $x[$y,2]
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
         $b = $a.foreach {|$x| 
-          $y = 2 * $x 
-          = [$y, 2] 
+          $y = 2 * $x ; 
+          [$y, 2] 
         }
         file { "/file_${$b[0]}":
           ensure => present
@@ -119,7 +120,7 @@ describe 'methods' do
     it 'foreach checking produced value using final expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| = [$x*2, 333] }
+        $b = $a.foreach {|$x| [$x*2, 333] }
         file { "/file_${$b[0]}":
           ensure => present
         }
