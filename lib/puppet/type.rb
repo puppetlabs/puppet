@@ -636,6 +636,8 @@ class Type
   # Sets the 'should' (wanted state) value of a property, or the value of a parameter.
   # @return 
   # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
+  # @raise [Puppet::ResourceError] when the parameter validation raises Puppet::Error or
+  #   ArgumentError
   def []=(name,value)
     name = name.intern
 
@@ -652,9 +654,9 @@ class Type
       begin
         # make sure the parameter doesn't have any errors
         property.value = value
-      rescue => detail
-        error = Puppet::Error.new("Parameter #{name} failed on #{ref}: #{detail}")
-        error.set_backtrace(detail.backtrace)
+      rescue Puppet::Error, ArgumentError => detail
+        error = Puppet::ResourceError.new("Parameter #{name} failed on #{ref}: #{detail}")
+        adderrorcontext(error, detail)
         raise error
       end
     end
@@ -2161,8 +2163,12 @@ class Type
   #
   # @overaload initialize(hsh)
   #   @param hsh [Hash] 
+  #   @raise [Puppet::ResourceError] when the type validation raises
+  #     Puppet::Error or ArgumentError
   # @overload initialize(resource)
   #   @param resource [Puppet:Resource]
+  #   @raise [Puppet::ResourceError] when the type validation raises
+  #     Puppet::Error or ArgumentError
   #
   def initialize(resource)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
@@ -2195,7 +2201,13 @@ class Type
 
     set_parameters(@original_parameters)
 
-    self.validate if self.respond_to?(:validate)
+    begin
+      self.validate if self.respond_to?(:validate)
+    rescue Puppet::Error, ArgumentError => detail
+      error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
+      adderrorcontext(error, detail)
+      raise error
+    end
   end
 
   private

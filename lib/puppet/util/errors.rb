@@ -1,11 +1,24 @@
-# Some helper methods for throwing errors.
+# Some helper methods for throwing and populating errors.
+#
+# @api public
 module Puppet::Util::Errors
-  # Throw a dev error.
+  # Throw a Puppet::DevError with the specified message.  Used for unknown or
+  # internal application failures.
+  #
+  # @param msg [String] message used in raised error
+  # @raise [Puppet::DevError] always raised with the supplied message
   def devfail(msg)
     self.fail(Puppet::DevError, msg)
   end
 
-  # Add line and file info if available and appropriate.
+  # Add line and file info to the supplied exception if info is available from
+  # this object, is appropriately populated and the supplied exception supports
+  # it.  When other is supplied, the backtrace will be copied to the error
+  # object.
+  #
+  # @param error [Exception] exception that is populated with info
+  # @param other [Exception] original exception, source of backtrace info
+  # @return [Exception] error parameter
   def adderrorcontext(error, other = nil)
     error.line ||= self.line if error.respond_to?(:line=) and self.respond_to?(:line) and self.line
     error.file ||= self.file if error.respond_to?(:file=) and self.respond_to?(:file) and self.file
@@ -15,6 +28,10 @@ module Puppet::Util::Errors
     error
   end
 
+  # Return a human-readable string of this object's file and line attributes,
+  # if set.
+  #
+  # @return [String] description of file and line
   def error_context
     if file and line
       " at #{file}:#{line}"
@@ -29,6 +46,15 @@ module Puppet::Util::Errors
 
   # Wrap a call in such a way that we always throw the right exception and keep
   # as much context as possible.
+  #
+  # @param options [Hash<Symbol,Object>] options used to create error
+  # @option options [Class] :type error type to raise, defaults to
+  #   Puppet::DevError
+  # @option options [String] :message message to use in error, default mentions
+  #   the name of this class
+  # @raise [Puppet::Error] re-raised with extra context if the block raises it
+  # @raise [Error] of type options[:type], when the block raises other
+  #   exceptions
   def exceptwrap(options = {})
     options[:type] ||= Puppet::DevError
     begin
@@ -48,6 +74,16 @@ module Puppet::Util::Errors
   end
 
   # Throw an error, defaulting to a Puppet::Error.
+  #
+  # @overload fail(message, ..)
+  #   Throw a Puppet::Error with a message concatenated from the given
+  #   arguments.
+  #   @param [String] message error message(s)
+  # @overload fail(error_klass, message, ..)
+  #   Throw an exception of type error_klass with a message concatenated from
+  #   the given arguments.
+  #   @param [Class] type of error
+  #   @param [String] message error message(s)
   def fail(*args)
     if args[0].is_a?(Class)
       type = args.shift
