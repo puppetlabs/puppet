@@ -2,6 +2,7 @@ require 'puppet/pops/api/model/model'
 require 'puppet/pops/api/visitor'
 require 'puppet/parser/ast'
 require 'puppet/pops/api/model/model'
+require 'puppet/pops/api/adapters'
 
 module Puppet; module Pops; module Impl; module Model
 
@@ -17,19 +18,31 @@ module Puppet; module Pops; module Impl; module Model
   #
   class AstTransformer
 
-    def initialize(importer=nil)
+    def initialize(source_file = "unknown-file", importer=nil)
       @@transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"transform",0,0)
       @@query_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"query",0,0)
       @@hostname_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"hostname",0,0)
       @importer = importer
+      @source_file = source_file
     end
 
     # Initialize klass from o and hash    
-    def ast klass, hash 
-      # TODO: Pick up generic file and line from o
-      klass.new hash
+    def ast klass, hash, o = nil
+      # create and pass hash with file and line information
+      klass.new(merge_location(hash, o))
     end
 
+    def merge_location hash, o
+      if o
+        pos = {}
+        source_pos = find_source_pos(o)
+        pos[:line] = source_pos.start_line if source_pos
+        pos[:file] = @file if @file
+        hash = hash.merge(pos)
+      end
+      hash
+    end
+    
     # Transforms pops expressions into AST 3.1 statements/expressions
     def transform(o)
       @@transform_visitor.visit(o)
@@ -291,11 +304,11 @@ module Puppet; module Pops; module Impl; module Model
     # compatible
     def transform_LiteralHash o
       if o.entries.size == 0
-        ast AST::ASTHash, :value=> {}
+        ast AST::ASTHash, {:value=> {}}, o
       else
         value = {}
         o.entries.each {|x| value.merge! transform(x) }
-        ast AST::ASTHash, :value=> value
+        ast AST::ASTHash, {:value=> value}, o
       end
     end
 
@@ -408,7 +421,7 @@ module Puppet; module Pops; module Impl; module Model
         :parent => o.parent_class, 
       }
       args[:code] = transform(o.body) unless is_nop?(o.body) 
-      Puppet::Parser::AST::Hostclass.new(o.name, args)
+      Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
       # TODO: since ast function is not used, the result must receive its LOCATION
       #    
     end
@@ -541,7 +554,7 @@ module Puppet; module Pops; module Impl; module Model
         :ftype => o.rval_required ? :rvalue : :statement
       }
       args[:pblock] = transform(o.lambda) if o.lambda          
-      ast AST::Function, args
+      ast AST::Function, args, o
     end
 
     # Transformation of CallMethodExpression handles a NamedAccessExpression functor and
@@ -613,5 +626,17 @@ module Puppet; module Pops; module Impl; module Model
     def is_nop? o
       o.nil? || o.is_a?(Model::Nop)
     end
+    
+    # Finds source position closest to given object (going up the containment hierarchy)
+    def find_source_pos o
+      x = o
+      loop do 
+        if source_pos = Puppet::Pops::API::Adapters::SourcePosAdapter.get(x)
+          return source_pos
+        end
+        return nil unless x = x.eContainer
+      end
+    end
+    
   end
 end; end; end; end

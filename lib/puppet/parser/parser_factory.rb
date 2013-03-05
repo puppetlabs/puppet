@@ -52,8 +52,12 @@ module Puppet; module Parser
         else
           parser.parse_file(@file)
         end
+        # Compute the source_file to set in created AST objects (it was either given, or it may be unknown
+        # if caller did not set a file and the present a string.
+        #
+        source_file = @file || "unknown-source-location"
         # Transform the result, but only if not nil
-        parse_result = Puppet::Pops::Impl::Model::AstTransformer.new(@classic_parser).transform(parse_result) if parse_result
+        parse_result = Puppet::Pops::Impl::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result
         if parse_result && !parse_result.is_a?(Puppet::Parser::AST::BlockExpression)
           # Need to transform again, if result is not wrapped in something iterable when handed off to 
           # a new Hostclass as its code.
