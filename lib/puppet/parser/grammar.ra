@@ -132,7 +132,7 @@ function_call_statement
         :line => val[0][:line],
         :arguments => val[2],
         :ftype => :statement,
-        :pblock => val[4]
+        :pblock => val[5]
     } 
   | NAME LPAREN RPAREN optional_lambda {
       result = ast AST::Function,
@@ -140,15 +140,14 @@ function_call_statement
         :line => val[0][:line],
         :arguments => AST::ASTArray.new({}),
         :ftype => :statement,
-        :pblock => val[4]
+        :pblock => val[3]
       }
   | NAME funcvalues {
       result = ast AST::Function,
         :name => val[0][:value],
         :line => val[0][:line],
         :arguments => val[1],
-        :ftype => :statement,
-        :pblock => val[4]
+        :ftype => :statement
     }
 
 ##
