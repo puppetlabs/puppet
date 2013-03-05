@@ -91,6 +91,23 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
           @handler.set_response(@response, @file, 200)
         end
       end
+
+      it "should ensure the body has been read on success" do
+        req = mk_req('/production/report/foo', :method => 'PUT')
+        req.body.expects(:read).at_least_once
+
+        Puppet::Transaction::Report.stubs(:save)
+
+        @handler.process(req, @response)
+      end
+
+      it "should ensure the body has been partially read on failure" do
+        req = mk_req('/production/report/foo')
+        req.body.expects(:read).with(1)
+        req.stubs(:check_authorization).raises(Exception)
+
+        @handler.process(req, @response)
+      end
     end
 
     describe "and determining the request parameters" do
