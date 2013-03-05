@@ -41,7 +41,7 @@ on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes 
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-nginx' (latest: v0.0.1)
     STDERR>   Installation would overwrite /etc/puppet/modules/nginx
     STDERR>     Currently, 'notpmtacceptance-nginx' (v0.0.3) is installed to that directory
-    STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
+    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
     STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
   OUTPUT
 end
@@ -54,7 +54,7 @@ on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes
     STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-apache' (latest: v0.0.1)
     STDERR>   Installation would overwrite /etc/puppet/modules/apache
-    STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
+    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
     STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
   OUTPUT
 end
@@ -67,7 +67,7 @@ on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptab
     STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-php' (v0.0.1)
     STDERR>   Dependency 'pmtacceptance-apache' (v0.0.1) would overwrite /etc/puppet/modules/apache
-    STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
+    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
     STDERR>     Use `puppet module install --ignore-dependencies` to install only this module\e[0m
   OUTPUT
 end
