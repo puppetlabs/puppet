@@ -85,6 +85,9 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should create default ACL entries if no file have been read" do
+    # The singleton instance is stored as an instance variable we don't have
+    # access to, so.. instance_variable_set. Alas.
+    Puppet::Network::RestAuthConfig.instance_variable_set(:@main, nil)
     Puppet::Network::RestAuthConfig.any_instance.stubs(:exists?).returns(false)
 
     Puppet::Network::RestAuthConfig.any_instance.expects(:insert_default_acl)
