@@ -12,14 +12,11 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-RSpec.configure do |c|
-  c.include TransformerRspecHelper
-end
-
 # Tests containers (top level in file = expr or a block), class, define, and node  
 describe Puppet::Pops::Impl::Parser::Parser do
   EvaluationError ||= Puppet::Pops::EvaluationError
   Model ||= Puppet::Pops::API::Model
+  include TransformerRspecHelper
 
   context "When running these examples, the setup" do
 

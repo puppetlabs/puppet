@@ -98,10 +98,10 @@ module Puppet::Pops::API
     
     # Finds an adapter for o or for one of its containers, or nil, if none of the containers
     # was adapted with the given adapter.
-    # This method can only be used with objects that respond to #eContainer and respond to #is_adaptable?
+    # This method can only be used with objects that respond to `:eContainer`.
     # with true, and Adaptable#adapters.
     #
-    def find_adapter(o, adapter)
+    def Utils.find_adapter(o, adapter)
       return nil unless o
       a = adapter.get(o)
       return a if a
