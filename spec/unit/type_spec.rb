@@ -356,7 +356,23 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should fail if any invalid attributes have been provided" do
-      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.to raise_error(Puppet::Error, /Invalid parameter/)
+    end
+
+    context "when an attribute fails validation" do
+      it "should fail with Puppet::ResourceError when PuppetError raised" do
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /Parameter source failed on File\[.*foo\]/)
+      end
+
+      it "should fail with Puppet::ResourceError when ArgumentError raised" do
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :mode => "abcdef") }.to raise_error(Puppet::ResourceError, /Parameter mode failed on File\[.*foo\]/)
+      end
+
+      it "should include the file/line in the error" do
+        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
+        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /example.pp:42/)
+      end
     end
 
     it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
@@ -418,6 +434,35 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should delete the name via the namevar from the originally provided parameters" do
       Puppet::Type.type(:file).new(:name => make_absolute('/foo')).original_parameters[:path].should be_nil
+    end
+
+    context "when validating the resource" do
+      it "should call the type's validate method if present" do
+        Puppet::Type.type(:file).any_instance.expects(:validate)
+        Puppet::Type.type(:file).new(:name => make_absolute('/foo'))
+      end
+
+      it "should raise Puppet::ResourceError with resource name when Puppet::Error raised" do
+        expect do
+          Puppet::Type.type(:file).new(
+            :name => make_absolute('/foo'),
+            :source => "puppet:///",
+            :content => "foo"
+          )
+        end.to raise_error(Puppet::ResourceError, /Validation of File\[.*foo.*\]/)
+      end
+
+      it "should raise Puppet::ResourceError with manifest file and line on failure" do
+        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
+        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        expect do
+          Puppet::Type.type(:file).new(
+            :name => make_absolute('/foo'),
+            :source => "puppet:///",
+            :content => "foo"
+          )
+        end.to raise_error(Puppet::ResourceError, /Validation.*example.pp:42/)
+      end
     end
   end
 
