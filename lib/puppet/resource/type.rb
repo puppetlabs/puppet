@@ -1,4 +1,4 @@
-require 'puppet/parser/parser'
+require 'puppet/parser'
 require 'puppet/util/warnings'
 require 'puppet/util/errors'
 require 'puppet/util/inline_docs'

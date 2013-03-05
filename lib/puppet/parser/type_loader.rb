@@ -1,6 +1,7 @@
 require 'find'
 require 'forwardable'
 require 'puppet/node/environment'
+require 'puppet/parser/parser_factory'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable
@@ -137,7 +138,8 @@ class Puppet::Parser::TypeLoader
 
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
-    parser = Puppet::Parser::Parser.new(environment)
+#    parser = Puppet::Parser::Parser.new(environment)
+    parser = Puppet::Parser::ParserFactory.parser(environment)
     parser.file = file
     return parser.parse
   end
