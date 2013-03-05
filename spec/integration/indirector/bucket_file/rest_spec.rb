@@ -54,7 +54,7 @@ describe "Filebucket REST Terminus" do
     # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
     # return.
     @file_bucket_file = stub_everything 'file_bucket_file'
-    @mock_model = stub('faked model', :name => "file_bucket_file", :convert_from => @file_bucket_file)
+    @mock_model = stub('faked model', :name => "file_bucket_file", :convert_from => @file_bucket_file, :=== => true)
     Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
     Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:check_authorization)

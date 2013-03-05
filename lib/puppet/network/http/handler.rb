@@ -157,6 +157,9 @@ module Puppet::Network::HTTP::Handler
 
     format = request_format(request)
     obj = indirection_request.model.convert_from(format, data)
+    unless indirection_request.model === obj
+      raise ArgumentError, "Request data must be of type #{indirection_request.model.inspect}"
+    end
     result = save_object(indirection_request, obj)
     return_yaml_response(response, result)
   end
