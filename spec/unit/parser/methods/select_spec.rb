@@ -17,7 +17,7 @@ describe 'the select method' do
     it 'select on an array (all berries)' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = ['strawberry','blueberry','orange']
-        $a.select {|$x| = $x  =~ /berry$/}.foreach {|$v| 
+        $a.select {|$x| $x  =~ /berry$/}.foreach {|$v| 
           file { "/file_$v": ensure => present }
         }
       MANIFEST

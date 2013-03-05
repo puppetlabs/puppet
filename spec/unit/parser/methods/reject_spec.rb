@@ -17,7 +17,7 @@ describe 'the reject method' do
     it 'reject on an array (no berries)' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = ['strawberry','blueberry','orange']
-        $a.reject {|$x| = $x  =~ /berry$/}.foreach {|$v| 
+        $a.reject {|$x| $x  =~ /berry$/}.foreach {|$v| 
           file { "/file_$v": ensure => present }
         }
       MANIFEST

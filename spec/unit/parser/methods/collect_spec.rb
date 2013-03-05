@@ -17,7 +17,7 @@ describe 'the collect method' do
     it 'collect on an array (multiplying each value by 2)' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        $a.collect {|$x| = $x*2}.foreach {|$v| 
+        $a.collect {|$x| $x*2}.foreach {|$v| 
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -30,7 +30,7 @@ describe 'the collect method' do
     it 'collect on a hash selecting keys' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
-      $a.collect {|$x| = $x[0]}.foreach {|$k| 
+      $a.collect {|$x| $x[0]}.foreach {|$k| 
           file { "/file_$k": ensure => present }
         }
       MANIFEST
@@ -42,7 +42,7 @@ describe 'the collect method' do
     it 'foreach on a hash selecting value' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
-      $a.collect {|$x| = $x[1]}.foreach {|$k| 
+      $a.collect {|$x| $x[1]}.foreach {|$k| 
           file { "/file_$k": ensure => present }
         }
       MANIFEST
