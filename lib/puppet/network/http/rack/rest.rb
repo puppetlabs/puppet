@@ -73,10 +73,15 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
   end
 
   # return the request body
-  # request.body has some limitiations, so we need to concat it back
-  # into a regular string, which is something puppet can use.
   def body(request)
     request.body.read
+  end
+
+  # Passenger freaks out if we finish handling the request without reading any
+  # part of the body, so make sure we have.
+  def cleanup(request)
+    request.body.read(1)
+    nil
   end
 
   def extract_client_info(request)
