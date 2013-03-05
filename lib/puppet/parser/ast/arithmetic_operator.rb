@@ -11,23 +11,58 @@ class Puppet::Parser::AST
       [@lval,@rval,@operator].each { |child| yield child }
     end
 
-    # Returns a boolean which is the result of the boolean operation
-    # of lval and rval operands
+    # Produces an object which is the result of the applying the operator to the of lval and rval operands.
+    # * Supports +, -, *, /, %, and <<, >> on numeric strings.
+    # * Supports + on arrays (concatenate), and hashes (merge)
+    # * Supports << on arrays (append)
+    #
     def evaluate(scope)
       # evaluate the operands, should return a boolean value
-      lval = @lval.safeevaluate(scope)
-      lval = Puppet::Parser::Scope.number?(lval)
-      if lval == nil
-        raise ArgumentError, "left operand of #{@operator} is not a number"
+      left = @lval.safeevaluate(scope)
+      right = @rval.safeevaluate(scope)
+      
+      if left.is_a?(Array) || right.is_a?(Array)
+        eval_array(left, right)
+      elsif left.is_a?(Hash) || right.is_a?(Hash)
+        eval_hash(left, right)
+      else
+        eval_numeric(left, right)
       end
-      rval = @rval.safeevaluate(scope)
-      rval = Puppet::Parser::Scope.number?(rval)
-      if rval == nil
-        raise ArgumentError, "right operand of #{@operator} is not a number"
+    end
+
+    # Concatenates (+) two arrays, or appends (<<) any object to a newly created array.
+    #
+    def eval_array(left, right)
+      raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Array." unless %w{+ <<}.include?(@operator)
+      raise ArgumentError, "left operand of #{@operator} must be an Array" unless left.is_a?(Array)
+      if @operator == '+'
+        raise ArgumentError, "right operand of #{@operator} must be an Array when left is an Array." unless right.is_a?(Array)
+        return left + right
       end
+      # only append case remains, left asserted to be an array, and right may be any object
+      # wrapping right in an array and adding it ensures a new copy (operator << mutates).
+      #
+      left + [right]
+    end
+    
+    # Merges two hashes.
+    #
+    def eval_hash(left, right)
+      raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Hash." unless @operator == '+'
+      raise ArgumentError, "left operand of #{@operator} must be an Hash" unless left.is_a?(Hash)
+      raise ArgumentError, "right operand of #{@operator} must be an Hash" unless right.is_a?(Hash)
+      # merge produces a merged copy
+      left.merge(right)
+    end
+    
+    def eval_numeric(left, right)
+      left = Puppet::Parser::Scope.number?(left)
+      right = Puppet::Parser::Scope.number?(right)
+      raise ArgumentError, "left operand of #{@operator} is not a number" unless left != nil
+      raise ArgumentError, "right operand of #{@operator} is not a number" unless right != nil
 
       # compute result
-      lval.send(@operator, rval)
+      left.send(@operator, right)        
     end
 
     def initialize(hash)
