@@ -15,10 +15,10 @@ describe 'methods' do
   end
 
   context "should be callable as" do
-    it 'foreach on an array selecting each value' do
+    it 'each on an array selecting each value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        $a.foreach {|$v| 
+        $a.each |$v| { 
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -27,10 +27,12 @@ describe 'methods' do
       catalog.resource(:file, "/file_2")['ensure'].should == 'present'
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
-    it 'foreach on an array selecting each value - function call style' do
+    it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        foreach ($a) {|$v| 
+        foreach ($a)
+        |
+        $index, $v| => { 
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -41,10 +43,10 @@ describe 'methods' do
     end
     
     
-    it 'foreach on an array with index' do
+    it 'each on an array with index' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [present, absent, present]
-        $a.foreach {|$k,$v| 
+        $a.each |$k,$v| { 
           file { "/file_${$k+1}": ensure => $v }
         }
       MANIFEST
@@ -54,10 +56,10 @@ describe 'methods' do
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
 
-    it 'foreach on a hash selecting entries' do
+    it 'each on a hash selecting entries' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>'present','b'=>'absent','c'=>'present'}
-        $a.foreach {|$e| 
+        $a.each |$e| { 
         file { "/file_${e[0]}": ensure => $e[1] }
         }
       MANIFEST
@@ -66,10 +68,10 @@ describe 'methods' do
       catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
       catalog.resource(:file, "/file_c")['ensure'].should == 'present'
     end
-    it 'foreach on a hash selecting key and value' do
+    it 'each on a hash selecting key and value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>present,'b'=>absent,'c'=>present}
-        $a.foreach {|$k, $v| 
+        $a.each |$k, $v| { 
           file { "/file_$k": ensure => $v }
         }
       MANIFEST
@@ -80,10 +82,10 @@ describe 'methods' do
     end
   end
   context "should allow production of value" do
-    it 'foreach checking produced value using single expression' do
+    it 'each checking produced value using single expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| $x }
+        $b = $a.each |$x| { $x }
         file { "/file_$b":
           ensure => present
         }
@@ -91,10 +93,10 @@ describe 'methods' do
     
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
-    it 'foreach checking produced value using final expression' do
+    it 'each checking produced value using final expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| 
+        $b = $a.each |$x| { 
           $y = 2 * $x 
           $y 
         }
@@ -104,11 +106,11 @@ describe 'methods' do
       MANIFEST
       catalog.resource(:file, "/file_6")['ensure'].should == 'present'
     end
-    it 'foreach checking produced value using final expression' do
+    it 'each checking produced value using final expression' do
       # semic required to protect array result from $x[$y,2]
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| 
+        $b = $a.each |$x| { 
           $y = 2 * $x ; 
           [$y, 2] 
         }
@@ -118,10 +120,10 @@ describe 'methods' do
       MANIFEST
       catalog.resource(:file, "/file_6")['ensure'].should == 'present'
     end
-    it 'foreach checking produced value using final expression' do
+    it 'each checking produced value using final expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 2, 3]
-        $b = $a.foreach {|$x| [$x*2, 333] }
+        $b = $a.each |$x|{ [$x*2, 333] }
         file { "/file_${$b[0]}":
           ensure => present
         }
