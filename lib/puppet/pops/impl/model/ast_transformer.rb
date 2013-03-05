@@ -8,16 +8,20 @@ module Puppet; module Pops; module Impl; module Model
   AST = Puppet::Parser::AST
   Model = Puppet::Pops::API::Model
 
+  # The receiver of `import(file)` calls; once per imported file, or nil if imports are ignored
+  #
+  
   # Transforms a Pops::Model to classic Puppet AST.
   # TODO: Location not handled yet
   # TODO: Documentation is currently skipped completely (it is only used for Rdoc)
   #
   class AstTransformer
 
-    def initialize
+    def initialize(importer=nil)
       @@transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"transform",0,0)
       @@query_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"query",0,0)
       @@hostname_transform_visitor ||= Puppet::Pops::API::Visitor.new(self,"hostname",0,0)
+      @importer = importer
     end
 
     # Initialize klass from o and hash    
@@ -231,7 +235,19 @@ module Puppet; module Pops; module Impl; module Model
       ast AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
+    # This is a complex transformation from a modeled import to a Nop result (where the import took place),
+    # and calls to perform import/parsing etc. during the transformation.
+    # When testing syntax, the @importer does not have to be set, but it is not possible to check
+    # the actual import without inventing a new AST::ImportExpression with nop effect when evaluating.
     def transform_ImportExpression o
+      if @importer
+        o.files.each {|f|
+          unless f.is_a? Model::LiteralString 
+            raise "Illegal import file expression. Must be a single quoted string"
+          end
+          @importer.import(f.value)
+        } 
+      end
       # Crazy stuff
       # Transformation of "import" needs to parse the other files at the time of transformation.
       # Then produce a :nop, since nothing should be evaluated.
@@ -377,7 +393,7 @@ module Puppet; module Pops; module Impl; module Model
     # (A BlockExpression has now been introduced in the AST to solve this).
     #
     def transform_BlockExpression o
-      ast AST::BlockExpression, :children => transform(o.statements)
+      ast AST::BlockExpression, :children => o.statements.collect {|s| transform(s) }
     end
 
     # Interpolated strings are kept in an array of AST (string or other expression).
@@ -387,11 +403,12 @@ module Puppet; module Pops; module Impl; module Model
 
     def transform_HostClassDefinition o
       parameters = o.parameters.collect {|p| transform(p) }
-      Puppet::Parser::AST::Hostclass.new(o.name,
-      :arguments => parameters, 
-          :parent => o.parent_class, 
-          :code => transform(o.body) 
-          )
+      args = {
+        :arguments => parameters, 
+        :parent => o.parent_class, 
+      }
+      args[:code] = transform(o.body) unless is_nop?(o.body) 
+      Puppet::Parser::AST::Hostclass.new(o.name, args)
       # TODO: since ast function is not used, the result must receive its LOCATION
       #    
     end
@@ -439,10 +456,10 @@ module Puppet; module Pops; module Impl; module Model
 
     def transform_ResourceTypeDefinition o
       parameters = o.parameters.collect {|p| transform(p) }
-      Puppet::Parser::AST::Definition.new(o.name,
-        :arguments => parameters, 
-          :code => transform(o.body) 
-          )
+      args = { :arguments => parameters }
+      args[:code] = transform(o.body) unless is_nop?(o.body) 
+      
+      Puppet::Parser::AST::Definition.new(o.name, args)
       # TODO: since ast function is not used, the result must receive its location
       #    
     end
