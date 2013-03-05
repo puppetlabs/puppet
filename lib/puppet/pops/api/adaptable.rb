@@ -67,7 +67,7 @@ module Puppet; module Pops; module API;
     #   n.nick_name # => "Daffy, the Duck"
     # @example Using a block to set values
     #   NickNameAdapter.adapt(o) { |a| a.nick_name = "Buddy!" }
-    #   NickNameAdapter.adapt(o) { |a, o| a.nick_name = "Your the best #{o.class.name} I met."}
+    #   NickNameAdapter.adapt(o) { |a, o| a.nick_name = "You're the best #{o.class.name} I met."}
     #  
     class Adapter
       # Returns an existing adapter for the given object, or nil, if the object is not
@@ -79,7 +79,6 @@ module Puppet; module Pops; module API;
       # @raise [ArgumentError] if the object is not adaptable
       #
       def Adapter.get(o)
-        raise ArgumentError.new("Given object is not adaptable") unless o.is_adaptable?
         attr_name = :"@#{instance_var_name(self.name)}"
         if existing = o.instance_variable_defined?(attr_name)
           o.instance_variable_get(attr_name)
@@ -105,7 +104,7 @@ module Puppet; module Pops; module API;
       # @raise [ArgumentError] if the given object o is not adaptable
       #
       def Adapter.adapt(o, &block)
-        raise ArgumentError.new("Given object is not adaptable") unless o.is_adaptable? 
+        raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable? 
         attr_name = :"@#{instance_var_name(self.name)}"
         adapter = if existing = o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
           value
@@ -141,7 +140,7 @@ module Puppet; module Pops; module API;
       # @raise [ArgumentError] if the given object o is not adaptable
       #
       def Adapter.adapt_new(o, &block)
-        raise ArgumentError.new("Given object is not adaptable") unless o.is_adaptable?
+        raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable? 
         adapter = associate_adapter(create_adapter(o), o)
         if block_given?
           case block.arity
