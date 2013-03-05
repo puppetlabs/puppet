@@ -161,6 +161,13 @@ class Puppet::Pops::Impl::Parser::Parser
     end
   end
   
+  # Associate documentation with the factory wrapped model object.
+  # @return [Puppet::Pops::Impl::Model::Factory] the given factory
+  # @api private
+  def doc factory, doc_string
+    factory.doc = doc_string
+  end
+  
   def start_loc(o)
     if !o
       nil

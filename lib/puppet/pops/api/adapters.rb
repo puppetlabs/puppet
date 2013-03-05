@@ -1,6 +1,16 @@
 require 'puppet/pops/api/adaptable'
 module Puppet; module Pops; module API
 module Adapters
+  
+  # A documentation adapter adapts an object with a documentation string.
+  # (The intented use is for a source text parser to extract documentation and store this
+  # in DocumentationAdapter instances).
+  #
+  class DocumentationAdapter < Puppet::Pops::API::Adaptable::Adapter
+    # @return [String] The documentation associated with an object
+    attr_accessor :documentation
+  end
+  
   # An origin adapter adapts an object with a URI (or an object responding to #uri, such as
   # {Puppet::Pops::API::Origin}). This origin
   # describes the resource (a file, etc.) where source text originates, and on which line in this resource.

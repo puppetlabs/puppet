@@ -400,6 +400,19 @@ class Factory
     a = Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
     [a.start_line, a.end_line]
   end
+
+  # Returns documentation string, or nil if not available
+  # @return [String, nil] associated documentation if available
+  def doc()
+    a = Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
+    return a.documentation if a
+    nil
+  end
+
+  def doc=(doc_string)
+    a = Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
+    a.documentation = doc_string
+  end
   
   # Returns symbolic information about a expected share of a resource expression given the LHS of a resource expr.
   #
