@@ -20,9 +20,9 @@ token LOW
 prechigh
   left  HIGH
   left  SEMIC
+  left  PIPE
   left  LPAREN
   left  RPAREN
-  left  PIPE
   left  AT
   left  DOT
   left  CALL
@@ -168,7 +168,7 @@ call_function_expression
       loc result, val[0], val[3]
       result.lambda = val[4]
     }
-  | primary_expression LPAREN RPAREN  lambda     {
+  | primary_expression LPAREN RPAREN  lambda {
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[2]
       result.lambda = val[3]

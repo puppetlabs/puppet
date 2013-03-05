@@ -11,19 +11,19 @@ Puppet::Parser::Functions::newfunction(
   
     $a.foreach {|$x| ... }
       
-  When the first argument is an Array, the parameterized block should define one or more block parameters.
-  For each application of the block, a corresponding number of elements from the array are selected. Thus,
-  to iterate over an array of pairs, (or triplets) do like this:
+  When the first argument is an Array, the parameterized block should define one or two block parameters.
+  For each application of the block, the next element from the array is selected, and it is passed to
+  the block if the block has one parameter.args If the block has two parameters, the first is the elements
+  index, and the second the value. The index starts from 0.
   
-    $a.foreach {|$x, $y| ... }
-    $a.foreach {|$x, $y, $z| ... }
+    $a.foreach {|$index, $value| ... }
       
   When the first argument is a Hash, the parameterized block should define one or two parameters.
-  When one parameter is defined, the iteration is performed with each key, and when two parameters are
-  defined the iteration is performed with key and value.
+  When one parameter is defined, the iteration is performed with each entry as an array of `[key, value]`,
+  and when two parameters are defined the iteration is performed with key and value.
   
-    $a.foreach {|$key| ...args } 
-    $a.foreach {|$key, $value| ...args }
+    $a.foreach {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" } 
+    $a.foreach {|$key, $value| ..."key ${key}, value ${value}" }
 
   Since 3.2       
   ENDHEREDOC
@@ -34,15 +34,23 @@ Puppet::Parser::Functions::newfunction(
     
     serving_size = pblock.parameter_count
     if serving_size == 0
-      raise ArgumentError, "Block must define at least one parameter."
+      raise ArgumentError, "Block must define at least one parameter; value."
     end
-    unless o.size % serving_size == 0 
-      raise ArgumentError, "Array size #{o.size} is not an even multiple of the block's parameter count #{serving_size}."
+    if serving_size > 2 
+      raise ArgumentError, "Block must define at most two parameters; index, value"
     end
-    enumerator = o.each_slice(serving_size)
+    enumerator = o.each
+    index = 0
     result = nil
-    (o.size/serving_size).times do
-      result = pblock.call(scope, *enumerator.next)
+    if serving_size == 1
+      (o.size).times do
+        result = pblock.call(scope, enumerator.next)
+      end
+    else
+      (o.size).times do
+        result = pblock.call(scope, index, enumerator.next)
+        index = index +1
+      end
     end
     result
   end
@@ -58,10 +66,16 @@ Puppet::Parser::Functions::newfunction(
     else
       raise ArgumentError, "Block must define at most two parameters (for hash entry key and value)."
     end
-    enumerator = serving_size == 1 ? o.each_key : o.each_pair
+    enumerator = o.each_pair
     result = nil
-    (o.size).times do
-      result = pblock.call(scope, *enumerator.next)
+    if serving_size == 1
+      (o.size).times do
+        result = pblock.call(scope, enumerator.next)
+      end
+    else
+      (o.size).times do
+        result = pblock.call(scope, *enumerator.next)
+      end
     end
     result
   end

@@ -217,14 +217,14 @@ class Puppet::Pops::Impl::Parser::Parser
       begin
         @yydebug = false
         main = yyparse(@lexer,:scan)
- #Commented out now because this hides problems in the racc grammar while developing
- # TODO include this when test coverage is good enough.        
-      rescue Puppet::ParseError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-      rescue => except
-        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
+# #Commented out now because this hides problems in the racc grammar while developing
+# # TODO include this when test coverage is good enough.        
+#      rescue Puppet::ParseError => except
+#        except.line ||= @lexer.line
+#        except.file ||= @lexer.file
+#        raise except
+#      rescue => except
+#        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
       end
     return main
   ensure
