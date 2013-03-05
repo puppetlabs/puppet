@@ -333,10 +333,12 @@ module Puppet; module Pops; module Impl; module Model
         o.key.value
       when Model::LiteralString
         transform o.key
-      when Model::ConcatentatedString
+      when Model::LiteralNumber
+        transform o.key
+      when Model::ConcatenatedString
         transform o.key
       else
-        raise "Illegal hash key expression"
+        raise "Illegal hash key expression of type (#{o.key.class})"
       end
       {key => value}       
     end
