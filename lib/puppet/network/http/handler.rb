@@ -73,6 +73,8 @@ module Puppet::Network::HTTP::Handler
     raise
   rescue Exception => e
     return do_exception(response, e)
+  ensure
+    cleanup(request)
   end
 
   # Set the response up, with the body and status.
@@ -219,9 +221,12 @@ module Puppet::Network::HTTP::Handler
     raise NotImplementedError
   end
 
-  # Retrieve the client certificate from the request if possible
   def client_cert(request)
     raise NotImplementedError
+  end
+
+  def cleanup(request)
+    # By default, there is nothing to cleanup.
   end
 
   def decode_params(params)
