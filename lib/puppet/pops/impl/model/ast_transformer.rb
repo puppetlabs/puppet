@@ -29,13 +29,17 @@ module Puppet; module Pops; module Impl; module Model
       @source_file = source_file
     end
 
-    # Initialize klass from o and hash
-    # TODO: The signature should change to ast o, klass, hash, but this requires all calls to ast
-    # to pass a suitable o (or nil). This is now just POC, and o is passed in only a couple of places
-    # for testing.
-    # All calls to this method should be update to the changed signature (they are all in this file.
+    # Initialize klass from o (location) and hash (options to created instance).
+    # The object o is used to compute a source location. It may be nil. Source position is merged into
+    # the given options (non surgically). If o is non-nil, the first found source position going up
+    # the containment hierarchy is set. I.e. callers should pass nil if a source position is not wanted
+    # or known to be unobtainable for the object.
+    #
+    # @param o [Object, nil] object from which source position / location is obtained, may be nil
+    # @param klass [Class<Puppet::Parser::AST>] the ast class to create an instance of
+    # @param hash [Hash] hash with options for the class to create
     #    
-    def ast klass, hash, o = nil
+    def ast o, klass, hash
       # create and pass hash with file and line information
       klass.new(merge_location(hash, o))
     end
@@ -79,17 +83,17 @@ module Puppet; module Pops; module Impl; module Model
       end
 
       # Numbers are strings in the AST
-      ast AST::String, :value => s
+      ast o, AST::String, :value => s
     end
 
     # Transforms all literal values to string (override for those that should not be AST::String)
     #
     def transform_LiteralValue o
-      ast AST::String, :value => o.value.to_s
+      ast o, AST::String, :value => o.value.to_s
     end
 
     def transform_LiteralBoolean o
-      ast AST::Boolean, :value => o.value
+      ast o, AST::Boolean, :value => o.value
     end
 
     def transform_Factory o
@@ -97,12 +101,12 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_ArithmeticExpression o
-      ast AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), 
+      ast o, AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), 
         :operator => o.operator.to_s
     end
 
     def transform_Array o
-      ast AST::ASTArray, :children => o.collect {|x| transform(x) }
+      ast nil, AST::ASTArray, :children => o.collect {|x| transform(x) }
     end
 
     # Puppet AST only allows:
@@ -123,23 +127,23 @@ module Puppet; module Pops; module Impl; module Model
     def transform_AccessExpression o
       case o.left_expr
       when Model::QualifiedName
-        ast AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
+        ast o, AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
 
       when Model::QualifiedReference
-        ast AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
+        ast o, AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
 
       when Model::VariableExpression
-#        ast AST::HashOrArrayAccess, :variable => o.left_expr.expr.value(), :key => transform(o.keys()[0])
-         ast AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
+#        ast o, AST::HashOrArrayAccess, :variable => o.left_expr.expr.value(), :key => transform(o.keys()[0])
+         ast o, AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
 
       #when Model::AccessExpression
       else
-        ast AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
+        ast o, AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
       end
     end
 
     def transform_MatchesExpression o
-      ast AST::MatchOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), :operator => o.operator
+      ast o, AST::MatchOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), :operator => o.operator
     end
 
     # Puppet AST has a complicated structure
@@ -164,7 +168,7 @@ module Puppet; module Pops; module Impl; module Model
       if o.operations.size > 0
         args[:override] = transform(o.operations)
       end      
-      ast AST::Collection, args
+      ast o, AST::Collection, args
     end
 
     def transform_ExportedQuery o
@@ -197,17 +201,17 @@ module Puppet; module Pops; module Impl; module Model
     #
     def query_ComparisonExpression o
       if [:'==', :'!='].include? o.operator
-        ast AST::CollExpr, :test1 => query(o.left_expr), :oper => o.operator.to_s, :test2 => query(o.right_expr)
+        ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => o.operator.to_s, :test2 => query(o.right_expr)
       else
         raise "Not a valid comparison operator in a collection query: " + o.operator.to_s
       end
     end
     def query_AndExpression o
-      ast AST::CollExpr, :test1 => query(o.left_expr), :oper => 'and', :test2 => query(o.right_expr)
+      ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => 'and', :test2 => query(o.right_expr)
     end
 
     def query_OrExpression o
-      ast AST::CollExpr, :test1 => query(o.left_expr), :oper => 'or', :test2 => query(o.right_expr)
+      ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => 'or', :test2 => query(o.right_expr)
     end
 
     def query_ParenthesizedExpression o
@@ -233,27 +237,27 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_QualifiedName o
-      ast AST::Name, :value => o.value
+      ast o, AST::Name, :value => o.value
     end
 
     def transform_QualifiedReference o
-      ast AST::Type, :value => o.value
+      ast o, AST::Type, :value => o.value
     end
 
     def transform_ComparisonExpression o
-      ast AST::ComparisonOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)       
+      ast o, AST::ComparisonOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)       
     end
 
     def transform_AndExpression o
-      ast AST::BooleanOperator, :operator => 'and', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
+      ast o, AST::BooleanOperator, :operator => 'and', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
     def transform_OrExpression o       
-      ast AST::BooleanOperator, :operator => 'or', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
+      ast o, AST::BooleanOperator, :operator => 'or', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
     def transform_InExpression o
-      ast AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
+      ast o, AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
     # This is a complex transformation from a modeled import to a Nop result (where the import took place),
@@ -272,11 +276,11 @@ module Puppet; module Pops; module Impl; module Model
       # Crazy stuff
       # Transformation of "import" needs to parse the other files at the time of transformation.
       # Then produce a :nop, since nothing should be evaluated.
-      ast AST::Nop, {}
+      ast o, AST::Nop, {}
     end
     
     def transform_InstanceReferences o
-      ast AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
+      ast o, AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
     end
 
     # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
@@ -286,13 +290,13 @@ module Puppet; module Pops; module Impl; module Model
 
       args[:name] = case o.left_expr
       when Model::VariableExpression
-        ast AST::Name, {:value => o.left_expr.expr.value }
+        ast o, AST::Name, {:value => o.left_expr.expr.value }
       when Model::AccessExpression
         transform(o.left_expr)
       else
         raise "LHS is not an expression that can be assigned to"
       end    
-      ast AST::VarDef, args
+      ast o, AST::VarDef, args
     end
 
     # Produces (name => expr) or (name +> expr)
@@ -300,7 +304,7 @@ module Puppet; module Pops; module Impl; module Model
       args = { :value => transform(o.value_expr) }
       args[:add] = true if o.operator == :'+>'
       args[:param] = o.attribute_name  
-      ast AST::ResourceParam, args
+      ast o, AST::ResourceParam, args
     end
 
     def transform_LiteralList o
@@ -312,11 +316,11 @@ module Puppet; module Pops; module Impl; module Model
     # compatible
     def transform_LiteralHash o
       if o.entries.size == 0
-        ast AST::ASTHash, {:value=> {}}, o
+        ast o, AST::ASTHash, {:value=> {}}
       else
         value = {}
         o.entries.each {|x| value.merge! transform(x) }
-        ast AST::ASTHash, {:value=> value}, o
+        ast o, AST::ASTHash, {:value=> value}
       end
     end
 
@@ -344,38 +348,38 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_MatchExpression o
-      ast AST::MatchOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
+      ast o, AST::MatchOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
     end
 
     def transform_LiteralString o
-      ast AST::String, :value => o.value
+      ast o, AST::String, :value => o.value
     end
 
     # Literal text in a concatenated string
     def transform_LiteralText o
-      ast AST::String, :value => o.value
+      ast o, AST::String, :value => o.value
     end
 
     def transform_LambdaExpression o
       astargs = { :parameters => o.parameters.collect {|p| transform(p) } }
       astargs.merge!({ :children => transform(o.body) }) if o.body         # do not want children if it is nil/nop
-      ast AST::Lambda, astargs
+      ast o, AST::Lambda, astargs
     end
 
     def transform_LiteralDefault o
-      ast AST::Default, :value => :default
+      ast o, AST::Default, :value => :default
     end
 
     def transform_LiteralUndef o
-      ast AST::Undef, :value => :undef
+      ast o, AST::Undef, :value => :undef
     end
 
     def transform_LiteralRegularExpression o
-      ast AST::Regex, :value => o.value
+      ast o, AST::Regex, :value => o.value
     end
 
     def transform_Nop o
-      ast AST::Nop
+      ast o, AST::Nop
     end
 
     # In the 3.1. grammar this is a hash that is merged with other elements to form a method call
@@ -389,16 +393,16 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_NilClass o
-      ast AST::Nop, {}
+      ast o, AST::Nop, {}
     end
 
     def transform_NotExpression o
-      ast AST::Not, :value => transform(o.expr)
+      ast o, AST::Not, :value => transform(o.expr)
     end
 
     def transform_VariableExpression o
       # assumes the expression is a QualifiedName
-      ast AST::Variable, :value => o.expr.value
+      ast o, AST::Variable, :value => o.expr.value
     end
 
     # In Puppet 3.1, the ConcatenatedString is responsible for the evaluation and stringification of
@@ -408,7 +412,7 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def transform_UnaryMinusExpression o
-      ast AST::Minus, :value => transform(o.expr)
+      ast o, AST::Minus, :value => transform(o.expr)
     end
 
     # Puppet 3.1 representation of a BlockExpression is an AST::Array - this makes it impossible to differentiate
@@ -416,12 +420,12 @@ module Puppet; module Pops; module Impl; module Model
     # (A BlockExpression has now been introduced in the AST to solve this).
     #
     def transform_BlockExpression o
-      ast AST::BlockExpression, :children => o.statements.collect {|s| transform(s) }
+      ast o, AST::BlockExpression, :children => o.statements.collect {|s| transform(s) }
     end
 
     # Interpolated strings are kept in an array of AST (string or other expression).
     def transform_ConcatenatedString o
-      ast AST::Concat, :value => o.segments.collect {|x| transform(x)} 
+      ast o, AST::Concat, :value => o.segments.collect {|x| transform(x)} 
     end
 
     def transform_HostClassDefinition o
@@ -432,25 +436,22 @@ module Puppet; module Pops; module Impl; module Model
       }
       args[:code] = transform(o.body) unless is_nop?(o.body) 
       Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
-      # TODO: since ast function is not used, the result must receive its LOCATION
-      #    
     end
 
     def transform_NodeDefinition o
       # o.host_matches are expressions, and 3.1 AST requires special object AST::HostName
       # where a HostName is one of NAME, STRING, DEFAULT or Regexp - all of these are strings except regexp
       #
-      Puppet::Parser::AST::Node.new(hostname(o.host_matches),
-        :parent => transform(o.parent), 
+      args = {
+        :parent => transform(o.parent),
         :code => transform(o.body)
-        )
-      # TODO: since ast function is not used, the result must receive its location
-      #    
+      }
+      Puppet::Parser::AST::Node.new(hostname(o.host_matches), merge_location(args, o))
     end
 
     # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
     def hostname_Array o
-      o.collect {|x| ast AST::HostName, :value => hostname(x) }
+      o.collect {|x| ast x, AST::HostName, :value => hostname(x) }
     end
 
     def hostname_LiteralValue o
@@ -470,7 +471,7 @@ module Puppet; module Pops; module Impl; module Model
     end
 
     def hostname_LiteralRegularExpression o
-      ast AST::Regex, :value => o.value
+      ast o, AST::Regex, :value => o.value
     end
 
     def hostname_Object o
@@ -482,9 +483,7 @@ module Puppet; module Pops; module Impl; module Model
       args = { :arguments => parameters }
       args[:code] = transform(o.body) unless is_nop?(o.body) 
       
-      Puppet::Parser::AST::Definition.new(o.name, args)
-      # TODO: since ast function is not used, the result must receive its location
-      #    
+      Puppet::Parser::AST::Definition.new(o.name, merge_location(args, o))
     end
 
     # Transformation of ResourceOverrideExpression is slightly more involved than a straight forward
@@ -512,10 +511,10 @@ module Puppet; module Pops; module Impl; module Model
         raise "Unacceptable expression for resource override; need NAME or CLASSREF"
       end
 
-      result_ref = ast AST::ResourceReference, :type => type, :title => transform(resource_ref.keys)
+      result_ref = ast o, AST::ResourceReference, :type => type, :title => transform(resource_ref.keys)
 
       # title is one or more expressions, if more than one it should be an ASTArray  
-      ast AST::ResourceOverride, :object => result_ref, :parameters => transform(o.operations)        
+      ast o, AST::ResourceOverride, :object => result_ref, :parameters => transform(o.operations)        
     end
 
     # Parameter is a parameter in a definition of some kind. 
@@ -536,17 +535,17 @@ module Puppet; module Pops; module Impl; module Model
     def transform_IfExpression o
       args = { :test => transform(o.test), :statements => transform(o.then_expr) }
       args[:else] = transform(o.else_expr) unless is_nop? o.else_expr      
-      result = ast AST::IfStatement, args
+      result = ast o, AST::IfStatement, args
     end
 
     # Unless is not an AST object, instead an AST::IfStatement is used with an AST::Not around the test
     #
     def transform_UnlessExpression o
-      args = { :test => ast(AST::Not, :value => transform(o.test)), 
+      args = { :test => ast(o, AST::Not, :value => transform(o.test)), 
         :statements => transform(o.then_expr) }
       # AST 3.1 does not allow else on unless in the grammar, but it is ok since unless is encoded as a if !x
       args.merge!({:else => transform(o.else_expr)}) unless is_nop?(o.else_expr)
-      result = ast AST::IfStatement, args
+      result = ast o, AST::IfStatement, args
     end
 
     # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
@@ -564,7 +563,7 @@ module Puppet; module Pops; module Impl; module Model
         :ftype => o.rval_required ? :rvalue : :statement
       }
       args[:pblock] = transform(o.lambda) if o.lambda          
-      ast AST::Function, args, o
+      ast o, AST::Function, args
     end
 
     # Transformation of CallMethodExpression handles a NamedAccessExpression functor and
@@ -576,26 +575,26 @@ module Puppet; module Pops; module Impl; module Model
       # transform of NamedAccess produces a hash, add arguments to it
       astargs = transform(name).merge(:arguments => transform(o.arguments))
       astargs.merge!(:lambda => transform(o.lambda)) if o.lambda # do not want a Nop as the lambda
-      ast AST::MethodCall, astargs          
+      ast o, AST::MethodCall, astargs          
 
     end
 
     def transform_CaseExpression o
       # Expects expression, AST::ASTArray of AST
-      ast AST::CaseStatement, :test => transform(o.test), :options => transform(o.options)
+      ast o, AST::CaseStatement, :test => transform(o.test), :options => transform(o.options)
     end
 
     def transform_CaseOption o
-      ast AST::CaseOpt, :value => transform(o.values), :statements => transform(o.then_expr)
+      ast o, AST::CaseOpt, :value => transform(o.values), :statements => transform(o.then_expr)
     end
 
     def transform_ResourceBody o
       # expects AST, AST::ASTArray of AST
-      ast AST::ResourceInstance, :title => transform(o.title), :parameters => transform(o.operations)
+      ast o, AST::ResourceInstance, :title => transform(o.title), :parameters => transform(o.operations)
     end
 
     def transform_ResourceDefaultsExpression o
-      ast AST::ResourceDefaults, :type => o.type_ref.value, :parameters => transform(o.operations)
+      ast o, AST::ResourceDefaults, :type => o.type_ref.value, :parameters => transform(o.operations)
     end
 
     # Transformation of ResourceExpression requires calling a method on the resulting
@@ -603,7 +602,7 @@ module Puppet; module Pops; module Impl; module Model
     #
     def transform_ResourceExpression o
       raise "Unacceptable type name expression" unless o.type_name.is_a? Model::QualifiedName  
-      resource = ast AST::Resource, :type => o.type_name.value, :instances => transform(o.bodies)
+      resource = ast o, AST::Resource, :type => o.type_name.value, :instances => transform(o.bodies)
       resource.send("#{o.form}=", true) unless o.form == :regular
       resource
     end
@@ -619,11 +618,11 @@ module Puppet; module Pops; module Impl; module Model
       else
         raise "Unacceptable select expression" unless o.left_expr.kind_of? Model::Literal
       end
-      ast AST::Selector, :param => transform(o.left_expr), :values => transform(o.selectors)
+      ast o, AST::Selector, :param => transform(o.left_expr), :values => transform(o.selectors)
     end
 
     def transform_SelectorEntry o
-      ast AST::ResourceParam, :param => transform(o.matching_expr), :value => transform(o.value_expr)
+      ast o, AST::ResourceParam, :param => transform(o.matching_expr), :value => transform(o.value_expr)
     end
 
     def transform_Object o
