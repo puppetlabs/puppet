@@ -12,15 +12,14 @@ module Puppet; module Pops; module Impl; module Model
 
   # The receiver of `import(file)` calls; once per imported file, or nil if imports are ignored
   #
-  
+
   # Transforms a Pops::Model to classic Puppet AST.
-  # TODO: Location not handled yet
   # TODO: Documentation is currently skipped completely (it is only used for Rdoc)
   #
   class AstTransformer
 
     attr_reader :importer
-    
+
     def initialize(source_file = "unknown-file", importer=nil)
       @@transform_visitor ||= Puppet::Pops::API::Visitor.new(nil,"transform",0,0)
       @@query_transform_visitor ||= Puppet::Pops::API::Visitor.new(nil,"query",0,0)

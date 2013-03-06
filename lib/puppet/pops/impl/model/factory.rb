@@ -3,8 +3,7 @@ require 'puppet/pops/api/adapters'
 require 'puppet/pops/api/utils'
 
 module Puppet; module Pops; module Impl; module Model
-
-# Factory is a helper class that makes construction of a Pops Model 
+# Factory is a helper class that makes construction of a Pops Model
 # much more convenient. It can be viewed as a small internal DSL for model
 # constructions.
 # For usage see tests using the factory.
@@ -14,12 +13,11 @@ module Puppet; module Pops; module Impl; module Model
 #
 class Factory
   Model = Puppet::Pops::API::Model
-  
+
   attr_accessor :current
 
   # Shared build_visitor, since there are many instances of Factory being used
   @@build_visitor = Puppet::Pops::API::Visitor.new(self, "build")
-
   # Initialize a factory with a single object, or a class with arguments applied to build of
   # created instance
   #
@@ -30,15 +28,15 @@ class Factory
   # Polymorphic build
   def build(o, *args)
     begin
-    @@build_visitor.visit_this(self, o, *args)
+      @@build_visitor.visit_this(self, o, *args)
     rescue =>e
       # require 'debugger'; debugger # enable this when in trouble...
       raise e
     end
   end
-  
+
   # Building of Model classes
-  
+
   def build_ArithmeticExpression(o, op, a, b)
     o.operator = op
     build_BinaryExpression(o, a, b)
@@ -70,9 +68,9 @@ class Factory
 
   def build_BlockExpression(o, *args)
     args.each {|expr| o.addStatements(to_ops(expr)) }
-    o  
+    o
   end
-  
+
   def build_CollectExpression(o, type_expr, query_expr, attribute_operations)
     o.type_expr = to_ops(type_expr)
     o.query = build(query_expr)
@@ -89,25 +87,25 @@ class Factory
     args.each {|expr| o.addSegments(build(expr)) }
     o
   end
-  
+
   def build_CreateTypeExpression(o, name, super_name = nil)
     o.name = name
     o.super_name = super_name
     o
   end
-  
+
   def build_CreateEnumExpression(o, *args)
     o.name = args.slice(0) if args.size == 2
     o.values = build(args.last)
     o
   end
-  
+
   def build_CreateAttributeExpression(o, name, datatype_expr)
     o.name = name
     o.type = to_ops(datatype_expr)
     o
   end
-  
+
   # @param name [String] a valid classname
   # @param parameters [Array<Model::Parameter>] may be empty
   # @param parent_class_name [String, nil] a valid classname referencing a parent class, optional.
@@ -120,37 +118,37 @@ class Factory
     o
   end
 
-#  # @param name [String] a valid classname
-#  # @param parameters [Array<Model::Parameter>] may be empty
-#  # @param body [Array<Expression>, Expression, nil] expression that constitute the body
-#  # @return [Model::HostClassDefinition] configured from the parameters
-#  #
-#  def build_ResourceTypeDefinition(o, name, parameters, body)
-#    build_NamedDefinition(o, name, parameters, body)
-#    o.name = name
-#    parameters.each {|p| o.addParameters(build(p)) }
-#    b = f_build_body(body)
-#    o.body = b.current if b
-#    o
-#  end
+  #  # @param name [String] a valid classname
+  #  # @param parameters [Array<Model::Parameter>] may be empty
+  #  # @param body [Array<Expression>, Expression, nil] expression that constitute the body
+  #  # @return [Model::HostClassDefinition] configured from the parameters
+  #  #
+  #  def build_ResourceTypeDefinition(o, name, parameters, body)
+  #    build_NamedDefinition(o, name, parameters, body)
+  #    o.name = name
+  #    parameters.each {|p| o.addParameters(build(p)) }
+  #    b = f_build_body(body)
+  #    o.body = b.current if b
+  #    o
+  #  end
 
   def build_ResourceOverrideExpression(o, resources, attribute_operations)
     o.resources = build(resources)
     attribute_operations.each {|ao| o.addOperations(build(ao)) }
     o
   end
-  
+
   def build_KeyedEntry(o, k, v)
     o.key = build(k)
     o.value = build(v)
-    o 
+    o
   end
-  
+
   def build_LiteralHash(o, *keyed_entries)
     keyed_entries.each {|entry| o.addEntries build(entry) }
     o
   end
-  
+
   def build_LiteralList(o, *values)
     values.each {|v| o.addValues build(v) }
     o
@@ -161,7 +159,7 @@ class Factory
     o.radix = radix
     o
   end
-  
+
   def build_InstanceReferences(o, type_name, name_expressions)
     o.type_name = build(type_name)
     name_expressions.each {|n| o.addNames(build(n)) }
@@ -180,12 +178,12 @@ class Factory
     o.else_expr= build(els)
     o
   end
-  
+
   def build_MatchExpression(o, op, a, b)
     o.operator = op
     build_BinaryExpression(o, a, b)
   end
-  
+
   # Builds body :) from different kinds of input
   # @param body [nil] unchanged, produces nil
   # @param body [Array<Expression>] turns into a BlockExpression
@@ -208,13 +206,13 @@ class Factory
     o.body = b.current if b
     o
   end
-  
+
   def build_NamedDefinition(o, name, parameters, body)
     build_Definition(o, parameters, body)
     o.name = name
     o
   end
-  
+
   # @param o [Model::NodeDefinition]
   # @param hosts [Array<Expression>] host matches
   # @param parent [Expression] parent node matcher
@@ -226,7 +224,7 @@ class Factory
     o.body = b.current if b
     o
   end
-  
+
   def build_Parameter(o, name, expr)
     o.name = name
     o.value = build(expr) if expr # don't build a nil/nop
@@ -278,100 +276,126 @@ class Factory
     o.expr = ops unless Factory.nop? ops
     o
   end
-  
+
   def build_QualifiedName(o, name)
     o.value = name.to_s
     o
   end
-  
+
   # Factory helpers
-  def f_build_unary(klazz, expr) 
+  def f_build_unary(klazz, expr)
     Factory.new(build(klazz.new, expr))
   end
-  
+
   def f_build_binary_op(klazz, op, left, right)
     Factory.new(build(klazz.new, op, left, right))
-  end  
-  
+  end
+
   def f_build_binary(klazz, left, right)
     Factory.new(build(klazz.new, left, right))
-  end  
+  end
+
   def f_build_vararg(klazz, left, *arg)
     Factory.new(build(klazz.new, left, *arg))
-  end  
-  
+  end
+
   def f_arithmetic(op, r)
     f_build_binary_op(Model::ArithmeticExpression, op, current, r)
   end
-  
+
   def f_comparison(op, r)
     f_build_binary_op(Model::ComparisonExpression, op, current, r)
   end
-  
+
   def f_match(op, r)
     f_build_binary_op(Model::MatchExpression, op, current, r)
   end
-  
+
   # Operator helpers
   def in(r)     f_build_binary(Model::InExpression, current, r);          end
+
   def or(r)     f_build_binary(Model::OrExpression, current, r);          end
+
   def and(r)    f_build_binary(Model::AndExpression, current, r);         end
+
   def not();    f_build_unary(Model::NotExpression, self);                end
+
   def minus();  f_build_unary(Model::UnaryMinusExpression, self);         end
+
   def text();   f_build_unary(Model::TextExpression, self);               end
+
   def var();    f_build_unary(Model::VariableExpression, self);           end
+
   def [](*r);   f_build_vararg(Model::AccessExpression, current, *r);     end
+
   def dot r;    f_build_binary(Model::NamedAccessExpression, current, r); end
+
   def + r;      f_arithmetic(:+, r);                                      end
+
   def - r;      f_arithmetic(:-, r);                                      end
+
   def / r;      f_arithmetic(:/, r);                                      end
+
   def * r;      f_arithmetic(:*, r);                                      end
+
+  def % r;      f_arithmetic(:%, r);                                      end
+
   def << r;     f_arithmetic(:<<, r);                                     end
+
   def >> r;     f_arithmetic(:>>, r);                                     end
+
   def < r;      f_comparison(:<, r);                                      end
+
   def <= r;     f_comparison(:<=, r);                                     end
+
   def > r;      f_comparison(:>, r);                                      end
+
   def >= r;     f_comparison(:>=, r);                                     end
+
   def == r;     f_comparison(:==, r);                                     end
+
   def ne r;     f_comparison(:'!=', r);                                   end
+
   def =~ r;     f_match(:'=~', r);                                        end
+
   def mne r;    f_match(:'!~', r);                                        end
+
   def paren();  f_build_unary(Model::ParenthesizedExpression, current);   end
 
   def relop op, r
     f_build_binary_op(Model::RelationshipExpression, op.to_sym, current, r)
-  end 
+  end
 
   def select *args
     Factory.new(build(Model::SelectorExpression, current, *args))
   end
-  
+
   # For CaseExpression, setting the default for an already build CaseExpression
   def default r
-    current.addOptions(Factory.WHEN(:default, r).current) 
-    self                
+    current.addOptions(Factory.WHEN(:default, r).current)
+    self
   end
 
   def lambda=(lambda)
     current.lambda = lambda.current
     self
   end
-  
-    # Assignment =
+
+  # Assignment =
   def set(r)
     f_build_binary_op(Model::AssignmentExpression, :'=', current, r)
   end
-  
-  # Assignment +=  
+
+  # Assignment +=
   def plus_set(r)
     f_build_binary_op(Model::AssignmentExpression, :'+=', current, r)
   end
-  
+
   def attributes(*args)
     args.each {|a| current.addAttributes(build(a)) }
     self
   end
-  
+
   # Catch all delegation to current
   def method_missing(meth, *args, &block)
     if current.respond_to?(meth)
@@ -380,10 +404,11 @@ class Factory
       super
     end
   end
+
   def respond_to?(meth)
     current.respond_to?(meth) || super
   end
-  
+
   def line(start_line, end_line = nil)
     puts "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
     Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current) do |a|
@@ -392,7 +417,7 @@ class Factory
     end
     self
   end
-  
+
   # Produces [start_line, end_line]
   # @return [Array<Integer, Integer>] start and end lines for the current element
   def loc()
@@ -413,14 +438,14 @@ class Factory
     a = Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
     a.documentation = doc_string
   end
-  
+
   # Returns symbolic information about a expected share of a resource expression given the LHS of a resource expr.
   #
   # * `name { }` => `:resource`,  create a resource of the given type
   # * `Name { }` => ':defaults`, set defauls for the referenced type
   # * `Name[] { }` => `:override`, ioverrides nstances referenced by LHS
   # * _any other_ => ':error', all other are considered illegal
-  #  
+  #
   def Factory.resource_shape(expr)
     expr = expr.current if expr.is_a?(Factory)
     case expr
@@ -437,26 +462,43 @@ class Factory
     end
   end
   # Factory starting points
-  
-  def Factory.literal(o);                   new(o);                                                 end  
+
+  def Factory.literal(o);                   new(o);                                                 end
+
   def Factory.minus(o);                     new(o).minus;                                           end
+
   def Factory.var(o);                       new(o).var;                                             end
+
   def Factory.block(*args);                 new(Model::BlockExpression, *args);                     end
+
   def Factory.string(*args);                new(Model::ConcatenatedString, *args);                  end
+
   def Factory.text(o);                      new(o).text;                                            end
+
   def Factory.IF(test_e,then_e,else_e);     new(Model::IfExpression, test_e, then_e, else_e);       end
+
   def Factory.UNLESS(test_e,then_e,else_e); new(Model::UnlessExpression, test_e, then_e, else_e);   end
+
   def Factory.CASE(test_e,*options);        new(Model::CaseExpression, test_e, *options);           end
+
   def Factory.WHEN(values_list, block);     new(Model::CaseOption, values_list, block);             end
+
   def Factory.MAP(match, value);            new(Model::SelectorEntry, match, value);                end
 
   def Factory.TYPE(name, super_name=nil);   new(Model::CreateTypeExpression, name, super_name);     end
+
   def Factory.ATTR(name, type_expr=nil);    new(Model::CreateAttributeExpression, name, type_expr); end
+
   def Factory.ENUM(*args);                  new(Model::CreateEnumExpression, *args);                end
+
   def Factory.KEY_ENTRY(key, val);          new(Model::KeyedEntry, key, val);                       end
+
   def Factory.HASH(entries);                new(Model::LiteralHash, *entries);                      end
+
   def Factory.LIST(entries);                new(Model::LiteralList, *entries);                      end
+
   def Factory.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
+
   def Factory.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
@@ -467,6 +509,7 @@ class Factory
     o = new(Model::QualifiedName, o) unless o.is_a? Model::QualifiedName
     o
   end
+
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
@@ -475,9 +518,9 @@ class Factory
     o = new(Model::QualifiedReference, o) unless o.is_a? Model::QualifiedReference
     o
   end
-  
+
   def Factory.TEXT(expr)
-    new(Model::TextExpression, expr) 
+    new(Model::TextExpression, expr)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
@@ -488,7 +531,7 @@ class Factory
   end
 
   # Convert input string to either a qualified name, or a LiteralNumber with radix
-  # 
+  #
   def Factory.QNAME_OR_NUMBER(name)
     if n_radix = Puppet::Pops::API::Utils.to_n_with_radix(name)
       new(Model::LiteralNumber, *n_radix)
@@ -496,7 +539,7 @@ class Factory
       new(Model::QualifiedName, name)
     end
   end
-  
+
   def Factory.QREF(name)
     new(Model::QualifiedReference, name)
   end
@@ -509,7 +552,7 @@ class Factory
     new(Model::ExportedQuery, query_expr)
   end
 
-  # Used by regular grammar, egrammar creates an AccessExpression instead, and evaluation determines 
+  # Used by regular grammar, egrammar creates an AccessExpression instead, and evaluation determines
   # if access is to instances or something else.
   #
   def Factory.INSTANCE(type_name, name_expressions)
@@ -523,7 +566,7 @@ class Factory
   def Factory.CALL_NAMED(name, rval_required, argument_list)
     unless name.kind_of?(Model::PopsObject)
       name = Factory.fqn(name) unless name.is_a?(Factory)
-    end    
+    end
     new(Model::CallNamedFunctionExpression, name, rval_required, *argument_list)
   end
 
@@ -534,7 +577,7 @@ class Factory
   def Factory.COLLECT(type_expr, query_expr, attribute_operations)
     new(Model::CollectExpression, Factory.fqr(type_expr), query_expr, attribute_operations)
   end
-  
+
   def Factory.IMPORT(files)
     new(Model::ImportExpression, files)
   end
@@ -571,19 +614,19 @@ class Factory
   def Factory.HOSTCLASS(name, parameters, parent, body)
     new(Model::HostClassDefinition, name, parameters, parent, body)
   end
-  
+
   def Factory.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
-  end 
+  end
 
   def Factory.LAMBDA(parameters, body)
     new(Model::LambdaExpression, parameters, body)
-  end 
+  end
 
   def Factory.nop? o
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
-  
+
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list. Also transforms a "call" to `import` into an ImportExpression.
   #
@@ -594,7 +637,7 @@ class Factory
       if name.is_a? Model::QualifiedName
         if name.value() == 'import'
           memo[-1] = Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
-        else  
+        else
           memo[-1] = Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
         end
       else
@@ -607,59 +650,59 @@ class Factory
       end
       memo
     end
-    
+
   end
 
   # Building model equivalences of Ruby objects
   # Allows passing regular ruby objects to the factory to produce instructions
   # that when evaluated produce the same thing.
-      
+
   def build_String(o)
     x = Model::LiteralString.new
     x.value = o;
     x
   end
-  
+
   def build_NilClass(o)
     x = Model::Nop.new
     x
   end
-  
+
   def build_TrueClass(o)
     x = Model::LiteralBoolean.new
     x.value = o
     x
   end
-  
+
   def build_FalseClass(o)
     x = Model::LiteralBoolean.new
     x.value = o
     x
   end
-  
+
   def build_Fixnum(o)
     x = Model::LiteralNumber.new
     x.value = o;
     x
   end
-  
+
   def build_Float(o)
     x = Model::LiteralNumber.new
     x.value = o;
     x
   end
-  
+
   def build_Regexp(o)
     x = Model::LiteralRegularExpression.new
     x.value = o;
     x
   end
-  
+
   # If building a factory, simply unwrap the model oject contained in the factory.
   def build_Factory(o)
     o.current
   end
-  
+
   # Creates a String literal, unless the symbol is one of the special :undef, or :default
   # which instead creates a LiterlUndef, or a LiteralDefault.
   def build_Symbol(o)
@@ -672,14 +715,14 @@ class Factory
       build_String(o.to_s)
     end
   end
-  
+
   # Creates a LiteralList instruction from an Array, where the entries are built.
   def build_Array(o)
     x = Model::LiteralList.new
     o.each { |v| x.addValues(build(v)) }
     x
   end
-  
+
   # Create a LiteralHash instruction from a hash, where keys and values are built
   #
   def build_Hash(o)
@@ -695,28 +738,28 @@ class Factory
     args.each {|x| o.addArguments(to_ops(x)) }
     o
   end
-  
-#  # @param rval_required [Boolean] if the call must produce a value
-#  def build_CallNamedFunctionExpression(o, name, rval_required, *args)
-#    build_CallExpression(o, name, rval_required, *args)
-##    o.functor_expr = build(name)
-##    o.rval_required = rval_required
-##    args.each {|x| o.addArguments(build(x)) }
-#    o
-#  end
+
+  #  # @param rval_required [Boolean] if the call must produce a value
+  #  def build_CallNamedFunctionExpression(o, name, rval_required, *args)
+  #    build_CallExpression(o, name, rval_required, *args)
+  ##    o.functor_expr = build(name)
+  ##    o.rval_required = rval_required
+  ##    args.each {|x| o.addArguments(build(x)) }
+  #    o
+  #  end
 
   def build_CallMethodExpression(o, functor, rval_required, lambda, *args)
     build_CallExpression(o, functor, rval_required, *args)
     o.lambda = lambda
     o
   end
-  
+
   def build_CaseExpression(o, test, *args)
     o.test = build(test)
     args.each {|opt| o.addOptions(build(opt)) }
-    o 
+    o
   end
-  
+
   def build_CaseOption(o, value_list, then_expr)
     value_list = [value_list] unless value_list.is_a? Array
     value_list.each { |v| o.addValues(build(v)) }
@@ -724,15 +767,15 @@ class Factory
     o.then_expr = to_ops(b) if b
     o
   end
-  
+
   # Build a Class by creating an instance of it, and then calling build on the created instance
   # with the given arguments
   def build_Class(o, *args)
     build(o.new(), *args)
   end
-  
+
   # Checks if the object is already a model object, or build it
-  def to_ops(o, *args)    
+  def to_ops(o, *args)
     if o.kind_of?(Model::PopsObject)
       o
     else
