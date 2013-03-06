@@ -1,29 +1,28 @@
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/api/visitor'
-module Puppet; module Pops; module Impl; module Model
 
+module Puppet; module Pops; module Impl; module Model
 # Base class for formatted textual dump of a "model"
 #
 class TreeDumper
   attr_accessor :indent_count
-  
   def initialize initial_indentation = 0
     @@dump_visitor ||= Puppet::Pops::API::Visitor.new(nil,"dump",0,0)
     @indent_count = initial_indentation
   end
-  
+
   def dump(o)
     format(do_dump(o))
   end
-  
+
   def do_dump(o)
     @@dump_visitor.visit_this(self, o)
   end
-  
+
   def indent
-    "  " * indent_count 
+    "  " * indent_count
   end
-      
+
   def format(x)
     result = ""
     parts = format_r(x)
@@ -36,7 +35,7 @@ class TreeDumper
     end
     result
   end
-  
+
   def format_r(x)
     result = []
     case x
@@ -55,8 +54,9 @@ class TreeDumper
     else
       result << x
     end
-    result 
+    result
   end
+
   def is_nop? o
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
