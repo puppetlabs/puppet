@@ -602,7 +602,10 @@ Puppet::Type.newtype(:file) do
   def remove_existing(should)
     return unless s = stat
 
-    self.fail "Could not back up; will not replace" unless perform_backup
+    # Don't perform backup of directories unless we are going to replace them
+    unless s.ftype == "directory" and self[:force] != :true
+      self.fail "Could not back up; will not replace" unless perform_backup
+    end
 
     unless should.to_s == "link"
       return if s.ftype.to_s == should.to_s
