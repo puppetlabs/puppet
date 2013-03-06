@@ -8,7 +8,7 @@ class TreeDumper
   attr_accessor :indent_count
   
   def initialize initial_indentation = 0
-    @dump_visitor = Puppet::Pops::API::Visitor.new(self,"dump",0,0)
+    @@dump_visitor ||= Puppet::Pops::API::Visitor.new(nil,"dump",0,0)
     @indent_count = initial_indentation
   end
   
@@ -17,7 +17,7 @@ class TreeDumper
   end
   
   def do_dump(o)
-    @dump_visitor.visit(o)
+    @@dump_visitor.visit_this(self, o)
   end
   
   def indent
