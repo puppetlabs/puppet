@@ -597,34 +597,35 @@ Puppet::Type.newtype(:file) do
     )
   end
 
-  # Remove any existing data.  This is only used when dealing with
-  # links or directories.
+  # Back up and remove the file or directory at `self[:path]`.
+  #
+  # @param  [Symbol] should The file type replacing the current content.
+  # @return [Boolean] True if the file was removed, else False
+  # @raises [fail???] If the current file isn't one of %w{file link directory} and can't be removed.
   def remove_existing(should)
-    return unless s = stat
+    wanted_type = should.to_s
+    current_type = read_current_type
 
-    self.fail "Could not back up; will not replace" unless perform_backup
-
-    unless should.to_s == "link"
-      return if s.ftype.to_s == should.to_s
+    if current_type.nil?
+      return false
     end
 
-    case s.ftype
+    if can_backup?(current_type)
+      backup_existing
+    end
+
+    if wanted_type != "link" and current_type == wanted_type
+      return false
+    end
+
+    case current_type
     when "directory"
-      if self[:force] == :true
-        debug "Removing existing directory for replacement with #{should}"
-        FileUtils.rmtree(self[:path])
-      else
-        notice "Not removing directory; use 'force' to override"
-        return
-      end
+      return remove_directory(wanted_type)
     when "link", "file"
-      debug "Removing existing #{s.ftype} for replacement with #{should}"
-      ::File.unlink(self[:path])
+      return remove_file(current_type, wanted_type)
     else
-      self.fail "Could not back up files of type #{s.ftype}"
+      self.fail "Could not back up files of type #{current_type}"
     end
-    @stat = :needs_stat
-    true
   end
 
   def retrieve
@@ -746,6 +747,64 @@ Puppet::Type.newtype(:file) do
 
   private
 
+  # @return [String] The type of the current file, cast to a string.
+  def read_current_type
+    stat_info = stat
+    if stat_info
+      stat_info.ftype.to_s
+    else
+      nil
+    end
+  end
+
+  # @return [Boolean] If the current file can be backed up and needs to be backed up.
+  def can_backup?(type)
+    if type == "directory" and self[:force] == :false
+      # (#18110) Directories cannot be removed without :force, so it doesn't
+      # make sense to back them up.
+      false
+    else
+      true
+    end
+  end
+
+  # @return [Boolean] True if the directory was removed
+  # @api private
+  def remove_directory(wanted_type)
+    if self[:force] == :true
+      debug "Removing existing directory for replacement with #{wanted_type}"
+      FileUtils.rmtree(self[:path])
+      stat_needed
+      true
+    else
+      notice "Not removing directory; use 'force' to override"
+      false
+    end
+  end
+
+  # @return [Boolean] if the file was removed (which is always true currently)
+  # @api private
+  def remove_file(current_type, wanted_type)
+    debug "Removing existing #{current_type} for replacement with #{wanted_type}"
+    ::File.unlink(self[:path])
+    stat_needed
+    true
+  end
+
+  def stat_needed
+    @stat = :needs_stat
+  end
+
+  # Back up the existing file at a given prior to it being removed
+  # @api private
+  # @raise [Puppet::Error] if the file backup failed
+  # @return [void]
+  def backup_existing
+    unless perform_backup
+      raise Puppet::Error, "Could not back up; will not replace"
+    end
+  end
+
   # Should we validate the checksum of the file we're writing?
   def validate_checksum?
     self[:checksum] !~ /time/
@@ -765,8 +824,6 @@ Puppet::Type.newtype(:file) do
   def write_content(file)
     (content = property(:content)) && content.write(file)
   end
-
-  private
 
   def write_temporary_file?
     # unfortunately we don't know the source file size before fetching it
