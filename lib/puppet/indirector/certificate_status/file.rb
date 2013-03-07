@@ -79,4 +79,9 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
       nil
     end
   end
+
+  def validate_key(request)
+    # We only use desired_state from the instance and use request.key
+    # otherwise, so the name does not need to match
+  end
 end
