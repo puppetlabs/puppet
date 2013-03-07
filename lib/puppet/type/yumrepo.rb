@@ -221,6 +221,22 @@ module Puppet
       newvalue(/.*/) { }
     end
 
+    newproperty(:mirrorlist_expire, :parent => Puppet::IniProperty) do
+      desc "Time (in seconds) after which the mirrorlist locally cached
+        will expire.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      # Should really check that it's a valid URL
+      newvalue(%r{[0-9]+}) { }
+    end
+
+    newproperty(:metalink, :parent => Puppet::IniProperty) do
+      desc "Specifies a URL to a metalink file for the repomd.xml.
+        #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      # Should really check that it's a valid URL
+      newvalue(/.*/) { }
+    end
+
     newproperty(:baseurl, :parent => Puppet::IniProperty) do
       desc "The URL for this repository. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
@@ -249,6 +265,20 @@ module Puppet
       newvalue(:absent) { self.should = :absent }
       # Should really check that it's a valid URL
       newvalue(/.*/) { }
+    end
+
+    newproperty(:gpgcakey, :parent => Puppet::IniProperty) do
+      desc "The URL for the GPG CA key for this repository. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      # Should really check that it's a valid URL
+      newvalue(/.*/) { }
+    end
+
+    newproperty(:repo_gpgcheck, :parent => Puppet::IniProperty) do
+      desc "This tells yum whether or not it should perform a GPG
+        signature check on the repodata from this repository. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{(0|1)}) { }
     end
 
     newproperty(:include, :parent => Puppet::IniProperty) do
@@ -287,7 +317,7 @@ module Puppet
       desc "The failover methode for this repository; should be either
         `roundrobin` or `priority`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{roundrobin|priority}) { }
+      newvalue(%r{(roundrobin|priority)}) { }
     end
 
     newproperty(:keepalive, :parent => Puppet::IniProperty) do
@@ -297,11 +327,18 @@ module Puppet
       newvalue(%r{(0|1)}) { }
     end
 
-     newproperty(:http_caching, :parent => Puppet::IniProperty) do
-       desc "What to cache from this repository. #{ABSENT_DOC}"
-       newvalue(:absent) { self.should = :absent }
-       newvalue(%r(packages|all|none)) { }
-     end
+    newproperty(:http_caching, :parent => Puppet::IniProperty) do
+      desc "What to cache from this repository. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{(packages|all|none)}) { }
+    end
+
+    newproperty(:skip_if_unavailable, :parent => Puppet::IniProperty) do
+      desc "Control whether yum will continue running if this repository
+        cannot be contacted for any reason.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{(0|1)}) { }
+    end
 
     newproperty(:timeout, :parent => Puppet::IniProperty) do
       desc "Number of seconds to wait for a connection before timing
@@ -310,11 +347,19 @@ module Puppet
       newvalue(%r{[0-9]+}) { }
     end
 
+    newproperty(:retries, :parent => Puppet::IniProperty) do
+      desc "Set the number of times any attempt to retrieve a file should
+        retry before returning an error. Setting this to `0` makes yum 
+       try forever.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{[0-9]+}) { } 
+    end
+
     newproperty(:metadata_expire, :parent => Puppet::IniProperty) do
       desc "Number of seconds after which the metadata will expire.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{[0-9]+}) { }
+      newvalue(%r{[0-9]+[d|h|m]?|never}) { }
     end
 
     newproperty(:protect, :parent => Puppet::IniProperty) do
@@ -337,6 +382,25 @@ module Puppet
       desc "Cost of this repository.\n#{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{\d+}) { }
+    end
+
+    newproperty(:throttle, :parent => Puppet::IniProperty) do
+      desc "Enable bandwidth throttling for downloads. This option
+        can be expressed as a absolute data rate in bytes/sec or a
+        percentage `60%`. An SI prefix (k, M or G) may be appended
+        to the data rate values.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{[.0-9]+[k|M|G|%]?}) { }
+    end
+
+    newproperty(:bandwidth, :parent => Puppet::IniProperty) do
+      desc "Use to specify the maximum available network bandwidth
+        in bytes/second. Used with the `throttle` option. If `throttle`
+        is a percentage and `bandwidth` is `0` then bandwidth throttling
+        will be disabled. If `throttle` is expressed as a data rate then
+        this option is ignored.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{[.0-9]+[k|M|G]?}) { }
     end
 
     newproperty(:proxy, :parent => Puppet::IniProperty) do
