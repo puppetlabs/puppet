@@ -39,7 +39,7 @@ puppetd=${PUPPETD-/usr/bin/puppet}
 RETVAL=0
 
 PUPPET_OPTS="agent"
-[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
 
