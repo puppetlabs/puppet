@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_name
     name = self.rcvar[1]
     self.error("No rcvar name found in rcvar") if name.nil?
-    name = name.gsub!(/(.*)(_enable)?=(.*)/, '\1')
+    name = name.gsub!(/^(.*)(_enable)?=(.*)/, '\1')
     self.error("rcvar name is empty") if name.nil?
     self.debug("rcvar name is #{name}")
     name
@@ -51,7 +51,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_value
     value = self.rcvar[1]
     self.error("No rcvar value found in rcvar") if value.nil?
-    value = value.gsub!(/(.*)(_enable)?="?(\w+)"?/, '\3')
+    value = value.gsub!(/^(.*)(_enable)?="?(\w+)"?/, '\3')
     self.error("rcvar value is empty") if value.nil?
     self.debug("rcvar value is #{value}")
     value
@@ -73,7 +73,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     [rcconf, rcconf_local, rcconf_dir + "/#{service}"].each do |filename|
       if File.exists?(filename)
         s = File.read(filename)
-        if s.gsub!(/(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+        if s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
           File.open(filename, File::WRONLY) { |f| f << s }
           self.debug("Replaced in #{filename}")
           success = true
