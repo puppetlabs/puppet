@@ -4,40 +4,47 @@ Puppet::Parser::Functions::newfunction(
   :arity => -2, 
   :doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of entries from the first
-  argument and returns an array with the result of each invokation of the parameterized block.
+  argument (_the collection_) and returns the last result of the invocation of the parameterized block.
 
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the last
   a parameterized block as produced by the puppet syntax:
 
-    $a.reduce {|$x| ... }
+    $a.reduce |$memo, $x| { ... }
 
   When the first argument is an Array, the block is called with each entry in turn. When the first argument
   is a hash each entry is converted to an array with `[key, value]` before being fed to the block. An optional
   'start memo' value may be supplied as an argument between the array/hash and mandatory block.
+  
+  If no 'start memo' is given, the first invocation of the parameterized block will be given the first and second
+  elements of the collection, and if the collection has fewer than 2 elements, the first
+  element is produced as the result of the reduction without invocation of the block.
+  
+  On each subsequent invocations, the produced value of the invoked parameterized block is given as the memo in the
+  next invocation. 
 
   *Examples*
 
     # Reduce an array  
     $a = [1,2,3]
-    $a.reduce {|$memo, $entry| = $memo + $entry }
+    $a.reduce |$memo, $entry| { $memo + $entry }
     #=> 6
 
     # Reduce hash values  
     $a = {a => 1, b => 2, c => 3}
-    $a.reduce {|$memo, $entry| = [sum, $memo[1]+$entry[1]] }
+    $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
     #=> [sum, 6]
    
-  It is possible to provide a starting 'memo' as a regular argument.    
+  It is possible to provide a starting 'memo' as an argument.    
   
   *Examples*
     # Reduce an array  
     $a = [1,2,3]
-    $a.reduce(4) {|$memo, $entry| = $memo + $entry }
+    $a.reduce(4) |$memo, $entry| { $memo + $entry }
     #=> 10
     
     # Reduce hash values  
     $a = {a => 1, b => 2, c => 3}
-    $a.reduce([na, 4]) {|$memo, $entry| = [sum, $memo[1]+$entry[1]] }
+    $a.reduce([na, 4]) |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
     #=> [sum, 10]
   
   Since 3.2       

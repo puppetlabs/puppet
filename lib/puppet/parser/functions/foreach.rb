@@ -4,7 +4,7 @@ Puppet::Parser::Functions::newfunction(
   :arity => 2, 
   :doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of selected entries from the first
-  argument and returns the result returned by the last application.
+  argument and returns the first argument.
   
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
   a parameterized block as produced by the puppet syntax:
@@ -13,7 +13,7 @@ Puppet::Parser::Functions::newfunction(
       
   When the first argument is an Array, the parameterized block should define one or two block parameters.
   For each application of the block, the next element from the array is selected, and it is passed to
-  the block if the block has one parameter.args If the block has two parameters, the first is the elements
+  the block if the block has one parameter. If the block has two parameters, the first is the elements
   index, and the second the value. The index starts from 0.
   
     $a.foreach {|$index, $value| ... }
@@ -44,15 +44,15 @@ Puppet::Parser::Functions::newfunction(
     result = nil
     if serving_size == 1
       (o.size).times do
-        result = pblock.call(scope, enumerator.next)
+        pblock.call(scope, enumerator.next)
       end
     else
       (o.size).times do
-        result = pblock.call(scope, index, enumerator.next)
+        pblock.call(scope, index, enumerator.next)
         index = index +1
       end
     end
-    result
+    o
   end
 
   def foreach_Hash(o, scope, pblock)
@@ -70,14 +70,14 @@ Puppet::Parser::Functions::newfunction(
     result = nil
     if serving_size == 1
       (o.size).times do
-        result = pblock.call(scope, enumerator.next)
+        pblock.call(scope, enumerator.next)
       end
     else
       (o.size).times do
-        result = pblock.call(scope, *enumerator.next)
+        pblock.call(scope, *enumerator.next)
       end
     end
-    result
+    o
   end
 
   raise ArgumentError, ("foreach(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
