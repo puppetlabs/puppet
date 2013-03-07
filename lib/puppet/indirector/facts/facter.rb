@@ -55,7 +55,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
 
     result.add_local_facts
-    result.stringify
+    Puppet[:stringify_facts] ? result.stringify : result.sanitize
 
     result
   end

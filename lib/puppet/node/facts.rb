@@ -39,8 +39,17 @@ class Puppet::Node::Facts
 
   # Convert all fact values into strings.
   def stringify
+    Puppet.deprecation_warning("Stringifying facts is deprecated, see the stringify_facts setting")
     values.each do |fact, value|
       values[fact] = value.to_s
+    end
+  end
+
+  # Sanitize fact values by converting everything not a string, boolean
+  # numeric, array or hash into strings.
+  def sanitize
+    values.each do |fact, value|
+      values[fact] = sanitize_fact value
     end
   end
 
@@ -88,5 +97,22 @@ class Puppet::Node::Facts
     newvals = values.dup
     newvals.find_all { |name, value| name.to_s =~ /^_/ }.each { |name, value| newvals.delete(name) }
     newvals
+  end
+
+  def sanitize_fact(fact)
+    if fact.is_a? Hash then
+      ret = {}
+      fact.each_pair { |k,v| ret[sanitize_fact k]=sanitize_fact v }
+      ret
+    elsif fact.is_a? Array then
+      fact.collect { |i| sanitize_fact i }
+    elsif fact.is_a? Numeric \
+      or fact.is_a? TrueClass \
+      or fact.is_a? FalseClass \
+      or fact.is_a? String
+      fact
+    else
+      fact.to_s
+    end
   end
 end
