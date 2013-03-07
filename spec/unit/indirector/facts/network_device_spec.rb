@@ -54,14 +54,6 @@ describe Puppet::Node::Facts::NetworkDevice do
 
       @device.find(@request)
     end
-
-    it "should convert all facts into strings" do
-      facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:stringify)
-
-      @device.find(@request)
-    end
   end
 
   describe Puppet::Node::Facts::NetworkDevice, " when saving facts" do
