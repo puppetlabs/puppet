@@ -127,6 +127,15 @@ describe Puppet::Pops::Impl::Parser::Parser do
       end
     end
 
+  context "reported issues in 3.x" do
+    it "should not screw up on brackets in title of resource #19632" do
+      dump(parse('notify { "thisisa[bug]": }')).should == [
+        "(resource notify",
+        "  ('thisisa[bug]'))",
+        ].join("\n")
+    end
+  end
+
   context "When parsing collection" do
     context "of virtual resources" do
       it "File <| |>" do
