@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :pip,
 
   desc "Python packages via `pip`."
 
-  has_feature :installable, :uninstallable, :upgradeable, :versionable
+  has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options
 
   # Parse lines of output from `pip freeze`, which are structured as
   # _package_==_version_.
@@ -87,6 +87,23 @@ Puppet::Type.type(:package).provide :pip,
         args << "--upgrade" << @resource[:name]
       else
         args << @resource[:name]
+      end
+    end
+    if @resource[:install_options]
+      @resource[:install_options].each do |install_option|
+        if install_option.is_a? String 
+          args << install_option
+        elsif install_option.is_a? Hash 
+          install_option.each do |argument,value| 
+            if argument.length == 2 and argument[0] == '-'
+	      args << argument+" "+value
+            else
+       	      args << argument+"='"+value+"'"
+            end
+          end
+        else
+          raise Puppet::Error, "install_options provided is of an unsupported type."
+        end
       end
     end
     lazy_pip *args
