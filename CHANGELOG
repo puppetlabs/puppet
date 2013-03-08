@@ -1,3 +1,29 @@
+2.7.21
+===
+570e4d2 Update CHANGELOG, PUPPETVERSION for 2.7.21
+4b0a7e2 Add missing 2.7.20 CHANGELOG entries
+3ecd376 (#19391) Find the catalog for the specified node name
+c240299 (#19392) Don't validate key for certificate_status
+a1c4abd Don't assume master supports SSLv2
+60eebed Don't require openssl client to return 0 on failure
+12728c0 Display SSL messages so we can match our regex
+70cdc63 Don't assume puppetbindir is defined
+9cbfb9d Remove unnecessary rubygems require
+0f4ac20 Run openssl from windows when trying to downgrade master
+7d62aa0 Separate tests for same CVEs into separate files
+61109fa Fix order-dependent test failure in rest_authconfig_spec
+a3d3c95 Always read request body when using Rack
+79b875e Acceptance tests for CVEs 2013 (1640, 1652, 1653, 1654, 2274, 2275)
+632e12d (#19531) (CVE-2013-2275) Only allow report save from the node matching the certname
+7df884b Fix module tool acceptance test
+4a272ea Updating module tool acceptance tests with new expectations.
+0a7d61f (#19392) (CVE-2013-1653) Validate instances passed to indirector
+be920ac (#19151) Reject SSLv2 SSL handshakes and ciphers
+516142e (#19391) (CVE-2013-1652) Disallow use_node compiler parameter for remote requests
+bd942ec (#14093) Restore access to the filename in the template
+cf6cf81 (#14093) Remove unsafe attributes from TemplateWrapper
+f2a3d5c (#19393) Safely load YAML from the network
+
 2.7.20
 ===
 cb9696d Update lib/puppet/version.rb for 2.7.20
