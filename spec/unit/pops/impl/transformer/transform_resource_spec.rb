@@ -123,6 +123,30 @@ describe Puppet::Pops::Impl::Parser::Parser do
       end
     end
 
+  context "When parsing Relationships" do
+    it "File[a] -> File[b]" do
+      astdump(parse("File[a] -> File[b]")).should == "(-> (slice file a) (slice file b))"
+    end
+    it "File[a] <- File[b]" do
+      astdump(parse("File[a] <- File[b]")).should == "(<- (slice file a) (slice file b))"
+    end
+    it "File[a] ~> File[b]" do
+      astdump(parse("File[a] ~> File[b]")).should == "(~> (slice file a) (slice file b))"
+    end
+    it "File[a] <~ File[b]" do
+      astdump(parse("File[a] <~ File[b]")).should == "(<~ (slice file a) (slice file b))"
+    end
+    
+    it "Should chain relationships" do
+      astdump(parse("a -> b -> c")).should ==
+        "(-> (-> a b) c)"
+    end
+    it "Should chain relationships" do
+      astdump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]")).should ==
+        "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
+    end
+  end
+
   context "When parsing collection" do
     context "of virtual resources" do
       it "File <| |>" do

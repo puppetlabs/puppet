@@ -307,6 +307,10 @@ class ModelTreeDumper < TreeDumper
     result
   end
 
+  def dump_RelationshipExpression o
+    [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
+  end
+
   def dump_ResourceBody o
     result = [do_dump(o.title), :indent]
     o.operations.each do |p|

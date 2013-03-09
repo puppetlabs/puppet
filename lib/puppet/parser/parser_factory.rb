@@ -34,18 +34,20 @@ module Puppet; module Parser
     end
 
     def parse(string = nil)
-#      # Uncomment this block to also parse using the classoc parser (enables comparison at the end).
-#      begin
-#      classic_result = @classic_parser.parse(string)
-#      rescue
-#        # May fail to parse new syntax
-#        classic_result = nil
-#      end
-      self.string= string if string
+#      return @classic_parser.parse(string)
+      # Uncomment this block to also parse using the classoc parser (enables comparison at the end).
+      begin
+ #     classic_result = @classic_parser.parse(string)
+      rescue
+        # May fail to parse new syntax
+        classic_result = nil
+      end
+
       
       if @file =~ /\.rb$/
-        parse_result = parse_ruby_file
+        return parse_ruby_file
       else
+        self.string= string if string
         parser = Puppet::Pops::Impl::Parser::Parser.new()
         parse_result = if @use == :string
           parser.parse_string(@string)
@@ -64,20 +66,23 @@ module Puppet; module Parser
           parse_result = Puppet::Parser::AST::BlockExpression.new(:children => [parse_result]) if parse_result
         end
       end
-#      # DEBUGGING OUTPUT
-#      # See comment at entry of method to also parse using classic parser
-#      #
+##      # DEBUGGING OUTPUT
+##      # See comment at entry of method to also parse using classic parser
+##      #
 #      original_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(classic_result)
 #      converted_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(parse_result) 
-#      puts "Classic:\n" + original_result
-#      converted = puts "Converted:\n" + converted_result
+##      puts "Classic:\n" + original_result
+##      converted = puts "Converted:\n" + converted_result
              
       result = Puppet::Parser::AST::Hostclass.new('', :code => parse_result)
-      
+
+#      # DEBUGGING COMPARISION      
 #      final_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(result)
 #      if final_result != original_result
+#        puts "Classic:\n" + original_result
+#        puts "Final:\n" + final_result
 #        debugger
-#        puts "Classic and converted result differs"
+#        puts "Classic and final result differs"
 #      end
       result
     end
@@ -88,7 +93,7 @@ module Puppet; module Parser
       @use = :string
     end
     def parse_ruby_file
-      @classic_parser.parse_ruby_file
+      @classic_parser.parse
     end
   end
 end; end

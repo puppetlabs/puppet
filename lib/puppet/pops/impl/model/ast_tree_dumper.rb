@@ -31,6 +31,9 @@ class AstTreeDumper < TreeDumper
   def dump_ArithmeticOperator o
     [o.operator.to_s, do_dump(o.lval), do_dump(o.rval)]
   end
+  def dump_Relationship o
+    [o.arrow.to_s, do_dump(o.left), do_dump(o.right)]
+  end
 
   # Hostname is tricky, it is either a bare word, a string, or default, or regular expression
   # Least evil, all strings except default are quoted
@@ -238,7 +241,7 @@ class AstTreeDumper < TreeDumper
     args = context[:arguments]
     code = context[:code]
     result = ["define", name]
-    result << ["parameters"] + args.collect {|p| _dump_ParameterArray(p) } if args.size() > 0
+    result << ["parameters"] + args.collect {|p| _dump_ParameterArray(p) } if args && args.size() > 0
     if is_nop?(code)
       result << []
     else
