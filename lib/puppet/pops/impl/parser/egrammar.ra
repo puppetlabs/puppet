@@ -80,11 +80,11 @@ any_expression
   : relationship_expression
   
 relationship_expression
-  : resource_expression                                   { result = val[0] }
-  | resource_expression IN_EDGE      resource_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | resource_expression IN_EDGE_SUB  resource_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | resource_expression OUT_EDGE     resource_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
-  | resource_expression OUT_EDGE_SUB resource_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  : resource_expression                                     =LOW  { result = val[0] }
+  | relationship_expression IN_EDGE      relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship_expression IN_EDGE_SUB  relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship_expression OUT_EDGE     relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
+  | relationship_expression OUT_EDGE_SUB relationship_expression  { result = val[0].relop(val[1][:value], val[2]); loc result, val[1] }
   
 #---EXPRESSION
 #
