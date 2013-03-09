@@ -481,14 +481,17 @@ class Puppet::Parser::Scope
 
   def method_missing(method, *args, &block)
     method.to_s =~ /^function_(.*)$/
-    super unless $1
-    super unless Puppet::Parser::Functions.function($1)
+    name = $1
+    super unless name
+    super unless Puppet::Parser::Functions.function(name)
     # In odd circumstances, this might not end up defined by the previous
     # method, so we might as well be certain.
     if respond_to? method
-      send(method, *args)
+      Puppet::Util::Profiler.profile("Called #{name}") do
+        send(method, *args)
+      end
     else
-      raise Puppet::DevError, "Function #{$1} not defined despite being loaded!"
+      raise Puppet::DevError, "Function #{name} not defined despite being loaded!"
     end
   end
 

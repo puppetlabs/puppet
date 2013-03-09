@@ -113,6 +113,15 @@ describe Puppet::Parser::Scope do
     it "raises NoMethodError when prefixed with function_ but it doesn't exist" do
       expect { scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
     end
+
+    it "profiles the execution of the method" do
+      messages = []
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::Measuring.new(proc { |msg| messages << msg }, "id")
+
+      scope.function_sprintf(["%f", 3.14159])
+
+      messages.first.should =~ /Called sprintf/
+    end
   end
 
   describe "when initializing" do
