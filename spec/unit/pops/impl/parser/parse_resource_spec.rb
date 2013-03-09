@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
@@ -19,10 +18,10 @@ end
 # Tests resource parsing.
 # @todo Add more tests for variations on end comma and end semicolon.
 # @todo Add tests for related syntax parse errors
-#  
+#
 describe Puppet::Pops::Impl::Parser::Parser do
   Model ||= Puppet::Pops::API::Model
-  
+
   context "When running these examples, the setup" do
 
     it "should include a ModelTreeDumper for convenient string comparisons" do
@@ -35,23 +34,23 @@ describe Puppet::Pops::Impl::Parser::Parser do
       model.class.should == Model::AssignmentExpression
       dump(model).should == "(= $a 10)"
     end
-   end
+  end
 
   context "When parsing regular resource" do
     it "file { 'title': }" do
       dump(parse("file { 'title': }")).should == [
         "(resource file",
         "  ('title'))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "file { 'title': path => '/somewhere', mode => 0777}" do
       dump(parse("file { 'title': path => '/somewhere', mode => 0777}")).should == [
         "(resource file",
         "  ('title'",
         "    (path => '/somewhere')",
         "    (mode => 0777)))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "file { 'title1': path => 'x'; 'title2': path => 'y'}" do
       dump(parse("file { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
         "(resource file",
@@ -59,7 +58,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (path => 'x'))",
         "  ('title2'",
         "    (path => 'y')))",
-        ].join("\n")
+      ].join("\n")
     end
   end
   context "When parsing resource defaults" do
@@ -70,8 +69,8 @@ describe Puppet::Pops::Impl::Parser::Parser do
       dump(parse("File { mode => 0777}")).should == [
         "(resource-defaults file",
         "  (mode => 0777))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
   end
 
   context "When parsing resource override" do
@@ -100,22 +99,22 @@ describe Puppet::Pops::Impl::Parser::Parser do
       dump(parse("@file { 'title': }")).should ==  "(virtual-resource file\n  ('title'))"
     end
   end
-  
+
   context "When parsing class resource" do
     it "class { 'cname': }" do
       dump(parse("class { 'cname': }")).should == [
         "(resource class",
         "  ('cname'))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "class { 'cname': x => 1, y => 2}" do
       dump(parse("class { 'cname': x => 1, y => 2}")).should == [
         "(resource class",
         "  ('cname'",
         "    (x => 1)",
         "    (y => 2)))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "class { 'cname1': x => 1; 'cname2': y => 2}" do
       dump(parse("class { 'cname1': x => 1; 'cname2': y => 2}")).should == [
         "(resource class",
@@ -123,16 +122,40 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (x => 1))",
         "  ('cname2'",
         "    (y => 2)))",
-        ].join("\n")
-      end
+      ].join("\n")
     end
+  end
 
   context "reported issues in 3.x" do
     it "should not screw up on brackets in title of resource #19632" do
       dump(parse('notify { "thisisa[bug]": }')).should == [
         "(resource notify",
         "  ('thisisa[bug]'))",
-        ].join("\n")
+      ].join("\n")
+    end
+  end
+
+  context "When parsing Relationships" do
+    it "File[a] -> File[b]" do
+      dump(parse("File[a] -> File[b]")).should == "(-> (slice file a) (slice file b))"
+    end
+    it "File[a] <- File[b]" do
+      dump(parse("File[a] <- File[b]")).should == "(<- (slice file a) (slice file b))"
+    end
+    it "File[a] ~> File[b]" do
+      dump(parse("File[a] ~> File[b]")).should == "(~> (slice file a) (slice file b))"
+    end
+    it "File[a] <~ File[b]" do
+      dump(parse("File[a] <~ File[b]")).should == "(<~ (slice file a) (slice file b))"
+    end
+
+    it "Should chain relationships" do
+      dump(parse("a -> b -> c")).should ==
+      "(-> (-> a b) c)"
+    end
+    it "Should chain relationships" do
+      dump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]")).should ==
+      "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
     end
   end
 
@@ -158,12 +181,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
         dump(parse("File <| tag == 'foo' or mode != 0777 |>")).should == "(collect file\n  (<| |> (|| (== tag 'foo') (!= mode 0777))))"
       end
       it "File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>" do
-        dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should == 
-          "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
+        dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should ==
+        "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
       end
       it "File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>" do
-        dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should == 
-          "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"
+        dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should ==
+        "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"
       end
     end
   end
