@@ -21,14 +21,14 @@ describe Puppet::Util::Profiler::WallClock do
   it "logs the number of seconds it took to execute the segment" do
     profiler.profile("Testing") { }
 
-    logger.messages.first.should =~ /in \d\.\d{4} seconds$/
+    logger.messages.first.should =~ /took \d\.\d{4} seconds/
   end
 
   it "logs the number of seconds even when an error is raised" do
     begin
       profiler.profile("Testing") { raise "a problem" }
     rescue
-      logger.messages.first.should =~ /in \d\.\d{4} seconds$/
+      logger.messages.first.should =~ /took \d\.\d{4} seconds/
     end
   end
 

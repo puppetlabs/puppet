@@ -10,17 +10,26 @@ class Puppet::Util::Profiler::WallClock
     @sequence = Sequence.new
   end
 
+  def start
+    Timer.new
+  end
+
+  def finish(context)
+    context.stop
+    "took #{context} seconds"
+  end
+
   def profile(description, &block)
     retval = nil
     @sequence.next
     @sequence.down
-    timer = Timer.new
+    context = start
     begin
       retval = yield
     ensure
-      timer.stop
+      profile_explanation = finish(context)
       @sequence.up
-      @logger.call("[#{@identifier}] #{@sequence} #{description} in #{timer} seconds")
+      @logger.call("[#{@identifier}] #{@sequence} #{description}: #{profile_explanation}")
     end
     retval
   end
