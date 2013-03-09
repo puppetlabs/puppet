@@ -65,7 +65,7 @@ describe Puppet::Network::HTTP::Handler do
 
       handler.process(request, response)
 
-      Puppet::Util::Profiler.current.should be_kind_of(Puppet::Util::Profiler::Measuring)
+      Puppet::Util::Profiler.current.should be_kind_of(Puppet::Util::Profiler::WallClock)
     end
 
     it "should not setup profiler when the profile parameter is missing" do

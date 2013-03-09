@@ -4,7 +4,7 @@ require 'benchmark'
 #
 # @api private
 module Puppet::Util::Profiler
-  require 'puppet/util/profiler/measuring'
+  require 'puppet/util/profiler/wall_clock'
   require 'puppet/util/profiler/none'
 
   NONE = Puppet::Util::Profiler::None.new

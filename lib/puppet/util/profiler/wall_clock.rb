@@ -3,7 +3,7 @@
 # the profiling information.
 #
 # @api private
-class Puppet::Util::Profiler::Measuring
+class Puppet::Util::Profiler::WallClock
   def initialize(logger, identifier)
     @logger = logger
     @identifier = identifier
@@ -26,6 +26,8 @@ class Puppet::Util::Profiler::Measuring
   end
 
   class Timer
+    FOUR_DECIMAL_DIGITS = '%0.4f'
+
     def initialize
       @start = Time.now
     end
@@ -35,12 +37,13 @@ class Puppet::Util::Profiler::Measuring
     end
 
     def to_s
-      format('%0.4f', @finish - @start)
+      format(FOUR_DECIMAL_DIGITS, @finish - @start)
     end
   end
 
   class Sequence
     INITIAL = 0
+    SEPARATOR = '.'
 
     def initialize
       @elements = [INITIAL]
@@ -59,7 +62,7 @@ class Puppet::Util::Profiler::Measuring
     end
 
     def to_s
-      @elements.join('.')
+      @elements.join(SEPARATOR)
     end
   end
 end

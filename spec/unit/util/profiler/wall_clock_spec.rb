@@ -1,10 +1,10 @@
 require 'spec_helper'
 require 'puppet/util/profiler'
 
-describe Puppet::Util::Profiler::Measuring do
+describe Puppet::Util::Profiler::WallClock do
   let(:logger) { SimpleLog.new }
   let(:identifier) { "Profiling ID" }
-  let(:profiler) { Puppet::Util::Profiler::Measuring.new(logger, identifier) }
+  let(:profiler) { Puppet::Util::Profiler::WallClock.new(logger, identifier) }
 
   it "returns the value of the profiled segment" do
     retval = profiler.profile("Testing") { "the return value" }

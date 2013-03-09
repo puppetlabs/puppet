@@ -116,7 +116,7 @@ describe Puppet::Parser::Scope do
 
     it "profiles the execution of the method" do
       messages = []
-      Puppet::Util::Profiler.current = Puppet::Util::Profiler::Measuring.new(proc { |msg| messages << msg }, "id")
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(proc { |msg| messages << msg }, "id")
 
       scope.function_sprintf(["%f", 3.14159])
 
