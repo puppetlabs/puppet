@@ -495,7 +495,7 @@ class TestSnippets < Test::Unit::TestCase
 
         catalog = nil
         assert_nothing_raised("Could not compile catalog") {
-          catalog = Puppet::Resource::Catalog.find(node)
+          catalog = Puppet::Resource::Catalog.find(node.name)
         }
 
         assert_nothing_raised("Could not convert catalog") {
