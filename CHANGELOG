@@ -1,3 +1,28 @@
+2.6.18
+===
+b166c4f (#19391) Find the catalog for the specified node name
+f256c6d Don't assume master supports SSLv2
+bb288aa Don't require openssl client to return 0 on failure
+a11a690 Display SSL messages so we can match our regex
+f07b761 Don't assume puppetbindir is defined
+e617728 Remove unnecessary rubygems require
+75a5f7e Run openssl from windows when trying to downgrade master
+e6b6124 Separate tests for same CVEs into separate files
+bdcf029 Fix order-dependent test failure in rest_authconfig_spec
+66249d4 Always read request body when using Rack
+d5c9a2c (#19392) (CVE-2013-1653) Fix acceptance test to catch unvalidated model on 2.6
+ac44d87 (#19392) (CVE-2013-1653) Validate indirection model in save handler
+b01c728 Acceptance tests for CVEs 2013 (1640, 1652, 1653, 1654, 2274, 2275)
+16fce8e (#19531) (CVE-2013-2275) Only allow report save from the node matching the certname
+7648de2 (#19391) Backport Request#remote? method
+906ab92 (#8858) Explicitly set SSL peer verification mode.
+31dad7d (#8858) Refactor tests to use real HTTP objects
+6a7bd25 (#19392) (CVE-2013-1653) Validate instances passed to indirector
+ccf2e4c (#19391) (CVE-2013-1652) Disallow use_node compiler parameter for remote requests
+add9998 (#19151) Reject SSLv2 SSL handshakes and ciphers
+d9ad70a (#14093) Restore access to the filename in the template
+f45cd4b (#14093) Remove unsafe attributes from TemplateWrapper
+
 2.6.17
 ===
 554eefc Reject directory traversal in store report processor

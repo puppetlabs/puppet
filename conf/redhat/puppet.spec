@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.17
+Version:        2.6.18
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2
@@ -253,8 +253,11 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Sun Mar 10 2013 Matthaus Owens <matthaus@puppetlabs.com> - 2.6.18-1
+- Update for 2.6.18 (CVE-2013-1640, CVE-2013-1652, CVE-2013-1654, CVE-2013-2274, CVE-2013-2275)
+
 * Mon Jul 19 2012 Moses Mendoza <moses@puppetlabs.com> - 2.6.17-1
-- Update for 2.7.17
+- Update for 2.6.17
 
 * Mon Dec 12 2011 Matthaus Litteken <matthaus@puppetlabs.com> - 2.6.13-1
 - Release of 2.6.13
