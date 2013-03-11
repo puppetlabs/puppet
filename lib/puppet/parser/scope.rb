@@ -487,9 +487,7 @@ class Puppet::Parser::Scope
     # In odd circumstances, this might not end up defined by the previous
     # method, so we might as well be certain.
     if respond_to? method
-      Puppet::Util::Profiler.profile("Called #{name}") do
-        send(method, *args)
-      end
+      send(method, *args)
     else
       raise Puppet::DevError, "Function #{name} not defined despite being loaded!"
     end

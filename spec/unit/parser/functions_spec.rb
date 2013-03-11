@@ -2,6 +2,9 @@
 require 'spec_helper'
 
 describe Puppet::Parser::Functions do
+  def callable_functions_from(mod)
+    Class.new { include mod }.new
+  end
 
   it "should have a method for returning an environment-specific module" do
     Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should be_instance_of(Module)
@@ -16,15 +19,15 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling newfunction" do
+    let(:function_module) { Module.new }
     before do
-      @module = Module.new
-      Puppet::Parser::Functions.stubs(:environment_module).returns @module
+      Puppet::Parser::Functions.stubs(:environment_module).returns(function_module)
     end
 
     it "should create the function in the environment module" do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
 
-      @module.should be_method_defined :function_name
+      function_module.should be_method_defined :function_name
     end
 
     it "should warn if the function already exists" do
@@ -37,12 +40,22 @@ describe Puppet::Parser::Functions do
     it "should raise an error if the function type is not correct" do
       lambda { Puppet::Parser::Functions.newfunction("name", :type => :unknown) { |args| } }.should raise_error Puppet::DevError, "Invalid statement type :unknown"
     end
+
+    it "instruments the function to profiles the execution" do
+      messages = []
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(proc { |msg| messages << msg }, "id")
+
+      Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
+      callable_functions_from(function_module).function_name([])
+
+      messages.first.should =~ /Called name/
+    end
   end
 
   describe "when calling function to test function existence" do
+    let(:function_module) { Module.new }
     before do
-      @module = Module.new
-      Puppet::Parser::Functions.stubs(:environment_module).returns @module
+      Puppet::Parser::Functions.stubs(:environment_module).returns(function_module)
     end
 
     it "should return false if the function doesn't exist" do
@@ -65,40 +78,39 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test arity" do
-    before :each do
-      Puppet::Node::Environment.stubs(:current).returns(nil)
-      @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-      @scope = Puppet::Parser::Scope.new(@compiler)
+    let(:function_module) { Module.new }
+    before do
+      Puppet::Parser::Functions.stubs(:environment_module).returns(function_module)
     end
 
     it "should raise an error if the function is called with too many arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
-      lambda { @scope.function_name([1,2,3]) }.should raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1,2,3]) }.should raise_error ArgumentError
     end
 
     it "should raise an error if the function is called with too few arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
-      lambda { @scope.function_name([1]) }.should raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1]) }.should raise_error ArgumentError
     end
 
     it "should not raise an error if the function is called with correct number of arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }
-      lambda { @scope.function_name([1,2]) }.should_not raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1,2]) }.should_not raise_error ArgumentError
     end
 
     it "should raise an error if the variable arg function is called with too few arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
-      lambda { @scope.function_name([1]) }.should raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1]) }.should raise_error ArgumentError
     end
 
     it "should not raise an error if the variable arg function is called with correct number of arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
-      lambda { @scope.function_name([1,2]) }.should_not raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1,2]) }.should_not raise_error ArgumentError
     end
 
     it "should not raise an error if the variable arg function is called with more number of arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => -3) { |args| }
-      lambda { @scope.function_name([1,2,3]) }.should_not raise_error ArgumentError
+      lambda { callable_functions_from(function_module).function_name([1,2,3]) }.should_not raise_error ArgumentError
     end
   end
 
