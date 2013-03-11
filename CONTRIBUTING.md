@@ -49,7 +49,7 @@ top of things.
 
 ## Submitting Changes
 
-* Sign the [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign).
+* Sign the [Contributor License Agreement](http://links.puppetlabs.com/cla).
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the puppetlabs organization.
 * Update your Redmine ticket to mark that you have submitted code and are ready for it to be reviewed.
@@ -59,7 +59,7 @@ top of things.
 
 * [More information on contributing](http://links.puppetlabs.com/contribute-to-puppet)
 * [Bug tracker (Redmine)](http://projects.puppetlabs.com)
-* [Contributor License Agreement](https://projects.puppetlabs.com/contributor_licenses/sign)
+* [Contributor License Agreement](http://links.puppetlabs.com/cla)
 * [General GitHub documentation](http://help.github.com/)
 * [GitHub pull request documentation](http://help.github.com/send-pull-requests/)
 * #puppet-dev IRC channel on freenode.org
