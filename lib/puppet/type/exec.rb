@@ -180,9 +180,11 @@ module Puppet
     end
 
     newparam(:logoutput) do
-      desc "Whether to log output.  Defaults to `on_failure`, which only logs
-        the output when the command has a non-zero exit code.  In addition to
-        the values below, you may set this attribute to any legal log level."
+      desc "Whether to log command output in addition to logging the
+        exit code.  Defaults to `on_failure`, which only logs the output
+        when the command has an exit code that does not match any value
+        specified by the `returns` attribute.  In addition to the values
+        below, you may set this attribute to any legal log level."
 
       defaultto :on_failure
 
