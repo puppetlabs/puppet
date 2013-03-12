@@ -177,6 +177,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
 
+  def validate_key(request)
+    # Validation happens on the remote end
+  end
+
   private
 
   def environment

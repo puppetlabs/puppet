@@ -9,6 +9,10 @@ describe Puppet::Indirector::Terminus do
     class Puppet::AbstractConcept
       extend Puppet::Indirector
       indirects :abstract_concept
+      attr_accessor :name
+      def initialize(name = "name")
+        @name = name
+      end
     end
 
     class Puppet::AbstractConcept::Freedom < Puppet::Indirector::Code
@@ -23,6 +27,7 @@ describe Puppet::Indirector::Terminus do
   let :terminus_class do Puppet::AbstractConcept::Freedom end
   let :terminus       do terminus_class.new end
   let :indirection    do Puppet::AbstractConcept.indirection end
+  let :model          do Puppet::AbstractConcept end
 
   it "should provide a method for setting terminus class documentation" do
     terminus_class.should respond_to(:desc)
@@ -214,6 +219,46 @@ describe Puppet::Indirector::Terminus do
     it "should list the terminus files available to load" do
       Puppet::Util::Autoload.any_instance.stubs(:files_to_load).returns ["/foo/bar/baz", "/max/runs/marathon"]
       Puppet::Indirector::Terminus.terminus_classes('my_stuff').should == [:baz, :marathon]
+    end
+  end
+
+  describe "when validating a request" do
+    let :request do
+      Puppet::Indirector::Request.new(indirection.name, :find, "the_key", instance)
+    end
+
+    describe "`instance.name` does not match the key in the request" do
+      let(:instance) { model.new("wrong_key") }
+
+      it "raises an error " do
+        expect {
+          terminus.validate(request)
+        }.to raise_error(
+          Puppet::Indirector::ValidationError,
+          /Instance name .* does not match requested key/
+        )
+      end
+    end
+
+    describe "`instance` is not an instance of the model class" do
+      let(:instance) { mock "instance" }
+
+      it "raises an error" do
+        expect {
+          terminus.validate(request)
+        }.to raise_error(
+          Puppet::Indirector::ValidationError,
+          /Invalid instance type/
+        )
+      end
+    end
+
+    describe "the instance key and class match the request key and model class" do
+      let(:instance) { model.new("the_key") }
+
+      it "passes" do
+        terminus.validate(request)
+      end
     end
   end
 end

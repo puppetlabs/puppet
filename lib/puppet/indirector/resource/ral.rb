@@ -1,4 +1,7 @@
+require 'puppet/indirector/resource/validator'
+
 class Puppet::Resource::Ral < Puppet::Indirector::Code
+  include Puppet::Resource::Validator
 
   desc "Manipulate resources with the resource abstraction layer. Only used internally."
 

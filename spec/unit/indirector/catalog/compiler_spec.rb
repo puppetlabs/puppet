@@ -53,11 +53,20 @@ describe Puppet::Resource::Catalog::Compiler do
       @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil, :node => @name)
     end
 
-    it "should directly use provided nodes" do
+    it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
       @compiler.expects(:compile).with(@node)
       @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
+    end
+
+    it "rejects a provided node if the request is remote" do
+      @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(true)
+      expect {
+        @compiler.find(@request)
+      }.to raise_error Puppet::Error, /invalid option use_node/i
     end
 
     it "should use the authenticated node name if no request key is provided" do
@@ -99,6 +108,24 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.find(@request)
     end
 
+    it "requires `facts_format` option if facts are passed in" do
+      facts = Puppet::Node::Facts.new("mynode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(:catalog, :find, "mynode", nil, :facts => facts)
+      expect {
+        @compiler.find(request)
+      }.to raise_error ArgumentError, /no fact format provided for mynode/
+    end
+
+    it "rejects facts in the request from a different node" do
+      facts = Puppet::Node::Facts.new("differentnode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(
+        :catalog, :find, "mynode", nil, :facts => facts, :facts_format => "unused"
+      )
+      expect {
+        @compiler.find(request)
+      }.to raise_error Puppet::Error, /fact definition for the wrong node/i
+    end
+
     it "should return the results of compiling as the catalog" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       config = mock 'config'
@@ -133,7 +160,7 @@ describe Puppet::Resource::Catalog::Compiler do
     before do
       Facter.stubs(:value).returns "something"
       @compiler = Puppet::Resource::Catalog::Compiler.new
-      @request = stub 'request', :options => {}
+      @request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
 
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
       Puppet::Node::Facts.indirection.stubs(:save).returns(nil)
