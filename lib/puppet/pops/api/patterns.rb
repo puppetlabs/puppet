@@ -1,8 +1,9 @@
+module Puppet; module Pops; module API; end; end; end;
 
-module Puppet; module Pops; module API;
-  # The Patterns module contains common regular expression patters for the Puppet DSL language
-  module Patterns
-  # Numeric matches hex, octal, decimal, and floating point and captures three parts
+# The Patterns module contains common regular expression patters for the Puppet DSL language
+module Pupet::Pops::API::Patterns
+
+  # NUMERIC matches hex, octal, decimal, and floating point and captures three parts
   # 0 = entire matched number, leading and trailing whitespace included
   # 1 = hexadecimal number
   # 2 = non hex integer portion, possibly with leading 0 (octal)
@@ -12,5 +13,17 @@ module Puppet; module Pops; module API;
   # and a floating point value has group 2 and group 3.
   #
   NUMERIC = %r{^\s*(?:(0[xX][0-9A-Fa-f]+)|(0?\d+)((?:\.\d+)?(?:[eE]-?\d+)?))\s*$}
-  end
-end; end; end;
+
+  # ILLEGAL_P3_1_HOSTNAME matches if a hostname contains illegal characters.
+  # This check does not prevent pathological names like 'a....b', '.....', "---". etc.
+  ILLEGAL_HOSTNAME_CHARS = %r{[^-\w.]}
+
+  # NAME matches a name the same way as the lexer.
+  # This name includes hyphen, which may be illegal in variables, and names in general.
+  NAME = %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*}
+
+  # CLASSREF matches a class referene the same way as the lexer.
+  # This name includes hyphen, which may be illegal in some cases.
+  #
+  CLASSREF = %r{((::){0,1}[A-Z][-\w]*)+}
+end
