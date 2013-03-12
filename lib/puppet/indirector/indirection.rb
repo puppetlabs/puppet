@@ -196,7 +196,7 @@ class Puppet::Indirector::Indirection
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
         if cache? and request.use_cache?
           Puppet.info "Caching #{self.name} for #{request.key}"
-          cache.save request(:save, nil, result, options)
+          cache.save request(:save, key, result, options)
         end
 
         if terminus.respond_to?(:filter)
@@ -310,6 +310,7 @@ class Puppet::Indirector::Indirection
 
     dest_terminus = terminus(terminus_name)
     check_authorization(request, dest_terminus)
+    dest_terminus.validate(request)
 
     dest_terminus
   end

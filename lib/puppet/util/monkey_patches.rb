@@ -41,6 +41,21 @@ end
   end
 }
 
+if defined?(YAML::ENGINE) and YAML::ENGINE.yamler == 'psych'
+  def Psych.safely_load(str)
+    result = Psych.parse(str)
+    if invalid_node = result.find { |node| node.tag =~ /!map:(.*)/ || node.tag =~ /!ruby\/hash:(.*)/ }
+      raise ArgumentError, "Illegal YAML mapping found with tag #{invalid_node.tag}; please use !ruby/object:#{$1} instead"
+    else
+      result.to_ruby
+    end
+  end
+else
+  def YAML.safely_load(str)
+    self.load(str)
+  end
+end
+
 def YAML.dump(*args)
   ZAML.dump(*args)
 end
@@ -354,6 +369,29 @@ unless Dir.respond_to?(:mktmpdir)
     else
       path
     end
+  end
+end
+
+# (#19151) Reject all SSLv2 ciphers and handshakes
+require 'openssl'
+class OpenSSL::SSL::SSLContext
+  if DEFAULT_PARAMS[:options]
+    DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2
+  else
+    DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2
+  end
+  DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+
+  alias __original_initialize initialize
+  private :__original_initialize
+
+  def initialize(*args)
+    __original_initialize(*args)
+    params = {
+      :options => DEFAULT_PARAMS[:options],
+      :ciphers => DEFAULT_PARAMS[:ciphers],
+    }
+    set_params(params)
   end
 end
 

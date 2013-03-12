@@ -40,7 +40,7 @@ shared_examples_for "Indirection Delegator" do
       end
     end
 
-    request = stub 'request', :key => "me", :options => {}
+    request = Puppet::Indirector::Request.new(:indirection, :find, "me", nil)
 
     @indirection.stubs(:request).returns request
 
@@ -101,6 +101,16 @@ shared_examples_for "Delegation Authorizer" do
   end
 end
 
+shared_examples_for "Request validator" do
+  it "asks the terminus to validate the request" do
+    @terminus.expects(:validate).raises(Puppet::Indirector::ValidationError, "Invalid")
+    @terminus.expects(@method).never
+    expect {
+      @indirection.send(@method, "key")
+    }.to raise_error Puppet::Indirector::ValidationError
+  end
+end
+
 describe Puppet::Indirector::Indirection do
   describe "when initializing" do
     # (LAK) I've no idea how to test this, really.
@@ -141,6 +151,7 @@ describe Puppet::Indirector::Indirection do
     before :each do
       @terminus_class = mock 'terminus_class'
       @terminus = mock 'terminus'
+      @terminus.stubs(:validate)
       @terminus_class.stubs(:new).returns(@terminus)
       @cache = stub 'cache', :name => "mycache"
       @cache_class = mock 'cache_class'
@@ -211,6 +222,7 @@ describe Puppet::Indirector::Indirection do
 
       it_should_behave_like "Indirection Delegator"
       it_should_behave_like "Delegation Authorizer"
+      it_should_behave_like "Request validator"
 
       it "should return the results of the delegation" do
         @terminus.expects(:find).returns(@instance)
@@ -389,6 +401,7 @@ describe Puppet::Indirector::Indirection do
 
       it_should_behave_like "Indirection Delegator"
       it_should_behave_like "Delegation Authorizer"
+      it_should_behave_like "Request validator"
 
       it "should return true if the head method returned true" do
         @terminus.expects(:head).returns(true)
@@ -506,6 +519,7 @@ describe Puppet::Indirector::Indirection do
 
       it_should_behave_like "Indirection Delegator"
       it_should_behave_like "Delegation Authorizer"
+      it_should_behave_like "Request validator"
 
       it "should return the result of removing the instance" do
         @terminus.stubs(:destroy).returns "yayness"
@@ -544,6 +558,7 @@ describe Puppet::Indirector::Indirection do
 
       it_should_behave_like "Indirection Delegator"
       it_should_behave_like "Delegation Authorizer"
+      it_should_behave_like "Request validator"
 
       it "should set the expiration date on any instances without one set" do
         @terminus.stubs(:search).returns([@instance])
@@ -712,6 +727,7 @@ describe Puppet::Indirector::Indirection do
     before do
       @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
       @terminus = mock 'terminus'
+      @terminus.stubs(:validate)
       @terminus_class = stub 'terminus class', :new => @terminus
     end
 
