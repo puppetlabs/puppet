@@ -1,6 +1,9 @@
 require 'puppet/indirector/active_record'
+require 'puppet/indirector/resource/validator'
 
 class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
+  include Puppet::Resource::Validator
+
   def search(request)
     type   = request_to_type_name(request)
     host   = request.options[:host]

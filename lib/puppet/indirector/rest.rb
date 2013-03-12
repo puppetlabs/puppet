@@ -108,6 +108,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
 
       raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
+    elsif error.message.empty?
+      # This may be because the server is speaking SSLv2 and we
+      # monkey patch OpenSSL::SSL:SSLContext to reject SSLv2.
+      raise error.exception("#{error.class} with no message")
     else
       raise
     end
@@ -156,6 +160,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
     deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+  end
+
+  def validate_key(request)
+    # Validation happens on the remote end
   end
 
   private

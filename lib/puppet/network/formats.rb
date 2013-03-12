@@ -3,12 +3,12 @@ require 'puppet/network/format_handler'
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   # Yaml doesn't need the class name; it's serialized.
   def intern(klass, text)
-    YAML.load(text)
+    YAML.safely_load(text)
   end
 
   # Yaml doesn't need the class name; it's serialized.
   def intern_multiple(klass, text)
-    YAML.load(text)
+    YAML.safely_load(text)
   end
 
   def render(instance)
@@ -72,7 +72,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
 
   def decode(yaml)
     requiring_zlib do
-      YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
+      YAML.safely_load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
     end
   end
 end

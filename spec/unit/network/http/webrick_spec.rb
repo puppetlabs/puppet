@@ -313,6 +313,10 @@ describe Puppet::Network::HTTP::WEBrick do
       @server.setup_ssl[:SSLEnable].should be_true
     end
 
+    it "should reject SSLv2" do
+      @server.setup_ssl[:SSLOptions].should == OpenSSL::SSL::OP_NO_SSLv2
+    end
+
     it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'" do
       @server.setup_ssl[:SSLVerifyClient].should == OpenSSL::SSL::VERIFY_PEER
     end

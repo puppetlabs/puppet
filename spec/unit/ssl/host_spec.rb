@@ -495,6 +495,7 @@ describe Puppet::SSL::Host do
       @request.stubs(:generate)
       @request.stubs(:name).returns("myname")
       terminus = stub 'terminus'
+      terminus.stubs(:validate)
       Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
       terminus.expects(:save).with { |req| req.instance == @request && req.key == "myname" }.raises "eh"
 

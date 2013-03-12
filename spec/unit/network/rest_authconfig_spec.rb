@@ -85,6 +85,9 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should create default ACL entries if no file have been read" do
+    # The singleton instance is stored as an instance variable we don't have
+    # access to, so.. instance_variable_set. Alas.
+    Puppet::Network::RestAuthConfig.instance_variable_set(:@main, nil)
     Puppet::Network::RestAuthConfig.any_instance.stubs(:exists?).returns(false)
 
     Puppet::Network::RestAuthConfig.any_instance.expects(:insert_default_acl)
@@ -122,6 +125,18 @@ describe Puppet::Network::RestAuthConfig do
       @authconfig.insert_default_acl
     end
 
-  end
+    it '(CVE-2013-2275) allows report submission only for the node matching the certname by default' do
+      acl = {
+        :acl => "~ ^\/report\/([^\/]+)$",
+        :method => :save,
+        :allow => '$1',
+        :authenticated => true
+      }
+      @authconfig.rights.stubs(:[]).returns(true)
+      @authconfig.rights.stubs(:[]).with(acl[:acl]).returns(nil)
 
+      @authconfig.expects(:mk_acl).with(acl)
+      @authconfig.insert_default_acl
+    end
+  end
 end

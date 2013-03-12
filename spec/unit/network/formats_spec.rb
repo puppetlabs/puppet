@@ -55,15 +55,15 @@ describe "Puppet Network Format" do
       @yaml.render_multiple(instances).should == "foo"
     end
 
-    it "should intern by calling 'YAML.load'" do
+    it "should safely load YAML when interning" do
       text = "foo"
-      YAML.expects(:load).with("foo").returns "bar"
+      YAML.expects(:safely_load).with("foo").returns "bar"
       @yaml.intern(String, text).should == "bar"
     end
 
-    it "should intern multiples by calling 'YAML.load'" do
+    it "should safely load YAML when interning multiples" do
       text = "foo"
-      YAML.expects(:load).with("foo").returns "bar"
+      YAML.expects(:safely_load).with("foo").returns "bar"
       @yaml.intern_multiple(String, text).should == "bar"
     end
   end
@@ -120,10 +120,10 @@ describe "Puppet Network Format" do
       @yaml.intern_multiple(String, text).should == "bar"
     end
 
-    it "should decode by base64 decoding, uncompressing and Yaml loading" do
+    it "should decode by base64 decoding, uncompressing and safely Yaml loading" do
       Base64.expects(:decode64).with("zorg").returns "foo"
       Zlib::Inflate.expects(:inflate).with("foo").returns "baz"
-      YAML.expects(:load).with("baz").returns "bar"
+      YAML.expects(:safely_load).with("baz").returns "bar"
       @yaml.decode("zorg").should == "bar"
     end
 
