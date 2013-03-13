@@ -157,6 +157,10 @@ describe Puppet::Pops::Impl::Parser::Parser do
       dump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]")).should ==
       "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
     end
+    it "should create relationships between collects" do
+      dump(parse("File <| mode == 0644 |> -> File <| mode == 0755 |>")).should ==
+        "(-> (collect file\n  (<| |> (== mode 0644))) (collect file\n  (<| |> (== mode 0755))))"
+    end
   end
 
   context "When parsing collection" do
