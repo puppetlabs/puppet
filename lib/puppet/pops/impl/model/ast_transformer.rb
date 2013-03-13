@@ -129,10 +129,8 @@ class AstTransformer
       ast o, AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
 
     when Model::VariableExpression
-      #        ast o, AST::HashOrArrayAccess, :variable => o.left_expr.expr.value(), :key => transform(o.keys()[0])
       ast o, AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
 
-      #when Model::AccessExpression
     else
       ast o, AST::HashOrArrayAccess, :variable => transform(o.left_expr), :key => transform(o.keys()[0])
     end
