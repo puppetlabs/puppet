@@ -137,6 +137,10 @@ module Puppet
         normal log level (usually `notice`), but if the command fails
         (meaning its return code does not match the specified code) then
         any output is logged at the `err` log level."
+
+      validate do |command|
+        raise ArgumentError, "Command must be a String, got value of class #{command.class}" unless command.is_a? String
+      end
     end
 
     newparam(:path) do
