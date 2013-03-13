@@ -187,11 +187,12 @@ module Puppet; module Pops; module API; module Model
   end
 
   # A query expression is an expression that is applied to some collection.
-  # The contained expression may contain different types of relational expressions depending
+  # The contained optional expression may contain different types of relational expressions depending
   # on what the query is applied to.
   #
-  class QueryExpression < UnaryExpression
+  class QueryExpression < Expression
     abstract
+    contains_one_uni 'expr', Expression, :lowerBound => 0
   end
 
   # An exported query is a special form of query that searches for exported objects.
