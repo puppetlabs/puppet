@@ -9,7 +9,7 @@
   :record:
     :special: hourly
     :command: /bin/date
-    :record_type: :freebsd_special
+    :record_type: :crontab
 :long_name:
   :text: "# Puppet Name: long_name"
   :record:
@@ -63,7 +63,7 @@
   :record:
     :special: daily
     :command: /bin/echo testing
-    :record_type: :freebsd_special
+    :record_type: :crontab
 :tabs:
   :text: !binary |
     CQ==
@@ -145,7 +145,7 @@
   :record:
     :special: hourly
     :command: /bin/date
-    :record_type: :freebsd_special
+    :record_type: :crontab
 :long_name:
   :text: "# Puppet Name: long_name"
   :record:
@@ -199,7 +199,7 @@
   :record:
     :special: daily
     :command: /bin/echo testing
-    :record_type: :freebsd_special
+    :record_type: :crontab
 :tabs:
   :text: !binary |
     CQ==
