@@ -271,6 +271,12 @@ class Factory
     o
   end
 
+  def build_QueryExpression(o, expr)
+    ops = to_ops(expr)
+    o.expr = ops unless Factory.nop? ops
+    o
+  end
+
   def build_UnaryExpression(o, expr)
     ops = to_ops(expr)
     o.expr = ops unless Factory.nop? ops
