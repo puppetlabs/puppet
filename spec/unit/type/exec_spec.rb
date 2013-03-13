@@ -318,6 +318,16 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
+  describe "when setting command" do
+    it "fails when passed an Array" do
+      expect { Puppet::Type.type(:exec).new(:name => 'array_test', :command => []) }.to raise_error Puppet::Error, /Command must be a String/
+    end
+
+    it "fails when passed a Hash" do
+      expect { Puppet::Type.type(:exec).new(:name => 'array_test', :command => {}) }.to raise_error Puppet::Error, /Command must be a String/
+    end
+  end
+
   describe "when setting refresh" do
     it_should_behave_like "all exec command parameters", :refresh
   end
