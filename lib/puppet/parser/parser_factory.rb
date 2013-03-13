@@ -21,6 +21,9 @@ module Puppet; module Parser
       require 'puppet/pops/impl/parser/eparser'
       require 'puppet/pops/impl/model/ast_transformer'
       require 'puppet/pops/impl/model/ast_tree_dumper'
+      require 'puppet/pops/api/validation'
+      require 'puppet/pops/impl/validation/validator_factory_3_1'
+      
       @classic_parser = classic_parser
       @file = ''
       @string = ''
@@ -58,6 +61,16 @@ module Puppet; module Parser
         # if caller did not set a file and the present a string.
         #
         source_file = @file || "unknown-source-location"
+        
+        # Validate
+        begin
+          validate(parse_result)
+        rescue => e
+          # This rescue is here for debugging purposes (if there is a fundamental issue rather than one that
+          # should be reported.
+          raise e
+        end
+        
         # Transform the result, but only if not nil
         parse_result = Puppet::Pops::Impl::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result
         if parse_result && !parse_result.is_a?(Puppet::Parser::AST::BlockExpression)
@@ -86,7 +99,24 @@ module Puppet; module Parser
 #      end
       result
     end
-    
+
+    def validate(parse_result)
+      # TODO: This is too many hoops to jump through... ugly API
+      # could reference a ValidatorFactory.validator_3_1(acceptor) instead.
+      # and let the factory abstract the rest.
+      #
+      return unless parse_result
+      
+      acceptor  = Puppet::Pops::API::Validation::Acceptor.new
+      validator = Puppet::Pops::Impl::Validation::ValidatorFactory_3_1.new().validator(acceptor)
+      validator.validate(parse_result)
+      # If there were errors, report the first found. Use a puppet style formatter.
+      if acceptor.errors?
+        formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
+        message = formatter.format(acceptor.errors[0])
+        raise message
+      end
+    end
     def string=(string)
       @classic_parser.string = string
       @string = string
