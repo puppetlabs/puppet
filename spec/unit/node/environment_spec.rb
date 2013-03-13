@@ -397,7 +397,7 @@ describe Puppet::Node::Environment do
 
   describe "when performing initial import" do
     before do
-      @parser = Puppet::Parser::PopsParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
+      @parser = Puppet::Parser::EParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
       Puppet::Parser::ParserFactory.stubs(:parser).returns @parser
     end
 
