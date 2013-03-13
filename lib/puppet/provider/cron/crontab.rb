@@ -28,7 +28,9 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     :fields     => %w{time command},
     :match      => %r{^\s*(@\w+|\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(.+)$},
     :absent     => '*',
-    :post_parse => proc { |record|
+    :block_eval => :instance do
+
+    def post_parse(record)
       time = record.delete(:time)
       if match = /@(\S+)/.match(time)
         # is there another way to access the constant?
@@ -47,8 +49,9 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         raise Puppet::Error, "Line got parsed as a crontab entry but cannot be handled. Please file a bug with the contents of your crontab"
       end
       record
-    },
-    :pre_gen => proc { |record|
+    end
+
+    def pre_gen(record)
       if record[:special] and record[:special] != :absent
         record[:special] = "@#{record[:special]}"
       end
@@ -59,8 +62,9 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         end
       end
       record
-    },
-    :to_line => proc { |record|
+    end
+
+    def to_line(record)
       str = ""
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
       if record[:environment] and record[:environment] != :absent
@@ -79,7 +83,8 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         end
       end.join(self.joiner)
       str
-    }
+    end
+  end
 
   # Return the header placed at the top of each generated file, warning
   # users that modifying this file manually is probably a bad idea.
