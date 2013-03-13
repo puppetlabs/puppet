@@ -319,12 +319,13 @@ describe Puppet::Type.type(:exec) do
   end
 
   describe "when setting command" do
+    subject { described_class.new(:name => '/array_test') }
     it "fails when passed an Array" do
-      expect { Puppet::Type.type(:exec).new(:name => 'array_test', :command => []) }.to raise_error Puppet::Error, /Command must be a String/
+      expect { subject[:command] = [] }.to raise_error Puppet::Error, /Command must be a String/
     end
 
     it "fails when passed a Hash" do
-      expect { Puppet::Type.type(:exec).new(:name => 'array_test', :command => {}) }.to raise_error Puppet::Error, /Command must be a String/
+      expect { subject[:command] = {} }.to raise_error Puppet::Error, /Command must be a String/
     end
   end
 
