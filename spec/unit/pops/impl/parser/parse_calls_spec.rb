@@ -42,6 +42,15 @@ describe Puppet::Pops::Impl::Parser::Parser do
       it "foo bar" do
         dump(parse("foo bar")).should == "(invoke foo bar)"      
       end
+      it "foo(bar)" do
+        dump(parse("foo(bar)")).should == "(invoke foo bar)"      
+      end
+      it "foo(bar,)" do
+        dump(parse("foo(bar,)")).should == "(invoke foo bar)"      
+      end
+      it "foo(bar, fum,)" do
+        dump(parse("foo(bar,fum,)")).should == "(invoke foo bar fum)"      
+      end
     end
     context "in nested scopes" do
       it "if true { foo() }" do
