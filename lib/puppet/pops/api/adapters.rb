@@ -35,17 +35,17 @@ module Adapters
   #
   class SourcePosAdapter < Puppet::Pops::API::Adaptable::Adapter
     # @return [Fixnum] The start line in source starting from 1
-    attr_accessor :start_line
+    attr_accessor :line
     
-    # @return [Fixnum] The end line in source, starting from 1 (often the same as #start_line).
-    attr_accessor :end_line
-    
-    # @return [Fixnum] The (start) offset of source text (starting from 0) representing the adapted object.
+    # @return [Fixnum] The position on the start_line (in characters) starting from 0
+    attr_accessor :pos
+        
+    # @return [Fixnum] The (start) offset of source text characters (starting from 0) representing the adapted object.
     #   Value may be nil
     attr_accessor :offset
     
     # @return [Fixnum] The length (count) of characters of source text representing the adapted object from the
-    #   origin.
+    #   origin. Not including any trailing whitespace.
     attr_accessor :length
   end
   

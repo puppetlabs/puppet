@@ -35,7 +35,7 @@ class AstTransformer
   # @param klass [Class<Puppet::Parser::AST>] the ast class to create an instance of
   # @param hash [Hash] hash with options for the class to create
   #
-  def ast o, klass, hash
+  def ast o, klass, hash={}
     # create and pass hash with file and line information
     klass.new(merge_location(hash, o))
   end
@@ -44,7 +44,10 @@ class AstTransformer
     if o
       pos = {}
       source_pos = Puppet::Pops::API::Utils.find_adapter(o, Puppet::Pops::API::Adapters::SourcePosAdapter)
-      pos[:line] = source_pos.start_line if source_pos
+      if source_pos
+        pos[:line] = source_pos.line
+        pos[:pos]  = source_pos.pos
+      end
       pos[:file] = @file if @file
       hash = hash.merge(pos)
     end
@@ -78,8 +81,8 @@ class AstTransformer
       "bad radix:" + o.value.to_s
     end
 
-    # Numbers are strings in the AST
-    ast o, AST::String, :value => s
+    # Numbers are Names in the AST !! (Name a.k.a BareWord)
+    ast o, AST::Name, :value => s
   end
 
   # Transforms all literal values to string (override for those that should not be AST::String)
@@ -191,11 +194,11 @@ class AstTransformer
     raise "Not a valid expression in a collection query: "+o.class.name
   end
 
-  # Puppet AST only allows == and !=
+  # Puppet AST only allows == and !=, and left expr is restricted, but right value is an expression
   #
   def query_ComparisonExpression o
     if [:'==', :'!='].include? o.operator
-      ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => o.operator.to_s, :test2 => query(o.right_expr)
+      ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => o.operator.to_s, :test2 => transform(o.right_expr)
     else
       raise "Not a valid comparison operator in a collection query: " + o.operator.to_s
     end
@@ -540,7 +543,7 @@ class AstTransformer
 
   def transform_IfExpression o
     args = { :test => transform(o.test), :statements => transform(o.then_expr) }
-    args[:else] = transform(o.else_expr) unless is_nop? o.else_expr
+    args[:else] = transform(o.else_expr) # Tests say Nop should be there (unless is_nop? o.else_expr), probably not needed
     result = ast o, AST::IfStatement, args
   end
 

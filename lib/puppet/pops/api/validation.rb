@@ -36,20 +36,16 @@ module Puppet::Pops::API::Validation
     def [] issue
       severity issue
     end
-
+    
     # Override a default severity with the given severity level.
     #
     # @param issue [Puppet::Pops::API::Issues::Issue] the issue for which to set severity
     # @param level [Symbol] the severity level (:error, :warning, or :ignore).
     #
-    def severity= issue, level
+    def []= issue, level
       assert_issue(issue)
       assert_severity(level)
-      @severities[issue] = diagnose
-    end
-    
-    def []= issue, level
-      severity= issue, level
+      @severities[issue] = level
     end
     
     # Returns true if the issue should be reported or not.
@@ -117,10 +113,8 @@ module Puppet::Pops::API::Validation
       # extract file and line
       file = nil
       source_pos = Puppet::Pops::API::Utils.find_adapter(semantic, Puppet::Pops::API::Adapters::SourcePosAdapter)
-      line = nil
-      line = source_pos.start_line if source_pos
       severity = @severity_producer.severity(issue)
-      @acceptor.accept(Diagnostic.new(severity, issue, file, line, arguments))
+      @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments))
     end
 
     def will_accept? issue
@@ -134,15 +128,13 @@ module Puppet::Pops::API::Validation
     attr_reader :arguments
     attr_reader :exception
     attr_reader :file
-    attr_reader :line
-    attr_reader :pos
+    attr_reader :source_pos
     
-    def initialize severity, issue, file, line, arguments={}, exception=nil
+    def initialize severity, issue, file, source_pos, arguments={}, exception=nil
       @severity = severity
       @issue = issue
       @file = file
-      @line = line
-      @pos = nil  # TODO: Wait until lexer can produce 'pos'
+      @source_pos = source_pos
       @arguments = arguments
       @exception = exception
     end
@@ -164,8 +156,8 @@ module Puppet::Pops::API::Validation
 
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.line
-      pos = diagnostic.pos
+      line = diagnostic.source_pos.line
+      pos = diagnostic.source_pos.pos
       if file && line && pos
         "#{file}:#{line}:#{pos}:"
       elsif file && line
@@ -194,9 +186,14 @@ module Puppet::Pops::API::Validation
     # have to be used here for backwards compatibility. 
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.line
-      if file and line
+      line = diagnostic.source_pos.line
+      pos = diagnostic.source_pos.pos
+      if file && line && pos
+        " at #{file}:#{line}:#{pos}"
+      elsif file and line
         " at #{file}:#{line}"
+      elsif line && pos
+          " at line #{line}:#{pos}"
       elsif line
         " at line #{line}"
       elsif file

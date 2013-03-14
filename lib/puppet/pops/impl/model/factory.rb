@@ -49,7 +49,7 @@ class Factory
 
   def build_AttributeOperation(o, name, op, value)
     o.operator = op
-    o.attribute_name = name
+    o.attribute_name = name.to_s # BOOLEAN is allowed in the grammar
     o.value_expr = build(value)
     o
   end
@@ -415,21 +415,26 @@ class Factory
     current.respond_to?(meth) || super
   end
 
-  def line(start_line, end_line = nil)
+  # Records the position (start -> end) and computes the resulting length.
+  #
+  def record_position(start_pos, end_pos)
     puts "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
     Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current) do |a|
-      a.start_line = start_line
-      a.end_line = end_line ? end_line : start_line
+      a.line   = start_pos.line
+      a.offset = start_pos.offset
+      a.pos    = start_pos.pos
+      a.length = start_pos.length
+      if(end_pos.offset && end_pos.length)
+        a.length = end_pos.offset + end_pos.length - start_pos.offset
+      end
     end
     self
   end
 
-  # Produces [start_line, end_line]
-  # @return [Array<Integer, Integer>] start and end lines for the current element
+  # @return [Puppet::Pops::API::Adapters::SourcePosAdapter] with location information
   def loc()
     raise "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
-    a = Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
-    [a.start_line, a.end_line]
+    Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
   end
 
   # Returns documentation string, or nil if not available
