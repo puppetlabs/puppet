@@ -1,11 +1,12 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/parser/parser_factory'
 
-describe Puppet::Parser::Parser do
+describe "Puppet::Parser::Parser" do
   module ParseMatcher
     class ParseAs
       def initialize(klass)
-        @parser = Puppet::Parser::Parser.new "development"
+        @parser = Puppet::Parser::ParserFactory.parser("development")
         @class = klass
       end
 
@@ -38,7 +39,7 @@ describe Puppet::Parser::Parser do
 
     class ParseWith
       def initialize(block)
-        @parser = Puppet::Parser::Parser.new "development"
+        @parser = Puppet::Parser::ParserFactory.parser("development")
         @block = block
       end
 
@@ -74,11 +75,14 @@ describe Puppet::Parser::Parser do
 
   before :each do
     @resource_type_collection = Puppet::Resource::TypeCollection.new("env")
-    @parser = Puppet::Parser::Parser.new "development"
+    @parser = Puppet::Parser::ParserFactory.parser("development")
+
+#    @parser = Puppet::Parser::Parser.new "development"
   end
 
   describe "when parsing comments before statement" do
     it "should associate the documentation to the statement AST node" do
+      pending "egrammar does not yet process comments"
       ast = @parser.parse("""
       # comment
       class test {}
