@@ -483,6 +483,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       :start_of_line => true,
       :line_offset => 0, # byte offset of newline 
       :offset => 0,      # byte offset before where token starts
+      :end_offset => 0,  # byte offset after scanned token
       :string_interpolation_depth => 0
       }
   end
@@ -509,16 +510,28 @@ class Puppet::Pops::Impl::Parser::Lexer
     
     offset      = lexing_context[:offset]
     line_offset = lexing_context[:line_offset]
+    end_offset = lexing_context[:end_offset]
+      
     if multibyte?
-      offset = @scanner.string.byteslice(0,offset).length
-      pos = @scanner.string.byteslice(line_offset, offset).length
+      offset = @scanner.string.byteslice(0, lexing_context[:offset]).length
+      pos = @scanner.string.byteslice(line_offset, lexing_context[:offset]).length
+      length = @scanner.string.byteslice(offset, end_offset).length
     else
       pos = offset - line_offset
+      length = end_offset - offset
     end
 
-    return token, { :value => value, :line => @line, :pos => pos, :offset => offset}
+    return token, { :value => value, :line => @line, :pos => pos, :offset => offset, :length => length}
   end
 
+  def pos
+    if multibyte?
+      @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]).length
+    else
+      lexing_context[:offset] - lexing_context[:line_offset]
+    end
+  end
+  
   # Handling the namespace stack
   def_delegator :@namestack, :pop, :namepop
   # This value might have :: in it, but we don't care -- it'll be handled
@@ -545,7 +558,8 @@ class Puppet::Pops::Impl::Parser::Lexer
       yielded = false
       offset = @scanner.pos
       matched_token, value = find_token
-
+      end_offset = @scanner.pos
+      
       # error out if we didn't match anything at all
       lex_error "Could not match #{@scanner.rest[/^(\S+|\s+|.*)/]}" unless matched_token
 
@@ -556,6 +570,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       lexing_context[:start_of_line] = newline
       lexing_context[:line_offset] = offset if newline
       lexing_context[:offset] = offset
+      lexing_context[:end_offset] = end_offset
 
       final_token, token_value = munge_token(matched_token, value)
 
@@ -601,7 +616,10 @@ class Puppet::Pops::Impl::Parser::Lexer
       @previous_token = final_token
       skip
     end
-    @scanner = nil
+    # Cannot reset @scanner to nil here - it is needed to answer questions about context after 
+    # completed parsing.
+    # Seems meaningless to do this. Everything will be gc anyway.
+    #@scanner = nil
 
     # This indicates that we're done parsing.
     yield [false,false]
