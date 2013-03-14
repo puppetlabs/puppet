@@ -13,7 +13,7 @@ token DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-token IN UNLESS PIPE
+token IN UNLESS MODULO PIPE
 token LAMBDA SELBRACE
 token LOW
 
@@ -91,29 +91,31 @@ relationship_expression
 # Produces Model::Expression
 expression
   : higher_precedence
-  | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]; loc result, val[0], val[3] }
-  | expression IN           expression                 { result = val[0].in val[2]  ; loc result, val[1] }
-  | expression MATCH        match_rvalue               { result = val[0] =~  val[2] ; loc result, val[1] }
-  | expression NOMATCH      match_rvalue               { result = val[0].mne val[2] ; loc result, val[1] }
-  | expression PLUS         expression                 { result = val[0] +   val[2] ; loc result, val[1] }
-  | expression MINUS        expression                 { result = val[0] -   val[2] ; loc result, val[1] }
-  | expression DIV          expression                 { result = val[0] /   val[2] ; loc result, val[1] }
-  | expression TIMES        expression                 { result = val[0] *   val[2] ; loc result, val[1] }
-  | expression LSHIFT       expression                 { result = val[0] <<  val[2] ; loc result, val[1] }
-  | expression RSHIFT       expression                 { result = val[0] >>  val[2] ; loc result, val[1] }
-  |            MINUS        expression         =UMINUS { result = val[1].minus()    ; loc result, val[0] }
-  | expression NOTEQUAL     expression                 { result = val[0].ne  val[2] ; loc result, val[1] }
-  | expression ISEQUAL      expression                 { result = val[0] ==  val[2] ; loc result, val[1] }
-  | expression GREATERTHAN  expression                 { result = val[0] >   val[2] ; loc result, val[1] }
-  | expression GREATEREQUAL expression                 { result = val[0] >=  val[2] ; loc result, val[1] }
-  | expression LESSTHAN     expression                 { result = val[0] <   val[2] ; loc result, val[1] }
-  | expression LESSEQUAL    expression                 { result = val[0] <=  val[2] ; loc result, val[1] }
-  |            NOT          expression                 { result = val[1].not        ; loc result, val[0] }
-  | expression AND          expression                 { result = val[0].and val[2] ; loc result, val[1] }
-  | expression OR           expression                 { result = val[0].or  val[2] ; loc result, val[1] }
-  | expression EQUALS       expression                 { result = val[0].set(val[2]); loc result, val[1] }
-  | expression APPENDS      expression                 { result = val[0].plus_set(val[2]); loc result, val[1] }
-  |            LPAREN       expression RPAREN          { result = val[1].paren()    ;                    }
+  | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
+  | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
+  | expression MATCH        match_rvalue               { result = val[0] =~  val[2]       ; loc result, val[1] }
+  | expression NOMATCH      match_rvalue               { result = val[0].mne val[2]       ; loc result, val[1] }
+  | expression PLUS         expression                 { result = val[0] +   val[2]       ; loc result, val[1] }
+  | expression MINUS        expression                 { result = val[0] -   val[2]       ; loc result, val[1] }
+  | expression DIV          expression                 { result = val[0] /   val[2]       ; loc result, val[1] }
+  | expression TIMES        expression                 { result = val[0] *   val[2]       ; loc result, val[1] }
+  | expression MODULO       expression                 { result = val[0] %   val[2]       ; loc result, val[1] }
+  | expression LSHIFT       expression                 { result = val[0] <<  val[2]       ; loc result, val[1] }
+  | expression RSHIFT       expression                 { result = val[0] >>  val[2]       ; loc result, val[1] }
+  |            MINUS        expression         =UMINUS { result = val[1].minus()          ; loc result, val[0] }
+  | expression NOTEQUAL     expression                 { result = val[0].ne  val[2]       ; loc result, val[1] }
+  | expression ISEQUAL      expression                 { result = val[0] ==  val[2]       ; loc result, val[1] }
+  | expression GREATERTHAN  expression                 { result = val[0] >   val[2]       ; loc result, val[1] }
+  | expression GREATEREQUAL expression                 { result = val[0] >=  val[2]       ; loc result, val[1] }
+  | expression LESSTHAN     expression                 { result = val[0] <   val[2]       ; loc result, val[1] }
+  | expression LESSEQUAL    expression                 { result = val[0] <=  val[2]       ; loc result, val[1] }
+  |            NOT          expression                 { result = val[1].not              ; loc result, val[0] }
+  | expression AND          expression                 { result = val[0].and val[2]       ; loc result, val[1] }
+  | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
+  | expression EQUALS       expression                 { result = val[0].set(val[2])      ; loc result, val[1] }
+  | expression APPENDS      expression                 { result = val[0].plus_set(val[2]) ; loc result, val[1] }
+  | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
+  |            LPAREN       expression RPAREN          { result = val[1].paren()          ;                    }
 
 #---EXPRESSIONS
 #   (e.g. argument list)
@@ -126,7 +128,7 @@ expressions
 
 # These go through a chain of left recursion, ending with primary_expression
 higher_precedence
-  : selector_expression 
+  : call_function_expression 
     
 primary_expression
   : literal_expression
@@ -330,15 +332,6 @@ case_expression
       }
   
   case_colon: COLON =CASE_COLON { result = val[0] }
-
-#---SELECTOR EXPRESSION
-#
-# Chains to call_function_expression
-# Produces Model::SelectorExpression
-#
-selector_expression
-  : call_function_expression
-  | call_function_expression QMARK selector_entries { result = val[0].select(*val[2]) ; loc result, val[0] }
   
   # This special construct is required or racc will produce the wrong result when the selector entry
   # LHS is generalized to any expression (LBRACE looks like a hash). Thus it is not possible to write
@@ -393,6 +386,18 @@ resource_expression
         error "Expression is not valid as a resource, resource-default, or resource-override"
       end
       loc result, val[1], val[4]
+    }
+  | at expression LBRACE attribute_operations endcomma RBRACE {
+      result = case Factory.resource_shape(val[1])
+      when :resource, :class
+        error "Defaults are not virtualizable"
+      when :defaults
+        error "Defaults are not virtualizable"
+      when :override
+        error "Defaults are not virtualizable"
+      else
+        error "Expression is not valid as a resource, resource-default, or resource-override"
+      end
     }
   | expression LBRACE resourceinstances endsemi RBRACE {
   	  result = case Factory.resource_shape(val[0])
