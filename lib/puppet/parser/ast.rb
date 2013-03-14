@@ -14,7 +14,7 @@ class Puppet::Parser::AST
   include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
-  attr_accessor :parent, :scope, :file, :line
+  attr_accessor :parent, :scope, :file, :line, :pos
 
   def inspect
     "( #{self.class} #{self.to_s} #{@children.inspect} )"

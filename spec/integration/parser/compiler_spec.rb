@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/parser/parser_factory'
 
 describe Puppet::Parser::Compiler do
   before :each do
@@ -21,6 +22,8 @@ describe Puppet::Parser::Compiler do
     pending "git is not available or not in a git repo" if version.empty?
 
     Puppet.settings[:config_version] = 'git rev-parse HEAD'
+    @parser = Puppet::Parser::ParserFactory.parser "development"
+    @compiler = Puppet::Parser::Compiler.new(@node)
 
     @parser = Puppet::Parser::Parser.new "development"
     @compiler = Puppet::Parser::Compiler.new(@node)
