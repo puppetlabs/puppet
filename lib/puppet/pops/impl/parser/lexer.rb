@@ -526,9 +526,9 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   def pos
     if multibyte?
-      @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]).length
+      1 + @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]).length
     else
-      lexing_context[:offset] - lexing_context[:line_offset]
+      1 + lexing_context[:offset] - lexing_context[:line_offset]
     end
   end
   
