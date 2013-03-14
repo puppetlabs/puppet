@@ -163,11 +163,17 @@ text_or_name
 # Produces Model::CallNamedFunction
   
 call_function_expression
-  : primary_expression LPAREN expressions RPAREN { result = Factory.CALL_NAMED(val[0], true, val[2]) ; loc result, val[0], val[3] }
-  | primary_expression LPAREN RPAREN             { result = Factory.CALL_NAMED(val[0], true, [])     ; loc result, val[0], val[2] }
-  | primary_expression LPAREN expressions RPAREN lambda { 
+  : primary_expression LPAREN expressions endcomma RPAREN {
       result = Factory.CALL_NAMED(val[0], true, val[2])
-      loc result, val[0], val[3]
+      loc result, val[0], val[4]
+    }
+  | primary_expression LPAREN RPAREN {
+      result = Factory.CALL_NAMED(val[0], true, [])
+      loc result, val[0], val[2]
+    }
+  | primary_expression LPAREN expressions endcomma RPAREN lambda { 
+      result = Factory.CALL_NAMED(val[0], true, val[2])
+      loc result, val[0], val[4]
       result.lambda = val[4]
     }
   | primary_expression LPAREN RPAREN  lambda {
