@@ -37,13 +37,14 @@ class Puppet::Pops::Impl::Validation::Checker3_1
 
     @acceptor = diagnostics_producer
   end
-  
+
   # Validates the entire model by visiting each model element and calling `check`.
   # The result is collected (or acted on immediately) by the configured diagnostic provider/acceptor
   # given when creating this Checker.
   #
   def validate model
     # tree iterate the model, and call check for each element
+    check model
     model.eAllContents.each {|m| check(m) }
   end
 
@@ -108,11 +109,15 @@ class Puppet::Pops::Impl::Validation::Checker3_1
 
   def check_Object o
   end
-  
+
+  def check_Factory o
+    check o.current
+  end
+
   def check_AccessExpression o
     # TODO: See ast transformer for what needs to be checked
   end
-  
+
   def check_AssignmentExpression(o)
     assign o.left_expr
     rvalue o.right_expr
