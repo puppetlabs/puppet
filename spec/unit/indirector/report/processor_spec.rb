@@ -92,9 +92,9 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     @reporter.save(@request)
   end
 
-  it "should not raise exceptions" do
+  it "should raise exceptions" do
     Puppet[:trace] = false
     @dup_report.expects(:process).raises(ArgumentError)
-    proc { @reporter.save(@request) }.should_not raise_error
+    proc { @reporter.save(@request) }.should raise_error
   end
 end

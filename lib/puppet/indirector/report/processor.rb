@@ -37,6 +37,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
         newrep.process
       rescue => detail
         Puppet.log_exception(detail, "Report #{name} failed: #{detail}")
+        raise detail
       end
     end
   end
