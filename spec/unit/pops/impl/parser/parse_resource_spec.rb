@@ -98,6 +98,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "@file { 'title': }" do
       dump(parse("@file { 'title': }")).should ==  "(virtual-resource file\n  ('title'))"
     end
+    it "@file { mode => 0777 }" do
+      # Defaults are not virtualizeable
+      expect {
+        dump(parse("@file { mode => 0777 }")).should ==  ""
+      }.to raise_error(Puppet::ParseError, /Defaults are not virtualizable/)
+    end
   end
 
   context "When parsing class resource" do

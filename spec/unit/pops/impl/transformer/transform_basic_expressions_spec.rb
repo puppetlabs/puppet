@@ -22,7 +22,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
   
   context "When running these transformation examples, the setup" do
     it "should be able to transform a model" do
-      transform(literal(10)).class.should == AST::String
+      transform(literal(10)).class.should == AST::Name
     end
     
     it "ast dumper should dump numbers as literal numbers" do
