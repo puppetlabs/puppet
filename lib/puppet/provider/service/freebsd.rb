@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_name
     name = self.rcvar[1]
     self.error("No rcvar name found in rcvar") if name.nil?
-    name = name.gsub!(/(.*)(_enable)?=(.*)/, '\1')
+    name = name.gsub!(/(.*?)(_enable)?=(.*)/, '\1')
     self.error("rcvar name is empty") if name.nil?
     self.debug("rcvar name is #{name}")
     name
