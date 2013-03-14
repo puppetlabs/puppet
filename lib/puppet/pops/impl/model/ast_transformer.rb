@@ -139,10 +139,6 @@ class AstTransformer
     end
   end
 
-  def transform_MatchesExpression o
-    ast o, AST::MatchOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr), :operator => o.operator
-  end
-
   # Puppet AST has a complicated structure
   # LHS can not be an expression, it must be a type (which is downcased).
   # type = a downcased QualifiedName
