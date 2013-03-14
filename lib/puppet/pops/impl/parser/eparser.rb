@@ -1373,7 +1373,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 174)
   def _reduce_66(val, _values, result)
           result = Factory.CALL_NAMED(val[0], true, val[2])
       loc result, val[0], val[4]
-      result.lambda = val[4]
+      result.lambda = val[5]
     
     result
   end
