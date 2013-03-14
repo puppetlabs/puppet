@@ -18,7 +18,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   attr_accessor :line, :indefine
   alias :indefine? :indefine
-
+  
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
@@ -344,7 +344,8 @@ class Puppet::Pops::Impl::Parser::Lexer
     "("   => ")",
     "["   => "]",
     "<|"  => "|>",
-    "<<|" => "|>>"
+    "<<|" => "|>>",
+    "|"   => "|"
   }
 
   KEYWORDS = TokenList.new
@@ -437,7 +438,23 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   def initialize
+    @multibyte = init_multibyte
     initvars
+  end
+
+  # Returns true if ruby version >= 1.9.3 since regexp supports multi-byte matches and expanded
+  # character categories like [[:blank:]].
+  #
+  # This implementation will fail if there are more than 255 minor or micro versions of ruby
+  #
+  def init_multibyte
+    numver = RUBY_VERSION.split(".").collect {|s| s.to_i }
+    return true if (numver[0] << 16 | numver[1] << 8 | numver[2]) >= (1 << 16 | 9 << 8 | 3)  
+    false
+  end
+
+  def multibyte?
+    @multibyte
   end
 
   def initvars
@@ -445,9 +462,16 @@ class Puppet::Pops::Impl::Parser::Lexer
     @previous_token = nil
     @scanner = nil
     @file = nil
+
     # AAARRGGGG! okay, regexes in ruby are bloody annoying
     # no one else has "\n" =~ /\s/
-    @skip = %r{[ \t\r]+}
+
+    if multibyte?
+      # Skip all kinds of space, and CR, but not newlines
+      @skip = %r{[[:blank:]\r]+}
+    else
+      @skip = %r{[ \t\r]+}
+    end
 
     @namestack = []
     @token_queue = []
@@ -457,6 +481,8 @@ class Puppet::Pops::Impl::Parser::Lexer
     @lexing_context = {
       :after => nil,
       :start_of_line => true,
+      :line_offset => 0, # byte offset of newline 
+      :offset => 0,      # byte offset before where token starts
       :string_interpolation_depth => 0
       }
   end
@@ -480,8 +506,17 @@ class Puppet::Pops::Impl::Parser::Lexer
     end
 
     return if token.skip
+    
+    offset      = lexing_context[:offset]
+    line_offset = lexing_context[:line_offset]
+    if multibyte?
+      offset = @scanner.string.byteslice(0,offset).length
+      pos = @scanner.string.byteslice(line_offset, offset).length
+    else
+      pos = offset - line_offset
+    end
 
-    return token, { :value => value, :line => @line }
+    return token, { :value => value, :line => @line, :pos => pos, :offset => offset}
   end
 
   # Handling the namespace stack
@@ -508,6 +543,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     until token_queue.empty? and @scanner.eos? do
       yielded = false
+      offset = @scanner.pos
       matched_token, value = find_token
 
       # error out if we didn't match anything at all
@@ -518,6 +554,8 @@ class Puppet::Pops::Impl::Parser::Lexer
       # this matches a blank line; eat the previously accumulated comments
       getcomment if lexing_context[:start_of_line] and newline
       lexing_context[:start_of_line] = newline
+      lexing_context[:line_offset] = offset if newline
+      lexing_context[:offset] = offset
 
       final_token, token_value = munge_token(matched_token, value)
 
