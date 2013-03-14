@@ -54,4 +54,10 @@ OUTPUT
 
     @provider.rcvar_value.should == "YES"
   end
+
+  it "should find the right rcvar_name" do
+    @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable="YES"'])
+
+    @provider.rcvar_name.should == "ntpd"
+  end
 end
