@@ -47,6 +47,7 @@ class LabelProvider
       result = "a"
     end
     result = result.capitalize if capitalize
+    result
   end
 
 end
