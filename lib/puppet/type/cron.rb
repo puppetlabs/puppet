@@ -10,11 +10,12 @@ Puppet::Type.newtype(:cron) do
     job is not part of the actual job, it is used by Puppet to store and
     retrieve it.
 
-    If you specify a cron job that matches an existing job in every way
-    except name, then the jobs will be considered equivalent and the
-    new name will be permanently associated with that job.  Once this
-    association is made and synced to disk, you can then manage the job
-    normally (e.g., change the schedule of the job).
+    If you specify a cron resource that duplicates the scheduling and command
+    used by an existing crontab entry, then Puppet will take no action and
+    defers to the existing crontab entry.  If the duplicate cron resource
+    specifies `ensure => absent`, all existing duplicated crontab entries will
+    be removed.  Specifying multiple duplicate cron resources with different
+    `ensure` states will result in undefined behavior.
 
     Example:
 
