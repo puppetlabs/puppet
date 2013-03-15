@@ -71,7 +71,6 @@ Puppet::Parser::Functions::newfunction(
   end
 
   raise ArgumentError, ("slice(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length < 2 || args.length > 3
-  require 'debugger'; debugger
   receiver = args[0]
   begin
     slice_size = args.length == 3 ? Puppet::Parser::Scope.number?(args[1]) : 2
