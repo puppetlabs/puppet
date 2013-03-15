@@ -93,6 +93,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   describe "when returning the metadata" do
     before do
       @metadata = stub 'metadata', :source= => nil
+      @resource.stubs(:[]).with(:links).returns :manage
     end
 
     it "should return already-available metadata" do
@@ -108,22 +109,22 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should collect its metadata using the Metadata class if it is not already set" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment).returns @metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :links => :manage, :environment => @environment).returns @metadata
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
       metadata = stub 'metadata', :source= => nil
       @source = source.new(:resource => @resource, :value => [@foobar, @feebooz])
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment).returns nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, :environment => @environment).returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :links => :manage, :environment => @environment).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, :links => :manage, :environment => @environment).returns metadata
       @source.metadata.should equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
       metadata = mock 'metadata'
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment).returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :links => :manage, :environment => @environment).returns metadata
 
       metadata.expects(:source=).with(@foobar_uri)
       @source.metadata
@@ -131,7 +132,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment).raises RuntimeError
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :links => :manage, :environment => @environment).raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
       lambda { @source.metadata }.should raise_error(ArgumentError)
@@ -139,7 +140,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail if no specified sources can be found" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :links => :manage, :environment => @environment).returns nil
 
       @source.expects(:fail).raises RuntimeError
 
@@ -321,7 +322,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       before(:each) do
         metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
         #metadata = stub('remote', :ftype => "file", :source => uri)
-        Puppet::FileServing::Metadata.indirection.stubs(:find).with(uri, has_key(:environment)).returns metadata
+        Puppet::FileServing::Metadata.indirection.stubs(:find).
+          with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
         resource[:source] = uri
       end
 

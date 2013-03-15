@@ -273,22 +273,20 @@ describe Puppet::Type.type(:file) do
 
             describe "that is readable" do
               it "should set the executable bits when creating the destination (#10315)" do
-                pending "bug #10315"
-
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
                 catalog.apply
 
+                File.should be_directory(path)
                 (get_mode(path) & 07777).should == 0777
               end
 
               it "should set the executable bits when overwriting the destination (#10315)" do
-                pending "bug #10315"
-
                 FileUtils.touch(path)
 
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow, :backup => false)
                 catalog.apply
 
+                File.should be_directory(path)
                 (get_mode(path) & 07777).should == 0777
               end
             end
@@ -303,37 +301,41 @@ describe Puppet::Type.type(:file) do
                 set_mode(0700, link_target)
               end
 
-              it "should not set executable bits when creating the destination (#10315)" do
-                pending "bug #10315"
-
+              it "should set executable bits when creating the destination (#10315)" do
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
                 catalog.apply
 
-                (get_mode(path) & 07777).should == 0666
+                File.should be_directory(path)
+                (get_mode(path) & 07777).should == 0777
               end
 
-              it "should not set executable bits when overwriting the destination" do
+              it "should set executable bits when overwriting the destination" do
                 FileUtils.touch(path)
 
-                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow, :backup => false)
                 catalog.apply
 
-                (get_mode(path) & 07777).should == 0666
+                File.should be_directory(path)
+                (get_mode(path) & 07777).should == 0777
               end
             end
           end
 
           describe "to a file" do
-            let(:target) { tmpfile('file_target') }
+            let(:link_target) { tmpfile('file_target') }
+
+            before :each do
+              FileUtils.touch(link_target)
+
+              File.symlink(link_target, link)
+            end
 
             it "should create the file, not a symlink (#2817, #10315)" do
-              pending "bug #2817, #10315"
-
               catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
               catalog.apply
 
               File.should be_file(path)
-              (get_mode(path) & 07777) == 0600
+              (get_mode(path) & 07777).should == 0600
             end
 
             it "should overwrite the file" do
@@ -343,7 +345,7 @@ describe Puppet::Type.type(:file) do
               catalog.apply
 
               File.should be_file(path)
-              (get_mode(path) & 07777) == 0600
+              (get_mode(path) & 07777).should == 0600
             end
           end
 
@@ -365,13 +367,11 @@ describe Puppet::Type.type(:file) do
 
             describe "when following all links" do
               it "should create the destination and apply executable bits (#10315)" do
-                pending "bug #10315"
-
                 catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
                 catalog.apply
 
                 File.should be_directory(path)
-                (get_mode(path) & 07777) == 0777
+                (get_mode(path) & 07777).should == 0700
               end
 
               it "should overwrite the destination and apply executable bits" do
@@ -381,7 +381,7 @@ describe Puppet::Type.type(:file) do
                 catalog.apply
 
                 File.should be_directory(path)
-                (get_mode(path) & 07777) == 0777
+                (get_mode(path) & 0111).should == 0100
               end
             end
           end
