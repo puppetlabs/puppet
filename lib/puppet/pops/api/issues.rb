@@ -197,8 +197,8 @@ module Puppet::Pops::API::Issues
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
+  # Issues when an expression is used illegaly in a query.
+  # query only supports == and !=, and not <, > etc.
   #
   ILLEGAL_QUERY_EXPRESSION = issue :ILLEGAL_QUERY_EXPRESSION do
     "Illegal query expression. #{label.a_an_uc(semantic)} cannot be used in a query"
@@ -210,4 +210,13 @@ module Puppet::Pops::API::Issues
     "Resource Defaults are not virtualizable"
   end
 
+  # If an attempt is made to make a resource default virtual or exported.
+  #
+  UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
+    "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
+  end
+
+  DEPRECATED_NAME_AS_TYPE = issue :DEPRECATED_NAME_AS_TYPE, :name do
+    "Resource references should now be capitalized. The given '#{name}' does not have the correct form"
+  end
 end

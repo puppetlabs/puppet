@@ -76,6 +76,8 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   #---ASSIGNMENT CHECKS
 
   def assign_VariableExpression o, *args
+    # TODO: Assignment to numeric variable
+    
     # Can not assign to something in another namespace (i.e. a '::' in the name is not legal)
     if acceptor.will_accept? Issues::CROSS_SCOPE_ASSIGNMENT
       varname_string = varname_to_s(o.expr)
@@ -115,7 +117,23 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   end
 
   def check_AccessExpression o
-    # TODO: See ast transformer for what needs to be checked
+    # Check multiplicity of keys
+    case o.left_expr
+    when Model::QualifiedName
+      # allows many keys, but the name should really be a QualifiedReference
+      acceptor.accept(Issues::DEPRECATED_NAME_AS_TYPE, o, :name => o.value)
+    when Model::QualifiedReference
+      # ok, allows many - this is a resource reference
+
+    else
+      # i.e. for any other expression that may produce an array or hash
+      if o.keys.size > 1
+        acceptor.accept(Issues::UNSUPPORTED_RANGE, o, :count => o.keys.size)
+      end
+      if o.keys.size < 1
+        acceptor.accept(Issues::MISSING_INDEX, o)
+      end
+    end
   end
 
   def check_AssignmentExpression(o)
