@@ -137,7 +137,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     # a real fileserver initialized for testing.
     Puppet::FileServing::Metadata.
       indirection.stubs(:find).
-      with(options[:source].sub('puppet:///','')).
+      with(options[:source].sub('puppet:///',''), :links => :manage).
       returns(fake_fileserver_metadata)
 
     # I want a resource that all the file resources require and another
