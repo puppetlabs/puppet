@@ -74,7 +74,7 @@ module Puppet::ModuleTool::Shared
   def get_release(metadata, file)
     return nil if metadata.nil?
 
-    module_name = metadata['name'] 
+    module_name = metadata['name']
     version = metadata['version']
 
     release = {
@@ -304,10 +304,16 @@ module Puppet::ModuleTool::Shared
     release[:has_local_changes] = mod.has_metadata? && mod.has_local_changes?
   end
 
-  def resolve_constraints(dependencies, selected = {})
+  #
+  # Select releases satisfying the constraints specified by the dependencies
+  # parameter while making sure they are not in conflict with previously
+  # selected realeases specified by the selected parameter.
+  #
+  def get_candidates(dependencies, selected)
     candidates = []
     preferred = []
-    dependencies.each { |module_name, constraints|
+
+    dependencies.each do |module_name, constraints|
       range = constraints.map { |constraint| constraint[:range] }.inject(&:&)
 
       if selected.include?(module_name)
@@ -378,7 +384,75 @@ module Puppet::ModuleTool::Shared
       end
 
       candidates << releases
+    end
+
+    [candidates, preferred]
+  end
+
+  #
+  # Perform the following post-resolution checks when applicable:
+  # - check that the resolution satisfies contraints imposed by already installed module releases
+  # - check that the resolution is not a downgrade of an already installed module release
+  # - check that the reoslution is not replacing an already installead module release with local modifications
+  # Throw an appropriate exception in case any of the checks fails.
+  #
+  def check_resolution(release, selected)
+    # skip the tests if --force was specified or the resolution
+    # is an already installed module release
+    return if @force || release[:module]
+
+    module_name = release[:module_name]
+
+    # verify that constraints imposed by already installed module releases
+    # are not violated
+    constraints = @conditions[module_name].select { |constraint|
+      # ignore constraints from modules which are being upgraded
+      !selected.include?(constraint[:source][:module_name])
     }
+    range = constraints.map { |constraint| constraint[:range] }.inject(&:&)
+
+    unless constraints.empty? || range === release[:semver]
+      raise NoVersionsSatisfyError,
+        :requested_name    => @module_name,
+        :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
+        :installed_version => @installed[@module_name].empty? ? nil : @installed[@module_name].first[:version],
+        :dependency_name   => module_name,
+        :conditions        => constraints,
+        :action            => @action
+    end
+
+    # more checks in case we are to upgrade a module
+    if module_name != @module_name && previous = release[:previous]
+      # refuse to downgrade
+      if previous[:semver] > release[:semver]
+        raise NewerInstalledError,
+          :action            => @action,
+          :module_name       => module_name,
+          :requested_version => release[:version] || :best,
+          :installed_version => previous[:version]
+      end
+      # refuse to replace a modified module release
+      if has_local_changes?(previous)
+        raise LocalChangesError,
+          :action            => @action,
+          :module_name       => module_name,
+          :requested_version => release[:version] || :best,
+          :installed_version => previous[:version]
+      end
+    end
+  end
+
+  #
+  # Resolve constraints described by the dependencies parameter.
+  # First select all releases which satisfy the constraints, these
+  # are candidates for the resolution. Then select one particular
+  # release of each module from the candidates, collect all
+  # dependencies of these selected releases and try to resolve
+  # those recursively. If the resolution fails, try to select
+  # different releases from the candidates and try again.
+  #
+  def resolve_constraints(dependencies, selected = {})
+    candidates, preferred = get_candidates(dependencies, selected)
 
     # we are done if there are no dependencies left to be resolved
     return [] if candidates.empty?
@@ -417,49 +491,8 @@ module Puppet::ModuleTool::Shared
         subresolutions = @ignore_dependencies ? [] : resolve_constraints(subdependencies, selected)
 
         resolutions = candidate_set.map do |release|
-	  # perfrom post-resolution checks on modules installed from Forge (or a tarball)
-	  # (skip the checks if --force was specified)
-	  unless @force || release[:module] # skip already installed modules
-            module_name = release[:module_name]
-
-            # verify that constraints imposed by already installed modules
-            # are not violated
-            constraints = @conditions[module_name].select { |constraint|
-              # ignore constraints from modules which are being upgraded
-              !selected.include?(constraint[:source][:module_name])
-            }
-            range = constraints.map { |constraint| constraint[:range] }.inject(&:&)
-
-            unless constraints.empty? || range === release[:semver]
-              raise NoVersionsSatisfyError,
-                :requested_name    => @module_name,
-                :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-                :installed_version => @installed[@module_name].empty? ? nil : @installed[@module_name].first[:version],
-                :dependency_name   => module_name,
-                :conditions        => constraints,
-                :action            => @action
-            end
-
-            # more checks in case we are to upgrade a module
-            if module_name != @module_name && previous = release[:previous]
-              # refuse to downgrade
-              if previous[:semver] > release[:semver]
-                raise NewerInstalledError,
-                  :action            => @action,
-                  :module_name       => module_name,
-                  :requested_version => release[:version] || :best,
-                  :installed_version => previous[:version]
-              end
-              # refuse to replace a modified module release
-              if has_local_changes?(previous)
-                raise LocalChangesError,
-                  :action            => @action,
-                  :module_name       => module_name,
-                  :requested_version => release[:version] || :best,
-                  :installed_version => previous[:version]
-              end
-            end
-          end
+          # perform post resolution checks
+          check_resolution(release, selected)
 
           # the rosultion consists of the release satisfying the constriants
           # and the list of resolutions satisfying its dependencies (to be
@@ -472,7 +505,7 @@ module Puppet::ModuleTool::Shared
           resolution
         end
 
-        # link the subresolutions with the resolutions to from the install/upgrade tree
+        # link the subresolutions with the resolutions to form the install/upgrade tree
         subresolutions.each do |subresolution|
           resolutions[parentmap[subresolution[:release][:module_name]]][:dependencies] << subresolution
         end
@@ -500,7 +533,7 @@ module Puppet::ModuleTool::Shared
         # fall through to try the next candidate set
       end
 
-      # the currently selected candidate set is could not be resolved
+      # the currently selected candidate set could not be resolved
       # we need to unselected the respective releaes and try the next set
       candidate_set.each do |release|
         selected.delete(release[:module_name])
@@ -511,8 +544,8 @@ module Puppet::ModuleTool::Shared
     # of the NoVersionsSatisfyError so that they are diplayed if/when
     # the error is eventually reported
     if resolution_exception.is_a? NoVersionsSatisfyError
-       dependencies = dependencies[resolution_exception.dependency_name]
-       resolution_exception.add_conditions(dependencies) unless (!dependencies || dependencies.empty?)
+      dependencies = dependencies[resolution_exception.dependency_name]
+      resolution_exception.add_conditions(dependencies) unless (!dependencies || dependencies.empty?)
     end
 
     # no more combinations to try, re-raise the most recent exception
@@ -619,7 +652,7 @@ module Puppet::ModuleTool::Shared
     # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
     # but for now this is a quick fix to disable caching
     Puppet::Forge::Cache.clean
-    download_tarballs(@graph, @options[:target_dir])
+    download_tarballs(@graph, options[:target_dir])
   end
 
   #
