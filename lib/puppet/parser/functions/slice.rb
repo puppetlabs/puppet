@@ -69,19 +69,21 @@ Puppet::Parser::Functions::newfunction(
       result
     end
   end
-
-  raise ArgumentError, ("slice(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length < 2 || args.length > 3
-  receiver = args[0]
-  begin
-    slice_size = args.length == 3 ? Puppet::Parser::Scope.number?(args[1]) : 2
-  rescue
-    # fails if number is expected and it cannot be converted - error given below.
-  end 
-  pblock = args[-1]
-
+  raise ArgumentError, ("slice(): wrong number of arguments (#{args.length}; must be 2 or 3)") unless args.length == 2 || args.length == 3
+  if args.length >= 2
+    begin
+      slice_size = Puppet::Parser::Scope.number?(args[1])
+    rescue
+      raise ArgumentError, ("slice(): wrong argument type (#{args[1]}; must be number.")
+    end 
+  end
   raise ArgumentError, ("slice(): wrong argument type (#{args[1]}; must be number.") unless slice_size
-  raise ArgumentError, ("slice(): wrong argument type #{slice_size}; is not an positive integer number") unless slice_size.is_a?(Fixnum) && slice_size > 0
-  raise ArgumentError, ("slice(): wrong argument type (#{args[-1].class}; must be a parameterized block.") unless pblock.is_a?(Puppet::Parser::AST::Lambda) || args.length == 2
+  raise ArgumentError, ("slice(): wrong argument value: #{slice_size}; is not an positive integer number > 0") unless slice_size.is_a?(Fixnum) && slice_size > 0
+  receiver = args[0]
+  
+  # the block is optional, ok if nil, function then produces an array
+  pblock = args[2]
+  raise ArgumentError, ("slice(): wrong argument type (#{args[2].class}; must be a parameterized block.") unless pblock.is_a?(Puppet::Parser::AST::Lambda) || args.length == 2
 
   case receiver
   when Array
