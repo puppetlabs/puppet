@@ -5,12 +5,24 @@ require 'puppet_spec/compiler'
 describe 'the select method' do
   include PuppetSpec::Compiler
 
+  before :all do
+    # enable switching back 
+    @saved_parser = Puppet[:parser]
+    # These tests only work with future parser
+    Puppet[:parser] = 'future'
+  end
+  after :all do
+    # switch back to original 
+    Puppet[:parser] = @saved_parser
+  end
+
   before :each do
     node      = Puppet::Node.new("floppy", :environment => 'production')
     @compiler = Puppet::Parser::Compiler.new(node)
     @scope    = Puppet::Parser::Scope.new(@compiler)
     @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
+    Puppet[:parser] = 'future'
   end
 
   context "should be callable as" do

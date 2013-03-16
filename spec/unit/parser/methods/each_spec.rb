@@ -6,12 +6,22 @@ require 'rubygems'
 describe 'methods' do
   include PuppetSpec::Compiler
 
+  before :all do
+    # enable switching back 
+    @saved_parser = Puppet[:parser]
+  end
+  after :all do
+    # switch back to original 
+    Puppet[:parser] = @saved_parser
+  end
+
   before :each do
     node      = Puppet::Node.new("floppy", :environment => 'production')
     @compiler = Puppet::Parser::Compiler.new(node)
     @scope    = Puppet::Parser::Scope.new(@compiler)
     @topscope = @scope.compiler.topscope
     @scope.parent = @topscope
+    Puppet[:parser] = 'future'
   end
 
   context "should be callable as" do
@@ -30,9 +40,7 @@ describe 'methods' do
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        foreach ($a)
-        |
-        $index, $v| => { 
+        foreach ($a) |$index, $v| => { 
           file { "/file_$v": ensure => present }
         }
       MANIFEST
