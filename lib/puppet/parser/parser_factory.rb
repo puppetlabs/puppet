@@ -9,7 +9,12 @@ module Puppet; module Parser
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
-      eparser(environment)
+      case Puppet[:parser]
+      when 'future'
+        eparser(environment)
+      else
+        classic_parser(environment)
+      end
     end
     
     # Creates an instance of the classic parser.
