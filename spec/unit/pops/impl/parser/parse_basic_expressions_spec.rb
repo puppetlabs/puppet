@@ -195,6 +195,18 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
   end
   
+  context "When parsing assignments" do
+    it "Should allow simple assignment" do
+      dump(parse("$a = 10")).should == "(= $a 10)"      
+    end
+    it "Should allow chained assignment" do
+      dump(parse("$a = $b = 10")).should == "(= $a (= $b 10))"      
+    end
+    it "Should allow chained assignment with expressions" do
+      dump(parse("$a = 1 + ($b = 10)")).should == "(= $a (+ 1 (= $b 10)))"      
+    end
+  end
+
   context "When parsing Hashes" do
     it "(selftest) these tests depends on that the factory creates hash with literal expressions" do
       x = literal({'a'=>1,'b'=>2}).current
