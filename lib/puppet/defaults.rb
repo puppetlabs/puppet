@@ -1505,6 +1505,20 @@ apologize for the inconvenience --- you can temporarily set this to `true`
 in order to upgrade, and can rename your variables at your leisure. Please
 revert it to `false` after you have renamed all affected variables.
 EOT
+    },
+    :parser => {
+      :default => "current",
+      :desc => <<-'EOT'
+Selects the parser to use for parsing puppet manifests (in puppet DSL language/'.pp' files).
+Available choices are 'current' (the default), and 'future'.
+
+The 'curent' parser means that the released version of the parser should be used.
+
+The 'future' parser is a "time travel to the future" allowing early exposure to new language features.
+What these fatures are will vary from release to release and they may be invididually configurable.
+
+Available Since Puppet 3.2. 
+EOT
     }
   )
   define_settings(:puppetdoc,
