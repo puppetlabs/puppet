@@ -329,12 +329,28 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   TOKENS.add_token :VARIABLE_WITH_DASH, %r{(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
-
-    [TOKENS[:VARIABLE], value]
+    # If the varname (following $, or ${ is followed by (, it is a function call, and not a variable
+    # reference.
+    #
+    if lexer.match?(%r{[ \t\r]*\(})
+      [TOKENS[:NAME],value]
+    else
+      [TOKENS[:VARIABLE], value]
+    end
   end
   TOKENS[:VARIABLE_WITH_DASH].acceptable_when Contextual::VARIABLE_AND_DASHES_ALLOWED
 
-  TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+}
+  TOKENS.add_token :VARIABLE, %r{(::)?(\w+::)*\w+} do |lexer, value|
+    # If the varname (following $, or ${ is followed by (, it is a function call, and not a variable
+    # reference.
+    #
+    if lexer.match?(%r{[ \t\r]*\(})
+      [TOKENS[:NAME],value]
+    else
+      [TOKENS[:VARIABLE],value]
+    end
+
+  end
   TOKENS[:VARIABLE].acceptable_when Contextual::INSIDE_QUOTES
 
   TOKENS.sort_tokens
@@ -677,7 +693,14 @@ class Puppet::Pops::Impl::Parser::Lexer
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
       warn_if_variable_has_hyphen(var_name)
-      token_queue << [TOKENS[:VARIABLE],var_name]
+      # If the varname (following $, or ${ is followed by (, it is a function call, and not a variable
+      # reference.
+      #
+      if @scanner.match?(%r{[ \t\r]*\(})
+        token_queue << [TOKENS[:NAME],var_name]
+      else    
+        token_queue << [TOKENS[:VARIABLE],var_name]
+      end
       tokenize_interpolated_string(DQ_continuation_token_types)
     else
       tokenize_interpolated_string(token_type,token_queue.pop.last + terminator)
