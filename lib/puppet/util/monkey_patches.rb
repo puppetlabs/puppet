@@ -126,6 +126,25 @@ class Array
 
     slice(n, length - n) or []
   end unless method_defined? :drop
+  
+  # Array does not have a to_hash method and Hash uses this instead of checking with "respond_to?" if an
+  # array can convert itself or not. (This is a bad thing in Hash). When Array is extended with a method_missing,
+  # (like when using the RGen package 0.6.1 where meta methods are available on arrays), this trips up the
+  # Hash implementation.
+  # This patch simply does what the regular to_hash does, and it is accompanied by a respond_to? method that
+  # returns false for :to_hash.
+  # This is really ugly, and should be removed when the implementation in lib/rgen/array_extension.rb is
+  # fixed to handle to_hash correctly.
+  def to_hash
+    raise NoMethodError.new
+  end
+  
+  # @see #to_hash   
+  def respond_to? m
+    return false if m == :to_hash
+    super
+  end
+
 end
 
 
