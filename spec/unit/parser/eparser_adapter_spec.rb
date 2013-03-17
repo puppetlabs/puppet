@@ -138,7 +138,7 @@ describe Puppet::Parser do
       # keeps the UC name in some contexts - it gets downcased later as the name of the type is in lower case.
       #
       Puppet::Parser::AST::ResourceReference.expects(:new).with { |arg|
-        arg[:line]==1 and arg[:pos] ==24 and arg[:type]=="file" and arg[:title].is_a?(Puppet::Parser::AST::ASTArray)
+        arg[:line]==1 and arg[:pos] ==25 and arg[:type]=="file" and arg[:title].is_a?(Puppet::Parser::AST::ASTArray)
       }
       @parser.parse('exec { test: command => File["a","b"] }')
     end

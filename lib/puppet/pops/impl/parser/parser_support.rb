@@ -211,7 +211,8 @@ class Puppet::Pops::Impl::Parser::Parser
       #      rescue => except
       #        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, @lexer.pos, except)
     end
-    return main.record_origin(@lexer.file)
+    main.record_origin(@lexer.file) if main
+    return main
   ensure
     @lexer.clear
   end
