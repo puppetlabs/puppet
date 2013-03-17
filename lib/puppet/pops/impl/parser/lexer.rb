@@ -521,7 +521,8 @@ class Puppet::Pops::Impl::Parser::Lexer
       length = end_offset - offset
     end
 
-    return token, { :value => value, :line => @line, :pos => pos, :offset => offset, :length => length}
+    # Add one to pos, first char on line is 1
+    return token, { :value => value, :line => @line, :pos => pos+1, :offset => offset, :length => length}
   end
 
   def pos
