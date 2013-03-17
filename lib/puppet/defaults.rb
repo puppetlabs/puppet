@@ -1519,7 +1519,21 @@ What these fatures are will vary from release to release and they may be invidid
 
 Available Since Puppet 3.2. 
 EOT
-    }
+    },
+   :max_errors => {
+     :default => 10,
+     :desc => <<-'EOT'
+Sets the max number of logged/displayed parser validation errors in case multiple errors have been detected.
+A value of 0 is the same as value 1.
+EOT
+   },
+   :max_warnings => {
+     :default => 10,
+     :desc => <<-'EOT'
+Sets the max number of logged/displayed parser validation warnings in case multiple errors have been detected.
+A value of 0 is the same as value 1.
+EOT
+     }
   )
   define_settings(:puppetdoc,
     :document_all => {

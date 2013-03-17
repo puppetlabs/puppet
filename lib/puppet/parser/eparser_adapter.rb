@@ -96,11 +96,42 @@ class Puppet::Parser::EParserAdapter
     acceptor  = Puppet::Pops::API::Validation::Acceptor.new
     validator = Puppet::Pops::Impl::Validation::ValidatorFactory_3_1.new().validator(acceptor)
     validator.validate(parse_result)
-    # If there were errors, report the first found. Use a puppet style formatter.
-    if acceptor.errors?
+
+    max_errors = Puppet[:max_errors]
+    max_warnings = Puppet[:max_warnings]
+
+    # If there are warnings output all of them
+    warnings = acceptor.warnings
+    if warnings.size > 0
       formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
-      message = formatter.format(acceptor.errors[0])
-      raise Puppet::ParseError.new(message)
+      emitted = 0      
+      acceptor.warnings.each {|w|
+        # TODO: if diagnostic is a deprecation, call Puppet.deprecation_warning instead 
+        Puppet.warning(formatter.format(w))
+        emitted += 1
+        break if emitted > max_warnings
+      }
+    end
+
+    # If there were errors, report the first found. Use a puppet style formatter.
+    errors = acceptor.errors
+    if errors.size > 0
+      formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
+      if errors.size == 1 || max_errors <= 1
+        # raise immediately
+        raise Puppet::ParseError.new(formatter.format(errors[0]))
+      end
+      emitted = 0
+      errors.each {|e| 
+        Puppet.err(formatter.format(e))
+        emitted += 1
+        break if emitted >= max_errors
+      }
+      warnings_message = warnings.size > 0 ? ", and #{warnings.size} warnings" : ""
+      giving_up_message = "Found #{errors.size} errors#{warnings_message}. Giving up"
+      exception = Puppet::ParseError.new(giving_up_message)
+      exception.file = errors[0].file
+      raise exception
     end
   end
 

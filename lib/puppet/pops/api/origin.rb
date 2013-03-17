@@ -11,7 +11,7 @@ module Puppet; module Pops; module API
   # this position.
   # 
   # Unspecified line, offset and length
-  # values can be started as -1 (this is also the default if nothing is stated).
+  # values can be stated as -1 (this is also the default if nothing is stated).
   #
   # The individual fields can be obtained via #file, #line, #offset and #length, or as a
   # combined URI, with the path and URI query parameters line, offset and length.
@@ -38,7 +38,7 @@ module Puppet; module Pops; module API
       uriargs = [file]
       uriargs << "?line=#{line}"
       uriargs << "&offset=#{offset}" if offset >= 0
-      uriargs << "&length=#{length}" if offset >= 0 && offset >= 0 
+      uriargs << "&length=#{length}" if offset >= 0 && length >= 0 
       URI(uriargs.join(''))
     end
     

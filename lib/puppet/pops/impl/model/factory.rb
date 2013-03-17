@@ -1,6 +1,7 @@
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/api/adapters'
 require 'puppet/pops/api/utils'
+require 'puppet/pops/api/origin'
 
 module Puppet; module Pops; module Impl; module Model
 # Factory is a helper class that makes construction of a Pops Model
@@ -431,6 +432,24 @@ class Factory
     self
   end
 
+  # Records the origin of an element (file and starting line if other than 1)
+  # (Origin also supports a char offset and a length for a region within a file
+  # but this is not required (yet)).
+  # Does nothing if file is nil.
+  #
+  # @param file [String,nil] the file/path to the origin, may contain URI scheme of file: or some other URI scheme
+  # @param line [Fixnum]= 1 the line number of the first line where the content originates
+  # @returns [Factory] returns self
+  #
+  def record_origin(file, line = 1)
+    return self unless file
+    puts "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
+    Puppet::Pops::API::Adapters::OriginAdapter.adapt(current) do |a|
+       a.origin = Puppet::Pops::API::Origin.new(file, line)
+    end
+    self    
+  end
+  
   # @return [Puppet::Pops::API::Adapters::SourcePosAdapter] with location information
   def loc()
     raise "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?

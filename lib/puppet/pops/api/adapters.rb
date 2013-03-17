@@ -20,7 +20,7 @@ module Adapters
   # @see Puppet::Pops::API::Utils#find_adapter
   # 
   class OriginAdapter < Puppet::Pops::API::Adaptable::Adapter
-    # @return [URI, #uri] object describing the origin of the adapted
+    # @return [Puppet::Pops::API::Origin] object describing the origin of the adapted
     attr_accessor :origin
   end
   
