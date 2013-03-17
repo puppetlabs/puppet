@@ -381,6 +381,9 @@ class Puppet::Parser::Scope
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
   def setvar(name, value, options = {})
+    if name =~ /^[0-9]+$/
+      raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") unless options[:ephemeral]
+    end
     unless name.is_a? String
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
     end
