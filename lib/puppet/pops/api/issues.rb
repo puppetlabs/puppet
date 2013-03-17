@@ -102,7 +102,7 @@ module Puppet::Pops::API::Issues
   # @todo configuration
   #
   NAME_WITH_HYPHEN = issue :NAME_WITH_HYPHEN, :name do
-    "A name may not contain a hyphen. The name '#{name}' is not legal"
+    "#{label.a_an_uc(semantic)} may not have a name contain a hyphen. The name '#{name}' is not legal"
   end
 
   # When a variable name contains a hyphen and these are illegal.
