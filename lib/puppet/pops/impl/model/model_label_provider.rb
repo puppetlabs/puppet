@@ -74,5 +74,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < LabelProvider
   def label_SelectorExpression o          ; "Selector Expression"               end 
   def label_SelectorEntry o               ; "Selector Option"                   end
   def label_Object o                      ; "Object"                            end
+  def label_QualifiedName o               ; "Name"                              end
+  def label_QualifiedReference o          ; "Type Name"                         end
 
 end
