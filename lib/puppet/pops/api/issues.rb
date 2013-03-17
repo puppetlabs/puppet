@@ -132,6 +132,11 @@ module Puppet::Pops::API::Issues
     "Illegal attempt to assign to '#{label.a_an(semantic)}'. Not an assignable reference"
   end
 
+  # Assignment cannot be made to numeric match result variables
+  ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
+    "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
+  end
+
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key
   # in an array or a hash. This is an optional validation that may be turned on to prevent accidental
   # mutation.
