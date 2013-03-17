@@ -182,6 +182,9 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   # for 'class' and 'define'
   def check_NamedDefinition o
     top o.eContainer, o
+    if (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.name.include?('-')
+      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.name})
+    end
   end
 
   def check_InstanceReference(o)
@@ -204,23 +207,14 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     top o.eContainer, o
   end
 
-  # Asserts that value is a valid QualifiedName, and optionally if it contains a hyphen.
+  # Asserts that value is a valid QualifiedName. No additional checking is made, objects that use
+  # a QualifiedName as a name should check the validity - this since a QualifiedName is used as a BARE WORD
+  # and then additional chars may be valid (like a hyphen).
   #
   def check_QualifiedName(o)
     # Is this a valid qualified name?
     if o.value !~ Puppet::Pops::API::Patterns::NAME
-      acceptor.accept(Issues::IllegalName, o, {:name=>o.value})
-    else
-      # Do not check this if name is malformed
-      unless o.eContainer.is_a? Model::VariableExpression
-        # Only check usage when not being a variable name (which is responsible for its own checking)
-        # Note, that if it later becomes illegal with hyphen in any name, the special check
-        # in a VariableExpression
-
-        if (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.value.include?('-')
-          acceptor.accept(Issues::NAME_WITH_HYPEN, o, {:name => o.value})
-        end
-      end
+      acceptor.accept(Issues::ILLEGAL_NAME, o, {:name=>o.value})
     end
   end
 
@@ -231,7 +225,7 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     if o.value !~ Puppet::Pops::API::Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.value})
     elsif (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.value.include?('-')
-      acceptor.accept(Issues::NAME_WITH_HYPEN, o, {:name => o.value})
+      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.value})
     end
   end
 
@@ -300,7 +294,7 @@ class Puppet::Pops::Impl::Validation::Checker3_1
       # a VariableExpression
       name = o.expr.value
       if (acceptor.will_accept? Issues::VAR_WITH_HYPHEN) && name.include?('-')
-        acceptor.accept(Issues::VAR_WITH_HYPEN, o, {:name => name})
+        acceptor.accept(Issues::VAR_WITH_HYPHEN, o, {:name => name})
       end
     end
   end
