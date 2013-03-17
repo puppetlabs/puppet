@@ -50,7 +50,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < LabelProvider
   def label_NamedAccessExpression o       ; "'.' expression"                    end
   def label_NilClass o                    ; "Nil Object"                        end
   def label_NotExpression o               ; "'not' expression"                  end
-  def label_VariableExpression o          ; "Variable Expression"               end
+  def label_VariableExpression o          ; "Variable"                          end
   def label_TextExpression o              ; "Expression in Interpolated String" end
   def label_UnaryMinusExpression o        ; "Unary Minus"                       end
   def label_BlockExpression o             ; "Block Expression"                  end
