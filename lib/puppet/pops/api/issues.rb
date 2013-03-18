@@ -136,6 +136,11 @@ module Puppet::Pops::API::Issues
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
+  
+  # parameters cannot have numeric names, clashes with match result variables
+  ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
+    "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
+  end
 
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key
   # in an array or a hash. This is an optional validation that may be turned on to prevent accidental
