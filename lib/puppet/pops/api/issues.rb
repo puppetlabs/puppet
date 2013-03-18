@@ -8,19 +8,36 @@ module Puppet::Pops::API; end
 # @api public
 #
 module Puppet::Pops::API::Issues
-  
   # Describes an issue, and can produce a message for an occurrence of the issue.
   #
   class Issue
+    # The issue code
+    # @return [Symbol]
     attr_reader :issue_code
+
+    # A block producing the message
+    # @return [Proc]
     attr_reader :message_block
+
+    # Names that must be bound in an occurrence of the issue to be able to produce a message.
+    # These are the names in addition to requirements stipulated by the Issue formatter contract; i.e. :label`,
+    # and `:semantic`.
+    #
     attr_reader :arg_names
-    
+
+    # If this issue can have its severity lowered to :warning, :deprecation, or :ignored
+    attr_writer :demotable
     # Configures the Issue with required arguments (bound by occurrence), and a block producing a message.
     def initialize issue_code, *args, &block
       @issue_code = issue_code
       @message_block = block
       @arg_names = args
+      @demotable = true
+    end
+
+    # Returns true if it is allowed to demote this issue
+    def demotable?
+      @demotable
     end
 
     # Formats a message for an occurrence of the issue with argument bindings passed in a hash.
@@ -63,6 +80,7 @@ module Puppet::Pops::API::Issues
       raise "Label provider key :label must be set to produce the text of the message!" unless @data[:label]
       @data[:label]
     end
+
     # Returns the label provider given as a key in the hash passed to #format.
     #
     def semantic
@@ -88,6 +106,15 @@ module Puppet::Pops::API::Issues
   #
   def self.issue (issue_code, *args, &block)
     Issue.new(issue_code, *args, &block)
+  end
+
+  # Creates a non demotable issue.
+  # @see Issue.issue
+  #
+  def self.hard_issue(issue_code, *args, &block)
+    result = Issue.new(issue_code, *args, &block)
+    result.demotable = false
+    result
   end
 
   # @comment Here follows definitions of issues. The intent is to provide a list from which yardoc can be generated
@@ -119,16 +146,16 @@ module Puppet::Pops::API::Issues
   # @todo Is this really true for nodes? Can they be inside classes? Isn't that too late?
   # @api public
   #
-  NOT_TOP_LEVEL = issue :NOT_TOP_LEVEL do
+  NOT_TOP_LEVEL = hard_issue :NOT_TOP_LEVEL do
     "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
   end
 
-  CROSS_SCOPE_ASSIGNMENT = issue :CROSS_SCOPE_ASSIGNMENT, :name do
+  CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
     "Illegal attempt to assign to '#{name}'. Cannot assign to variables in other namespaces"
   end
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
-  ILLEGAL_ASSIGNMENT = issue :ILLEGAL_ASSIGNMENT do
+  ILLEGAL_ASSIGNMENT = hard_issue :ILLEGAL_ASSIGNMENT do
     "Illegal attempt to assign to '#{label.a_an(semantic)}'. Not an assignable reference"
   end
 
@@ -136,7 +163,7 @@ module Puppet::Pops::API::Issues
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
-  
+
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
     "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
@@ -153,7 +180,7 @@ module Puppet::Pops::API::Issues
   # When indexed assignment ($x[]=) is allowed, the leftmost expression must be
   # a variable expression.
   #
-  ILLEGAL_ASSIGNMENT_VIA_INDEX = issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do
+  ILLEGAL_ASSIGNMENT_VIA_INDEX = hard_issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
@@ -164,17 +191,15 @@ module Puppet::Pops::API::Issues
     "Invalid use of expression. #{label.a_an_uc(semantic)} does not produce a value"
   end
 
-  # Some expressions/statements may not produce a value (known as right-value, or rvalue).
-  # This may vary between puppet versions.
+  # Appending to attributes is only allowed in certain types of resource expressions.
   #
-  ILLEGAL_ATTRIBUTE_APPEND = issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
+  ILLEGAL_ATTRIBUTE_APPEND = hard_issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
     "Illegal +> operation on attribute #{name}. This operator can not be used in #{label.a_an(parent)}"
   end
 
-  # Some expressions/statements may not produce a value (known as right-value, or rvalue).
-  # This may vary between puppet versions.
+  # In case a model is constructed programmatically, it must create valid type references.
   #
-  ILLEGAL_CLASSREF = issue :ILLEGAL_CLASSREF, :name do
+  ILLEGAL_CLASSREF = hard_issue :ILLEGAL_CLASSREF, :name do
     "Illegal type reference. The given name '#{name}' does not conform to the naming rule"
   end
 
@@ -196,31 +221,32 @@ module Puppet::Pops::API::Issues
 
   # A hostname may only contain letters, digits, '_', '-', and '.'.
   #
-  ILLEGAL_HOSTNAME_CHARS = issue :ILLEGAL_HOSTNAME_CHARS, :hostname do
+  ILLEGAL_HOSTNAME_CHARS = hard_issue :ILLEGAL_HOSTNAME_CHARS, :hostname do
     "The hostname '#{hostname}' contains illegal characters (only letters, digits, '_', '-', and '.' are allowed)"
   end
 
   # Issues when an expression is used where it is not legal.
   # E.g. an arithmetic expression where a hostname is expected.
   #
-  ILLEGAL_EXPRESSION = issue :ILLEGAL_EXPRESSION, :feature, :container do
+  ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
   # Issues when an expression is used illegaly in a query.
   # query only supports == and !=, and not <, > etc.
   #
-  ILLEGAL_QUERY_EXPRESSION = issue :ILLEGAL_QUERY_EXPRESSION do
+  ILLEGAL_QUERY_EXPRESSION = hard_issue :ILLEGAL_QUERY_EXPRESSION do
     "Illegal query expression. #{label.a_an_uc(semantic)} cannot be used in a query"
   end
 
   # If an attempt is made to make a resource default virtual or exported.
   #
-  NOT_VIRTUALIZEABLE = issue :NOT_VIRTUALIZEABLE do
+  NOT_VIRTUALIZEABLE = hard_issue :NOT_VIRTUALIZEABLE do
     "Resource Defaults are not virtualizable"
   end
 
-  # If an attempt is made to make a resource default virtual or exported.
+  # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
+  # This is currently not supported, but may be in future versions
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"

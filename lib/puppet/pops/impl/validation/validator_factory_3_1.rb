@@ -15,7 +15,7 @@ module Puppet::Pops::Impl::Validation
   class ValidatorFactory_3_1
     Issues = Puppet::Pops::API::Issues
     
-    # Produces validator with the given acceptor as the recipient of produced diagnostics.
+    # Produces a validator with the given acceptor as the recipient of produced diagnostics.
     #
     def validator acceptor
       checker(diagnostic_producer(acceptor))
@@ -41,11 +41,12 @@ module Puppet::Pops::Impl::Validation
     def severity_producer
       p = Puppet::Pops::API::Validation::SeverityProducer.new
 
-      # configure each issue that should not be an error
+      # Configure each issue that should **not** be an error
       #
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = :warning
       p[Issues::RT_NO_STORECONFIGS]           = :warning
-      p[Issues::NAME_WITH_HYPHEN]             = :ignore
+      p[Issues::NAME_WITH_HYPHEN]             = :deprecation
+      p[Issues::DEPRECATED_NAME_AS_TYPE]      = :deprecation
 
       p
     end

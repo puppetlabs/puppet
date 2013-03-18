@@ -1524,16 +1524,24 @@ EOT
      :default => 10,
      :desc => <<-'EOT'
 Sets the max number of logged/displayed parser validation errors in case multiple errors have been detected.
-A value of 0 is the same as value 1.
+A value of 0 is the same as value 1. The count is per manifest.
 EOT
    },
    :max_warnings => {
      :default => 10,
      :desc => <<-'EOT'
 Sets the max number of logged/displayed parser validation warnings in case multiple errors have been detected.
-A value of 0 is the same as value 1.
+A value of 0 is the same as value 1. The count is per manifest.
 EOT
-     }
+     },
+  :max_deprecations => {
+    :default => 10,
+    :desc => <<-'EOT'
+Sets the max number of logged/displayed parser validation deprecation warnings in case multiple errors have been detected.
+A value of 0 is the same as value 1. The count is per manifest.
+EOT
+    }
+
   )
   define_settings(:puppetdoc,
     :document_all => {
