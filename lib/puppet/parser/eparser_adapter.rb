@@ -98,18 +98,28 @@ class Puppet::Parser::EParserAdapter
     validator.validate(parse_result)
 
     max_errors = Puppet[:max_errors]
-    max_warnings = Puppet[:max_warnings]
+    max_warnings = Puppet[:max_warnings] + 1
+    max_deprecations = Puppet[:max_deprecations] + 1 
 
-    # If there are warnings output all of them
+    # If there are warnings output them
     warnings = acceptor.warnings
     if warnings.size > 0
       formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
-      emitted = 0      
+      emitted_w = 0
+      emitted_dw = 0      
       acceptor.warnings.each {|w|
-        # TODO: if diagnostic is a deprecation, call Puppet.deprecation_warning instead 
-        Puppet.warning(formatter.format(w))
-        emitted += 1
-        break if emitted > max_warnings
+        if w.severity == :deprecation
+          # Do *not* call Puppet.deprecation_warning it is for internal deprecation, not
+          # deprecation of constructs in manifests! (It is not designed for that purpose even if
+          # used throughout the code base).
+          #
+          Puppet.warning(formatter.format(w)) if emitted_dw < max_deprecations
+          emitted_dw += 1 
+        else
+          Puppet.warning(formatter.format(w)) if emitted_w < max_warnings
+          emitted_w += 1
+        end
+        break if emitted_w > max_warnings && emitted_dw > max_deprecations # but only then
       }
     end
 

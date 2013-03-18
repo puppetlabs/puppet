@@ -44,7 +44,8 @@ module Puppet::Pops::API::Validation
     #
     def []= issue, level
       assert_issue(issue)
-      assert_severity(level)
+      assert_severity(level)     
+      raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
     
@@ -53,15 +54,15 @@ module Puppet::Pops::API::Validation
     #
     def should_report? issue
       diagnose = self[issue]
-      diagnose == :error || diagnose == :warning
+      diagnose == :error || diagnose == :warning || diagnose == :deprecation
     end
 
     def assert_issue issue
-      raise Puppet::DevError.new("Attempt to get validation option for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::API::Issues::Issue
+      raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::API::Issues::Issue
     end
 
     def assert_severity level
-      raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error].include? level
+      raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error, :deprecation].include? level
     end
   end
 
@@ -148,13 +149,22 @@ module Puppet::Pops::API::Validation
   #
   class DiagnosticFormatter
     def format diagnostic
-      "#{loc(diagnostic)} #{format_message(diagnostic)}"
+      "#{loc(diagnostic)} #{format_severity(diagnostic)}#{format_message(diagnostic)}"
     end
 
     def format_message diagnostic
       diagnostic.issue.format(diagnostic.arguments)
     end
 
+    # This produces "Deprecation notice: " prefix if the diagnostic has :deprecation severity, otherwise "".
+    # The idea is that all other diagnostics are emitted with the methods Puppet.err (or an exception), and 
+    # Puppet.warning.
+    # @note Note that it is not a good idea to use Puppet.deprecation_warning as it is for internal deprecation.
+    #
+    def format_severity diagnostic
+      diagnostic.severity == :deprecation ? "Deprecation notice: " : "" 
+    end
+    
     def format_location diagnostic
       file = diagnostic.file
       line = diagnostic.source_pos.line
@@ -177,14 +187,14 @@ module Puppet::Pops::API::Validation
   class DiagnosticFormatterPuppetStyle < DiagnosticFormatter
     def format diagnostic
       if (location = format_location diagnostic) != ""
-        "#{format_message(diagnostic)}#{location}"
+        "#{format_severity(diagnostic)}#{format_message(diagnostic)}#{location}"
       else
         format_message(diagnostic)
       end
     end
     
-    # The somewhat unusable format in current use by puppet.
-    # have to be used here for backwards compatibility. 
+    # The somewhat (machine) unusable format in current use by puppet.
+    # have to be used here for backwards compatibility.
     def format_location diagnostic
       file = diagnostic.file
       line = diagnostic.source_pos.line
@@ -214,9 +224,15 @@ module Puppet::Pops::API::Validation
   #
   class Acceptor
 
+    # All diagnstic in the order they were issued
     attr_reader :diagnostics
+    
+    # The number of :warning severity issues + number of :deprecation severity issues
     attr_reader :warning_count
+    
+    # The number of :error severity issues
     attr_reader :error_count
+    
     # Initializes this diagnostics acceptor.
     # By default, the acceptor is configured with a default severity producer.
     # @param severity_producer [SeverityProducer] the severity producer to use to determine severity of an issue
@@ -250,12 +266,13 @@ module Puppet::Pops::API::Validation
     end
 
     # Returns the diagnosed warnings in the order thwy were reported.
+    # (This includes :warning and :deprecation severity)
     def warnings
-      @diagnostics.select {|d| d.severity == :warning }
+      @diagnostics.select {|d| d.severity == :warning || d.severity == :deprecation }
     end
 
     def errors_and_warnings
-      @diagnostics.select {|d| [:warning, :error].include? d.severity }
+      @diagnostics.select {|d| d.severity != :ignored}
     end
 
     # Returns the ignored diagnostics in the order thwy were reported (if reported at all)
@@ -277,13 +294,15 @@ module Puppet::Pops::API::Validation
     def error diagnostic
       @diagnostics << diagnostic
       @error_count += 1
-      # TODO: Remove this - this is for an exception throwing acceptor
-      # raise Puppet::ParseError.new(except.message, file, line, exception)
     end
 
     def warning diagnostic
       @diagnostics << diagnostic
       @warning_count += 1
+    end
+    
+    def deprecation diagnostic
+      warning diagnostic
     end
   end
 end
