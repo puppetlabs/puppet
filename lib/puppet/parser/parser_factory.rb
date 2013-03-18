@@ -27,10 +27,36 @@ module Puppet; module Parser
     # Creates an instance of the expression based parser 'eparser'
     #
     def self.eparser(environment)
+      # Since RGen is optional, test that it is installed
+      @@asserted ||= false
+      assert_rgen_installed() unless @asserted
       require 'puppet/parser'
       require 'puppet/parser/eparser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
     end
+    
+    private 
+    def self.assert_rgen_installed
+      begin
+        require 'rgen/metamodel_builder'
+      rescue LoadError
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using the setting '--parser future'. Please install 'rgen'.")
+      end
+      # Since RGen is optional, there is nothing specifying its version.
+      # It is not installed in any controlled way, so not possible to use gems to check (it may be installed some other way).
+      # Instead check that "eContainer, and eContainingFeature" has been installed.
+      require 'puppet/pops/api/model/model'
+      begin
+        litstring = Puppet::Pops::API::Model::LiteralString.new();
+        container = Puppet::Pops::API::Model::ArithmeticExpression.new();
+        container.left_expr = litstring
+        raise "no eContainer" if litstring.eContainer() != container
+        raise "no eContainingFeature" if litstring.eContainingFeature() != :left_expr
+      rescue =>e
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using '--parser future'. An older version is installed, please update.")
+      end
+    end
   end
+  
   
 end; end
