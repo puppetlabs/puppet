@@ -252,14 +252,15 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         expect { @master.compile }.to exit_with 0
       end
 
-      it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
+      it "should convert the catalog to a pure-resource catalog and use 'PSON::pretty_generate' to pretty-print the catalog" do
         catalog = Puppet::Resource::Catalog.new
+        PSON.stubs(:pretty_generate)
         Puppet::Resource::Catalog.indirection.expects(:find).returns catalog
 
         catalog.expects(:to_resource).returns("rescat")
 
         @master.options[:node] = "foo"
-        @master.expects(:jj).with("rescat")
+        PSON.expects(:pretty_generate).with('rescat', :allow_nan => true, :max_nesting => false)
 
         expect { @master.compile }.to exit_with 0
       end
