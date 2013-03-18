@@ -11,7 +11,7 @@ describe Puppet::Provider::ParsedFile do
   # sharing data between classes we construct an anonymous class that inherits
   # the ParsedFile provider instead of directly working with the ParsedFile
   # provider itself.
-  subject { Class.new(described_class) }
+  subject { Puppet::Type.newtype(:parsedfile_type).provide(:parsedfile_provider, :parent => described_class) }
 
   describe "when looking up records loaded from disk" do
     it "should return nil if no records have been loaded" do
@@ -35,6 +35,27 @@ describe Puppet::Provider::ParsedFile do
       end
 
       subject.instances.should == results
+    end
+
+    it "should ignore target when retrieve fails" do
+      subject.expects(:targets).returns %w{/one /two /three}
+      subject.stubs(:skip_record?).returns false
+      subject.expects(:retrieve).with("/one").returns [
+        {:name => 'target1_record1'},
+        {:name => 'target1_record2'}
+      ]
+      subject.expects(:retrieve).with("/two").raises Puppet::Util::FileType::FileReadError, "some error"
+      subject.expects(:retrieve).with("/three").returns [
+        {:name => 'target3_record1'},
+        {:name => 'target3_record2'}
+      ]
+      Puppet.expects(:err).with('Could not prefetch parsedfile_type provider \'parsedfile_provider\' target \'/two\': some error. Treating as empty')
+      subject.expects(:new).with(:name => 'target1_record1', :on_disk => true, :target => '/one', :ensure => :present).returns 'r1'
+      subject.expects(:new).with(:name => 'target1_record2', :on_disk => true, :target => '/one', :ensure => :present).returns 'r2'
+      subject.expects(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present).returns 'r3'
+      subject.expects(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present).returns 'r4'
+
+      subject.instances.should == %w{r1 r2 r3 r4}
     end
 
     it "should skip specified records" do
