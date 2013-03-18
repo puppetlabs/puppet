@@ -12,7 +12,7 @@ module Puppet; module Pops; module Impl; module Validation; end; end; end; end;
 # but not validate its referenced/contained elements except to check their validity in their respective role.
 # The intent is to drive the validation with a tree iterator that visits all elements in a model.
 #
-# 
+#
 # TODO: Add validation of multiplicities - this is a general validation that can be checked for all
 #       Model objects via their metamodel. (I.e an extra call to multiplicity check in polymorph check).
 #       This is however mostly valuable when validating model to model transformations, and is therefore T.B.D
@@ -22,7 +22,6 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   Model = Puppet::Pops::API::Model
 
   attr_reader :acceptor
-  
   # Initializes the validator with a diagnostics producer. This object must respond to
   # `:will_accept?` and `:accept`.
   #
@@ -56,7 +55,7 @@ class Puppet::Pops::Impl::Validation::Checker3_1
 
   # Performs check if this is valid as a query
   def query o              ; @@query_visitor.visit_this(self, o)                ; end
-    
+
   # Performs check if this is valid as a relationship side
   def relation o, container ; @@relation_visitor.visit_this(self, o, container) ; end
 
@@ -76,11 +75,12 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   #---ASSIGNMENT CHECKS
 
   def assign_VariableExpression o, *args
-    # TODO: Assignment to numeric variable
-    
+    varname_string = varname_to_s(o.expr)
+    if varname_string =~ /^[0-9]+$/
+      acceptor.accept Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o, :varname => varname_string
+    end
     # Can not assign to something in another namespace (i.e. a '::' in the name is not legal)
     if acceptor.will_accept? Issues::CROSS_SCOPE_ASSIGNMENT
-      varname_string = varname_to_s(o.expr)
       if varname_string =~ /::/
         acceptor.accept(Issues::CROSS_SCOPE_ASSIGNMENT, o, :name => varname_string)
       end
@@ -144,7 +144,7 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   # Checks that operation with :+> is contained in a ResourceOverride or Collector.
   #
   # Parent of an AttributeOperation can be one of:
-  # * CollectExpression 
+  # * CollectExpression
   # * ResourceOverride
   # * ResourceBody (ILLEGAL this is a regular resource expression)
   # * ResourceDefaults (ILLEGAL)
@@ -165,17 +165,42 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     rvalue o.right_expr
   end
 
+  def check_CallNamedFunctionExpression o
+    unless o.functor_expr.is_a? Model::QualifiedName
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature=> 'function name', :container => o
+    end
+  end
+
+  def check_MethodCallExpression o
+    unless o.functor_expr.is_a? Model::QualifiedName
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature=> 'function name', :container => o
+    end
+  end
+
   def check_CaseExpression o
     # There should only be one LiteralDefault case option value
     # TODO: Implement this check
   end
 
-  def checkCollectExpression o
-    # TODO: if a collect expression tries to collect exported resources and storeconfigs is not on
-    #   then it will not work... This was checked in the parser previously. This is a runtime checking
-    #   thing as opposed to a language thing.
+  def check_CollectExpression o
+    unless o.type_expr.is_a? Model::QualifiedReference
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o
+    end
+
+    # If a collect expression tries to collect exported resources and storeconfigs is not on
+    # then it will not work... This was checked in the parser previously. This is a runtime checking
+    # thing as opposed to a language thing.
     if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.query.is_a?(Model::ExportedQuery)
       acceptor.accept Issues::RT_NO_STORECONFIGS, o
+    end
+  end
+
+  # Only used for function names, grammar should not be able to produce something faulty, but
+  # check anyway if model is created programatically (it will fail in transformation to AST for sure).
+  def check_NamedAccessExpression o
+    name = o.right_expr
+    unless name.is_a? Model::QualifiedName
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => o.eContainer
     end
   end
 
@@ -184,6 +209,14 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     top o.eContainer, o
     if (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.name.include?('-')
       acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.name})
+    end
+  end
+
+  def check_ImportExpression o
+    o.files.each do |f|
+      unless f.is_a? Model::LiteralString
+        acceptor.accept Issues::ILLEGAL_EXPRESSION, f, :feature=> 'file name', :container => o
+      end
     end
   end
 
@@ -196,11 +229,25 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     #
   end
 
+  # Restrictions on hash key are because of the strange key comparisons/and merge rules in the AST evaluation
+  # (Even the allowed ones are handled in a strange way).
+  #
+  def transform_KeyedEntry o
+    key = case o.key
+    when Model::QualifiedName
+    when Model::LiteralString
+    when Model::LiteralNumber
+    when Model::ConcatenatedString
+    else
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.key, :feature=> 'hash key', :container => o.eContainer
+    end
+  end
+
   # A Lambda is a Definition, but it may appear in other scopes that top scope (Which check_Definition asserts).
   #
   def check_LambdaExpression o
   end
-  
+
   def check_NodeDefinition o
     # Check that hostnames are valid hostnames (or regular expressons)
     hostname o.host_matches, o
@@ -236,16 +283,30 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   def relation_Object o, rel_expr
     acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature => o.eContainingFeature, :container => rel_expr})
   end
-  
+
   def relation_AccessExpression o, rel_expr; end
+
   def relation_CollectExpression o, rel_expr; end
+
   def relation_VariableExpression o, rel_expr; end
+
   def relation_LiteralString o, rel_expr; end
+
   def relation_ConcatenatedStringExpression o, rel_expr; end
+
   def relation_SelectorExpression o, rel_expr; end
+
   def relation_CaseExpression o, rel_expr; end
+
   def relation_ResourceExpression o, rel_expr; end
+
   def relation_RelationshipExpression o, rel_expr; end
+
+  def check_Parameter o
+    if o.name =~ /^[0-9]+$/
+      acceptor.accept Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name
+    end
+  end
 
   #relationship_side: resource
   #  | resourceref
@@ -260,8 +321,13 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     relation(o.left_expr, o)
     relation(o.right_expr, o)
   end
-  
+
   def check_ResourceExpression o
+    # A resource expression must have a lower case NAME as its type e.g. 'file { ... }'
+    unless o.type_name.is_a? Model::QualifiedName
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.type_name, :feature=> 'resource type', :container => o
+    end
+
     # This is a runtime check - the model is valid, but will have runtime issues when evaluated
     # and storeconfigs is not set.
     if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.exported
@@ -272,6 +338,19 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   def check_ResourceDefaultsExpression(o)
     if o.form && o.form != :regular
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
+    end
+  end
+
+  # Transformation of SelectorExpression is limited to certain types of expressions.
+  # This is probably due to constraints in the old grammar rather than any real concerns.
+  def select_SelectorExpression o
+    case o.left_expr
+    when Model::CallNamedFunctionExpression
+    when Model::AccessExpression
+    when Model::VariableExpression
+    when Model::ConcatenatedString
+    else
+      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.left_expr, :feature=> 'left operand', :container => o
     end
   end
 
@@ -404,27 +483,26 @@ class Puppet::Pops::Impl::Validation::Checker3_1
 
   def rvalue_UnaryExpression o            ; rvalue o.expr                 ; end
 
-
   #---TOP CHECK
-  
+
   def top_NilClass o, definition
     # ok, reached the top, no more parents
   end
-  
+
   def top_Object o, definition
     # fail, reached a container that is not top level
     acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
-  
+
   def top_BlockExpression o, definition
     # ok, if this is a block representing the body of a class, or is top level
     top o.eContainer, definition
   end
-  
+
   def top_HostClassDefinition o, definition
     # ok, stop scanning parents
   end
-  
+
   # A LambdaExpression is a BlockExpression, and this method is needed to prevent the polymorph method for BlockExpression
   # to accept a lambda.
   # A lambda can not iteratively create classes, nodes or defines as the lambda does not have a closure.
@@ -433,9 +511,9 @@ class Puppet::Pops::Impl::Validation::Checker3_1
     # fail, stop scanning parents
     acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
-  
+
   #--- NON POLYMORPH, NON CHECKING CODE
-    
+
   # Produces string part of something named, or nil if not a QualifiedName or QualifiedReference
   #
   def varname_to_s o
