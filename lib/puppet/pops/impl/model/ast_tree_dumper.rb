@@ -121,7 +121,8 @@ class AstTreeDumper < TreeDumper
   end
 
   def dump_ASTHash o
-    ["{}"] + o.value.collect {|x| [do_dump(x[0]), do_dump(x[1])]}
+    ["{}"] + o.value.sort_by{|k,v| k.to_s}.collect {|x| [do_dump(x[0]), do_dump(x[1])]}
+#    ["{}"] + o.value.collect {|x| [do_dump(x[0]), do_dump(x[1])]}
   end
 
   def dump_MatchOperator o

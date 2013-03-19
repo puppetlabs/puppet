@@ -76,7 +76,5 @@ module FactoryRspecHelper
   def unindent x
     (x.gsub /^#{x[/\A\s*/]}/, '').chomp
   end
-  factory = Puppet::Pops::Impl::Model::Factory
-  EvaluationError = Puppet::Pops::EvaluationError
-  Model = Puppet::Pops::API::Model
+  factory ||= Puppet::Pops::Impl::Model::Factory
 end

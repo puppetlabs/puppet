@@ -11,14 +11,10 @@ require 'puppet/pops/impl/top_scope'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 
-RSpec.configure do |c|
-  c.include EvaluatorRspecHelper
-end
-
 # This file contains testing of variables in a top scope and named scopes.
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  EvaluationError ||= Puppet::Pops::EvaluationError
+  include EvaluatorRspecHelper
   Model ||= Puppet::Pops::API::Model
   
   context "(selftest)" do

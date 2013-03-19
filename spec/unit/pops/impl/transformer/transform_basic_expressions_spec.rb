@@ -15,14 +15,12 @@ require 'puppet/pops/impl/parser/eparser'
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
   
 describe Puppet::Pops::Impl::Parser::Parser do
-  EvaluationError ||= Puppet::Pops::EvaluationError
   Model ||= Puppet::Pops::API::Model
-  AST ||= Puppet::Parser::AST
   include TransformerRspecHelper
   
   context "When running these transformation examples, the setup" do
     it "should be able to transform a model" do
-      transform(literal(10)).class.should == AST::Name
+      transform(literal(10)).class.should == Puppet::Parser::AST::Name
     end
     
     it "ast dumper should dump numbers as literal numbers" do
@@ -232,7 +230,8 @@ describe Puppet::Pops::Impl::Parser::Parser do
       astdump(parse("$a = 1 in [1,2,3]")).should == "(= $a (in 1 ([] 1 2 3)))"
     end
     it "with string key in a hash" do
-      astdump(parse("$a = 'a' in {'x'=>1, 'a'=>2, 'y'=> 3}")).should == "(= $a (in 'a' ({} ('x' 1) ('a' 2) ('y' 3))))"
+      # note that hash dump of ast is in key sorted order
+      astdump(parse("$a = 'a' in {'x'=>1, 'a'=>2, 'y'=> 3}")).should == "(= $a (in 'a' ({} ('a' 2) ('x' 1) ('y' 3))))"
     end
     it "with substrings of a string" do
       astdump(parse("$a = 'ana' in 'bananas'")).should == "(= $a (in 'ana' 'bananas'))"

@@ -11,13 +11,9 @@ require 'puppet/pops/impl/parser/eparser'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
-
-RSpec.configure do |c|
-  c.include ParserRspecHelper
-end
   
 describe "Puppet::Pops::Impl::Parser::Parser" do
-  EvaluationError ||= Puppet::Pops::EvaluationError
+  include ParserRspecHelper
     
 # With egrammar this is now supported (it was only a grammar restriction), AST evaluation is ok.  
 #  context "When parsing Lists" do
