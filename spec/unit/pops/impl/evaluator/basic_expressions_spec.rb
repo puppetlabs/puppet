@@ -11,12 +11,8 @@ require 'puppet/pops/impl/base_scope'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 
-RSpec.configure do |c|
-  c.include EvaluatorRspecHelper
-end
-
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  EvaluationError ||= Puppet::Pops::EvaluationError
+  include EvaluatorRspecHelper
   
   context "When running these examples, the setup" do
     
@@ -61,8 +57,8 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "6.6 / 3.3  ==  2.0"   do; evaluate(literal(6.6) / literal(3.3)).should == 2.0  ; end
       it "-(6.0/3.0) == -2.0"   do; evaluate(minus(literal(6.0) / literal(3.0))).should == -2.0; end
       it "-6.0/3.0   == -2.0"   do; evaluate(minus(literal(6.0)) / literal(3.0)).should == -2.0; end
-      it "3.14 << 2  == error"  do; expect { evaluate(literal(3.14) << literal(2))}.to raise_error(EvaluationError); end
-      it "3.14 >> 2  == error"  do; expect { evaluate(literal(3.14) >> literal(2))}.to raise_error(EvaluationError); end
+      it "3.14 << 2  == error"  do; expect { evaluate(literal(3.14) << literal(2))}.to raise_error(Puppet::Pops::API::EvaluationError); end
+      it "3.14 >> 2  == error"  do; expect { evaluate(literal(3.14) >> literal(2))}.to raise_error(Puppet::Pops::API::EvaluationError); end
     end
     
     context "on strings requiring boxing to Numeric" do
@@ -83,15 +79,15 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       end
 
       it "'0888' + '010'   ==  error" do
-        expect { evaluate(literal('0888') + literal('010'))}.to raise_error(EvaluationError)
+        expect { evaluate(literal('0888') + literal('010'))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
       
       it "'0xWTF' + '010'  ==  error" do
-        expect { evaluate(literal('0xWTF') + literal('010'))}.to raise_error(EvaluationError)
+        expect { evaluate(literal('0xWTF') + literal('010'))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
 
       it "'0x12.3' + '010' ==  error" do
-        expect { evaluate(literal('0x12.3') + literal('010'))}.to raise_error(EvaluationError)
+        expect { evaluate(literal('0x12.3') + literal('010'))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
 
       it "'012.3' + '0.3'  ==  12.6 (not error, floats can start with 0)" do
@@ -161,7 +157,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(literal(true).or(literal('0xwtf') + literal(1)).or(literal(false))).should == true
       end
       it "false || false || error == error (false positive test)" do
-        expect {evaluate(literal(true).and(literal('0xwtf') + literal(1)).or(literal(false)))}.to raise_error(EvaluationError)
+        expect {evaluate(literal(true).and(literal('0xwtf') + literal(1)).or(literal(false)))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
     end
   end
@@ -242,10 +238,10 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
     end
     context "of non comparable types" do
       it "false < true  == error" do
-        expect { evaluate(literal(true) < literal(false))}.to raise_error(EvaluationError)
+        expect { evaluate(literal(true) < literal(false))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
       it "/a/ < /b/     == error" do
-        expect { evaluate(literal(/a/) < literal(/b/))}.to raise_error(EvaluationError)
+        expect { evaluate(literal(/a/) < literal(/b/))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
     end
   end

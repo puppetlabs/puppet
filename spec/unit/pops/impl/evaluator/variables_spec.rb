@@ -78,7 +78,10 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
           it "from hash, [] += {a=>b}" do
             top_scope_block = fqn('a').set([1,2,3])
             local_scope_block = fqn('a').plus_set({'a' => 1, 'b'=>2})
-            evaluate_l(top_scope_block, local_scope_block).should == [1,2,3,['a',1],['b',2]]
+            evaluate_l(top_scope_block, local_scope_block).should satisfy {|result|
+              # hash in 1.8.7 is not insertion order preserving, hence this hoop 
+             result == [1,2,3,['a',1],['b',2]] || result == [1,2,3,['b',2],['a',1]] 
+            }
           end
           it "from single value, [] += x" do
             top_scope_block = fqn('a').set([1,2,3])

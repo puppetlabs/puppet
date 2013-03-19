@@ -14,7 +14,6 @@ require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
 # Tests containers (top level in file = expr or a block), class, define, and node  
 describe Puppet::Pops::Impl::Parser::Parser do
-  EvaluationError ||= Puppet::Pops::EvaluationError
   include TransformerRspecHelper
   
   context "When running these examples, the setup" do

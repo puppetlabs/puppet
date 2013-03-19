@@ -37,7 +37,7 @@ class LabelProvider
   # as a consonant, the article should not be "an".
   #
   def article s, capitalize = false
-    char = s[0]
+    char = s[0,1]
     # skip an initial quote to pick first real char
     char = s[1] if char == '\'' || char == '"'
     char = char.downcase if char

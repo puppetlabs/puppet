@@ -754,10 +754,11 @@ class Factory
   end
 
   # Create a LiteralHash instruction from a hash, where keys and values are built
+  # The hash entries are added in sorted order based on key.to_s
   #
   def build_Hash(o)
     x = Model::LiteralHash.new
-    o.each {|k,v| x.addEntries(build(Model::KeyedEntry.new, k, v)) }
+    (o.sort_by {|k,v| k.to_s}).each {|k,v| x.addEntries(build(Model::KeyedEntry.new, k, v)) }
     x
   end
 
