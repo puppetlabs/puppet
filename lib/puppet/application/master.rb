@@ -165,7 +165,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise "Could not compile catalog for #{options[:node]}"
       end
 
-      jj catalog.to_resource
+      puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
       $stderr.puts detail
       exit(30)
