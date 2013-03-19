@@ -130,7 +130,7 @@ describe Puppet::Parser::AST::CaseStatement do
 
   it "should match if any of the provided options evaluate as true" do
     ast = nil
-    AST ||= Puppet::Parser::AST
+    AST = Puppet::Parser::AST
 
     tests = {
       "one" => %w{a b c},
