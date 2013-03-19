@@ -392,7 +392,7 @@ class Puppet::Pops::Impl::Parser::Lexer
   def expected
     return nil if @expected.empty?
     name = @expected[-1]
-    TOKENS.lookup(name) or lex_error "Could not find expected token #{name}"
+    TOKENS.lookup(name) or lex_error "Internal Lexer Error: Could not find expected token #{name}"
   end
 
   # scan the whole file
@@ -566,7 +566,7 @@ class Puppet::Pops::Impl::Parser::Lexer
   # this is the heart of the lexer
   def scan
     #Puppet.debug("entering scan")
-    lex_error "Invalid or empty string" unless @scanner
+    lex_error "Internal Error: No string or file given to lexer to process." unless @scanner
 
     # Skip any initial whitespace.
     skip
