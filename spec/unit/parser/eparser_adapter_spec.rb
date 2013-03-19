@@ -58,7 +58,6 @@ describe Puppet::Parser do
     end
     
     it "should not raise an error with empty statements" do
-      require 'debugger'
       expect {  @parser.parse("unless false { }") }.to_not raise_error
     end
     
