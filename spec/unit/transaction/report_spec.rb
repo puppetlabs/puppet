@@ -130,6 +130,14 @@ describe Puppet::Transaction::Report do
       report.exit_status.should == 4
     end
 
+    it "should produce 4 if failures to restart are present" do
+      report = Puppet::Transaction::Report.new("apply")
+      report.add_metric("changes", {"total" => 0})
+      report.add_metric("resources", {"failed" => 0})
+      report.add_metric("resources", {"failed_to_restart" => 1})
+      report.exit_status.should == 4
+    end
+
     it "should produce 6 if both changes and failures are present" do
       report = Puppet::Transaction::Report.new("apply")
       report.add_metric("changes", {"total" => 1})

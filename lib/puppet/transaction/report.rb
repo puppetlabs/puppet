@@ -237,7 +237,7 @@ class Puppet::Transaction::Report
   # individual bits represent the presence of different metrics.
   #
   # * 0x2 set if there are changes
-  # * 0x4 set if there are failures
+  # * 0x4 set if there are resource failures or resources that failed to restart
   # @return [Integer] A bitmask where 0x2 is set if there are changes, and 0x4 is set of there are failures.
   # @api public
   #
@@ -245,6 +245,7 @@ class Puppet::Transaction::Report
     status = 0
     status |= 2 if @metrics["changes"]["total"] > 0
     status |= 4 if @metrics["resources"]["failed"] > 0
+    status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
     status
   end
 
