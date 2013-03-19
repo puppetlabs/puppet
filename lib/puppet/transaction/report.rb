@@ -244,7 +244,8 @@ class Puppet::Transaction::Report
   def exit_status
     status = 0
     status |= 2 if @metrics["changes"]["total"] > 0
-    status |= 4 if @metrics["resources"]["failed"] > 0
+    status |= 4 if @metrics["resources"]["failed"] > 0 ||
+      @metrics["resources"]["failed_to_restart"] > 0
     status
   end
 
