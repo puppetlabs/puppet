@@ -191,7 +191,7 @@ class AstTreeDumper < TreeDumper
 
   # Interpolated strings are shown as (cat seg0 seg1 ... segN)
   def dump_Concat o
-    ["cat"] + o.value.collect {|x| x.is_a?(AST::String) ? do_dump(x) : ["str", do_dump(x)]}
+    ["cat"] + o.value.collect {|x| x.is_a?(AST::String) ? " "+do_dump(x) : ["str", do_dump(x)]}
   end
 
   def dump_Hostclass o
