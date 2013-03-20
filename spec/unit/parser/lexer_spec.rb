@@ -166,7 +166,7 @@ describe Puppet::Parser::Lexer::TOKENS do
   {
     :LBRACK => '[',
     :RBRACK => ']',
-#    :LBRACE => '{',
+    :LBRACE => '{',
     :RBRACE => '}',
     :LPAREN => '(',
     :RPAREN => ')',
@@ -204,7 +204,6 @@ describe Puppet::Parser::Lexer::TOKENS do
     :OUT_EDGE => '<-',
     :IN_EDGE_SUB => '~>',
     :OUT_EDGE_SUB => '<~',
-    :PIPE => '|',
   }.each do |name, string|
     it "should have a token named #{name.to_s}" do
       Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
@@ -244,9 +243,7 @@ describe Puppet::Parser::Lexer::TOKENS do
   end
 
   # These tokens' strings don't matter, just that the tokens exist.
-  [:STRING, :DQPRE, :DQMID, :DQPOST, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT,
-    :LBRACE, :LAMBDA,
-    :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
+  [:STRING, :DQPRE, :DQMID, :DQPOST, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT, :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
     it "should have a token named #{name.to_s}" do
       Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
     end
