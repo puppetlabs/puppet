@@ -206,7 +206,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   module Contextual
     QUOTE_TOKENS = [:DQPRE,:DQMID]
-    REGEX_INTRODUCING_TOKENS = [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA]
+    REGEX_INTRODUCING_TOKENS = [:NODE,:LBRACE, :SELBRACE, :RBRACE,:MATCH,:NOMATCH,:COMMA]
 
     NOT_INSIDE_QUOTES = Proc.new do |context|
       !QUOTE_TOKENS.include? context[:after]
@@ -257,7 +257,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     # A name starting with a number must be a valid numeric string (not that
     # NUMBER token captures those names that do not comply with the name rule.
     if value =~ /^[0-9].*$/ 
-      lexer.assert_numeric(value)
+      assert_numeric(value)
     end
     
     string_token = self
@@ -689,14 +689,14 @@ class Puppet::Pops::Impl::Parser::Lexer
                      else
                        TOKENS[:VARIABLE].regex
                      end
-    if terminator != '$' or @scanner.scan(/\{/)
+    if terminator != '$' or braced = @scanner.scan(/\{/)
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
       warn_if_variable_has_hyphen(var_name)
-      # If the varname (following $, or ${ is followed by (, it is a function call, and not a variable
+      # If the varname after ${ is followed by (, it is a function call, and not a variable
       # reference.
       #
-      if @scanner.match?(%r{[ \t\r]*\(})
+      if braced && @scanner.match?(%r{[ \t\r]*\(})
         token_queue << [TOKENS[:NAME],var_name]
       else    
         token_queue << [TOKENS[:VARIABLE],var_name]
