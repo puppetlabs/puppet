@@ -23,6 +23,7 @@ group(:development, :test) do
   gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
   gem "rack", "~> 1.4", :require => false
   gem "rake", :require => false
+  gem "rgen", :require => false
   gem "rspec", "~> 2.11.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
   gem "activerecord", *location_for('~> 3.0.7')

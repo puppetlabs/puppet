@@ -1,6 +1,8 @@
 require 'puppet/version'
 
 # see the bottom of the file for further inclusions
+# Also see the new Vendor support - towards the end
+#
 require 'facter'
 require 'puppet/error'
 require 'puppet/util'
@@ -153,6 +155,14 @@ module Puppet
   def self.newtype(name, options = {}, &block)
     Puppet::Type.newtype(name, options, &block)
   end
+
+  # Following the style of mcollective (although autoload is not threadsafe and eventually going away it seems)
+  autoload :Vendor, "puppet/vendor"
+
+  # Load vendored (setup paths, and load what is needed upfront).
+  # See the Vendor class for how to add additional vendored gems/code
+  Puppet::Vendor.load_vendored
+
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
