@@ -93,6 +93,11 @@ describe Puppet::Parser::TemplateWrapper do
     tw.result("<%= @one %>").should == "foo"
   end
 
+  it "should provide an alias for scope.lookupvar" do
+    scope.expects(:lookupvar).with('foo::bar',{}).returns('value')
+    tw.sl('foo::bar').should eql('value')
+  end
+
   %w{! . ; :}.each do |badchar|
     it "translates #{badchar} to _ in instance variables" do
       scope["one#{badchar}"] = "foo"

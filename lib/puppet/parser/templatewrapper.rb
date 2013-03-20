@@ -62,6 +62,11 @@ class Puppet::Parser::TemplateWrapper
     scope.catalog.tags
   end
 
+  # A short alias for scope.lookupvar()
+  def sl(name, options = {})
+    scope.lookupvar(name,options)
+  end
+
   # Ruby treats variables like methods, so we used to expose variables
   # within scope to the ERB code via method_missing.  As per RedMine #1427,
   # though, this means that conflicts between methods in our inheritance
