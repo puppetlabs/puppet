@@ -247,6 +247,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "should interpolate a variable in a text expression, \"${$var}\"" do
       astdump(parse("$a = \"${$var}\"")).should == "(= $a (cat '' (str $var) ''))"
     end
+    it "should interpolate two variables in a text expression" do
+      astdump(parse(%q{$a = "xxx $x and $y end"})).should == "(= $a (cat 'xxx ' (str $x) ' and ' (str $y) ' end'))"
+    end
+    it "should interpolate one variables  followed by parentheses" do
+    astdump(parse(%q{$a = "xxx ${x} (yay)"})).should == "(= $a (cat 'xxx ' (str $x) ' (yay)'))"
+    end
     it "should interpolate a variable, \"yo${var}yo\"" do
       astdump(parse("$a = \"yo${var}yo\"")).should == "(= $a (cat 'yo' (str $var) 'yo'))"
     end
