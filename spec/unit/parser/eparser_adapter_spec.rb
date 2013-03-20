@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/parser/eparser_adapter'
+require 'puppet/parser/e_parser_adapter'
 describe Puppet::Parser do
 
   Puppet::Parser::AST

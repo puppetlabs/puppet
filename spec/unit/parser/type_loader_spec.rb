@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/parser/type_loader'
 require 'puppet/parser/parser_factory'
-require 'puppet/parser/eparser_adapter'
+require 'puppet/parser/e_parser_adapter'
 require 'puppet_spec/modules'
 require 'puppet_spec/files'
 

@@ -31,7 +31,7 @@ module Puppet; module Parser
       @@asserted ||= false
       assert_rgen_installed() unless @asserted
       require 'puppet/parser'
-      require 'puppet/parser/eparser_adapter'
+      require 'puppet/parser/e_parser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
     end
     
