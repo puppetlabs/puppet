@@ -224,16 +224,23 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       # Skip things like comments and blank lines
       next if skip_record?(record)
 
-      if name = record[:name] and resource = resources[name]
-        resource.provider = new(record)
+      if name = find_resource(record, resources) then
+        resources[name].provider = new(record)
       elsif respond_to?(:match)
         if resource = match(record, matchers)
-          # Remove this resource from circulation so we don't unnecessarily try to match
           matchers.delete(resource.title)
           record[:name] = resource[:name]
           resource.provider = new(record)
         end
       end
+    end
+  end
+
+  # Look up a record by name. If a resource with the
+  # same name exists, just return the name, nil otherwise.
+  def self.find_resource(record, resources)
+    if name = record[:name] and resources[name] then
+      name
     end
   end
 
