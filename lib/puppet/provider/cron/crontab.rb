@@ -88,6 +88,17 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     end
   end
 
+  # Override the method for finding resources by name, so that
+  # orphaned records in other crontabs don't get falsely matched
+  # to a given resource (#2251)
+  def self.find_resource(record, resources)
+    name = record[:name]
+    resource = resources[name]
+    if name and resource and record[:target] == resource[:user]
+      name
+    end
+  end
+
   # Return the header placed at the top of each generated file, warning
   # users that modifying this file manually is probably a bad idea.
   def self.header
