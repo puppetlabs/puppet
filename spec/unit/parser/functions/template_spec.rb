@@ -81,6 +81,11 @@ describe "the template function" do
     }.to raise_error(Puppet::ParseError, /Could not find value for 'lookupvar'/)
   end
 
+  it "should have an alias for scope.lookupvar" do
+    scope["foobar"] = 'value'
+    eval_template("<%= sl('foobar') %>").should eql('value')
+  end
+
   def eval_template(content)
     File.stubs(:read).with("template").returns(content)
     Puppet::Parser::Files.stubs(:find_template).returns("template")
