@@ -2,11 +2,11 @@
 require 'spec_helper'
 
 require 'puppet/application/kick'
+require 'puppet/run'
+require 'puppet/util/ldap/connection'
 
 describe Puppet::Application::Kick, :if => Puppet.features.posix? do
-
   before :each do
-    require 'puppet/util/ldap/connection'
     Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
     @kick = Puppet::Application[:kick]
     Puppet::Util::Log.stubs(:newdestination)
@@ -226,7 +226,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:debug).returns(false)
         @kick.options.stubs(:[]).with(:verbose).returns(false) # needed when logging is initialized
         @kick.options.stubs(:[]).with(:setdest).returns(false) # needed when logging is initialized
-         
+
         @kick.stubs(:print)
         @kick.preinit
         @kick.stubs(:parse_options)
@@ -256,7 +256,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
       describe "during call of run_for_host" do
         before do
-          require 'puppet/run'
           options = {
             :background => true, :ignoreschedules => false, :tags => []
           }
@@ -264,13 +263,16 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
           @agent_run = Puppet::Run.new( options.dup )
           @agent_run.stubs(:status).returns("success")
 
+          # ensure that we don't actually run the agent
+          @agent_run.stubs(:run).returns(@agent_run)
+
+          Puppet::Run.indirection.terminus_class = :local
           Puppet::Run.indirection.expects(:terminus_class=).with( :rest )
           Puppet::Run.expects(:new).with( options ).returns(@agent_run)
         end
 
         it "should call run on a Puppet::Run for the given host" do
           Puppet::Run.indirection.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
-
           expect { @kick.run_for_host('host') }.to exit_with 0
         end
 
