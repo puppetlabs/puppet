@@ -33,6 +33,8 @@ class Puppet::Parser::AST
     # Concatenates (+) two arrays, or appends (<<) any object to a newly created array.
     #
     def eval_array(left, right)
+      assert_concatenation_supported()
+      
       raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Array." unless %w{+ <<}.include?(@operator)
       raise ArgumentError, "left operand of #{@operator} must be an Array" unless left.is_a?(Array)
       if @operator == '+'
@@ -48,6 +50,8 @@ class Puppet::Parser::AST
     # Merges two hashes.
     #
     def eval_hash(left, right)
+      assert_concatenation_supported()
+      
       raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Hash." unless @operator == '+'
       raise ArgumentError, "left operand of #{@operator} must be an Hash" unless left.is_a?(Hash)
       raise ArgumentError, "right operand of #{@operator} must be an Hash" unless right.is_a?(Hash)
@@ -63,6 +67,11 @@ class Puppet::Parser::AST
 
       # compute result
       left.send(@operator, right)        
+    end
+
+    def assert_concatenation_supported
+      return if Puppet[:parser] == :future
+      raise ParseError.new("Unsupported Operation: Array concatenation available with '--parser future' setting only.")
     end
 
     def initialize(hash)
