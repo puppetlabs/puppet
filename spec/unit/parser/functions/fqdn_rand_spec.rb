@@ -55,4 +55,9 @@ describe "the fqdn_rand function" do
     val2 = @scope.function_fqdn_rand([10000000,42])
     val1.should_not eql(val2)
   end
+
+  it "should use the Puppet::Util function" do
+    Puppet::Util.expects(:deterministic_rand).with(177093203648075535190027737376590689559,4)
+    @scope.function_fqdn_rand([4])
+  end
 end
