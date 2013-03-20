@@ -61,6 +61,10 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     operator.evaluate(@scope).should == 4.33
   end
   context "when applied to array" do
+    before :each do
+      Puppet[:parser] = :future
+    end
+    
     it "+ should concatenate an array" do
       one = stub 'one', :safeevaluate => [1,2,3]
       two = stub 'two', :safeevaluate => [4,5]
@@ -109,6 +113,10 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     end
     
     context "when applied to hash" do
+      before :each do
+        Puppet[:parser] = :future
+      end
+
       it "+ should merge two hashes" do
         one = stub 'one', :safeevaluate => {'a' => 1, 'b' => 2}
         two = stub 'two', :safeevaluate => {'c' => 3 }
