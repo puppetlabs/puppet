@@ -46,6 +46,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
       it "$a = 7 - 3"   do; dump(parse("$a = 7 - 3")).should == "(= $a (- 7 3))"      ; end
       it "$a = 6 * 3"   do; dump(parse("$a = 6 * 3")).should == "(= $a (* 6 3))"      ; end
       it "$a = 6 / 3"   do; dump(parse("$a = 6 / 3")).should == "(= $a (/ 6 3))"      ; end
+      it "$a = 6 % 3"   do; dump(parse("$a = 6 % 3")).should == "(= $a (% 6 3))"      ; end
       it "$a = -(6/3)"  do; dump(parse("$a = -(6/3)")).should == "(= $a (- (/ 6 3)))" ; end
       it "$a = -6/3"    do; dump(parse("$a = -6/3")).should == "(= $a (/ (- 6) 3))"   ; end
       it "$a = 8 >> 1 " do; dump(parse("$a = 8 >> 1")).should == "(= $a (>> 8 1))"    ; end
@@ -77,6 +78,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
     context "precedence should be correct" do
       it "$a = 1 + 2 * 3" do; dump(parse("$a = 1 + 2 * 3")).should == "(= $a (+ 1 (* 2 3)))"; end
+      it "$a = 1 + 2 % 3" do; dump(parse("$a = 1 + 2 % 3")).should == "(= $a (+ 1 (% 2 3)))"; end
       it "$a = 1 + 2 / 3" do; dump(parse("$a = 1 + 2 / 3")).should == "(= $a (+ 1 (/ 2 3)))"; end
       it "$a = 1 + 2 << 3" do; dump(parse("$a = 1 + 2 << 3")).should == "(= $a (<< (+ 1 2) 3))"; end
       it "$a = 1 + 2 >> 3" do; dump(parse("$a = 1 + 2 >> 3")).should == "(= $a (>> (+ 1 2) 3))"; end

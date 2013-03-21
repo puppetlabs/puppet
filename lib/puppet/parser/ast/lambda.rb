@@ -19,12 +19,12 @@ class Puppet::Parser::AST
     # Evaluates each expression/statement and produce the last expression evaluation result
     # @return [Object] what the last expression evaluated to
     def evaluate(scope)
-      if @expressions.is_a? Puppet::Parser::AST::ASTArray
+      if @children.is_a? Puppet::Parser::AST::ASTArray
         result = nil
-        @expressions.each {|expr| result = expr.evaluate(scope) }
+        @children.each {|expr| result = expr.evaluate(scope) }
         result
       else
-        @expressions.evaluate(scope)
+        @children.evaluate(scope)
       end
     end
 

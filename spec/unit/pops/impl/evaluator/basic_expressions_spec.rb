@@ -44,6 +44,8 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "7 - 3  ==  4"   do; evaluate(literal(7) - literal(3)).should == 4 ; end
       it "6 * 3  ==  18"  do; evaluate(literal(6) * literal(3)).should == 18; end
       it "6 / 3  ==  2"   do; evaluate(literal(6) / literal(3)).should == 2 ; end
+      it "6 % 3  ==  0"   do; evaluate(literal(6) % literal(3)).should == 0 ; end
+      it "10 % 3 ==  1"   do; evaluate(literal(10) % literal(3)).should == 1; end
       it "-(6/3) == -2"   do; evaluate(minus(literal(6) / literal(3))).should == -2 ; end
       it "-6/3   == -2"   do; evaluate(minus(literal(6)) / literal(3)).should == -2 ; end
       it "8 >> 1 == 4"    do; evaluate(literal(8) >> literal(1)).should == 4 ; end
@@ -55,6 +57,8 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "7.7 - 3.3  ==  4.4"   do; evaluate(literal(7.7) - literal(3.3)).should == 4.4  ; end
       it "6.1 * 3.1  ==  18.91" do; evaluate(literal(6.1) * literal(3.1)).should == 18.91; end
       it "6.6 / 3.3  ==  2.0"   do; evaluate(literal(6.6) / literal(3.3)).should == 2.0  ; end
+      it "6.6 % 3.3  ==  0.0"   do; evaluate(literal(6.6) % literal(3.3)).should == 0.0  ; end
+      it "10.0 % 3.0 ==  1.0"   do; evaluate(literal(10.0) % literal(3.0)).should == 1.0 ; end
       it "-(6.0/3.0) == -2.0"   do; evaluate(minus(literal(6.0) / literal(3.0))).should == -2.0; end
       it "-6.0/3.0   == -2.0"   do; evaluate(minus(literal(6.0)) / literal(3.0)).should == -2.0; end
       it "3.14 << 2  == error"  do; expect { evaluate(literal(3.14) << literal(2))}.to raise_error(Puppet::Pops::API::EvaluationError); end

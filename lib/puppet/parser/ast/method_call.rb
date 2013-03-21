@@ -65,7 +65,6 @@ class Puppet::Parser::AST
 
     # Sets this method call in statement mode where a produced rvalue is ignored.
     # @return [void]
-    #
     def ignore_rvalue
       @ftype = :statement
     end

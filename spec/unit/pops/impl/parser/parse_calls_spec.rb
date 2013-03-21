@@ -74,8 +74,9 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
     # For egrammar where a bare word can be a "statement"
     it "$a = foo bar # illegal, must have parentheses" do
-      expect { dump(parse("$a = foo bar"))}.to raise_error(Puppet::ParseError)      
+      dump(parse("$a = foo bar")).should == "(block (= $a foo) bar)"
     end
+
     context "in nested scopes" do
       it "if true { $a = foo() }" do
         dump(parse("if true { $a = foo()}")).should == "(if true\n  (then (= $a (call foo))))"
