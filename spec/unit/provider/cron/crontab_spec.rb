@@ -17,7 +17,6 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
   context "with the simple samples" do
     FIELDS = {
       :crontab => %w{command minute hour month monthday weekday}.collect { |o| o.intern },
-      :freebsd_special => %w{special command}.collect { |o| o.intern },
       :environment => [:line],
       :blank => [:line],
       :comment => [:line],
