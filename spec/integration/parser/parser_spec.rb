@@ -89,45 +89,45 @@ describe "Puppet::Parser::Parser" do
         # comment
         class test {}
         """)
-  
+
         ast.code[0].should be_a(Puppet::Parser::AST::Hostclass)
         ast.code[0].name.should == 'test'
         ast.code[0].instantiate('')[0].doc.should == "comment\n"
       end
     end
-  
+
     describe "when parsing" do
       it "should be able to parse normal left to right relationships" do
         "Notify[foo] -> Notify[bar]".should parse_as(Puppet::Parser::AST::Relationship)
       end
-  
+
       it "should be able to parse right to left relationships" do
         "Notify[foo] <- Notify[bar]".should parse_as(Puppet::Parser::AST::Relationship)
       end
-  
+
       it "should be able to parse normal left to right subscriptions" do
         "Notify[foo] ~> Notify[bar]".should parse_as(Puppet::Parser::AST::Relationship)
       end
-  
+
       it "should be able to parse right to left subscriptions" do
         "Notify[foo] <~ Notify[bar]".should parse_as(Puppet::Parser::AST::Relationship)
       end
-  
+
       it "should correctly set the arrow type of a relationship" do
         "Notify[foo] <~ Notify[bar]".should parse_with { |rel| rel.arrow == "<~" }
       end
-  
+
       it "should be able to parse deep hash access" do
         %q{
           $hash = { 'a' => { 'b' => { 'c' => 'it works' } } }
           $out = $hash['a']['b']['c']
         }.should parse_with { |v| v.value.is_a?(Puppet::Parser::AST::ASTHash) }
       end
-  
+
       it "should fail if asked to parse '$foo::::bar'" do
         expect { @parser.parse("$foo::::bar") }.to raise_error(Puppet::ParseError, /Syntax error at ':'/)
       end
-  
+
       describe "function calls" do
         it "should be able to pass an array to a function" do
           "my_function([1,2,3])".should parse_with { |fun|
@@ -135,7 +135,7 @@ describe "Puppet::Parser::Parser" do
             fun.arguments[0].evaluate(stub 'scope') == ['1','2','3']
           }
         end
-  
+
         it "should be able to pass a hash to a function" do
           "my_function({foo => bar})".should parse_with { |fun|
             fun.is_a?(Puppet::Parser::AST::Function) &&
@@ -143,7 +143,7 @@ describe "Puppet::Parser::Parser" do
           }
         end
       end
-  
+
       describe "collections" do
         it "should find resources according to an expression" do
           %q{ File <| mode == 0700 + 0050 + 0050 |> }.should parse_with { |coll|
@@ -156,14 +156,14 @@ describe "Puppet::Parser::Parser" do
   end
 
   describe 'using classic parser' do
-    before :each do 
+    before :each do
       Puppet[:parser] = 'current'
     end
     it_behaves_like 'a puppet parser'
   end
 
   describe 'using future parser' do
-    before :each do 
+    before :each do
       Puppet[:parser] = 'future'
     end
     it_behaves_like 'a puppet parser'

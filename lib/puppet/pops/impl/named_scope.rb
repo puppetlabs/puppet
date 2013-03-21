@@ -2,11 +2,9 @@ require 'puppet/pops/api'
 require 'puppet/pops/impl'
 require 'puppet/pops/impl/base_scope'
 
-module Puppet::Pops::Impl 
-
+module Puppet::Pops::Impl
   class NamedScope < BaseScope
     attr_reader :scope_name
-
     def initialize(scope_name)
       super()
       # TODO: Check scope name's validity
@@ -18,7 +16,7 @@ module Puppet::Pops::Impl
     end
 
     def set_data(type, name, value, origin = nil)
-        parent_scope.set_data(type, name, value, origin)
+      parent_scope.set_data(type, name, value, origin)
     end
 
     def set_variable(name, value, origin = nil)

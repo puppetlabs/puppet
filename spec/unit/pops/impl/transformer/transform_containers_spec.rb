@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
@@ -12,10 +11,10 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests containers (top level in file = expr or a block), class, define, and node  
+# Tests containers (top level in file = expr or a block), class, define, and node
 describe Puppet::Pops::Impl::Parser::Parser do
   include TransformerRspecHelper
-  
+
   context "When running these examples, the setup" do
 
     it "should include a ModelTreeDumper for convenient string comparisons" do
@@ -28,14 +27,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
       model.class.should == Model::AssignmentExpression
       astdump(model).should == "(= $a 10)"
     end
-   end
+  end
 
   context "When parsing file scope" do
     it "$a = 10 $b = 20" do
-      astdump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"      
+      astdump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"
     end
     it "$a = 10" do
-      astdump(parse("$a = 10")).should == "(= $a 10)"      
+      astdump(parse("$a = 10")).should == "(= $a 10)"
     end
   end
 
@@ -71,7 +70,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         # instead of some foo::class etc.
         # This is allowed in 3.x.
         astdump(parse("class class {}")).should == "(class class ())"
-      end    
+      end
       it "class default {} # a class named 'default'" do
         # The weirdness here is that a class can inherit 'default' but not declare a class called default.
         # (It will work with relative names i.e. foo::default though). The whole idea with keywords as
@@ -79,7 +78,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         expect { dump(parse("class default {}")).should == "(class default ())" }.to raise_error(Puppet::ParseError)
       end
       it "class foo::default {} # a nested name 'default'" do
-        astdump(parse("class foo::default {}")).should == "(class foo::default ())"        
+        astdump(parse("class foo::default {}")).should == "(class foo::default ())"
       end
       it "class class inherits default {} # inherits default", :broken => true do
         astdump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
@@ -95,7 +94,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
       it "class foo inherits class" do
         astdump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
       end
-    end    
+    end
   end
 
   context "When the parser parses define" do
@@ -122,11 +121,11 @@ describe Puppet::Pops::Impl::Parser::Parser do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
         astdump(parse("define class {}")).should == "(define class ())"
-      end    
+      end
       it "define default {} # a define named 'default'" do
-        # Check unwanted ability to define 'default'. 
+        # Check unwanted ability to define 'default'.
         # The expression below is not allowed (which is good).
-        # 
+        #
         expect { dump(parse("define default {}")).should == "(define default ())"}.to raise_error(Puppet::ParseError)
       end
     end

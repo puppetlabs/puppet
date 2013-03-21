@@ -1,6 +1,6 @@
+module Puppet; end
 
-module Puppet; module Parser
-  
+module Puppet::Parser
   # The ParserFactory makes selection of parser possible.
   # Currently, it is possible to switch between two different parsers:
   # * classic_parser, the parser in 3.1
@@ -16,14 +16,14 @@ module Puppet; module Parser
         classic_parser(environment)
       end
     end
-    
+
     # Creates an instance of the classic parser.
     #
     def self.classic_parser(environment)
       require 'puppet/parser'
-      Puppet::Parser::Parser.new(environment)    
+      Puppet::Parser::Parser.new(environment)
     end
-    
+
     # Creates an instance of the expression based parser 'eparser'
     #
     def self.eparser(environment)
@@ -34,8 +34,9 @@ module Puppet; module Parser
       require 'puppet/parser/e_parser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
     end
-    
-    private 
+
+    private
+
     def self.assert_rgen_installed
       begin
         require 'rgen/metamodel_builder'
@@ -57,6 +58,5 @@ module Puppet; module Parser
       end
     end
   end
-  
-  
-end; end
+
+end

@@ -268,9 +268,9 @@ class Puppet::Parser::Scope
 
     # Save the originating scope for the request
     options[:origin] = self unless options[:origin]
-      
+
     # TODO: Cleanup comments/dead code, new design, the ephemeral refers to @symtable as "parent"
-    # 
+    #
     table = @ephemeral.last
     # table = ephemeral?(name) ? @ephemeral.last : @symtable
 
@@ -391,7 +391,7 @@ class Puppet::Parser::Scope
     #
     table = effective_symtable options[:ephemeral]
     # table = options[:ephemeral] || @ephemeral.last.is_local_scope?() ? @ephemeral.last : @symtable
-      
+
     # TODO: F* up design, this may write in the shadow of other ephemeral scopes...
     #   this because :ephemeral an be given as option to write in topmost/last ephemeral while
     #   the real scope to write in is a local ephemeral or the scope's symtable.
@@ -408,7 +408,7 @@ class Puppet::Parser::Scope
 
     if options[:append]
       table[name] = append_value(undef_as('', self[name]), value)
-    else 
+    else
       table[name] = value
     end
     table[name]
@@ -423,7 +423,7 @@ class Puppet::Parser::Scope
   def effective_symtable use_ephemeral
     s = @ephemeral.last
     return s if use_ephemeral
-    
+
     while s && !(s.is_a?(Hash) || s.is_local_scope?())
       s = s.parent
     end
@@ -453,7 +453,7 @@ class Puppet::Parser::Scope
       bound_value.merge(new_value)
     else
       if bound_value.is_a?(Hash)
-        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" 
+        raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported"
       end
       bound_value + new_value
     end
@@ -509,7 +509,7 @@ class Puppet::Parser::Scope
       # Create local scope ephemeral and set all values from hash
       new_ephemeral true
       match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
-    else 
+    else
       raise(ArgumentError,"Invalid regex match data. Got a #{match.class}") unless match.is_a?(MatchData)
       # Create a match ephemeral and set values from match data
       new_ephemeral false

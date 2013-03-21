@@ -1,42 +1,42 @@
 Puppet::Parser::Functions::newfunction(
-  :foreach,
-  :type => :rvalue, 
-  :arity => 2, 
-  :doc => <<-'ENDHEREDOC') do |args|
+:foreach,
+:type => :rvalue,
+:arity => 2,
+:doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of selected entries from the first
   argument and returns the first argument.
-  
+
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
   a parameterized block as produced by the puppet syntax:
-  
+
     $a.foreach {|$x| ... }
-      
+
   When the first argument is an Array, the parameterized block should define one or two block parameters.
   For each application of the block, the next element from the array is selected, and it is passed to
   the block if the block has one parameter. If the block has two parameters, the first is the elements
   index, and the second the value. The index starts from 0.
-  
+
     $a.foreach {|$index, $value| ... }
-      
+
   When the first argument is a Hash, the parameterized block should define one or two parameters.
   When one parameter is defined, the iteration is performed with each entry as an array of `[key, value]`,
   and when two parameters are defined the iteration is performed with key and value.
-  
-    $a.foreach {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" } 
+
+    $a.foreach {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" }
     $a.foreach {|$key, $value| ..."key ${key}, value ${value}" }
 
-  Since 3.2       
+  Since 3.2
   ENDHEREDOC
   require 'puppet/parser/ast/lambda'
 
   def foreach_Array(o, scope, pblock)
     return nil unless pblock
-    
+
     serving_size = pblock.parameter_count
     if serving_size == 0
       raise ArgumentError, "Block must define at least one parameter; value."
     end
-    if serving_size > 2 
+    if serving_size > 2
       raise ArgumentError, "Block must define at most two parameters; index, value"
     end
     enumerator = o.each
@@ -84,7 +84,7 @@ Puppet::Parser::Functions::newfunction(
   receiver = args[0]
   pblock = args[1]
   raise ArgumentError, ("foreach(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.is_a? Puppet::Parser::AST::Lambda
-  
+
   case receiver
   when Array
     foreach_Array(receiver, self, pblock)

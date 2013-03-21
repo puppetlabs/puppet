@@ -19,19 +19,19 @@ module Puppet::Pops::Impl
       # Set additional variables
       extra_vars_hash.each {|k,v| set_variable(k, v, origin) }
     end
-    
+
     # Prevents variables representing an object feature from being set, else behaves as BaseScope
     def set_variable(name, value, origin=nil)
       feature = scoped_object.class.ecore.eAllStructuralFeatures.select {|f| f.name == name }
       raise "TODO: ImmutableError" if feature
       super.set_variable(name, value, origin)
     end
-    
+
     # If name represents a feature, return its value, else behaves as BaseScope
     def get_variable(name, missing_value = nil)
       feature = scoped_object.class.ecore.eAllStructuralFeatures.select {|f| f.name == name }
       if feature
-        # Protected against the potential call out to pops instructions that may recursively 
+        # Protected against the potential call out to pops instructions that may recursively
         # attempt to get the same feature value (i.e, while computing the feature value itself).
         #
         begin
@@ -50,13 +50,13 @@ module Puppet::Pops::Impl
     def is_object_scope?
       true
     end
-    
+
     private
 
     # Locks the given name for this scope's object for the current thread.
     # The same name can not be locked when already locked; this is the reentrancy detection
     # and an exception is raised.
-    # The caller of lock must call #unlock, or there will be memory leakage.  
+    # The caller of lock must call #unlock, or there will be memory leakage.
     def lock(name)
       if t = @@locks[Thread.current]
         if o = t[obj]
@@ -66,13 +66,13 @@ module Puppet::Pops::Impl
             o[name] = true
           end
         else
-          t[obj] = {name => true}  
+          t[obj] = {name => true}
         end
       else
-        @@locks[Thread.current] = { obj => { name => true }}  
-      end    
+        @@locks[Thread.current] = { obj => { name => true }}
+      end
     end
-    
+
     # Unlocks the given name for this scope's object for the current thread.
     # An exception is raised if unlocking something that was not locked.
     #
@@ -83,7 +83,7 @@ module Puppet::Pops::Impl
         @@locks.delete(Thread.current) if t.size == 0
       else
         raise "TODO: unlock without lock of #{obj.class}.#{name}"
-      end    
+      end
     end
-  end      
+  end
 end

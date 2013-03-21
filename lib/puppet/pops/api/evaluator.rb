@@ -1,10 +1,11 @@
-module Puppet; module Pops; module API
+module Puppet; module Pops; end; end;
+
+module Puppet::Pops::API
   # An evaluator evaluates a given object in the given Puppet::Pops::API::Scope scope.
   # @abstract
   #
   class Evaluator
-
-    # Evaluates the given object o in the given scope, optionally passing a block which will be 
+    # Evaluates the given object o in the given scope, optionally passing a block which will be
     # called with the result of the evaluation.
     # @abstract
     # @param o [Object] the object to evaluate
@@ -14,6 +15,5 @@ module Puppet; module Pops; module API
     def evaluate(o, scope, &block)
       raise Puppet::Pops::API::APINotImplementedError.new
     end
-
   end
-end; end; end
+end

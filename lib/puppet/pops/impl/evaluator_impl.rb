@@ -2,14 +2,14 @@ require 'puppet/pops/api'
 require 'puppet/pops/impl/call_operator'
 require 'puppet/pops/impl/compare_operator'
 require 'puppet/pops/api/utils'
-
 require 'rgen/ecore/ecore'
 
-module Puppet; module Pops; module Impl
+module Puppet; module Pops; module Impl; end; end; end;
 
+module Puppet::Pops::Impl
   # This implementation of {Puppet::Pops::API::Evaluator} performs evaluation, in a manner largely compatible with Puppet 3.x,
   # but adds new features and introduces constraints.
-  # 
+  #
   # The evaluation uses _polymorphic dispatch_ which works by dispatching to the first found method named after
   # the class or one of its super-classes. The EvaluatorImpl itself mainly deals with evaluation (it currently
   # also handles assignment), and it uses a delegation pattern to more specialized handlers of some operators
@@ -18,35 +18,34 @@ module Puppet; module Pops; module Impl
   # Since a pattern is used, only the main entry points are fully documented. The parameters _o_ and _scope_ are
   # the same in all the polymorphic methods, (the type of the parameter _o_ is reflected in the method's name;
   # either the actual class, or one of its super classes). The _scope_ parameter is always the scope in which
-  # the evaluation takes place. If nothing else is mentioned, the return is always the result of evaluation. 
-  # 
+  # the evaluation takes place. If nothing else is mentioned, the return is always the result of evaluation.
+  #
   # See {Puppet::Pops::API::Visitable} and {Puppet::Pops::API::Visitor} for more information about
   # polymorphic calling.
   # @api private
   #
   class EvaluatorImpl < Puppet::Pops::API::Evaluator
     include Puppet::Pops::API::Utils
-
     def initialize
-      @eval_visitor ||= Visitor.new(self, "eval", 1, 1)
-      @assign_visitor ||= Visitor.new(self, "assign", 3, 3)
-      @call_operator ||= CallOperator.new
+      @eval_visitor     ||= Puppet::Pops::API::Visitor.new(self, "eval", 1, 1)
+      @assign_visitor   ||= Puppet::Pops::API::Visitor.new(self, "assign", 3, 3)
+      @call_operator    ||= CallOperator.new
       @compare_operator ||= CompareOperator.new
     end
-  
+
     # PolymorphiC evaluate - calls eval_TYPE
-    # 
+    #
     # ## Polymorphic evaluate
     # Polymorphic evaluate calls a method on the format eval_TYPE where classname is the last
     # part of the class of the given _target_. A search is performed starting with the actual class, continuing
     # with each of the _target_ class's super classes until a matching method is found.
-    # 
+    #
     # # Description
-    # Evaluates the given _target_ object in the given scope, optionally passing a block which will be 
+    # Evaluates the given _target_ object in the given scope, optionally passing a block which will be
     # called with the result of the evaluation.
     #
     # @overload evaluate(target, scope, {|result| block})
-    # @param target [Object] evaluation target - see methods on the pattern assign_TYPE for actual supported types. 
+    # @param target [Object] evaluation target - see methods on the pattern assign_TYPE for actual supported types.
     # @param scope [Puppet::Pops::API::Scope] the scope where evaluation should take place
     # @return [Object] the result of the evaluation
     # @yieldparam [Object] the result of the evaluation of target
@@ -61,8 +60,7 @@ module Puppet; module Pops; module Impl
         x
       end
     end
-    
-    
+
     # Fails the evaluation of _o_ in the given scope with the given message
     #
     # @status may need an extra parameter for error code
@@ -81,26 +79,26 @@ module Puppet; module Pops; module Impl
     end
 
     # Polymorphic assign - calls assign_TYPE.
-    # 
+    #
     # # Polymorphic assign
     # Polymorphic assign calls a method on the format assign_TYPE where TYPE is the last
     # part of the class of the given _target_. A search is performed starting with the actual class, continuing
     # with each of the _target_ class's super classes until a matching method is found.
-    # 
+    #
     # # Description
     # Assigns the given _value_ to the given _target_. The additional argument _o_ is the instruction that
     # produced the target/value tuple and it is used to set the origin of the result.
-    # @param target [Object] assignment target - see methods on the pattern assign_TYPE for actual supported types. 
-    # @param value [Object] the value to assign to `target` 
+    # @param target [Object] assignment target - see methods on the pattern assign_TYPE for actual supported types.
+    # @param value [Object] the value to assign to `target`
     # @param o [Puppet::Pops::API::Model::PopsObject] originating instruction
     # @param scope [Puppet::Pops::API::Scope] the scope where evaluation should take place
 
     def assign target, value, o, scope
       @assign_visitor.visit(target, value, o, scope)
     end
-    
+
     protected
-    
+
     # Assign value to named variable.
     # The '$' sign is never part of the name.
     # @todo origin needs to be passed to the setting of the variable in scope
@@ -116,11 +114,11 @@ module Puppet; module Pops; module Impl
       scope.set_variable(name, value)
       value
     end
-  
-    # Assign value to named variables in an array. 
+
+    # Assign value to named variables in an array.
     # The '$' sign is never part of the name.
-    # @todo setting matching name from value with keyed access (e.g. a hash). 
-    # @example Puppet DSL has no concrete syntax 
+    # @todo setting matching name from value with keyed access (e.g. a hash).
+    # @example Puppet DSL has no concrete syntax
     #   [a, b, c] = 10
     # @param names [Array<String>] array of variable names without $
     # @param value [Object] value to assign to each varible
@@ -131,24 +129,24 @@ module Puppet; module Pops; module Impl
       names.each {|x| scope.set_variable(x, value) }
       value
     end
-    
+
     # Catch all evaluation.
     # Any object not evaluated to something else, evaluates to itself.
     def eval_Object o, scope
       o
     end
-    
+
     # Allows nil to be used as a Nop.
     # Evaluates to nil
     def eval_NilClass o, scope
       nil
     end
-    
+
     # Evaluates Nop to nil.
     def eval_Nop o, scope
       nil
     end
-    
+
     # Captures all LiteralValues (including QualifiedName which many other expression want to
     # evaluate as a reference instead of a string value).
     #--
@@ -157,29 +155,29 @@ module Puppet; module Pops; module Impl
     def eval_LiteralValue o, scope
       o.value
     end
-        
+
     def eval_LiteralDefault o, scope
       :default
     end
-    
+
     def eval_LiteralUndef o, scope
       :undef # TODO: or just use nil for this?
     end
-    
+
     def eval_NotExpression o, scope
       ! is_true?(evaluate(o.expr, scope))
     end
-  
+
     def eval_UnaryMinusExpression o, scope
       - box_numeric(evaluate(o.expr, scope), o, scope)
     end
-    
+
     # Abstract evaluation, returns array [left, right] with the evaluated result of left_expr and
     # right_expr
     def eval_BinaryExpression o, scope
       [] << evaluate(o.left_expr, scope) << evaluate(o.right_expr, scope)
     end
-    
+
     # Evaluates assignment with operators =, +=, -= and []=
     #
     # @example Puppet DSL
@@ -187,41 +185,41 @@ module Puppet; module Pops; module Impl
     #   $a += 1
     # @todo support for -= ('without' to remove from array) not yet implemented
     # @todo support for []= (for each assignment)
-    # 
+    #
     def eval_AssignmentExpression o, scope
       case o.operator
       when :'=' # normal assignment
         assign(evaluate(o.left_expr, scope), evaluate(o.right_expr, scope), o, scope)
-      when :'+=' 
+      when :'+='
         # concatenation current + value
-          name = evaluate(o.left_expr, scope)
-          unless scope.get_variable_entry(name)
-            fail("Can not append to undefined variable: '#{name}'", o, scope)
-          end
-          value = evaluate(o.right_expr, scope)
-          begin
-            result = concatenate(scope.get_variable_entry(name).value, value)
-            assign(name, result, o, scope)
-          rescue ArgumentError => e
-            fail("Assignment += failed with error: #{e.message}", o, scope)
-          end
-      when :'-=' 
+        name = evaluate(o.left_expr, scope)
+        unless scope.get_variable_entry(name)
+          fail("Can not append to undefined variable: '#{name}'", o, scope)
+        end
+        value = evaluate(o.right_expr, scope)
+        begin
+          result = concatenate(scope.get_variable_entry(name).value, value)
+          assign(name, result, o, scope)
+        rescue ArgumentError => e
+          fail("Assignment += failed with error: #{e.message}", o, scope)
+        end
+      when :'-='
         # current without value(s)
         # TODO
         fail "Not Implemented Yet: operator: '#{o.operator}'.", o, scope
-  
-      when :'[]=' 
+
+      when :'[]='
         # for each, a new variable mapped to name in value responding to []
         # TODO
         fail "Not Implemented Yet: operator: '#{o.operator}'.", o, scope
-            
-      else 
+
+      else
         fail "Unknown operator: '#{o.operator}'.", o, scope
       end
     end
-  
-    # Handles binary expression where lhs and rhs are numeric and operator is +, - , * /
-    # 
+
+    # Handles binary expression where lhs and rhs are numeric and operator is +, - , *, % /
+    #
     def eval_ArithmeticExpression o, scope
       left = box_numeric(evaluate(o.left_expr, scope), o, scope)
       right = box_numeric(evaluate(o.right_expr, scope), o, scope)
@@ -230,51 +228,51 @@ module Puppet; module Pops; module Impl
       rescue NoMethodError => e
         fail("Operator #{o.operator} not applicable to a value of type #{left.class}", o, scope)
       end
-#      puts "Arithmetic returns '#{left}' #{o.operator} '#{right}' => #{result}"
-#      puts "left = #{o.left_expr.class}, #{o.left_expr.value}"
-#      puts "right = #{o.right_expr.class}, #{o.right_expr.value}"
+      #      puts "Arithmetic returns '#{left}' #{o.operator} '#{right}' => #{result}"
+      #      puts "left = #{o.left_expr.class}, #{o.left_expr.value}"
+      #      puts "right = #{o.right_expr.class}, #{o.right_expr.value}"
       result
     end
-    
+
     # Evaluates Puppet DSL ->, ~>, <-, and <~
     def eval_RelationshipExpression(o, scope)
       real = eval_BinaryExpression(o, scope)
-      
+
       # assert operator (should have been validated, but this logic makes assumptions which would
       # screw things up royally). Better safe than sorry.
       unless [:'->', :'~>', :'<-', :'<~'].include?(o.operator)
         fail "Unknown operator #{o.operator}.", o, scope
       end
-  
+
       # assert they are all CatalogResource objects
-      real.flatten.each do |r| 
+      real.flatten.each do |r|
         unless r.is_a?(CatalogResource)
           fail "A relationship can only be established between resources. Got an instance of #{r.class}.", o, scope
         end
       end
-  
+
       # reverse order if operator is Right to Left
       adjusted = if [:'<-', :'<~'].include?(o.operator)
         real.reverse
       else
         real
       end
-      
+
       # is this a subscription or order/dependency
       method = if [:'<~', '~>'].include?(o.operator)
         :'addSubscribers'
       else
         :'addFollowers'
       end
-      
+
       # make associations
       adjusted.product.each {|from, to| from.send(method, to) }
-        
+
       # result is the evaluated right expression (irrespective of the operator's direction)
       # Example: File[foo] -> File[bar]  => File[bar]
       real.slice(1)
     end
-    
+
     # Evaluates x[key]
     #
     def eval_AccessExpression(o, scope)
@@ -290,7 +288,7 @@ module Puppet; module Pops; module Impl
       end
       unless container.respond_to?(:'[]')
         fail "The operator [] is not applicable to the left expression.", o, scope
-      end  
+      end
       # Result is the looked up key
       case o.keys.size
       when 0
@@ -303,17 +301,17 @@ module Puppet; module Pops; module Impl
         o.keys.collect {|k| container[evaluate(k, scope)] }
       end
     end
-    
+
     # Evaluates <, <=, >, >=, and ==
-    # 
+    #
     def eval_ComparisonExpression o, scope
       left, right = eval_BinaryExpression o, scope
-      
+
       begin
         case o.operator
         when :'=='
           @compare_operator.equals(left,right)
-        when :'!=' 
+        when :'!='
           ! @compare_operator.equals(left,right)
         when :'<'
           @compare_operator.compare(left,right) < 0
@@ -330,7 +328,7 @@ module Puppet; module Pops; module Impl
         fail("Comparison of #{left.class} #{o.operator} #{right.class} is not possible. Caused by #{e.message}.", o, scope)
       end
     end
-  
+
     # Evaluates matching expressions with string or regexp rhs expression.
     #
     # @example
@@ -345,19 +343,19 @@ module Puppet; module Pops; module Impl
     def eval_MatchExpression o, scope
       left, pattern = eval_BinaryExpression o, scope
       begin
-       pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)  
+        pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
       rescue StandardError => e
-        fail "Can not convert right expression to a regular expression. Caused by: '#{e.message}'", o, scope 
+        fail "Can not convert right expression to a regular expression. Caused by: '#{e.message}'", o, scope
       end
       # DEBUGGING
       # puts "matching #{left} #{o.operator} #{pattern}"
       matched = pattern.match(left) # nil, or MatchData
       scope.set_match_data(matched) # creates or clears ephemeral
-      
+
       # convert to boolean true, or false
       o.operator == :'=~' ? !!matched : !matched
     end
-    
+
     # Evaluates Puppet DSL `in` expression
     # @todo Puppet only allows in where left is a String, since this evaluator makes a distinction between
     #   Numeric and String, this is relaxed, (Currently there is no check and ´in´ just searches for lhs
@@ -376,7 +374,7 @@ module Puppet; module Pops; module Impl
       end
       right.include?(left)
     end
-    
+
     # @example
     #   $a and $b
     # b is only evaluated if a is true
@@ -384,7 +382,7 @@ module Puppet; module Pops; module Impl
     def eval_AndExpression o, scope
       is_true?(evaluate(o.left_expr, scope)) ? is_true?(evaluate(o.right_expr, scope)) : false
     end
-  
+
     # @example
     #   a or b
     # b is only evaluated if a is false
@@ -392,14 +390,14 @@ module Puppet; module Pops; module Impl
     def eval_OrExpression o, scope
       is_true?(evaluate(o.left_expr, scope)) ? true : is_true?(evaluate(o.right_expr, scope))
     end
-    
+
     # Evaluates each entry of the literal list and creates a new Array
     # @return [Array] with the evaluated content
     #
     def eval_LiteralList o, scope
       o.values.collect {|expr| evaluate(expr, scope)}
     end
-    
+
     # Evaluates each entry of the literal hash and creates a new Hash.
     # @return [Hash] with the evaluated content
     #
@@ -408,7 +406,7 @@ module Puppet; module Pops; module Impl
       o.entries.each {|entry| h[ evaluate(entry.key, scope)]= evaluate(entry.value, scope)}
       h
     end
-    
+
     # Evaluates all statements and produces the last evaluated value
     #
     def eval_BlockExpression o, scope
@@ -416,7 +414,7 @@ module Puppet; module Pops; module Impl
       o.statements.each {|s| r = evaluate(s, scope)}
       r
     end
-    
+
     # Performs optimized search over case option values, lazily evaluating each
     # until there is a match. If no match is found, the case expression's default expression
     # is evaluated (it may be nil or Nop if there is no default, thus producing nil).
@@ -427,27 +425,27 @@ module Puppet; module Pops; module Impl
       test = evaluate(o.test, scope)
       result = nil
       the_default = nil
-      if o.options.find do |co| 
-        # the first case option that matches
-        if co.values.find do |c|
-              the_default = co.then_expr if c.is_a? Puppet::Pops::API::Model::LiteralDefault 
-              is_match?(test, evaluate(c, scope), scope)
-            end
-            result = evaluate(co.then_expr, scope)
-            true # the option was picked
-          end
-        end
+      if o.options.find do |co|
+      # the first case option that matches
+      if co.values.find do |c|
+      the_default = co.then_expr if c.is_a? Puppet::Pops::API::Model::LiteralDefault
+      is_match?(test, evaluate(c, scope), scope)
+      end
+      result = evaluate(co.then_expr, scope)
+      true # the option was picked
+      end
+      end
         result # an option was picked, and produced a result
       else
         evaluate(the_default, scope) # evaluate the default (should be a nop/nil) if there is no default).
       end
     end
-    
+
     # @todo not implemented - maybe not needed; this is an abstract class
     def eval_QueryExpression o, scope
       # TODO: or remove - this is the abstract query
     end
-    
+
     # @todo not implemented
     def eval_ExportedQuery o, scope
       # TODO
@@ -477,12 +475,12 @@ module Puppet; module Pops; module Impl
     def eval_Parameter o, scope
       # TODO
     end
-    
+
     # TODO:
     # Definition < Expression (abstract)
     # NamedDefinition < Definition (abstract)
     # ResourceTypeDefinition < NamedDefinition
-    
+
     # NodeDefinition < Expression
     # HostClassDefinition < NamedDefinition
     # CallExpression < Expression
@@ -494,14 +492,13 @@ module Puppet; module Pops; module Impl
     # ResourceDefaultsExpression < Expression
     # ResourceOverrideExpression < Expression
     # NamedAccessExpression < Expression
-  
-  
+
     # @example
     #   $x ? { 10 => true, 20 => false, default => 0 }
     #
     def eval_SelectorExpression o, scope
       test = evaluate(o.left_expr, scope)
-      selected = o.selectors.find {|s| 
+      selected = o.selectors.find {|s|
         evaluate(s.matching_expr, scope) {|candidate|
           candidate == :default || is_match?(test, candidate, scope)
         }
@@ -512,7 +509,7 @@ module Puppet; module Pops; module Impl
         nil
       end
     end
-    
+
     # Evaluates Puppet DSL `if`
     def eval_IfExpression o, scope
       if is_true?(evaluate(o.test, scope))
@@ -530,7 +527,7 @@ module Puppet; module Pops; module Impl
         evaluate(o.else_expr, scope)
       end
     end
-  
+
     # Evaluates a variable (getting its value)
     # The evaluator is lenient; any expression producing a String is used as a name
     # of a variable.
@@ -540,7 +537,7 @@ module Puppet; module Pops; module Impl
       # is a String and a valid variable name
       #
       name = evaluate(o.expr, scope)
-      
+
       # Should be caught by validation, but make this explicit here as well, or mysterious evaluation issues
       # may occur.
       case name
@@ -557,17 +554,17 @@ module Puppet; module Pops; module Impl
         nil
       end
     end
-    
+
     # Evaluates double quoted strings that may contain interpolation
     #
     def eval_ConcatenatedString o, scope
       o.segments.collect {|expr| evaluate(expr, scope).to_s}.join
     end
-      
+
     # Create a metadata object that describes an attribute (an ECore EAttribute).
     # Only free-standing metadata is created to the actual attribute in a class (that happens later)
     #
-    # Part of type creation. 
+    # Part of type creation.
     #
     # @todo possibly support:
     #   changeable: false (i.e. constants)
@@ -579,14 +576,14 @@ module Puppet; module Pops; module Impl
       # Note: Only some of the validation required takes place here
       # There are additional nonsensical invariants; like derived attributes with default values
       the_attr = RGen::ECore::EAttribute.new
-      
-      evaluator.fail("An attribute name must be a String", o, scope) unless o.name.is_a? String 
+
+      evaluator.fail("An attribute name must be a String", o, scope) unless o.name.is_a? String
       the_attr.name = o.name
-      
+
       datatype = datatype_reference(evaluate(o.type, scope), o.name, scope)
       evaluator.fail("Invalid data-type expression.", o.type, scope) unless datatype
       the_attr.eType = datatype
-      
+
       min = evaluate(o.min_expr, scope)
       max = evaluate(o.max_expr, scope)
       min = 0 if !min || min < 0
@@ -594,17 +591,17 @@ module Puppet; module Pops; module Impl
       max = -1 if max == 'unlimited' || max == 'many' || max == '*' || max == 'M'
       max = -1 if max < -1
       if max >= 0 && min > max
-          fail("The max occurrence of an attribute must be bigger than the min occurrence (or be unlimited).", o.max_expr, scope) 
+        fail("The max occurrence of an attribute must be bigger than the min occurrence (or be unlimited).", o.max_expr, scope)
       end
       if(min == 0 && max == 0)
         fail("The min and max occurrences of an attribute can not both be 0.", o.max_expr, scope)
       end
       the_attr.lowerBound = min
       the_attr.upperBound = max
-      
+
       # derived?
       the_attr.derived = true if o.derived_expr
-      
+
       # TODO: possibly support:
       # changeable: false (i.e. constants)
       # volatile: non having storage allocated (default for derived), if true = cache
@@ -657,13 +654,13 @@ module Puppet; module Pops; module Impl
       # it then creates both the model and a class implementation.
       scope.top_scope.type_creator.create_type(o, scope, self)
     end
-    
+
     # If the wrapped expression is a QualifiedName, it is taken as the name of a variable in scope.
-    # Note that this is different from the 3.x implementation, where an initial qualified name 
-    # is accepted. (e.g. `"---${var + 1}---"` is legal. This implementation requires such concrete 
+    # Note that this is different from the 3.x implementation, where an initial qualified name
+    # is accepted. (e.g. `"---${var + 1}---"` is legal. This implementation requires such concrete
     # syntax to be expressed in a model as `(TextExpression (+ (Variable var) 1)` - i.e. moving the decision to
     # the parser.
-    # 
+    #
     # Semantics; the result of an expression is turned into a string, nil is silently transformed to empty
     # string.
     # @return [String] the interpolated result
@@ -671,13 +668,13 @@ module Puppet; module Pops; module Impl
     def eval_TextExpression o, scope
       if o.expr.is_a?(Puppet::Pops::API::Model::QualifiedName)
         # TODO: formalize, when scope returns nil, vs error
-        result = scope.get_variable_entry(o.expr.value) 
+        result = scope.get_variable_entry(o.expr.value)
         (result ? result.value : nil).to_s
       else
         evaluate(o.expr, scope).to_s
       end
     end
-  
+
     # Produces concatenation / merge of x and y.
     #
     # When x is an Array, y of type produces:
@@ -718,7 +715,7 @@ module Puppet; module Pops; module Impl
     # @raise [ArgumentError] when `xxx_x` is a Hash, and `xxx_y` is neither Array nor Hash.
     #
     def concatenate(x, y)
-      case x 
+      case x
       when Array
         y = case y
         when Array then y
@@ -739,7 +736,7 @@ module Puppet; module Pops; module Impl
         raise ArgumentError.new("Can only append to an Array or a Hash.")
       end
     end
-  
+
     # Box value _v_ to numeric or fails.
     # The given value `v` is converted to Numeric, and if that fails the operation
     # calls {#fail}.
@@ -754,7 +751,7 @@ module Puppet; module Pops; module Impl
       end
       n
     end
-    
+
     # Raises evaluation error with a composed message.
     # An exception is raised with a message composed out of the given `message` and information
     # obtained from the given _originating object_ `o`.
@@ -768,7 +765,7 @@ module Puppet; module Pops; module Impl
       #       purposes / stackdump
       raise Puppet::Pops::EvaluationError.new(message)
     end
-    
+
     # Implementation of case option matching.
     #
     # This is the type of matching performed in a case option, using == for every type
@@ -787,7 +784,7 @@ module Puppet; module Pops; module Impl
         left == right
       end
     end
-  
+
     # This is the same type of "truth" as used in the current Puppet DSL.
     #
     def is_true? o
@@ -802,23 +799,22 @@ module Puppet; module Pops; module Impl
         !!o
       end
     end
-    
+
     # Utility method for TrueClass || FalseClass
     # @param x [Object] the object to test if it is instance of TrueClass or FalseClass
     def is_boolean? x
       x.is_a?(TrueClass) || x.is_a?(FalseClass)
     end
-  
-  
+
     # Translates data type name to instance of a data type.
     #
     # Maps an object to an instance of RGen::ECore::EDataType - i.e. returns
     # an enum, `EString`, `EInt`, `EFloat`, or `EBoolean`. The default (if nil) is `EString`.
-    # If an instance of EEnum is passed, a new Enum datatype is created named after the 
+    # If an instance of EEnum is passed, a new Enum datatype is created named after the
     # attributes (e.g. fooEnumValues) unless the enum is already named. This named enum can not
     # be accessed and reused, but it is of value when debugging that it has a name related to
     # the attribute).
-    # 
+    #
     # @param o [String, RGen::Ecore::EDataType, nil] reference to, or real data type
     # @param attribute_name [String] the name of the attribute having data type given by `o`
     # @param scope [Puppet::Pops::API::Scope] the scope where this instruction is evaluated
@@ -835,21 +831,21 @@ module Puppet; module Pops; module Impl
       when RGen::ECore::EEnum
         o.ePackage = package
         # anonymous enums are named after the attribute
-        # This is slightly problematic as the names are stored as constants in the 
+        # This is slightly problematic as the names are stored as constants in the
         # module, and may thus overwrite a constant (which does not really matter) since
         # the constant gets erased anyway by the type creator
         # after having been associated with the created object/class.
-        # 
+        #
         o.name = attribute_name + "EnumValues" unless o.name
         scope.top_scope.type_creator.create_enum o
       when RGen::ECore::EDataType
         # Already resolved to a data type
-        o  
+        o
       when 'String'
         RGen::ECore::EString
       when 'Integer'
         RGen::ECore::EInt
-      when 'Float' 
+      when 'Float'
         RGen::ECore::EFloat
       when 'Boolean'
         RGen::ECore::EBoolean
@@ -858,6 +854,7 @@ module Puppet; module Pops; module Impl
         RGen::ECore::EString
       else
         nil
-      end  
-    end        
-end; end; end;end;
+      end
+    end
+  end
+end

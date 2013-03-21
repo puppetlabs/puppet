@@ -1,14 +1,12 @@
 require 'puppet/pops/api'
 require 'puppet/pops/impl'
 require 'puppet/pops/impl/match_scope'
-
 require 'uri'
 
 module Puppet::Pops::Impl
   class BaseScope < Puppet::Pops::Scope
     include Puppet::Pops::API::Utils
     Utils = Puppet::Pops::API::Utils
-
     def initialize
       super
       @data         = Hash.new
@@ -72,7 +70,7 @@ module Puppet::Pops::Impl
       number = Utils.to_n(name)
       if number
         get_match_scope_entry(number)
-      else    
+      else
         name = Utils.relativize_name(name)
         variables[name]
       end
@@ -82,10 +80,10 @@ module Puppet::Pops::Impl
     def get_data_entry(type, name)
       type = type.to_s.downcase.to_sym unless type.is_a?(Symbol)
       begin
-         data[type][name]
+        data[type][name]
       rescue NameError => e
-        nil 
-      end 
+        nil
+      end
     end
 
     # API IMPL
@@ -98,22 +96,21 @@ module Puppet::Pops::Impl
       end
     end
 
-
     # NOT API
     def local_scope()
       scope = LocalScope.new
       scope.parent_scope = self
       scope
     end
-    
-    # NOT API 
+
+    # NOT API
     def named_scope(name)
       scope = NamedScope.new(name)
       # Note that names scopes are always parented by the top scope
       scope.parent_scope = top_scope
       scope
     end
-    
+
     # NOT API
     def object_scope(o, extra_var_hash = {})
       scope = ObjectScope.new(o, extra_var_hash)
@@ -127,15 +124,15 @@ module Puppet::Pops::Impl
       raise "Internal Error: there is no top scope!" unless parent_scope
       parent_scope.top_scope
     end
-    
+
     protected
 
     # NOT API
     attr_accessor :data, :variables, :match_scope, :parent_scope
 
     # NOT API
-    def get_match_scope_entry(name) 
-      if match_scope 
+    def get_match_scope_entry(name)
+      if match_scope
         match_scope.get_entry(Utils.to_n(name))
       else
         nil
@@ -153,8 +150,9 @@ module Puppet::Pops::Impl
       end
     end
 
-  end  
+  end
 end
+
 require 'puppet/pops/impl/local_scope'
 require 'puppet/pops/impl/named_scope'
 

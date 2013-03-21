@@ -9,16 +9,20 @@ describe Puppet::Pops::API::Visitor do
       def initialize
         @friend_visitor = Puppet::Pops::API::Visitor.new(self, "friend", 0, 0)
       end
+
       def hi(o, *args)
         @friend_visitor.visit(o, *args)
       end
+
       def friend_Duck(o)
         "Hi #{o.class}"
       end
+
       def friend_Numeric(o)
         "Howdy #{o.class}"
       end
     end
+
     class Duck
       include Puppet::Pops::API::Visitable
     end
@@ -27,7 +31,7 @@ describe Puppet::Pops::API::Visitor do
       duck = Duck.new
       duck_processor = DuckProcessor.new
       duck_processor.hi(duck).should == "Hi Duck"
-      end
+    end
 
     it "should fail if there are too many arguments" do
       duck = Duck.new
@@ -50,41 +54,43 @@ describe Puppet::Pops::API::Visitor do
       expect { duck_processor.hi("wassup?") }.to raise_error(/Visitor Error: the configured.*/)
     end
   end
-   
+
   describe "A visitor and a visitable in a configuration with min =1, and max args set to 2" do
     class DuckProcessor2
       def initialize
         @friend_visitor = Puppet::Pops::API::Visitor.new(self, "friend", 1, 2)
       end
+
       def hi(o, *args)
         @friend_visitor.visit(o, *args)
       end
+
       def friend_Duck(o, drink, eat="grain")
         "Hi #{o.class}, drink=#{drink}, eat=#{eat}"
       end
     end
+
     class Duck
       include Puppet::Pops::API::Visitable
     end
-  
+
     it "should select the expected method when there are is one arguments" do
       duck = Duck.new
       duck_processor = DuckProcessor2.new
       duck_processor.hi(duck, "water").should == "Hi Duck, drink=water, eat=grain"
-      end
-      
+    end
+
     it "should fail if there are too many arguments" do
       duck = Duck.new
       duck_processor = DuckProcessor2.new
       expect { duck_processor.hi(duck, "scotch", "soda", "peanuts") }.to raise_error(/^Visitor Error: Too many.*/)
     end
-    
+
     it "should fail if there are too few arguments" do
       duck = Duck.new
       duck_processor = DuckProcessor2.new
       expect { duck_processor.hi(duck) }.to raise_error(/^Visitor Error: Too few.*/)
     end
-    
-   end
 
+  end
 end

@@ -7,7 +7,7 @@ require 'monitor'
 # A method call on the form:
 #
 #  $a.meth(1,2,3] {|...| ...}
-# 
+#
 # will lookup a function called 'meth' and call it with the arguments ($a, 1, 2, 3, <lambda>)
 #
 # @see Puppet::Parser::AST::Lambda
@@ -18,7 +18,6 @@ require 'monitor'
 #
 module Puppet::Parser::Methods
   Environment = Puppet::Node::Environment
-
   # Represents an invokable method configured to be invoked for a given object.
   #
   class Method
@@ -28,7 +27,7 @@ module Puppet::Parser::Methods
       @method_name = method_name
       @rvalue = rvalue
     end
-    
+
     # Invoke this method's function in the given scope with the given arguments and parameterized block.
     # A method call on the form:
     #
@@ -54,7 +53,7 @@ module Puppet::Parser::Methods
       @rvalue
     end
   end
-      
+
   class << self
     include Puppet::Util
   end

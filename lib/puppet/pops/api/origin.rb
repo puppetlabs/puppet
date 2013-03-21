@@ -1,15 +1,16 @@
 require 'uri'
 
-module Puppet; module Pops; module API
-  
+module Puppet; module Pops; end; end
+
+module Puppet::Pops::API
   # Origin describes a position in some file. If an instance is created without
   # arguments, it will bind to the position in code where Origin.new is called (i.e.
   # the __FILE__ and __LINE__ where the call takes place).
-  # 
+  #
   # More detailed information may be passed by specifying an offset (0 based) starting from
   # the beginning of the file, and where length specifies the number of characters from
   # this position.
-  # 
+  #
   # Unspecified line, offset and length
   # values can be stated as -1 (this is also the default if nothing is stated).
   #
@@ -27,20 +28,19 @@ module Puppet; module Pops; module API
         file = $1
         line = $2 unless line
       end
-      
+
       @file = file
       @line = line ? line.to_i : -1
       @offset = offset.to_i
       @length = length.to_i
     end
-    
+
     def uri
       uriargs = [file]
       uriargs << "?line=#{line}"
       uriargs << "&offset=#{offset}" if offset >= 0
-      uriargs << "&length=#{length}" if offset >= 0 && length >= 0 
+      uriargs << "&length=#{length}" if offset >= 0 && length >= 0
       URI(uriargs.join(''))
     end
-    
   end
-end; end; end
+end

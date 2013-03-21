@@ -1,8 +1,8 @@
 Puppet::Parser::Functions::newfunction(
-  :select,
-  :type => :rvalue, 
-  :arity => 2, 
-  :doc => <<-'ENDHEREDOC') do |args|
+:select,
+:type => :rvalue,
+:arity => 2,
+:doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of entries from the first
   argument and returns an array with the entires for which the block evaluates to true.
 
@@ -17,23 +17,23 @@ Puppet::Parser::Functions::newfunction(
   *Examples*
 
     # selects all that end with berry
-    $a = ["raspberry", "blueberry", "orange"]  
+    $a = ["raspberry", "blueberry", "orange"]
     $a.select |$x| { $x =~ /berry$/ }
 
-  Since 3.2       
+  Since 3.2
   ENDHEREDOC
-  
+
   require 'puppet/parser/ast/lambda'
   raise ArgumentError, ("select(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   receiver = args[0]
   pblock = args[1]
   raise ArgumentError, ("select(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.is_a? Puppet::Parser::AST::Lambda
   case receiver
-    when Array
-    when Hash
-    else
-      raise ArgumentError, ("select(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
-    end
+  when Array
+  when Hash
+  else
+    raise ArgumentError, ("select(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
+  end
 
-  receiver.select {|x| pblock.call(self, x) }   
+  receiver.select {|x| pblock.call(self, x) }
 end
