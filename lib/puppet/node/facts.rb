@@ -39,6 +39,7 @@ class Puppet::Node::Facts
 
   # Convert all fact values into strings.
   def stringify
+    Puppet.deprecation_warning("The method Puppet::Node::Facts.stringify is deprecated")
     values.each do |fact, value|
       values[fact] = value.to_s
     end
