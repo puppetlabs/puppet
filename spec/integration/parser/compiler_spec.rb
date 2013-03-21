@@ -44,15 +44,15 @@ describe "Puppet::Parser::Compiler" do
           notify { bar_notify: }
         }
       PP
-  
+
       @node.stubs(:classes).returns(['foo', 'bar'])
-  
+
       catalog = Puppet::Parser::Compiler.compile(@node)
-  
+
       catalog.resource("Notify[foo_notify]").should_not be_nil
       catalog.resource("Notify[bar_notify]").should_not be_nil
     end
-  
+
     describe "when resolving class references" do
       it "should favor local scope, even if there's an included class in topscope" do
         Puppet[:code] = <<-PP
@@ -67,14 +67,14 @@ describe "Puppet::Parser::Compiler" do
           include experiment
           include experiment::baz
         PP
-  
+
         catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
-  
+
         notify_resource = catalog.resource( "Notify[x]" )
-  
+
         notify_resource[:require].title.should == "Experiment::Baz"
       end
-  
+
       it "should favor local scope, even if there's an unincluded class in topscope" do
         Puppet[:code] = <<-PP
           class experiment {
@@ -87,11 +87,11 @@ describe "Puppet::Parser::Compiler" do
           include experiment
           include experiment::baz
         PP
-  
+
         catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
-  
+
         notify_resource = catalog.resource( "Notify[x]" )
-  
+
         notify_resource[:require].title.should == "Experiment::Baz"
       end
     end
@@ -111,9 +111,9 @@ describe "Puppet::Parser::Compiler" do
               	notify { 'bad!': }
               }
             MANIFEST
-  
+
             catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
-  
+
             catalog.resource("Class[Bar::Baz]").should_not be_nil
             catalog.resource("Notify[good!]").should_not be_nil
             catalog.resource("Class[Foo::Bar::Baz]").should be_nil
@@ -122,7 +122,7 @@ describe "Puppet::Parser::Compiler" do
         end
       end
     end
-  
+
     it "should recompute the version after input files are re-parsed" do
       Puppet[:code] = 'class foo { }'
       Time.stubs(:now).returns(1)
@@ -133,7 +133,7 @@ describe "Puppet::Parser::Compiler" do
       Puppet::Resource::TypeCollection.any_instance.stubs(:stale?).returns(true).then.returns(false) # pretend change
       Puppet::Parser::Compiler.compile(node).version.should == 2
     end
-  
+
     ['class', 'define', 'node'].each do |thing|
       it "should not allow #{thing} inside evaluated conditional constructs" do
         Puppet[:code] = <<-PP
@@ -143,7 +143,7 @@ describe "Puppet::Parser::Compiler" do
             notify { decoy: }
           }
         PP
-  
+
         begin
           Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
           raise "compilation should have raised Puppet::Error"
@@ -152,7 +152,7 @@ describe "Puppet::Parser::Compiler" do
         end
       end
     end
-  
+
     it "should not allow classes inside unevaluated conditional constructs" do
       Puppet[:code] = <<-PP
         if false {
@@ -160,15 +160,15 @@ describe "Puppet::Parser::Compiler" do
           }
         }
       PP
-  
+
       lambda { Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode")) }.should raise_error(Puppet::Error)
     end
-  
+
     describe "when defining relationships" do
       def extract_name(ref)
         ref.sub(/File\[(\w+)\]/, '\1')
       end
-  
+
       let(:node) { Puppet::Node.new('mynode') }
       let(:code) do
         <<-MANIFEST
@@ -182,42 +182,42 @@ describe "Puppet::Parser::Compiler" do
       end
       let(:expected_relationships) { [] }
       let(:expected_subscriptions) { [] }
-  
+
       before :each do
         Puppet[:code] = code
       end
-  
+
       after :each do
         catalog = Puppet::Parser::Compiler.compile(node)
-  
+
         resources = catalog.resources.select { |res| res.type == 'File' }
-  
+
         actual_relationships, actual_subscriptions = [:before, :notify].map do |relation|
           resources.map do |res|
             dependents = Array(res[relation])
             dependents.map { |ref| [res.title, extract_name(ref)] }
           end.inject(&:concat)
         end
-  
+
         actual_relationships.should =~ expected_relationships
         actual_subscriptions.should =~ expected_subscriptions
       end
-  
+
       it "should create a relationship" do
         code << "File[a] -> File[b]"
-  
+
         expected_relationships << ['a','b']
       end
-  
+
       it "should create a subscription" do
         code << "File[a] ~> File[b]"
-  
+
         expected_subscriptions << ['a', 'b']
       end
-  
+
       it "should create relationships using title arrays" do
         code << "File[a,b] -> File[c,d]"
-  
+
         expected_relationships.concat [
           ['a', 'c'],
           ['b', 'c'],
@@ -225,10 +225,10 @@ describe "Puppet::Parser::Compiler" do
           ['b', 'd'],
         ]
       end
-  
+
       it "should create relationships using collection expressions" do
         code << "File <| mode == 0644 |> -> File <| mode == 0755 |>"
-  
+
         expected_relationships.concat [
           ['a', 'd'],
           ['b', 'd'],
@@ -238,22 +238,22 @@ describe "Puppet::Parser::Compiler" do
           ['c', 'e'],
         ]
       end
-  
+
       it "should create relationships using resource names" do
         code << "'File[a]' -> 'File[b]'"
-  
+
         expected_relationships << ['a', 'b']
       end
-  
+
       it "should create relationships using variables" do
         code << <<-MANIFEST
           $var = File[a]
           $var -> File[b]
         MANIFEST
-  
+
         expected_relationships << ['a', 'b']
       end
-  
+
       it "should create relationships using case statements" do
         code << <<-MANIFEST
           $var = 10
@@ -275,43 +275,43 @@ describe "Puppet::Parser::Compiler" do
             }
           }
         MANIFEST
-  
+
         expected_relationships << ['s1', 't2']
       end
-  
+
       it "should create relationships using array members" do
         code << <<-MANIFEST
           $var = [ [ [ File[a], File[b] ] ] ]
           $var[0][0][0] -> $var[0][0][1]
         MANIFEST
-  
+
         expected_relationships << ['a', 'b']
       end
-  
+
       it "should create relationships using hash members" do
         code << <<-MANIFEST
           $var = {'foo' => {'bar' => {'source' => File[a], 'target' => File[b]}}}
           $var[foo][bar][source] -> $var[foo][bar][target]
         MANIFEST
-  
+
         expected_relationships << ['a', 'b']
       end
-  
+
       it "should create relationships using resource declarations" do
         code << "file { l: } -> file { r: }"
-  
+
         expected_relationships << ['l', 'r']
       end
-  
+
       it "should chain relationships" do
         code << "File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]"
-  
+
         expected_relationships << ['a', 'b'] << ['d', 'c']
         expected_subscriptions << ['b', 'c'] << ['e', 'd']
       end
     end
   end
-  
+
   describe 'using classic parser' do
     before :each do
       Puppet[:parser] = 'current'
@@ -319,7 +319,7 @@ describe "Puppet::Parser::Compiler" do
     it_behaves_like 'the compiler' do
     end
   end
-  
+
   describe 'using future parser' do
     # have absolutely no clue to why this is needed - if not required here (even if required by used classes)
     # the tests will fail with error that rgen/ecore/ruby_to_ecore cannot be found...

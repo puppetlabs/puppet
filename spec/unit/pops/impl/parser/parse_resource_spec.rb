@@ -165,7 +165,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
     it "should create relationships between collects" do
       dump(parse("File <| mode == 0644 |> -> File <| mode == 0755 |>")).should ==
-        "(-> (collect file\n  (<| |> (== mode 0644))) (collect file\n  (<| |> (== mode 0755))))"
+      "(-> (collect file\n  (<| |> (== mode 0644))) (collect file\n  (<| |> (== mode 0755))))"
     end
   end
 

@@ -1,17 +1,17 @@
 # Require this to require everything in the pops api
 
 module Puppet
-  module Pops    
+  module Pops
     module API
       # Raised if a referenced value does not exist (has not been set) and a method
       # guarantees a value result that may include nil.
       class NoValueError < NameError
       end
-      
+
       # Raised if an attempt is made to change/set an immutable value
       class ImmutableError < StandardError
       end
-      
+
       # Raised when there is an attempt to set a reserved name
       class ReservedNameError < ArgumentError
       end
@@ -20,17 +20,18 @@ module Puppet
       # different than does not respond to...
       class NotImplementedError
       end
-      
+
       # Raised when an API method is not implemented (internal error)
       class APINotImplementedError < NotImplementedError
       end
-      
+
       # Raised when there is an evaluation error
       class EvaluationError < StandardError
       end
     end
   end
 end
+
 # require all contributions to the api, except the model
 require 'puppet/pops/api/named_entry'
 require 'puppet/pops/api/scope'
@@ -42,7 +43,7 @@ require 'puppet/pops/api/evaluator'
 require 'puppet/pops/api/containment'
 
 #--
-# Map API names 
+# Map API names
 # This enables reference to the names in the API without future concern that support for more
 # than one API requires clients to update all their named references
 module Puppet::Pops
@@ -60,5 +61,4 @@ module Puppet::Pops
   Evaluator               = Puppet::Pops::API::Evaluator
   Containment             = Puppet::Pops::API::Containment
 end
-
 

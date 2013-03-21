@@ -37,7 +37,7 @@ class Puppet::Parser::Parser
   def aryfy(arg)
     ast AST::ASTArray, :children => [arg]
   end
-  
+
   # Create an AST block containing a single element
   def block(arg)
     ast AST::BlockExpression, :children => [arg]

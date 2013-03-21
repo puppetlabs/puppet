@@ -14,7 +14,7 @@ module Puppet::Pops::Impl::Validation
   #
   class ValidatorFactory_3_1
     Issues = Puppet::Pops::API::Issues
-    
+
     # Produces a validator with the given acceptor as the recipient of produced diagnostics.
     #
     def validator acceptor

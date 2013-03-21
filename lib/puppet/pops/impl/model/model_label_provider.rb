@@ -8,7 +8,7 @@ module Puppet; module Pops; module Impl; module Model; end; end; end; end
 # As an example, if object is an ArithmeticExpression with operator +, `#a_an(o)` produces "a '+' Expression",
 # #the(o) produces "the + Expression", and #label produces "+ Expression".  
 #
-class Puppet::Pops::Impl::Model::ModelLabelProvider < LabelProvider
+class Puppet::Pops::Impl::Model::ModelLabelProvider < Puppet::Pops::API::LabelProvider
   def initialize 
     @@label_visitor ||= Puppet::Pops::API::Visitor.new(self,"label",0,0)
   end
@@ -46,7 +46,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < LabelProvider
   def label_LiteralDefault o              ; "'default' expression"              end
   def label_LiteralUndef o                ; "'undef' expression"                end
   def label_LiteralRegularExpression o    ; "Regular Expression"                end
-  def label_Nop o                         ; "Nop Expression"                    end                  
+  def label_Nop o                         ; "Nop Expression"                    end
   def label_NamedAccessExpression o       ; "'.' expression"                    end
   def label_NilClass o                    ; "Nil Object"                        end
   def label_NotExpression o               ; "'not' expression"                  end

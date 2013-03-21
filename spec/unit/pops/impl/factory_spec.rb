@@ -4,7 +4,6 @@ require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
 require 'puppet/pops/impl/model/model_tree_dumper'
-
 require File.join(File.dirname(__FILE__), '/factory_rspec_helper')
 
 # This file contains testing of the pops model factory
@@ -16,7 +15,7 @@ RSpec.configure do |c|
 end
 
 describe Puppet::Pops::Impl::Model::Factory do
-  
+
   context "When factory methods are invoked they should produce expected results" do
     it "tests #var should create a VariableExpression" do
       var('a').current.class.should == Model::VariableExpression
@@ -40,7 +39,7 @@ describe Puppet::Pops::Impl::Model::Factory do
       literal(:default).current.class.should == Model::LiteralDefault
     end
   end
-  context "When calling block_or_expression" do  
+  context "When calling block_or_expression" do
     it "A single expression should produce identical output" do
       block_or_expression(literal(1) + literal(2)).current.is_a?(Puppet::Pops::API::Model::ArithmeticExpression).should == true
     end
@@ -50,7 +49,7 @@ describe Puppet::Pops::Impl::Model::Factory do
       built.statements.size.should == 2
     end
   end
-  
+
   context "When processing calls with CALL_NAMED" do
     it "Should be possible to state that r-value is required" do
       built = CALL_NAMED("foo", true, []).current
@@ -244,14 +243,14 @@ describe Puppet::Pops::Impl::Model::Factory do
       built.class.should == Model::UnlessExpression
       built.test.class.should == Model::LiteralBoolean
       built.then_expr.class.should == Model::LiteralNumber
-      built.else_expr.class.should == Model::Nop      
+      built.else_expr.class.should == Model::Nop
     end
     it "should create an UNLESS expression with then and else parts" do
       built = UNLESS(true, literal(1), literal(2)).current
       built.class.should == Model::UnlessExpression
       built.test.class.should == Model::LiteralBoolean
       built.then_expr.class.should == Model::LiteralNumber
-      built.else_expr.class.should == Model::LiteralNumber      
+      built.else_expr.class.should == Model::LiteralNumber
     end
   end
   context "When processing IF" do
@@ -260,14 +259,14 @@ describe Puppet::Pops::Impl::Model::Factory do
       built.class.should == Model::IfExpression
       built.test.class.should == Model::LiteralBoolean
       built.then_expr.class.should == Model::LiteralNumber
-      built.else_expr.class.should == Model::Nop      
+      built.else_expr.class.should == Model::Nop
     end
     it "should create an IF expression with then and else parts" do
       built = IF(true, literal(1), literal(2)).current
       built.class.should == Model::IfExpression
       built.test.class.should == Model::LiteralBoolean
       built.then_expr.class.should == Model::LiteralNumber
-      built.else_expr.class.should == Model::LiteralNumber      
+      built.else_expr.class.should == Model::LiteralNumber
     end
   end
   context "When processing a Parameter" do
@@ -286,7 +285,7 @@ describe Puppet::Pops::Impl::Model::Factory do
     # HOSTCLASS(classname, arguments, parent, statements)
     # parent may be passed as a nop /nil - check this works, should accept empty statements (nil)
     # should accept empty arguments
-    
+
   end
   context "When processing Node" do
   end

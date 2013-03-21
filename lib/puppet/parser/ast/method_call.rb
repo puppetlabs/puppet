@@ -10,15 +10,15 @@ class Puppet::Parser::AST
     # An AST that evaluates to the object the method is applied to
     # @return [Puppet::Parser::AST]
     attr_accessor :receiver
-    
+
     # The name of the method
     # @return [String]
     attr_accessor :name
-    
+
     # The arguments to evaluate as arguments to the method.
     # @return [Array<Puppet::Parser::AST>]
     attr_accessor :arguments
-    
+
     # An optional lambda/block that will be yielded to by the called method (if it supports this)
     # @return [Puppet::Parser::AST::Lambda]
     attr_accessor :lambda
@@ -29,7 +29,7 @@ class Puppet::Parser::AST
     # @see Puppet::Parser::Methods
     # @return [Object] what the called method/function returns
     def evaluate(scope)
-      # Make sure it's a defined method for the receiver 
+      # Make sure it's a defined method for the receiver
       r = @receiver.evaluate(scope)
       raise Puppet::ParseError, "No object to apply method #{@name} to" unless r
       m = Puppet::Parser::Methods.find_method(scope, r, @name)
@@ -62,14 +62,14 @@ class Puppet::Parser::AST
 
       # Lastly, check the parity
     end
-    
+
     # Sets this method call in statement mode where a produced rvalue is ignored.
     # @return [void]
     #
     def ignore_rvalue
       @ftype = :statement
     end
-    
+
     def to_s
       args = arguments.is_a?(ASTArray) ? arguments.to_s.gsub(/\[(.*)\]/,'\1') : arguments
       "#{@receiver.to_s}.#{name} (#{args})" + (@lambda ? " #{@lambda.to_s}" : '')

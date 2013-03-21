@@ -184,12 +184,6 @@ class Puppet::Parser::Scope
     # The symbol table for this scope.  This is where we store variables.
     @symtable = Ephemeral.new
 
-    # the ephemeral symbol tables
-    # those should not persist long, and are used for the moment only
-    # for $0..$xy capture variables of regexes
-    # this is actually implemented as a stack, with each ephemeral scope
-    # shadowing the previous one
-    # TODO: UPDATE YARDOC
     @ephemeral = [ Ephemeral.new(@symtable) ]
 
     # All of the defaults set for types.  It's a hash of hashes,
@@ -276,7 +270,7 @@ class Puppet::Parser::Scope
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
     end
 
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
+    table = @ephemeral.last
 
     if name =~ /^(.*)::(.+)$/
       class_name = $1
@@ -565,7 +559,7 @@ class Puppet::Parser::Scope
       # Create local scope ephemeral and set all values from hash
       new_ephemeral true
       match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
-    else 
+    else
       raise(ArgumentError,"Invalid regex match data. Got a #{match.class}") unless match.is_a?(MatchData)
       # Create a match ephemeral and set values from match data
       new_ephemeral false

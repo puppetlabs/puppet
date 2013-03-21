@@ -1,4 +1,6 @@
-module Puppet; module Pops; module API
+module Puppet; module Pops; end; end
+
+module Puppet::Pops::API
   # A Visitor performs delegation to a given receiver based on the configuration of the Visitor.
   # A new visitor is created with a given receiver, a method prefix, min, and max argument counts.
   # e.g.
@@ -12,23 +14,22 @@ module Puppet; module Pops; module API
   #
   class Visitor
     attr_reader :receiver, :message, :min_args, :max_args, :cache
-    
     def initialize(receiver, message, min_args=0, max_args=nil)
       raise ArgumentError.new("min_args must be >= 0") if min_args < 0
       raise ArgumentError.new("max_args must be >= min_args or nil") if max_args && max_args < min_args
-        
+
       @receiver = receiver
       @message = message
       @min_args = min_args
       @max_args = max_args
       @cache = Hash.new
     end
-    
+
     # Visit the configured receiver
     def visit(thing, *args)
       visit_this(@receiver, thing, *args)
     end
-    
+
     # Visit an explicit receiver
     def visit_this(receiver, thing, *args)
       raise "Visitor Error: Too few arguments passed. min = #{@min_args}" unless args.length >= @min_args
@@ -45,9 +46,9 @@ module Puppet; module Pops; module API
           next unless receiver.respond_to? method_name
           @cache[thing.class] = method_name
           return receiver.send(method_name, thing, *args)
-          end
+        end
       end
       raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{thing.class}"
-    end  
+    end
   end
-end; end; end
+end

@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
@@ -12,12 +11,12 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests calls  
+# Tests calls
 describe Puppet::Pops::Impl::Parser::Parser do
   Model ||= Puppet::Pops::API::Model
   include TransformerRspecHelper
   context "When running these examples, the setup" do
-    
+
     it "should include a ModelTreeDumper for convenient string comparisons" do
       x = literal(10) + literal(20)
       astdump(x).should == "(+ 10 20)"
@@ -28,32 +27,32 @@ describe Puppet::Pops::Impl::Parser::Parser do
       model.class.should == Model::AssignmentExpression
       astdump(model).should == "(= $a 10)"
     end
-   end
+  end
 
   context "When parsing calls as statements" do
     context "in top level scope" do
       it "foo()" do
-        astdump(parse("foo()")).should == "(invoke foo)"      
+        astdump(parse("foo()")).should == "(invoke foo)"
       end
       it "foo bar" do
-        astdump(parse("foo bar")).should == "(invoke foo bar)"      
+        astdump(parse("foo bar")).should == "(invoke foo bar)"
       end
     end
     context "in nested scopes" do
       it "if true { foo() }" do
-        astdump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"      
+        astdump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"
       end
       it "if true { foo bar}" do
-        astdump(parse("if true {foo bar}")).should == "(if true\n  (then (invoke foo bar)))"      
+        astdump(parse("if true {foo bar}")).should == "(if true\n  (then (invoke foo bar)))"
       end
     end
   end
   context "When parsing calls as expressions" do
     it "$a = foo()" do
-      astdump(parse("$a = foo()")).should == "(= $a (call foo))"      
+      astdump(parse("$a = foo()")).should == "(= $a (call foo))"
     end
     it "$a = foo(bar)" do
-      astdump(parse("$a = foo()")).should == "(= $a (call foo))"      
+      astdump(parse("$a = foo()")).should == "(= $a (call foo))"
     end
 
     # For egrammar where a bare word can be a "statement"
@@ -63,10 +62,10 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
     context "in nested scopes" do
       it "if true { $a = foo() }" do
-        astdump(parse("if true { $a = foo()}")).should == "(if true\n  (then (= $a (call foo))))"      
+        astdump(parse("if true { $a = foo()}")).should == "(if true\n  (then (= $a (call foo))))"
       end
       it "if true { $a= foo(bar)}" do
-        astdump(parse("if true {$a = foo(bar)}")).should == "(if true\n  (then (= $a (call foo bar))))"      
+        astdump(parse("if true {$a = foo(bar)}")).should == "(if true\n  (then (= $a (call foo bar))))"
       end
     end
   end
@@ -84,8 +83,8 @@ describe Puppet::Pops::Impl::Parser::Parser do
       astdump(parse("$a.foo {|$x| }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
     it "$a.foo {|$x| $b = $x}" do
-      astdump(parse("$a.foo {|$x| $b = $x}")).should == 
-        "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"
+      astdump(parse("$a.foo {|$x| $b = $x}")).should ==
+      "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"
     end
   end
 end

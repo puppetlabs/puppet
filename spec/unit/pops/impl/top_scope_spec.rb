@@ -21,14 +21,14 @@ describe Puppet::Pops::Impl::TopScope do
       scope = TopScope.new
       api_methods.each {|m| scope.respond_to?(m).should == true }
     end
-    
+
     it "should present itself as a top scope" do
       scope = TopScope.new
       scope.is_named_scope?().should == false
       scope.is_top_scope?().should == true
       scope.is_local_scope?().should == false
     end
-    
+
     it "should contain a type creator" do
       scope = TopScope.new
       scope.type_creator.class.should == Pops::Impl::TypeCreator

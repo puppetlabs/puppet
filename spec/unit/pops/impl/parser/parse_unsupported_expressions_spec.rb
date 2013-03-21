@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
@@ -11,15 +10,15 @@ require 'puppet/pops/impl/parser/eparser'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
-  
+
 describe "Puppet::Pops::Impl::Parser::Parser" do
   include ParserRspecHelper
-    
-# With egrammar this is now supported (it was only a grammar restriction), AST evaluation is ok.  
-#  context "When parsing Lists" do
-#    it "$a = [1, 2, 3][2]" do
-#      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference"
-#      dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
-#    end
-#  end
+
+  # With egrammar this is now supported (it was only a grammar restriction), AST evaluation is ok.
+  #  context "When parsing Lists" do
+  #    it "$a = [1, 2, 3][2]" do
+  #      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference"
+  #      dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
+  #    end
+  #  end
 end

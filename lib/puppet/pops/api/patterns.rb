@@ -27,7 +27,7 @@ module Puppet::Pops::API::Patterns
   # This name includes hyphen, which may be illegal in some cases.
   #
   CLASSREF_EXT = %r{((::){0,1}[A-Z][-\w]*)+}
-  
+
   # CLASSREF matches a class reference the way it is represented internall in the
   # model (i.e. in lower case).
   # This name includes hyphen, which may be illegal in some cases.

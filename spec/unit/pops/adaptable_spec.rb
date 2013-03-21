@@ -15,6 +15,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
   class ValueAdapter < Puppet::Pops::API::Adaptable::Adapter
     attr_accessor :value
   end
+
   class OtherAdapter < Puppet::Pops::API::Adaptable::Adapter
     attr_accessor :value
     def OtherAdapter.create_adapter(o)
@@ -23,21 +24,23 @@ describe Puppet::Pops::API::Adaptable::Adapter do
       x
     end
   end
+
   module Farm
     class FarmAdapter < Puppet::Pops::API::Adaptable::Adapter
       attr_accessor :value
     end
   end
-  class Duck 
+
+  class Duck
     include Puppet::Pops::API::Adaptable
   end
-  
+
   it "should create specialized adapter instance on call to adapt" do
     d = Duck.new
     a = ValueAdapter.adapt(d)
     a.class.should == ValueAdapter
   end
-  
+
   it "should produce the same instance on multiple adaptations" do
     d = Duck.new
     a = ValueAdapter.adapt(d)
@@ -45,7 +48,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
     b = ValueAdapter.adapt(d)
     b.value.should == 10
   end
-  
+
   it "should return the correct adapter if there are several" do
     d = Duck.new
     other = OtherAdapter.adapt(d)
@@ -54,7 +57,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
     b = ValueAdapter.adapt(d)
     b.value.should == 10
   end
-  
+
   it "should allow specialization to override creating" do
     d = Duck.new
     a = OtherAdapter.adapt(d)
@@ -119,7 +122,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
       end
       a.value.should == "Donald"
     end
-  
+
     it "should be possible to pass a block to configure the adapter and get the adapted" do
       d = Duck.new
       a = OtherAdapter.adapt(d) do |x, o|
@@ -136,7 +139,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
       end
       a.value.should == "Donald"
     end
-  
+
     it "should be possible to pass a block to configure the adapter and get the adapted" do
       d = Duck.new
       a = OtherAdapter.adapt_new(d) do |x, o|

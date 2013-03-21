@@ -25,7 +25,7 @@ describe Puppet::Pops::Impl::MatchScope do
       scope[0].origin.should == nil
     end
   end
-  
+
   describe "A match scope with one match" do
     it "should produce a single entry with the expected match" do
       scope = MatchScope.new(/.*/.match("monkey likes banana"))
@@ -43,7 +43,7 @@ describe Puppet::Pops::Impl::MatchScope do
       scope[3].value.should == "banana"
       scope[4].value.should == nil
     end
-    
+
     it "should produce the same result on [] as on get_entry" do
       scope = MatchScope.new(/(monkey)\s(likes)\s(banana)/.match("monkey likes banana"))
       scope[0].value.should == scope.get_entry(0).value

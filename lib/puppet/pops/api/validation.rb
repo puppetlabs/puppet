@@ -1,8 +1,4 @@
-module Puppet; end
-
-module Puppet::Pops; end
-
-module Puppet::Pops::API; end
+module Puppet; module Pops; module API; end; end; end
 
 # A module with base functionality for validation of a model.
 #
@@ -36,7 +32,7 @@ module Puppet::Pops::API::Validation
     def [] issue
       severity issue
     end
-    
+
     # Override a default severity with the given severity level.
     #
     # @param issue [Puppet::Pops::API::Issues::Issue] the issue for which to set severity
@@ -44,11 +40,11 @@ module Puppet::Pops::API::Validation
     #
     def []= issue, level
       assert_issue(issue)
-      assert_severity(level)     
+      assert_severity(level)
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
-    
+
     # Returns true if the issue should be reported or not.
     # @returns [Boolean] this implementation returns true for errors and warnings
     #
@@ -131,7 +127,6 @@ module Puppet::Pops::API::Validation
     attr_reader :exception
     attr_reader :file
     attr_reader :source_pos
-    
     def initialize severity, issue, file, source_pos, arguments={}, exception=nil
       @severity = severity
       @issue = issue
@@ -157,14 +152,14 @@ module Puppet::Pops::API::Validation
     end
 
     # This produces "Deprecation notice: " prefix if the diagnostic has :deprecation severity, otherwise "".
-    # The idea is that all other diagnostics are emitted with the methods Puppet.err (or an exception), and 
+    # The idea is that all other diagnostics are emitted with the methods Puppet.err (or an exception), and
     # Puppet.warning.
     # @note Note that it is not a good idea to use Puppet.deprecation_warning as it is for internal deprecation.
     #
     def format_severity diagnostic
-      diagnostic.severity == :deprecation ? "Deprecation notice: " : "" 
+      diagnostic.severity == :deprecation ? "Deprecation notice: " : ""
     end
-    
+
     def format_location diagnostic
       file = diagnostic.file
       line = diagnostic.source_pos.line
@@ -192,7 +187,7 @@ module Puppet::Pops::API::Validation
         format_message(diagnostic)
       end
     end
-    
+
     # The somewhat (machine) unusable format in current use by puppet.
     # have to be used here for backwards compatibility.
     def format_location diagnostic
@@ -204,7 +199,7 @@ module Puppet::Pops::API::Validation
       elsif file and line
         " at #{file}:#{line}"
       elsif line && pos
-          " at line #{line}:#{pos}"
+        " at line #{line}:#{pos}"
       elsif line
         " at line #{line}"
       elsif file
@@ -226,13 +221,12 @@ module Puppet::Pops::API::Validation
 
     # All diagnstic in the order they were issued
     attr_reader :diagnostics
-    
+
     # The number of :warning severity issues + number of :deprecation severity issues
     attr_reader :warning_count
-    
+
     # The number of :error severity issues
     attr_reader :error_count
-    
     # Initializes this diagnostics acceptor.
     # By default, the acceptor is configured with a default severity producer.
     # @param severity_producer [SeverityProducer] the severity producer to use to determine severity of an issue
@@ -300,7 +294,7 @@ module Puppet::Pops::API::Validation
       @diagnostics << diagnostic
       @warning_count += 1
     end
-    
+
     def deprecation diagnostic
       warning diagnostic
     end

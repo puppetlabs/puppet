@@ -16,8 +16,6 @@ class Puppet::Parser::AST
     #
     # @return [Array<Array<String,String>>] list of parameter names with optional value expression
     attr_accessor :parameters
-
-
     # Evaluates each expression/statement and produce the last expression evaluation result
     # @return [Object] what the last expression evaluated to
     def evaluate(scope)
@@ -50,8 +48,8 @@ class Puppet::Parser::AST
         n = m[0].is_a?(Array) ? m[0][0] : m[0]
         v = m[1] || (m[0][1]).safeevaluate(scope) # given value or default expression value
         [n, v]
-      end 
-      
+      end
+
       # Store the evaluated name => value associations in a new inner/local/ephemeral scope
       # (This is made complicated due to the fact that the implementation of scope is overloaded with
       # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
@@ -98,12 +96,12 @@ class Puppet::Parser::AST
       @parameters = [] unless options[:parameters]
       validate
     end
-    
+
     def to_s
       result = ["{|"]
       result += @parameters.collect {|p| "#{p[0]}" + (p.size == 2 && p[1]) ? p[1].to_s() : '' }.join(', ')
       result << "| ... }"
-      result.join('')  
+      result.join('')
     end
   end
 end

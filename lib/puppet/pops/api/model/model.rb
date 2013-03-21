@@ -19,14 +19,16 @@
 # This metamodel is expressed using RGen.
 #
 # TODO: Anonymous Enums - probably ok, but they can be named (don't know if that is meaningsful)
-# TODO: Source Location - either have reference in objects, or separate model / map, tie them in a "Resource"
 
 require 'rgen/metamodel_builder'
 require 'puppet/pops/api'
-module Puppet; module Pops; module API; module Model
+
+module Puppet; module Pops; module API; end; end; end;
+
+module Puppet::Pops::API::Model
   # A base class for modeled objects that makes them Visitable, and Adaptable.
   # @todo currently  includes Containment which will not be needed when the corresponding methods
-  #   are added to RGen.
+  #   are added to RGen (in some version after 0.6.2).
   #
   class PopsObject < RGen::MetamodelBuilder::MMBase
     include Puppet::Pops::Visitable
@@ -78,7 +80,7 @@ module Puppet; module Pops; module API; module Model
   class ImportExpression < Expression
     contains_many_uni 'files', Expression, :lowerBound => 1
   end
-  
+
   # A boolean not expression, reversing the truth of the unary expr.
   #
   class NotExpression < UnaryExpression; end
@@ -418,10 +420,12 @@ module Puppet; module Pops; module API; module Model
     has_attr 'form', RGen::MetamodelBuilder::DataTypes::Enum.new([:regular, :virtual, :exported ]), :lowerBound => 1, :defaultValueLiteral => "regular"
     has_attr 'virtual', Boolean, :derived => true
     has_attr 'exported', Boolean, :derived => true
+
     module ClassModule
       def virtual_derived
         form == :virtual || form == :exported
       end
+
       def exported_derived
         form == :exported
       end
@@ -563,4 +567,4 @@ module Puppet; module Pops; module API; module Model
       contains_one_uni 'instantiation', Expression
     end
   end
-end; end; end; end
+end

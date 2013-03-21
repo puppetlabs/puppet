@@ -20,7 +20,7 @@ class Puppet::Parser::AST
       # evaluate the operands, should return a boolean value
       left = @lval.safeevaluate(scope)
       right = @rval.safeevaluate(scope)
-      
+
       if left.is_a?(Array) || right.is_a?(Array)
         eval_array(left, right)
       elsif left.is_a?(Hash) || right.is_a?(Hash)
@@ -34,7 +34,7 @@ class Puppet::Parser::AST
     #
     def eval_array(left, right)
       assert_concatenation_supported()
-      
+
       raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Array." unless %w{+ <<}.include?(@operator)
       raise ArgumentError, "left operand of #{@operator} must be an Array" unless left.is_a?(Array)
       if @operator == '+'
@@ -46,19 +46,19 @@ class Puppet::Parser::AST
       #
       left + [right]
     end
-    
+
     # Merges two hashes.
     #
     def eval_hash(left, right)
       assert_concatenation_supported()
-      
+
       raise ArgumentError, "operator #{@operator} is not applicable when one of the operands is an Hash." unless @operator == '+'
       raise ArgumentError, "left operand of #{@operator} must be an Hash" unless left.is_a?(Hash)
       raise ArgumentError, "right operand of #{@operator} must be an Hash" unless right.is_a?(Hash)
       # merge produces a merged copy
       left.merge(right)
     end
-    
+
     def eval_numeric(left, right)
       left = Puppet::Parser::Scope.number?(left)
       right = Puppet::Parser::Scope.number?(right)
@@ -66,7 +66,7 @@ class Puppet::Parser::AST
       raise ArgumentError, "right operand of #{@operator} is not a number" unless right != nil
 
       # compute result
-      left.send(@operator, right)        
+      left.send(@operator, right)
     end
 
     def assert_concatenation_supported

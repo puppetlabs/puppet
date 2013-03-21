@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/parser/e_parser_adapter'
+
 describe Puppet::Parser do
 
   Puppet::Parser::AST
@@ -56,11 +57,11 @@ describe Puppet::Parser do
       Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
       @parser.parse("unless false { $var = 1 }")
     end
-    
+
     it "should not raise an error with empty statements" do
       expect {  @parser.parse("unless false { }") }.to_not raise_error
     end
-    
+
     #test for bug #13296
     it "should not override 'unless' as a parameter inside resources" do
       lambda { @parser.parse("exec {'/bin/echo foo': unless => '/usr/bin/false',}") }.should_not raise_error
@@ -232,7 +233,6 @@ describe Puppet::Parser do
     end
   end
 
-
   describe "when parsing classes" do
     before :each do
       @krt = Puppet::Resource::TypeCollection.new("development")
@@ -331,12 +331,12 @@ describe Puppet::Parser do
   context "when parsing collections" do
     it "should parse basic collections" do
       @parser.parse("Port <| |>").code.
-        should be_all {|x| x.is_a? Puppet::Parser::AST::Collection }
+      should be_all {|x| x.is_a? Puppet::Parser::AST::Collection }
     end
 
     it "should parse fully qualified collections" do
       @parser.parse("Port::Range <| |>").code.
-        should be_all {|x| x.is_a? Puppet::Parser::AST::Collection }
+      should be_all {|x| x.is_a? Puppet::Parser::AST::Collection }
     end
   end
 
@@ -355,13 +355,13 @@ describe Puppet::Parser do
   it "should treat classes as case insensitive" do
     @classic_parser.known_resource_types.import_ast(@parser.parse("class yayness {}"), '')
     @classic_parser.known_resource_types.hostclass('yayness').
-      should == @classic_parser.find_hostclass("", "YayNess")
+    should == @classic_parser.find_hostclass("", "YayNess")
   end
 
   it "should treat defines as case insensitive" do
     @classic_parser.known_resource_types.import_ast(@parser.parse("define funtest {}"), '')
     @classic_parser.known_resource_types.hostclass('funtest').
-      should == @classic_parser.find_hostclass("", "fUntEst")
+    should == @classic_parser.find_hostclass("", "fUntEst")
   end
   context "when parsing method calls" do
     it "should parse method call with one param lambda" do

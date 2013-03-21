@@ -182,7 +182,7 @@ describe "Two step scoping for variables" do
           class c {
             notify { 'something': message => "$a::b" }
           }
-          
+
           class a { }
 
           node default {

@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/pops/api'
 require 'puppet/pops/api/model/model'
 require 'puppet/pops/impl/model/factory'
@@ -15,10 +14,10 @@ require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 # Tests resource parsing.
 # @todo Add more tests for variations on end comma and end semicolon.
 # @todo Add tests for related syntax parse errors
-#  
+#
 describe Puppet::Pops::Impl::Parser::Parser do
   include TransformerRspecHelper
-  
+
   context "When running these examples, the setup" do
 
     it "should include a AstTreeDumper for convenient string comparisons" do
@@ -31,23 +30,23 @@ describe Puppet::Pops::Impl::Parser::Parser do
       model.class.should == Model::AssignmentExpression
       astdump(model).should == "(= $a 10)"
     end
-   end
+  end
 
   context "When parsing regular resource" do
     it "file { 'title': }" do
       astdump(parse("file { 'title': }")).should == [
         "(resource file",
         "  ('title'))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "file { 'title': path => '/somewhere', mode => 0777}" do
       astdump(parse("file { 'title': path => '/somewhere', mode => 0777}")).should == [
         "(resource file",
         "  ('title'",
         "    (path => '/somewhere')",
         "    (mode => 0777)))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "file { 'title1': path => 'x'; 'title2': path => 'y'}" do
       astdump(parse("file { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
         "(resource file",
@@ -55,7 +54,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (path => 'x'))",
         "  ('title2'",
         "    (path => 'y')))",
-        ].join("\n")
+      ].join("\n")
     end
   end
   context "When parsing resource defaults" do
@@ -66,8 +65,8 @@ describe Puppet::Pops::Impl::Parser::Parser do
       astdump(parse("File { mode => 0777}")).should == [
         "(resource-defaults file",
         "  (mode => 0777))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
   end
 
   context "When parsing resource override" do
@@ -96,22 +95,22 @@ describe Puppet::Pops::Impl::Parser::Parser do
       astdump(parse("@file { 'title': }")).should ==  "(virtual-resource file\n  ('title'))"
     end
   end
-  
+
   context "When parsing class resource" do
     it "class { 'cname': }" do
       astdump(parse("class { 'cname': }")).should == [
         "(resource class",
         "  ('cname'))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "class { 'cname': x => 1, y => 2}" do
       astdump(parse("class { 'cname': x => 1, y => 2}")).should == [
         "(resource class",
         "  ('cname'",
         "    (x => 1)",
         "    (y => 2)))"
-        ].join("\n")
-      end
+      ].join("\n")
+    end
     it "class { 'cname1': x => 1; 'cname2': y => 2}" do
       astdump(parse("class { 'cname1': x => 1; 'cname2': y => 2}")).should == [
         "(resource class",
@@ -119,9 +118,9 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (x => 1))",
         "  ('cname2'",
         "    (y => 2)))",
-        ].join("\n")
-      end
+      ].join("\n")
     end
+  end
 
   context "When parsing Relationships" do
     it "File[a] -> File[b]" do
@@ -136,14 +135,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "File[a] <~ File[b]" do
       astdump(parse("File[a] <~ File[b]")).should == "(<~ (slice file a) (slice file b))"
     end
-    
+
     it "Should chain relationships" do
       astdump(parse("a -> b -> c")).should ==
-        "(-> (-> a b) c)"
+      "(-> (-> a b) c)"
     end
     it "Should chain relationships" do
       astdump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]")).should ==
-        "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
+      "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
     end
   end
 
@@ -169,12 +168,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
         astdump(parse("File <| tag == 'foo' or mode != 0777 |>")).should == "(collect file\n  (<| |> (|| (== tag 'foo') (!= mode 0777))))"
       end
       it "File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>" do
-        astdump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should == 
-          "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
+        astdump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should ==
+        "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
       end
       it "File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>" do
-        astdump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should == 
-          "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"
+        astdump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should ==
+        "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"
       end
     end
   end

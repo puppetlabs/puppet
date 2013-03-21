@@ -18,7 +18,6 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   attr_accessor :line, :indefine
   alias :indefine? :indefine
-  
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
@@ -56,18 +55,18 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     # @return [Boolean] if the token is acceptable in the given context or not.
     #   this implementation always returns true.
-    # @param context [Hash] ? ? ? 
+    # @param context [Hash] ? ? ?
     #
     def acceptable?(context={})
       @acceptable_when.call(context)
     end
-    
+
     def assert_numeric(value)
-      if value =~ /^0[xX].*$/ 
-          lex_error "Not a valid hex number #{value}" unless value =~ /^0[xX][0-9A-Fa-f]+$/
-      elsif value =~ /^0[^.].*$/ 
+      if value =~ /^0[xX].*$/
+        lex_error "Not a valid hex number #{value}" unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      elsif value =~ /^0[^.].*$/
         lex_error "Not a valid octal number #{value}" unless value =~ /^0[0-7]+$/
-      else 
+      else
         lex_error "Not a valid decimal number #{value}" unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
       end
     end
@@ -87,7 +86,6 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     attr_reader :regex_tokens, :string_tokens
     def_delegator :@tokens, :[]
-
     # Adds a new token to the set of regognized tokens
     # @param name [String] the token name
     # @param regex [Regexp, String] source text token matcher, a litral string or regular expression
@@ -153,55 +151,56 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   TOKENS = TokenList.new
   TOKENS.add_tokens(
-    '['   => :LBRACK,
-    ']'   => :RBRACK,
-#    '{'   => :LBRACE, # Specialized to handle lambda
-    '}'   => :RBRACE,
-    '('   => :LPAREN,
-    ')'   => :RPAREN,
-    '='   => :EQUALS,
-    '+='  => :APPENDS,
-    '=='  => :ISEQUAL,
-    '>='  => :GREATEREQUAL,
-    '>'   => :GREATERTHAN,
-    '<'   => :LESSTHAN,
-    '<='  => :LESSEQUAL,
-    '!='  => :NOTEQUAL,
-    '!'   => :NOT,
-    ','   => :COMMA,
-    '.'   => :DOT,
-    ':'   => :COLON,
-    '@'   => :AT,
-    '|'   => :PIPE,
-    '<<|' => :LLCOLLECT,
-    '|>>' => :RRCOLLECT,
-    '->'  => :IN_EDGE,
-    '<-'  => :OUT_EDGE,
-    '~>'  => :IN_EDGE_SUB,
-    '<~'  => :OUT_EDGE_SUB,
-    '<|'  => :LCOLLECT,
-    '|>'  => :RCOLLECT,
-    ';'   => :SEMIC,
-    '?'   => :QMARK,
-    '\\'  => :BACKSLASH,
-    '=>'  => :FARROW,
-    '+>'  => :PARROW,
-    '+'   => :PLUS,
-    '-'   => :MINUS,
-    '/'   => :DIV,
-    '*'   => :TIMES,
-    '<<'  => :LSHIFT,
-    '>>'  => :RSHIFT,
-    '=~'  => :MATCH,
-    '!~'  => :NOMATCH,
-    %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
-    "<string>" => :STRING,
-    "<dqstring up to first interpolation>" => :DQPRE,
-    "<dqstring between two interpolations>" => :DQMID,
-    "<dqstring after final interpolation>" => :DQPOST,
-    "<boolean>" => :BOOLEAN,
-    "<lambda start>" => :LAMBDA, # A LBRACE followed by '|'
-    "<select start>" => :SELBRACE # A QMARK followed by '{'
+  '['   => :LBRACK,
+  ']'   => :RBRACK,
+  #    '{'   => :LBRACE, # Specialized to handle lambda
+  '}'   => :RBRACE,
+  '('   => :LPAREN,
+  ')'   => :RPAREN,
+  '='   => :EQUALS,
+  '+='  => :APPENDS,
+  '=='  => :ISEQUAL,
+  '>='  => :GREATEREQUAL,
+  '>'   => :GREATERTHAN,
+  '<'   => :LESSTHAN,
+  '<='  => :LESSEQUAL,
+  '!='  => :NOTEQUAL,
+  '!'   => :NOT,
+  ','   => :COMMA,
+  '.'   => :DOT,
+  ':'   => :COLON,
+  '@'   => :AT,
+  '|'   => :PIPE,
+  '<<|' => :LLCOLLECT,
+  '|>>' => :RRCOLLECT,
+  '->'  => :IN_EDGE,
+  '<-'  => :OUT_EDGE,
+  '~>'  => :IN_EDGE_SUB,
+  '<~'  => :OUT_EDGE_SUB,
+  '<|'  => :LCOLLECT,
+  '|>'  => :RCOLLECT,
+  ';'   => :SEMIC,
+  '?'   => :QMARK,
+  '\\'  => :BACKSLASH,
+  '=>'  => :FARROW,
+  '+>'  => :PARROW,
+  '+'   => :PLUS,
+  '-'   => :MINUS,
+  '/'   => :DIV,
+  '*'   => :TIMES,
+  '%'   => :MODULO,
+  '<<'  => :LSHIFT,
+  '>>'  => :RSHIFT,
+  '=~'  => :MATCH,
+  '!~'  => :NOMATCH,
+  %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
+  "<string>" => :STRING,
+  "<dqstring up to first interpolation>" => :DQPRE,
+  "<dqstring between two interpolations>" => :DQMID,
+  "<dqstring after final interpolation>" => :DQPOST,
+  "<boolean>" => :BOOLEAN,
+  "<lambda start>" => :LAMBDA, # A LBRACE followed by '|'
+  "<select start>" => :SELBRACE # A QMARK followed by '{'
   )
 
   module Contextual
@@ -241,11 +240,11 @@ class Puppet::Pops::Impl::Parser::Lexer
       [TOKENS[:LAMBDA], value]
     elsif lexer.lexing_context[:after] == :QMARK
       [TOKENS[:SELBRACE], value]
-    else    
+    else
       [TOKENS[:LBRACE], value]
     end
   end
-  
+
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     assert_numeric(value)
@@ -256,10 +255,10 @@ class Puppet::Pops::Impl::Parser::Lexer
   TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     # A name starting with a number must be a valid numeric string (not that
     # NUMBER token captures those names that do not comply with the name rule.
-    if value =~ /^[0-9].*$/ 
+    if value =~ /^[0-9].*$/
       assert_numeric(value)
     end
-    
+
     string_token = self
     # we're looking for keywords here
     if tmp = KEYWORDS.lookup(value)
@@ -366,23 +365,23 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   KEYWORDS = TokenList.new
   KEYWORDS.add_tokens(
-    "case"     => :CASE,
-    "class"    => :CLASS,
-    "default"  => :DEFAULT,
-    "define"   => :DEFINE,
-#    "import"   => :IMPORT,
-    "if"       => :IF,
-    "elsif"    => :ELSIF,
-    "else"     => :ELSE,
-    "inherits" => :INHERITS,
-    "node"     => :NODE,
-    "and"      => :AND,
-    "or"       => :OR,
-    "undef"    => :UNDEF,
-    "false"    => :FALSE,
-    "true"     => :TRUE,
-    "in"       => :IN,
-    "unless"   => :UNLESS
+  "case"     => :CASE,
+  "class"    => :CLASS,
+  "default"  => :DEFAULT,
+  "define"   => :DEFINE,
+  #    "import"   => :IMPORT,
+  "if"       => :IF,
+  "elsif"    => :ELSIF,
+  "else"     => :ELSE,
+  "inherits" => :INHERITS,
+  "node"     => :NODE,
+  "and"      => :AND,
+  "or"       => :OR,
+  "undef"    => :UNDEF,
+  "false"    => :FALSE,
+  "true"     => :TRUE,
+  "in"       => :IN,
+  "unless"   => :UNLESS
   )
 
   def clear
@@ -465,7 +464,7 @@ class Puppet::Pops::Impl::Parser::Lexer
   #
   def init_multibyte
     numver = RUBY_VERSION.split(".").collect {|s| s.to_i }
-    return true if (numver[0] << 16 | numver[1] << 8 | numver[2]) >= (1 << 16 | 9 << 8 | 3)  
+    return true if (numver[0] << 16 | numver[1] << 8 | numver[2]) >= (1 << 16 | 9 << 8 | 3)
     false
   end
 
@@ -497,11 +496,11 @@ class Puppet::Pops::Impl::Parser::Lexer
     @lexing_context = {
       :after => nil,
       :start_of_line => true,
-      :line_offset => 0, # byte offset of newline 
+      :line_offset => 0, # byte offset of newline
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
       :string_interpolation_depth => 0
-      }
+    }
   end
 
   # Make any necessary changes to the token and/or value.
@@ -523,11 +522,11 @@ class Puppet::Pops::Impl::Parser::Lexer
     end
 
     return if token.skip
-    
+
     offset      = lexing_context[:offset]
     line_offset = lexing_context[:line_offset]
     end_offset = lexing_context[:end_offset]
-      
+
     if multibyte?
       offset = @scanner.string.byteslice(0, lexing_context[:offset]).length
       pos = @scanner.string.byteslice(line_offset, lexing_context[:offset]).length
@@ -548,7 +547,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       1 + lexing_context[:offset] - lexing_context[:line_offset]
     end
   end
-  
+
   # Handling the namespace stack
   def_delegator :@namestack, :pop, :namepop
   # This value might have :: in it, but we don't care -- it'll be handled
@@ -576,7 +575,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       offset = @scanner.pos
       matched_token, value = find_token
       end_offset = @scanner.pos
-      
+
       # error out if we didn't match anything at all
       lex_error "Could not match #{@scanner.rest[/^(\S+|\s+|.*)/]}" unless matched_token
 
@@ -633,7 +632,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       @previous_token = final_token
       skip
     end
-    # Cannot reset @scanner to nil here - it is needed to answer questions about context after 
+    # Cannot reset @scanner to nil here - it is needed to answer questions about context after
     # completed parsing.
     # Seems meaningless to do this. Everything will be gc anyway.
     #@scanner = nil
@@ -650,7 +649,7 @@ class Puppet::Pops::Impl::Parser::Lexer
   def match? r
     @scanner.match?(r)
   end
-  
+
   # Provide some limited access to the scanner, for those
   # tokens that need it.
   def_delegator :@scanner, :scan_until
@@ -685,10 +684,10 @@ class Puppet::Pops::Impl::Parser::Lexer
     value,terminator = slurpstring('"$')
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
     variable_regex = if Puppet[:allow_variables_with_dashes]
-                       TOKENS[:VARIABLE_WITH_DASH].regex
-                     else
-                       TOKENS[:VARIABLE].regex
-                     end
+      TOKENS[:VARIABLE_WITH_DASH].regex
+    else
+      TOKENS[:VARIABLE].regex
+    end
     if terminator != '$' or braced = @scanner.scan(/\{/)
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
@@ -698,7 +697,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       #
       if braced && @scanner.match?(%r{[ \t\r]*\(})
         token_queue << [TOKENS[:NAME],var_name]
-      else    
+      else
         token_queue << [TOKENS[:VARIABLE],var_name]
       end
       tokenize_interpolated_string(DQ_continuation_token_types)
