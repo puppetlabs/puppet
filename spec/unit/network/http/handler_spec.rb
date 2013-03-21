@@ -136,7 +136,7 @@ describe Puppet::Network::HTTP::Handler do
     it "should deserialize YAML parameters" do
       params = {'my_param' => [1,2,3].to_yaml}
 
-      decoded_params = @handler.send(:decode_params, params)
+      decoded_params = handler.send(:decode_params, params)
 
       decoded_params.should == {:my_param => [1,2,3]}
     end
@@ -144,7 +144,7 @@ describe Puppet::Network::HTTP::Handler do
     it "should accept YAML parameters with !ruby/hash tags on Ruby 1.8", :if => RUBY_VERSION =~ /^1\.8/ do
       params = {'my_param' => "--- !ruby/hash:Array {}"}
 
-      decoded_params = @handler.send(:decode_params, params)
+      decoded_params = handler.send(:decode_params, params)
 
       decoded_params[:my_param].should be_an(Array)
     end
@@ -155,7 +155,7 @@ describe Puppet::Network::HTTP::Handler do
     it "should fail if YAML parameters have !ruby/hash tags on Ruby 1.9", :unless => RUBY_VERSION =~ /^1\.8/ do
       params = {'my_param' => "--- !ruby/hash:Array {}"}
 
-      expect { @handler.send(:decode_params, params) }.to raise_error(ArgumentError, /Illegal YAML mapping found/)
+      expect { handler.send(:decode_params, params) }.to raise_error(ArgumentError, /Illegal YAML mapping found/)
     end
 
     describe "when finding a model instance" do
