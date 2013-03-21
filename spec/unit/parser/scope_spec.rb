@@ -84,32 +84,34 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when custom functions are called" do
-    before :each do
-      @env      = Puppet::Node::Environment.new('testing')
-      @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => @env))
-      @scope    = Puppet::Parser::Scope.new(@compiler)
+    let(:env) { Puppet::Node::Environment.new('testing') }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => env)) }
+    let(:scope) { Puppet::Parser::Scope.new(compiler) }
+
+    it "calls methods prefixed with function_ as custom functions" do
+      scope.function_sprintf(["%b", 123]).should == "1111011"
     end
 
-    it "should load and call the method if it looks like a function and it exists" do
-      @scope.function_sprintf(["%b", 123]).should == "1111011"
+    it "raises an error when arguments are not passed in an Array" do
+      expect do
+        scope.function_sprintf("%b", 123)
+      end.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
     end
 
-    it "should raise and error when called without an Array" do
-      expect { @scope.function_sprintf("%b", 123) }.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
+    it "raises an error on subsequent calls when arguments are not passed in an Array" do
+      scope.function_sprintf(["first call"])
+
+      expect do
+        scope.function_sprintf("%b", 123)
+      end.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
     end
 
-    it "should raise and error when subsequent calls are without an Array" do
-      @scope.function_sprintf(["first call"])
-
-      expect { @scope.function_sprintf("%b", 123) }.to raise_error ArgumentError, /custom functions must be called with a single array that contains the arguments/
+    it "raises NoMethodError when the not prefixed" do
+      expect { scope.sprintf(["%b", 123]) }.to raise_error(NoMethodError)
     end
 
-    it "should raise NoMethodError if the method doesn't look like a function" do
-      expect { @scope.sprintf(["%b", 123]) }.to raise_error(NoMethodError)
-    end
-
-    it "should raise NoMethodError if the method looks like a function but doesn't exist" do
-      expect { @scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
+    it "raises NoMethodError when prefixed with function_ but it doesn't exist" do
+      expect { scope.function_fake_bs(['cows']) }.to raise_error(NoMethodError)
     end
   end
 

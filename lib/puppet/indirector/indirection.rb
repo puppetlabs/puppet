@@ -1,4 +1,5 @@
 require 'puppet/util/docs'
+require 'puppet/util/profiler'
 require 'puppet/util/methodhelper'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
@@ -199,11 +200,14 @@ class Puppet::Indirector::Indirection
           cache.save request(:save, key, result, options)
         end
 
+        filtered = result
         if terminus.respond_to?(:filter)
-          terminus.filter(result)
-        else
-          result
+          Puppet::Util::Profiler.profile("Filtered result for #{self.name} #{request.key}") do
+            filtered = terminus.filter(result)
+          end
         end
+
+        filtered
       end
     end
   end
