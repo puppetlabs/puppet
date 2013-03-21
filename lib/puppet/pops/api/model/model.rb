@@ -98,7 +98,7 @@ module Puppet::Pops::API::Model
   # An arithmetic expression applies an arithmetic operator on left and right expressions.
   #
   class ArithmeticExpression < BinaryExpression
-    has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'+', :'-', :'*', :'/', :'<<', :'>>' ]), :lowerBound => 1
+    has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'+', :'-', :'*', :'%', :'/', :'<<', :'>>' ]), :lowerBound => 1
   end
 
   # A relationship expression associates the left and right expressions
