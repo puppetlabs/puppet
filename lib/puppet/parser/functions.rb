@@ -137,15 +137,17 @@ module Puppet::Parser::Functions
 
     fname = "function_#{name}"
     environment_module.send(:define_method, fname) do |*args|
-      if args[0].is_a? Array
-        if arity >= 0 and args[0].size != arity
-          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
-        elsif arity < 0 and args[0].size < (arity+1).abs
-          raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
+      Puppet::Util::Profiler.profile("Called #{name}") do
+        if args[0].is_a? Array
+          if arity >= 0 and args[0].size != arity
+            raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
+          elsif arity < 0 and args[0].size < (arity+1).abs
+            raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
+          end
+          self.send(real_fname, args[0])
+        else
+          raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
         end
-        self.send(real_fname, args[0])
-      else
-        raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
       end
     end
 

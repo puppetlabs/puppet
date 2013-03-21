@@ -1,6 +1,7 @@
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
+require 'puppet/util/profiler'
 require 'yaml'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
@@ -16,20 +17,22 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise ArgumentError, "Facts but no fact format provided for #{request.key}"
     end
 
-    # If the facts were encoded as yaml, then the param reconstitution system
-    # in Network::HTTP::Handler will automagically deserialize the value.
-    if text_facts.is_a?(Puppet::Node::Facts)
-      facts = text_facts
-    else
-      facts = Puppet::Node::Facts.convert_from(format, text_facts)
-    end
+    Puppet::Util::Profiler.profile("Found facts") do
+      # If the facts were encoded as yaml, then the param reconstitution system
+      # in Network::HTTP::Handler will automagically deserialize the value.
+      if text_facts.is_a?(Puppet::Node::Facts)
+        facts = text_facts
+      else
+        facts = Puppet::Node::Facts.convert_from(format, text_facts)
+      end
 
-    unless facts.name == request.key
-      raise Puppet::Error, "Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect})."
-    end
+      unless facts.name == request.key
+        raise Puppet::Error, "Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect})."
+      end
 
-    facts.add_timestamp
-    Puppet::Node::Facts.indirection.save(facts)
+      facts.add_timestamp
+      Puppet::Node::Facts.indirection.save(facts)
+    end
   end
 
   # Compile a node's catalog.
@@ -54,7 +57,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   def initialize
-    set_server_facts
+    Puppet::Util::Profiler.profile("Setup server facts for compiling") do
+      set_server_facts
+    end
   end
 
   # Is our compiler part of a network, or are we just local?
@@ -76,9 +81,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
-    loglevel = networked? ? :notice : :none
-
-    benchmark(loglevel, str) do
+    Puppet::Util::Profiler.profile(str) do
       begin
         config = Puppet::Parser::Compiler.compile(node)
       rescue Puppet::Error => detail
@@ -92,19 +95,23 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Turn our host name into a node object.
   def find_node(name, *args)
-    begin
-      return nil unless node = Puppet::Node.indirection.find(name, *args)
-    rescue => detail
-      message = "Failed when searching for node #{name}: #{detail}"
-      Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
+    Puppet::Util::Profiler.profile("Found node information") do
+      node = nil
+      begin
+        node = Puppet::Node.indirection.find(name)
+      rescue => detail
+        message = "Failed when searching for node #{name}: #{detail}"
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message
+      end
+
+
+      # Add any external data to the node.
+      if node
+        add_node_data(node)
+      end
+      node
     end
-
-
-    # Add any external data to the node.
-    add_node_data(node)
-
-    node
   end
 
   # Extract the node from the request, or use the request

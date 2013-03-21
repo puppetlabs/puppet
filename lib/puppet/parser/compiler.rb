@@ -90,18 +90,19 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     # Set the client's parameters into the top scope.
-    set_node_parameters
-    create_settings_scope
+    Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
-    evaluate_main
+    Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
 
-    evaluate_ast_node
+    Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
 
-    evaluate_node_classes
+    Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
 
-    evaluate_generators
+    Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
 
-    finish
+    Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
+
+    Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
 
     fail_on_unevaluated
 
@@ -226,17 +227,18 @@ class Puppet::Parser::Compiler
   def evaluate_collections
     return false if @collections.empty?
 
-    found_something = false
     exceptwrap do
       # We have to iterate over a dup of the array because
       # collections can delete themselves from the list, which
       # changes its length and causes some collections to get missed.
-      @collections.dup.each do |collection|
-        found_something = true if collection.evaluate
+      Puppet::Util::Profiler.profile("Evaluated collections") do
+        found_something = false
+        @collections.dup.each do |collection|
+          found_something = true if collection.evaluate
+        end
+        found_something
       end
     end
-
-    found_something
   end
 
   # Make sure all of our resources have been evaluated into native resources.
@@ -244,7 +246,13 @@ class Puppet::Parser::Compiler
   # evaluate_generators loop.
   def evaluate_definitions
     exceptwrap do
-      !unevaluated_resources.each { |resource| resource.evaluate }.empty?
+      Puppet::Util::Profiler.profile("Evaluated definitions") do
+        !unevaluated_resources.each do |resource|
+          Puppet::Util::Profiler.profile("Evaluated resource #{resource}") do
+            resource.evaluate
+          end
+        end.empty?
+      end
     end
   end
 
@@ -257,9 +265,12 @@ class Puppet::Parser::Compiler
     loop do
       done = true
 
-      # Call collections first, then definitions.
-      done = false if evaluate_collections
-      done = false if evaluate_definitions
+      Puppet::Util::Profiler.profile("Iterated (#{count + 1}) on generators") do
+        # Call collections first, then definitions.
+        done = false if evaluate_collections
+        done = false if evaluate_definitions
+      end
+
       break if done
 
       count += 1
