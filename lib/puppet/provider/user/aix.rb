@@ -72,6 +72,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
+    {:aix_attr => :gecos,      :puppet_prop => :comment},
   ]
 
   #--------------
@@ -94,7 +95,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list)] + self.get_ia_module_args + [ value]
+    [self.class.command(:list) + "-c" ] + self.get_ia_module_args + [ value]
   end
 
   def lsallcmd()
@@ -297,13 +298,6 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
 
-  #- **comment**
-  #    A description of the user.  Generally is a user's full name.
-  #def comment=(value)
-  #end
-  #
-  #def comment
-  #end
   # UNSUPPORTED
   #- **profile_membership**
   #    Whether specified roles should be treated as the only roles
