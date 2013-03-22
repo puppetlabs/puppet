@@ -136,11 +136,11 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl.revoke(1, @key)
     end
 
-    it "should mark the CRL as updated" do
+    it "should mark the CRL as updated at a time that makes it valid now" do
       time = Time.now
       Time.stubs(:now).returns time
 
-      @crl.content.expects(:last_update=).with(time)
+      @crl.content.expects(:last_update=).with(time - 1)
 
       @crl.revoke(1, @key)
     end

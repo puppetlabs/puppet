@@ -34,7 +34,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     @content.extensions = [OpenSSL::X509::Extension.new("crlNumber", crlNum)]
 
     # Set last/next update
-    @content.last_update = Time.now
+    @content.last_update = Time.now - 1
     # Keep CRL valid for 5 years
     @content.next_update = Time.now + 5 * 365*24*60*60
 
@@ -73,7 +73,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     @content.extensions = ext
 
     # Set last/next update
-    @content.last_update = time
+    @content.last_update = time - 1
     # Keep CRL valid for 5 years
     @content.next_update = time + 5 * 365*24*60*60
 
