@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
-describe Puppet::Type.type(:cron).provider(:crontab), '(integration)' do
+describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before :each do
