@@ -8,7 +8,10 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
   wraps OpenSSL::X509::CRL
 
   extend Puppet::Indirector
-  indirects :certificate_revocation_list, :terminus_class => :file
+  indirects :certificate_revocation_list, :terminus_class => :file, :doc => <<DOC
+    This indirection wraps an `OpenSSL::X509::CRL` object, representing a certificate revocation list (CRL).
+    The indirection key is the CA name (usually literally `ca`).
+DOC
 
   # Convert a string into an instance.
   def self.from_s(string)

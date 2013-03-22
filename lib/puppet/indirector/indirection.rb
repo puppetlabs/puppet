@@ -87,20 +87,22 @@ class Puppet::Indirector::Indirection
 
     text += scrub(@doc) + "\n\n" if @doc
 
+    text << "* **Indirected Class**: `#{@indirected_class}`\n";
     if s = terminus_setting
-      text += "* **Terminus Setting**: #{terminus_setting}"
+      text << "* **Terminus Setting**: #{terminus_setting}\n"
     end
 
     text
   end
 
-  def initialize(model, name, options = {})
+  def initialize(model, name, indirected_class, options = {})
     @model = model
     @name = name
     @termini = {}
 
     @cache_class = nil
     @terminus_class = nil
+    @indirected_class = indirected_class
 
     raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
     @@indirections << self

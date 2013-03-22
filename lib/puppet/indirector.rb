@@ -42,7 +42,8 @@ module Puppet::Indirector
 
     # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
     # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
-    @indirection = Puppet::Indirector::Indirection.new(self, indirection,  options)
+    indirected_class = name
+    @indirection = Puppet::Indirector::Indirection.new(self, indirection, indirected_class, options)
   end
 
   module ClassMethods
