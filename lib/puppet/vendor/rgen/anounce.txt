@@ -1,0 +1,61 @@
+=RGen - Ruby Modelling and Generator Framework
+
+RGen is a framework to support the "Model Driven Software Development (MDSD)" approach. Some people may want to call just about the same thing "Domain Specific Languages".
+
+The essence is to have a Metamodel which imposes a structure as well as certain other constraints on the Models to be instantiated from it. The Metamodel can be part of the software which is being developed.
+From a formal language point of view, the metamodel could be regarded as a grammer with the model being a sentence of the grammer.
+
+One possible application of MDSD are large domain specific software systems like banking systems. In this case one would define a metamodel which reflects the application domain (e.g. accounts, customers, their relations, ...).
+The metamodel can then serve as a common means of communication between users from the application domain (e.g. the customer) and software developers, as well as between software developers working on different subsystems. In addition, the metamodel can be used to generate recurring parts of the software instead of writing it by hand
+(e.g. database interfaces, application server glue code, etc). In a particular project a lot more usescases will typically show up.
+
+A very good framework implementing the MDSD approach is the open source Java framework OpenArchitectureWare (http://www.openarchitectureware.org/). Actually OpenArchitectureWare inspired the development of RGen.
+
+RGen implements many features also provided by OpenArchitectureWare:
+* Programmatic (textual) definition of Metamodels
+* Instantiation of models from various sources (XML, UML Models, ...)
+* Support of Model Transformations
+* Powerful template language (based on ERB) to generate arbitrary textual content
+
+In contrast to the mentioned Java framework, RGen is a more lightweight approach.
+It can be used to write powerful generator or transformation scripts quickly.
+However I believe RGen can also be useful in large software development projects.
+
+
+Here are some example usecases of RGen:
+
+Example 1: Generating C Code from a XML description
+* Directly instantiate the XML file using RGen's XMLInstantiator
+  An implicit Metamodel (Ruby classes) will be created automatically
+  The model is now available as Ruby objects in memory
+* Use the template language to navigate the instantiated model and       generate C code
+
+Example 2: UML Defined Application specific Metamodel
+* Specify your metamodel as a UML Class Diagram
+* If the tool you use is Enterprise Architect, the UML Class Diagram can directly be instantiated using RGen's XMIClassInstantiator
+* If not, support for your tool should be added. The existing XMI instantiator is basically a transformation from an XMI model to an UML Class model. For a tool producing different XMI output the transformation has to be adapted.
+* Use the included MetamodelGenerator to generate Ruby classes from the UML model. These classes act as your application specific metamodel. Of course the generated classes can be extended by hand written code, either by subclassing or by just adding methods using Ruby's open classes. The generated code itself should not be touched.
+* Extend RGen with an own instantiator which reads your specific file format and instantiates your application specific metamodel
+* Then go on doing transformations on your model(s) or generate output.
+
+
+RGen could also be useful in combination with Rails.
+One application to Rails could be to generate not only the model, view and controller classes, but also the database schemas and code reflecting associations between Rails model elements (i.e. the has_many, belongs_to, .. code in the ActiveRecord subclasses)
+The base model for such a generation could be a description of the model elements and its associations as an UML class model.
+Another application could be to base new Rails generators (like the Login generator, etc) on RGen.
+
+
+=Major Performance Improvement
+
+RGen 0.4.1 features major performance improvements.
+All applications using the template language will be faster now.
+Applications using the AbstractXMLInstantiator can benefit if explicit garbage collection is enabled.
+(see documentation of AbstractXMLInstantiator)
+Another improvement makes the "ecore" class method of classes and modules much faster.
+Last but not least the loading of metamodels takes about half the time as before.
+
+For large models the metamodel generator is about 20 times faster.
+Reading a 50 000 lines ecore file now takes 9 seconds on a Centrino Duo 2GHz (85s with RGen 0.4.0)
+Generating the RGen metamodel code for the ecore model takes 5 seconds (200s with RGen 0.4.0)
+Requiring this RGen metamodel takes about 3 seconds (about 6s with RGen 0.4.0).
+
