@@ -29,6 +29,15 @@ class Puppet::Indirector::Face < Puppet::Face
     end
   end
 
+  option "--profile" do
+    summary "Enable experimental performance profiling."
+    description <<-EOT
+      If this option is passed, some basic profiling data will be collected
+      during the processing of some requests.  This data will be logged
+      on the Puppet master.
+    EOT
+  end
+
   def self.indirections
     Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
   end
@@ -37,7 +46,11 @@ class Puppet::Indirector::Face < Puppet::Face
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
 
-  def call_indirection_method(method, key, options)
+  def call_indirection_method(method, key, options, profile = false)
+    if (profile)
+      options[:profile] = true
+    end
+
     begin
       result = indirection.__send__(method, key, options)
     rescue => detail
@@ -62,13 +75,13 @@ class Puppet::Indirector::Face < Puppet::Face
   action :destroy do
     summary "Delete an object."
     arguments "<key>"
-    when_invoked {|key, options| call_indirection_method :destroy, key, options[:extra] }
+    when_invoked {|key, options| call_indirection_method :destroy, key, options[:extra], options[:profile] }
   end
 
   action :find do
     summary "Retrieve an object by name."
     arguments "<key>"
-    when_invoked {|key, options| call_indirection_method :find, key, options[:extra] }
+    when_invoked {|key, options| call_indirection_method :find, key, options[:extra], options[:profile] }
   end
 
   action :save do
@@ -79,13 +92,13 @@ class Puppet::Indirector::Face < Puppet::Face
       currently accept data from STDIN, save actions cannot currently be invoked
       from the command line.
     EOT
-    when_invoked {|key, options| call_indirection_method :save, key, options[:extra] }
+    when_invoked {|key, options| call_indirection_method :save, key, options[:extra], options[:profile] }
   end
 
   action :search do
     summary "Search for an object or retrieve multiple objects."
     arguments "<query>"
-    when_invoked {|key, options| call_indirection_method :search, key, options[:extra] }
+    when_invoked {|key, options| call_indirection_method :search, key, options[:extra], options[:profile] }
   end
 
   # Print the configuration for the current terminus class
