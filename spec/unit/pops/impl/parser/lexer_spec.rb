@@ -895,3 +895,16 @@ describe "when string quotes are not closed" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var =  "123456') }.to raise_error(/at line 1:9/)
   end
 end
+
+describe "when lexing number, bad input should not go unpunished" do
+  it "should slap bad octal as such" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0778') }.to raise_error(/Not a valid octal/)
+  end
+  it "should slap bad hex as such" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0xFG') }.to raise_error(/Not a valid hex/)
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0xfg') }.to raise_error(/Not a valid hex/)
+  end
+  # Note, bad decimals are probably impossible to enter, as they are not recognized as complete numbers, instead,
+  # the error will be something else, depending on what follows some initial digit.
+  #
+end

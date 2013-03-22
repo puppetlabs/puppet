@@ -62,15 +62,6 @@ class Puppet::Pops::Impl::Parser::Lexer
       @acceptable_when.call(context)
     end
 
-    def assert_numeric(value)
-      if value =~ /^0[xX].*$/
-        lex_error "Not a valid hex number #{value}" unless value =~ /^0[xX][0-9A-Fa-f]+$/
-      elsif value =~ /^0[^.].*$/
-        lex_error "Not a valid octal number #{value}" unless value =~ /^0[0-7]+$/
-      else
-        lex_error "Not a valid decimal number #{value}" unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
-      end
-    end
 
     # Defines when the token is able to match.
     # This provides context that cannot be expressed otherwise, such as feature flags.
@@ -248,7 +239,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
-    assert_numeric(value)
+    lexer.assert_numeric(value)
     [TOKENS[:NAME], value]
   end
   TOKENS[:NUMBER].acceptable_when Contextual::NOT_INSIDE_QUOTES
@@ -257,7 +248,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     # A name starting with a number must be a valid numeric string (not that
     # NUMBER token captures those names that do not comply with the name rule.
     if value =~ /^[0-9].*$/
-      assert_numeric(value)
+      lexer.assert_numeric(value)
     end
 
     string_token = self
@@ -456,6 +447,16 @@ class Puppet::Pops::Impl::Parser::Lexer
   def initialize
     @multibyte = init_multibyte
     initvars
+  end
+
+  def assert_numeric(value)
+    if value =~ /^0[xX].*$/
+      lex_error (positioned_message("Not a valid hex number #{value}")) unless value =~ /^0[xX][0-9A-Fa-f]+$/
+    elsif value =~ /^0[^.].*$/
+      lex_error(positioned_message("Not a valid octal number #{value}")) unless value =~ /^0[0-7]+$/
+    else
+      lex_error(positioned_message("Not a valid decimal number #{value}")) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
+    end
   end
 
   # Returns true if ruby version >= 1.9.3 since regexp supports multi-byte matches and expanded
