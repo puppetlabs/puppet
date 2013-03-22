@@ -56,18 +56,19 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     }
   end
 
-  # I am not able to stub operatingsystem because the filetype is determined
-  # at load time
   describe "when determining the correct filetype" do
-    it "should use the suntab filetype on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris'  do
+    it "should use the suntab filetype on Solaris" do
+      Facter.stubs(:value).with(:osfamily).returns 'Solaris'
       described_class.filetype.should == Puppet::Util::FileType::FileTypeSuntab
     end
 
-    it "should use the aixtab filetype on AIX", :if => Facter.value(:operatingsystem) == 'AIX' do
+    it "should use the aixtab filetype on AIX" do
+      Facter.stubs(:value).with(:osfamily).returns 'AIX'
       described_class.filetype.should == Puppet::Util::FileType::FileTypeAixtab
     end
 
-    it "should use the crontab filetype on other platforms", :unless => %w{AIX Solaris}.include?(Facter.value(:operatingsystem)) do
+    it "should use the crontab filetype on other platforms" do
+      Facter.stubs(:value).with(:osfamily).returns 'Not a real operating system family'
       described_class.filetype.should == Puppet::Util::FileType::FileTypeCrontab
     end
   end
@@ -176,6 +177,11 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     end
 
     describe "on linux" do
+      before do
+        Facter.stubs(:value).with(:osfamily).returns 'Linux'
+        Facter.stubs(:value).with(:operatingsystem)
+      end
+
       it "should be empty if user has no crontab" do
         # `crontab...` does only capture stdout here. On vixie-cron-4.1
         # STDERR shows "no crontab for foobar" but stderr is ignored as
