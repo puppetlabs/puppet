@@ -873,3 +873,25 @@ describe "when trying to lex an non-existent file" do
     lexer.fullscan.should == [[false,false]]
   end
 end
+
+describe "when string quotes are not closed" do
+  it "should report with message including an \" opening quote" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = "') }.to raise_error(/after '"'/)
+  end
+  it "should report with message including an \' opening quote" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = \'') }.to raise_error(/after "'"/)
+  end
+  it "should report <eof> if immediately followed by eof" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = "') }.to raise_error(/followed by '<eof>'/)
+  end
+  it "should report max 5 chars following quote" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = "123456') }.to raise_error(/followed by '12345...'/)
+  end
+  it "should escape control chars" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = "12\n3456') }.to raise_error(/followed by '12\\n3...'/)
+  end
+  it "should resport position of opening quote" do
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var = "123456') }.to raise_error(/at line 1:8/)
+    expect { EgrammarLexerSpec.tokens_scanned_from('$var =  "123456') }.to raise_error(/at line 1:9/)
+  end
+end

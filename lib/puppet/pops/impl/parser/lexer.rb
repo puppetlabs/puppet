@@ -14,10 +14,11 @@ module Puppet; module Pops; module Impl; module Parser; end; end; end; end
 class Puppet::Pops::Impl::Parser::Lexer
   extend Forwardable
 
-  attr_reader :last, :file, :lexing_context, :token_queue
+  attr_reader :file, :lexing_context, :token_queue
 
   attr_accessor :line, :indefine
   alias :indefine? :indefine
+
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
@@ -659,7 +660,8 @@ class Puppet::Pops::Impl::Parser::Lexer
   def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
-    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
+    last = @scanner.matched
+    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
     @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/m) {
       ch = $1
@@ -673,11 +675,37 @@ class Puppet::Pops::Impl::Parser::Lexer
         else      ch
         end
       else
-        Puppet.warning "Unrecognised escape sequence '\\#{ch}'#{file && " in file #{file}"}#{line && " at line #{line}"}" unless ignore_invalid_escapes
+        Puppet.warning(positioned_message("Unrecognized escape sequence '\\#{ch}'")) unless ignore_invalid_escapes
         "\\#{ch}"
       end
     }
     [ str[0..-2],str[-1,1] ]
+  end
+
+  # Formats given message by appending file, line and position if available.
+  def positioned_message msg
+    result = [msg]
+    result << "in file #{file}" if file
+    result << "at line #{line}:#{pos}" if line
+    result.join(" ")
+  end
+
+  # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
+  def followed_by
+    return "<eof>" if @scanner.eos?
+    result = @scanner.rest[0,5] + "..."
+    result.gsub!("\t", '\t')
+    result.gsub!("\n", '\n')
+    result.gsub!("\r", '\r')
+    result
+  end
+
+  def format_quote q
+    if q == "'"
+      '"\'"'
+    else
+      "'#{q}'"
+    end
   end
 
   def tokenize_interpolated_string(token_type,preamble='')
