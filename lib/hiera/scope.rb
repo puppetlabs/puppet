@@ -1,30 +1,36 @@
 class Hiera
   class Scope
+    CALLING_CLASS = "calling_class"
+    CALLING_MODULE = "calling_module"
+
     attr_reader :real
 
     def initialize(real)
       @real = real
     end
 
-
     def [](key)
-      if key == "calling_class"
+      if key == CALLING_CLASS
         ans = find_hostclass(@real)
-      elsif key == "calling_module"
+      elsif key == CALLING_MODULE
         ans = @real.source.module_name.downcase
       else
         ans = @real.lookupvar(key)
       end
 
-      # damn you puppet visual basic style variables.
-      return nil if ans.nil? or ans == ""
-      return ans
+      if ans.nil? or ans == ""
+        nil
+      else
+        ans
+      end
     end
 
     def include?(key)
-      return true if ["calling_class", "calling_module"].include?(key)
-
-      return @real.lookupvar(key) != ""
+      if key == CALLING_CLASS or key == CALLING_MODULE
+        true
+      else
+        @real.lookupvar(key) != ""
+      end
     end
 
     def catalog
@@ -51,4 +57,3 @@ class Hiera
     private :find_hostclass
   end
 end
-
