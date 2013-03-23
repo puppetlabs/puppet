@@ -1,17 +1,6 @@
 require 'puppet/provider/parsedfile'
 
-tab = case Facter.value(:osfamily)
-  when "Solaris"
-    :suntab
-  when "AIX"
-    :aixtab
-  else
-    :crontab
-  end
-
-
-
-Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFile, :default_target => ENV["USER"] || "root", :filetype => tab) do
+Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFile, :default_target => ENV["USER"] || "root") do
   commands :crontab => "crontab"
 
   text_line :comment, :match => %r{^\s*#}, :post_parse => proc { |record|
@@ -21,6 +10,19 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   text_line :blank, :match => %r{^\s*$}
 
   text_line :environment, :match => %r{^\s*\w+=}
+
+  def self.filetype
+  tabname = case Facter.value(:osfamily)
+            when "Solaris"
+              :suntab
+            when "AIX"
+              :aixtab
+            else
+              :crontab
+            end
+
+    Puppet::Util::FileType.filetype(tabname)
+  end
 
   self::TIME_FIELDS = [:minute, :hour, :monthday, :month, :weekday]
 
