@@ -146,6 +146,22 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         expect_output('create_special_entry')
       end
 
+      it "should be able to purge unmanaged entried" do
+        resource = Puppet::Type.type(:cron).new(
+          :name        => 'only managed entry',
+          :ensure      => :present,
+          :command     => '/bin/true',
+          :target      => crontab_user1,
+          :user        => crontab_user1
+        )
+	resources = Puppet::Type.type(:resources).new(
+	  :name        => 'cron',
+	  :purge       => 'true'
+	)
+        run_in_catalog(resource, resources)
+        expect_output('purged')
+      end
+
       it "should change existing entry if out of sync" do
         resource = Puppet::Type.type(:cron).new(
           :name        => 'Monthly job',

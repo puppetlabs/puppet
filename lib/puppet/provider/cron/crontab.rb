@@ -68,6 +68,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
 
     def to_line(record)
       str = ""
+      record[:name] = nil if record[:unmanaged]
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
       if record[:environment] and record[:environment] != :absent
         str += record[:environment].map {|line| "#{line}\n"}.join('')
@@ -194,6 +195,9 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         if name
           record[:name] = name
           name = nil
+        else
+          record[:name] = "unmanaged:" + record[:command].gsub(/\s+/, "_")
+          record[:unmanaged] = true
         end
         if envs.nil? or envs.empty?
           record[:environment] = :absent
