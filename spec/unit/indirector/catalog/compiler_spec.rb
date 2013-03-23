@@ -28,8 +28,8 @@ describe Puppet::Resource::Catalog::Compiler do
       node1 = stub 'node1', :merge => nil
       node2 = stub 'node2', :merge => nil
       compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with('node1', anything).returns(node1)
-      Puppet::Node.indirection.stubs(:find).with('node2', anything).returns(node2)
+      Puppet::Node.indirection.stubs(:find).with('node1', has_entry(:environment => anything)).returns(node1)
+      Puppet::Node.indirection.stubs(:find).with('node2', has_entry(:environment => anything)).returns(node2)
 
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
