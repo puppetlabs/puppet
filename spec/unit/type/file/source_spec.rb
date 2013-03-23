@@ -322,7 +322,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       before(:each) do
         metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
         #metadata = stub('remote', :ftype => "file", :source => uri)
-        Puppet::FileServing::Metadata.indirection.stubs(:find).with(uri, has_key(:environment)).returns metadata
+        Puppet::FileServing::Metadata.indirection.stubs(:find).
+          with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
         resource[:source] = uri
       end
 
