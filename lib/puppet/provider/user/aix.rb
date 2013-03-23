@@ -95,7 +95,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list) + "-c" ] + self.get_ia_module_args + [ value]
+    [self.class.command(:list), "-c"] + self.get_ia_module_args + [ value]
   end
 
   def lsallcmd()
