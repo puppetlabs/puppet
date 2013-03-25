@@ -1,5 +1,7 @@
+require 'openssl'
 require 'puppet/network/http/handler'
 require 'puppet/network/http/rack/httphandler'
+require 'puppet/util/ssl'
 
 class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
@@ -98,11 +100,12 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     result = {}
     result[:ip] = request.ip
 
-    # if we find SSL info in the headers, use them to get a hostname.
+    # if we find SSL info in the headers, use them to get a hostname from the CN.
     # try this with :ssl_client_header, which defaults should work for
     # Apache with StdEnvVars.
-    if dn = request.env[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
-      result[:node] = dn_matchdata[1].to_str
+    if subj_str = request.env[Puppet[:ssl_client_header]]
+      subject = Puppet::Util::SSL.subject_from_dn(subj_str)
+      result[:node] = Puppet::Util::SSL.cn_from_subject(subject)
       result[:authenticated] = (request.env[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
     else
       result[:node] = resolve_node(result)

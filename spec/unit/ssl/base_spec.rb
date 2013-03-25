@@ -38,16 +38,10 @@ describe Puppet::SSL::Certificate do
   end
 
   describe "when determining a name from a certificate subject" do
-    it "should convert it to a string" do
+    it "should extract only the CN and not any other components" do
       subject = stub 'sub'
-      subject.expects(:to_s).returns('foo')
-
-      @class.name_from_subject(subject).should == 'foo'
-    end
-
-    it "should strip the prefix" do
-      subject = '/CN=foo'
-      @class.name_from_subject(subject).should == 'foo'
+      Puppet::Util::SSL.expects(:cn_from_subject).with(subject).returns 'host.domain.com'
+      @class.name_from_subject(subject).should == 'host.domain.com'
     end
   end
 
