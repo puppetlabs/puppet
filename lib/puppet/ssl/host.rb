@@ -156,20 +156,12 @@ class Puppet::SSL::Host
     @certificate_request ||= CertificateRequest.indirection.find(name)
   end
 
-  def this_csr_is_for_the_current_host
-    name == Puppet[:certname].downcase
-  end
-
-  def this_csr_is_for_the_current_host
-    name == Puppet[:certname].downcase
-  end
-
   # Our certificate request requires the key but that's all.
   def generate_certificate_request(options = {})
     generate_key unless key
 
-    # If this is for the current machine...
-    if this_csr_is_for_the_current_host
+    # If this CSR is for the current machine...
+    if name == Puppet[:certname].downcase
       # ...add our configured dns_alt_names
       if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
