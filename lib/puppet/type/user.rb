@@ -169,6 +169,16 @@ module Puppet
         executable.
 
         This attribute cannot be managed on Windows systems."
+
+    validate do |value|
+        unless File.exists?(value)
+          raise ArgumentError, "the Shell must exist"
+          return
+        end
+        unless File.executable?(value)
+          raise ArgumentError, "Shell must be executable"
+        end
+      end
     end
 
     newproperty(:password, :required_features => :manages_passwords) do

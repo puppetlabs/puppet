@@ -337,4 +337,16 @@ describe Puppet::Type.type(:user) do
       rel.target.ref.should == testuser.ref
     end
   end
+
+  describe "when setting shell" do
+    it "should fail when path does not exist" do
+      expect { described_class.new(:name => 'foo', :shell => 'bar')}.to raise_error(Puppet::Error, /Shell must exist/)
+    end
+    it "should fail when shell is not executable" do
+      expect { described_class.new(:name => 'foo', :shell => 'LICENSE')}.to raise_error(Puppet::Error, /Shell must be executable/)
+    end
+    it "should allow a valid shell" do
+    expect { described_class.new(:name => 'foo', :shell => '/bin/sh')}.to_not raise_error
+    end
+  end
 end
