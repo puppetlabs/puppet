@@ -172,7 +172,7 @@ module Puppet
 
     validate do |value|
         unless File.exists?(value)
-          raise ArgumentError, "the Shell must exist"
+          raise ArgumentError, "Shell must exist"
           return
         end
         unless File.executable?(value)
