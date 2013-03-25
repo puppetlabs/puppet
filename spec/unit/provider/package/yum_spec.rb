@@ -28,7 +28,7 @@ describe provider do
     before(:each) do
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       provider.stubs(:which).with("rpm").returns("/bin/rpm")
-      Puppet::Type::Package::ProviderYum.expects(:execute).with(["/bin/rpm", "--version"]).returns("4.10.1\n").at_most_once
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
     end
 
     it 'should call yum install for :installed' do

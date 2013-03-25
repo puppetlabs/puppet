@@ -10,6 +10,12 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
   it { should be_versionable }
 
   context "when retrieving ensure" do
+    before(:each) do
+      Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
+      pkg.provider.stubs(:which).with("rpm").returns("/bin/rpm")
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
+    end
+
     def rpm
       pkg.provider.expects(:rpm).
         with('-q', 'faff', '--nosignature', '--nodigest', '--qf',
