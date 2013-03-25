@@ -78,7 +78,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     attr_reader :regex_tokens, :string_tokens
     def_delegator :@tokens, :[]
-    # Adds a new token to the set of regognized tokens
+    # Adds a new token to the set of recognized tokens
     # @param name [String] the token name
     # @param regex [Regexp, String] source text token matcher, a litral string or regular expression
     # @param options [Hash] see {Token::set_options}
@@ -507,6 +507,10 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   # Make any necessary changes to the token and/or value.
   def munge_token(token, value)
+    # A token may already have been munged (converted and positioned)
+    #
+    return token, value if value.is_a? Hash
+
     @line += 1 if token.incr_line
 
     skip if token.skip_text
@@ -525,21 +529,34 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     return if token.skip
 
+    # If the conversion performed the munging/positioning
+    return token, value if value.is_a? Hash
+
+    pos_hash = position_in_source
+    pos_hash[:value] = value
+
+    # Add one to pos, first char on line is 1
+    return token, pos_hash #{ :value => value, :line => @line, :pos => pos+1, :offset => offset, :length => length}
+  end
+
+  # Returns a hash with the current position in source based on the current lexing context
+  #
+  def position_in_source
     offset      = lexing_context[:offset]
     line_offset = lexing_context[:line_offset]
-    end_offset = lexing_context[:end_offset]
+    end_offset  = lexing_context[:end_offset]
 
     if multibyte?
-      offset = @scanner.string.byteslice(0, lexing_context[:offset]).length
-      pos = @scanner.string.byteslice(line_offset, lexing_context[:offset]).length
-      length = @scanner.string.byteslice(offset, end_offset).length
+      offset = @scanner.string.byteslice( 0,           lexing_context[:offset]).length
+      pos    = @scanner.string.byteslice( line_offset, lexing_context[:offset]).length
+      length = @scanner.string.byteslice( lexing_context[:offset], end_offset-lexing_context[:offset]).length
     else
-      pos = offset - line_offset
+      pos    = offset - line_offset
       length = end_offset - offset
     end
 
     # Add one to pos, first char on line is 1
-    return token, { :value => value, :line => @line, :pos => pos+1, :offset => offset, :length => length}
+    return { :line => @line, :pos => pos+1, :offset => offset, :length => length}
   end
 
   def pos
@@ -710,31 +727,54 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   def tokenize_interpolated_string(token_type,preamble='')
+    # Expecting a (possibly empty) stretch of text terminated by end of string ", a variable $, or expression ${
+    # The length of this part includes the start and terminating characters.
     value,terminator = slurpstring('"$')
-    token_queue << [TOKENS[token_type[terminator]],preamble+value]
+
+    # Advanced after '{' if this is in expression ${} interpolation
+    braced = terminator == '$' && @scanner.scan(/\{/)
+    # make offset to end_ofset be the length of the pre expression string including its start and terminating chars
+    lexing_context[:end_offset] = @scanner.pos
+
+    token_queue << [TOKENS[token_type[terminator]],position_in_source().merge!({:value => preamble+value})]
     variable_regex = if Puppet[:allow_variables_with_dashes]
       TOKENS[:VARIABLE_WITH_DASH].regex
     else
       TOKENS[:VARIABLE].regex
     end
-    if terminator != '$' or braced = @scanner.scan(/\{/)
-      token_queue.shift
-    elsif var_name = @scanner.scan(variable_regex)
+    if terminator != '$' or braced # = @scanner.scan(/\{/)
+      return token_queue.shift
+    end
+
+    tmp_offset = @scanner.pos
+    if var_name = @scanner.scan(variable_regex)
+      lexing_context[:offset] = tmp_offset
+      lexing_context[:end_offset] = @scanner.pos
       warn_if_variable_has_hyphen(var_name)
       # If the varname after ${ is followed by (, it is a function call, and not a variable
       # reference.
       #
       if braced && @scanner.match?(%r{[ \t\r]*\(})
-        token_queue << [TOKENS[:NAME],var_name]
+        token_queue << [TOKENS[:NAME], position_in_source().merge!({:value=>var_name})]
       else
-        token_queue << [TOKENS[:VARIABLE],var_name]
+        token_queue << [TOKENS[:VARIABLE],position_in_source().merge!({:value=>var_name})]
       end
+      lexing_context[:offset] = @scanner.pos
       tokenize_interpolated_string(DQ_continuation_token_types)
     else
-      tokenize_interpolated_string(token_type,token_queue.pop.last + terminator)
+      tokenize_interpolated_string(token_type, replace_false_start_with_text(terminator))
     end
   end
 
+  def replace_false_start_with_text(appendix)
+    last_token = token_queue.pop
+    value = last_token.last
+    if value.is_a? Hash
+      value[:value] + appendix
+    else
+      value + appendix
+    end
+  end
   # just parse a string, not a whole file
   def string=(string)
     @scanner = StringScanner.new(string)
