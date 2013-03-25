@@ -1,0 +1,5 @@
+.eprj
+test/metamodel_roundtrip_test/TestModel_Regenerated.rb
+test/metamodel_roundtrip_test/houseMetamodel_Regenerated.ecore
+test/model_builder/ecore_internal.rb
+test/testmodel/ea_testmodel_regenerated.xml
