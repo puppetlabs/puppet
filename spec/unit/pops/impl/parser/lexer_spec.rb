@@ -6,6 +6,7 @@ require 'puppet/pops/impl/parser/lexer'
 # This is a special matcher to match easily lexer output
 RSpec::Matchers.define :be_like do |*expected|
   match do |actual|
+    diffable
     expected.zip(actual).all? { |e,a| !e or a[0] == e or (e.is_a? Array and a[0] == e[0] and (a[1] == e[1] or (a[1].is_a?(Hash) and a[1][:value] == e[1]))) }
   end
 end
@@ -907,4 +908,54 @@ describe "when lexing number, bad input should not go unpunished" do
   # Note, bad decimals are probably impossible to enter, as they are not recognized as complete numbers, instead,
   # the error will be something else, depending on what follows some initial digit.
   #
+end
+
+describe "when lexing interpolation detailed positioning should be correct" do
+  it "should correctly position a string without interpolation" do
+    EgrammarLexerSpec.tokens_scanned_from('"not interpolated"').should be_like(
+      [:STRING, {:value=>"not interpolated", :line=>1, :offset=>0, :pos=>1, :length=>18}])
+  end
+
+  it "should correctly position a string with false start in interpolation" do
+    EgrammarLexerSpec.tokens_scanned_from('"not $$$ rpolated"').should be_like(
+      [:STRING, {:value=>"not $$$ rpolated", :line=>1, :offset=>0, :pos=>1, :length=>18}])
+  end
+
+  it "should correctly position pre-mid-end interpolation " do
+    EgrammarLexerSpec.tokens_scanned_from('"pre $x mid $y end"').should be_like(
+      [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>6}],
+      [:VARIABLE, {:value=>"x", :line=>1, :offset=>6, :pos=>7, :length=>1}],
+      [:DQMID,    {:value=>" mid ", :line=>1, :offset=>7, :pos=>8, :length=>6}],
+      [:VARIABLE, {:value=>"y", :line=>1, :offset=>13, :pos=>14, :length=>1}],
+      [:DQPOST,   {:value=>" end", :line=>1, :offset=>14, :pos=>15, :length=>5}]
+    )
+  end
+
+  it "should correctly position pre-mid-end interpolation using ${} " do
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${x} mid ${y} end"').should be_like(
+      [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
+      [:VARIABLE, {:value=>"x", :line=>1, :offset=>7, :pos=>8, :length=>1}],
+      [:DQMID,    {:value=>" mid ", :line=>1, :offset=>8, :pos=>9, :length=>8}],
+      [:VARIABLE, {:value=>"y", :line=>1, :offset=>16, :pos=>17, :length=>1}],
+      [:DQPOST,   {:value=>" end", :line=>1, :offset=>17, :pos=>18, :length=>6}]
+    )
+  end
+
+  it "should correctly position pre-mid-end interpolation using ${} with f call" do
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${x()} end"').should be_like(
+      [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
+      [:NAME,     {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>1}],
+      [:LPAREN,   {:value=>"(",    :line=>1, :offset=>8, :pos=>9, :length=>1}],
+      [:RPAREN,   {:value=>")",    :line=>1, :offset=>9, :pos=>10, :length=>1}],
+      [:DQPOST,   {:value=>" end", :line=>1, :offset=>10, :pos=>11, :length=>6}]
+    )
+  end
+
+  it "should correctly position pre-mid-end interpolation using ${} with $x" do
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${$x} end"').should be_like(
+      [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
+      [:VARIABLE, {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>2}],
+      [:DQPOST,   {:value=>" end", :line=>1, :offset=>9, :pos=>10, :length=>6}]
+    )
+  end
 end
