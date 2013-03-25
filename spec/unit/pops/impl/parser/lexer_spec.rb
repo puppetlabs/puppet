@@ -563,9 +563,9 @@ describe "the horrible deprecation / compatibility variables with dashes" do
       Puppet.expects(:deprecation_warning).once
 
       EgrammarLexerSpec.tokens_scanned_from('"$::foo-bar::baz-quux"').should == [
-        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>1}],
-        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>23, :offset=>22, :length=>0}],
-        [:DQPOST,   {:value=>"", :line=>1, :pos=>23, :offset=>22, :length=>0}],
+        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>2}],  # length since preamble includes start and terminator
+        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>3, :offset=>2, :length=>19}],
+        [:DQPOST,   {:value=>"", :line=>1, :pos=>22, :offset=>21, :length=>1}],
       ]
     end
 
@@ -573,8 +573,8 @@ describe "the horrible deprecation / compatibility variables with dashes" do
       Puppet.expects(:deprecation_warning).once
 
       EgrammarLexerSpec.tokens_scanned_from('"${::foo-bar::baz-quux}"').should == [
-        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>1}],
-        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>4, :offset=>3, :length=>21}],
+        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>3}],
+        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>4, :offset=>3, :length=>19}],
         [:DQPOST,   {:value=>"", :line=>1, :pos=>23, :offset=>22, :length=>2}],
       ]
     end
