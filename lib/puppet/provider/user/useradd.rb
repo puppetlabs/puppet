@@ -93,6 +93,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
+  has_features :manages_shell
 
   def check_allow_dup
     # We have to manually check for duplicates when using libuser
@@ -107,6 +108,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
        return ["-o"] 
     end
     []
+  end
+
+  def check_valid_shell
+    unless File.exists?(@resource.should(:shell).to_s)
+      raise(Puppet::Error, "Shell #{@resource.should(:shell).to_s} must exist")
+    end
+    unless File.executable?(@resource.should(:shell).to_s)
+      raise(Puppet::Error, "Shell #{@resource.should(:shell).to_s} must be executable")
+    end
   end
 
   def check_manage_home
@@ -210,6 +220,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def create
+    if @resource.should(:shell)
+      check_valid_shell
+    end
      super
      if @resource.forcelocal? and self.groups?
        set(:groups, @resource[:groups])

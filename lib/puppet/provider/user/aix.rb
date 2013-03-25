@@ -34,7 +34,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Provider features
   has_features :manages_aix_lam
-  has_features :manages_homedir, :manages_passwords
+  has_features :manages_homedir, :manages_passwords, :manages_shell
   has_features :manages_expiry,  :manages_password_age
 
   # Attribute verification (TODO)

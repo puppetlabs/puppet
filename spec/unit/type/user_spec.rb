@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Puppet::Type.type(:user) do
   before :each do
     @provider_class = described_class.provide(:simple) do
-      has_features :manages_expiry, :manages_password_age, :manages_passwords, :manages_solaris_rbac
+      has_features :manages_expiry, :manages_password_age, :manages_passwords, :manages_solaris_rbac, :manages_shell
       mk_resource_methods
       def create; end
       def delete; end
@@ -336,5 +336,35 @@ describe Puppet::Type.type(:user) do
       rel.source.ref.should == testrole.ref
       rel.target.ref.should == testuser.ref
     end
+  end
+
+  describe "when setting shell" do
+
+    before :each do
+      @shell_provider_class = described_class.provide(:shell_check) do
+        has_features :manages_shell
+        mk_resource_methods
+        def create; end
+        def delete; end
+        def exists?; get(:ensure) != :absent; end
+        def flush; end
+        def self.instances; []; end
+        def check_valid_shell; end
+      end
+      described_class.stubs(:defaultprovider).returns @shell_provider_class
+    end
+
+    it "should call :check_valid_shell on the provider when changing shell" do
+      @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash')
+      @provider.expects(:check_valid_shell)
+      described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider).parameter(:shell).sync
+    end
+
+    it "should call :check_valid_shell on the provider when chaging from present to absent" do
+      @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'absent')
+      @provider.expects(:check_valid_shell)
+      described_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'present', :provider => @provider).parameter(:shell).sync
+    end
+
   end
 end
