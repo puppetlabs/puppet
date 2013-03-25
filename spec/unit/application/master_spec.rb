@@ -241,7 +241,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       before do
         Puppet[:manifest] = "site.pp"
         Puppet.stubs(:err)
-        $stdout.stubs(:puts)
+        @master.stubs(:puts)
       end
 
       it "should compile a catalog for the specified node" do
