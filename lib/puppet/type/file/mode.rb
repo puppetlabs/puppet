@@ -144,7 +144,13 @@ module Puppet
     end
 
     def is_to_s(currentvalue)
-      currentvalue.rjust(4, "0")
+      if currentvalue == :absent
+        # This can occur during audits---if a file is transitioning from
+        # present to absent the mode will have a value of `:absent`.
+        super
+      else
+        currentvalue.rjust(4, "0")
+      end
     end
   end
 end

@@ -138,5 +138,11 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
         mode.is_to_s('1755').should == '1755'
       end
     end
+
+    describe 'when passed :absent' do
+      it 'returns :absent' do
+        mode.is_to_s(:absent).should == :absent
+      end
+    end
   end
 end
