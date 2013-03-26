@@ -960,4 +960,12 @@ describe "when lexing interpolation detailed positioning should be correct" do
       [:DQPOST,   {:value=>" end", :line=>2, :offset=>10, :pos=>3, :length=>6}]
     )
   end
+  it "should correctly position interpolation across lines when strings have embedded newlines" do
+    EgrammarLexerSpec.tokens_scanned_from(%Q["pre \n\n${$x}\n mid$y"]).should be_like(
+      [:DQPRE,    {:value=>"pre \n\n", :line=>1, :offset=>0, :pos=>1, :length=>9}],
+      [:VARIABLE, {:value=>"x",    :line=>3, :offset=>9, :pos=>3, :length=>2}],
+      [:DQMID,   {:value=>"\n mid", :line=>3, :offset=>11, :pos=>5, :length=>7}],
+      [:VARIABLE, {:value=>"y",    :line=>4, :offset=>18, :pos=>6, :length=>1}]
+    )
+  end
 end
