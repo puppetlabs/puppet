@@ -225,6 +225,12 @@ Puppet::Type.newtype(:cron) do
         nil
       end
     end
+
+    def munge(value)
+      value.sub!(/^\s+/, '')
+      value.sub!(/\s+$/, '')
+      value
+    end
   end
 
   newproperty(:special) do
