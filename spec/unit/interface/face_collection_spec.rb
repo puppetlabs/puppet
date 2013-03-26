@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 require 'tmpdir'
-require 'puppet/interface/face_collection'
+require 'puppet/interface'
 
 describe Puppet::Interface::FaceCollection do
   # To avoid cross-pollution we have to save and restore both the hash

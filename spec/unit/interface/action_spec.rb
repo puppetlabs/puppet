@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/interface/action'
+require 'puppet/interface'
 
 describe Puppet::Interface::Action do
   describe "when validating the action name" do

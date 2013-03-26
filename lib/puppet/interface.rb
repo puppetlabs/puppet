@@ -1,20 +1,27 @@
 require 'puppet'
 require 'puppet/util/autoload'
-require 'puppet/interface/documentation'
 require 'prettyprint'
 require 'semver'
 
 # @api public
 class Puppet::Interface
-  include FullDocs
-
+  require 'puppet/interface/documentation'
   require 'puppet/interface/face_collection'
 
+  require 'puppet/interface/action'
+  require 'puppet/interface/action_builder'
   require 'puppet/interface/action_manager'
+
+  require 'puppet/interface/option'
+  require 'puppet/interface/option_builder'
+  require 'puppet/interface/option_manager'
+
+
+  include FullDocs
+
   include Puppet::Interface::ActionManager
   extend Puppet::Interface::ActionManager
 
-  require 'puppet/interface/option_manager'
   include Puppet::Interface::OptionManager
   extend Puppet::Interface::OptionManager
 
