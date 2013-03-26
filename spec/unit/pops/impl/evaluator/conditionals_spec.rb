@@ -18,14 +18,6 @@ end
 # This file contains testing of Conditionals, if, case, unless, selector
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  
-  context "(selftest)" do
-    it "factory IF should produce an IfExpression" do
-      IF(literal(true), literal(true)).current.class.should == Puppet::Pops::API::Model::IfExpression
-      IF(literal(true), literal(true), literal(true)).current.class.should == Puppet::Pops::API::Model::IfExpression
-    end
-  end
-  
   context "When the evaluator evaluates" do
     context "an if expression" do
       it 'should output the expected result when dumped' do

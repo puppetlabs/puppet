@@ -15,20 +15,6 @@ require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 describe Puppet::Pops::Impl::Parser::Parser do
   include ParserRspecHelper
 
-  context "When running these examples, the setup" do
-
-    it "should include a ModelTreeDumper for convenient string comparisons" do
-      x = literal(10) + literal(20)
-      dump(x).should == "(+ 10 20)"
-    end
-
-    it "should parse a code string and return a model" do
-      model = parse("$a = 10").current
-      model.class.should == Model::AssignmentExpression
-      dump(model).should == "(= $a 10)"
-    end
-  end
-
   context "When parsing file scope" do
     it "$a = 10 $b = 20" do
       dump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"

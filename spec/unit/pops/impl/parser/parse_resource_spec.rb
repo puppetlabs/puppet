@@ -11,28 +11,12 @@ require 'puppet/pops/impl/parser/eparser'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
-RSpec.configure do |c|
-  c.include ParserRspecHelper
-end
-
 # Tests resource parsing.
 # @todo Add more tests for variations on end comma and end semicolon.
 # @todo Add tests for related syntax parse errors
 #
 describe Puppet::Pops::Impl::Parser::Parser do
-  context "When running these examples, the setup" do
-
-    it "should include a ModelTreeDumper for convenient string comparisons" do
-      x = literal(10) + literal(20)
-      dump(x).should == "(+ 10 20)"
-    end
-
-    it "should parse a code string and return a model" do
-      model = parse("$a = 10").current
-      model.class.should == Puppet::Pops::API::Model::AssignmentExpression
-      dump(model).should == "(= $a 10)"
-    end
-  end
+  include ParserRspecHelper
 
   context "When parsing regular resource" do
     it "file { 'title': }" do

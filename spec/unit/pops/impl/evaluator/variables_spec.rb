@@ -22,19 +22,6 @@ RSpec.configure do |c|
 end
 
 describe Puppet::Pops::Impl::EvaluatorImpl do
-  
-  context "(selftest)" do
-    it "tests #var should create a VariableExpression" do
-      var('a').current.is_a?(Puppet::Pops::API::Model::VariableExpression).should == true
-    end
-    it "tests #fqn should create a QualifiedName" do
-      fqn('a').current.is_a?(Puppet::Pops::API::Model::QualifiedName).should == true
-    end
-    it "tests #block should create a BlockExpression" do
-      block().current.is_a?(Puppet::Pops::API::Model::BlockExpression).should == true
-    end
-  end
-  
   context "When the evaluator deals with variables" do
     context "it should handle" do
       it "simple assignment and dereference" do

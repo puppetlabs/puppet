@@ -19,12 +19,6 @@ end
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
   
-  context "(selftest)" do
-    it "simple assignment and dereference should work" do
-      evaluate(block( fqn('a').set(literal(2)+literal(2)), var('a'))).should == 4
-    end
-  end
-  
   context "When the evaluator deals with variables" do
     context "it should handle" do
       it "simple assignment and dereference" do

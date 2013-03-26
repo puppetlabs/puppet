@@ -18,20 +18,6 @@ require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 describe Puppet::Pops::Impl::Parser::Parser do
   include TransformerRspecHelper
 
-  context "When running these examples, the setup" do
-
-    it "should include a AstTreeDumper for convenient string comparisons" do
-      x = literal(10) + literal(20)
-      astdump(x).should == "(+ 10 20)"
-    end
-
-    it "should parse a code string and return a model and transform it" do
-      model = parse("$a = 10").current
-      model.class.should == Model::AssignmentExpression
-      astdump(model).should == "(= $a 10)"
-    end
-  end
-
   context "When parsing regular resource" do
     it "file { 'title': }" do
       astdump(parse("file { 'title': }")).should == [

@@ -13,30 +13,7 @@ require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 
 describe Puppet::Pops::Impl::EvaluatorImpl do
   include EvaluatorRspecHelper
-  
-  context "When running these examples, the setup" do
-    
-    it "should include a ModelTreeDumper for convenient string comparisons" do
-      x = literal(10) + literal(20)
-      Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "(+ 10 20)"
-    end
-  
-    it "should use a Factory that applies arithmetic precedence to operators" do
-      x = literal(2) * literal(10) + literal(20)
-      Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "(+ (* 2 10) 20)"
-    end
-  
-    it "should allow creation of an EvaluatorImpl" do
-      # smoke test; just to make sure class loads ok
-      evaluator = Puppet::Pops::Impl::EvaluatorImpl.new
-      evaluator.class.should == Puppet::Pops::Impl::EvaluatorImpl
-    end
-    it "literal nil is translated to Nop expression" do
-      literal(nil).current.class.should == Puppet::Pops::API::Model::Nop
-      evaluate(literal(nil)).should == nil
-    end
-   end
-  
+
   context "When the evaluator performs arithmetic" do
     
     context "on Integers" do
@@ -256,11 +233,6 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
     it "'a' !~ 'b.*'  == true"    do; evaluate(literal('a').mne(literal("b.*"))).should == true  ; end
   end
   context "When the evaluator evaluates Lists" do
-    it "(selftest) these tests depends on that the factory creates lists with literal expressions" do
-      x = literal([1,2,3]).current
-      x.values.each {|v| v.kind_of?(Puppet::Pops::API::Model::LiteralValue).should == true}
-      Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "([] 1 2 3)"
-    end
     it "should create an Array when evaluating a LiteralList" do
       evaluate(literal([1,2,3])).should == [1,2,3]
     end
@@ -283,11 +255,6 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
     end
   end
   context "When the evaluator evaluates Hashes" do
-    it "(selftest) these tests depends on that the factory creates hash with literal expressions" do
-      x = literal({'a'=>1,'b'=>2}).current
-      x.entries.each {|v| v.kind_of?(Puppet::Pops::API::Model::KeyedEntry).should == true }
-      Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "({} ('a' 1) ('b' 2))"
-    end
     it "should create a  Hash when evaluating a LiteralHash" do
       evaluate(literal({'a'=>1,'b'=>2})).should == {'a'=>1,'b'=>2}
     end

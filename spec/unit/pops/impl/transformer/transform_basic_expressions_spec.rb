@@ -14,41 +14,7 @@ require 'puppet/pops/impl/parser/eparser'
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
 describe Puppet::Pops::Impl::Parser::Parser do
-  Model ||= Puppet::Pops::API::Model
   include TransformerRspecHelper
-
-  context "When running these transformation examples, the setup" do
-    it "should be able to transform a model" do
-      transform(literal(10)).class.should == Puppet::Parser::AST::Name
-    end
-
-    it "ast dumper should dump numbers as literal numbers" do
-      astdump(transform(parse('10'))).should   == "10"
-      astdump(transform(parse('0x10'))).should == "0x10"
-      astdump(transform(parse('010'))).should  == "010"
-    end
-
-    it "ast dumper should transform if not already transformed" do
-      astdump(parse('10')).should   == "10"
-    end
-
-    it "should include tree dumpers for convenient string comparisons" do
-      x = literal(10) + literal(20)
-      dump(x).should == "(+ 10 20)"
-      astdump(transform(x)).should == "(+ 10 20)"
-    end
-
-    it "should use a Factory that applies arithmetic precedence to operators" do
-      x = literal(2) * literal(10) + literal(20)
-      astdump(transform(x)).should == "(+ (* 2 10) 20)"
-    end
-
-    it "should parse a code string and return a model" do
-      model = parse("$a = 10").current
-      model.class.should == Puppet::Pops::API::Model::AssignmentExpression
-      dump(model).should == "(= $a 10)"
-    end
-  end
 
   context "When the parser parses arithmetic" do
 
@@ -203,11 +169,6 @@ describe Puppet::Pops::Impl::Parser::Parser do
   end
 
   context "When parsing Hashes" do
-    it "(selftest) these tests depends on that the factory creates hash with literal expressions" do
-      x = literal({'a'=>1,'b'=>2}).current
-      x.entries.each {|v| v.kind_of?(Puppet::Pops::API::Model::KeyedEntry).should == true }
-      Puppet::Pops::Impl::Model::ModelTreeDumper.new.dump(x).should == "({} ('a' 1) ('b' 2))"
-    end
     it "should create a  Hash when evaluating a LiteralHash" do
       astdump(parse("$a = {'a'=>1,'b'=>2}")).should == "(= $a ({} ('a' 1) ('b' 2)))"
     end
