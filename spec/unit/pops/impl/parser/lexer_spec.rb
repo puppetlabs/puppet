@@ -25,27 +25,25 @@ describe Puppet::Pops::Impl::Parser::Lexer do
   describe "when reading strings" do
     before { @lexer = Puppet::Pops::Impl::Parser::Lexer.new }
     it "should increment the line count for every carriage return in the string" do
-      @lexer.line = 10
-      @lexer.string = "this\nis\natest'"
-      @lexer.slurpstring("'")
+      @lexer.string = "'this\nis\natest'"
+      @lexer.fullscan[0..-2]
 
-      @lexer.line.should == 12
+      line = @lexer.line
+      line.should == 3
     end
 
     it "should not increment the line count for escapes in the string" do
-      @lexer.line = 10
-      @lexer.string = "this\\nis\\natest'"
-      @lexer.slurpstring("'")
+      @lexer.string = "'this\\nis\\natest'"
+      @lexer.fullscan[0..-2]
 
-      @lexer.line.should == 10
+      @lexer.line.should == 1
     end
 
     it "should not think the terminator is escaped, when preceeded by an even number of backslashes" do
-      @lexer.line = 10
-      @lexer.string = "here\nis\nthe\nstring\\\\'with\nextra\njunk"
-      @lexer.slurpstring("'")
+      @lexer.string = "'here\nis\nthe\nstring\\\\'with\nextra\njunk"
+      @lexer.fullscan[0..-2]
 
-      @lexer.line.should == 13
+      @lexer.line.should == 6
     end
 
     {
@@ -67,7 +65,7 @@ describe Puppet::Pops::Impl::Parser::Lexer::Token do
     @token = Puppet::Pops::Impl::Parser::Lexer::Token.new(%r{something}, :NAME)
   end
 
-  [:regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate].each do |param|
+  [:regex, :name, :string, :skip, :skip_text, :accumulate].each do |param|
     it "should have a #{param.to_s} reader" do
       @token.should be_respond_to(param)
     end
@@ -390,10 +388,11 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:MLCOMMENT] do
       */"""
   end
 
-  it "should increase the lexer current line number by the amount of lines spanned by the comment" do
-    @lexer.expects(:line=).with(2)
-    @token.convert(@lexer, "1\n2\n3")
-  end
+#  # TODO: REWRITE THIS TEST TO NOT BE BASED ON INTERNALS
+#  it "should increase the lexer current line number by the amount of lines spanned by the comment" do
+#    @lexer.expects(:line=).with(2)
+#    @token.convert(@lexer, "1\n2\n3")
+#  end
 
   it "should not greedily match comments" do
     match = @token.regex.match("/* first */ word /* second */")
@@ -421,10 +420,6 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:RETURN] do
 
   it "should be marked to initiate text skipping" do
     @token.skip_text.should be_true
-  end
-
-  it "should be marked to increment the line" do
-    @token.incr_line.should be_true
   end
 end
 
@@ -461,14 +456,12 @@ end
 
 describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:DOLLAR_VAR] do
   its(:skip_text) { should be_false }
-  its(:incr_line) { should be_false }
 
   it_should_behave_like "handling `-` in standard variable names for egrammar", '$'
 end
 
 describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:VARIABLE] do
   its(:skip_text) { should be_false }
-  its(:incr_line) { should be_false }
 
   it_should_behave_like "handling `-` in standard variable names for egrammar", ''
 end
@@ -481,7 +474,6 @@ describe "the horrible deprecation / compatibility variables with dashes" do
   }.each do |token, prefix|
     describe token do
       its(:skip_text) { should be_false }
-      its(:incr_line) { should be_false }
 
       context "when compatibly is disabled" do
         before :each do Puppet[:allow_variables_with_dashes] = false end

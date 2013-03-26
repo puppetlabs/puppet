@@ -18,7 +18,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   attr_reader :locator
 
-  attr_accessor :line, :indefine
+  attr_accessor :indefine
   alias :indefine? :indefine
 
   def lex_error msg
@@ -30,7 +30,7 @@ class Puppet::Pops::Impl::Parser::Lexer
 
     include Puppet::Util::MethodHelper
 
-    attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
+    attr_accessor :regex, :name, :string, :skip, :skip_text, :accumulate
     alias skip? skip
     alias accumulate? accumulate
 
@@ -274,7 +274,6 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m, :accumulate => true, :skip => true do |lexer, value|
-    lexer.line += value.count("\n")
     value.sub!(/^\/\* ?/,'')
     value.sub!(/ ?\*\/$/,'')
     [self,value]
@@ -291,7 +290,7 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
   TOKENS[:REGEX].acceptable_when Contextual::IN_REGEX_POSITION
 
-  TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
+  TOKENS.add_token :RETURN, "\n", :skip => true, :skip_text => true
 
   TOKENS.add_token :SQUOTE, "'" do |lexer, value|
     [TOKENS[:STRING], lexer.slurpstring(value,["'"],:ignore_invalid_escapes).first ]
@@ -403,7 +402,6 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   def file=(file)
     @file = file
-    @line = 1
     contents = File.exists?(file) ? File.read(file) : ""
     @scanner = StringScanner.new(contents)
     @locator = Locator.new(contents, multibyte?)
@@ -478,7 +476,6 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   def initvars
-    @line = 1
     @previous_token = nil
     @scanner = nil
     @file = nil
@@ -497,7 +494,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     @token_queue = []
     @indefine = false
     @expected = []
-    @commentstack = [ ['', @line] ]
+    @commentstack = [ ['', 1] ] # commentstack for line 1
     @lexing_context = {
       :after => nil,
       :start_of_line => true,
@@ -512,8 +509,6 @@ class Puppet::Pops::Impl::Parser::Lexer
     # A token may already have been munged (converted and positioned)
     #
     return token, value if value.is_a? Hash
-
-    @line += 1 if token.incr_line
 
     skip if token.skip_text
 
@@ -570,7 +565,6 @@ class Puppet::Pops::Impl::Parser::Lexer
   end
 
   def_delegator :@scanner, :rest
-
   # this is the heart of the lexer
   def scan
     #Puppet.debug("entering scan")
@@ -597,6 +591,8 @@ class Puppet::Pops::Impl::Parser::Lexer
       lexing_context[:end_offset] = end_offset
 
       final_token, token_value = munge_token(matched_token, value)
+      # update end position since munging may have moved the end offset
+      lexing_context[:end_offset] = @scanner.pos
 
       unless final_token
         skip
@@ -670,7 +666,6 @@ class Puppet::Pops::Impl::Parser::Lexer
     last = @scanner.matched
     tmp_offset = @scanner.pos
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
-    @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/m) {
       ch = $1
       if escapes.include? ch
@@ -777,24 +772,33 @@ class Puppet::Pops::Impl::Parser::Lexer
     @commentstack.pop[0]
   end
 
-  def getcomment(line = nil)
+  def getcomment(for_line = nil)
     comment = @commentstack.last
-    if line.nil? or comment[1] <= line
+    if for_line.nil? or comment[1] <= for_line
       @commentstack.pop
-      @commentstack.push(['', @line])
+      @commentstack.push(['', line()])
       return comment[0]
     end
     ''
   end
 
   def commentpush
-    @commentstack.push(['', @line])
+    @commentstack.push(['', line()])
   end
 
   def warn_if_variable_has_hyphen(var_name)
     if var_name.include?('-')
       Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/puppet-hyphenated-variable-deprecation")
     end
+  end
+
+  # Returns the line number (starting from 1) for the current position
+  # in the scanned text (at the end of the last produced, but not necessarily
+  # consumed.
+  #
+  def line
+    return 1 unless lexing_context && locator
+    locator.line_for_offset(lexing_context[:end_offset])
   end
 
   # Helper class that keeps track of where line breaks are located and can answer questions about positions.
@@ -826,14 +830,16 @@ class Puppet::Pops::Impl::Parser::Lexer
       while scanner.scan_until(/\n/)
         result << scanner.pos
       end
-      # Make sure there is an end if last line does not end with a newline
-      result << scanner.string.bytesize
       @line_index = result
     end
 
     # Returns the line number (first line is 1) for the given offset
     def line_for_offset(offset)
-      line_index.index {|x| x > offset}
+      if line_nbr = line_index.index {|x| x > offset}
+        return line_nbr
+      end
+      # If not found it is after last
+      return line_index.size 
     end
 
     # Returns the offset on line (first offset on a line is 0).
