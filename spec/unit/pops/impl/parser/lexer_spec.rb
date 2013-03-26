@@ -936,7 +936,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
     )
   end
 
-  it "should correctly position pre-mid-end interpolation using ${} with f call" do
+  it "should correctly position pre-end interpolation using ${} with f call" do
     EgrammarLexerSpec.tokens_scanned_from('"pre ${x()} end"').should be_like(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:NAME,     {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>1}],
@@ -946,11 +946,18 @@ describe "when lexing interpolation detailed positioning should be correct" do
     )
   end
 
-  it "should correctly position pre-mid-end interpolation using ${} with $x" do
+  it "should correctly position pre-end interpolation using ${} with $x" do
     EgrammarLexerSpec.tokens_scanned_from('"pre ${$x} end"').should be_like(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:VARIABLE, {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>2}],
       [:DQPOST,   {:value=>" end", :line=>1, :offset=>9, :pos=>10, :length=>6}]
+    )
+  end
+  it "should correctly position pre-end interpolation across lines" do
+    EgrammarLexerSpec.tokens_scanned_from(%Q["pre ${\n$x} end"]).should be_like(
+      [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
+      [:VARIABLE, {:value=>"x",    :line=>2, :offset=>8, :pos=>1, :length=>2}],
+      [:DQPOST,   {:value=>" end", :line=>2, :offset=>10, :pos=>3, :length=>6}]
     )
   end
 end

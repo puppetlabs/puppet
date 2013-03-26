@@ -547,9 +547,10 @@ class Puppet::Pops::Impl::Parser::Lexer
     end_offset  = lexing_context[:end_offset]
 
     if multibyte?
-      offset = @scanner.string.byteslice( 0,           lexing_context[:offset]).length
-      pos    = @scanner.string.byteslice( line_offset, lexing_context[:offset]).length
-      length = @scanner.string.byteslice( lexing_context[:offset], end_offset-lexing_context[:offset]).length
+      token_length = end_offset - lexing_context[:offset]
+      offset = @scanner.string.byteslice(0, lexing_context[:offset]).length
+      pos    = @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]-lexing_context[:line_offset]).length
+      length = @scanner.string.byteslice(lexing_context[:offset], token_length).length
     else
       pos    = offset - line_offset
       length = end_offset - offset
@@ -603,7 +604,7 @@ class Puppet::Pops::Impl::Parser::Lexer
       # this matches a blank line; eat the previously accumulated comments
       getcomment if lexing_context[:start_of_line] and newline
       lexing_context[:start_of_line] = newline
-      lexing_context[:line_offset] = offset if newline
+      lexing_context[:line_offset] = end_offset if newline
       lexing_context[:offset] = offset
       lexing_context[:end_offset] = end_offset
 
@@ -679,6 +680,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
     last = @scanner.matched
+    tmp_offset = @scanner.pos
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
     @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/m) {
@@ -742,7 +744,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     else
       TOKENS[:VARIABLE].regex
     end
-    if terminator != '$' or braced # = @scanner.scan(/\{/)
+    if terminator != '$' or braced
       return token_queue.shift
     end
 
