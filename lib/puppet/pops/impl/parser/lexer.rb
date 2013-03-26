@@ -16,6 +16,8 @@ class Puppet::Pops::Impl::Parser::Lexer
 
   attr_reader :file, :lexing_context, :token_queue
 
+  attr_reader :locator
+
   attr_accessor :line, :indefine
   alias :indefine? :indefine
 
@@ -404,6 +406,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     @line = 1
     contents = File.exists?(file) ? File.read(file) : ""
     @scanner = StringScanner.new(contents)
+    @locator = Locator.new(contents, multibyte?)
   end
 
   def_delegator :@token_queue, :shift, :shift_token
@@ -498,7 +501,6 @@ class Puppet::Pops::Impl::Parser::Lexer
     @lexing_context = {
       :after => nil,
       :start_of_line => true,
-      :line_offset => 0, # byte offset of newline
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
       :string_interpolation_depth => 0
@@ -542,34 +544,21 @@ class Puppet::Pops::Impl::Parser::Lexer
   # Returns a hash with the current position in source based on the current lexing context
   #
   def position_in_source
-    offset      = lexing_context[:offset]
-    line_offset = lexing_context[:line_offset]
-    end_offset  = lexing_context[:end_offset]
+    pos        = @locator.pos_on_line(lexing_context[:offset])
+    offset     = @locator.char_offset(lexing_context[:offset])
+    length     = @locator.char_length(lexing_context[:offset], lexing_context[:end_offset])
+    start_line = @locator.line_for_offset(lexing_context[:offset])
 
-    if multibyte?
-      token_length = end_offset - lexing_context[:offset]
-      offset = @scanner.string.byteslice(0, lexing_context[:offset]).length
-      pos    = @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]-lexing_context[:line_offset]).length
-      length = @scanner.string.byteslice(lexing_context[:offset], token_length).length
-    else
-      pos    = offset - line_offset
-      length = end_offset - offset
-    end
-
-    # Add one to pos, first char on line is 1
-    return { :line => @line, :pos => pos+1, :offset => offset, :length => length}
+    return { :line => start_line, :pos => pos, :offset => offset, :length => length}
   end
 
   def pos
-    if multibyte?
-      1 + @scanner.string.byteslice(lexing_context[:line_offset], lexing_context[:offset]).length
-    else
-      1 + lexing_context[:offset] - lexing_context[:line_offset]
-    end
+    @locator.pos_on_line(lexing_context[:offset])
   end
 
   # Handling the namespace stack
   def_delegator :@namestack, :pop, :namepop
+
   # This value might have :: in it, but we don't care -- it'll be handled
   # normally when joining, and when popping we want to pop this full value,
   # however long the namespace is.
@@ -604,7 +593,6 @@ class Puppet::Pops::Impl::Parser::Lexer
       # this matches a blank line; eat the previously accumulated comments
       getcomment if lexing_context[:start_of_line] and newline
       lexing_context[:start_of_line] = newline
-      lexing_context[:line_offset] = end_offset if newline
       lexing_context[:offset] = offset
       lexing_context[:end_offset] = end_offset
 
@@ -777,9 +765,11 @@ class Puppet::Pops::Impl::Parser::Lexer
       value + appendix
     end
   end
+
   # just parse a string, not a whole file
   def string=(string)
     @scanner = StringScanner.new(string)
+    @locator = Locator.new(string, multibyte?)
   end
 
   # returns the content of the currently accumulated content cache
@@ -804,6 +794,80 @@ class Puppet::Pops::Impl::Parser::Lexer
   def warn_if_variable_has_hyphen(var_name)
     if var_name.include?('-')
       Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/puppet-hyphenated-variable-deprecation")
+    end
+  end
+
+  # Helper class that keeps track of where line breaks are located and can answer questions about positions.
+  #
+  class Locator
+    attr_reader :line_index
+    attr_reader :string
+
+    # Create a locator based on a content string, and a boolean indicating if ruby version support multi-byte strings
+    # or not.
+    #
+    def initialize(string, multibyte)
+      @string = string
+      @multibyte = multibyte
+      compute_line_index
+    end
+
+    # Returns whether this a ruby version that supports multi-byte strings or not
+    #
+    def multibyte?
+      @multibyte
+    end
+
+    # Computes the start offset for each line.
+    #
+    def compute_line_index
+      scanner = StringScanner.new(@string)
+      result = [0] # first line starts at 0
+      while scanner.scan_until(/\n/)
+        result << scanner.pos
+      end
+      # Make sure there is an end if last line does not end with a newline
+      result << scanner.string.bytesize
+      @line_index = result
+    end
+
+    # Returns the line number (first line is 1) for the given offset
+    def line_for_offset(offset)
+      line_index.index {|x| x > offset}
+    end
+
+    # Returns the offset on line (first offset on a line is 0).
+    #
+    def offset_on_line(offset)
+      line_offset = line_index[line_for_offset(offset)-1]
+      if multibyte?
+        @string.byteslice(line_offset, offset-line_offset).length
+      else
+        offset - line_offset
+      end
+    end
+
+    # Returns the position on line (first position on a line is 1)
+    def pos_on_line(offset)
+      offset_on_line(offset) +1
+    end
+
+    # Returns the character offset for a given byte offset
+    def char_offset(byte_offset)
+      if multibyte?
+        @string.byteslice(0, byte_offset).length
+      else
+        byte_offset
+      end
+    end
+
+    # Returns the length measured in number of characters from the given start and end byte offseta
+    def char_length(offset, end_offset)
+      if multibyte?
+        @string.byteslice(offset, end_offset - offset).length
+      else
+        end_offset - offset
+      end
     end
   end
 end
