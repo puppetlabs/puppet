@@ -36,7 +36,7 @@ The termini can be local (e.g., on-disk files) or remote (e.g., using a REST int
 
 An indirector has five methods, which are mapped into HTTP verbs for the REST interface:
 
- * `find(key)` - get a single value (mapped to GET with a singular endpoint, or POST)
+ * `find(key)` - get a single value (mapped to GET or POST with a singular endpoint)
  * `search(key)` - get a list of matching values (mapped to GET with a plural endpoint)
  * `head(key)` - return true if the key exists (mapped to HEAD)
  * `destroy(key)` - remove the key van value (mapped to DELETE)
