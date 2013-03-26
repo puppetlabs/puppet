@@ -105,7 +105,7 @@ module Puppet::Pops::API::Adaptable
     # @raise [ArgumentError] if the given object o is not adaptable
     #
     def Adapter.adapt(o, &block)
-      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable? 
+      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       attr_name = :"@#{instance_var_name(self.name)}"
       adapter = if existing = o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
         value
@@ -141,7 +141,7 @@ module Puppet::Pops::API::Adaptable
     # @raise [ArgumentError] if the given object o is not adaptable
     #
     def Adapter.adapt_new(o, &block)
-      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable? 
+      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       adapter = associate_adapter(create_adapter(o), o)
       if block_given?
         case block.arity
@@ -190,7 +190,7 @@ module Puppet::Pops::API::Adaptable
       adapter
     end
 
-    # Returns a suitable instance variable name given a class name. 
+    # Returns a suitable instance variable name given a class name.
     # The returned string is the fully qualified name of a class with '::' replaced by '_' since
     # '::' is not allowed in an instance variable name.
     # @param name [String] the fully qualified name of a class

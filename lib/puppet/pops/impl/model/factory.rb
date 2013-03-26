@@ -447,9 +447,9 @@ class Factory
     Puppet::Pops::API::Adapters::OriginAdapter.adapt(current) do |a|
        a.origin = Puppet::Pops::API::Origin.new(file, line)
     end
-    self    
+    self
   end
-  
+
   # @return [Puppet::Pops::API::Adapters::SourcePosAdapter] with location information
   def loc()
     raise "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?

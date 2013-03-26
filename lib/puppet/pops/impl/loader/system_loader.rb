@@ -10,7 +10,7 @@ module Puppet; module Pops; module Impl; module Loader
 # A System loader loads "evaluateable" files found relative to a set of given roots. The path relative to
 # the root consists of the name segments in the given name.
 # A System loader can scan one or multiple roots. Root pats are given as file system paths, or as
-# URIs. The URI may have no scheme (interpreted as a file), file: scheme, or gem:. The gem: scheme allows 
+# URIs. The URI may have no scheme (interpreted as a file), file: scheme, or gem:. The gem: scheme allows
 # a symbolic reference to be made to the content of a gem.
 #
 # ==Gem Scheme
@@ -26,8 +26,8 @@ module Puppet; module Pops; module Impl; module Loader
 # A search for a type will take place in the given order among the locations passed when instantiating
 # the system loader. The first found will be used.
 # If a name matches a file, it is expected to produce the given name when evaluated or an exception is raised.
-# 
-# NOTE: Currently the search is limited to 'puppet/types/pops' and 'puppet/functions/pops' 
+#
+# NOTE: Currently the search is limited to 'puppet/types/pops' and 'puppet/functions/pops'
 # under a given location, and only for .pp
 # file extension. TODO: This can be extended to allow other types of things to be loaded such as
 # an .ecore model, content from .zip or .jar files, or .rb
@@ -53,11 +53,11 @@ class SystemLoader < Puppet::Pops::Impl::Loader::BaseLoader
     @miss_cache = Set.new # prevents scanning file system multiple times
     @loaded_files = Set.new # prevent files from being loaded again
   end
-  
+
   def find(name, executor)
     name = Utils.relativize_name(name)
     return nil if @miss_cache.include?(name)
-    
+
     # Turn name into a relative path.
     # Structured type name not possible in 3x, but this makes it possible
     namepath = File.join(Utils.relativize_name(name).downcase.split('::'))
@@ -71,7 +71,7 @@ class SystemLoader < Puppet::Pops::Impl::Loader::BaseLoader
         # do not give up here if not found, in the future there may be fragments/extensions to search
       end
 
-      # File is expected to define the name when evaluated 
+      # File is expected to define the name when evaluated
       executor.run_file(file, self)
       if loaded = self[name]
         loaded
@@ -86,19 +86,19 @@ class SystemLoader < Puppet::Pops::Impl::Loader::BaseLoader
   end
 
   private
-  
+
   def configure_locations(locations)
     raise "TODO TYPE: A system loader must be given at least one location to load from" unless locations.size > 0
     locations = locations.flatten # varargs or array passed
-    # Turn into a valid URI - or throw exception (this to force interpretation of files etc. into 
+    # Turn into a valid URI - or throw exception (this to force interpretation of files etc. into
     # a common form.
     result = locations.collect {|loc| path_for_uri(URI(loc), DefaultGemPath) }
     # Verify they exists
-    unless (rejected = locations.reject {|path| !File.directory?(path) }).empty? 
+    unless (rejected = locations.reject {|path| !File.directory?(path) }).empty?
      raise "TODO TYPE: Loader can not load from the directories (not directory): #{rejected}"
-    end 
+    end
     result
   end
-  
+
 end
 end; end; end; end

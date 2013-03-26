@@ -3,7 +3,7 @@ require 'dir'
 require 'file'
 
 # =ModuleLoader
-# A ModuleLoader loads items from a single module. 
+# A ModuleLoader loads items from a single module.
 # It is instantiated with a name, a path to its root, and with a set of dependency_loaders.
 # A ModuleLoader does not directly support gem: URI scheme as it is expected that the configuration
 # of all module loaders is performed by a ModuleLoaderConfigurator (which is aware of different schemes).
@@ -11,7 +11,7 @@ require 'file'
 class ModuleLoader < Pupet::Pops::Impl::Loader::BaseLoader
   Subpaths = '{types,functions,manifests}'
   Extensions = '.{pp}'
-  
+
   # Create a ModuleLoader for one module
   # The parameters are:
   # * parent_loader - typically the loader for the root
@@ -34,7 +34,7 @@ class ModuleLoader < Pupet::Pops::Impl::Loader::BaseLoader
   def find(name, executor)
     # relativize
     name = name[2..-1] if name.start_with?("::")
-    # All potential files 
+    # All potential files
     matching_files = files_for_name(name)
     # Run the first existing file unless it has already been executed
     if found_index = matching_files.index {|f| File.file? f }
@@ -52,12 +52,12 @@ class ModuleLoader < Pupet::Pops::Impl::Loader::BaseLoader
       break v if v
       loader.load(name, executor)
     end
-  end  
-  
+  end
+
   protected
-  
+
   # Produces a directory listing of all matching file-names (different possible locations and extensions)
-  # 
+  #
   def files_for_name name
     if name == @name
       Dir[File.join(@path, '/manifests/init.'+Extensions)]
@@ -65,7 +65,7 @@ class ModuleLoader < Pupet::Pops::Impl::Loader::BaseLoader
       Dir[File.join(@path, Subpaths, name_to_ls(name))]
     end
   end
-  
+
   # Produces a name that can be used in a Dir[#name_to_ls] to produce an array of matching
   # filenames (having one of the supported extensions).
   #

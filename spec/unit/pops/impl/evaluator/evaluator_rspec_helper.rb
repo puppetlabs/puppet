@@ -10,7 +10,7 @@ require File.join(File.dirname(__FILE__), '/../factory_rspec_helper')
 
 module EvaluatorRspecHelper
   include FactoryRspecHelper
-  
+
   # Evaluate a Factory wrapper round a model object in top scope + named scope
   # Optionally pass two or three model objects (typically blocks) to be executed
   # in top scope, named scope, and then top scope again. If a named_scope is used, it must
@@ -34,7 +34,7 @@ module EvaluatorRspecHelper
     end
     result
   end
-  
+
   # Evaluate a Factory wrapper round a model object in top scope + local scope
   # Optionally pass two or three model objects (typically blocks) to be executed
   # in top scope, local scope, and then top scope again

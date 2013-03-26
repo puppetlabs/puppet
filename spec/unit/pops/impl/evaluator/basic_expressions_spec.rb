@@ -15,9 +15,9 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
   include EvaluatorRspecHelper
 
   context "When the evaluator performs arithmetic" do
-    
+
     context "on Integers" do
-      it "2 + 2  ==  4"   do; evaluate(literal(2) + literal(2)).should == 4 ; end  
+      it "2 + 2  ==  4"   do; evaluate(literal(2) + literal(2)).should == 4 ; end
       it "7 - 3  ==  4"   do; evaluate(literal(7) - literal(3)).should == 4 ; end
       it "6 * 3  ==  18"  do; evaluate(literal(6) * literal(3)).should == 18; end
       it "6 / 3  ==  2"   do; evaluate(literal(6) / literal(3)).should == 2 ; end
@@ -28,7 +28,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "8 >> 1 == 4"    do; evaluate(literal(8) >> literal(1)).should == 4 ; end
       it "8 << 1 == 16"   do; evaluate(literal(8) << literal(1)).should == 16; end
     end
-    
+
     context "on Floats" do
       it "2.2 + 2.2  ==  4.4"   do; evaluate(literal(2.2) + literal(2.2)).should == 4.4  ; end
       it "7.7 - 3.3  ==  4.4"   do; evaluate(literal(7.7) - literal(3.3)).should == 4.4  ; end
@@ -41,12 +41,12 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "3.14 << 2  == error"  do; expect { evaluate(literal(3.14) << literal(2))}.to raise_error(Puppet::Pops::API::EvaluationError); end
       it "3.14 >> 2  == error"  do; expect { evaluate(literal(3.14) >> literal(2))}.to raise_error(Puppet::Pops::API::EvaluationError); end
     end
-    
+
     context "on strings requiring boxing to Numeric" do
       it "'2' + '2'        ==  4" do
         evaluate(literal('2') + literal('2')).should == 4
       end
-      
+
       it "'2.2' + '2.2'    ==  4.4" do
         evaluate(literal('2.2') + literal('2.2')).should == 4.4
       end
@@ -54,7 +54,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "'0xF7' + '0x8'   ==  0xFF" do
         evaluate(literal('0xF7') + literal('0x8')).should == 0xFF
       end
-      
+
       it "'0367' + '010'   ==  0xFF" do
         evaluate(literal('0367') + literal('010')).should == 0xFF
       end
@@ -62,7 +62,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "'0888' + '010'   ==  error" do
         expect { evaluate(literal('0888') + literal('010'))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
-      
+
       it "'0xWTF' + '010'  ==  error" do
         expect { evaluate(literal('0xWTF') + literal('010'))}.to raise_error(Puppet::Pops::API::EvaluationError)
       end
@@ -74,10 +74,10 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "'012.3' + '0.3'  ==  12.6 (not error, floats can start with 0)" do
         evaluate(literal('012.3') + literal('010')) == 12.6
       end
-    
+
     end
   end
-  
+
   context "When the evaluator performs boolean operations" do
     context "using operator AND" do
       it "true  && true  == true" do
@@ -93,7 +93,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(literal(false).and(literal(false))).should == false
       end
     end
-    
+
     context "using operator OR" do
       it "true  || true  == true" do
         evaluate(literal(true).or(literal(true))).should == true
@@ -108,7 +108,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(literal(false).or(literal(false))).should == false
       end
     end
-    
+
     context "using operator NOT" do
       it "!false         == true" do
         evaluate(literal(false).not()).should == true
@@ -117,7 +117,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(literal(true).not()).should == false
       end
     end
-   
+
     context "on values requiring boxing to Boolean" do
       it "'x'            == true" do
         evaluate(literal('x').not()).should == false
@@ -129,7 +129,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(literal(:undef).not()).should == true
       end
     end
-    
+
     context "connectives should stop when truth is obtained" do
       it "true && false && error  == false (and no failure)" do
         evaluate(literal(false).and(literal('0xwtf') + literal(1)).and(literal(true))).should == false
@@ -144,63 +144,63 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
   end
   context "When the evaluator performs comparisons" do
     context "of string values" do
-      it "'a' == 'a' == true"  do; evaluate(literal('a') == literal('a')).should == true   ; end 
-      it "'a' == 'b' == false" do; evaluate(literal('a') == literal('b')).should == false  ; end 
-      it "'a' != 'a' == false" do; evaluate(literal('a').ne(literal('a'))).should == false ; end 
-      it "'a' != 'b' == true"  do; evaluate(literal('a').ne(literal('b'))).should == true  ; end 
-      
-      it "'a' < 'b'  == true"  do; evaluate(literal('a')  < literal('b')).should == true   ; end 
-      it "'a' < 'a'  == false" do; evaluate(literal('a')  < literal('a')).should == false  ; end 
+      it "'a' == 'a' == true"  do; evaluate(literal('a') == literal('a')).should == true   ; end
+      it "'a' == 'b' == false" do; evaluate(literal('a') == literal('b')).should == false  ; end
+      it "'a' != 'a' == false" do; evaluate(literal('a').ne(literal('a'))).should == false ; end
+      it "'a' != 'b' == true"  do; evaluate(literal('a').ne(literal('b'))).should == true  ; end
+
+      it "'a' < 'b'  == true"  do; evaluate(literal('a')  < literal('b')).should == true   ; end
+      it "'a' < 'a'  == false" do; evaluate(literal('a')  < literal('a')).should == false  ; end
       it "'b' < 'a'  == false" do; evaluate(literal('b')  < literal('a')).should == false  ; end
 
-      it "'a' <= 'b' == true"  do; evaluate(literal('a')  <= literal('b')).should == true  ; end 
-      it "'a' <= 'a' == true"  do; evaluate(literal('a')  <= literal('a')).should == true  ; end 
+      it "'a' <= 'b' == true"  do; evaluate(literal('a')  <= literal('b')).should == true  ; end
+      it "'a' <= 'a' == true"  do; evaluate(literal('a')  <= literal('a')).should == true  ; end
       it "'b' <= 'a' == false" do; evaluate(literal('b')  <= literal('a')).should == false ; end
 
-      it "'a' > 'b'  == false" do; evaluate(literal('a')  > literal('b')).should == false  ; end 
-      it "'a' > 'a'  == false" do; evaluate(literal('a')  > literal('a')).should == false  ; end 
+      it "'a' > 'b'  == false" do; evaluate(literal('a')  > literal('b')).should == false  ; end
+      it "'a' > 'a'  == false" do; evaluate(literal('a')  > literal('a')).should == false  ; end
       it "'b' > 'a'  == true"  do; evaluate(literal('b')  > literal('a')).should == true   ; end
 
-      it "'a' >= 'b' == false" do; evaluate(literal('a')  >= literal('b')).should == false ; end 
-      it "'a' >= 'a' == true"  do; evaluate(literal('a')  >= literal('a')).should == true  ; end 
+      it "'a' >= 'b' == false" do; evaluate(literal('a')  >= literal('b')).should == false ; end
+      it "'a' >= 'a' == true"  do; evaluate(literal('a')  >= literal('a')).should == true  ; end
       it "'b' >= 'a' == true"  do; evaluate(literal('b')  >= literal('a')).should == true  ; end
       context "with mixed case" do
-        it "'a' == 'A' == true"    do; evaluate(literal('a') == literal('A')).should == true   ; end 
-        it "'a' != 'A' == false"   do; evaluate(literal('a').ne(literal('A'))).should == false ; end 
-        it "'a' >  'A' == false"   do; evaluate(literal('a') > literal('A')).should == false   ; end 
-        it "'a' >= 'A' == true"    do; evaluate(literal('a') >= literal('A')).should == true   ; end 
-        it "'A' <  'a' == false"   do; evaluate(literal('A') < literal('a')).should == false   ; end 
-        it "'A' <= 'a' == true"    do; evaluate(literal('A') <= literal('a')).should == true  ; end 
+        it "'a' == 'A' == true"    do; evaluate(literal('a') == literal('A')).should == true   ; end
+        it "'a' != 'A' == false"   do; evaluate(literal('a').ne(literal('A'))).should == false ; end
+        it "'a' >  'A' == false"   do; evaluate(literal('a') > literal('A')).should == false   ; end
+        it "'a' >= 'A' == true"    do; evaluate(literal('a') >= literal('A')).should == true   ; end
+        it "'A' <  'a' == false"   do; evaluate(literal('A') < literal('a')).should == false   ; end
+        it "'A' <= 'a' == true"    do; evaluate(literal('A') <= literal('a')).should == true  ; end
       end
     end
     context "of integer values" do
-      it "1 == 1 == true"  do; evaluate(literal(1) == literal(1)).should == true   ; end 
-      it "1 == 2 == false" do; evaluate(literal(1) == literal(2)).should == false  ; end 
-      it "1 != 1 == false" do; evaluate(literal(1).ne(literal(1))).should == false ; end 
-      it "1 != 2 == true"  do; evaluate(literal(1).ne(literal(2))).should == true  ; end 
-      
-      it "1 < 2  == true"  do; evaluate(literal(1)  < literal(2)).should == true   ; end 
-      it "1 < 1  == false" do; evaluate(literal(1)  < literal(1)).should == false  ; end 
+      it "1 == 1 == true"  do; evaluate(literal(1) == literal(1)).should == true   ; end
+      it "1 == 2 == false" do; evaluate(literal(1) == literal(2)).should == false  ; end
+      it "1 != 1 == false" do; evaluate(literal(1).ne(literal(1))).should == false ; end
+      it "1 != 2 == true"  do; evaluate(literal(1).ne(literal(2))).should == true  ; end
+
+      it "1 < 2  == true"  do; evaluate(literal(1)  < literal(2)).should == true   ; end
+      it "1 < 1  == false" do; evaluate(literal(1)  < literal(1)).should == false  ; end
       it "2 < 1  == false" do; evaluate(literal(2)  < literal(1)).should == false  ; end
 
-      it "1 <= 2 == true"  do; evaluate(literal(1)  <= literal(2)).should == true  ; end 
-      it "1 <= 1 == true"  do; evaluate(literal(1)  <= literal(1)).should == true  ; end 
+      it "1 <= 2 == true"  do; evaluate(literal(1)  <= literal(2)).should == true  ; end
+      it "1 <= 1 == true"  do; evaluate(literal(1)  <= literal(1)).should == true  ; end
       it "2 <= 1 == false" do; evaluate(literal(2)  <= literal(1)).should == false ; end
 
-      it "1 > 2  == false" do; evaluate(literal(1)  > literal(2)).should == false  ; end 
-      it "1 > 1  == false" do; evaluate(literal(1)  > literal(1)).should == false  ; end 
+      it "1 > 2  == false" do; evaluate(literal(1)  > literal(2)).should == false  ; end
+      it "1 > 1  == false" do; evaluate(literal(1)  > literal(1)).should == false  ; end
       it "2 > 1  == true"  do; evaluate(literal(2)  > literal(1)).should == true   ; end
 
-      it "1 >= 2 == false" do; evaluate(literal(1)  >= literal(2)).should == false ; end 
-      it "1 >= 1 == true"  do; evaluate(literal(1)  >= literal(1)).should == true  ; end 
-      it "2 >= 1 == true"  do; evaluate(literal(2)  >= literal(1)).should == true  ; end      
+      it "1 >= 2 == false" do; evaluate(literal(1)  >= literal(2)).should == false ; end
+      it "1 >= 1 == true"  do; evaluate(literal(1)  >= literal(1)).should == true  ; end
+      it "2 >= 1 == true"  do; evaluate(literal(2)  >= literal(1)).should == true  ; end
     end
     context "of mixed value types" do
-      it "1 == 1.0  == true"   do; evaluate(literal(1)     == literal(1.0)).should == true   ; end 
-      it "1 < 1.1   == true"   do; evaluate(literal(1)     <  literal(1.1)).should == true   ; end 
-      it "'1' < 1.1 == true"   do; evaluate(literal('1')   <  literal(1.1)).should == true   ; end 
-      it "1.0 == 1  == true"   do; evaluate(literal(1.0)   == literal(1)).should == true     ; end 
-      it "1.0 < 2   == true"   do; evaluate(literal(1.0)   <  literal(2)).should == true     ; end 
+      it "1 == 1.0  == true"   do; evaluate(literal(1)     == literal(1.0)).should == true   ; end
+      it "1 < 1.1   == true"   do; evaluate(literal(1)     <  literal(1.1)).should == true   ; end
+      it "'1' < 1.1 == true"   do; evaluate(literal('1')   <  literal(1.1)).should == true   ; end
+      it "1.0 == 1  == true"   do; evaluate(literal(1.0)   == literal(1)).should == true     ; end
+      it "1.0 < 2   == true"   do; evaluate(literal(1.0)   <  literal(2)).should == true     ; end
       it "'1.0' < 1.1 == true" do; evaluate(literal('1.0') <  literal(1.1)).should == true   ; end
 
       it "'1.0' < 'a' == true" do; evaluate(literal('1.0') <  literal('a')).should == true   ; end
@@ -209,8 +209,8 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       it "'a' > '1.0' == true" do; evaluate(literal('a')   >  literal('1.0')).should == true ; end
     end
     context "of regular expressions" do
-      it "/.*/ == /.*/  == true"   do; evaluate(literal(/.*/) == literal(/.*/)).should == true   ; end 
-      it "/.*/ != /a.*/ == true"   do; evaluate(literal(/.*/).ne(literal(/a.*/))).should == true ; end 
+      it "/.*/ == /.*/  == true"   do; evaluate(literal(/.*/) == literal(/.*/)).should == true   ; end
+      it "/.*/ != /a.*/ == true"   do; evaluate(literal(/.*/).ne(literal(/a.*/))).should == true ; end
     end
     context "of booleans" do
       it "true  == true  == true"  do; evaluate(literal(true) == literal(true)).should == true  ; end;

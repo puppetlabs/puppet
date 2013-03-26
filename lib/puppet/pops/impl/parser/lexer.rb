@@ -839,7 +839,7 @@ class Puppet::Pops::Impl::Parser::Lexer
         return line_nbr
       end
       # If not found it is after last
-      return line_index.size 
+      return line_index.size
     end
 
     # Returns the offset on line (first offset on a line is 0).

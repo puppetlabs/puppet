@@ -21,6 +21,6 @@ describe "Puppet::Pops::API::Issues" do
     x = Puppet::Pops::API::Issues::NOT_TOP_LEVEL
     x.format().should == "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
   end
-  
+
  end
 

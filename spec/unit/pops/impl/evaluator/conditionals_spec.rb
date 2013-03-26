@@ -97,32 +97,32 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         evaluate(CASE(literal(2), WHEN([literal(1), literal(2), literal(3)], literal('w00t')))).should == 'w00t'
       end
       it "case 2 { 1,3 : {'wat'} 2: { 'w00t'} } == 'w00t'" do
-        evaluate(CASE(literal(2), 
-          WHEN([literal(1), literal(3)], literal('wat')), 
+        evaluate(CASE(literal(2),
+          WHEN([literal(1), literal(3)], literal('wat')),
           WHEN(literal(2), literal('w00t')))).should == 'w00t'
       end
       it "case 2 { 1,3 : {'wat'} 5: { 'wat'} default: {'w00t'}} == 'w00t'" do
-        evaluate(CASE(literal(2), 
-          WHEN([literal(1), literal(3)], literal('wat')), 
+        evaluate(CASE(literal(2),
+          WHEN([literal(1), literal(3)], literal('wat')),
           WHEN(literal(5), literal('wat'))).default(literal('w00t'))
           ).should == 'w00t'
       end
       it "case 2 { 1,3 : {'wat'} 5: { 'wat'} } == nil" do
-        evaluate(CASE(literal(2), 
-          WHEN([literal(1), literal(3)], literal('wat')), 
+        evaluate(CASE(literal(2),
+          WHEN([literal(1), literal(3)], literal('wat')),
           WHEN(literal(5), literal('wat')))
           ).should == nil
       end
       it "case 'banana' { 1,3 : {'wat'} /.*ana.*/: { 'w00t'} } == w00t" do
-        evaluate(CASE(literal('banana'), 
-          WHEN([literal(1), literal(3)], literal('wat')), 
+        evaluate(CASE(literal('banana'),
+          WHEN([literal(1), literal(3)], literal('wat')),
           WHEN(literal(/.*ana.*/), literal('w00t')))
           ).should == 'w00t'
       end
       context "with regular expressions" do
         it "should set numeric variables from the match" do
-          evaluate(CASE(literal('banana'), 
-            WHEN([literal(1), literal(3)], literal('wat')), 
+          evaluate(CASE(literal('banana'),
+            WHEN([literal(1), literal(3)], literal('wat')),
             WHEN(literal(/.*(ana).*/), var(1)))
             ).should == 'ana'
         end
@@ -133,7 +133,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
         dump(literal(2).select(
                   MAP(literal(1), literal('wat')),
                   MAP(literal(2), literal('w00t'))
-                  )).should == "(? 2 (1 => 'wat') (2 => 'w00t'))" 
+                  )).should == "(? 2 (1 => 'wat') (2 => 'w00t'))"
       end
       it "1 ? {1 => 'w00t'} == 'w00t'" do
         evaluate(literal(1).select(MAP(literal(1), literal('w00t')))).should == 'w00t'

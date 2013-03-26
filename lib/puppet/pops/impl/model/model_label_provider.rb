@@ -6,10 +6,10 @@ module Puppet; module Pops; module Impl; module Model; end; end; end; end
 
 # A provider of labels for model object, producing a human name for the model object.
 # As an example, if object is an ArithmeticExpression with operator +, `#a_an(o)` produces "a '+' Expression",
-# #the(o) produces "the + Expression", and #label produces "+ Expression".  
+# #the(o) produces "the + Expression", and #label produces "+ Expression".
 #
 class Puppet::Pops::Impl::Model::ModelLabelProvider < Puppet::Pops::API::LabelProvider
-  def initialize 
+  def initialize
     @@label_visitor ||= Puppet::Pops::API::Visitor.new(self,"label",0,0)
   end
 
@@ -18,7 +18,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < Puppet::Pops::API::LabelPr
    @@label_visitor.visit(o)
   end
 
-  def label_Factory o                     ; label(o.current)                    end  
+  def label_Factory o                     ; label(o.current)                    end
   def label_Array o                       ; "Array Object"                      end
   def label_LiteralNumber o               ; "Literal Number"                    end
   def label_ArithmeticExpression o        ; "'#{o_operator}' expression"        end
@@ -39,7 +39,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < Puppet::Pops::API::LabelPr
   def label_LiteralList o                 ; "Array Expression"                  end
   def label_LiteralHash o                 ; "Hash Expression"                   end
   def label_KeyedEntry o                  ; "Hash Entry"                        end
-  def label_LiteralBoolean o              ; "Boolean"                           end    
+  def label_LiteralBoolean o              ; "Boolean"                           end
   def label_LiteralString o               ; "String"                            end
   def label_LiteralText o                 ; "Text in Interpolated String"       end
   def label_LambdaExpression o            ; "Lambda"                            end
@@ -71,7 +71,7 @@ class Puppet::Pops::Impl::Model::ModelLabelProvider < Puppet::Pops::API::LabelPr
   def label_ResourceBody o                ; "Resource Instance Definition"      end
   def label_ResourceDefaultsExpression o  ; "Resource Defaults Expression"      end
   def label_ResourceExpression o          ; "Resource Statement"                end
-  def label_SelectorExpression o          ; "Selector Expression"               end 
+  def label_SelectorExpression o          ; "Selector Expression"               end
   def label_SelectorEntry o               ; "Selector Option"                   end
   def label_String o                      ; "Ruby String"                       end
   def label_Object o                      ; "Ruby Object"                       end

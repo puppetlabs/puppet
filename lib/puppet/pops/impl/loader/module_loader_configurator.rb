@@ -7,11 +7,11 @@ module Puppet::Pops::Impl::Loader
   # A ModuleLoaderConfigurator is responsible for configuring module loaders given a module path
   # NOTE: Exploratory code (not yet fully featured/functional) showing how a configurator loads and configures
   # ModuleLoaders for a given set of modules on a given module path.
-  # 
+  #
   # ==Usage
   # Create an instance and for each wanted entry call one of the methods #add_all_modules,
   # or #add_module. A call must be made to #add_root (once only) to define where the root is.
-  # 
+  #
   # The next step is to produce loaders for the modules. This involves resolving the modules dependencies
   # to know what is visible to each module (and later to create a real loader). This can be a quite heavy
   # operation and there may be many more modules available than what will actually be used.
@@ -53,7 +53,7 @@ module Puppet::Pops::Impl::Loader
     end
 
     # Produces module loaders for all modules and returns the loader for the root.
-    # All other module loaders are parented by this loader. The root loader is parented by 
+    # All other module loaders are parented by this loader. The root loader is parented by
     # the given parent_loader.
     #
     def create_loaders(parent_loader)
@@ -105,7 +105,7 @@ module Puppet::Pops::Impl::Loader
       def matching_name?(name)
         name = name[2..-1] if name.start_with?("::")
         segments = name.split("::")
-        @module_data.name == segments[0] || (segments.size == 1 && non_namespace_name_exists?(segments[0])) 
+        @module_data.name == segments[0] || (segments.size == 1 && non_namespace_name_exists?(segments[0]))
       end
 
       def non_namespace_name_exists? name
@@ -131,7 +131,7 @@ module Puppet::Pops::Impl::Loader
     #
     def add_root path
       data= ModuleData.new('', :unversioned, path)
-      @root_module = data 
+      @root_module = data
     end
 
     # Path should refer to a directory of 'modules', where each directory is named after the module it contains.
@@ -144,7 +144,7 @@ module Puppet::Pops::Impl::Loader
       #
       Dir[file_name + '/*'].sort.each do |f|
         next unless File.directory? f
-        add_module File.basename(f), f 
+        add_module File.basename(f), f
       end
     end
 
@@ -232,7 +232,7 @@ module Puppet::Pops::Impl::Loader
           # - pick the latest version of each named module if there is more than one version
           # - pick the first found module on the path (this is probably what Puppet 3x does)
 
-          # Resolutions are all modules (except the current)        
+          # Resolutions are all modules (except the current)
           md.resolutions += @first_of_each.reject { |m| m == md }
         end
         md.status = :resolved

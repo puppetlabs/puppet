@@ -9,25 +9,25 @@ module Loader
   class StaticLoader
   include Puppet::Pops::API::Utils
   Utils = Puppet::Pops::API::Utils
-  
+
   def [](name)
     load_constant(name)
   end
-  
+
   def load(name, executor)
     load_constant(Utils.relativize_name(name))
   end
-  
+
   def find(name, executor)
     nil
   end
-  
+
   def parent
     nil # at top of the hierarchy
   end
-  
-  private 
-  
+
+  private
+
   def load_constant(name)
     case name
     when 'String'
@@ -40,7 +40,7 @@ module Loader
       RGen::ECore::EInt
     else
       nil
-    end  
+    end
   end
 end
 end; end; end; end

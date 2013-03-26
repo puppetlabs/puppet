@@ -27,13 +27,13 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       end
       it "local scope shadows top scope" do
         top_scope_block   = block( fqn('a').set(literal(2)+literal(2)), var('a'))
-        local_scope_block = block( fqn('a').set(var('a') + literal(2)), var('a')) 
+        local_scope_block = block( fqn('a').set(var('a') + literal(2)), var('a'))
         evaluate_l(top_scope_block, local_scope_block).should == 6
       end
       it "shadowed in local does not affect parent scope" do
         top_scope_block   = block( fqn('a').set(literal(2)+literal(2)), var('a'))
         local_scope_block = block( fqn('a').set(var('a') + literal(2)), var('a'))
-        top_scope_again = var('a') 
+        top_scope_again = var('a')
         evaluate_l(top_scope_block, local_scope_block, top_scope_again).should == 4
       end
       it "access to global names works in top scope" do
@@ -64,8 +64,8 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
             top_scope_block = fqn('a').set([1,2,3])
             local_scope_block = fqn('a').plus_set({'a' => 1, 'b'=>2})
             evaluate_l(top_scope_block, local_scope_block).should satisfy {|result|
-              # hash in 1.8.7 is not insertion order preserving, hence this hoop 
-             result == [1,2,3,['a',1],['b',2]] || result == [1,2,3,['b',2],['a',1]] 
+              # hash in 1.8.7 is not insertion order preserving, hence this hoop
+             result == [1,2,3,['a',1],['b',2]] || result == [1,2,3,['b',2],['a',1]]
             }
           end
           it "from single value, [] += x" do
@@ -121,19 +121,19 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       end
       context "access to numeric variables" do
         it "without a match" do
-          evaluate_l(block(literal(2) + literal(2), 
+          evaluate_l(block(literal(2) + literal(2),
             [var(0), var(1), var(2), var(3)])).should == [nil, nil, nil, nil]
         end
         it "after a match" do
-          evaluate_l(block(literal('abc') =~ literal(/(a)(b)(c)/), 
+          evaluate_l(block(literal('abc') =~ literal(/(a)(b)(c)/),
             [var(0), var(1), var(2), var(3)])).should == ['abc', 'a', 'b', 'c']
         end
         it "after a failed match" do
-          evaluate_l(block(literal('abc') =~ literal(/(x)(y)(z)/), 
+          evaluate_l(block(literal('abc') =~ literal(/(x)(y)(z)/),
             [var(0), var(1), var(2), var(3)])).should == [nil, nil, nil, nil]
         end
         it "after a match with variable referencing a non existing group" do
-          evaluate_l(block(literal('abc') =~ literal(/(a)(b)(c)/), 
+          evaluate_l(block(literal('abc') =~ literal(/(a)(b)(c)/),
             [var(0), var(1), var(2), var(3), var(4)])).should == ['abc', 'a', 'b', 'c', nil]
         end
       end

@@ -15,7 +15,7 @@ require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
   include EvaluatorRspecHelper
-  
+
   context "When the evaluator deals with variables" do
     context "it should handle" do
       it "simple assignment and dereference" do
@@ -23,7 +23,7 @@ describe Puppet::Pops::Impl::EvaluatorImpl do
       end
       it "local scope shadows top scope and fqn set in top scope" do
         top_scope_block   = block( fqn('a').set(literal(2)+literal(2)), var('a'))
-        local_scope_block = block( fqn('a').set(var('a') + literal(2)), var('a')) 
+        local_scope_block = block( fqn('a').set(var('a') + literal(2)), var('a'))
         evaluate(top_scope_block, "x", local_scope_block) do |scope|
           scope.get_variable_entry("x::a").value.should == 6
         end.should == 6
