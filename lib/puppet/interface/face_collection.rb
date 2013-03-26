@@ -1,5 +1,3 @@
-require 'puppet/interface'
-
 module Puppet::Interface::FaceCollection
   @faces = Hash.new { |hash, key| hash[key] = {} }
 

@@ -1,5 +1,3 @@
-require 'puppet/interface'
-
 # This represents an option on an action or face (to be globally applied
 # to its actions). Options should be constructed by calling
 # {Puppet::Interface::OptionManager#option}, which is available on

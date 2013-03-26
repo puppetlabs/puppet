@@ -1,6 +1,3 @@
-require 'puppet/interface'
-require 'puppet/interface/action'
-
 # This class is used to build {Puppet::Interface::Action actions}.
 # When an action is defined with
 # {Puppet::Interface::ActionManager#action} the block is evaluated

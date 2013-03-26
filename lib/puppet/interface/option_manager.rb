@@ -1,5 +1,3 @@
-require 'puppet/interface/option_builder'
-
 # This class is not actually public API, but the method
 # {Puppet::Interface::OptionManager#option option} is public when used
 # as part of the Faces DSL (i.e. from within a

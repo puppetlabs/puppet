@@ -1,5 +1,4 @@
 require 'puppet/interface'
-require 'puppet/interface/option'
 
 describe Puppet::Interface::Option do
   let :face do Puppet::Interface.new(:option_testing, '0.0.1') end

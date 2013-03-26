@@ -1,5 +1,3 @@
-require 'puppet/interface/option'
-
 # @api public
 class Puppet::Interface::OptionBuilder
   # The option under construction
