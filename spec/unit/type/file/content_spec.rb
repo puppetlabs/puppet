@@ -187,6 +187,14 @@ describe content do
           @content.safe_insync?("other content")
         end
 
+        it "should not display a diff if the show_diff parameter is false" do
+          @resource.stubs(:show_diff?).returns false
+          @content.should = "some content"
+          @content.expects(:diff).never
+
+          @content.safe_insync?("other content")
+        end
+
         it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do
           @content.should = "some content"
           @content.expects(:diff).never
