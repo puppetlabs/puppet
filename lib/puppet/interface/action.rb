@@ -1,5 +1,3 @@
-require 'puppet/interface'
-require 'puppet/interface/documentation'
 require 'puppet/util/methodhelper'
 require 'prettyprint'
 

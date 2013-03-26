@@ -1,9 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-# This is entirely an internal class for Interface, so we have to load it instead of our class.
 require 'puppet/interface'
-require 'puppet/face'
 
 class ActionManagerTester
   include Puppet::Interface::ActionManager

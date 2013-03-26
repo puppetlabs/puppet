@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/interface/action_builder'
+require 'puppet/interface'
 require 'puppet/network/format_handler'
 
 describe Puppet::Interface::ActionBuilder do

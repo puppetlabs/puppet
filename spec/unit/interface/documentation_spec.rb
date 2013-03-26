@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/interface'
-require 'puppet/interface/option'
-require 'puppet/interface/documentation'
 
 class Puppet::Interface::TinyDocs::Test
   include Puppet::Interface::TinyDocs
