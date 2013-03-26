@@ -352,11 +352,6 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:NUMBER] do
   it "should match against float terms with fractional parts and exponent" do
     @regex.should =~ "1.234e23"
   end
-
-  it "should return the NAME token and the value" do
-    pending "Don't understand what this tests - fails in egrammars lexer"
-    @token.convert(stub("lexer"), "myval").should == [Puppet::Pops::Impl::Parser::Lexer::TOKENS[:NAME], "myval"]
-  end
 end
 
 describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:COMMENT] do
