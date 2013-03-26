@@ -17,11 +17,9 @@ require 'puppet/pops/impl/top_scope'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 
-RSpec.configure do |c|
-  c.include EvaluatorRspecHelper
-end
-
 describe Puppet::Pops::Impl::EvaluatorImpl do
+  include EvaluatorRspecHelper
+
   context "When the evaluator deals with variables" do
     context "it should handle" do
       it "simple assignment and dereference" do

@@ -11,13 +11,11 @@ require 'puppet/pops/impl/top_scope'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 
-RSpec.configure do |c|
-  c.include EvaluatorRspecHelper
-end
-
 # This file contains testing of Conditionals, if, case, unless, selector
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
+  include EvaluatorRspecHelper
+
   context "When the evaluator evaluates" do
     context "an if expression" do
       it 'should output the expected result when dumped' do
