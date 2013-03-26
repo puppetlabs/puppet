@@ -1,5 +1,6 @@
 require 'puppet/util/windows'
 require 'openssl'
+require 'Win32API'
 
 # Represents a collection of trusted root certificates.
 #
