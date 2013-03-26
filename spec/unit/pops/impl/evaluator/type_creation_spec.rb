@@ -15,25 +15,24 @@ require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 #
 describe Puppet::Pops::Impl::EvaluatorImpl do
   include EvaluatorRspecHelper
-  Model ||= Puppet::Pops::API::Model
   
   context "(selftest)" do
     it "factory should return a CreateTypeExpression" do
-      TYPE('name', 'super_name').current.class.should == Model::CreateTypeExpression
+      TYPE('name', 'super_name').current.class.should == Puppet::Pops::API::Model::CreateTypeExpression
     end
         
     it "factory should return a CreateAttributeExpression" do
-      ATTR('name').current.class.should == Model::CreateAttributeExpression
+      ATTR('name').current.class.should == Puppet::Pops::API::Model::CreateAttributeExpression
     end
     
     it "factory should return a CreateEnumExpression" do
-      ENUM('name', ['blue', 'green']).current.class.should == Model::CreateEnumExpression
+      ENUM('name', ['blue', 'green']).current.class.should == Puppet::Pops::API::Model::CreateEnumExpression
     end
     
     it "factory should return a CreateTypeExpression with a CreateAttributeExpression" do
       x = TYPE('name', 'super_name').attributes(ATTR('my_attr')).current
-      x.class.should == Model::CreateTypeExpression
-      x.attributes[0].class.should == Model::CreateAttributeExpression
+      x.class.should == Puppet::Pops::API::Model::CreateTypeExpression
+      x.attributes[0].class.should == Puppet::Pops::API::Model::CreateAttributeExpression
     end    
    end
   

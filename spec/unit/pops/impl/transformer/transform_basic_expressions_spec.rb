@@ -45,7 +45,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
     it "should parse a code string and return a model" do
       model = parse("$a = 10").current
-      model.class.should == Model::AssignmentExpression
+      model.class.should == Puppet::Pops::API::Model::AssignmentExpression
       dump(model).should == "(= $a 10)"
     end
   end

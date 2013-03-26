@@ -9,12 +9,9 @@ require File.join(File.dirname(__FILE__), '/factory_rspec_helper')
 # This file contains testing of the pops model factory
 #
 
-RSpec.configure do |c|
-  c.include FactoryRspecHelper
-  Model ||= Puppet::Pops::API::Model
-end
-
 describe Puppet::Pops::Impl::Model::Factory do
+  include FactoryRspecHelper
+  Model = Puppet::Pops::API::Model
 
   context "When factory methods are invoked they should produce expected results" do
     it "tests #var should create a VariableExpression" do

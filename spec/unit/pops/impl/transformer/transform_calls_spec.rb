@@ -13,7 +13,6 @@ require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
 # Tests calls
 describe Puppet::Pops::Impl::Parser::Parser do
-  Model ||= Puppet::Pops::API::Model
   include TransformerRspecHelper
   context "When running these examples, the setup" do
 
@@ -24,7 +23,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
     it "should parse a code string and return a model" do
       model = parse("$a = 10").current
-      model.class.should == Model::AssignmentExpression
+      model.class.should == Puppet::Pops::API::Model::AssignmentExpression
       astdump(model).should == "(= $a 10)"
     end
   end

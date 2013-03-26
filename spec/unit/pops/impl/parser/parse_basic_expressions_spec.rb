@@ -13,7 +13,6 @@ require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
 describe Puppet::Pops::Impl::Parser::Parser do
   include ParserRspecHelper
-  Model ||= Puppet::Pops::API::Model
 
   context "When running these examples, the setup" do
 
@@ -33,7 +32,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
 
     it "should parse a code string and return a model" do
       model = parse("$a = 10").current
-      model.class.should == Model::AssignmentExpression
+      model.class.should == Puppet::Pops::API::Model::AssignmentExpression
       dump(model).should == "(= $a 10)"
     end
 
