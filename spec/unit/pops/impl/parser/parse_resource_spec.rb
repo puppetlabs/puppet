@@ -25,6 +25,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  ('title'))"
       ].join("\n")
     end
+
     it "file { 'title': path => '/somewhere', mode => 0777}" do
       dump(parse("file { 'title': path => '/somewhere', mode => 0777}")).should == [
         "(resource file",
@@ -33,6 +34,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (mode => 0777)))"
       ].join("\n")
     end
+
     it "file { 'title1': path => 'x'; 'title2': path => 'y'}" do
       dump(parse("file { 'title1': path => 'x'; 'title2': path => 'y'}")).should == [
         "(resource file",
@@ -43,10 +45,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
       ].join("\n")
     end
   end
+
   context "When parsing resource defaults" do
     it "File {  }" do
       dump(parse("File { }")).should == "(resource-defaults file)"
     end
+
     it "File { mode => 0777 }" do
       dump(parse("File { mode => 0777}")).should == [
         "(resource-defaults file",
@@ -59,15 +63,19 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "File['x'] {  }" do
       dump(parse("File['x'] { }")).should == "(override (slice file 'x'))"
     end
+
     it "File['x'] { x => 1 }" do
       dump(parse("File['x'] { x => 1}")).should == "(override (slice file 'x')\n  (x => 1))"
     end
+
     it "File['x', 'y'] { x => 1 }" do
       dump(parse("File['x', 'y'] { x => 1}")).should == "(override (slice file ('x' 'y'))\n  (x => 1))"
     end
+
     it "File['x'] { x => 1, y => 2 }" do
       dump(parse("File['x'] { x => 1, y=> 2}")).should == "(override (slice file 'x')\n  (x => 1)\n  (y => 2))"
     end
+
     it "File['x'] { x +> 1 }" do
       dump(parse("File['x'] { x +> 1}")).should == "(override (slice file 'x')\n  (x +> 1))"
     end
@@ -77,9 +85,11 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "@@file { 'title': }" do
       dump(parse("@@file { 'title': }")).should ==  "(exported-resource file\n  ('title'))"
     end
+
     it "@file { 'title': }" do
       dump(parse("@file { 'title': }")).should ==  "(virtual-resource file\n  ('title'))"
     end
+
     it "@file { mode => 0777 }" do
       # Defaults are not virtualizeable
       expect {
@@ -95,6 +105,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  ('cname'))"
       ].join("\n")
     end
+
     it "class { 'cname': x => 1, y => 2}" do
       dump(parse("class { 'cname': x => 1, y => 2}")).should == [
         "(resource class",
@@ -103,6 +114,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "    (y => 2)))"
       ].join("\n")
     end
+
     it "class { 'cname1': x => 1; 'cname2': y => 2}" do
       dump(parse("class { 'cname1': x => 1; 'cname2': y => 2}")).should == [
         "(resource class",
@@ -127,12 +139,15 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "File[a] -> File[b]" do
       dump(parse("File[a] -> File[b]")).should == "(-> (slice file a) (slice file b))"
     end
+
     it "File[a] <- File[b]" do
       dump(parse("File[a] <- File[b]")).should == "(<- (slice file a) (slice file b))"
     end
+
     it "File[a] ~> File[b]" do
       dump(parse("File[a] ~> File[b]")).should == "(~> (slice file a) (slice file b))"
     end
+
     it "File[a] <~ File[b]" do
       dump(parse("File[a] <~ File[b]")).should == "(<~ (slice file a) (slice file b))"
     end
@@ -141,10 +156,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
       dump(parse("a -> b -> c")).should ==
       "(-> (-> a b) c)"
     end
+
     it "Should chain relationships" do
       dump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]")).should ==
       "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
     end
+
     it "should create relationships between collects" do
       dump(parse("File <| mode == 0644 |> -> File <| mode == 0755 |>")).should ==
       "(-> (collect file\n  (<| |> (== mode 0644))) (collect file\n  (<| |> (== mode 0755))))"
@@ -157,25 +174,31 @@ describe Puppet::Pops::Impl::Parser::Parser do
         dump(parse("File <| |>")).should == "(collect file\n  (<| |>))"
       end
     end
+
     context "of exported resources" do
       it "File <<| |>>" do
         dump(parse("File <<| |>>")).should == "(collect file\n  (<<| |>>))"
       end
     end
+
     context "queries are parsed with correct precedence" do
       it "File <| tag == 'foo' |>" do
         dump(parse("File <| tag == 'foo' |>")).should == "(collect file\n  (<| |> (== tag 'foo')))"
       end
+
       it "File <| tag == 'foo' and mode != 0777 |>" do
         dump(parse("File <| tag == 'foo' and mode != 0777 |>")).should == "(collect file\n  (<| |> (&& (== tag 'foo') (!= mode 0777))))"
       end
+
       it "File <| tag == 'foo' or mode != 0777 |>" do
         dump(parse("File <| tag == 'foo' or mode != 0777 |>")).should == "(collect file\n  (<| |> (|| (== tag 'foo') (!= mode 0777))))"
       end
+
       it "File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>" do
         dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != 0777 |>")).should ==
         "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode 0777)))))"
       end
+
       it "File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>" do
         dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != 0777 |>")).should ==
         "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode 0777))))"

@@ -6,7 +6,6 @@ TopScope = Puppet::Pops::Impl::TopScope
 
 # TODO: These tests only test the difference from BaseScope, could test the API
 describe Puppet::Pops::Impl::TopScope do
-
   describe "An instance of TopScope" do
     # smoke test
     # Assumptions made that BaseScope is tested

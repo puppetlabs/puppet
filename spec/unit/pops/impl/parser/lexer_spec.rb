@@ -22,8 +22,10 @@ end
 
 describe Puppet::Pops::Impl::Parser::Lexer do
   include EgrammarLexerSpec
+
   describe "when reading strings" do
     before { @lexer = Puppet::Pops::Impl::Parser::Lexer.new }
+
     it "should increment the line count for every carriage return in the string" do
       @lexer.string = "'this\nis\natest'"
       @lexer.fullscan[0..-2]
@@ -408,7 +410,6 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:MLCOMMENT] do
 
     @token.convert(@lexer,"/* this is a comment */")[1].should == "this is a comment"
   end
-
 end
 
 describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:RETURN] do
@@ -422,7 +423,6 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:RETURN] do
     @token.skip_text.should be_true
   end
 end
-
 
 shared_examples_for "handling `-` in standard variable names for egrammar" do |prefix|
   # Watch out - a regex might match a *prefix* on these, not just the whole
@@ -496,6 +496,7 @@ describe "the horrible deprecation / compatibility variables with dashes" do
 
       context "when compatibility is enabled" do
         before :each do Puppet[:allow_variables_with_dashes] = true end
+
         it "should be acceptable after DQPRE" do
           token.acceptable?(:after => :DQPRE).should be_true
         end
@@ -660,9 +661,7 @@ describe Puppet::Pops::Impl::Parser::Lexer::TOKENS[:REGEX] do
         :CASE,:VARIABLE,:LBRACE,:STRING,:COLON,:LBRACE,:VARIABLE,:EQUALS,:NAME,:DIV,:NAME,:RBRACE,[:REGEX,/regex/],:COLON,:LBRACE,:NAME,:LPAREN,:STRING,:RPAREN,:RBRACE,:RBRACE
       )
     end
-
   end
-
 
   it "should return the REGEX token and a Regexp" do
     @token.convert(stub("lexer"), "/myregex/").should == [Puppet::Pops::Impl::Parser::Lexer::TOKENS[:REGEX], Regexp.new(/myregex/)]
@@ -866,18 +865,23 @@ describe "when string quotes are not closed" do
   it "should report with message including an \" opening quote" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = "') }.to raise_error(/after '"'/)
   end
+
   it "should report with message including an \' opening quote" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = \'') }.to raise_error(/after "'"/)
   end
+
   it "should report <eof> if immediately followed by eof" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = "') }.to raise_error(/followed by '<eof>'/)
   end
+
   it "should report max 5 chars following quote" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = "123456') }.to raise_error(/followed by '12345...'/)
   end
+
   it "should escape control chars" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = "12\n3456') }.to raise_error(/followed by '12\\n3...'/)
   end
+
   it "should resport position of opening quote" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = "123456') }.to raise_error(/at line 1:8/)
     expect { EgrammarLexerSpec.tokens_scanned_from('$var =  "123456') }.to raise_error(/at line 1:9/)
@@ -888,6 +892,7 @@ describe "when lexing number, bad input should not go unpunished" do
   it "should slap bad octal as such" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0778') }.to raise_error(/Not a valid octal/)
   end
+
   it "should slap bad hex as such" do
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0xFG') }.to raise_error(/Not a valid hex/)
     expect { EgrammarLexerSpec.tokens_scanned_from('$var = 0xfg') }.to raise_error(/Not a valid hex/)
@@ -945,6 +950,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
       [:DQPOST,   {:value=>" end", :line=>1, :offset=>9, :pos=>10, :length=>6}]
     )
   end
+
   it "should correctly position pre-end interpolation across lines" do
     EgrammarLexerSpec.tokens_scanned_from(%Q["pre ${\n$x} end"]).should be_like(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
@@ -952,6 +958,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
       [:DQPOST,   {:value=>" end", :line=>2, :offset=>10, :pos=>3, :length=>6}]
     )
   end
+
   it "should correctly position interpolation across lines when strings have embedded newlines" do
     EgrammarLexerSpec.tokens_scanned_from(%Q["pre \n\n${$x}\n mid$y"]).should be_like(
       [:DQPRE,    {:value=>"pre \n\n", :line=>1, :offset=>0, :pos=>1, :length=>9}],

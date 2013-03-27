@@ -4,7 +4,6 @@ require 'puppet/pops/impl/base_scope'
 BaseScope = Puppet::Pops::Impl::BaseScope
 
 describe Puppet::Pops::Impl::BaseScope do
-
   describe "An instance of BaseScope" do
     # smoke test
     it "should not crash when created" do
@@ -91,6 +90,5 @@ describe Puppet::Pops::Impl::BaseScope do
       scope.is_top_scope?().should == false
       scope.is_local_scope?().should == false
     end
-
   end
 end

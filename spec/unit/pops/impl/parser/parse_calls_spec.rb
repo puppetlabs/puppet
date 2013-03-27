@@ -20,32 +20,40 @@ describe Puppet::Pops::Impl::Parser::Parser do
       it "foo()" do
         dump(parse("foo()")).should == "(invoke foo)"
       end
+
       it "foo bar" do
         dump(parse("foo bar")).should == "(invoke foo bar)"
       end
+
       it "foo(bar)" do
         dump(parse("foo(bar)")).should == "(invoke foo bar)"
       end
+
       it "foo(bar,)" do
         dump(parse("foo(bar,)")).should == "(invoke foo bar)"
       end
+
       it "foo(bar, fum,)" do
         dump(parse("foo(bar,fum,)")).should == "(invoke foo bar fum)"
       end
     end
+
     context "in nested scopes" do
       it "if true { foo() }" do
         dump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"
       end
+
       it "if true { foo bar}" do
         dump(parse("if true {foo bar}")).should == "(if true\n  (then (invoke foo bar)))"
       end
     end
   end
+
   context "When parsing calls as expressions" do
     it "$a = foo()" do
       dump(parse("$a = foo()")).should == "(= $a (call foo))"
     end
+
     it "$a = foo(bar)" do
       dump(parse("$a = foo()")).should == "(= $a (call foo))"
     end
@@ -64,22 +72,27 @@ describe Puppet::Pops::Impl::Parser::Parser do
       it "if true { $a = foo() }" do
         dump(parse("if true { $a = foo()}")).should == "(if true\n  (then (= $a (call foo))))"
       end
+
       it "if true { $a= foo(bar)}" do
         dump(parse("if true {$a = foo(bar)}")).should == "(if true\n  (then (= $a (call foo bar))))"
       end
     end
   end
+
   context "When parsing method calls" do
     it "$a.foo" do
       dump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
+
     it "$a.foo {|| }" do
       #      dump(parse("$a.foo {|| }")).should == "(call-method (. $a foo) (lambda ()))"
       dump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
+
     it "$a.foo {|$x| }" do
       dump(parse("$a.foo {|$x| }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
+
     it "$a.foo {|$x| }" do
       dump(parse("$a.foo {|$x| $b = $x}")).should ==
       "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"

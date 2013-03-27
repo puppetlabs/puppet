@@ -19,12 +19,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
     it "if true { $a = 10 }" do
       astdump(parse("if true { $a = 10 }")).should == "(if true\n  (then (= $a 10)))"
     end
+
     it "if true { $a = 10 } else {$a = 20}" do
       astdump(parse("if true { $a = 10 } else {$a = 20}")).should ==
       ["(if true",
         "  (then (= $a 10))",
         "  (else (= $a 20)))"].join("\n")
     end
+
     it "if true { $a = 10 } elsif false { $a = 15} else {$a = 20}" do
       astdump(parse("if true { $a = 10 } elsif false { $a = 15} else {$a = 20}")).should ==
       ["(if true",
@@ -33,6 +35,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "      (then (= $a 15))",
         "      (else (= $a 20)))))"].join("\n")
     end
+
     it "if true { $a = 10 $b = 10 } else {$a = 20}" do
       astdump(parse("if true { $a = 10 $b = 20} else {$a = 20}")).should ==
       ["(if true",
@@ -40,17 +43,20 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  (else (= $a 20)))"].join("\n")
     end
   end
+
   context "When parsing unless statements" do
     # Note that Puppet 3.1 does not have an "unless x", it is encoded as "if !x"
     it "unless true { $a = 10 }" do
       astdump(parse("unless true { $a = 10 }")).should == "(if (! true)\n  (then (= $a 10)))"
     end
+
     it "unless true { $a = 10 } else {$a = 20}" do
       astdump(parse("unless true { $a = 10 } else {$a = 20}")).should ==
       ["(if (! true)",
         "  (then (= $a 10))",
         "  (else (= $a 20)))"].join("\n")
     end
+
     it "unless true { $a = 10 } elsif false { $a = 15} else {$a = 20} # is illegal" do
       expect { parse("unless true { $a = 10 } elsif false { $a = 15} else {$a = 20}")}.to raise_error(Puppet::ParseError)
     end
@@ -61,23 +67,28 @@ describe Puppet::Pops::Impl::Parser::Parser do
       astdump(parse("$a = $b ? banana => fruit")).should ==
       "(= $a (? $b (banana => fruit)))"
     end
+
     it "$a = $b ? { banana => fruit}" do
       astdump(parse("$a = $b ? { banana => fruit }")).should ==
       "(= $a (? $b (banana => fruit)))"
     end
+
     it "$a = $b ? { banana => fruit, grape => berry }" do
       astdump(parse("$a = $b ? {banana => fruit, grape => berry}")).should ==
       "(= $a (? $b (banana => fruit) (grape => berry)))"
     end
+
     it "$a = $b ? { banana => fruit, grape => berry, default => wat }" do
       astdump(parse("$a = $b ? {banana => fruit, grape => berry, default => wat}")).should ==
       "(= $a (? $b (banana => fruit) (grape => berry) (:default => wat)))"
     end
+
     it "$a = $b ? { default => wat, banana => fruit, grape => berry,  }" do
       astdump(parse("$a = $b ? {default => wat, banana => fruit, grape => berry}")).should ==
       "(= $a (? $b (:default => wat) (banana => fruit) (grape => berry)))"
     end
   end
+
   context "When parsing case statements" do
     it "case $a { a : {}}" do
       astdump(parse("case $a { a : {}}")).should ==
@@ -85,18 +96,21 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  (when (a) (then ())))"
       ].join("\n")
     end
+
     it "case $a { /.*/ : {}}" do
       astdump(parse("case $a { /.*/ : {}}")).should ==
       ["(case $a",
         "  (when (/.*/) (then ())))"
       ].join("\n")
     end
+
     it "case $a { a, b : {}}" do
       astdump(parse("case $a { a, b : {}}")).should ==
       ["(case $a",
         "  (when (a b) (then ())))"
       ].join("\n")
     end
+
     it "case $a { a, b : {} default : {}}" do
       astdump(parse("case $a { a, b : {} default : {}}")).should ==
       ["(case $a",
@@ -104,6 +118,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  (when (:default) (then ())))"
       ].join("\n")
     end
+
     it "case $a { a : {$b = 10 $c = 20}}" do
       astdump(parse("case $a { a : {$b = 10 $c = 20}}")).should ==
       ["(case $a",
@@ -111,13 +126,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
       ].join("\n")
     end
   end
+
   context "When parsing imports" do
     it "import 'foo'" do
       astdump(parse("import 'foo'")).should == ":nop"
     end
+
     it "import 'foo', 'bar'" do
       astdump(parse("import 'foo', 'bar'")).should == ":nop"
     end
   end
-
 end

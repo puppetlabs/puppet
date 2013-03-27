@@ -2,9 +2,7 @@ require 'spec_helper'
 require 'pops/impl/type_creator'
 
 describe Pops::Impl::TypeCreator do
-
   it "should create a package" do
-
     tc = Pops::Impl::TypeCreator.new
     result = tc.test_create_type()
 
@@ -30,7 +28,6 @@ describe Pops::Impl::TypeCreator do
 
     #puts "TestClass2 anscestors: " + y.class.ancestors.join(", ")
     pending "TypeCreator - should create a package is unfinished"
-
   end
   # TODO: More things to test - see aboce for ideas
 end

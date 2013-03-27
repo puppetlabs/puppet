@@ -4,7 +4,6 @@ require 'puppet/pops/impl/match_scope'
 MatchScope = Puppet::Pops::Impl::MatchScope
 
 describe Puppet::Pops::Impl::MatchScope do
-
   describe "A match scope without match data" do
     it "should produce entries for all numeric variables" do
       scope = MatchScope.new
@@ -13,6 +12,7 @@ describe Puppet::Pops::Impl::MatchScope do
       result = result.compact
       result.count.should == 100
     end
+
     it "should produce entries with nil values for all numeric variables" do
       scope = MatchScope.new
       result = (0..99).collect { |n| scope[n].value }
@@ -20,6 +20,7 @@ describe Puppet::Pops::Impl::MatchScope do
       result = result.compact
       result.count.should == 0
     end
+
     it "should have entries without origin" do
       scope = MatchScope.new
       scope[0].origin.should == nil

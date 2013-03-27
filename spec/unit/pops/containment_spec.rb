@@ -22,6 +22,5 @@ describe Puppet::Pops::API::Containment do
     #pending "eContainingFeature does not work on _uni containments in RGen < 0.6.1"
     left.current.eContainingFeature.should == :left_expr
     right.current.eContainingFeature.should == :right_expr
-
   end
 end

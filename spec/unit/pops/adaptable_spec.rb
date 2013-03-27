@@ -131,6 +131,7 @@ describe Puppet::Pops::API::Adaptable::Adapter do
       a.value.should == "Donald, the Duck"
     end
   end
+
   context "When adapting with #adapt_new it" do
     it "should be possible to pass a block to configure the adapter" do
       d = Duck.new
@@ -148,5 +149,4 @@ describe Puppet::Pops::API::Adaptable::Adapter do
       a.value.should == "Donald, the Duck"
     end
   end
-
 end

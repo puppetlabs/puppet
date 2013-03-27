@@ -91,6 +91,5 @@ describe Puppet::Pops::API::Visitor do
       duck_processor = DuckProcessor2.new
       expect { duck_processor.hi(duck) }.to raise_error(/^Visitor Error: Too few.*/)
     end
-
   end
 end
