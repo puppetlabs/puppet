@@ -48,8 +48,16 @@ class Puppet::SSL::Base
     self.class.validate_certname(@name)
   end
 
-  # Class method to extract a 'name' from the CN field of the subject of a
-  # certificate
+  ##
+  # name_from_subject extracts the common name attribute from the subject of an
+  # x.509 certificate certificate
+  #
+  # @api private
+  #
+  # @param [OpenSSL::X509::Name] subject The full subject (distinguished name) of the x.509
+  #   certificate.
+  #
+  # @return [String] the name (CN) extracted from the subject.
   def self.name_from_subject(subject)
     Puppet::Util::SSL.cn_from_subject(subject)
   end
