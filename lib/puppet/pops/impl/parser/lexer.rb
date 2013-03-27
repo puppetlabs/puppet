@@ -533,7 +533,7 @@ class Puppet::Pops::Impl::Parser::Lexer
     pos_hash[:value] = value
 
     # Add one to pos, first char on line is 1
-    return token, pos_hash #{ :value => value, :line => @line, :pos => pos+1, :offset => offset, :length => length}
+    return token, pos_hash
   end
 
   # Returns a hash with the current position in source based on the current lexing context
