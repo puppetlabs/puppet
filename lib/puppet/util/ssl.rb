@@ -20,6 +20,8 @@ module Puppet::Util::SSL
   # @param subject [OpenSSL::X509::Name] the subject to extract from
   # @return [String, nil] the CN, or nil if not found
   def self.cn_from_subject(subject)
-    (subject.to_a.assoc('CN') || [])[1]
+    if subject.respond_to? :to_a
+      (subject.to_a.assoc('CN') || [])[1]
+    end
   end
 end
