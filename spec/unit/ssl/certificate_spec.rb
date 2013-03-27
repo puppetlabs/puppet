@@ -26,7 +26,9 @@ describe Puppet::SSL::Certificate do
 
   describe "when converting from a string" do
     it "should create a certificate instance with its name set to the certificate subject and its content set to the extracted certificate" do
-      cert = stub 'certificate', :subject => "/CN=Foo.madstop.com", :is_a? => true
+      cert = stub 'certificate',
+        :subject => OpenSSL::X509::Name.parse("/CN=Foo.madstop.com"),
+        :is_a? => true
       OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(cert)
 
       mycert = stub 'sslcert'
