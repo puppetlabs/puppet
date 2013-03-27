@@ -465,6 +465,8 @@ class Puppet::Pops::Impl::Validation::Checker3_1
 
   def rvalue_BlockExpression o            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
+  def rvalue_CaseExpression o             ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+
   def rvalue_IfExpression o               ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
   def rvalue_UnlessExpression o           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
