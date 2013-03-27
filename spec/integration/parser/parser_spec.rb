@@ -212,6 +212,26 @@ describe "Puppet::Parser::Parser" do
         expect { @parser.parse(source) }.to raise_error(/A 'case' statement does not produce a value at line 1:6/)
       end
 
+      it 'should flag illegal use of non r-value producing <| |>' do
+        expect { @parser.parse("$a = file <| |>") }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+      end
+
+      it 'should flag illegal use of non r-value producing <<| |>>' do
+        expect { @parser.parse("$a = file <<| |>>") }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+      end
+
+      it 'should flag illegal use of non r-value producing define' do
+        Puppet.expects(:err).with("Invalid use of expression. A 'define' expression does not produce a value at line 1:6")
+        Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+        expect { @parser.parse("$a = define foo { }") }.to raise_error(/2 errors/)
+      end
+
+      it 'should flag illegal use of non r-value producing class' do
+        Puppet.expects(:err).with("Invalid use of expression. A Host Class Definition does not produce a value at line 1:6")
+        Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+        expect { @parser.parse("$a = class foo { }") }.to raise_error(/2 errors/)
+      end
+
       it 'unclosed quote should be flagged for start position of string' do
         source = <<-SOURCE.gsub(/^ {8}/,'')
         $a = "xx
