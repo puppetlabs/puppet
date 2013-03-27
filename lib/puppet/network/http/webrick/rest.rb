@@ -1,6 +1,7 @@
 require 'puppet/network/http/handler'
 require 'resolv'
 require 'webrick'
+require 'puppet/util/ssl'
 
 class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
@@ -73,8 +74,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     # then we get the hostname from the cert, instead of via IP
     # info
     result[:authenticated] = false
-    if cert = request.client_cert and nameary = cert.subject.to_a.find { |ary| ary[0] == "CN" }
-      result[:node] = nameary[1]
+    if cert = request.client_cert and cn = Puppet::Util::SSL.cn_from_subject(cert.subject)
+      result[:node] = cn
       result[:authenticated] = true
     else
       result[:node] = resolve_node(result)
