@@ -248,6 +248,7 @@ lambda_parameter_list
 if_expression
   : IF if_part {
       result = val[1]
+      loc(result, val[0], val[1])
     }
 
   # Produces Model::IfExpression
@@ -265,7 +266,10 @@ if_expression
   # Produces [Model::Expression, nil] - nil if there is no else or elsif part
   else
     : # nothing
-    | ELSIF if_part { result = val[1] }
+    | ELSIF if_part {
+        result = val[1]
+        loc(result, val[0], val[1])
+      }
     | ELSE LBRACE statements RBRACE {
         @lexer.commentpop
         result = Factory.block_or_expression(*val[2])

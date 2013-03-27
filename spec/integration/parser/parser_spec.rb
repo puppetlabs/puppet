@@ -167,6 +167,43 @@ describe "Puppet::Parser::Parser" do
       Puppet[:parser] = 'future'
     end
     it_behaves_like 'a puppet parser'
+
+    context 'more detailed errors should be generated' do
+      before :each do
+        Puppet[:parser] = 'future'
+        @resource_type_collection = Puppet::Resource::TypeCollection.new("env")
+        @parser = Puppet::Parser::ParserFactory.parser("development")
+      end
+
+      it 'should flag illegal type references' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        1+1 { "title": }
+        SOURCE
+        # This error message is currently produced by the parser, and is not as detailed as desired
+        # It references position 16 at the closing '}'
+        expect { @parser.parse(source) }.to raise_error(/Expression is not valid as a resource.*line 1:16/)
+      end
+
+      it 'should flag illegal type references and get position correct' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        1+1 { "title":
+          }
+        SOURCE
+        # This error message is currently produced by the parser, and is not as detailed as desired
+        # It references position 16 at the closing '}'
+        expect { @parser.parse(source) }.to raise_error(/Expression is not valid as a resource.*line 2:3/)
+      end
+
+      it 'should flag illegal use of non r-value producing if' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        $a = if true {
+          false
+        }
+        SOURCE
+        expect { @parser.parse(source) }.to raise_error(/An 'if' statement does not produce a value at line 1:6/)
+      end
+
+    end
   end
 
 end
