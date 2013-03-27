@@ -31,7 +31,9 @@ describe Puppet::SSL::CertificateRequest do
 
   describe "when converting from a string" do
     it "should create a CSR instance with its name set to the CSR subject and its content set to the extracted CSR" do
-      csr = stub 'csr', :subject => "/CN=Foo.madstop.com", :is_a? => true
+      csr = stub 'csr',
+        :subject => OpenSSL::X509::Name.parse("/CN=Foo.madstop.com"),
+        :is_a? => true
       OpenSSL::X509::Request.expects(:new).with("my csr").returns(csr)
 
       mycsr = stub 'sslcsr'

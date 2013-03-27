@@ -173,13 +173,26 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should pass the client's certificate name to model method if a certificate is present" do
-        cert = stub 'cert', :subject => [%w{CN host.domain.com}]
+        subj = stub 'subj'
+        cert = stub 'cert', :subject => subj
         @request.stubs(:client_cert).returns cert
+        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns 'host.domain.com'
         @handler.params(@request)[:node].should == "host.domain.com"
       end
 
       it "should resolve the node name with an ip address look-up if no certificate is present" do
         @request.stubs(:client_cert).returns nil
+
+        @handler.expects(:resolve_node).returns(:resolved_node)
+
+        @handler.params(@request)[:node].should == :resolved_node
+      end
+
+      it "should resolve the node name with an ip address look-up if CN parsing fails" do
+        subj = stub 'subj'
+        cert = stub 'cert', :subject => subj
+        @request.stubs(:client_cert).returns cert
+        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns nil
 
         @handler.expects(:resolve_node).returns(:resolved_node)
 
