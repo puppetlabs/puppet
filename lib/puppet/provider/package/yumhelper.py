@@ -79,15 +79,25 @@ def shell_out():
             if re.compile("^[ \t]*$").search(line):
                 continue
 
+            if re.compile("^Obsoleting Packages *").search(line):
+                continue
+
             # Format is:
             # Yum 1.x: name arch (epoch:)?version
             # Yum 2.0: name arch (epoch:)?version repo
+            # Yum 3.x: name.arch (epoch:)?version repo
             # epoch is optional if 0
 
             p = string.split(line)
-            pname = p[0]
-            parch = p[1]
-            pevr = p[2]
+            m = re.match("^(.*)\.(.*)$", p[0])
+            if m:
+                pname = m.group(1)
+                parch = m.group(2)
+                pevr = p[1]
+            else:
+                pname = p[0]
+                parch = p[1]
+                pevr = p[2]
 
             # Separate out epoch:version-release
             evr_re = re.compile("^(\d:)?(\S+)-(\S+)$")
