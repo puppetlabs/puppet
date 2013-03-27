@@ -100,11 +100,11 @@ describe Puppet::Parser do
       Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
       @parser.parse("unless false { $var = 1 }")
     end
-    
+
     it "should not raise an error with empty statements" do
       expect { @parser.parse("unless false { }") }.to_not raise_error
     end
-    
+
     #test for bug #13296
     it "should not override 'unless' as a parameter inside resources" do
       lambda { @parser.parse("exec {'/bin/echo foo': unless => '/usr/bin/false',}") }.should_not raise_error

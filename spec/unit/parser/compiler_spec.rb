@@ -152,7 +152,7 @@ describe Puppet::Parser::Compiler do
 
     it "should transform node class hashes into a class list" do
       node = Puppet::Node.new("mynode")
-      node.classes = {'foo'=>{'one'=>'1'}, 'bar'=>{'two'=>'2'}}
+      node.classes = {'foo'=>{'one'=>'p1'}, 'bar'=>{'two'=>'p2'}}
       compiler = Puppet::Parser::Compiler.new(node)
 
       compiler.classlist.should =~ ['foo', 'bar']
@@ -231,7 +231,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should evaluate any parameterized classes named in the node" do
-      classes = {'foo'=>{'1'=>'one'}, 'bar'=>{'2'=>'two'}}
+      classes = {'foo'=>{'p1'=>'one'}, 'bar'=>{'p2'=>'two'}}
       @node.stubs(:classes).returns(classes)
       @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
       @compiler.compile
@@ -609,7 +609,7 @@ describe Puppet::Parser::Compiler do
       # Define the given class with default parameters
       def define_class(name, parameters)
         @node.classes[name] = parameters
-        klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'1' => @ast_obj, '2' => @ast_obj})
+        klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => @ast_obj, 'p2' => @ast_obj})
         @compiler.topscope.known_resource_types.add klass
       end
 
@@ -627,20 +627,20 @@ describe Puppet::Parser::Compiler do
       it "should provide default values for parameters that have no values specified" do
         define_class('foo', {})
         compile()
-        @catalog.resource(:class, 'foo')['1'].should == "foo"
+        @catalog.resource(:class, 'foo')['p1'].should == "foo"
       end
 
       it "should use any provided values" do
-        define_class('foo', {'1' => 'real_value'})
+        define_class('foo', {'p1' => 'real_value'})
         compile()
-        @catalog.resource(:class, 'foo')['1'].should == "real_value"
+        @catalog.resource(:class, 'foo')['p1'].should == "real_value"
       end
 
       it "should support providing some but not all values" do
-        define_class('foo', {'1' => 'real_value'})
+        define_class('foo', {'p1' => 'real_value'})
         compile()
-        @catalog.resource(:class, 'Foo')['1'].should == "real_value"
-        @catalog.resource(:class, 'Foo')['2'].should == "foo"
+        @catalog.resource(:class, 'Foo')['p1'].should == "real_value"
+        @catalog.resource(:class, 'Foo')['p2'].should == "foo"
       end
 
       it "should ensure each node class is in catalog and has appropriate tags" do
@@ -648,7 +648,7 @@ describe Puppet::Parser::Compiler do
         @node.classes = klasses
         ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
         klasses.each do |name|
-          klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'1' => ast_obj, '2' => ast_obj})
+          klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => ast_obj, 'p2' => ast_obj})
           @compiler.topscope.known_resource_types.add klass
         end
         catalog = @compiler.compile
@@ -659,11 +659,11 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should fail if required parameters are missing" do
-      klass = {'foo'=>{'1'=>'one'}}
+      klass = {'foo'=>{'a'=>'one'}}
       @node.classes = klass
-      klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'1' => nil, '2' => nil})
+      klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
       @compiler.topscope.known_resource_types.add klass
-      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, "Must pass 2 to Class[Foo]")
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, "Must pass b to Class[Foo]")
     end
 
     it "should fail if invalid parameters are passed" do

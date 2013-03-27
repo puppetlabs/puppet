@@ -20,6 +20,15 @@ class Puppet::Parser::Lexer
   attr_accessor :line, :indefine
   alias :indefine? :indefine
 
+  # Returns the position on the line.
+  # This implementation always returns nil. It is here for API reasons in Puppet::Error
+  # which needs to support both --parser current, and --parser future.
+  #
+  def pos
+    # Make the lexer comply with newer API. It does not produce a pos...
+    nil
+  end
+  
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
