@@ -519,7 +519,17 @@ module Util
   end
   module_function :exit_on_fail
 
-
+  def deterministic_rand(seed,max)
+    if defined?(Random) == 'constant' && Random.class == Class
+      Random.new(seed).rand(max).to_s
+    else
+      srand(seed)
+      result = rand(max).to_s
+      srand()
+      result
+    end
+  end
+  module_function :deterministic_rand
 
 
   #######################################################################################################
