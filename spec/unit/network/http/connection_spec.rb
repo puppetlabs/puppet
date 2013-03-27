@@ -199,9 +199,13 @@ describe Puppet::Network::HTTP::Connection do
 
     def a_store_context(args)
       Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate(args[:for_server], :dns_alt_names => args[:for_aliases]).content
       ssl_context = mock('OpenSSL::X509::StoreContext')
-      ssl_context.stubs(:current_cert).returns(cert)
+      if args[:verify_raises]
+        ssl_context.stubs(:current_cert).raises("oh noes")
+      else
+        cert = Puppet::SSL::CertificateAuthority.new.generate(args[:for_server], :dns_alt_names => args[:for_aliases]).content
+        ssl_context.stubs(:current_cert).returns(cert)
+      end
       ssl_context.stubs(:error_string).returns(args[:with_error_string])
       ssl_context
     end
@@ -215,6 +219,16 @@ describe Puppet::Network::HTTP::Connection do
       expect do
         subject.request(:get, stub('request'))
       end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature for /CN=not_my_server]")
+    end
+
+    it "should provide a useful error message when verify_callback raises", :unless => Puppet.features.microsoft_windows? do
+      subject.stubs(:create_connection).
+          returns(a_connection_that_verifies(:has_passed_pre_checks => false,
+                                             :in_context => a_store_context(:verify_raises => true),
+                                             :fails_with => 'certificate verify failed'))
+      expect do
+        subject.request(:get, stub('request'))
+      end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes in verify_callback]")
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
