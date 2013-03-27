@@ -212,7 +212,37 @@ describe "Puppet::Parser::Parser" do
         expect { @parser.parse(source) }.to raise_error(/A 'case' statement does not produce a value at line 1:6/)
       end
 
+      it 'unclosed quote should be flagged for start position of string' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        $a = "xx
+        yyy
+        SOURCE
+        expect { @parser.parse(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' at line 1:6/)
+      end
+
+      it 'can produce multiple errors and raise a summary exception' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        $a = node x { }
+        SOURCE
+        Puppet.expects(:err).with("Invalid use of expression. A Node Definition does not produce a value at line 1:6")
+        Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+        expect { @parser.parse(source) }.to raise_error(/2 errors/)
+      end
+
+      it 'can produce detailed error for a bad hostname' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        node 'macbook+owned+by+name' { }
+        SOURCE
+        expect { @parser.parse(source) }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.*at line 1:6/)
+      end
+
+      it 'can produce detailed error for a hostname with interpolation' do
+        source = <<-SOURCE.gsub(/^ {8}/,'')
+        $name = 'fred'
+        node "macbook-owned-by$name" { }
+        SOURCE
+        expect { @parser.parse(source) }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:24/)
+      end
     end
   end
-
 end

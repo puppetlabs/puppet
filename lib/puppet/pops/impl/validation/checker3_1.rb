@@ -51,7 +51,7 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   def check o              ; @@check_visitor.visit_this(self, o)                ; end
 
   # Performs check if this is a vaid hostname expression
-  def hostname o,node      ; @@hostname_visitor.visit_this(self, o,node)        ; end
+  def hostname o, semantic ; @@hostname_visitor.visit_this(self, o, semantic)   ; end
 
   # Performs check if this is valid as a query
   def query o              ; @@query_visitor.visit_this(self, o)                ; end
@@ -381,46 +381,60 @@ class Puppet::Pops::Impl::Validation::Checker3_1
   #--- HOSTNAME CHECKS
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
-  def hostname_Array o, node
-    o.each {|x| hostname x, node }
+  def hostname_Array o, semantic
+    o.each {|x| hostname x, semantic }
   end
 
-  def hostname_String o, node
+  def hostname_String o, semantic
     # The 3.x checker only checks for illegal characters - if matching /[^-\w.]/ the name is invalid,
     # but this allows pathological names like "a..b......c", "----"
     # TODO: Investigate if more illegal hostnames should be flagged.
     #
     if o =~ Puppet::Pops::API::Patterns::ILLEGAL_HOSTNAME_CHARS
-      acceptor.accept(Issues::ILLEGAL_HOSTNAME_CHARS, node, :hostname => o)
+      acceptor.accept(Issues::ILLEGAL_HOSTNAME_CHARS, semantic, :hostname => o)
     end
   end
 
-  def hostname_LiteralValue o, node
-    hostname_String(o.value.to_s)
+  def hostname_LiteralValue o, semantic
+    hostname_String(o.value.to_s, o)
   end
 
-  def hostname_QualifiedName o, node
-    hostname_String(o.value.to_s, node)
+  def hostname_ConcatenatedString o, semantic
+    # Puppet 3.1. only accepts a concatenated string without interpolated expressions
+    if the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+      acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
+    elsif o.segments.size() != 1
+      # corner case, bad model, concatenation of several plain strings
+      acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o)
+    else
+      # corner case, may be ok, but lexer may have replaced with plain string, this is
+      # here if it does not
+      hostname_String(o.segments[0], o.segments[0])
+    end
   end
 
-  def hostname_QualifiedReference o, node
-    hostname_String(o.value.to_s, node)
+  def hostname_QualifiedName o, semantic
+    hostname_String(o.value.to_s, o)
   end
 
-  def hostname_LiteralNumber o, node
+  def hostname_QualifiedReference o, semantic
+    hostname_String(o.value.to_s, o)
+  end
+
+  def hostname_LiteralNumber o, semantic
     # always ok
   end
 
-  def hostname_LiteralDefault o, node
+  def hostname_LiteralDefault o, semantic
     # always ok
   end
 
-  def hostname_LiteralRegularExpression o, node
+  def hostname_LiteralRegularExpression o, semantic
     # always ok
   end
 
-  def hostname_Object o, node
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=>'hostname', :container=>node})
+  def hostname_Object o, semantic
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=>'hostname', :container=>semantic})
   end
 
   #---QUERY CHECKS

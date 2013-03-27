@@ -596,10 +596,11 @@ node_definition_expression
     | hostnames COMMA hostname { result = val[0].push(val[2]) }
 
   # Produces a LiteralExpression (string, :default, or regexp)
+  # String with interpolation is validated for better error message
   hostname
-    : NAME    { result = Factory.fqn(val[0][:value]); loc result, val[0] }
-    | STRING  { result = Factory.literal(val[0][:value]); loc result, val[0] }
-    | DEFAULT { result = Factory.literal(:default); loc result, val[0] }
+    : NAME        { result = Factory.fqn(val[0][:value]); loc result, val[0] }
+    | quotedtext  { result = val[0] } 
+    | DEFAULT     { result = Factory.literal(:default); loc result, val[0] }
     | regex
 
   # Produces Expression, since hostname is an Expression

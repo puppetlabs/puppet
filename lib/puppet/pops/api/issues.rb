@@ -225,6 +225,12 @@ module Puppet::Pops::API::Issues
     "The hostname '#{hostname}' contains illegal characters (only letters, digits, '_', '-', and '.' are allowed)"
   end
 
+  # A hostname may only contain letters, digits, '_', '-', and '.'.
+  #
+  ILLEGAL_HOSTNAME_INTERPOLATION = hard_issue :ILLEGAL_HOSTNAME_INTERPOLATION do
+    "An interpolated expression is not allowed in a hostname of a node"
+  end
+
   # Issues when an expression is used where it is not legal.
   # E.g. an arithmetic expression where a hostname is expected.
   #
