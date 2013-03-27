@@ -8,6 +8,6 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
       $random_number = fqdn_rand(30)
       $random_number_seed = fqdn_rand(30,30)") do |args|
     max = args.shift.to_i
-    srand(Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex)
-    rand(max).to_s
+    seed = Digest::MD5.hexdigest([self['::fqdn'],args].join(':')).hex
+    Puppet::Util.deterministic_rand(seed,max)
 end

@@ -526,4 +526,29 @@ describe Puppet::Util do
       subject.execute(command)
     end
   end
+
+  describe "#deterministic_rand" do
+
+    it "should not fiddle with future rand calls" do
+      Puppet::Util.deterministic_rand(123,20)
+      rand_one = rand()
+      Puppet::Util.deterministic_rand(123,20)
+      rand().should_not eql(rand_one)
+    end
+
+    if defined?(Random) == 'constant' && Random.class == Class
+      it "should not fiddle with the global seed" do
+        srand(1234)
+        Puppet::Util.deterministic_rand(123,20)
+        srand().should eql(1234)
+      end
+    # ruby below 1.9.2 variant
+    else
+      it "should set a new global seed" do
+        srand(1234)
+        Puppet::Util.deterministic_rand(123,20)
+        srand().should_not eql(1234)
+      end
+    end
+  end
 end
