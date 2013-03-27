@@ -203,7 +203,7 @@ describe "Puppet::Parser::Parser" do
         expect { @parser.parse(source) }.to raise_error(/An 'if' statement does not produce a value at line 1:6/)
       end
 
-      it 'should flag illegal use of non r-value producing if' do
+      it 'should flag illegal use of non r-value producing case' do
         source = <<-SOURCE.gsub(/^ {8}/,'')
         $a = case true {
           false :{ }
