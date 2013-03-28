@@ -6,11 +6,10 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests calls
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "transformation to Puppet AST for function calls" do
   include TransformerRspecHelper
 
-  context "When parsing calls as statements" do
+  context "When transforming calls as statements" do
     context "in top level scope" do
       it "foo()" do
         astdump(parse("foo()")).should == "(invoke foo)"
@@ -32,7 +31,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing calls as expressions" do
+  context "When transforming calls as expressions" do
     it "$a = foo()" do
       astdump(parse("$a = foo()")).should == "(= $a (call foo))"
     end
@@ -57,7 +56,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing method calls" do
+  context "When transforming method calls" do
     it "$a.foo" do
       astdump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end

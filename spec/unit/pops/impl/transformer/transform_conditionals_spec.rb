@@ -6,11 +6,10 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests containers (top level in file = expr or a block), class, define, and node
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "transformation to Puppet AST for conditionals" do
   include TransformerRspecHelper
 
-  context "When parsing if statements" do
+  context "When transforming if statements" do
     it "if true { $a = 10 }" do
       astdump(parse("if true { $a = 10 }")).should == "(if true\n  (then (= $a 10)))"
     end
@@ -39,7 +38,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing unless statements" do
+  context "When transforming unless statements" do
     # Note that Puppet 3.1 does not have an "unless x", it is encoded as "if !x"
     it "unless true { $a = 10 }" do
       astdump(parse("unless true { $a = 10 }")).should == "(if (! true)\n  (then (= $a 10)))"
@@ -57,7 +56,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing selector expressions" do
+  context "When transforming selector expressions" do
     it "$a = $b ? banana => fruit " do
       astdump(parse("$a = $b ? banana => fruit")).should ==
       "(= $a (? $b (banana => fruit)))"
@@ -84,7 +83,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing case statements" do
+  context "When transforming case statements" do
     it "case $a { a : {}}" do
       astdump(parse("case $a { a : {}}")).should ==
       ["(case $a",
@@ -122,7 +121,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing imports" do
+  context "When transforming imports" do
     it "import 'foo'" do
       astdump(parse("import 'foo'")).should == ":nop"
     end

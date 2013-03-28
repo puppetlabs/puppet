@@ -6,11 +6,10 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests containers (top level in file = expr or a block), class, define, and node
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "transformation to Puppet AST for containers" do
   include TransformerRspecHelper
 
-  context "When parsing file scope" do
+  context "When transforming file scope" do
     it "$a = 10 $b = 20" do
       astdump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"
     end
@@ -20,7 +19,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing class" do
+  context "When transforming class" do
     it "class foo {}" do
       astdump(parse("class foo {}")).should == "(class foo ())"
     end
@@ -92,7 +91,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When the parser parses define" do
+  context "When transforming define" do
     it "define foo {}" do
       astdump(parse("define foo {}")).should == "(define foo ())"
     end
@@ -133,7 +132,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing node" do
+  context "When transforming node" do
     it "node foo {}" do
       # AST can not differentiate between bare word and string
       astdump(parse("node foo {}")).should == "(node (matches 'foo') ())"

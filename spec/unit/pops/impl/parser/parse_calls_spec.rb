@@ -6,8 +6,7 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
-# Tests calls
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "egrammar parsing function calls" do
   include ParserRspecHelper
 
   context "When parsing calls as statements" do
@@ -80,7 +79,6 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
 
     it "$a.foo {|| }" do
-      #      dump(parse("$a.foo {|| }")).should == "(call-method (. $a foo) (lambda ()))"
       dump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
 

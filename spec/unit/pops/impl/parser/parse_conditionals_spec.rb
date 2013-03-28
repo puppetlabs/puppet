@@ -6,8 +6,7 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
-# Tests containers (top level in file = expr or a block), class, define, and node
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "egrammar parsing conditionals" do
   include ParserRspecHelper
 
   context "When parsing if statements" do

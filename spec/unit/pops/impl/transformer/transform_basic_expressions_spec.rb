@@ -6,10 +6,10 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "transformation to Puppet AST for basic expressions" do
   include TransformerRspecHelper
 
-  context "When the parser parses arithmetic" do
+  context "When transforming arithmetic" do
     context "with Integers" do
       it "$a = 2 + 2"   do; astdump(parse("$a = 2 + 2")).should == "(= $a (+ 2 2))"      ; end
       it "$a = 7 - 3"   do; astdump(parse("$a = 7 - 3")).should == "(= $a (- 7 3))"      ; end
@@ -61,7 +61,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When the evaluator performs boolean operations" do
+  context "When transforming boolean operations" do
     context "using operators AND OR NOT" do
       it "$a = true  and true" do; astdump(parse("$a = true and true")).should == "(= $a (&& true true))"; end
       it "$a = true  or true"  do; astdump(parse("$a = true or true")).should == "(= $a (|| true true))" ; end
@@ -98,7 +98,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing comparisons" do
+  context "When transforming comparisons" do
     context "of string values" do
       it "$a = 'a' == 'a'"  do; astdump(parse("$a = 'a' == 'a'")).should == "(= $a (== 'a' 'a'))"   ; end
       it "$a = 'a' != 'a'"  do; astdump(parse("$a = 'a' != 'a'")).should == "(= $a (!= 'a' 'a'))"   ; end
@@ -129,14 +129,14 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing Regular Expression matching" do
+  context "When transforming Regular Expression matching" do
     it "$a = 'a' =~ /.*/"    do; astdump(parse("$a = 'a' =~ /.*/")).should == "(= $a (=~ 'a' /.*/))"      ; end
     it "$a = 'a' =~ '.*'"    do; astdump(parse("$a = 'a' =~ '.*'")).should == "(= $a (=~ 'a' '.*'))"      ; end
     it "$a = 'a' !~ /b.*/"   do; astdump(parse("$a = 'a' !~ /b.*/")).should == "(= $a (!~ 'a' /b.*/))"    ; end
     it "$a = 'a' !~ 'b.*'"   do; astdump(parse("$a = 'a' !~ 'b.*'")).should == "(= $a (!~ 'a' 'b.*'))"    ; end
   end
 
-  context "When parsing Lists" do
+  context "When transforming Lists" do
     it "$a = []" do
       astdump(parse("$a = []")).should == "(= $a ([]))"
     end
@@ -162,23 +162,21 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing indexed access" do
+  context "When transforming indexed access" do
     it "$a = $b[2]" do
       astdump(parse("$a = $b[2]")).should == "(= $a (slice $b 2))"
     end
 
     it "$a = [1, 2, 3][2]" do
-      # pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference in puppet 3.x"
       astdump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
     end
 
     it "$a = {'a' => 1, 'b' => 2}['b']" do
-      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference in puppet 3.x"
       astdump(parse("$a = {'a'=>1,'b' =>2}[b]")).should == "(= $a (slice ({} ('a' 1) ('b' 2)) b))"
     end
   end
 
-  context "When parsing Hashes" do
+  context "When transforming Hashes" do
     it "should create a  Hash when evaluating a LiteralHash" do
       astdump(parse("$a = {'a'=>1,'b'=>2}")).should == "(= $a ({} ('a' 1) ('b' 2)))"
     end
@@ -200,13 +198,12 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing the 'in' operator" do
+  context "When transforming the 'in' operator" do
     it "with integer in a list" do
       astdump(parse("$a = 1 in [1,2,3]")).should == "(= $a (in 1 ([] 1 2 3)))"
     end
 
     it "with string key in a hash" do
-      # note that hash dump of ast is in key sorted order
       astdump(parse("$a = 'a' in {'x'=>1, 'a'=>2, 'y'=> 3}")).should == "(= $a (in 'a' ({} ('a' 2) ('x' 1) ('y' 3))))"
     end
 
@@ -219,7 +216,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing string interpolation" do
+  context "When transforming string interpolation" do
     it "should interpolate a bare word as a variable name, \"${var}\"" do
       astdump(parse("$a = \"$var\"")).should == "(= $a (cat '' (str $var) ''))"
     end

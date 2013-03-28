@@ -6,7 +6,7 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "egrammar parsing basic expressions" do
   include ParserRspecHelper
 
   context "When the parser parses arithmetic" do
@@ -167,14 +167,10 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
 
     it "$a = [1, 2, 3][2]" do
-      # Not pending when using egrammar
-      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference in puppet 3.x"
       dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
     end
 
     it "$a = {'a' => 1, 'b' => 2}['b']" do
-      # Not pending when using egrammar
-      #pending "hasharrayaccess only operates on variable as LHS due to clash with resource reference in puppet 3.x"
       dump(parse("$a = {'a'=>1,'b' =>2}[b]")).should == "(= $a (slice ({} ('a' 1) ('b' 2)) b))"
     end
   end

@@ -6,18 +6,22 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
 
-# Tests resource parsing.
-# @todo Add more tests for variations on end comma and end semicolon.
-# @todo Add tests for related syntax parse errors
-#
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "transformation to Puppet AST for resource declarations" do
   include TransformerRspecHelper
 
-  context "When parsing regular resource" do
+  context "When transforming regular resource" do
     it "file { 'title': }" do
       astdump(parse("file { 'title': }")).should == [
         "(resource file",
         "  ('title'))"
+      ].join("\n")
+    end
+
+    it "file { 'title': ; 'other_title': }" do
+      astdump(parse("file { 'title': ; 'other_title': }")).should == [
+        "(resource file",
+        "  ('title')",
+        "  ('other_title'))"
       ].join("\n")
     end
 
@@ -41,7 +45,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing resource defaults" do
+  context "When transforming resource defaults" do
     it "File {  }" do
       astdump(parse("File { }")).should == "(resource-defaults file)"
     end
@@ -54,7 +58,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing resource override" do
+  context "When transforming resource override" do
     it "File['x'] {  }" do
       astdump(parse("File['x'] { }")).should == "(override (slice file 'x'))"
     end
@@ -76,7 +80,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing virtual and exported resources" do
+  context "When transforming virtual and exported resources" do
     it "@@file { 'title': }" do
       astdump(parse("@@file { 'title': }")).should ==  "(exported-resource file\n  ('title'))"
     end
@@ -86,7 +90,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing class resource" do
+  context "When transforming class resource" do
     it "class { 'cname': }" do
       astdump(parse("class { 'cname': }")).should == [
         "(resource class",
@@ -114,7 +118,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing Relationships" do
+  context "When transforming Relationships" do
     it "File[a] -> File[b]" do
       astdump(parse("File[a] -> File[b]")).should == "(-> (slice file a) (slice file b))"
     end
@@ -142,7 +146,7 @@ describe Puppet::Pops::Impl::Parser::Parser do
     end
   end
 
-  context "When parsing collection" do
+  context "When transforming collection" do
     context "of virtual resources" do
       it "File <| |>" do
         astdump(parse("File <| |>")).should == "(collect file\n  (<| |>))"

@@ -189,7 +189,7 @@ class Puppet::Pops::Impl::Model::Factory
     when NilClass
       nil
     when Array
-      Factory.new(Model::BlockExpression, *body)
+      Puppet::Pops::Impl::Model::Factory.new(Model::BlockExpression, *body)
     else
       build(body)
     end
@@ -268,13 +268,13 @@ class Puppet::Pops::Impl::Model::Factory
 
   def build_QueryExpression(o, expr)
     ops = to_ops(expr)
-    o.expr = ops unless Factory.nop? ops
+    o.expr = ops unless Puppet::Pops::Impl::Model::Factory.nop? ops
     o
   end
 
   def build_UnaryExpression(o, expr)
     ops = to_ops(expr)
-    o.expr = ops unless Factory.nop? ops
+    o.expr = ops unless Puppet::Pops::Impl::Model::Factory.nop? ops
     o
   end
 
@@ -283,21 +283,21 @@ class Puppet::Pops::Impl::Model::Factory
     o
   end
 
-  # Factory helpers
+  # Puppet::Pops::Impl::Model::Factory helpers
   def f_build_unary(klazz, expr)
-    Factory.new(build(klazz.new, expr))
+    Puppet::Pops::Impl::Model::Factory.new(build(klazz.new, expr))
   end
 
   def f_build_binary_op(klazz, op, left, right)
-    Factory.new(build(klazz.new, op, left, right))
+    Puppet::Pops::Impl::Model::Factory.new(build(klazz.new, op, left, right))
   end
 
   def f_build_binary(klazz, left, right)
-    Factory.new(build(klazz.new, left, right))
+    Puppet::Pops::Impl::Model::Factory.new(build(klazz.new, left, right))
   end
 
   def f_build_vararg(klazz, left, *arg)
-    Factory.new(build(klazz.new, left, *arg))
+    Puppet::Pops::Impl::Model::Factory.new(build(klazz.new, left, *arg))
   end
 
   def f_arithmetic(op, r)
@@ -368,12 +368,12 @@ class Puppet::Pops::Impl::Model::Factory
   end
 
   def select *args
-    Factory.new(build(Model::SelectorExpression, current, *args))
+    Puppet::Pops::Impl::Model::Factory.new(build(Model::SelectorExpression, current, *args))
   end
 
   # For CaseExpression, setting the default for an already build CaseExpression
   def default r
-    current.addOptions(Factory.WHEN(:default, r).current)
+    current.addOptions(Puppet::Pops::Impl::Model::Factory.WHEN(:default, r).current)
     self
   end
 
@@ -471,7 +471,7 @@ class Puppet::Pops::Impl::Model::Factory
   # * _any other_ => ':error', all other are considered illegal
   #
   def self.resource_shape(expr)
-    expr = expr.current if expr.is_a?(Factory)
+    expr = expr.current if expr.is_a?(Puppet::Pops::Impl::Model::Factory)
     case expr
     when Model::QualifiedName
       :resource
@@ -529,7 +529,7 @@ class Puppet::Pops::Impl::Model::Factory
   # case it is returned.
   #
   def self.fqn(o)
-    o = o.current if o.is_a?(Factory)
+    o = o.current if o.is_a?(Puppet::Pops::Impl::Model::Factory)
     o = new(Model::QualifiedName, o) unless o.is_a? Model::QualifiedName
     o
   end
@@ -538,7 +538,7 @@ class Puppet::Pops::Impl::Model::Factory
   # case it is returned.
   #
   def self.fqr(o)
-    o = o.current if o.is_a?(Factory)
+    o = o.current if o.is_a?(Puppet::Pops::Impl::Model::Factory)
     o = new(Model::QualifiedReference, o) unless o.is_a? Model::QualifiedReference
     o
   end
@@ -589,7 +589,7 @@ class Puppet::Pops::Impl::Model::Factory
 
   def self.CALL_NAMED(name, rval_required, argument_list)
     unless name.kind_of?(Model::PopsObject)
-      name = Factory.fqn(name) unless name.is_a?(Factory)
+      name = Puppet::Pops::Impl::Model::Factory.fqn(name) unless name.is_a?(Puppet::Pops::Impl::Model::Factory)
     end
     new(Model::CallNamedFunctionExpression, name, rval_required, *argument_list)
   end
@@ -599,7 +599,7 @@ class Puppet::Pops::Impl::Model::Factory
   end
 
   def self.COLLECT(type_expr, query_expr, attribute_operations)
-    new(Model::CollectExpression, Factory.fqr(type_expr), query_expr, attribute_operations)
+    new(Model::CollectExpression, Puppet::Pops::Impl::Model::Factory.fqr(type_expr), query_expr, attribute_operations)
   end
 
   def self.IMPORT(files)
@@ -656,13 +656,13 @@ class Puppet::Pops::Impl::Model::Factory
   #
   def self.transform_calls(expressions)
     expressions.reduce([]) do |memo, expr|
-      expr = expr.current if expr.is_a?(Factory)
+      expr = expr.current if expr.is_a?(Puppet::Pops::Impl::Model::Factory)
       name = memo[-1]
       if name.is_a? Model::QualifiedName
         if name.value() == 'import'
-          memo[-1] = Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
+          memo[-1] = Puppet::Pops::Impl::Model::Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
         else
-          memo[-1] = Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+          memo[-1] = Puppet::Pops::Impl::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
         end
       else
         memo << expr

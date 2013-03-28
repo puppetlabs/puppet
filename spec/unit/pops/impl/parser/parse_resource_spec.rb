@@ -6,11 +6,7 @@ require 'puppet/pops/impl'
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
 
-# Tests resource parsing.
-# @todo Add more tests for variations on end comma and end semicolon.
-# @todo Add tests for related syntax parse errors
-#
-describe Puppet::Pops::Impl::Parser::Parser do
+describe "egrammar parsing resource declarations" do
   include ParserRspecHelper
 
   context "When parsing regular resource" do
@@ -27,6 +23,36 @@ describe Puppet::Pops::Impl::Parser::Parser do
         "  ('title'",
         "    (path => '/somewhere')",
         "    (mode => 0777)))"
+      ].join("\n")
+    end
+
+    it "file { 'title': path => '/somewhere', }" do
+      dump(parse("file { 'title': path => '/somewhere', }")).should == [
+        "(resource file",
+        "  ('title'",
+        "    (path => '/somewhere')))"
+      ].join("\n")
+    end
+
+    it "file { 'title': , }" do
+      dump(parse("file { 'title': , }")).should == [
+        "(resource file",
+        "  ('title'))"
+      ].join("\n")
+    end
+
+    it "file { 'title': ; }" do
+      dump(parse("file { 'title': ; }")).should == [
+        "(resource file",
+        "  ('title'))"
+      ].join("\n")
+    end
+
+    it "file { 'title': ; 'other_title': }" do
+      dump(parse("file { 'title': ; 'other_title': }")).should == [
+        "(resource file",
+        "  ('title')",
+        "  ('other_title'))"
       ].join("\n")
     end
 
