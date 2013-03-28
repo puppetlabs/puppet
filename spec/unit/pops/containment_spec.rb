@@ -1,5 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/api/containment'
 require File.join(File.dirname(__FILE__), '/impl/factory_rspec_helper')
 
 describe Puppet::Pops::API::Containment do

@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/pops/impl/base_scope'
+require 'puppet/pops/impl'
 
 BaseScope = Puppet::Pops::Impl::BaseScope
 

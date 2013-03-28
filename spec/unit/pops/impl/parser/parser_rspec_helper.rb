@@ -1,9 +1,6 @@
 require 'puppet/pops/api'
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/impl/model/factory'
-require 'puppet/pops/impl/model/model_tree_dumper'
-require 'puppet/pops/impl/parser/eparser'
-require 'puppet/pops/impl/top_scope'
+require 'puppet/pops/impl'
+
 require File.join(File.dirname(__FILE__), '/../factory_rspec_helper')
 
 module ParserRspecHelper

@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/pops/impl/top_scope'
+require 'puppet/pops/impl'
 
 TopScope = Puppet::Pops::Impl::TopScope
 

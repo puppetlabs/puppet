@@ -21,7 +21,6 @@
 # TODO: Anonymous Enums - probably ok, but they can be named (don't know if that is meaningsful)
 
 require 'rgen/metamodel_builder'
-require 'puppet/pops/api'
 
 module Puppet; module Pops; module API; end; end; end;
 
@@ -31,9 +30,9 @@ module Puppet::Pops::API::Model
   #   are added to RGen (in some version after 0.6.2).
   #
   class PopsObject < RGen::MetamodelBuilder::MMBase
-    include Puppet::Pops::Visitable
-    include Puppet::Pops::Adaptable
-    include Puppet::Pops::Containment
+    include Puppet::Pops::API::Visitable
+    include Puppet::Pops::API::Adaptable
+    include Puppet::Pops::API::Containment
     abstract
   end
 

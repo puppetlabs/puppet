@@ -1,5 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl'
 
 module Puppet::Pops::Impl
   # This is a special inner scope class that implements mappint of numeric variables

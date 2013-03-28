@@ -1,6 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl'
-require 'puppet/pops/impl/match_scope'
 require 'uri'
 
 module Puppet::Pops::Impl
@@ -152,7 +150,3 @@ module Puppet::Pops::Impl
 
   end
 end
-
-require 'puppet/pops/impl/local_scope'
-require 'puppet/pops/impl/named_scope'
-

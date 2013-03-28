@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/pops/api/issues'
-require 'puppet/pops/impl/model/model_label_provider'
+require 'puppet/pops/api'
+require 'puppet/pops/impl'
 
 describe "Puppet::Pops::API::Issues" do
   include Puppet::Pops::API::Issues

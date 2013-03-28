@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/pops/impl/parser/lexer'
+require 'puppet/pops/impl'
 
 # This is a special matcher to match easily lexer output
 RSpec::Matchers.define :be_like do |*expected|

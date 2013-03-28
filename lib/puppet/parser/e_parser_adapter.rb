@@ -1,10 +1,5 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/api/validation'
-
-require 'puppet/pops/impl/parser/eparser'
-require 'puppet/pops/impl/model/ast_transformer'
-require 'puppet/pops/impl/model/ast_tree_dumper'
-require 'puppet/pops/impl/validation/validator_factory_3_1'
+require 'puppet/pops/api'
+require 'puppet/pops/impl'
 
 module Puppet; module Parser; end; end;
 # Adapts an egrammar/eparser to respond to the public API of the classic parser

@@ -1,7 +1,5 @@
 require 'puppet/pops/api'
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/impl/model/factory'
-require 'puppet/pops/impl/model/model_tree_dumper'
+require 'puppet/pops/impl'
 
 module FactoryRspecHelper
   def literal(x)

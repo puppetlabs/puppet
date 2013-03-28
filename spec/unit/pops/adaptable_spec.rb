@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/pops/api/adaptable'
+require 'puppet/pops/api'
 
 describe Puppet::Pops::API::Adaptable do
   it "should add method is_adaptable? to a class that includes it" do

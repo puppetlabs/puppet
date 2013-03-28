@@ -1,4 +1,3 @@
-require 'puppet/pops/impl/loader/base_loader'
 require 'dir'
 require 'file'
 

@@ -1,9 +1,5 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/api/visitor'
+require 'puppet/pops/api'
 require 'puppet/parser/ast'
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/api/adapters'
-require 'puppet/pops/api/utils'
 
 module Puppet; module Pops; module Impl; module Model
 

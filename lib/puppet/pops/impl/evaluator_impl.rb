@@ -1,7 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl/call_operator'
-require 'puppet/pops/impl/compare_operator'
-require 'puppet/pops/api/utils'
 require 'rgen/ecore/ecore'
 
 module Puppet; module Pops; module Impl; end; end; end;

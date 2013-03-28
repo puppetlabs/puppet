@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/pops/impl/match_scope'
+require 'puppet/pops/impl'
 
 MatchScope = Puppet::Pops::Impl::MatchScope
 

@@ -1,6 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl/loader/uri_helper'
-require 'rubygems'
 require 'set'
 require 'file'
 

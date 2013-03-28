@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/pops/api/label_provider'
+require 'puppet/pops/api'
 
 describe Puppet::Pops::API::LabelProvider do
   let(:labeler) { Puppet::Pops::API::LabelProvider.new }

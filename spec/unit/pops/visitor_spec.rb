@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/pops/api/visitable'
-require 'puppet/pops/api/visitor'
+require 'puppet/pops/api'
 
 describe Puppet::Pops::API::Visitor do
   describe "A visitor and a visitable in a configuration with min and max args set to 0" do

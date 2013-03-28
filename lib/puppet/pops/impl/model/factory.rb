@@ -1,7 +1,4 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/api/adapters'
-require 'puppet/pops/api/utils'
-require 'puppet/pops/api/origin'
+require 'puppet/pops/api'
 
 module Puppet; module Pops; module Impl; module Model
 # Factory is a helper class that makes construction of a Pops Model

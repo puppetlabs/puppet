@@ -2,7 +2,7 @@ require 'puppet/pops/api'
 
 module Puppet; module Pops; module Impl; end; end; end;
 
-module Puppet::Pops::Imple::Loader
+module Puppet::Pops::Impl::Loader
   # Abstract loader implementation
   # A derived class should implement #find(name, executor), and possible handle "miss caching". This
   # abstract implementation handles caching of found items.

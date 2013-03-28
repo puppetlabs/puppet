@@ -1,6 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl'
-require 'puppet/pops/impl/base_scope'
 
 module Puppet::Pops::Impl
   # An ObjectScope wraps an ecore object and makes all structural features

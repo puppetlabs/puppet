@@ -46,7 +46,7 @@ module Puppet::Parser
       # Since RGen is optional, there is nothing specifying its version.
       # It is not installed in any controlled way, so not possible to use gems to check (it may be installed some other way).
       # Instead check that "eContainer, and eContainingFeature" has been installed.
-      require 'puppet/pops/api/model/model'
+      require 'puppet/pops/api'
       begin
         litstring = Puppet::Pops::API::Model::LiteralString.new();
         container = Puppet::Pops::API::Model::ArithmeticExpression.new();

@@ -1,6 +1,3 @@
-require 'puppet/pops/api'
-require 'puppet/pops/api/patterns'
-
 module Puppet::Pops::API
   # Provides utility methods
   module Utils

@@ -1,6 +1,4 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/impl/model/tree_dumper'
-require 'puppet/pops/api/visitor'
+require 'puppet/pops/api'
 
 module Puppet; module Pops; module Impl; module Model
 # Dumps a Pops::Model in reverse polish notation; i.e. LISP style

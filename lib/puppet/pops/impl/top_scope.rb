@@ -1,7 +1,4 @@
 require 'puppet/pops/api'
-require 'puppet/pops/impl'
-require 'puppet/pops/impl/base_scope'
-require 'pops/impl/type_creator'
 
 module Puppet::Pops::Impl
   class TopScope < BaseScope

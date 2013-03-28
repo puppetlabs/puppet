@@ -1,5 +1,6 @@
 require 'puppet/pops/api'
 require 'rgen/ecore/ecore'
+
 module Puppet; module Pops; module Impl
 module Loader
 

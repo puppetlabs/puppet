@@ -1,5 +1,4 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/api/visitor'
+require 'puppet/pops/api'
 
 module Puppet; module Pops; module Impl; module Model
 # Base class for formatted textual dump of a "model"

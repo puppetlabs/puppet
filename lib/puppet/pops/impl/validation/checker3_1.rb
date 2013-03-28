@@ -1,8 +1,4 @@
-require 'puppet/pops/api/validation'
-require 'puppet/pops/api/issues'
-require 'puppet/pops/api/patterns'
 require 'puppet/pops/api'
-require 'puppet/pops/api/model/model'
 
 module Puppet; module Pops; module Impl; module Validation; end; end; end; end;
 

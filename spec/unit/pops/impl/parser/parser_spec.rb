@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/pops/impl/parser/eparser'
+require 'puppet/pops/impl'
 require 'puppet/pops/api'
 
 describe Puppet::Pops::Impl::Parser::Parser do

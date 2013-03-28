@@ -1,4 +1,3 @@
-require 'puppet/pops/impl/loader/uri_helper'
 require 'delegator'
 
 module Puppet; module Pops; module Impl; end; end; end

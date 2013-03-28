@@ -1,7 +1,4 @@
-require 'puppet/pops/impl/model/model_label_provider'
-require 'puppet/pops/api/validation'
-require 'puppet/pops/impl/validation/checker3_1'
-require 'puppet/pops/api/issues'
+require 'puppet/pops/api'
 
 module Puppet; end
 

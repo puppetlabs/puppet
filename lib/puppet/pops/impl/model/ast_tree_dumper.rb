@@ -1,7 +1,4 @@
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/impl/model/tree_dumper'
-require 'puppet/pops/api/visitor'
-require 'puppet/pops/api/utils'
+require 'puppet/pops/api'
 require 'puppet/parser/ast'
 
 module Puppet; module Pops; module Impl; module Model

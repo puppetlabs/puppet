@@ -1,8 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/pops/api/model/model'
-require 'puppet/pops/impl/model/factory'
-require 'puppet/pops/impl/model/model_tree_dumper'
+require 'puppet/pops/api'
+require 'puppet/pops/impl'
 
 describe Puppet::Pops::API::Model do
   it "should be possible to create an instance of a model object" do

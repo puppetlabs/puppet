@@ -7,8 +7,8 @@ module Puppet; module Pops; module API; end; end; end
 #
 module  Puppet::Pops::API::Runtime
   class RuntimeObject < RGen::MetamodelBuilder::MMBase
-    include Puppet::Pops::Visitable
-    include Puppet::Pops::Adaptable
+    include Puppet::Pops::API::Visitable
+    include Puppet::Pops::API::Adaptable
     abstract
   end
 
