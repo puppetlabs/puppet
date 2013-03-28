@@ -62,7 +62,11 @@ Puppet::Type.newtype(:scheduled_task) do
       completed successfully'.  It is recommended that you either
       choose another user to run the scheduled task, or alter the
       security policy to allow v1 scheduled tasks to run as the
-      'SYSTEM' account.  Defaults to 'SYSTEM'."
+      'SYSTEM' account.  Defaults to 'SYSTEM'.
+
+      Please also note that Puppet must be running as a privileged user
+      in order to manage `scheduled_task` resources. Running as an
+      unprivileged user will result in 'access denied' errors."
 
     defaultto :system
 
