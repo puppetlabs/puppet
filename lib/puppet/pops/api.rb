@@ -2,33 +2,33 @@
 
 module Puppet
   module Pops
+    # Raised if a referenced value does not exist (has not been set) and a method
+    # guarantees a value result that may include nil.
+    class NoValueError < NameError
+    end
+
+    # Raised if an attempt is made to change/set an immutable value
+    class ImmutableError < StandardError
+    end
+
+    # Raised when there is an attempt to set a reserved name
+    class ReservedNameError < ArgumentError
+    end
+
+    # Raised when an implementation of a method is pending (to make it fail in a manner
+    # different than does not respond to...
+    class NotImplementedError
+    end
+
+    # Raised when an API method is not implemented (internal error)
+    class APINotImplementedError < NotImplementedError
+    end
+
+    # Raised when there is an evaluation error
+    class EvaluationError < StandardError
+    end
+
     module API
-      # Raised if a referenced value does not exist (has not been set) and a method
-      # guarantees a value result that may include nil.
-      class NoValueError < NameError
-      end
-
-      # Raised if an attempt is made to change/set an immutable value
-      class ImmutableError < StandardError
-      end
-
-      # Raised when there is an attempt to set a reserved name
-      class ReservedNameError < ArgumentError
-      end
-
-      # Raised when an implementation of a method is pending (to make it fail in a manner
-      # different than does not respond to...
-      class NotImplementedError
-      end
-
-      # Raised when an API method is not implemented (internal error)
-      class APINotImplementedError < NotImplementedError
-      end
-
-      # Raised when there is an evaluation error
-      class EvaluationError < StandardError
-      end
-
       require 'puppet/pops/api/patterns'
       require 'puppet/pops/api/utils'
 
@@ -58,24 +58,3 @@ end
 # Unfinished
 # require 'puppet/pops/api/model/catalog'
 # require 'puppet/pops/api/model/runtime'
-
-#--
-# Map API names
-# This enables reference to the names in the API without future concern that support for more
-# than one API requires clients to update all their named references
-module Puppet::Pops
-  NamedEntry              = Puppet::Pops::API::NamedEntry
-  Scope                   = Puppet::Pops::API::Scope
-  NoValueError            = Puppet::Pops::API::NoValueError
-  ImmutableError          = Puppet::Pops::API::ImmutableError
-  ReservedNameError       = Puppet::Pops::API::ReservedNameError
-  NotImplementedError     = Puppet::Pops::API::NotImplementedError
-  APINotImplementedError  = Puppet::Pops::API::APINotImplementedError
-  EvaluationError         = Puppet::Pops::API::EvaluationError
-  Adaptable               = Puppet::Pops::API::Adaptable
-  Visitable               = Puppet::Pops::API::Visitable
-  Visitor                 = Puppet::Pops::API::Visitor
-  Evaluator               = Puppet::Pops::API::Evaluator
-  Containment             = Puppet::Pops::API::Containment
-end
-

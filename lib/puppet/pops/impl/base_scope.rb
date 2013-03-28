@@ -1,6 +1,6 @@
 require 'uri'
 
-class Puppet::Pops::Impl::BaseScope < Puppet::Pops::Scope
+class Puppet::Pops::Impl::BaseScope < Puppet::Pops::API::Scope
   include Puppet::Pops::API::Utils
   Utils = Puppet::Pops::API::Utils
   def initialize
@@ -46,7 +46,7 @@ class Puppet::Pops::Impl::BaseScope < Puppet::Pops::Scope
       origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : ""
       raise Puppet::Pops::ImmutableError.new("Assigning to already assigned variable named '#{name}' at #{origin_label(origin)}.#{origin_info}")
     end
-    variables[name] = Puppet::Pops::NamedEntry.new(:variable, name, value, origin).freeze
+    variables[name] = Puppet::Pops::API::NamedEntry.new(:variable, name, value, origin).freeze
   end
 
   # API IMPL
@@ -58,7 +58,7 @@ class Puppet::Pops::Impl::BaseScope < Puppet::Pops::Scope
       origin_info = entry.origin ? " Originally set at #{origin_label(entry.origin)}." : ""
       raise Puppet::Pops::ImmutableError.new("Assigning to already assigned #{type} named '#{name}' at #{origin_label(origin)}.#{origin_info}")
     end
-    t[name] = Puppet::Pops::NamedEntry.new(type, name, value, origin).freeze
+    t[name] = Puppet::Pops::API::NamedEntry.new(type, name, value, origin).freeze
   end
 
   # API IMPL

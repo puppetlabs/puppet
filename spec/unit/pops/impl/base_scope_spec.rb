@@ -73,14 +73,14 @@ describe Puppet::Pops::Impl::BaseScope do
     it "should protect immutable data entries" do
       scope = BaseScope.new
       scope.set_data(:file, 'a', 1)
-      expect { scope.set_data(:file, 'a', 2) }.to raise_error(Puppet::Pops::API::ImmutableError)
+      expect { scope.set_data(:file, 'a', 2) }.to raise_error(Puppet::Pops::ImmutableError)
       scope[:file, 'a'].value.should == 1
     end
 
     it "should protect immutable variable entries" do
       scope = BaseScope.new
       scope.set_variable('a', 1)
-      expect { scope.set_variable('a', 2) }.to raise_error(Puppet::Pops::API::ImmutableError)
+      expect { scope.set_variable('a', 2) }.to raise_error(Puppet::Pops::ImmutableError)
       scope['a'].value.should == 1
     end
 

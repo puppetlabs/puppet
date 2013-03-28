@@ -8,7 +8,7 @@ class Puppet::Pops::Impl::MatchScope
   end
 
   def get_entry(n)
-    Puppet::Pops::NamedEntry.new(:variable, n.to_s, @match_data[n], @origin).freeze
+    Puppet::Pops::API::NamedEntry.new(:variable, n.to_s, @match_data[n], @origin).freeze
   end
 
   def [](n)

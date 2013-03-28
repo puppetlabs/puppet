@@ -62,7 +62,7 @@ module Puppet::Pops::Impl::Loader
         raise Puppet::Pops::ImmutableError.new("Attempt to redefine item named '#{name}' at #{origin_label(origin)}.#{origin_info}")
       end
       # TODO: the classification of NamedEntry type is smelly, the :loaded is not used
-      @named_values[name] = Puppet::Pops::NamedEntry.new(:loaded, name, value, origin).freeze
+      @named_values[name] = Puppet::Pops::API::NamedEntry.new(:loaded, name, value, origin).freeze
     end
 
     private
