@@ -110,6 +110,8 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
 
   # See if we can match the record against an existing cron job.
   def self.match(record, resources)
+    # if the record is named, do not even bother (#19876)
+    return false if record[:name]
     resources.each do |name, resource|
       # Match the command first, since it's the most important one.
       next unless record[:target] == resource[:target]
