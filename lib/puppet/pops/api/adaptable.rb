@@ -1,5 +1,3 @@
-module Puppet; module Pops; module API; end; end; end
-
 # Adaptable is a mix-in module that adds adaptability to a class.
 # This means that an adapter can
 # associate itself with an instance of the class and store additional data/have behavior.
@@ -79,7 +77,7 @@ module Puppet::Pops::API::Adaptable
     # @return [nil] if the given object o has not been adapted by the receiving adapter
     # @raise [ArgumentError] if the object is not adaptable
     #
-    def Adapter.get(o)
+    def self.get(o)
       attr_name = :"@#{instance_var_name(self.name)}"
       if existing = o.instance_variable_defined?(attr_name)
         o.instance_variable_get(attr_name)
@@ -104,7 +102,7 @@ module Puppet::Pops::API::Adaptable
     # @return [Adapter<self>] an adapter of the same class as the receiver of the call
     # @raise [ArgumentError] if the given object o is not adaptable
     #
-    def Adapter.adapt(o, &block)
+    def self.adapt(o, &block)
       raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       attr_name = :"@#{instance_var_name(self.name)}"
       adapter = if existing = o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
@@ -140,7 +138,7 @@ module Puppet::Pops::API::Adaptable
     # @return [Adapter<self>] an adapter of the same class as the receiver of the call
     # @raise [ArgumentError] if the given object o is not adaptable
     #
-    def Adapter.adapt_new(o, &block)
+    def self.adapt_new(o, &block)
       raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       adapter = associate_adapter(create_adapter(o), o)
       if block_given?
@@ -159,7 +157,7 @@ module Puppet::Pops::API::Adaptable
     # @return [Adapter] if an adapter was set
     # @return [nil] if the adapter has not been set
     #
-    def Adapter.clear(o)
+    def self.clear(o)
       attr_name = :"@#{instance_var_name(self.name)}"
       if o.instance_variable_defined?(attr_name)
         o.send(:remove_instance_variable, attr_name)
@@ -175,7 +173,7 @@ module Puppet::Pops::API::Adaptable
     #   specialization may want to initialize itself differently depending on the object it is adapting.
     # @return [Adapter<self>] instance of the subclass of Adapter receiving the call
     #
-    def Adapter.create_adapter(o)
+    def self.create_adapter(o)
       new
     end
 
@@ -184,7 +182,7 @@ module Puppet::Pops::API::Adaptable
     # @param o [Adaptable] the object to adapt
     # @return [adapter] the given adapter
     #
-    def Adapter.associate_adapter(adapter, o)
+    def self.associate_adapter(adapter, o)
       attr_name = :"@#{instance_var_name(adapter.class.name)}"
       o.instance_variable_set(attr_name, adapter)
       adapter
@@ -198,7 +196,7 @@ module Puppet::Pops::API::Adaptable
     # @api private
     # @private
     #
-    def Adapter.instance_var_name(name)
+    def self.instance_var_name(name)
       name.split("::").join('_')
     end
   end

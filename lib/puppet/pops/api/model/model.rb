@@ -22,8 +22,6 @@
 
 require 'rgen/metamodel_builder'
 
-module Puppet; module Pops; module API; end; end; end;
-
 module Puppet::Pops::API::Model
   # A base class for modeled objects that makes them Visitable, and Adaptable.
   # @todo currently  includes Containment which will not be needed when the corresponding methods

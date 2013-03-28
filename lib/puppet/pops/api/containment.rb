@@ -1,5 +1,3 @@
-module Puppet; module Pops; module API; end; end; end;
-
 # FIXME: This module should be updated when a newer version of RGen (>0.6.2) adds required meta model "e-method" supports.
 #
 module Puppet::Pops::API::Containment

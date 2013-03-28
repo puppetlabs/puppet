@@ -1,5 +1,3 @@
-module Puppet; module Pops; module API; end; end; end;
-
 # The Patterns module contains common regular expression patters for the Puppet DSL language
 module Puppet::Pops::API::Patterns
 

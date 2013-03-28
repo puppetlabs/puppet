@@ -1,5 +1,3 @@
-module Puppet; module Pops; module API; end; end; end;
-
 # The Adapters module contains adapters for Documentation, Origin, SourcePosition, and Loader.
 #
 module Puppet::Pops::API::Adapters

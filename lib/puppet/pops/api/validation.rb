@@ -1,5 +1,3 @@
-module Puppet; module Pops; module API; end; end; end
-
 # A module with base functionality for validation of a model.
 #
 # * SeverityProducer - produces a severity (:error, :warning, :ignore) for a given Issue

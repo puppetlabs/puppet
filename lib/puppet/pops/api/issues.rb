@@ -1,9 +1,3 @@
-module Puppet; end
-
-module Puppet::Pops; end
-
-module Puppet::Pops::API; end
-
 # Defines classes to deal with issues, and message formatting and defines constants with Issues.
 # @api public
 #
