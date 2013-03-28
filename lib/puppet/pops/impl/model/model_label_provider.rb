@@ -1,7 +1,3 @@
-require 'puppet/pops/api'
-
-module Puppet; module Pops; module Impl; module Model; end; end; end; end
-
 # A provider of labels for model object, producing a human name for the model object.
 # As an example, if object is an ArithmeticExpression with operator +, `#a_an(o)` produces "a '+' Expression",
 # #the(o) produces "the + Expression", and #label produces "+ Expression".

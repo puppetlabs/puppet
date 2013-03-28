@@ -1,12 +1,8 @@
+require 'puppet/pops/api'
+
 module Puppet
   module Pops
     module Impl
-      module Parser
-        require 'puppet/pops/impl/parser/eparser'
-        require 'puppet/pops/impl/parser/parser_support'
-        require 'puppet/pops/impl/parser/lexer'
-      end
-
       module Model
         require 'puppet/pops/impl/model/tree_dumper'
         require 'puppet/pops/impl/model/ast_transformer'
@@ -16,14 +12,16 @@ module Puppet
         require 'puppet/pops/impl/model/model_label_provider'
       end
 
+      module Parser
+        require 'puppet/pops/impl/parser/eparser'
+        require 'puppet/pops/impl/parser/parser_support'
+        require 'puppet/pops/impl/parser/lexer'
+      end
+
       module Validation
         require 'puppet/pops/impl/validation/checker3_1'
         require 'puppet/pops/impl/validation/validator_factory_3_1'
       end
-
-      require 'puppet/pops/impl/evaluator_impl'
-      require 'puppet/pops/impl/call_operator'
-      require 'puppet/pops/impl/compare_operator'
 
       # Unfinished
       # require 'puppet/pops/impl/type_creator'
@@ -34,6 +32,10 @@ module Puppet
       require 'puppet/pops/impl/named_scope'
       require 'puppet/pops/impl/object_scope'
       require 'puppet/pops/impl/top_scope'
+
+      require 'puppet/pops/impl/evaluator_impl'
+      require 'puppet/pops/impl/call_operator'
+      require 'puppet/pops/impl/compare_operator'
 
       # Unfinished
       # module Loader

@@ -9,8 +9,6 @@ module Puppet
   class LexError < RuntimeError; end
 end
 
-module Puppet; module Pops; module Impl; module Parser; end; end; end; end
-
 class Puppet::Pops::Impl::Parser::Lexer
   extend Forwardable
 

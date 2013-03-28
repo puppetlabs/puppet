@@ -1,27 +1,23 @@
 # CallOperator
 # Call operator is part of evaluation
 #
-module Puppet; module Pops; end; end
+class Puppet::Pops::Impl::CallOperator
+  attr_reader :eval_visitor
+  def initialize
+    @call_visitor = Puppet::Pops::API::Visitor.new(self, "call", 2, 2)
+  end
 
-module Puppet::Pops::Impl
-  class CallOperator
-    attr_reader :eval_visitor
-    def initialize
-      @call_visitor = Puppet::Pops::API::Visitor.new(self, "call", 2, 2)
+  def call (o, scope, *params, &block)
+    x = @call_visitor.visit(o, scope, params)
+    if block_given?
+      block.call(x)
+    else
+      x
     end
+  end
 
-    def call (o, scope, *params, &block)
-      x = @call_visitor.visit(o, scope, params)
-      if block_given?
-        block.call(x)
-      else
-        x
-      end
-    end
+  protected
 
-    protected
-
-    def call_FunctionExpression o, scope, params
-    end
+  def call_FunctionExpression o, scope, params
   end
 end

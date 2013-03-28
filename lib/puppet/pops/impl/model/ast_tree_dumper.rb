@@ -1,12 +1,10 @@
-require 'puppet/pops/api'
 require 'puppet/parser/ast'
 
-module Puppet; module Pops; module Impl; module Model
 # Dumps a Pops::Model in reverse polish notation; i.e. LISP style
 # The intention is to use this for debugging output
 # TODO: BAD NAME - A DUMP is a Ruby Serialization
 #
-class AstTreeDumper < TreeDumper
+class Puppet::Pops::Impl::Model::AstTreeDumper < Puppet::Pops::Impl::Model::TreeDumper
   AST = Puppet::Parser::AST
   def dump_LiteralNumber o
     case o.radix
@@ -376,4 +374,3 @@ class AstTreeDumper < TreeDumper
     o.nil? || o.is_a?(Model::Nop) || o.is_a?(AST::Nop)
   end
 end
-end; end; end; end

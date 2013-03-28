@@ -1,16 +1,13 @@
-require 'puppet/pops/api'
 require 'puppet/parser/ast'
 
-module Puppet; module Pops; module Impl; module Model
-
-AST = Puppet::Parser::AST
-Model = Puppet::Pops::API::Model
 # The receiver of `import(file)` calls; once per imported file, or nil if imports are ignored
 #
 # Transforms a Pops::Model to classic Puppet AST.
 # TODO: Documentation is currently skipped completely (it is only used for Rdoc)
 #
-class AstTransformer
+class Puppet::Pops::Impl::Model::AstTransformer
+  AST = Puppet::Parser::AST
+  Model = Puppet::Pops::API::Model
 
   attr_reader :importer
   def initialize(source_file = "unknown-file", importer=nil)
@@ -636,6 +633,4 @@ class AstTransformer
   def is_nop? o
     o.nil? || o.is_a?(Model::Nop)
   end
-
 end
-end; end; end; end

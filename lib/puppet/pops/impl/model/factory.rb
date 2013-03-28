@@ -1,6 +1,3 @@
-require 'puppet/pops/api'
-
-module Puppet; module Pops; module Impl; module Model
 # Factory is a helper class that makes construction of a Pops Model
 # much more convenient. It can be viewed as a small internal DSL for model
 # constructions.
@@ -9,7 +6,7 @@ module Puppet; module Pops; module Impl; module Model
 # @todo All those uppercase methods ... they look bad in one way, but stand out nicely in the grammar...
 #   decide if they should change into lower case names (some of the are lower case)...
 #
-class Factory
+class Puppet::Pops::Impl::Model::Factory
   Model = Puppet::Pops::API::Model
 
   attr_accessor :current
@@ -473,7 +470,7 @@ class Factory
   # * `Name[] { }` => `:override`, ioverrides nstances referenced by LHS
   # * _any other_ => ':error', all other are considered illegal
   #
-  def Factory.resource_shape(expr)
+  def self.resource_shape(expr)
     expr = expr.current if expr.is_a?(Factory)
     case expr
     when Model::QualifiedName
@@ -490,48 +487,48 @@ class Factory
   end
   # Factory starting points
 
-  def Factory.literal(o);                   new(o);                                                 end
+  def self.literal(o);                   new(o);                                                 end
 
-  def Factory.minus(o);                     new(o).minus;                                           end
+  def self.minus(o);                     new(o).minus;                                           end
 
-  def Factory.var(o);                       new(o).var;                                             end
+  def self.var(o);                       new(o).var;                                             end
 
-  def Factory.block(*args);                 new(Model::BlockExpression, *args);                     end
+  def self.block(*args);                 new(Model::BlockExpression, *args);                     end
 
-  def Factory.string(*args);                new(Model::ConcatenatedString, *args);                  end
+  def self.string(*args);                new(Model::ConcatenatedString, *args);                  end
 
-  def Factory.text(o);                      new(o).text;                                            end
+  def self.text(o);                      new(o).text;                                            end
 
-  def Factory.IF(test_e,then_e,else_e);     new(Model::IfExpression, test_e, then_e, else_e);       end
+  def self.IF(test_e,then_e,else_e);     new(Model::IfExpression, test_e, then_e, else_e);       end
 
-  def Factory.UNLESS(test_e,then_e,else_e); new(Model::UnlessExpression, test_e, then_e, else_e);   end
+  def self.UNLESS(test_e,then_e,else_e); new(Model::UnlessExpression, test_e, then_e, else_e);   end
 
-  def Factory.CASE(test_e,*options);        new(Model::CaseExpression, test_e, *options);           end
+  def self.CASE(test_e,*options);        new(Model::CaseExpression, test_e, *options);           end
 
-  def Factory.WHEN(values_list, block);     new(Model::CaseOption, values_list, block);             end
+  def self.WHEN(values_list, block);     new(Model::CaseOption, values_list, block);             end
 
-  def Factory.MAP(match, value);            new(Model::SelectorEntry, match, value);                end
+  def self.MAP(match, value);            new(Model::SelectorEntry, match, value);                end
 
-  def Factory.TYPE(name, super_name=nil);   new(Model::CreateTypeExpression, name, super_name);     end
+  def self.TYPE(name, super_name=nil);   new(Model::CreateTypeExpression, name, super_name);     end
 
-  def Factory.ATTR(name, type_expr=nil);    new(Model::CreateAttributeExpression, name, type_expr); end
+  def self.ATTR(name, type_expr=nil);    new(Model::CreateAttributeExpression, name, type_expr); end
 
-  def Factory.ENUM(*args);                  new(Model::CreateEnumExpression, *args);                end
+  def self.ENUM(*args);                  new(Model::CreateEnumExpression, *args);                end
 
-  def Factory.KEY_ENTRY(key, val);          new(Model::KeyedEntry, key, val);                       end
+  def self.KEY_ENTRY(key, val);          new(Model::KeyedEntry, key, val);                       end
 
-  def Factory.HASH(entries);                new(Model::LiteralHash, *entries);                      end
+  def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
-  def Factory.LIST(entries);                new(Model::LiteralList, *entries);                      end
+  def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 
-  def Factory.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
+  def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
 
-  def Factory.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
+  def self.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
-  def Factory.fqn(o)
+  def self.fqn(o)
     o = o.current if o.is_a?(Factory)
     o = new(Model::QualifiedName, o) unless o.is_a? Model::QualifiedName
     o
@@ -540,26 +537,26 @@ class Factory
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
-  def Factory.fqr(o)
+  def self.fqr(o)
     o = o.current if o.is_a?(Factory)
     o = new(Model::QualifiedReference, o) unless o.is_a? Model::QualifiedReference
     o
   end
 
-  def Factory.TEXT(expr)
+  def self.TEXT(expr)
     new(Model::TextExpression, expr)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
   # same result or not yet - refactor into one method when decided.
   #
-  def Factory.QNAME(name)
+  def self.QNAME(name)
     new(Model::QualifiedName, name)
   end
 
   # Convert input string to either a qualified name, or a LiteralNumber with radix
   #
-  def Factory.QNAME_OR_NUMBER(name)
+  def self.QNAME_OR_NUMBER(name)
     if n_radix = Puppet::Pops::API::Utils.to_n_with_radix(name)
       new(Model::LiteralNumber, *n_radix)
     else
@@ -567,70 +564,70 @@ class Factory
     end
   end
 
-  def Factory.QREF(name)
+  def self.QREF(name)
     new(Model::QualifiedReference, name)
   end
 
-  def Factory.VIRTUAL_QUERY(query_expr)
+  def self.VIRTUAL_QUERY(query_expr)
     new(Model::VirtualQuery, query_expr)
   end
 
-  def Factory.EXPORTED_QUERY(query_expr)
+  def self.EXPORTED_QUERY(query_expr)
     new(Model::ExportedQuery, query_expr)
   end
 
   # Used by regular grammar, egrammar creates an AccessExpression instead, and evaluation determines
   # if access is to instances or something else.
   #
-  def Factory.INSTANCE(type_name, name_expressions)
+  def self.INSTANCE(type_name, name_expressions)
     new(Model::InstanceReferences, type_name, name_expressions)
   end
 
-  def Factory.ATTRIBUTE_OP(name, op, expr)
+  def self.ATTRIBUTE_OP(name, op, expr)
     new(Model::AttributeOperation, name, op, expr)
   end
 
-  def Factory.CALL_NAMED(name, rval_required, argument_list)
+  def self.CALL_NAMED(name, rval_required, argument_list)
     unless name.kind_of?(Model::PopsObject)
       name = Factory.fqn(name) unless name.is_a?(Factory)
     end
     new(Model::CallNamedFunctionExpression, name, rval_required, *argument_list)
   end
 
-  def Factory.CALL_METHOD(functor, argument_list)
+  def self.CALL_METHOD(functor, argument_list)
     new(Model::CallMethodExpression, functor, true, nil, *argument_list)
   end
 
-  def Factory.COLLECT(type_expr, query_expr, attribute_operations)
+  def self.COLLECT(type_expr, query_expr, attribute_operations)
     new(Model::CollectExpression, Factory.fqr(type_expr), query_expr, attribute_operations)
   end
 
-  def Factory.IMPORT(files)
+  def self.IMPORT(files)
     new(Model::ImportExpression, files)
   end
 
-  def Factory.NAMED_ACCESS(type_name, bodies)
+  def self.NAMED_ACCESS(type_name, bodies)
     new(Model::NamedAccessExpression, type_name, bodies)
   end
 
-  def Factory.RESOURCE(type_name, bodies)
+  def self.RESOURCE(type_name, bodies)
     new(Model::ResourceExpression, type_name, bodies)
   end
 
-  def Factory.RESOURCE_DEFAULTS(type_name, attribute_operations)
+  def self.RESOURCE_DEFAULTS(type_name, attribute_operations)
     new(Model::ResourceDefaultsExpression, type_name, attribute_operations)
   end
 
-  def Factory.RESOURCE_OVERRIDE(resource_ref, attribute_operations)
+  def self.RESOURCE_OVERRIDE(resource_ref, attribute_operations)
     new(Model::ResourceOverrideExpression, resource_ref, attribute_operations)
   end
 
-  def Factory.RESOURCE_BODY(resource_title, attribute_operations)
+  def self.RESOURCE_BODY(resource_title, attribute_operations)
     new(Model::ResourceBody, resource_title, attribute_operations)
   end
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
-  def Factory.block_or_expression(*args)
+  def self.block_or_expression(*args)
     if args.size > 1
       new(Model::BlockExpression, *args)
     else
@@ -638,26 +635,26 @@ class Factory
     end
   end
 
-  def Factory.HOSTCLASS(name, parameters, parent, body)
+  def self.HOSTCLASS(name, parameters, parent, body)
     new(Model::HostClassDefinition, name, parameters, parent, body)
   end
 
-  def Factory.DEFINITION(name, parameters, body)
+  def self.DEFINITION(name, parameters, body)
     new(Model::ResourceTypeDefinition, name, parameters, body)
   end
 
-  def Factory.LAMBDA(parameters, body)
+  def self.LAMBDA(parameters, body)
     new(Model::LambdaExpression, parameters, body)
   end
 
-  def Factory.nop? o
+  def self.nop? o
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
 
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list. Also transforms a "call" to `import` into an ImportExpression.
   #
-  def Factory.transform_calls(expressions)
+  def self.transform_calls(expressions)
     expressions.reduce([]) do |memo, expr|
       expr = expr.current if expr.is_a?(Factory)
       name = memo[-1]
@@ -811,4 +808,3 @@ class Factory
     end
   end
 end
-end;end;end;end;

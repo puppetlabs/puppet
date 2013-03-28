@@ -1,9 +1,6 @@
-require 'puppet/pops/api'
-
-module Puppet; module Pops; module Impl; module Model
 # Base class for formatted textual dump of a "model"
 #
-class TreeDumper
+class Puppet::Pops::Impl::Model::TreeDumper
   attr_accessor :indent_count
   def initialize initial_indentation = 0
     @@dump_visitor ||= Puppet::Pops::API::Visitor.new(nil,"dump",0,0)
@@ -60,4 +57,3 @@ class TreeDumper
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
 end
-end; end; end; end

@@ -1,11 +1,8 @@
-require 'puppet/pops/api'
-
-module Puppet; module Pops; module Impl; module Model
 # Dumps a Pops::Model in reverse polish notation; i.e. LISP style
 # The intention is to use this for debugging output
 # TODO: BAD NAME - A DUMP is a Ruby Serialization
 #
-class ModelTreeDumper < TreeDumper
+class Puppet::Pops::Impl::Model::ModelTreeDumper < Puppet::Pops::Impl::Model::TreeDumper
   def dump_Array o
     o.collect {|e| do_dump(e) }
   end
@@ -353,4 +350,3 @@ class ModelTreeDumper < TreeDumper
     o.nil? || o.is_a?(Puppet::Pops::API::Model::Nop)
   end
 end
-end; end; end; end

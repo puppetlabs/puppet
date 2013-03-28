@@ -1,7 +1,3 @@
-require 'puppet/pops/api'
-
-module Puppet; module Pops; module Impl; module Validation; end; end; end; end;
-
 # A Validator validates a model.
 #
 # Validation is performed on each model element in isolation. Each method should validate the model element's state
