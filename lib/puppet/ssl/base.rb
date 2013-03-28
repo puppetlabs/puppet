@@ -45,7 +45,6 @@ class Puppet::SSL::Base
 
   def initialize(name)
     @name = name.to_s.downcase
-    self.class.validate_certname(@name)
   end
 
   ##

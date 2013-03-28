@@ -31,6 +31,13 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     @ef ||= OpenSSL::X509::ExtensionFactory.new
   end
 
+  # We check that certificate requests don't contain invalid characters to avoid
+  # CVE-2012-3867 and CVE-2012-3865
+  def initialize(name)
+    super(name)
+    self.class.validate_certname(@name)
+  end
+
   # How to create a certificate request with our system defaults.
   def generate(key, options = {})
     Puppet.info "Creating a new SSL certificate request for #{name}"
