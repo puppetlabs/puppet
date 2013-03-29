@@ -15,7 +15,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :as_platform => :posix 
     resource
   end
 
-  subject(:provider) do
+  let(:provider) do
     provider = described_class.new
     provider.stubs(:get).with(:hasstatus).returns false
 
