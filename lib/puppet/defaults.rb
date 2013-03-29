@@ -772,7 +772,9 @@ EOT
     },
     :masterport => {
       :default    => 8140,
-      :desc       => "Which port puppet master listens on.",
+      :desc       => "The port for puppet master traffic. For puppet master,
+      this is the port to listen on; for puppet agent, this is the port
+      to make requests on. Both applications use this setting to get the port.",
     },
     :node_name => {
       :default    => "cert",
