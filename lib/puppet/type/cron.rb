@@ -43,6 +43,13 @@ Puppet::Type.newtype(:cron) do
           hour    => ['2-4'],
           minute  => '*/10'
         }
+
+    An important note: _the Cron type will not reset parameters that are
+    removed from a manifest_. For example, removing a `minute => 10` parameter
+    will not reset the minute component of the associated cronjob to `*`.
+    These changes must be expressed by setting the parameter to
+    `minute => absent` because Puppet only manages parameters that are out of
+    sync with manifest entries.
   EOT
   ensurable
 
