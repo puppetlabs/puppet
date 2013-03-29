@@ -21,7 +21,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # @raise [Puppet::Error] if this property is configured for single paths and an array is given
   # @raise [Puppet::Error] if a path is not an absolute path
   # @return [Array<String>] the given paths
-  # 
+  #
   def validate_path(paths)
     if paths.is_a?(Array) and ! self.class.arrays? then
       fail "#{name} only accepts a single path, not an array of paths"

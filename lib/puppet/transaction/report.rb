@@ -3,16 +3,16 @@ require 'puppet/indirector'
 
 # This class is used to report what happens on a client.
 # There are two types of data in a report; _Logs_ and _Metrics_.
-# 
+#
 # * **Logs** - are the output that each change produces.
 # * **Metrics** - are all of the numerical data involved in the transaction.
-# 
+#
 # Use {Puppet::Reports} class to create a new custom report type. This class is indirectly used
 # as a source of data to report in such a registered report.
-# 
+#
 # ##Metrics
 # There are three types of metrics in each report, and each type of metric has one or more values.
-# 
+#
 # * Time: Keeps track of how long things took.
 #   * Total: Total time for the configuration run
 #   * File:
@@ -42,36 +42,36 @@ class Puppet::Transaction::Report
   # The version of the configuration
   # @todo Uncertain what this is?
   # @return [???] the configuration version
-  attr_accessor :configuration_version 
-  
+  attr_accessor :configuration_version
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
-  
+
   # The name of the environment the host is in
   # @return [String] the environment name
   attr_accessor :environment
-  
+
   # A hash with a map from resource to status
   # @return [Hash<{String => String}>] Resource name to status string.
   # @todo Uncertain if the types in the hash are correct...
   attr_reader :resource_statuses
-  
+
   # A list of log messages.
   # @return [Array<String>] logged messages
   attr_reader :logs
-  
+
   # A hash of metric name to metric value.
   # @return [Hash<{String => Object}>] A map of metric name to value.
   # @todo Uncertain if all values are numbers - now marked as Object.
   #
   attr_reader :metrics
-  
+
   # The time when the report data was generated.
   # @return [Time] A time object indicating when the report data was generated
   #
   attr_reader :time
-  
+
   # The 'kind' of report is the name of operation that triggered the report to be produced.
   # Typically "apply".
   # @return [String] the kind of operation that triggered the generation of the report.
@@ -80,14 +80,14 @@ class Puppet::Transaction::Report
 
   # The status of the client run is an enumeration: 'failed', 'changed' or 'unchanged'
   # @return [String] the status of the run - one of the values 'failed', 'changed', or 'unchanged'
-  # 
+  #
   attr_reader :status
-  
+
   # @return [String] The Puppet version in String form.
   # @see Puppet::version()
   #
   attr_reader :puppet_version
-  
+
   # @return [Integer] (3) a report format version number
   # @todo Unclear what this is - a version?
   #

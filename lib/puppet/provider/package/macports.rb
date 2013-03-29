@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
   confine :operatingsystem => :darwin
 
-  has_command(:port, "/opt/local/bin/port") do 
+  has_command(:port, "/opt/local/bin/port") do
     environment :HOME => "/opt/local"
   end
 

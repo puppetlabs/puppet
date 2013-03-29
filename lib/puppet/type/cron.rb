@@ -371,7 +371,7 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:target) do
-    desc "The username that will own the cron entry. Defaults to 
+    desc "The username that will own the cron entry. Defaults to
     the value of $USER for the shell that invoked Puppet, or root if $USER
     is empty."
 
@@ -423,6 +423,4 @@ Puppet::Type.newtype(:cron) do
     ret
   end
 end
-
-
 

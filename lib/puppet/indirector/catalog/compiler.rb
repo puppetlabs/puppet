@@ -130,7 +130,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # By default the REST authorization system makes sure only the connected node
     # can compile his catalog.
     # This allows for instance monitoring systems or puppet-load to check several
-    # node's catalog with only one certificate and a modification to auth.conf 
+    # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
     if node = find_node(name, request.environment)

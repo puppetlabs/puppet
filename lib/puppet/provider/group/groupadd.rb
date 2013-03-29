@@ -47,7 +47,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     group = findgroup('group_name', resource[:name])
     return group[2] if group
     false
-  end 
+  end
 
   def check_allow_dup
     # We have to manually check for duplicates when using libuser
@@ -63,12 +63,12 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     end
     []
   end
-  
+
   def addcmd
     if @resource.forcelocal?
       cmd = [command(:localadd)]
       @custom_environment = Puppet::Util::Libuser.getenv
-    else 
+    else
       cmd = [command(:add)]
     end
 

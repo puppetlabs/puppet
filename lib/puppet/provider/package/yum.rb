@@ -2,9 +2,9 @@ require 'puppet/util/package'
 
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   desc "Support via `yum`.
-  
-  Using this provider's `uninstallable` feature will not remove dependent packages. To 
-  remove dependent packages with this provider use the `purgeable` feature, but note this 
+
+  Using this provider's `uninstallable` feature will not remove dependent packages. To
+  remove dependent packages with this provider use the `purgeable` feature, but note this
   feature is destructive and should be used with the utmost care."
 
   has_feature :versionable

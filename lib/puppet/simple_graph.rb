@@ -19,7 +19,7 @@ class Puppet::SimpleGraph
   #
   # This class is intended to be used with DAGs.  However, if the
   # graph has a cycle, it will not cause non-termination of any of the
-  # algorithms.  
+  # algorithms.
   #
   def initialize
     @in_to = {}
@@ -376,7 +376,7 @@ class Puppet::SimpleGraph
   end
 
   def direct_dependents_of(v)
-    (@out_from[v] || {}).keys 
+    (@out_from[v] || {}).keys
   end
 
   def upstream_from_vertex(v)
@@ -390,7 +390,7 @@ class Puppet::SimpleGraph
   end
 
   def direct_dependencies_of(v)
-    (@in_to[v] || {}).keys 
+    (@in_to[v] || {}).keys
   end
 
   # Return an array of the edge-sets between a series of n+1 vertices (f=v0,v1,v2...t=vn)
@@ -404,7 +404,7 @@ class Puppet::SimpleGraph
   #     * if there is no path from f to t, the result is nil
   #
   # This implementation is not particularly efficient; it's used in testing where clarity
-  #   is more important than last-mile efficiency. 
+  #   is more important than last-mile efficiency.
   #
   def path_between(f,t)
     if f==t

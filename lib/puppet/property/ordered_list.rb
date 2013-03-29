@@ -6,7 +6,7 @@ module Puppet
     # The maintained order is the order defined by the 'current' set of values (i.e. the
     # original order is not disrupted). Any additions are added after the current values
     # in their given order).
-    # 
+    #
     # For an unordered list see {Puppet::Property::List}.
     #
     class OrderedList < List

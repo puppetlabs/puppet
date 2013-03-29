@@ -12,18 +12,18 @@ require 'puppet/util/instance_loader'
 #     def process
 #       if self.status == 'failed'
 #         msg = "failed puppet run for #{self.host} #{self.status}"
-#         . . . 
+#         . . .
 #       else
 #         . . .
 #       end
-#     end 
+#     end
 #   end
 #
 # Required configuration:
 # --
 # * A .rb file that defines a new report should be placed in the master's directory `lib/puppet/reports`
 # * The `puppet.conf` file must have `report = true` in the `[agent]` section
-# 
+#
 # @see Puppet::Transaction::Report
 # @api public
 #
@@ -43,14 +43,14 @@ class Puppet::Reports
   # The block should contain setup, and define a method with the name `process`. The `process` method is
   # called when the report is executed; the `process` method has access to report data via methods available
   # in its context where `self` is an instance of {Puppet::Transaction::Report}.
-  # 
+  #
   # For an example, see the overview of this class.
   #
   # @param name [Symbol] the name of the report (do not use whitespace in the name).
   # @param options [Hash] a hash of options
   # @option options [Boolean] :useyaml whether yaml should be used or not
   # @todo Uncertain what the options :useyaml really does; "whether yaml should be used or not", used where/how?
-  # 
+  #
   def self.register_report(name, options = {}, &block)
     name = name.intern
 

@@ -18,7 +18,7 @@ require 'puppet/util/docs'
 # @see Puppet::Type
 # @see Puppet::Property
 # @api public
-# 
+#
 class Puppet::Parameter
   include Puppet::Util
   include Puppet::Util::Errors
@@ -36,7 +36,7 @@ class Puppet::Parameter
     #   which seems to works fine without this attribute declaration.
     # @api private
     #
-    attr_reader :validater 
+    attr_reader :validater
 
     # Unused?
     # @todo The term "munger" only appears in this location in the Puppet code base. There is munge and unmunge
@@ -44,14 +44,14 @@ class Puppet::Parameter
     # @api private
     #
     attr_reader :munger
-    
+
     # @return [Symbol] The parameter name as given when it was created.
     attr_reader :name
-    
+
     # @return [Object] The default value of the parameter as determined by the {defaultto} method, or nil if no
     #  default has been set.
     attr_reader :default
-    
+
     # @comment This somewhat odd documentation construct is because the getter and setter are not
     #  orthogonal; the setter uses varargs and this confuses yard. To overcome the problem both the
     #  getter and the setter are documented here. If this issues is fixed, a todo will be displayed
@@ -65,24 +65,24 @@ class Puppet::Parameter
     # @overload required_features
     #   Returns the required _provider features_ as an array of lower case symbols
     # @overload required_features=(*args)
-    #   @param *args [Symbol] one or more names of required provider features 
+    #   @param *args [Symbol] one or more names of required provider features
     #   Sets the required_provider_features_ from one or more values, or array. The given arguments
     #   are flattened, and internalized.
     # @api public
     # @dsl type
     #
     attr_reader :required_features
-    
+
     # @return [Puppet::Parameter::ValueCollection] The set of valid values (or an empty set that accepts any value).
     # @api private
     #
     attr_reader :value_collection
-    
+
     # @return [Boolean] Flag indicating whether this parameter is a meta-parameter or not.
     attr_accessor :metaparam
 
     # Defines how the `default` value of a parameter is computed.
-    # The computation of the parameter's default value is defined by providing a value or a block. 
+    # The computation of the parameter's default value is defined by providing a value or a block.
     # A default of `nil` can not be used.
     # @overload defaultto(value)
     #   Defines the default value with a literal value
@@ -95,7 +95,7 @@ class Puppet::Parameter
     # @see Parameter.default
     # @dsl type
     # @api public
-    # 
+    #
     def defaultto(value = nil, &block)
       if block
         define_method(:default, &block)
@@ -108,7 +108,7 @@ class Puppet::Parameter
       end
     end
 
-    # Produces a documentation string. 
+    # Produces a documentation string.
     # If an enumeration of _valid values_ has been defined, it is appended to the documentation
     # for this parameter specified with the {desc} method.
     # @return [String] Returns a documentation string.
@@ -259,7 +259,7 @@ class Puppet::Parameter
     # regular expression patterns.
     # @note Each call to this method adds to the set of valid values
     # @param names [Symbol, Regexp] The set of valid literal values and/or patterns for the parameter.
-    # @return [void] 
+    # @return [void]
     # @dsl type
     # @api public
     #
@@ -321,14 +321,14 @@ class Puppet::Parameter
 
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed
-  # are used to initialize the attributes of this parameter by treating each key in the `options` hash as 
+  # are used to initialize the attributes of this parameter by treating each key in the `options` hash as
   # the name of the attribute to set, and the value as the value to set.
   # @param options [Hash{Symbol => Object]] Options, where `resource` is required
   # @option options [Puppet::Resource] :resource The resource this parameter holds a value for. Required.
   # @raise [Puppet::DevError] If resource is not specified in the options hash.
   # @api public
   # @note A parameter should be created via the DSL method {Puppet::Type::newparam}
-  # 
+  #
   def initialize(options = {})
     options = symbolize_options(options)
     if resource = options[:resource]
@@ -341,7 +341,7 @@ class Puppet::Parameter
     set_options(options)
   end
 
-  # Writes the given `msg` to the log with the loglevel indicated by the associated resource's 
+  # Writes the given `msg` to the log with the loglevel indicated by the associated resource's
   # `loglevel` parameter.
   # @todo is loglevel a metaparameter? it is looked up with `resource[:loglevel]`
   # @return [void]
@@ -357,7 +357,7 @@ class Puppet::Parameter
 
   # @!attribute [r] name
   # @return [Symbol] The parameter's name as given when it was created.
-  # @note Since a Parameter defines the name at the class level, each Parameter class must be 
+  # @note Since a Parameter defines the name at the class level, each Parameter class must be
   #  unique within a type's inheritance chain.
   # @comment each parameter class must define the name method, and parameter
   #   instances do not change that name this implicitly means that a given
@@ -369,7 +369,7 @@ class Puppet::Parameter
 
   # @return [Boolean] Returns true if this parameter, the associated resource, or overall puppet mode is `noop`.
   # @todo How is noop mode set for a parameter? Is this of value in DSL to inhibit a parameter?
-  # 
+  #
   def noop
     @noop ||= false
     tmp = @noop || self.resource.noop || Puppet[:noop] || false
@@ -380,7 +380,7 @@ class Puppet::Parameter
   # @todo Original comment = _return the full path to us, for logging and rollback; not currently
   #   used_ This is difficult to figure out (if it is used or not as calls are certainly made to "pathbuilder"
   #   method is several places, not just sure if it is this implementation or not.
-  # 
+  #
   # @api private
   def pathbuilder
     if @resource
@@ -427,7 +427,7 @@ class Puppet::Parameter
     ret
   end
 
-  # This is the default implementation of `validate` that may be overridden by the DSL method {validate}. 
+  # This is the default implementation of `validate` that may be overridden by the DSL method {validate}.
   # If no valid values have been defined, the given value is accepted, else it is validated against
   # the literal values (enumerator) and/or patterns defined by calling {newvalues}.
   #
@@ -435,7 +435,7 @@ class Puppet::Parameter
   # @raise [ArgumentError] if the value is not valid
   # @return [void]
   # @api private
-  # 
+  #
   def unsafe_validate(value)
     self.class.value_collection.validate(value)
   end
@@ -444,7 +444,7 @@ class Puppet::Parameter
   # @return [void]
   # @todo Better description of when the various exceptions are raised.ArgumentError is rescued and
   #   changed into Puppet::Error.
-  # @raise [ArgumentError, TypeError, Puppet::DevError, Puppet::Error] under various conditions 
+  # @raise [ArgumentError, TypeError, Puppet::DevError, Puppet::Error] under various conditions
   # A protected validation method that only ever raises useful exceptions.
   # @api public
   #
@@ -478,7 +478,7 @@ class Puppet::Parameter
   #   late-binding (e.g., users might not exist when the value is assigned
   #   but might when it is asked for)."_ does not seem to be correct, the implementation
   #   calls both validate an munge on the given value, so no late binding.
-  # 
+  #
   # The given value is validated and then munged (if munging has been specified). The result is store
   # as the value of this arameter.
   # @return [Object] The given `value` after munging.
@@ -495,7 +495,7 @@ class Puppet::Parameter
   #   Some types don't have providers, in which case we return the resource object itself."_
   #   This does not seem to be true, the default implementation that sets this value may be
   #   {Puppet::Type.provider=} which always gets either the name of a provider or an instance of one.
-  # 
+  #
   def provider
     @resource.provider
   end
@@ -507,7 +507,7 @@ class Puppet::Parameter
   # @todo The original comment says = _"The properties need to return tags so that logs correctly
   #   collect them."_ what if anything of that is of interest to document. Should tags and their relationship
   #   to logs be described. This is a more general concept.
-  # 
+  #
   def tags
     unless defined?(@tags)
       @tags = []
@@ -525,20 +525,20 @@ class Puppet::Parameter
 
   # Produces a String with the value formatted for display to a human.
   # When the parameter value is a:
-  # 
-  # * **single valued parameter value** the result is produced on the
-  #   form `'value'` where _value_ is the string form of the parameter's value. 
   #
-  # * **Array** the list of values is enclosed in `[]`, and 
+  # * **single valued parameter value** the result is produced on the
+  #   form `'value'` where _value_ is the string form of the parameter's value.
+  #
+  # * **Array** the list of values is enclosed in `[]`, and
   #   each produced value is separated by a comma.
-  # 
+  #
   # * **Hash** value is output with keys in sorted order enclosed in `{}` with each entry formatted
   #   on the form `'k' => v` where
   #   `k` is the key in string form and _v_ is the value of the key. Entries are comma separated.
   #
   # For both Array and Hash this method is called recursively to format contained values.
   # @note this method does not protect against infinite structures.
-  # 
+  #
   # @return [String] The formatted value in string form.
   #
   def self.format_value_for_display(value)

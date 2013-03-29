@@ -36,7 +36,7 @@ module Puppet::Provider::Confiner
   # Checks whether this implementation is suitable for the current platform (or returns a summary
   # of all confines if short == false).
   # @return [Boolean. Hash] Returns whether the confines are all valid (if short == true), or a hash of all confines
-  #   if short == false. 
+  #   if short == false.
   # @api public
   #
   def suitable?(short = true)

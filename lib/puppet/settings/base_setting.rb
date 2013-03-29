@@ -23,7 +23,7 @@ class Puppet::Settings::BaseSetting
       Puppet.deprecation_warning ":call_on_define has been changed to :call_hook => :on_define_and_write. Please change #{name}."
       @call_hook = :on_define_and_write
     else
-      Puppet.deprecation_warning ":call_on_define => :false has been changed to :call_hook => :on_write_only. Please change #{name}." 
+      Puppet.deprecation_warning ":call_on_define => :false has been changed to :call_hook => :on_write_only. Please change #{name}."
       @call_hook = :on_write_only
     end
   end

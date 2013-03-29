@@ -83,11 +83,11 @@ module Puppet::Util::Instrumentation::Instrumentable
   #   this can either be a static symbol/string or a block. If it's a block
   #   this one will be evaluated on every call of the instrumented method and
   #   should return a string or a symbol
-  #   
+  #
   # data::
   #   this can be a hash or a block. If it's a block this one will be evaluated
   #   on every call of the instrumented method and should return a hash.
-  # 
+  #
   #Example:
   #
   #   class MyClass

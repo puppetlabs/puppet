@@ -113,7 +113,7 @@ module Puppet::Util::ProviderFeatures
   end
 
   # Generates a module that sets up the boolean predicate methods to test for given features.
-  # 
+  #
   def feature_module
     unless defined?(@feature_module)
       @features ||= {}

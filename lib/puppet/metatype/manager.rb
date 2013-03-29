@@ -34,7 +34,7 @@ module Manager
     end
   end
 
-  # Loads all types.  
+  # Loads all types.
   # @note Should only be used for purposes such as generating documentation as this is potentially a very
   #  expensive operation.
   # @return [void]

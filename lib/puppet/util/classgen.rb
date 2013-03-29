@@ -34,7 +34,7 @@ module Puppet::Util::ClassGen
     genthing(name, Class, options, block)
   end
 
-  # Creates a new module.  
+  # Creates a new module.
   # @param name [String] the name of the generated module
   # @param optinos [Hash] hash with options
   # @option options [Array<Class>] :array if specified, the generated class is appended to this array

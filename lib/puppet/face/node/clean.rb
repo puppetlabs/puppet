@@ -9,17 +9,17 @@ Puppet::Face.define(:node, '0.0.1') do
     description <<-'EOT'
       Clean up everything a puppet master knows about a node, including certificates
       and storeconfigs data.
-      
+
       The full list of info cleaned by this action is:
 
       <Signed certificates> - ($vardir/ssl/ca/signed/node.domain.pem)
-      
+
       <Cached facts> - ($vardir/yaml/facts/node.domain.yaml)
-      
+
       <Cached node objects> - ($vardir/yaml/node/node.domain.yaml)
-      
+
       <Reports> - ($vardir/reports/node.domain)
-      
+
       <Stored configs> - (in database) The clean action can either remove all
       data from a host in your storeconfigs database, or, with the
       <--unexport> option, turn every exported resource supporting ensure to

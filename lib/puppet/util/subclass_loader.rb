@@ -18,11 +18,7 @@ module Puppet::Util::SubclassLoader
     raise ArgumentError, "Must be a class to use SubclassLoader" unless self.is_a?(Class)
     @subclasses = []
 
-          @loader = Puppet::Util::Autoload.new(
-        self,
-        
-      path, :wrap => false
-    )
+    @loader = Puppet::Util::Autoload.new(self, path, :wrap => false)
 
     @subclassname = name
 

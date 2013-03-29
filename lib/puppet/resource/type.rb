@@ -260,10 +260,10 @@ class Puppet::Resource::Type
 
   # MQR TODO:
   #
-  # The change(s) introduced by the fix for #4270 are mostly silly & should be 
+  # The change(s) introduced by the fix for #4270 are mostly silly & should be
   # removed, though we didn't realize it at the time.  If it can be established/
   # ensured that nodes never call parent_type and that resource_types are always
-  # (as they should be) members of exactly one resource_type_collection the 
+  # (as they should be) members of exactly one resource_type_collection the
   # following method could / should be replaced with:
   #
   # def parent_type

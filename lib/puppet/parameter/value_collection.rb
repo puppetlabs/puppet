@@ -2,7 +2,7 @@ require 'puppet/parameter/value'
 
 # A collection of values and regular expressions, used for specifying allowed values
 # in a given parameter.
-# @note This class is considered part of the internal implementation of {Puppet::Parameter}, and 
+# @note This class is considered part of the internal implementation of {Puppet::Parameter}, and
 #   {Puppet::Property} and the functionality provided by this class should be used via their interfaces.
 # @comment This class probably have several problems when trying to use it with a combination of
 #   regular expressions and aliases as it finds an acceptable value holder vi "name" which may be
@@ -88,7 +88,7 @@ class Puppet::Parameter::ValueCollection
   end
 
   # Munges the value if it is valid, else produces the same value.
-  # @param value [Object] the value to munge 
+  # @param value [Object] the value to munge
   # @return [Object] the munged value, or the given value
   # @todo This method does not seem to do any munging. It just returns the value if it matches the
   #   regexp, or the (most likely Symbolic) allowed value if it matches (which is more of a replacement
@@ -191,7 +191,7 @@ class Puppet::Parameter::ValueCollection
   # Returns a valid value matcher (a literal or regular expression)
   # @todo This looks odd, asking for an instance that matches a symbol, or a instance that has
   #   a regexp. What is the intention here? Marking as api private...
-  # 
+  #
   # @return [Puppet::Parameter::Value] a valid valud matcher
   # @api private
   #

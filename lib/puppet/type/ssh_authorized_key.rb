@@ -27,8 +27,8 @@ module Puppet
     end
 
     newproperty(:key) do
-      desc "The public key itself; generally a long string of hex characters. The key attribute 
-      may not contain whitespace: Omit key headers (e.g. 'ssh-rsa') and key identifiers 
+      desc "The public key itself; generally a long string of hex characters. The key attribute
+      may not contain whitespace: Omit key headers (e.g. 'ssh-rsa') and key identifiers
       (e.g. 'joe@joescomputer.local') found in the public key file."
 
       validate do |value|

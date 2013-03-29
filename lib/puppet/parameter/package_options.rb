@@ -3,7 +3,7 @@ require 'puppet/parameter'
 # This specialized {Puppet::Parameter} handles munging of package options.
 # Package options are passed as an array of key value pairs. Special munging is
 # required as the keys and values needs to be quoted in a safe way.
-# 
+#
 class Puppet::Parameter::PackageOptions < Puppet::Parameter
   def unsafe_munge(values)
     values = [values] unless values.is_a? Array

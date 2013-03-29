@@ -115,11 +115,11 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       if pacman_check
         output = pacman "-Sp", "--print-format", "%v", @resource[:name]
         return output.chomp
-      else 
+      else
         output = yaourt "-Qma", @resource[:name]
         output.split("\n").each do |line|
           return line.split[1].chomp if line =~ /^aur/
-        end  
+        end
       end
     rescue Puppet::ExecutionFailure
       if pacman_check and self.yaourt?

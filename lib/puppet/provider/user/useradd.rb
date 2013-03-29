@@ -72,15 +72,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def local_username
     user = finduser('uid', @resource.uid)
-    
-  end 
+  end
 
   def localuid
     user = finduser('account', resource[:name])
     return user[2] if user
     false
   end
- 
+
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -104,7 +103,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
-       return ["-o"] 
+       return ["-o"]
     end
     []
   end
@@ -180,7 +179,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def deletecmd
     if @resource.forcelocal?
-       cmd = [command(:localdelete)] 
+       cmd = [command(:localdelete)]
     else
        cmd = [command(:delete)]
     end
@@ -216,11 +215,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      end
      if @resource.forcelocal? and @resource[:expiry]
        set(:expiry, @resource[:expiry])
-     end 
+     end
   end
- 
+
   def groups?
     !!@resource[:groups]
   end
-
 end

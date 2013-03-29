@@ -10,11 +10,11 @@ module Puppet
   #   `vendor/require_vendored.rb`.
   # * To load the vendored lib on demand, add a comment to `vendor/require_vendored.rb`
   #    to make it clear it should not be loaded upfront.
-  # 
+  #
   # At runtime, the #load_vendored method should be called. It will ensure
   # all vendored libraries are added to the global `$:` path, and
   # will then call execute the up-front loading specified in `vendor/require_vendored.rb`.
-  # 
+  #
   # The intention is to not change vendored libraries and to eventually
   # make adding them in optional so that distros can simply adjust their
   # packaging to exclude this directory and the various load_xxx.rb scripts
