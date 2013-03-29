@@ -214,7 +214,7 @@ module Puppet
     :node_cache_terminus => {
       :type       => :terminus,
       :default    => nil,
-      :desc       => "How to store cached nodes. 
+      :desc       => "How to store cached nodes.
       Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
       The master application defaults to 'write_only_yaml', all others to none.",
     },
@@ -225,7 +225,7 @@ module Puppet
     },
     :hiera_config => {
       :default => "$confdir/hiera.yaml",
-      :desc    => "The hiera configuration file",
+      :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
     :catalog_terminus => {
