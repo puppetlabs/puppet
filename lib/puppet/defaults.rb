@@ -225,7 +225,7 @@ module Puppet
     },
     :hiera_config => {
       :default => "$confdir/hiera.yaml",
-      :desc    => "The hiera configuration file",
+      :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
     :catalog_terminus => {
