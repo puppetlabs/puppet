@@ -41,7 +41,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
         pos[:line] = source_pos.line
         pos[:pos]  = source_pos.pos
       end
-      pos[:file] = @file if @file
+      pos[:file] = @source_file if @source_file
       hash = hash.merge(pos)
     end
     hash
