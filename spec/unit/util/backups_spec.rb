@@ -66,7 +66,7 @@ describe Puppet::Util::Backups do
 
       it "should fail when the old backup can't be removed" do
         File.expects(:lstat).with(backup).returns stub("stat", :ftype => "file")
-        File.expects(:unlink).raises ArgumentError
+        File.expects(:unlink).with(backup).raises ArgumentError
         FileUtils.expects(:cp_r).never
         FileTest.expects(:exists?).with(path).returns(true)
 
@@ -75,7 +75,7 @@ describe Puppet::Util::Backups do
 
       it "should not try to remove backups that don't exist" do
         File.expects(:lstat).with(backup).raises(Errno::ENOENT)
-        File.expects(:unlink).never
+        File.expects(:unlink).with(backup).never
         FileUtils.stubs(:cp_r)
         FileTest.expects(:exists?).with(path).returns(true)
 
