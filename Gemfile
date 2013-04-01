@@ -18,7 +18,7 @@ platforms :ruby do
 end
 
 group(:development, :test) do
-  gem "puppet", *location_for('file://.')
+  gem "puppet", :path => File.dirname(__FILE__), :require => false
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
   gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
   gem "rack", "~> 1.4", :require => false
