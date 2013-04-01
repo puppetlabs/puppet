@@ -5,8 +5,8 @@ module Puppet; module Parser; end; end;
 # Adapts an egrammar/eparser to respond to the public API of the classic parser
 #
 class Puppet::Parser::EParserAdapter
-  def initialize(classic_parser)
 
+  def initialize(classic_parser)
     @classic_parser = classic_parser
     @file = ''
     @string = ''
@@ -20,14 +20,6 @@ class Puppet::Parser::EParserAdapter
   end
 
   def parse(string = nil)
-    #      # Uncomment this block to also parse using the classoc parser (enables comparison at the end).
-    #      # But be careful, this means parsing the same file twice which does not always work (creates duplicates).
-    #      begin
-    #      classic_result = @classic_parser.parse(string)
-    #      rescue
-    #        # May fail to parse new syntax
-    #        classic_result = nil
-    #      end
     if @file =~ /\.rb$/
       return parse_ruby_file
     else
@@ -60,25 +52,8 @@ class Puppet::Parser::EParserAdapter
         parse_result = Puppet::Parser::AST::BlockExpression.new(:children => [parse_result]) if parse_result
       end
     end
-    #      # DEBUGGING OUTPUT
-    #      # See comment at entry of method to also parse using classic parser
-    #      #
-    #      original_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(classic_result)
-    #      converted_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(parse_result)
-    ##      puts "Classic:\n" + original_result
-    ##      converted = puts "Converted:\n" + converted_result
 
-    result = Puppet::Parser::AST::Hostclass.new('', :code => parse_result)
-
-    #      # DEBUGGING COMPARISION
-    #      final_result = Puppet::Pops::Impl::Model::AstTreeDumper.new().dump(result)
-    #      if final_result != original_result
-    #        puts "Classic:\n" + original_result
-    #        puts "Final:\n" + final_result
-    #        debugger
-    #        puts "Classic and final result differs"
-    #      end
-    result
+    Puppet::Parser::AST::Hostclass.new('', :code => parse_result)
   end
 
   def validate(parse_result)
@@ -94,14 +69,14 @@ class Puppet::Parser::EParserAdapter
 
     max_errors = Puppet[:max_errors]
     max_warnings = Puppet[:max_warnings] + 1
-    max_deprecations = Puppet[:max_deprecations] + 1 
+    max_deprecations = Puppet[:max_deprecations] + 1
 
     # If there are warnings output them
     warnings = acceptor.warnings
     if warnings.size > 0
       formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
       emitted_w = 0
-      emitted_dw = 0      
+      emitted_dw = 0
       acceptor.warnings.each {|w|
         if w.severity == :deprecation
           # Do *not* call Puppet.deprecation_warning it is for internal deprecation, not
@@ -109,7 +84,7 @@ class Puppet::Parser::EParserAdapter
           # used throughout the code base).
           #
           Puppet.warning(formatter.format(w)) if emitted_dw < max_deprecations
-          emitted_dw += 1 
+          emitted_dw += 1
         else
           Puppet.warning(formatter.format(w)) if emitted_w < max_warnings
           emitted_w += 1
@@ -127,11 +102,11 @@ class Puppet::Parser::EParserAdapter
         raise Puppet::ParseError.new(formatter.format(errors[0]))
       end
       emitted = 0
-      errors.each {|e| 
+      errors.each do |e|
         Puppet.err(formatter.format(e))
         emitted += 1
         break if emitted >= max_errors
-      }
+      end
       warnings_message = warnings.size > 0 ? ", and #{warnings.size} warnings" : ""
       giving_up_message = "Found #{errors.size} errors#{warnings_message}. Giving up"
       exception = Puppet::ParseError.new(giving_up_message)
@@ -148,5 +123,5 @@ class Puppet::Parser::EParserAdapter
 
   def parse_ruby_file
     @classic_parser.parse
-  end  
+  end
 end
