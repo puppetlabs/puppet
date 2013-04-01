@@ -727,8 +727,7 @@ array: LBRACK expressions       RBRACK { result = val[1] }
      | LBRACK expressions COMMA RBRACK { result = val[1] }
      | LBRACK               RBRACK { result = ast AST::ASTArray }
 
-comma:        FARROW
-  | COMMA
+comma:        COMMA
 
 endcomma:     # nothing
   | COMMA { result = nil }
