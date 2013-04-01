@@ -40,10 +40,12 @@ module Puppet::Indirector
     include Puppet::Indirector::Envelope
     extend Puppet::Network::FormatHandler
 
+    # record the indirected class name for documentation purposes
+    options[:indirected_class] = name
+
     # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
     # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
-    indirected_class = name
-    @indirection = Puppet::Indirector::Indirection.new(self, indirection, indirected_class, options)
+    @indirection = Puppet::Indirector::Indirection.new(self, indirection, options)
   end
 
   module ClassMethods

@@ -95,14 +95,14 @@ class Puppet::Indirector::Indirection
     text
   end
 
-  def initialize(model, name, indirected_class, options = {})
+  def initialize(model, name, options = {})
     @model = model
     @name = name
     @termini = {}
 
     @cache_class = nil
     @terminus_class = nil
-    @indirected_class = indirected_class
+    @indirected_class = options.delete(:indirected_class)
 
     raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
     @@indirections << self
