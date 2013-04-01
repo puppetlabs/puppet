@@ -16,7 +16,10 @@ class Puppet::SSL::Host
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
   extend Puppet::Indirector
-  indirects :certificate_status, :terminus_class => :file
+  indirects :certificate_status, :terminus_class => :file, :doc => <<DOC
+    This indirection represents the host that ties a key, certificate, and certificate request together.
+    The indirection key is the certificate CN (generally a hostname).
+DOC
 
   attr_reader :name
   attr_accessor :ca
