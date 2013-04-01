@@ -28,12 +28,12 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # @param klass [Class<Puppet::Parser::AST>] the ast class to create an instance of
   # @param hash [Hash] hash with options for the class to create
   #
-  def ast o, klass, hash={}
+  def ast(o, klass, hash={})
     # create and pass hash with file and line information
     klass.new(merge_location(hash, o))
   end
 
-  def merge_location hash, o
+  def merge_location(hash, o)
     if o
       pos = {}
       source_pos = Puppet::Pops::API::Utils.find_adapter(o, Puppet::Pops::API::Adapters::SourcePosAdapter)
@@ -62,7 +62,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
     @@hostname_transform_visitor.visit_this(self, o)
   end
 
-  def transform_LiteralNumber o
+  def transform_LiteralNumber(o)
     s = case o.radix
     when 10
       o.value.to_s
@@ -80,24 +80,24 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   # Transforms all literal values to string (override for those that should not be AST::String)
   #
-  def transform_LiteralValue o
+  def transform_LiteralValue(o)
     ast o, AST::String, :value => o.value.to_s
   end
 
-  def transform_LiteralBoolean o
+  def transform_LiteralBoolean(o)
     ast o, AST::Boolean, :value => o.value
   end
 
-  def transform_Factory o
+  def transform_Factory(o)
     transform(o.current)
   end
 
-  def transform_ArithmeticExpression o
+  def transform_ArithmeticExpression(o)
     ast o, AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr),
     :operator => o.operator.to_s
   end
 
-  def transform_Array o
+  def transform_Array(o)
     ast nil, AST::ASTArray, :children => o.collect {|x| transform(x) }
   end
 
@@ -116,7 +116,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   #
   # Hm, this seems to have changed, the LHS (variable) is evaluated if evaluateable, else it is used as is.
   #
-  def transform_AccessExpression o
+  def transform_AccessExpression(o)
     case o.left_expr
     when Model::QualifiedName
       ast o, AST::ResourceReference, :type => o.left_expr.value, :title => transform(o.keys)
@@ -136,7 +136,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # LHS can not be an expression, it must be a type (which is downcased).
   # type = a downcased QualifiedName
   #
-  def transform_CollectExpression o
+  def transform_CollectExpression(o)
     raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
     type = o.type_expr.value().downcase()
     args = { :type => type }
@@ -157,7 +157,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
     ast o, AST::Collection, args
   end
 
-  def transform_ExportedQuery o
+  def transform_ExportedQuery(o)
     if is_nop?(o.expr)
       result = :exported
     else
@@ -167,7 +167,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
     result
   end
 
-  def transform_VirtualQuery o
+  def transform_VirtualQuery(o)
     if is_nop?(o.expr)
       result = :virtual
     else
@@ -179,13 +179,13 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   # Ensures transformation fails if a 3.1 non supported object is encountered in a query expression
   #
-  def query_Object o
+  def query_Object(o)
     raise "Not a valid expression in a collection query: "+o.class.name
   end
 
   # Puppet AST only allows == and !=, and left expr is restricted, but right value is an expression
   #
-  def query_ComparisonExpression o
+  def query_ComparisonExpression(o)
     if [:'==', :'!='].include? o.operator
       ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => o.operator.to_s, :test2 => transform(o.right_expr)
     else
@@ -193,61 +193,61 @@ class Puppet::Pops::Impl::Model::AstTransformer
     end
   end
 
-  def query_AndExpression o
+  def query_AndExpression(o)
     ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => 'and', :test2 => query(o.right_expr)
   end
 
-  def query_OrExpression o
+  def query_OrExpression(o)
     ast o, AST::CollExpr, :test1 => query(o.left_expr), :oper => 'or', :test2 => query(o.right_expr)
   end
 
-  def query_ParenthesizedExpression o
+  def query_ParenthesizedExpression(o)
     result = query(o.expr) # produces CollExpr
     result.parens = true
     result
   end
 
-  def query_VariableExpression o
+  def query_VariableExpression(o)
     transform(o)
   end
 
-  def query_QualifiedName o
+  def query_QualifiedName(o)
     transform(o)
   end
 
-  def query_LiteralNumber o
+  def query_LiteralNumber(o)
     transform(o) # number to string in correct radix
   end
 
-  def query_LiteralString o
+  def query_LiteralString(o)
     transform(o)
   end
 
-  def query_LiteralBoolean o
+  def query_LiteralBoolean(o)
     transform(o)
   end
 
-  def transform_QualifiedName o
+  def transform_QualifiedName(o)
     ast o, AST::Name, :value => o.value
   end
 
-  def transform_QualifiedReference o
+  def transform_QualifiedReference(o)
     ast o, AST::Type, :value => o.value
   end
 
-  def transform_ComparisonExpression o
+  def transform_ComparisonExpression(o)
     ast o, AST::ComparisonOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
-  def transform_AndExpression o
+  def transform_AndExpression(o)
     ast o, AST::BooleanOperator, :operator => 'and', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
-  def transform_OrExpression o
+  def transform_OrExpression(o)
     ast o, AST::BooleanOperator, :operator => 'or', :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
-  def transform_InExpression o
+  def transform_InExpression(o)
     ast o, AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
@@ -255,7 +255,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # and calls to perform import/parsing etc. during the transformation.
   # When testing syntax, the @importer does not have to be set, but it is not possible to check
   # the actual import without inventing a new AST::ImportExpression with nop effect when evaluating.
-  def transform_ImportExpression o
+  def transform_ImportExpression(o)
     if importer
       o.files.each {|f|
         unless f.is_a? Model::LiteralString
@@ -270,12 +270,12 @@ class Puppet::Pops::Impl::Model::AstTransformer
     ast o, AST::Nop, {}
   end
 
-  def transform_InstanceReferences o
+  def transform_InstanceReferences(o)
     ast o, AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
   end
 
   # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
-  def transform_AssignmentExpression o
+  def transform_AssignmentExpression(o)
     args = {:value => transform(o.right_expr) }
     args[:append] = true if o.operator == :'+='
 
@@ -291,21 +291,21 @@ class Puppet::Pops::Impl::Model::AstTransformer
   end
 
   # Produces (name => expr) or (name +> expr)
-  def transform_AttributeOperation o
+  def transform_AttributeOperation(o)
     args = { :value => transform(o.value_expr) }
     args[:add] = true if o.operator == :'+>'
     args[:param] = o.attribute_name
     ast o, AST::ResourceParam, args
   end
 
-  def transform_LiteralList o
+  def transform_LiteralList(o)
     # Uses default transform of Ruby Array to ASTArray
     transform(o.values)
   end
 
   # Literal hash has strange behavior in Puppet 3.1. See Bug #19426, and this implementation is bug
   # compatible
-  def transform_LiteralHash o
+  def transform_LiteralHash(o)
     if o.entries.size == 0
       ast o, AST::ASTHash, {:value=> {}}
     else
@@ -321,7 +321,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # * quotedtext
   # As keys (quoted text can be an interpolated string which is compared as a key in a less than satisfactory way).
   #
-  def transform_KeyedEntry o
+  def transform_KeyedEntry(o)
     value = transform(o.value)
     key = case o.key
     when Model::QualifiedName
@@ -338,71 +338,71 @@ class Puppet::Pops::Impl::Model::AstTransformer
     {key => value}
   end
 
-  def transform_MatchExpression o
+  def transform_MatchExpression(o)
     ast o, AST::MatchOperator, :operator => o.operator.to_s, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
-  def transform_LiteralString o
+  def transform_LiteralString(o)
     ast o, AST::String, :value => o.value
   end
 
   # Literal text in a concatenated string
-  def transform_LiteralText o
+  def transform_LiteralText(o)
     ast o, AST::String, :value => o.value
   end
 
-  def transform_LambdaExpression o
+  def transform_LambdaExpression(o)
     astargs = { :parameters => o.parameters.collect {|p| transform(p) } }
     astargs.merge!({ :children => transform(o.body) }) if o.body         # do not want children if it is nil/nop
     ast o, AST::Lambda, astargs
   end
 
-  def transform_LiteralDefault o
+  def transform_LiteralDefault(o)
     ast o, AST::Default, :value => :default
   end
 
-  def transform_LiteralUndef o
+  def transform_LiteralUndef(o)
     ast o, AST::Undef, :value => :undef
   end
 
-  def transform_LiteralRegularExpression o
+  def transform_LiteralRegularExpression(o)
     ast o, AST::Regex, :value => o.value
   end
 
-  def transform_Nop o
+  def transform_Nop(o)
     ast o, AST::Nop
   end
 
   # In the 3.1. grammar this is a hash that is merged with other elements to form a method call
   # Also in 3.1. grammar there are restrictions on the LHS (that are only there for grammar issues).
   #
-  def transform_NamedAccessExpression o
+  def transform_NamedAccessExpression(o)
     receiver = transform(o.left_expr)
     name = o.right_expr
     raise "Unacceptable function/method name" unless name.is_a? Model::QualifiedName
     {:receiver => receiver, :name => name.value}
   end
 
-  def transform_NilClass o
+  def transform_NilClass(o)
     ast o, AST::Nop, {}
   end
 
-  def transform_NotExpression o
+  def transform_NotExpression(o)
     ast o, AST::Not, :value => transform(o.expr)
   end
 
-  def transform_VariableExpression o
+  def transform_VariableExpression(o)
     # assumes the expression is a QualifiedName
     ast o, AST::Variable, :value => o.expr.value
   end
 
   # In Puppet 3.1, the ConcatenatedString is responsible for the evaluation and stringification of
   # expression segments. Expressions and Strings are kept in an array.
-  def transform_TextExpression o
+  def transform_TextExpression(o)
     transform(o.expr)
   end
 
-  def transform_UnaryMinusExpression o
+  def transform_UnaryMinusExpression(o)
     ast o, AST::Minus, :value => transform(o.expr)
   end
 
@@ -410,7 +410,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # between a LiteralArray and a Sequence. (Should it return the collected array, or the last expression?)
   # (A BlockExpression has now been introduced in the AST to solve this).
   #
-  def transform_BlockExpression o
+  def transform_BlockExpression(o)
     children = []
     # remove nops resulting from import
     o.statements.each {|s| r = transform(s); children << r unless is_nop?(r) }
@@ -418,11 +418,11 @@ class Puppet::Pops::Impl::Model::AstTransformer
   end
 
   # Interpolated strings are kept in an array of AST (string or other expression).
-  def transform_ConcatenatedString o
+  def transform_ConcatenatedString(o)
     ast o, AST::Concat, :value => o.segments.collect {|x| transform(x)}
   end
 
-  def transform_HostClassDefinition o
+  def transform_HostClassDefinition(o)
     parameters = o.parameters.collect {|p| transform(p) }
     args = {
       :arguments => parameters,
@@ -432,7 +432,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
     Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
   end
 
-  def transform_NodeDefinition o
+  def transform_NodeDefinition(o)
     # o.host_matches are expressions, and 3.1 AST requires special object AST::HostName
     # where a HostName is one of NAME, STRING, DEFAULT or Regexp - all of these are strings except regexp
     #
@@ -444,39 +444,39 @@ class Puppet::Pops::Impl::Model::AstTransformer
   end
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
-  def hostname_Array o
+  def hostname_Array(o)
     o.collect {|x| ast x, AST::HostName, :value => hostname(x) }
   end
 
-  def hostname_LiteralValue o
+  def hostname_LiteralValue(o)
     return o.value
   end
 
-  def hostname_QualifiedName o
+  def hostname_QualifiedName(o)
     return o.value
   end
 
-  def hostname_LiteralNumber o
+  def hostname_LiteralNumber(o)
     transform(o) # Number to string with correct radix
   end
 
-  def hostname_LiteralDefault o
+  def hostname_LiteralDefault(o)
     return 'default'
   end
 
-  def hostname_LiteralRegularExpression o
+  def hostname_LiteralRegularExpression(o)
     ast o, AST::Regex, :value => o.value
   end
 
-  def hostname_Object o
+  def hostname_Object(o)
     raise "Illegal expression - unacceptable as a node name"
   end
 
-  def transform_RelationshipExpression o
+  def transform_RelationshipExpression(o)
     Puppet::Parser::AST::Relationship.new(transform(o.left_expr), transform(o.right_expr), o.operator.to_s, merge_location({}, o))
   end
 
-  def transform_ResourceTypeDefinition o
+  def transform_ResourceTypeDefinition(o)
     parameters = o.parameters.collect {|p| transform(p) }
     args = { :arguments => parameters }
     args[:code] = transform(o.body) unless is_nop?(o.body)
@@ -495,7 +495,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # ResourceReference has type as a string, and the expressions representing
   # the "titles" to be an ASTArray.
   #
-  def transform_ResourceOverrideExpression o
+  def transform_ResourceOverrideExpression(o)
     resource_ref = o.resources
     raise "Unacceptable expression for resource override" unless resource_ref.is_a? Model::AccessExpression
 
@@ -517,7 +517,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   # Parameter is a parameter in a definition of some kind.
   # It is transformed to an array on the form `[name]´, or `[name, value]´.
-  def transform_Parameter o
+  def transform_Parameter(o)
     if o.value
       [o.name, transform(o.value)]
     else
@@ -526,11 +526,11 @@ class Puppet::Pops::Impl::Model::AstTransformer
   end
 
   # For non query expressions, parentheses can be dropped in the resulting AST.
-  def transform_ParenthesizedExpression o
+  def transform_ParenthesizedExpression(o)
     transform(o.expr)
   end
 
-  def transform_IfExpression o
+  def transform_IfExpression(o)
     args = { :test => transform(o.test), :statements => transform(o.then_expr) }
     args[:else] = transform(o.else_expr) # Tests say Nop should be there (unless is_nop? o.else_expr), probably not needed
     result = ast o, AST::IfStatement, args
@@ -538,7 +538,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   # Unless is not an AST object, instead an AST::IfStatement is used with an AST::Not around the test
   #
-  def transform_UnlessExpression o
+  def transform_UnlessExpression(o)
     args = { :test => ast(o, AST::Not, :value => transform(o.test)),
       :statements => transform(o.then_expr) }
     # AST 3.1 does not allow else on unless in the grammar, but it is ok since unless is encoded as a if !x
@@ -552,7 +552,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # functor_expr (lhs - the "name" expression)
   # arguments - list of arguments
   #
-  def transform_CallNamedFunctionExpression o
+  def transform_CallNamedFunctionExpression(o)
     name = o.functor_expr
     raise "Unacceptable expression for name of function" unless name.is_a? Model::QualifiedName
     args = {
@@ -567,7 +567,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
   # Transformation of CallMethodExpression handles a NamedAccessExpression functor and
   # turns this into a 3.1 AST::MethodCall.
   #
-  def transform_CallMethodExpression o
+  def transform_CallMethodExpression(o)
     name = o.functor_expr
     raise "Unacceptable expression for name of function" unless name.is_a? Model::NamedAccessExpression
     # transform of NamedAccess produces a hash, add arguments to it
@@ -577,28 +577,28 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   end
 
-  def transform_CaseExpression o
+  def transform_CaseExpression(o)
     # Expects expression, AST::ASTArray of AST
     ast o, AST::CaseStatement, :test => transform(o.test), :options => transform(o.options)
   end
 
-  def transform_CaseOption o
+  def transform_CaseOption(o)
     ast o, AST::CaseOpt, :value => transform(o.values), :statements => transform(o.then_expr)
   end
 
-  def transform_ResourceBody o
+  def transform_ResourceBody(o)
     # expects AST, AST::ASTArray of AST
     ast o, AST::ResourceInstance, :title => transform(o.title), :parameters => transform(o.operations)
   end
 
-  def transform_ResourceDefaultsExpression o
+  def transform_ResourceDefaultsExpression(o)
     ast o, AST::ResourceDefaults, :type => o.type_ref.value, :parameters => transform(o.operations)
   end
 
   # Transformation of ResourceExpression requires calling a method on the resulting
   # AST::Resource if it is virtual or exported
   #
-  def transform_ResourceExpression o
+  def transform_ResourceExpression(o)
     raise "Unacceptable type name expression" unless o.type_name.is_a? Model::QualifiedName
     resource = ast o, AST::Resource, :type => o.type_name.value, :instances => transform(o.bodies)
     resource.send("#{o.form}=", true) unless o.form == :regular
@@ -607,7 +607,7 @@ class Puppet::Pops::Impl::Model::AstTransformer
 
   # Transformation of SelectorExpression is limited to certain types of expressions.
   # This is probably due to constraints in the old grammar rather than any real concerns.
-  def transform_SelectorExpression o
+  def transform_SelectorExpression(o)
     case o.left_expr
     when Model::CallNamedFunctionExpression
     when Model::AccessExpression
@@ -619,18 +619,18 @@ class Puppet::Pops::Impl::Model::AstTransformer
     ast o, AST::Selector, :param => transform(o.left_expr), :values => transform(o.selectors)
   end
 
-  def transform_SelectorEntry o
+  def transform_SelectorEntry(o)
     ast o, AST::ResourceParam, :param => transform(o.matching_expr), :value => transform(o.value_expr)
   end
 
-  def transform_Object o
+  def transform_Object(o)
     raise "Unacceptable transform - found an Object without a rule: #{o.class}"
   end
 
   # Nil, nop
   # Bee bopp a luh-lah, a bop bop boom.
   #
-  def is_nop? o
+  def is_nop?(o)
     o.nil? || o.is_a?(Model::Nop)
   end
 end
