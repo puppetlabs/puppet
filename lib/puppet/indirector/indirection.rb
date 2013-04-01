@@ -102,11 +102,11 @@ class Puppet::Indirector::Indirection
 
     @cache_class = nil
     @terminus_class = nil
-    @indirected_class = options.delete(:indirected_class)
 
     raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
+    @indirected_class = options.delete(:indirected_class)
     if mod = options[:extend]
       extend(mod)
       options.delete(:extend)
