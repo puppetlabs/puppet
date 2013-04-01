@@ -87,8 +87,9 @@ class Puppet::Indirector::Indirection
 
     text += scrub(@doc) + "\n\n" if @doc
 
+    text << "* **Indirected Class**: `#{@indirected_class}`\n";
     if s = terminus_setting
-      text += "* **Terminus Setting**: #{terminus_setting}"
+      text << "* **Terminus Setting**: #{terminus_setting}\n"
     end
 
     text
@@ -105,6 +106,7 @@ class Puppet::Indirector::Indirection
     raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
+    @indirected_class = options.delete(:indirected_class)
     if mod = options[:extend]
       extend(mod)
       options.delete(:extend)

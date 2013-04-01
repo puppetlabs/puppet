@@ -19,7 +19,10 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     end
   end
 
-  indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner
+  indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner, :doc => <<DOC
+    This indirection wraps an `OpenSSL::X509::Request` object, representing a certificate signing request (CSR).
+    The indirection key is the certificate CN (generally a hostname).
+DOC
 
   # Because of how the format handler class is included, this
   # can't be in the base class.
