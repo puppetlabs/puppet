@@ -425,19 +425,16 @@ class Puppet::Pops::Impl::Model::Factory
     self
   end
 
-  # Records the origin of an element (file and starting line if other than 1)
-  # (Origin also supports a char offset and a length for a region within a file
-  # but this is not required (yet)).
+  # Records the origin file of an element
   # Does nothing if file is nil.
   #
   # @param file [String,nil] the file/path to the origin, may contain URI scheme of file: or some other URI scheme
-  # @param line [Fixnum]= 1 the line number of the first line where the content originates
   # @returns [Factory] returns self
   #
-  def record_origin(file, line = 1)
+  def record_origin(file)
     return self unless file
     Puppet::Pops::API::Adapters::OriginAdapter.adapt(current) do |a|
-       a.origin = Puppet::Pops::API::Origin.new(file, line)
+       a.origin = file
     end
     self
   end

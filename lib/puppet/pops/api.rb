@@ -13,8 +13,6 @@ module Puppet
 
       require 'puppet/pops/api/containment'
 
-      require 'puppet/pops/api/origin'
-
       require 'puppet/pops/api/issues'
       require 'puppet/pops/api/label_provider'
       require 'puppet/pops/api/validation'

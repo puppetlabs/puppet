@@ -103,11 +103,8 @@ module Puppet::Pops::API::Validation
       # A detail message is always provided, but is blank by default.
       arguments[:detail] ||= ''
 
-      # Find the origin adapter
-      # Find the sourcepos
-      # extract file and line
       origin_adapter = Puppet::Pops::API::Utils.find_adapter(semantic, Puppet::Pops::API::Adapters::OriginAdapter)
-      file = origin_adapter ? origin_adapter.origin.file : nil
+      file = origin_adapter ? origin_adapter.origin : nil
       source_pos = Puppet::Pops::API::Utils.find_adapter(semantic, Puppet::Pops::API::Adapters::SourcePosAdapter)
       severity = @severity_producer.severity(issue)
       @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments))

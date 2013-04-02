@@ -10,16 +10,15 @@ module Puppet::Pops::API::Adapters
     attr_accessor :documentation
   end
 
-  # An origin adapter adapts an object with a URI (or an object responding to #uri, such as
-  # {Puppet::Pops::API::Origin}). This origin
-  # describes the resource (a file, etc.) where source text originates, and on which line in this resource.
-  # For a regular file, the URI is the path to the file, and line number is 0. Instances of SourcePosAdapter
-  # is then used on other objects in a model to describe their relative position versus the origin.
+  # An origin adapter adapts an object with where it came from. This origin
+  # describes the resource (a file, etc.) where source text originates.
+  # Instances of SourcePosAdapter is then used on other objects in a model to
+  # describe their relative position versus the origin.
   #
   # @see Puppet::Pops::API::Utils#find_adapter
   #
   class OriginAdapter < Puppet::Pops::API::Adaptable::Adapter
-    # @return [Puppet::Pops::API::Origin] object describing the origin of the adapted
+    # @return [String] the origin of the adapted (usually a filename)
     attr_accessor :origin
   end
 
