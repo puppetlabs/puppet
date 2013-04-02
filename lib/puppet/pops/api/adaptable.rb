@@ -13,20 +13,9 @@
 # @note the implementation details; the fact that an instance variable is used to keep the adapter
 #   instance data should not
 #   be exploited as the implementation of _being adaptable_ may change in the future.
-# @api
+# @api private
 #
 module Puppet::Pops::API::Adaptable
-  # Indicates that an instance is adaptable (willing to be adapted) by returning true.
-  # This method works as
-  # a marker, but a response of 'true' is also needed (to enable disabling adaptability
-  # when not wanting the capability in a subclass).
-  # @return [Boolean] this implementation always returns true
-  # @api
-  #
-  def is_adaptable?
-    true
-  end
-
   # Base class for an Adapter.
   #
   # A typical adapter just defines some accessors.
@@ -103,7 +92,6 @@ module Puppet::Pops::API::Adaptable
     # @raise [ArgumentError] if the given object o is not adaptable
     #
     def self.adapt(o, &block)
-      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       attr_name = :"@#{instance_var_name(self.name)}"
       adapter = if existing = o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
         value
@@ -139,7 +127,6 @@ module Puppet::Pops::API::Adaptable
     # @raise [ArgumentError] if the given object o is not adaptable
     #
     def self.adapt_new(o, &block)
-      raise ArgumentError.new("Given object is not adaptable") if o.respond_to?(:is_adaptable?) && !o.is_adaptable?
       adapter = associate_adapter(create_adapter(o), o)
       if block_given?
         case block.arity

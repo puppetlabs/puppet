@@ -2,15 +2,6 @@
 require 'spec_helper'
 require 'puppet/pops/api'
 
-describe Puppet::Pops::API::Adaptable do
-  it "should add method is_adaptable? to a class that includes it" do
-    class Duck
-      include Puppet::Pops::API::Adaptable
-    end
-    Duck.new.is_adaptable?.should == true
-  end
-end
-
 describe Puppet::Pops::API::Adaptable::Adapter do
   class ValueAdapter < Puppet::Pops::API::Adaptable::Adapter
     attr_accessor :value

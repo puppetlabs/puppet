@@ -413,7 +413,6 @@ class Puppet::Pops::Impl::Model::Factory
   # Records the position (start -> end) and computes the resulting length.
   #
   def record_position(start_pos, end_pos)
-    puts "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
     Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current) do |a|
       a.line   = start_pos.line
       a.offset = start_pos.offset
@@ -437,7 +436,6 @@ class Puppet::Pops::Impl::Model::Factory
   #
   def record_origin(file, line = 1)
     return self unless file
-    puts "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
     Puppet::Pops::API::Adapters::OriginAdapter.adapt(current) do |a|
        a.origin = Puppet::Pops::API::Origin.new(file, line)
     end
@@ -446,7 +444,6 @@ class Puppet::Pops::Impl::Model::Factory
 
   # @return [Puppet::Pops::API::Adapters::SourcePosAdapter] with location information
   def loc()
-    raise "NON Adaptable: #{current}" unless current.respond_to? :is_adaptable?
     Puppet::Pops::API::Adapters::SourcePosAdapter.adapt(current)
   end
 
