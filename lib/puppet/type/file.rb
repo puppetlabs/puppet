@@ -246,10 +246,11 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:show_diff, :boolean => true) do
-    desc "Whether to display differences when the file changes, defaulting to true.
-      This parameter is useful for files that may contain passwords or other secret
-      data, which might otherwise be included in Puppet reports or other insecure
-      outputs.  This parameter is overridden by the global `show_diff` configuration."
+    desc "Whether to display differences when the file changes, defaulting to
+        true.  This parameter is useful for files that may contain passwords or
+        other secret data, which might otherwise be included in Puppet reports or
+        other insecure outputs.  If the global ``show_diff` configuratoin parameter
+        is false, then no diffs will be shown even if this parameter is true."
 
     defaultto :true
 
