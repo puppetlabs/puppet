@@ -1,7 +1,7 @@
-require 'puppet/pops/api'
-require File.join(File.dirname(__FILE__), '/impl/factory_rspec_helper')
+require 'puppet/pops'
+require File.join(File.dirname(__FILE__), 'factory_rspec_helper')
 
-describe Puppet::Pops::API::Containment do
+describe Puppet::Pops::Containment do
   include FactoryRspecHelper
 
   it "Should return an Enumerable if eAllContents is called without arguments" do

@@ -1,5 +1,4 @@
-require 'puppet/pops/api'
-require 'puppet/pops/impl'
+require 'puppet/pops'
 
 module Puppet; module Parser; end; end;
 # Adapts an egrammar/eparser to respond to the public API of the classic parser
@@ -24,7 +23,7 @@ class Puppet::Parser::EParserAdapter
       return parse_ruby_file
     else
       self.string= string if string
-      parser = Puppet::Pops::Impl::Parser::Parser.new()
+      parser = Puppet::Pops::Parser::Parser.new()
       parse_result = if @use == :string
         parser.parse_string(@string)
       else
@@ -45,7 +44,7 @@ class Puppet::Parser::EParserAdapter
       end
 
       # Transform the result, but only if not nil
-      parse_result = Puppet::Pops::Impl::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result
+      parse_result = Puppet::Pops::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result
       if parse_result && !parse_result.is_a?(Puppet::Parser::AST::BlockExpression)
         # Need to transform again, if result is not wrapped in something iterable when handed off to
         # a new Hostclass as its code.
@@ -63,8 +62,8 @@ class Puppet::Parser::EParserAdapter
     #
     return unless parse_result
 
-    acceptor  = Puppet::Pops::API::Validation::Acceptor.new
-    validator = Puppet::Pops::Impl::Validation::ValidatorFactory_3_1.new().validator(acceptor)
+    acceptor  = Puppet::Pops::Validation::Acceptor.new
+    validator = Puppet::Pops::Validation::ValidatorFactory_3_1.new().validator(acceptor)
     validator.validate(parse_result)
 
     max_errors = Puppet[:max_errors]
@@ -74,7 +73,7 @@ class Puppet::Parser::EParserAdapter
     # If there are warnings output them
     warnings = acceptor.warnings
     if warnings.size > 0
-      formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
+      formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       emitted_w = 0
       emitted_dw = 0
       acceptor.warnings.each {|w|
@@ -96,7 +95,7 @@ class Puppet::Parser::EParserAdapter
     # If there were errors, report the first found. Use a puppet style formatter.
     errors = acceptor.errors
     if errors.size > 0
-      formatter = Puppet::Pops::API::Validation::DiagnosticFormatterPuppetStyle.new
+      formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
         raise Puppet::ParseError.new(formatter.format(errors[0]))
