@@ -42,7 +42,6 @@ describe Puppet::Pops::Impl::Model::AstTransformer do
   it "preserves the file location" do
     model = literal(1)
     model.record_position(location(3, 1, 10), location(3, 2, 11))
-    model.record_origin(filename)
 
     ast = transform(model)
 
