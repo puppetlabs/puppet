@@ -122,8 +122,8 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
   end
 
   context "when adding a cronjob with the same command as an existing job" do
-    let(:resource) { Puppet::Type::Cron.new(:name => "test", :user => "root", :command => "/bin/true") }
     let(:record) { {:name => "existing", :user => "root", :command => "/bin/true", :record_type => :crontab} }
+    let(:resource) { Puppet::Type::Cron.new(:name => "test", :user => "root", :command => "/bin/true") }
     let(:resources) { { "test" => resource } }
 
     before :each do
@@ -146,6 +146,32 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       subject.expects(:new).with(record).never
       subject.stubs(:new)
       subject.prefetch(resources)
+    end
+  end
+
+  context "when prefetching an entry now managed for another user" do
+    let(:record) { {:name => "test", :user => "nobody", :command => "/bin/true", :record_type => :crontab} }
+    let(:resource) { Puppet::Type::Cron.new(:name => "test", :user => "root", :command => "/bin/true") }
+    let(:resources) { { "test" => resource } }
+
+    before :each do
+      subject.stubs(:prefetch_all_targets).returns([record])
+    end
+
+    it "should try and use the match method to find a more fitting record" do
+      subject.expects(:match).with(record, resources)
+      subject.prefetch(resources)
+    end
+
+    it "should create no provider instance for the old record" do
+      subject.expects(:new).with(record).never
+      subject.expects(:new).with(resource)
+      subject.prefetch(resources)
+    end
+
+    it "should not find the resource when looking up the on-disk record" do
+      subject.prefetch(resources)
+      subject.find_resource(record, resources).should be_nil
     end
   end
 end
