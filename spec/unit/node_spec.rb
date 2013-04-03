@@ -194,6 +194,12 @@ describe Puppet::Node, "when merging facts" do
     @node.merge "environment" => "two"
     @node.parameters["environment"].should == "two"
   end
+
+  it "should override a parameter if it is already set in the parameters" do
+    @node = Puppet::Node.new("testnode", :parameters => { "servernodename" => "foo.blah.com" } )
+    @node.merge! "servernodename" => "moo.cow.com"
+    @node.parameters["servernodename"].should == "moo.cow.com"
+  end
 end
 
 describe Puppet::Node, "when indirecting" do
