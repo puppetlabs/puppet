@@ -296,7 +296,6 @@ Listen 8140
     RequestHeader set X-Client-DN %{SSL_CLIENT_S_DN}e
     RequestHeader set X-Client-Verify %{SSL_CLIENT_VERIFY}e
 
-    ServerName #{master_name}
     DocumentRoot "#{test_dir}/etc/master/public"
 
     PassengerRoot /usr/share/gems/gems/passenger-3.0.17
@@ -323,7 +322,6 @@ Listen 8141
     RequestHeader set X-Client-DN %{SSL_CLIENT_S_DN}e
     RequestHeader set X-Client-Verify %{SSL_CLIENT_VERIFY}e
 
-    ServerName #{master_name}
     DocumentRoot "#{test_dir}/etc/master/public"
 
     PassengerRoot /usr/share/gems/gems/passenger-3.0.17
