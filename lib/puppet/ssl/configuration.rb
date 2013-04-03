@@ -1,4 +1,5 @@
 require 'puppet/ssl'
+require 'openssl'
 module Puppet
 module SSL
   # Puppet::SSL::Configuration is intended to separate out the following concerns:
@@ -27,6 +28,37 @@ class Configuration
   def ca_auth_file
     @ca_auth_file || @localcacert
   end
+
+  ##
+  # ca_auth_certificates returns an Array of OpenSSL::X509::Certificate
+  # instances intended to be used in the connection verify_callback.  This
+  # method loads and parses the {#ca_auth_file} from the filesystem.
+  #
+  # @api private
+  #
+  # @return [Array<OpenSSL::X509::Certificate>]
+  def ca_auth_certificates
+    @ca_auth_certificates ||= decode_cert_bundle(read_file(ca_auth_file))
+  end
+
+  ##
+  # Decode a string of concatenated certificates
+  #
+  # @return [Array<OpenSSL::X509::Certificate>]
+  def decode_cert_bundle(bundle_str)
+    re = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
+    pem_ary = bundle_str.scan(re)
+    pem_ary.map do |pem_str|
+      OpenSSL::X509::Certificate.new(pem_str)
+    end
+  end
+  private :decode_cert_bundle
+
+  # read_file makes testing easier.
+  def read_file(path)
+    File.read(path)
+  end
+  private :read_file
 end
 end
 end

@@ -58,6 +58,19 @@ module Puppet::Network::HTTP
           if ssl_context.error_string and not preverify_ok
             verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
           end
+
+          # (#20027) The peer cert must be issued by a specific authority
+          # If we've copied all of the certs in the chain out of the SSL library
+          if peer_certs.length == ssl_context.chain.length
+            descending_cert_chain = peer_certs.reverse.map {|c| c.content }
+            authz_ca_certs = ssl_configuration.ca_auth_certificates
+
+            if not has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
+              verify_errors << "The server presented a SSL certificate chain which does not include a " +
+                "CA listed in the ssl_client_ca_auth file"
+              preverify_ok = false
+            end
+          end
           preverify_ok
         rescue => ex
           verify_errors << "#{ex.message} in verify_callback"
@@ -193,5 +206,21 @@ module Puppet::Network::HTTP
           :ca_auth_file  => Puppet[:ssl_client_ca_auth]
       )
     end
+
+    ##
+    # checks if the set of peer_certs contains at least one certificate issued
+    # by a certificate listed in authz_certs
+    #
+    # @api private
+    #
+    # @return [Boolean]
+    def has_authz_peer_cert(peer_certs, authz_certs)
+      peer_certs.any? do |peer_cert|
+        authz_certs.any? do |authz_cert|
+          peer_cert.verify(authz_cert.public_key)
+        end
+      end
+    end
+    private :has_authz_peer_cert
   end
 end
