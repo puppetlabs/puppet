@@ -15,14 +15,15 @@ platforms :ruby do
   gem 'pry', :group => :development
   gem 'yard', :group => :development
   gem 'redcarpet', :group => :development
+  gem "racc", "~> 1.4", :group => :development
 end
+
 
 group(:development, :test) do
   gem "puppet", :path => File.dirname(__FILE__), :require => false
   gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
   gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
   gem "rack", "~> 1.4", :require => false
-  gem "racc", "~> 1.4", :require => false
   gem "rake", :require => false
   gem "rspec", "~> 2.11.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
