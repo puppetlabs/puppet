@@ -13,19 +13,19 @@ describe Puppet::Parser::Compiler do
     Puppet.settings.clear
   end
 
-  it "should be able to determine the configuration version from a local version control repository" do
-    pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows", :if => Puppet.features.microsoft_windows?) do
-      # This should always work, because we should always be
-      # in the puppet repo when we run this.
-      version = %x{git rev-parse HEAD}.chomp
+  it "should be able to determine the configuration version from a local version control repository", :fails_on_windows => true do
+    # This should always work, because we should always be
+    # in the puppet repo when we run this.
+    version = %x{git rev-parse HEAD 2> /dev/null}.chomp
 
-      Puppet.settings[:config_version] = 'git rev-parse HEAD'
+    pending "git is not available or not in a git repo" if version.empty?
 
-      @parser = Puppet::Parser::Parser.new "development"
-      @compiler = Puppet::Parser::Compiler.new(@node)
+    Puppet.settings[:config_version] = 'git rev-parse HEAD'
 
-      @compiler.catalog.version.should == version
-    end
+    @parser = Puppet::Parser::Parser.new "development"
+    @compiler = Puppet::Parser::Compiler.new(@node)
+
+    @compiler.catalog.version.should == version
   end
 
   it "should not create duplicate resources when a class is referenced both directly and indirectly by the node classifier (4792)" do
