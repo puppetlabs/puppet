@@ -260,33 +260,20 @@ TypesConfig /etc/mime.types
 # Same thing, just using a certificate issued by the Agent CA, which should not
 # be trusted by the clients.
 
-Listen 8140
-<VirtualHost *:8140>
+Listen 8140 https
+Listen 8141 https
+
+<VirtualHost _default_:8140>
     SSLEngine on
     SSLProtocol ALL -SSLv2
     SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:-LOW:-SSLv2:-EXP
 
-    ## PENDING
-    # This is how we reject clients that have a different intermediate issuer, but
-    # a common shared root CA
-    # SSLRequire %{SSL_CLIENT_I_DN_CN} == "PRODUCTION-CA"
-
-    ## PENDING (Mozilla wants to use Certificate Paths, not files)
-    # SSLCACertificatePath "#{test_dir}/certdir"
-    # SSLCARevocationPath "#{test_dir}/certdir"
-    # SSLCARevocationCheck chain
-
     SSLCertificateFile "#{test_dir}/master.crt"
     SSLCertificateKeyFile "#{test_dir}/master.key"
 
-    # chain in the intermediate cert for this master.  This file _must_ contain the
-    # intermediate CA above the Root CA to complete the chain down to the self
-    # signed root.  Otherwise, you should expect the agent side error, "unable to
-    # get local issuer certificate"
+    # The chain file is sent to the client during handshake.
     SSLCertificateChainFile "#{test_dir}/ca_master_bundle.crt"
-    # Client certificates we trust (Note, other intermediate CA's issued by the
-    # Root CA will also be trusted if the client sends the intermediate CA
-    # certificate during the handshake.  The master CA, for example.)
+    # The CA cert file is used to authenticate clients
     SSLCACertificateFile "#{test_dir}/ca_agent_bundle.crt"
 
     SSLVerifyClient optional
@@ -304,8 +291,8 @@ Listen 8140
     RackAutoDetect On
     RackBaseURI /
 </VirtualHost>
-Listen 8141
-<VirtualHost *:8141>
+
+<VirtualHost _default_:8141>
     SSLEngine on
     SSLProtocol ALL -SSLv2
     SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:-LOW:-SSLv2:-EXP
