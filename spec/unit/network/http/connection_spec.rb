@@ -206,6 +206,7 @@ describe Puppet::Network::HTTP::Connection do
         cert = Puppet::SSL::CertificateAuthority.new.generate(args[:for_server], :dns_alt_names => args[:for_aliases]).content
         ssl_context.stubs(:current_cert).returns(cert)
       end
+      ssl_context.stubs(:chain).returns([])
       ssl_context.stubs(:error_string).returns(args[:with_error_string])
       ssl_context
     end
