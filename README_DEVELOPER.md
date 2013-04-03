@@ -273,23 +273,32 @@ include `ext/envpuppet.bat` will help.
 To quickly run Puppet from source, assuming you already have Ruby installed
 from [rubyinstaller.org](http://rubyinstaller.org).
 
-    gem install sys-admin win32-process win32-dir win32-taskscheduler --no-rdoc --no-ri
-    gem install win32-service --platform=mswin32 --no-rdoc --no-ri --version 0.7.1
-    net use Z: "\\vmware-host\Shared Folders" /persistent:yes
-    Z:
-    cd <path_to_puppet>
-    set PATH=%PATH%;Z:\<path_to_puppet>\ext
-    envpuppet puppet --version
+    C:\> cd C:\work\puppet
+    C:\work\puppet> set PATH=%PATH%;C:\work\puppet\ext
+    C:\work\puppet> envpuppet bundle install
+    C:\work\puppet> envpuppet puppet --version
     2.7.9
 
-Some spec tests are known to fail on Windows, e.g. no mount provider
-on Windows, so use the following rspec exclude filter:
+When writing a test that cannot possibly run on Windows, e.g. there is
+no mount type on windows, do the following:
 
-    cd <path_to_puppet>
-    envpuppet rspec --tag ~fails_on_windows spec
+    describe Puppet::MyClass, :unless => Puppet.features.microsoft_windows? do
+      ..
+    end
 
-This will give you a shared filesystem with your Mac and allow you to run
-Puppet directly from source without using install.rb or copying files around.
+If the test doesn't currently pass on Windows, e.g. due to on going porting, then use an rspec conditional pending block:
+
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      <example1>
+    end
+
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      <example2>
+    end
+
+Then run the test as:
+
+    C:\work\puppet> envpuppet bundle exec rspec spec
 
 ## Common Issues ##
 

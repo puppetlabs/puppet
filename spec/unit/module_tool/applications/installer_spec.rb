@@ -3,7 +3,7 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::ModuleTool::Applications::Installer, :fails_on_windows => true do
+describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before do
