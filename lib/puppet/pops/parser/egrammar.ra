@@ -114,7 +114,7 @@ expression
   | expression EQUALS       expression                 { result = val[0].set(val[2])      ; loc result, val[1] }
   | expression APPENDS      expression                 { result = val[0].plus_set(val[2]) ; loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
-  |            LPAREN       expression RPAREN          { result = val[1].paren()          ;                    }
+  |            LPAREN       expression RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
 #---EXPRESSIONS
 #   (e.g. argument list)

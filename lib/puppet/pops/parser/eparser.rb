@@ -1270,7 +1270,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 115)
 
 module_eval(<<'.,.,', 'egrammar.ra', 116)
   def _reduce_40(val, _values, result)
-     result = val[1].paren()          ;                    
+     result = val[1].paren()          ; loc result, val[0] 
     result
   end
 .,.,

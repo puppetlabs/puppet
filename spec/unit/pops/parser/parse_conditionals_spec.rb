@@ -35,6 +35,18 @@ describe "egrammar parsing conditionals" do
         "  (then (block (= $a 10) (= $b 20)))",
         "  (else (= $a 20)))"].join("\n")
     end
+
+    it "allows a parenthesized conditional expression" do
+      dump(parse("if (true) { 10 }")).should == "(if true\n  (then 10))"
+    end
+
+    it "allows a parenthesized elsif conditional expression" do
+      dump(parse("if true { 10 } elsif (false) { 20 }")).should ==
+        ["(if true",
+         "  (then 10)",
+         "  (else (if false",
+         "      (then 20))))"].join("\n")
+    end
   end
 
   context "When parsing unless statements" do
@@ -47,6 +59,10 @@ describe "egrammar parsing conditionals" do
       ["(unless true",
         "  (then (= $a 10))",
         "  (else (= $a 20)))"].join("\n")
+    end
+
+    it "allows a parenthesized conditional expression" do
+      dump(parse("unless (true) { 10 }")).should == "(unless true\n  (then 10))"
     end
 
     it "unless true { $a = 10 } elsif false { $a = 15} else {$a = 20} # is illegal" do
@@ -84,6 +100,13 @@ describe "egrammar parsing conditionals" do
   context "When parsing case statements" do
     it "case $a { a : {}}" do
       dump(parse("case $a { a : {}}")).should ==
+      ["(case $a",
+        "  (when (a) (then ())))"
+      ].join("\n")
+    end
+
+    it "allows a parenthesized value expression" do
+      dump(parse("case ($a) { a : {}}")).should ==
       ["(case $a",
         "  (when (a) (then ())))"
       ].join("\n")
