@@ -17,8 +17,10 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
     Puppet::Indirector::Terminus.terminus_classes(ind.name).sort { |a,b| a.to_s <=> b.to_s }.each do |terminus|
       terminus_name = terminus.to_s
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
-      terminus_doc = Puppet::Util::Docs.scrub(term_class.doc)
-      text << markdown_definitionlist(terminus_name, terminus_doc)
+      if term_class
+        terminus_doc = Puppet::Util::Docs.scrub(term_class.doc)
+        text << markdown_definitionlist(terminus_name, terminus_doc)
+      end
     end
   end
 
