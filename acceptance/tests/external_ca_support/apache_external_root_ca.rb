@@ -124,6 +124,14 @@ on master, puppet_agent("#{agent_cmd_prefix} --test"), :acceptable_exit_codes =>
   assert exit_code == 0
 end
 
+step "Agent refuses to connect to a rogue master"
+on master, puppet_agent("#{agent_cmd_prefix} --ssl_client_ca_auth=#{testdir}/ca_master.crt --masterport=8141 --test"), :acceptable_exit_codes => (0..255) do
+  assert_no_match /Creating a new SSL key/, stdout
+  assert_match /Failed to connect to #{fixtures.master_name}/i, stderr
+  assert_match /The server presented a SSL certificate issued by a CA not listed in the ssl_client_ca_auth file/i, stderr
+  assert exit_code == 1
+end
+
 step "Master accepts client cert with email address in subject"
 on master, "cp #{testdir}/etc/agent/puppet.conf{,.no_email}"
 on master, "cp #{testdir}/etc/agent/puppet.conf{.email,}"
