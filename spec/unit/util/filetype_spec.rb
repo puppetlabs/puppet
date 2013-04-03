@@ -100,6 +100,12 @@ describe Puppet::Util::FileType do
       type.should_not be_nil
     end
 
+    # make Puppet::Util::SUIDManager return something deterministic, not the
+    # uid of the user running the tests, except where overridden below.
+    before :each do
+      Puppet::Util::SUIDManager.stubs(:uid).returns 1234
+    end
+
     describe "#read" do
       it "should run crontab -l as the target user" do
         Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).returns crontab
