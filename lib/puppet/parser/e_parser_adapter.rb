@@ -35,13 +35,7 @@ class Puppet::Parser::EParserAdapter
       source_file = @file || "unknown-source-location"
 
       # Validate
-      begin
-        validate(parse_result)
-      rescue => e
-        # This rescue is here for debugging purposes (if there is a fundamental issue rather than one that
-        # should be reported.
-        raise e
-      end
+      validate(parse_result)
 
       # Transform the result, but only if not nil
       parse_result = Puppet::Pops::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result

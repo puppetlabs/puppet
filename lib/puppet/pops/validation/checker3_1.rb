@@ -33,43 +33,55 @@ class Puppet::Pops::Validation::Checker3_1
   # The result is collected (or acted on immediately) by the configured diagnostic provider/acceptor
   # given when creating this Checker.
   #
-  def validate model
+  def validate(model)
     # tree iterate the model, and call check for each element
-    check model
+    check(model)
     model.eAllContents.each {|m| check(m) }
   end
 
   # Performs regular validity check
-  def check o              ; @@check_visitor.visit_this(self, o)                ; end
+  def check(o)
+    @@check_visitor.visit_this(self, o)
+  end
 
   # Performs check if this is a vaid hostname expression
-  def hostname o, semantic ; @@hostname_visitor.visit_this(self, o, semantic)   ; end
+  def hostname(o, semantic)
+    @@hostname_visitor.visit_this(self, o, semantic)
+  end
 
   # Performs check if this is valid as a query
-  def query o              ; @@query_visitor.visit_this(self, o)                ; end
+  def query(o)
+    @@query_visitor.visit_this(self, o)
+  end
 
   # Performs check if this is valid as a relationship side
-  def relation o, container ; @@relation_visitor.visit_this(self, o, container) ; end
+  def relation(o, container)
+    @@relation_visitor.visit_this(self, o, container)
+  end
 
   # Performs check if this is valid as a rvalue
-  def rvalue o              ; @@rvalue_visitor.visit_this(self, o)              ; end
+  def rvalue(o)
+    @@rvalue_visitor.visit_this(self, o)
+  end
 
   # Performs check if this is valid as a container of a definition (class, define, node)
-  def top o, definition     ; @@top_visitor.visit_this(self, o, definition)     ; end
+  def top(o, definition)
+    @@top_visitor.visit_this(self, o, definition)
+  end
 
   # Checks the LHS of an assignment (is it assignable?).
   # If args[0] is true, assignment via index is checked.
   #
-  def assign o, *args
+  def assign(o, *args)
     @@assignment_visitor.visit_this(self, o, *args)
   end
 
   #---ASSIGNMENT CHECKS
 
-  def assign_VariableExpression o, *args
+  def assign_VariableExpression(o, *args)
     varname_string = varname_to_s(o.expr)
     if varname_string =~ /^[0-9]+$/
-      acceptor.accept Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o, :varname => varname_string
+      acceptor.accept(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o, :varname => varname_string)
     end
     # Can not assign to something in another namespace (i.e. a '::' in the name is not legal)
     if acceptor.will_accept? Issues::CROSS_SCOPE_ASSIGNMENT
@@ -82,17 +94,17 @@ class Puppet::Pops::Validation::Checker3_1
     # TODO: Investigate if there are invalid cases for += assignment
   end
 
-  def assign_AccessExpression o, *args
+  def assign_AccessExpression(o, *args)
     # Are indexed assignments allowed at all ? $x[x] = '...'
     if acceptor.will_accept? Issues::ILLEGAL_INDEXED_ASSIGNMENT
-      acceptor.accept Issues::ILLEGAL_INDEXED_ASSIGNMENT, o
+      acceptor.accept(Issues::ILLEGAL_INDEXED_ASSIGNMENT, o)
     else
       # Then the left expression must be assignable-via-index
-      assign o.left_expr, true
+      assign(o.left_expr, true)
     end
   end
 
-  def assign_Object o, *args
+  def assign_Object(o, *args)
     # Can not assign to anything else (differentiate if this is via index or not)
     # i.e. 10 = 'hello' vs. 10['x'] = 'hello' (the root is reported as being in error in both cases)
     #
@@ -101,14 +113,14 @@ class Puppet::Pops::Validation::Checker3_1
 
   #---CHECKS
 
-  def check_Object o
+  def check_Object(o)
   end
 
-  def check_Factory o
-    check o.current
+  def check_Factory(o)
+    check(o.current)
   end
 
-  def check_AccessExpression o
+  def check_AccessExpression(o)
     # Check multiplicity of keys
     case o.left_expr
     when Model::QualifiedName
@@ -129,8 +141,8 @@ class Puppet::Pops::Validation::Checker3_1
   end
 
   def check_AssignmentExpression(o)
-    assign o.left_expr
-    rvalue o.right_expr
+    assign(o.left_expr)
+    rvalue(o.right_expr)
   end
 
   # Checks that operation with :+> is contained in a ResourceOverride or Collector.
@@ -152,62 +164,62 @@ class Puppet::Pops::Validation::Checker3_1
     rvalue(o.value_expr)
   end
 
-  def check_BinaryExpression o
-    rvalue o.left_expr
-    rvalue o.right_expr
+  def check_BinaryExpression(o)
+    rvalue(o.left_expr)
+    rvalue(o.right_expr)
   end
 
-  def check_CallNamedFunctionExpression o
+  def check_CallNamedFunctionExpression(o)
     unless o.functor_expr.is_a? Model::QualifiedName
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature=> 'function name', :container => o
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature => 'function name', :container => o)
     end
   end
 
-  def check_MethodCallExpression o
+  def check_MethodCallExpression(o)
     unless o.functor_expr.is_a? Model::QualifiedName
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature=> 'function name', :container => o
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature => 'function name', :container => o)
     end
   end
 
-  def check_CaseExpression o
+  def check_CaseExpression(o)
     # There should only be one LiteralDefault case option value
     # TODO: Implement this check
   end
 
-  def check_CollectExpression o
+  def check_CollectExpression(o)
     unless o.type_expr.is_a? Model::QualifiedReference
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o)
     end
 
     # If a collect expression tries to collect exported resources and storeconfigs is not on
     # then it will not work... This was checked in the parser previously. This is a runtime checking
     # thing as opposed to a language thing.
     if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.query.is_a?(Model::ExportedQuery)
-      acceptor.accept Issues::RT_NO_STORECONFIGS, o
+      acceptor.accept(Issues::RT_NO_STORECONFIGS, o)
     end
   end
 
   # Only used for function names, grammar should not be able to produce something faulty, but
   # check anyway if model is created programatically (it will fail in transformation to AST for sure).
-  def check_NamedAccessExpression o
+  def check_NamedAccessExpression(o)
     name = o.right_expr
     unless name.is_a? Model::QualifiedName
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => o.eContainer
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => o.eContainer)
     end
   end
 
   # for 'class' and 'define'
-  def check_NamedDefinition o
-    top o.eContainer, o
+  def check_NamedDefinition(o)
+    top(o.eContainer, o)
     if (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.name.include?('-')
       acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.name})
     end
   end
 
-  def check_ImportExpression o
+  def check_ImportExpression(o)
     o.files.each do |f|
       unless f.is_a? Model::LiteralString
-        acceptor.accept Issues::ILLEGAL_EXPRESSION, f, :feature=> 'file name', :container => o
+        acceptor.accept(Issues::ILLEGAL_EXPRESSION, f, :feature => 'file name', :container => o)
       end
     end
   end
@@ -224,26 +236,26 @@ class Puppet::Pops::Validation::Checker3_1
   # Restrictions on hash key are because of the strange key comparisons/and merge rules in the AST evaluation
   # (Even the allowed ones are handled in a strange way).
   #
-  def transform_KeyedEntry o
-    key = case o.key
+  def transform_KeyedEntry(o)
+    case o.key
     when Model::QualifiedName
     when Model::LiteralString
     when Model::LiteralNumber
     when Model::ConcatenatedString
     else
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.key, :feature=> 'hash key', :container => o.eContainer
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => o.eContainer)
     end
   end
 
   # A Lambda is a Definition, but it may appear in other scopes that top scope (Which check_Definition asserts).
   #
-  def check_LambdaExpression o
+  def check_LambdaExpression(o)
   end
 
-  def check_NodeDefinition o
+  def check_NodeDefinition(o)
     # Check that hostnames are valid hostnames (or regular expressons)
-    hostname o.host_matches, o
-    top o.eContainer, o
+    hostname(o.host_matches, o)
+    top(o.eContainer, o)
   end
 
   # Asserts that value is a valid QualifiedName. No additional checking is made, objects that use
@@ -268,35 +280,35 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
-  def check_QueryExpression o
-    rvalue o.expr if o.expr  # is optional
+  def check_QueryExpression(o)
+    rvalue(o.expr) if o.expr  # is optional
   end
 
-  def relation_Object o, rel_expr
+  def relation_Object(o, rel_expr)
     acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature => o.eContainingFeature, :container => rel_expr})
   end
 
-  def relation_AccessExpression o, rel_expr; end
+  def relation_AccessExpression(o, rel_expr); end
 
-  def relation_CollectExpression o, rel_expr; end
+  def relation_CollectExpression(o, rel_expr); end
 
-  def relation_VariableExpression o, rel_expr; end
+  def relation_VariableExpression(o, rel_expr); end
 
-  def relation_LiteralString o, rel_expr; end
+  def relation_LiteralString(o, rel_expr); end
 
-  def relation_ConcatenatedStringExpression o, rel_expr; end
+  def relation_ConcatenatedStringExpression(o, rel_expr); end
 
-  def relation_SelectorExpression o, rel_expr; end
+  def relation_SelectorExpression(o, rel_expr); end
 
-  def relation_CaseExpression o, rel_expr; end
+  def relation_CaseExpression(o, rel_expr); end
 
-  def relation_ResourceExpression o, rel_expr; end
+  def relation_ResourceExpression(o, rel_expr); end
 
-  def relation_RelationshipExpression o, rel_expr; end
+  def relation_RelationshipExpression(o, rel_expr); end
 
-  def check_Parameter o
+  def check_Parameter(o)
     if o.name =~ /^[0-9]+$/
-      acceptor.accept Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name
+      acceptor.accept(Issues::ILLEGAL_NUMERIC_PARAMETER, o, :name => o.name)
     end
   end
 
@@ -309,21 +321,21 @@ class Puppet::Pops::Validation::Checker3_1
   #  | casestatement
   #  | hasharrayaccesses
 
-  def check_RelationshipExpression o
+  def check_RelationshipExpression(o)
     relation(o.left_expr, o)
     relation(o.right_expr, o)
   end
 
-  def check_ResourceExpression o
+  def check_ResourceExpression(o)
     # A resource expression must have a lower case NAME as its type e.g. 'file { ... }'
     unless o.type_name.is_a? Model::QualifiedName
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.type_name, :feature=> 'resource type', :container => o
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_name, :feature => 'resource type', :container => o)
     end
 
     # This is a runtime check - the model is valid, but will have runtime issues when evaluated
     # and storeconfigs is not set.
     if acceptor.will_accept?(Issues::RT_NO_STORECONFIGS) && o.exported
-      acceptor.accept Issues::RT_NO_STORECONFIGS_EXPORT, o
+      acceptor.accept(Issues::RT_NO_STORECONFIGS_EXPORT, o)
     end
   end
 
@@ -335,30 +347,30 @@ class Puppet::Pops::Validation::Checker3_1
 
   # Transformation of SelectorExpression is limited to certain types of expressions.
   # This is probably due to constraints in the old grammar rather than any real concerns.
-  def select_SelectorExpression o
+  def select_SelectorExpression(o)
     case o.left_expr
     when Model::CallNamedFunctionExpression
     when Model::AccessExpression
     when Model::VariableExpression
     when Model::ConcatenatedString
     else
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o.left_expr, :feature=> 'left operand', :container => o
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.left_expr, :feature => 'left operand', :container => o)
     end
   end
 
-  def check_UnaryExpression o
-    rvalue o.expr
+  def check_UnaryExpression(o)
+    rvalue(o.expr)
   end
 
-  def check_UnlessExpression o
+  def check_UnlessExpression(o)
     # TODO: Unless may not have an elsif
     # TODO: 3.x unless may not have an else
   end
 
-  def check_VariableExpression o
+  def check_VariableExpression(o)
     # The expression must be a qualified name
     if !o.expr.is_a? Model::QualifiedName
-      acceptor.accept Issues::ILLEGAL_EXPRESSION, o, {:feature => 'name', :container => o}
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, :feature => 'name', :container => o)
     else
       # Note, that if it later becomes illegal with hyphen in any name, this special check
       # can be skipped in favor of the check in QualifiedName, which is now not done if contained in
@@ -373,11 +385,11 @@ class Puppet::Pops::Validation::Checker3_1
   #--- HOSTNAME CHECKS
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
-  def hostname_Array o, semantic
+  def hostname_Array(o, semantic)
     o.each {|x| hostname x, semantic }
   end
 
-  def hostname_String o, semantic
+  def hostname_String(o, semantic)
     # The 3.x checker only checks for illegal characters - if matching /[^-\w.]/ the name is invalid,
     # but this allows pathological names like "a..b......c", "----"
     # TODO: Investigate if more illegal hostnames should be flagged.
@@ -387,11 +399,11 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
-  def hostname_LiteralValue o, semantic
+  def hostname_LiteralValue(o, semantic)
     hostname_String(o.value.to_s, o)
   end
 
-  def hostname_ConcatenatedString o, semantic
+  def hostname_ConcatenatedString(o, semantic)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
     if the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
@@ -405,109 +417,111 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
-  def hostname_QualifiedName o, semantic
+  def hostname_QualifiedName(o, semantic)
     hostname_String(o.value.to_s, o)
   end
 
-  def hostname_QualifiedReference o, semantic
+  def hostname_QualifiedReference(o, semantic)
     hostname_String(o.value.to_s, o)
   end
 
-  def hostname_LiteralNumber o, semantic
+  def hostname_LiteralNumber(o, semantic)
     # always ok
   end
 
-  def hostname_LiteralDefault o, semantic
+  def hostname_LiteralDefault(o, semantic)
     # always ok
   end
 
-  def hostname_LiteralRegularExpression o, semantic
+  def hostname_LiteralRegularExpression(o, semantic)
     # always ok
   end
 
-  def hostname_Object o, semantic
+  def hostname_Object(o, semantic)
     acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=>'hostname', :container=>semantic})
   end
 
   #---QUERY CHECKS
 
   # Anything not explicitly allowed is flagged as error.
-  def query_Object o
+  def query_Object(o)
     acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o)
   end
 
   # Puppet AST only allows == and !=
   #
-  def query_ComparisonExpression o
+  def query_ComparisonExpression(o)
     acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o) unless [:'==', :'!='].include? o.operator
   end
 
   # Allows AND, OR, and checks if left/right are allowed in query.
-  def query_BooleanExpression o
+  def query_BooleanExpression(o)
     query o.left_expr
     query o.right_expr
   end
 
-  def query_ParenthesizedExpression o ; query(o.expr) ; end
+  def query_ParenthesizedExpression(o)
+    query(o.expr)
+  end
 
-  def query_VariableExpression o                      ; end
+  def query_VariableExpression(o); end
 
-  def query_QualifiedName o                           ; end
+  def query_QualifiedName(o); end
 
-  def query_LiteralNumber o                           ; end
+  def query_LiteralNumber(o); end
 
-  def query_LiteralString o                           ; end
+  def query_LiteralString(o); end
 
-  def query_LiteralBoolean o                          ; end
+  def query_LiteralBoolean(o); end
 
   #---RVALUE CHECKS
 
   # By default, all expressions are reported as being rvalues
   # Implement specific rvalue checks for those that are not.
   #
-  def rvalue_Expression o                 ; end
+  def rvalue_Expression(o); end
 
-  def rvalue_ImportExpression o           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_ImportExpression(o)          ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_BlockExpression o            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_BlockExpression(o)           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_CaseExpression o             ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_CaseExpression(o)            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_IfExpression o               ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_IfExpression(o)              ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_UnlessExpression o           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_UnlessExpression(o)          ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_ResourceExpression o         ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_ResourceExpression(o)        ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_ResourceDefaultsExpression o ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_ResourceDefaultsExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_ResourceOverrideExpression o ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_ResourceOverrideExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_CollectExpression o          ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_CollectExpression(o)         ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_Definition o                 ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_Definition(o)                ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_NodeDefinition o             ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+  def rvalue_NodeDefinition(o)            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
-  def rvalue_UnaryExpression o            ; rvalue o.expr                 ; end
+  def rvalue_UnaryExpression(o)           ; rvalue o.expr                 ; end
 
   #---TOP CHECK
 
-  def top_NilClass o, definition
+  def top_NilClass(o, definition)
     # ok, reached the top, no more parents
   end
 
-  def top_Object o, definition
+  def top_Object(o, definition)
     # fail, reached a container that is not top level
     acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
 
-  def top_BlockExpression o, definition
+  def top_BlockExpression(o, definition)
     # ok, if this is a block representing the body of a class, or is top level
     top o.eContainer, definition
   end
 
-  def top_HostClassDefinition o, definition
+  def top_HostClassDefinition(o, definition)
     # ok, stop scanning parents
   end
 
@@ -515,7 +529,7 @@ class Puppet::Pops::Validation::Checker3_1
   # to accept a lambda.
   # A lambda can not iteratively create classes, nodes or defines as the lambda does not have a closure.
   #
-  def top_LambdaExpression o, definition
+  def top_LambdaExpression(o, definition)
     # fail, stop scanning parents
     acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
@@ -524,7 +538,7 @@ class Puppet::Pops::Validation::Checker3_1
 
   # Produces string part of something named, or nil if not a QualifiedName or QualifiedReference
   #
-  def varname_to_s o
+  def varname_to_s(o)
     case o
     when Model::QualifiedName
       o.value
