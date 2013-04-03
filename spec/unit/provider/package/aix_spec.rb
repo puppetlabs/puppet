@@ -19,6 +19,7 @@ describe provider_class do
 
   it "should uninstall a package" do
     @provider.expects(:installp).with('-gu', 'mypackage')
+    @provider.class.expects(:pkglist).with(:pkgname => 'mypackage').returns(nil)
     @provider.uninstall
   end
 
