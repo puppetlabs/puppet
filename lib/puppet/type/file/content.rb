@@ -107,7 +107,7 @@ module Puppet
 
       result = super
 
-      if ! result and Puppet[:show_diff]
+      if ! result and Puppet[:show_diff] and resource.show_diff?
         write_temporarily do |path|
           notice "\n" + diff(@resource[:path], path)
         end

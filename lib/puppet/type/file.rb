@@ -245,6 +245,18 @@ Puppet::Type.newtype(:file) do
     newvalues(:first, :all)
   end
 
+  newparam(:show_diff, :boolean => true) do
+    desc "Whether to display differences when the file changes, defaulting to
+        true.  This parameter is useful for files that may contain passwords or
+        other secret data, which might otherwise be included in Puppet reports or
+        other insecure outputs.  If the global ``show_diff` configuration parameter
+        is false, then no diffs will be shown even if this parameter is true."
+
+    defaultto :true
+
+    newvalues(:true, :false)
+  end
+
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
     req = []
@@ -469,6 +481,11 @@ Puppet::Type.newtype(:file) do
   # Should we be purging?
   def purge?
     @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
+  end
+
+  # Should we be showing diffs?
+  def show_diff?
+    @parameters.include?(:show_diff) and (self[:show_diff] == :true or self[:show_diff] == "true")
   end
 
   # Recursively generate a list of file resources, which will
