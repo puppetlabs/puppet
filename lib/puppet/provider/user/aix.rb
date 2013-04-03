@@ -72,6 +72,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
+    {:aix_attr => :gecos,      :puppet_prop => :comment},
   ]
 
   #--------------
@@ -94,7 +95,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list)] + self.get_ia_module_args + [ value]
+    [self.class.command(:list), "-c"] + self.get_ia_module_args + [ value]
   end
 
   def lsallcmd()
@@ -146,7 +147,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # Get the groupname from its id
-  def self.groupname_by_id(gid)
+  def groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
@@ -166,7 +167,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # Check that a group exists and is valid
   def verify_group(value)
     if value.is_a? Integer or value.is_a? Fixnum
-      groupname = self.groupname_by_id(value)
+      groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else
       raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
@@ -297,13 +298,6 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
 
-  #- **comment**
-  #    A description of the user.  Generally is a user's full name.
-  #def comment=(value)
-  #end
-  #
-  #def comment
-  #end
   # UNSUPPORTED
   #- **profile_membership**
   #    Whether specified roles should be treated as the only roles
