@@ -143,6 +143,61 @@ describe Puppet::Application::Doc do
       @doc.setup
     end
 
+    describe "configuring logging" do
+      before :each do
+        Puppet::Util::Log.stubs(:newdestination)
+      end
+
+      describe "with --debug" do
+        before do
+          @doc.options[:debug] = true
+        end
+
+        it "should set log level to debug" do
+          @doc.setup
+          Puppet::Util::Log.level.should == :debug
+        end
+
+        it "should set log destination to console" do
+          Puppet::Util::Log.expects(:newdestination).with(:console)
+          @doc.setup
+        end
+      end
+
+      describe "with --verbose" do
+        before do
+          @doc.options[:verbose] = true
+        end
+
+        it "should set log level to info" do
+          @doc.setup
+          Puppet::Util::Log.level.should == :info
+        end
+
+        it "should set log destination to console" do
+          Puppet::Util::Log.expects(:newdestination).with(:console)
+          @doc.setup
+        end
+      end
+
+      describe "without --debug or --verbose" do
+        before do
+          @doc.options[:debug] = false
+          @doc.options[:verbose] = false
+        end
+
+        it "should set log level to warning" do
+          @doc.setup
+          Puppet::Util::Log.level.should == :warning
+        end
+
+        it "should set log destination to console" do
+          Puppet::Util::Log.expects(:newdestination).with(:console)
+          @doc.setup
+        end
+      end
+    end
+
     describe "in non-rdoc mode" do
       it "should get all non-dynamic reference if --all" do
         @doc.options[:all] = true
@@ -163,10 +218,6 @@ describe Puppet::Application::Doc do
     end
 
     describe "in rdoc mode" do
-      before :each do
-        Puppet::Util::Log.stubs(:newdestination)
-      end
-
       describe "when there are unknown args" do
         it "should expand --modulepath if any" do
           @doc.unknown_args = [ { :opt => "--modulepath", :arg => "path" } ]
@@ -196,34 +247,6 @@ describe Puppet::Application::Doc do
 
       it "should operate in master run_mode" do
         @doc.class.run_mode.name.should == :master
-
-        @doc.setup_rdoc
-      end
-
-      it "should set log level to debug if --debug" do
-        @doc.options[:debug] = true
-        @doc.setup_rdoc
-        Puppet::Util::Log.level.should == :debug
-      end
-
-      it "should set log level to info if --verbose" do
-        @doc.options[:verbose] = true
-        @doc.setup_rdoc
-        Puppet::Util::Log.level.should == :info
-      end
-
-      it "should set log destination to console if --verbose" do
-        @doc.options[:verbose] = true
-
-        Puppet::Util::Log.expects(:newdestination).with(:console)
-
-        @doc.setup_rdoc
-      end
-
-      it "should set log destination to console if --debug" do
-        @doc.options[:debug] = true
-
-        Puppet::Util::Log.expects(:newdestination).with(:console)
 
         @doc.setup_rdoc
       end
