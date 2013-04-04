@@ -174,4 +174,29 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       subject.resource_for_record(record, resources).should be_nil
     end
   end
+
+  context "when matching resources to existing crontab entries" do
+    let(:first_resource) { Puppet::Type::Cron.new(:name => :one, :user => 'root', :command => '/bin/true') }
+    let(:second_resource) { Puppet::Type::Cron.new(:name => :two, :user => 'nobody', :command => '/bin/false') }
+
+    let(:resources) {{:one => first_resource, :two => second_resource}}
+
+    describe "with a record with a matching name and mismatching user (#2251)" do
+      # Puppet::Resource objects have #should defined on them, so in these
+      # examples we have to use the monkey patched `must` alias for the rspec
+      # `should` method.
+
+      it "doesn't match the record to the resource" do
+        record = {:name => :one, :user => 'notroot', :record_type => :crontab}
+        subject.resource_for_record(record, resources).must be_nil
+      end
+    end
+
+    describe "with a record with a matching name and matching user" do
+      it "matches the record to the resource" do
+        record = {:name => :two, :target => 'nobody', :command => '/bin/false'}
+        subject.resource_for_record(record, resources).must == second_resource
+      end
+    end
+  end
 end
