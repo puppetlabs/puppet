@@ -219,6 +219,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Match a list of catalog resources with provider instances
   #
+  # @api private
+  #
   # @param [Array<Puppet::Resource>] resources A list of resources using this class as a provider
   def self.match_providers_with_resources(resources)
     return unless resources
