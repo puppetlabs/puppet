@@ -164,9 +164,8 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     end
 
     it "should create no provider instance for the old record" do
-      subject.expects(:new).with(record).never
-      subject.expects(:new).with(resource)
       subject.prefetch(resources)
+      resource.provider.should be_nil
     end
 
     it "should not find the resource when looking up the on-disk record" do
