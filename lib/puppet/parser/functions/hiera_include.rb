@@ -11,9 +11,10 @@ module Puppet::Parser::Functions
     definition and below any top-scope variables in use for Hiera lookups.
   - Class keys in the appropriate data sources. In a data source keyed to a node's role,
     one might have:
-            ---  
-            classes:  
-              - apache  
+
+            ---
+            classes:
+              - apache
               - apache::passenger
 
   In addition to the required `key` argument, `hiera_include` accepts two additional
