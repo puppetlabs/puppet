@@ -171,7 +171,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
     it "should not find the resource when looking up the on-disk record" do
       subject.prefetch(resources)
-      subject.find_resource(record, resources).should be_nil
+      subject.resource_for_record(record, resources).should be_nil
     end
   end
 end
