@@ -35,7 +35,7 @@ describe Puppet::Util::Profiler::Logging do
   it "describes the profiled segment" do
     profiler.profile("Tested measurement") { }
 
-    logger.messages.first.should =~ /\[#{identifier}\] \d Tested measurement/
+    logger.messages.first.should =~ /PROFILE \[#{identifier}\] \d Tested measurement/
   end
 
   it "indicates the order in which segments are profiled" do
