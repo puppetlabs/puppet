@@ -88,14 +88,24 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     end
   end
 
-  # Override the method for finding resources by name, so that
-  # orphaned records in other crontabs don't get falsely matched
-  # to a given resource (#2251)
-  def self.find_resource(record, resources)
-    name = record[:name]
-    resource = resources[name]
-    if name and resource and record[:target] == resource[:user]
-      name
+  # Look up a resource with a given name whose user matches a record target
+  #
+  # @api private
+  #
+  # @note This overrides the ParsedFile method for finding resources by name,
+  #   so that only records for a given user are matched to resources of the
+  #   same user so that orphaned records in other crontabs don't get falsely
+  #   matched (#2251)
+  #
+  # @param [Hash<Symbol, Object>] record
+  # @param [Array<Puppet::Resource>] resources
+  #
+  # @return [Puppet::Resource, nil] The resource if found, else nil
+  def self.resource_for_record(record, resources)
+    resource = super
+
+    if resource and record[:target] == resource[:user]
+      resource
     end
   end
 

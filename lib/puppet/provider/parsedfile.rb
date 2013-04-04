@@ -217,6 +217,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     match_providers_with_resources(resources)
   end
 
+  # Match a list of catalog resources with provider instances
+  #
+  # @param [Array<Puppet::Resource>] resources A list of resources using this class as a provider
   def self.match_providers_with_resources(resources)
     return unless resources
     matchers = resources.dup
@@ -224,8 +227,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       # Skip things like comments and blank lines
       next if skip_record?(record)
 
-      if name = find_resource(record, resources)
-        resources[name].provider = new(record)
+      if (resource = resource_for_record(record, resources))
+        resource.provider = new(record)
       elsif respond_to?(:match)
         if resource = match(record, matchers)
           matchers.delete(resource.title)
@@ -236,11 +239,18 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
   end
 
-  # Look up a record by name. If a resource with the
-  # same name exists, just return the name, nil otherwise.
-  def self.find_resource(record, resources)
-    if name = record[:name] and resources[name]
-      name
+  # Look up a resource based on a parsed file record
+  #
+  # @api private
+  #
+  # @param [Hash<Symbol, Object>] record
+  # @param [Array<Puppet::Resource>] resources
+  #
+  # @return [Puppet::Resource, nil] The resource if found, else nil
+  def self.resource_for_record(record, resources)
+    name = record[:name]
+    if name
+      resources[name]
     end
   end
 
