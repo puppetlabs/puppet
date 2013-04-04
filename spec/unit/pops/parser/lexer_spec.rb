@@ -62,22 +62,6 @@ describe Puppet::Pops::Parser::Lexer do
   end
 end
 
-describe Puppet::Pops::Parser::Lexer::Token do
-  before do
-    @token = Puppet::Pops::Parser::Lexer::Token.new(%r{something}, :NAME)
-  end
-
-  [:regex, :name, :string, :skip, :skip_text, :accumulate].each do |param|
-    it "should have a #{param.to_s} reader" do
-      @token.should be_respond_to(param)
-    end
-
-    it "should have a #{param.to_s} writer" do
-      @token.should be_respond_to(param.to_s + "=")
-    end
-  end
-end
-
 describe Puppet::Pops::Parser::Lexer::Token, "when initializing" do
   it "should create a regex if the first argument is a string" do
     Puppet::Pops::Parser::Lexer::Token.new("something", :NAME).regex.should == %r{something}
@@ -365,10 +349,6 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:COMMENT] do
     @token.skip?.should be_true
   end
 
-  it "should be marked to accumulate" do
-    @token.accumulate?.should be_true
-  end
-
   it "'s block should return the comment without the #" do
     @token.convert(@lexer,"# this is a comment")[1].should == "this is a comment"
   end
@@ -399,10 +379,6 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:MLCOMMENT] do
   it "should not greedily match comments" do
     match = @token.regex.match("/* first */ word /* second */")
     match[1].should == " first "
-  end
-
-  it "should be marked to accumulate" do
-    @token.accumulate?.should be_true
   end
 
   it "'s block should return the comment without the comment marks" do
@@ -671,70 +647,8 @@ end
 describe Puppet::Pops::Parser::Lexer, "when lexing comments" do
   before { @lexer = Puppet::Pops::Parser::Lexer.new }
 
-  it "should accumulate token in munge_token" do
-    token = stub 'token', :skip => true, :accumulate? => true, :incr_line => nil, :skip_text => false
-
-    token.stubs(:convert).with(@lexer, "# this is a comment").returns([token, " this is a comment"])
-    @lexer.munge_token(token, "# this is a comment")
-    @lexer.munge_token(token, "# this is a comment")
-
-    @lexer.getcomment.should == " this is a comment\n this is a comment\n"
-  end
-
-  it "should add a new comment stack level on LBRACE" do
-    @lexer.string = "{"
-
-    @lexer.expects(:commentpush)
-
-    @lexer.fullscan
-  end
-
-  it "should add a new comment stack level on LPAREN" do
-    @lexer.string = "("
-
-    @lexer.expects(:commentpush)
-
-    @lexer.fullscan
-  end
-
-  it "should pop the current comment on RPAREN" do
-    @lexer.string = ")"
-
-    @lexer.expects(:commentpop)
-
-    @lexer.fullscan
-  end
-
-  it "should return the current comments on getcomment" do
-    @lexer.string = "# comment"
-    @lexer.fullscan
-
-    @lexer.getcomment.should == "comment\n"
-  end
-
-  it "should discard the previous comments on blank line" do
-    @lexer.string = "# 1\n\n# 2"
-    @lexer.fullscan
-
-    @lexer.getcomment.should == "2\n"
-  end
-
   it "should skip whitespace before lexing the next token after a non-token" do
     EgrammarLexerSpec.tokens_scanned_from("/* 1\n\n */ \ntest").should be_like([:NAME, "test"])
-  end
-
-  it "should not return comments seen after the current line" do
-    @lexer.string = "# 1\n\n# 2"
-    @lexer.fullscan
-
-    @lexer.getcomment(1).should == ""
-  end
-
-  it "should return a comment seen before the current line" do
-    @lexer.string = "# 1\n# 2"
-    @lexer.fullscan
-
-    @lexer.getcomment(2).should == "1\n2\n"
   end
 end
 

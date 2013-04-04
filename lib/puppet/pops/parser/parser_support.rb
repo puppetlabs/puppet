@@ -25,17 +25,6 @@ class Puppet::Pops::Parser::Parser
 
   attr_accessor :lexer
 
-  #  # Unused, keep as reference to getting doc commetns
-  #  #
-  #  def ast_context(include_docs = false, ast_line = nil)
-  #    result = {
-  #      :line => ast_line || lexer.line,
-  #      :file => lexer.file
-  #    }
-  #    result[:doc] = lexer.getcomment(result[:line]) if include_docs
-  #    result
-  #  end
-
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
     return t if t.nil?

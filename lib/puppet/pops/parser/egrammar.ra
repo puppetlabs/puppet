@@ -254,7 +254,6 @@ if_expression
   # Produces Model::IfExpression
   if_part
     : expression LBRACE statements RBRACE else {
-        @lexer.commentpop
         result = Factory.IF(val[0], Factory.block_or_expression(*val[2]), val[4])
         loc(result, val[0], (val[4] ? val[4] : val[3]))
       }
@@ -271,12 +270,10 @@ if_expression
         loc(result, val[0], val[1])
       }
     | ELSE LBRACE statements RBRACE {
-        @lexer.commentpop
         result = Factory.block_or_expression(*val[2])
         loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
-        @lexer.commentpop
         result = nil # don't think a nop is needed here either
       }
 
@@ -286,12 +283,10 @@ if_expression
 #
 unless_expression
   : UNLESS expression LBRACE statements RBRACE unless_else {
-      @lexer.commentpop
       result = Factory.UNLESS(val[1], Factory.block_or_expression(*val[3]), val[5])
       loc result, val[0], val[4]
     }
   | UNLESS expression LBRACE RBRACE unless_else {
-      @lexer.commentpop
       result = Factory.UNLESS(val[1], nil, nil)
       loc result, val[0], val[4]
     }
@@ -302,12 +297,10 @@ unless_expression
   unless_else
     : # nothing
     | ELSE LBRACE statements RBRACE {
-        @lexer.commentpop
         result = Factory.block_or_expression(*val[2])
         loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
-        @lexer.commentpop
         result = nil # don't think a nop is needed here either
       }
 
@@ -316,7 +309,6 @@ unless_expression
 # Produces Model::CaseExpression
 case_expression
   : CASE expression LBRACE case_options RBRACE {
-      @lexer.commentpop
       result = Factory.CASE(val[1], *val[3])
       loc result, val[0], val[4]
     }
@@ -329,12 +321,10 @@ case_expression
   # Produced Model::CaseOption (aka When)
   case_option
     : expressions case_colon LBRACE statements RBRACE {
-        @lexer.commentpop
         result = Factory.WHEN(val[0], val[3])
         loc result, val[1], val[4]
       }
     | expressions case_colon LBRACE RBRACE = LOW {
-        @lexer.commentpop
         result = Factory.WHEN(val[0], nil)
         loc result, val[1], val[3]
       }
@@ -350,7 +340,6 @@ case_expression
   selector_entries
     : selector_entry
     | SELBRACE selector_entry_list endcomma RBRACE {
-        @lexer.commentpop
         result = val[1]
       }
 
@@ -429,7 +418,6 @@ resource_expression
         Factory.RESOURCE_DEFAULTS(val[0], val[2])
       when :override
         # This was only done for override in original - TODO shuld it be here at all
-        @lexer.commentpop
         Factory.RESOURCE_OVERRIDE(val[0], val[2])
       else
         error "Expression is not valid as a resource, resource-default, or resource-override"
@@ -466,7 +454,6 @@ resource_expression
 #
 collection_expression
   : expression collect_query LBRACE attribute_operations endcomma RBRACE {
-      @lexer.commentpop
       result = Factory.COLLECT(val[0], val[1], val[3])
       loc result, val[0], val[5]
     }
@@ -522,13 +509,11 @@ attribute_operations
 #
 definition_expression
   : DEFINE classname parameter_list LBRACE statements RBRACE {
-      @lexer.commentpop
       result = Factory.DEFINITION(classname(val[1][:value]), val[2], val[4])
       loc result, val[0], val[5]
       @lexer.indefine = false
     }
   | DEFINE classname parameter_list LBRACE RBRACE {
-      @lexer.commentpop
       result = Factory.DEFINITION(classname(val[1][:value]), val[2], nil)
       loc result, val[0], val[4]
       @lexer.indefine = false
@@ -544,13 +529,11 @@ definition_expression
 #
 hostclass_expression
   : CLASS classname parameter_list classparent LBRACE statements RBRACE {
-      @lexer.commentpop
       @lexer.namepop
       result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5])
       loc result, val[0], val[6]
     }
   | CLASS classname parameter_list classparent LBRACE RBRACE {
-      @lexer.commentpop
       @lexer.namepop
       result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), nil)
       loc result, val[0], val[5]
@@ -576,12 +559,10 @@ hostclass_expression
 #
 node_definition_expression
   : NODE hostnames nodeparent LBRACE statements RBRACE {
-      @lexer.commentpop
       result = Factory.NODE(val[1], val[2], val[4])
       loc result, val[0], val[5]
     }
   | NODE hostnames nodeparent LBRACE RBRACE {
-      @lexer.commentpop
       result = Factory.NODE(val[1], val[2], nil)
       loc result, val[0], val[4]
     }

@@ -28,9 +28,8 @@ class Puppet::Pops::Parser::Lexer
 
     include Puppet::Util::MethodHelper
 
-    attr_accessor :regex, :name, :string, :skip, :skip_text, :accumulate
+    attr_accessor :regex, :name, :string, :skip, :skip_text
     alias skip? skip
-    alias accumulate? accumulate
 
     # @param string_or_regex[String] a literal string token matcher
     # @param string_or_regex[Regexp] a regular expression token text matcher
@@ -224,8 +223,9 @@ class Puppet::Pops::Parser::Lexer
     end
   end
 
-  # LBRACE needs look ahead to differentiate between '{' and a '{' followed by a '|' (start of lambda)
-  # The racc grammar can only do one token lookahead.
+  # LBRACE needs look ahead to differentiate between '{' and a '{'
+  # followed by a '|' (start of lambda) The racc grammar can only do one
+  # token lookahead.
   #
   TOKENS.add_token :LBRACE, /\{/ do | lexer, value |
     if lexer.match?(/[ \t\r]*\|/)
@@ -266,12 +266,12 @@ class Puppet::Pops::Parser::Lexer
     TOKENS[name_token].acceptable_when Contextual::NOT_INSIDE_QUOTES
   end
 
-  TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
+  TOKENS.add_token :COMMENT, %r{#.*}, :skip => true do |lexer,value|
     value.sub!(/# ?/,'')
     [self, value]
   end
 
-  TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m, :accumulate => true, :skip => true do |lexer, value|
+  TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m, :skip => true do |lexer, value|
     value.sub!(/^\/\* ?/,'')
     value.sub!(/ ?\*\/$/,'')
     [self,value]
@@ -492,7 +492,6 @@ class Puppet::Pops::Parser::Lexer
     @token_queue = []
     @indefine = false
     @expected = []
-    @commentstack = [ ['', 1] ] # commentstack for line 1
     @lexing_context = {
       :after => nil,
       :start_of_line => true,
@@ -510,17 +509,11 @@ class Puppet::Pops::Parser::Lexer
 
     skip if token.skip_text
 
-    return if token.skip and not token.accumulate?
+    return if token.skip
 
     token, value = token.convert(self, value) if token.respond_to?(:convert)
 
     return unless token
-
-    if token.accumulate?
-      comment = @commentstack.pop
-      comment[0] << value + "\n"
-      @commentstack.push(comment)
-    end
 
     return if token.skip
 
@@ -582,8 +575,6 @@ class Puppet::Pops::Parser::Lexer
 
       newline = matched_token.name == :RETURN
 
-      # this matches a blank line; eat the previously accumulated comments
-      getcomment if lexing_context[:start_of_line] and newline
       lexing_context[:start_of_line] = newline
       lexing_context[:offset] = offset
       lexing_context[:end_offset] = end_offset
@@ -597,7 +588,7 @@ class Puppet::Pops::Parser::Lexer
         next
       end
 
-      lexing_context[:after]         = final_token.name unless newline
+      lexing_context[:after] = final_token.name unless newline
       lexing_context[:string_interpolation_depth] += 1 if final_token.name == :DQPRE
       lexing_context[:string_interpolation_depth] -= 1 if final_token.name == :DQPOST
 
@@ -607,13 +598,6 @@ class Puppet::Pops::Parser::Lexer
         @expected << match
       elsif exp = @expected[-1] and exp == value and final_token.name != :DQUOTE and final_token.name != :SQUOTE
         @expected.pop
-      end
-
-      if final_token.name == :LBRACE or final_token.name == :LPAREN
-        commentpush
-      end
-      if final_token.name == :RPAREN
-        commentpop
       end
 
       yield [final_token.name, token_value]
@@ -763,25 +747,6 @@ class Puppet::Pops::Parser::Lexer
   def string=(string)
     @scanner = StringScanner.new(string)
     @locator = Locator.new(string, multibyte?)
-  end
-
-  # returns the content of the currently accumulated content cache
-  def commentpop
-    @commentstack.pop[0]
-  end
-
-  def getcomment(for_line = nil)
-    comment = @commentstack.last
-    if for_line.nil? or comment[1] <= for_line
-      @commentstack.pop
-      @commentstack.push(['', line()])
-      return comment[0]
-    end
-    ''
-  end
-
-  def commentpush
-    @commentstack.push(['', line()])
   end
 
   def warn_if_variable_has_hyphen(var_name)

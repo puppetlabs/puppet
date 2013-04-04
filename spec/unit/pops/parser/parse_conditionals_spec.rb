@@ -81,6 +81,11 @@ describe "egrammar parsing conditionals" do
       "(= $a (? $b (banana => fruit)))"
     end
 
+    it "does not fail on a trailing blank line" do
+      dump(parse("$a = $b ? { banana => fruit }\n\n")).should ==
+      "(= $a (? $b (banana => fruit)))"
+    end
+
     it "$a = $b ? { banana => fruit, grape => berry }" do
       dump(parse("$a = $b ? {banana => fruit, grape => berry}")).should ==
       "(= $a (? $b (banana => fruit) (grape => berry)))"
