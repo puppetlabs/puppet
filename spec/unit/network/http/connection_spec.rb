@@ -206,6 +206,7 @@ describe Puppet::Network::HTTP::Connection do
         cert = Puppet::SSL::CertificateAuthority.new.generate(args[:for_server], :dns_alt_names => args[:for_aliases]).content
         ssl_context.stubs(:current_cert).returns(cert)
       end
+      ssl_context.stubs(:chain).returns([])
       ssl_context.stubs(:error_string).returns(args[:with_error_string])
       ssl_context
     end
@@ -228,7 +229,7 @@ describe Puppet::Network::HTTP::Connection do
                                              :fails_with => 'certificate verify failed'))
       expect do
         subject.request(:get, stub('request'))
-      end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes in verify_callback]")
+      end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes]")
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do

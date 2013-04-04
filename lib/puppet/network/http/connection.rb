@@ -1,6 +1,7 @@
 require 'net/https'
 require 'puppet/ssl/host'
 require 'puppet/ssl/configuration'
+require 'puppet/ssl/validator'
 require 'puppet/network/authentication'
 
 module Puppet::Network::HTTP
@@ -44,43 +45,23 @@ module Puppet::Network::HTTP
     end
 
     def request(method, *args)
-      peer_certs = []
-      verify_errors = []
-
-      connection.verify_callback = proc do |preverify_ok, ssl_context|
-        begin
-          # We use the callback to collect the certificates for use in
-          # constructing the error message if the verification failed.
-          # This is necessary since we don't have direct access to the
-          # cert that we expected the connection to use otherwise.
-          peer_certs << Puppet::SSL::Certificate.from_instance(ssl_context.current_cert)
-          # And also keep the detailed verification error if such an error occurs
-          if ssl_context.error_string and not preverify_ok
-            verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
-          end
-          preverify_ok
-        rescue => ex
-          verify_errors << "#{ex.message} in verify_callback"
-          false
-        end
-      end
-
+      ssl_validator = Puppet::SSL::Validator.new(:ssl_configuration => ssl_configuration)
+      # Perform our own validation of the SSL connection in addition to OpenSSL
+      ssl_validator.register_verify_callback(connection)
       response = connection.send(method, *args)
-
-      # Now that the request completed successfully, lets check the involved
-      # certificates for approaching expiration dates
-      warn_if_near_expiration(*peer_certs)
+      # Check the peer certs and warn if they're nearing expiration.
+      warn_if_near_expiration(*ssl_validator.peer_certs)
 
       response
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
-        msg << ": [" + verify_errors.join('; ') + "]"
+        msg << ": [" + ssl_validator.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg
       elsif error.message =~ /hostname (was )?not match/
-        cert = peer_certs.last
+        leaf_ssl_cert = ssl_validator.peer_certs.last
 
-        valid_certnames = [cert.name, *cert.subject_alt_names].uniq
+        valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
 
         raise Puppet::Error, "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
