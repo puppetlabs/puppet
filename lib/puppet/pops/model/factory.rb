@@ -413,6 +413,9 @@ class Puppet::Pops::Model::Factory
   # Records the position (start -> end) and computes the resulting length.
   #
   def record_position(start_pos, end_pos)
+    unless start_pos.offset
+      require 'debugger'; debugger; 1
+    end
     Puppet::Pops::Adapters::SourcePosAdapter.adapt(current) do |a|
       a.line   = start_pos.line
       a.offset = start_pos.offset

@@ -70,7 +70,7 @@ class Puppet::Parser::AST
     end
 
     def assert_concatenation_supported
-      return if Puppet[:parser] == :future
+      return if Puppet[:parser] == 'future'
       raise ParseError.new("Unsupported Operation: Array concatenation available with '--parser future' setting only.")
     end
 

@@ -130,7 +130,7 @@ class Puppet::Pops::Parser::Parser
   # @return [Puppet::Pops::Model::Factory] the given factory
   # @api private
   #
-  def loc factory, start_token, end_token = nil
+  def loc(factory, start_token, end_token = nil)
     factory.record_position(sourcepos(start_token), sourcepos(end_token))
   end
 

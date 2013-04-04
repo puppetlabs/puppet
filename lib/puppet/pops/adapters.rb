@@ -38,12 +38,14 @@ module Puppet::Pops::Adapters
     # @return [Fixnum] The position on the start_line (in characters) starting from 0
     attr_accessor :pos
 
-    # @return [Fixnum] The (start) offset of source text characters (starting from 0) representing the adapted object.
+    # @return [Fixnum] The (start) offset of source text characters
+    #   (starting from 0) representing the adapted object.
     #   Value may be nil
     attr_accessor :offset
 
-    # @return [Fixnum] The length (count) of characters of source text representing the adapted object from the
-    #   origin. Not including any trailing whitespace.
+    # @return [Fixnum] The length (count) of characters of source text
+    #   representing the adapted object from the origin. Not including any
+    #   trailing whitespace.
     attr_accessor :length
   end
 
