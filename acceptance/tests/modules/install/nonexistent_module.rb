@@ -15,7 +15,7 @@ step "Try to install a non-existent module"
 on master, puppet("module install pmtacceptance-nonexistent"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    STDOUT> \e[mNotice: Querying https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not execute operation for 'pmtacceptance/nonexistent'
     STDERR>   The server being queried was https://forge.puppetlabs.com
     STDERR>   The HTTP response we received was '410 Gone'
@@ -38,7 +38,6 @@ Could not execute operation for 'pmtacceptance/nonexistent'
   The message we received said 'Module pmtacceptance/nonexistent not found'
     Check the author and module names are correct.
 OUTPUT
-
 
   assert_equal nil,                         json['module_version']
   assert_equal 'pmtacceptance-nonexistent', json['module_name']

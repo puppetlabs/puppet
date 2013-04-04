@@ -50,7 +50,7 @@ on master, puppet("module upgrade pmtacceptance-java --modulepath /etc/puppet/mo
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
     \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in /etc/puppet/modules ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Querying https://forge.puppetlabs.com ...\e[0m
     \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.1\e[0m)

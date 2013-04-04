@@ -59,10 +59,10 @@ step "Install a module that is already installed (with --force)"
 on master, puppet("module install pmtacceptance-nginx --force") do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Querying https://forge.puppetlabs.com ...\e[0m
     \e[mNotice: Installing -- do not interrupt ...\e[0m
     /etc/puppet/modules
-    └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
+    └── pmtacceptance-nginx (\e[0;36mv0.0.1 -> v0.0.1\e[0m) [/usr/share/puppet/modules]
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules/nginx ]'
+on master, '[ ! -d /etc/puppet/modules/nginx ]'
