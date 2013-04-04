@@ -229,7 +229,7 @@ describe Puppet::Network::HTTP::Connection do
                                              :fails_with => 'certificate verify failed'))
       expect do
         subject.request(:get, stub('request'))
-      end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes in verify_callback]")
+      end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes]")
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
