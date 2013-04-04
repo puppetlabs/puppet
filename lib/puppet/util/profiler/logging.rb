@@ -15,7 +15,7 @@ class Puppet::Util::Profiler::Logging
     ensure
       profile_explanation = finish(context)
       @sequence.up
-      @logger.call("[#{@identifier}] #{@sequence} #{description}: #{profile_explanation}")
+      @logger.call("PROFILE [#{@identifier}] #{@sequence} #{description}: #{profile_explanation}")
     end
     retval
   end
