@@ -92,7 +92,7 @@ epel_release_path = "http://mirror.us.leaseweb.net/epel/6/i386/epel-release-6-8.
 on master, "rpm -q epel-release || (yum -y install #{epel_release_path} && yum -y upgrade epel-release)"
 
 step "Configure Apache and Passenger"
-packages = [ 'httpd', 'mod_ssl', 'mod_passenger', 'rubygem-passenger' ]
+packages = [ 'httpd', 'mod_ssl', 'mod_passenger', 'rubygem-passenger', 'policycoreutils-python' ]
 packages.each do |pkg|
   on master, "rpm -q #{pkg} || (yum -y install #{pkg})"
 end
@@ -100,6 +100,10 @@ end
 create_remote_file master, "#{testdir}/etc/httpd.conf", fixtures.httpd_conf
 on master, 'test -f /etc/httpd/conf/httpd.conf.orig || cp -p /etc/httpd/conf/httpd.conf{,.orig}'
 on master, "cat #{testdir}/etc/httpd.conf > /etc/httpd/conf/httpd.conf"
+
+step "Make SELinux and Apache play nicely together..."
+on master, "chcon -R --reference=/var/www/html #{testdir}"
+on master, "semanage port -a -t http_port_t -p tcp 8141"
 
 step "Start the Apache httpd service..."
 on master, 'service httpd restart'
