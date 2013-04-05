@@ -495,6 +495,27 @@ describe Puppet::Parser::Scope do
     end
   end
 
+  context "when using ephemeral as local scope" do
+    it "should store all variables in local scope" do
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :fruit)
+      @scope["apple"].should == :fruit
+    end
+
+    it "should remove all local scope variables on unset" do
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :fruit)
+      @scope["apple"].should == :fruit
+      @scope.unset_ephemeral_var
+      @scope["apple"].should == nil
+    end
+    it "should be created from a hash" do
+      @scope.ephemeral_from({ "apple" => :fruit, "strawberry" => :berry})
+      @scope["apple"].should == :fruit
+      @scope["strawberry"].should == :berry
+    end
+  end
+
   describe "when setting ephemeral vars from matches" do
     before :each do
       @match = stub 'match', :is_a? => true

@@ -64,7 +64,7 @@ describe Puppet::Parser::Collector do
     expect_the_message_to_be(["the message", "different message"], <<-MANIFEST)
       @notify { "testing":     message => "different message", withpath => true }
       @notify { "other":       message => "the message" }
-      @notify { "yet another": message => "the message",       withpath => true } 
+      @notify { "yet another": message => "the message",       withpath => true }
 
       Notify <| (title == "testing" or message == "the message") and withpath == true |>
     MANIFEST

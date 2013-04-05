@@ -12,18 +12,29 @@ module Puppet
     # This module implements logging with a filename and line number. Use this
     # for errors that need to report a location in a non-ruby file that we
     # parse.
-    attr_accessor :line, :file
+    attr_accessor :line, :file, :pos
 
-    def initialize(message, file=nil, line=nil, original=nil)
+    # May be called with 3 arguments for message, file, line, and exception, or
+    # 4 args including the position on the line.
+    #
+    def initialize(message, file=nil, line=nil, pos=nil, original=nil)
+      if pos.kind_of? Exception
+        original = pos
+        pos = nil
+      end
       super(message, original)
       @file = file
       @line = line
+      @pos = pos
     end
-
     def to_s
       msg = super
-      if @file and @line
+      if @file and @line and @pos
+        "#{msg} at #{@file}:#{@line}:#{@pos}"
+      elsif @file and @line
         "#{msg} at #{@file}:#{@line}"
+      elsif @line and @pos
+          "#{msg} at line #{@line}:#{@pos}"
       elsif @line
         "#{msg} at line #{@line}"
       elsif @file

@@ -2,7 +2,7 @@
 # such.
 require 'forwardable'
 
-require 'puppet/parser/parser'
+require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 
 require 'puppet/resource/type_collection_helper'
@@ -42,9 +42,10 @@ class Puppet::Parser::Scope
   class Ephemeral
     extend Forwardable
 
-    def initialize(parent=nil)
+    def initialize(parent=nil, local=false)
       @symbols = {}
       @parent = parent
+      @local_scope = local
     end
 
     def_delegators :@symbols, :delete, :[]=, :each
@@ -63,6 +64,15 @@ class Puppet::Parser::Scope
 
     def bound?(name)
       @symbols.include?(name)
+    end
+
+    def is_local_scope?
+      @local_scope
+    end
+
+    # @return [Ephemeral, Hash, nil]
+    def parent
+      @parent
     end
   end
 
@@ -174,12 +184,7 @@ class Puppet::Parser::Scope
     # The symbol table for this scope.  This is where we store variables.
     @symtable = Ephemeral.new
 
-    # the ephemeral symbol tables
-    # those should not persist long, and are used for the moment only
-    # for $0..$xy capture variables of regexes
-    # this is actually implemented as a stack, with each ephemeral scope
-    # shadowing the previous one
-    @ephemeral = [ Ephemeral.new ]
+    @ephemeral = [ Ephemeral.new(@symtable) ]
 
     # All of the defaults set for types.  It's a hash of hashes,
     # with the first key being the type, then the second key being
@@ -265,7 +270,7 @@ class Puppet::Parser::Scope
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
     end
 
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
+    table = @ephemeral.last
 
     if name =~ /^(.*)::(.+)$/
       class_name = $1
@@ -432,11 +437,14 @@ class Puppet::Parser::Scope
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
   def setvar(name, value, options = {})
+    if name =~ /^[0-9]+$/
+      raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") unless options[:ephemeral]
+    end
     unless name.is_a? String
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
     end
 
-    table = options[:ephemeral] ? @ephemeral.last : @symtable
+    table = effective_symtable options[:ephemeral]
     if table.bound?(name)
       if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
@@ -453,6 +461,23 @@ class Puppet::Parser::Scope
     else
       table[name] = value
     end
+    table[name]
+  end
+
+  # Return the effective "table" for setting variables.
+  # This method returns the first ephemeral "table" that acts as a local scope, or this
+  # scope's symtable. If the parameter `use_ephemeral` is true, the "top most" ephemeral "table"
+  # will be returned (irrespective of it being a match scope or a local scope).
+  #
+  # @param [Boolean] whether the top most ephemeral (of any kind) should be used or not
+  def effective_symtable use_ephemeral
+    s = @ephemeral.last
+    return s if use_ephemeral
+
+    while s && !(s.is_a?(Hash) || s.is_local_scope?())
+      s = s.parent
+    end
+    s ? s : @symtable
   end
 
   # Sets the variable value of the name given as an argument to the given value. The value is
@@ -496,7 +521,7 @@ class Puppet::Parser::Scope
   # remove ephemeral scope up to level
   def unset_ephemeral_var(level=:all)
     if level == :all
-      @ephemeral = [ Ephemeral.new ]
+      @ephemeral = [ Ephemeral.new(@symtable)]
     else
       # If we ever drop 1.8.6 and lower, this should be replaced by a single
       # pop-with-a-count - or if someone more ambitious wants to monkey-patch
@@ -507,32 +532,41 @@ class Puppet::Parser::Scope
     end
   end
 
-  # check if name exists in one of the ephemeral scope.
+  # check if name exists in one of the ephemeral scopes.
   def ephemeral_include?(name)
     @ephemeral.any? {|eph| eph.include?(name) }
   end
 
-  # is name an ephemeral variable?
+  # Checks whether the variable should be processed in the ephemeral scope or not.
+  # All numerical variables are processed in ephemeral scope at all times, and all other
+  # variables when the ephemeral scope is a local scope.
+  #
   def ephemeral?(name)
-    name =~ /^\d+$/
+    @ephemeral.last.is_local_scope? || name =~ /^\d+$/
   end
 
   def ephemeral_level
     @ephemeral.size
   end
 
-  def new_ephemeral
-    @ephemeral.push(Ephemeral.new(@ephemeral.last))
+  def new_ephemeral(local_scope = false)
+    @ephemeral.push(Ephemeral.new(@ephemeral.last, local_scope))
   end
 
   def ephemeral_from(match, file = nil, line = nil)
-    raise(ArgumentError,"Invalid regex match data") unless match.is_a?(MatchData)
-
-    new_ephemeral
-
-    setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
-    match.captures.each_with_index do |m,i|
-      setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
+    case match
+    when Hash
+      # Create local scope ephemeral and set all values from hash
+      new_ephemeral true
+      match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
+    else
+      raise(ArgumentError,"Invalid regex match data. Got a #{match.class}") unless match.is_a?(MatchData)
+      # Create a match ephemeral and set values from match data
+      new_ephemeral false
+      setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
+      match.captures.each_with_index do |m,i|
+        setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
+      end
     end
   end
 
