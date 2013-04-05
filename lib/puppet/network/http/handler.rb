@@ -1,6 +1,7 @@
 module Puppet::Network::HTTP
 end
 
+require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/authorization'
 require 'puppet/network/authentication'
@@ -14,6 +15,13 @@ module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authentication
 
   attr_reader :server, :handler
+
+
+  # Retrieve all headers from the http request, as a hash with the header names
+  # (lower-cased) as the keys
+  def headers(request)
+    raise NotImplementedError
+  end
 
   # Retrieve the accept header from the http request.
   def accept_header(request)
@@ -64,11 +72,12 @@ module Puppet::Network::HTTP::Handler
 
   # handle an HTTP request
   def process(request, response)
+    request_headers = headers(request)
     request_params = params(request)
     request_method = http_method(request)
     request_path = path(request)
 
-    configure_profiler(request_params)
+    configure_profiler(request_headers, request_params)
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
       indirection, method, key, params = uri2indirection(request_method, request_path, request_params)
@@ -268,8 +277,8 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
-  def configure_profiler(request_params)
-    if (request_params.include?(:profile) or Puppet[:enable_profiling])
+  def configure_profiler(request_headers, request_params)
+    if (request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile])
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), request_params.object_id)
     else
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::NONE

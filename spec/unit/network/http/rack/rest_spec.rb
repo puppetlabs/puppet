@@ -31,6 +31,16 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       Rack::Request.new(env)
     end
 
+    describe "#headers" do
+      it "should return the headers (parsed from env with prefix 'HTTP_')" do
+        req = mk_req('/', {'HTTP_Accept' => 'myaccept',
+                           'HTTP_X-Custom-Header' => 'mycustom',
+                           'NOT_HTTP_foo' => 'not an http header'})
+        @handler.headers(req).should == {"accept" => 'myaccept',
+                                         "x-custom-header" => 'mycustom'}
+      end
+    end
+
     describe "and using the HTTP Handler interface" do
       it "should return the HTTP_ACCEPT parameter as the accept header" do
         req = mk_req('/', 'HTTP_ACCEPT' => 'myaccept')
