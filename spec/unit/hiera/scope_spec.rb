@@ -34,20 +34,10 @@ describe Hiera::Scope do
       scope["foo"].should == "CAPITAL!"
     end
 
-    it "uses the module of the scope's class as the calling_module" do
-      real.source = Puppet::Resource::Type.new(:hostclass,
-                                               "testing",
-                                               :module_name => "the_module")
+    it "aliases $module_name as calling_module" do
+      real["module_name"] = "the_module"
 
       scope["calling_module"].should == "the_module"
-    end
-
-    it "downcases the calling_module" do
-      real.source = Puppet::Resource::Type.new(:hostclass,
-                                               "testing",
-                                               :module_name => "UPPER CASE")
-
-      scope["calling_module"].should == "upper case"
     end
 
     it "uses the name of the of the scope's class as the calling_class" do
@@ -77,19 +67,6 @@ describe Hiera::Scope do
                                                :module_name => "definition_module")
 
       scope["calling_class"].should == "name_of_the_class_including_the_definition"
-    end
-
-    it "uses the module of the defined type as the calling module" do
-      parent = Puppet::Parser::Scope.new_for_test_harness("parent")
-      real.parent = parent
-      parent.source = Puppet::Resource::Type.new(:hostclass,
-                                                 "using_class_name",
-                                                 :module_name => "class_module")
-      real.source = Puppet::Resource::Type.new(:definition,
-                                               "definition_name",
-                                               :module_name => "definition_module")
-
-      scope["calling_module"].should == "definition_module"
     end
   end
 

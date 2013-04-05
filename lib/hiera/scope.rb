@@ -2,6 +2,7 @@ class Hiera
   class Scope
     CALLING_CLASS = "calling_class"
     CALLING_MODULE = "calling_module"
+    MODULE_NAME = "module_name"
 
     attr_reader :real
 
@@ -13,7 +14,7 @@ class Hiera
       if key == CALLING_CLASS
         ans = find_hostclass(@real)
       elsif key == CALLING_MODULE
-        ans = @real.source.module_name.downcase
+        ans = @real.lookupvar(MODULE_NAME)
       else
         ans = @real.lookupvar(key)
       end
