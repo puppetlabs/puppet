@@ -6,9 +6,7 @@ module HieraPuppet
   module_function
 
   def lookup(key, default, scope, override, resolution_type)
-    unless scope.respond_to?("[]")
-      scope = Hiera::Scope.new(scope)
-    end
+    scope = Hiera::Scope.new(scope)
 
     answer = hiera.lookup(key, default, scope, override, resolution_type)
 
