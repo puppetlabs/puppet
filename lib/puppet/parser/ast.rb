@@ -14,7 +14,7 @@ class Puppet::Parser::AST
   include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
-  attr_accessor :parent, :scope, :file, :line
+  attr_accessor :parent, :scope, :file, :line, :pos
 
   def inspect
     "( #{self.class} #{self.to_s} #{@children.inspect} )"
@@ -110,8 +110,10 @@ require 'puppet/parser/ast/function'
 require 'puppet/parser/ast/hostclass'
 require 'puppet/parser/ast/ifstatement'
 require 'puppet/parser/ast/in_operator'
+require 'puppet/parser/ast/lambda'
 require 'puppet/parser/ast/leaf'
 require 'puppet/parser/ast/match_operator'
+require 'puppet/parser/ast/method_call'
 require 'puppet/parser/ast/minus'
 require 'puppet/parser/ast/node'
 require 'puppet/parser/ast/nop'

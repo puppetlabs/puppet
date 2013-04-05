@@ -1,6 +1,7 @@
 require 'puppet/util'
 require 'puppet/util/cacher'
 require 'monitor'
+require 'puppet/parser/parser_factory'
 
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node
@@ -217,7 +218,8 @@ class Puppet::Node::Environment
 
   def perform_initial_import
     return empty_parse_result if Puppet.settings[:ignoreimport]
-    parser = Puppet::Parser::Parser.new(self)
+#    parser = Puppet::Parser::Parser.new(self)
+    parser = Puppet::Parser::ParserFactory.parser(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code
     else

@@ -21,6 +21,13 @@ class Puppet::Parser::AST
           scope.setvar(name,value, :file => file, :line => line, :append => @append)
         end
       end
+      if @append
+        # Produce resulting value from append operation
+        scope[name]
+      else
+        # Produce assigned value
+        value
+      end
     end
 
     def each

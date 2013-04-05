@@ -9,7 +9,7 @@ class Puppet::Parser::AST
   class ASTArray < Branch
     include Enumerable
 
-    # Return a child by index.  Probably never used.
+    # Return a child by index. Used (at least) by tests.
     def [](index)
       @children[index]
     end

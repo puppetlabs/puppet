@@ -1,11 +1,12 @@
 require 'puppet/module'
-require 'puppet/parser/parser'
+#require 'puppet/parser/parser'
 
 # This is a silly central module for finding
 # different kinds of files while parsing.  This code
 # doesn't really belong in the Puppet::Module class,
 # but it doesn't really belong anywhere else, either.
-module Puppet::Parser::Files
+module Puppet; module Parser; module Files
+  
   module_function
 
   # Return a list of manifests (as absolute filenames) that match +pat+
@@ -85,4 +86,4 @@ module Puppet::Parser::Files
     path.split(File::SEPARATOR, 2) unless path == "" or Puppet::Util.absolute_path?(path)
   end
 
-end
+end; end; end
