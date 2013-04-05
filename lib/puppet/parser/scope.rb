@@ -47,7 +47,7 @@ class Puppet::Parser::Scope
       @parent = parent
     end
 
-    def_delegators :@symbols, :include?, :delete, :[]=
+    def_delegators :@symbols, :delete, :[]=, :each
 
     def [](name)
       if @symbols.include?(name) or @parent.nil?
@@ -55,6 +55,14 @@ class Puppet::Parser::Scope
       else
         @parent[name]
       end
+    end
+
+    def include?(name)
+      bound?(name) or (@parent and @parent.include?(name))
+    end
+
+    def bound?(name)
+      @symbols.include?(name)
     end
   end
 
@@ -164,7 +172,7 @@ class Puppet::Parser::Scope
     @tags = []
 
     # The symbol table for this scope.  This is where we store variables.
-    @symtable = {}
+    @symtable = Ephemeral.new
 
     # the ephemeral symbol tables
     # those should not persist long, and are used for the moment only
@@ -257,27 +265,21 @@ class Puppet::Parser::Scope
       raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
     end
 
-    # Save the originating scope for the request
-    options[:origin] = self unless options[:origin]
     table = ephemeral?(name) ? @ephemeral.last : @symtable
 
     if name =~ /^(.*)::(.+)$/
-      begin
-        qualified_scope($1).lookupvar($2, options.merge({:origin => nil}))
-      rescue RuntimeError => e
-        location = (options[:file] && (options[:line] || options[:lineproc])) ? " at #{options[:file]}:#{options[:line]|| options[:lineproc].call}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
+      class_name = $1
+      variable_name = $2
+      lookup_qualified_variable(class_name, variable_name, options)
+    elsif table.include?(name)
+      table[name]
+    else
+      next_scope = inherited_scope || enclosing_scope
+      if next_scope
+        next_scope.lookupvar(name, options)
+      else
         nil
       end
-    # If the value is present and either we are top/node scope or originating scope...
-    elsif (ephemeral_include?(name) or table.include?(name)) and (compiler and self == compiler.topscope or (resource and resource.type == "Node") or self == options[:origin])
-      table[name]
-    elsif resource and resource.type == "Class" and parent_type = resource.resource_type.parent
-      qualified_scope(parent_type).lookupvar(name, options.merge({:origin => nil}))
-    elsif parent
-      parent.lookupvar(name, options)
-    else
-      nil
     end
   end
 
@@ -294,6 +296,75 @@ class Puppet::Parser::Scope
   def [](varname, options={})
     lookupvar(varname, options)
   end
+
+  # The scope of the inherited thing of this scope's resource. This could
+  # either be a node that was inherited or the class.
+  #
+  # @returns [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
+  def inherited_scope
+    if has_inherited_class?
+      qualified_scope(resource.resource_type.parent)
+    else
+      nil
+    end
+  end
+
+  # The enclosing scope (topscope or nodescope) of this scope.
+  # The enclosing scopes are produced when a class or define is included at
+  # some point. The parent scope of the included class or define becomes the
+  # scope in which it was included. The chain of parent scopes is followed
+  # until a node scope or the topscope is found
+  #
+  # @returns [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
+  def enclosing_scope
+    if has_enclosing_scope?
+      if parent.is_topscope? or parent.is_nodescope?
+        parent
+      else
+        parent.enclosing_scope
+      end
+    else
+      nil
+    end
+  end
+
+  def is_classscope?
+    resource and resource.type == "Class"
+  end
+
+  def is_nodescope?
+    resource and resource.type == "Node"
+  end
+
+  def is_topscope?
+    compiler and self == compiler.topscope
+  end
+
+  def lookup_qualified_variable(class_name, variable_name, position)
+    begin
+      qualified_scope(class_name).lookupvar(variable_name, position)
+    rescue RuntimeError => e
+      location = if position[:lineproc]
+                   " at #{position[:lineproc].call}"
+                 elsif position[:file] && position[:line]
+                   " at #{position[:file]}:#{position[:line]}"
+                 else
+                   ""
+                 end
+      warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
+      nil
+    end
+  end
+
+  def has_inherited_class?
+    is_classscope? and resource.resource_type.parent
+  end
+  private :has_inherited_class?
+
+  def has_enclosing_scope?
+    not parent.nil?
+  end
+  private :has_enclosing_scope?
 
   def qualified_scope(classname)
     raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
@@ -366,7 +437,7 @@ class Puppet::Parser::Scope
     end
 
     table = options[:ephemeral] ? @ephemeral.last : @symtable
-    if table.include?(name)
+    if table.bound?(name)
       if options[:append]
         error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
       else
