@@ -102,8 +102,15 @@ on master, 'test -f /etc/httpd/conf/httpd.conf.orig || cp -p /etc/httpd/conf/htt
 on master, "cat #{testdir}/etc/httpd.conf > /etc/httpd/conf/httpd.conf"
 
 step "Make SELinux and Apache play nicely together..."
-on master, "chcon -R --reference=/var/www/html #{testdir}"
-on master, "semanage port -a -t http_port_t -p tcp 8141"
+reenable_selinux = nil
+on master, "sestatus" do
+  if stdout.match(/Current mode:.*enforcing/)
+    reenable_selinux = true
+  else
+    reenable_selinux = false
+  end
+end
+on master, "setenforce 0"
 
 step "Start the Apache httpd service..."
 on master, 'service httpd restart'
@@ -166,5 +173,10 @@ on master, "cp -p '#{testdir}/hosts' /etc/hosts"
 on master, "/etc/init.d/httpd stop"
 on master, "mv --force /etc/httpd/conf/httpd.conf{,.external_ca_test}"
 on master, "mv --force /etc/httpd/conf/httpd.conf{.orig,}"
+
+if reenable_selinux
+  step "Restore the original state of SELinux"
+  on master, "setenforce 1"
+end
 
 step "Finished testing External Certificates"
