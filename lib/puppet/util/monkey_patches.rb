@@ -140,7 +140,7 @@ class Array
   end
   
   # @see #to_hash   
-  def respond_to? m
+  def respond_to? m, include_private=false
     return false if m == :to_hash
     super
   end

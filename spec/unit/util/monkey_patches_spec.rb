@@ -94,6 +94,24 @@ describe Array do
       [1,2,3].drop(3).should == []
     end
   end
+
+  describe "#respond_to?" do
+    it "should return true for a standard method (each)" do
+      [].respond_to?(:each).should be_true
+    end
+
+    it "should return false for to_hash" do
+      [].respond_to?(:to_hash).should be_false
+    end
+
+    it "should accept one argument" do
+      lambda { [].respond_to?(:each) }.should_not raise_error
+    end
+
+    it "should accept two arguments" do
+      lambda { [].respond_to?(:each, false) }.should_not raise_error
+    end
+  end
 end
 
 describe IO do
