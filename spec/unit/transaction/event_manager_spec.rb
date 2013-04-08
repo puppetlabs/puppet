@@ -286,6 +286,10 @@ describe Puppet::Transaction::EventManager do
       @event2 = Puppet::Transaction::Event.new(:name => :service_start, :resource => @target, :invalidate_refreshes => true)
     end
 
+    it "should succeed when there's no invalidated event" do
+      @manager.queue_events(@target, [@event2])
+    end
+
     describe "and the events were dequeued/invalidated" do
       before do
         @resource.expects(:info).with { |msg| msg.include?("Scheduling refresh") }
