@@ -274,29 +274,32 @@ describe Puppet::Transaction::EventManager do
       @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
       @manager = Puppet::Transaction::EventManager.new(@transaction)
 
-      @graph = stub 'graph', :matching_edges => [], :resource => @resource
+      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
+      @target = Puppet::Type.type(:file).new :path => make_absolute("/your/file")
+
+      @graph = stub 'graph'
       @graph.stubs(:matching_edges).returns []
+      @graph.stubs(:matching_edges).with(anything, @resource).returns [stub('edge', :target => @target, :callback => :refresh)]
       @manager.stubs(:relationship_graph).returns @graph
 
-      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
-      @resource.expects(:self_refresh?).returns true
-      @resource.expects(:deleting?).returns false
-      @resource.expects(:info).with { |msg| msg.include?("Scheduling refresh") }
-      @event = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource)
+      @event  = Puppet::Transaction::Event.new(:name => :notify, :resource => @target)
+      @event2 = Puppet::Transaction::Event.new(:name => :service_start, :resource => @target, :invalidate_refreshes => true)
     end
 
     describe "and the events were dequeued/invalidated" do
       before do
-        @event2 = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource, :invalidate_refreshes => true)
-        @resource.expects(:info).with { |msg| msg.include?("Unscheduling") }
+        @resource.expects(:info).with { |msg| msg.include?("Scheduling refresh") }
+        @target.expects(:info).with { |msg| msg.include?("Unscheduling") }
       end
 
       it "should not run an event or log" do
-        @resource.expects(:notice).with { |msg| msg.include?("Would have triggered 'refresh'") }.never
-        @resource.expects(:refresh).never
+        @target.expects(:notice).with { |msg| msg.include?("Would have triggered 'refresh'") }.never
+        @target.expects(:refresh).never
 
-        @manager.queue_events(@resource, [@event, @event2])
+        @manager.queue_events(@resource, [@event])
+        @manager.queue_events(@target, [@event2])
         @manager.process_events(@resource)
+        @manager.process_events(@target)
       end
     end
   end
