@@ -65,7 +65,7 @@ class Puppet::Transaction::EventManager
 
   def dequeue_events_for_resource(target, callback)
     target.info "Unscheduling #{callback} on #{target}"
-    @event_queues[target][callback] = {}
+    @event_queues[target][callback] = {} if @event_queues[target]
   end
 
   def queue_events_for_resource(source, target, callback, events)
