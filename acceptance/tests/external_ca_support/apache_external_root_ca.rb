@@ -102,7 +102,9 @@ on master, 'test -f /etc/httpd/conf/httpd.conf.orig || cp -p /etc/httpd/conf/htt
 on master, "cat #{testdir}/etc/httpd.conf > /etc/httpd/conf/httpd.conf"
 
 step "Make SELinux and Apache play nicely together..."
-reenable_selinux = nil
+
+# We need this variable in scope.
+disable_and_reenable_selinux = 'UNKNOWN'
 on master, "sestatus" do
   if stdout.match(/Current mode:.*enforcing/)
     disable_and_reenable_selinux = true
