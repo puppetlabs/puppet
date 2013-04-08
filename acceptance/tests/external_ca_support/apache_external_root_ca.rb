@@ -105,12 +105,15 @@ step "Make SELinux and Apache play nicely together..."
 reenable_selinux = nil
 on master, "sestatus" do
   if stdout.match(/Current mode:.*enforcing/)
-    reenable_selinux = true
+    disable_and_reenable_selinux = true
   else
-    reenable_selinux = false
+    disable_and_reenable_selinux = false
   end
 end
-on master, "setenforce 0"
+
+if disable_and_reenable_selinux
+  on master, "setenforce 0"
+end
 
 step "Start the Apache httpd service..."
 on master, 'service httpd restart'
@@ -174,7 +177,7 @@ on master, "/etc/init.d/httpd stop"
 on master, "mv --force /etc/httpd/conf/httpd.conf{,.external_ca_test}"
 on master, "mv --force /etc/httpd/conf/httpd.conf{.orig,}"
 
-if reenable_selinux
+if disable_and_reenable_selinux
   step "Restore the original state of SELinux"
   on master, "setenforce 1"
 end
