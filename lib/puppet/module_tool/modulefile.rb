@@ -30,13 +30,13 @@ module Puppet::ModuleTool
       @metadata.full_module_name = name
     end
 
-    # Set the module +version+ (e.g., "0.0.1"). Required.
+    # Set the module +version+ (e.g., "0.1.0"). Required.
     def version(version)
       @metadata.version = version
     end
 
     # Add a dependency with the full_module_name +name+ (e.g. "myuser-mymodule"), an
-    # optional +version_requirement+ (e.g. "0.0.1") and +repository+ (a URL
+    # optional +version_requirement+ (e.g. "0.1.0") and +repository+ (a URL
     # string). Optional. Can be called multiple times to add many dependencies.
     def dependency(name, version_requirement = nil, repository = nil)
       @metadata.dependencies << Dependency.new(name, version_requirement, repository)
