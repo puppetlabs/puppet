@@ -160,7 +160,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         run_in_catalog(resource)
         expect_output('modify_entry')
       end
-      it "should be able to move an entry from one file to another" do
+      it "should not try to move an entry from one file to another" do
         # force the parsedfile provider to also parse user1's crontab
         random_resource = Puppet::Type.type(:cron).new(
           :name   => 'foo',
@@ -171,6 +171,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         resource = Puppet::Type.type(:cron).new(
           :name         => 'My daily failure',
           :special      => 'daily',
+	  :command      => "/bin/false",
           :target       => crontab_user2,
           :user         => crontab_user2
         )
