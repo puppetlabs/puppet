@@ -62,7 +62,7 @@ Replaces: puppetmaster (<< 2.6.1~rc2-1)
 Suggests: apache2 | nginx, puppet-el, vim-puppet, stompserver, ruby-stomp | libstomp-ruby1.8,
  rdoc, ruby-ldap | libldap-ruby1.8, puppetdb-terminus
 Description: Puppet master common scripts
- This package contains common scripts for the puppet master, 
+ This package contains common scripts for the puppet master,
  which is the server hosting manifests and files for the puppet nodes.
  .
  Puppet lets you centrally manage every important aspect of your system
