@@ -24,7 +24,7 @@ on master, puppet("module list") do
 end
 
 step "Try to uninstall a module that exists multiple locations in the module path"
-on master, puppet("module uninstall pmtacceptance-java"), :acceptable_exit_codes => [1] do
+on master, puppet("module uninstall pmtacceptance-java --trace"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> \e[mNotice: Preparing to uninstall 'pmtacceptance-java' ...\e[0m
     STDERR> \e[1;31mError: Could not uninstall module 'pmtacceptance-java'

@@ -12,6 +12,12 @@ module Puppet::ModuleTool::Errors
       super "Could not #{@action} '#{@requested_name}' (#{vstring}); module '#{@dependency_name}' cannot satisfy dependencies"
     end
 
+    attr_reader :dependency_name
+
+    def add_conditions(conditions)
+      @conditions += conditions
+    end
+
     def multiline
       same_mod = @requested_name == @dependency_name
 
@@ -19,8 +25,9 @@ module Puppet::ModuleTool::Errors
       message << "Could not #{@action} module '#{@requested_name}' (#{vstring})"
       message << "  No version of '#{@dependency_name}' will satisfy dependencies"
       message << "    You specified '#{@requested_name}' (#{v(@requested_version)})" if same_mod
-      message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
-        "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@dependency_name}' (#{v(c[:dependency])})"
+      message += @conditions.select { |c| c[:source] }.sort_by { |c| c[:source][:module_name] }.map do |c|
+        source = c[:source]
+        "    '#{source[:module_name]}' (#{v(source[:version])}) requires '#{@dependency_name}' (#{v(c[:constraint])})"
       end
       message << "    Use `puppet module #{@action} --force` to #{@action} this module anyway" if same_mod
       message << "    Use `puppet module #{@action} --ignore-dependencies` to #{@action} only this module" unless same_mod
@@ -101,14 +108,62 @@ module Puppet::ModuleTool::Errors
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
       @action            = options[:action]
-      super "Could not #{@action} '#{@module_name}'; module is not installed"
+      super "Could not upgrade '#{@module_name}'; module is installed"
     end
 
     def multiline
       message = []
-      message << "Could not #{@action} module '#{@module_name}' (#{vstring})"
+      message << "Could not upgrade module '#{@module_name}' (#{vstring})"
       message << "  Installed module has had changes made locally"
-      message << "    Use `puppet module #{@action} --force` to #{@action} this module anyway"
+      message << "    Use `puppet module #{@action} --force` to upgrade this module anyway"
+      message.join("\n")
+    end
+  end
+
+  class MissingPackageError < InstallError
+    def initialize(options)
+      @requested_package = options[:requested_package]
+      @action = options[:action]
+      super "#{@requested_package} requested; Package #{@requested_package} does not exist"
+    end
+
+    def multiline
+      message = []
+      message << "Could not #{@action} from package #{@requested_package}"
+      message << "  Package #{@requested_package} does not exist"
+      message.join("\n")
+    end
+  end
+
+  class InvalidPackageError < ModuleToolError
+    def initialize(options)
+      @requested_package = options[:requested_package]
+      @detail = options[:detail]
+      @action = options[:action]
+      super "#{@requested_package} requested; Package #{@requested_package} is invalid"
+    end
+
+    def multiline
+      message = []
+      message << "Could not #{@action} from package #{@requested_package}"
+      message << "  #{@detail}"
+      message.join("\n")
+    end
+  end
+
+  class NewerInstalledError < ModuleToolError
+    def initialize(options)
+      @module_name       = options[:module_name]
+      @requested_version = options[:requested_version]
+      @installed_version = options[:installed_version]
+      @action            = options[:action]
+      super "Won't downgrade '#{@module_name}' (#{vstring})"
+    end
+
+    def multiline
+      message = []
+      message << "Won't downgrade module '#{@module_name}' (#{vstring})"
+      message << "  Use `puppet module #{@action} --force` to force the downgrade"
       message.join("\n")
     end
   end

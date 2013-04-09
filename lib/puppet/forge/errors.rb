@@ -14,6 +14,18 @@ module Puppet::Forge::Errors
     end
   end
 
+  # This class just adds the possibility to specify the multiline message
+  class VerboseForgeError < ForgeError
+    def initialize(message, multiline_message, original=nil)
+      super(message, original)
+      @multiline_message = multiline_message
+    end
+
+    def multiline
+      @multiline_message
+    end
+  end
+
   # This exception is raised when there is an SSL verification error when
   # communicating with the forge.
   class SSLVerifyError < ForgeError
@@ -78,9 +90,9 @@ Could not connect to #{@uri}
       @input   = options[:input]
       @message = options[:message]
       response = options[:response]
-      @response = "#{response.code} #{response.message}"
+      @response = "#{response.code} #{response.message}".strip
 
-      message = "Could not execute operation for '#{@input}'. Detail: "
+      message = "Could not execute operation for '#{@input.is_a?(Array) ? @input.join('\', \'') : @input}'. Detail: "
       message << @message << " / " if @message
       message << @response << "."
       super(message, original)
@@ -91,7 +103,7 @@ Could not connect to #{@uri}
     # @return [String] the multiline version of the error message
     def multiline
       message = <<-EOS
-Could not execute operation for '#{@input}'
+Could not execute operation for '#{@input.is_a?(Array) ? @input.join('\', \'') : @input}'
   The server being queried was #{@uri}
   The HTTP response we received was '#{@response}'
       EOS

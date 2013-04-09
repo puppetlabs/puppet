@@ -15,59 +15,70 @@ module Puppet::ModuleTool
       include Puppet::ModuleTool::Errors
       include Puppet::Forge::Errors
 
-      def initialize(name, forge, install_dir, options = {})
+      def initialize(name, forge, options = {})
         super(options)
+        @name                = name
+        @forge               = forge
         @action              = :install
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
         @force               = options[:force]
-        @ignore_dependencies = options[:force] || options[:ignore_dependencies]
-        @name                = name
-        @forge               = forge
-        @install_dir         = install_dir
+        @ignore_dependencies = @force || options[:ignore_dependencies]
       end
 
       def run
-        begin
-          if is_module_package?(@name)
-            @source = :filesystem
-            @filename = File.expand_path(@name)
-            raise MissingPackageError, :requested_package => @filename unless File.exist?(@filename)
+        results = {
+          :install_dir => options[:target_dir]
+        }
 
-            parsed = parse_filename(@filename)
-            @module_name = parsed[:module_name]
-            @version     = parsed[:version]
+        begin
+          if metadata = read_module_package_metadata(@name)
+            @module_name = metadata['name']
+            @version     = metadata['version']
           else
-            @source = :repository
-            @module_name = @name.gsub('/', '-')
+            @module_name = @name.tr('/', '-')
             @version = options[:version]
           end
 
-          results = {
-            :module_name    => @module_name,
-            :module_version => @version,
-            :install_dir    => options[:target_dir],
-          }
+          results[:module_name] = @module_name
+          results[:module_version] = @version
 
-          @install_dir.prepare(@module_name, @version || 'latest')
+          Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
+          # prepare (create) the target directory
+          Puppet::ModuleTool::InstallDirectory.
+             new(Pathname.new(options[:target_dir])).
+             prepare(@module_name, @version || 'latest')
 
-          cached_paths = get_release_packages
+          # scan already installed module releases
+          get_local_constraints
 
-          unless @graph.empty?
-            Puppet.notice 'Installing -- do not interrupt ...'
-            cached_paths.each do |hash|
-              hash.each do |dir, path|
-                Unpacker.new(path, @options.merge(:target_dir => dir)).run
-              end
+          if !@force && previous = @installed[@module_name].first
+            raise AlreadyInstalledError,
+              :module_name       => @module_name,
+              :installed_version => previous[:version],
+              :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
+              :local_changes     => has_local_changes?(previous)
+          end
+
+          # get the module releases to install / upgrade
+          cached_paths = get_release_packages(metadata)
+
+          # install them
+          Puppet.notice 'Installing -- do not interrupt ...'
+          cached_paths.each do |hash|
+            hash.each do |dir, path|
+              Unpacker.new(path, @options.merge(:target_dir => dir)).run
             end
           end
-        rescue ModuleToolError, ForgeError => err
+        rescue => err
           results[:error] = {
-            :oneline   => err.message,
-            :multiline => err.multiline,
+            :oneline => err.message,
+            :multiline => err.respond_to?(:multiline) ? err.multiline : [err.to_s, err.backtrace].join("\n")
           }
         else
+          results[:affected_modules] = @graph
           results[:result] = :success
-          results[:installed_modules] = @graph
+          # for backward compatibility
+          results[:installed_modules] = results[:affected_modules]
         ensure
           results[:result] ||= :failure
         end
@@ -78,106 +89,6 @@ module Puppet::ModuleTool
       private
 
       include Puppet::ModuleTool::Shared
-
-      # Return a Pathname object representing the path to the module
-      # release package in the `Puppet.settings[:module_working_dir]`.
-      def get_release_packages
-        get_local_constraints
-
-        if !@force && @installed.include?(@module_name)
-
-          raise AlreadyInstalledError,
-            :module_name       => @module_name,
-            :installed_version => @installed[@module_name].first.version,
-            :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-            :local_changes     => @installed[@module_name].first.local_changes
-        end
-
-        if @ignore_dependencies && @source == :filesystem
-          @urls   = {}
-          @remote = { "#{@module_name}@#{@version}" => { } }
-          @versions = {
-            @module_name => [
-              { :vstring => @version, :semver => SemVer.new(@version) }
-            ]
-          }
-        else
-          get_remote_constraints(@forge)
-        end
-
-        @graph = resolve_constraints({ @module_name => @version })
-        @graph.first[:tarball] = @filename if @source == :filesystem
-        resolve_install_conflicts(@graph) unless @force
-
-        # This clean call means we never "cache" the module we're installing, but this
-        # is desired since module authors can easily rerelease modules different content but the same
-        # version number, meaning someone with the old content cached will be very confused as to why
-        # they can't get new content.
-        # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
-        # but for now this is a quick fix to disable caching
-        Puppet::Forge::Cache.clean
-        download_tarballs(@graph, @graph.last[:path], @forge)
-      end
-
-      #
-      # Resolve installation conflicts by checking if the requested module
-      # or one of it's dependencies conflicts with an installed module.
-      #
-      # Conflicts occur under the following conditions:
-      #
-      # When installing 'puppetlabs-foo' and an existing directory in the
-      # target install path contains a 'foo' directory and we cannot determine
-      # the "full name" of the installed module.
-      #
-      # When installing 'puppetlabs-foo' and 'pete-foo' is already installed.
-      # This is considered a conflict because 'puppetlabs-foo' and 'pete-foo'
-      # install into the same directory 'foo'.
-      #
-      def resolve_install_conflicts(graph, is_dependency = false)
-        graph.each do |release|
-          @environment.modules_by_path[options[:target_dir]].each do |mod|
-            if mod.has_metadata?
-              metadata = {
-                :name    => mod.forge_name.gsub('/', '-'),
-                :version => mod.version
-              }
-              next if release[:module] == metadata[:name]
-            else
-              metadata = nil
-            end
-
-            if release[:module] =~ /-#{mod.name}$/
-              dependency_info = {
-                :name    => release[:module],
-                :version => release[:version][:vstring]
-              }
-              dependency = is_dependency ? dependency_info : nil
-              latest_version = @versions["#{@module_name}"].sort_by { |h| h[:semver] }.last[:vstring]
-
-              raise InstallConflictError,
-                :requested_module  => @module_name,
-                :requested_version => @version || "latest: v#{latest_version}",
-                :dependency        => dependency,
-                :directory         => mod.path,
-                :metadata          => metadata
-            end
-
-            resolve_install_conflicts(release[:dependencies], true)
-          end
-        end
-      end
-
-      #
-      # Check if a file is a vaild module package.
-      # ---
-      # FIXME: Checking for a valid module package should be more robust and
-      # use the acutal metadata contained in the package. 03132012 - Hightower
-      # +++
-      #
-      def is_module_package?(name)
-        filename = File.expand_path(name)
-        filename =~ /.tar.gz$/
-      end
     end
   end
 end

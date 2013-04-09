@@ -5,97 +5,99 @@ module Puppet::ModuleTool
       include Puppet::ModuleTool::Errors
 
       def initialize(name, forge, options)
+        super(options)
+        @name                = name
+        @forge               = forge
         @action              = :upgrade
         @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
-        @module_name         = name
-        @options             = options
         @force               = options[:force]
-        @ignore_dependencies = options[:force] || options[:ignore_dependencies]
-        @version             = options[:version]
-        @forge               = forge
+        @ignore_dependencies = @froce || options[:ignore_dependencies]
       end
 
       def run
-        begin
-          results = { :module_name => @module_name }
+        results = {
+          :install_dir => options[:target_dir]
+        }
+        # for backward compatibility
+        results[:base_dir] = results[:install_dir]
 
+        begin
+          if metadata = read_module_package_metadata(@name)
+            @module_name = metadata['name']
+            @version     = metadata['version']
+          else
+            @module_name = @name.tr('/', '-')
+            @version = options[:version]
+          end
+
+          results[:module_name] = @module_name
+          results[:module_version] = @version
+
+          Puppet.notice "Preparing to upgrade '#{@module_name}' ..."
+
+          # scan already installed module releases
           get_local_constraints
 
           if @installed[@module_name].length > 1
             raise MultipleInstalledError,
               :action            => :upgrade,
               :module_name       => @module_name,
-              :installed_modules => @installed[@module_name].sort_by { |mod| @environment.modulepath.index(mod.modulepath) }
+              :installed_modules => @installed[@module_name].sort_by { |release|
+                @environment.modulepath.index(release[:module].modulepath)
+              }.map{ |release| release[:module] }
           elsif @installed[@module_name].empty?
             raise NotInstalledError,
-              :action      => :upgrade,
-              :module_name => @module_name
-          end
-
-          @module = @installed[@module_name].last
-          results[:installed_version] = @module.version ? @module.version.sub(/^(?=\d)/, 'v') : nil
-          results[:requested_version] = @version || (@conditions[@module_name].empty? ? :latest : :best)
-          dir = @module.modulepath
-
-          Puppet.notice "Found '#{@module_name}' (#{colorize(:cyan, results[:installed_version] || '???')}) in #{dir} ..."
-          if !@options[:force] && @module.has_metadata? && @module.has_local_changes?
-            raise LocalChangesError,
               :action            => :upgrade,
-              :module_name       => @module_name,
+              :module_name       => @module_name
+          end
+
+          previous = @installed[@module_name].first
+          Puppet.notice "Found '#{@module_name}' (" <<
+            colorize(:cyan, previous[:version] ? previous[:version].sub(/^(?=\d)/, 'v') : '???') <<
+            ") in #{previous[:module].modulepath} ..."
+
+          if !@force && has_local_changes?(previous)
+            raise LocalChangesError,
+              :action => :upgrade,
+              :module_name => @module_name,
               :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-              :installed_version => @module.version
+              :installed_version => previous[:version]
           end
 
-          begin
-            get_remote_constraints(@forge)
-          rescue => e
-            raise UnknownModuleError, results.merge(:repository => @forge.uri)
-          else
-            raise UnknownVersionError, results.merge(:repository => @forge.uri) if @remote.empty?
-          end
+          # get the module releases to install / upgrade
+          cached_paths = get_release_packages(metadata)
 
-          if !@options[:force] && @versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
+          upgrade = @graph.first[:release]
+          if !@force && (upgrade[:semver] == previous[:semver] || !@version && upgrade[:semver] < previous[:semver])
             raise VersionAlreadyInstalledError,
               :module_name       => @module_name,
-              :requested_version => @version || ((@conditions[@module_name].empty? ? 'latest' : 'best') + ": #{@versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v')}"),
-              :installed_version => @installed[@module_name].last.version,
-              :conditions        => @conditions[@module_name] + [{ :module => :you, :version => @version }]
+              :installed_version => previous[:version],
+              :requested_version => @version || upgrade[:version],
+              :specified_version => @version,
+              :conditions        => @conditions[@module_name]
           end
 
-          @graph = resolve_constraints({ @module_name => @version })
-
-          # This clean call means we never "cache" the module we're installing, but this
-          # is desired since module authors can easily rerelease modules different content but the same
-          # version number, meaning someone with the old content cached will be very confused as to why
-          # they can't get new content.
-          # Long term we should just get rid of this caching behavior and cleanup downloaded modules after they install
-          # but for now this is a quick fix to disable caching
-          Puppet::Forge::Cache.clean
-          tarballs = download_tarballs(@graph, @graph.last[:path], @forge)
-
-          unless @graph.empty?
-            Puppet.notice 'Upgrading -- do not interrupt ...'
-            tarballs.each do |hash|
-              hash.each do |dir, path|
-                Unpacker.new(path, @options.merge(:target_dir => dir)).run
-              end
+          Puppet.notice 'Upgrading -- do not interrupt ...'
+          cached_paths.each do |hash|
+            hash.each do |dir, path|
+              Unpacker.new(path, @options.merge(:target_dir => dir)).run
             end
           end
-
-          results[:result] = :success
-          results[:base_dir] = @graph.first[:path]
-          results[:affected_modules] = @graph
-        rescue VersionAlreadyInstalledError => e
+        rescue VersionAlreadyInstalledError => err
+          results[:error] = {
+            :oneline   => err.message,
+            :multiline => err.multiline
+          }
           results[:result] = :noop
+        rescue => err
           results[:error] = {
-            :oneline   => e.message,
-            :multiline => e.multiline
+            :oneline => err.message,
+            :multiline => err.respond_to?(:multiline) ? err.multiline : [err.to_s, err.backtrace].join("\n")
           }
-        rescue => e
-          results[:error] = {
-            :oneline => e.message,
-            :multiline => e.respond_to?(:multiline) ? e.multiline : [e.to_s, e.backtrace].join("\n")
-          }
+        else
+          results[:affected_modules] = @graph
+          results[:install_dir] = options[:target_dir]
+          results[:result] = :success
         ensure
           results[:result] ||= :failure
         end
@@ -104,6 +106,7 @@ module Puppet::ModuleTool
       end
 
       private
+
       include Puppet::ModuleTool::Shared
     end
   end

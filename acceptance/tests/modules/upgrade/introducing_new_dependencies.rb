@@ -38,7 +38,7 @@ on master, puppet("module upgrade pmtacceptance-postgresql") do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to upgrade 'pmtacceptance-postgresql' ...\e[0m
     \e[mNotice: Found 'pmtacceptance-postgresql' (\e[0;36mv0.0.2\e[m) in /etc/puppet/modules ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+    \e[mNotice: Querying https://forge.puppetlabs.com ...\e[0m
     \e[mNotice: Upgrading -- do not interrupt ...\e[0m
     /etc/puppet/modules
     └─┬ pmtacceptance-postgresql (\e[0;36mv0.0.2 -> v1.0.0\e[0m)

@@ -12,23 +12,23 @@ module Puppet::ModuleTool::Errors
       @module_name       = options[:module_name]
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
+      @specified_version = options[:specified_version]
       @dependency_name   = options[:dependency_name]
       @conditions        = options[:conditions]
-      super "Could not upgrade '#{@module_name}'; module is not installed"
+      super "Could not upgrade '#{@module_name}'; a better release is already installed"
     end
 
     def multiline
       message = []
       message << "Could not upgrade module '#{@module_name}' (#{vstring})"
-      if @conditions.length == 1 && @conditions.last[:version].nil?
+      if @conditions.empty? && !@specified_version
         message << "  The installed version is already the latest version"
       else
         message << "  The installed version is already the best fit for the current dependencies"
-        message += @conditions.select { |c| c[:module] == :you && c[:version] }.map do |c|
-          "    You specified '#{@module_name}' (#{v(c[:version])})"
-        end
-        message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
-           "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@module_name}' (#{v(c[:dependency])})"
+        message << "    You specified '#{@module_name}' (#{v(@specified_version)})" if @specified_version
+        message += @conditions.sort_by { |c| c[:source][:module_name] }.map do |c|
+           source = c[:source]
+           "    '#{source[:module_name]}' (#{v(source[:version])}) requires '#{@module_name}' (#{v(c[:constraint])})"
         end
       end
       message << "    Use `puppet module install --force` to re-install this module"

@@ -28,7 +28,6 @@ on master, puppet("module build /etc/puppet/modules/nginx") do
     Module built: /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1 ]'
 on master, '[ -f /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz ]'
 
 step "Try to build a module without providing a path"
@@ -38,7 +37,6 @@ on master, ("cd /etc/puppet/modules/nginx && puppet module build") do
     Module built: /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1 ]'
 on master, '[ -f /etc/puppet/modules/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz ]'
 
 ensure step "Teardown"
