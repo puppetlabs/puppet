@@ -27,6 +27,7 @@ module Puppet::ModuleTool
       end
 
       def run
+        results = {}
         begin
           if is_module_package?(@name)
             @source = :filesystem
