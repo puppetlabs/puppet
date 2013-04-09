@@ -72,6 +72,23 @@ describe Puppet::Provider::ParsedFile do
     end
   end
 
+  describe "when matching resources to existing records" do
+    let(:first_resource) { stub(:one, :name => :one) }
+    let(:second_resource) { stub(:two, :name => :two) }
+
+    let(:resources) {{:one => first_resource, :two => second_resource}}
+
+    it "returns a resource if the record name matches the resource name" do
+      record = {:name => :one}
+      subject.resource_for_record(record, resources).should be first_resource
+    end
+
+    it "doesn't return a resource if the record name doesn't match any resource names" do
+      record = {:name => :three}
+      subject.resource_for_record(record, resources).should be_nil
+    end
+  end
+
   describe "when flushing a file's records to disk" do
     before do
       # This way we start with some @records, like we would in real life.
