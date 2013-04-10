@@ -34,6 +34,7 @@ group(:development, :test) do
   gem "sqlite3"
   gem "stomp"
   gem "tzinfo"
+  gem "rgen"
 end
 
 platforms :mswin, :mingw do
