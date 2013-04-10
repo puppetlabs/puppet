@@ -2,6 +2,7 @@ module Puppet::Scheduler
   class Job
     attr_reader :run_interval
     attr_accessor :last_run
+    attr_accessor :start_time
 
     def initialize(run_interval, &block)
       self.run_interval = run_interval
@@ -45,7 +46,7 @@ module Puppet::Scheduler
     def run(now)
       @last_run = now
       if @run_proc
-        @run_proc.call
+        @run_proc.call(self)
       end
     end
   end

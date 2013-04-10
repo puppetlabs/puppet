@@ -147,11 +147,12 @@ class Puppet::Daemon
   end
 
   def run_event_loop
-    agent_run = Puppet::Scheduler::Job.new(Puppet[:runinterval]) do
-      agent.run
+    agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do
+      # Splay for the daemon is handled in the scheduler
+      agent.run(:splay => false)
     end
 
-    reparse_run = Puppet::Scheduler::Job.new(Puppet[:filetimeout]) do
+    reparse_run = Puppet::Scheduler.create_job(Puppet[:filetimeout]) do
       Puppet.settings.reparse_config_files
       agent_run.run_interval = Puppet[:runinterval]
       if Puppet[:filetimeout] == 0

@@ -66,4 +66,14 @@ describe Puppet::Scheduler::Job do
     job.disable
     job.enabled?.should_not be
   end
+
+  it "has the job instance as a parameter" do
+    passed_job = nil
+    job = Puppet::Scheduler::Job.new(run_interval) do |j|
+      passed_job = j
+    end
+    job.run(5)
+
+    passed_job.should eql(job)
+  end
 end
