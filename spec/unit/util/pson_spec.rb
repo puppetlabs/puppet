@@ -63,4 +63,9 @@ describe Puppet::Util::Pson do
     s = ["\xc3\xc3"]
     PSON.parse( [s].to_pson ).should == [s]
   end
+
+  it "should be able to parse JSON containing UTF-8 characters in strings" do
+    s = '{ "foö": "bár" }'
+    lambda { PSON.parse s }.should_not raise_error
+  end
 end
