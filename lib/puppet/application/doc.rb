@@ -235,6 +235,8 @@ HELP
     else
       setup_reference
     end
+
+    setup_logging
   end
 
   def setup_reference
@@ -261,16 +263,18 @@ HELP
         Puppet.settings.handlearg(option[:opt], option[:arg])
       end
     end
+  end
 
-    # Handle the logging settings.
-    if options[:debug] or options[:verbose]
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
-
-      Puppet::Util::Log.newdestination(:console)
+  def setup_logging
+  # Handle the logging settings.
+    if options[:debug]
+      Puppet::Util::Log.level = :debug
+    elsif options[:verbose]
+      Puppet::Util::Log.level = :info
+    else
+      Puppet::Util::Log.level = :warning
     end
+
+    Puppet::Util::Log.newdestination(:console)
   end
 end
