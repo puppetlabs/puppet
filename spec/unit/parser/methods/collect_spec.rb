@@ -2,29 +2,16 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
+require 'unit/parser/methods/shared'
+
 describe 'the collect method' do
   include PuppetSpec::Compiler
 
-  before :all do
-    # enable switching back 
-    @saved_parser = Puppet[:parser]
-  end
-  after :all do
-    # switch back to original 
-    Puppet[:parser] = @saved_parser
-  end
   before :each do
-    node      = Puppet::Node.new("floppy", :environment => 'production')
-    @compiler = Puppet::Parser::Compiler.new(node)
-    @scope    = Puppet::Parser::Scope.new(@compiler)
-    @topscope = @scope.compiler.topscope
-    @scope.parent = @topscope
+    Puppet[:parser] = "future"
   end
 
   context "using future parser" do
-    before :each do
-      Puppet[:parser] = "future"
-    end
     context "in Ruby style should be callable as" do
       it 'collect on an array (multiplying each value by 2)' do
         catalog = compile_to_catalog(<<-MANIFEST)
@@ -117,4 +104,7 @@ describe 'the collect method' do
       end
     end
   end
+
+  it_should_behave_like 'all iterative functions argument checks', 'collect'
+  it_should_behave_like 'all iterative functions hash handling', 'collect'
 end

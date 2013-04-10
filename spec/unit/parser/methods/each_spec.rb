@@ -3,24 +3,10 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'rubygems'
 
-describe 'methods' do
+describe 'the each method' do
   include PuppetSpec::Compiler
 
-  before :all do
-    # enable switching back 
-    @saved_parser = Puppet[:parser]
-  end
-  after :all do
-    # switch back to original 
-    Puppet[:parser] = @saved_parser
-  end
-
   before :each do
-    node      = Puppet::Node.new("floppy", :environment => 'production')
-    @compiler = Puppet::Parser::Compiler.new(node)
-    @scope    = Puppet::Parser::Scope.new(@compiler)
-    @topscope = @scope.compiler.topscope
-    @scope.parent = @topscope
     Puppet[:parser] = 'future'
   end
 
@@ -40,7 +26,7 @@ describe 'methods' do
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        foreach ($a) |$index, $v| => { 
+        each ($a) |$index, $v| => { 
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -92,7 +78,7 @@ describe 'methods' do
     it 'each checking produced value using single expression' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, 3, 2]
-        $b = $a.each |$x| { $x }
+        $b = $a.each |$x| { "unwanted" }
         file { "/file_${b[1]}":
           ensure => present
         }

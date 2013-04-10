@@ -1,5 +1,5 @@
 require 'puppet/parser/ast/block_expression'
-
+require 'debugger'
 class Puppet::Parser::AST
   # A block of statements/expressions with additional parameters
   # Requires scope to contain the values for the defined parameters when evaluated
