@@ -208,6 +208,69 @@ the nested format to see the descriptions:
 
     rspec spec/unit/ssl/host_spec.rb --format nested
 
+# A brief introduction to testing in Puppet
+
+Puppet relies heavily on automated testing to ensure that Puppet behaves as
+expected and that new features don't interfere with existing behavior. There are
+three primary sets of tests that Puppet uses: _unit tests_, _integration tests_,
+and _acceptance tests_.
+
+- - -
+
+Unit tests are used to test the individual components of Puppet to ensure that
+they function as expected in isolation. Unit tests are designed to hide the
+actual system implementations and provide canned information so that only the
+intended behavior is tested, rather than the targeted code and everything else
+connected to it. Unit tests should never affect the state of the system that's
+running the test.
+
+Integration tests serve to test different units of code together to ensure that
+they interact correctly. While individual methods might perform correctly, when
+used with the rest of the system they might fail, so integration tests are a
+higher level version of unit tests that serve to check the behavior of
+individual subsystems. Integration tests might affect the system in a limited
+manner, like writing to a temporary directory, but should not affect the system
+state in any meaningful way.
+
+All of the unit and integration tests for Puppet are kept in the spec/ directory.
+
+- - -
+
+Acceptance tests are used to test high level behaviors of Puppet that deal with
+a number of concerns and aren't easily tested with normal unit tests. Acceptance
+tests function by actually changing system state and checking the system after
+the fact to make sure that the intended behavior occurred, and it's possible for
+them to be destructive.
+
+All of the acceptance tests for Puppet are kept in the acceptance/tests/
+directory.
+
+## Puppet Continuous integration
+
+  * Travis-ci (unit tests only): https://travis-ci.org/puppetlabs/puppet/
+  * Jenkins (unit and acceptance tests): https://jenkins.puppetlabs.com/view/Puppet%20FOSS/
+
+## RSpec
+
+Puppet uses RSpec to perform unit and integration tests.
+
+### RSpec references
+
+  * RSpec core docs: https://www.relishapp.com/rspec/rspec-core/docs
+  * RSpec guidelines with Ruby: http://betterspecs.org/
+
+### Puppet-acceptance
+
+[puppet-acceptance]: https://github.com/puppetlabs/puppet-acceptance
+[test::unit]: http://test-unit.rubyforge.org/
+
+Puppet has a custom acceptance testing framework called
+[puppet-acceptance][puppet-acceptance] for running acceptance tests.
+Puppet-acceptance runs the tests by configuring one or more VMs, copying the
+test cases onto the VMs, performing the tests and collecting the results, and
+ensuring that the results match the intended behavior. It uses
+[test::unit][test::unit] to perform the actual assertions.
+
 # UTF-8 Handling #
 
 As Ruby 1.9 becomes more commonly used with Puppet, developers should be aware
