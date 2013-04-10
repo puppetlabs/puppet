@@ -47,7 +47,7 @@ platforms :mswin, :mingw do
   gem "win32-service", "~> 0.7.2", :require => false
   gem "win32-taskscheduler", "~> 0.2.2", :require => false
   gem "win32console", "~> 1.3.2", :require => false
-  gem "windows-api", "~> 0.4.1", :require => false
+  gem "windows-api", "~> 0.4.2", :require => false
   gem "windows-pr", "~> 1.2.1", :require => false
 end
 

@@ -68,7 +68,7 @@ end
 EOM
 
   on agent, puppet('module', 'build', 'puppetlabs-helloworld')
-  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.0.1.tar.gz')
+  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.1.0.tar.gz')
 
   on(agent, puppet('help', '--config', puppetconf)) do
     assert_match(/helloworld\s*Hello world face/, stdout, "Face missing from list of available subcommands")
