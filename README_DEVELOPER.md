@@ -238,9 +238,10 @@ All of the unit and integration tests for Puppet are kept in the spec/ directory
 
 Acceptance tests are used to test high level behaviors of Puppet that deal with
 a number of concerns and aren't easily tested with normal unit tests. Acceptance
-tests function by actually changing system state and checking the system after
-the fact to make sure that the intended behavior occurred, and it's possible for
-them to be destructive.
+tests function by changing system state and checking the system after
+the fact to make sure that the intended behavior occurred. Because of this
+acceptance tests can be destructive, so the systems being tested should be
+throwaway systems.
 
 All of the acceptance tests for Puppet are kept in the acceptance/tests/
 directory.
@@ -252,7 +253,31 @@ directory.
 
 ## RSpec
 
-Puppet uses RSpec to perform unit and integration tests.
+Puppet uses RSpec to perform unit and integration tests. RSpec handles a number
+of concerns to make testing easier:
+
+  * Executing examples and ensuring the actual behavior matches the expected behavior (examples)
+  * Isolating tests (mocks and stubs)
+  * Grouping tests (describe and contexts)
+  * Setting up test environments and cleaning up afterwards (before and after blocks)
+
+#### Examples
+
+At the most basic level, RSpec provides a framework for executing tests (which
+are called examples) and ensuring that the actual behavior matches the expected
+behavior (which are done with expectations)
+
+```ruby
+# This is an example; it sets the test name and defines the test to run
+specify "1 == 1" do
+  # 'should' is an expectation
+  # It adds a check to make sure that the left argument matches the right argument
+  1.should == 1
+end
+```
+
+Good examples generally do as little setup as possible and only test one or two
+things; it makes tests easier to understand and easier to debug.
 
 ### RSpec references
 
