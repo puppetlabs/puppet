@@ -224,13 +224,13 @@ intended behavior is tested, rather than the targeted code and everything else
 connected to it. Unit tests should never affect the state of the system that's
 running the test.
 
+- - -
+
 Integration tests serve to test different units of code together to ensure that
 they interact correctly. While individual methods might perform correctly, when
 used with the rest of the system they might fail, so integration tests are a
 higher level version of unit tests that serve to check the behavior of
-individual subsystems. Integration tests might affect the system in a limited
-manner, like writing to a temporary directory, but should not affect the system
-state in any meaningful way.
+individual subsystems.
 
 All of the unit and integration tests for Puppet are kept in the spec/ directory.
 
@@ -257,9 +257,9 @@ Puppet uses RSpec to perform unit and integration tests. RSpec handles a number
 of concerns to make testing easier:
 
   * Executing examples and ensuring the actual behavior matches the expected behavior (examples)
+  * Grouping tests (describe and contexts)
   * Setting up test environments and cleaning up afterwards (before and after blocks)
   * Isolating tests (mocks and stubs)
-  * Grouping tests (describe and contexts)
 
 #### Examples and expectations
 
@@ -322,6 +322,151 @@ the number one
 
 Finished in 0.00516 seconds
 3 examples, 0 failures
+```
+
+### Setting up and tearing down tests
+
+Examples may require some setup before they can run, and might need to clean up
+afterwards. `before` and `after` blocks can be used before this, and can be
+used inside of example groups to limit how many examples they affect.
+
+```ruby
+
+describe "something that could warn" do
+  before :each do
+    # Disable warnings for this test
+    $VERBOSE = nil
+  end
+
+  after do
+    # Enable warnings afterwards
+    $VERBOSE = true
+  end
+
+  it "doesn't generate a warning" do
+    MY_CONSTANT = 1
+    # reassigning a normally prints out 'warning: already initialized constant FOO'
+    MY_CONSTANT = 2
+  end
+end
+```
+
+### Setting up helper data
+
+Some examples may require setting up data before hand and making it available to
+tests. RSpec provides helper methods with the `let` method call that can be used
+inside of tests.
+
+```ruby
+describe "a helper object" do
+  # This creates an array with three elements that we can retrieve in tests. A
+  # new copy will be made for each test.
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  it "should be an array" do
+    my_helper.should be_a_kind_of Array
+  end
+
+  it "should have three elements" do
+    my_helper.should have(3).items
+  end
+end
+```
+
+Like `before` blocks, helper objects like this are used to avoid doing a lot of
+setup in individual examples and share setup between similar tests.
+
+### Isolating tests with stubs
+
+RSpec allows you to provide fake data during testing to make sure that
+individual tests are only running the code being tested. You can stub out entire
+objects, or just stub out individual methods on an object. When a method is
+stubbed the method itself will never be called.
+
+While RSpec comes with its own stubbing framework, Puppet uses the Mocha
+framework.
+
+A brief usage guide for Mocha is available at http://gofreerange.com/mocha/docs/#Usage,
+and an overview of Mocha expectations is available at http://gofreerange.com/mocha/docs/Mocha/Expectation.html
+
+```ruby
+describe "stubbing a method on an object" do
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  it 'should have three items before being stubbed' do
+    my_helper.size.should == 3
+  end
+
+  describe 'when stubbing the size' do
+    before do
+      my_helper.stubs(:size).returns 10
+    end
+
+    it 'should have the stubbed value for size' do
+      my_helper.size.should == 10
+    end
+  end
+end
+```
+
+Entire objects can be stubbed as well.
+
+```ruby
+describe "stubbing an object" do
+  let(:my_helper) do
+    stub(:not_an_array, :size => 10)
+  end
+
+  it 'should have the stubbed size'
+    my_helper.size.should == 10
+  end
+end
+```
+
+### Adding expectations with mocks
+
+It's possible to combine the concepts of stubbing and expectations so that a
+method has to be called for the test to pass (like an expectation), and can
+return a fixed value (like a stub).
+
+```ruby
+describe "mocking a method on an object" do
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  describe "when mocking the size" do
+    before do
+      my_helper.expects(:size).returns 10
+    end
+
+    it "adds an expectation that a method was called" do
+      my_helper.size
+    end
+  end
+end
+```
+
+Like stubs, entire objects can be mocked.
+
+```ruby
+describe "mocking an object" do
+  let(:my_helper) do
+    mock(:not_an_array)
+  end
+
+  before do
+    not_an_array.expects(:size).returns 10
+  end
+
+  it "adds an expectation that the method was called" do
+    not_an_array.size
+  end
+end
 ```
 
 ### RSpec references
