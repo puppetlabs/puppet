@@ -257,11 +257,11 @@ Puppet uses RSpec to perform unit and integration tests. RSpec handles a number
 of concerns to make testing easier:
 
   * Executing examples and ensuring the actual behavior matches the expected behavior (examples)
+  * Setting up test environments and cleaning up afterwards (before and after blocks)
   * Isolating tests (mocks and stubs)
   * Grouping tests (describe and contexts)
-  * Setting up test environments and cleaning up afterwards (before and after blocks)
 
-#### Examples
+#### Examples and expectations
 
 At the most basic level, RSpec provides a framework for executing tests (which
 are called examples) and ensuring that the actual behavior matches the expected
@@ -269,15 +269,60 @@ behavior (which are done with expectations)
 
 ```ruby
 # This is an example; it sets the test name and defines the test to run
-specify "1 == 1" do
-  # 'should' is an expectation
-  # It adds a check to make sure that the left argument matches the right argument
+specify "one equals one" do
+  # 'should' is an expectation; it adds a check to make sure that the left argument
+  # matches the right argument
   1.should == 1
+end
+
+# Examples can be declared with either 'it' or 'specify'
+it "one doesn't equal two" do
+  1.should_not == 2
 end
 ```
 
 Good examples generally do as little setup as possible and only test one or two
 things; it makes tests easier to understand and easier to debug.
+
+More complete documentation on expectations is available at https://www.relishapp.com/rspec/rspec-expectations/docs
+
+### Example groups
+
+Example groups are fairly self explanatory; they group similar examples into a
+set.
+
+```ruby
+describe "the number one" do
+
+  it "is larger than zero" do
+    1.should be > 0
+  end
+
+  it "is an odd number" do
+    1.odd?.should be true
+  end
+
+  it "is not nil" do
+    1.should_not be_nil
+  end
+end
+```
+
+Example groups have a number of uses that we'll get into later, but one of the
+simplest demonstrations of what they do is how they help to format
+documentation:
+
+```
+rspec ex.rb --format documentation
+
+the number one
+  is larger than zero
+  is an odd number
+  is not nil
+
+Finished in 0.00516 seconds
+3 examples, 0 failures
+```
 
 ### RSpec references
 
