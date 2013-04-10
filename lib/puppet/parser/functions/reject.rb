@@ -36,6 +36,6 @@ Puppet::Parser::Functions::newfunction(
   else
     raise ArgumentError, ("reject(): wrong argument type (#{receiver.class}; must be an Array or a Hash.")
   end
-  
+
   receiver.to_a.reject {|x| pblock.call(self, x) }
 end

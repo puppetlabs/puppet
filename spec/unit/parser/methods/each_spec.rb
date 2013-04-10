@@ -14,7 +14,7 @@ describe 'the each method' do
     it 'each on an array selecting each value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        $a.each |$v| { 
+        $a.each |$v| {
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -26,7 +26,7 @@ describe 'the each method' do
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        each ($a) |$index, $v| => { 
+        each ($a) |$index, $v| => {
           file { "/file_$v": ensure => present }
         }
       MANIFEST
@@ -39,7 +39,7 @@ describe 'the each method' do
     it 'each on an array with index' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [present, absent, present]
-        $a.each |$k,$v| { 
+        $a.each |$k,$v| {
           file { "/file_${$k+1}": ensure => $v }
         }
       MANIFEST
@@ -52,7 +52,7 @@ describe 'the each method' do
     it 'each on a hash selecting entries' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>'present','b'=>'absent','c'=>'present'}
-        $a.each |$e| { 
+        $a.each |$e| {
         file { "/file_${e[0]}": ensure => $e[1] }
         }
       MANIFEST
@@ -64,7 +64,7 @@ describe 'the each method' do
     it 'each on a hash selecting key and value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>present,'b'=>absent,'c'=>present}
-        $a.each |$k, $v| { 
+        $a.each |$k, $v| {
           file { "/file_$k": ensure => $v }
         }
       MANIFEST
