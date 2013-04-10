@@ -62,7 +62,7 @@ end
 
 if defined?(RSpec::Core::RakeTask)
   RSpec::Core::RakeTask.new do |t|
-      t.pattern ='spec/{unit,integration}/**/*.rb'
+      t.pattern ='spec/**/*_spec.rb'
       t.fail_on_error = true
   end
 end
