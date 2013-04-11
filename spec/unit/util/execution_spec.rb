@@ -44,6 +44,9 @@ describe Puppet::Util::Execution do
         Puppet::Util::SUIDManager.stubs(:change_user)
         Puppet::Util::SUIDManager.stubs(:change_group)
 
+        # ensure that we don't really close anything!
+        (0..256).each {|n| IO.stubs(:new) }
+
         $stdin.stubs(:reopen)
         $stdout.stubs(:reopen)
         $stderr.stubs(:reopen)

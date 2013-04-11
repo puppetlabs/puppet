@@ -223,6 +223,9 @@ describe Puppet::Util do
       $stdin.stubs(:reopen)
       $stdout.stubs(:reopen)
       $stderr.stubs(:reopen)
+
+      # ensure that we don't really close anything!
+      (0..256).each {|n| IO.stubs(:new) }
     end
 
     it "should close all open file descriptors except stdin/stdout/stderr" do

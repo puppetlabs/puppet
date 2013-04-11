@@ -26,6 +26,8 @@ gem "rspec", "~> 2.11.0", :require => false
 gem "mocha", "~> 0.10.5", :require => false
 gem "rgen", "0.6.1", :require => false
 
+gem "yarjuf", "~> 1.0"
+
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
   gem "activerecord", '~> 3.0.7', :require => false
