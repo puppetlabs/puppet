@@ -1,11 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/indirector/catalog/active_record'
 
 describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before :each do
+    require 'puppet/indirector/catalog/active_record'
     setup_scratch_database
   end
 
