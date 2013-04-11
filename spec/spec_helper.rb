@@ -67,7 +67,12 @@ RSpec.configure do |config|
   if Puppet::Util::Platform.windows?
     config.output_stream = $stdout
     config.error_stream = $stderr
-    config.formatters.each { |f| f.instance_variable_set(:@output, $stdout) }
+
+    config.formatters.each do |f|
+      if not f.instance_variable_get(:@output).kind_of?(::File)
+        f.instance_variable_set(:@output, $stdout)
+      end
+    end
   end
 
   Puppet::Test::TestHelper.initialize
