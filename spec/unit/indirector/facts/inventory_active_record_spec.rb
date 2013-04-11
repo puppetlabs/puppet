@@ -1,26 +1,20 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/rails'
+require 'puppet/indirector/facts/inventory_active_record'
 
 describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   let(:terminus) { Puppet::Node::Facts::InventoryActiveRecord.new }
 
-  before :all do
-    require 'puppet/indirector/facts/inventory_active_record'
+  before :each do
+    Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
+    setup_scratch_database
   end
 
   after :each do
-    Puppet::Node::Facts.indirection.reset_terminus_class
-  end
-
-  before :each do
-    Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
-
-    Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
-    setup_scratch_database
+    Puppet::Rails.teardown
   end
 
   context "under Ruby 1.x", :if => (RUBY_VERSION[0] == '1' and can_use_scratch_database?) do

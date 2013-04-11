@@ -288,6 +288,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       Puppet[:storeconfigs_backend] = "active_record"
     end
 
+    after :each do
+      Puppet::Rails.teardown
+    end
+
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
       one = Puppet::Parser::Resource.new('notify', 'one',
                                          :virtual  => true,
@@ -304,10 +308,6 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @collector.evaluate.should == [one, two]
       one.should_not be_virtual
       two.should_not be_virtual
-
-      # REVISIT: Apparently we never actually marked local resources as
-      # non-exported.  So, this is what the previous test asserted, and checking
-      # what it claims to do causes test failures. --daniel 2011-08-23
     end
 
     it "should mark all returned resources as not virtual" do
