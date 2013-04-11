@@ -1,3 +1,5 @@
+require 'hiera_puppet'
+
 module Puppet::Parser::Functions
   newfunction(:hiera_array, :type => :rvalue, :arity => -2,:doc => "Returns all 
   matches throughout the hierarchy --- not just the first match --- as a flattened array of unique values.
@@ -18,7 +20,6 @@ module Puppet::Parser::Functions
   More thorough examples of `hiera` are available at:  
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    require 'hiera_puppet'
     key, default, override = HieraPuppet.parse_args(args)
     HieraPuppet.lookup(key, default, self, override, :array)
   end

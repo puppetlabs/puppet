@@ -1,3 +1,5 @@
+require 'hiera_puppet'
+
 module Puppet::Parser::Functions
   newfunction(:hiera_include, :arity => -2, :doc => "Assigns classes to a node
   using an array merge lookup that retrieves the value for a user-specified key
@@ -30,7 +32,6 @@ module Puppet::Parser::Functions
   More thorough examples of `hiera_include` are available at:
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    require 'hiera_puppet'
     key, default, override = HieraPuppet.parse_args(args)
     if answer = HieraPuppet.lookup(key, default, self, override, :array)
       method = Puppet::Parser::Functions.function(:include)

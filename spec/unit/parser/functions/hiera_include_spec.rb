@@ -1,6 +1,4 @@
 require 'spec_helper'
-require 'hiera_puppet'
-require 'puppet/parser/functions/hiera_include'
 
 describe 'Puppet::Parser::Functions#hiera_include' do
   let :scope do Puppet::Parser::Scope.new_for_test_harness('foo') end

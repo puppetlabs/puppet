@@ -1,3 +1,5 @@
+require 'hiera_puppet'
+
 module Puppet::Parser::Functions
   newfunction(:hiera_hash, :type => :rvalue, :arity => -2, :doc => 
   "Returns a merged hash of matches from throughout the hierarchy. In cases where two or 
@@ -20,7 +22,6 @@ module Puppet::Parser::Functions
   More thorough examples of `hiera_hash` are available at:  
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
-    require 'hiera_puppet'
     key, default, override = HieraPuppet.parse_args(args)
     HieraPuppet.lookup(key, default, self, override, :hash)
   end
