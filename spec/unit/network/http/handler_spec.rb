@@ -68,7 +68,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should setup a profiler when the puppet-profiling header exists" do
-      request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING] = "true"
+      request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
       handler.process(request, response)
 
