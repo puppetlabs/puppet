@@ -165,7 +165,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
     end
   end
 
-  context "under Ruby 2.x", :if => RUBY_VERSION[0] == '2' do
+  context "under Ruby 2.x", :if => (RUBY_VERSION[0] == '2' and can_use_scratch_database?) do
     describe "#initialize" do
       it "should raise error under Ruby 2" do
         lambda { terminus }.should raise_error(Puppet::Error, /Ruby 2/)
