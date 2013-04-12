@@ -43,9 +43,18 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should tell webrick to listen on the specified address and port" do
-      WEBrick::HTTPServer.expects(:new).with {|args|
-        args[:Port] == 31337 and args[:BindAddress] == "127.0.0.1"
-      }.returns(mock_webrick)
+      WEBrick::HTTPServer.expects(:new).with(
+        has_entries(:Port => 31337, :BindAddress => "127.0.0.1")
+      ).returns(mock_webrick)
+      server.listen(address, port)
+    end
+
+    it "should not perform reverse lookups" do
+      WEBrick::HTTPServer.expects(:new).with(
+        has_entry(:DoNotReverseLookup => true)
+      ).returns(mock_webrick)
+      BasicSocket.expects(:do_not_reverse_lookup=).with(true)
+
       server.listen(address, port)
     end
 

@@ -14,9 +14,11 @@ class Puppet::Network::HTTP::WEBrick
   end
 
   def listen(address, port)
-    arguments = {:BindAddress => address, :Port => port}
+    arguments = {:BindAddress => address, :Port => port, :DoNotReverseLookup => true}
     arguments.merge!(setup_logger)
     arguments.merge!(setup_ssl)
+
+    BasicSocket.do_not_reverse_lookup = true
 
     @server = WEBrick::HTTPServer.new(arguments)
     @server.listeners.each { |l| l.start_immediately = false }
