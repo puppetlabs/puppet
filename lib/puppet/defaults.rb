@@ -820,13 +820,23 @@ EOT
       :default    => "HTTP_X_CLIENT_DN",
       :desc       => "The header containing an authenticated client's SSL DN.
       This header must be set by the proxy to the authenticated client's SSL
-      DN (e.g., `/CN=puppet.puppetlabs.com`).",
+      DN (e.g., `/CN=puppet.puppetlabs.com`).
+
+      Note that the name of the HTTP header gets munged by Rack: an `HTTP_` prefix is
+      added, dashes are converted to underscores, and all letters are uppercased.
+      Thus, to use the `X-Client-DN` header, this setting should be
+      `HTTP_X_CLIENT_DN`.",
     },
     :ssl_client_verify_header => {
       :default    => "HTTP_X_CLIENT_VERIFY",
       :desc       => "The header containing the status message of the client
       verification. This header must be set by the proxy to 'SUCCESS' if the
-      client successfully authenticated, and anything else otherwise.",
+      client successfully authenticated, and anything else otherwise.
+
+      Note that the name of the HTTP header gets munged by Rack: an `HTTP_` prefix is
+      added, dashes are converted to underscores, and all letters are uppercased.
+      Thus, to use the `X-Client-Verify` header, this setting should be
+      `HTTP_X_CLIENT_VERIFY`.",
     },
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).
@@ -1524,7 +1534,7 @@ The 'curent' parser means that the released version of the parser should be used
 The 'future' parser is a "time travel to the future" allowing early exposure to new language features.
 What these fatures are will vary from release to release and they may be invididually configurable.
 
-Available Since Puppet 3.2. 
+Available Since Puppet 3.2.
 EOT
     },
    :max_errors => {
