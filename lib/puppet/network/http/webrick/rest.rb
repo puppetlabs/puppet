@@ -25,6 +25,14 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     process(request, response)
   end
 
+  def headers(request)
+    result = {}
+    request.each do |k, v|
+      result[k.downcase] = v
+    end
+    result
+  end
+
   def accept_header(request)
     request["accept"]
   end

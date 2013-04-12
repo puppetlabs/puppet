@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/network/http'
 require 'puppet/network/http/handler'
 require 'puppet/network/authorization'
 require 'puppet/network/authentication'
@@ -47,8 +48,14 @@ describe Puppet::Network::HTTP::Handler do
 
       @result = stub 'result', :render => "mytext"
 
+      request[:headers] = {
+          "Content-Type"  => request[:content_type_header],
+          "Accept"        => request[:accept_header]
+      }
+
       handler.stubs(:check_authorization)
       handler.stubs(:warn_if_near_expiration)
+      handler.stubs(:headers).returns(request[:headers])
     end
 
     it "should check the client certificate for upcoming expiration" do
@@ -60,8 +67,8 @@ describe Puppet::Network::HTTP::Handler do
       handler.process(request, response)
     end
 
-    it "should setup a profiler when the profile parameter exists" do
-      request[:params] = { :profile => "" }
+    it "should setup a profiler when the puppet-profiling header exists" do
+      request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING] = "true"
 
       handler.process(request, response)
 

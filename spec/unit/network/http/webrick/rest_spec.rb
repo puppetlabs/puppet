@@ -41,6 +41,20 @@ describe Puppet::Network::HTTP::WEBrickREST do
       @handler.service(@request, @response).should == "stuff"
     end
 
+    describe "#headers" do
+      let(:fake_request) { {"Foo" => "bar", "BAZ" => "bam" } }
+
+      it "should iterate over the request object using #each" do
+        fake_request.expects(:each)
+        @handler.headers(fake_request)
+      end
+
+      it "should return a hash with downcased header names" do
+        result = @handler.headers(fake_request)
+        result.should == fake_request.inject({}) { |m,(k,v)| m[k.downcase] = v; m }
+      end
+    end
+
     describe "when using the Handler interface" do
       it "should use the 'accept' request parameter as the Accept header" do
         @request.expects(:[]).with("accept").returns "foobar"

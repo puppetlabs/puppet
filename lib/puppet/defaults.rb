@@ -49,6 +49,11 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to print stack traces on some errors",
     },
+    :profile => {
+        :default  => false,
+        :type     => :boolean,
+        :desc     => "Whether to enable experimental performance profiling",
+    },
     :autoflush => {
       :default => true,
       :type       => :boolean,
