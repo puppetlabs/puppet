@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 
+require 'puppet/network/http'
 require 'puppet/network/http_pool'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/http/compression'
@@ -76,28 +77,35 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
   end
 
+  def add_profiling_header(headers)
+    if (Puppet[:profile])
+      headers[Puppet::Network::HTTP::HEADER_ENABLE_PROFILING] = "true"
+    end
+    headers
+  end
+
   def network(request)
     Puppet::Network::HTTP::Connection.new(request.server || self.class.server, request.port || self.class.port)
   end
 
-  def http_get(request, *args)
-    http_request(:get, request, *args)
+  def http_get(request, path, headers = nil, *args)
+    http_request(:get, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_post(request, *args)
-    http_request(:post, request, *args)
+  def http_post(request, path, data, headers = nil, *args)
+    http_request(:post, request, path, data, add_profiling_header(headers), *args)
   end
 
-  def http_head(request, *args)
-    http_request(:head, request, *args)
+  def http_head(request, path, headers = nil, *args)
+    http_request(:head, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_delete(request, *args)
-    http_request(:delete, request, *args)
+  def http_delete(request, path, headers = nil, *args)
+    http_request(:delete, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_put(request, *args)
-    http_request(:put, request, *args)
+  def http_put(request, path, data, headers = nil, *args)
+    http_request(:put, request, path, data, add_profiling_header(headers), *args)
   end
 
   def http_request(method, request, *args)

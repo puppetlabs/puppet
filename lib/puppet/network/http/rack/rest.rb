@@ -48,6 +48,14 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     end
   end
 
+  # Retrieve all headers from the http request, as a map.
+  def headers(request)
+    request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
+      m[k.sub(/^HTTP_/, '').downcase] = v
+      m
+    end
+  end
+
   # Retrieve the accept header from the http request.
   def accept_header(request)
     request.env[HEADER_ACCEPT]
