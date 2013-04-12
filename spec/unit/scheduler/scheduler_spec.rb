@@ -46,14 +46,6 @@ describe Puppet::Scheduler::Scheduler do
     timer.wait_for_calls.should == [2, 5]
   end
 
-  it "doesn't run disabled jobs" do
-    disabled = disabled_job(4)
-    scheduler = Puppet::Scheduler::Scheduler.new([disabled], timer)
-    disabled.expects(:run).never
-
-    scheduler.run_ready
-  end
-
   it "ignores disabled jobs when calculating intervals" do
     enabled = one_time_job(7)
     enabled.last_run = now
@@ -119,5 +111,19 @@ describe Puppet::Scheduler::Scheduler do
     scheduler.run_loop
 
     disabled_job.start_time.should == now
+  end
+
+  it "calculates the next interval from the start of a job" do
+    countdown = 2
+    slow_job = Puppet::Scheduler::Job.new(10) do |job|
+      timer.wait_for(3)
+      countdown -= 1
+      job.disable if countdown == 0
+    end
+
+    scheduler = Puppet::Scheduler::Scheduler.new([slow_job], timer)
+    scheduler.run_loop
+
+    timer.wait_for_calls.should == [0, 3, 7, 3]
   end
 end
