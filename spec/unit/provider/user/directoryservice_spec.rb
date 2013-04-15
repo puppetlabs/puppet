@@ -266,6 +266,13 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       provider.expects(:merge_attribute_with_dscl).with('Groups', 'somegroup', 'GroupMembers', 'GUID')
       provider.create
     end
+
+    it 'should convert group names into integers' do
+      resource[:gid] = 'somegroup'
+      Puppet::Util.expects(:gid).with('somegroup').returns(21)
+      provider.expects(:merge_attribute_with_dscl).with('Users', username, 'PrimaryGroupID', 21)
+      provider.create
+    end
   end
 
   describe 'self#instances' do
