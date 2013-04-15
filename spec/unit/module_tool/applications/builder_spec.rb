@@ -26,14 +26,12 @@ EOM
   end
 
   it "should attempt to create a module" do
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
+    tarrer = mock('tarrer')
+    Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
 
-      build_path = File.join(path, 'pkg', "#{module_name}-#{version}")
-      tarrer.expects(:pack).with(build_path, build_path + ".tar.gz")
+    build_path = File.join(path, 'pkg', "#{module_name}-#{version}")
+    tarrer.expects(:pack).with(build_path, build_path + ".tar.gz")
 
-      builder.run
-    end
+    builder.run
   end
 end
