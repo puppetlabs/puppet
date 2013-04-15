@@ -820,7 +820,9 @@ EOT
       :default    => "HTTP_X_CLIENT_DN",
       :desc       => "The header containing an authenticated client's SSL DN.
       This header must be set by the proxy to the authenticated client's SSL
-      DN (e.g., `/CN=puppet.puppetlabs.com`).
+      DN (e.g., `/CN=puppet.puppetlabs.com`).  Puppet will parse out the Common
+      Name (CN) from the Distinguished Name (DN) and use the value of the CN
+      field for authorization.
 
       Note that the name of the HTTP header gets munged by the web server
       common gateway inteface: an `HTTP_` prefix is added, dashes are converted
