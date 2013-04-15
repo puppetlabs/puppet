@@ -228,7 +228,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       {
         'UniqueID'         => '1000',
         'RealName'         => resource[:name],
-        'PrimaryGroupID'   => '20',
+        'PrimaryGroupID'   => 20,
         'UserShell'        => '/bin/bash',
         'NFSHomeDirectory' => "/Users/#{resource[:name]}"
       }

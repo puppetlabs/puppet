@@ -297,11 +297,8 @@ Puppet::Type.type(:user).provide :directoryservice do
                 end
       end
 
-      # If a non-numerical gid value is passed, assume it is a group name and
-      # lookup that group's GID value to use when setting the GID
-      if (attribute == :gid) and value.class == 'Fixnum'
-        value = self.class.get_attribute_from_dscl('Groups', value, 'PrimaryGroupID')['dsAttrTypeStandard:PrimaryGroupID'][0]
-      end
+      # Ensure group names are converted to integers.
+      value = Puppet::Util.gid(value) if attribute == :gid
 
       ## Set values ##
       # For the :password and :groups properties, call the setter methods
