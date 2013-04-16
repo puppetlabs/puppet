@@ -23,6 +23,18 @@ describe 'the reject method' do
     catalog.resource(:file, "/file_strawberry").should == nil
   end
 
+  it 'produces an array when acting on an array' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = ['strawberry','blueberry','orange']
+      $b = $a.reject {|$x| $x  =~ /berry$/}
+      file { "/file_${b[0]}": ensure => present }
+
+    MANIFEST
+
+    catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_strawberry").should == nil
+  end
+
   it 'rejects on a hash (all berries) by key' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}
@@ -32,6 +44,17 @@ describe 'the reject method' do
     MANIFEST
 
     catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
+  end
+
+  it 'produces a hash when acting on a hash' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = {'strawberry'=>'red','blueberry'=>'blue','grape'=>'purple'}
+      $b = $a.reject {|$x| $x[0]  =~ /berry$/}
+      file { "/file_${b[grape]}": ensure => present }
+
+    MANIFEST
+
+    catalog.resource(:file, "/file_purple")['ensure'].should == 'present'
   end
 
   it 'rejects on a hash (all berries) by value' do

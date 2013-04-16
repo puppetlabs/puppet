@@ -16,6 +16,8 @@ Puppet::Parser::Functions::newfunction(
   When the first argument is an Array, the block is called with each entry in turn. When the first argument
   is a hash the entry is an array with `[key, value]`.
 
+  The returned filtered object is of the same type as the receiver.
+
   *Examples*
 
     # selects all that does not end with berry
@@ -32,10 +34,13 @@ Puppet::Parser::Functions::newfunction(
 
   case receiver
   when Array
+    receiver.reject {|x| pblock.call(self, x) }
   when Hash
+    result = receiver.reject {|x, y| pblock.call(self, [x, y]) }
+    # Ruby 1.8.7 returns Array
+    result = Hash[result] unless result.is_a? Hash
+    result
   else
     raise ArgumentError, ("reject(): wrong argument type (#{receiver.class}; must be an Array or a Hash.")
   end
-
-  receiver.to_a.reject {|x| pblock.call(self, x) }
 end

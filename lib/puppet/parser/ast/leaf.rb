@@ -140,7 +140,7 @@ class Puppet::Parser::AST
 
     def array_index_or_key(object, key)
       if object.is_a?(Array)
-        raise Puppet::ParserError, "#{key} is not an integer, but is used as an index of an array" unless key = Puppet::Parser::Scope.number?(key)
+        raise Puppet::ParseError, "#{key} is not an integer, but is used as an index of an array" unless key = Puppet::Parser::Scope.number?(key)
       end
       key
     end
