@@ -5,10 +5,12 @@ require 'puppet_spec/modules'
 describe Puppet::ModuleTool::Applications::Builder do
   include PuppetSpec::Files
 
-  let(:path) { tmpdir("working_dir") }
-  let(:module_name) { 'myusername-mytarball' }
-  let(:builder)     { Puppet::ModuleTool::Applications::Builder.new(path) }
-  let(:version)     { '0.0.1' }
+  let(:path)         { tmpdir("working_dir") }
+  let(:module_name)  { 'myusername-mytarball' }
+  let(:version)      { '0.0.1' }
+  let(:release_name) { "#{module_name}-#{version}" }
+  let(:tarball)      { File.join(path, 'pkg', release_name) + ".tar.gz" }
+  let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path) }
 
   before :each do
     File.open(File.join(path, 'Modulefile'), 'w') do |f|
@@ -25,12 +27,11 @@ EOM
     end
   end
 
-  it "should attempt to create a module" do
+  it "should attempt to create a module relative to the pkg directory" do
     tarrer = mock('tarrer')
     Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
-
-    build_path = File.join(path, 'pkg', "#{module_name}-#{version}")
-    tarrer.expects(:pack).with(build_path, build_path + ".tar.gz")
+    Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
+    tarrer.expects(:pack).with(release_name, tarball)
 
     builder.run
   end
