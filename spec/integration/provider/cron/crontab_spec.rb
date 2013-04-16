@@ -160,6 +160,17 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         run_in_catalog(resource)
         expect_output('modify_entry')
       end
+      it "should change a special schedule to numeric if requested" do
+        resource = Puppet::Type.type(:cron).new(
+          :name        => 'My daily failure',
+          :special     => 'absent',
+          :command     => '/bin/false',
+          :target      => crontab_user1,
+          :user        => crontab_user1
+        )
+        run_in_catalog(resource)
+        expect_output('unspecialized')
+      end
       it "should not try to move an entry from one file to another" do
         # force the parsedfile provider to also parse user1's crontab
         random_resource = Puppet::Type.type(:cron).new(
