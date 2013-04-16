@@ -14,9 +14,6 @@ module Puppet::ModuleTool
       attr_accessor :options
 
       def initialize(options = {})
-        if Puppet.features.microsoft_windows?
-          raise Puppet::Error, "`puppet module` actions are currently not supported on Microsoft Windows"
-        end
         @options = options
       end
 

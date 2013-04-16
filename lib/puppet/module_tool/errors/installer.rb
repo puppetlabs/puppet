@@ -107,4 +107,21 @@ Could not install module '#{@requested_module}' (#{@requested_version})
       MSG
     end
   end
+
+  class InvalidPathInPackageError < InstallError
+    def initialize(options)
+      @requested_package = options[:requested_package]
+      @entry_path        = options[:entry_path]
+      @directory         = options[:directory]
+      super "Attempt to install file into #{@entry_path.inspect} under #{@directory.inspect}"
+    end
+
+    def multiline
+      <<-MSG.strip
+Could not install package #{@requested_package}
+  Package #{@requested_package} attempted to install file into
+  #{@entry_path.inspect} under #{@directory.inspect}.
+      MSG
+    end
+  end
 end

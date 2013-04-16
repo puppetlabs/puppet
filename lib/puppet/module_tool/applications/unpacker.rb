@@ -8,6 +8,7 @@ module Puppet::ModuleTool
       def initialize(filename, options = {})
         @filename = Pathname.new(filename)
         parsed = parse_filename(filename)
+        @module_name = parsed[:module_name]
         super(options)
         @module_dir = Pathname.new(options[:target_dir]) + parsed[:dir_name]
       end
@@ -29,23 +30,14 @@ module Puppet::ModuleTool
       end
 
       private
+
       def extract_module_to_install_dir
         delete_existing_installation_or_abort!
 
         build_dir.mkpath
         begin
           begin
-            if Facter.value('osfamily') == "Solaris"
-              # Solaris tar is not as safe and works differently, so we prefer
-              # gnutar instead.
-              if Puppet::Util.which('gtar')
-                Puppet::Util::Execution.execute("gtar xzf #{@filename} -C #{build_dir}")
-              else
-                raise RuntimeError, "Cannot find the command 'gtar'. Make sure GNU tar is installed, and is in your PATH."
-              end
-            else
-              Puppet::Util::Execution.execute("tar xzf #{@filename} -C #{build_dir}")
-            end
+            Puppet::ModuleTool::Tar.instance(@module_name).unpack(@filename.to_s, build_dir.to_s)
           rescue Puppet::ExecutionFailure => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end
