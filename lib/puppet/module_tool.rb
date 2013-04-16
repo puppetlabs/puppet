@@ -6,6 +6,7 @@ require 'puppet/util/colors'
 
 module Puppet
   module ModuleTool
+    require 'puppet/module_tool/tar'
     extend Puppet::Util::Colors
 
     # Directory and names that should not be checksummed.

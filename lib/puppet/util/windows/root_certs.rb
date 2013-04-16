@@ -1,6 +1,7 @@
 require 'puppet/util/windows'
 require 'openssl'
 require 'Win32API'
+require 'windows/msvcrt/buffer'
 
 # Represents a collection of trusted root certificates.
 #
@@ -24,7 +25,6 @@ class Puppet::Util::Windows::RootCerts
   end
 
   class << self
-    require 'windows/msvcrt/buffer'
     include Windows::MSVCRT::Buffer
   end
 

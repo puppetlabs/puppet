@@ -12,9 +12,7 @@ describe Puppet::ModuleTool::Applications::Application do
 
     good_versions.each do |ver|
       it "should accept version string #{ver}" do
-        pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-          app.parse_filename("puppetlabs-ntp-#{ver}")
-        end
+        app.parse_filename("puppetlabs-ntp-#{ver}")
       end
     end
 
