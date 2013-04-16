@@ -36,7 +36,10 @@ Puppet::Parser::Functions::newfunction(
   when Array
     receiver.select {|x| pblock.call(self, x) }
   when Hash
-    receiver.select {|x, y| pblock.call(self, [x, y]) }
+    result = receiver.select {|x, y| pblock.call(self, [x, y]) }
+    # Ruby 1.8.7 returns Array
+    result = Hash[result] unless result.is_a? Hash
+    result
   else
     raise ArgumentError, ("select(): wrong argument type (#{receiver.class}; must be an Array or a Hash.")
   end
