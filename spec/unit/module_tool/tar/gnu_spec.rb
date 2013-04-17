@@ -13,7 +13,7 @@ describe Puppet::ModuleTool::Tar::Gnu do
   end
 
   it "packs a tar file" do
-    Puppet::Util::Execution.expects(:execute).with("tar -c #{sourcedir} | gzip -c > #{destfile}")
+    Puppet::Util::Execution.expects(:execute).with("tar cf - #{sourcedir} | gzip -c > #{destfile}")
     subject.pack(sourcedir, destfile)
   end
 end

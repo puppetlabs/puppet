@@ -4,6 +4,6 @@ class Puppet::ModuleTool::Tar::Gnu
   end
 
   def pack(sourcedir, destfile)
-    Puppet::Util::Execution.execute("tar -c #{sourcedir} | gzip -c > #{destfile}")
+    Puppet::Util::Execution.execute("tar cf - #{sourcedir} | gzip -c > #{destfile}")
   end
 end
