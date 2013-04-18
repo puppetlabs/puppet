@@ -176,14 +176,14 @@ describe Puppet::Type.type(:file) do
     [true, :true, :yes].each do |value|
       it "should consider #{value} to be true" do
         file[:replace] = value
-        file[:replace].should == :true
+        file[:replace].should be_true
       end
     end
 
     [false, :false, :no].each do |value|
       it "should consider #{value} to be false" do
         file[:replace] = value
-        file[:replace].should == :false
+        file[:replace].should be_false
       end
     end
   end

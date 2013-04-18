@@ -241,10 +241,11 @@ class Puppet::Parameter
     end
 
     # @overload validate {|| ... }
-    # Defines an optional method that is used to validate the parameter's value.
+    # Defines an optional method that is used to validate the parameter's DSL/string value.
     # Validation should raise appropriate exceptions, the return value of the given block is ignored.
     # The easiest way to raise an appropriate exception is to call the method {Puppet::Util::Errors.fail} with
     # the message as an argument.
+    # To validate the munged value instead, just munge the value (`munge(value)`).
     #
     # @return [void]
     # @dsl type

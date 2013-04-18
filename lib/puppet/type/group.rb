@@ -1,6 +1,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/property/keyvalue'
+require 'puppet/parameter/boolean'
 
 module Puppet
   newtype(:group) do
@@ -104,10 +105,8 @@ module Puppet
       isnamevar
     end
 
-    newparam(:allowdupe, :boolean => true) do
+    newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to allow duplicate GIDs. Defaults to `false`."
-
-      newvalues(:true, :false)
 
       defaultto false
     end
@@ -142,18 +141,17 @@ module Puppet
       defaultto :minimum
     end
 
-    newparam(:system, :boolean => true) do
+    newparam(:system, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether the group is a system group with lower GID."
-
-      newvalues(:true, :false)
 
       defaultto false
     end
 
-    newparam(:forcelocal, :boolean => true, :required_features => :libuser ) do
+    newparam(:forcelocal, :boolean => true,
+             :required_features => :libuser,
+             :parent => Puppet::Parameter::Boolean) do
       desc "Forces the mangement of local accounts when accounts are also
             being managed by some other NSS"
-      newvalues(:true, :false)
       defaultto false
     end
 
