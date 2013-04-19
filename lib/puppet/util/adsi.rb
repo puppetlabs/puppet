@@ -28,7 +28,7 @@ module Puppet::Util::ADSI
       unless @computer_name
         buf = " " * 128
         Win32API.new('kernel32', 'GetComputerName', ['P','P'], 'I').call(buf, buf.length.to_s)
-        @computer_name = buf.unpack("A*")
+        @computer_name = buf.unpack("A*")[0]
       end
       @computer_name
     end
