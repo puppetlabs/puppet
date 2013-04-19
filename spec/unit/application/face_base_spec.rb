@@ -304,8 +304,8 @@ describe Puppet::Application::FaceBase do
       end
 
       [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
-        it "should render #{input.class} using JSON" do
-          app.render(input, {}).should == input.to_pson.chomp
+        it "should render Array as one item per line" do
+          app.render(input, {}).should == input.collect { |item| item.to_s + "\n" }.join('')
         end
       end
 
