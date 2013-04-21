@@ -6,6 +6,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   commands :systemctl => "systemctl"
 
   #defaultfor :osfamily => [:redhat, :suse]
+  defaultfor :osfamily => [:Archlinux]
 
   def self.instances
     i = []
@@ -61,4 +62,3 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     [command(:systemctl), "stop", @resource[:name]]
   end
 end
-
