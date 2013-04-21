@@ -188,6 +188,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ["cat"] + o.segments.collect {|x| do_dump(x)}
   end
 
+  def dump_HeredocExpression(o)
+    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
+  end
+
   def dump_HostClassDefinition o
     result = ["class", o.name]
     result << ["inherits", o.parent_class] if o.parent_class

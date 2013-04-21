@@ -519,6 +519,8 @@ class Puppet::Pops::Model::Factory
 
   def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
+  def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
+
   def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 
   def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
@@ -760,6 +762,13 @@ class Puppet::Pops::Model::Factory
     x = Model::LiteralHash.new
     (o.sort_by {|k,v| k.to_s}).each {|k,v| x.addEntries(build(Model::KeyedEntry.new, k, v)) }
     x
+  end
+
+  # @param name [String, nil] the name of the syntax
+  def build_HeredocExpression(o, syntax, expr)
+    o.syntax = syntax
+    o.text_expr = to_ops(expr)
+    o
   end
 
   # @param rval_required [Boolean] if the call must produce a value
