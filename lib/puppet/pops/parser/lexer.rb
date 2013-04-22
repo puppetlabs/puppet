@@ -861,7 +861,8 @@ class Puppet::Pops::Parser::Lexer
     # Update where lexer is in terms of calculating position/offset/length
     lexing_context[:end_offset] = @scanner.pos
 
-    unless md = str.match(%r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_]+)#{@blank}*)?(?:/(\w+))?\)})
+    # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
+    unless md = str.match(%r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/(\w+))?\)})
       lex_error(positioned_message("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"))
     end
     endtag = md[1]
@@ -989,7 +990,7 @@ class Puppet::Pops::Parser::Lexer
   #
   def continuation_types
     context = lexing_context
-    cont_types = if mode() == :dqstring && context[:string_interpolation_depth] == 1
+    cont_types = if mode() == :dqstring && context[:string_interpolation_depth] <= 1
       UQ_continuation_token_types
     else
       DQ_continuation_token_types

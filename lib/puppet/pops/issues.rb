@@ -259,4 +259,8 @@ module Puppet::Pops::Issues
   DEPRECATED_NAME_AS_TYPE = issue :DEPRECATED_NAME_AS_TYPE, :name do
     "Resource references should now be capitalized. The given '#{name}' does not have the correct form"
   end
+
+  EMPTY_HEREDOC_SYNTAX_SEGMENT = issue :EMPTY_HEREDOC_SYNTAX_SEGMENT, :syntax do
+    "Heredoc syntax specification has empty segment between '+' : '#{syntax}'"
+  end
 end

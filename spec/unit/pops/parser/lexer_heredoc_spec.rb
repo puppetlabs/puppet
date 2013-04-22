@@ -3,7 +3,6 @@ require 'spec_helper'
 
 require 'puppet/pops'
 
-require 'debugger'
 # This is a special matcher to match easily lexer output
 RSpec::Matchers.define :be_like do |*expected|
   match do |actual|
