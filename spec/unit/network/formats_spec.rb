@@ -306,8 +306,8 @@ describe "Puppet Network Format" do
     end
 
     [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
-      it "should render #{input.inspect} as JSON" do
-        subject.render(input).should == json.render(input).chomp
+      it "should render #{input.inspect} as one item per line" do
+        subject.render(input).should == input.collect { |item| item.to_s + "\n" }.join('')
       end
     end
 

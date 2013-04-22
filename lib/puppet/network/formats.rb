@@ -159,6 +159,16 @@ Puppet::Network::FormatHandler.create(:console,
       return output
     end
 
+    # Print one item per line for arrays
+    if datum.is_a? Array
+      output = ''
+      datum.each do |item|
+        output << item.to_s
+        output << "\n"
+      end
+      return output
+    end
+
     # ...or pretty-print the inspect outcome.
     return json.render(datum)
   end

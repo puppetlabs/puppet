@@ -27,7 +27,7 @@ class Puppet::Application::Apply < Puppet::Application
     end
   end
 
-  option("--parseonly") do
+  option("--parseonly") do |arg|
     puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
     exit 1
   end

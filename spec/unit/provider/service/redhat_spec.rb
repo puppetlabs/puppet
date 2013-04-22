@@ -68,6 +68,13 @@ describe provider_class, :as_platform => :posix do
     @provider.should respond_to(:enabled?)
   end
 
+  it "should use --check on SuSE" do
+    Facter.expects(:value).with(:osfamily).returns 'Suse'
+    provider_class.expects(:chkconfig).with(@resource[:name], '--check')
+
+    @provider.enabled?
+  end
+
   it "should have an enable method" do
     @provider.should respond_to(:enable)
   end
