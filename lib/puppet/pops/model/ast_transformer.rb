@@ -432,6 +432,11 @@ class Puppet::Pops::Model::AstTransformer
     Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
   end
 
+  def transform_HeredocExpression(o)
+    args = {:syntax=> o.syntax(), :expr => transform(o.text_expr()) }
+    Puppet::Parser::AST::Heredoc.new(merge_location(args, o))
+  end
+
   def transform_NodeDefinition(o)
     # o.host_matches are expressions, and 3.1 AST requires special object AST::HostName
     # where a HostName is one of NAME, STRING, DEFAULT or Regexp - all of these are strings except regexp

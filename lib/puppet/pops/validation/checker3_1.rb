@@ -217,6 +217,19 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
+  def check_HeredocExpression(o)
+    # Validate that a syntax string does not have empty segments (separated by +).
+    if o.syntax && o.syntax.length > 0
+      segments = o.syntax.split(/\+/,-1)
+      segments.each {|x| 
+        if x.length < 1
+          acceptor.accept(Issues::EMPTY_HEREDOC_SYNTAX_SEGMENT, o, :syntax => o.syntax())
+          break
+        end
+      }
+    end
+  end
+
   def check_ImportExpression(o)
     o.files.each do |f|
       unless f.is_a? Model::LiteralString
