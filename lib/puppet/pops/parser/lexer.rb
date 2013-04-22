@@ -494,9 +494,10 @@ class Puppet::Pops::Parser::Lexer
     self
   end
 
-  def initialize initial_mode = :pp
+  def initialize(options={})
     @multibyte = init_multibyte
-    self.mode = initial_mode
+    @options = options
+    self.mode = (options[:mode] or :pp)
     initvars
   end
 
@@ -722,7 +723,7 @@ class Puppet::Pops::Parser::Lexer
     last = @scanner.matched
     if mode == :dqstring && lexing_context[:string_interpolation_depth] <= 1
       pattern = SLURP_UQ_PATTERN
-      escapes = UQ_ESCAPES
+      escapes = (@options[:escapes] or UQ_ESCAPES)
       ignore = true
     else
       pattern = SLURP_DQ_PATTERN
@@ -862,7 +863,7 @@ class Puppet::Pops::Parser::Lexer
     lexing_context[:end_offset] = @scanner.pos
 
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
-    unless md = str.match(%r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/(\w+))?\)})
+    unless md = str.match(%r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/((?:\w|[$])*)#{@blank}*)?\)})
       lex_error(positioned_message("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"))
     end
     endtag = md[1]
@@ -883,21 +884,22 @@ class Puppet::Pops::Parser::Lexer
 
     resulting_escapes = []
     if escapes
-      if dqstring_style
-        lex_error(positioned_message("Escapes are hard-wired for a @() using \" \" form and can not be changed"))
-      end
+      escapes = "trnsL$" if escapes.length < 1
+#    if dqstring_style
+#      lex_error(positioned_message("Escapes are hard-wired for a @() using \" \" form and can not be changed"))
+#    end
 
       escapes = escapes.split('')
       lex_error(positioned_message("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")) unless escapes.length == escapes.uniq.length
       resulting_escapes = ["\\"]
       escapes.each {|e|
         case e
-        when "t", "r", "n", "s"
+        when "t", "r", "n", "s", "$"
           resulting_escapes << e
         when "L"
           resulting_escapes += ["\n", "\r\n"]
         else
-          lex_error(positioned_message("Invalid heredoc escape char. Only t, r, n, s, L allowed. Got '#{e}'")) 
+          lex_error(positioned_message("Invalid heredoc escape char. Only t, r, n, s, L, $ allowed. Got '#{e}'")) 
         end
       }
     end
@@ -939,19 +941,19 @@ class Puppet::Pops::Parser::Lexer
 
         # Process captured lines - remove leading, and trailing newline
         str = heredoc_text(lines, leading, has_margin, remove_break)
-        if resulting_escapes.length > 0
+        if dqstring_style
+          # if the style is dqstring a new lexer instance is needed, it is configured
+          # with offsets to make it report errors correctly and it is given the escapes to use
+          sublexer = self.class.new({:mode => :dqstring, :escapes => resulting_escapes})
+          sublexer.lex_string(str, @file, heredoc_line, heredoc_offset, leading.length())
+          sublexer.fullscan[0..-2].each {|token|
+            token_queue << [TOKENS[token[0]], token[1]]
+          }
+        elsif resulting_escapes.length > 0
           # this is only needed to process escapes, if there are none the string can be used as is...
           subscanner = StringScanner.new(str)
           str = slurp subscanner, /\z/, resulting_escapes, :ignore_invalid_escapes
           token_queue << munge_token(TOKENS[:STRING], str)
-        elsif dqstring_style
-          # ...unless the style is dqstring (in which case it is illegal to specify escapes)
-          # A new lexer instance is needed, it is configured with offsets to make it report errors correctly
-          sublexer = self.class.new(:dqstring)
-          sublexer.lex_string(str, @file, heredoc_line, heredoc_offset, leading.length())
-          sublexer.fullscan[0..-2].each {|token| 
-            token_queue << [TOKENS[token[0]], token[1]]
-        }
         else
           # use string as is
           token_queue << munge_token(TOKENS[:STRING], str)
