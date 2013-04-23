@@ -13,6 +13,17 @@ on?"  This is already called out in the [CONTRIBUTING.md](http://goo.gl/XRH2J).
 Therefore, it is the responsibility of the committer to re-base the change set
 on the appropriate branch which should receive the contribution.
 
+It is also the responsibility of the committer to review the change set in an
+effort to make sure the end users must opt-in to new behavior that is
+incompatible with previous behavior.  We employ the use of [feature
+flags](http://stackoverflow.com/questions/7707383/what-is-a-feature-flag) as
+the primary way to achieve this user opt-in behavior.  Finally, it is the
+responsibility of the committer to make sure the `master` and `stable` branches
+are both clean and working at all times.  Clean means that dead code is not
+allowed, everything needs to be usable in some manner at all points in time.
+Stable is not an indication of the build status, but rather an expression of
+our intent that the `stable` branch does not receive new functionality.
+
 The rest of this document addresses the concerns of the committer.  This
 document will help guide the committer decide which branch to base, or re-base
 a contribution on top of.  This document also describes our branch management
