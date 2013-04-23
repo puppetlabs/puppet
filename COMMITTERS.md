@@ -67,8 +67,8 @@ branch that a change set should be merged into.
 
 The latest minor release of a major release is the only base branch that should
 be patched.  These patches will be merged into `master` if they contain new
-functionality.  They will be merged into `stable` if they fix a bug.  Older
-minor releases in a major release do not get patched.
+functionality.  They will be merged into `stable` and `master` if they fix a
+critical bug.  Older minor releases in a major release do not get patched.
 
 Before the switch to [semantic versions](http://semver.org/) committers did not
 have to think about the difference between minor and major releases.
@@ -90,36 +90,34 @@ fixed to avoid having to update CI jobs and tasks as new versions are released.
 How to commit a change set to multiple base branches
 ---
 
-A change set may apply to multiple releases.  In this situation the change set
-needs to be committed to multiple base branches.  This section provides a guide
-for how to merge patches up into the development branch, e.g. `stable` is
-patched, how should the changes be applied to `master`?
+A change set may apply to multiple branches, for example a bug fix should be
+applied to the stable release and the development branch.  In this situation
+the change set needs to be committed to multiple base branches.  This section
+provides a guide for how to merge patches into these branches, e.g.
+`stable` is patched, how should the changes be applied to `master`?
 
-First, merge the change set into the `stable` branch.  Next, merge the stable
-branch up into the `master` branch.  This merge strategy loosely follows the
-[git flow](http://nvie.com/posts/a-successful-git-branching-model/) model.
-Both of these change set merges should have a merge commit which makes it much
-easier to track a set of commits as a logical change set through the history of
-a branch.  Merge commits should be created using the `--no-ff --log` git merge
+First, rebase the change set onto the `stable` branch.  Next, merge the change
+set into the `stable` branch using a merge commit.  Once merged into `stable`,
+merge the same change set into `master` without doing a rebase as to preserve
+the commit identifiers.  This merge strategy follows the [git
+flow](http://nvie.com/posts/a-successful-git-branching-model/) model.  Both of
+these change set merges should have a merge commit which makes it much easier
+to track a set of commits as a logical change set through the history of a
+branch.  Merge commits should be created using the `--no-ff --log` git merge
 options.
 
-Benefits of resetting stable
----
+Any merge conflicts should be resolved using the merge commit in order to
+preserve the commit identifiers for each individual change.  This ensures `git
+branch --contains` will accurately report all of the base branches which
+contain a specific patch.
 
-The primary benefit of resetting the stable branch is a clean history combined
-with a consistent branch name.
-
-The stable and master branch merge strategy has a number of benefits over the
-previous strategy of merging release branches up and into the master branch.
-There are two main way to handle the scenario when we release a new minor or
-major version of Puppet.  In this scenario the goal is for the stable branch to
-contain all of the work included in the master branch.  We could reset the
-stable branch to match the master branch, or we could merge the master branch
-into the stable branch.  We've chosen to rest stable to match master because we
-often "merge up" bug fixes from stable into master.  If we were to merge down
-from master to stable while also merging up from stable to master, then the
-history would be very confusing.  We reset the stable branch to the master
-branch upon a new minor or major release to avoid this confusion.
+Using this strategy, the stable branch need not be reset.  Both `master` and
+`stable` have infinite lifetimes.  Patch versions, also known as bug fix
+releases, will be tagged and released directly from the `stable` branch.  Major
+and minor versions, also known as feature releases, will be tagged and released
+directly from the `master` branch.  Upon release of a new major or minor
+version all of the changes in the `master` branch will be merged into the
+`stable` branch.
 
 Code review checklist
 ---
@@ -194,7 +192,7 @@ The `git rebase` command may be interpreted as, "First, check out the branch
 named `bug/stable/fix_foo_error`, then take the changes that were previously
 based on `master` and re-base them onto `stable`.
 
-Now that we have a topic branch containing the change set based on the correct
+Now that we have a topic branch containing the change set based on the `stable`
 release branch, the committer merges in:
 
     $ git checkout stable
@@ -205,23 +203,31 @@ release branch, the committer merges in:
      1 file changed, 0 insertions(+), 0 deletions(-)
      create mode 100644 foo
 
-Once merged into the first base branch, the committer merges stable up into
-master.
+Once merged into the first base branch, the committer merges the same topic
+branch into `master`, being careful to preserve the same commit identifiers.
 
     $ git checkout master
     Switched to branch 'master'
-    $ git merge --no-ff --log stable
+    $ git merge --no-ff --log bug/stable/fix_foo_error
     Merge made by the 'recursive' strategy.
      foo | 0
      1 file changed, 0 insertions(+), 0 deletions(-)
      create mode 100644 foo
 
-Once the change set has been merged into `stable` and up into `master`, the
-committer pushes.  (Note, the checklist should be complete at this point.)
-Note that both the `stable` and `master` branches are being pushed at the same
-time.
+Once the change set has been merged into one base branch, the change set should
+not be modified in order to keep the history clean, avoid "double" commits, and
+preserve the usefulness of `git branch --contains`.  If there are any merge
+conflicts, they are to be resolved in the merge commit itself and not by
+re-writing (rebasing) the patches for one base branch, but not another.
+
+Once the change set has been merged into `stable` and into `master`, the
+committer pushes.  Please note, the checklist should be complete at this point.
+It's helpful to make sure your local branches are up to date to avoid one of
+the branches failing to fast forward while the other succeeds.  Both the
+`stable` and `master` branches are being pushed at the same time.
 
     $ git push puppetlabs master:master stable:stable
 
 That's it!  The committer then updates the pull request, updates the issue in
-our issue tracker, and keeps an eye on the build status.
+our issue tracker, and keeps an eye on the [build
+status](http://jenkins.puppetlabs.com).
