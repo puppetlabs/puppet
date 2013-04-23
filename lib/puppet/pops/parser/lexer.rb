@@ -904,9 +904,6 @@ class Puppet::Pops::Parser::Lexer
     resulting_escapes = []
     if escapes
       escapes = "trnsL$" if escapes.length < 1
-#    if dqstring_style
-#      lex_error(positioned_message("Escapes are hard-wired for a @() using \" \" form and can not be changed"))
-#    end
 
       escapes = escapes.split('')
       lex_error(positioned_message("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")) unless escapes.length == escapes.uniq.length
@@ -1006,7 +1003,7 @@ class Puppet::Pops::Parser::Lexer
 
   # Returns continuation types (tokens that apply depending on how an interpolation scan ends) depending on mode.
   # If mode is "unquoted dqstring" (as used in Heredoc) and scan is for the outermost level (interpolation
-  # depth == 1), then the continuation types are based on a regular expression UQ_continuation_types that
+  # depth <= 1), then the continuation types are based on a regular expression UQ_continuation_types that
   # matches the end of input without an error and an end token of ''), otherwise the normal continuation types.
   #
   def continuation_types
