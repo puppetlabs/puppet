@@ -172,6 +172,7 @@ describe Puppet::Resource::TypeCollection do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "klass").returns(nil)
         @code.find_hostclass("Ns", "Klass").should be_nil
 
+        Puppet.expects(:warning).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
         @code.find_hostclass("Ns", "Klass").should be_nil
       end
     end
