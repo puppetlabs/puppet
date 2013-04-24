@@ -10,6 +10,11 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
   end
   
+
+  let :provider do
+    described_class.new(:name => 'sshd.service')
+  end
+  
   osfamily = [ 'archlinux' ]
 
   osfamily.each do |osfamily|
@@ -17,11 +22,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
       provider_class.default?.should be_true
     end
-  end
-
-  let :provider do
-    described_class.new(:name => 'sshd.service')
-  end
+  end  
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
