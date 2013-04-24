@@ -104,7 +104,7 @@ describe Puppet::Configurer do
       @agent.run(:pluginsync => false)
     end
 
-    it "should carry on when it can't fetch it's node definition" do
+    it "should carry on when it can't fetch its node definition" do
       error = Net::HTTPError.new(400, 'dummy server communication error')
       Puppet::Node.indirection.expects(:find).raises(error)
       @agent.run.should == 0

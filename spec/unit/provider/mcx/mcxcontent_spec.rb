@@ -43,11 +43,11 @@ describe provider_class do
     @provider.should respond_to(:exists?)
   end
 
-  it "should have an content method." do
+  it "should have a content method." do
     @provider.should respond_to(:content)
   end
 
-  it "should have an content= method." do
+  it "should have a content= method." do
     @provider.should respond_to(:content=)
   end
 

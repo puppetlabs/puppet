@@ -5,7 +5,7 @@
 # It describes a Metamodel containing DSL instructions, a description of PuppetType and related
 # classes needed to evaluate puppet logic.
 # The metamodel resembles the existing AST model, but it is a semantic model of instructions and
-# the types that they operate on rather than a Abstract Syntax Tree, although closely related.
+# the types that they operate on rather than an Abstract Syntax Tree, although closely related.
 #
 # The metamodel is anemic (has no behavior) except basic datatype and type
 # assertions and reference/containment assertions.

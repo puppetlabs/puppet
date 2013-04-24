@@ -157,7 +157,7 @@ with '--genconfig'.
   option requires LDAP support at this point.
 
 * --ping:
-  Do a ICMP echo against the target host. Skip hosts that don't respond
+  Do an ICMP echo against the target host. Skip hosts that don't respond
   to ping.
 
 

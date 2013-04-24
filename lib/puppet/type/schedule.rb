@@ -130,7 +130,7 @@ module Puppet
       def match?(previous, now)
         # The lowest-level array is of the hour, minute, second triad
         # then it's an array of two of those, to present the limits
-        # then it's array of those ranges
+        # then it's an array of those ranges
         @value = [@value] unless @value[0][0].is_a?(Array)
 
         @value.each do |value|

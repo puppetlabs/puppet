@@ -78,7 +78,7 @@ Puppet::Parser::Functions::newfunction(
     end
   end
   raise ArgumentError, ("slice(): wrong argument type (#{args[1]}; must be number.") unless slice_size
-  raise ArgumentError, ("slice(): wrong argument value: #{slice_size}; is not an positive integer number > 0") unless slice_size.is_a?(Fixnum) && slice_size > 0
+  raise ArgumentError, ("slice(): wrong argument value: #{slice_size}; is not a positive integer number > 0") unless slice_size.is_a?(Fixnum) && slice_size > 0
   receiver = args[0]
 
   # the block is optional, ok if nil, function then produces an array

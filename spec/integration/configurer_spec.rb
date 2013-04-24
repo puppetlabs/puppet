@@ -23,7 +23,7 @@ describe Puppet::Configurer do
       @catalog.add_resource(Puppet::Type.type(:notify).new(:title => "testing"))
 
       # Make sure we don't try to persist the local state after the transaction ran, 
-      # because it will fail during test (the state file is in an not existing directory)
+      # because it will fail during test (the state file is in a not-existing directory)
       # and we need the transaction to be successful to be able to produce a summary report
       @catalog.host_config = false
 

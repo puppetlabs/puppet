@@ -10,7 +10,7 @@ describe Puppet::Parser::AST::Leaf do
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
 
-  it "should have a evaluate_match method" do
+  it "should have an evaluate_match method" do
     Puppet::Parser::AST::Leaf.new(:value => "value").should respond_to(:evaluate_match)
   end
 
@@ -177,7 +177,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.evaluate(@scope).should == :undef
     end
 
-    it "should be able to return an hash value" do
+    it "should be able to return a hash value" do
       @scope["a"] = { "key1" => "val1", "key2" => "val2", "key3" => "val3" }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
@@ -193,7 +193,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.evaluate(@scope).should == :undef
     end
 
-    it "should be able to return an hash value with a numerical key" do
+    it "should be able to return a hash value with a numerical key" do
       @scope["a"] = { "key1" => "val1", "key2" => "val2", "45" => "45", "key3" => "val3" }
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "45" )
@@ -201,7 +201,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.evaluate(@scope).should == "45"
     end
 
-    it "should raise an error if the variable lookup didn't return an hash or an array" do
+    it "should raise an error if the variable lookup didn't return a hash or an array" do
       @scope["a"] = "I'm a string"
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
@@ -274,7 +274,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       scope['a'].should == ["val2"]
     end
 
-    it "should raise an error when trying to overwrite an hash value" do
+    it "should raise an error when trying to overwrite a hash value" do
       @scope['a'] = { "key" => [ "a" , "b" ]}
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
 
@@ -425,7 +425,7 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should raise an error if hostname is not valid" do
-    lambda { Puppet::Parser::AST::HostName.new( :value => "not an hostname!" ) }.should raise_error
+    lambda { Puppet::Parser::AST::HostName.new( :value => "not a hostname!" ) }.should raise_error
   end
 
   it "should not raise an error if hostname is a regex" do

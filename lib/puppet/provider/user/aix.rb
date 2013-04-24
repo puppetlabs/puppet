@@ -38,7 +38,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   has_features :manages_expiry,  :manages_password_age
 
   # Attribute verification (TODO)
-  #verify :gid, "GID must be an string or int of a valid group" do |value|
+  #verify :gid, "GID must be a string or int of a valid group" do |value|
   #  value.is_a? String || value.is_a? Integer
   #end
   #

@@ -186,7 +186,7 @@ describe Puppet::Util::Log do
       log.tags.should be_include("bar")
     end
 
-    it "should use an passed-in source" do
+    it "should use a passed-in source" do
       Puppet::Util::Log.any_instance.expects(:source=).with "foo"
       Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
     end

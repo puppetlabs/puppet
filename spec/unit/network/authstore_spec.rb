@@ -82,7 +82,7 @@ describe Puppet::Network::AuthStore::Declaration do
     end
 
     (1..3).each { |n|
-      describe "when the pattern is a IP mask with #{n} numeric segments and a *" do
+      describe "when the pattern is an IP mask with #{n} numeric segments and a *" do
         before :each do
           @ip_pattern = ip.split('.')[0,n].join('.')+'.*'
           @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,@ip_pattern)

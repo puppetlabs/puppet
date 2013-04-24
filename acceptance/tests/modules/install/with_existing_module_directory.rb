@@ -33,7 +33,7 @@ file {
 }
 PP
 
-step "Try to install an module with a name collision"
+step "Try to install a module with a name collision"
 on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
@@ -47,7 +47,7 @@ on master, puppet("module install pmtacceptance-nginx"), :acceptable_exit_codes 
 end
 on master, '[ -f /etc/puppet/modules/nginx/extra.json ]'
 
-step "Try to install an module with a path collision"
+step "Try to install a module with a path collision"
 on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
@@ -60,7 +60,7 @@ on master, puppet("module install pmtacceptance-apache"), :acceptable_exit_codes
 end
 on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 
-step "Try to install an module with a dependency that has collides"
+step "Try to install a module with a dependency that has collides"
 on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
     STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
@@ -73,7 +73,7 @@ on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptab
 end
 on master, '[ -f /etc/puppet/modules/apache/extra.json ]'
 
-step "Install an module with a name collision by using --force"
+step "Install a module with a name collision by using --force"
 on master, puppet("module install pmtacceptance-nginx --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
@@ -85,7 +85,7 @@ on master, puppet("module install pmtacceptance-nginx --force"), :acceptable_exi
 end
 on master, '[ ! -f /etc/puppet/modules/nginx/extra.json ]'
 
-step "Install an module with a name collision by using --force"
+step "Install a module with a name collision by using --force"
 on master, puppet("module install pmtacceptance-apache --force"), :acceptable_exit_codes => [0] do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m

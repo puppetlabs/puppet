@@ -16,7 +16,7 @@ describe "the sprintf function" do
     Puppet::Parser::Functions.function("sprintf").should == "function_sprintf"
   end
 
-  it "should raise a ArgumentError if there is less than 1 argument" do
+  it "should raise an ArgumentError if there is less than 1 argument" do
     lambda { @scope.function_sprintf([]) }.should( raise_error(ArgumentError))
   end
 

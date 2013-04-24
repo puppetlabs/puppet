@@ -44,7 +44,7 @@ describe list_class do
         @property.add_should_with_current(["foo"], ["bar"]).should == ["foo", "bar"]
       end
 
-      it "should return should if current is not a array" do
+      it "should return should if current is not an array" do
         @property.add_should_with_current(["foo"], :absent).should == ["foo"]
       end
 
