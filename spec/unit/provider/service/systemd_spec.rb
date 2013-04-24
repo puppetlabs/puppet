@@ -4,19 +4,19 @@
 #
 require 'spec_helper'
 
-osfamily = [ 'archlinux' ]
-
-osfamily.each do |osfamily|
-    it "should be the default provider on #{osfamily}" do
-      Facter.expects(:value).with(:osfamily).returns(osfamily)
-      provider_class.default?.should be_true
-    end
-  end
-
 describe Puppet::Type.type(:service).provider(:systemd) do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
+  end
+  
+  osfamily = [ 'archlinux' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      provider_class.default?.should be_true
+    end
   end
 
   let :provider do
