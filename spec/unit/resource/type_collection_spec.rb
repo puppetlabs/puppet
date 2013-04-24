@@ -167,7 +167,8 @@ describe Puppet::Resource::TypeCollection do
         @code.find_hostclass("foo", "bar").should == :foobar
       end
 
-      it "should not try to autoload names that we couldn't autoload in a previous step" do
+      it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
+        Puppet[:ignoremissingtypes] = true
         @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
         @code.loader.expects(:try_load_fqname).with(:hostclass, "klass").returns(nil)
         @code.find_hostclass("Ns", "Klass").should be_nil
