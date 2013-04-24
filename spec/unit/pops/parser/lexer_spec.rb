@@ -763,7 +763,7 @@ describe "Puppet::Pops::Parser::Lexer in the old tests when lexing example files
   end
 end
 
-describe "when trying to lex an non-existent file" do
+describe "when trying to lex a non-existent file" do
   include PuppetSpec::Files
 
   it "should return an empty list of tokens" do

@@ -33,7 +33,7 @@ describe Puppet::FileServing::Metadata do
   describe "when serializing" do
     let(:metadata) { Puppet::FileServing::Metadata.new(foobar) }
 
-    it "should perform pson serialization by calling to_pson on it's pson_data_hash" do
+    it "should perform pson serialization by calling to_pson on its pson_data_hash" do
       pdh = mock "data hash"
       pdh_as_pson = mock "data as pson"
       metadata.expects(:to_pson_data_hash).returns pdh

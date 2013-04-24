@@ -17,7 +17,7 @@ module Puppet
     # Is this a directory that shouldn't be checksummed?
     #
     # TODO: Should this be part of Checksums?
-    # TODO: Rename this method to reflect it's purpose?
+    # TODO: Rename this method to reflect its purpose?
     # TODO: Shouldn't this be used when building packages too?
     def self.artifact?(path)
       case File.basename(path)

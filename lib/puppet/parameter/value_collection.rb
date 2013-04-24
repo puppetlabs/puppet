@@ -189,7 +189,7 @@ class Puppet::Parameter::ValueCollection
   end
 
   # Returns a valid value matcher (a literal or regular expression)
-  # @todo This looks odd, asking for an instance that matches a symbol, or a instance that has
+  # @todo This looks odd, asking for an instance that matches a symbol, or an instance that has
   #   a regexp. What is the intention here? Marking as api private...
   #
   # @return [Puppet::Parameter::Value] a valid valud matcher

@@ -541,7 +541,7 @@ class Puppet::Pops::Model::AstTransformer
   def transform_UnlessExpression(o)
     args = { :test => ast(o, AST::Not, :value => transform(o.test)),
       :statements => transform(o.then_expr) }
-    # AST 3.1 does not allow else on unless in the grammar, but it is ok since unless is encoded as a if !x
+    # AST 3.1 does not allow else on unless in the grammar, but it is ok since unless is encoded as an if !x
     args.merge!({:else => transform(o.else_expr)}) unless is_nop?(o.else_expr)
     result = ast o, AST::IfStatement, args
   end

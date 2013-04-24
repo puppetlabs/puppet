@@ -122,7 +122,7 @@ module Puppet::ModuleTool
 
       #
       # Resolve installation conflicts by checking if the requested module
-      # or one of it's dependencies conflicts with an installed module.
+      # or one of its dependencies conflicts with an installed module.
       #
       # Conflicts occur under the following conditions:
       #

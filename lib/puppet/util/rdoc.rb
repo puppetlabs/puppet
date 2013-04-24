@@ -45,7 +45,7 @@ module Puppet::Util::RDoc
     end
   end
 
-  # launch a output to console manifest doc
+  # launch an output to console manifest doc
   def manifestdoc(files)
     Puppet[:ignoreimport] = true
     files.select { |f| FileTest.file?(f) }.each do |f|

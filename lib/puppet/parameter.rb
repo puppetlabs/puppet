@@ -477,7 +477,7 @@ class Puppet::Parameter
   # @todo This original comment _"All of the checking should possibly be
   #   late-binding (e.g., users might not exist when the value is assigned
   #   but might when it is asked for)."_ does not seem to be correct, the implementation
-  #   calls both validate an munge on the given value, so no late binding.
+  #   calls both validate and munge on the given value, so no late binding.
   #
   # The given value is validated and then munged (if munging has been specified). The result is store
   # as the value of this arameter.

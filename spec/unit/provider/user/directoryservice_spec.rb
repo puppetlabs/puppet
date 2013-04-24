@@ -606,7 +606,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
         }]
     end
 
-    it 'should return a array of hashes containing group data' do
+    it 'should return an array of hashes containing group data' do
       provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Groups').returns(groups_xml)
       provider.class.get_list_of_groups.should == groups_hash
     end
@@ -703,7 +703,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     let(:password_hash_file) { '/var/db/shadow/hash/user_guid' }
     let(:stub_password_file) { stub('connection') }
 
-    it 'should return a a sha1 hash read from disk' do
+    it 'should return a sha1 hash read from disk' do
       File.expects(:exists?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(true)
       File.expects(:readable?).with(password_hash_file).returns(true)
@@ -780,7 +780,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       }
     end
 
-    it 'should call set_salted_sha512 on 10.7 when given a a salted-SHA512 password hash' do
+    it 'should call set_salted_sha512 on 10.7 when given a salted-SHA512 password hash' do
       provider.expects(:get_users_plist).returns(sample_users_plist)
       provider.expects(:get_shadow_hash_data).with(sample_users_plist).returns(sha512_shadowhashdata)
       provider.class.expects(:get_os_version).returns('10.7')

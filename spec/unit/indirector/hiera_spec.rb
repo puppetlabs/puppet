@@ -127,7 +127,7 @@ describe Puppet::Indirector::Hiera do
 
     let(:data_binder) { @hiera_class.new }
 
-    it "support looking up an integer" do
+    it "should support looking up an integer" do
       data_binder.find(request_integer).should == 3000
     end
 

@@ -97,7 +97,7 @@ module Puppet
 # === Execution state
 # The class attributes/methods of Puppet::Application serve as a global place to set and query the execution
 # status of the application: stopping, restarting, etc.  The setting of the application status does not directly
-# aftect its running status; it's assumed that the various components within the application will consult these
+# affect its running status; it's assumed that the various components within the application will consult these
 # settings appropriately and affect their own processing accordingly.  Control operations (signal handlers and
 # the like) should set the status appropriately to indicate to the overall system that it's the process of
 # stopping or restarting (or just running as usual).

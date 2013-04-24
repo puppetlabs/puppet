@@ -1044,7 +1044,7 @@ class Type
   end
 
   # Returns a hash of the current properties and their values.
-  # If a resource is absent, it's value is the symbol `:absent`
+  # If a resource is absent, its value is the symbol `:absent`
   # @return [Hash{Puppet::Property => Object}] mapping of property instance to its value
   #
   def currentpropvalues
@@ -2351,14 +2351,14 @@ class Type
     end
   end
 
-  # Returns the title of this object, or it's name if title was not explicetly set.
+  # Returns the title of this object, or its name if title was not explicetly set.
   # If the title is not already set, it will be computed by looking up the {#name_var} and using
   # that value as the title.
   # @todo it is somewhat confusing that if the name_var is a valid parameter, it is assumed to
   #  be the name_var called :name, but if it is a property, it uses the name_var.
   #  It is further confusing as Type in some respects supports multiple namevars.
   #
-  # @return [String] Returns the title of this object, or it's name if title was not explicetly set.
+  # @return [String] Returns the title of this object, or its name if title was not explicetly set.
   # @raise [??? devfail] if title is not set, and name_var can not be found.
   def title
     unless @title

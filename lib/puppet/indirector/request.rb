@@ -5,7 +5,7 @@ require 'puppet/util/pson'
 require 'puppet/network/resolver'
 
 # This class encapsulates all of the information you need to make an
-# Indirection call, and as a a result also handles REST calls.  It's somewhat
+# Indirection call, and as a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
   attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
