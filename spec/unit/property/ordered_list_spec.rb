@@ -24,7 +24,7 @@ describe ordered_list_class do
         @property.add_should_with_current(["should"], ["current"]).should == ["should", "current"]
       end
 
-      it "should return 'should' if current is not a array" do
+      it "should return 'should' if current is not an array" do
         @property.add_should_with_current(["should"], :absent).should == ["should"]
       end
 

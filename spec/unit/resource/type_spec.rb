@@ -80,7 +80,7 @@ describe Puppet::Resource::Type do
       lambda { Puppet::Resource::Type.new(:node, /foo/) }.should_not raise_error
     end
 
-    it "should allow a AST::HostName instance as its name" do
+    it "should allow an AST::HostName instance as its name" do
       regex = Puppet::Parser::AST::Regex.new(:value => /foo/)
       name = Puppet::Parser::AST::HostName.new(:value => regex)
       lambda { Puppet::Resource::Type.new(:node, name) }.should_not raise_error

@@ -18,11 +18,11 @@ describe "the extlookup function" do
     Puppet::Parser::Functions.function("extlookup").should == "function_extlookup"
   end
 
-  it "should raise a ArgumentError if there is less than 1 arguments" do
+  it "should raise an ArgumentError if there is less than 1 arguments" do
     lambda { @scope.function_extlookup([]) }.should( raise_error(ArgumentError))
   end
 
-  it "should raise a ArgumentError if there is more than 3 arguments" do
+  it "should raise an ArgumentError if there is more than 3 arguments" do
     lambda { @scope.function_extlookup(["foo", "bar", "baz", "gazonk"]) }.should( raise_error(ArgumentError))
   end
 

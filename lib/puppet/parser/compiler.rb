@@ -135,7 +135,7 @@ class Puppet::Parser::Compiler
   #
   # Sometimes we evaluate classes with a fully qualified name already, in which
   # case, we tell scope.find_hostclass we've pre-qualified the name so it
-  # doesn't need to search it's namespaces again.  This gets around a weird
+  # doesn't need to search its namespaces again.  This gets around a weird
   # edge case of duplicate class names, one at top scope and one nested in our
   # namespace and the wrong one (or both!) getting selected. See ticket #13349
   # for more detail.  --jeffweiss 26 apr 2012

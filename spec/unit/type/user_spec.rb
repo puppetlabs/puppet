@@ -15,7 +15,7 @@ describe Puppet::Type.type(:user) do
     described_class.stubs(:defaultprovider).returns @provider_class
   end
 
-  it "should be able to create a instance" do
+  it "should be able to create an instance" do
     described_class.new(:name => "foo").should_not be_nil
   end
 
@@ -23,11 +23,11 @@ describe Puppet::Type.type(:user) do
     described_class.provider_feature(:allows_duplicates).should_not be_nil
   end
 
-  it "should have an manages_homedir feature" do
+  it "should have a manages_homedir feature" do
     described_class.provider_feature(:manages_homedir).should_not be_nil
   end
 
-  it "should have an manages_passwords feature" do
+  it "should have a manages_passwords feature" do
     described_class.provider_feature(:manages_passwords).should_not be_nil
   end
 

@@ -82,7 +82,7 @@ describe Puppet::Parser::Resource do
     @resource = Puppet::Parser::Resource.new("whatever", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
   end
 
-  it "should have a array-indexing method for retrieving parameter values" do
+  it "should have an array-indexing method for retrieving parameter values" do
     @resource = mkresource
     @resource[:one].should == "yay"
   end

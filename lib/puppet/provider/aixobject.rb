@@ -152,7 +152,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Parse AIX command attributes from the output of an AIX command, that
   # which format is a list of space separated of key=value pairs:
   # "uid=100 groups=a,b,c".
-  # It returns an hash.
+  # It returns a hash.
   #
   # If a mapping is provided, the keys are translated as defined in the
   # mapping hash. And only values included in mapping will be added

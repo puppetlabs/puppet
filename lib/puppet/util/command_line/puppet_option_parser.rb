@@ -11,7 +11,7 @@ module Puppet
       # This is a command line option parser.  It is intended to have an API that is very similar to
       #  the ruby stdlib 'OptionParser' API, for ease of integration into our existing code... however,
       #  However, we've removed the OptionParser-based implementation and are only maintaining the
-      #  it's impilemented based on the third-party "trollop" library.  This was done because there
+      #  it's implemented based on the third-party "trollop" library.  This was done because there
       #  are places where the stdlib OptionParser is not flexible enough to meet our needs.
 
       class PuppetOptionParser
