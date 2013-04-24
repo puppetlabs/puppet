@@ -365,6 +365,11 @@ module Puppet
         :desc     => "Freezes the 'main' class, disallowing any code to be added to it.  This\n" +
             "essentially means that you can't have any code outside of a node, class, or definition other\n" +
             "than in the site manifest.",
+    },
+    :stringify_facts => {
+      :default => true,
+      :type    => :boolean,
+      :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or hashes as fact values.",
     }
   )
   Puppet.define_settings(:module_tool,
