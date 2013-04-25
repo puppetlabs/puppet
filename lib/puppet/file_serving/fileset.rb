@@ -82,6 +82,8 @@ class Puppet::FileServing::Fileset
 
   private
 
+  Traversal = Struct.new(:depth, :path)
+
   def initialize_from_hash(options)
     options.each do |option, value|
       method = option.to_s + "="
@@ -112,16 +114,12 @@ class Puppet::FileServing::Fileset
   # allows us to keep the hairiness apart from what we do with the files.
   def perform_recursion
     # Start out with just our base directory.
-    current_dirs = [@path]
-
-    next_dirs = []
-
-    depth = 1
+    current_dirs = [Traversal.new(0, @path)]
 
     result = []
-    return result unless recurse?(depth)
 
-    while dir_path = current_dirs.shift
+    while traversal = current_dirs.shift
+      dir_path = traversal.path
       next unless stat = stat(dir_path)
       next unless stat.directory?
 
@@ -132,19 +130,13 @@ class Puppet::FileServing::Fileset
         # to be recursed into.
         next if ignore?(file_path)
 
-        # Add it to our list of files to return
-        result << File.join(dir_path, file_path)
+        path = File.join(dir_path, file_path)
 
-        # And to our list of files/directories to iterate over.
-        next_dirs << File.join(dir_path, file_path)
-      end
+        if recurse?(traversal.depth + 1)
+          result << path
 
-      # Move to the next recusion level
-      if current_dirs.empty?
-        depth += 1
-        break unless recurse?(depth)
-        current_dirs = next_dirs
-        next_dirs = []
+          current_dirs << Traversal.new(traversal.depth + 1, path)
+        end
       end
     end
 
