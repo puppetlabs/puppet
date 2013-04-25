@@ -23,7 +23,7 @@ end
 # automatically for you.  Nothing to do there.
 def setup_scratch_database
   Puppet[:dbadapter] = 'sqlite3'
-  Puppet[:dblocation] = ':memory'
+  Puppet[:dblocation] = ':memory:'
   Puppet[:railslog] = PuppetSpec::Files.tmpfile('storeconfigs.log')
   Puppet::Rails.init
 end
