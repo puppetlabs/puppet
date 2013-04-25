@@ -984,9 +984,9 @@ describe Puppet::Settings do
       @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
-    it "should use a LoadedFile instance to determine if the file has changed" do
+    it "should use a WatchedFile instance to determine if the file has changed" do
       file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
+      Puppet::Util::WatchedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?)
 
@@ -994,9 +994,9 @@ describe Puppet::Settings do
       @settings.reparse_config_files
     end
 
-    it "should not create the LoadedFile instance and should not parse if the file does not exist" do
+    it "should not create the WatchedFile instance and should not parse if the file does not exist" do
       FileTest.expects(:exist?).with(@file).returns false
-      Puppet::Util::LoadedFile.expects(:new).never
+      Puppet::Util::WatchedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never
 
@@ -1005,7 +1005,7 @@ describe Puppet::Settings do
 
     it "should not reparse if the file has not changed" do
       file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
+      Puppet::Util::WatchedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?).returns false
 
@@ -1016,7 +1016,7 @@ describe Puppet::Settings do
 
     it "should reparse if the file has changed" do
       file = stub 'file', :file => @file
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
+      Puppet::Util::WatchedFile.expects(:new).with(@file).returns file
 
       file.expects(:changed?).returns true
 

@@ -7,7 +7,6 @@
 require 'racc/parser.rb'
 
 require 'puppet'
-require 'puppet/util/loadedfile'
 require 'puppet/pops'
 
 module Puppet
