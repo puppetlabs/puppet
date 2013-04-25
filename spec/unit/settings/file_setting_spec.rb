@@ -289,5 +289,11 @@ describe Puppet::Settings::FileSetting do
       @file.to_resource[:links].should == :follow
     end
   end
-end
 
+  describe "#munge" do
+    it 'does not expand the path of the special value :memory: so we can set dblocation to an in-memory database' do
+      filesetting = FileSetting.new(:settings => mock("settings"), :desc => "eh")
+      filesetting.munge(':memory:').should == ':memory:'
+    end
+  end
+end
