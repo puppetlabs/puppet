@@ -25,8 +25,8 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should cache the server metadata and reuse it" do
       compiler = Puppet::Resource::Catalog::Compiler.new
-      node1 = stub 'node1', :merge => nil
-      node2 = stub 'node2', :merge => nil
+      node1 = stub 'node1', :merge => nil, :merge! => nil
+      node2 = stub 'node2', :merge => nil, :merge! => nil
       compiler.stubs(:compile)
       Puppet::Node.indirection.stubs(:find).with('node1', has_entry(:environment => anything)).returns(node1)
       Puppet::Node.indirection.stubs(:find).with('node2', has_entry(:environment => anything)).returns(node2)
@@ -192,6 +192,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should look node information up via the Node class with the provided key" do
       @node.stubs :merge
+      @node.stubs :merge!
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
       @compiler.find(@request)
     end
@@ -211,17 +212,26 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
+      @node.stubs :merge!
       @node.expects(:merge).with { |args| args["serverversion"] == "1" }
       @compiler.find(@request)
     end
 
     it "should add the server's fqdn to the node's parameters as 'servername'" do
+      @node.stubs :merge!
       @node.expects(:merge).with { |args| args["servername"] == "my.server.com" }
       @compiler.find(@request)
     end
 
     it "should add the server's IP address to the node's parameters as 'serverip'" do
+      @node.stubs :merge!
       @node.expects(:merge).with { |args| args["serverip"] == "my.ip.address" }
+      @compiler.find(@request)
+    end
+
+    it "should add the nodename to the node's parameters as 'servernodename'" do
+      @node.stubs :merge
+      @node.expects(:merge!).with { |args| args["servernodename"] == @name }
       @compiler.find(@request)
     end
   end

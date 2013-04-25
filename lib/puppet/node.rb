@@ -101,6 +101,13 @@ class Puppet::Node
     @parameters["environment"] ||= self.environment.name.to_s
   end
 
+  # Force overwrite parameters into the parameter list
+  def merge!(params)
+    params.each do |name, value|
+      @parameters[name] = value
+    end
+  end
+
   # Calculate the list of names we might use for looking
   # up our node.  This is only used for AST nodes.
   def names

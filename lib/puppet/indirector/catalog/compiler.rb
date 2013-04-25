@@ -109,6 +109,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # Add any external data to the node.
       if node
         add_node_data(node)
+        node.merge!( { 'servernodename' => name } )
       end
       node
     end
