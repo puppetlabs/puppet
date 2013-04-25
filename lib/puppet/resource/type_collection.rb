@@ -200,9 +200,11 @@ class Puppet::Resource::TypeCollection
     searchspace.each do |fqname|
       result = send(type, fqname)
       unless result
-        # do not try to autoload if we already tried and it wasn't conclusive
-        # as this is a time consuming operation.
-        unless @notfound[fqname]
+        if @notfound[fqname] and Puppet[:ignoremissingtypes]
+          # do not try to autoload if we already tried and it wasn't conclusive
+          # as this is a time consuming operation. Warn the user.
+          Puppet.warning "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+        else
           result = loader.try_load_fqname(type, fqname)
           @notfound[fqname] = result.nil?
         end

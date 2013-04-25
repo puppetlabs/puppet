@@ -1100,6 +1100,13 @@ EOT
       on every run.  Puppet can be run with this enabled by default and then selectively
       disabled when a recompile is desired.",
     },
+    :ignoremissingtypes => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Skip searching for classes and definitions that were missing during a
+      prior compilation. The list of missing objects is maintained per-environment and
+      persists until the environment is cleared or the master is restarted.",
+    },
     :ignorecache => {
       :default    => false,
       :type       => :boolean,
