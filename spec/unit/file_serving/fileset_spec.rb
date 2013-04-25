@@ -204,6 +204,43 @@ describe Puppet::FileServing::Fileset, " when recursing" do
     end
   end
 
+  MockStat = Struct.new(:path, :directory) do
+    # struct doesn't support thing ending in ?
+    def directory?
+      directory
+    end
+  end
+
+  MockDirectory = Struct.new(:name, :entries) do
+    def mock(base_path)
+      path = File.join(base_path, name)
+      File.stubs(:lstat).with(path).returns(MockStat.new(path, true))
+      Dir.stubs(:entries).with(path).returns(entries.map(&:name))
+      entries.each do |entry|
+        entry.mock(path)
+      end
+    end
+  end
+
+  MockFile = Struct.new(:name) do
+    def mock(base_path)
+      path = File.join(base_path, name)
+      File.stubs(:lstat).with(path).returns(MockStat.new(path, false))
+    end
+  end
+
+  it "doesn't ignore pending directories when the last entry at the top level is a file" do
+    structure = MockDirectory.new('path',
+                  [MockDirectory.new('dir1',
+                                 [MockDirectory.new('a', [MockFile.new('f')])]),
+                   MockFile.new('file')])
+    structure.mock('/your')
+    fileset = Puppet::FileServing::Fileset.new('/your/path')
+    fileset.recurse = true
+    fileset.links = :manage
+    fileset.files.should == [".", "dir1", "file", "dir1/a", "dir1/a/f"]
+  end
+
   it "should recurse through the whole file tree if :recurse is set to 'true'" do
     mock_dir_structure(@path)
     @fileset.stubs(:recurse?).returns(true)
