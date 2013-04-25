@@ -20,7 +20,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
-      provider_class.default?.should be_true
+      described_class.default?.should be_true
     end
   end  
 
