@@ -24,36 +24,6 @@ class Puppet::FileServing::Fileset
     result
   end
 
-  # Return a list of all files in our fileset.  This is different from the
-  # normal definition of find in that we support specific levels
-  # of recursion, which means we need to know when we're going another
-  # level deep, which Find doesn't do.
-  def files
-    files = perform_recursion
-
-    # Now strip off the leading path, so each file becomes relative, and remove
-    # any slashes that might end up at the beginning of the path.
-    result = files.collect { |file| file.sub(%r{^#{Regexp.escape(@path)}/*}, '') }
-
-    # And add the path itself.
-    result.unshift(".")
-
-    result
-  end
-
-  # Should we ignore this path?
-  def ignore?(path)
-    return false if @ignore == [nil]
-
-    # 'detect' normally returns the found result, whereas we just want true/false.
-    ! @ignore.detect { |pattern| File.fnmatch?(pattern, path) }.nil?
-  end
-
-  def ignore=(values)
-    values = [values] unless values.is_a?(Array)
-    @ignore = values
-  end
-
   def initialize(path, options = {})
     if Puppet.features.microsoft_windows?
       # REMIND: UNC path
@@ -81,6 +51,28 @@ class Puppet::FileServing::Fileset
     raise ArgumentError.new("Fileset recurse parameter must not be a number anymore, please use recurselimit") if @recurse.is_a?(Integer)
   end
 
+  # Return a list of all files in our fileset.  This is different from the
+  # normal definition of find in that we support specific levels
+  # of recursion, which means we need to know when we're going another
+  # level deep, which Find doesn't do.
+  def files
+    files = perform_recursion
+
+    # Now strip off the leading path, so each file becomes relative, and remove
+    # any slashes that might end up at the beginning of the path.
+    result = files.collect { |file| file.sub(%r{^#{Regexp.escape(@path)}/*}, '') }
+
+    # And add the path itself.
+    result.unshift(".")
+
+    result
+  end
+
+  def ignore=(values)
+    values = [values] unless values.is_a?(Array)
+    @ignore = values
+  end
+
   def links=(links)
     links = links.to_sym
     raise(ArgumentError, "Invalid :links value '#{links}'") unless [:manage, :follow].include?(links)
@@ -88,12 +80,7 @@ class Puppet::FileServing::Fileset
     @stat_method = links == :manage ? :lstat : :stat
   end
 
-  # Should we recurse further?  This is basically a single
-  # place for all of the logic around recursion.
-  def recurse?(depth)
-    # recurse if told to, and infinite recursion or current depth not at the limit
-    self.recurse and (self.recurselimit == :infinite or depth <= self.recurselimit)
-  end
+  private
 
   def initialize_from_hash(options)
     options.each do |option, value|
@@ -120,8 +107,6 @@ class Puppet::FileServing::Fileset
       send(param.to_s + "=", value)
     end
   end
-
-  private
 
   # Pull the recursion logic into one place.  It's moderately hairy, and this
   # allows us to keep the hairiness apart from what we do with the files.
@@ -165,7 +150,7 @@ class Puppet::FileServing::Fileset
 
     result
   end
-  public
+
   # Stat a given file, using the links-appropriate method.
   def stat(path)
     @stat_method ||= self.links == :manage ? :lstat : :stat
@@ -177,5 +162,20 @@ class Puppet::FileServing::Fileset
       # trying to manage a link to a file that does not exist.
       return nil
     end
+  end
+
+  # Should we ignore this path?
+  def ignore?(path)
+    return false if @ignore == [nil]
+
+    # 'detect' normally returns the found result, whereas we just want true/false.
+    ! @ignore.detect { |pattern| File.fnmatch?(pattern, path) }.nil?
+  end
+
+  # Should we recurse further?  This is basically a single
+  # place for all of the logic around recursion.
+  def recurse?(depth)
+    # recurse if told to, and infinite recursion or current depth not at the limit
+    self.recurse and (self.recurselimit == :infinite or depth <= self.recurselimit)
   end
 end

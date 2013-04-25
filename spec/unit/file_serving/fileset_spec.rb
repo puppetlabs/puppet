@@ -134,45 +134,6 @@ describe Puppet::FileServing::Fileset, " when initializing" do
   end
 end
 
-describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
-  include PuppetSpec::Files
-
-  before do
-    @path = make_absolute("/my/path")
-    File.expects(:lstat).with(@path).returns stub("stat")
-    @fileset = Puppet::FileServing::Fileset.new(@path)
-  end
-
-  it "should always recurse if :recurse is set to 'true' and with infinite recursion" do
-    @fileset.recurse = true
-    @fileset.recurselimit = :infinite
-    @fileset.recurse?(0).should be_true
-  end
-
-  it "should never recurse if :recurse is set to 'false'" do
-    @fileset.recurse = false
-    @fileset.recurse?(-1).should be_false
-  end
-
-  it "should recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is less than that integer" do
-    @fileset.recurse = true
-    @fileset.recurselimit = 1
-    @fileset.recurse?(0).should be_true
-  end
-
-  it "should recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is equal to that integer" do
-    @fileset.recurse = true
-    @fileset.recurselimit = 1
-    @fileset.recurse?(1).should be_true
-  end
-
-  it "should not recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is greater than that integer" do
-    @fileset.recurse = true
-    @fileset.recurselimit = 1
-    @fileset.recurse?(2).should be_false
-  end
-end
-
 describe Puppet::FileServing::Fileset, " when recursing" do
   include PuppetSpec::Files
 
@@ -336,35 +297,6 @@ describe Puppet::FileServing::Fileset, " when following links that point to miss
 
   it "should still manage the link" do
     @fileset.files.sort.should == %w{. mylink}.sort
-  end
-end
-
-describe Puppet::FileServing::Fileset, " when ignoring" do
-  include PuppetSpec::Files
-
-  before do
-    @path = make_absolute("/my/path")
-    File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
-    @fileset = Puppet::FileServing::Fileset.new(@path)
-  end
-
-  it "should use ruby's globbing to determine what files should be ignored" do
-    @fileset.ignore = ".svn"
-    File.expects(:fnmatch?).with(".svn", "my_file")
-    @fileset.ignore?("my_file")
-  end
-
-  it "should ignore files whose paths match a single provided ignore value" do
-    @fileset.ignore = ".svn"
-    File.stubs(:fnmatch?).with(".svn", "my_file").returns true
-    @fileset.ignore?("my_file").should be_true
-  end
-
-  it "should ignore files whose paths match any of multiple provided ignore values" do
-    @fileset.ignore = [".svn", "CVS"]
-    File.stubs(:fnmatch?).with(".svn", "my_file").returns false
-    File.stubs(:fnmatch?).with("CVS", "my_file").returns true
-    @fileset.ignore?("my_file").should be_true
   end
 end
 
