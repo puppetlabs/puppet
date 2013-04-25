@@ -35,7 +35,7 @@ describe Puppet::FileServing::Fileset, " when initializing" do
   end
 
   it "should fail if its path does not exist" do
-    File.expects(:lstat).with(@somefile).returns nil
+    File.expects(:lstat).with(@somefile).raises(Errno::ENOENT)
     proc { Puppet::FileServing::Fileset.new(@somefile) }.should raise_error(ArgumentError)
   end
 
@@ -176,7 +176,7 @@ describe Puppet::FileServing::Fileset, " when recursing" do
     def mock(base_path)
       path = File.join(base_path, name)
       File.stubs(:lstat).with(path).returns(MockStat.new(path, true))
-      Dir.stubs(:entries).with(path).returns(entries.map(&:name))
+      Dir.stubs(:entries).with(path).returns(['.', '..'] + entries.map(&:name))
       entries.each do |entry|
         entry.mock(path)
       end
@@ -204,13 +204,13 @@ describe Puppet::FileServing::Fileset, " when recursing" do
 
   it "should recurse through the whole file tree if :recurse is set to 'true'" do
     mock_dir_structure(@path)
-    @fileset.stubs(:recurse?).returns(true)
+    @fileset.recurse = true
     @fileset.files.sort.should == @files.sort
   end
 
   it "should not recurse if :recurse is set to 'false'" do
     mock_dir_structure(@path)
-    @fileset.stubs(:recurse?).returns(false)
+    @fileset.recurse = false
     @fileset.files.should == %w{.}
   end
 
@@ -278,25 +278,24 @@ describe Puppet::FileServing::Fileset, " when following links that point to miss
   include PuppetSpec::Files
 
   before do
-    @path = make_absolute("/my/path")
-    File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
-    @fileset = Puppet::FileServing::Fileset.new(@path)
-    @fileset.links = :follow
-    @fileset.recurse = true
-
-    @stat = stub 'stat', :directory? => true
-
-    File.expects(:stat).with(@path).returns(@stat)
-    File.expects(:stat).with(File.join(@path, "mylink")).raises(Errno::ENOENT)
-    Dir.stubs(:entries).with(@path).returns(["mylink"])
-  end
-
-  it "should not fail" do
-    proc { @fileset.files }.should_not raise_error
   end
 
   it "should still manage the link" do
-    @fileset.files.sort.should == %w{. mylink}.sort
+    path = make_absolute("/my/path")
+    stat = stub 'stat', :directory? => true
+
+    File.expects(:lstat).with(path).returns(stat)
+    File.expects(:stat).with(path).returns(stat)
+    File.expects(:stat).with(File.join(path, "mylink")).raises(Errno::ENOENT)
+
+    Dir.stubs(:entries).with(path).returns(["mylink"])
+
+    fileset = Puppet::FileServing::Fileset.new(path)
+
+    fileset.links = :follow
+    fileset.recurse = true
+
+    fileset.files.sort.should == %w{. mylink}.sort
   end
 end
 
