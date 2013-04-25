@@ -109,7 +109,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def munge(value)
-    if value.is_a?(String)
+    if value.is_a?(String) and value != ':memory:' # for sqlite3 in-memory tests
       value = File.expand_path(value)
     end
     value
