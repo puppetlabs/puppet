@@ -187,7 +187,7 @@ describe Puppet::FileServing::Fileset do
                                    [MockDirectory.new('a', [MockFile.new('f')])]),
                      MockFile.new('file')])
       structure.mock(make_absolute('/your'))
-      fileset = Puppet::FileServing::Fileset.new('/your/path')
+      fileset = Puppet::FileServing::Fileset.new(make_absolute('/your/path'))
       fileset.recurse = true
       fileset.links = :manage
       fileset.files.should == [".", "dir1", "file", "dir1/a", "dir1/a/f"]
