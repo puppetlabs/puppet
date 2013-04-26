@@ -24,6 +24,33 @@ class Puppet::FileServing::Fileset
     result
   end
 
+  def initialize(path, options = {})
+    if Puppet.features.microsoft_windows?
+      # REMIND: UNC path
+      path = path.chomp(File::SEPARATOR) unless path =~ /^[A-Za-z]:\/$/
+    else
+      path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
+    end
+    raise ArgumentError.new("Fileset paths must be fully qualified: #{path}") unless Puppet::Util.absolute_path?(path)
+
+    @path = path
+
+    # Set our defaults.
+    self.ignore = []
+    self.links = :manage
+    @recurse = false
+    @recurselimit = :infinite
+
+    if options.is_a?(Puppet::Indirector::Request)
+      initialize_from_request(options)
+    else
+      initialize_from_hash(options)
+    end
+
+    raise ArgumentError.new("Fileset paths must exist") unless valid?(path)
+    raise ArgumentError.new("Fileset recurse parameter must not be a number anymore, please use recurselimit") if @recurse.is_a?(Integer)
+  end
+
   # Return a list of all files in our fileset.  This is different from the
   # normal definition of find in that we support specific levels
   # of recursion, which means we need to know when we're going another
@@ -41,59 +68,19 @@ class Puppet::FileServing::Fileset
     result
   end
 
-  # Should we ignore this path?
-  def ignore?(path)
-    return false if @ignore == [nil]
-
-    # 'detect' normally returns the found result, whereas we just want true/false.
-    ! @ignore.detect { |pattern| File.fnmatch?(pattern, path) }.nil?
-  end
-
   def ignore=(values)
     values = [values] unless values.is_a?(Array)
     @ignore = values
-  end
-
-  def initialize(path, options = {})
-    if Puppet.features.microsoft_windows?
-      # REMIND: UNC path
-      path = path.chomp(File::SEPARATOR) unless path =~ /^[A-Za-z]:\/$/
-    else
-      path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
-    end
-    raise ArgumentError.new("Fileset paths must be fully qualified: #{path}") unless Puppet::Util.absolute_path?(path)
-
-    @path = path
-
-    # Set our defaults.
-    @ignore = []
-    @links = :manage
-    @recurse = false
-    @recurselimit = :infinite
-
-    if options.is_a?(Puppet::Indirector::Request)
-      initialize_from_request(options)
-    else
-      initialize_from_hash(options)
-    end
-
-    raise ArgumentError.new("Fileset paths must exist") unless stat = stat(path)
-    raise ArgumentError.new("Fileset recurse parameter must not be a number anymore, please use recurselimit") if @recurse.is_a?(Integer)
   end
 
   def links=(links)
     links = links.to_sym
     raise(ArgumentError, "Invalid :links value '#{links}'") unless [:manage, :follow].include?(links)
     @links = links
-    @stat_method = links == :manage ? :lstat : :stat
+    @stat_method = File.method(@links == :manage ? :lstat : :stat)
   end
 
-  # Should we recurse further?  This is basically a single
-  # place for all of the logic around recursion.
-  def recurse?(depth)
-    # recurse if told to, and infinite recursion or current depth not at the limit
-    self.recurse and (self.recurselimit == :infinite or depth <= self.recurselimit)
-  end
+  private
 
   def initialize_from_hash(options)
     options.each do |option, value|
@@ -121,61 +108,65 @@ class Puppet::FileServing::Fileset
     end
   end
 
-  private
+  FileSetEntry = Struct.new(:depth, :path, :ignored, :stat_method) do
+    def down_level(to)
+      FileSetEntry.new(depth + 1, File.join(path, to), ignored, stat_method)
+    end
+
+    def basename
+      File.basename(path)
+    end
+
+    def children
+      return [] unless directory?
+
+      Dir.entries(path).
+        reject { |child| ignore?(child) }.
+        collect { |child| down_level(child) }
+    end
+
+    def ignore?(child)
+      return true if child == "." || child == ".."
+      return false if ignored == [nil]
+
+      ignored.any? { |pattern| File.fnmatch?(pattern, child) }
+    end
+
+    def directory?
+      stat_method.call(path).directory?
+    rescue Errno::ENOENT, Errno::EACCES
+      false
+    end
+  end
 
   # Pull the recursion logic into one place.  It's moderately hairy, and this
   # allows us to keep the hairiness apart from what we do with the files.
   def perform_recursion
-    # Start out with just our base directory.
-    current_dirs = [@path]
-
-    next_dirs = []
-
-    depth = 1
+    current_dirs = [FileSetEntry.new(0, @path, @ignore, @stat_method)]
 
     result = []
-    return result unless recurse?(depth)
 
-    while dir_path = current_dirs.shift
-      next unless stat = stat(dir_path)
-      next unless stat.directory?
-
-      Dir.entries(dir_path).each do |file_path|
-        next if [".", ".."].include?(file_path)
-
-        # Note that this also causes matching directories not
-        # to be recursed into.
-        next if ignore?(file_path)
-
-        # Add it to our list of files to return
-        result << File.join(dir_path, file_path)
-
-        # And to our list of files/directories to iterate over.
-        next_dirs << File.join(dir_path, file_path)
-      end
-
-      # Move to the next recusion level
-      if current_dirs.empty?
-        depth += 1
-        break unless recurse?(depth)
-        current_dirs = next_dirs
-        next_dirs = []
+    while entry = current_dirs.shift
+      if continue_recursion_at?(entry.depth + 1)
+        entry.children.each do |child|
+          result << child.path
+          current_dirs << child
+        end
       end
     end
 
     result
   end
-  public
-  # Stat a given file, using the links-appropriate method.
-  def stat(path)
-    @stat_method ||= self.links == :manage ? :lstat : :stat
 
-    begin
-      return File.send(@stat_method, path)
-    rescue
-      # If this happens, it is almost surely because we're
-      # trying to manage a link to a file that does not exist.
-      return nil
-    end
+  def valid?(path)
+    @stat_method.call(path)
+    true
+  rescue Errno::ENOENT, Errno::EACCES
+    false
+  end
+
+  def continue_recursion_at?(depth)
+    # recurse if told to, and infinite recursion or current depth not at the limit
+    self.recurse && (self.recurselimit == :infinite || depth <= self.recurselimit)
   end
 end
