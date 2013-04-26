@@ -533,7 +533,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     msg << " in file #{existing_resource.file} at line #{existing_resource.line}" if existing_resource.file and existing_resource.line
 
-    msg << "; cannot redeclare" if resource.line or resource.file
+    msg << "; cannot redeclare in file #{resource.file} at line #{resource.line}" if resource.line and resource.file
 
     raise DuplicateResourceError.new(msg)
   end
