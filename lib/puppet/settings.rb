@@ -969,8 +969,8 @@ Generated on #{Time.now}.
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
-    if cached = @cache[environment||"none"][param]
-      return cached
+    if @cache[environment||"none"].has_key?(param)
+      return @cache[environment||"none"][param]
     end
 
     val = uninterpolated_value(param, environment)
