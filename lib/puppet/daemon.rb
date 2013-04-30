@@ -1,5 +1,3 @@
-require 'puppet'
-require 'puppet/util/pidlock'
 require 'puppet/application'
 require 'puppet/scheduler'
 
@@ -7,6 +5,10 @@ require 'puppet/scheduler'
 # into the Server and Client base classes.
 class Puppet::Daemon
   attr_accessor :agent, :server, :argv
+
+  def initialize(pidfile)
+    @pidfile = pidfile
+  end
 
   def daemonname
     Puppet.run_mode.name
@@ -56,13 +58,8 @@ class Puppet::Daemon
   # don't try to start.
   def create_pidfile
     Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
+      raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
     end
-  end
-
-  # Provide the path to our pidfile.
-  def pidfile
-    Puppet[:pidfile]
   end
 
   def reexec
@@ -86,7 +83,7 @@ class Puppet::Daemon
   # Remove the pid file for our daemon.
   def remove_pidfile
     Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      Puppet::Util::Pidlock.new(pidfile).unlock
+      @pidfile.unlock
     end
   end
 

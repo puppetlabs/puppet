@@ -1,5 +1,7 @@
 require 'puppet/application'
 require 'puppet/util'
+require 'puppet/daemon'
+require 'puppet/util/pidlock'
 
 class Puppet::Application::Queue < Puppet::Application
 
@@ -10,9 +12,7 @@ class Puppet::Application::Queue < Puppet::Application
   end
 
   def preinit
-    require 'puppet/daemon'
-    @daemon = Puppet::Daemon.new
-    @daemon.argv = ARGV.dup
+    @argv = ARGV.dup
 
     # Do an initial trap, so that cancels don't get a stack trace.
 
@@ -153,6 +153,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'puppet/resource/catalog'
     Puppet::Resource::Catalog.indirection.terminus_class = :store_configs
 
+    daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+    daemon.argv = @argv
     daemon.daemonize if Puppet[:daemonize]
 
     # We want to make sure that we don't have a cache

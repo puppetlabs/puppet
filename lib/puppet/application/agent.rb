@@ -1,5 +1,7 @@
 require 'puppet/application'
 require 'puppet/run'
+require 'puppet/daemon'
+require 'puppet/util/pidlock'
 
 class Puppet::Application::Agent < Puppet::Application
 
@@ -43,9 +45,7 @@ class Puppet::Application::Agent < Puppet::Application
     end
 
     @args = {}
-    require 'puppet/daemon'
-    @daemon = Puppet::Daemon.new
-    @daemon.argv = ARGV.dup
+    @argv = ARGV.dup
   end
 
   option("--centrallogging")
@@ -443,6 +443,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    @daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+    @daemon.argv = @argv
+
     setup_test if options[:test]
 
     setup_logs(true)
