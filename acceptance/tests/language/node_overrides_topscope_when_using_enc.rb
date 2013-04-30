@@ -18,7 +18,7 @@ create_remote_file(master, "#{testdir}/enc", <<-PP)
 cat <<END
 ---
 classes:
-  a
+  - a
 parameters:
   enc_var: "Set from ENC."
 END
