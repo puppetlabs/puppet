@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 test_name "puppet module install (with modulepath)"
 
 step 'Setup'
@@ -22,9 +24,9 @@ on master, "cd /etc/puppet/modules2 && puppet module install pmtacceptance-nginx
   OUTPUT
 end
 on master, '[ -d /etc/puppet/modules2/nginx ]'
-apply_manifest_on master, "file { ['/etc/puppet/modules2']: ensure => directory, recurse => true, purge => true, force => true }"
 
 step "Install a module with absolute modulepath"
+on master, "test -d /etc/puppet/modules2/nginx && rm -rf /etc/puppet/modules2/nginx"
 on master, puppet('module install pmtacceptance-nginx --modulepath=/etc/puppet/modules2') do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to install into /etc/puppet/modules2 ...\e[0m
