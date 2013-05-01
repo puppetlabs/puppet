@@ -19,13 +19,23 @@ end
 describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
-  let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
+  class RecordingScheduler
+    attr_reader :jobs
 
-  let(:daemon) { Puppet::Daemon.new(pidfile) }
+    def run_loop(jobs)
+      @jobs = jobs
+    end
+  end
+
+  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
+  let(:agent) { Puppet::Agent.new(TestClient.new, false) }
+
+  let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
+  let(:scheduler) { RecordingScheduler.new }
+
+  let(:daemon) { Puppet::Daemon.new(pidfile, scheduler) }
 
   before do
-    # Forking agent not needed here
-    @agent = Puppet::Agent.new(TestClient.new, false)
     daemon.stubs(:close_streams).returns nil
   end
 
@@ -53,7 +63,6 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   describe "when starting" do
     before do
       daemon.stubs(:set_signal_traps)
-      daemon.stubs(:run_event_loop)
     end
 
     it "should fail if it has neither agent nor server" do
@@ -63,21 +72,47 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "should create its pidfile" do
       pidfile.expects(:lock).returns(true)
 
-      daemon.agent = @agent
+      daemon.agent = agent
       daemon.start
     end
 
     it "should fail if it cannot lock" do
       pidfile.expects(:lock).returns(false)
-      daemon.agent = @agent
+      daemon.agent = agent
 
       expect { daemon.start }.to raise_error(RuntimeError, "Could not create PID file: #{pidfile.file_path}")
     end
 
     it "should start its server if one is configured" do
-      server = mock 'server'
-      server.expects(:start)
       daemon.server = server
+
+      server.expects(:start)
+
+      daemon.start
+    end
+
+    it "disables the reparse of configs if the filetimeout is 0" do
+      Puppet[:filetimeout] = 0
+      daemon.agent = agent
+
+      daemon.start
+
+      scheduler.jobs[0].should_not be_enabled
+    end
+
+    it "disables the agent run when there is no agent" do
+      Puppet[:filetimeout] = 0
+      daemon.server = server
+
+      daemon.start
+
+      scheduler.jobs[1].should_not be_enabled
+    end
+
+    it "waits for the server to shutdown when there is one" do
+      daemon.server = server
+
+      server.expects(:wait_for_shutdown)
 
       daemon.start
     end
@@ -97,9 +132,10 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should stop its server if one is configured" do
-      server = mock 'server'
       server.expects(:stop)
-      daemon.stubs(:server).returns server
+
+      daemon.server = server
+
       expect { daemon.stop }.to exit_with 0
     end
 
@@ -134,18 +170,18 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should do nothing if the agent is running" do
-      @agent.expects(:running?).returns true
+      agent.expects(:running?).returns true
 
-      daemon.agent = @agent
+      daemon.agent = agent
 
       daemon.reload
     end
 
     it "should run the agent if one is available and it is not running" do
-      @agent.expects(:running?).returns false
-      @agent.expects(:run).with({:splay => false})
+      agent.expects(:running?).returns false
+      agent.expects(:run).with({:splay => false})
 
-      daemon.agent = @agent
+      daemon.agent = agent
 
       daemon.reload
     end
@@ -173,8 +209,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should reexec itself if the agent is not running" do
-      @agent.expects(:running?).returns false
-      daemon.agent = @agent
+      agent.expects(:running?).returns false
+      daemon.agent = agent
       daemon.expects(:reexec)
 
       daemon.restart
