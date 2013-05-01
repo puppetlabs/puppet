@@ -41,8 +41,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # it should remain excluded. When that bug is adddressed this should be
     # reexamined.
     excludes += %w{wait-for-state portmap-wait}
-    # these excludes were found with grep -r -L start /etc/init.d
-    excludes += %w{rcS module-init-tools}
+    excludes
   end
 
   # List all services of this type.
