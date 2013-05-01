@@ -11,7 +11,6 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
     # This reduces the odds of conflicting port numbers between concurrent runs
     # of the suite on the same machine dramatically.
     let(:port) { 20000 + ($$ % 40000) }
-    let(:handlers) { [:node] }
     let(:address) { '127.0.0.1' }
 
     before :each do
@@ -30,7 +29,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
       ca = Puppet::SSL::CertificateAuthority.new
       ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.indirection.find(Puppet[:certname])
 
-      @server = Puppet::Network::Server.new(address, port, handlers)
+      @server = Puppet::Network::Server.new(address, port)
     end
 
     after do
@@ -57,7 +56,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
 
       it "should not allow multiple servers to listen on the same address and port" do
         @server.listen
-        server2 = Puppet::Network::Server.new(address, port, handlers)
+        server2 = Puppet::Network::Server.new(address, port)
         expect { server2.listen }.to raise_error
       end
 

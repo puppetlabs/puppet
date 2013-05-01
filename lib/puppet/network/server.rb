@@ -2,6 +2,8 @@ require 'puppet/network/http'
 require 'puppet/util/pidlock'
 require 'puppet/network/http/webrick'
 
+#
+# @api private
 class Puppet::Network::Server
   attr_reader :address, :port
 
@@ -46,40 +48,15 @@ class Puppet::Network::Server
     Puppet[:pidfile]
   end
 
-  def initialize(address, port, handlers = nil)
+  def initialize(address, port)
     @port = port
     @address = address
     @http_server = Puppet::Network::HTTP::WEBrick.new
 
     @listening = false
-    @routes = {}
-    self.register(handlers) if handlers
 
     # Make sure we have all of the directories we need to function.
     Puppet.settings.use(:main, :ssl, :application)
-  end
-
-  # Register handlers for REST networking, based on the Indirector.
-  def register(*indirections)
-    raise ArgumentError, "Indirection names are required." if indirections.empty?
-    indirections.flatten.each do |name|
-      Puppet::Indirector::Indirection.model(name) || raise(ArgumentError, "Cannot locate indirection '#{name}'.")
-      @routes[name.to_sym] = true
-    end
-  end
-
-  # Unregister Indirector handlers.
-  def unregister(*indirections)
-    raise "Cannot unregister indirections while server is listening." if listening?
-    indirections = @routes.keys if indirections.empty?
-
-    indirections.flatten.each do |i|
-      raise(ArgumentError, "Indirection [#{i}] is unknown.") unless @routes[i.to_sym]
-    end
-
-    indirections.flatten.each do |i|
-      @routes.delete(i.to_sym)
-    end
   end
 
   def listening?

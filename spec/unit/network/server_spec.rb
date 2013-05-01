@@ -24,11 +24,6 @@ describe Puppet::Network::Server do
       Puppet[:masterport] = ''
     end
 
-    it "should allow registering REST handlers" do
-      server = Puppet::Network::Server.new(address, port, [:foo, :bar, :baz])
-      expect { server.unregister(:foo, :bar, :baz) }.to_not raise_error
-    end
-
     it "should not be listening after initialization" do
       Puppet::Network::Server.new(address, port).should_not be_listening
     end
@@ -135,82 +130,6 @@ describe Puppet::Network::Server do
     end
   end
 
-  describe "when managing indirection registrations" do
-    before do
-      Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-    end
-
-    it "should allow registering an indirection for client access by specifying its indirection name" do
-      expect { server.register(:foo) }.to_not raise_error
-    end
-
-    it "should require that the indirection be valid" do
-      Puppet::Indirector::Indirection.expects(:model).with(:foo).returns nil
-      expect { server.register(:foo) }.to raise_error(ArgumentError)
-    end
-
-    it "should require at least one indirection name when registering indirections for client access" do
-      expect { server.register }.to raise_error(ArgumentError)
-    end
-
-    it "should allow for numerous indirections to be registered at once for client access" do
-      expect { server.register(:foo, :bar, :baz) }.to_not raise_error
-    end
-
-    it "should allow the use of indirection names to specify which indirections are to be no longer accessible to clients" do
-      server.register(:foo)
-      expect { server.unregister(:foo) }.to_not raise_error
-    end
-
-    it "should leave other indirections accessible to clients when turning off indirections" do
-      server.register(:foo, :bar)
-      server.unregister(:foo)
-      expect { server.unregister(:bar)}.to_not raise_error
-    end
-
-    it "should allow specifying numerous indirections which are to be no longer accessible to clients" do
-      server.register(:foo, :bar)
-      expect { server.unregister(:foo, :bar) }.to_not raise_error
-    end
-
-    it "should not turn off any indirections if given unknown indirection names to turn off" do
-      server.register(:foo, :bar)
-      expect { server.unregister(:foo, :bar, :baz) }.to raise_error(ArgumentError)
-      expect { server.unregister(:foo, :bar) }.to_not raise_error
-    end
-
-    it "should not allow turning off unknown indirection names" do
-      server.register(:foo, :bar)
-      expect { server.unregister(:baz) }.to raise_error(ArgumentError)
-    end
-
-    it "should disable client access immediately when turning off indirections" do
-      server.register(:foo, :bar)
-      server.unregister(:foo)
-      expect { server.unregister(:foo) }.to raise_error(ArgumentError)
-    end
-
-    it "should allow turning off all indirections at once" do
-      server.register(:foo, :bar)
-      server.unregister
-      [:foo, :bar, :baz].each do |indirection|
-        expect { server.unregister(indirection) }.to raise_error(ArgumentError)
-      end
-    end
-  end
-
-  it "should allow for multiple configurations, each handling different indirections" do
-    Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-
-    server2 = Puppet::Network::Server.new(address, port)
-    server.register(:foo, :bar)
-    server2.register(:foo, :xyzzy)
-    server.unregister(:foo, :bar)
-    server2.unregister(:foo, :xyzzy)
-    expect { server.unregister(:xyzzy) }.to raise_error(ArgumentError)
-    expect { server2.unregister(:bar) }.to raise_error(ArgumentError)
-  end
-
   describe "when listening is off" do
     before do
       @mock_http_server.stubs(:listen)
@@ -256,7 +175,7 @@ describe Puppet::Network::Server do
     end
 
     it "should cause the HTTP server to listen" do
-      server = Puppet::Network::Server.new(address, port, [:node])
+      server = Puppet::Network::Server.new(address, port)
       @mock_http_server.expects(:listen).with(address, port)
       server.listen
     end
@@ -272,13 +191,6 @@ describe Puppet::Network::Server do
     it "should cause the HTTP server to stop listening" do
       @mock_http_server.expects(:unlisten)
       server.unlisten
-    end
-
-    it "should not allow for indirections to be turned off" do
-      Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-
-      server.register(:foo)
-      expect { server.unregister(:foo) }.to raise_error(RuntimeError)
     end
   end
 end
