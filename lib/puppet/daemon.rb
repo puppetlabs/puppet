@@ -6,7 +6,8 @@ require 'puppet/scheduler'
 class Puppet::Daemon
   attr_accessor :agent, :server, :argv
 
-  def initialize(pidfile)
+  def initialize(pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
+    @scheduler = scheduler
     @pidfile = pidfile
   end
 
@@ -162,9 +163,7 @@ class Puppet::Daemon
     reparse_run.disable if Puppet[:filetimeout] == 0
     agent_run.disable unless agent
 
-    scheduler = Puppet::Scheduler::Scheduler.new([reparse_run, agent_run])
-
-    scheduler.run_loop
+    @scheduler.run_loop([reparse_run, agent_run])
   end
 end
 
