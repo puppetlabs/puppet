@@ -3,6 +3,7 @@ require 'puppet/scheduler'
 
 # A module that handles operations common to all daemons.  This is included
 # into the Server and Client base classes.
+# @api private
 class Puppet::Daemon
   attr_accessor :agent, :server, :argv
 
@@ -55,14 +56,6 @@ class Puppet::Daemon
     Puppet::Daemon.close_streams
   end
 
-  # Create a pidfile for our daemon, so we can be stopped and others
-  # don't try to start.
-  def create_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
-    end
-  end
-
   def reexec
     raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
     command = $0 + " " + argv.join(" ")
@@ -79,13 +72,6 @@ class Puppet::Daemon
     end
 
     agent.run({:splay => false})
-  end
-
-  # Remove the pid file for our daemon.
-  def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      @pidfile.unlock
-    end
   end
 
   def restart
@@ -144,6 +130,23 @@ class Puppet::Daemon
     run_event_loop
 
     server.wait_for_shutdown if server
+  end
+
+  private
+
+  # Create a pidfile for our daemon, so we can be stopped and others
+  # don't try to start.
+  def create_pidfile
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
+      raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
+    end
+  end
+
+  # Remove the pid file for our daemon.
+  def remove_pidfile
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
+      @pidfile.unlock
+    end
   end
 
   def run_event_loop
