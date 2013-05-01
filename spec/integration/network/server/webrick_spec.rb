@@ -44,31 +44,31 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
 
     describe "when listening" do
       it "should be reachable on the specified address and port" do
-        @server.listen
+        @server.start
         expect { TCPSocket.new('127.0.0.1', port) }.to_not raise_error
       end
 
       it "should use any specified bind address" do
-        @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
+        @server.stubs(:stop) # we're breaking listening internally, so we have to keep it from unlistening
         Puppet::Network::HTTP::WEBrick.any_instance.expects(:listen).with(address, port)
-        @server.listen
+        @server.start
       end
 
       it "should not allow multiple servers to listen on the same address and port" do
-        @server.listen
+        @server.start
         server2 = Puppet::Network::Server.new(address, port)
-        expect { server2.listen }.to raise_error
+        expect { server2.start }.to raise_error
       end
 
       after :each do
-        @server.unlisten if @server && @server.listening?
+        @server.stop if @server && @server.listening?
       end
     end
 
     describe "after unlistening" do
       it "should not be reachable on the port and address assigned" do
-        @server.listen
-        @server.unlisten
+        @server.start
+        @server.stop
         expect { TCPSocket.new('127.0.0.1', port) }.to raise_error(Errno::ECONNREFUSED)
       end
     end

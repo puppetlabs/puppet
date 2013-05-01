@@ -5,22 +5,16 @@ require 'puppet/network/server'
 describe Puppet::Network::Server do
   let(:port) { 8140 }
   let(:address) { '0.0.0.0' }
-  let(:server) {
-    server = Puppet::Network::Server.new(address, port)
-    server.stubs(:close_streams)
-    server
-  }
+  let(:server) { Puppet::Network::Server.new(address, port) }
 
   before do
     @mock_http_server = mock('http server')
     Puppet.settings.stubs(:use)
-    Puppet.run_mode.stubs(:name).returns :master
     Puppet::Network::HTTP::WEBrick.stubs(:new).returns(@mock_http_server)
   end
 
   describe "when initializing" do
     before do
-      Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
       Puppet[:masterport] = ''
     end
 
@@ -40,97 +34,7 @@ describe Puppet::Network::Server do
     end
   end
 
-  describe "when being started" do
-    before do
-      server.stubs(:listen)
-      server.stubs(:create_pidfile)
-    end
-
-    it "should listen" do
-      server.expects(:listen)
-      server.start
-    end
-
-    it "should create its PID file" do
-      server.expects(:create_pidfile)
-      server.start
-    end
-  end
-
-  describe "when being stopped" do
-    before do
-      server.stubs(:unlisten)
-      server.stubs(:remove_pidfile)
-    end
-
-    it "should unlisten" do
-      server.expects(:unlisten)
-      server.stop
-    end
-
-    it "should remove its PID file" do
-      server.expects(:remove_pidfile)
-      server.stop
-    end
-  end
-
-  describe "when creating its pidfile" do
-    it "should use an exclusive mutex" do
-      Puppet.run_mode.expects(:name).returns "me"
-      Puppet::Util.expects(:synchronize_on).with("me", Sync::EX)
-      server.create_pidfile
-    end
-
-    it "should lock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile'
-
-      Puppet.run_mode.expects(:name).returns "eh"
-      Puppet[:pidfile] = File.expand_path("/my/file")
-
-      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
-
-      pidfile.expects(:lock).returns true
-      server.create_pidfile
-    end
-
-    it "should fail if it cannot lock" do
-      pidfile = mock 'pidfile'
-
-      Puppet[:pidfile] = File.expand_path("/my/file")
-
-      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
-
-      pidfile.expects(:lock).returns false
-
-      expect { server.create_pidfile }.to raise_error /Could not create PID/
-    end
-  end
-
-  describe "when removing its pidfile" do
-    it "should use an exclusive mutex" do
-      Puppet.run_mode.expects(:name).returns "me"
-      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
-      server.remove_pidfile
-    end
-
-    it "should do nothing if the pidfile is not present" do
-      pidfile = mock 'pidfile', :unlock => false
-      Puppet[:pidfile] = "/my/file"
-      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
-
-      server.remove_pidfile
-    end
-
-    it "should unlock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile', :unlock => true
-      Puppet[:pidfile] = "/my/file"
-      Puppet::Util::Pidlock.expects(:new).with(Puppet[:pidfile]).returns pidfile
-
-      server.remove_pidfile
-    end
-  end
-
-  describe "when listening is off" do
+  describe "when not yet started" do
     before do
       @mock_http_server.stubs(:listen)
     end
@@ -139,58 +43,53 @@ describe Puppet::Network::Server do
       server.should_not be_listening
     end
 
-    it "should not allow listening to be turned off" do
-      expect { server.unlisten }.to raise_error(RuntimeError)
+    it "should not allow server to be stopped" do
+      expect { server.stop }.to raise_error(RuntimeError)
     end
 
-    it "should allow listening to be turned on" do
-      expect { server.listen }.to_not raise_error
+    it "should allow server to be started" do
+      expect { server.start }.to_not raise_error
     end
-
   end
 
-  describe "when listening is on" do
+  describe "when server is on" do
     before do
       @mock_http_server.stubs(:listen)
       @mock_http_server.stubs(:unlisten)
-      server.listen
+      server.start
     end
 
     it "should indicate that it is listening" do
       server.should be_listening
     end
 
-    it "should not allow listening to be turned on" do
-      expect { server.listen }.to raise_error(RuntimeError)
+    it "should not allow server to be started again" do
+      expect { server.start }.to raise_error(RuntimeError)
     end
 
-    it "should allow listening to be turned off" do
-      expect { server.unlisten }.to_not raise_error
+    it "should allow server to be stopped" do
+      expect { server.stop }.to_not raise_error
     end
   end
 
-  describe "when listening is being turned on" do
-    before do
-      Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
-    end
-
+  describe "when server is being started" do
     it "should cause the HTTP server to listen" do
       server = Puppet::Network::Server.new(address, port)
       @mock_http_server.expects(:listen).with(address, port)
-      server.listen
+      server.start
     end
   end
 
-  describe "when listening is being turned off" do
+  describe "when server is being stopped" do
     before do
       @mock_http_server.stubs(:listen)
       server.stubs(:http_server).returns(@mock_http_server)
-      server.listen
+      server.start
     end
 
     it "should cause the HTTP server to stop listening" do
       @mock_http_server.expects(:unlisten)
-      server.unlisten
+      server.stop
     end
   end
 end
