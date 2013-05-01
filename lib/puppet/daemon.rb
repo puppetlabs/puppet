@@ -1,8 +1,21 @@
 require 'puppet/application'
 require 'puppet/scheduler'
 
-# A module that handles operations common to all daemons.  This is included
-# into the Server and Client base classes.
+# Run periodic actions and a network server in a daemonized process.
+#
+# A Daemon has 3 parts:
+#   * config reparse
+#   * (optional) an agent that responds to #run
+#   * (optional) a server that response to #stop, #start, and #wait_for_shutdown
+#
+# The config reparse will occur periodically based on Settings. The server will
+# be started and is expected to manage its own run loop (and so no block). The
+# server will however to waited for by using the #wait_for_shutdown method.
+#
+# The Daemon is also responsible for signal handling, starting, stopping,
+# running the agent on demand, and reloading the entire process. It ensures
+# that only one Daemon is running by using a lockfile.
+#
 # @api private
 class Puppet::Daemon
   attr_accessor :agent, :server, :argv
