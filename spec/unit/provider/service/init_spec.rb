@@ -27,7 +27,7 @@ describe Puppet::Type.type(:service).provider(:init) do
 
   let :excludes do
     # Taken from redhat, gentoo, and debian
-    %w{functions.sh reboot.sh shutdown.sh functions halt killall single linuxconf reboot boot wait-for-state rcS module-init-tools}
+    %w{functions.sh reboot.sh shutdown.sh functions halt killall single linuxconf reboot boot wait-for-state}
   end
 
   describe "when getting all service instances" do
