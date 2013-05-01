@@ -12,7 +12,9 @@ require 'puppet/util/tagging'
 # of the information in the catalog, including the resources
 # and the relationships between them.
 class Puppet::Resource::Catalog < Puppet::SimpleGraph
-  class DuplicateResourceError < Puppet::Error; end
+  class DuplicateResourceError < Puppet::Error
+    include Puppet::ExternalFileError
+  end
 
   extend Puppet::Indirector
   indirects :catalog, :terminus_setting => :catalog_terminus
@@ -531,11 +533,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # If we've gotten this far, it's a real conflict
     msg = "Duplicate declaration: #{resource.ref} is already declared"
 
-    msg << " in file #{existing_resource.file} at line #{existing_resource.line}" if existing_resource.file and existing_resource.line
+    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
 
-    msg << "; cannot redeclare" if resource.line or resource.file
+    msg << "; cannot redeclare"
 
-    raise DuplicateResourceError.new(msg)
+    raise DuplicateResourceError.new(msg, resource.file, resource.line)
   end
 
   # An abstracted method for converting one catalog into another type of catalog.
