@@ -8,10 +8,10 @@ testdir = master.tmpdir('use_enc')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
 #!/usr/bin/env ruby
-puts <<YAML
-parameters:
-  data: "data from enc"
-YAML
+require 'yaml'
+puts({'classes' => [],
+      'parameters' => { 'data' => 'data from enc' },
+     }.to_yaml)
 END
 on master, "chmod 755 #{testdir}/enc.rb"
 
