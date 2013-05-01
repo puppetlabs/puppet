@@ -8,10 +8,11 @@ describe provider_class do
 
   let (:packages) do
     <<-RPM_OUTPUT
-    cracklib-dicts 0 2.8.9 3.3 x86_64
-    basesystem 0 8.0 5.1.1.el5.centos noarch
-    chkconfig 0 1.3.30.2 2.el5 x86_64
-    myresource 0 1.2.3.4 5.el4 noarch
+    cracklib-dicts 0 2.8.9 3.3 x86_64:DESC:The standard CrackLib dictionaries
+    basesystem 0 8.0 5.1.1.el5.centos noarch:DESC:The skeleton package which defines a simple Red Hat Enterprise Linux system
+    chkconfig 0 1.3.30.2 2.el5 x86_64:DESC:A system tool for maintaining the /etc/rc*.d hierarchy
+    myresource 0 1.2.3.4 5.el4 noarch:DESC:Now with summary
+    mysummaryless 0 1.2.3.4 5.el4 noarch:DESC:
     RPM_OUTPUT
   end
 
@@ -41,7 +42,7 @@ describe provider_class do
   describe "self.instances" do
     describe "with a modern version of RPM" do
       it "should include all the modern flags" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n'").yields(packages)
 
         installed_packages = subject.instances
       end
@@ -50,7 +51,7 @@ describe provider_class do
     describe "with a version of RPM < 4.1" do
       let(:rpm_version) { "RPM version 4.0.2\n" }
       it "should exclude the --nosignature flag" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n'").yields(packages)
 
         installed_packages = subject.instances
       end
@@ -59,14 +60,14 @@ describe provider_class do
     describe "with a version of RPM < 4.0.2" do
       let(:rpm_version) { "RPM version 3.0.5\n" }
       it "should exclude the --nodigest flag" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n'").yields(packages)
 
         installed_packages = subject.instances
       end
     end
 
     it "returns an array of packages" do
-      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n'").yields(packages)
+      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n'").yields(packages)
 
       installed_packages = subject.instances
 
@@ -78,7 +79,8 @@ describe provider_class do
           :version => "2.8.9",
           :release => "3.3",
           :arch => "x86_64",
-          :ensure => "2.8.9-3.3"
+          :ensure => "2.8.9-3.3",
+          :description => "The standard CrackLib dictionaries",
         }
       installed_packages[1].properties.should ==
         {
@@ -88,7 +90,8 @@ describe provider_class do
           :version => "8.0",
           :release => "5.1.1.el5.centos",
           :arch => "noarch",
-          :ensure => "8.0-5.1.1.el5.centos"
+          :ensure => "8.0-5.1.1.el5.centos",
+          :description => "The skeleton package which defines a simple Red Hat Enterprise Linux system",
         }
       installed_packages[2].properties.should ==
         {
@@ -98,7 +101,19 @@ describe provider_class do
           :version => "1.3.30.2",
           :release => "2.el5",
           :arch => "x86_64",
-          :ensure => "1.3.30.2-2.el5"
+          :ensure => "1.3.30.2-2.el5",
+          :description => "A system tool for maintaining the /etc/rc*.d hierarchy",
+        }
+      installed_packages.last.properties.should ==
+        {
+          :provider    => :rpm,
+          :name        => "mysummaryless",
+          :epoch       => "0",
+          :version     => "1.2.3.4",
+          :release     => "5.el4",
+          :arch        => "noarch",
+          :ensure      => "1.2.3.4-5.el4",
+          :description => "",
         }
     end
   end
@@ -143,7 +158,7 @@ describe provider_class do
 
     describe "on a modern RPM" do
       before(:each) do 
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 4.10.0\n" }
@@ -156,7 +171,7 @@ describe provider_class do
 
     describe "on an ancient RPM" do
       before(:each) do 
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', "--qf", "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}:DESC:%{SUMMARY}\n"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 3.0.6\n" }

@@ -15,27 +15,57 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     packages = []
 
     # list out all of the packages
-    cmd = "#{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'"
+    cmd = "#{command(:dpkgquery)} -W --showformat '#{self::DPKG_QUERY_FORMAT_STRING}'"
     Puppet.debug "Executing '#{cmd}'"
     Puppet::Util::Execution.execpipe(cmd) do |process|
-      # our regex for matching dpkg output
-      regex = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-      fields = [:desired, :error, :status, :name, :ensure]
-      hash = {}
-
-      # now turn each returned line into a package object
-      process.each_line { |line|
-        if hash = parse_line(line)
-          packages << new(hash)
-        end
-      }
+      until process.eof?
+        hash = parse_multi_line(process)
+        packages << new(hash) if hash
+      end
     end
 
     packages
   end
 
-  self::REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-  self::FIELDS = [:desired, :error, :status, :name, :ensure]
+  # dpkg-query Description field has a one line summary and a multi-line
+  # description.  dpkg-query binary:Summary is what we want to use but was
+  # introduced in 2012 dpkg 1.16.2
+  # (https://launchpad.net/debian/+source/dpkg/1.16.2) and is not not available
+  # in older Debian versions.  So we're placing a delimiter marker at the end
+  # of the description so we can consume and ignore the multiline description
+  # without issuing warnings
+  self::DPKG_DESCRIPTION_DELIMITER = ':DESC:'
+  self::DPKG_QUERY_FORMAT_STRING = %Q{${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER}${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n}
+  self::REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER}(.+)$}
+  self::FIELDS = [:desired, :error, :status, :name, :ensure, :description]
+
+  # Handles parsing one package's worth of multi-line dpkg-query output.  Will
+  # emit warnings if it encounters an initial line that does not match
+  # DPKG_QUERY_FORMAT_STRING.  Swallows extra description lines silently.
+  #
+  # @param output [IO,String] something that respond's to each_line
+  # @return [Hash] parsed dpkg-entry as a hash of FIELDS
+  # @api private
+  def self.parse_multi_line(output)
+    # now turn each returned entry into a package object
+    hash = nil
+
+    # this would be simpler with IO#gets, but we also handle a string
+    # in Dpkg#query.
+    output.each_line { |line|
+      if hash # already parsed from first line
+        break if line.match(/^#{self::DPKG_DESCRIPTION_DELIMITER}\n/)
+        next # otherwise skip through extra description lines
+      else
+        unless hash = parse_line(line)
+          # bad entry altogether
+          Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
+          return nil
+        end
+      end
+    }
+    return hash
+  end
 
   def self.parse_line(line)
     if match = self::REGEX.match(line)
@@ -54,7 +84,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       end
       hash[:ensure] = :held if hash[:desired] == 'hold'
     else
-      Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
       return nil
     end
 
@@ -96,8 +125,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   def query
     packages = []
 
-    fields = [:desired, :error, :status, :name, :ensure]
-
     hash = {}
 
     # list out our specific package
@@ -105,7 +132,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       output = dpkgquery(
         "-W",
         "--showformat",
-        '${Status} ${Package} ${Version}\\n',
+        self.class::DPKG_QUERY_FORMAT_STRING, 
         @resource[:name]
       )
     rescue Puppet::ExecutionFailure
@@ -113,7 +140,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
     end
 
-    hash = self.class.parse_line(output) || {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+    hash = self.class.parse_multi_line(output) || {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
     if hash[:error] != "ok"
       raise Puppet::Error.new(

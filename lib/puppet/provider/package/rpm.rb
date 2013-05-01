@@ -8,8 +8,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   has_feature :versionable
 
   # The query format by which we identify installed packages
-  NEVRAFORMAT = "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}"
-  NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
+  RPM_DESCRIPTION_DELIMITER = ':DESC:'
+  NEVRAFORMAT = "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}#{RPM_DESCRIPTION_DELIMITER}%{SUMMARY}"
+  NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch, :description]
 
   commands :rpm => "rpm"
 
@@ -137,8 +138,17 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   def self.nevra_to_hash(line)
     line.chomp!
+
+    # Fiddle with the line to extract description (which will almost
+    # certainly have whitespace itself)
+    description_delimited = line.split(RPM_DESCRIPTION_DELIMITER)
+    fields = description_delimited.shift
+    # Just in case the free text summary had a RPM_DESCRIPTION_DELIMITER in it...
+    description = description_delimited.join(RPM_DESCRIPTION_DELIMITER)
+
     hash = {}
-    NEVRA_FIELDS.zip(line.split) { |f, v| hash[f] = v }
+    NEVRA_FIELDS.zip(fields.split) { |f, v| hash[f] = v }
+    hash[:description] = description
     hash[:provider] = self.name
     hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
     hash

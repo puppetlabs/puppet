@@ -10,12 +10,12 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
   it { should be_versionable }
 
   context "when retrieving ensure" do
-    { :absent   => "deinstall ok config-files faff 1.2.3-1\n",
-      "1.2.3-1" => "install ok installed faff 1.2.3-1\n",
+    { :absent   => "deinstall ok config-files faff 1.2.3-1 :DESC:faff summary\n:DESC:\n",
+      "1.2.3-1" => "install ok installed faff 1.2.3-1 :DESC:faff summary\n:DESC:\n",
     }.each do |expect, output|
       it "should detect #{expect} packages" do
         pkg.provider.expects(:dpkgquery).
-          with('-W', '--showformat', '${Status} ${Package} ${Version}\n', 'faff').
+          with('-W', '--showformat', '${Status} ${Package} ${Version} :DESC:${Description}\n:DESC:\n', 'faff').
           returns(output)
 
         pkg.property(:ensure).retrieve.should == expect

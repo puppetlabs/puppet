@@ -10,7 +10,21 @@ describe provider do
     @provider = provider.new(@resource)
     @provider.expects(:execute).never # forbid "manual" executions
 
-    @fakeresult = "install ok installed asdf 1.0\n"
+    @fakeresult1 = <<-EOF
+install ok installed asdf 1.0 :DESC:asdf summary
+ asdf multiline description
+ with multiple lines
+:DESC:
+EOF
+    @fakeresult2 = <<-EOF
+install ok installed other 2.0 :DESC:other summary
+ other multiline description
+ with even more multiple lines
+ like this one
+:DESC:
+EOF
+    @a_fakeresult_io = StringIO.new(@fakeresult1)
+    @all_fakeresults_io = StringIO.new([@fakeresult1, @fakeresult2].join)
   end
 
   it "should have documentation" do
@@ -24,39 +38,67 @@ describe provider do
 
     it "should use dpkg-query" do
       provider.expects(:command).with(:dpkgquery).returns "myquery"
-      Puppet::Util::Execution.expects(:execpipe).with("myquery -W --showformat '${Status} ${Package} ${Version}\\n'").yields StringIO.new(@fakeresult)
+      Puppet::Util::Execution.expects(:execpipe).with(%Q{myquery -W --showformat '${Status} ${Package} ${Version} :DESC:${Description}\\n:DESC:\\n'}).yields @a_fakeresult_io
 
       provider.instances
     end
 
-    it "should create and return an instance with each parsed line from dpkg-query" do
-      pipe = mock 'pipe'
-      pipe.expects(:each).never
-      pipe.expects(:each_line).yields @fakeresult
-      Puppet::Util::Execution.expects(:execpipe).yields pipe
+    it "should create and return an instance with each parsed entry from dpkg-query" do
+      Puppet::Util::Execution.expects(:execpipe).yields @a_fakeresult_io
 
       asdf = mock 'pkg1'
-      provider.expects(:new).with(:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :provider => :dpkg).returns asdf
+      provider.expects(:new).with(:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :description => "asdf summary", :provider => :dpkg).returns asdf
 
       provider.instances.should == [asdf]
     end
 
+    it "should parse multiple dpkg-query multi-line entries in the output" do
+      Puppet::Util::Execution.expects(:execpipe).yields @all_fakeresults_io
+
+      asdf = mock 'pkg1'
+      provider.expects(:new).with(:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :description => "asdf summary", :provider => :dpkg).returns asdf
+      other = mock 'pkg2'
+      provider.expects(:new).with(:ensure => "2.0", :error => "ok", :desired => "install", :name => "other", :status => "installed", :description => "other summary", :provider => :dpkg).returns other
+
+      provider.instances.should == [asdf, other]
+    end
+
     it "should warn on and ignore any lines it does not understand" do
-      pipe = mock 'pipe'
-      pipe.expects(:each).never
-      pipe.expects(:each_line).yields "foobar"
-      Puppet::Util::Execution.expects(:execpipe).yields pipe
+      Puppet::Util::Execution.expects(:execpipe).yields StringIO.new('foobar')
 
       Puppet.expects(:warning)
       provider.expects(:new).never
 
       provider.instances.should == []
     end
+
+    it "should not warn on extra multiline description lines which we are ignoring" do
+      Puppet::Util::Execution.expects(:execpipe).yields @all_fakeresults_io
+
+      Puppet.expects(:warning).never
+      provider.instances
+    end
+
+    it "should warn if encounters bad entries between good entries without failing" do
+      Puppet::Util::Execution.expects(:execpipe).yields StringIO.new([@fakeresult1, "foobar\n", @fakeresult2].join)
+
+      Puppet.expects(:warning)
+
+      # WARNING: order of mock entry is important here...
+      # is there a better way to ensure return order of mocks?
+      other = mock 'pkg2'
+      provider.expects(:new).returns other
+
+      asdf = mock 'pkg1'
+      provider.expects(:new).returns asdf
+
+      provider.instances.should == [asdf, other]
+    end
   end
 
   describe "when querying the current state" do
     it "should use dpkg-query" do
-      @provider.expects(:dpkgquery).with("-W", "--showformat",'${Status} ${Package} ${Version}\\n', "asdf").returns @fakeresult
+      @provider.expects(:dpkgquery).with("-W", "--showformat",'${Status} ${Package} ${Version} :DESC:${Description}\\n:DESC:\\n', "asdf").returns @fakeresult1
 
       @provider.query
     end
@@ -68,9 +110,9 @@ describe provider do
     end
 
     it "should return a hash of the found status with the desired state, error state, status, name, and 'ensure'" do
-      @provider.expects(:dpkgquery).returns @fakeresult
+      @provider.expects(:dpkgquery).returns @fakeresult1
 
-      @provider.query.should == {:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :provider => :dpkg}
+      @provider.query.should == {:ensure => "1.0", :error => "ok", :desired => "install", :name => "asdf", :status => "installed", :provider => :dpkg, :description => "asdf summary"}
     end
 
     it "should consider the package absent if the dpkg-query result cannot be interpreted" do
@@ -80,39 +122,39 @@ describe provider do
     end
 
     it "should fail if an error is discovered" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("ok", "error")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("ok", "error")
 
       lambda { @provider.query }.should raise_error(Puppet::Error)
     end
 
     it "should consider the package purged if it is marked 'not-installed'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "not-installed")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("installed", "not-installed")
 
       @provider.query[:ensure].should == :purged
     end
 
     it "should consider the package absent if it is marked 'config-files'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "config-files")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("installed", "config-files")
       @provider.query[:ensure].should == :absent
     end
 
     it "should consider the package absent if it is marked 'half-installed'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "half-installed")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("installed", "half-installed")
       @provider.query[:ensure].should == :absent
     end
 
     it "should consider the package absent if it is marked 'unpacked'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "unpacked")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("installed", "unpacked")
       @provider.query[:ensure].should == :absent
     end
 
     it "should consider the package absent if it is marked 'half-configured'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "half-configured")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("installed", "half-configured")
       @provider.query[:ensure].should == :absent
     end
 
     it "should consider the package held if its state is 'hold'" do
-      @provider.expects(:dpkgquery).returns @fakeresult.sub("install", "hold")
+      @provider.expects(:dpkgquery).returns @fakeresult1.sub("install", "hold")
       @provider.query[:ensure].should == :held
     end
   end
