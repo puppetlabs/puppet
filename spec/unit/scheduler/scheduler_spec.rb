@@ -34,14 +34,15 @@ describe Puppet::Scheduler::Scheduler do
     job
   end
 
+  let(:scheduler) { Puppet::Scheduler::Scheduler.new(timer) }
+
   it "uses the minimum interval" do
     later_job = one_time_job(7)
     earlier_job = one_time_job(2)
-    scheduler = Puppet::Scheduler::Scheduler.new([later_job, earlier_job], timer)
     later_job.last_run = now
     earlier_job.last_run = now
 
-    scheduler.run_loop
+    scheduler.run_loop([later_job, earlier_job])
 
     timer.wait_for_calls.should == [2, 5]
   end
@@ -50,9 +51,8 @@ describe Puppet::Scheduler::Scheduler do
     enabled = one_time_job(7)
     enabled.last_run = now
     disabled = disabled_job(2)
-    scheduler = Puppet::Scheduler::Scheduler.new([enabled, disabled], timer)
 
-    scheduler.run_loop
+    scheduler.run_loop([enabled, disabled])
 
     timer.wait_for_calls.should == [7]
   end
@@ -60,46 +60,35 @@ describe Puppet::Scheduler::Scheduler do
   it "asks the timer to wait for the job interval" do
     job = one_time_job(5)
     job.last_run = now
-    scheduler = Puppet::Scheduler::Scheduler.new([job], timer)
 
-    scheduler.run_loop
+    scheduler.run_loop([job])
 
     timer.wait_for_calls.should == [5]
   end
 
   it "does not run when there are no jobs" do
-    timer = mock 'no run timer'
-    scheduler = Puppet::Scheduler::Scheduler.new([], timer)
+    scheduler.run_loop([])
 
-    timer.stubs(:now).returns(now)
-    timer.expects(:wait_for).never
-
-    scheduler.run_loop
+    timer.wait_for_calls.should be_empty
   end
 
   it "does not run when there are only disabled jobs" do
-    timer = mock 'no run timer'
     disabled_job = Puppet::Scheduler::Job.new(0)
-    scheduler = Puppet::Scheduler::Scheduler.new([disabled_job], timer)
-
     disabled_job.disable
-    timer.stubs(:now).returns(now)
-    timer.expects(:wait_for).never
 
-    scheduler.run_loop
+    scheduler.run_loop([disabled_job])
+
+    timer.wait_for_calls.should be_empty
   end
 
   it "stops running when there are no more enabled jobs" do
-    timer = mock 'run once timer'
     disabling_job = Puppet::Scheduler::Job.new(0) do |j|
       j.disable
     end
-    scheduler = Puppet::Scheduler::Scheduler.new([disabling_job], timer)
 
-    timer.stubs(:now).returns(now)
-    timer.expects(:wait_for).once
+    scheduler.run_loop([disabling_job])
 
-    scheduler.run_loop
+    timer.wait_for_calls.size.should == 1
   end
 
   it "marks the start of the run loop" do
@@ -107,8 +96,7 @@ describe Puppet::Scheduler::Scheduler do
 
     disabled_job.disable
 
-    scheduler = Puppet::Scheduler::Scheduler.new([disabled_job], timer)
-    scheduler.run_loop
+    scheduler.run_loop([disabled_job])
 
     disabled_job.start_time.should == now
   end
@@ -121,8 +109,7 @@ describe Puppet::Scheduler::Scheduler do
       job.disable if countdown == 0
     end
 
-    scheduler = Puppet::Scheduler::Scheduler.new([slow_job], timer)
-    scheduler.run_loop
+    scheduler.run_loop([slow_job])
 
     timer.wait_for_calls.should == [0, 3, 7, 3]
   end

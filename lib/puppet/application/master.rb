@@ -1,4 +1,6 @@
 require 'puppet/application'
+require 'puppet/daemon'
+require 'puppet/util/pidlock'
 
 class Puppet::Application::Master < Puppet::Application
 
@@ -152,10 +154,8 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
       exit(0)
     end
 
-    # Create this first-off, so we have ARGV
-    require 'puppet/daemon'
-    @daemon = Puppet::Daemon.new
-    @daemon.argv = ARGV.dup
+    # save ARGV to protect us from it being smashed later by something
+    @argv = ARGV.dup
   end
 
   def run_command
@@ -183,6 +183,8 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'etc'
+    daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+    daemon.argv = @argv
 
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
@@ -202,8 +204,8 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     unless options[:rack]
       require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
-      @daemon.daemonize if Puppet[:daemonize]
+      daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
+      daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
       @app = Puppet::Network::HTTP::Rack.new()
@@ -212,7 +214,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet.notice "Starting Puppet master version #{Puppet.version}"
 
     unless options[:rack]
-      @daemon.start
+      daemon.start
     else
       return @app
     end
