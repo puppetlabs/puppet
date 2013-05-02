@@ -39,6 +39,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     @daemon.reopen_logs
   end
 
+  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
+
   describe "when setting signal traps" do
     signals = {:INT => :stop, :TERM => :stop }
     signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}) unless Puppet.features.microsoft_windows?
@@ -74,9 +76,18 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should start its server if one is configured" do
-      server = mock 'server'
+      @daemon.server = server
+
       server.expects(:start)
       @daemon.stubs(:server).returns server
+
+      @daemon.start
+    end
+
+    it "waits for the server to shutdown when there is one" do
+      @daemon.server = server
+
+      server.expects(:wait_for_shutdown)
 
       @daemon.start
     end
@@ -97,7 +108,6 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should stop its server if one is configured" do
-      server = mock 'server'
       server.expects(:stop)
       @daemon.stubs(:server).returns server
       expect { @daemon.stop }.to exit_with 0
