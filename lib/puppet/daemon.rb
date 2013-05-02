@@ -144,6 +144,8 @@ class Puppet::Daemon
 
     # Finally, loop forever running events - or, at least, until we exit.
     run_event_loop
+
+    server.wait_for_shutdown if server
   end
 
   def run_event_loop
