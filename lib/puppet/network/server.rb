@@ -108,4 +108,8 @@ class Puppet::Network::Server
     unlisten
     remove_pidfile
   end
+
+  def wait_for_shutdown
+    @http_server.wait_for_shutdown
+  end
 end

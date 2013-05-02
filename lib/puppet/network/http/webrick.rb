@@ -43,7 +43,7 @@ class Puppet::Network::HTTP::WEBrick
     @mutex.synchronize do
       raise "WEBrick server is not listening" unless @listening
       @server.shutdown
-      @thread.join
+      wait_for_shutdown
       @server = nil
       @listening = false
     end
@@ -53,6 +53,10 @@ class Puppet::Network::HTTP::WEBrick
     @mutex.synchronize do
       @listening
     end
+  end
+
+  def wait_for_shutdown
+    @thread.join
   end
 
   # Configure our http log file.
