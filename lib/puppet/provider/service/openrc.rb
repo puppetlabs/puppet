@@ -29,6 +29,7 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
   # runlevel our service is listed
   def enabled?
     enabled = :false
+    ENV.delete('RC_SVCNAME')
     rcstatus('-C', '-a').each_line do |line|
       case line.chomp
       when /^Runlevel: /
