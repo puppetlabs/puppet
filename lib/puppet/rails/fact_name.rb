@@ -1,3 +1,4 @@
+require 'active_record'
 require 'puppet/rails'
 require 'puppet/rails/fact_value'
 

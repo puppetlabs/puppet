@@ -23,11 +23,6 @@ class Puppet::Application::Master < Puppet::Application
     end
   end
 
-  option("--parseonly") do
-    puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
-    exit 1
-  end
-
   def help
     <<-'HELP'
 
