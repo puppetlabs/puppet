@@ -36,7 +36,7 @@ package {
     ensure => present;
 
   activerecord:
-    ensure => '2.2.3',
+    ensure => '3.0.20',
     provider => 'gem',
     require => Package[rubygems]
 }
@@ -50,7 +50,7 @@ if $osfamily == "Debian" {
       ensure => present,
       require => Package[sqlite3]
   }
-} elsif $osfamily == "Redhat" {
+} elsif $osfamily == "RedHat" {
   package {
     sqlite:
       ensure => present;
