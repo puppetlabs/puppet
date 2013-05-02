@@ -2,8 +2,7 @@
 require 'spec_helper'
 require 'puppet/pops'
 
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
+require 'rgen/array_extensions'
 
 describe "RGen working with hashes" do
   it "should be possible to create an empty hash after having required the files above" do
