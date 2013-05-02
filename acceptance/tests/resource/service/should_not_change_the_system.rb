@@ -1,6 +1,8 @@
 test_name "`puppet resource service` should list running services without changing the system"
 
 confine :except, :platform => 'windows'
+confine :except, :platform => 'solaris'
+
 
 hosts.each do |host|
   step "list running services and make sure ssh reports running"
