@@ -34,6 +34,9 @@ class Puppet::Util::Pidlock
     @lockfile.lock_data.to_i
   end
 
+  def file_path
+    @lock_data.file_path
+  end
 
   def clear_if_stale
     return if lock_pid.nil?
