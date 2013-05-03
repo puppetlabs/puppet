@@ -1,12 +1,32 @@
-require 'puppet'
-require 'puppet/util/pidlock'
 require 'puppet/application'
 require 'puppet/scheduler'
 
-# A module that handles operations common to all daemons.  This is included
-# into the Server and Client base classes.
+# Run periodic actions and a network server in a daemonized process.
+#
+# A Daemon has 3 parts:
+#   * config reparse
+#   * (optional) an agent that responds to #run
+#   * (optional) a server that response to #stop, #start, and #wait_for_shutdown
+#
+# The config reparse will occur periodically based on Settings. The server will
+# be started and is expected to manage its own run loop (and so not block the
+# start call). The server will, however, still be waited for by using the
+# #wait_for_shutdown method. The agent is run periodically and a time interval
+# based on Settings. The config reparse will update this time interval when
+# needed.
+#
+# The Daemon is also responsible for signal handling, starting, stopping,
+# running the agent on demand, and reloading the entire process. It ensures
+# that only one Daemon is running by using a lockfile.
+#
+# @api private
 class Puppet::Daemon
   attr_accessor :agent, :server, :argv
+
+  def initialize(pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
+    @scheduler = scheduler
+    @pidfile = pidfile
+  end
 
   def daemonname
     Puppet.run_mode.name
@@ -52,19 +72,6 @@ class Puppet::Daemon
     Puppet::Daemon.close_streams
   end
 
-  # Create a pidfile for our daemon, so we can be stopped and others
-  # don't try to start.
-  def create_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
-    end
-  end
-
-  # Provide the path to our pidfile.
-  def pidfile
-    Puppet[:pidfile]
-  end
-
   def reexec
     raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
     command = $0 + " " + argv.join(" ")
@@ -81,13 +88,6 @@ class Puppet::Daemon
     end
 
     agent.run({:splay => false})
-  end
-
-  # Remove the pid file for our daemon.
-  def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      Puppet::Util::Pidlock.new(pidfile).unlock
-    end
   end
 
   def restart
@@ -148,6 +148,23 @@ class Puppet::Daemon
     server.wait_for_shutdown if server
   end
 
+  private
+
+  # Create a pidfile for our daemon, so we can be stopped and others
+  # don't try to start.
+  def create_pidfile
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
+      raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
+    end
+  end
+
+  # Remove the pid file for our daemon.
+  def remove_pidfile
+    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
+      @pidfile.unlock
+    end
+  end
+
   def run_event_loop
     agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do
       # Splay for the daemon is handled in the scheduler
@@ -167,9 +184,7 @@ class Puppet::Daemon
     reparse_run.disable if Puppet[:filetimeout] == 0
     agent_run.disable unless agent
 
-    scheduler = Puppet::Scheduler::Scheduler.new([reparse_run, agent_run])
-
-    scheduler.run_loop
+    @scheduler.run_loop([reparse_run, agent_run])
   end
 end
 

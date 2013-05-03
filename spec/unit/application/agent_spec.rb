@@ -464,22 +464,28 @@ describe Puppet::Application::Agent do
 
 
       it "should exit if no authorization file" do
+        Puppet[:listen] = true
         Puppet.stubs(:err)
         FileTest.stubs(:exists?).with(Puppet[:rest_authconfig]).returns(false)
-        expect { @puppetd.setup_listen }.to exit_with 14
+
+        expect { @puppetd.setup }.to exit_with 14
       end
 
       it "should use puppet default port" do
         Puppet[:puppetport] = 32768
+        Puppet[:listen] = true
 
         Puppet::Network::Server.expects(:new).with(anything, 32768)
 
-        @puppetd.setup_listen
+        @puppetd.setup
       end
-      
+
       it "should issue a warning that listen is deprecated" do
+        Puppet[:listen] = true
+
         Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
-        @puppetd.setup_listen
+
+        @puppetd.setup
       end
     end
 
