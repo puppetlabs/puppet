@@ -47,6 +47,29 @@ describe Puppet::Type.type(:user) do
     described_class.provider_feature(:system_users).should_not be_nil
   end
 
+  describe :managehome do
+    let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
+    let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
+
+    it "defaults to false" do
+      instance[:managehome].should be_false
+    end
+
+    it "can be set to false" do
+      instance[:managehome] = 'false'
+    end
+
+    it "cannot be set to true for a provider that does not manage homedirs" do
+      provider.class.stubs(:manages_homedir?).returns false
+      expect { instance[:managehome] = 'yes' }.to raise_error Puppet::Error
+    end
+
+    it "can be set to true for a provider that does manage homedirs" do
+      provider.class.stubs(:manages_homedir?).returns true
+      instance[:managehome] = 'yes'
+    end
+  end
+
   describe "instances" do
     it "should delegate existence questions to its provider" do
       @provider = @provider_class.new(:name => 'foo', :ensure => :absent)

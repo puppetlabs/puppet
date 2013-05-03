@@ -1,4 +1,5 @@
 require 'puppet'
+require 'puppet/parameter/boolean'
 
 Puppet::Type.newtype(:resources) do
   @doc = "This is a metatype that can manage other resource types.  Any
@@ -17,15 +18,15 @@ Puppet::Type.newtype(:resources) do
     munge { |v| v.to_s }
   end
 
-  newparam(:purge, :boolean => true) do
+  newparam(:purge, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Purge unmanaged resources.  This will delete any resource
       that is not specified in your configuration
       and is not required by any specified resources."
 
-    newvalues(:true, :false)
+    defaultto :false
 
     validate do |value|
-      if [:true, true, "true"].include?(value)
+      if munge(value)
         unless @resource.resource_type.respond_to?(:instances)
           raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
         end

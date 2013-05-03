@@ -1,5 +1,6 @@
 require 'etc'
 require 'facter'
+require 'puppet/parameter/boolean'
 require 'puppet/property/list'
 require 'puppet/property/ordered_list'
 require 'puppet/property/keyvalue'
@@ -283,37 +284,31 @@ module Puppet
       defaultto :minimum
     end
 
-    newparam(:system, :boolean => true) do
+    newparam(:system, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether the user is a system user, according to the OS's criteria;
       on most platforms, a UID less than or equal to 500 indicates a system
       user. Defaults to `false`."
 
-      newvalues(:true, :false)
-
       defaultto false
     end
 
-    newparam(:allowdupe, :boolean => true) do
+    newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to allow duplicate UIDs. Defaults to `false`."
 
-      newvalues(:true, :false)
-
       defaultto false
     end
 
-    newparam(:managehome, :boolean => true) do
+    newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to manage the home directory when managing the user.
         This will create the home directory when `ensure => present`,
         delete the home directory when `ensure => absent`. Linux only:
         this will update the user's home directory when the `home` property
         changes. Defaults to `false`."
 
-      newvalues(:true, :false)
-
       defaultto false
 
       validate do |val|
-        if val.to_s == "true"
+        if munge(val)
           raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and not provider.class.manages_homedir?
         end
       end
@@ -561,10 +556,11 @@ module Puppet
       end
     end
 
-    newparam(:forcelocal, :boolean => true, :required_features => :libuser ) do
+    newparam(:forcelocal, :boolean => true,
+            :required_features => :libuser,
+            :parent => Puppet::Parameter::Boolean) do
       desc "Forces the mangement of local accounts when accounts are also
             being managed by some other NSS"
-      newvalues(:true, :false)
       defaultto false
     end
   end

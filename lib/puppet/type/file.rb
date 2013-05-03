@@ -5,6 +5,7 @@ require 'uri'
 require 'fileutils'
 require 'enumerator'
 require 'pathname'
+require 'puppet/parameter/boolean'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
 require 'puppet/util/backups'
@@ -163,26 +164,22 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  newparam(:replace, :boolean => true) do
+  newparam(:replace, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Whether to replace a file or symlink that already exists on the local system but
       whose content doesn't match what the `source` or `content` attribute
       specifies.  Setting this to false allows file resources to initialize files
       without overwriting future changes.  Note that this only affects content;
       Puppet will still manage ownership and permissions. Defaults to `true`."
-    newvalues(:true, :false)
-    aliasvalue(:yes, :true)
-    aliasvalue(:no, :false)
     defaultto :true
   end
 
-  newparam(:force, :boolean => true) do
+  newparam(:force, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Perform the file operation even if it will destroy one or more directories.
       You must use `force` in order to:
 
       * `purge` subdirectories
       * Replace directories with files or links
       * Remove a directory when `ensure => absent`"
-    newvalues(:true, :false)
     defaultto false
   end
 
@@ -213,7 +210,7 @@ Puppet::Type.newtype(:file) do
     defaultto :manage
   end
 
-  newparam(:purge, :boolean => true) do
+  newparam(:purge, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Whether unmanaged files should be purged. This option only makes
       sense when managing directories with `recurse => true`.
 
@@ -228,8 +225,6 @@ Puppet::Type.newtype(:file) do
       but if you do not, this will destroy data."
 
     defaultto :false
-
-    newvalues(:true, :false)
   end
 
   newparam(:sourceselect) do
@@ -245,7 +240,7 @@ Puppet::Type.newtype(:file) do
     newvalues(:first, :all)
   end
 
-  newparam(:show_diff, :boolean => true) do
+  newparam(:show_diff, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Whether to display differences when the file changes, defaulting to
         true.  This parameter is useful for files that may contain passwords or
         other secret data, which might otherwise be included in Puppet reports or
@@ -253,8 +248,6 @@ Puppet::Type.newtype(:file) do
         is false, then no diffs will be shown even if this parameter is true."
 
     defaultto :true
-
-    newvalues(:true, :false)
   end
 
   # Autorequire the nearest ancestor directory found in the catalog.
@@ -476,16 +469,6 @@ Puppet::Type.newtype(:file) do
     else
       return [self.ref]
     end
-  end
-
-  # Should we be purging?
-  def purge?
-    @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
-  end
-
-  # Should we be showing diffs?
-  def show_diff?
-    @parameters.include?(:show_diff) and (self[:show_diff] == :true or self[:show_diff] == "true")
   end
 
   # Recursively generate a list of file resources, which will
@@ -776,7 +759,7 @@ Puppet::Type.newtype(:file) do
 
   # @return [Boolean] If the current file can be backed up and needs to be backed up.
   def can_backup?(type)
-    if type == "directory" and self[:force] == :false
+    if type == "directory" and not force?
       # (#18110) Directories cannot be removed without :force, so it doesn't
       # make sense to back them up.
       false
@@ -788,7 +771,7 @@ Puppet::Type.newtype(:file) do
   # @return [Boolean] True if the directory was removed
   # @api private
   def remove_directory(wanted_type)
-    if self[:force] == :true
+    if force?
       debug "Removing existing directory for replacement with #{wanted_type}"
       FileUtils.rmtree(self[:path])
       stat_needed
