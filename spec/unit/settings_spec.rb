@@ -266,7 +266,7 @@ describe Puppet::Settings do
       @settings[:myval] = "12"
       @settings.set_by_cli?(:myval).should be_false
     end
-    
+
     describe "setbycli" do
       it "should generate a deprecation warning" do
         Puppet.expects(:deprecation_warning)
@@ -477,7 +477,8 @@ describe Puppet::Settings do
           :one    => { :default => "ONE", :desc => "a" },
           :two    => { :default => "$one TWO", :desc => "b"},
           :three  => { :default => "$one $two THREE", :desc => "c"},
-          :four   => { :default => "$two $three FOUR", :desc => "d"}
+          :four   => { :default => "$two $three FOUR", :desc => "d"},
+          :five   => { :default => nil, :desc => "e" }
       FileTest.stubs(:exist?).returns true
     end
 
@@ -533,6 +534,20 @@ describe Puppet::Settings do
       @settings[:two].should == "ONE TWO"
       @settings[:one] = "one"
       @settings[:two].should == "one TWO"
+    end
+
+    describe "caching values that evaluate to false" do
+      it "caches nil" do
+        @settings.expects(:convert).once.returns nil
+        @settings[:five].should be_nil
+        @settings[:five].should be_nil
+      end
+
+      it "caches false" do
+        @settings.expects(:convert).once.returns false
+        @settings[:five].should == false
+        @settings[:five].should == false
+      end
     end
 
     it "should not cache values such that information from one environment is returned for another environment" do
