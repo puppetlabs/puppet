@@ -51,11 +51,16 @@ if $osfamily == "Debian" {
       require => Package[sqlite3]
   }
 } elsif $osfamily == "RedHat" {
+  $sqlite_gem_pkg_name = $operatingsystem ? {
+    Fedora => "rubygem-sqlite3",
+    default => "rubygem-sqlite3-ruby"
+  }
+
   package {
     sqlite:
       ensure => present;
 
-    rubygem-sqlite3-ruby:
+    $sqlite_gem_pkg_name:
       ensure => present,
       require => Package[sqlite]
   }
