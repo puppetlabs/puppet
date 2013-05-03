@@ -952,8 +952,15 @@ Generated on #{Time.now}.
   end
   private :find_value
 
-  # Find the correct value using our search path.  Optionally accept an environment
-  # in which to search before the other configuration sections.
+  # Find the correct value using our search path.
+  #
+  # @param param [String, Symbol] The value to look up
+  # @param environment [String, Symbol] The environment to check for the value
+  # @param bypass_interpolation [true, false] Whether to skip interpolation
+  #
+  # @return [Object] The looked up value
+  #
+  # @raise [InterpolationError]
   def value(param, environment = nil, bypass_interpolation = false)
     param = param.to_sym
     environment &&= environment.to_sym
