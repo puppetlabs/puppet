@@ -20,7 +20,7 @@ module Puppet
     module Parser
       class Parser < Racc::Parser
 
-module_eval(<<'...end egrammar.ra/module_eval...', 'egrammar.ra', 719)
+module_eval(<<'...end egrammar.ra/module_eval...', 'egrammar.ra', 718)
 
 # Make emacs happy
 # Local Variables:
