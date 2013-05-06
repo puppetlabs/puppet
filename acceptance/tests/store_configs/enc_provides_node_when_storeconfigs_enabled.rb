@@ -31,12 +31,21 @@ on master, "chown -R root:puppet #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 create_remote_file master, "#{testdir}/setup.pp", <<END
+
+$active_record_version = $osfamily ? {
+  RedHat => $lsbmajdistrelease ? {
+    5       => '2.2.3',
+    default => '3.0.20',
+  },
+  default => '3.0.20',
+}
+
 package {
   rubygems:
     ensure => present;
 
   activerecord:
-    ensure => '3.0.20',
+    ensure => $active_record_version,
     provider => 'gem',
     require => Package[rubygems]
 }
