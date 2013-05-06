@@ -472,6 +472,25 @@ have a pool of multiple load balanced masters, or for the same master to
 respond on two physically separate networks under different names.
 EOT
     },
+    :csr_attributes_file => {
+      :type => :string,
+      :default => "$confdir/csrattributes.yaml",
+      :desc => <<EOT,
+YAML file which contains additional attributes to add to the CSR.
+This file should be in a `key: value` format where the key is an OID and the
+value is a string, number, or single-level array of strings or numbers
+(numbers will be converted to decimal strings when added to the CSR).
+
+For example:
+---
+1.3.6.1.4.1.34380.2.0: hostname.domain.com
+1.3.6.1.4.1.34380.2.1: my super secret autosign passhprase
+1.3.6.1.4.1.34380.2.2: # system IPs in hex
+  - 0xC0A80001 # 192.168.0.1
+  - 0xC0A80101 # 192.168.1.1
+EOT
+      :hook => proc { |value| raise ArgumentError, "The csr_attributes_file parameter must be an absolute path." unless Puppet::Util.absolute_path?(value) },
+    },
     :certdir => {
       :default => "$ssldir/certs",
       :type   => :directory,
@@ -686,7 +705,24 @@ EOT
       :desc => "Whether to enable autosign.  Valid values are true (which
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
-        uses that configuration file to determine which keys to sign."},
+        uses that configuration file to determine which keys to sign.",
+			:hook => proc { |value| "The autosign parameter must be 'true'/'false' or an absolute path." unless [false, 'false', true, 'true'].include?(value) or Puppet::Util.absolute_path?(value) },
+
+    },
+    :autosign_command => {
+      :default => nil,
+      :type => :string,
+      :desc => "Command to run which determines whether certificate
+        request should be automatically signed. The script is called
+        on each request and is passed the certificate name as an
+        argument. It should exit with a status of 0 if the cert is to be
+        signed, and non-zero otherwise.
+        The 'autosign' parameter has precedence over this one. If 'autosign'
+        determines a cert should be signed, 'autosign_command' will never be
+        called. However if 'autosign' does not validate a request, it will
+        pass through to 'autosign_command'.",
+      :hook => proc { |value| raise ArgumentError, "The autosign_command parameter must be an absolute path." unless Puppet::Util.absolute_path?(value) },
+    },
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
