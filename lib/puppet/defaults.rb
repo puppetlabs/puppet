@@ -3,6 +3,14 @@
 
 module Puppet
 
+  def self.default_diffargs
+    if (Facter.value(:kernel) == "AIX" && Facter.value(:kernelmajversion) == "5300")
+      ""
+    else
+      "-u"
+    end
+  end
+
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
   #   see the docs for Settings.define_settings
@@ -170,7 +178,7 @@ module Puppet
             "this provides the default environment for nodes we know nothing about."
     },
     :diff_args => {
-        :default  => "-u",
+        :default  => default_diffargs,
         :desc     => "Which arguments to pass to the diff command when printing differences between\n" +
             "files. The command to use can be chosen with the `diff` setting.",
     },
