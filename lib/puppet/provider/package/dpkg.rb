@@ -11,15 +11,25 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
 
+  # Performs a dpkgquery call with a pipe so that output can be processed
+  # inline in a passed block.
+  # @param args [Array<String>] any command line arguments to be appended to the command
+  # @param block expected to be passed on to execpipe
+  # @return whatever the block returns
+  # @see Puppet::Util::Execution.execpipe
+  # @api private
+  def self.dpkgquery_piped(*args, &block)
+    cmd = args.unshift(command(:dpkgquery))
+    Puppet::Util::Execution.execpipe(cmd, &block)
+  end
+
   def self.instances
     packages = []
 
     # list out all of the packages
-    cmd = "#{command(:dpkgquery)} -W --showformat '#{self::DPKG_QUERY_FORMAT_STRING}'"
-    Puppet.debug "Executing '#{cmd}'"
-    Puppet::Util::Execution.execpipe(cmd) do |process|
-      until process.eof?
-        hash = parse_multi_line(process)
+    dpkgquery_piped('-W', '--showformat', self::DPKG_QUERY_FORMAT_STRING) do |pipe|
+      until pipe.eof?
+        hash = parse_multi_line(pipe)
         packages << new(hash) if hash
       end
     end
@@ -27,53 +37,49 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     packages
   end
 
-  # dpkg-query Description field has a one line summary and a multi-line
-  # description.  dpkg-query binary:Summary is what we want to use but was
-  # introduced in 2012 dpkg 1.16.2
-  # (https://launchpad.net/debian/+source/dpkg/1.16.2) and is not not available
-  # in older Debian versions.  So we're placing a delimiter marker at the end
-  # of the description so we can consume and ignore the multiline description
-  # without issuing warnings
+  private
+
+  # Note: self:: is required here to keep these constants in the context of what will
+  # eventually become this Puppet:Type::Package::ProviderDpkg class.
   self::DPKG_DESCRIPTION_DELIMITER = ':DESC:'
-  self::DPKG_QUERY_FORMAT_STRING = %Q{${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER}${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n}
-  self::REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER}(.+)$}
-  self::FIELDS = [:desired, :error, :status, :name, :ensure, :description]
+  self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER} ${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n'}
+  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER} (.*)$}
+  self::FIELDS= [:desired, :error, :status, :name, :ensure, :description]
+  self::END_REGEX = %r{^#{self::DPKG_DESCRIPTION_DELIMITER}$}
 
   # Handles parsing one package's worth of multi-line dpkg-query output.  Will
   # emit warnings if it encounters an initial line that does not match
   # DPKG_QUERY_FORMAT_STRING.  Swallows extra description lines silently.
   #
-  # @param output [IO,String] something that respond's to each_line
-  # @return [Hash] parsed dpkg-entry as a hash of FIELDS
+  # @param pipe [IO] the pipe yielded while processing dpkg output
+  # @return [Hash,nil] parsed dpkg-query entry as a hash of FIELDS strings or
+  # nil if we failed to parse
   # @api private
-  def self.parse_multi_line(output)
-    # now turn each returned entry into a package object
-    hash = nil
+  def self.parse_multi_line(pipe)
 
-    # this would be simpler with IO#gets, but we also handle a string
-    # in Dpkg#query.
-    output.each_line { |line|
-      if hash # already parsed from first line
-        break if line.match(/^#{self::DPKG_DESCRIPTION_DELIMITER}\n/)
-        next # otherwise skip through extra description lines
-      else
-        unless hash = parse_line(line)
-          # bad entry altogether
-          Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
-          return nil
-        end
-      end
-    }
+    line = pipe.gets
+    unless hash = parse_line(line)
+      Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
+      return nil
+    end
+
+    consume_excess_description(pipe)
+
     return hash
   end
 
+  # @param line [String] one line of dpkg-query output
+  # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
+  # @api private
   def self.parse_line(line)
-    if match = self::REGEX.match(line)
+    hash = nil
+
+    if match = self::FIELDS_REGEX.match(line)
       hash = {}
 
-      self::FIELDS.zip(match.captures) { |field,value|
+      self::FIELDS.zip(match.captures) do |field,value|
         hash[field] = value
-      }
+      end
 
       hash[:provider] = self.name
 
@@ -83,12 +89,32 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[:ensure] = :absent
       end
       hash[:ensure] = :held if hash[:desired] == 'hold'
-    else
-      return nil
     end
 
-    hash
+    return hash
   end
+
+  # Silently consumes the extra description lines from dpkg-query and brings
+  # us to the next package entry start.
+  #
+  # @note dpkg-query Description field has a one line summary and a multi-line
+  # description.  dpkg-query binary:Summary is what we want to use but was
+  # introduced in 2012 dpkg 1.16.2
+  # (https://launchpad.net/debian/+source/dpkg/1.16.2) and is not not available
+  # in older Debian versions.  So we're placing a delimiter marker at the end
+  # of the description so we can consume and ignore the multiline description
+  # without issuing warnings
+  #
+  # @param pipe [IO] the pipe yielded while processing dpkg output
+  # @return nil
+  def self.consume_excess_description(pipe)
+    until pipe.eof?
+      break if self::END_REGEX.match(pipe.gets)
+    end
+    return nil
+  end
+
+  public
 
   def install
     unless file = @resource[:source]
@@ -123,24 +149,24 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def query
-    packages = []
-
-    hash = {}
+    hash = nil
 
     # list out our specific package
     begin
-      output = dpkgquery(
+      self.class.dpkgquery_piped(
         "-W",
         "--showformat",
-        self.class::DPKG_QUERY_FORMAT_STRING, 
+        self.class::DPKG_QUERY_FORMAT_STRING,
         @resource[:name]
-      )
+      ) do |pipe|
+        hash = self.class.parse_multi_line(pipe)
+      end
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
     end
 
-    hash = self.class.parse_multi_line(output) || {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+    hash ||= {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
     if hash[:error] != "ok"
       raise Puppet::Error.new(
@@ -175,4 +201,5 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
     end
   end
+
 end
