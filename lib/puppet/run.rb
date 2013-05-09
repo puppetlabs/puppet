@@ -33,6 +33,17 @@ class Puppet::Run
     @options = options
   end
 
+  def initialize_from_hash(hash)
+    @options = {}
+
+    hash['options'].each do |key, value|
+      @options[key.to_sym] = value
+    end
+
+    @background = hash['background']
+    @status = hash['status']
+  end
+
   def log_run
     msg = ""
     msg += "triggered run" % if options[:tags]
@@ -63,9 +74,20 @@ class Puppet::Run
     self
   end
 
-  def self.from_pson( pson )
+  def self.from_hash(hash)
+    obj = allocate
+    obj.initialize_from_hash(hash)
+    obj
+  end
+
+  def self.from_pson(hash)
+    if hash['options']
+      return from_hash(hash)
+    end
+
     options = { :pluginsync => Puppet[:pluginsync] }
-    pson.each do |key, value|
+
+    hash.each do |key, value|
       options[key.to_sym] = value
     end
 

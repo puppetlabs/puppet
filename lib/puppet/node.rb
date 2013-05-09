@@ -22,7 +22,7 @@ class Puppet::Node
   ::PSON.register_document_type('Node',self)
 
   def self.from_pson(pson)
-    raise ArgumentError, "No name provided in pson data" unless name = pson['name']
+    raise ArgumentError, "No name provided in serialized data" unless name = pson['name']
 
     node = new(name)
     node.classes = pson['classes']

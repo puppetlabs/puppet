@@ -9,6 +9,12 @@ class Puppet::Util::Metric
 
   attr_writer :basedir
 
+  def self.from_pson(data)
+    metric = new(data['name'], data['label'])
+    metric.values = data['values']
+    metric
+  end
+
   # Return a specific value
   def [](name)
     if value = @values.find { |v| v[0] == name }

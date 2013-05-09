@@ -28,8 +28,8 @@ class Puppet::Resource
   ATTRIBUTES = [:file, :line, :exported]
 
   def self.from_pson(pson)
-    raise ArgumentError, "No resource type provided in pson data" unless type = pson['type']
-    raise ArgumentError, "No resource title provided in pson data" unless title = pson['title']
+    raise ArgumentError, "No resource type provided in serialized data" unless type = pson['type']
+    raise ArgumentError, "No resource title provided in serialized data" unless title = pson['title']
 
     resource = new(type, title)
 
@@ -46,8 +46,6 @@ class Puppet::Resource
         resource.send(a.to_s + "=", value)
       end
     end
-
-    resource.exported ||= false
 
     resource
   end
