@@ -32,36 +32,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet.settings[port_setting || :masterport].to_i
   end
 
-  # Figure out the content type, turn that into a format, and use the format
-  # to extract the body of the response.
-  def deserialize(response, multiple = false)
-    case response.code
-    when "404"
-      return nil
-    when /^2/
-      raise "No content type in http response; cannot parse" unless response['content-type']
-
-      content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
-
-      body = uncompress_body(response)
-
-      # Convert the response to a deserialized object.
-      if multiple
-        model.convert_from_multiple(content_type, body)
-      else
-        model.convert_from(content_type, body)
-      end
-    else
-      # Raise the http error if we didn't get a 'success' of some kind.
-      raise convert_to_http_error(response)
-    end
-  end
-
-  def convert_to_http_error(response)
-    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-    Net::HTTPError.new(message, response)
-  end
-
   # Provide appropriate headers.
   def headers
     add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
@@ -127,39 +97,58 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     else
       http_get(request, uri_with_query_string, headers)
     end
-    result = deserialize response
-    result.name = request.key if result.respond_to?(:name=)
-    result
+
+    if is_http_200?(response)
+      content_type, body = parse_response(response)
+      result = deserialize_find(content_type, body)
+      result.name = request.key if result.respond_to?(:name=)
+      result
+    else
+      nil
+    end
   end
 
   def head(request)
     response = http_head(request, indirection2uri(request), headers)
-    case response.code
-    when "404"
-      return false
-    when /^2/
-      return true
-    else
-      # Raise the http error if we didn't get a 'success' of some kind.
-      raise convert_to_http_error(response)
-    end
+
+    !!is_http_200?(response)
   end
 
   def search(request)
-    unless result = deserialize(http_get(request, indirection2uri(request), headers), true)
-      return []
+    response = http_get(request, indirection2uri(request), headers)
+
+    if is_http_200?(response)
+      content_type, body = parse_response(response)
+      deserialize_search(content_type, body) || []
+    else
+      []
     end
-    result
   end
 
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-    deserialize http_delete(request, indirection2uri(request), headers)
+
+    response = http_delete(request, indirection2uri(request), headers)
+
+    if is_http_200?(response)
+      content_type, body = parse_response(response)
+      deserialize_destroy(content_type, body)
+    else
+      nil
+    end
   end
 
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-    deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+
+    response = http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+
+    if is_http_200?(response)
+      content_type, body = parse_response(response)
+      deserialize_save(content_type, body)
+    else
+      nil
+    end
   end
 
   def validate_key(request)
@@ -167,6 +156,51 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   private
+
+  def is_http_200?(response)
+    case response.code
+    when "404"
+      false
+    when /^2/
+      true
+    else
+      # Raise the http error if we didn't get a 'success' of some kind.
+      raise convert_to_http_error(response)
+    end
+  end
+
+  def convert_to_http_error(response)
+    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+    Net::HTTPError.new(message, response)
+  end
+
+  # Returns the content_type, stripping any appended charset, and the
+  # body, decompressed if necessary (content-encoding is checked inside
+  # uncompress_body)
+  def parse_response(response)
+    if response['content-type']
+      [ response['content-type'].gsub(/\s*;.*$/,''),
+        body = uncompress_body(response) ]
+    else
+      raise "No content type in http response; cannot parse"
+    end
+  end
+
+  def deserialize_find(content_type, body)
+    model.convert_from(content_type, body)
+  end
+
+  def deserialize_search(content_type, body)
+    model.convert_from_multiple(content_type, body)
+  end
+
+  def deserialize_destroy(content_type, body)
+    model.convert_from(content_type, body)
+  end
+
+  def deserialize_save(content_type, body)
+    nil
+  end
 
   def environment
     Puppet::Node::Environment.new

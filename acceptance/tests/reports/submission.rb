@@ -6,7 +6,7 @@ with_master_running_on(master, "--reportdir #{testdir} --reports store --daemoni
   agents.each do |agent|
     run_agent_on(agent, "-t --server #{master}")
 
-    on master, "grep -rq #{agent} #{testdir}"
+    on master, "grep -q #{agent} #{testdir}/*/*"
   end
 end
 

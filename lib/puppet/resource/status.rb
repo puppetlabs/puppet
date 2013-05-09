@@ -14,6 +14,13 @@ module Puppet
 
       YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count @out_of_sync_count @tags @time @events @out_of_sync @changed @resource_type @title @skipped @failed}
 
+
+      def self.from_pson(data)
+        obj = self.allocate
+        obj.initialize_from_hash(data)
+        obj
+      end
+
       # Provide a boolean method for each of the states.
       STATES.each do |attr|
         define_method("#{attr}?") do
@@ -63,6 +70,27 @@ module Puppet
         @events = []
         @resource_type = resource.type.to_s.capitalize
         @title = resource.title
+      end
+
+      def initialize_from_hash(data)
+        @resource_type = data['resource_type']
+        @title = data['title']
+        @resource = data['resource']
+        @file = data['file']
+        @line = data['line']
+        @evaluation_time = data['evaluation_time']
+        @change_count = data['change_count']
+        @out_of_sync_count = data['out_of_sync_count']
+        @tags = data['tags']
+        @time = data['time']
+        @out_of_sync = data['out_of_sync']
+        @changed = data['changed']
+        @skipped = data['skipped']
+        @failed = data['failed']
+
+        @events = data['events'].map do |event|
+          Puppet::Transaction::Event.from_pson(event)
+        end
       end
 
       def to_yaml_properties

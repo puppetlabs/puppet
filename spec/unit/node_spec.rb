@@ -36,6 +36,87 @@ describe Puppet::Node do
       node.environment.name.should == :bar
     end
   end
+
+  it "can survive a round-trip through YAML" do
+    facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+    node = Puppet::Node.new("hello",
+                            :environment => 'kjhgrg',
+                            :classes => ['erth', 'aiu'],
+                            :parameters => {"hostname"=>"food"}
+                           )
+    new_node = Puppet::Node.convert_from('yaml', node.render('yaml'))
+    new_node.environment.should == node.environment
+    new_node.parameters.should == node.parameters
+    new_node.classes.should == node.classes
+    new_node.name.should == node.name
+  end
+
+  describe "when converting to json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+    end
+
+    it "should provide its name" do
+      @node.should set_json_attribute('name').to("mynode")
+    end
+
+    it "should produce a hash with the document_type set to 'Node'" do
+      @node.should set_json_document_type_to("Node")
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      @node.should set_json_attribute("classes").to(%w{a b c})
+    end
+
+    it "should not include the classes if there are none" do
+      @node.should_not set_json_attribute('classes')
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      @node.should set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
+    end
+
+    it "should not include the parameters if there are none" do
+      @node.should_not set_json_attribute('parameters')
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      @node.should set_json_attribute('environment').to('production')
+    end
+  end
+
+  describe "when converting from json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+      @format = Puppet::Network::FormatHandler.format('pson')
+    end
+
+    def from_json(json)
+      @format.intern(Puppet::Node, json)
+    end
+
+    it "should set its name" do
+      Puppet::Node.should read_json_attribute('name').from(@node.to_pson).as("mynode")
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      Puppet::Node.should read_json_attribute('classes').from(@node.to_pson).as(%w{a b c})
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      Puppet::Node.should read_json_attribute('parameters').from(@node.to_pson).as({"a" => "b", "c" => "d"})
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(Puppet::Node::Environment.new(:production))
+    end
+  end
 end
 
 describe Puppet::Node, "when initializing" do
