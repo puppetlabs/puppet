@@ -25,7 +25,7 @@ on master, "mkdir -p #{testdir}/modules"
 on master, "mkdir -p #{testdir}/special/amod/lib/puppet"
 create_remote_file(master, "#{testdir}/special/amod/lib/puppet/foo.rb", "#special_version")
 
-on master, "chown -R root:puppet #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do

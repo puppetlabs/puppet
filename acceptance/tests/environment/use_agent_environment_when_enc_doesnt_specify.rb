@@ -26,7 +26,7 @@ END
 create_remote_file(master, "#{testdir}/different.pp", 'notify { "production environment": }')
 create_remote_file(master, "#{testdir}/more_different.pp", 'notify { "more_different_string": }')
 
-on master, "chown -R root:puppet #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do

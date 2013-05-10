@@ -27,7 +27,7 @@ END
 
 create_remote_file(master, "#{testdir}/site.pp", 'notify { $data: }')
 
-on master, "chown -R root:puppet #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 create_remote_file master, "#{testdir}/setup.pp", <<END
