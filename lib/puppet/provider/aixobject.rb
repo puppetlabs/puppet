@@ -7,24 +7,20 @@ class Puppet::Provider::AixObject < Puppet::Provider
   desc "Generic AIX resource provider"
 
   # The real provider must implement these functions.
-  def lscmd(value=@resource[:name])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def lscmd( _value = @resource[:name] )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd"
   end
 
-  def lscmd(value=@resource[:name])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def addcmd( _extra_attrs = [] )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement addcmd"
   end
 
-  def addcmd(extra_attrs = [])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
-  end
-
-  def modifycmd(attributes_hash)
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def modifycmd( _attributes_hash = {} )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement modifycmd"
   end
 
   def deletecmd
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement deletecmd"
   end
 
   # Valid attributes to be managed by this provider.
@@ -161,7 +157,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_attr_list(str, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if !str or (attrs = str.split()).empty?
+    if str.nil? or (attrs = str.split()).empty?
       return nil
     end
 
@@ -169,7 +165,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       if i.include? "=" # Ignore if it does not include '='
         (key_str, val) = i.split('=')
         # Check the key
-        if !key_str or key_str.empty?
+        if key_str.nil? or key_str.empty?
           info "Empty key in string 'i'?"
           continue
         end
@@ -193,7 +189,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_colon_list(str, key_list, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if !str or (attrs = str.split(':')).empty?
+    if str.nil? or (attrs = str.split(':')).empty?
       return nil
     end
 

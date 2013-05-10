@@ -21,7 +21,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
-  confine :operatingsystem => :aix
+  confine    :operatingsystem => :aix
 
   # Commands that manage the element
   commands :list      => "/usr/sbin/lsuser"
@@ -60,19 +60,20 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #  :to            Method to adapt puppet property to aix command value. Optional.
   #  :from          Method to adapt aix command value to puppet property. Optional
   self.attribute_mapping = [
-    #:name => :name,
-    {:aix_attr => :pgrp,       :puppet_prop => :gid,
-        :to => :gid_to_attr, :from => :gid_from_attr},
-    {:aix_attr => :id,         :puppet_prop => :uid},
-    {:aix_attr => :groups,     :puppet_prop => :groups},
-    {:aix_attr => :home,       :puppet_prop => :home},
-    {:aix_attr => :shell,      :puppet_prop => :shell},
-    {:aix_attr => :expires,    :puppet_prop => :expiry,
-        :to => :expiry_to_attr, :from => :expiry_from_attr},
-    {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
-    {:aix_attr => :minage,     :puppet_prop => :password_min_age},
-    {:aix_attr => :attributes, :puppet_prop => :attributes},
-    {:aix_attr => :gecos,      :puppet_prop => :comment},
+    { :aix_attr => :pgrp,       :puppet_prop => :gid,
+                                :to => :gid_to_attr,
+                                :from => :gid_from_attr },
+    { :aix_attr => :id,         :puppet_prop => :uid },
+    { :aix_attr => :groups,     :puppet_prop => :groups },
+    { :aix_attr => :home,       :puppet_prop => :home },
+    { :aix_attr => :shell,      :puppet_prop => :shell },
+    { :aix_attr => :expires,    :puppet_prop => :expiry,
+                                :to => :expiry_to_attr,
+                                :from => :expiry_from_attr },
+    { :aix_attr => :maxage,     :puppet_prop => :password_max_age },
+    { :aix_attr => :minage,     :puppet_prop => :password_min_age },
+    { :aix_attr => :attributes, :puppet_prop => :attributes },
+    { :aix_attr => :gecos,      :puppet_prop => :comment },
   ]
 
   #--------------
@@ -148,7 +149,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Get the groupname from its id
   def groupname_by_id(gid)
-    groupname=nil
+    groupname = nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
       if attrs and attrs.include? :id and gid == attrs[:id].to_i
