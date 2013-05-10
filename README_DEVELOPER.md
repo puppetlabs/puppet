@@ -468,6 +468,95 @@ describe "mocking an object" do
   end
 end
 ```
+### Writing tests without side effects
+
+When properly written each test should be able to run in isolation, and tests
+should be able to be run in any order. This makes tests more reliable and allows
+a single test to be run if only that test is failing, instead of running all
+17000+ tests each time something is changed. However, there are a number of ways
+that can make tests fail when run in isolation or out of order.
+
+#### Using instance variables
+
+Puppet has a number of older tests that use `before` blocks and instance
+variables to set up fixture data, instead of `let` blocks. These can retain
+state between tests, which can lead to test failures when tests are run out of
+order.
+
+```ruby
+# test.rb
+RSpec.configure do |c|
+  c.mock_framework = :mocha
+end
+
+describe "fixture data" do
+  describe "using instance variables" do
+
+    # BAD
+    before :all do
+      # This fixture will be created only once and will retain the `foo` stub
+      # between tests.
+      @fixture = stub 'test data'
+    end
+
+    it "can be stubbed" do
+      @fixture.stubs(:foo).returns :bar
+      @fixture.foo.should == :bar
+    end
+
+    it "should not keep state between tests" do
+      # The foo stub was added in the previous test and shouldn't be present
+      # in this test.
+      expect { @fixture.foo }.to raise_error
+    end
+  end
+
+  describe "using `let` blocks" do
+
+    # GOOD
+    # This will be recreated between tests so that state isn't retained.
+    let(:fixture) { stub 'test data' }
+
+    it "can be stubbed" do
+      fixture.stubs(:foo).returns :bar
+      fixture.foo.should == :bar
+    end
+
+    it "should not keep state between tests" do
+      # since let blocks are regenerated between tests, the foo stub added in
+      # the previous test will not be present here.
+      expect { fixture.foo }.to raise_error
+    end
+  end
+end
+```
+
+```
+bundle exec rspec test.rb -fd
+
+fixture data
+  using instance variables
+    can be stubbed
+    should not keep state between tests (FAILED - 1)
+  using `let` blocks
+    can be stubbed
+    should not keep state between tests
+
+Failures:
+
+  1) fixture data using instance variables should not keep state between tests
+     Failure/Error: expect { @fixture.foo }.to raise_error
+       expected Exception but nothing was raised
+     # ./test.rb:17:in `block (3 levels) in <top (required)>'
+
+Finished in 0.00248 seconds
+4 examples, 1 failure
+
+Failed examples:
+
+rspec ./test.rb:16 # fixture data using instance variables should not keep state between tests
+```
+
 
 ### RSpec references
 
