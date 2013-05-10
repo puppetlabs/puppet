@@ -26,4 +26,68 @@ describe Puppet::Provider::AixObject do
       end
     end
   end
+
+  describe "attribute mapping methods" do
+    let(:mapping) do
+      [
+        { :aix_attr => :test_aix_property,
+          :puppet_prop => :test_puppet_property,
+          :to => :test_convert_to_aix_method,
+          :from => :test_convert_to_puppet_method
+        }
+      ]
+    end
+
+    before(:each) do
+      provider.class.attribute_mapping = mapping
+    end
+
+    describe ".attribute_mapping_to" do
+      before(:each) do
+         if provider.class.instance_variable_defined? :@attribute_mapping_to
+           provider.class.send(:remove_instance_variable, :@attribute_mapping_to)
+         end
+      end
+
+      it "should create a hash where the key is the puppet property and the value is a hash with the aix property and the conversion method" do
+        hash = provider.class.attribute_mapping_to
+        hash.should have_key :test_puppet_property
+        sub_hash = hash[:test_puppet_property]
+        sub_hash.should have_key :key
+        sub_hash.should have_key :method
+        sub_hash[:key].should == :test_aix_property
+        sub_hash[:method].should == :test_convert_to_aix_method
+      end
+
+      it "should cache results between calls" do
+        provider.class.expects(:attribute_mapping).returns(mapping).once
+        provider.class.attribute_mapping_to
+        provider.class.attribute_mapping_to
+      end
+    end
+
+    describe ".attribute_mapping_from" do
+      before(:each) do
+        if provider.class.instance_variable_defined? :@attribute_mapping_from
+          provider.class.send(:remove_instance_variable, :@attribute_mapping_from)
+        end
+      end
+
+      it "should create a hash where the key is the aix property and the value is a hash with the puppet property and the conversion method" do
+        hash = provider.class.attribute_mapping_from
+        hash.should have_key :test_aix_property
+        sub_hash = hash[:test_aix_property]
+        sub_hash.should have_key :key
+        sub_hash.should have_key :method
+        sub_hash[:key].should == :test_puppet_property
+        sub_hash[:method].should == :test_convert_to_puppet_method
+      end
+
+      it "should cache results between calls" do
+        provider.class.expects(:attribute_mapping).returns(mapping).once
+        provider.class.attribute_mapping_from
+        provider.class.attribute_mapping_from
+      end
+    end
+  end
 end
