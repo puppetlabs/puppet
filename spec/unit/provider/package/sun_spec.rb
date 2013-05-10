@@ -5,14 +5,6 @@ describe Puppet::Type.type(:package).provider(:sun) do
   let(:resource) { Puppet::Type.type(:package).new(:name => 'dummy', :ensure => :installed, :provider => :sun) }
   let(:provider) { resource.provider }
 
-  before(:each) do
-    # Stub some provider methods to avoid needing the actual software
-    # installed, so we can test on whatever platform we want.
-    provider.class.stubs(:command).with(:pkginfo).returns('/usr/bin/pkginfo')
-    provider.class.stubs(:command).with(:pkgadd).returns('/usr/sbin/pkgadd')
-    provider.class.stubs(:command).with(:pkgrm).returns('/usr/sbin/pkgrm')
-  end
-
   describe 'provider features' do
     it { should be_installable }
     it { should be_uninstallable }
