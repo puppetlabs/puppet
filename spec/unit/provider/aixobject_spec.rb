@@ -90,4 +90,12 @@ describe Puppet::Provider::AixObject do
       end
     end
   end
+
+  describe "#getinfo" do
+    it "should only execute the system command once" do
+      provider.stubs(:lscmd).returns "ls"
+      provider.expects(:execute).returns("bob=frank").once
+      provider.getinfo(true)
+    end
+  end
 end

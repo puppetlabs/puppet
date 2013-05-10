@@ -223,9 +223,9 @@ class Puppet::Provider::AixObject < Puppet::Provider
       # Execute lsuser, split all attributes and add them to a dict.
       begin
         output = execute(self.lscmd)
-        @objectinfo = self.parse_command_output(execute(self.lscmd))
+        @objectinfo = self.parse_command_output(output)
         # All attributtes without translation
-        @objectosinfo = self.parse_command_output(execute(self.lscmd), nil)
+        @objectosinfo = self.parse_command_output(output, nil)
       rescue Puppet::ExecutionFailure => detail
         # Print error if needed. FIXME: Do not check the user here.
         Puppet.debug "aix.getinfo(): Could not find #{@resource.class.name} #{@resource.name}: #{detail}"
