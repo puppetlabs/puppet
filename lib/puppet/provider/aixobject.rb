@@ -169,7 +169,9 @@ class Puppet::Provider::AixObject < Puppet::Provider
           info "Empty key in string 'i'?"
           continue
         end
+        key_str.strip!
         key = key_str.to_sym
+        val.strip! if val
 
         properties = self.load_attribute(key, val, mapping, properties)
       end
@@ -237,10 +239,10 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Like getinfo, but it will not use the mapping to translate the keys and values.
   # It might be usefult to retrieve some raw information.
   def getosinfo(refresh = false)
-    if @objectosinfo .nil? or refresh == true
+    if @objectosinfo.nil? or refresh == true
       getinfo(refresh)
     end
-    @objectosinfo
+    @objectosinfo || Hash.new
   end
 
 
@@ -286,7 +288,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # providers, preferably with values already filled in, not resources.
   def self.instances
     objects=[]
-    self.list_all.each { |entry|
+    list_all.each { |entry|
       objects << new(:name => entry, :ensure => :present)
     }
     objects
