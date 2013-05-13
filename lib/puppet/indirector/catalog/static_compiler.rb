@@ -15,23 +15,25 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     This terminus works today, but cannot be used without additional
     configuration. Specifically:
 
-    You must create a `Filebucket['puppet']` resource in site.pp (or somewhere
-    else where it will be added to every node's catalog). The title of this
-    resource **MUST** be "puppet"; the static compiler treats this title as magical.
+    * You must create a special filebucket resource --- with the title `puppet`
+      and the `path` attribute set to `false` --- in site.pp or somewhere else
+      where it will be added to every node's catalog. Using `puppet` as the title
+      is mandatory; the static compiler treats this title as magical.
 
-        # Note: the special $servername var always contains the master's FQDN,
-        # even if it was reached at a different name.
-        filebucket { puppet:
-          server => $servername,
-          path   => false,
-        }
+          filebucket { puppet:
+            path => false,
+          }
 
-    You must set `catalog_terminus = static_compiler` in the puppet master's puppet.conf.
-
-    If you are using multiple puppet masters, you must configure load balancer
-    affinity for agent nodes. This is because puppet masters other than the one
-    that compiled a given catalog may not have stored the required file contents
-    in their filebuckets.}
+    * You must set `catalog_terminus = static_compiler` in the puppet
+      master's puppet.conf.
+    * The puppet master's auth.conf must allow authenticated nodes to access the
+      `file_bucket_file` endpoint. This is enabled by default (see the
+      `path /file` rule), but if you have made your auth.conf more restrictive,
+      you may need to re-enable it.)
+    * If you are using multiple puppet masters, you must configure load balancer
+      affinity for agent nodes. This is because puppet masters other than the one
+      that compiled a given catalog may not have stored the required file contents
+      in their filebuckets.}
 
   def compiler
     @compiler ||= indirection.terminus(:compiler)
