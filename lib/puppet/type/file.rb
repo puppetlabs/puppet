@@ -59,47 +59,44 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:backup) do
-    desc "Whether files should be backed up before
-      being replaced.  The preferred method of backing files up is via
-      a `filebucket`, which stores files by their MD5 sums and allows
-      easy retrieval without littering directories with backups.  You
-      can specify a local filebucket or a network-accessible
-      server-based filebucket by setting `backup => bucket-name`.
-      Alternatively, if you specify any value that begins with a `.`
-      (e.g., `.puppet-bak`), then Puppet will use copy the file in
-      the same directory with that value as the extension of the
-      backup. Setting `backup => false` disables all backups of the
-      file in question.
+    desc <<-EOT
+      Whether (and how) file content should be backed up before being replaced.
+      This attribute works best as a resource default in the site manifest
+      (`File { backup => main }`), so it can affect all file resources.
 
-      Puppet automatically creates a local filebucket named `puppet` and
-      defaults to backing up there.  To use a server-based filebucket,
-      you must specify one in your configuration.
+      * If set to `false`, file content won't be backed up.
+      * If set to a string beginning with `.` (e.g., `.puppet-bak`), Puppet will
+        use copy the file in the same directory with that value as the extension
+        of the backup. (A value of `true` is a synonym for `.puppet-bak`.)
+      * If set to any other string, Puppet will try to back up to a filebucket
+        with that title. See the `filebucket` resource type for more details.
+        (This is the preferred method for backup, since it can be centralized
+        and queried.)
 
-            filebucket { main:
-              server => puppet,
-              path   => false,
-              # The path => false line works around a known issue with the filebucket type.
-            }
+      Default value: `puppet`, which backs up to a filebucket of the same name.
+      (Puppet automatically creates a **local** filebucket named `puppet` if one
+      doesn't already exist.)
 
-      The `puppet master` daemon creates a filebucket by default,
-      so you can usually back up to your main server with this
-      configuration.  Once you've described the bucket in your
-      configuration, you can use it in any file's backup attribute:
+      Backing up to a local filebucket isn't particularly useful. If you want
+      to make organized use of backups, you will generally want to use the
+      puppet master server's filebucket service. This requires declaring a
+      filebucket resource and a resource default for the `backup` attribute
+      in site.pp:
 
-            file { \"/my/file\":
-              source => \"/path/in/nfs/or/something\",
-              backup => main
-            }
+          # /etc/puppet/manifests/site.pp
+          filebucket { 'main':
+            path   => false,                # This is required for remote filebuckets.
+            server => 'puppet.example.com', # Optional; defaults to the configured puppet master.
+          }
 
-      This will back the file up to the central server.
+          File { backup => main, }
 
-      At this point, the benefits of using a central filebucket are that you
-      do not have backup files lying around on each of your machines, a given
-      version of a file is only backed up once, you can restore any given file
-      manually (no matter how old), and you can use Puppet Dashboard to view
-      file contents.  Eventually, transactional support will be able to
-      automatically restore filebucketed files.
-      "
+      If you are using multiple puppet master servers, you will want to
+      centralize the contents of the filebucket. Either configure your load
+      balancer to direct all filebucket traffic to a single master, or use
+      something like an out-of-band rsync task to synchronize the content on all
+      masters.
+    EOT
 
     defaultto "puppet"
 
