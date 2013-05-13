@@ -5,14 +5,6 @@ describe Puppet::Type.type(:package).provider(:sun) do
   let(:resource) { Puppet::Type.type(:package).new(:name => 'dummy', :ensure => :installed, :provider => :sun) }
   let(:provider) { resource.provider }
 
-  before(:each) do
-    # Stub some provider methods to avoid needing the actual software
-    # installed, so we can test on whatever platform we want.
-    provider.class.stubs(:command).with(:pkginfo).returns('/usr/bin/pkginfo')
-    provider.class.stubs(:command).with(:pkgadd).returns('/usr/sbin/pkgadd')
-    provider.class.stubs(:command).with(:pkgrm).returns('/usr/sbin/pkgrm')
-  end
-
   describe 'provider features' do
     it { should be_installable }
     it { should be_uninstallable }
@@ -35,7 +27,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
     it "should install a package if it is not present on update" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns File.read(my_fixture('dummy.server'))
+      provider.expects(:pkginfo).with('-l', 'dummy').returns File.read(my_fixture('dummy.server'))
       provider.expects(:pkgrm).with(['-n', 'dummy'])
       provider.expects(:install)
       provider.update
@@ -74,7 +66,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
 
   context '#query' do
     it "should find the package on query" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns File.read(my_fixture('dummy.server'))
+      provider.expects(:pkginfo).with('-l', 'dummy').returns File.read(my_fixture('dummy.server'))
       provider.query.should == {
         :name     => 'SUNWdummy',
         :category=>"system",
@@ -87,19 +79,19 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
     it "shouldn't find the package on query if it is not present" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns 'ERROR: information for "dummy" not found.'
+      provider.expects(:pkginfo).with('-l', 'dummy').raises Puppet::ExecutionFailure, "Execution of 'pkginfo -l dummy' returned 3: ERROR: information for \"dummy\" not found."
       provider.query.should == {:ensure => :absent}
     end
 
     it "unknown message should raise error." do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l', 'dummy'], {:failonfail => false, :combine => false}).returns 'RANDOM'
-      lambda { provider.query }.should raise_error(Puppet::Error)
+      provider.expects(:pkginfo).with('-l', 'dummy').returns 'RANDOM'
+      expect { provider.query }.to raise_error Puppet::Error
     end
   end
 
   context '#instance' do
     it "should list instances when there are packages in the system" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l']).returns File.read(my_fixture('simple'))
+      described_class.expects(:pkginfo).with('-l').returns File.read(my_fixture('simple'))
       instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       instances.size.should == 2
       instances[0].should == {
@@ -113,7 +105,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
     it "should return empty if there were no packages" do
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/pkginfo', '-l']).returns ''
+      described_class.expects(:pkginfo).with('-l').returns ''
       instances = provider.class.instances
       instances.size.should == 0
     end
