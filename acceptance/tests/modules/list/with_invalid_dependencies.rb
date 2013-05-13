@@ -1,21 +1,25 @@
 test_name "puppet module list (with invalid dependencies)"
 
+teardown do
+  on master, "rm -rf #{master['distmoduledir']}/thelock"
+  on master, "rm -rf #{master['distmoduledir']}/appleseed"
+  on master, "rm -rf #{master['distmoduledir']}/crakcorn"
+  on master, "rm -rf #{master['sitemoduledir']}/crick"
+end
+
 step "Setup"
 apply_manifest_on master, <<-PP
 file {
   [
-    '/etc/puppet/modules',
-    '/etc/puppet/modules/appleseed',
-    '/etc/puppet/modules/crakorn',
-    '/etc/puppet/modules/thelock',
-    '/usr/share/puppet',
-    '/usr/share/puppet/modules',
-    '/usr/share/puppet/modules/crick',
+    '#{master['distmoduledir']}/appleseed',
+    '#{master['distmoduledir']}/crakorn',
+    '#{master['distmoduledir']}/thelock',
+    '#{master['sitemoduledir']}/crick',
   ]: ensure => directory,
      recurse => true,
      purge => true,
      force => true;
-   '/etc/puppet/modules/crakorn/metadata.json':
+   '#{master['distmoduledir']}/crakorn/metadata.json':
      content => '{
        "name": "jimmy/crakorn",
        "version": "0.3.0",
@@ -24,7 +28,7 @@ file {
        "license": "MIT",
        "dependencies": []
      }';
-  '/etc/puppet/modules/appleseed/metadata.json':
+  '#{master['distmoduledir']}/appleseed/metadata.json':
     content => '{
       "name": "jimmy/appleseed",
       "version": "1.1.0",
@@ -35,7 +39,7 @@ file {
         { "name": "jimmy/crakorn", "version_requirement": "0.x" }
       ]
     }';
-  '/etc/puppet/modules/thelock/metadata.json':
+  '#{master['distmoduledir']}/thelock/metadata.json':
     content => '{
       "name": "jimmy/thelock",
       "version": "1.0.0",
@@ -46,7 +50,7 @@ file {
         { "name": "jimmy/appleseed", "version_requirement": "1.x" }
       ]
     }';
-  '/usr/share/puppet/modules/crick/metadata.json':
+  '#{master['sitemoduledir']}/crick/metadata.json':
     content => '{
       "name": "jimmy/crick",
       "version": "1.0.1",
@@ -59,14 +63,11 @@ file {
     }';
 }
 PP
-teardown do
-  on master, "rm -rf /etc/puppet/modules"
-  on master, "rm -rf /usr/share/puppet/modules"
-end
-on master, '[ -d /etc/puppet/modules/appleseed ]'
-on master, '[ -d /etc/puppet/modules/crakorn ]'
-on master, '[ -d /etc/puppet/modules/thelock ]'
-on master, '[ -d /usr/share/puppet/modules/crick ]'
+
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
+on master, "[ -d #{master['distmoduledir']}/crakorn ]"
+on master, "[ -d #{master['distmoduledir']}/thelock ]"
+on master, "[ -d #{master['sitemoduledir']}/crick ]"
 
 step "List the installed modules"
 on master, puppet('module list') do
@@ -75,11 +76,11 @@ on master, puppet('module list') do
   'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
-/etc/puppet/modules
+#{master['distmoduledir']}
 ├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
 ├── jimmy-crakorn (\e[0;36mv0.3.0\e[0m)  \e[0;31minvalid\e[0m
 └── jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-/usr/share/puppet/modules
+#{master['sitemoduledir']}
 └── jimmy-crick (\e[0;36mv1.0.1\e[0m)
 STDOUT
 end
@@ -91,12 +92,12 @@ on master, puppet('module list --tree') do
   'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
   assert_equal <<-STDOUT, stdout
-/etc/puppet/modules
+#{master['distmoduledir']}
 └─┬ jimmy-thelock (\e[0;36mv1.0.0\e[0m)
   └─┬ jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
     └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m)
-/usr/share/puppet/modules
+#{master['sitemoduledir']}
 └─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
-  └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m) [/etc/puppet/modules]  \e[0;31minvalid\e[0m
+  └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m) [#{master['distmoduledir']}]  \e[0;31minvalid\e[0m
 STDOUT
 end

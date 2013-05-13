@@ -1,10 +1,13 @@
 begin test_name "Lookup data using the hiera parser function"
 
+testdir = master.tmpdir('hiera')
+
 step 'Setup'
-on master, "mkdir -p /var/lib/hiera"
+on master, "mkdir -p #{testdir}/hieradata"
+on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['puppetpath']}/hiera.yaml #{master['puppetpath']}/hiera.yaml.bak; fi"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hiera.yaml':
+file { '#{master['puppetpath']}/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
@@ -16,20 +19,13 @@ file { '/etc/puppet/hiera.yaml':
       - "global"
 
     :yaml:
-      :datadir: "/var/lib/hiera"
+      :datadir: "#{testdir}/hieradata"
   '
-}
-
-file { '/var/lib/hiera':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
 }
 PP
 
 apply_manifest_on master, <<-PP
-file { '/var/lib/hiera/global.yaml':
+file { '#{master['hieradatadir']}/global.yaml':
   ensure  => present,
   content => "---
     port: 8080
@@ -37,7 +33,6 @@ file { '/var/lib/hiera/global.yaml':
 }
 PP
 
-testdir = master.tmpdir('hiera')
 
 create_remote_file(master, "#{testdir}/puppet.conf", <<END)
 [main]
@@ -80,12 +75,7 @@ end
 
 
 ensure step "Teardown"
-apply_manifest_on master, <<-PP
-file { '/var/lib/hiera':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
-}
-PP
+
+on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then mv -f #{master['puppetpath']}/hiera.conf.bak #{master['puppetpath']}/hiera.yaml; fi"
+
 end

@@ -4,14 +4,14 @@ begin test_name "Auto lookup for class parameters"
 step "Setup"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata':
+file { '#{master['hieradatadir']}':
   ensure  => directory,
   recurse => true,
   purge   => true,
   force   => true,
 }
 
-file { '/etc/puppet/hiera.yaml':
+file { '#{master['puppetpath']}/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
@@ -24,7 +24,7 @@ file { '/etc/puppet/hiera.yaml':
       - "global"
 
     :yaml:
-      :datadir: "/etc/puppet/hieradata"
+      :datadir: "#{master['hieradatadir']}"
   '
 }
 PP
@@ -67,7 +67,7 @@ on master, "chmod -R g+rwX #{testdir}"
 step "Setup Hiera data"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata/global.yaml':
+file { '#{master['hieradata']}/global.yaml':
   ensure  => present,
   content => "---
     'ssh::server::port': 22
@@ -92,13 +92,13 @@ end
 ensure step "Teardown"
 on master, "rm -rf #{testdir}"
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata':
+file { '#{master['hieradata']}':
   ensure  => directory,
   recurse => true,
   purge   => true,
   force   => true,
 }
-file { '/etc/puppet/hiera.yaml':
+file { '#{master['hieraconf']}':
   ensure => absent,
 }
 PP

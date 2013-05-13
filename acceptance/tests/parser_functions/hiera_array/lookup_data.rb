@@ -1,10 +1,13 @@
 begin test_name "Lookup data using the hiera parser function"
 
+testdir = master.tmpdir('hiera')
+
 step 'Setup'
-on master, "mkdir -p /var/lib/hiera"
+on master, "mkdir -p #{testdir}/hieradata"
+on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['puppetpath']}/hiera.yaml #{master['puppetpath']}/hiera.yaml.bak; fi"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hiera.yaml':
+file { '#{master['hieradatadir']}/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
@@ -16,11 +19,11 @@ file { '/etc/puppet/hiera.yaml':
       - "global"
 
     :yaml:
-      :datadir: "/var/lib/hiera"
+      :datadir: "#{testdir}/hieradata"
   '
 }
 
-file { '/var/lib/hiera':
+file { '#{testdir}/hieradata':
   ensure  => directory,
   recurse => true,
   purge   => true,
@@ -29,7 +32,7 @@ file { '/var/lib/hiera':
 PP
 
 apply_manifest_on master, <<-PP
-file { '/var/lib/hiera/global.yaml':
+file { '#{testdir}/hieradata/global.yaml':
   ensure  => present,
   content => "---
     port: '8080'
@@ -37,7 +40,7 @@ file { '/var/lib/hiera/global.yaml':
   "
 }
 
-file { '/var/lib/hiera/production.yaml':
+file { '#{testdir}/hieradata/production.yaml':
   ensure  => present,
   content => "---
     ntpservers: ['production.ntp.puppetlabs.com']
@@ -46,7 +49,6 @@ file { '/var/lib/hiera/production.yaml':
 
 PP
 
-testdir = master.tmpdir('hiera')
 
 create_remote_file(master, "#{testdir}/puppet.conf", <<END)
 [main]
@@ -76,7 +78,7 @@ class ntp {
 }
 PP
 
-on master, "chown -R #{host['user']}:#{master['group']} #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 
@@ -93,12 +95,7 @@ end
 
 
 ensure step "Teardown"
-apply_manifest_on master, <<-PP
-file { '/var/lib/hiera':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
-}
-PP
+
+on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then mv -f #{master['puppetpath']}/hiera.conf.bak #{master['puppetpath']}/hiera.yaml; fi"
+
 end

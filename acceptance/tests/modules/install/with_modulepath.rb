@@ -4,34 +4,33 @@ step 'Setup'
 
 stub_forge_on(master)
 
-# Ensure module path dirs are purged before and after the tests
-apply_manifest_on master, "file { ['/etc/puppet/modules2', '/usr/share/puppet/modules']: ensure => directory, recurse => true, purge => true, force => true }"
+on master, "mkdirp -p #{master['puppetpath']}/modules2"
+
 teardown do
-  on master, "rm -rf /etc/puppet/modules2"
-  on master, "rm -rf /usr/share/puppet/modules"
+  on master, "rm -rf #{master['puppetpath']}/modules2"
 end
 
 step "Install a module with relative modulepath"
-on master, "cd /etc/puppet/modules2 && puppet module install pmtacceptance-nginx --modulepath=." do
+on master, "cd #{master['puppetpath']}/modules2 && puppet module install pmtacceptance-nginx --modulepath=." do
   assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into /etc/puppet/modules2 ...\e[0m
+    \e[mNotice: Preparing to install into #{master['puppetpath']}/modules2 ...\e[0m
     \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     \e[mNotice: Installing -- do not interrupt ...\e[0m
-    /etc/puppet/modules2
+    #{master['puppetpath']}/modules2
     └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules2/nginx ]'
-apply_manifest_on master, "file { ['/etc/puppet/modules2']: ensure => directory, recurse => true, purge => true, force => true }"
+on master, "[ -d #{master['puppetpath']}/modules2/nginx ]"
+apply_manifest_on master, "file { ['#{master['puppetpath']}/modules2']: ensure => directory, recurse => true, purge => true, force => true }"
 
 step "Install a module with absolute modulepath"
-on master, puppet('module install pmtacceptance-nginx --modulepath=/etc/puppet/modules2') do
+on master, puppet("module install pmtacceptance-nginx --modulepath=#{master['puppetpath']}/modules2") do
   assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into /etc/puppet/modules2 ...\e[0m
+    \e[mNotice: Preparing to install into #{master['puppetpath']}/modules2 ...\e[0m
     \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     \e[mNotice: Installing -- do not interrupt ...\e[0m
-    /etc/puppet/modules2
+    #{master['puppetpath']}/modules2
     └── pmtacceptance-nginx (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules2/nginx ]'
+on master, "[ -d #{master['puppetpath']}/modules2/nginx ]"
