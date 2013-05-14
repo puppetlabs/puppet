@@ -1,10 +1,13 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 begin test_name 'puppet module search should print a reasonable message on ssl errors'
 
 step "Search against a website where the certificate is not signed by a public authority"
 
 # This might seem silly, but a master has a self-signed certificate and is a
 # cheap way of testing against a web server without a publicly signed cert
-with_master_running_on(master) do
+with_puppet_running_on master, {} do
   on master, puppet("module search yup --module_repository=https://#{master}:8140"), :acceptable_exit_codes => [1] do
     assert_match <<-STDOUT, stdout
 \e[mNotice: Searching https://#{master}:8140 ...\e[0m
