@@ -1,3 +1,6 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 test_name "#15717: puppet kick"
 step "verify puppet kick actually triggers an agent run"
 
@@ -12,7 +15,7 @@ path /
 auth any
 END
 
-with_master_running_on(master, "--autosign true") do
+with_puppet_running_on master, {} do
   agents.each do |agent|
     if agent == master
       Log.warn("This test does not support nodes that are both master and agent")
