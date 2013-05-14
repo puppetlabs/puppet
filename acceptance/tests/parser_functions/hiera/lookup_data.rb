@@ -1,3 +1,6 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 begin test_name "Lookup data using the hiera parser function"
 
 testdir = master.tmpdir('hiera')
@@ -25,20 +28,13 @@ file { '#{master['puppetpath']}/hiera.yaml':
 PP
 
 apply_manifest_on master, <<-PP
-file { '#{master['hieradatadir']}/global.yaml':
+file { '#{testdir}/hieradata/global.yaml':
   ensure  => present,
   content => "---
     port: 8080
   "
 }
 PP
-
-
-create_remote_file(master, "#{testdir}/puppet.conf", <<END)
-[main]
-  manifest   = "#{testdir}/site.pp"
-  modulepath = "#{testdir}/modules"
-END
 
 on master, "mkdir -p #{testdir}/modules/apache/manifests"
 
@@ -65,7 +61,17 @@ on master, "chmod -R g+rwX #{testdir}"
 
 step "Try to lookup string data"
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+master_opts = {
+  'main' => {
+    'manifest' => "#{testdir}/site.pp",
+    'modulepath' => "#{testdir}/modules"
+  },
+  'master' => {
+    'node_terminus' => nil
+  }
+}
+
+with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
 
