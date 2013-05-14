@@ -24,7 +24,7 @@ on master, puppet("module install pmtacceptance-php --version 0.0.1") do
 end
 
 # This isn't going to work
-on master, puppet('module list') do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do |res|
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── pmtacceptance-apache (\e[0;36mv0.0.1\e[0m)
