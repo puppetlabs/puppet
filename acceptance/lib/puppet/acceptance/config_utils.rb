@@ -67,7 +67,7 @@ module Puppet
         IniFile.new( puppetconf )
       end
 
-      def with_puppet_running_on host, conf_opts, testdir = host.tmpdir, &block
+      def with_puppet_running_on host, conf_opts, testdir = host.tmpdir(File.basename(@path)), &block
         new_conf = puppet_conf_for( host )
         new_conf.merge!( conf_opts )
         create_remote_file host, "#{testdir}/puppet.conf", new_conf.to_s
