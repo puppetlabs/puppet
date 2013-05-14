@@ -1,25 +1,18 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 test_name "Agent should use environment given by ENC for fetching remote files"
 
 testdir = master.tmpdir('respect_enc_test')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
-#!/usr/bin/env ruby
+#!#{master['puppetbindir']}/ruby
 puts <<YAML
 parameters:
 environment: special
 YAML
 END
 on master, "chmod 755 #{testdir}/enc.rb"
-
-create_remote_file master, "#{testdir}/puppet.conf", <<END
-[main]
-node_terminus = exec
-external_nodes = "#{testdir}/enc.rb"
-
-[special]
-modulepath = "#{testdir}/special"
-manifest = "#{testdir}/different.pp"
-END
 
 on master, "mkdir -p #{testdir}/modules"
 # Create a plugin file on the master
@@ -29,10 +22,22 @@ create_remote_file(master, "#{testdir}/special/amod/files/testy", "special_envir
 on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
+master_opts = {
+  'master' => {
+    'node_terminus' => 'exec',
+    'external_nodes' => "#{testdir}/enc.rb"
+  },
+  'special' => {
+    'modulepath' => "#{testdir}/special",
+    'manifest' => "#{testdir}/different.pp"
+  }
+}
+
 agents.each do |agent|
-  with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+  with_puppet_running_on master, master_opts, testdir do
     atmp = agent.tmpdir('respect_enc_test')
-    puts "agent: #{agent} \tagent.tmpdir => #{atmp}"
+    logger.debug "agent: #{agent} \tagent.tmpdir => #{atmp}"
+
     create_remote_file master, "#{testdir}/different.pp", <<END
 file { "#{atmp}/special_testy":
   source => "puppet:///modules/amod/testy",
@@ -48,5 +53,3 @@ END
     on agent, "rm -rf #{atmp}"
   end
 end
-
-on master, "rm -rf #{testdir}"
