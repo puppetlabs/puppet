@@ -21,7 +21,7 @@ on master, puppet("module install pmtacceptance-java --version 1.6.0") do
   OUTPUT
 end
 
-on master, puppet('module list --tree') do
+on master, puppet("module list --tree --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     └─┬ pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
@@ -42,7 +42,7 @@ on master, puppet("module install pmtacceptance-apollo") do
   OUTPUT
 end
 
-on master, puppet('module list') do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── pmtacceptance-apollo (\e[0;36mv0.0.1\e[0m)
