@@ -1,3 +1,6 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 test_name "ENC node information is used when store configs enabled (#16698)"
 
 confine :except, :platform => 'solaris'
@@ -7,23 +10,13 @@ confine :except, :platform => 'el-6'
 testdir = master.tmpdir('use_enc')
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
-#!/usr/bin/env ruby
+#!#{master['puppetbindir']}/ruby
 puts <<YAML
 parameters:
   data: "data from enc"
 YAML
 END
 on master, "chmod 755 #{testdir}/enc.rb"
-
-create_remote_file master, "#{testdir}/puppet.conf", <<END
-[main]
-node_terminus = exec
-external_nodes = "#{testdir}/enc.rb"
-storeconfigs = true
-dbadapter = sqlite3
-dblocation = #{testdir}/store_configs.sqlite3
-manifest = "#{testdir}/site.pp"
-END
 
 create_remote_file(master, "#{testdir}/site.pp", 'notify { $data: }')
 
@@ -66,11 +59,20 @@ END
 
 on master, puppet_apply("#{testdir}/setup.pp")
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+master_opts = {
+  'master' => {
+    'node_terminus' => 'exec',
+    'external_nodes' => "#{testdir}/enc.rb",
+    'storeconfigs' => true,
+    'dbadapter' => 'sqlite3',
+    'dblocation' => "#{testdir}/store_configs.sqlite3",
+    'manifest' => "#{testdir}/site.pp"
+  }
+}
+
+with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose")
     assert_match(/data from enc/, stdout)
   end
 end
-
-on master, "rm -rf #{testdir}"
