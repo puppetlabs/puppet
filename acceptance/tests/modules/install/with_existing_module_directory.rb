@@ -64,7 +64,7 @@ on master, puppet("module install pmtacceptance-php --version 0.0.1"), :acceptab
     STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
     STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not install module 'pmtacceptance-php' (v0.0.1)
-    STDERR>   Dependency 'pmtacceptance-apache' (v0.0.1) would overwrite #{master['distmoduledir']}
+    STDERR>   Dependency 'pmtacceptance-apache' (v0.0.1) would overwrite #{master['distmoduledir']}/apache
     STDERR>     Use `puppet module install --dir <DIR>` to install modules elsewhere
     STDERR>     Use `puppet module install --ignore-dependencies` to install only this module\e[0m
   OUTPUT
