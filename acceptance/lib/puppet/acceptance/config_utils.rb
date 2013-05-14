@@ -2,8 +2,12 @@ module Puppet
   module Acceptance
     module ConfigUtils
       class IniFile
+        attr_accessor :contents
         def initialize file_as_string
           @contents = parse( file_as_string )
+          @contents['main'] ||= {}
+          @contents['master'] ||= {}
+          @contents['agent'] ||= {}
         end
 
         def method_missing( meth, *args )
@@ -69,15 +73,16 @@ module Puppet
 
       def with_puppet_running_on host, conf_opts, testdir = host.tmpdir(File.basename(@path)), &block
         new_conf = puppet_conf_for( host )
-        new_conf[:global].merge!( conf_opts[:global] ) if conf_opts[:global]
-        new_conf['main'].merge!( conf_opts['main'] ) if conf_opts['main']
-        new_conf['master'].merge!( conf_opts['master'] ) if conf_opts['master']
-        new_conf['agent'].merge!( conf_opts['agent'] ) if conf_opts['agent']
+        new_conf.contents.each_key do |key|
+          new_conf.contents[key].merge!( conf_opts.delete( key ) ) if conf_opts[key]
+        end
+        new_conf.contents.merge!( conf_opts )
         create_remote_file host, "#{testdir}/puppet.conf", new_conf.to_s
 
         begin
           on host, "cp #{host['puppetpath']}/puppet.conf #{host['puppetpath']}/puppet.conf.bak"
-          on host, "cat #{testdir}/puppet.conf > #{host['puppetpath']}/puppet.conf"
+          on host, "cat #{testdir}/puppet.conf > #{host['puppetpath']}/puppet.conf", :silent => true
+          on host, "cat #{host['puppetpath']}/puppet.conf"
           if host.is_pe?
             on host, '/etc/init.d/pe-httpd restart' # we work with PE yo!
           else
