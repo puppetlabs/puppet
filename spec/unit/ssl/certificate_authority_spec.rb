@@ -748,6 +748,13 @@ describe Puppet::SSL::CertificateAuthority do
       @ca.list.should == %w{cert1 cert2}
     end
 
+    it "should list the full certificates" do
+      cert1 = stub 'cert1', :name => "cert1"
+      cert2 = stub 'cert2', :name => "cert2"
+      Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
+      @ca.list_certificates.should == [cert1, cert2]
+    end
+
     describe "and printing certificates" do
       it "should return nil if the certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
@@ -859,6 +866,35 @@ describe Puppet::SSL::CertificateAuthority do
         @store.expects(:verify).with("mycert").returns false
 
         expect { @ca.verify("me") }.to raise_error
+      end
+
+      describe "certificate_is_alive?" do
+        it "should return false if verification fails" do
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns false
+
+          @ca.certificate_is_alive?(@cert).should be_false
+        end
+
+        it "should return true if verification passes" do
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns true
+
+          @ca.certificate_is_alive?(@cert).should be_true
+        end
+
+        it "should used a cached instance of the x509 store" do
+          OpenSSL::X509::Store.stubs(:new).returns(@store).once
+
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns true
+
+          @ca.certificate_is_alive?(@cert)
+          @ca.certificate_is_alive?(@cert)
+        end
       end
     end
 
