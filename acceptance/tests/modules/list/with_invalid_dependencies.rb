@@ -8,6 +8,9 @@ teardown do
 end
 
 step "Setup"
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -70,34 +73,22 @@ on master, "[ -d #{master['distmoduledir']}/thelock ]"
 on master, "[ -d #{master['sitemoduledir']}/crick ]"
 
 step "List the installed modules"
-on master, puppet('module list') do
-  assert_equal <<-STDERR, stderr
+on master, puppet("module list") do |res|
+  assert_equal <<-STDERR, res.stderr
 \e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
   'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-├── jimmy-crakorn (\e[0;36mv0.3.0\e[0m)  \e[0;31minvalid\e[0m
-└── jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-#{master['sitemoduledir']}
-└── jimmy-crick (\e[0;36mv1.0.1\e[0m)
-STDOUT
+
+  assert_match /jimmy-crakorn.*invalid/, res.stdout, 'Did not find module jimmy-crick in module site path'
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list --tree') do
-  assert_equal <<-STDERR, stderr
+on master, puppet("module list --tree") do |res|
+
+  assert_equal <<-STDERR, res.stderr
 \e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
   'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
 STDERR
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-└─┬ jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-  └─┬ jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-    └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m)
-#{master['sitemoduledir']}
-└─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
-  └── jimmy-crakorn (\e[0;36mv0.3.0\e[0m) [#{master['distmoduledir']}]  \e[0;31minvalid\e[0m
-STDOUT
+
+  assert_match /jimmy-crakorn.*\[#{master['distmoduledir']}\].*invalid/, res.stdout
 end
