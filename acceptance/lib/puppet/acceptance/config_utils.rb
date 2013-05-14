@@ -97,7 +97,11 @@ module Puppet
 
           yield self if block_given?
         ensure
-          on host, "if [ -f #{host['puppetpath']}/puppet.conf.bak ]; then mv -f #{host['puppetpath']}/puppet.conf.bak #{host['puppetpath']}/puppet.conf; fi"
+          on host, "if [ -f #{host['puppetpath']}/puppet.conf.bak ]; then " +
+                     "cat #{host['puppetpath']}/puppet.conf.bak > " +
+                     "#{host['puppetpath']}/puppet.conf; " +
+                     "rm -rf #{host['puppetpath']}/puppet.conf.bak; " +
+                   "fi"
           if host.is_pe?
             on host, '/etc/init.d/pe-httpd restart'
           else
