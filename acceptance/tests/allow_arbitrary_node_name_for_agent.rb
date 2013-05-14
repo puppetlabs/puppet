@@ -4,9 +4,9 @@ extend Puppet::Acceptance::ConfigUtils
 test_name "node_name_value should be used as the node name for puppet agent"
 
 success_message = "node_name_value setting was correctly used as the node name"
-testdir = master.tmpdir('nodenamevalue')
+in_testdir = master.tmpdir('nodenamevalue')
 
-authfile = "#{testdir}/auth.conf"
+authfile = "#{in_testdir}/auth.conf"
 create_remote_file master, authfile, <<AUTHCONF
 path /catalog/specified_node_name
 auth yes
@@ -21,7 +21,7 @@ auth yes
 allow *
 AUTHCONF
 
-manifest_file = "#{testdir}/manifest.pp"
+manifest_file = "#{in_testdir}/manifest.pp"
 create_remote_file master, manifest_file, <<MANIFEST
   Exec { path => "/usr/bin:/bin" }
   node default {
@@ -32,23 +32,20 @@ create_remote_file master, manifest_file, <<MANIFEST
   }
 MANIFEST
 
-puppetconf_file = "#{testdir}/puppet.conf"
-puppetconf = puppet_conf_for( master )
-puppetconf['master']['rest_authconfig'] = "#{testdir}/auth.conf"
-puppetconf['master'].delete('node_terminus')
-puppetconf['master']['manifest'] = manifest_file
-create_remote_file master, puppetconf_file, puppetconf.to_s
+on master, "chmod 644 #{authfile} #{manifest_file}"
+on master, "chmod 777 #{in_testdir}"
 
-on master, "chmod 644 #{authfile} #{manifest_file} #{puppetconf_file}"
-on master, "chmod 777 #{testdir}"
+with_these_opts = {
+  'master' => {
+    'rest_authconfig' => "#{in_testdir}/auth.conf",
+    'node_terminus'   => nil,
+    'manifest'        => manifest_file
+  }
+}
 
-on master, "cp #{master['puppetpath']}/puppet.conf #{master['puppetpath']}/puppet.conf.bak"
-on master, "cp #{testdir}/puppet.conf #{master['puppetpath']}/puppet.conf"
-on master, '/etc/init.d/pe-httpd restart'
+with_puppet_running_on master, with_these_opts, in_testdir do
 
-with_puppet_running_on master, testdir do
-
-  run_agent_on(agents, "--no-daemonize --verbose --onetime --node_name_value specified_node_name --server #{master}") do
+  run_agent_on(agents, "-t --node_name_value specified_node_name", :acceptable_exit_codes => [0,2]) do
     assert_match(/defined 'message'.*#{success_message}/, stdout)
   end
 
