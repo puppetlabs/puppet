@@ -7,6 +7,10 @@ teardown do
 end
 
 step "Setup"
+
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -67,13 +71,6 @@ on master, puppet('module list') do
 \e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
   'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
 STDERR
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-└── jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-#{master['sitemoduledir']}
-└── jimmy-crick (\e[0;36mv1.0.1\e[0m)
-STDOUT
 end
 
 step "List the installed modules as a dependency tree"
@@ -85,14 +82,8 @@ on master, puppet('module list --tree') do
 \e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
   'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
 STDERR
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-└─┬ jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-  ├── \e[0;41mUNMET DEPENDENCY\e[0m jimmy-sprinkles (\e[0;36mv2.x\e[0m)
-  └─┬ jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-    └── \e[0;41mUNMET DEPENDENCY\e[0m jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-#{master['sitemoduledir']}
-└─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
-  └── \e[0;41mUNMET DEPENDENCY\e[0m jimmy-crakorn (\e[0;36mv0.4.x\e[0m)
-STDOUT
+
+  assert_match /UNMET DEPENDENCY.*jimmy-sprinkles/, stdout, 'Did not find unmeet dependency for jimmy-sprinkles warning'
+
+  assert_match /UNMET DEPENDENCY.*jimmy-crakorn/, stdout, 'Did not find unmeet dependency for jimmy-crakorn warning'
 end
