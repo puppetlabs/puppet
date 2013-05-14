@@ -1,3 +1,6 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 begin test_name "Lookup data using the hiera parser function"
 
 testdir = master.tmpdir('hiera')
@@ -7,7 +10,7 @@ on master, "mkdir -p #{testdir}/hieradata"
 on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['puppetpath']}/hiera.yaml #{master['puppetpath']}/hiera.yaml.bak; fi"
 
 apply_manifest_on master, <<-PP
-file { '#{master['puppetpath']}/hiera.yaml':
+file { '#{testdir}/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
@@ -52,12 +55,6 @@ file { '#{testdir}/hieradata/production.yaml':
 
 PP
 
-create_remote_file(master, "#{testdir}/puppet.conf", <<END)
-[main]
-  manifest   = "#{testdir}/site.pp"
-  modulepath = "#{testdir}/modules"
-END
-
 on master, "mkdir -p #{testdir}/modules/ntp/manifests"
 
 agent_names = agents.map { |agent| "'#{agent.to_s}'" }.join(', ')
@@ -79,11 +76,20 @@ PP
 
 on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
+on master, "cat #{testdir}/hiera.yaml > #{master['puppetpath']}/hiera.yaml"
 
 
 step "Try to lookup hash data"
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+master_opts = {
+  'master' => {
+    'manifest' => "#{testdir}/site.pp",
+    'modulepath' => "#{testdir}/modules",
+    'node_terminus' => nil
+  }
+}
+
+with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
 
@@ -94,6 +100,9 @@ end
 
 ensure step "Teardown"
 
-on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then mv -f #{master['puppetpath']}/hiera.conf.bak #{master['puppetpath']}/hiera.yaml; fi"
+on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then " +
+             "cat #{master['puppetpath']}/hiera.conf.bak > #{master['puppetpath']}/hiera.yaml; " +
+             "rm -rf #{master['puppetpath']}/hiera.yaml.bak; " +
+           "fi"
 
 end
