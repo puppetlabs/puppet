@@ -103,7 +103,7 @@ ensure step "Teardown"
 
 on master, "if [ -f #{master['puppetpath']}/hiera.conf.bak ]; then " +
              "cat #{master['puppetpath']}/hiera.conf.bak > #{master['puppetpath']}/hiera.yaml; " +
-             "rm -rf #{master['puppetpath']}/hiera.conf; " +
+             "rm -rf #{master['puppetpath']}/hiera.conf.bak; " +
            "fi"
 
 end
