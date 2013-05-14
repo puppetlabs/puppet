@@ -16,9 +16,10 @@ describe provider_class do
     RPM_OUTPUT
   end
 
+  let(:resource_name) { 'myresource' }
   let(:resource) do
     Puppet::Type.type(:package).new(
-      :name     => 'myresource',
+      :name     => resource_name,
       :ensure   => :installed
     )
   end
@@ -40,7 +41,7 @@ describe provider_class do
     subject.stubs(:which).with("rpm").returns("/bin/rpm")
     subject.instance_variable_set("@current_version", nil)
     Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "--version"]).returns(rpm_version).at_most_once
-    Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:failonfail => true, :combine => true, :custom_environment => {}}).returns(rpm_version).at_most_once
+    Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], execute_options).returns(rpm_version).at_most_once
   end
 
   describe "self.instances" do
@@ -133,7 +134,7 @@ describe provider_class do
 
     describe "when not already installed" do
       it "should only include the '-i' flag" do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-i", '/path/to/package'], {:failonfail => true, :combine => true, :custom_environment => {}})
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-i", '/path/to/package'], execute_options)
         provider.install
       end
    end
@@ -197,6 +198,14 @@ describe provider_class do
   end
 
   describe "parsing" do
+    let(:resource_name) { 'name' }
+
+    def parser_test(rpm_output_string, gold_hash, number_of_warnings = 0)
+      Puppet.expects(:warning).times(number_of_warnings)
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).returns(rpm_output_string)
+      provider.query.should == gold_hash
+    end
+
     ['name', 'epoch', 'version', 'release', 'arch'].each do |field|
       let('delimiter') { ':DESC:' }
       let(:package_hash) do
@@ -214,26 +223,33 @@ describe provider_class do
       let(:line) { 'name epoch version release arch :DESC: a description' }
 
       it "should still parse if #{field} is replaced by delimiter" do
-        provider_class.nevra_to_hash(line.gsub(field, delimiter)).should ==
+        parser_test(
+          line.gsub(field, delimiter),
           package_hash.merge(
             field.to_sym => delimiter,
             :ensure => 'version-release'.gsub(field, delimiter)
           )
+        )
       end
 
     end
 
     it "should still parse if missing description" do
-      provider_class.nevra_to_hash(line.gsub(/#{delimiter} .+$/, delimiter)).should == package_hash.merge(:description => '')
+      parser_test(
+        line.gsub(/#{delimiter} .+$/, delimiter),
+        package_hash.merge(:description => '')
+      )
     end
 
     it "should still parse if description contains a new line" do
-      provider_class.nevra_to_hash(line.gsub(/#{delimiter} .+$/, "#{delimiter} whoops\nnewline")).should == package_hash.merge(:description => 'whoops')
+      parser_test(
+        line.gsub(/#{delimiter} .+$/, "#{delimiter} whoops\nnewline"),
+        package_hash.merge(:description => 'whoops')
+      )
     end
 
     it "should warn but not fail if line is unparseable" do
-      Puppet.expects(:warning).once
-      provider_class.nevra_to_hash('bad data').should == {}
+      parser_test('bad data', {}, 1)
     end
   end
 

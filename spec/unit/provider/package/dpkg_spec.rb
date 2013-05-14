@@ -204,28 +204,30 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
   end
 
   describe "parsing tests" do
+    let(:resource_name) { 'name' }
     let(:package_hash) do
       {
         :desired => 'desired',
-        :error => 'error',
+        :error => 'ok',
         :status => 'status',
-        :name => 'name',
+        :name => resource_name,
         :ensure => 'ensure',
         :description => 'summary text',
         :provider => :dpkg,
       }
     end
+    let(:query_args) { args.push(resource_name) }
 
     it "warns about excess lines if encounters a delimiter in description but does not fail" do
       broken_description = <<-EOS
-desired error status name ensure :DESC: summary text
+desired ok status name ensure :DESC: summary text
  more description
 :DESC:
  1 whoops ^^ should not happen, because dpkg-query is supposed to prefix description lines with
  2 whitespace.  So we should see three warnings for these four additional lines when we try
  3 and process next-pkg (vv the :DESC: is line number 4)
 :DESC:
-desired error status next-pkg ensure :DESC: next summary
+desired ok status next-pkg ensure :DESC: next summary
 :DESC:
       EOS
       Puppet.expects(:warning).times(4)
@@ -239,60 +241,53 @@ desired error status next-pkg ensure :DESC: next summary
       hash.should == next_package
     end
 
+    def parser_test(dpkg_output_string, gold_hash)
+      pipe = StringIO.new(dpkg_output_string)
+      Puppet::Util::Execution.expects(:execpipe).with(query_args).yields pipe
+      Puppet.expects(:warning).never
+
+      provider.query.should == gold_hash
+    end
+
     it "should parse properly even if delimiter is in version" do
       version_delimiter = <<-EOS
-desired error status name 1.2.3-:DESC: :DESC: summary text
+desired ok status name 1.2.3-:DESC: :DESC: summary text
  more description
 :DESC:
       EOS
-      Puppet.expects(:warning).never
-
-      pipe = StringIO.new(version_delimiter)
-      provider_class.parse_multi_line(pipe).should == package_hash.merge(:ensure => '1.2.3-:DESC:')
+      parser_test(version_delimiter, package_hash.merge(:ensure => '1.2.3-:DESC:'))
     end
 
     it "should parse properly even if delimiter is name" do
       name_delimiter = <<-EOS
-desired error status :DESC: ensure :DESC: summary text
+desired ok status :DESC: ensure :DESC: summary text
  more description
 :DESC:
       EOS
-      Puppet.expects(:warning).never
-
-      pipe = StringIO.new(name_delimiter)
-      provider_class.parse_multi_line(pipe).should == package_hash.merge(:name => ':DESC:')
+      parser_test(name_delimiter, package_hash.merge(:name => ':DESC:'))
     end
 
     it "should parse properly even if optional ensure field is missing" do
       no_ensure = <<-EOS
-desired error status name  :DESC: summary text
+desired ok status name  :DESC: summary text
  more description and note^ two spaces surround the hole where 'ensure' field would be...
 :DESC:
       EOS
-      Puppet.expects(:warning).never
-
-      pipe = StringIO.new(no_ensure)
-      provider_class.parse_multi_line(pipe).should == package_hash.merge(:ensure => '')
+      parser_test(no_ensure, package_hash.merge(:ensure => ''))
     end
 
     it "should parse properly even if extra delimiter is in summary" do
       extra_description_delimiter = <<-EOS
-desired error status name ensure :DESC: summary text
+desired ok status name ensure :DESC: summary text
  :DESC: should be completely ignored because of leading space which dpkg-query should ensure
 :DESC:
       EOS
-      Puppet.expects(:warning).never
-
-      pipe = StringIO.new(extra_description_delimiter)
-      provider_class.parse_multi_line(pipe).should == package_hash
+      parser_test(extra_description_delimiter, package_hash)
     end
 
     it "should parse properly even if package description is completely missing" do
-      no_description = "desired error status name ensure :DESC: \n:DESC:"
-      Puppet.expects(:warning).never
-
-      pipe = StringIO.new(no_description)
-      provider_class.parse_multi_line(pipe).should == package_hash.merge(:description => '')
+      no_description = "desired ok status name ensure :DESC: \n:DESC:"
+      parser_test(no_description, package_hash.merge(:description => ''))
     end
   end
 
