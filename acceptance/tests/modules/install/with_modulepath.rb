@@ -4,7 +4,7 @@ step 'Setup'
 
 stub_forge_on(master)
 
-on master, "mkdirp -p #{master['puppetpath']}/modules2"
+on master, "mkdir -p #{master['puppetpath']}/modules2"
 
 teardown do
   on master, "rm -rf #{master['puppetpath']}/modules2"
