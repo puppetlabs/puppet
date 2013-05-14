@@ -9,8 +9,10 @@ test_name "the pluginsync functionality should sync feature definitions"
 
 
 require 'puppet/acceptance/temp_file_utils'
+require 'puppet/acceptance/config_utils'
 
 extend Puppet::Acceptance::TempFileUtils
+extend Puppet::Acceptance::ConfigUtils
 
 initialize_temp_dirs()
 
@@ -116,10 +118,15 @@ begin
 
   step "start the master" do
 
-    with_master_running_on(master,
-               "--manifest=\"#{get_test_file_path(master, master_manifest_file)}\" " +
-               "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-               "--autosign true --pluginsync") do
+    master_opts = {
+      'master' => {
+        'manifest' => "#{get_test_file_path(master, master_manifest_file)}",
+        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
+        'node_terminus' => nil
+      }
+    }
+
+    with_puppet_running_on master, master_opts do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
