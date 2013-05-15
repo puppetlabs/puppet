@@ -6,6 +6,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   has_feature :versionable
 
+  has_feature :install_options
+
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
   commands :preseed => "/usr/bin/debconf-set-selections"
@@ -61,6 +63,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       # Add the package version and --force-yes option
       str += "=#{should}"
       cmd << "--force-yes"
+    end
+
+    if @resource[:install_options]
+      cmd << @resource[:install_options]
     end
 
     cmd << :install << str
