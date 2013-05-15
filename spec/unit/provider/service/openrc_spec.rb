@@ -58,6 +58,19 @@ describe Puppet::Type.type(:service).provider(:openrc) do
     end
   end
 
+  describe 'when invoking `rc-status`' do
+    subject { described_class.new(Puppet::Type.type(:service).new(:name => 'urandom')) }
+    it "clears the RC_SVCNAME environment variable" do
+      Puppet::Util.withenv(:RC_SVCNAME => 'puppet') do
+        Puppet::Util::Execution.expects(:execute).with(
+          includes('/bin/rc-status'),
+          has_entry(:custom_environment, {:RC_SVCNAME => nil})
+        ).returns ''
+        subject.enabled?
+      end
+    end
+  end
+
   describe "#enabled?" do
 
     before :each do
