@@ -9,7 +9,7 @@ teardown do
   on master, "rm -rf #{master['distmoduledir']}/stdlib"
   on master, "rm -rf #{master['distmoduledir']}/apollo"
   on master, "rm -rf #{master['sitemoduledir']}/apollo"
-  on master, "rm -rf #{master['siteoduledir']}/java"
+  on master, "rm -rf #{master['sitemoduledir']}/java"
 end
 
 step "Install an older module version"
