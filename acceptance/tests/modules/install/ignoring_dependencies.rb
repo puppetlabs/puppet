@@ -3,12 +3,12 @@ test_name "puppet module install (ignoring dependencies)"
 step 'Setup'
 
 stub_forge_on(master)
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/java"
   on master, "rm -rf #{master['distmoduledir']}/stdlib"
-  on master, "rm -rf #{master['sitemoduledir']}/java"
-  on master, "rm -rf #{master['sitemoduledir']}/stdlib"
 end
 
 step "Install a module, but ignore dependencies"
