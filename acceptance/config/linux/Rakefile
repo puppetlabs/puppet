@@ -1,0 +1,11 @@
+task :up do
+  sh "vagrant up"
+end
+
+task :clean do
+  sh "vagrant destroy -f"
+end
+
+task :test => :up do
+  sh "systest -o options.rb -t ../../tests"
+end

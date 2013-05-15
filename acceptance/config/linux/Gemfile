@@ -1,0 +1,5 @@
+source "https://rubygems.org"
+
+#gem "puppet_acceptance", :git => "git://github.com/puppetlabs/puppet-acceptance.git"
+gem "puppet_acceptance", :path => "/Users/andy/work/puppet-acceptance"
+gem "rake"
