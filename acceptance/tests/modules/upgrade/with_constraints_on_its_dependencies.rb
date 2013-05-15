@@ -30,7 +30,7 @@ apply_manifest_on master, <<-PP
 PP
 on master, puppet("module install pmtacceptance-stdlib --version 0.0.2")
 on master, puppet("module install pmtacceptance-java --version 1.6.0")
-on master, puppet("module list") do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── notpmtacceptance-unicorns (\e[0;36mv0.0.3\e[0m)
@@ -55,7 +55,7 @@ end
 
 step "Relax constraints"
 on master, puppet("module uninstall notpmtacceptance-unicorns")
-on master, puppet("module list") do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)

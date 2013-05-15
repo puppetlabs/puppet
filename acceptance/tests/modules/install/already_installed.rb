@@ -3,9 +3,9 @@ test_name "puppet module install (already installed)"
 step 'Setup'
 
 stub_forge_on(master)
+on master, "mkdir -p #{master['distmoduledir']}"
 
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/nginx"
   on master, "rm -rf #{master['distmoduledir']}/nginx"
 end
 

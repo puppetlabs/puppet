@@ -12,7 +12,7 @@ end
 
 on master, puppet("module install pmtacceptance-java --version 1.7.0")
 on master, puppet("module install pmtacceptance-apollo")
-on master, puppet("module list") do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── pmtacceptance-apollo (\e[0;36mv0.0.1\e[0m)
