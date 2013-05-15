@@ -47,25 +47,13 @@ on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 on master, "[ -d #{master['sitemoduledir']}/crakorn ]"
 
 step "List the installed modules"
-on master, puppet('module list') do
+on master, puppet("module list") do
   assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-└── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-#{master['sitemoduledir']}
-└── jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list --tree') do
+on master, puppet("module list --tree") do
   assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-└─┬ jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-  └── jimmy-crakorn (\e[0;36mv0.4.0\e[0m) [#{master['sitemoduledir']}]
-#{master['sitemoduledir']}
-└─┬ jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-  └── jimmy-appleseed (\e[0;36mv1.1.0\e[0m) [#{master['distmoduledir']}]
-STDOUT
+  assert_match /jimmy-crakorn.*\[#{master['sitemoduledir']}\]/, stdout, 'Could not find jimmy crakorn'
+  assert_match /jimmy-appleseed.*\[#{master['distmoduledir']}\]/, stdout, 'Could not find jimmy appleseed, but then again... wasnt it johnny appleseed?'
 end
