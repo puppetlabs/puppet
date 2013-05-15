@@ -1,6 +1,7 @@
 test_name "should modify a user when no longer managing home (#20726)"
 
 name = "pl#{rand(999999).to_i}"
+pw = "Passwrd-#{rand(999999).to_i}"[0..11]
 
 def get_home_dir(host, user_name)
   home_dir = nil
@@ -11,6 +12,11 @@ def get_home_dir(host, user_name)
 end
 
 agents.each do |agent|
+  case agent['platform']
+  when /windows/
+    pending_test("#20768 managehome only works on ruby 1.8")
+  end
+
   teardown do
     step "delete the user"
     agent.user_absent(name)
@@ -18,7 +24,7 @@ agents.each do |agent|
   end
 
   step "ensure the user is present with managehome"
-  on agent, puppet_resource('user', name, ["ensure=present", "managehome=true"])
+  on agent, puppet_resource('user', name, ["ensure=present", "managehome=true", "password=#{pw}"])
 
   step "find the current home dir"
   home_dir = get_home_dir(agent, name)
