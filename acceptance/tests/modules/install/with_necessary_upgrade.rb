@@ -7,6 +7,7 @@ stub_forge_on(master)
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/java"
   on master, "rm -rf #{master['distmoduledir']}/stdlib"
+  on master, "rm -rf #{master['distmoduledir']}/apollo"
 end
 
 step "Install an older module version"
