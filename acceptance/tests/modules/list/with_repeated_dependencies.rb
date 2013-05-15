@@ -9,6 +9,10 @@ teardown do
 end
 
 step "Setup"
+
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 apply_manifest_on master, <<-PP
 file {
   [
@@ -87,19 +91,10 @@ on master, "[ -d #{master['sitemoduledir']}/crick ]"
 step "List the installed modules"
 on master, puppet('module list') do
   assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-#{master['distmoduledir']}
-├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-├── jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-├── jimmy-steward (\e[0;36mv0.9.0\e[0m)
-└── jimmy-thelock (\e[0;36mv1.0.0\e[0m)
-#{master['sitemoduledir']}
-└── jimmy-crick (\e[0;36mv1.0.1\e[0m)
-STDOUT
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list --tree') do
+on master, puppet("module list --tree --modulepath #{master['distmoduledir']}") do
   assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 #{master['distmoduledir']}
@@ -107,9 +102,15 @@ on master, puppet('module list --tree') do
   ├─┬ jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
   │ └── jimmy-steward (\e[0;36mv0.9.0\e[0m)
   └── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-#{master['sitemoduledir']}
-└─┬ jimmy-crick (\e[0;36mv1.0.1\e[0m)
-  └─┬ jimmy-crakorn (\e[0;36mv0.4.0\e[0m) [#{master['distmoduledir']}]
-    └── jimmy-steward (\e[0;36mv0.9.0\e[0m) [#{master['distmoduledir']}]
 STDOUT
+end
+
+on master, puppet("module list --tree") do
+  assert_equal '', stderr
+  assert_match( /jimmy-crakorn.*\[#{master['distmoduledir']}\]/,
+                stdout,
+                'Did not find cross modulepath reference to jimmy-crakorn' )
+  assert_match( /jimmy-steward.*\[#{master['distmoduledir']}\]/,
+                stdout,
+                'Did not find cross modulepath reference to jimmy-steward' )
 end
