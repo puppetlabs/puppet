@@ -7,10 +7,10 @@ on master, "mkdir -p #{master['distmoduledir']}"
 on master, "mkdir -p #{master['sitemoduledir']}"
 
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/crakcorn"
+  on master, "rm -rf #{master['distmoduledir']}/crakorn"
   on master, "rm -rf #{master['distmoduledir']}/stdlib"
   on master, "rm -rf #{master['distmoduledir']}/git"
-  on master, "rm -rf #{master['sitemoduledir']}/crakcorn"
+  on master, "rm -rf #{master['sitemoduledir']}/crakorn"
   on master, "rm -rf #{master['sitemoduledir']}/git"
 end
 

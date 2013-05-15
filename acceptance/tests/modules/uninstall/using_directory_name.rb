@@ -2,7 +2,7 @@ test_name "puppet module uninstall (using directory name)"
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/apache"
-  on master, "rm -rf #{master['distmoduledir']}/crakcorn"
+  on master, "rm -rf #{master['distmoduledir']}/crakorn"
 end
 
 step "Setup"

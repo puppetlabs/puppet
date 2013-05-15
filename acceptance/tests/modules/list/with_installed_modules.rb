@@ -3,7 +3,7 @@ test_name "puppet module list (with installed modules)"
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/thelock"
   on master, "rm -rf #{master['distmoduledir']}/appleseed"
-  on master, "rm -rf #{master['distmoduledir']}/crakcorn"
+  on master, "rm -rf #{master['distmoduledir']}/crakorn"
   on master, "rm -rf #{master['sitemoduledir']}/crick"
 end
 

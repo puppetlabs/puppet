@@ -29,8 +29,8 @@ file {
 PP
 
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/crakcorn"
-  on master, "rm -rf #{master['sitemoduledir']}/crakcorn"
+  on master, "rm -rf #{master['distmoduledir']}/crakorn"
+  on master, "rm -rf #{master['sitemoduledir']}/crakorn"
 end
 
 on master, "[ -d #{master['distmoduledir']}/crakorn ]"

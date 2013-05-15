@@ -6,11 +6,15 @@ teardown do
 end
 
 step "Setup"
+
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 apply_manifest_on master, <<-PP
 file {
   [
     '#{master['distmoduledir']}/appleseed',
-    '#{master['sitemdouledir']}/crakorn',
+    '#{master['sitemoduledir']}/crakorn',
   ]: ensure => directory,
      recurse => true,
      purge => true,
