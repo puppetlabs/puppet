@@ -40,6 +40,13 @@ describe Puppet::Network::AuthConfig do
     @auth = parser.parse
   end
 
+  def add_raw_stanza(stanza)
+    parser = Puppet::Network::AuthConfigParser.new(
+      stanza
+    )
+    @auth = parser.parse
+  end
+
   def request(args = {})
     args = {
       :key => 'key',
@@ -85,6 +92,18 @@ describe Puppet::Network::AuthConfig do
       add_rule("allow *.domain.com")
 
       @auth.should allow(request)
+    end
+
+    it 'should warn about missing path before allow_ip in stanza' do
+      expect {
+        add_raw_stanza("allow_ip 10.0.0.1\n")
+      }.to raise_error Puppet::ConfigurationError, /Missing or invalid 'path' before right directive at line.*/
+    end
+
+    it 'should warn about missing path before allow in stanza' do
+      expect {
+        add_raw_stanza("allow host.domain.com\n")
+      }.to raise_error Puppet::ConfigurationError, /Missing or invalid 'path' before right directive at line.*/
     end
 
     it "should support hostname backreferences" do
