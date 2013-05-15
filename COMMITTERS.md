@@ -214,12 +214,12 @@ release branch, the committer merges in:
      1 file changed, 0 insertions(+), 0 deletions(-)
      create mode 100644 foo
 
-Once merged into the first base branch, the committer merges the same topic
+Once merged into the first base branch, the committer merges the `stable`
 branch into `master`, being careful to preserve the same commit identifiers.
 
     $ git checkout master
     Switched to branch 'master'
-    $ git merge --no-ff --log bug/stable/fix_foo_error
+    $ git merge --no-ff --log stable
     Merge made by the 'recursive' strategy.
      foo | 0
      1 file changed, 0 insertions(+), 0 deletions(-)
