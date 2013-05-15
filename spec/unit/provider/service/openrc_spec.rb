@@ -7,7 +7,10 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     ['/sbin/rc-service', '/bin/rc-status', '/sbin/rc-update'].each do |command|
+      # Puppet::Util is both mixed in to providers and is also invoked directly
+      # by Puppet::Provider::CommandDefiner, so we have to stub both out.
       described_class.stubs(:which).with(command).returns(command)
+      Puppet::Util.stubs(:which).with(command).returns(command)
     end
   end
 
