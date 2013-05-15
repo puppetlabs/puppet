@@ -11,6 +11,7 @@ teardown do
   on master, "rm -rf #{master['distmoduledir']}/nginx"
 end
 
+on master, "mkdir -p #{master['distmoduledir']}"
 apply_manifest_on master, <<-PP
   file {
     [
@@ -30,7 +31,7 @@ apply_manifest_on master, <<-PP
 PP
 
 on master, puppet("module install pmtacceptance-java --version 1.6.0")
-on master, puppet("module list") do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── nginx (\e[0;36m???\e[0m)
