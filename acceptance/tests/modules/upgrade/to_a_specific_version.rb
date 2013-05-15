@@ -3,6 +3,7 @@ test_name "puppet module upgrade (to a specific version)"
 step 'Setup'
 
 stub_forge_on(master)
+on master, "mkdir -p #{master['distmoduledir']}"
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/java"
@@ -10,7 +11,7 @@ teardown do
 end
 
 on master, puppet("module install pmtacceptance-java --version 1.6.0")
-on master, puppet("module list") do
+on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   assert_output <<-OUTPUT
     #{master['distmoduledir']}
     ├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
