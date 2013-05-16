@@ -79,11 +79,35 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
   end
 
   describe "when installing flat pkg file" do
-    it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
-      resource[:source] = "/tmp/test.pkg"
-      resource[:name] = "testpkg"
-      provider.class.expects(:installpkgdmg).with("/tmp/test.pkg", "testpkg").returns ""
-      provider.install
+    describe "with a local source" do
+      it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
+        resource[:source] = "/tmp/test.pkg"
+        resource[:name] = "testpkg"
+        provider.class.expects(:installpkgdmg).with("/tmp/test.pkg", "testpkg").returns ""
+        provider.install
+      end
+    end
+
+    describe "with a remote source" do
+      let(:remote_source) { 'http://fake.puppetlabs.com/test.pkg' }
+      let(:tmpdir) { '/path/to/tmpdir' }
+      let(:tmpfile) { File.join(tmpdir, 'testpkg.pkg') }
+
+      before do
+        resource[:name]   = 'testpkg'
+        resource[:source] = remote_source
+
+        Dir.stubs(:mktmpdir).returns tmpdir
+      end
+
+      it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
+        described_class.expects(:curl).with do |*args|
+          args.should be_include tmpfile
+          args.should be_include remote_source
+        end
+        provider.class.expects(:installpkg).with(tmpfile, 'testpkg', remote_source)
+        provider.install
+      end
     end
   end
 end
