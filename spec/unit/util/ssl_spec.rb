@@ -17,6 +17,8 @@ describe Puppet::Util::SSL do
       end
     end
 
+    NO_PARTS = {}
+
     it "parses a DN with a single part" do
       parse('CN=client.example.org').should be_a_subject_with({
         'CN' => 'client.example.org'
@@ -43,31 +45,47 @@ describe Puppet::Util::SSL do
         'CN' => 'client2a.example.org'
       })
     end
+
+    it "finds no parts in something that is not a DN" do
+      parse('(no)').should be_a_subject_with(NO_PARTS)
+    end
+
+    it "finds no parts in a DN with an invalid part" do
+      parse('no=yes,CN=Root CA').should be_a_subject_with(NO_PARTS)
+    end
+
+    it "finds no parts in an empty DN" do
+      parse('').should be_a_subject_with(NO_PARTS)
+    end
   end
 
   describe "when getting a CN from a subject" do
+    def cn_from(subject)
+      Puppet::Util::SSL.cn_from_subject(subject)
+    end
+
     it "should correctly parse a subject containing only a CN" do
       subj = parse('/CN=foo')
-      described_class.cn_from_subject(subj).should == 'foo'
+      cn_from(subj).should == 'foo'
     end
 
     it "should correctly parse a subject containing other components" do
       subj = parse('/CN=Root CA/OU=Server Operations/O=Example Org')
-      described_class.cn_from_subject(subj).should == 'Root CA'
+      cn_from(subj).should == 'Root CA'
     end
 
     it "should correctly parse a subject containing other components with CN not first" do
       subj = parse('/emailAddress=foo@bar.com/CN=foo.bar.com/O=Example Org')
-      described_class.cn_from_subject(subj).should == 'foo.bar.com'
+      cn_from(subj).should == 'foo.bar.com'
     end
 
     it "should return nil for a subject with no CN" do
       subj = parse('/OU=Server Operations/O=Example Org')
-      described_class.cn_from_subject(subj).should == nil
+      cn_from(subj).should == nil
     end
 
     it "should return nil for a bare string" do
-      described_class.cn_from_subject("/CN=foo").should == nil
+      cn_from("/CN=foo").should == nil
     end
   end
 end
