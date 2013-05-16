@@ -134,6 +134,26 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       results[:installed_modules][0][:version][:vstring].should == "1.0.0-rc1"
     end
 
+    it "should install the most recent stable version of requested module for the requested version range" do
+      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+        with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options.merge(:version => '1.x')).
+        returns(unpacker)
+      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.x'))
+      results[:installed_modules].length == 1
+      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+      results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+    end
+
+    it "should install the most recent version of requested module for the requested version range in the absence of a stable version" do
+      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+      with('/fake_cache/pmtacceptance-stdlib-1.5.0-pre.tar.gz', options.merge(:version => '1.5.0-pre')).
+        returns(unpacker)
+      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.5.0-pre'))
+      results[:installed_modules].length == 1
+      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+      results[:installed_modules][0][:version][:vstring].should == "1.5.0-pre"
+    end
+
     context "should check the target directory" do
       let(:installer) do
         installer_class.new('pmtacceptance-stdlib', forge, install_dir, options)
