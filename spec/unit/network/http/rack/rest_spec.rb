@@ -253,6 +253,23 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         @handler.expects(:resolve_node).returns("host.domain.com")
         @handler.params(req)[:node].should == "host.domain.com"
       end
+
+      it "should resolve the node name with an ip address look-up if a certificate without a CN is present" do
+        Puppet[:ssl_client_header] = "myheader"
+        req = mk_req('/', "myheader" => "O=no CN")
+        @handler.expects(:resolve_node).returns("host.domain.com")
+        @handler.params(req)[:node].should == "host.domain.com"
+      end
+
+      it "should not allow authentication via the verify header if there is no CN available" do
+        Puppet[:ssl_client_header] = "dn_header"
+        Puppet[:ssl_client_verify_header] = "verify_header"
+        req = mk_req('/', "dn_header" => "O=no CN", "verify_header" => 'SUCCESS')
+
+        @handler.expects(:resolve_node).returns("host.domain.com")
+
+        @handler.params(req)[:authenticated].should be_false
+      end
     end
   end
 end
