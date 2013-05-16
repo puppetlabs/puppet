@@ -24,7 +24,7 @@ module Puppet
       "The provider supports duplicate users with the same UID."
 
     feature :manages_homedir,
-      "The provider can create, remove, and update home directories."
+      "The provider can create and remove home directories."
 
     feature :manages_passwords,
       "The provider can modify user passwords, by accepting a password
@@ -300,10 +300,8 @@ module Puppet
 
     newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to manage the home directory when managing the user.
-        This will create the home directory when `ensure => present`,
-        delete the home directory when `ensure => absent`. Linux only:
-        this will update the user's home directory when the `home` property
-        changes. Defaults to `false`."
+        This will create the home directory when `ensure => present`, and
+        delete the home directory when `ensure => absent`. Defaults to `false`."
 
       defaultto false
 
