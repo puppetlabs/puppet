@@ -205,12 +205,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.create
     end
 
-    it "should return an array with -m flag if home is managed and the home directory is modified" do
-      resource[:managehome] = :true
-      provider.expects(:execute).with(includes('-m'))
-      provider.home = '/tmp/myuser'
-    end
-
     it "should return an array with -r flag if home is managed" do
       resource[:managehome] = :true
       resource[:ensure] = :absent
