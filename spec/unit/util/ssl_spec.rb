@@ -5,41 +5,64 @@ require 'openssl'
 require 'puppet/util/ssl'
 
 describe Puppet::Util::SSL do
+  def parse(dn)
+    Puppet::Util::SSL.subject_from_dn(dn)
+  end
+
   describe "when getting a subject from a DN" do
-    [['/CN=Root CA/OU=Server Operations/O=Example Org',
-            [['CN', 'Root CA'], ['OU', 'Server Operations'], ['O', 'Example Org']]],
-     ['/CN=client.example.org',
-            [['CN', 'client.example.org']]],
-     ['CN=client.example.org',
-            [['CN', 'client.example.org']]],
-     ['O=Foo\, Inc,CN=client2a.example.org',
-            [['CN', 'client2a.example.org'], ['O', 'Foo, Inc']]],
-    ].each do |dn, exp|
-      it "parses #{dn} correctly to #{exp.inspect}" do
-        # parse out the important bits of the Name object to compare
-        described_class.subject_from_dn(dn).to_a.map { |a| [a[0], a[1]] }.should === exp
+    RSpec::Matchers.define :be_a_subject_with do |expected|
+      match do |actual|
+        parts = actual.to_a.map { |part| part[0..1] }.flatten
+        Hash[*parts] == expected
       end
+    end
+
+    it "parses a DN with a single part" do
+      parse('CN=client.example.org').should be_a_subject_with({
+        'CN' => 'client.example.org'
+      })
+    end
+
+    it "parses a DN with parts separated by slashes" do
+      parse('/CN=Root CA/OU=Server Operations/O=Example Org').should be_a_subject_with({
+        'CN' => 'Root CA',
+        'OU' => 'Server Operations',
+        'O'  => 'Example Org'
+      })
+    end
+
+    it "parses a DN with a single part preceeded by a slash" do
+      parse('/CN=client.example.org').should be_a_subject_with({
+        'CN' => 'client.example.org'
+      })
+    end
+
+    it "parses a DN with parts separated by commas" do
+      parse('O=Foo\, Inc,CN=client2a.example.org').should be_a_subject_with({
+        'O' => 'Foo, Inc',
+        'CN' => 'client2a.example.org'
+      })
     end
   end
 
   describe "when getting a CN from a subject" do
     it "should correctly parse a subject containing only a CN" do
-      subj = OpenSSL::X509::Name.parse('/CN=foo')
+      subj = parse('/CN=foo')
       described_class.cn_from_subject(subj).should == 'foo'
     end
 
     it "should correctly parse a subject containing other components" do
-      subj = OpenSSL::X509::Name.parse('/CN=Root CA/OU=Server Operations/O=Example Org')
+      subj = parse('/CN=Root CA/OU=Server Operations/O=Example Org')
       described_class.cn_from_subject(subj).should == 'Root CA'
     end
 
     it "should correctly parse a subject containing other components with CN not first" do
-      subj = OpenSSL::X509::Name.parse('/emailAddress=foo@bar.com/CN=foo.bar.com/O=Example Org')
+      subj = parse('/emailAddress=foo@bar.com/CN=foo.bar.com/O=Example Org')
       described_class.cn_from_subject(subj).should == 'foo.bar.com'
     end
 
     it "should return nil for a subject with no CN" do
-      subj = OpenSSL::X509::Name.parse('/OU=Server Operations/O=Example Org')
+      subj = parse('/OU=Server Operations/O=Example Org')
       described_class.cn_from_subject(subj).should == nil
     end
 
