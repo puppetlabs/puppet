@@ -54,17 +54,18 @@ module Puppet::Util::Windows::User
     fLOGON32_PROVIDER_DEFAULT = 0
 
     logon_user = Win32API.new("advapi32", "LogonUser", ['P', 'P', 'P', 'L', 'L', 'P'], 'L')
-    close_handle = Win32API.new("kernel32", "CloseHandle", ['P'], 'V')
+    close_handle = Win32API.new("kernel32", "CloseHandle", ['L'], 'B')
 
     token = 0.chr * 4
     if logon_user.call(name, ".", password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token) == 0
       raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
     end
 
+    token = token.unpack('L')[0]
     begin
-      yield token.unpack('L')[0] if block_given?
+      yield token if block_given?
     ensure
-      close_handle.call(token.unpack('L')[0])
+      close_handle.call(token)
     end
   end
   module_function :logon_user
@@ -88,7 +89,7 @@ module Puppet::Util::Windows::User
       pi = [4 * 8, fPI_NOUI, user, nil, nil, nil, nil, profile].pack('LLPPPPPP')
 
       load_user_profile   = Win32API.new('userenv', 'LoadUserProfile', ['L', 'P'], 'L')
-      unload_user_profile = Win32API.new('userenv', 'UnloadUserProfile', ['L', 'P'], 'L')
+      unload_user_profile = Win32API.new('userenv', 'UnloadUserProfile', ['L', 'L'], 'L')
 
       # Load the profile. Since it doesn't exist, it will be created
       if load_user_profile.call(token, pi) == 0
@@ -97,7 +98,8 @@ module Puppet::Util::Windows::User
 
       Puppet.debug("Loaded profile for #{user}")
 
-      if unload_user_profile.call(token, pi.unpack('LLLLLLLL').last) == 0
+      profile = pi.unpack('LLLLLLLL').last
+      if unload_user_profile.call(token, profile) == 0
         raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
       end
     end
