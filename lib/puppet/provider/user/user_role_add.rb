@@ -1,5 +1,6 @@
 require 'puppet/util'
 require 'puppet/util/user_attr'
+require 'date'
 
 Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source => :useradd do
 
@@ -195,6 +196,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
           line_arr = line.split(':')
           if line_arr[0] == @resource[:name]
             line_arr[1] = cryptopw
+            line_arr[2] = (Date.today - Date.new(1970,1,1)).to_i.to_s
             line = line_arr.join(':')
           end
           fh.print line
