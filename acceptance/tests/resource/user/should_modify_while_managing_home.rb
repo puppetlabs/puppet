@@ -15,6 +15,8 @@ agents.each do |agent|
   case agent['platform']
   when /windows/
     pending_test("#20768 managehome only works on ruby 1.8")
+  when /solaris/
+    pending_test("managehome needs work on solaris")
   end
 
   teardown do
