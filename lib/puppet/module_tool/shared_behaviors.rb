@@ -107,7 +107,9 @@ module Puppet::ModuleTool::Shared
         @conditions.each { |_, conds| conds.delete_if { |c| c[:module] == mod } }
       end
 
-      valid_versions = @versions["#{mod}"].select { |h| range === h[:semver] }
+      versions = @versions["#{mod}"].select { |h| range === h[:semver] }
+      valid_versions = versions.select { |x| x[:semver].special == '' }
+      valid_versions = versions if valid_versions.empty?
 
       unless version = valid_versions.last
         req_module   = @module_name
