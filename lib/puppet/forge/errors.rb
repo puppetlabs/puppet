@@ -78,7 +78,7 @@ Could not connect to #{@uri}
       @input   = options[:input]
       @message = options[:message]
       response = options[:response]
-      @response = "#{response.code} #{response.message}"
+      @response = "#{response.code} #{response.message.strip}"
 
       message = "Could not execute operation for '#{@input}'. Detail: "
       message << @message << " / " if @message

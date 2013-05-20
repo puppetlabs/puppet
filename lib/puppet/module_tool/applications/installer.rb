@@ -153,7 +153,10 @@ module Puppet::ModuleTool
                 :version => release[:version][:vstring]
               }
               dependency = is_dependency ? dependency_info : nil
-              latest_version = @versions["#{@module_name}"].sort_by { |h| h[:semver] }.last[:vstring]
+              all_versions = @versions["#{@module_name}"].sort_by { |h| h[:semver] }
+              versions = all_versions.select { |x| x[:semver].special == '' }
+              versions = all_versions if versions.empty?
+              latest_version = versions.last[:vstring]
 
               raise InstallConflictError,
                 :requested_module  => @module_name,
