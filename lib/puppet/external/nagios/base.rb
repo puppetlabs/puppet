@@ -215,7 +215,7 @@ class Nagios::Base
       # Now access the parameters directly, to make it at least less
       # likely we'll end up in an infinite recursion.
       if mname.to_s =~ /=$/
-        @parameters[pname] = *args
+        @parameters[pname] = args.first
       else
         return @parameters[mname]
       end
