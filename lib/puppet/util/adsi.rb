@@ -175,7 +175,7 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery("select * from win32_useraccount")
+      wql = Puppet::Util::ADSI.execquery("select name from win32_useraccount")
 
       users = []
       wql.each do |u|
@@ -283,7 +283,7 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery( "select * from win32_group" )
+      wql = Puppet::Util::ADSI.execquery( "select name from win32_group" )
 
       groups = []
       wql.each do |g|
