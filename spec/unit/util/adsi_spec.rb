@@ -8,24 +8,19 @@ describe Puppet::Util::ADSI do
   let(:connection) { stub 'connection' }
 
   before(:each) do
-    Puppet::Util::ADSI.instance_variable_set(:@computer_name, 'testcomputername')
     Puppet::Util::ADSI.stubs(:connect).returns connection
   end
 
-  after(:each) do
-    Puppet::Util::ADSI.instance_variable_set(:@computer_name, nil)
-  end
-
   it "should generate the correct URI for a resource" do
-    Puppet::Util::ADSI.uri('test', 'user').should == "WinNT://testcomputername/test,user"
+    Puppet::Util::ADSI.uri('test', 'user').should == "WinNT://./test,user"
   end
 
-  it "should be able to get the name of the computer" do
-    Puppet::Util::ADSI.computer_name.should == 'testcomputername'
+  it "should be able to get the name of the computer", :if => Puppet.features.microsoft_windows? do
+    Puppet::Util::ADSI.computer_name.should_not be_nil
   end
 
   it "should be able to provide the correct WinNT base URI for the computer" do
-    Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
+    Puppet::Util::ADSI.computer_uri.should == "WinNT://."
   end
 
   describe ".sid_for_account", :if => Puppet.features.microsoft_windows? do
@@ -52,7 +47,7 @@ describe Puppet::Util::ADSI do
     let(:username)  { 'testuser' }
 
     it "should generate the correct URI" do
-      Puppet::Util::ADSI::User.uri(username).should == "WinNT://testcomputername/#{username},user"
+      Puppet::Util::ADSI::User.uri(username).should == "WinNT://./#{username},user"
     end
 
     it "should be able to create a user" do
@@ -68,7 +63,7 @@ describe Puppet::Util::ADSI do
     end
 
     it "should be able to check the existence of a user" do
-      Puppet::Util::ADSI.expects(:connect).with("WinNT://testcomputername/#{username},user").returns connection
+      Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
       Puppet::Util::ADSI::User.exists?(username).should be_true
     end
 
@@ -114,7 +109,7 @@ describe Puppet::Util::ADSI do
       end
 
       it "should generate the correct URI" do
-        user.uri.should == "WinNT://testcomputername/#{username},user"
+        user.uri.should == "WinNT://./#{username},user"
       end
 
       describe "when given a set of groups to which to add the user" do
@@ -127,13 +122,13 @@ describe Puppet::Util::ADSI do
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
             group1 = stub 'group1'
-            group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
+            group1.expects(:Add).with("WinNT://./#{username},user")
 
             group3 = stub 'group1'
-            group3.expects(:Remove).with("WinNT://testcomputername/#{username},user")
+            group3.expects(:Remove).with("WinNT://./#{username},user")
 
-            Puppet::Util::ADSI.expects(:connect).with('WinNT://testcomputername/group1,group').returns group1
-            Puppet::Util::ADSI.expects(:connect).with('WinNT://testcomputername/group3,group').returns group3
+            Puppet::Util::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
+            Puppet::Util::ADSI.expects(:connect).with('WinNT://./group3,group').returns group3
 
             user.set_groups(groups_to_set, false)
           end
@@ -142,9 +137,9 @@ describe Puppet::Util::ADSI do
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
             group1 = stub 'group1'
-            group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
+            group1.expects(:Add).with("WinNT://./#{username},user")
 
-            Puppet::Util::ADSI.expects(:connect).with('WinNT://testcomputername/group1,group').returns group1
+            Puppet::Util::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
 
             user.set_groups(groups_to_set, true)
           end
@@ -161,13 +156,13 @@ describe Puppet::Util::ADSI do
       let(:group)      { Puppet::Util::ADSI::Group.new(groupname, adsi_group) }
 
       it "should be able to add a member" do
-        adsi_group.expects(:Add).with("WinNT://testcomputername/someone,user")
+        adsi_group.expects(:Add).with("WinNT://./someone,user")
 
         group.add_member('someone')
       end
 
       it "should be able to remove a member" do
-        adsi_group.expects(:Remove).with("WinNT://testcomputername/someone,user")
+        adsi_group.expects(:Remove).with("WinNT://./someone,user")
 
         group.remove_member('someone')
       end
@@ -186,19 +181,19 @@ describe Puppet::Util::ADSI do
         names = ['user1', 'user2']
         adsi_group.expects(:Members).returns names.map{|n| stub(:Name => n)}
 
-        adsi_group.expects(:Remove).with('WinNT://testcomputername/user1,user')
-        adsi_group.expects(:Add).with('WinNT://testcomputername/user3,user')
+        adsi_group.expects(:Remove).with('WinNT://./user1,user')
+        adsi_group.expects(:Add).with('WinNT://./user3,user')
 
         group.set_members(['user2', 'user3'])
       end
 
       it "should generate the correct URI" do
-        group.uri.should == "WinNT://testcomputername/#{groupname},group"
+        group.uri.should == "WinNT://./#{groupname},group"
       end
     end
 
     it "should generate the correct URI" do
-      Puppet::Util::ADSI::Group.uri("people").should == "WinNT://testcomputername/people,group"
+      Puppet::Util::ADSI::Group.uri("people").should == "WinNT://./people,group"
     end
 
     it "should be able to create a group" do
@@ -214,7 +209,7 @@ describe Puppet::Util::ADSI do
     end
 
     it "should be able to confirm the existence of a group" do
-      Puppet::Util::ADSI.expects(:connect).with("WinNT://testcomputername/#{groupname},group").returns connection
+      Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
 
       Puppet::Util::ADSI::Group.exists?(groupname).should be_true
     end

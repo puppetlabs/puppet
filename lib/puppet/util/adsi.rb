@@ -34,7 +34,9 @@ module Puppet::Util::ADSI
     end
 
     def computer_uri
-      "WinNT://#{computer_name}"
+      # We always want to enumerate the local accounts, so don't specify a
+      # server otherwise, it can result in NetBIOS lookups
+      "WinNT://."
     end
 
     def wmi_resource_uri( host = '.' )
