@@ -54,7 +54,7 @@ module Puppet::Util::ADSI
     end
 
     def sid_for_account(name)
-      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_account instead."
+      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_sid instead."
 
       Puppet::Util::Windows::Security.name_to_sid(name)
     end
