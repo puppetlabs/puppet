@@ -23,9 +23,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     output = urpmi "--auto", wanted
 
     unless self.query
-      raise Puppet::Error.new(
-        "Could not find package #{self.name}"
-      )
+      raise Puppet::Error, "Package #{self.name} was not present after trying to install it"
     end
   end
 
