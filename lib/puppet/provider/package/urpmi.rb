@@ -57,7 +57,11 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     self.install
   end
 
-  def uninstall
-    urpme @resource[:name]
+  # For normal package removal the urpmi provider will delegate to the RPM
+  # provider. If the package to remove has dependencies then uninstalling via
+  # rpm will fail, but `urpme` can be used to remove a package and its
+  # dependencies.
+  def purge
+    urpme '--auto', @resource[:name]
   end
 end
