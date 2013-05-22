@@ -192,6 +192,10 @@ describe provider_class do
 
   describe "lazy_pip" do
 
+    after(:each) do
+      Puppet::Type::Package::ProviderPip.instance_variable_set(:@confine_collection, nil)
+    end
+
     it "should succeed if pip is present" do
       @provider.stubs(:pip).returns(nil)
       @provider.method(:lazy_pip).call "freeze"
