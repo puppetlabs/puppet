@@ -43,7 +43,7 @@ agents.each do |agent|
   step "Zone: ip - assign: ensure that our ip assignment works."
   # --------------------------------------------------------------------
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"ip.if.1" }', :acceptable_exit_codes => [1] ) do
-    assert_match(/Error: ip must contain interface name and ip address separated by a ":"/, result.output, "err: #{agent}")
+    assert_match(/ip must contain interface name and ip address separated by a \W*?:/, result.output, "err: #{agent}")
   end
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt", ip=>"ip.if.1:1.1.1.1" }') do
     assert_match(/defined 'ip' as .'ip.if.1:1.1.1.1'./ , result.stdout, "err: #{agent}")
