@@ -2,16 +2,6 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
   desc "Support via `urpmi`."
   commands :urpmi => "urpmi", :urpmq => "urpmq", :rpm => "rpm", :urpme => "urpme"
 
-  if command('rpm')
-    confine :true => begin
-      rpm('-ql', 'rpm')
-      rescue Puppet::ExecutionFailure
-        false
-      else
-        true
-      end
-  end
-
   defaultfor :operatingsystem => [:mandriva, :mandrake]
 
   has_feature :versionable
