@@ -42,7 +42,7 @@ with_puppet_running_on master, master_opts do
 
 
   yamldir = on(master, puppet('master', '--configprint', 'yamldir')).stdout.chomp
-  on master, puppet('node', 'search', '"*"', '--node_terminus', 'yaml', '--clientyamldir', yamldir) do
+  on master, puppet('node', 'search', '"*"', '--node_terminus', 'yaml', '--clientyamldir', yamldir, '--render-as', 'json') do
     assert_match(/"name":["\s]*#{node_name}/, stdout,
                  "Expect node name '#{node_name}' to be present in node yaml content written by the WriteOnlyYaml terminus")
   end
