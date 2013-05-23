@@ -39,7 +39,12 @@ class Puppet::Node::Facts
 
   # Convert all fact values into strings.
   def stringify
-    Puppet.deprecation_warning("Stringifying facts is deprecated, see the stringify_facts setting")
+    # Fact stringification should be deprecated in Puppet 4.0. At the time of
+    # this commit the next planned release is 3.3, so until 4.0 this has to
+    # stay off.
+    # --adrienthebo 23 may 2013
+    #Puppet.deprecation_warning("Stringifying facts is deprecated, see the stringify_facts setting")
+
     values.each do |fact, value|
       values[fact] = value.to_s
     end
