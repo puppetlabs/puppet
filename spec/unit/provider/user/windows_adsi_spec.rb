@@ -16,7 +16,6 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
   let(:connection) { stub 'connection' }
 
   before :each do
-    Puppet::Util::ADSI.stubs(:computer_name).returns('testcomputername')
     Puppet::Util::ADSI.stubs(:connect).returns connection
   end
 
