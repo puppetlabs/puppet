@@ -414,12 +414,3 @@ if Puppet::Util::Platform.windows?
   end
 end
 
-# Old puppet clients may make large GET requests, lets be reasonably tolerant
-# in our default WEBrick server.
-require 'webrick'
-if defined?(WEBrick::HTTPRequest::MAX_URI_LENGTH) and WEBrick::HTTPRequest::MAX_URI_LENGTH < 8192
-  # Silence ruby warning: already initialized constant MAX_URI_LENGTH
-  v, $VERBOSE = $VERBOSE, nil
-  WEBrick::HTTPRequest.const_set("MAX_URI_LENGTH", 8192)
-  $VERBOSE = v
-end
