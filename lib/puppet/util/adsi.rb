@@ -33,16 +33,16 @@ module Puppet::Util::ADSI
       @computer_name
     end
 
-    def computer_uri
-      "WinNT://#{computer_name}"
+    def computer_uri(host = '.')
+      "WinNT://#{host}"
     end
 
     def wmi_resource_uri( host = '.' )
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
-    def uri(resource_name, resource_type)
-      "#{computer_uri}/#{resource_name},#{resource_type}"
+    def uri(resource_name, resource_type, host = '.')
+      "#{computer_uri(host)}/#{resource_name},#{resource_type}"
     end
 
     def wmi_connection
@@ -74,8 +74,8 @@ module Puppet::Util::ADSI
       @native_user ||= Puppet::Util::ADSI.connect(uri)
     end
 
-    def self.uri(name)
-      Puppet::Util::ADSI.uri(name, 'user')
+    def self.uri(name, host = '.')
+      Puppet::Util::ADSI.uri(name, 'user', host)
     end
 
     def uri
@@ -216,8 +216,8 @@ module Puppet::Util::ADSI
       self.class.uri(name)
     end
 
-    def self.uri(name)
-      Puppet::Util::ADSI.uri(name, 'group')
+    def self.uri(name, host = '.')
+      Puppet::Util::ADSI.uri(name, 'group', host)
     end
 
     def native_group
@@ -235,14 +235,14 @@ module Puppet::Util::ADSI
 
     def add_members(*names)
       names.each do |name|
-        native_group.Add(Puppet::Util::ADSI::User.uri(name))
+        native_group.Add(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
       end
     end
     alias add_member add_members
 
     def remove_members(*names)
       names.each do |name|
-        native_group.Remove(Puppet::Util::ADSI::User.uri(name))
+        native_group.Remove(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
       end
     end
     alias remove_member remove_members
