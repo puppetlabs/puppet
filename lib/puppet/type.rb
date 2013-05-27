@@ -1408,7 +1408,7 @@ class Type
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
           description = self.class.direction == :in ? "dependency" : "dependent"
-          fail "Could not find #{description} #{ref} for #{resource.ref}"
+          fail ResourceError, "Could not find #{description} #{ref} for #{resource.ref}"
         end
       end
     end

@@ -811,7 +811,7 @@ describe Puppet::Type::RelationshipMetaparam do
     catalog.expects(:resource).with("Foo[bar]").returns "something"
     catalog.expects(:resource).with("Class[Test]").returns nil
 
-    param.expects(:fail).with { |string| string.include?("Class[Test]") }
+    param.expects(:fail).with { |exception,string| string.include?("Class[Test]") }
 
     param.validate_relationship
   end
