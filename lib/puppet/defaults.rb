@@ -241,6 +241,11 @@ module Puppet
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
+    :hiera_munge_undef => {
+      :default => true,
+      :desc    => "Whether undef should be munged into an empty string when passed to the hiera() function.",
+      :type    => :boolean,
+    },
     :catalog_terminus => {
       :type       => :terminus,
       :default    => "compiler",

@@ -1,7 +1,9 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera_hash, :type => :rvalue, :arity => -2, :doc => 
+  newfunction(:hiera_hash, :type => :rvalue,
+              :honor_undef => !Puppet.settings[:hiera_munge_undef],
+              :arity => -2, :doc => 
   "Returns a merged hash of matches from throughout the hierarchy. In cases where two or 
   more hashes share keys, the hierarchy  order determines which key/value pair will be 
   used in the returned hash, with the pair in the highest priority data source winning.
@@ -23,6 +25,8 @@ module Puppet::Parser::Functions
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     key, default, override = HieraPuppet.parse_args(args)
+    key = '' if key == :undef
+    override = '' if override == :undef
     HieraPuppet.lookup(key, default, self, override, :hash)
   end
 end

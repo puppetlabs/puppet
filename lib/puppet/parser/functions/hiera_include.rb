@@ -1,7 +1,9 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera_include, :arity => -2, :doc => "Assigns classes to a node
+  newfunction(:hiera_include,
+              :honor_undef => !Puppet.settings[:hiera_munge_undef],
+              :arity => -2, :doc => "Assigns classes to a node
   using an array merge lookup that retrieves the value for a user-specified key
   from a Hiera data source.
 
@@ -33,7 +35,10 @@ module Puppet::Parser::Functions
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     key, default, override = HieraPuppet.parse_args(args)
-    if answer = HieraPuppet.lookup(key, default, self, override, :array)
+    key = '' if key == :undef
+    override = '' if override == :undef
+    answer = HieraPuppet.lookup(key, default, self, override, :array)
+    if answer and answer != :undef
       method = Puppet::Parser::Functions.function(:include)
       send(method, answer)
     else

@@ -1,7 +1,9 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera_array, :type => :rvalue, :arity => -2,:doc => "Returns all 
+  newfunction(:hiera_array, :type => :rvalue,
+              :honor_undef => !Puppet.settings[:hiera_munge_undef],
+              :arity => -2,:doc => "Returns all 
   matches throughout the hierarchy --- not just the first match --- as a flattened array of unique values.
   If any of the matched values are arrays, they're flattened and included in the results.
   
@@ -21,6 +23,8 @@ module Puppet::Parser::Functions
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     key, default, override = HieraPuppet.parse_args(args)
+    key = '' if key == :undef
+    override = '' if override == :undef
     HieraPuppet.lookup(key, default, self, override, :array)
   end
 end
