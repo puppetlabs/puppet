@@ -825,7 +825,7 @@ Puppet::Type.newtype(:file) do
   def write_temporary_file?
     # unfortunately we don't know the source file size before fetching it
     # so let's assume the file won't be empty
-    (c = property(:content) and c.length) || (s = @parameters[:source] and 1)
+    (c = property(:content) and c.length) || @parameters[:source]
   end
 
   # There are some cases where all of the work does not get done on

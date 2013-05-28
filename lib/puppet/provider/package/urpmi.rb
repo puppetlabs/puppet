@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
       wanted += "-#{should}"
     end
 
-    output = urpmi "--auto", wanted
+    urpmi "--auto", wanted
 
     unless self.query
       raise Puppet::Error, "Package #{self.name} was not present after trying to install it"

@@ -225,7 +225,7 @@ class Puppet::Module
 
       dep_mod = begin
         environment.module_by_forge_name(forge_name)
-      rescue => e
+      rescue
         nil
       end
 

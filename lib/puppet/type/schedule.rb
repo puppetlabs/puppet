@@ -304,9 +304,6 @@ module Puppet
           # than the unit of time, we match.  We divide the scale
           # by the repeat, so that we'll repeat that often within
           # the scale.
-          diff = (now.to_i - previous.to_i)
-          comparison = (scale / @resource[:repeat])
-
           return (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
         end
       end

@@ -79,7 +79,6 @@ class Puppet::Util::Metric
       args.push("--title",self.label)
       args.push("--imgformat","PNG")
       args.push("--interlace")
-      i = 0
       defs = []
       lines = []
       #p @values.collect { |s,l| s }

@@ -240,7 +240,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def run_for_host(host)
     if options[:ping]
-      out = %x{ping -c 1 #{host}}
+      %x{ping -c 1 #{host}}
       unless $CHILD_STATUS == 0
         $stderr.print "Could not contact #{host}\n"
         exit($CHILD_STATUS)

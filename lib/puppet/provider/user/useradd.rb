@@ -71,7 +71,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def local_username
-    user = finduser('uid', @resource.uid)
+    finduser('uid', @resource.uid)
   end
 
   def localuid

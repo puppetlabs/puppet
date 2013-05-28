@@ -227,7 +227,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
       begin
         @objectinfo = Etc.send(@etcmethod, @resource[:name])
-      rescue ArgumentError => detail
+      rescue ArgumentError
         @objectinfo = nil
       end
     end

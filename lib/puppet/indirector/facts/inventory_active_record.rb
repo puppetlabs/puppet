@@ -46,7 +46,6 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
   def search(request)
     return [] unless request.options
     matching_nodes = []
-    fact_names = []
     fact_filters = Hash.new {|h,k| h[k] = []}
     meta_filters = Hash.new {|h,k| h[k] = []}
     request.options.each do |key,value|

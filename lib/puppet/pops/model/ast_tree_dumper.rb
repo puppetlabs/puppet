@@ -131,7 +131,7 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
 
     if o.is_a? String
       o               # A Ruby String, not quoted
-    elsif n = Puppet::Pops::Utils.to_n(o.value)
+    elsif Puppet::Pops::Utils.to_n(o.value)
       o.value         # AST::String that is a number without quotes
     else
       "'#{o.value}'"  # AST::String that is not a number

@@ -109,7 +109,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     paths.each { |path|
       fqname = File.join(path,name)
       begin
-        stat = File.stat(fqname)
+        File.stat(fqname)
       rescue
         # should probably rescue specific errors...
         self.debug("Could not find #{name} in #{path}")
@@ -123,7 +123,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     paths.each { |path|
       fqname_sh = File.join(path,"#{name}.sh")
       begin
-        stat = File.stat(fqname_sh)
+        File.stat(fqname_sh)
       rescue
         # should probably rescue specific errors...
         self.debug("Could not find #{name}.sh in #{path}")

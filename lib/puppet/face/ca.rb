@@ -204,7 +204,7 @@ Puppet::Face.define(:ca, '0.1.0') do
 
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
-      unless ca = Puppet::SSL::CertificateAuthority.instance
+      unless Puppet::SSL::CertificateAuthority.instance
         raise "Unable to fetch the CA"
       end
       Puppet::SSL::Host.ca_location = :only

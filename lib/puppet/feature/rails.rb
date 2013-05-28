@@ -23,7 +23,7 @@ Puppet.features.add(:rails) do
 
     require 'active_record'
     require 'active_record/version'
-  rescue LoadError => detail
+  rescue LoadError
     if FileTest.exists?("/usr/share/rails")
       count = 0
       Dir.entries("/usr/share/rails").each do |dir|

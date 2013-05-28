@@ -506,7 +506,7 @@ class Puppet::Settings
   def config_file_name
     begin
       return self[:config_file_name] if self[:config_file_name]
-    rescue SettingsError => err
+    rescue SettingsError
       # This just means that the setting wasn't explicitly set on the command line, so we will ignore it and
       #  fall through to the default name.
     end
@@ -562,7 +562,7 @@ class Puppet::Settings
     # Call any hooks we should be calling.
     settings_with_hooks.each do |setting|
       each_source(env) do |source|
-        if value = @values[source][setting.name]
+        if @values[source][setting.name]
           # We still have to use value to retrieve the value, since
           # we want the fully interpolated value, not $vardir/lib or whatever.
           # This results in extra work, but so few of the settings
@@ -1190,7 +1190,7 @@ Generated on #{Time.now}.
     #
     begin
       return true if self[:config]
-    rescue InterpolationError => err
+    rescue InterpolationError
       # This means we failed to interpolate, which means that they didn't
       #  explicitly specify either :config or :confdir... so we'll fall out to
       #  the default value.

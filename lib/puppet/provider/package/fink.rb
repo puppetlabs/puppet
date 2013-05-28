@@ -35,8 +35,6 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     end
     cmd = %w{-b -q -y}
 
-    keep = ""
-
     cmd << :install << str
 
     finkcmd(cmd)

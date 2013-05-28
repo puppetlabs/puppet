@@ -44,7 +44,7 @@ module Puppet::Util::Windows::User
   def password_is?(name, password)
     logon_user(name, password)
     true
-  rescue Puppet::Util::Windows::Error => e
+  rescue Puppet::Util::Windows::Error
     false
   end
   module_function :password_is?

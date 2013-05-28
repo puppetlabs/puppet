@@ -84,7 +84,6 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
               hash[field] = value
             }
 
-            name = hash[:name]
             hash[:provider] = self.name
 
             packages << new(hash)

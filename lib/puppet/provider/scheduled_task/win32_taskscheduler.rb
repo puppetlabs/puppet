@@ -74,7 +74,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     task.trigger_count.times do |i|
       trigger = begin
                   task.trigger(i)
-                rescue Win32::TaskScheduler::Error => e
+                rescue Win32::TaskScheduler::Error
                   # Win32::TaskScheduler can't handle all of the
                   # trigger types Windows uses, so we need to skip the
                   # unhandled types to prevent "puppet resource" from
