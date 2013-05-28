@@ -120,6 +120,9 @@ module Puppet
   require "puppet/vendor"
   Puppet::Vendor.load_vendored
 
+  # Set default for YAML.load to unsafe so we don't affect programs
+  # requiring puppet -- in puppet we will call safe explicitly
+  SafeYAML::OPTIONS[:default_mode] = :unsafe
 end
 
 require 'puppet/type'
