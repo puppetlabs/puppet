@@ -239,8 +239,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     Puppet::Util::Log.newdestination(:console) unless options[:logset]
-    client = nil
-    server = nil
 
     Signal.trap(:INT) do
       $stderr.puts "Exiting"

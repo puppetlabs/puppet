@@ -22,8 +22,6 @@ module Puppet
 
           @parser = Trollop::Parser.new do
             banner usage_msg
-            create_default_short_options = false
-            handle_help_and_version = false
           end
 
         end

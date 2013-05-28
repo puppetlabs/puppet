@@ -1,4 +1,4 @@
-metaparameter = Puppet::Util::Reference.newreference :metaparameter, :doc => "All Puppet metaparameters and all their details" do
+Puppet::Util::Reference.newreference :metaparameter, :doc => "All Puppet metaparameters and all their details" do
   types = {}
   Puppet::Type.loadall
 

@@ -188,7 +188,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.convert_xml_to_binary(plist_data)
     Puppet.debug('Converting XML plist to binary')
     Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
-    IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert binary1 -o - -', 'r+') do |io|
       io.write Plist::Emit.dump(plist_data)
       io.close_write
       @converted_plist = io.read
@@ -201,7 +201,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.convert_binary_to_xml(plist_data)
     Puppet.debug('Converting binary plist to XML')
     Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
-    IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert xml1 -o - -', 'r+') do |io|
       io.write plist_data
       io.close_write
       @converted_plist = io.read

@@ -142,9 +142,7 @@ module Puppet
 
       munge do |value|
         value = [value] unless value.is_a?(Array)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-        # It affects stand-alone blocks, too.
-        paths = value.flatten.collect { |p| x = p.split(File::PATH_SEPARATOR) }.flatten
+        value.flatten.collect { |p| p.split(File::PATH_SEPARATOR) }.flatten
       end
 
       defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }

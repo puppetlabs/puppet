@@ -203,7 +203,6 @@ class Puppet::Util::FileType
     # Only add the -u flag when the @path is different.  Fedora apparently
     # does not think I should be allowed to set the @path to my own user name
     def cmdbase
-      cmd = nil
       if @uid == Puppet::Util::SUIDManager.uid || Facter.value(:operatingsystem) == "HP-UX"
         return "crontab"
       else

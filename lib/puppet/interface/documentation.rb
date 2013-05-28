@@ -79,7 +79,7 @@ class Puppet::Interface
 
     # @api private
     def build_synopsis(face, action = nil, arguments = nil)
-      output = PrettyPrint.format do |s|
+      PrettyPrint.format do |s|
         s.text("puppet #{face}")
         s.text(" #{action}") unless action.nil?
         s.text(" ")
@@ -105,7 +105,6 @@ class Puppet::Interface
         display_global_options.sort.each do |option|
           wrap = %w{ [ ] }
           s.group(0, *wrap) do
-            desc = Puppet.settings.setting(option).desc
             type = Puppet.settings.setting(option).default
             type ||= Puppet.settings.setting(option).type.to_s.upcase
             s.text "--#{option} #{type}"

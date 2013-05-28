@@ -14,7 +14,6 @@ module Puppet::Util::RetryAction
     raise RetryException::NoRetriesGiven if parameters[:retries].nil?
     parameters[:retry_exceptions] ||= Hash.new
 
-    start = Time.now
     failures = 0
 
     begin

@@ -140,7 +140,7 @@ Detail: "#{detail.message}"
         begin
           face = Puppet::Face[appname, :current]
           result << [appname, face.summary]
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
         end
       else

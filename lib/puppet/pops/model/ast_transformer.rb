@@ -533,7 +533,7 @@ class Puppet::Pops::Model::AstTransformer
   def transform_IfExpression(o)
     args = { :test => transform(o.test), :statements => transform(o.then_expr) }
     args[:else] = transform(o.else_expr) # Tests say Nop should be there (unless is_nop? o.else_expr), probably not needed
-    result = ast o, AST::IfStatement, args
+    ast o, AST::IfStatement, args
   end
 
   # Unless is not an AST object, instead an AST::IfStatement is used with an AST::Not around the test
@@ -543,7 +543,7 @@ class Puppet::Pops::Model::AstTransformer
       :statements => transform(o.then_expr) }
     # AST 3.1 does not allow else on unless in the grammar, but it is ok since unless is encoded as an if !x
     args.merge!({:else => transform(o.else_expr)}) unless is_nop?(o.else_expr)
-    result = ast o, AST::IfStatement, args
+    ast o, AST::IfStatement, args
   end
 
   # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function

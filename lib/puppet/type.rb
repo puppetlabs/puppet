@@ -358,7 +358,7 @@ class Type
   #
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
-      params = @parameters.find_all { |param|
+      @parameters.find_all { |param|
         param.isnamevar? or param.name == :name
       }
     )
@@ -1097,7 +1097,7 @@ class Type
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
     providers_by_source.collect do |provider|
-      all_properties = self.properties.find_all do |property|
+      self.properties.find_all do |property|
         provider.supports_parameter?(property)
       end.collect do |property|
         property.name
@@ -1459,7 +1459,7 @@ class Type
           self.debug("requires #{related_resource.ref}")
         end
 
-        rel = Puppet::Relationship.new(source, target, subargs)
+        Puppet::Relationship.new(source, target, subargs)
       end
     end
   end
@@ -1819,7 +1819,7 @@ class Type
         provider_class = provider_class[0] if provider_class.is_a? Array
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
-        unless provider = @resource.class.provider(provider_class)
+        unless @resource.class.provider(provider_class)
           raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
         end
       end
@@ -1953,7 +1953,7 @@ class Type
     reqs = []
     self.class.eachautorequire { |type, block|
       # Ignore any types we can't find, although that would be a bit odd.
-      next unless typeobj = Puppet::Type.type(type)
+      next unless Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
       next unless list = self.instance_eval(&block)

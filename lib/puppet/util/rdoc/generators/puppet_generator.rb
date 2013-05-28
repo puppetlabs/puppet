@@ -795,7 +795,6 @@ module Generators
       end
       @values["title"]     = "#{@values['classmod']}: #{h_name}"
 
-      c = @context
       @values["full_name"] = h_name
 
       files = []

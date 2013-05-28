@@ -27,7 +27,6 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
   # Use the last field of a space-separated array as
   # the sn.  LDAP requires a surname, for some stupid reason.
   manager.generates(:sn).from(:cn).with do |cn|
-    x = 1
     cn[0].split(/\s+/)[-1]
   end
 

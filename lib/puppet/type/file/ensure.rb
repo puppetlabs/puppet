@@ -48,7 +48,7 @@ module Puppet
         property.sync
       else
         @resource.write(:ensure)
-        mode = @resource.should(:mode)
+        @resource.should(:mode)
       end
     end
 

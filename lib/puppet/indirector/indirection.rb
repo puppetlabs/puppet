@@ -88,7 +88,7 @@ class Puppet::Indirector::Indirection
     text += scrub(@doc) + "\n\n" if @doc
 
     text << "* **Indirected Class**: `#{@indirected_class}`\n";
-    if s = terminus_setting
+    if terminus_setting
       text << "* **Terminus Setting**: #{terminus_setting}\n"
     end
 
@@ -247,7 +247,7 @@ class Puppet::Indirector::Indirection
 
     result = terminus.destroy(request)
 
-    if cache? and cached = cache.find(request(:find, key, nil, options))
+    if cache? and cache.find(request(:find, key, nil, options))
       # Reuse the existing request, since it's equivalent.
       cache.destroy(request)
     end

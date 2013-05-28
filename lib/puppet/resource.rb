@@ -398,7 +398,7 @@ class Puppet::Resource
   # Produce a canonical method name.
   def parameter_name(param)
     param = param.to_s.downcase.to_sym
-    if param == :name and n = namevar
+    if param == :name and namevar
       param = namevar
     end
     param

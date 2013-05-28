@@ -83,7 +83,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
   def exists?
     begin
       has_mcx?
-    rescue Puppet::ExecutionFailure => e
+    rescue Puppet::ExecutionFailure
       return false
     end
   end

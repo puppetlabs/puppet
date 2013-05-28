@@ -75,7 +75,7 @@ module Puppet
     def checksum_type
       if source = resource.parameter(:source)
         result = source.checksum
-      else checksum = resource.parameter(:checksum)
+      else
         result = resource[:checksum]
       end
       if result =~ /^\{(\w+)\}.+/
