@@ -7,6 +7,8 @@ rescue LoadError
 end
 
 # see the bottom of the file for further inclusions
+# Also see the new Vendor support - towards the end
+
 require 'singleton'
 require 'facter'
 require 'puppet/error'
@@ -112,6 +114,12 @@ module Puppet
   def self.newtype(name, options = {}, &block)
     Puppet::Type.newtype(name, options, &block)
   end
+
+  # Load vendored (setup paths, and load what is needed upfront).
+  # See the Vendor class for how to add additional vendored gems/code
+  require "puppet/vendor"
+  Puppet::Vendor.load_vendored
+
 end
 
 require 'puppet/type'
