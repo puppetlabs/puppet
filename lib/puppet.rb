@@ -161,6 +161,9 @@ module Puppet
   require "puppet/vendor"
   Puppet::Vendor.load_vendored
 
+  # Set default for YAML.load to unsafe so we don't affect programs
+  # requiring puppet -- in puppet we will call safe explicitly
+  SafeYAML::OPTIONS[:default_mode] = :unsafe
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
