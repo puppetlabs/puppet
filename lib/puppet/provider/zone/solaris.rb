@@ -23,8 +23,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   end
 
   def self.instances
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = adm(:list, "-cp").split("\n").collect do |line|
+    adm(:list, "-cp").split("\n").collect do |line|
       new(line2hash(line))
     end
   end

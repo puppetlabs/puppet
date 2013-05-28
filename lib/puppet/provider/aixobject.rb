@@ -381,7 +381,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
 
     # Refresh de info.
-    hash = getinfo(true)
+    getinfo(true)
   end
 
   def initialize(resource)

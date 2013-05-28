@@ -30,7 +30,7 @@ module Puppet::Forge::Errors
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = <<-EOS.chomp
+      <<-EOS.chomp
 Could not connect via HTTPS to #{@uri}
   Unable to verify the SSL certificate
     The certificate may not be signed by a valid CA
@@ -57,7 +57,7 @@ Could not connect via HTTPS to #{@uri}
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = <<-EOS.chomp
+      <<-EOS.chomp
 Could not connect to #{@uri}
   There was a network communications problem
     The error we caught said '#{@detail}'

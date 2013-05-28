@@ -48,7 +48,7 @@ class Hiera
 
         Hiera.debug("Looking up #{key} in Puppet backend")
 
-        include_class = Puppet::Parser::Functions.function(:include)
+        Puppet::Parser::Functions.function(:include)
         loaded_classes = scope.catalog.classes
 
         hierarchy(scope, order_override).each do |klass|

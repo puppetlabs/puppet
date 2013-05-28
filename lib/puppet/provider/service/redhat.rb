@@ -25,7 +25,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     args = (Facter.value(:osfamily) == 'Suse' ? ['--check'] : [])
 
     begin
-      output = chkconfig(@resource[:name], *args)
+      chkconfig(@resource[:name], *args)
     rescue Puppet::ExecutionFailure
       return :false
     end
@@ -36,7 +36,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   # Don't support them specifying runlevels; always use the runlevels
   # in the init scripts.
   def enable
-      output = chkconfig(@resource[:name], :on)
+      chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
   end

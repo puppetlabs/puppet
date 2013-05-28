@@ -84,7 +84,7 @@ class Puppet::Interface::Option
     unless found = declaration.match(/^-+(?:\[no-\])?([^ =]+)/) then
       raise ArgumentError, "Can't find a name in the declaration #{declaration.inspect}"
     end
-    name = found.captures.first
+    found.captures.first
   end
 
   # @api private

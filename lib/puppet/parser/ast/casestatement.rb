@@ -15,9 +15,6 @@ class Puppet::Parser::AST
 
       value = @test.safeevaluate(scope)
 
-      retvalue = nil
-      found = false
-
       # Iterate across the options looking for a match.
       default = nil
       @options.each do |option|

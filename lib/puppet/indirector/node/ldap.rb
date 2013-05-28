@@ -9,8 +9,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # The attributes that Puppet class information is stored in.
   def class_attributes
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = Puppet[:ldapclassattrs].split(/\s*,\s*/)
+    Puppet[:ldapclassattrs].split(/\s*,\s*/)
   end
 
   # Separate this out so it's relatively atomic.  It's tempting to call
@@ -198,7 +197,6 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   end
 
   def merge_parent(info)
-    parent_info = nil
     parent = info[:parent]
 
     # Preload the parent array with the node name.

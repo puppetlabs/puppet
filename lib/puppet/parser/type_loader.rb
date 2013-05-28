@@ -126,7 +126,7 @@ class Puppet::Parser::TypeLoader
           Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
           return result
         end
-      rescue Puppet::ImportError => detail
+      rescue Puppet::ImportError
         # We couldn't load the item
         # I'm not convienced we should just drop these errors, but this
         # preserves existing behaviours.

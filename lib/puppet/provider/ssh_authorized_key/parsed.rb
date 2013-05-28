@@ -47,7 +47,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
 
   def flush
     raise Puppet::Error, "Cannot write SSH authorized keys without user"    unless @resource.should(:user)
-    raise Puppet::Error, "User '#{@resource.should(:user)}' does not exist" unless uid = Puppet::Util.uid(@resource.should(:user))
+    raise Puppet::Error, "User '#{@resource.should(:user)}' does not exist" unless Puppet::Util.uid(@resource.should(:user))
     # ParsedFile usually calls backup_target much later in the flush process,
     # but our SUID makes that fail to open filebucket files for writing.
     # Fortunately, there's already logic to make sure it only ever happens once,

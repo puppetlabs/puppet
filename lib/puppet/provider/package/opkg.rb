@@ -18,7 +18,6 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
       process.each_line { |line|
         if match = regex.match(line)
           fields.zip(match.captures) { |field,value| hash[field] = value }
-          name = hash[:name]
           hash[:provider] = self.name
           packages << new(hash)
           hash = {}

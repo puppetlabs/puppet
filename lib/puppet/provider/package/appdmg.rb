@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
           end
       end
     ensure
-      FileUtils.remove_entry_secure(tmpdir, force=true)
+      FileUtils.remove_entry_secure(tmpdir, true)
     end
   end
 

@@ -410,7 +410,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup_host
     @host = Puppet::SSL::Host.new
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    cert = @host.wait_for_cert(waitforcert) unless options[:fingerprint]
+    @host.wait_for_cert(waitforcert) unless options[:fingerprint]
   end
 
   def setup_agent

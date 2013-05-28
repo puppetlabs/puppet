@@ -27,8 +27,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             fields.zip(match.captures) { |field,value|
               hash[field] = value
             }
-            yup = nil
-            name = hash[:name]
 
             hash[:provider] = self.name
 
@@ -53,8 +51,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def install
-    should = @resource.should(:ensure)
-
     unless @resource[:source]
       if File.exist?("/etc/pkg.conf")
         File.open("/etc/pkg.conf", "rb").readlines.each do |line|
@@ -89,7 +85,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
       regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
-      fields = [ :name, :version, :flavor ]
       master_version = 0
       version = -1
 

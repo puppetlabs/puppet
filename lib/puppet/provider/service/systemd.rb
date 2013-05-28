@@ -37,7 +37,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def status
     begin
-      output = systemctl("is-active", @resource[:name])
+      systemctl("is-active", @resource[:name])
     rescue Puppet::ExecutionFailure
       return :stopped
     end

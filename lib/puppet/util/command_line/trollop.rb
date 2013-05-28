@@ -454,7 +454,7 @@ class Parser
         # chronic is not available
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-    rescue ArgumentError => e
+    rescue ArgumentError
       raise CommandlineError, "option '#{arg}' needs a date"
     end
   end

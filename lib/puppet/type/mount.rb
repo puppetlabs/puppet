@@ -222,7 +222,6 @@ module Puppet
 
     def value(name)
       name = name.intern
-      ret = nil
       if property = @parameters[name]
         return property.value
       end

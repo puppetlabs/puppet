@@ -194,7 +194,7 @@ class Puppet::Property < Puppet::Parameter
   def call_valuemethod(name, value)
     if method = self.class.value_option(name, :method) and self.respond_to?(method)
       begin
-        event = self.send(method)
+        self.send(method)
       rescue Puppet::Error
         raise
       rescue => detail

@@ -129,7 +129,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         Puppet.notice "Configuring #{resource[:name]}"
         command = [ resource[:manifest], resource[:name] ]
         #texecute("setupservice", command)
-        rv = system("#{command}")
+        system("#{command}")
       end
   rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}" )
@@ -157,7 +157,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
           File.symlink(self.daemon, self.service)
         end
       end
-  rescue Puppet::ExecutionFailure => detail
+  rescue Puppet::ExecutionFailure
       raise Puppet::Error.new( "No daemon directory found for #{self.service}")
   end
 
@@ -173,7 +173,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
           File.unlink(self.service)
         end
       end
-    rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure
       raise Puppet::Error.new( "No daemon directory found for #{self.service}")
     end
     self.stop

@@ -140,7 +140,7 @@ class Puppet::Node::Environment
     module_references.collect do |reference|
       begin
         Puppet::Module.new(reference[:name], reference[:path], self)
-      rescue Puppet::Module::Error => e
+      rescue Puppet::Module::Error
         nil
       end
     end.compact

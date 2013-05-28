@@ -68,7 +68,7 @@ module Puppet::Pops::Adaptable
     #
     def self.get(o)
       attr_name = :"@#{instance_var_name(self.name)}"
-      if existing = o.instance_variable_defined?(attr_name)
+      if o.instance_variable_defined?(attr_name)
         o.instance_variable_get(attr_name)
       else
         nil
@@ -93,7 +93,7 @@ module Puppet::Pops::Adaptable
     #
     def self.adapt(o, &block)
       attr_name = :"@#{instance_var_name(self.name)}"
-      adapter = if existing = o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
+      adapter = if o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
         value
       else
         associate_adapter(create_adapter(o), o)

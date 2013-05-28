@@ -174,7 +174,6 @@ module Util
 
     # Only benchmark if our log level is high enough
     if level != :none and Puppet::Util::Log.sendlevel?(level)
-      result = nil
       seconds = Benchmark.realtime {
         yield
       }
@@ -403,8 +402,6 @@ module Util
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
 
-    file_exists = file.exist?
-
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
     # that it avoids races around creating the file.
@@ -456,7 +453,7 @@ module Util
         # Yes, the arguments are reversed compared to the rename in the rest
         # of the world.
         Puppet::Util::Windows::File.replace_file(file, tempfile.path)
-      rescue Puppet::Util::Windows::Error => e
+      rescue Puppet::Util::Windows::Error
         # This might race, but there are enough possible cases that there
         # isn't a good, solid "better" way to do this, and the next call
         # should fail in the same way anyhow.

@@ -250,7 +250,6 @@ class Puppet::Resource::Type
 
   def assign_parameter_values(parameters, resource)
     return unless parameters
-    scope = resource.scope || {}
 
     # It'd be nice to assign default parameter values here,
     # but we can't because they often rely on local variables

@@ -73,7 +73,6 @@ MCX settings refer to, the MCX resource will autorequire that user, group, or co
 
   def setup_autorequire(type)
     # value returns a Symbol
-    name = value(:name)
     ds_type = value(:ds_type)
     ds_name = value(:ds_name)
     if ds_type == type
