@@ -1298,7 +1298,17 @@ EOT
     :smtpserver => {
         :default  => "none",
         :desc     => "The server through which to send email reports.",
-    }
+    },
+    :smtpport => {
+        :default  => 25,
+        :desc     => "The TCP port through which to send email reports.",
+    },
+    :smtphelo => {
+        :default  => Facter["fqdn"].value,
+        :desc     => "The name by which we identify ourselves in SMTP HELO for reports.
+          If you send to a smtpserver which does strict HELO checking (as with Postfix's
+          `smtpd_helo_restrictions` access controls), you may need to ensure this resolves.",
+    },
   )
 
     define_settings(
