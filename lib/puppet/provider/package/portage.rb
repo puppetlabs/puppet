@@ -6,7 +6,15 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   has_feature :versionable
 
-  commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/eix-update"
+  {
+    :emerge => "/usr/bin/emerge",
+    :eix => "/usr/bin/eix",
+    :update_eix => "/usr/bin/eix-update",
+  }.each_pair do |name, path|
+    has_command(name, path) do
+      environment :HOME => '/'
+    end
+  end
 
   confine :operatingsystem => :gentoo
 
