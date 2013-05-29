@@ -445,7 +445,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup
     setup_test if options[:test]
 
-    setup_logs(true)
+    setup_logs
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
