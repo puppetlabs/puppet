@@ -1,11 +1,9 @@
 require 'puppet/provider/parsedfile'
 
-
-  Puppet::Type.type(:mailalias).provide(
-    :aliases,
+Puppet::Type.type(:mailalias).provide(
+  :aliases,
   :parent => Puppet::Provider::ParsedFile,
   :default_target => "/etc/aliases",
-
   :filetype => :flat
 ) do
   text_line :comment, :match => /^#/
@@ -13,9 +11,7 @@ require 'puppet/provider/parsedfile'
 
   record_line :aliases, :fields => %w{name recipient}, :separator => /\s*:\s*/, :block_eval => :instance do
     def post_parse(record)
-      # It's not sufficient to assign to an existing hash.
-      recipient = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
-      record[:recipient] = recipient
+      record[:recipient] = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
       record
     end
 
