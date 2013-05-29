@@ -7,7 +7,7 @@ stub_forge_on(master)
 step "Try to install a non-existent module"
 on master, puppet("module install pmtacceptance-nonexistent"), :acceptable_exit_codes => [1] do
   assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into /etc/puppet/modules ...\e[0m
+    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
     STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
     STDERR> \e[1;31mError: Could not execute operation for 'pmtacceptance/nonexistent'
     STDERR>   The server being queried was https://forge.puppetlabs.com
@@ -36,7 +36,7 @@ OUTPUT
   assert_equal nil,                         json['module_version']
   assert_equal 'pmtacceptance-nonexistent', json['module_name']
   assert_equal 'failure',                   json['result']
-  assert_equal '/etc/puppet/modules',       json['install_dir']
+  assert_equal master['distmoduledir'],     json['install_dir']
   assert_equal multiline_expectation,       json['error']['multiline']
   assert_equal oneline_expectation,         json['error']['oneline']
 end
