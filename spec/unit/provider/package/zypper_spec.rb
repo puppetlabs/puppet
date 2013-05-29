@@ -39,13 +39,18 @@ describe provider_class do
     @provider.should respond_to(:latest)
   end
 
+  it "should have a install_options method" do
+    @provider = provider_class.new
+    @provider.should respond_to(:install_options)
+  end
+
   describe "when installing with zypper version >= 1.0" do
     it "should use a command-line with versioned package'" do
       @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
       @provider.stubs(:zypper_version).returns "1.2.8"
 
       @provider.expects(:zypper).with('--quiet', :install,
-        '--auto-agree-with-licenses', '--no-confirm', 'mypackage-1.2.3-4.5.6')
+        '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage-1.2.3-4.5.6')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -54,7 +59,7 @@ describe provider_class do
       @resource.stubs(:should).with(:ensure).returns :latest
       @provider.stubs(:zypper_version).returns "1.2.8"
       @provider.expects(:zypper).with('--quiet', :install,
-        '--auto-agree-with-licenses', '--no-confirm', 'mypackage')
+        '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -66,7 +71,7 @@ describe provider_class do
       @provider.stubs(:zypper_version).returns "0.6.104"
 
       @provider.expects(:zypper).with('--terse', :install,
-        '--auto-agree-with-licenses', '--no-confirm', 'mypackage-1.2.3-4.5.6')
+        '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage-1.2.3-4.5.6')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -75,7 +80,7 @@ describe provider_class do
       @resource.stubs(:should).with(:ensure).returns :latest
       @provider.stubs(:zypper_version).returns "0.6.104"
       @provider.expects(:zypper).with('--terse', :install,
-        '--auto-agree-with-licenses', '--no-confirm', 'mypackage')
+        '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -87,7 +92,7 @@ describe provider_class do
       @provider.stubs(:zypper_version).returns "0.6.13"
 
       @provider.expects(:zypper).with('--terse', :install,
-        '--no-confirm', 'mypackage-1.2.3-4.5.6')
+        '--no-confirm', nil, 'mypackage-1.2.3-4.5.6')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -96,7 +101,7 @@ describe provider_class do
       @resource.stubs(:should).with(:ensure).returns :latest
       @provider.stubs(:zypper_version).returns "0.6.13"
       @provider.expects(:zypper).with('--terse', :install,
-        '--no-confirm', 'mypackage')
+        '--no-confirm', nil, 'mypackage')
       @provider.expects(:query).returns "mypackage 0 1.2.3 4.5.6 x86_64"
       @provider.install
     end
@@ -119,4 +124,18 @@ describe provider_class do
     end
   end
 
+  describe "when installing with zypper install options" do
+    it "should install the package without checking keys" do
+      @resource.stubs(:[]).with(:name).returns "php5"
+      @resource.stubs(:should).with(:install_options).returns ['--no-gpg-check', {'-p' => '/vagrant/files/localrepo/'}]
+      @resource.stubs(:should).with(:ensure).returns "5.4.10-4.5.6"
+      @provider.stubs(:zypper_version).returns "1.2.8"
+
+      @provider.expects(:install_options).returns "--no-gpg-check -p \"/vagrant/files/localrepo/\""
+      @provider.expects(:zypper).with('--quiet', :install,
+        '--auto-agree-with-licenses', '--no-confirm', '--no-gpg-check -p "/vagrant/files/localrepo/"', 'php5-5.4.10-4.5.6')
+      @provider.expects(:query).returns "php5 0 5.4.10 4.5.6 x86_64"
+      @provider.install
+    end
+  end
 end
