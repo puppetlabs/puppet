@@ -106,33 +106,23 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def search(name)
-    paths.each { |path|
+    paths.each do |path|
       fqname = File.join(path,name)
-      begin
-        File.stat(fqname)
-      rescue
-        # should probably rescue specific errors...
+      if File.exist? fqname
+        return fqname
+      else
         self.debug("Could not find #{name} in #{path}")
-        next
       end
+    end
 
-      # if we've gotten this far, we found a valid script
-      return fqname
-    }
-
-    paths.each { |path|
+    paths.each do |path|
       fqname_sh = File.join(path,"#{name}.sh")
-      begin
-        File.stat(fqname_sh)
-      rescue
-        # should probably rescue specific errors...
+      if File.exist? fqname_sh
+        return fqname_sh
+      else
         self.debug("Could not find #{name}.sh in #{path}")
-        next
       end
-
-      # if we've gotten this far, we found a valid script
-      return fqname_sh
-    }
+    end
     raise Puppet::Error, "Could not find init script for '#{name}'"
   end
 
