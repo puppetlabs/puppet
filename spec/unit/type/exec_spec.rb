@@ -42,8 +42,9 @@ describe Puppet::Type.type(:exec) do
   describe "when not stubbing the provider" do
     before do
       path = tmpdir('path')
-      true_cmd = File.join(path, 'true')
-      false_cmd = File.join(path, 'false')
+      ext = Puppet.features.microsoft_windows? ? '.exe' : ''
+      true_cmd = File.join(path, "true#{ext}")
+      false_cmd = File.join(path, "false#{ext}")
 
       FileUtils.touch(true_cmd)
       FileUtils.touch(false_cmd)

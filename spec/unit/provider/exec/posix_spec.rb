@@ -7,6 +7,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
   def make_exe
     cmdpath = tmpdir('cmdpath')
     exepath = tmpfile('my_command', cmdpath)
+    exepath = exepath + ".exe" if Puppet.features.microsoft_windows?
     FileUtils.touch(exepath)
     File.chmod(0755, exepath)
     exepath
