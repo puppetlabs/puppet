@@ -32,7 +32,12 @@ describe "the sprintf function" do
 
   it "should format large floats" do
     result = @scope.function_sprintf(["%+.2e", "27182818284590451"])
-    str = Puppet.features.microsoft_windows? ? "+2.72e+016" : "+2.72e+16"
+    str =
+      if Puppet.features.microsoft_windows? && RUBY_VERSION[0,3] == '1.8'
+        "+2.72e+016"
+      else
+        "+2.72e+16"
+      end
     result.should(eql(str))
   end
 
