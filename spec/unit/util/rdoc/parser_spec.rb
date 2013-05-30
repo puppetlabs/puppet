@@ -176,7 +176,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
     end
 
-    it "should handle windows paths with drive letters", :if => Puppet.features.microsoft_windows? do
+    it "should handle windows paths with drive letters", :if => Puppet.features.microsoft_windows? && Puppet.features.rdoc1? do
       @parser.split_module("C:/temp/init.pp").should == RDoc::Parser::SITE
     end
   end
