@@ -179,7 +179,7 @@ module Puppet::Util::ADSI
 
       users = []
       wql.each do |u|
-        users << new(u.name, u)
+        users << new(u.name)
       end
 
       users.each(&block)
@@ -287,7 +287,7 @@ module Puppet::Util::ADSI
 
       groups = []
       wql.each do |g|
-        groups << new(g.name, g)
+        groups << new(g.name)
       end
 
       groups.each(&block)
