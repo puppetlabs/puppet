@@ -45,10 +45,13 @@ describe Puppet::Util::Pidlock do
       @lock.lock.should be_true
     end
 
-
     it "should create a lock file" do
       @lock.lock
       File.should be_exists(@lockfile)
+    end
+
+    it "should expose the lock file_path" do
+      @lock.file_path.should == @lockfile
     end
   end
 

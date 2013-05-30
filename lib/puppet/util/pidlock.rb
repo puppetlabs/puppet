@@ -35,7 +35,7 @@ class Puppet::Util::Pidlock
   end
 
   def file_path
-    @lock_data.file_path
+    @lockfile.file_path
   end
 
   def clear_if_stale
