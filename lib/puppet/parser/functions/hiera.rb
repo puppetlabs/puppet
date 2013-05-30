@@ -1,8 +1,10 @@
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
-  newfunction(:hiera, :type => :rvalue, :arity => -2, :doc => "Performs a
-  standard priority lookup and returns the most specific value for a given key.
+  newfunction(:hiera, :type => :rvalue,
+              :honor_undef => !Puppet.settings[:hiera_munge_undef],
+              :arity => -2, :doc => "Performs a standard priority lookup and
+  returns the most specific value for a given key.
   The returned value can be data of any type (strings, arrays, or hashes). 
 
   In addition to the required `key` argument, `hiera` accepts two additional
@@ -20,6 +22,8 @@ module Puppet::Parser::Functions
   <http://docs.puppetlabs.com/hiera/1/puppet.html#hiera-lookup-functions>
   ") do |*args|
     key, default, override = HieraPuppet.parse_args(args)
+    key = '' if key == :undef
+    override = '' if override == :undef
     HieraPuppet.lookup(key, default, self, override, :priority)
   end
 end

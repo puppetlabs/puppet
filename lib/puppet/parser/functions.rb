@@ -115,6 +115,11 @@ module Puppet::Parser::Functions
   #   zero or more arguments.  A function with an arity of 2 must be provided
   #   with exactly two arguments, no more and no less.  Added in Puppet 3.1.0.
   #
+  # @option options [Boolean] :honor_undef (false) whether unset arguments
+  #   (:unset) should be munged as an empty string (default behavior).
+  #   If set to `true`, the function will have to manage the :undef case
+  #   for all passed arguments.
+  #
   # @return [Hash] describing the function.
   #
   # @api public
@@ -125,6 +130,7 @@ module Puppet::Parser::Functions
 
     arity = options[:arity] || -1
     ftype = options[:type] || :statement
+    honor_undef = options[:honor_undef] || false
 
     unless ftype == :statement or ftype == :rvalue
       raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
@@ -151,7 +157,7 @@ module Puppet::Parser::Functions
       end
     end
 
-    func = {:arity => arity, :type => ftype, :name => fname}
+    func = {:arity => arity, :type => ftype, :name => fname, :honor_undef => honor_undef}
     func[:doc] = options[:doc] if options[:doc]
 
     add_function(name, func)
@@ -223,6 +229,16 @@ module Puppet::Parser::Functions
   def self.arity(name)
     func = get_function(name)
     func ? func[:arity] : -1
+  end
+
+  # Return whether the function honors undef as an argument
+  #
+  # @param [Symbol] name the function
+  #
+  # @api public
+  def self.honor_undef?(name)
+    func = get_function(name)
+    func ? func[:honor_undef] : false
   end
 
   class << self
