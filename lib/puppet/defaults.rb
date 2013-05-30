@@ -16,6 +16,9 @@ module Puppet
   #   see the docs for Settings.define_settings
   ############################################################################################
 
+  AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
+  STORECONFIGS_ONLY = %q{This setting is only used by the ActiveRecord storeconfigs and inventory backends, which are deprecated.}
+
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -299,7 +302,7 @@ module Puppet
       :type       => :duration,
       :desc       => "The minimum time to wait between checking for updates in
       configuration files.  This timeout determines how quickly Puppet checks whether
-      a file (such as manifests or templates) has changed on disk. Can be specified as a duration.",
+      a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
     },
     :queue_type => {
       :default    => "stomp",
@@ -591,7 +594,7 @@ EOT
       :default  => "60d",
       :type     => :duration,
       :desc     => "The window of time leading up to a certificate's expiration that a notification
-        will be logged. This applies to CA, master, and agent certificates. Can be specified as a duration."
+        will be logged. This applies to CA, master, and agent certificates. #{AS_DURATION}"
     }
   )
 
@@ -698,7 +701,7 @@ EOT
       :default    => "5y",
       :type       => :duration,
       :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
-      Can be specified as a duration."
+      #{AS_DURATION}"
     },
     :req_bits => {
       :default    => 4096,
@@ -917,7 +920,7 @@ EOT
       :default  => "$runinterval",
       :type     => :duration,
       :desc     => "How often RRD should expect data.
-            This should match how often the hosts report back to the server. Can be specified as a duration.",
+            This should match how often the hosts report back to the server. #{AS_DURATION}",
     }
   )
 
@@ -1038,10 +1041,10 @@ EOT
     :runinterval => {
       :default  => "30m",
       :type     => :duration,
-      :desc     => "How often puppet agent applies the client configuration; in seconds.
+      :desc     => "How often puppet agent applies the catalog.
           Note that a runinterval of 0 means \"run continuously\" rather than
           \"never run.\" If you want puppet agent to never run, you should start
-          it with the `--no-client` option. Can be specified as a duration.",
+          it with the `--no-client` option. #{AS_DURATION}",
     },
     :listen => {
       :default    => false,
@@ -1138,7 +1141,7 @@ EOT
       :default    => "$runinterval",
       :type       => :duration,
       :desc       => "The maximum time to delay before runs.  Defaults to being the same as the
-      run interval. Can be specified as a duration.",
+      run interval. #{AS_DURATION}",
     },
     :splay => {
       :default    => false,
@@ -1157,7 +1160,7 @@ EOT
       :type     => :duration,
       :desc     => "How long the client should wait for the configuration to be retrieved
       before considering it a failure.  This can help reduce flapping if too
-      many clients contact the server at one time. Can be specified as a duration.",
+      many clients contact the server at one time. #{AS_DURATION}",
     },
     :report_server => {
       :default  => "$server",
@@ -1217,10 +1220,19 @@ EOT
     :waitforcert => {
       :default  => "2m",
       :type     => :duration,
-      :desc     => "The time interval 'puppet agent' should connect to the server
-      and ask it to sign a certificate request. This is useful for the initial setup of a
-      puppet client. You can turn off waiting for certificates by specifying a time of 0.
-      Can be specified as a duration.",
+      :desc     => "How frequently puppet agent should ask for a signed certificate.
+
+      When starting for the first time, puppet agent will submit a certificate
+      signing request (CSR) to the server named in the `ca_server` setting
+      (usually the puppet master); this may be autosigned, or may need to be
+      approved by a human, depending on the CA server's configuration.
+
+      Puppet agent cannot apply configurations until its approved certificate is
+      available. Since the certificate may or may not be available immediately,
+      puppet agent will repeatedly try to fetch it at this interval. You can
+      turn off waiting for certificates by specifying a time of 0, in which case
+      puppet agent will exit if it cannot get a cert.
+      #{AS_DURATION}",
     }
   )
 
@@ -1319,21 +1331,20 @@ EOT
       :mode     => 0660,
       :owner    => "service",
       :group    => "service",
-      :desc     => "The database cache for client configurations.  Used for
-        querying within the language."
+      :desc     => "The sqlite database file. #{STORECONFIGS_ONLY}"
     },
     :dbadapter => {
       :default  => "sqlite3",
-      :desc     => "The type of database to use.",
+      :desc     => "The type of database to use. #{STORECONFIGS_ONLY}",
     },
     :dbmigrate => {
       :default  => false,
       :type     => :boolean,
-      :desc     => "Whether to automatically migrate the database.",
+      :desc     => "Whether to automatically migrate the database. #{STORECONFIGS_ONLY}",
     },
     :dbname => {
       :default  => "puppet",
-      :desc     => "The name of the database to use.",
+      :desc     => "The name of the database to use. #{STORECONFIGS_ONLY}",
     },
     :dbserver => {
       :default  => "localhost",
@@ -1343,27 +1354,27 @@ EOT
     :dbport => {
       :default  => "",
       :desc     => "The database password for caching. Only
-      used when networked databases are used.",
+      used when networked databases are used. #{STORECONFIGS_ONLY}",
     },
     :dbuser => {
       :default  => "puppet",
       :desc     => "The database user for caching. Only
-      used when networked databases are used.",
+      used when networked databases are used. #{STORECONFIGS_ONLY}",
     },
     :dbpassword => {
       :default  => "puppet",
       :desc     => "The database password for caching. Only
-      used when networked databases are used.",
+      used when networked databases are used. #{STORECONFIGS_ONLY}",
     },
     :dbconnections => {
       :default  => '',
       :desc     => "The number of database connections for networked
-      databases.  Will be ignored unless the value is a positive integer.",
+      databases.  Will be ignored unless the value is a positive integer. #{STORECONFIGS_ONLY}",
     },
     :dbsocket => {
       :default  => "",
       :desc     => "The database socket location. Only used when networked
-      databases are used.  Will be ignored if the value is an empty string.",
+      databases are used.  Will be ignored if the value is an empty string. #{STORECONFIGS_ONLY}",
     },
     :railslog => {
       :default  => "$logdir/rails.log",
@@ -1371,14 +1382,14 @@ EOT
       :mode     => 0600,
       :owner    => "service",
       :group    => "service",
-      :desc     => "Where Rails-specific logs are sent"
+      :desc     => "Where Rails-specific logs are sent. #{STORECONFIGS_ONLY}"
     },
 
     :rails_loglevel => {
         :default  => "info",
         :desc     => "The log level for Rails connections.  The value must be
             a valid log level within Rails.  Production environments normally use `info`
-            and other environments normally use `debug`.",
+            and other environments normally use `debug`. #{STORECONFIGS_ONLY}",
     }
   )
 
@@ -1387,7 +1398,8 @@ EOT
 
     :couchdb_url => {
         :default  => "http://127.0.0.1:5984/puppet",
-        :desc     => "The url where the puppet couchdb database will be created",
+        :desc     => "The url where the puppet couchdb database will be created.
+        Only used when `facts_terminus` is set to `couch`.",
     }
   )
 
@@ -1597,7 +1609,8 @@ EOT
     :document_all => {
         :default  => false,
         :type     => :boolean,
-        :desc     => "Document all resources",
+        :desc     => "Whether to document all resources when using `puppet doc` to
+        generate manifest documentation.",
     }
   )
 end
