@@ -253,10 +253,13 @@ describe Puppet::Application::Agent do
       end
 
       [:verbose, :debug].each do |level|
-        it "should set console as the log destination with level #{level}" do
+        it "should set console as a log destination with level #{level}" do
+          # Cannot set expectations on a stub.
+          Puppet::Util::Log.unstub(:newdestination)
           @puppetd.options.stubs(:[]).with(level).returns(true)
 
-          Puppet::Util::Log.expects(:newdestination).with(:console)
+          Puppet::Util::Log.expects(:newdestination).at_least_once
+          Puppet::Util::Log.expects(:newdestination).with(:console).once
 
           @puppetd.setup_logs
         end
