@@ -802,18 +802,47 @@ describe Puppet::Type::RelationshipMetaparam do
     Puppet::Type.metaparamclass(:require).new(:resource => mock("resource")).should respond_to(:validate_relationship)
   end
 
-  it "should fail if any specified resource is not found in the catalog" do
-    catalog = mock 'catalog'
-    resource = stub 'resource', :catalog => catalog, :ref => "resource"
+  describe 'if any specified resource is not in the catalog' do
+    let(:catalog) { mock 'catalog' }
 
-    param = Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]})
+    let(:resource) do
+      stub 'resource',
+        :catalog => catalog,
+        :ref     => 'resource',
+        :line=   => nil,
+        :file=   => nil
+    end
 
-    catalog.expects(:resource).with("Foo[bar]").returns "something"
-    catalog.expects(:resource).with("Class[Test]").returns nil
+    let(:param) { Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]}) }
 
-    param.expects(:fail).with { |string| string.include?("Class[Test]") }
+    before do
+      catalog.expects(:resource).with("Foo[bar]").returns "something"
+      catalog.expects(:resource).with("Class[Test]").returns nil
+    end
 
-    param.validate_relationship
+    describe "and the resource doesn't have a file or line number" do
+      it "raises an error" do
+        expect { param.validate_relationship }.to raise_error do |error|
+          error.should be_a Puppet::ResourceError
+          error.message.should match %r[Class\[Test\]]
+        end
+      end
+    end
+
+    describe "and the resource has a file or line number" do
+      before do
+        resource.stubs(:line).returns '42'
+        resource.stubs(:file).returns '/hitchhikers/guide/to/the/galaxy'
+      end
+
+      it "raises an error with context" do
+        expect { param.validate_relationship }.to raise_error do |error|
+          error.should be_a Puppet::ResourceError
+          error.message.should match %r[Class\[Test\]]
+          error.message.should match %r["in /hitchhikers/guide/to/the/galaxy:42"]
+        end
+      end
+    end
   end
 end
 
