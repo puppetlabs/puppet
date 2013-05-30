@@ -273,7 +273,10 @@ describe Puppet::Util do
     it "should warn if the user's HOME is not set but their PATH contains a ~" do
       env_path = %w[~/bin /usr/bin /bin].join(File::PATH_SEPARATOR)
 
-      Puppet::Util.withenv({:HOME => nil, :PATH => env_path}) do
+      env = {:HOME => nil, :PATH => env_path}
+      env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet.features.microsoft_windows?
+
+      Puppet::Util.withenv(env) do
         Puppet::Util::Warnings.expects(:warnonce).once
         Puppet::Util.which('foo')
       end
