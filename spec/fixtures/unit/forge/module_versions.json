@@ -1,0 +1,35 @@
+{
+  "adrien/pe_upgrade":
+  [
+    {
+      "file":"/system/releases/a/adrien/adrien-pe_upgrade-0.4.2.tar.gz",
+      "version":"0.4.2",
+      "dependencies":
+      [
+        ["nanliu/staging","0.x"],
+        ["puppetlabs/stdlib",">= 2.5.1"]
+      ]
+    }
+  ],
+  "nanliu/staging":
+  [
+    {
+      "file":"/system/releases/n/nanliu/nanliu-staging-0.3.0.tar.gz",
+      "version":"0.3.0",
+      "dependencies":[]
+    }
+  ],
+  "puppetlabs/stdlib":
+  [
+    {
+      "file":"/system/releases/p/puppetlabs/puppetlabs-stdlib-2.5.1.tar.gz",
+      "version":"2.5.1",
+      "dependencies":[]
+    }
+  ],
+  "_warnings":
+  [
+    "Dependency nanliu/staging for module adrien/pe_upgrade had invalid version range \">= 0\"",
+    "Dependency nanliu/staging for module adrien/pe_upgrade had invalid version range \">= 0\""
+  ]
+}
