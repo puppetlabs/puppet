@@ -6,10 +6,10 @@ require 'puppet/daemon'
 
 # The command line flags affecting #20900 and #20919:
 #
-# --onetime      (o)
-# --daemonize    (d)
-# --no-daemonize (nd)
-# --logdest      (ld)
+# --onetime
+# --daemonize
+# --no-daemonize
+# --logdest
 # --verbose
 # --debug
 # (no flags)     (-)
@@ -18,11 +18,11 @@ require 'puppet/daemon'
 #
 # Combinations without logdest, verbose or debug:
 #
-# o d
-# o nd
-# o
-# d
-# nd
+# --onetime --daemonize
+# --onetime --no-daemonize
+# --onetime
+# --daemonize
+# --no-daemonize
 # -
 #
 # 6 cases X [--logdest=console, --logdest=syslog, --logdest=/some/file, <nothing added>]
@@ -36,32 +36,32 @@ require 'puppet/daemon'
 # adjusting the logic in those methods to define new behavior.
 #
 describe 'agent logging' do
-  OT  = '--onetime'
-  DA  = '--daemonize'
-  ND  = '--no-daemonize'
-  LDF = '--logdest=/dev/null/foo'
-  LDS = '--logdest=syslog'
-  LDC = '--logdest=console'
-  VE  = '--verbose'
-  DB  = '--debug'
+  ONETIME  = '--onetime'
+  DAEMONIZE  = '--daemonize'
+  NO_DAEMONIZE  = '--no-daemonize'
+  LOGDEST_FILE = '--logdest=/dev/null/foo'
+  LOGDEST_SYSLOG = '--logdest=syslog'
+  LOGDEST_CONSOLE = '--logdest=console'
+  VERBOSE  = '--verbose'
+  DEBUG  = '--debug'
 
   DEFAULT_LOG_LEVEL = :notice
-  VERBOSE           = :info
-  DEBUG             = :debug
+  INFO_LEVEL        = :info
+  DEBUG_LEVEL       = :debug
   CONSOLE           = :console
   SYSLOG            = :syslog
   FILE              = :file
 
   ONETIME_DAEMONIZE_ARGS = [
-    [OT],
-    [OT, DA],
-    [OT, ND],
-    [DA],
-    [ND],
+    [ONETIME],
+    [ONETIME, DAEMONIZE],
+    [ONETIME, NO_DAEMONIZE],
+    [DAEMONIZE],
+    [NO_DAEMONIZE],
     [],
   ]
-  LOG_DEST_ARGS = [LDF, LDS, LDC, nil]
-  LOG_LEVEL_ARGS = [VE, DB, nil]
+  LOG_DEST_ARGS = [LOGDEST_FILE, LOGDEST_SYSLOG, LOGDEST_CONSOLE, nil]
+  LOG_LEVEL_ARGS = [VERBOSE, DEBUG, nil]
 
   shared_examples "an agent" do |argv, expected|
     before(:each) do
@@ -107,11 +107,11 @@ describe 'agent logging' do
   end
 
   def self.no_log_dest_set_in(argv)
-    ([LDS, LDC, LDF] & argv).empty?
+    ([LOGDEST_SYSLOG, LOGDEST_CONSOLE, LOGDEST_FILE] & argv).empty?
   end
 
   def self.verbose_or_debug_set_in_argv(argv)
-    !([VE, DB] & argv).empty?
+    !([VERBOSE, DEBUG] & argv).empty?
   end
 
   def self.log_dest_is_set_to(argv, log_dest)
@@ -123,9 +123,9 @@ describe 'agent logging' do
   def self.expected_loggers(argv)
     loggers = Set.new
     loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
-    loggers << 'console' if log_dest_is_set_to(argv, LDC)
-    loggers << 'syslog' if log_dest_is_set_to(argv, LDS)
-    loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LDF)
+    loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
+    loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
+    loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
     loggers << SYSLOG if no_log_dest_set_in(argv)
     return loggers
   end
@@ -134,8 +134,8 @@ describe 'agent logging' do
   # @return Symbol of the expected log level
   def self.expected_level(argv)
     case
-      when argv.include?(VE) then VERBOSE
-      when argv.include?(DB) then DEBUG
+      when argv.include?(VERBOSE) then INFO_LEVEL
+      when argv.include?(DEBUG) then DEBUG_LEVEL
       else DEFAULT_LOG_LEVEL
     end
   end
