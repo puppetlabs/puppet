@@ -82,6 +82,22 @@ describe Puppet::Util::ADSI do
       Puppet::Util::ADSI::User.delete(username)
     end
 
+    it "should return an enumeration of IADsUser wrapped objects" do
+      name = 'Administrator'
+      wmi_users = [stub('WMI', :name => name)]
+      Puppet::Util::ADSI.expects(:execquery).with("select name from win32_useraccount").returns(wmi_users)
+
+      native_user = stub('IADsUser')
+      homedir = "C:\\Users\\#{name}"
+      native_user.expects(:Get).with('HomeDirectory').returns(homedir)
+      Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{name},user").returns(native_user)
+
+      users = Puppet::Util::ADSI::User.to_a
+      users.length.should == 1
+      users[0].name.should == name
+      users[0]['HomeDirectory'].should == homedir
+    end
+
     describe "an instance" do
       let(:adsi_user) { stub 'user' }
       let(:user)      { Puppet::Util::ADSI::User.new(username, adsi_user) }
@@ -227,6 +243,21 @@ describe Puppet::Util::ADSI do
       connection.expects(:Delete).with('group', groupname)
 
       Puppet::Util::ADSI::Group.delete(groupname)
+    end
+
+    it "should return an enumeration of IADsGroup wrapped objects" do
+      name = 'Administrators'
+      wmi_groups = [stub('WMI', :name => name)]
+      Puppet::Util::ADSI.expects(:execquery).with("select name from win32_group").returns(wmi_groups)
+
+      native_group = stub('IADsGroup')
+      native_group.expects(:Members).returns([stub(:Name => 'Administrator')])
+      Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_group)
+
+      groups = Puppet::Util::ADSI::Group.to_a
+      groups.length.should == 1
+      groups[0].name.should == name
+      groups[0].members.should == ['Administrator']
     end
   end
 
