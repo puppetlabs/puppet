@@ -48,6 +48,37 @@ describe Puppet::Forge do
     end
   end
 
+  context 'when querying remote dependency info' do
+    let(:response_body) do
+      File.read(my_fixture('module_versions.json'))
+    end
+
+    before do
+      repository_responds_with(stub(:body => response_body, :code => '200', :message => "ok"))
+    end
+
+    it 'prints out warnings' do
+      Puppet.expects(:warning).twice.with 'Dependency nanliu/staging for module adrien/pe_upgrade had invalid version range ">= 0"'
+      forge.remote_dependency_info('adrien', 'pe_upgrade', nil)
+    end
+
+    it 'removes warnings from the returned json' do
+      json = forge.remote_dependency_info('adrien', 'pe_upgrade', nil)
+      json.should_not have_key '_warnings'
+    end
+
+    it 'returns an empty hash if the JSON is invalid' do
+      repository_responds_with(stub(:body => "Definitely not json", :code => '200', :message => "ok"))
+      json = forge.remote_dependency_info('adrien', 'pe_upgrade', nil)
+      json.should == {}
+    end
+
+    it 'only rescues descendents of PSONError when parsing the JSON' do
+      Puppet::Forge::Repository.any_instance.stubs(:make_http_request).raises Errno::ENOMEM
+      expect { forge.remote_dependency_info('adrien', 'pe_upgrade', nil) }.to raise_error, Errno::ENOMEM
+    end
+  end
+
   context "when the API responses with an error" do
     before :each do
       repository_responds_with(stub(:body => '{"error":"invalid module"}', :code => '410', :message => "Gone"))

@@ -75,7 +75,15 @@ class Puppet::Forge
   def remote_dependency_info(author, mod_name, version)
     version_string = version ? "&version=#{version}" : ''
     response = repository.make_http_request("/api/v1/releases.json?module=#{author}/#{mod_name}#{version_string}")
+
     json = PSON.parse(response.body) rescue {}
+
+    if (warnings = json.delete('_warnings'))
+      warnings.each do |message|
+        Puppet.warning(message)
+      end
+    end
+
     case response.code
     when "200"
       return json
