@@ -26,8 +26,8 @@ SHELL
   }
 
   HOSTS = {
-    :agent1 => { :ip => "192.168.33.10", :box => "precise" },
-    :master => { :ip => "192.168.33.12", :box => "centos6" }
+    :agent1 => { :ip => "192.168.40.10", :box => "precise" },
+    :master => { :ip => "192.168.40.12", :box => "centos6" }
   }
 
   config.vm.provision :shell, :inline => <<SHELL
