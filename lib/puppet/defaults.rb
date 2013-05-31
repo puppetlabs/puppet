@@ -89,6 +89,8 @@ module Puppet
       :default  => nil,
       :type     => :directory,
       :mode     => 0755,
+      :owner    => "service",
+      :group    => "service",
       :desc     => "Where Puppet PID files are kept."
     },
     :genconfig => {
