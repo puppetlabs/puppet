@@ -1,5 +1,8 @@
 test_name "should modify a user when no longer managing home (#20726)"
 
+require 'puppet/acceptance/windows_utils'
+extend Puppet::Acceptance::WindowsUtils
+
 name = "pl#{rand(999999).to_i}"
 pw = "Passwrd-#{rand(999999).to_i}"[0..11]
 
@@ -21,13 +24,7 @@ agents.each do |agent|
     # initial home directory, that matches what the default will be.
     # This way we are guaranteed that `puppet resource user name`
     # will include the home directory in its output.
-    on agent, facter('kernelmajversion') do
-      if stdout.chomp.to_f < 6.0
-        home_prop = "home='C:\\Documents and Settings\\#{name}'"
-      else
-        home_prop = "home=C:\\Users\\#{name}"
-      end
-    end
+    home_prop = "home='#{profile_base(agent)}\\#{name}'"
   when /solaris/
     pending_test("managehome needs work on solaris")
   end
