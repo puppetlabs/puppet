@@ -6,6 +6,10 @@ task :clean do
   sh "vagrant destroy -f"
 end
 
-task :test => :up do
-  sh "systest -o options.rb -t ../../tests"
+task :ensure_good_private_key do
+  sh "chmod 600 acceptance.priv"
+end
+
+task :test => [:up, :ensure_good_private_key] do
+  sh "systest -o options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
 end
