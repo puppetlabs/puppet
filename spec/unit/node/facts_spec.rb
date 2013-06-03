@@ -9,7 +9,6 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   it "should be able to convert all fact values to strings" do
-    Puppet.expects(:deprecation_warning).once
     @facts.values["one"] = 1
     @facts.stringify
     @facts.values["one"].should == "1"
