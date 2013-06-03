@@ -775,6 +775,15 @@ EOT
       by `puppet`, and should only be set if you're writing your own Puppet
       executable",
     },
+    :masterlog => {
+      :default => "$logdir/puppetmaster.log",
+      :type => :file,
+      :owner => "service",
+      :group => "service",
+      :mode => 0660,
+      :desc => "Where puppet master logs.  This is generally not used,
+        since syslog is the default log destination."
+    },
     :masterhttplog => {
       :default => "$logdir/masterhttp.log",
       :type => :file,
