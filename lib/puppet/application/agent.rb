@@ -7,8 +7,6 @@ class Puppet::Application::Agent < Puppet::Application
 
   run_mode :agent
 
-  attr_accessor :agent, :daemon, :host
-
   def app_defaults
     super.merge({
       :catalog_terminus => :rest,
@@ -315,12 +313,31 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def run_command
-    return fingerprint if options[:fingerprint]
-    return onetime if Puppet[:onetime]
-    main
+    if options[:fingerprint]
+      fingerprint
+    else
+      daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+      daemon.argv = @argv
+      daemon.agent = @agent
+
+      # It'd be nice to daemonize later, but we have to daemonize before the
+      # waitforcert happens.
+      daemon.daemonize if Puppet[:daemonize]
+
+      host = Puppet::SSL::Host.new
+      waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
+      host.wait_for_cert(waitforcert)
+
+      if Puppet[:onetime]
+        onetime(daemon)
+      else
+        main(daemon)
+      end
+    end
   end
 
   def fingerprint
+    host = Puppet::SSL::Host.new
     unless cert = host.certificate || host.certificate_request
       $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
       exit(1)
@@ -332,22 +349,26 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     puts digest.to_s
   end
 
-  def onetime
+  def onetime(daemon)
+    if Puppet[:listen]
+      Puppet.notice "Ignoring --listen on onetime run"
+    end
+
     unless options[:client]
       $stderr.puts "onetime is specified but there is no client"
       exit(43)
       return
     end
 
-    @daemon.set_signal_traps
+    daemon.set_signal_traps
 
     begin
-      exitstatus = @agent.run
+      exitstatus = daemon.agent.run
     rescue => detail
       Puppet.log_exception(detail)
     end
 
-    @daemon.stop(:exit => false)
+    daemon.stop(:exit => false)
 
     if not exitstatus
       exit(1)
@@ -358,10 +379,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
-  def main
+  def main(daemon)
+    if Puppet[:listen]
+      setup_listen(daemon)
+    end
     Puppet.notice "Starting Puppet client version #{Puppet.version}"
 
-    @daemon.start
+    daemon.start
   end
 
   # Enable all of the most common test options.
@@ -385,7 +409,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(0)
   end
 
-  def setup_listen
+  def setup_listen(daemon)
     Puppet.warning "Puppet --listen / kick is deprecated. See http://links.puppetlabs.com/puppet-kick-deprecation"
     unless FileTest.exists?(Puppet[:rest_authconfig])
       Puppet.err "Will not start without authorization file #{Puppet[:rest_authconfig]}"
@@ -396,13 +420,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # No REST handlers yet.
     server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:puppetport])
 
-    @daemon.server = server
-  end
-
-  def setup_host
-    @host = Puppet::SSL::Host.new
-    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    @host.wait_for_cert(waitforcert) unless options[:fingerprint]
+    daemon.server = server
   end
 
   def setup_agent
@@ -410,34 +428,14 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # if --no-client is set.
     require 'puppet/agent'
     require 'puppet/configurer'
-    @agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
+    agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
 
-    enable_disable_client(@agent) if options[:enable] or options[:disable]
+    enable_disable_client(agent) if options[:enable] or options[:disable]
 
-    @daemon.agent = agent if options[:client]
-
-    # It'd be nice to daemonize later, but we have to daemonize before the
-    # waitforcert happens.
-    @daemon.daemonize if Puppet[:daemonize]
-
-    setup_host
-
-    @objects = []
-
-    # This has to go after the certs are dealt with.
-    if Puppet[:listen]
-      unless Puppet[:onetime]
-        setup_listen
-      else
-        Puppet.notice "Ignoring --listen on onetime run"
-      end
-    end
+    @agent = agent if options[:client]
   end
 
   def setup
-    @daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
-    @daemon.argv = @argv
-
     setup_test if options[:test]
 
     setup_logs
@@ -454,11 +452,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # but this is just a temporary band-aid.
     Puppet[:ignoreimport] = true
 
-    # We need to specify a ca location for all of the SSL-related i
-    # indirected classes to work; in fingerprint mode we just need
-    # access to the local files and we don't need a ca.
-    Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
-
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
@@ -467,10 +460,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 
-    unless options[:fingerprint]
-      setup_agent
+    if options[:fingerprint]
+      # in fingerprint mode we just need
+      # access to the local files and we don't need a ca
+      Puppet::SSL::Host.ca_location = :none
     else
-      setup_host
+      Puppet::SSL::Host.ca_location = :remote
+      setup_agent
     end
   end
 end
