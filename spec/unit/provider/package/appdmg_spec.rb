@@ -32,6 +32,7 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
         described_class.expects(:curl).with do |*args|
           args[0] == "-o" and args[1].include? tmpdir
         end
+        described_class.stubs(:execute).returns fake_hdiutil_plist
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installapp)
 

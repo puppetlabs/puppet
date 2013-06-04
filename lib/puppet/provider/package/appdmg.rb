@@ -21,6 +21,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   commands :hdiutil => "/usr/bin/hdiutil"
   commands :curl => "/usr/bin/curl"
   commands :ditto => "/usr/bin/ditto"
+  commands :yes => "/usr/bin/yes"
 
   # JJM We store a cookie for each installed .app.dmg in /var/db
   def self.instances_by_name
@@ -69,7 +70,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
       end
 
       open(cached_source) do |dmg|
-        xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
+        xml_str = execute("#{command :yes} | #{command :hdiutil} mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path} 2> /dev/null")
           ptable = Plist::parse_xml xml_str
           # JJM Filter out all mount-paths into a single array, discard the rest.
           mounts = ptable['system-entities'].collect { |entity|
