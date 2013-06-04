@@ -94,7 +94,7 @@ describe Puppet::Application::Agent do
       @puppetd.command_line.stubs(:args).returns([])
     end
 
-    [:centrallogging, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
+    [:enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
         @puppetd.should respond_to("handle_#{option}".to_sym)
       end
@@ -178,12 +178,6 @@ describe Puppet::Application::Agent do
 
       @puppetd.handle_waitforcert("42")
     end
-
-    it "should set args[:Port] with --port" do
-      @puppetd.handle_port("42")
-      @puppetd.args[:Port].should == "42"
-    end
-
   end
 
   describe "during setup" do
@@ -287,16 +281,6 @@ describe Puppet::Application::Agent do
       Puppet[:configprint] = "modulepath"
       Puppet::Settings.any_instance.expects(:puts).with(path)
       expect { @puppetd.setup }.to exit_with 0
-    end
-
-    it "should set a central log destination with --centrallogs" do
-      @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
-      Puppet[:server] = "puppet.reductivelabs.com"
-      Puppet::Util::Log.stubs(:setup_default)
-
-      Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
-
-      @puppetd.setup
     end
 
     it "should use :main, :puppetd, and :ssl" do

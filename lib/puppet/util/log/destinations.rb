@@ -126,56 +126,6 @@ Puppet::Util::Log.newdesttype :console do
   end
 end
 
-Puppet::Util::Log.newdesttype :host do
-  def initialize(host)
-    Puppet.info "Treating #{host} as a hostname"
-    args = {}
-    if host =~ /:(\d+)/
-      args[:Port] = $1
-      args[:Server] = host.sub(/:\d+/, '')
-    else
-      args[:Server] = host
-    end
-
-    @name = host
-
-    @driver = Puppet::Network::Client::LogClient.new(args)
-  end
-
-  def handle(msg)
-    unless msg.is_a?(String) or msg.remote
-      @hostname ||= Facter["hostname"].value
-      unless defined?(@domain)
-        @domain = Facter["domain"].value
-        @hostname += ".#{@domain}" if @domain
-      end
-      if Puppet::Util.absolute_path?(msg.source)
-        msg.source = @hostname + ":#{msg.source}"
-      elsif msg.source == "Puppet"
-        msg.source = @hostname + " #{msg.source}"
-      else
-        msg.source = @hostname + " #{msg.source}"
-      end
-      begin
-        #puts "would have sent #{msg}"
-        #puts "would have sent %s" %
-        #    CGI.escape(YAML.dump(msg))
-        begin
-          tmp = CGI.escape(YAML.dump(msg))
-        rescue => detail
-          puts "Could not dump: #{detail}"
-          return
-        end
-        # Add the hostname to the source
-        @driver.addlog(tmp)
-      rescue => detail
-        Puppet.log_exception(detail)
-        Puppet::Util::Log.close(self)
-      end
-    end
-  end
-end
-
 # Log to a transaction report.
 Puppet::Util::Log.newdesttype :report do
   attr_reader :report

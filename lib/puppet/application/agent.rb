@@ -7,7 +7,7 @@ class Puppet::Application::Agent < Puppet::Application
 
   run_mode :agent
 
-  attr_accessor :args, :agent, :daemon, :host
+  attr_accessor :agent, :daemon, :host
 
   def app_defaults
     super.merge({
@@ -30,7 +30,6 @@ class Puppet::Application::Agent < Puppet::Application
       :detailed_exitcodes => false,
       :verbose => false,
       :debug => false,
-      :centrallogs => false,
       :setdest => false,
       :enable => false,
       :disable => false,
@@ -44,11 +43,8 @@ class Puppet::Application::Agent < Puppet::Application
       options[opt] = val
     end
 
-    @args = {}
     @argv = ARGV.dup
   end
-
-  option("--centrallogging")
 
   option("--disable [MESSAGE]") do |message|
     options[:disable] = true
@@ -83,10 +79,6 @@ class Puppet::Application::Agent < Puppet::Application
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
     options[:waitforcert] = arg.to_i
-  end
-
-  option("--port PORT","-p") do |arg|
-    @args[:Port] = arg
   end
 
   def help
@@ -452,17 +444,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    args[:Server] = Puppet[:server]
     if options[:fqdn]
-      args[:FQDN] = options[:fqdn]
       Puppet[:certname] = options[:fqdn]
-    end
-
-    if options[:centrallogs]
-      logdest = args[:Server]
-
-      logdest += ":" + args[:Port] if args.include?(:Port)
-      Puppet::Util::Log.newdestination(logdest)
     end
 
     Puppet.settings.use :main, :agent, :ssl
