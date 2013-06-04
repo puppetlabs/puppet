@@ -316,17 +316,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     if options[:fingerprint]
       fingerprint
     else
-      daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
-      daemon.argv = @argv
-      daemon.agent = @agent
+      # It'd be nice to daemonize later, but we have to daemonize before
+      # waiting for certificates so that we don't block
+      daemon = daemonize_process_when(Puppet[:daemonize])
 
-      # It'd be nice to daemonize later, but we have to daemonize before the
-      # waitforcert happens.
-      daemon.daemonize if Puppet[:daemonize]
-
-      host = Puppet::SSL::Host.new
-      waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-      host.wait_for_cert(waitforcert)
+      wait_for_certificates
 
       if Puppet[:onetime]
         onetime(daemon)
@@ -355,7 +349,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     unless options[:client]
-      $stderr.puts "onetime is specified but there is no client"
+      Puppet.err "onetime is specified but there is no client"
       exit(43)
       return
     end
@@ -400,6 +394,43 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     options[:detailed_exitcodes] = true
   end
 
+  def setup
+    setup_test if options[:test]
+
+    setup_logs
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
+    if options[:fqdn]
+      Puppet[:certname] = options[:fqdn]
+    end
+
+    Puppet.settings.use :main, :agent, :ssl
+
+    # Always ignoreimport for agent. It really shouldn't even try to import,
+    # but this is just a temporary band-aid.
+    Puppet[:ignoreimport] = true
+
+    Puppet::Transaction::Report.indirection.terminus_class = :rest
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.indirection.cache_class = :yaml
+
+    if Puppet[:catalog_cache_terminus]
+      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
+    end
+
+    if options[:fingerprint]
+      # in fingerprint mode we just need
+      # access to the local files and we don't need a ca
+      Puppet::SSL::Host.ca_location = :none
+    else
+      Puppet::SSL::Host.ca_location = :remote
+      setup_agent
+    end
+  end
+
+  private
+
   def enable_disable_client(agent)
     if options[:enable]
       agent.enable
@@ -435,38 +466,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @agent = agent if options[:client]
   end
 
-  def setup
-    setup_test if options[:test]
+  def daemonize_process_when(should_daemonize)
+    daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+    daemon.argv = @argv
+    daemon.agent = @agent
 
-    setup_logs
+    daemon.daemonize if should_daemonize
 
-    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+    daemon
+  end
 
-    if options[:fqdn]
-      Puppet[:certname] = options[:fqdn]
-    end
-
-    Puppet.settings.use :main, :agent, :ssl
-
-    # Always ignoreimport for agent. It really shouldn't even try to import,
-    # but this is just a temporary band-aid.
-    Puppet[:ignoreimport] = true
-
-    Puppet::Transaction::Report.indirection.terminus_class = :rest
-    # we want the last report to be persisted locally
-    Puppet::Transaction::Report.indirection.cache_class = :yaml
-
-    if Puppet[:catalog_cache_terminus]
-      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
-    end
-
-    if options[:fingerprint]
-      # in fingerprint mode we just need
-      # access to the local files and we don't need a ca
-      Puppet::SSL::Host.ca_location = :none
-    else
-      Puppet::SSL::Host.ca_location = :remote
-      setup_agent
-    end
+  def wait_for_certificates
+    host = Puppet::SSL::Host.new
+    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
+    host.wait_for_cert(waitforcert)
   end
 end

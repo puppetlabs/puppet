@@ -31,6 +31,8 @@ describe Puppet::Application::Agent do
     Puppet::Node.indirection.stubs(:terminus_class=)
     Puppet::Node.indirection.stubs(:cache_class=)
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+
+    $stderr.expects(:puts).never
   end
 
   it "should operate in agent run_mode" do
@@ -377,7 +379,7 @@ describe Puppet::Application::Agent do
         it "should call client.#{action}" do
           @puppetd.options[action] = true
           @agent.expects(action)
-          expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+          expect { execute_agent }.to exit_with 0
         end
       end
 
@@ -385,18 +387,16 @@ describe Puppet::Application::Agent do
         @puppetd.options[:disable] = true
         @puppetd.options[:disable_message] = "message"
         @agent.expects(:disable).with("message")
-        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+
+        expect { execute_agent }.to exit_with 0
       end
 
       it "should pass the default disable message when disabling without a message" do
         @puppetd.options[:disable] = true
         @puppetd.options[:disable_message] = nil
         @agent.expects(:disable).with("reason not specified")
-        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
-      end
 
-      it "should finally exit" do
-        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+        expect { execute_agent }.to exit_with 0
       end
     end
 
@@ -435,9 +435,16 @@ describe Puppet::Application::Agent do
     it "should not wait for a certificate in fingerprint mode" do
       @puppetd.options[:fingerprint] = true
       @puppetd.options[:waitforcert] = 123
-      @ssl_host.expects(:wait_for_cert).never
+      @puppetd.options[:digest] = 'MD5'
 
-      expect { execute_agent }.to exit_with 1
+      certificate = mock 'certificate'
+      certificate.stubs(:digest).with('MD5').returns('ABCDE')
+      @ssl_host.stubs(:certificate).returns(certificate)
+
+      @ssl_host.expects(:wait_for_cert).never
+      @puppetd.expects(:puts).with('ABCDE')
+
+      execute_agent
     end
 
     describe "when setting up listen" do
@@ -558,8 +565,9 @@ describe Puppet::Application::Agent do
       end
 
       it "should exit if no defined --client" do
-        $stderr.stubs(:puts)
         @puppetd.options[:client] = nil
+
+        Puppet.expects(:err).with('onetime is specified but there is no client')
 
         expect { execute_agent }.to exit_with 43
       end
@@ -605,29 +613,26 @@ describe Puppet::Application::Agent do
 
     describe "with --fingerprint" do
       before :each do
-        @cert = stub_everything 'cert'
+        @cert = mock 'cert'
         @puppetd.options[:fingerprint] = true
         @puppetd.options[:digest] = :MD5
       end
 
       it "should fingerprint the certificate if it exists" do
-        @ssl_host.expects(:certificate).returns(@cert)
-        @cert.expects(:digest).with('MD5').returns "fingerprint"
+        @ssl_host.stubs(:certificate).returns(@cert)
+        @cert.stubs(:digest).with('MD5').returns "fingerprint"
+
+        @puppetd.expects(:puts).with "fingerprint"
+
         @puppetd.fingerprint
       end
 
       it "should fingerprint the certificate request if no certificate have been signed" do
-        @ssl_host.expects(:certificate).returns(nil)
-        @ssl_host.expects(:certificate_request).returns(@cert)
-        @cert.expects(:digest).with('MD5').returns "fingerprint"
-        @puppetd.fingerprint
-      end
+        @ssl_host.stubs(:certificate).returns(nil)
+        @ssl_host.stubs(:certificate_request).returns(@cert)
+        @cert.stubs(:digest).with('MD5').returns "fingerprint"
 
-      it "should display the fingerprint" do
-        @ssl_host.stubs(:certificate).returns(@cert)
-        @cert.stubs(:digest).with('MD5').returns("DIGEST")
-
-        @puppetd.expects(:puts).with "DIGEST"
+        @puppetd.expects(:puts).with "fingerprint"
 
         @puppetd.fingerprint
       end
