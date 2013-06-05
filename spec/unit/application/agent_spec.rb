@@ -279,7 +279,7 @@ describe Puppet::Application::Agent do
     it "should print puppet config if asked to in Puppet config" do
       Puppet[:configprint] = "pluginsync"
       Puppet.settings.expects(:print_configs).returns true
-      expect { @puppetd.setup }.to exit_with 0
+      expect { execute_agent }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
@@ -287,7 +287,7 @@ describe Puppet::Application::Agent do
       Puppet[:modulepath] = path
       Puppet[:configprint] = "modulepath"
       Puppet::Settings.any_instance.expects(:puts).with(path)
-      expect { @puppetd.setup }.to exit_with 0
+      expect { execute_agent }.to exit_with 0
     end
 
     it "should use :main, :puppetd, and :ssl" do
@@ -481,8 +481,7 @@ describe Puppet::Application::Agent do
 
         Puppet.expects(:warning).with() { |msg| msg =~ /kick is deprecated/ }
 
-        @puppetd.setup
-        @puppetd.run_command
+        execute_agent
       end
     end
 
@@ -532,8 +531,7 @@ describe Puppet::Application::Agent do
 
       @puppetd.stubs(:fingerprint)
 
-      @puppetd.setup
-      @puppetd.run_command
+      execute_agent
     end
 
     it "should dispatch to onetime if --onetime is used" do
@@ -541,8 +539,7 @@ describe Puppet::Application::Agent do
 
       @puppetd.stubs(:onetime)
 
-      @puppetd.setup
-      @puppetd.run_command
+      execute_agent
     end
 
     it "should dispatch to main if --onetime and --fingerprint are not used" do
@@ -550,8 +547,7 @@ describe Puppet::Application::Agent do
 
       @puppetd.stubs(:main)
 
-      @puppetd.setup
-      @puppetd.run_command
+      execute_agent
     end
 
     describe "with --onetime" do
