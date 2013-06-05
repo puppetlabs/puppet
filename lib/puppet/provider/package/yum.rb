@@ -59,6 +59,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
+    limiter = 0
+    tries = 3
 
     case should
     when true, false, Symbol
@@ -74,7 +76,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    yum "-d", "0", "-e", "0", "-y", operation, wanted
+    begin
+      limiter += 1
+      output = yum "-d", "0", "-e", "0", "-y", operation, wanted
+    rescue Puppet::ExecutionFailure => error
+      debug("Got error while operation:#{operation}, wanted:#{wanted}:\n#{error}")
+      if limiter < tries
+        debug("Cleaning yum cache and retrying operation, try #{limiter} of #{tries}...")
+        yum "clean", "expire-cache"
+        #yum "history", "redo", "last"
+        retry
+      end
+    end
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is
