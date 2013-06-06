@@ -11,7 +11,7 @@ Puppet::Parser::Functions::newfunction(
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
   a parameterized block as produced by the puppet syntax:
 
-    $a.reject |$x| { ... }
+        $a.reject |$x| { ... }
 
   When the first argument is an Array, the block is called with each entry in turn. When the first argument
   is a hash the entry is an array with `[key, value]`.
@@ -20,11 +20,12 @@ Puppet::Parser::Functions::newfunction(
 
   *Examples*
 
-    # selects all that does not end with berry
-    $a = ["rasberry", "blueberry", "orange"]
-    $a.reject |$x| { $x =~ /berry$/ }
+        # selects all that does not end with berry
+        $a = ["rasberry", "blueberry", "orange"]
+        $a.reject |$x| { $x =~ /berry$/ }
 
-  Since 3.2
+  - Since 3.2
+  - requires `parser = future`.
   ENDHEREDOC
 
   receiver = args[0]
