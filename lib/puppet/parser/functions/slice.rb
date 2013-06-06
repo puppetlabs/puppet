@@ -7,11 +7,11 @@ Puppet::Parser::Functions::newfunction(
   argument and returns the first argument, or if no block is given returns a new array with a concatenation of
   the slices.
 
-  This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
+  This function takes two mandatory arguments: the first, `$a`, should be an Array or a Hash, and the second, `$n`,
   the number of elements to include in each slice. The optional third argument should be a
   a parameterized block as produced by the puppet syntax:
 
-      |$x| { ... }
+      $a.slice($n) |$x| { ... }
 
   The parameterized block should have either one parameter (receiving an array with the slice), or the same number
   of parameters as specified by the slice size (each parameter receiving its part of the slice).
@@ -31,7 +31,8 @@ Puppet::Parser::Functions::newfunction(
 
       slice($[1,2,3,4,5,6], 2) # produces [[1,2], [3,4], [5,6]]
 
-  Since 3.2
+  - Since 3.2
+  - requires `parser = future`.
   ENDHEREDOC
   require 'puppet/parser/ast/lambda'
   require 'puppet/parser/scope'
