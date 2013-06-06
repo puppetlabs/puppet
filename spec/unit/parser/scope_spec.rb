@@ -142,8 +142,8 @@ describe Puppet::Parser::Scope do
     end
 
     it "should fail if invoked with a non-string name" do
-      expect { @scope[:foo] }.to raise_error Puppet::DevError
-      expect { @scope[:foo] = 12 }.to raise_error Puppet::DevError
+      expect { @scope[:foo] }.to raise_error Puppet::ParseError
+      expect { @scope[:foo] = 12 }.to raise_error Puppet::ParseError
     end
 
     it "should return nil for unset variables" do
