@@ -285,10 +285,30 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.resource("notify[one]", nil).must equal(@one)
     end
 
-    it "should not allow two resources with the same resource reference" do
-      @catalog.add_resource(@one)
+    describe 'with a duplicate resource' do
+      def resource_at(type, name, file, line)
+        resource = Puppet::Resource.new(type, name)
+        resource.file = file
+        resource.line = line
 
-      proc { @catalog.add_resource(@dupe) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
+        Puppet::Type.type(type).new(resource)
+      end
+
+      let(:orig) { resource_at(:notify, 'duplicate-title', '/path/to/orig/file', 42) }
+      let(:dupe) { resource_at(:notify, 'duplicate-title', '/path/to/dupe/file', 314) }
+
+      it "should print the locations of the original duplicated resource" do
+        @catalog.add_resource(orig)
+
+        expect { @catalog.add_resource(dupe) }.to raise_error { |error|
+          error.should be_a Puppet::Resource::Catalog::DuplicateResourceError
+
+          error.message.should match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
+          error.message.should match %r[in file /path/to/orig/file:42]
+          error.message.should match %r[cannot redeclare]
+          error.message.should match %r[at /path/to/dupe/file:314]
+        }
+      end
     end
 
     it "should not store objects that do not respond to :ref" do
