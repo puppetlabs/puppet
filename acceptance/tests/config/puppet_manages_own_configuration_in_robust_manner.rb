@@ -8,6 +8,9 @@ test_name "Puppet manages its own configuration in a robust manner"
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
 
+step "Clear out yaml directory because of a bug in the indirector/yaml. (See #21145)"
+on master, 'rm -rf $(puppet master --configprint yamldir)'
+
 step "Record original state of system users"
 original_state = {}
 hosts.each do |host|
