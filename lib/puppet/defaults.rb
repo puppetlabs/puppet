@@ -131,6 +131,11 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether Puppet should manage the owner, group, and mode of files it uses internally",
     },
+    :yumretries => {
+        :default  => 0,
+        :desc     => "Number of tries yum provider would expire yum cache and redo an operation, \n" +
+                     "if it had failed. Recommended 1. Default is 0 - do not retry failed operations. ",
+    },
     :onetime => {
         :default  => false,
         :type     => :boolean,
