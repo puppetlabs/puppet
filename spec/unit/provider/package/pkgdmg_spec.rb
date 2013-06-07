@@ -64,11 +64,11 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         resource[:source] = "http://fake.puppetlabs.com/foo.dmg"
       end
 
-      it "should call tmpdir and use the returned directory" do
+      it "should call tmpdir and then call curl with that directory" do
         Dir.expects(:mktmpdir).returns tmpdir
         Dir.stubs(:entries).returns ["foo.pkg"]
         described_class.expects(:curl).with do |*args|
-          args[0] == "-o" and args[1].include? tmpdir
+          args[0] == "-o" and args[1].include? tmpdir and args.include? "--fail"
         end
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installpkg)
