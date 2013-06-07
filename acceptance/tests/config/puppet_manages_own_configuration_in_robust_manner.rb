@@ -7,6 +7,11 @@ test_name "Puppet manages its own configuration in a robust manner"
 
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
+# when managhome roundtrips for solaris, this confine should be removed
+confine :except, :platform => 'solaris'
+
+step "Clear out yaml directory because of a bug in the indirector/yaml. (See #21145)"
+on master, 'rm -rf $(puppet master --configprint yamldir)'
 
 step "Record original state of system users"
 original_state = {}
@@ -35,6 +40,10 @@ with_master_running_on(master, '--mkusers --autosign true') do
 end
 
 teardown do
+  # And cleaning up yaml dir again here because we are changing service
+  # user and group ids back to the original uid and gid
+  on master, 'rm -rf $(puppet master --configprint yamldir)'
+
   hosts.each do |host|
     apply_manifest_on(host, <<-ORIG)
       #{original_state[host]}
