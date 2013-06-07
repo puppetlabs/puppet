@@ -9,7 +9,7 @@ Puppet::Parser::Functions::newfunction(
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the last
   a parameterized block as produced by the puppet syntax:
 
-    $a.reduce |$memo, $x| { ... }
+        $a.reduce |$memo, $x| { ... }
 
   When the first argument is an Array, the block is called with each entry in turn. When the first argument
   is a hash each entry is converted to an array with `[key, value]` before being fed to the block. An optional
@@ -24,30 +24,32 @@ Puppet::Parser::Functions::newfunction(
 
   *Examples*
 
-    # Reduce an array
-    $a = [1,2,3]
-    $a.reduce |$memo, $entry| { $memo + $entry }
-    #=> 6
+        # Reduce an array
+        $a = [1,2,3]
+        $a.reduce |$memo, $entry| { $memo + $entry }
+        #=> 6
 
-    # Reduce hash values
-    $a = {a => 1, b => 2, c => 3}
-    $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
-    #=> [sum, 6]
+        # Reduce hash values
+        $a = {a => 1, b => 2, c => 3}
+        $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
+        #=> [sum, 6]
 
   It is possible to provide a starting 'memo' as an argument.
 
   *Examples*
-    # Reduce an array
-    $a = [1,2,3]
-    $a.reduce(4) |$memo, $entry| { $memo + $entry }
-    #=> 10
 
-    # Reduce hash values
-    $a = {a => 1, b => 2, c => 3}
-    $a.reduce([na, 4]) |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
-    #=> [sum, 10]
+        # Reduce an array
+        $a = [1,2,3]
+        $a.reduce(4) |$memo, $entry| { $memo + $entry }
+        #=> 10
 
-  Since 3.2
+        # Reduce hash values
+        $a = {a => 1, b => 2, c => 3}
+        $a.reduce([na, 4]) |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
+        #=> [sum, 10]
+
+  - Since 3.2
+  - requires `parser = future`.
   ENDHEREDOC
 
   require 'puppet/parser/ast/lambda'
