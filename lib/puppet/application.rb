@@ -377,13 +377,14 @@ class Application
   end
 
   def setup_logs
-    if options[:debug] or options[:verbose]
+    if options[:debug] || options[:verbose]
       Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
+    end
+
+    if options[:debug]
+      Puppet::Util::Log.level = :debug
+    elsif options[:verbose]
+      Puppet::Util::Log.level = :info
     end
 
     Puppet::Util::Log.setup_default unless options[:setdest]
