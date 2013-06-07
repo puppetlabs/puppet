@@ -88,9 +88,7 @@ module Puppet
     :rundir => {
       :default  => nil,
       :type     => :directory,
-      :mode     => 0755,
-      :owner    => "service",
-      :group    => "service",
+      :mode     => 01777,
       :desc     => "Where Puppet PID files are kept."
     },
     :genconfig => {
