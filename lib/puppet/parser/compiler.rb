@@ -152,13 +152,13 @@ class Puppet::Parser::Compiler
       classes_with_params = Hash[classes_with_params]
       classes_without_params.map!(&:first)
     else
-      classes_with_params = []
+      classes_with_params = {}
       classes_without_params = @node.classes
     end
 
     evaluate_classes(classes_without_params, @node_scope || topscope)
 
-    evaluate_classes(Hash[classes_with_params], @node_scope || topscope)
+    evaluate_classes(classes_with_params, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
