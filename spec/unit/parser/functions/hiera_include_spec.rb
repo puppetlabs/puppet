@@ -21,4 +21,16 @@ describe 'Puppet::Parser::Functions#hiera_include' do
     HieraPuppet.expects(:lookup).with() { |*args| args[4].should be :array }.returns(['someclass'])
     expect { scope.function_hiera_include(['key']) }.to raise_error Puppet::Error, /Could not find class someclass/
   end
+
+  it 'should call the `include` function with the classes' do
+    HieraPuppet.expects(:lookup).returns %w[foo bar baz]
+
+    scope.expects(:function_include).with([%w[foo bar baz]])
+    scope.function_hiera_include(['key'])
+  end
+
+  it 'should not raise an error if the resulting hiera lookup returns an empty array' do
+    HieraPuppet.expects(:lookup).returns []
+    expect { scope.function_hiera_include(['key']) }.to_not raise_error
+  end
 end
