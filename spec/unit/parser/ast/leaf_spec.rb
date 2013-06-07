@@ -237,6 +237,37 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
 
       access2.evaluate(@scope).should == 'b'
     end
+
+    it "should raise a useful error for hash access on undef" do
+      @scope["a"] = :undef
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
+
+      expect {
+        access.evaluate(@scope)
+      }.to raise_error(Puppet::ParseError, /not a hash or array/)
+    end
+
+    it "should raise a useful error for hash access on TrueClass" do
+      @scope["a"] = true
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
+
+      expect {
+        access.evaluate(@scope)
+      }.to raise_error(Puppet::ParseError, /not a hash or array/)
+    end
+
+    it "should raise a useful error for recursive undef hash access" do
+      @scope["a"] = { "key" => "val" }
+
+      access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "nonexistent")
+      access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => "subkey")
+
+      expect {
+        access2.evaluate(@scope)
+      }.to raise_error(Puppet::ParseError, /not a hash or array/)
+    end
   end
 
   describe "when assigning" do
