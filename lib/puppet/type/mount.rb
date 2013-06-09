@@ -118,6 +118,10 @@ module Puppet
         device is supporting by the mount, including network
         devices or devices specified by UUID rather than device
         path, depending on the operating system."
+
+      validate do |value|
+        raise Puppet::Error, "device must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     # Solaris specifies two devices, not just one.
@@ -139,16 +143,28 @@ module Puppet
           nil
         end
       end
+
+      validate do |value|
+        raise Puppet::Error, "blockdevice must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:fstype) do
       desc "The mount type.  Valid values depend on the
         operating system.  This is a required option."
+
+      validate do |value|
+        raise Puppet::Error, "fstype must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:options) do
       desc "Mount options for the mounts, as they would
         appear in the fstab."
+
+      validate do |value|
+        raise Puppet::Error, "option must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:pass) do
@@ -162,6 +178,8 @@ module Puppet
     newproperty(:atboot) do
       desc "Whether to mount the mount at boot.  Not all platforms
         support this."
+
+      newvalues :yes, :no
     end
 
     newproperty(:dump) do
@@ -197,6 +215,10 @@ module Puppet
       desc "The mount path for the mount."
 
       isnamevar
+
+      validate do |value|
+        raise Puppet::Error, "name must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newparam(:remounts) do

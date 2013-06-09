@@ -64,6 +64,17 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when validating values" do
+
+    describe "for name" do
+      it "should allow full qualified paths" do
+        expect { described_class.new(:name => "/mnt/foo") }.to_not raise_error
+      end
+
+      it "should not allow spaces" do
+        expect { described_class.new(:name => "/mnt/foo bar") }.to raise_error Puppet::Error, /name.*whitespace/
+      end
+    end
+
     describe "for ensure" do
       it "should alias :present to :defined as a value to :ensure" do
         mount = described_class.new(:name => "yay", :ensure => :present)
@@ -112,6 +123,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'sysfs') }.to_not raise_error
         expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'proc') }.to_not raise_error
       end
+
+      it 'should not support whitespace in device' do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/my dev/foo') }.to raise_error Puppet::Error, /device.*whitespace/
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /device.*whitespace/
       end
     end
 
@@ -128,6 +143,11 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
       it "should support a dash for blockdevice" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '-') }.to_not raise_error
+      end
+
+      it "should not support whitespace in blockdevice" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '/dev/my dev/foo') }.to raise_error Puppet::Error, /blockdevice.*whitespace/
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /blockdevice.*whitespace/
       end
 
       it "should default to /dev/rdsk/DEVICE if device is /dev/dsk/DEVICE" do
@@ -156,6 +176,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       it "should support auto as a special fstype" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'auto') }.to_not raise_error
       end
+
+      it "should not support whitespace in fstype" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext 3') }.to raise_error Puppet::Error, /fstype.*whitespace/
+      end
     end
 
     describe "for options" do
@@ -165,6 +189,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
       it "should support muliple options as a comma separated list" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro,rsize=4096') }.to_not raise_error
+      end
+
+      it "should not support whitespace in options" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :options => ['ro','foo bar','intr']) }.to raise_error Puppet::Error, /option.*whitespace/
       end
     end
 
@@ -218,6 +246,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
       it "should support no as a value for atboot" do
         expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :no) }.to_not raise_error
+      end
+
+      it "should not support other values for atboot" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :true) }.to raise_error Puppet::Error, /Invalid value/
       end
     end
   end
