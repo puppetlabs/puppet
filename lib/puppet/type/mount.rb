@@ -128,7 +128,7 @@ module Puppet
 
       # Default to the device but with "dsk" replaced with "rdsk".
       defaultto do
-        if Facter["osfamily"].value == "Solaris"
+        if Facter.value(:osfamily) == "Solaris"
           device = @resource.value(:device)
           if device =~ %r{/dsk/}
             device.sub(%r{/dsk/}, "/rdsk/")
@@ -168,7 +168,7 @@ module Puppet
       desc "Whether to dump the mount.  Not all platform support this.
         Valid values are `1` or `0`. or `2` on FreeBSD, Default is `0`."
 
-      if Facter["operatingsystem"].value == "FreeBSD"
+      if Facter.value(:operatingsystem) == "FreeBSD"
         newvalue(%r{(0|1|2)})
       else
         newvalue(%r{(0|1)})
