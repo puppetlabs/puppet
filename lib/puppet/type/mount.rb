@@ -172,7 +172,13 @@ module Puppet
       desc "The pass in which the mount is checked."
 
       defaultto {
-        0 if @resource.managed?
+        if @resource.managed?
+          if Facter.value(:osfamily) == 'Solaris'
+            '-'
+          else
+            0
+          end
+        end
       }
     end
 

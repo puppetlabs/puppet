@@ -226,10 +226,16 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '-') }.to_not raise_error
       end
 
-      it "should default to 0" do
+      it "should default to 0 on non Solaris" do
         Facter.stubs(:value).with(:osfamily).returns nil
         Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
         described_class.new(:name => "/foo", :ensure => :present)[:pass].should == 0
+      end
+
+      it "should default to - on Solaris" do
+        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
+        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == '-'
       end
     end
 
