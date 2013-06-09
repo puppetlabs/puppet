@@ -67,11 +67,23 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     describe "for name" do
       it "should allow full qualified paths" do
-        expect { described_class.new(:name => "/mnt/foo") }.to_not raise_error
+        described_class.new(:name => "/mnt/foo")[:name].should == '/mnt/foo'
+      end
+
+      it "should remove trailing slashes" do
+        described_class.new(:name => '/')[:name].should == '/'
+        described_class.new(:name => '//')[:name].should == '/'
+        described_class.new(:name => '/foo/')[:name].should == '/foo'
+        described_class.new(:name => '/foo/bar/')[:name].should == '/foo/bar'
+        described_class.new(:name => '/foo/bar/baz//')[:name].should == '/foo/bar/baz'
       end
 
       it "should not allow spaces" do
         expect { described_class.new(:name => "/mnt/foo bar") }.to raise_error Puppet::Error, /name.*whitespace/
+      end
+
+      it "should allow pseudo mountpoints (e.g. swap)" do
+        described_class.new(:name => 'none')[:name].should == 'none'
       end
     end
 

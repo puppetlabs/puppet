@@ -220,6 +220,10 @@ module Puppet
       validate do |value|
         raise Puppet::Error, "name must not contain whitespace: #{value}" if value =~ /\s/
       end
+
+      munge do |value|
+        value.gsub(/^(.+?)\/*$/, '\1')
+      end
     end
 
     newparam(:remounts) do
