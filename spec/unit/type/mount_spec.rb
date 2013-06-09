@@ -155,6 +155,11 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         obj[:blockdevice].should == '/dev/rdsk/c0d0s0'
       end
 
+      it "should default to - if it is an nfs-share" do
+        obj = described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs')
+        obj[:blockdevice].should == '-'
+      end
+
       it "should have no default otherwise" do
         described_class.new(:name => "/foo")[:blockdevice].should == nil
         described_class.new(:name => "/foo", :device => "/foo")[:blockdevice].should == nil
