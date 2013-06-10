@@ -18,7 +18,7 @@ module Puppet::ModuleTool
 
     # Return Pathnames to look for 'generate' templates.
     def paths
-      @paths ||= [ custom_path, default_path ]
+      @paths ||= [ home_path, custom_path, default_path ]
     end
 
     # Return Pathname of custom templates directory.
@@ -30,5 +30,20 @@ module Puppet::ModuleTool
     def default_path
       Pathname(__FILE__).dirname + 'skeleton/templates/generator'
     end
+
+    # Return settings from ~/.puppet-template/config
+    def generate_settings
+      file = ENV['HOME'] + '/.puppet-template/config'
+      if File.exist?(file)
+        text = File.read(file)
+        Hash[text.scan(/^\s*(\w+)\s*=\s*(.*?)\s*$/)]
+      end
+    end
+
+    # Return path name of custom skeleton based on the homedir of the user
+    def home_path
+      Pathname(ENV['HOME'] + '/.puppet-template/skeleton')
+    end
+
   end
 end

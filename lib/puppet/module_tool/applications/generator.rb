@@ -6,7 +6,10 @@ module Puppet::ModuleTool
   module Applications
     class Generator < Application
 
+      attr_accessor :settings
+
       def initialize(full_module_name, options = {})
+        @settings = {}
         begin
           @metadata = Metadata.new(:full_module_name => full_module_name)
         rescue ArgumentError
@@ -92,6 +95,11 @@ module Puppet::ModuleTool
         end
         def target
           target = @generator.destination + @source.relative_path_from(@generator.skeleton.path)
+
+          # Pick up the settings
+          settings = @generator.skeleton.generate_settings
+          @generator.settings.merge! settings
+
           components = target.to_s.split(File::SEPARATOR).map do |part|
             part == 'NAME' ? @generator.metadata.name : part
           end
