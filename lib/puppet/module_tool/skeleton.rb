@@ -33,7 +33,7 @@ module Puppet::ModuleTool
 
     # Return settings from ~/.puppet-template/config
     def generate_settings
-      file = ENV['HOME'] + '/.puppet-template/config'
+      file = ENV['HOME'] + '/.puppet-module-tool/config'
       if File.exist?(file)
         text = File.read(file)
         Hash[text.scan(/^\s*(\w+)\s*=\s*(.*?)\s*$/)]
@@ -42,7 +42,7 @@ module Puppet::ModuleTool
 
     # Return path name of custom skeleton based on the homedir of the user
     def home_path
-      Pathname(ENV['HOME'] + '/.puppet-template/skeleton')
+      Pathname(ENV['HOME'] + '/.puppet-module-tool/skeleton')
     end
 
   end
