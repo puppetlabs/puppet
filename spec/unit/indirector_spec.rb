@@ -120,7 +120,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
   it "should extend the class to handle serialization" do
     @indirection = @thingie.indirects :first
-    @thingie.should respond_to(:render)
+    @thingie.should respond_to(:convert_from)
   end
 
   after do
