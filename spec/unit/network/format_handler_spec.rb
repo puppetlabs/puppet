@@ -105,7 +105,10 @@ describe Puppet::Network::FormatHandler do
       format.expects(:intern).with(FormatTester, "mydata").raises "foo"
       expect do
         FormatTester.convert_from(:my_format, "mydata")
-      end.to raise_error(Puppet::Network::FormatHandler::FormatError, 'Could not intern from my_format: foo')
+      end.to raise_error(
+        Puppet::Network::FormatHandler::FormatError,
+        'Could not intern from my_format: foo'
+      )
     end
 
     it "should be able to use a specific hook for converting into multiple instances" do
