@@ -78,29 +78,6 @@ describe Puppet::Network::FormatHandler do
     FormatTester.default_format.should == :one
   end
 
-  it "should delegate all methods from the informative format to the specified format" do
-    format = mock 'format'
-    format.stubs(:name).returns(:myformat)
-    Puppet::Network::FormatHandler.expects(:format).twice.with(:myformat).returns format
-
-    format.expects(:render).with("foo").returns "yay"
-    Puppet::Network::FormatHandler.protected_format(:myformat).render("foo").should == "yay"
-  end
-
-  it "should provide better logging if a failure is encountered when delegating from the informative format to the real format" do
-    format = mock 'format'
-    format.stubs(:name).returns(:myformat)
-    Puppet::Network::FormatHandler.expects(:format).twice.with(:myformat).returns format
-
-    format.expects(:render).with("foo").raises "foo"
-    expect { Puppet::Network::FormatHandler.protected_format(:myformat).render("foo") }.to raise_error(Puppet::Network::FormatHandler::FormatError)
-  end
-
-  it "should raise an error if we couldn't find a format by name or mime-type" do
-    Puppet::Network::FormatHandler.stubs(:format).with(:myformat).returns nil
-    expect { Puppet::Network::FormatHandler.protected_format(:myformat) }.to raise_error
-  end
-
   describe "when using formats" do
     let(:format) { Puppet::Network::FormatHandler.create(:my_format, :mime => "text/myformat") }
 
@@ -126,7 +103,9 @@ describe Puppet::Network::FormatHandler do
 
     it "should raise a FormatError when an exception is encountered when converting from a format" do
       format.expects(:intern).with(FormatTester, "mydata").raises "foo"
-      expect { FormatTester.convert_from(:my_format, "mydata") }.to raise_error(Puppet::Network::FormatHandler::FormatError)
+      expect do
+        FormatTester.convert_from(:my_format, "mydata")
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, 'Could not intern from my_format: foo')
     end
 
     it "should be able to use a specific hook for converting into multiple instances" do
@@ -137,7 +116,9 @@ describe Puppet::Network::FormatHandler do
 
     it "should raise a FormatError when an exception is encountered when converting multiple items from a format" do
       format.expects(:intern_multiple).with(FormatTester, "mydata").raises "foo"
-      expect { FormatTester.convert_from_multiple(:my_format, "mydata") }.to raise_error(Puppet::Network::FormatHandler::FormatError)
+      expect do
+        FormatTester.convert_from_multiple(:my_format, "mydata")
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, 'Could not intern_multiple from my_format: foo')
     end
 
     it "should be able to use a specific hook for rendering multiple instances" do
@@ -148,7 +129,9 @@ describe Puppet::Network::FormatHandler do
 
     it "should raise a FormatError when an exception is encountered when rendering multiple items into a format" do
       format.expects(:render_multiple).with("mydata").raises "foo"
-      expect { FormatTester.render_multiple(:my_format, "mydata") }.to raise_error(Puppet::Network::FormatHandler::FormatError)
+      expect do
+        FormatTester.render_multiple(:my_format, "mydata")
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, 'Could not render_multiple to my_format: foo')
     end
   end
 
@@ -201,7 +184,9 @@ describe Puppet::Network::FormatHandler do
       tester = FormatTester.new
       format.expects(:render).with(tester).raises "eh"
 
-      expect { tester.render(:foo) }.to raise_error(Puppet::Network::FormatHandler::FormatError)
+      expect do
+        tester.render(:foo)
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, 'Could not render to foo: eh')
     end
 
     it "should call the format-specific converter when asked to convert to a given format" do
