@@ -30,8 +30,7 @@ module Puppet::Network::FormatHandler
 
   @formats = {}
   def self.create(*args, &block)
-    instance = Puppet::Network::Format.new(*args)
-    instance.instance_eval(&block) if block_given?
+    instance = Puppet::Network::Format.new(*args, &block)
 
     @formats[instance.name] = instance
     instance
