@@ -282,9 +282,9 @@ describe Puppet::SimpleGraph do
     end
 
     def simplify(cycles)
-      cycles.map do |x|
-        x.map do |y|
-          y.to_s.match(/^Notify\[(.*)\]$/)[1]
+      cycles.map do |cycle|
+        cycle.map do |resource|
+          resource.name
         end
       end
     end
@@ -325,6 +325,11 @@ describe Puppet::SimpleGraph do
       cycles = nil
       expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
       simplify(cycles).should be == [["a", "b"]]
+    end
+
+    it "cycle discovery handles a self-loop cycle" do
+      add_edges :a => :a
+      simplify(@graph.find_cycles_in_graph).should be == [["a"]]
     end
 
     it "cycle discovery should handle two distinct cycles" do
@@ -431,10 +436,6 @@ describe Puppet::SimpleGraph do
       @graph.expects(:to_dot).with("name" => @name.to_s.capitalize)
       Puppet[:graph] = true
       @graph.write_graph(@name)
-    end
-
-    after do
-      Puppet.settings.clear
     end
   end
 
