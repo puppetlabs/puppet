@@ -38,7 +38,7 @@ module Puppet::Indirector
     # populate this class with the various new methods
     extend ClassMethods
     include Puppet::Indirector::Envelope
-    extend Puppet::Network::FormatHandler
+    include Puppet::Network::FormatSupport
 
     # record the indirected class name for documentation purposes
     options[:indirected_class] = name

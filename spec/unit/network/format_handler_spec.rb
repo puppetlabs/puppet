@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/network/format_handler'
 
 class FormatTester
-  extend Puppet::Network::FormatHandler
+  include Puppet::Network::FormatSupport
 end
 
 describe Puppet::Network::FormatHandler do

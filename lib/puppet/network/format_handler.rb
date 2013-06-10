@@ -20,12 +20,6 @@ module Puppet::Network::FormatHandler
     }
   end
 
-  def self.extended(klass)
-    klass.extend(ClassMethods)
-
-    klass.send(:include, InstanceMethods)
-  end
-
   def self.format(name)
     @formats[name.to_s.downcase.intern]
   end
@@ -69,28 +63,31 @@ module Puppet::Network::FormatHandler
     raise ArgumentError, "No format match the given format name or mime-type (#{format})" if out.nil?
     out.name
   end
+end
+
+# Include this into serializable classes
+module Puppet::Network::FormatSupport
+  def self.included(klass)
+    klass.extend(ClassMethods)
+  end
 
   module ClassMethods
-    def format_handler
-      Puppet::Network::FormatHandler
-    end
-
     def convert_from(format, data)
-      format_handler.format_for(format).intern(self, data)
+      get_format(format).intern(self, data)
     rescue => err
-      raise FormatError, "Could not intern from #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, "Could not intern from #{format}: #{err}", err.backtrace
     end
 
     def convert_from_multiple(format, data)
-      format_handler.format_for(format).intern_multiple(self, data)
+      get_format(format).intern_multiple(self, data)
     rescue => err
-      raise FormatError, "Could not intern_multiple from #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, "Could not intern_multiple from #{format}: #{err}", err.backtrace
     end
 
     def render_multiple(format, instances)
-      format_handler.format_for(format).render_multiple(instances)
+      get_format(format).render_multiple(instances)
     rescue => err
-      raise FormatError, "Could not render_multiple to #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, "Could not render_multiple to #{format}: #{err}", err.backtrace
     end
 
     def default_format
@@ -114,7 +111,16 @@ module Puppet::Network::FormatHandler
       result
     end
 
+    # @api private
+    def get_format(format_name)
+      format_handler.format_for(format_name)
+    end
+
     private
+
+    def format_handler
+      Puppet::Network::FormatHandler
+    end
 
     def friendly_name
       if self.respond_to? :indirection
@@ -136,26 +142,24 @@ module Puppet::Network::FormatHandler
     end
   end
 
-  module InstanceMethods
-    def render(format = nil)
-      format ||= self.class.default_format
+  def render(format = nil)
+    format ||= self.class.default_format
 
-      Puppet::Network::FormatHandler.format_for(format).render(self)
-    rescue => err
-      raise FormatError, "Could not render to #{format}: #{err}", err.backtrace
-    end
+    self.class.get_format(format).render(self)
+  rescue => err
+    raise Puppet::Network::FormatHandler::FormatError, "Could not render to #{format}: #{err}", err.backtrace
+  end
 
-    def mime(format = nil)
-      format ||= self.class.default_format
+  def mime(format = nil)
+    format ||= self.class.default_format
 
-      Puppet::Network::FormatHandler.format_for(format).mime
-    rescue => err
-      raise FormatError, "Could not mime to #{format}: #{err}", err.backtrace
-    end
+    self.class.get_format(format).mime
+  rescue => err
+    raise Puppet::Network::FormatHandler::FormatError, "Could not mime to #{format}: #{err}", err.backtrace
+  end
 
-    def support_format?(name)
-      self.class.support_format?(name)
-    end
+  def support_format?(name)
+    self.class.support_format?(name)
   end
 end
 
