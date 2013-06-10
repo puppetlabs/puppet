@@ -96,13 +96,23 @@ describe 'agent logging' do
       app.setup
     end
 
-    it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
-      expected[:loggers].each do |logclass|
-        Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
-      end
-      mock_command_line_agent(argv)
+    if Puppet.features.microsoft_windows? && argv.include?(DAEMONIZE)
 
-      Puppet::Util::Log.level.should == expected[:level]
+      it "should raise a runtime error on a platform which cannot daemonize if the --daemonize flag is set" do
+        expect { mock_command_line_agent(argv) }.to raise_error(RuntimeError, /Cannot daemonize/)
+      end
+
+    else
+
+      it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
+        expected[:loggers].each do |logclass|
+          Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
+        end
+        mock_command_line_agent(argv)
+  
+        Puppet::Util::Log.level.should == expected[:level]
+      end
+
     end
   end
 
