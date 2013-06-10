@@ -3,6 +3,7 @@ require 'spec_helper'
 
 require 'puppet'
 require 'puppet/daemon'
+require 'puppet/application/agent'
 
 # The command line flags affecting #20900 and #20919:
 #
@@ -35,6 +36,8 @@ require 'puppet/daemon'
 # so adapting to a change in logging behavior should hopefully be mostly a matter of
 # adjusting the logic in those methods to define new behavior.
 #
+# Note that this test does not having to say about what happens to logging after
+# daemonizing.
 describe 'agent logging' do
   ONETIME  = '--onetime'
   DAEMONIZE  = '--daemonize'
@@ -65,16 +68,8 @@ describe 'agent logging' do
 
   shared_examples "an agent" do |argv, expected|
     before(:each) do
-      # Stub out host cert calling
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
-
-      # Stub out daemon so we don't daemonize
-      @daemon = stub_everything 'daemon'
-      # Object#daemonize in monkey_patches needs to be explicitly stubbed since
-      # Mocha's mocks are still Objects...
-      @daemon.stubs(:daemonize)
-      Puppet::Daemon.stubs(:new).returns(@daemon)
+      # Don't actually run the agent, bypassing cert checks, forking and the pupet run itself
+      Puppet::Application::Agent.any_instance.stubs(:run_command)
 
       # This logger is created by the Puppet::Settings object which creates and
       # applies a catalog to ensure that configuration files and users are in
@@ -85,21 +80,16 @@ describe 'agent logging' do
       Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).once
     end
 
-    def mock_command_line_agent(argv)
+    def double_of_bin_puppet_agent_call(argv)
+      argv.unshift('agent')
       command_line = Puppet::Util::CommandLine.new('puppet', argv)
-
-      Puppet.initialize_settings(command_line.args)
-
-      app = Puppet::Application.find('agent').new(command_line)
-      app.preinit
-      app.parse_options
-      app.setup
+      command_line.execute
     end
 
     if Puppet.features.microsoft_windows? && argv.include?(DAEMONIZE)
 
       it "should raise a runtime error on a platform which cannot daemonize if the --daemonize flag is set" do
-        expect { mock_command_line_agent(argv) }.to raise_error(RuntimeError, /Cannot daemonize/)
+        expect { double_of_bin_puppet_agent_call(argv) }.to raise_error(RuntimeError, /Cannot daemonize/)
       end
 
     else
@@ -108,7 +98,7 @@ describe 'agent logging' do
         expected[:loggers].each do |logclass|
           Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
         end
-        mock_command_line_agent(argv)
+        double_of_bin_puppet_agent_call(argv)
   
         Puppet::Util::Log.level.should == expected[:level]
       end
