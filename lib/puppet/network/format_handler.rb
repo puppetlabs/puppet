@@ -46,8 +46,6 @@ module Puppet::Network::FormatHandler
   def self.extended(klass)
     klass.extend(ClassMethods)
 
-    # LAK:NOTE This won't work in 1.9 ('send' won't be able to send
-    # private methods, but I don't know how else to do it.
     klass.send(:include, InstanceMethods)
   end
 
