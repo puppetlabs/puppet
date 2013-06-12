@@ -29,7 +29,8 @@ module Puppet::Parser
     def self.eparser(environment)
       # Since RGen is optional, test that it is installed
       @@asserted ||= false
-      assert_rgen_installed() unless @asserted
+      assert_rgen_installed() unless @@asserted
+      @@asserted = true
       require 'puppet/parser'
       require 'puppet/parser/e_parser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
