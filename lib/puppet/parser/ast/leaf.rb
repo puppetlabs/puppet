@@ -131,7 +131,13 @@ class Puppet::Parser::AST
 
     def evaluate_container(scope)
       container = variable.respond_to?(:evaluate) ? variable.safeevaluate(scope) : variable
-      (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope[container, {:file => file, :line => line}]
+      if container.is_a?(Hash) || container.is_a?(Array)
+        container
+      elsif container.is_a?(::String)
+        scope[container, {:file => file, :line => line}]
+      else
+        raise Puppet::ParseError, "#{variable} is #{container.inspect}, not a hash or array"
+      end
     end
 
     def evaluate_key(scope)

@@ -267,7 +267,7 @@ class Puppet::Parser::Scope
   # @api public
   def lookupvar(name, options = {})
     unless name.is_a? String
-      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+      raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
     end
 
     table = @ephemeral.last
@@ -441,7 +441,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") unless options[:ephemeral]
     end
     unless name.is_a? String
-      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+      raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
     end
 
     table = effective_symtable options[:ephemeral]
