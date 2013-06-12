@@ -36,7 +36,7 @@ require 'puppet/application/agent'
 # so adapting to a change in logging behavior should hopefully be mostly a matter of
 # adjusting the logic in those methods to define new behavior.
 #
-# Note that this test does not having to say about what happens to logging after
+# Note that this test does not have anything to say about what happens to logging after
 # daemonizing.
 describe 'agent logging' do
   ONETIME  = '--onetime'
@@ -69,7 +69,7 @@ describe 'agent logging' do
 
   shared_examples "an agent" do |argv, expected|
     before(:each) do
-      # Don't actually run the agent, bypassing cert checks, forking and the pupet run itself
+      # Don't actually run the agent, bypassing cert checks, forking and the puppet run itself
       Puppet::Application::Agent.any_instance.stubs(:run_command)
     end
 
@@ -99,7 +99,7 @@ describe 'agent logging' do
           Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
         end
         double_of_bin_puppet_agent_call(argv)
-  
+
         Puppet::Util::Log.level.should == expected[:level]
       end
 
