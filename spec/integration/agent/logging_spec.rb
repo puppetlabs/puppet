@@ -3,6 +3,7 @@ require 'spec_helper'
 
 require 'puppet'
 require 'puppet/daemon'
+require 'puppet/application/agent'
 
 # The command line flags affecting #20900 and #20919:
 #
@@ -35,6 +36,8 @@ require 'puppet/daemon'
 # so adapting to a change in logging behavior should hopefully be mostly a matter of
 # adjusting the logic in those methods to define new behavior.
 #
+# Note that this test does not have anything to say about what happens to logging after
+# daemonizing.
 describe 'agent logging' do
   ONETIME  = '--onetime'
   DAEMONIZE  = '--daemonize'
@@ -50,6 +53,7 @@ describe 'agent logging' do
   DEBUG_LEVEL       = :debug
   CONSOLE           = :console
   SYSLOG            = :syslog
+  EVENTLOG          = :eventlog
   FILE              = :file
 
   ONETIME_DAEMONIZE_ARGS = [
@@ -65,44 +69,40 @@ describe 'agent logging' do
 
   shared_examples "an agent" do |argv, expected|
     before(:each) do
-      # Stub out host cert calling
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
-
-      # Stub out daemon so we don't daemonize
-      @daemon = stub_everything 'daemon'
-      # Object#daemonize in monkey_patches needs to be explicitly stubbed since
-      # Mocha's mocks are still Objects...
-      @daemon.stubs(:daemonize)
-      Puppet::Daemon.stubs(:new).returns(@daemon)
-
-      # This logger is created by the Puppet::Settings object which creates and
-      # applies a catalog to ensure that configuration files and users are in
-      # place.
-      #
-      # It's not something we are specifically testing here since it occurs
-      # regardless of user flags.
-      Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).once
+      # Don't actually run the agent, bypassing cert checks, forking and the puppet run itself
+      Puppet::Application::Agent.any_instance.stubs(:run_command)
     end
 
-    def mock_command_line_agent(argv)
+    def double_of_bin_puppet_agent_call(argv)
+      argv.unshift('agent')
       command_line = Puppet::Util::CommandLine.new('puppet', argv)
-
-      Puppet.initialize_settings(command_line.args)
-
-      app = Puppet::Application.find('agent').new(command_line)
-      app.preinit
-      app.parse_options
-      app.setup
+      command_line.execute
     end
 
-    it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
-      expected[:loggers].each do |logclass|
-        Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
-      end
-      mock_command_line_agent(argv)
+    if Puppet.features.microsoft_windows? && argv.include?(DAEMONIZE)
 
-      Puppet::Util::Log.level.should == expected[:level]
+      it "should exit on a platform which cannot daemonize if the --daemonize flag is set" do
+        expect { double_of_bin_puppet_agent_call(argv) }.to raise_error(SystemExit)
+      end
+
+    else
+
+      it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
+        # This logger is created by the Puppet::Settings object which creates and
+        # applies a catalog to ensure that configuration files and users are in
+        # place.
+        #
+        # It's not something we are specifically testing here since it occurs
+        # regardless of user flags.
+        Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).once
+        expected[:loggers].each do |logclass|
+          Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
+        end
+        double_of_bin_puppet_agent_call(argv)
+
+        Puppet::Util::Log.level.should == expected[:level]
+      end
+
     end
   end
 
@@ -124,9 +124,20 @@ describe 'agent logging' do
     loggers = Set.new
     loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
     loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
-    loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
     loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
-    loggers << SYSLOG if no_log_dest_set_in(argv)
+    if Puppet.features.microsoft_windows?
+      # an explicit call to --logdest syslog on windows is swallowed silently with no
+      # logger created (see #suitable() of the syslog Puppet::Util::Log::Destination subclass)
+      # however Puppet::Util::Log.newdestination('syslog') does get called...so we have
+      # to set an expectation
+      loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
+
+      loggers << EVENTLOG if no_log_dest_set_in(argv)
+    else
+      # posix
+      loggers << 'syslog' if log_dest_is_set_to(argv, LOGDEST_SYSLOG)
+      loggers << SYSLOG if no_log_dest_set_in(argv)
+    end
     return loggers
   end
 
