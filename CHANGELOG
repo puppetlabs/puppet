@@ -1,3 +1,17 @@
+2.7.22
+===
+ba8c021 [packaging] Update mocks for rpmbuilder mock format
+7f40007 (packaging) Update debian build-depends to be ruby1.8 so that the shebang is correct after install and ruby1.9.1 isn't used on newer debians.
+96be982 (packaging) Update build_defaults to remove EOL platforms (natty, f15, f16).
+fea3cb6 Improve CVE 2013 1654 SSLv2 Downgrade Master test
+fd758ad Remove acceptance test for yaml parsing that was no longer valid
+5926d1a (#20584) Only deserialize expected objects from YAML
+e8c30cb Vendor safe_yaml 0.9.2
+ee741eb Fix installation of vendored libs
+2333fa4 Add vendoring system into puppet
+535da9b Add acceptance test for report processing
+788fdaf Don't keep Gemfile.lock checked in.
+
 2.7.21
 ===
 570e4d2 Update CHANGELOG, PUPPETVERSION for 2.7.21
