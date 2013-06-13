@@ -118,6 +118,10 @@ module Puppet
         device is supporting by the mount, including network
         devices or devices specified by UUID rather than device
         path, depending on the operating system."
+
+      validate do |value|
+        raise Puppet::Error, "device must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     # Solaris specifies two devices, not just one.
@@ -128,10 +132,11 @@ module Puppet
 
       # Default to the device but with "dsk" replaced with "rdsk".
       defaultto do
-        if Facter["osfamily"].value == "Solaris"
-          device = @resource.value(:device)
-          if device =~ %r{/dsk/}
+        if Facter.value(:osfamily) == "Solaris"
+          if device = resource[:device] and device =~ %r{/dsk/}
             device.sub(%r{/dsk/}, "/rdsk/")
+          elsif fstype = resource[:fstype] and fstype == 'nfs'
+            '-'
           else
             nil
           end
@@ -139,36 +144,56 @@ module Puppet
           nil
         end
       end
+
+      validate do |value|
+        raise Puppet::Error, "blockdevice must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:fstype) do
       desc "The mount type.  Valid values depend on the
         operating system.  This is a required option."
+
+      validate do |value|
+        raise Puppet::Error, "fstype must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:options) do
       desc "Mount options for the mounts, as they would
         appear in the fstab."
+
+      validate do |value|
+        raise Puppet::Error, "option must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:pass) do
       desc "The pass in which the mount is checked."
 
       defaultto {
-        0 if @resource.managed?
+        if @resource.managed?
+          if Facter.value(:osfamily) == 'Solaris'
+            '-'
+          else
+            0
+          end
+        end
       }
     end
 
     newproperty(:atboot) do
       desc "Whether to mount the mount at boot.  Not all platforms
         support this."
+
+      newvalues :yes, :no
     end
 
     newproperty(:dump) do
       desc "Whether to dump the mount.  Not all platform support this.
         Valid values are `1` or `0`. or `2` on FreeBSD, Default is `0`."
 
-      if Facter["operatingsystem"].value == "FreeBSD"
+      if Facter.value(:operatingsystem) == "FreeBSD"
         newvalue(%r{(0|1|2)})
       else
         newvalue(%r{(0|1)})
@@ -197,6 +222,14 @@ module Puppet
       desc "The mount path for the mount."
 
       isnamevar
+
+      validate do |value|
+        raise Puppet::Error, "name must not contain whitespace: #{value}" if value =~ /\s/
+      end
+
+      munge do |value|
+        value.gsub(/^(.+?)\/*$/, '\1')
+      end
     end
 
     newparam(:remounts) do
