@@ -313,10 +313,10 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should copy the resource's parameters as its own" do
-        resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:atboot => true, :fstype => "boo"})
+        resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:atboot => :yes, :fstype => "boo"})
         params = Puppet::Type.type(:mount).new(resource).to_hash
         params[:fstype].should == "boo"
-        params[:atboot].should == true
+        params[:atboot].should == :yes
       end
     end
 
@@ -349,9 +349,9 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should use any remaining hash keys as its parameters" do
-        resource = Puppet::Type.type(:mount).new(:title => "/foo", :catalog => "foo", :atboot => true, :fstype => "boo")
+        resource = Puppet::Type.type(:mount).new(:title => "/foo", :catalog => "foo", :atboot => :yes, :fstype => "boo")
         resource[:fstype].must == "boo"
-        resource[:atboot].must == true
+        resource[:atboot].must == :yes
       end
     end
 
@@ -382,12 +382,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should fail if no title, name, or namevar are provided" do
-      expect { Puppet::Type.type(:file).new(:atboot => true) }.to raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:mount).new(:atboot => :yes) }.to raise_error(Puppet::Error)
     end
 
     it "should set the attributes in the order returned by the class's :allattrs method" do
       Puppet::Type.type(:mount).stubs(:allattrs).returns([:name, :atboot, :noop])
-      resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot", :noop => "whatever"})
+      resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => :yes, :noop => "whatever"})
 
       set = []
 
@@ -404,7 +404,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should always set the name and then default provider before anything else" do
       Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
-      resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot"})
+      resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => :yes})
 
       set = []
 
@@ -429,7 +429,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should retain a copy of the originally provided parameters" do
-      Puppet::Type.type(:mount).new(:name => "foo", :atboot => true, :noop => false).original_parameters.should == {:atboot => true, :noop => false}
+      Puppet::Type.type(:mount).new(:name => "foo", :atboot => :yes, :noop => false).original_parameters.should == {:atboot => :yes, :noop => false}
     end
 
     it "should delete the name via the namevar from the originally provided parameters" do
@@ -535,9 +535,9 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should set the name of the returned resource if its own name and title differ" do
-      @resource[:name] = "my name"
+      @resource[:name] = "myname"
       @resource.title = "other name"
-      @resource.retrieve_resource[:name].should == "my name"
+      @resource.retrieve_resource[:name].should == "myname"
     end
 
     it "should provide a value for all set properties" do
