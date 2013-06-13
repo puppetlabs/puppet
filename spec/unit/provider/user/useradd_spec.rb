@@ -399,4 +399,18 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.passcmd.must == ['/usr/bin/chage','-m',123,'-M',999,'myuser']
     end
   end
+
+  describe "shell verification" do
+    it "should raise an error if shell does not exist" do
+      resource[:shell] = 'a/bin/bash'
+      lambda { provider.check_valid_shell }.should raise_error(Puppet::Error, /Shell a\/bin\/bash must exist/)
+    end
+
+    it "should raise an error if the shell is not executable" do
+      resource[:shell] = 'LICENSE'
+      lambda { provider.check_valid_shell }.should raise_error(Puppet::Error, /Shell LICENSE must be executable/)
+    end
+
+  end
+
 end
