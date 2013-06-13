@@ -67,9 +67,21 @@ class Puppet::Parser::Compiler
     # manifest.
     return if resource.stage?
 
+    resource_stage = resource[:stage] || (scope.resource && scope.resource[:stage]) || :main
+    scope_stage = (scope.resource && scope.resource[:stage]) || :main
+
     # This adds a resource to the class it lexically appears in in the
-    # manifest.
-    unless resource.class?
+    # manifest.  If the resource is a top-level class, or the class belongs
+    # to a different stage than its surrounding class, then add it to a
+    # stage.
+    if not scope.resource or (scope.resource && scope.resource.path == 'Class[main]') or resource_stage != scope_stage
+      unless stage = catalog.resource(:stage, resource_stage)
+        raise ArgumentError, "Could not find stage #{resource_stage} specified by #{resource}"
+      end
+
+      resource[:stage] ||= stage.title unless stage.title == :main
+      return @catalog.add_edge(stage, resource)
+    else
       return @catalog.add_edge(scope.resource, resource)
     end
   end

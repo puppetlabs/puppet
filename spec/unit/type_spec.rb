@@ -135,7 +135,29 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     Puppet::Type.type(:mount).new(:name => "foo", :noop => true).must be_noop
   end
 
-  it "should use the global noop value if none is provided" do
+  it "should inherit the noop value if none is provided" do
+    Puppet[:noop] = false
+    catalog = Puppet::Resource::Catalog.new
+    container = Puppet::Type.type(:component).new(:name => "container", :noop => true)
+    foo = Puppet::Type.type(:mount).new(:name => "foo")
+    catalog.add_resource container
+    catalog.add_resource foo
+    catalog.add_edge container, foo
+    foo.must be_noop
+  end
+
+  it "should override the noop value from the parent" do
+    Puppet[:noop] = false
+    catalog = Puppet::Resource::Catalog.new
+    container = Puppet::Type.type(:component).new(:name => "container", :noop => true)
+    foo = Puppet::Type.type(:mount).new(:name => "foo", :noop => false)
+    catalog.add_resource container
+    catalog.add_resource foo
+    catalog.add_edge container, foo
+    foo.must_not be_noop
+  end
+
+  it "should use the global noop value if none is provided it has no parent" do
     Puppet[:noop] = true
     Puppet::Type.type(:mount).new(:name => "foo").must be_noop
   end

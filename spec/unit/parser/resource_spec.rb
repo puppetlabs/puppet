@@ -181,7 +181,7 @@ describe Puppet::Parser::Resource do
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'other'
 
-      lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
+      lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError, /Could not find stage other specified by/)
     end
 
     it "should add edges from the class resources to the parent's stage if no stage is specified" do
@@ -218,8 +218,8 @@ describe Puppet::Parser::Resource do
       edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
 
       edges.should include(["Stage[before]", "Class[Alpha]"])
-      edges.should include(["Stage[before]", "Class[Beta]"])
-      edges.should include(["Stage[before]", "Class[Gamma]"])
+      edges.should include(["Class[Alpha]", "Class[Beta]"])
+      edges.should include(["Class[Beta]", "Class[Gamma]"])
     end
 
     it "should use the specified stage even if the parent scope specifies one" do

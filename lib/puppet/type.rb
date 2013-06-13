@@ -1077,6 +1077,8 @@ class Type
 
     if defined?(@noop)
       @noop
+    elsif parent
+      parent.noop?
     else
       Puppet[:noop]
     end
