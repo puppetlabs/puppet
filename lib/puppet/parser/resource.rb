@@ -58,6 +58,25 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def_delegator :scope, :environment
 
+  # Process the  stage metaparameter for a class.   A containment edge
+  # is drawn from  the class to the stage.   The stage for containment
+  # defaults to main, if none is specified.
+  def add_edge_to_stage
+    return unless self.class?
+
+    resource_stage = self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main
+    scope_stage = (scope && scope.resource && scope.resource[:stage]) || :main
+
+    if not scope.resource or (scope.resource && scope.resource.path == 'Class[main]') or resource_stage != scope_stage
+      unless stage = catalog.resource(:stage, resource_stage)
+        raise ArgumentError, "Could not find stage #{resource_stage} specified by #{self}"
+      end
+
+      self[:stage] ||= stage.title unless stage.title == :main
+      catalog.add_edge(stage, self)
+    end
+  end 
+
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
