@@ -16,6 +16,7 @@ module Puppet::Network::HTTP::Handler
 
   attr_reader :server, :handler
 
+  YAML_DEPRECATION = "YAML in network requests is deprecated and will be removed in a future version"
 
   # Retrieve all headers from the http request, as a hash with the header names
   # (lower-cased) as the keys
@@ -187,6 +188,9 @@ module Puppet::Network::HTTP::Handler
     raise ArgumentError, "No data to save" if !data or data.empty?
 
     format = request_format(request)
+    if format == 'yaml'
+      Puppet.deprecation_warning(YAML_DEPRECATION)
+    end
     obj = model(indirection_name).convert_from(format, data)
     result = model(indirection_name).indirection.save(obj, key)
     return_yaml_response(response, result)
@@ -206,6 +210,7 @@ module Puppet::Network::HTTP::Handler
   private
 
   def return_yaml_response(response, body)
+    Puppet.deprecation_warning(YAML_DEPRECATION)
     set_content_type(response, Puppet::Network::FormatHandler.format("yaml"))
     set_response(response, body.to_yaml)
   end
@@ -265,6 +270,7 @@ module Puppet::Network::HTTP::Handler
       next result if param == :ip
       value = CGI.unescape(value)
       if value =~ /^---/
+        Puppet.deprecation_warning(YAML_DEPRECATION)
         value = YAML.load(value, :safe => true, :deserialize_symbols => true)
       else
         value = true if value == "true"
