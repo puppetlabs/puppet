@@ -409,12 +409,13 @@ end
 # Change directory into the puppet root so we don't get the wrong files for install.
 FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
-  configs = glob(%w{conf/auth.conf})
-  bins  = glob(%w{bin/*})
-  rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
-  ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
-  man   = glob(%w{man/man[0-9]/*})
-  libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
+  configs     = glob(%w{conf/auth.conf})
+  lib_configs = glob(%w{lib/**/*.conf})
+  bins        = glob(%w{bin/*})
+  rdoc        = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
+  ri          = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
+  man         = glob(%w{man/man[0-9]/*})
+  libs        = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 
   check_prereqs
   prepare_installation
@@ -424,5 +425,6 @@ FileUtils.cd File.dirname(__FILE__) do
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
   do_libs(libs)
+  do_libs(lib_configs)
   do_man(man) unless $operatingsystem == "windows"
 end
