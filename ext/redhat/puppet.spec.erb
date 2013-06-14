@@ -94,7 +94,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q -n %{name}-%{realversion}
-patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build
