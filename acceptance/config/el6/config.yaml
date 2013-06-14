@@ -1,0 +1,18 @@
+HOSTS:
+  'dhcp70.platform.backline.puppetlabs.net':
+    roles:
+      - master
+      - agent
+    platform: el-6-i386
+    hypervisor: vsphere
+    vmname: platform.dhcp70
+    snapshot: foss
+  'dhcp71.platform.backline.puppetlabs.net':
+    roles:
+      - agent
+    platform: el-6-i386
+    hypervisor: vsphere
+    vmname: platform.dhcp71
+    snapshot: foss
+CONFIG:
+  filecount: 12
