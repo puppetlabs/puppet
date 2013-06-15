@@ -96,9 +96,11 @@ module Puppet::ModuleTool
         def target
           target = @generator.destination + @source.relative_path_from(@generator.skeleton.path)
 
-          # Pick up the settings
+          # Get the settings of the config file from the 'module_tool_config' file.
+          # These variables can be accessed in the skeleton like:
+          # <%= settings['key'] %>
           settings = @generator.skeleton.generate_settings
-          @generator.settings.merge! settings
+          @generator.settings.merge! settings unless settings.nil?
 
           components = target.to_s.split(File::SEPARATOR).map do |part|
             part == 'NAME' ? @generator.metadata.name : part

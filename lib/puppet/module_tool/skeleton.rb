@@ -31,18 +31,19 @@ module Puppet::ModuleTool
       Pathname(__FILE__).dirname + 'skeleton/templates/generator'
     end
 
-    # Return settings from ~/.puppet-template/config
+    # Return settings for the module tool generate
+    # These key=value pairs can be used in the skeleton files to fill in extra data
     def generate_settings
-      file = ENV['HOME'] + '/.puppet-module-tool/config'
+      file = Puppet.settings[:module_tool_config]
       if File.exist?(file)
         text = File.read(file)
         Hash[text.scan(/^\s*(\w+)\s*=\s*(.*?)\s*$/)]
       end
     end
 
-    # Return path name of custom skeleton based on the homedir of the user
+    # Return path name of custom skeleton path
     def home_path
-      Pathname(ENV['HOME'] + '/.puppet-module-tool/skeleton')
+      Pathname(Puppet.settings[:module_tool_skeleton])
     end
 
   end
