@@ -10,6 +10,7 @@ describe Puppet::Application::Apply do
   before :each do
     @apply = Puppet::Application[:apply]
     Puppet::Util::Log.stubs(:newdestination)
+    Puppet[:reports] = "none"
   end
 
   after :each do
