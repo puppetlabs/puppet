@@ -386,6 +386,7 @@ describe Puppet::Configurer do
       Puppet[:lastrunfile] = tmpfile('last_run_file')
 
       @report = Puppet::Transaction::Report.new("apply")
+      Puppet[:reports] = "none"
     end
 
     it "should print a report summary if configured to do so" do

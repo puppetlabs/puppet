@@ -6,6 +6,10 @@ require 'puppet/application/apply'
 describe "apply" do
   include PuppetSpec::Files
 
+  before :each do
+    Puppet[:reports] = "none"
+  end
+
   describe "when applying provided catalogs" do
     it "should be able to apply catalogs provided in a file in pson" do
       file_to_create = tmpfile("pson_catalog")
