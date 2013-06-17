@@ -4,7 +4,6 @@
 require 'puppet'
 
 module Puppet
-  class NoSuchFile < Puppet::Error; end
   class Util::WatchedFile
     attr_reader :filename, :statted
 
