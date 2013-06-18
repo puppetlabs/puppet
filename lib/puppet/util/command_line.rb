@@ -13,6 +13,7 @@ require 'puppet'
 require 'puppet/util'
 require "puppet/util/plugins"
 require "puppet/util/rubygems"
+require "puppet/util/limits"
 
 module Puppet
   module Util
@@ -20,6 +21,8 @@ module Puppet
     # is basically where the bootstrapping process / lifecycle of an app
     # begins.
     class CommandLine
+      include Puppet::Util::Limits
+
       OPTION_OR_MANIFEST_FILE = /^-|\.pp$|\.rb$/
 
       # @param zero [String] the name of the executable
@@ -82,6 +85,8 @@ module Puppet
         Puppet::Util.exit_on_fail("intialize global default settings") do
           Puppet.initialize_settings(args)
         end
+
+        setpriority(Puppet[:priority])
 
         find_subcommand.run
       end

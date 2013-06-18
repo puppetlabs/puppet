@@ -143,5 +143,46 @@ describe Puppet::Util::CommandLine do
         Puppet::Util::CommandLine.available_subcommands
       end
     end
+
+    describe 'when setting process priority' do
+      let(:command_line) do
+        Puppet::Util::CommandLine.new("puppet", %w{ agent })
+      end
+
+      before :each do
+        Puppet::Util::CommandLine::ApplicationSubcommand.any_instance.stubs(:run)
+      end
+
+      it 'should never set priority by default' do
+        Process.expects(:setpriority).never
+
+        command_line.execute
+      end
+
+      it 'should lower the process priority if one has been specified' do
+        Puppet[:priority] = 10
+
+        Process.expects(:setpriority).with(0, Process.pid, 10)
+        command_line.execute
+      end
+
+      it 'should warn if trying to raise priority, but not privileged user' do
+        Puppet[:priority] = -10
+
+        Process.expects(:setpriority).raises(Errno::EACCES, 'Permission denied')
+        Puppet.expects(:warning).with("Failed to set process priority to '-10'")
+
+        command_line.execute
+      end
+
+      it "should warn if the platform doesn't support `Process.setpriority`" do
+        Puppet[:priority] = 15
+
+        Process.expects(:setpriority).raises(NotImplementedError, 'NotImplementedError: setpriority() function is unimplemented on this machine')
+        Puppet.expects(:warning).with("Failed to set process priority to '15'")
+
+        command_line.execute
+      end
+    end
   end
 end

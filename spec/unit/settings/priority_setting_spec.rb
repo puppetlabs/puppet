@@ -6,7 +6,7 @@ require 'puppet/settings/priority_setting'
 require 'puppet/util/platform'
 
 describe Puppet::Settings::PrioritySetting do
-  setting { described_class.new(:settings => mock('settings'), :desc => "test") }
+  let(:setting) { described_class.new(:settings => mock('settings'), :desc => "test") }
 
   it "is of type :priority" do
     setting.type.should == :priority
