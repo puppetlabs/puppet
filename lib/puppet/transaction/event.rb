@@ -18,10 +18,29 @@ class Puppet::Transaction::Event
 
   EVENT_STATUSES = %w{noop success failure audit}
 
+  def self.from_pson(data)
+    obj = self.allocate
+    obj.initialize_from_hash(data)
+    obj
+  end
+
   def initialize(options = {})
     @audited = false
     set_options(options)
     @time = Time.now
+  end
+
+  def initialize_from_hash(data)
+    @audited = data['audited']
+    @property = data['property']
+    @previous_value = data['previous_value']
+    @desired_value = data['desired_value']
+    @historical_value = data['historical_value']
+    @message = data['message']
+    @name = data['name'].intern
+    @status = data['status']
+    @time = data['time']
+    @time = Time.parse(@time) if @time.is_a? String
   end
 
   def property=(prop)

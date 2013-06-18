@@ -14,8 +14,6 @@ doc
 .bundle/
 ext/packaging/
 pkg/
-vendor/
 Gemfile.lock
-vendor/
 .bundle/
 puppet-acceptance/

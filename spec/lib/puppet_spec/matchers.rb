@@ -95,3 +95,11 @@ end
 def have_printed(what)
   HavePrintedMatcher.new(what)
 end
+
+RSpec::Matchers.define :equal_attributes_of do |expected|
+  match do |actual|
+    actual.instance_variables.all? do |attr|
+      actual.instance_variable_get(attr) == expected.instance_variable_get(attr)
+    end
+  end
+end

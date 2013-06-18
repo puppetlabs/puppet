@@ -37,6 +37,26 @@ class Puppet::Node::Facts
     add_timestamp
   end
 
+  def initialize_from_hash(data)
+    @name = data['name']
+    @values = data['values']
+    # Timestamp will be here in YAML
+    timestamp = data['values']['_timestamp']
+    @values.delete_if do |key, val|
+      key =~ /^_/
+    end
+
+    #Timestamp will be here in pson
+    timestamp ||= data['timestamp']
+    timestamp = Time.parse(timestamp) if timestamp.is_a? String
+    self.timestamp = timestamp
+
+    self.expiration = data['expiration']
+    if expiration.is_a? String
+      self.expiration = Time.parse(expiration)
+    end
+  end
+
   # Convert all fact values into strings.
   def stringify
     values.each do |fact, value|
@@ -58,10 +78,9 @@ class Puppet::Node::Facts
   end
 
   def self.from_pson(data)
-    result = new(data['name'], data['values'])
-    result.timestamp = Time.parse(data['timestamp']) if data['timestamp']
-    result.expiration = Time.parse(data['expiration']) if data['expiration']
-    result
+    new_facts = allocate
+    new_facts.initialize_from_hash(data)
+    new_facts
   end
 
   def to_pson(*args)
