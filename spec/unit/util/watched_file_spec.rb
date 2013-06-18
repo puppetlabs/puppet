@@ -1,71 +1,81 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'tempfile'
 require 'puppet/util/watched_file'
 
 describe Puppet::Util::WatchedFile do
-  include PuppetSpec::Files
-  before(:each) do
-    @f = Tempfile.new('loadedfile_test')
-    @f.puts "yayness"
-    @f.flush
 
-    @loaded = Puppet::Util::WatchedFile.new(@f.path)
-
-    fake_ctime = Time.now - (2 * Puppet[:filetimeout])
-    @stat = stub('stat', :ctime => fake_ctime)
-    @fake_now = Time.now + (2 * Puppet[:filetimeout])
+  class WatchedFile_MockTimer
+    def initialize; @expired = false; end
+    def start(_); end
+    def expired=(exp); @expired = exp; end
+    def expired?; @expired; end
   end
 
-  it "should accept files that don't exist" do
-    nofile = tmpfile('testfile')
-    File.exists?(nofile).should == false
-    lambda{ Puppet::Util::WatchedFile.new(nofile) }.should_not raise_error
+  let(:mock_time) { Time.at(2005).to_i }
+
+  let(:timer) { WatchedFile_MockTimer.new }
+
+  subject { described_class.new('/some/file', 15, timer) }
+
+  describe 'with an initially non-existent file' do
+
+    before { subject.ctime = :absent }
+
+    it "isn't marked as changed if the file continues to not exist" do
+      subject.stubs(:file_ctime).returns(:absent)
+      timer.expired = true
+      subject.should_not be_changed
+    end
+
+    it "is marked as changed if the file is created" do
+      subject.stubs(:file_ctime).returns mock_time
+      timer.expired = true
+      subject.should be_changed
+    end
   end
 
-  it "should recognize when the file has not changed" do
-    # Use fake "now" so that we can be sure changed? actually checks, without sleeping
-    # for Puppet[:filetimeout] seconds.
-    Time.stubs(:now).returns(@fake_now)
-    @loaded.changed?.should == false
+  describe 'with an initially present file' do
+    before { subject.ctime = mock_time }
+
+    describe "and the file didn't change" do
+      before { subject.stubs(:file_ctime).returns mock_time }
+
+      it "should not be changed" do
+        timer.expired = true
+        subject.should_not be_changed
+      end
+    end
+
+    describe "and the file was changed" do
+      before { subject.stubs(:file_ctime).returns mock_time + 60 }
+
+      it "doesn't mark a file as changed until the file timeout expires" do
+        timer.expired = false
+        subject.should_not be_changed
+      end
+
+      it "marks the file as changed after the file timeout expires" do
+        timer.expired = true
+        subject.should be_changed
+      end
+    end
+
+    describe 'and the file was removed' do
+      before { subject.stubs(:file_ctime).returns :absent }
+      it "marks the file as changed" do
+        timer.expired = true
+        subject.should be_changed
+      end
+    end
   end
 
-  it "should recognize when the file has changed" do
-    # Fake File.stat so we don't have to depend on the filesystem granularity. Doing a flush()
-    # just didn't do the job.
-    File.stubs(:stat).returns(@stat)
-    # Use fake "now" so that we can be sure changed? actually checks, without sleeping
-    # for Puppet[:filetimeout] seconds.
-    Time.stubs(:now).returns(@fake_now)
-    @loaded.changed?.should == true
-  end
-
-  it "should not catch a change until the timeout has elapsed" do
-    # Fake File.stat so we don't have to depend on the filesystem granularity. Doing a flush()
-    # just didn't do the job.
-    File.stubs(:stat).returns(@stat)
-    @loaded.changed?.should be(false)
-    # Use fake "now" so that we can be sure changed? actually checks, without sleeping
-    # for Puppet[:filetimeout] seconds.
-    Time.stubs(:now).returns(@fake_now)
-    @loaded.changed?.should_not be(false)
-  end
-
-  it "should consider a file changed when that file is missing" do
-    @f.close!
-    # Use fake "now" so that we can be sure changed? actually checks, without sleeping
-    # for Puppet[:filetimeout] seconds.
-    Time.stubs(:now).returns(@fake_now)
-    @loaded.changed?.should_not be(false)
-  end
-
-  it "should disable checking if Puppet[:filetimeout] is negative" do
-    Puppet[:filetimeout] = -1
-    @loaded.changed?.should_not be(false)
-  end
-
-  after(:each) do
-    @f.close
+  describe 'with a disabled file timeout time period' do
+    subject { described_class.new('/some/file', -1, timer) }
+    it 'is always marked as changed' do
+      timer.expired = false
+      subject.should be_changed
+      subject.should be_changed
+    end
   end
 end
