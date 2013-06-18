@@ -41,21 +41,6 @@ end
   end
 }
 
-if defined?(YAML::ENGINE) and YAML::ENGINE.yamler == 'psych'
-  def Psych.safely_load(str)
-    result = Psych.parse(str)
-    if invalid_node = result.find { |node| node.tag =~ /!map:(.*)/ || node.tag =~ /!ruby\/hash:(.*)/ }
-      raise ArgumentError, "Illegal YAML mapping found with tag #{invalid_node.tag}; please use !ruby/object:#{$1} instead"
-    else
-      result.to_ruby
-    end
-  end
-else
-  def YAML.safely_load(str)
-    self.load(str)
-  end
-end
-
 def YAML.dump(*args)
   ZAML.dump(*args)
 end

@@ -41,6 +41,20 @@ describe Puppet::Node do
     end
   end
 
+  it "can survive a round-trip through YAML" do
+    facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+    node = Puppet::Node.new("hello",
+                            :environment => 'kjhgrg',
+                            :classes => ['erth', 'aiu'],
+                            :parameters => {"hostname"=>"food"}
+                           )
+    new_node = Puppet::Node.convert_from('yaml', node.render('yaml'))
+    new_node.environment.should == node.environment
+    new_node.parameters.should == node.parameters
+    new_node.classes.should == node.classes
+    new_node.name.should == node.name
+  end
+
   describe "when converting to json" do
     before do
       @node = Puppet::Node.new("mynode")

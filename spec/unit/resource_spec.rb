@@ -570,41 +570,11 @@ describe Puppet::Resource do
       @resource["two"] = "other"
     end
 
-    it "should be able to be dumped to yaml" do
-      expect { YAML.dump(@resource) }.to_not raise_error
-    end
-
     it "should produce an equivalent yaml object" do
-      text = YAML.dump(@resource)
+      text = @resource.render('yaml')
 
-      newresource = YAML.load(text)
-      newresource.title.should == @resource.title
-      newresource.type.should == @resource.type
-      %w{one two}.each do |param|
-        newresource[param].should == @resource[param]
-      end
-    end
-  end
-
-  describe "when loading 0.25.x storedconfigs YAML" do
-    before :each do
-      @old_storedconfig_yaml = %q{--- !ruby/object:Puppet::Resource::Reference
-builtin_type:
-title: /tmp/bar
-type: File
-}
-    end
-
-    it "should deserialize a Puppet::Resource::Reference without exceptions" do
-      expect { YAML.load(@old_storedconfig_yaml) }.to_not raise_error
-    end
-
-    it "should deserialize as a Puppet::Resource::Reference as a Puppet::Resource" do
-      YAML.load(@old_storedconfig_yaml).class.should == Puppet::Resource
-    end
-
-    it "should to_hash properly" do
-      YAML.load(@old_storedconfig_yaml).to_hash.should == { :path => "/tmp/bar" }
+      newresource = Puppet::Resource.convert_from('yaml', text)
+      newresource.should equal_attributes_of @resource
     end
   end
 
@@ -692,13 +662,13 @@ type: File
       resource = Puppet::Resource.new("File", "/foo")
       resource.exported = true
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported.should be_true
+      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported?.should be_true
     end
 
     it "should set 'exported' to false if no value is set" do
       resource = Puppet::Resource.new("File", "/foo")
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported.should be_false
+      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported?.should be_false
     end
 
     it "should set all of its parameters as the 'parameters' entry" do

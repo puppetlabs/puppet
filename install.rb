@@ -107,7 +107,7 @@ end
 
 def do_libs(libs, strip = 'lib/')
   libs.each do |lf|
-    olf = File.join(InstallOptions.site_dir, lf.gsub(/#{strip}/, ''))
+    olf = File.join(InstallOptions.site_dir, lf.sub(/^#{strip}/, ''))
     op = File.dirname(olf)
     if $haveftools
       File.makedirs(op, true)

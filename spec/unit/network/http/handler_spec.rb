@@ -148,21 +148,12 @@ describe Puppet::Network::HTTP::Handler do
       decoded_params.should == {:my_param => [1,2,3]}
     end
 
-    it "should accept YAML parameters with !ruby/hash tags on Ruby 1.8", :if => RUBY_VERSION =~ /^1\.8/ do
-      params = {'my_param' => "--- !ruby/hash:Array {}"}
+    it "should ignore tags on YAML parameters" do
+      params = {'my_param' => "--- !ruby/object:Array {}"}
 
       decoded_params = handler.send(:decode_params, params)
 
-      decoded_params[:my_param].should be_an(Array)
-    end
-
-    # These are only dangerous with Psych, which is Ruby 1.9-only. Since
-    # there's no real way to change the yamler in Puppet, assume that 1.9 means
-    # Psych, especially in tests.
-    it "should fail if YAML parameters have !ruby/hash tags on Ruby 1.9", :unless => RUBY_VERSION =~ /^1\.8/ do
-      params = {'my_param' => "--- !ruby/hash:Array {}"}
-
-      expect { handler.send(:decode_params, params) }.to raise_error(ArgumentError, /Illegal YAML mapping found/)
+      decoded_params[:my_param].should be_a(Hash)
     end
 
     describe "when finding a model instance" do

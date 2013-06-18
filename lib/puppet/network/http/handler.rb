@@ -265,7 +265,7 @@ module Puppet::Network::HTTP::Handler
       next result if param == :ip
       value = CGI.unescape(value)
       if value =~ /^---/
-        value = YAML.safely_load(value)
+        value = YAML.load(value, :safe => true, :deserialize_symbols => true)
       else
         value = true if value == "true"
         value = false if value == "false"

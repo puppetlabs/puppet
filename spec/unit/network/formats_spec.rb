@@ -55,16 +55,29 @@ describe "Puppet Network Format" do
       @yaml.render_multiple(instances).should == "foo"
     end
 
-    it "should safely load YAML when interning" do
-      text = "foo"
-      YAML.expects(:safely_load).with("foo").returns "bar"
-      @yaml.intern(String, text).should == "bar"
+    it "should deserialize YAML" do
+      @yaml.intern(String, YAML.dump("foo")).should == "foo"
     end
 
-    it "should safely load YAML when interning multiples" do
-      text = "foo"
-      YAML.expects(:safely_load).with("foo").returns "bar"
-      @yaml.intern_multiple(String, text).should == "bar"
+    it "should deserialize symbols as strings" do
+      @yaml.intern(String, YAML.dump(:foo)).should == "foo"
+    end
+
+    it "should fail when type does not match deserialized form and has no from_pson" do
+      expect do
+        @yaml.intern(Hash, YAML.dump("foo"))
+      end.to raise_error(NoMethodError)
+    end
+
+    it "should load from yaml when deserializing an array" do
+      text = YAML.dump(["foo"])
+      @yaml.intern_multiple(String, text).should == ["foo"]
+    end
+
+    it "should fail when one element does not have a from_pson" do
+      expect do
+        @yaml.intern_multiple(Hash, YAML.dump(["foo"]))
+      end.to raise_error(NoMethodError)
     end
   end
 
@@ -108,29 +121,25 @@ describe "Puppet Network Format" do
       @yaml.render(instances).should == "bar"
     end
 
-    it "should intern by calling decode" do
-      text = "foo"
-      @yaml.expects(:decode).with("foo").returns "bar"
-      @yaml.intern(String, text).should == "bar"
+    it "should round trip data" do
+      @yaml.intern(String, @yaml.encode("foo")).should == "foo"
     end
 
-    it "should intern multiples by calling 'decode'" do
-      text = "foo"
-      @yaml.expects(:decode).with("foo").returns "bar"
-      @yaml.intern_multiple(String, text).should == "bar"
+    it "should round trip multiple data elements" do
+      data = @yaml.render_multiple(["foo", "bar"])
+      @yaml.intern_multiple(String, data).should == ["foo", "bar"]
     end
 
-    it "should decode by base64 decoding, uncompressing and safely Yaml loading" do
-      Base64.expects(:decode64).with("zorg").returns "foo"
-      Zlib::Inflate.expects(:inflate).with("foo").returns "baz"
-      YAML.expects(:safely_load).with("baz").returns "bar"
-      @yaml.decode("zorg").should == "bar"
+    it "should intern by base64 decoding, uncompressing and safely Yaml loading" do
+      input = Base64.encode64(Zlib::Deflate.deflate(YAML.dump("data in")))
+
+      @yaml.intern(String, input).should == "data in"
     end
 
-    it "should encode by compressing and base64 encoding" do
-      Zlib::Deflate.expects(:deflate).with("foo", Zlib::BEST_COMPRESSION).returns "bar"
-      Base64.expects(:encode64).with("bar").returns "baz"
-      @yaml.encode("foo").should == "baz"
+    it "should render by compressing and base64 encoding" do
+      output = @yaml.render("foo")
+
+      YAML.load(Zlib::Inflate.inflate(Base64.decode64(output))).should == "foo"
     end
 
     describe "when zlib is disabled" do
@@ -143,11 +152,11 @@ describe "Puppet Network Format" do
       end
 
       it "should refuse to encode" do
-        lambda{ @yaml.encode("foo") }.should raise_error
+        expect { @yaml.render("foo") }.to raise_error(Puppet::Error, /zlib library is not installed/)
       end
 
       it "should refuse to decode" do
-        lambda{ @yaml.decode("foo") }.should raise_error
+        expect { @yaml.intern(String, "foo") }.to raise_error(Puppet::Error, /zlib library is not installed/)
       end
     end
 
