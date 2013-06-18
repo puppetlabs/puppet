@@ -206,6 +206,12 @@ class Puppet::Util::Log
     @levels.include?(level)
   end
 
+  def self.from_pson(data)
+    obj = allocate
+    obj.initialize_from_hash(data)
+    obj
+  end
+
   attr_accessor :time, :remote, :file, :line, :source
   attr_reader :level, :message
 
@@ -226,6 +232,19 @@ class Puppet::Util::Log
     end
 
     Log.newmessage(self)
+  end
+
+  def initialize_from_hash(data)
+    @level = data['level'].intern
+    @message = data['message']
+    @source = data['source']
+    @tags = data['tags']
+    @time = data['time']
+    if @time.is_a? String
+      @time = Time.parse(@time)
+    end
+    @file = data['file'] if data['file']
+    @line = data['line'] if data['line']
   end
 
   def message=(msg)

@@ -19,6 +19,12 @@ class Puppet::Transaction::Report
     :yaml
   end
 
+  def self.from_pson(data)
+    obj = self.allocate
+    obj.initialize_from_hash(data)
+    obj
+  end
+
   def <<(msg)
     @logs << msg
     self
@@ -81,6 +87,39 @@ class Puppet::Transaction::Report
     @configuration_version = configuration_version
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
+  end
+
+  def initialize_from_hash(data)
+    @puppet_version = data['puppet_version']
+    @report_format = data['report_format']
+    @configuration_version = data['configuration_version']
+    @environment = data['environment']
+    @status = data['status']
+    @host = data['host']
+    @time = data['time']
+    if @time.is_a? String
+      @time = Time.parse(@time)
+    end
+    @kind = data['kind']
+
+    @metrics = {}
+    data['metrics'].each do |name, hash|
+      @metrics[name] = Puppet::Util::Metric.from_pson(hash)
+    end
+
+    @logs = data['logs'].map do |record|
+      Puppet::Util::Log.from_pson(record)
+    end
+
+    @resource_statuses = {}
+    data['resource_statuses'].map do |record|
+      if record[1] == {}
+        status = nil
+      else
+        status = Puppet::Resource::Status.from_pson(record[1])
+      end
+      @resource_statuses[record[0]] = status
+    end
   end
 
   def name

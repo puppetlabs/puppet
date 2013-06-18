@@ -49,7 +49,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
   end
 
   def processors(&blk)
-    return if Puppet[:reports] == "none"
+    return [] if Puppet[:reports] == "none"
     reports.each do |name|
       if mod = Puppet::Reports.report(name)
         yield(mod)
