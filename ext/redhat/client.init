@@ -70,7 +70,7 @@ restart() {
 }
 
 rh_status() {
-    status $pidopts $puppetd
+    status $pidopts -l$lockfile $puppetd
     RETVAL=$?
     return $RETVAL
 }
