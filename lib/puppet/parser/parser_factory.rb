@@ -41,6 +41,7 @@ module Puppet::Parser
     def self.assert_rgen_installed
       begin
         require 'rgen/metamodel_builder'
+        require 'puppet/util/monkey_patches/rgen_patches'
       rescue LoadError
         raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using the setting '--parser future'. Please install 'rgen'.")
       end
