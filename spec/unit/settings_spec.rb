@@ -289,9 +289,15 @@ describe Puppet::Settings do
       @settings.define_settings :mysection,
           :one => { :default => "whah", :desc => "yay" },
           :two => { :default => "$one yay", :desc => "bah" }
+      @settings.expects(:unsafe_flush_cache)
       @settings[:two].should == "whah yay"
       @settings.handlearg("--one", "else")
       @settings[:two].should == "else yay"
+    end
+
+    it "should clear the cache when the preferred_run_mode is changed" do
+      @settings.expects(:flush_cache)
+      @settings.preferred_run_mode = :master
     end
 
     it "should not clear other values when setting getopt-specific values" do

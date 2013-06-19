@@ -156,7 +156,34 @@ class Puppet::Settings
   end
   private :unsafe_clear
 
-  # This is mostly just used for testing.
+  # Clear @cache, @used and the Environment.
+  #
+  # Whenever an object is returned by Settings, a copy is stored in @cache.
+  # As long as Setting attributes that determine the content of returned
+  # objects remain unchanged, Settings can keep returning objects from @cache
+  # without re-fetching or re-generating them.
+  #
+  # Whenever a Settings attribute changes, such as @values or @preferred_run_mode,
+  # this method must be called to clear out the caches so that updated
+  # objects will be returned.
+  def flush_cache
+    @sync.synchronize do
+      unsafe_flush_cache
+    end
+  end
+
+  def unsafe_flush_cache
+    clearused
+
+    # Clear the list of environments, because they cache, at least, the module path.
+    # We *could* preferentially just clear them if the modulepath is changed,
+    # but we don't really know if, say, the vardir is changed and the modulepath
+    # is defined relative to it. We need the defined?(stuff) because of loading
+    # order issues.
+    Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
+  end
+  private :unsafe_flush_cache
+
   def clearused
     @cache.clear
     @used = []
@@ -455,6 +482,10 @@ class Puppet::Settings
     mode = mode.to_s.downcase.intern
     raise ValidationError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
     @preferred_run_mode_name = mode
+    # Changing the run mode has far-reaching consequences. Flush any cached
+    # settings so they will be re-generated.
+    flush_cache
+    mode
   end
 
   # Return all of the parameters associated with a given section.
@@ -753,16 +784,8 @@ class Puppet::Settings
     @sync.synchronize do # yay, thread-safe
 
       @values[type][param] = value
-      @cache.clear
+      unsafe_flush_cache
 
-      clearused
-
-      # Clear the list of environments, because they cache, at least, the module path.
-      # We *could* preferentially just clear them if the modulepath is changed,
-      # but we don't really know if, say, the vardir is changed and the modulepath
-      # is defined relative to it. We need the defined?(stuff) because of loading
-      # order issues.
-      Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
     end
 
     value
