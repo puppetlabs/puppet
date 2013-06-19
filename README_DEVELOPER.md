@@ -130,67 +130,35 @@ method.
 
 # Ruby Dependencies #
 
-Puppet is considered an Application as it relates to the recommendation of
-adding a Gemfile.lock file to the repository and the information published at
-[Clarifying the Roles of the .gemspec and
-Gemfile](http://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/)
+To install the dependencies run:
 
-To install the dependencies run: `bundle install` to install the dependencies.
+    $ bundle install --path .bundle/gems/
 
-A checkout of the source repository should be used in a way that provides
-puppet as a gem rather than a simple Ruby library.  The parent directory should
-be set along the `GEM_PATH`, preferably before other tools such as RVM that
-manage gemsets using `GEM_PATH`.
+Once this is done, you can interact with puppet through bundler using `bundle
+exec <command>` which will ensure that `<command>` is executed in the context
+of puppet's dependencies.
 
-For example, Puppet checked out into `/workspace/src/puppet` using `git
-checkout https://github.com/puppetlabs/puppet` in `/workspace/src` can be used
-with the following actions.  The trick is to symlink `gems` to `src`.
+For example to run the specs:
 
-    $ cd /workspace
-    $ ln -s src gems
-    $ mkdir specifications
-    $ pushd specifications; ln -s ../gems/puppet/puppet.gemspec; ln -s ../gems/puppet/lib; popd
-    $ export GEM_PATH="/workspace:${GEM_PATH}"
-    $ gem list puppet
+    $ bundle exec rake spec
 
-This should list out
+To run puppet itself (for a resource lookup say):
 
-    puppet (2.7.19)
+    $ bundle exec puppet resource host localhost
 
-The final directory structure should look like this:
+which should return something like:
 
-    /workspace/src --- git working directory
-              /gems -> src
-              /specifications/puppet.gemspec -> ../gems/puppet/puppet.gemspec
-                             /lib -> ../gems/puppet/lib
-
-## Bundler ##
-
-With a source checkout of Puppet properly setup as a gem, dependencies can be
-installed using [Bundler](http://gembundler.com/)
-
-    $ bundle install
-    Fetching gem metadata from http://rubygems.org/........
-    Using diff-lcs (1.1.3)
-    Installing facter (1.6.11)
-    Using metaclass (0.0.1)
-    Using mocha (0.10.5)
-    Using puppet (2.7.19) from source at /workspace/puppet-2.7.x/src/puppet
-    Using rack (1.4.1)
-    Using rspec-core (2.10.1)
-    Using rspec-expectations (2.10.0)
-    Using rspec-mocks (2.10.1)
-    Using rspec (2.10.0)
-    Using bundler (1.1.5)
-    Your bundle is complete! Use `bundle show [gemname]` to see where a bundled gem is installed.
+    host { 'localhost':
+      ensure => 'present',
+      ip     => '127.0.0.1',
+      target => '/etc/hosts',
+    }
 
 # Running Tests #
 
 Puppet Labs projects use a common convention of using Rake to run unit tests.
 The tests can be run with the following rake task:
 
-    rake spec
-    # Or if using Bundler
     bundle exec rake spec
 
 This allows the Rakefile to set up the environment beforehand if needed. This
@@ -199,14 +167,12 @@ method is how the unit tests are run in [Jenkins](https://jenkins.puppetlabs.com
 Under the hood Puppet's tests use `rspec`.  To run all of them, you can directly
 use 'rspec':
 
-    rspec
-    # Or if using Bundler
     bundle exec rspec
 
 To run a single file's worth of tests (much faster!), give the filename, and use
 the nested format to see the descriptions:
 
-    rspec spec/unit/ssl/host_spec.rb --format nested
+    bundle exec rspec spec/unit/ssl/host_spec.rb --format nested
 
 # A brief introduction to testing in Puppet
 
@@ -792,11 +758,11 @@ default clientbucket.
 Create a module that recursively downloads something.  The jeffmccune-filetest
 module will recursively copy the rubygems source tree.
 
-    $ puppet module install jeffmccune-filetest
+    $ bundle exec puppet module install jeffmccune-filetest
 
 Start the master with the StaticCompiler turned on:
 
-    $ puppet master \
+    $ bundle exec puppet master \
         --catalog_terminus=static_compiler \
         --verbose \
         --no-daemonize
@@ -811,7 +777,7 @@ Add the special Filebucket[puppet] resource:
 
 Get the static catalog:
 
-    $ puppet agent --test
+    $ bundle exec puppet agent --test
 
 You should expect all file metadata to be contained in the catalog, including a
 checksum representing the content.  When managing an out of sync file resource,
