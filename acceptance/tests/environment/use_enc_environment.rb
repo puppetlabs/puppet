@@ -15,7 +15,7 @@ END
 on master, "chmod 755 #{testdir}/enc.rb"
 
 master_opts = {
-  'main' => {
+  'master' => {
     'node_terminus' => 'exec',
     'external_nodes' => "#{testdir}/enc.rb",
     'manifest' => "#{testdir}/site.pp"

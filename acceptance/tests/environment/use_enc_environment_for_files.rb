@@ -33,8 +33,8 @@ master_opts = {
   }
 }
 
-agents.each do |agent|
-  with_puppet_running_on master, master_opts, testdir do
+with_puppet_running_on master, master_opts, testdir do
+  agents.each do |agent|
     atmp = agent.tmpdir('respect_enc_test')
     logger.debug "agent: #{agent} \tagent.tmpdir => #{atmp}"
 
@@ -48,8 +48,13 @@ END
     on master, "chmod 644 #{testdir}/different.pp"
 
     run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --trace")
-    on agent, "cat #{atmp}/special_testy"
-    assert_match(/special_environment/, stdout, "The file from environment 'special' was not found")
+
+    on agent, "cat #{atmp}/special_testy" do |result|
+      assert_match(/special_environment/,
+                   result.stdout,
+                   "The file from environment 'special' was not found")
+    end
+
     on agent, "rm -rf #{atmp}"
   end
 end

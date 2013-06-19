@@ -51,14 +51,20 @@ with_puppet_running_on master, {} do
       end
 
       step "kick the agent from the master"
-      on(master, puppet_kick("--host #{agent_fqdn}")) do
-        assert_match(/Puppet kick is deprecated/, stderr, "Puppet kick did not issue deprecation warning")
-        assert_match(/status is success/, stdout, "Puppet kick was successful, but agent #{agent} did not report success")
+      on(master, puppet_kick("--host #{agent_fqdn}")) do |result|
+        assert_match(/Puppet kick is deprecated/,
+                     result.stderr,
+                     "Puppet kick did not issue deprecation warning")
+
+        assert_match(/status is success/,
+                     result.stdout,
+                     "Puppet kick was successful, " +
+                     "but agent #{agent} did not report success")
       end
     ensure
       step "kill agent"
-      on(agent, puppet_agent("--configprint pidfile #{config}")) do
-        on(agent, "kill `cat #{stdout.chomp}`")
+      on(agent, puppet_agent("--configprint pidfile")) do |result|
+        on(agent, "kill `cat #{result.stdout.chomp}`")
       end
     end
   end
