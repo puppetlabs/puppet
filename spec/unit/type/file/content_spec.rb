@@ -147,6 +147,17 @@ describe content do
       @content.must be_safe_insync("whatever")
     end
 
+    it "should warn that no content will be synced to links when ensure is :present" do
+      @resource[:ensure] = :present
+      @resource[:content] = 'foo'
+      @resource.stubs(:should_be_file?).returns false
+      @resource.stubs(:stat).returns mock("stat", :ftype => "link")
+
+      @resource.expects(:warning).with {|msg| msg =~ /Ensure set to :present but file type is/}
+
+      @content.insync? :present
+    end
+
     it "should return false if the current content is :absent" do
       @content.should = "foo"
       @content.should_not be_safe_insync(:absent)
