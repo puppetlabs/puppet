@@ -13,23 +13,6 @@ describe Puppet::Network::FormatHandler do
     Puppet::Network::FormatHandler.instance_variable_set(:@formats, @saved_formats)
   end
 
-  describe "when listing formats" do
-    before(:each) do
-      one = Puppet::Network::FormatHandler.create(:one, :weight => 1)
-      one.stubs(:supported?).returns(true)
-      two = Puppet::Network::FormatHandler.create(:two, :weight => 6)
-      two.stubs(:supported?).returns(true)
-      three = Puppet::Network::FormatHandler.create(:three, :weight => 2)
-      three.stubs(:supported?).returns(true)
-      four = Puppet::Network::FormatHandler.create(:four, :weight => 8)
-      four.stubs(:supported?).returns(false)
-    end
-
-    it "should return all formats in the order they were defined" do
-      Puppet::Network::FormatHandler.formats.should == [:one, :two, :three, :four]
-    end
-  end
-
   describe "when creating formats" do
     it "should instance_eval any block provided when creating a format" do
       format = Puppet::Network::FormatHandler.create(:instance_eval) do
