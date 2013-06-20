@@ -25,7 +25,8 @@ on master, "chmod -R g+rwX #{testdir}"
 master_opts = {
   'master' => {
     'node_terminus' => 'exec',
-    'external_nodes' => "#{testdir}/enc.rb"
+    'external_nodes' => "#{testdir}/enc.rb",
+    'filetimeout' => 1
   },
   'special' => {
     'modulepath' => "#{testdir}/special",
@@ -46,6 +47,8 @@ file { "#{atmp}/special_testy":
 notify { "mytemp is ${::mytemp}": }
 END
     on master, "chmod 644 #{testdir}/different.pp"
+
+    sleep 2 # Make sure the master has time to reload the file
 
     run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --trace")
 
