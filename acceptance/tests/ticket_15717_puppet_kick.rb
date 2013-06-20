@@ -25,7 +25,7 @@ with_puppet_running_on master, {} do
     # kick will verify the SSL server's cert, but since the master and
     # agent can be in different domains (ec2, dc1), ask the agent for
     # its fqdn, and always kick using that
-    agent_fqdn = on(agent, facter('fqdn')).stdout.chomp
+    agentname = on(agent, puppet_agent('--configprint certname')).stdout.chomp
 
     step "create rest auth.conf on agent"
     testdir = agent.tmpdir('puppet-kick-auth')
@@ -51,7 +51,7 @@ with_puppet_running_on master, {} do
       end
 
       step "kick the agent from the master"
-      on(master, puppet_kick("--host #{agent_fqdn}")) do |result|
+      on(master, puppet_kick("--host #{agentname}")) do |result|
         assert_match(/Puppet kick is deprecated/,
                      result.stderr,
                      "Puppet kick did not issue deprecation warning")
