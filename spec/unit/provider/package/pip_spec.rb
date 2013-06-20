@@ -90,6 +90,22 @@ describe provider_class do
       @provider.query.should == nil
     end
 
+    it "should be case insensitive" do
+      @resource[:name] = "Real_Package"
+
+      provider_class.expects(:instances).returns [provider_class.new({
+        :ensure   => "1.2.5",
+        :name     => "real_package",
+        :provider => :pip,
+      })]
+
+      @provider.query.should == {
+        :ensure   => "1.2.5",
+        :name     => "real_package",
+        :provider => :pip,
+      }
+    end
+
   end
 
   describe "latest" do
