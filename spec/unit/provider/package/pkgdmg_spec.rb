@@ -75,6 +75,37 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
 
         provider.install
       end
+
+      it "should use an http proxy host and port if specified" do
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args.should be_include 'some_host:some_port'
+          args.should be_include '--proxy'
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
+
+      it "should use an http proxy host only if specified" do
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns nil
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args.should be_include 'some_host'
+          args.should be_include '--proxy'
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
+
     end
   end
 
