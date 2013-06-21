@@ -1,0 +1,49 @@
+# == Class: <%= metadata.name %>::config
+#
+# FIXME/TODO Please check if you want to remove this class because it may be
+#            unnecessary for your module. Don't forget to update the class
+#            declarations and relationships at init.pp afterwards (the relevant
+#            parts are marked with "FIXME/TODO" comments).
+#
+# This class exists to coordinate all configuration related actions,
+# functionality and logical units in a central place.
+#
+#
+# === Parameters
+#
+# This class does not provide any parameters.
+#
+#
+# === Examples
+#
+# This class may be imported by other classes to use its functionality:
+#   class { '<%= metadata.name %>::config': }
+#
+# It is not intended to be used directly by external resources like node
+# definitions or other modules.
+#
+#
+# === Authors
+#
+# * Your name <mailto:you@email.com>
+#
+class <%= metadata.name %>::config {
+
+  #### Configuration
+
+  $notify_service = $<%= metadata.name %>::restart_on_change ? {
+    true  => Class['<%= metadata.name %>::service'],
+    false => undef,
+  }
+
+  file { '<%= metadata.name %>_config':
+    ensure  => 'present',
+    path    => '/etc/<%= metadata.name %>/<%= metadata.name %>.conf',
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    content => template('<%= metadata.name %>/config.erb'),
+    notify  => $notify_service,
+  }
+
+}
