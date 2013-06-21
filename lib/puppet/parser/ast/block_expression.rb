@@ -34,6 +34,10 @@ class Puppet::Parser::AST
       self
     end
 
+    def sequence_with(other)
+      Puppet::Parser::AST::BlockExpression.new(:children => self.children + other.children)
+    end
+
     def to_s
       "[" + @children.collect { |c| c.to_s }.join(', ') + "]"
     end
