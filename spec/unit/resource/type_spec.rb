@@ -715,15 +715,6 @@ describe Puppet::Resource::Type do
       dest.doc.should == "foonessyayness"
     end
 
-    it "should turn its code into a BlockExpression if necessary" do
-      dest = Puppet::Resource::Type.new(:hostclass, "bar", :code => code("foo"))
-      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
-
-      dest.merge(source)
-
-      dest.code.should be_instance_of(Puppet::Parser::AST::BlockExpression)
-    end
-
     it "should set the other class's code as its code if it has none" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
       source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
@@ -734,15 +725,15 @@ describe Puppet::Resource::Type do
     end
 
     it "should append the other class's code to its code if it has any" do
-      dcode = Puppet::Parser::AST::ASTArray.new :children => [code("dest")]
+      dcode = Puppet::Parser::AST::BlockExpression.new(:children => [code("dest")])
       dest = Puppet::Resource::Type.new(:hostclass, "bar", :code => dcode)
 
-      scode = Puppet::Parser::AST::ASTArray.new :children => [code("source")]
+      scode = Puppet::Parser::AST::BlockExpression.new(:children => [code("source")])
       source = Puppet::Resource::Type.new(:hostclass, "foo", :code => scode)
 
       dest.merge(source)
 
-      dest.code.children.collect { |l| l[0].value }.should == %w{dest source}
+      dest.code.children.collect { |l| l.value }.should == %w{dest source}
     end
   end
 end

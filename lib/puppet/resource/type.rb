@@ -191,15 +191,7 @@ class Puppet::Resource::Type
       return
     end
 
-    self.code = Puppet::Parser::AST::BlockExpression.new(:children => [self.code, other.code])
-#    array_class = Puppet::Parser::AST::ASTArray
-#    self.code = array_class.new(:children => [self.code]) unless self.code.is_a?(array_class)
-#
-#    if other.code.is_a?(array_class)
-#      code.children += other.code.children
-#    else
-#      code.children << other.code
-#    end
+    self.code = self.code.sequence_with(other.code)
   end
 
   # Make an instance of the resource type, and place it in the catalog
