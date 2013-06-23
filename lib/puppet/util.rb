@@ -11,6 +11,7 @@ require 'tempfile'
 require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
+require 'puppet/util/symbolic_file_mode'
 
 module Puppet
 module Util
@@ -21,6 +22,8 @@ module Util
   # to be in Puppet::Util but have been moved into external modules.
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
+
+  extend Puppet::Util::SymbolicFileMode
 
   @@sync_objects = {}.extend MonitorMixin
 
@@ -395,9 +398,15 @@ module Util
   #
   # The default_mode is the mode to use when the target file doesn't already
   # exist; if the file is present we copy the existing mode/owner/group values
-  # across.
+  # across. The default_mode can be expressed as an octal integer, a numeric string (ie '0664')
+  # or a symbolic file mode.
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
+
+    unless valid_symbolic_mode?(default_mode)
+      raise Puppet::DevError, "replace_file default_mode: #{default_mode} is invalid"
+    end
+    mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))
 
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
@@ -412,7 +421,7 @@ module Util
     # secure" tempfile permissions instead.  Magic happens later.
     unless Puppet.features.microsoft_windows?
       # Grab the current file mode, and fall back to the defaults.
-      stat = file.lstat rescue OpenStruct.new(:mode => default_mode,
+      stat = file.lstat rescue OpenStruct.new(:mode => mode,
                                               :uid  => Process.euid,
                                               :gid  => Process.egid)
 
@@ -472,7 +481,7 @@ module Util
         end
 
         # Set the permissions to what we want.
-        Puppet::Util::Windows::Security.set_mode(default_mode, file.to_s)
+        Puppet::Util::Windows::Security.set_mode(mode, file.to_s)
 
         # ...and finally retry the operation.
         retry
