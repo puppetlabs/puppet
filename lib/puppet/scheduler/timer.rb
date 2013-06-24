@@ -2,7 +2,7 @@ module Puppet::Scheduler
   class Timer
     def wait_for(seconds)
       if seconds > 0
-        select([], [], [], seconds)
+        sleep(seconds)
       end
     end
 
