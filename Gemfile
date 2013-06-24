@@ -24,7 +24,7 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
 gem "rake", :require => false
 gem "rspec", "~> 2.11.0", :require => false
 gem "mocha", "~> 0.10.5", :require => false
-gem "rgen", "0.6.2", :require => false
+gem "rgen", "0.6.5", :require => false
 
 gem "yarjuf", "~> 1.0"
 
