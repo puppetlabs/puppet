@@ -84,9 +84,9 @@ module Puppet::Pops::Binder::Bindings
 
   # A category predicate (the request has to be in this category).
   #
-  class CategoryPredicate < Puppet::Pops::Model::PopsObject
+  class Category < Puppet::Pops::Model::PopsObject
     has_attr 'categorization', String
-    has_attr 'category', String
+    has_attr 'value', String
   end
 
   # A container of Binding instances that are in effect when the
@@ -94,7 +94,20 @@ module Puppet::Pops::Binder::Bindings
   # Note that 'or' semantics are handled by repeating the same rules.
   #
   class CategorizedBindings < Bindings
-    contains_many_uni 'predicates', CategoryPredicate, :lowerBound => 1
+    contains_many_uni 'predicates', Category, :lowerBound => 1
   end
 
+  class LayeredBindings < Puppet::Pops::Model::PopsObject
+    contains_many_uni 'layers', NamedLayer
+  end
+
+  class NamedLayer < Puppet::Pops::Model::PopsObject
+    has_attr 'name', String, :lowerBound => 1
+    contains_many_uni 'bindings', NamedBindings
+  end
+
+  class EffectiveCategories < Puppet::Pops::Model::PopsObject
+    # The order is from highest precedence to lowest
+    contains_many_uni 'categories', Category
+  end
 end
