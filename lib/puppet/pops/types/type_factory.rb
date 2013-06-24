@@ -60,7 +60,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.array_of(o)
     type = Types::PArrayType.new()
-    type.element_type = if o.is_a?(Types::PType)
+    type.element_type = if o.is_a?(Types::PObjectType)
       o
     else
       @type_calculator.infer(o)
@@ -71,13 +71,13 @@ module Puppet::Pops::Types::TypeFactory
   # Produces a type for Hash[Literal, o] where o is either a type, or an instance for which a type is inferred.
   # @api public
   #
-  def self.hash_of(o)
+  def self.hash_of(value, key = literal())
     type = Types::PHashType.new()
-    type.key_type = literal()
-    type.element_type = if o.is_a?(Types::PType)
-      o
+    type.key_type = key
+    type.element_type = if value.is_a?(Types::PObjectType)
+      value
     else
-      @type_calculator.infer(o)
+      @type_calculator.infer(value)
     end
     type
   end
@@ -96,7 +96,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.hash_of_data()
     type = Types::PHashType.new()
-    type.element_type = literal()
+    type.key_type = literal()
     type.element_type = data()
     type
   end
