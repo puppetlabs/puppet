@@ -17,6 +17,8 @@
 # @api public
 class Puppet::Pops::Types::TypeCalculator
 
+  Types = Puppet::Pops::Types
+
   # @api public
   #
   def initialize
@@ -24,19 +26,19 @@ class Puppet::Pops::Types::TypeCalculator
     @@infer_visitor ||= Puppet::Pops::Visitor.new(nil,"infer",0,0)
     @@string_visitor ||= Puppet::Pops::Visitor.new(nil,"string",0,0)
 
-    da = Puppet::Pops::Types::PArrayType.new()
-    da.element_type = Puppet::Pops::Types::PDataType.new()
+    da = Types::PArrayType.new()
+    da.element_type = Types::PDataType.new()
     @data_array = da
 
-    h = Puppet::Pops::Types::PHashType.new()
-    h.element_type = Puppet::Pops::Types::PDataType.new()
-    h.key_type = Puppet::Pops::Types::PLiteralType.new()
+    h = Types::PHashType.new()
+    h.element_type = Types::PDataType.new()
+    h.key_type = Types::PLiteralType.new()
     @data_hash = h
 
-    @data_t = Puppet::Pops::Types::PDataType.new()
-    @literal_t = Puppet::Pops::Types::PLiteralType.new()
-    @numeric_t = Puppet::Pops::Types::PNumericType.new()
-    @t = Puppet::Pops::Types::PObjectType.new()
+    @data_t = Types::PDataType.new()
+    @literal_t = Types::PLiteralType.new()
+    @numeric_t = Types::PNumericType.new()
+    @t = Types::PObjectType.new()
   end
 
   # Answers 'can a t2 be assigned to a t'
@@ -67,14 +69,14 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def is_ptype?(t)
-    return t.is_a?(Puppet::Pops::Types::PObjectType)
+    return t.is_a?(Types::PObjectType)
   end
 
   # Answers if t represents the puppet type PNilType
   # @api public
   #
   def is_pnil?(t)
-    return t.nil? || t.is_a?(Puppet::Pops::Types::PNilType)
+    return t.nil? || t.is_a?(Types::PNilType)
   end
 
   # Answers, 'What is the common type of t1 and t2?'
@@ -97,23 +99,38 @@ class Puppet::Pops::Types::TypeCalculator
       return t2
     end
 
+    # when both are arrays, return an array with common element type
+    if t1.is_a?(Types::PArrayType) && t2.is_a?(Types::PArrayType)
+      type = Types::PArrayType.new()
+      type.element_type = common_type(t1.element_type, t2.element_type)
+      return type
+    end
+
+    # when both are hashes, return a hash with common key- and element type
+    if t1.is_a?(Types::PHashType) && t2.is_a?(Types::PHashType)
+      type = Types::PHashType.new()
+      type.key_type = common_type(t1.key_type, t2.key_type)
+      type.element_type = common_type(t1.element_type, t2.element_type)
+      return type
+    end
+
     # Common abstract types, from most specific to most general
     if common_numeric?(t1, t2)
-      return Puppet::Pops::Types::PNumericType.new()
+      return Types::PNumericType.new()
     end
 
     if common_literal?(t1, t2)
-      return Puppet::Pops::Types::PLiteralType.new()
+      return Types::PLiteralType.new()
     end
 
     if common_data?(t1,t2)
-      return Puppet::Pops::Types::PDataType.new()
+      return Types::PDataType.new()
     end
 
     # If both are RubyObjects
 
     if common_pobject?(t1, t2)
-      return Puppet::Pops::Types::PObjectType.new()
+      return Types::PObjectType.new()
     end
   end
 
@@ -141,8 +158,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Object(o)
-    type = Puppet::Pops::Types::PRubyType.new()
-    type.ruby_class = o.class
+    type = Types::PRubyType.new()
+    type.ruby_class = o.class.name
+    type
   end
 
   # The type of all types is PType
@@ -150,44 +168,49 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   #
   def infer_PType(o)
-    Puppet::Pops::Types::PType.new()
+    Types::PType.new()
   end
 
   # @api private
   def infer_String(o)
-    Puppet::Pops::Types::PStringType.new()
+    Types::PStringType.new()
   end
 
   # @api private
   def infer_Float(o)
-    Puppet::Pops::Types::PFloatType.new()
+    Types::PFloatType.new()
   end
 
   # @api private
   def infer_Fixnum(o)
-    Puppet::Pops::Types::PIntegerType.new()
+    Types::PIntegerType.new()
   end
 
   # @api private
   def infer_Regexp(o)
-    Puppet::Pops::Types::PPatternType.new()
+    Types::PPatternType.new()
+  end
+
+  # @api private
+  def infer_NilClass(o)
+    Types::PNilType.new()
   end
 
   # @api private
   def infer_TrueClass(o)
-    Puppet::Pops::Types::PBooleanType.new()
+    Types::PBooleanType.new()
   end
 
   # @api private
   def infer_FalseClass(o)
-    Puppet::Pops::Types::PBooleanType.new()
+    Types::PBooleanType.new()
   end
 
   # @api private
   def infer_Array(o)
-    type = Puppet::Pops::Types::PArrayType.new()
+    type = Types::PArrayType.new()
     type.element_type = if o.empty?
-      Puppet::Pops::Types::PNilType.new()
+      Types::PNilType.new()
     else
       infer_and_reduce_type(o)
     end
@@ -196,10 +219,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Hash(o)
-    type = Puppet::Pops::Types::PHashType.new()
+    type = Types::PHashType.new()
     if o.empty?
-      ktype = Puppet::Pops::Types::PNilType.new()
-      etype = Puppet::Pops::Types::PNilType.new()
+      ktype = Types::PNilType.new()
+      etype = Types::PNilType.new()
     else
       ktype = infer_and_reduce_type(o.keys())
       etype = infer_and_reduce_type(o.values())
@@ -217,68 +240,78 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PObjectType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PObjectType)
+    t2.is_a?(Types::PObjectType)
+  end
+
+  # @api private
+  def assignable_PDataType(t, t2)
+    t2.is_a?(Types::PDataType)
   end
 
   # @api private
   def assignable_PLiteralType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PLiteralType)
+    t2.is_a?(Types::PLiteralType)
   end
 
   # @api private
   def assignable_PNumericType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PNumericType)
+    t2.is_a?(Types::PNumericType)
   end
 
   # @api private
   def assignable_PIntegerType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PIntegerType)
+    t2.is_a?(Types::PIntegerType)
   end
 
   # @api private
   def assignable_PStringType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PStringType)
+    t2.is_a?(Types::PStringType)
   end
 
   # @api private
   def assignable_PFloatType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PFloatType)
+    t2.is_a?(Types::PFloatType)
   end
 
   # @api private
   def assignable_PBooleanType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PBooleanType)
+    t2.is_a?(Types::PBooleanType)
   end
 
   # @api private
   def assignable_PPatternType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PPatternType)
+    t2.is_a?(Types::PPatternType)
+  end
+
+  # @api private
+  def assignable_PCollectionType(t, t2)
+    t2.is_a?(Types::PCollectionType)
   end
 
   # Array is assignable if t2 is an Array and t2's element type is assignable
   # @api private
   def assignable_PArrayType(t, t2)
-    return false unless t2.is_a?(Puppet::Pops::Types::PArrayType)
+    return false unless t2.is_a?(Types::PArrayType)
     assignable?(t.element_type, t2.element_type)
   end
 
   # Hash is assignable if t2 is a Hash and t2's key and element types are assignable
   # @api private
   def assignable_PHashType(t, t2)
-    return false unless t2.is_a?(Puppet::Pops::Types::PHashType)
+    return false unless t2.is_a?(Types::PHashType)
     assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
   end
 
   # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Puppet::Pops::Types::PDataType) || assignable?(@data_array, t2) || assignable?(@data_hash, t2)
+    t2.is_a?(Types::PDataType) || assignable?(@data_array, t2) || assignable?(@data_hash, t2)
   end
 
   # Assignable if t2's ruby class is same or subclass of t1's ruby class
   # @api private
   def assignable_PRubyType(t1, t2)
-    return false unless t2.is_a?(Puppet::Pops::Types::PRubyType)
+    return false unless t2.is_a?(Types::PRubyType)
     c1 = class_from_string(t1.ruby_class)
     c2 = class_from_string(t2.ruby_class)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
