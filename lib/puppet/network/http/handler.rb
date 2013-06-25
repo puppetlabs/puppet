@@ -16,7 +16,7 @@ module Puppet::Network::HTTP::Handler
 
   attr_reader :server, :handler
 
-  YAML_DEPRECATION = "YAML in network requests is deprecated and will be removed in a future version"
+  YAML_DEPRECATION = "YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network"
 
   # Retrieve all headers from the http request, as a hash with the header names
   # (lower-cased) as the keys
@@ -270,6 +270,7 @@ module Puppet::Network::HTTP::Handler
       next result if param == :ip
       value = CGI.unescape(value)
       if value =~ /^---/
+        Puppet.debug("Found YAML while processing request parameter #{param} (value: <#{value}>)")
         Puppet.deprecation_warning(YAML_DEPRECATION)
         value = YAML.load(value, :safe => true, :deserialize_symbols => true)
       else
