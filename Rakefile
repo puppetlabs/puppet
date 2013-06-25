@@ -1,10 +1,11 @@
 # Rakefile for Puppet -*- ruby -*-
+RAKE_ROOT = File.dirname(__FILE__)
 
 # We need access to the Puppet.version method
 $LOAD_PATH.unshift(File.expand_path("lib"))
 require 'puppet/version'
 
-$LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
+$LOAD_PATH << File.join(RAKE_ROOT, 'tasks')
 
 begin
   require 'rubygems'
@@ -22,7 +23,11 @@ end
 require 'rake'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
-Dir['ext/packaging/tasks/**/*'].sort.each { |t| load t }
+
+begin
+  load File.join(RAKE_ROOT, 'ext', 'packaging', 'packaging.rake')
+rescue LoadError
+end
 
 build_defs_file = 'ext/build_defaults.yaml'
 if File.exist?(build_defs_file)
