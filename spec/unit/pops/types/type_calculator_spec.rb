@@ -340,4 +340,27 @@ describe 'The type calculator' do
       calculator.string(t).should == 'Hash[String, Integer]'
     end
   end
+
+  context 'when processing meta type' do
+    it 'should infer PType as the type of all other types' do
+      ptype = Puppet::Pops::Types::PType
+      calculator.infer(Puppet::Pops::Types::PNilType.new()       ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PDataType.new()      ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PLiteralType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PStringType.new()    ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PNumericType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PIntegerType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PFloatType.new()     ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PPatternType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PBooleanType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PCollectionType.new()).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PArrayType.new()     ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PHashType.new()      ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PRubyType.new()      ).is_a?(ptype).should() == true
+    end
+
+    it 'should infer PType as the type of PType (meta regression short-circuit)' do
+      calculator.infer(Puppet::Pops::Types::PType.new()).is_a?(Puppet::Pops::Types::PType).should() == true
+    end
+  end
 end

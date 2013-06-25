@@ -169,6 +169,12 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # The type of all types is PType
+  #
+  def infer_PObjectType(o)
+    Types::PType.new()
+  end
+
+  # The type of all types is PType
   # This is the metatype short circuit.
   # @api private
   #
