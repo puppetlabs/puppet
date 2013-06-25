@@ -38,6 +38,10 @@ end
 Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   require 'base64'
 
+  def issue_deprecation_warning
+    Puppet.deprecation_warning("The b64_zlib_yaml format is deprecated and will be removed in a future release. See http://links.puppetlabs.com/deprecate_yaml_on_network")
+  end
+
   def use_zlib?
     Puppet.features.zlib? && Puppet[:zlib]
   end
@@ -51,22 +55,30 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   end
 
   def intern(klass, text)
+    issue_deprecation_warning
+
     requiring_zlib do
       Puppet::Network::FormatHandler.format(:yaml).intern(klass, decode(text))
     end
   end
 
   def intern_multiple(klass, text)
+    issue_deprecation_warning
+
     requiring_zlib do
       Puppet::Network::FormatHandler.format(:yaml).intern_multiple(klass, decode(text))
     end
   end
 
   def render(instance)
+    issue_deprecation_warning
+
     encode(instance.to_yaml)
   end
 
   def render_multiple(instances)
+    issue_deprecation_warning
+
     encode(instances.to_yaml)
   end
 
