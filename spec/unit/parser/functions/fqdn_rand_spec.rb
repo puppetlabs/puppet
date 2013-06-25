@@ -2,62 +2,42 @@
 require 'spec_helper'
 
 describe "the fqdn_rand function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
+  it "provides a random number strictly less than the given max" do
+    fqdn_rand(3).should satisfy {|n| n.to_i < 3 }
   end
 
-  before :each do
-    node     = Puppet::Node.new('localhost')
-    compiler = Puppet::Parser::Compiler.new(node)
-    @scope   = Puppet::Parser::Scope.new(compiler)
-    @scope["fqdn"] = "127.0.0.1"
+  it "provides the same 'random' value on subsequent calls for the same host" do
+    fqdn_rand(3).should eql(fqdn_rand(3))
   end
 
-  it "should exist" do
-    Puppet::Parser::Functions.function("fqdn_rand").should == "function_fqdn_rand"
+  it "considers the same host and same extra arguments to have the same random sequence" do
+    first_random = fqdn_rand(3, :extra_identifier => [1, "same", "host"])
+    second_random = fqdn_rand(3, :extra_identifier => [1, "same", "host"])
+
+    first_random.should eql(second_random)
   end
 
-  it "should handle 0 arguments" do
-    lambda { @scope.function_fqdn_rand([]) }.should_not raise_error(Puppet::ParseError)
-  end
+  it "allows extra arguments to control the random value on a single host" do
+    first_random = fqdn_rand(10000, :extra_identifier => [1, "different", "host"])
+    second_different_random = fqdn_rand(10000, :extra_identifier => [2, "different", "host"])
 
-  it "should handle 1 argument'}" do
-    lambda { @scope.function_fqdn_rand([3]) }.should_not raise_error(Puppet::ParseError)
-  end
-
-
-  (1..10).each { |n|
-    it "should handle #{n} additional arguments" do
-      lambda { @scope.function_fqdn_rand([3,1,2,3,4,5,6,7,8,9,10][0..n]) }.should_not raise_error(Puppet::ParseError)
-    end
-    it "should handle #{n} additional string arguments" do
-      lambda { @scope.function_fqdn_rand([3,%w{ 1 2 3 4 5 6 7 8 9 10}].flatten[0..n]) }.should_not raise_error(Puppet::ParseError)
-    end
-  }
-
-  it "should return a value less than max" do
-    @scope.function_fqdn_rand([3]).should satisfy {|n| n.to_i < 3 }
-  end
-
-  it "should return the same values on subsequent invocations for the same host" do
-    @scope.function_fqdn_rand([3,4]).should eql(@scope.function_fqdn_rand([3, 4]))
+    first_random.should_not eql(second_different_random)
   end
 
   it "should return different sequences of value for different hosts" do
-    val1 = @scope.function_fqdn_rand([10000000,4])
-    @scope.expects(:[]).with("::fqdn").returns("127.0.0.2")
-    val2 = @scope.function_fqdn_rand([10000000,4])
+    val1 = fqdn_rand(1000000000, :host => "first.host.com")
+    val2 = fqdn_rand(1000000000, :host => "second.host.com")
+
     val1.should_not eql(val2)
   end
 
-  it "should return different values for the same hosts with different seeds" do
-    val1 = @scope.function_fqdn_rand([10000000,4])
-    val2 = @scope.function_fqdn_rand([10000000,42])
-    val1.should_not eql(val2)
-  end
+  def fqdn_rand(max, args = {})
+    host = args[:host] || '127.0.0.1'
+    extra = args[:extra_identifier] || []
 
-  it "should use the Puppet::Util function" do
-    Puppet::Util.expects(:deterministic_rand).with(177093203648075535190027737376590689559,4)
-    @scope.function_fqdn_rand([4])
+    scope = Puppet::Parser::Scope.new_for_test_harness('localhost')
+    scope.stubs(:[]).with("::fqdn").returns(host)
+
+    scope.function_fqdn_rand([max] + extra)
   end
 end
