@@ -480,6 +480,19 @@ describe Puppet::Configurer do
       Puppet.expects(:err)
       expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
     end
+
+    it "should create the last run file with the correct mode" do
+      Puppet.settings.setting(:lastrunfile).stubs(:mode).returns('664')
+      @configurer.save_last_run_summary(@report)
+      mode = File.stat(Puppet[:lastrunfile]).mode
+      (mode & 0777).should == 0664
+    end
+
+    it "should report invalid last run file permissions" do
+      Puppet.settings.setting(:lastrunfile).stubs(:mode).returns('892')
+      Puppet.expects(:err)
+      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
+    end
   end
 
   describe "when retrieving a catalog" do
