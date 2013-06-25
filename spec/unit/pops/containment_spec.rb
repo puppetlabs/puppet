@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'puppet/pops'
 require File.join(File.dirname(__FILE__), 'factory_rspec_helper')
 
