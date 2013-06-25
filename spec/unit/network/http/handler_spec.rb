@@ -4,6 +4,7 @@ require 'puppet/network/http'
 require 'puppet/network/http/handler'
 require 'puppet/network/authorization'
 require 'puppet/network/authentication'
+require 'puppet/indirector/memory'
 
 describe Puppet::Network::HTTP::Handler do
   let(:handler) { TestingHandler.new }
@@ -399,68 +400,83 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when saving a model instance" do
-      before do
-        Puppet::Indirector::Indirection.stubs(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
-        handler.stubs(:body).returns('my stuff')
-        handler.stubs(:content_type_header).returns("text/yaml")
+      before :all do
+        class Puppet::TestModel
+          extend Puppet::Indirector
+          indirects :test_model
+          attr_accessor :name, :data
+          def initialize(name = "name", data = '')
+            @name = name
+            @data = data
+          end
 
-        @result = stub 'result', :render => "the result"
+          def self.from_pson(pson)
+            new(pson["name"], pson["data"])
+          end
 
-        @model_instance = stub('indirected model instance')
-        @model_class.stubs(:convert_from).returns(@model_instance)
-        @indirection.stubs(:save)
+          def ==(other)
+            other.is_a? Puppet::TestModel and other.name == name and other.data == data
+          end
+        end
 
-        @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
-        Puppet::Network::FormatHandler.stubs(:format).returns @format
-        @yamlformat = stub 'yaml', :suitable? => true, :name => "yaml", :mime => "text/yaml"
-        Puppet::Network::FormatHandler.stubs(:format).with("yaml").returns @yamlformat
+        # The subclass must not be all caps even though the superclass is
+        class Puppet::TestModel::Memory < Puppet::Indirector::Memory
+        end
+
+        Puppet::TestModel.indirection.terminus_class = :memory
       end
 
-      it "should use the indirection request to find the model" do
-        handler.do_save("my_handler", "my_result", {}, request, response)
+      after :all do
+        # Remove the class, unlinking it from the rest of the system.
+        Puppet.send(:remove_const, :TestModel)
       end
 
-      it "should use the 'body' hook to retrieve the body of the request" do
-        handler.expects(:body).returns "my body"
-        @model_class.expects(:convert_from).with(anything, "my body").returns @model_instance
+      let(:terminus_class) { Puppet::TestModel::Memory }
+      let(:terminus) { Puppet::TestModel.indirection.terminus(:memory) }
+      let(:indirection) { Puppet::TestModel.indirection }
+      let(:model) { Puppet::TestModel }
 
-        handler.do_save("my_handler", "my_result", {}, request, response)
+      def a_request_that_submits(data, request = {})
+        {
+          :accept_header => request[:accept_header] || "yaml",
+          :content_type_header => "text/yaml",
+          :http_method => "GET",
+          :path => "/#{indirection.name}/#{data.name}",
+          :params => {},
+          :client_cert => nil,
+          :body => data.render("text/yaml")
+        }
       end
 
       it "should fail to save model if data is not specified" do
-        handler.stubs(:body).returns('')
+        request[:body] = ''
 
-        lambda { handler.do_save("my_handler", "my_result", {}, request, response) }.should raise_error(ArgumentError)
-      end
-
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:save).with(@model_instance, 'key').once
-        handler.do_save("my_handler", "key", {}, request, response)
+        expect { handler.do_save("my_handler", "my_result", {}, request, response) }.to raise_error(ArgumentError)
       end
 
       it "should use the default status when a model save call succeeds" do
+        request = a_request_that_submits(Puppet::TestModel.new("my data", "some data"))
+
         handler.expects(:set_response).with(anything, anything, nil)
-        handler.do_save("my_handler", "my_result", {}, request, response)
+
+        handler.do_save(indirection.name, "my data", {}, request, response)
       end
 
       it "should return the yaml-serialized result when a model save call succeeds" do
-        @indirection.stubs(:save).returns(@model_instance)
-        @model_instance.expects(:to_yaml).returns('foo')
-        handler.do_save("my_handler", "my_result", {}, request, response)
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data)
+
+        handler.expects(:set_response).with(response, data.render(:yaml))
+
+        handler.do_save(indirection.name, "my data", {}, request, response)
       end
 
       it "should set the content to yaml" do
-        handler.expects(:set_content_type).with(response, @yamlformat)
-        handler.do_save("my_handler", "my_result", {}, request, response)
-      end
+        request = a_request_that_submits(Puppet::TestModel.new("my data", "some data"))
 
-      it "should use the content-type header to know the body format" do
-        handler.expects(:content_type_header).returns("text/format")
-        Puppet::Network::FormatHandler.stubs(:mime).with("text/format").returns @format
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format("yaml"))
 
-        @model_class.expects(:convert_from).with("format", anything).returns @model_instance
-
-        handler.do_save("my_handler", "my_result", {}, request, response)
+        handler.do_save(indirection.name, "my data", {}, request, response)
       end
     end
   end
@@ -518,6 +534,10 @@ describe Puppet::Network::HTTP::Handler do
 
     def client_cert(request)
       request[:client_cert]
+    end
+
+    def body(request)
+      request[:body]
     end
   end
 end
