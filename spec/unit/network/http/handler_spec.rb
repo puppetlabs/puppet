@@ -128,7 +128,22 @@ describe Puppet::Network::HTTP::Handler do
 
     it "should set the format to text/plain when serializing an exception" do
       handler.expects(:set_content_type).with(response, "text/plain")
+
       handler.do_exception(response, "A test", 404)
+    end
+
+    it "sends an exception string with the given status" do
+      handler.expects(:set_response).with(response, "A test", 404)
+
+      handler.do_exception(response, "A test", 404)
+    end
+
+    it "sends an exception error with the exception's status" do
+      error = Puppet::Network::HTTP::Handler::HTTPNotAcceptableError.new("test message")
+
+      handler.expects(:set_response).with(response, error.to_s, error.status)
+
+      handler.do_exception(response, error)
     end
 
     it "should raise an error if the request is formatted in an unknown format" do
@@ -400,7 +415,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when saving a model instance" do
-      before :all do
+      before :each do
         class Puppet::TestModel
           extend Puppet::Indirector
           indirects :test_model
@@ -412,6 +427,13 @@ describe Puppet::Network::HTTP::Handler do
 
           def self.from_pson(pson)
             new(pson["name"], pson["data"])
+          end
+
+          def to_pson
+            {
+              "name" => @name,
+              "data" => @data
+            }.to_pson
           end
 
           def ==(other)
@@ -426,7 +448,8 @@ describe Puppet::Network::HTTP::Handler do
         Puppet::TestModel.indirection.terminus_class = :memory
       end
 
-      after :all do
+      after :each do
+        Puppet::TestModel.indirection.delete
         # Remove the class, unlinking it from the rest of the system.
         Puppet.send(:remove_const, :TestModel)
       end
@@ -438,7 +461,7 @@ describe Puppet::Network::HTTP::Handler do
 
       def a_request_that_submits(data, request = {})
         {
-          :accept_header => request[:accept_header] || "yaml",
+          :accept_header => request[:accept_header],
           :content_type_header => "text/yaml",
           :http_method => "GET",
           :path => "/#{indirection.name}/#{data.name}",
@@ -454,29 +477,44 @@ describe Puppet::Network::HTTP::Handler do
         expect { handler.do_save("my_handler", "my_result", {}, request, response) }.to raise_error(ArgumentError)
       end
 
-      it "should use the default status when a model save call succeeds" do
-        request = a_request_that_submits(Puppet::TestModel.new("my data", "some data"))
-
-        handler.expects(:set_response).with(anything, anything, nil)
-
-        handler.do_save(indirection.name, "my data", {}, request, response)
-      end
-
-      it "should return the yaml-serialized result when a model save call succeeds" do
+      it "saves the data sent in the request" do
         data = Puppet::TestModel.new("my data", "some data")
         request = a_request_that_submits(data)
 
+        handler.do_save(indirection.name, "my data", {}, request, response)
+
+        Puppet::TestModel.indirection.find("my data").should == data
+      end
+
+      it "responds with yaml when no Accept header is given" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => nil)
+
         handler.expects(:set_response).with(response, data.render(:yaml))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
 
         handler.do_save(indirection.name, "my data", {}, request, response)
       end
 
-      it "should set the content to yaml" do
-        request = a_request_that_submits(Puppet::TestModel.new("my data", "some data"))
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => "unknown, pson, yaml")
 
-        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format("yaml"))
+        handler.expects(:set_response).with(response, data.render(:pson))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
         handler.do_save(indirection.name, "my data", {}, request, response)
+      end
+
+      it "raises an error and does not save when no accepted formats are known" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
+
+        expect do
+          handler.do_save(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
+
+        Puppet::TestModel.indirection.find("my data").should be_nil
       end
     end
   end
