@@ -14,6 +14,21 @@ module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authorization
   include Puppet::Network::Authentication
 
+  class HTTPError < Exception
+    attr_reader :status
+
+    def initialize(message, status)
+      super(message)
+      @status = status
+    end
+  end
+
+  class HTTPNotAcceptableError < HTTPError
+    def initialize(message)
+      super("Not Acceptable: " + message, 406)
+    end
+  end
+
   attr_reader :server, :handler
 
   YAML_DEPRECATION = "YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network"
@@ -115,6 +130,11 @@ module Puppet::Network::HTTP::Handler
     if exception.is_a?(Exception)
       Puppet.log_exception(exception)
     end
+
+    if exception.respond_to?(:status)
+      status = exception.status
+    end
+
     set_content_type(response, "text/plain")
     set_response(response, exception.to_s, status)
   end
@@ -184,16 +204,14 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our save.
   def do_save(indirection_name, key, params, request, response)
-    data = body(request).to_s
-    raise ArgumentError, "No data to save" if !data or data.empty?
+    model_class = model(indirection_name)
+    formatter = response_formatter_for(model_class, request)
+    sent_object = read_body_into_model(model_class, request)
 
-    format = request_format(request)
-    if format == 'yaml'
-      Puppet.deprecation_warning(YAML_DEPRECATION)
-    end
-    obj = model(indirection_name).convert_from(format, data)
-    result = model(indirection_name).indirection.save(obj, key)
-    return_yaml_response(response, result)
+    result = model_class.indirection.save(sent_object, key)
+
+    set_content_type(response, formatter)
+    set_response(response, formatter.render(result))
   end
 
   # resolve node name from peer's ip address
@@ -208,6 +226,27 @@ module Puppet::Network::HTTP::Handler
   end
 
   private
+
+  def response_formatter_for(model_class, request)
+    accepted_formats = accept_header(request) || "yaml"
+    formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
+      accepted_formats.split(/\s*,\s*/),
+      model_class.supported_formats)
+
+    if formatter.nil?
+      raise HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
+    end
+
+    formatter
+  end
+
+  def read_body_into_model(model_class, request)
+    data = body(request).to_s
+    raise ArgumentError, "No data to save" if !data or data.empty?
+
+    format = request_format(request)
+    model_class.convert_from(format, data)
+  end
 
   def return_yaml_response(response, body)
     Puppet.deprecation_warning(YAML_DEPRECATION)
