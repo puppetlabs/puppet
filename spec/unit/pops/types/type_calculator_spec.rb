@@ -347,40 +347,40 @@ describe 'The type calculator' do
   context 'when converting a ruby class' do
     it 'should yield \'PIntegerType\' for Integer  and Fixnum' do
       [Integer,Fixnum].each do |c|
-        calculator.from_ruby_class(c).class.should == Puppet::Pops::Types::PIntegerType
+        calculator.type(c).class.should == Puppet::Pops::Types::PIntegerType
       end
     end
 
     it 'should yield \'PFloatType\' for Float' do
-      calculator.from_ruby_class(Float).class.should == Puppet::Pops::Types::PFloatType
+      calculator.type(Float).class.should == Puppet::Pops::Types::PFloatType
     end
 
     it 'should yield \'PBooleanType\' for FalseClass and TrueClass' do
       [FalseClass,TrueClass].each do |c|
-        calculator.from_ruby_class(c).class.should == Puppet::Pops::Types::PBooleanType
+        calculator.type(c).class.should == Puppet::Pops::Types::PBooleanType
       end
     end
 
     it 'should yield \'PNilType\' for NilClass' do
-      calculator.from_ruby_class(NilClass).class.should == Puppet::Pops::Types::PNilType
+      calculator.type(NilClass).class.should == Puppet::Pops::Types::PNilType
     end
 
     it 'should yield \'PStringType\' for String' do
-      calculator.from_ruby_class(String).class.should == Puppet::Pops::Types::PStringType
+      calculator.type(String).class.should == Puppet::Pops::Types::PStringType
     end
 
     it 'should yield \'PPatternType\' for Regexp' do
-      calculator.from_ruby_class(Regexp).class.should == Puppet::Pops::Types::PPatternType
+      calculator.type(Regexp).class.should == Puppet::Pops::Types::PPatternType
     end
 
     it 'should yield \'PArrayType[PDataType]\' for Array' do
-      t = calculator.from_ruby_class(Array)
+      t = calculator.type(Array)
       t.class.should == Puppet::Pops::Types::PArrayType
       t.element_type.class.should == Puppet::Pops::Types::PDataType
     end
 
     it 'should yield \'PHashType[PLiteralType,PDataType]\' for Hash' do
-      t = calculator.from_ruby_class(Hash)
+      t = calculator.type(Hash)
       t.class.should == Puppet::Pops::Types::PHashType
       t.key_type.class.should == Puppet::Pops::Types::PLiteralType
       t.element_type.class.should == Puppet::Pops::Types::PDataType
