@@ -11,27 +11,17 @@ STDOUT
 step 'Setup'
 stub_forge_on(master)
 
-step 'Search for modules by partial name'
-search_string = "geordi"
-on master, puppet("module search #{search_string}") do
-  em_module_name = module_name.gsub(/#{search_string}/, "\e[0;32m#{search_string}\e[0m")
-  assert_equal '', stderr
-  assert_equal expected_output % [em_module_name], stdout
-end
+search_types = { 'Search for modules by partial name'                   => "geordi",
+                 'Search for modules by partial full name (dashed)'     => "tance-ge",
+                 'Search for modules by partial full name (slashed)'    => "tance/ge",
+               }
 
-step 'Search for modules by partial full name (dashed)'
-search_string = "tance-ge"
-on master, puppet("module search #{search_string}") do
-  em_module_name = module_name.gsub(/#{search_string}/, "\e[0;32m#{search_string}\e[0m")
-  assert_equal '', stderr
-  assert_equal expected_output % [em_module_name], stdout
-end
-
-step 'Search for modules by partial full name (slashed)'
-search_string = "tance/ge"
-on master, puppet("module search #{search_string}") do
-  search_string = search_string.gsub(/\//, "-")
-  em_module_name = module_name.gsub(/#{search_string}/, "\e[0;32m#{search_string}\e[0m")
-  assert_equal '', stderr
-  assert_equal expected_output % [em_module_name], stdout
+search_types.each do |type, search_string|
+  step type
+  on master, puppet("module search #{search_string}") do
+    search_string = search_string.gsub(/\//, "-")
+    em_module_name = module_name.gsub(/#{search_string}/, "\e[0;32m#{search_string}\e[0m")
+    assert_equal '', stderr
+    assert_equal expected_output % [em_module_name], stdout
+  end
 end
