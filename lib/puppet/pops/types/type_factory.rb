@@ -108,13 +108,24 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
+  # Produces a type for a class or infers a type for something that is not a class
+  # @note
+  #   To get the type for the class' class use `TypeCalculator.infer(c)`
+  #
+  # @overload ruby(o)
+  #   @param o [Class] produces the type corresponding to the class (e.g. Integer becomes PIntegerType)
+  # @overload ruby(o)
+  #   @param o [Object] produces the type corresponding to the instance class (e.g. 3 becomes PIntegerType)
+  #
+  # @api public
+  #
   def self.ruby(o)
-    type = Types::PRubyType.new()
     if o.is_a?(Class)
-      type.ruby_class = o.name
+      @type_calculator.type(o)
     else
+      type = Types::PRubyType.new()
       type.ruby_class = o.class.name
+      type
     end
-    type
   end
 end
