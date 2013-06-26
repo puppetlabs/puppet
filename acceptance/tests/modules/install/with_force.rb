@@ -1,4 +1,4 @@
-test_name "puppet module install (agent)"
+test_name "puppet module install (with force)"
 
 module_user = "pmtacceptance"
 module_name = "nginx"
