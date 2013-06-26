@@ -168,7 +168,15 @@ class Puppet::Pops::Types::TypeCalculator
     type
   end
 
+  # @api private
+  def infer_Class(o)
+    type = Types::PRubyType.new()
+    type.ruby_class = o.name
+    type
+  end
+
   # The type of all types is PType
+  # @api private
   #
   def infer_PObjectType(o)
     Types::PType.new()
