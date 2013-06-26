@@ -35,6 +35,15 @@ describe 'The type calculator' do
       calculator.infer(nil).class.should == Puppet::Pops::Types::PNilType
     end
 
+    it 'an instance of class Foo translates to PRubyType[Foo]' do
+      class Foo
+      end
+
+      t = calculator.infer(Foo.new)
+      t.class.should == Puppet::Pops::Types::PRubyType
+      t.ruby_class.should == 'Foo'
+    end
+
     context 'array' do
       it 'translates to PArrayType' do
         calculator.infer([1,2]).class.should == Puppet::Pops::Types::PArrayType
@@ -118,8 +127,10 @@ describe 'The type calculator' do
         calculator.infer({:first => 1, :second => 2}).class.should == Puppet::Pops::Types::PHashType
       end
 
-      it 'with symbolic keys translates to PHashType[PObjectType,value]' do
-        calculator.infer({:first => 1, :second => 2}).key_type.class.should == Puppet::Pops::Types::PObjectType
+      it 'with symbolic keys translates to PHashType[PRubyType[Symbol],value]' do
+        k = calculator.infer({:first => 1, :second => 2}).key_type
+        k.class.should == Puppet::Pops::Types::PRubyType
+        k.ruby_class.should == 'Symbol'
       end
 
       it 'with string keys translates to PHashType[PStringType,value]' do
@@ -288,6 +299,92 @@ describe 'The type calculator' do
       t = Puppet::Pops::Types::PHashType.new()
       calculator.assignable?(Puppet::Pops::Types::PArrayType.new(), t).should() == false
     end
+
+    it 'should recognize mapped ruby types' do 
+      calculator.assignable?(Puppet::Pops::Types::PIntegerType.new(), Fixnum).should == true
+      calculator.assignable?(Puppet::Pops::Types::PFloatType.new(), Float).should == true
+      calculator.assignable?(Puppet::Pops::Types::PNumericType.new(), Numeric).should == true
+      calculator.assignable?(Puppet::Pops::Types::PNilType.new(), NilClass).should == true
+      calculator.assignable?(Puppet::Pops::Types::PBooleanType.new(), FalseClass).should == true
+      calculator.assignable?(Puppet::Pops::Types::PBooleanType.new(), TrueClass).should == true
+      calculator.assignable?(Puppet::Pops::Types::PStringType.new(), String).should == true
+      calculator.assignable?(Puppet::Pops::Types::PPatternType.new(), Regexp).should == true
+      calculator.assignable?(Puppet::Pops::Types::TypeFactory.array_of_data(), Array).should == true
+      calculator.assignable?(Puppet::Pops::Types::TypeFactory.hash_of_data(), Hash).should == true
+    end
+
+    it 'should recognize ruby type inheritance' do
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      fooType = calculator.infer(Foo.new)
+      barType = calculator.infer(Bar.new)
+
+      calculator.assignable?(fooType, fooType).should == true
+      calculator.assignable?(Foo, fooType).should == true
+
+      calculator.assignable?(fooType, barType).should == true
+      calculator.assignable?(Foo, barType).should == true
+
+      calculator.assignable?(barType, fooType).should == false
+      calculator.assignable?(Bar, fooType).should == false
+    end
+  end
+
+  context 'when testing if x is instance of type t' do
+    it 'should consider fixnum instanceof PIntegerType' do
+      calculator.instance?(Puppet::Pops::Types::PIntegerType.new(), 1)
+    end
+
+    it 'should consider fixnum instanceof Fixnum' do
+      calculator.instance?(Fixnum, 1)
+    end
+  end
+
+  context 'when converting a ruby class' do
+    it 'should yield \'PIntegerType\' for Integer  and Fixnum' do
+      [Integer,Fixnum].each do |c|
+        calculator.from_ruby_class(c).class.should == Puppet::Pops::Types::PIntegerType
+      end
+    end
+
+    it 'should yield \'PFloatType\' for Float' do
+      calculator.from_ruby_class(Float).class.should == Puppet::Pops::Types::PFloatType
+    end
+
+    it 'should yield \'PBooleanType\' for FalseClass and TrueClass' do
+      [FalseClass,TrueClass].each do |c|
+        calculator.from_ruby_class(c).class.should == Puppet::Pops::Types::PBooleanType
+      end
+    end
+
+    it 'should yield \'PNilType\' for NilClass' do
+      calculator.from_ruby_class(NilClass).class.should == Puppet::Pops::Types::PNilType
+    end
+
+    it 'should yield \'PStringType\' for String' do
+      calculator.from_ruby_class(String).class.should == Puppet::Pops::Types::PStringType
+    end
+
+    it 'should yield \'PPatternType\' for Regexp' do
+      calculator.from_ruby_class(Regexp).class.should == Puppet::Pops::Types::PPatternType
+    end
+
+    it 'should yield \'PArrayType[PDataType]\' for Array' do
+      t = calculator.from_ruby_class(Array)
+      t.class.should == Puppet::Pops::Types::PArrayType
+      t.element_type.class.should == Puppet::Pops::Types::PDataType
+    end
+
+    it 'should yield \'PHashType[PLiteralType,PDataType]\' for Hash' do
+      t = calculator.from_ruby_class(Hash)
+      t.class.should == Puppet::Pops::Types::PHashType
+      t.key_type.class.should == Puppet::Pops::Types::PLiteralType
+      t.element_type.class.should == Puppet::Pops::Types::PDataType
+    end
   end
 
   context 'when representing the type as string' do
@@ -357,6 +454,14 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PArrayType.new()     ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PHashType.new()      ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PRubyType.new()      ).is_a?(ptype).should() == true
+    end
+
+    it 'should infer PType as the type of ruby classes' do
+      class Foo
+      end
+      [Object, Numeric, Integer, Fixnum, Float, String, Regexp, Array, Hash, Foo].each do |c|
+        calculator.infer(c).is_a?(Puppet::Pops::Types::PType).should() == true
+      end
     end
 
     it 'should infer PType as the type of PType (meta regression short-circuit)' do
