@@ -46,7 +46,7 @@ class Puppet::Pops::Types::TypeCalculator
     @data_t
   end
 
-  # Answers 'can a t2 be assigned to a t'
+  # Answers 'can an instance of type t2 be assigned to a variable of type t'
   # @api public
   #
   def assignable?(t, t2)
@@ -55,12 +55,53 @@ class Puppet::Pops::Types::TypeCalculator
       return true
     end
 
-    # type compatibility or compatibility of instance's type
-    if is_ptype?(t2)
-      @@assignable_visitor.visit_this(self, t, t2)
-    else
-      @@assignable_visitor.visit_this(self, t, infer(t2))
+    if t.is_a?(Class)
+      t = from_ruby_class(t)
     end
+
+    if t2.is_a?(Class)
+      t2 = from_ruby_class(t2)
+    end
+
+    @@assignable_visitor.visit_this(self, t, t2)
+ end
+
+  # Answers 'what is the Puppet Type that corresponds to the given Ruby class'
+  # @api public
+  #
+  def from_ruby_class(c)
+    # Can't use a visitor here since we don't have an instance of the class
+    case
+    when c == Integer, c == Fixnum # Avoid Bignum for now
+      type = Types::PIntegerType.new()
+    when c == Float
+      type = Types::PFloatType.new()
+    when c == Numeric
+      type = Types::PNumericType.new()
+    when c == String
+      type = Types::PStringType.new()
+    when c == Regexp
+      type = Types::PPatternType.new()
+    when c == NilClass
+      type = Types::PNilType.new()
+    when c == FalseClass, c == TrueClass
+      type = Types::PBooleanType.new()
+    when c == Class
+      type = Types::PType.new()
+    when c == Array
+      # Assume array of data values
+      type = Types::PArrayType.new()
+      type.element_type = Types::PDataType.new()
+    when c == Hash
+      # Assume hash with literal keys and data values
+      type = Types::PHashType.new()
+      type.key_type = Types::PLiteralType.new()
+      type.element_type = Types::PDataType.new()
+    else
+      type = Types::PRubyType.new()
+      type.ruby_class = c.name
+    end
+    type
   end
 
   # Answers 'what is the Puppet Type of o'
@@ -68,6 +109,13 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def infer(o)
     @@infer_visitor.visit_this(self, o)
+  end
+
+  # Answers 'is o an instance of type t'
+  # @api public
+  #
+  def instance?(t, o)
+    assignable?(t, infer(o))
   end
 
   # Answers if t is a puppet type
@@ -161,17 +209,17 @@ class Puppet::Pops::Types::TypeCalculator
     reduce_type(enumerable.collect() {|o| infer(o) })
   end
 
+  # The type of all classes is PType
+  # @api private
+  #
+  def infer_Class(o)
+    Types::PType.new()
+  end
+
   # @api private
   def infer_Object(o)
     type = Types::PRubyType.new()
     type.ruby_class = o.class.name
-    type
-  end
-
-  # @api private
-  def infer_Class(o)
-    type = Types::PRubyType.new()
-    type.ruby_class = o.name
     type
   end
 
@@ -334,7 +382,7 @@ class Puppet::Pops::Types::TypeCalculator
     c1 = class_from_string(t1.ruby_class)
     c2 = class_from_string(t2.ruby_class)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
-    !!(c2 < c1)
+    !!(c2 <= c1)
   end
 
   # @api private
