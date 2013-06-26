@@ -31,8 +31,6 @@ module Puppet::Network::HTTP::Handler
 
   attr_reader :server, :handler
 
-  YAML_DEPRECATION = "YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network"
-
   # Retrieve all headers from the http request, as a hash with the header names
   # (lower-cased) as the keys
   def headers(request)
@@ -197,9 +195,13 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our destroy.
   def do_destroy(indirection_name, key, params, request, response)
-    result = model(indirection_name).indirection.destroy(key, params)
+    model_class = model(indirection_name)
+    formatter = response_formatter_for(model_class, request)
 
-    return_yaml_response(response, result)
+    result = model_class.indirection.destroy(key, params)
+
+    set_content_type(response, formatter)
+    set_response(response, formatter.render(result))
   end
 
   # Execute our save.
@@ -246,12 +248,6 @@ module Puppet::Network::HTTP::Handler
 
     format = request_format(request)
     model_class.convert_from(format, data)
-  end
-
-  def return_yaml_response(response, body)
-    Puppet.deprecation_warning(YAML_DEPRECATION)
-    set_content_type(response, Puppet::Network::FormatHandler.format("yaml"))
-    set_response(response, body.to_yaml)
   end
 
   def get?(request)
@@ -310,7 +306,7 @@ module Puppet::Network::HTTP::Handler
       value = CGI.unescape(value)
       if value =~ /^---/
         Puppet.debug("Found YAML while processing request parameter #{param} (value: <#{value}>)")
-        Puppet.deprecation_warning(YAML_DEPRECATION)
+        Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
         value = YAML.load(value, :safe => true, :deserialize_symbols => true)
       else
         value = true if value == "true"

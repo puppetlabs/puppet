@@ -7,6 +7,74 @@ require 'puppet/network/authentication'
 require 'puppet/indirector/memory'
 
 describe Puppet::Network::HTTP::Handler do
+  before :each do
+    class Puppet::TestModel
+      extend Puppet::Indirector
+      indirects :test_model
+      attr_accessor :name, :data
+      def initialize(name = "name", data = '')
+        @name = name
+        @data = data
+      end
+
+      def self.from_pson(pson)
+        new(pson["name"], pson["data"])
+      end
+
+      def to_pson
+        {
+          "name" => @name,
+          "data" => @data
+        }.to_pson
+      end
+
+      def ==(other)
+        other.is_a? Puppet::TestModel and other.name == name and other.data == data
+      end
+    end
+
+    # The subclass must not be all caps even though the superclass is
+    class Puppet::TestModel::Memory < Puppet::Indirector::Memory
+    end
+
+    Puppet::TestModel.indirection.terminus_class = :memory
+  end
+
+  after :each do
+    Puppet::TestModel.indirection.delete
+    # Remove the class, unlinking it from the rest of the system.
+    Puppet.send(:remove_const, :TestModel)
+  end
+
+  let(:terminus_class) { Puppet::TestModel::Memory }
+  let(:terminus) { Puppet::TestModel.indirection.terminus(:memory) }
+  let(:indirection) { Puppet::TestModel.indirection }
+  let(:model) { Puppet::TestModel }
+
+  def a_request_that_submits(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "GET",
+      :path => "/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => data.render("text/yaml")
+    }
+  end
+
+  def a_request_that_destroys(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "DELETE",
+      :path => "/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => ''
+    }
+  end
+
   let(:handler) { TestingHandler.new }
 
   it "should include the v1 REST API" do
@@ -378,99 +446,52 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when destroying a model instance" do
-      before do
-        Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
+      it "destroys the data indicated in the request" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data)
 
-        @result = stub 'result', :render => "the result"
-        @indirection.stubs(:destroy).returns @result
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
+
+        Puppet::TestModel.indirection.find("my data").should be_nil
       end
 
-      it "should use the indirection request to find the model" do
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
+      it "responds with yaml when no Accept header is given" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data, :accept_header => nil)
+
+        handler.expects(:set_response).with(response, data.render(:yaml))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
+
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
       end
 
-      it "should use the escaped request key to destroy the instance in the model" do
-        @indirection.expects(:destroy).with("foo bar", anything)
-        handler.do_destroy("my_handler", "foo bar", {}, request, response)
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data, :accept_header => "unknown, pson, yaml")
+
+        handler.expects(:set_response).with(response, data.render(:pson))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
+
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
       end
 
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:destroy).with(anything, has_entries(:foo => :baz, :bar => :xyzzy))
-        handler.do_destroy("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, request, response)
-      end
+      it "raises an error and does not destory when no accepted formats are known" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      it "should use the default status code a model destroy call succeeds" do
-        handler.expects(:set_response).with(anything, anything, nil)
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
-      end
+        expect do
+          handler.do_destroy(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
 
-      it "should return a yaml-encoded result when a model destroy call succeeds" do
-        @result = stub 'result', :to_yaml => "the result"
-        @indirection.expects(:destroy).returns(@result)
-
-        handler.expects(:set_response).with(anything, "the result", anything)
-
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
+        Puppet::TestModel.indirection.find("my data").should_not be_nil
       end
     end
 
     describe "when saving a model instance" do
-      before :each do
-        class Puppet::TestModel
-          extend Puppet::Indirector
-          indirects :test_model
-          attr_accessor :name, :data
-          def initialize(name = "name", data = '')
-            @name = name
-            @data = data
-          end
-
-          def self.from_pson(pson)
-            new(pson["name"], pson["data"])
-          end
-
-          def to_pson
-            {
-              "name" => @name,
-              "data" => @data
-            }.to_pson
-          end
-
-          def ==(other)
-            other.is_a? Puppet::TestModel and other.name == name and other.data == data
-          end
-        end
-
-        # The subclass must not be all caps even though the superclass is
-        class Puppet::TestModel::Memory < Puppet::Indirector::Memory
-        end
-
-        Puppet::TestModel.indirection.terminus_class = :memory
-      end
-
-      after :each do
-        Puppet::TestModel.indirection.delete
-        # Remove the class, unlinking it from the rest of the system.
-        Puppet.send(:remove_const, :TestModel)
-      end
-
-      let(:terminus_class) { Puppet::TestModel::Memory }
-      let(:terminus) { Puppet::TestModel.indirection.terminus(:memory) }
-      let(:indirection) { Puppet::TestModel.indirection }
-      let(:model) { Puppet::TestModel }
-
-      def a_request_that_submits(data, request = {})
-        {
-          :accept_header => request[:accept_header],
-          :content_type_header => "text/yaml",
-          :http_method => "GET",
-          :path => "/#{indirection.name}/#{data.name}",
-          :params => {},
-          :client_cert => nil,
-          :body => data.render("text/yaml")
-        }
-      end
-
       it "should fail to save model if data is not specified" do
         request[:body] = ''
 
