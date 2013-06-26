@@ -103,7 +103,7 @@ end
 on master, puppet("module list --tree --modulepath #{master['sitemoduledir']}") do |res|
   assert_match( /jimmy-crakorn/,
                 res.stdout,
-                'Did not find module jimmy-crick in module site path')
+                'Did not find module jimmy-crakorn in module site path')
 
   assert_match( /jimmy-crick/,
                 res.stdout,
