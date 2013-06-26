@@ -75,7 +75,7 @@ class Puppet::Pops::Types::TypeCalculator
 
     # Can't use a visitor here since we don't have an instance of the class
     case
-    when c == Integer, c == Fixnum # Avoid Bignum for now
+    when c <= Integer
       type = Types::PIntegerType.new()
     when c == Float
       type = Types::PFloatType.new()
@@ -252,7 +252,7 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def infer_Fixnum(o)
+  def infer_Integer(o)
     Types::PIntegerType.new()
   end
 

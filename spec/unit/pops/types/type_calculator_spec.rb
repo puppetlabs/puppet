@@ -11,6 +11,10 @@ describe 'The type calculator' do
       calculator.infer(1).class.should == Puppet::Pops::Types::PIntegerType
     end
 
+    it 'large fixnum (or bignum depending on architecture) translates to PIntegerType' do
+      calculator.infer(2**33).class.should == Puppet::Pops::Types::PIntegerType
+    end
+
     it 'float translates to PFloatType' do
       calculator.infer(1.3).class.should == Puppet::Pops::Types::PFloatType
     end
@@ -51,6 +55,10 @@ describe 'The type calculator' do
 
       it 'with fixnum values translates to PArrayType[PIntegerType]' do
         calculator.infer([1,2]).element_type.class.should == Puppet::Pops::Types::PIntegerType
+      end
+
+      it 'with 32 and 64 bit integer values translates to PArrayType[PIntegerType]' do
+        calculator.infer([1,2**33]).element_type.class.should == Puppet::Pops::Types::PIntegerType
       end
 
       it 'with fixnum and float values translates to PArrayType[PNumericType]' do
@@ -290,7 +298,7 @@ describe 'The type calculator' do
       calculator.assignable?(Puppet::Pops::Types::PRubyType.new(), t).should() == false
     end
 
-    it 'should reject PArrayType to non array type collectionss' do
+    it 'should reject PArrayType to non array type collections' do
       t = Puppet::Pops::Types::PArrayType.new()
       calculator.assignable?(Puppet::Pops::Types::PHashType.new(), t).should() == false
     end
@@ -301,7 +309,9 @@ describe 'The type calculator' do
     end
 
     it 'should recognize mapped ruby types' do 
+      calculator.assignable?(Puppet::Pops::Types::PIntegerType.new(), Integer).should == true
       calculator.assignable?(Puppet::Pops::Types::PIntegerType.new(), Fixnum).should == true
+      calculator.assignable?(Puppet::Pops::Types::PIntegerType.new(), Bignum).should == true
       calculator.assignable?(Puppet::Pops::Types::PFloatType.new(), Float).should == true
       calculator.assignable?(Puppet::Pops::Types::PNumericType.new(), Numeric).should == true
       calculator.assignable?(Puppet::Pops::Types::PNilType.new(), NilClass).should == true
@@ -345,8 +355,8 @@ describe 'The type calculator' do
   end
 
   context 'when converting a ruby class' do
-    it 'should yield \'PIntegerType\' for Integer  and Fixnum' do
-      [Integer,Fixnum].each do |c|
+    it 'should yield \'PIntegerType\' for Integer, Fixnum, and Bignum' do
+      [Integer,Fixnum,Bignum].each do |c|
         calculator.type(c).class.should == Puppet::Pops::Types::PIntegerType
       end
     end
@@ -459,7 +469,7 @@ describe 'The type calculator' do
     it 'should infer PType as the type of ruby classes' do
       class Foo
       end
-      [Object, Numeric, Integer, Fixnum, Float, String, Regexp, Array, Hash, Foo].each do |c|
+      [Object, Numeric, Integer, Fixnum, Bignum, Float, String, Regexp, Array, Hash, Foo].each do |c|
         calculator.infer(c).is_a?(Puppet::Pops::Types::PType).should() == true
       end
     end
