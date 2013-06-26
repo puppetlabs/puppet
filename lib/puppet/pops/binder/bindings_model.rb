@@ -35,18 +35,29 @@ module Puppet::Pops::Binder::Bindings
   # An InstanceProducer creates an instance of the given class
   # Arguments are passed to the class' `new` operator in the order they are given.
   #
-  class InstanceProducer < ArgumentedProducer
+  class InstanceProducer < Producer
     # TODO: This should be a typed Puppet Object
     contains_many_uni 'arguments', Object
     has_attr 'class_name', String
   end
 
   # Producer that provides an instance that in turn creates the looked up value
-  # Named arguments are passed to the given class' new operator as an Array[NamedArgument]
+  # Named arguments are passed to the given class' new operator as a Hash.
+  # The dynamic producer is later called with #produce() to produce the value.
   #
-  class DynamicProducer < ArgumentedProducer
+  class DynamicProducer < Producer
     contains_many_uni 'arguments', NamedArgument
     has_attr 'class_name', String
+  end
+
+  class MultibindProducer < Producer
+    abstract
+  end
+
+  class ArrayMultibindProducer < MultibindProducer
+  end
+
+  class HashMultibindProducer < MultibindProducer
   end
 
   class Binding < AbstractBinding

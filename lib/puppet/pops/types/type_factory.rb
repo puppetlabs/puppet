@@ -48,6 +48,13 @@ module Puppet::Pops::Types::TypeFactory
     Types::PLiteralType.new()
   end
 
+  # Produces the abstract type Collection
+  # @api public
+  #
+  def self.collection()
+    Types::PCollectionType.new()
+  end
+
   # Produces the Data type
   # @api public
   #
