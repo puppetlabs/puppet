@@ -29,6 +29,12 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
+  class HTTPNotFoundError < HTTPError
+    def initialize(message)
+      super("Not Found: " + message, 404)
+    end
+  end
+
   attr_reader :server, :handler
 
   # Retrieve all headers from the http request, as a hash with the header names
@@ -45,24 +51,6 @@ module Puppet::Network::HTTP::Handler
   # Retrieve the Content-Type header from the http request.
   def content_type_header(request)
     raise NotImplementedError
-  end
-
-  # Which format to use when serializing our response or interpreting the request.
-  # IF the client provided a Content-Type use this, otherwise use the Accept header
-  # and just pick the first value.
-  def format_to_use(request)
-    unless header = accept_header(request)
-      raise ArgumentError, "An Accept header must be provided to pick the right format"
-    end
-
-    format = nil
-    header.split(/,\s*/).each do |name|
-      next unless format = Puppet::Network::FormatHandler.format(name)
-      next unless format.suitable?
-      return format
-    end
-
-    raise "No specified acceptable formats (#{header}) are functional on this machine"
   end
 
   def request_format(request)
@@ -103,6 +91,8 @@ module Puppet::Network::HTTP::Handler
     end
   rescue SystemExit,NoMemoryError
     raise
+  rescue HTTPError => e
+    return do_exception(response, e.message, e.status)
   rescue Exception => e
     return do_exception(response, e)
   ensure
@@ -125,12 +115,11 @@ module Puppet::Network::HTTP::Handler
       # for authorization issues
       status = 403 if status == 400
     end
+
     if exception.is_a?(Exception)
       Puppet.log_exception(exception)
-    end
-
-    if exception.respond_to?(:status)
-      status = exception.status
+    else
+      Puppet.notice(exception.to_s)
     end
 
     set_content_type(response, "text/plain")
@@ -144,21 +133,18 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our find.
   def do_find(indirection_name, key, params, request, response)
-    unless result = model(indirection_name).indirection.find(key, params)
-      Puppet.info("Could not find #{indirection_name} for '#{key}'")
-      return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
+    model_class = model(indirection_name)
+    unless result = model_class.indirection.find(key, params)
+      raise HTTPNotFoundError, "Could not find #{indirection_name} #{key}"
     end
 
-    # The encoding of the result must include the format to use,
-    # and it needs to be used for both the rendering and as
-    # the content type.
-    format = format_to_use(request)
+    format = accepted_response_formatter_for(model_class, request)
     set_content_type(response, format)
 
     rendered_result = result
     if result.respond_to?(:render)
       Puppet::Util::Profiler.profile("Rendered result in #{format}") do
-       rendered_result = result.render(format)
+        rendered_result = result.render(format)
       end
     end
 
@@ -170,8 +156,7 @@ module Puppet::Network::HTTP::Handler
   # Execute our head.
   def do_head(indirection_name, key, params, request, response)
     unless self.model(indirection_name).indirection.head(key, params)
-      Puppet.info("Could not find #{indirection_name} for '#{key}'")
-      return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
+      raise HTTPNotFoundError, "Could not find #{indirection_name} #{key}"
     end
 
     # No need to set a response because no response is expected from a
@@ -184,10 +169,10 @@ module Puppet::Network::HTTP::Handler
     result = model.indirection.search(key, params)
 
     if result.nil?
-      return do_exception(response, "Could not find instances in #{indirection_name} with '#{key}'", 404)
+      raise HTTPNotFoundError, "Could not find instances in #{indirection_name} with '#{key}'"
     end
 
-    format = format_to_use(request)
+    format = accepted_response_formatter_for(model, request)
     set_content_type(response, format)
 
     set_response(response, model.render_multiple(format, result))
@@ -196,7 +181,7 @@ module Puppet::Network::HTTP::Handler
   # Execute our destroy.
   def do_destroy(indirection_name, key, params, request, response)
     model_class = model(indirection_name)
-    formatter = response_formatter_for(model_class, request)
+    formatter = accepted_response_formatter_or_yaml_for(model_class, request)
 
     result = model_class.indirection.destroy(key, params)
 
@@ -207,7 +192,7 @@ module Puppet::Network::HTTP::Handler
   # Execute our save.
   def do_save(indirection_name, key, params, request, response)
     model_class = model(indirection_name)
-    formatter = response_formatter_for(model_class, request)
+    formatter = accepted_response_formatter_or_yaml_for(model_class, request)
     sent_object = read_body_into_model(model_class, request)
 
     result = model_class.indirection.save(sent_object, key)
@@ -229,8 +214,17 @@ module Puppet::Network::HTTP::Handler
 
   private
 
-  def response_formatter_for(model_class, request)
+  def accepted_response_formatter_for(model_class, request)
+    accepted_formats = accept_header(request) or raise HTTPNotAcceptableError, "Missing required Accept header"
+    response_formatter_for(model_class, request, accepted_formats)
+  end
+
+  def accepted_response_formatter_or_yaml_for(model_class, request)
     accepted_formats = accept_header(request) || "yaml"
+    response_formatter_for(model_class, request, accepted_formats)
+  end
+
+  def response_formatter_for(model_class, request, accepted_formats)
     formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
       accepted_formats.split(/\s*,\s*/),
       model_class.supported_formats)
