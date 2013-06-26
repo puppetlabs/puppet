@@ -358,6 +358,12 @@ module Puppet
       newvalue(/.*/) { }
     end
 
+    newproperty(:s3_enabled, :parent => Puppet::IniProperty) do
+      desc "Access the repo via S3. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(/^(0|1)$/) { }
+    end
+
     newproperty(:sslcacert, :parent => Puppet::IniProperty) do
       desc "Path to the directory containing the databases of the
         certificate authorities yum should use to verify SSL certificates.\n#{ABSENT_DOC}"

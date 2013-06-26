@@ -14,7 +14,7 @@ describe Puppet::Type.type(:yumrepo) do
 
     [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude, :failovermethod, :gpgcheck, :gpgkey, :http_caching, 
        :include, :includepkgs, :keepalive, :metadata_expire, :mirrorlist, :priority, :protect, :proxy, :proxy_username, :proxy_password, :timeout, 
-       :sslcacert, :sslverify, :sslclientcert, :sslclientkey].each do |param|
+       :sslcacert, :sslverify, :sslclientcert, :sslclientkey, :s3_enabled].each do |param|
       it "should have a '#{param}' parameter" do
         Puppet::Type.type(:yumrepo).attrtype(param).should == :property
      end
@@ -36,7 +36,7 @@ describe Puppet::Type.type(:yumrepo) do
      end
     end
 
-    [:enabled, :enabledgroups, :gpgcheck, :keepalive, :protect].each do |param|
+    [:enabled, :enabledgroups, :gpgcheck, :keepalive, :protect, :s3_enabled].each do |param|
       it "should fail if '#{param}' does not have one of the following values (0|1)" do
         lambda { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "2") }.should raise_error
       end
