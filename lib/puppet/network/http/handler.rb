@@ -58,6 +58,7 @@ module Puppet::Network::HTTP::Handler
       header.gsub!(/\s*;.*$/,'') # strip any charset
       format = Puppet::Network::FormatHandler.mime(header)
       raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support" if format.nil?
+      report_if_deprecated(format)
       return format.name.to_s if format.suitable?
     end
 
@@ -214,6 +215,12 @@ module Puppet::Network::HTTP::Handler
 
   private
 
+  def report_if_deprecated(format)
+    if format.name == :yaml || format.name == :b64_zlib_yaml
+      Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
+    end
+  end
+
   def accepted_response_formatter_for(model_class, request)
     accepted_formats = accept_header(request) or raise HTTPNotAcceptableError, "Missing required Accept header"
     response_formatter_for(model_class, request, accepted_formats)
@@ -233,6 +240,7 @@ module Puppet::Network::HTTP::Handler
       raise HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
     end
 
+    report_if_deprecated(formatter)
     formatter
   end
 
