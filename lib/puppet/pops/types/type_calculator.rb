@@ -56,20 +56,23 @@ class Puppet::Pops::Types::TypeCalculator
     end
 
     if t.is_a?(Class)
-      t = from_ruby_class(t)
+      t = type(t)
     end
 
     if t2.is_a?(Class)
-      t2 = from_ruby_class(t2)
+      t2 = type(t2)
     end
 
     @@assignable_visitor.visit_this(self, t, t2)
  end
 
-  # Answers 'what is the Puppet Type that corresponds to the given Ruby class'
+  # Answers 'what is the Puppet Type corresponding to the given Ruby class'
+ # @param c [Class] the class for which a puppet type is wanted
   # @api public
   #
-  def from_ruby_class(c)
+  def type(c)
+    raise ArgumentError, "Argument must be a Class" unless c.is_a? Class
+
     # Can't use a visitor here since we don't have an instance of the class
     case
     when c == Integer, c == Fixnum # Avoid Bignum for now
