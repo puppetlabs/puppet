@@ -77,7 +77,7 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     it 'should install using the source' do
       cmd = subject.install_command({:source => source})
 
-      cmd.should == ['cmd.exe', '/c', 'start', '/w', source]
+      cmd.should == ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', source]
     end
   end
 
