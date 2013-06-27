@@ -1,14 +1,12 @@
 require 'puppet/network/format_handler'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
-  # Yaml doesn't need the class name; it's serialized.
   def intern(klass, text)
     data = YAML.load(text, :safe => true, :deserialize_symbols => true)
     return data if data.is_a?(klass)
     klass.from_pson(data)
   end
 
-  # Yaml doesn't need the class name; it's serialized.
   def intern_multiple(klass, text)
     YAML.load(text, :safe => true, :deserialize_symbols => true).collect do |data|
       if data.is_a?(klass)

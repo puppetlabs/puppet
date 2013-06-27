@@ -351,4 +351,46 @@ describe Puppet::Transaction::Report do
       report.to_yaml_properties.should_not include('@external_times')
     end
   end
+
+  it "can make a round trip through pson" do
+    status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
+    status.changed = true
+
+    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment')
+    report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
+    report.add_times("timing", 4)
+    report.add_resource_status(status)
+    report.finalize_report
+
+    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render(:pson))
+
+    tripped.host.should == report.host
+    tripped.time.should == report.time
+    tripped.configuration_version.should == report.configuration_version
+    tripped.report_format.should == report.report_format
+    tripped.puppet_version.should == report.puppet_version
+    tripped.kind.should == report.kind
+    tripped.status.should == report.status
+    tripped.environment.should == report.environment
+
+    logs_as_strings(tripped).should == logs_as_strings(report)
+    metrics_as_hashes(tripped).should == metrics_as_hashes(report)
+    resource_statuses_as_hashes(tripped).should == resource_statuses_as_hashes(report)
+  end
+
+  def logs_as_strings(report)
+    report.logs.map(&:to_report)
+  end
+
+  def metrics_as_hashes(report)
+    Hash[*report.metrics.collect do |name, m|
+      [name, { :name => m.name, :label => m.label, :value => m.value }]
+    end.flatten]
+  end
+
+  def resource_statuses_as_hashes(report)
+    Hash[*report.resource_statuses.collect do |name, s|
+      [name, PSON.parse(s.to_pson)]
+    end.flatten]
+  end
 end

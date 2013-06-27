@@ -15,6 +15,15 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
     @instances[request.key]
   end
 
+  def search(request)
+    found_keys = @instances.keys.find_all { |key| key.include?(request.key) }
+    found_keys.collect { |key| @instances[key] }
+  end
+
+  def head(request)
+    not find(request).nil?
+  end
+
   def save(request)
     @instances[request.key] = request.instance
   end
