@@ -19,6 +19,14 @@ class Puppet::Pops::Binder::Binder
   # @api private
   attr_reader :injector_entries
 
+  # @api private
+  attr_reader :key_factory
+
+  # Whether the binder is fully configured or not
+  # @api public
+  #
+  attr_reader :configured
+
   # @api public
   def initialize
     @category_precedences = {}
@@ -27,8 +35,16 @@ class Puppet::Pops::Binder::Binder
 
     # Resulting hash of all key -> binding
     @injector_entries = {}
+
+    # Not configured until the fat lady sings
+    @configured = false
   end
 
+  # Answers the question 'is this bindder configured?' to the point it can be used to instantiate an Injector
+  # @api public
+  def configured?()
+    configured()
+  end
 
   # Defines the effective categories in precedence order (highest precedence first).
   # The 'common' (lowest precedence) category should not be included in the list.
@@ -38,9 +54,14 @@ class Puppet::Pops::Binder::Binder
   # an instance of Puppet::Pops::Binder::Bindings::EffectiveCategories.
   #
   # @param effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] effective categories (i.e. with evaluated values)
+  # @raises ArgumentError if this binder is already configured
+  # @raises ArgumentError if the argument is not an EffectiveCategories
+  # @raises ArgumentError if there is an attempt to redefine a category (non unique, or 'common').
   # @api public
   #
   def define_categories(effective_categories)
+    raise ArgumentError, "This binder is already configured. Cannot redefine its content." if configured?()
+
     # Note: a model instance is used since a Hash does not have a defined order in all Rubies.
     unless effective_cateogires.is_a?(Puppet::Pops::Binder::Bindings::EffectiveCategories)
       raise ArgumentError, "Expected Puppet::Pops::Binder::Bindings::EffectiveCategories, but got a: #{effective_categories.class}"
@@ -68,20 +89,27 @@ class Puppet::Pops::Binder::Binder
   #
   # @param layered_bindings [Puppet::Pops::Binder::Bindings::LayeredBindings] the named and ordered layers
   # @raises ArgumentError if categories have not been defined
+  # @raises ArgumentError if this binder is already configured
   # @raises ArgumentError if bindings with unresolved 'override' surfaces as an effective binding
   # @raises ArgumentError if the given argument has the wrong type, or if model is invalid in some way
   # @api public
   #
   def define_layers(layered_bindings)
+    raise ArgumentError, "This binder is already configured. Cannot redefine its content." if configured?()
+
     raise ArgumentError, "Categories must be set first" if @category_precedences.empty?
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
     injector_entries.each  do |k,v|
       raise ArgumentError, "Binding with unresolved 'override' detected: #{k}" unless v.is_resolved?()
     end
+    # and the fat lady has sung
+    @configured = true
   end
 
 
   # Processes the information in a layer, aggregating it to the injector_entries hash in its parent binder.
+  # A LayerProcessor holds the intermediate state required while processing one layer.
+  #
   # @api private
   #
   class LayerProcessor
