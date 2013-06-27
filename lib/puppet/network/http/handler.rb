@@ -14,6 +14,10 @@ module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authorization
   include Puppet::Network::Authentication
 
+  # These shouldn't be allowed to be set by clients
+  # in the query string, for security reasons.
+  DISALLOWED_KEYS = ["node", "ip"]
+
   class HTTPError < Exception
     attr_reader :status
 
@@ -295,29 +299,42 @@ module Puppet::Network::HTTP::Handler
   end
 
   def decode_params(params)
-    params.inject({}) do |result, ary|
+    params.select { |key, _| allowed_parameter?(key) }.inject({}) do |result, ary|
       param, value = ary
-      next result if param.nil? || param.empty?
-
-      param = param.to_sym
-
-      # These shouldn't be allowed to be set by clients
-      # in the query string, for security reasons.
-      next result if param == :node
-      next result if param == :ip
-      value = CGI.unescape(value)
-      if value =~ /^---/
-        Puppet.debug("Found YAML while processing request parameter #{param} (value: <#{value}>)")
-        Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
-        value = YAML.load(value, :safe => true, :deserialize_symbols => true)
-      else
-        value = true if value == "true"
-        value = false if value == "false"
-        value = Integer(value) if value =~ /^\d+$/
-        value = value.to_f if value =~ /^\d+\.\d+$/
-      end
-      result[param] = value
+      result[param.to_sym] = parse_parameter_value(param, value)
       result
+    end
+  end
+
+  def allowed_parameter?(name)
+    not (name.nil? || name.empty? || DISALLOWED_KEYS.include?(name))
+  end
+
+  def parse_parameter_value(param, value)
+    case value
+    when /^---/
+      Puppet.debug("Found YAML while processing request parameter #{param} (value: <#{value}>)")
+      Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
+      YAML.load(value, :safe => true, :deserialize_symbols => true)
+    when Array
+      value.collect { |v| parse_primitive_parameter_value(v) }
+    else
+      parse_primitive_parameter_value(value)
+    end
+  end
+
+  def parse_primitive_parameter_value(value)
+    case value
+    when "true"
+      true
+    when "false"
+      false
+    when /^\d+$/
+      Integer(value)
+    when /^\d+\.\d+$/
+      value.to_f
+    else
+      value
     end
   end
 
