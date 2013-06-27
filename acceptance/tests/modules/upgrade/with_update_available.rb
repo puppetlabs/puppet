@@ -29,4 +29,7 @@ on master, puppet("module upgrade pmtacceptance-java") do
     #{master['distmoduledir']}
     └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.1\e[0m)
   OUTPUT
+  on master, "[ -d #{master['distmoduledir']}/java ]"
+  on master, "[ -f #{master['distmoduledir']}/java/Modulefile ]"
+  on master, "grep 1.7.1 #{master['distmoduledir']}/java/Modulefile"
 end
