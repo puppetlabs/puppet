@@ -15,6 +15,14 @@ class Puppet::Util::Metric
     metric
   end
 
+  def to_pson
+    {
+      'name' => @name,
+      'label' => @label,
+      'values' => @values
+    }.to_pson
+  end
+
   # Return a specific value
   def [](name)
     if value = @values.find { |v| v[0] == name }

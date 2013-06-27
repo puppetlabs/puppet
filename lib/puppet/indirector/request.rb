@@ -158,20 +158,42 @@ class Puppet::Indirector::Request
 
   # Create the query string, if options are present.
   def query_string
-    return "" unless options and ! options.empty?
-    "?" + options.collect do |key, value|
+    return "" if options.nil? || options.empty?
+    "?" + encode_params(expand_into_parameters(options.to_a))
+  end
+
+  def expand_into_parameters(data)
+    data.inject([]) do |params, key_value|
+      key, value = key_value
+
+      expanded_value = case value
+                       when Array
+                         value.collect { |val| [key, val] }
+                       else
+                         [key_value]
+                       end
+
+      params.concat(expand_primitive_types_into_parameters(expanded_value))
+    end
+  end
+
+  def expand_primitive_types_into_parameters(data)
+    data.inject([]) do |params, key_value|
+      key, value = key_value
       case value
-      when nil; next
-      when true, false; value = value.to_s
-      when Fixnum, Bignum, Float; value = value # nothing
-      when String; value = CGI.escape(value)
-      when Symbol; value = CGI.escape(value.to_s)
-      when Array; value = CGI.escape(YAML.dump(value))
+      when nil
+        params
+      when true, false, String, Symbol, Fixnum, Bignum, Float
+        params << [key, value]
       else
         raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
       end
+    end
+  end
 
-      "#{key}=#{value}"
+  def encode_params(params)
+    params.collect do |key, value|
+      "#{key}=#{CGI.escape(value.to_s)}"
     end.join("&")
   end
 

@@ -15,7 +15,7 @@ describe Puppet::Network::FormatHandler do
 
   describe "when creating formats" do
     it "should instance_eval any block provided when creating a format" do
-      format = Puppet::Network::FormatHandler.create(:instance_eval) do
+      format = Puppet::Network::FormatHandler.create(:test_format) do
         def asdfghjkl; end
       end
       format.should respond_to(:asdfghjkl)
@@ -47,6 +47,40 @@ describe Puppet::Network::FormatHandler do
 
     it "should be able to retrieve a format by mime type irrespective of case" do
       Puppet::Network::FormatHandler.mime("Foo/Bar").should equal(format)
+    end
+  end
+
+  describe "#most_suitable_format_for" do
+    before :each do
+      Puppet::Network::FormatHandler.create(:one, :extension => "foo", :mime => "text/one")
+      Puppet::Network::FormatHandler.create(:two, :extension => "bar", :mime => "text/two")
+    end
+
+    let(:format_one) { Puppet::Network::FormatHandler.format(:one) }
+    let(:format_two) { Puppet::Network::FormatHandler.format(:two) }
+
+    def suitable_in_setup_formats(accepted)
+      Puppet::Network::FormatHandler.most_suitable_format_for(accepted, [:one, :two])
+    end
+
+    it "finds no format when none are acceptable" do
+      suitable_in_setup_formats(["three"]).should be_nil
+    end
+
+    it "skips unsupported, but accepted, formats" do
+      suitable_in_setup_formats(["three", "two"]).should == format_two
+    end
+
+    it "gives the first acceptable and suitable format" do
+      suitable_in_setup_formats(["three", "one", "two"]).should == format_one
+    end
+
+    it "allows specifying acceptable formats by mime type" do
+      suitable_in_setup_formats(["text/one"]).should == format_one
+    end
+
+    it "allows specifying acceptable formats by canonical name" do
+      suitable_in_setup_formats([:one]).should == format_one
     end
   end
 end

@@ -63,6 +63,30 @@ module Puppet::Network::FormatHandler
     raise ArgumentError, "No format match the given format name or mime-type (#{format})" if out.nil?
     out.name
   end
+
+  # Determine which of the accepted formats should be used given what is supported.
+  #
+  # @param accepted [Array<String, Symbol>] the accepted formats in a form a
+  #   that can be understood by #format_to_canonical_name and is in order of
+  #   preference (most preferred is first)
+  # @param supported [Array<Symbol>] the names of the supported formats (order
+  #   does not matter)
+  # @return [Puppet::Network::Format, nil] the most suitable format
+  # @api private
+  def self.most_suitable_format_for(accepted, supported)
+    format_name = accepted.find do |accepted|
+      begin
+        format_name = format_to_canonical_name(accepted)
+        supported.include?(format_name)
+      rescue ArgumentError
+        false
+      end
+    end
+
+    if format_name
+      format_for(format_name)
+    end
+  end
 end
 
 require 'puppet/network/formats'

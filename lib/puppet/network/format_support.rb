@@ -34,14 +34,20 @@ module Puppet::Network::FormatSupport
     end
 
     def supported_formats
-      result = format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }.sort do |a, b|
+      result = format_handler.formats.collect do |f|
+        format_handler.format(f)
+      end.find_all do |f|
+        f.supported?(self)
+      end.sort do |a, b|
         # It's an inverse sort -- higher weight formats go first.
-        format_handler.format(b).weight <=> format_handler.format(a).weight
+        b.weight <=> a.weight
+      end.collect do |f|
+        f.name
       end
 
       result = put_preferred_format_first(result)
 
-      Puppet.debug "#{friendly_name} supports formats: #{result.map{ |f| f.to_s }.sort.join(' ')}; using #{result.first}"
+      Puppet.debug "#{friendly_name} supports formats: #{result.join(' ')}"
 
       result
     end
