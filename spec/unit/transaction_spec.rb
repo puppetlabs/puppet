@@ -308,7 +308,7 @@ describe Puppet::Transaction do
       transaction.evaluate
 
       generated.each do |res|
-        res.must be_tagged(generator.tags)
+        res.must be_tagged(*generator.tags)
       end
     end
   end
@@ -404,7 +404,6 @@ describe Puppet::Transaction do
     it "should otherwise let the resource determine if it is missing tags" do
       tags = ['one', 'two']
       @transaction.tags = tags
-      @resource.expects(:tagged?).with(*tags).returns(false)
       @transaction.should be_missing_tags(@resource)
     end
   end

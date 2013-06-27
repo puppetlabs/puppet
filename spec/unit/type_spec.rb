@@ -187,7 +187,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
+    {:file => "/my/file", :line => 50, :tags => %w{foo bar}}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value
@@ -632,7 +632,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       resource.should be_a Puppet::Resource
       resource[:fstype].should   == 15
       resource[:remounts].should == :true
-      resource.tags.should       =~ %w{foo bar baz mount}
+      resource.tags.should == Puppet::Util::TagSet.new(%w{foo bar baz mount})
     end
   end
 

@@ -809,11 +809,11 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     PSON.parse @catalog.to_pson
   end
 
-  [:name, :version, :tags, :classes].each do |param|
+  [:name, :version, :classes].each do |param|
     it "should set its #{param} to the #{param} of the resource" do
       @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-      pson_output_should { |hash| hash['data'][param.to_s] == @catalog.send(param) }
+      pson_output_should { |hash| hash['data'][param.to_s].should == @catalog.send(param) }
       PSON.parse @catalog.to_pson
     end
   end

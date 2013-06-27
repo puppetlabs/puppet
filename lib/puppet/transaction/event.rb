@@ -14,7 +14,6 @@ class Puppet::Transaction::Event
   ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes]
   YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
-  attr_writer :tags
   attr_accessor :time
   attr_reader :default_log_level
 
