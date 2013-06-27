@@ -43,6 +43,10 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{wait-for-state portmap-wait}
     # these excludes were found with grep -r -L start /etc/init.d
     excludes += %w{rcS module-init-tools}
+    # Prevent puppet failing to get status of the new service introduced
+    # by the fix for this (bug https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/982889)
+    # due to puppet's inability to deal with upstart services with instances.
+    excludes += %w{plymouth-ready}
   end
 
   # List all services of this type.
