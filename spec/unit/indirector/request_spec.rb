@@ -327,16 +327,34 @@ describe Puppet::Indirector::Request do
     end
 
     it "should convert an array of values into multiple entries for the same key" do
-      escaping = CGI.escape(YAML.dump(%w{one two}))
       request = a_request_with_options(:one => %w{one two})
 
       the_parsed_query_string_from(request).should == {
-        "one" => [YAML.dump(%w{one two})]
+        "one" => ["one", "two"]
       }
     end
 
+    it "should stringify simple data types inside an array" do
+      request = a_request_with_options(:one => ['one', nil])
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["one"]
+      }
+    end
+
+    it "should error if an array contains another array" do
+      request = a_request_with_options(:one => ['one', ["not allowed"]])
+
+      expect { request.query_string }.to raise_error(ArgumentError)
+    end
+
+    it "should error if an array contains illegal data" do
+      request = a_request_with_options(:one => ['one', { :not => "allowed" }])
+
+      expect { request.query_string }.to raise_error(ArgumentError)
+    end
+
     it "should convert to a string and CGI-escape all option values that are symbols" do
-      escaping = CGI.escape("sym bol")
       request = a_request_with_options(:one => :"sym bol")
 
       the_parsed_query_string_from(request).should == {
