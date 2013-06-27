@@ -83,4 +83,16 @@ describe Puppet::Util::Metric do
   it "should return nil if the named value cannot be found" do
     @metric["foo"].should == 0
   end
+
+  it "should round trip through pson" do
+    metric = Puppet::Util::Metric.new("foo", "mylabel")
+    metric.newvalue("v1", 10.1, "something")
+    metric.newvalue("v2", 20, "something else")
+
+    tripped = Puppet::Util::Metric.from_pson(PSON.parse(metric.to_pson))
+
+    tripped.name.should == metric.name
+    tripped.label.should == metric.label
+    tripped.values.should == metric.values
+  end
 end

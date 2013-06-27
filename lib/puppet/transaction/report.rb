@@ -58,7 +58,7 @@ class Puppet::Transaction::Report
   attr_reader :resource_statuses
 
   # A list of log messages.
-  # @return [Array<String>] logged messages
+  # @return [Array<Puppet::Util::Log>] logged messages
   attr_reader :logs
 
   # A hash of metric name to metric value.
@@ -92,15 +92,6 @@ class Puppet::Transaction::Report
   # @todo Unclear what this is - a version?
   #
   attr_reader :report_format
-
-  # This is necessary since Marshal doesn't know how to
-  # dump hash with default proc (see below "@records") ?
-  # @todo there is no "@records" to see below, uncertain what this is for.
-  # @api private
-  #
-  def self.default_format
-    :yaml
-  end
 
   def self.from_pson(data)
     obj = self.allocate
@@ -212,6 +203,23 @@ class Puppet::Transaction::Report
       end
       @resource_statuses[record[0]] = status
     end
+  end
+
+  def to_pson
+    {
+      'host' => @host,
+      'time' => @time.iso8601(9),
+      'configuration_version' => @configuration_version,
+      'report_format' => @report_format,
+      'puppet_version' => @puppet_version,
+      'kind' => @kind,
+      'status' => @status,
+      'environment' => @environment,
+
+      'logs' => @logs,
+      'metrics' => @metrics,
+      'resource_statuses' => @resource_statuses,
+    }.to_pson
   end
 
   # @return [String] the host name
