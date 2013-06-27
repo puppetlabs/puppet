@@ -95,6 +95,25 @@ module Puppet
         end
       end
 
+      def to_pson
+        {
+          'title' => @title,
+          'file' => @file,
+          'line' => @line,
+          'resource' => @resource,
+          'resource_type' => @resource_type,
+          'evaluation_time' => @evaluation_time,
+          'tags' => @tags,
+          'failed' => @failed,
+          'changed' => @changed,
+          'out_of_sync' => @out_of_sync,
+          'skipped' => @skipped,
+          'change_count' => @change_count,
+          'out_of_sync_count' => @out_of_sync_count,
+          'events' => @events,
+        }.to_pson
+      end
+
       def to_yaml_properties
         YAML_ATTRIBUTES & instance_variables
       end

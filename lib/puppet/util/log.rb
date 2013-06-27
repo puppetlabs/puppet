@@ -261,6 +261,18 @@ class Puppet::Util::Log
     @line = data['line'] if data['line']
   end
 
+  def to_pson
+    {
+      'level' => @level,
+      'message' => @message,
+      'source' => @source,
+      'tags' => @tags,
+      'time' => @time.iso8601(9),
+      'file' => @file,
+      'line' => @line,
+    }.to_pson
+  end
+
   def message=(msg)
     raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
     @message = msg.to_s
@@ -301,6 +313,7 @@ class Puppet::Util::Log
   def to_s
     message
   end
+
 end
 
 # This is for backward compatibility from when we changed the constant to Puppet::Util::Log

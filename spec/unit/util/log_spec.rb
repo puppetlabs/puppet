@@ -304,4 +304,17 @@ describe Puppet::Util::Log do
       log.to_yaml_properties.should include(:@line)
     end
   end
+
+  it "should round trip through pson" do
+    log = Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c'])
+    tripped = Puppet::Util::Log.from_pson(PSON.parse(log.to_pson))
+
+    tripped.file.should == log.file
+    tripped.line.should == log.line
+    tripped.level.should == log.level
+    tripped.message.should == log.message
+    tripped.source.should == log.source
+    tripped.tags.should == log.tags
+    tripped.time.should == log.time
+  end
 end
