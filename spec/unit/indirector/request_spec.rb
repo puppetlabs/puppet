@@ -247,6 +247,10 @@ describe Puppet::Indirector::Request do
       Puppet::Indirector::Request.new(:myind, :find, "my key", nil, options)
     end
 
+    def the_parsed_query_string_from(request)
+      CGI.parse(request.query_string.sub(/^\?/, ''))
+    end
+
     it "should return an empty query string if there are no options" do
       request = a_request_with_options(nil)
 
@@ -268,58 +272,76 @@ describe Puppet::Indirector::Request do
     it "should include all options in the query string, separated by '&'" do
       request = a_request_with_options(:one => "two", :three => "four")
 
-      request.query_string.sub(/^\?/, '').split("&").sort.should == %w{one=two three=four}.sort
+      the_parsed_query_string_from(request).should == {
+        "one" => ["two"],
+        "three" => ["four"]
+      }
     end
 
     it "should ignore nil options" do
       request = a_request_with_options(:one => "two", :three => nil)
 
-      request.query_string.should_not be_include("three")
+      the_parsed_query_string_from(request).should == {
+        "one" => ["two"]
+      }
     end
 
     it "should convert 'true' option values into strings" do
       request = a_request_with_options(:one => true)
 
-      request.query_string.should == "?one=true"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["true"]
+      }
     end
 
     it "should convert 'false' option values into strings" do
       request = a_request_with_options(:one => false)
 
-      request.query_string.should == "?one=false"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["false"]
+      }
     end
 
     it "should convert to a string all option values that are integers" do
       request = a_request_with_options(:one => 50)
 
-      request.query_string.should == "?one=50"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["50"]
+      }
     end
 
     it "should convert to a string all option values that are floating point numbers" do
       request = a_request_with_options(:one => 1.2)
 
-      request.query_string.should == "?one=1.2"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["1.2"]
+      }
     end
 
     it "should CGI-escape all option values that are strings" do
-      escaping = CGI.escape("one two")
       request = a_request_with_options(:one => "one two")
 
-      request.query_string.should == "?one=#{escaping}"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["one two"]
+      }
     end
 
-    it "should YAML-dump and CGI-escape arrays" do
+    it "should convert an array of values into multiple entries for the same key" do
       escaping = CGI.escape(YAML.dump(%w{one two}))
       request = a_request_with_options(:one => %w{one two})
 
-      request.query_string.should == "?one=#{escaping}"
+      the_parsed_query_string_from(request).should == {
+        "one" => [YAML.dump(%w{one two})]
+      }
     end
 
     it "should convert to a string and CGI-escape all option values that are symbols" do
       escaping = CGI.escape("sym bol")
       request = a_request_with_options(:one => :"sym bol")
 
-      request.query_string.should == "?one=#{escaping}"
+      the_parsed_query_string_from(request).should == {
+        "one" => ["sym bol"]
+      }
     end
 
     it "should fail if options other than booleans or strings are provided" do
