@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'puppet/interface'
 
 describe Puppet::Interface::OptionBuilder do
