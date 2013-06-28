@@ -612,4 +612,47 @@ describe Puppet::Parser::Scope do
       end
     end
   end
+
+  context "when producing a hash of all variables (as used in templates)" do
+    it "should contain all defined variables in the scope" do
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+    end
+
+    it "should contain variables in all local scopes (#21508)" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+    end
+
+    it "should contain all defined variables in the scope and all local scopes" do
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+    end
+
+    it "should not contain varaibles in match scopes (non local emphemeral)" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.ephemeral_from(/(f)(o)(o)/.match('foo'))
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+    end
+
+    it "should delete values that are :undef in inner scope" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.setvar("orange", :undef)
+      @scope.to_hash.should == {'pear' => :green, 'apple' => :red }
+    end
+  end
 end
