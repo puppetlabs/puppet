@@ -36,7 +36,7 @@ module Puppet::ModuleTool::Shared
       mod_name, releases = pair
       mod_name = mod_name.gsub('/', '-')
       releases.each do |rel|
-        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer.MIN
+        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer::MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
         @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
