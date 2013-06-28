@@ -1,5 +1,3 @@
-require 'puppet/pops/types'
-
 # The KeyFactory is responsible for creating keys used for lookup of bindings.
 #
 class Puppet::Pops::Binder::KeyFactory
