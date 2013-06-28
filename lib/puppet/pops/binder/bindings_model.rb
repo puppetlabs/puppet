@@ -15,49 +15,72 @@ module Puppet::Pops::Binder::Bindings
     abstract
   end
 
-  class Producer < Puppet::Pops::Model::PopsObject
+  # An abstract producer
+  class ProducerDescriptor < Puppet::Pops::Model::PopsObject
   end
 
-  class NamedArgument < Puppet::Pops::Model::PopsObject
-    has_attr 'name', String
-
-    # TODO: this should be a typed Puppet Object
-    has_attr 'value', Object
-  end
-
-  # A LiteralProducer produces a literal/data value.
+  # All producers are singleton producers unless wrapped in a non caching producer
+  # where each lookup produces a new instance. It is an error to have a nesting level > 1
+  # and to nest a NonCachingProducerDescriptor.
   #
-  class LiteralProducer < Producer
+  class NonCachingProducerDescriptor < ProducerDescriptor
+    contains_one_uni 'producer', ProducerDescriptor
+  end
+
+#  class NamedArgument < Puppet::Pops::Model::PopsObject
+#    has_attr 'name', String
+#
+#    # TODO: this should be a typed Puppet Object
+#    has_attr 'value', Object
+#  end
+
+  # Produces a constant value (i.e. something of PDataType)
+  #
+  class ConstantProducerDescriptor < ProducerDescriptor
     # TODO: This should be a typed Puppet Object
     has_attr 'value', Object
+  end
+
+  # Produces a value by evaluating a Puppet DSL expression
+  #
+  class EvaluatingProducerDescriptor < ProducerDescriptor
+    contains_one_uni 'expression', Puppet::Pops::Model::Expression
   end
 
   # An InstanceProducer creates an instance of the given class
   # Arguments are passed to the class' `new` operator in the order they are given.
   #
-  class InstanceProducer < Producer
-    # TODO: This should be a typed Puppet Object
+  class InstanceProducerDescriptor < ProducerDescriptor
+    # TODO: This should be a typed Puppet Object ??
     contains_many_uni 'arguments', Object
     has_attr 'class_name', String
   end
 
-  # Producer that provides an instance that in turn creates the looked up value
-  # Named arguments are passed to the given class' new operator as a Hash.
-  # The dynamic producer is later called with #produce() to produce the value.
+  # Produces a value by looking up another key (type/name)
   #
-  class DynamicProducer < Producer
-    contains_many_uni 'arguments', NamedArgument
-    has_attr 'class_name', String
+  class LookupProducerDescriptor < ProducerDescriptor
+    contains_one_uni 'type', Puppet::Pops::Types::PObjectType
+    has_attr 'name', String
   end
 
-  class MultibindProducer < Producer
+  # Produces a value by looking up another multibound key, and then looking up
+  # the detail using a detail_key.
+  # This is used to producer a specific service of a given type (such as a SyntaxChecker for the syntax "json").
+  #
+  class MultiLookupProducerDescriptor < LookupProducerDescriptor
+    has_attr 'detail_name', String
+  end
+
+  class MultibindProducerDescriptor < ProducerDescriptor
     abstract
   end
 
-  class ArrayMultibindProducer < MultibindProducer
+  # Used in a Multibind of Array type
+  class ArrayMultibindProducerDescriptor < MultibindProducerDescriptor
   end
 
-  class HashMultibindProducer < MultibindProducer
+  # Used in a Multibind of Hash type
+  class HashMultibindProducerDescriptor < MultibindProducerDescriptor
   end
 
   class Binding < AbstractBinding
