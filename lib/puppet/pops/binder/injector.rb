@@ -41,33 +41,36 @@ class Puppet::Pops::Binder::Injector
   # The lookup may be called with different parameters. This method is a convenience method that
   # dispatches to one of #lookup_key or #lookup_type depending on the arguments
   #
-  # @overload lookup(key)
+  # @overload lookup(scope, key)
   #   (see #lookup_key)
+  #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param key [Object] an opaque object being the full key
   #
-  # @overload lookup(type, name = '')
+  # @overload lookup(scope, type, name = '')
   #  (see #lookup_type)
+  #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param type [Puppet::Pops::Types::PObjectType], the type of what to lookup
   #   @param name [String], the name to use, defaults to empty string (for unnamed)
   #
-  # @overload lookup(name)
+  # @overload lookup(scope, name)
   #  Lookup of Data type with given name.
   #   @see #lookup_type
+  #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param name [String], the Data/name to lookup
   #
   # @api public
   #
-  def lookup(*args)
-    raise ArgumentError, "lookup should be called with 1 or two arguments, got: #{args.size()}" unless args.size <= 2
+  def lookup(scope, *args)
+    raise ArgumentError, "lookup should be called with two or three arguments, got: #{args.size()+1}" unless args.size <= 2
     case args[0]
     when Puppet::Pops::Types::PObjectType
-      lookup_type(*args)
+      lookup_type(scope, *args)
     when String
-      raise ArgumentError, "lookup of name with two arguments" unless args.size == 1
-      lookup_key(key_factory.data_key(args[0]))
+      raise ArgumentError, "lookup of name should only pass the name" unless args.size == 1
+      lookup_key(scope, key_factory.data_key(args[0]))
     else
-      raise ArgumentError, "lookup using a key passing two arguments" unless args.size == 1
-      lookup_key(args[0])
+      raise ArgumentError, "lookup using a key should only pass a single key" unless args.size == 1
+      lookup_key(scope, args[0])
     end
   end
 
@@ -98,8 +101,8 @@ class Puppet::Pops::Binder::Injector
   # @return [Object, nil] the looked up bound object, or nil if not found
   # @api public
   #
-  def lookup_type(type, name='')
-    produce(type, lookup_key(named_key(type, name)))
+  def lookup_type(scope, type, name='')
+    produce(scope, type, lookup_key(named_key(type, name)))
   end
 
   # Looks up the key and returns the entry, or nil if no entry is found.
@@ -110,24 +113,24 @@ class Puppet::Pops::Binder::Injector
   # @param key [Object] lookup of key as produced by the key factory
   # @api public
   #
-  def lookup_key(key)
+  def lookup_key(scope, key)
     entry = entries[key]
     return nil unless entry # not found
   end
 
-  def lookup_producer(*args)
+  def lookup_producer(scope, *args)
   end
 
-  def lookup_producer_key(key)
+  def lookup_producer_key(scope, key)
   end
 
-  def lookup_producer_type(type, name='')
+  def lookup_producer_type(scope, type, name='')
   end
 
   # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production)
   # TODO: if producers are singleton producers (like the literal) or not, use composition with dynamic? or singleton?
   #
-  def produce(type, entry)
+  def produce(scope, type, entry)
     return nil unless entry # not found
     if cached = entry.cached
       return cached
