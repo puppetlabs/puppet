@@ -155,5 +155,21 @@ describe Puppet::Run do
       run.background.should be_true
       run.status.should == 'success'
     end
+
+    it "should round trip through pson" do
+      run = Puppet::Run.new(
+        :tags => ['a', 'b', 'c'],
+        :ignoreschedules => true,
+        :pluginsync => false,
+        :background => true
+      )
+      run.instance_variable_set(:@status, true)
+
+      tripped = Puppet::Run.convert_from(:pson, run.render(:pson))
+
+      tripped.options.should == run.options
+      tripped.status.should == run.status
+      tripped.background.should == run.background
+    end
   end
 end
