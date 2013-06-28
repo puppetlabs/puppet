@@ -17,6 +17,12 @@ module Puppet
 
     require 'puppet/pops/model/model'
 
+    module Types
+      require 'puppet/pops/types/types'
+      require 'puppet/pops/types/type_calculator'
+      require 'puppet/pops/types/type_factory'
+    end
+
     module Model
       require 'puppet/pops/model/tree_dumper'
       require 'puppet/pops/model/ast_transformer'
@@ -24,6 +30,16 @@ module Puppet
       require 'puppet/pops/model/factory'
       require 'puppet/pops/model/model_tree_dumper'
       require 'puppet/pops/model/model_label_provider'
+    end
+
+    module Binder
+      require 'puppet/pops/binder/binder'
+      require 'puppet/pops/binder/bindings_model'
+      require 'puppet/pops/binder/binder_issues'
+      require 'puppet/pops/binder/bindings_checker'
+      require 'puppet/pops/binder/bindings_factory'
+      require 'puppet/pops/binder/injector_entry'
+      require 'puppet/pops/binder/key_factory'
     end
 
     module Parser

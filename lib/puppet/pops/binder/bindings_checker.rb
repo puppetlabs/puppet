@@ -6,10 +6,12 @@ class Puppet::Pops::Binder::BindingsChecker
   Types = Puppet::Pops::Types
 
   attr_reader :type_calculator
-  def intialize
+  attr_reader :acceptor
+
+  def initialize(diagnostics_producer)
     @@check_visitor  ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
     @type_calculator   = Puppet::Pops::Types::TypeCalculator.new()
-    @type_factory      = Puppet::Pops::Types::TypeFactory.new()
+    @acceptor          = diagnostics_producer
   end
 
   def check_Binding(o)

@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/pops'
-require 'puppet/types'
 
 describe 'The type calculator' do
   let(:calculator) {  Puppet::Pops::Types::TypeCalculator.new() }

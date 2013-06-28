@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/pops'
-require 'puppet/types'
 
 describe 'The type factory' do
   context 'when creating' do
