@@ -192,7 +192,15 @@ describe Puppet::Network::HTTP::WEBrickREST do
         result[:foo].should == [true, false, 1, 1.2]
       end
 
-      it "should YAML-load and CGI-decode values that are YAML-encoded" do
+      it "should YAML-load values that are YAML-encoded" do
+        request = a_request_querying('foo' => YAML.dump(%w{one two}))
+
+        result = @handler.params(request)
+
+        result[:foo].should == %w{one two}
+      end
+
+      it "should YAML-load that are YAML-encoded" do
         request = a_request_querying('foo' => YAML.dump(%w{one two}))
 
         result = @handler.params(request)
