@@ -6,6 +6,47 @@
 # * DiagnosticFormatter - produces human readable output for a Diagnostic
 #
 module Puppet::Pops::Validation
+
+  # Contains boilerplate code to create the validator instance and associate
+  # it with a fully configured DiagnosticProducer.
+  #
+  # This class must be subclassed. The subclass must implement the method
+  # label_provider() and checker(diagnostic_producer). It is also expected that the sublcass will override
+  # the severity_producer and add issues to it.
+  #
+  class Factory
+
+    # Produces a validator with the given acceptor as the recipient of produced diagnostics.
+    #
+    def validator acceptor
+      checker(diagnostic_producer(acceptor))
+    end
+
+    # Produces the diagnostics producer to use given an acceptor as the recipient of produced diagnostics
+    #
+    def diagnostic_producer acceptor
+      Puppet::Pops::Validation::DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
+    end
+
+    # Produces the severity producer to use
+    # Subclasses should implement and add specific overrides
+    def severity_producer
+      Puppet::Pops::Validation::SeverityProducer.new
+    end
+
+    # Produces the checker to use
+    # @abstract
+    def checker diagnostic_producer
+      raise NoMethodError("checker")
+    end
+
+    # Produces the label provider to use
+    # @abstract
+    def label_provider
+      raise NoMethodError("label_provider")
+    end
+  end
+
   # Decides on the severity of a given issue.
   # The produced severity is one of `:error`, `:warning`, or `:ignore`.
   # By default, a severity of `:error` is produced for all issues. To configure the severity
