@@ -28,7 +28,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
   describe "when receiving a request" do
     before do
-      @request     = stub('webrick http request', :query_string => '', :peeraddr => %w{eh boo host ip}, :client_cert => nil)
+      @request     = stub('webrick http request', :query => {}, :peeraddr => %w{eh boo host ip}, :client_cert => nil)
       @response    = stub('webrick http response', :status= => true, :body= => true)
       @model_class = stub('indirected model class')
       @webrick     = stub('webrick http server', :mount => true, :[] => {})
@@ -125,14 +125,19 @@ describe Puppet::Network::HTTP::WEBrickREST do
     end
 
     describe "and determining the request parameters" do
-      def query_string_of(options)
+      def query_of(options)
         request = Puppet::Indirector::Request.new(:myind, :find, "my key", nil, options)
-        request.query_string.sub(/^\?/, '')
+        WEBrick::HTTPUtils.parse_query(request.query_string.sub(/^\?/, ''))
+      end
+
+      def a_request_querying(query_data)
+        @request.expects(:query).returns(query_of(query_data))
+        @request
       end
 
       it "has no parameters when there is no query string" do
         only_server_side_information = [:authenticated, :ip, :node]
-        @request.stubs(:query_string).returns(nil)
+        @request.stubs(:query).returns(nil)
 
         result = @handler.params(@request)
 
@@ -140,71 +145,80 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should include the HTTP request parameters, with the keys as symbols" do
-        @request.stubs(:query_string).returns(query_string_of("foo" => "baz", "bar" => "xyzzy"))
-        result = @handler.params(@request)
+        request = a_request_querying("foo" => "baz", "bar" => "xyzzy")
+        result = @handler.params(request)
 
         result[:foo].should == "baz"
         result[:bar].should == "xyzzy"
       end
 
       it "should handle parameters with no value" do
-        @request.expects(:query_string).returns(query_string_of('foo' => ""))
+        request = a_request_querying('foo' => "")
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
 
         result[:foo].should == ""
       end
 
       it "should convert the string 'true' to the boolean" do
-        @request.expects(:query_string).returns(query_string_of('foo' => "true"))
+        request = a_request_querying('foo' => "true")
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
 
-        result[:foo].should be_true
+        result[:foo].should == true
       end
 
       it "should convert the string 'false' to the boolean" do
-        @request.expects(:query_string).returns(query_string_of('foo' => "false"))
+        request = a_request_querying('foo' => "false")
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
 
-        result[:foo].should be_false
+        result[:foo].should == false
       end
 
       it "should reconstruct arrays" do
-        @request.expects(:query_string).returns(query_string_of('foo' => ["a", "b", "c"]))
+        request = a_request_querying('foo' => ["a", "b", "c"])
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
 
         result[:foo].should == ["a", "b", "c"]
       end
 
       it "should convert values inside arrays into primitive types" do
-        @request.expects(:query_string).returns(query_string_of('foo' => ["true", "false", "1", "1.2"]))
+        request = a_request_querying('foo' => ["true", "false", "1", "1.2"])
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
 
         result[:foo].should == [true, false, 1, 1.2]
       end
 
-      it "should YAML-load and CGI-decode values that are YAML-encoded" do
-        @request.expects(:query_string).returns(query_string_of('foo' => YAML.dump(%w{one two})))
+      it "should YAML-load values that are YAML-encoded" do
+        request = a_request_querying('foo' => YAML.dump(%w{one two}))
 
-        result = @handler.params(@request)
+        result = @handler.params(request)
+
+        result[:foo].should == %w{one two}
+      end
+
+      it "should YAML-load that are YAML-encoded" do
+        request = a_request_querying('foo' => YAML.dump(%w{one two}))
+
+        result = @handler.params(request)
 
         result[:foo].should == %w{one two}
       end
 
       it "should not allow clients to set the node via the request parameters" do
-        @request.stubs(:query_string).returns(query_string_of("node" => "foo"))
+        request = a_request_querying("node" => "foo")
         @handler.stubs(:resolve_node)
 
-        @handler.params(@request)[:node].should be_nil
+        @handler.params(request)[:node].should be_nil
       end
 
       it "should not allow clients to set the IP via the request parameters" do
-        @request.stubs(:query_string).returns(query_string_of("ip" => "foo"))
-        @handler.params(@request)[:ip].should_not == "foo"
+        request = a_request_querying("ip" => "foo")
+
+        @handler.params(request)[:ip].should_not == "foo"
       end
 
       it "should pass the client's ip address to model find" do

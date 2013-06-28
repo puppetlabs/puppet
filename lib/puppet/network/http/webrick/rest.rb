@@ -15,10 +15,11 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   # Retrieve the request parameters, including authentication information.
   def params(request)
-    params = CGI.parse(request.query_string || "")
+    params = request.query || {}
 
     params = Hash[params.collect do |key, value|
-      [key, value.length == 1 ? value[0] : value]
+      all_values = value.list
+      [key, all_values.length == 1 ? value : all_values]
     end]
 
     params = decode_params(params)
