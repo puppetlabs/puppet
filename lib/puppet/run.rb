@@ -95,6 +95,10 @@ class Puppet::Run
   end
 
   def to_pson
-    @options.merge(:background => @background).to_pson
+    {
+      :options => @options,
+      :background => @background,
+      :status => @status
+    }.to_pson
   end
 end
