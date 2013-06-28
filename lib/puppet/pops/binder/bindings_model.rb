@@ -52,7 +52,7 @@ module Puppet::Pops::Binder::Bindings
   #
   class InstanceProducerDescriptor < ProducerDescriptor
     # TODO: This should be a typed Puppet Object ??
-    contains_many_uni 'arguments', Object
+    has_attr 'arguments', Object, :upperBound => -1
     has_attr 'class_name', String
   end
 
@@ -88,7 +88,7 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'name', String
     has_attr 'override', Boolean
     has_attr 'abstract', Boolean
-    contains_one_uni 'producer', Producer
+    contains_one_uni 'producer', ProducerDescriptor
   end
 
   class Multibinding < Binding
@@ -131,14 +131,15 @@ module Puppet::Pops::Binder::Bindings
     contains_many_uni 'predicates', Category, :lowerBound => 1
   end
 
-  class LayeredBindings < Puppet::Pops::Model::PopsObject
-    contains_many_uni 'layers', NamedLayer
-  end
-
   class NamedLayer < Puppet::Pops::Model::PopsObject
     has_attr 'name', String, :lowerBound => 1
     contains_many_uni 'bindings', NamedBindings
   end
+
+  class LayeredBindings < Puppet::Pops::Model::PopsObject
+    contains_many_uni 'layers', NamedLayer
+  end
+
 
   class EffectiveCategories < Puppet::Pops::Model::PopsObject
     # The order is from highest precedence to lowest
