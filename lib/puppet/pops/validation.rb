@@ -1,47 +1,80 @@
 # A module with base functionality for validation of a model.
 #
-# * SeverityProducer - produces a severity (:error, :warning, :ignore) for a given Issue
-# * DiagnosticProducer - produces a Diagnostic which binds an Issue to an occurrence of that issue
-# * Acceptor - the receiver/sink/collector of computed diagnostics
-# * DiagnosticFormatter - produces human readable output for a Diagnostic
+# * **Factory** - an abstract factory implementation that makes it easier to create a new validation factory.
+# * **SeverityProducer** - produces a severity (:error, :warning, :ignore) for a given Issue
+# * **DiagnosticProducer** - produces a Diagnostic which binds an Issue to an occurrence of that issue
+# * **Acceptor** - the receiver/sink/collector of computed diagnostics
+# * **DiagnosticFormatter** - produces human readable output for a Diagnostic
 #
 module Puppet::Pops::Validation
 
-  # Contains boilerplate code to create the validator instance and associate
-  # it with a fully configured DiagnosticProducer.
+  # This class is an abstract base implementation of a _model validation factory_ that creates a validator instance
+  # and associates it with a fully configured DiagnosticProducer.
   #
-  # This class must be subclassed. The subclass must implement the method
-  # label_provider() and checker(diagnostic_producer). It is also expected that the sublcass will override
-  # the severity_producer and add issues to it.
+  # A _validator_ is responsible for validating a model. There may be different versions of validation available
+  # for one and the same model; e.g. different semantics for different puppet versions, or different types of
+  # validation configuration depending on the context/type of validation that should be performed (static, vs. runtime, etc.).
+  #
+  # This class is abstract and must be subclassed. The subclass must implement the methods
+  # {#label_provider} and {#checker}. It is also expected that the sublcass will override
+  # the severity_producer and configure the issues that should be reported as errors (i.e. if they should be ignored, produce
+  # a warning, or a deprecation warning).
+  #
+  # @abstract Subclass must implement {#checker}, and {#label_provider}
+  # @api public
   #
   class Factory
 
     # Produces a validator with the given acceptor as the recipient of produced diagnostics.
+    # The acceptor is where detected issues are received (and typically collected).
     #
-    def validator acceptor
+    # @param acceptor [Acceptor] the acceptor is the receiver of all detected issues
+    # @return [#validate] a validator responding to `validate(model)`
+    #
+    # @api public
+    #
+    def validator(acceptor)
       checker(diagnostic_producer(acceptor))
     end
 
-    # Produces the diagnostics producer to use given an acceptor as the recipient of produced diagnostics
+    # Produces the diagnostics producer to use given an acceptor of issues.
     #
-    def diagnostic_producer acceptor
+    # @param acceptor [Acceptor] the acceptor is the receiver of all detected issues
+    # @return [DiagnosticProducer] a detector of issues
+    #
+    # @api public
+    #
+    def diagnostic_producer(acceptor)
       Puppet::Pops::Validation::DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
     end
 
-    # Produces the severity producer to use
+    # Produces the SeverityProducer to use
     # Subclasses should implement and add specific overrides
+    #
+    # @return [SeverityProducer] a severity producer producing error, warning or ignore per issue
+    #
+    # @api public
+    #
     def severity_producer
       Puppet::Pops::Validation::SeverityProducer.new
     end
 
-    # Produces the checker to use
+    # Produces the checker to use.
+    #
     # @abstract
-    def checker diagnostic_producer
+    #
+    # @api public
+    #
+    def checker(diagnostic_producer)
       raise NoMethodError("checker")
     end
 
-    # Produces the label provider to use
+    # Produces the label provider to use.
+    #
     # @abstract
+    #
+    # @api public
+    #
     def label_provider
       raise NoMethodError("label_provider")
     end
@@ -52,8 +85,14 @@ module Puppet::Pops::Validation
   # By default, a severity of `:error` is produced for all issues. To configure the severity
   # of an issue call `#severity=(issue, level)`.
   #
+  # @return [Symbol] a symbol representing the severity `:error`, `:warning`, or `:ignore`
+  #
+  # @api public
+  #
   class SeverityProducer
+
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
+    # @api public
     #
     def initialize
       # If diagnose is not set, the default is returned by the block
@@ -62,12 +101,16 @@ module Puppet::Pops::Validation
 
     # Returns the severity of the given issue.
     # @return [Symbol] severity level :error, :warning, or :ignore
+    # @api public
     #
-    def severity issue
+    def severity(issue)
       assert_issue(issue)
       @severities[issue]
     end
 
+    # @see {#severity}
+    # @api public
+    #
     def [] issue
       severity issue
     end
@@ -76,26 +119,35 @@ module Puppet::Pops::Validation
     #
     # @param issue [Puppet::Pops::Issues::Issue] the issue for which to set severity
     # @param level [Symbol] the severity level (:error, :warning, or :ignore).
+    # @api public
     #
-    def []= issue, level
+    def []=(issue, level)
       assert_issue(issue)
       assert_severity(level)
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
 
-    # Returns true if the issue should be reported or not.
+    # Returns `true` if the issue should be reported or not.
     # @return [Boolean] this implementation returns true for errors and warnings
+    #
+    # @api public
     #
     def should_report? issue
       diagnose = self[issue]
       diagnose == :error || diagnose == :warning || diagnose == :deprecation
     end
 
+    # Checks if the given issue is valid.
+    # @api private
+    #
     def assert_issue issue
       raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
     end
 
+    # Checks if the given severity level is valid.
+    # @api private
+    #
     def assert_severity level
       raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error, :deprecation].include? level
     end
