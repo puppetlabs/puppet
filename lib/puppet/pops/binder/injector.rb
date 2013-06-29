@@ -34,7 +34,7 @@ class Puppet::Pops::Binder::Injector
     # represented the same (but still opaque) way.
     #
     @key_factory         = configured_binder.key_factory()
-    @@producer_visitor ||= Puppet::Pops::Visitor.new(nil,"produce",1,1)
+    @@producer_visitor ||= Puppet::Pops::Visitor.new(nil,"produce", 2,  2)
   end
 
   # Lookup (a.k.a "inject") of a value given a key.
@@ -127,15 +127,14 @@ class Puppet::Pops::Binder::Injector
   def lookup_producer_type(scope, type, name='')
   end
 
-  # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production)
-  # TODO: if producers are singleton producers (like the literal) or not, use composition with dynamic? or singleton?
+  # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production) ??
   #
   def produce(scope, type, entry)
     return nil unless entry # not found
-    if cached = entry.cached
-      return cached
+    unless cached = entry.cached_producer
+      entry.cached_producer = @@producer_visitor.visit_this(self, entry.producer, scope, entry)
     end
-    @@producer_visitor.visit_this(self, entry.producer, entry)
+    cached.call(scope)
   end
 
   # Called when producer is missing (e.g. a Multibinding)
@@ -147,23 +146,65 @@ class Puppet::Pops::Binder::Injector
     
   end
 
-  # singleton
-  def produce_LiteralProducer(producer, entry)
-    entry.cached_producer = SingletonProducer.new(producer.value)
-  end
-
-  # singleton
-  def produce_InstanceProducer(producer, entry)
-    entry.cached_producer = SingletonProducer.new(Object.const_get(producer.class_name).new(*(producer.arguments)))
-  end
-
-  def produce_DynamicProducer(producer, entry)
-    unless cached = entry.cached_producer
-      args_hash = entry.arguments.reduce({}) {|memo, arg| memo[arg.name] = arg.value; memo }
-      cached = entry.cached_producer = Object.const_get(producer.class_name).new(args_hash)
+  # Produces a constant value
+  # If not a singleton the value is deep-cloned (if not immutable) before returned.
+  #
+  def produce_ConstantProducerDescriptor(descriptor, scope, entry)
+    if caching?(descriptor)
+      deep_cloning_producer(descriptor.value)
+    else
+      singleton_producer(descriptor.value)
     end
-    return cached.produce()
   end
+
+  # Produces a new instance of the given class with given initialization arguments
+  # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
+  #
+  def produce_InstanceProducer(descriptor, scope, entry)
+    if caching?(descriptor)
+      instantiating_producer.new(descriptor.class_name, *(descriptor.arguments))
+    else
+      singleton_producer(instantiating_producer(descriptor.class_name, *(descriptor.arguments)).call(scope))
+    end
+  end
+
+  # Evaluates a contained expression. If this is a singleton, the evaluation is performed once.
+  #
+  def produce_EvaluatingProducerDescriptor(descriptor, scope, entry)
+    if caching?(descriptor)
+      evaluating_proucer(descriptor.expr)
+    else
+      singleton_producer(evaluating_proucer(descriptor.expr).call(scope))
+    end
+  end
+
+  def caching?(descriptor)
+    descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
+  end
+
+  # This implementation simply delegates since caching status is determined by the polymorph produce_xxx method
+  # per type (different actions taken depending on the type).
+  #
+  def produce_NonCachingProducerDescriptor(descriptor, scope, entry)
+    # simply delegates to the wrapped producer
+    produce(descritor.producer, scope, entry)
+  end
+
+  # TODO: MultiLookupProducerDescriptor
+
+  # TODO: Add model, and implementation for a user supplied Producer
+  # This could be a reference to a PType, which is instantiated, then it's #producer method is called to
+  # return a Proc |scope|
+  #
+
+
+#  def produce_DynamicProducer(producer, entry)
+#    unless cached = entry.cached_producer
+#      args_hash = entry.arguments.reduce({}) {|memo, arg| memo[arg.name] = arg.value; memo }
+#      cached = entry.cached_producer = Object.const_get(producer.class_name).new(args_hash)
+#    end
+#    return cached.produce()
+#  end
 
   # TODO:
   # - producers in the bindings model are instructions, the real producers are defined here (they respond to
@@ -178,21 +219,47 @@ class Puppet::Pops::Binder::Injector
   #   Suggest having a Fake impl using Ruby shallow clone, or using the ugly Marshal.load(Marshal.dump))
   # - Check what RGen does
   #
-  # @api private
-  class SingletonProducer
-    attr_reader :produce
-    def initialize(value)
-      @produce = value
-    end
-  end
+  # These could be written as Procs
 
-  class RepeatingProducer
-    attr_reader :producer
-    def initialize(producer)
-      @producer = producer
+    def singleton_producer(value)
+      Proc.new do |scope|
+        return value
+      end
     end
-    def produce()
-      producer().produce()
+
+    def deep_cloning_producer(value)
+      Proc.new do |scope|
+        case value
+        # These are immutable
+        when Integer, Float, TrueClass, FalseClass, Symbol
+          return value
+        # ok if frozen
+        when String
+          return value if value.frozen?
+        end
+
+        # The default serialize/deserialize to get a deep copy
+        Marshal.load(Marshal.dump(value))
+      end
     end
-  end
+
+    def instantiating_producer(class_name, *init_args)
+      Proc.new do |scope|
+        Object.const_get(class_name).new(*init_args)
+      end
+    end
+
+    def evluating_producer(expr)
+      puppet3_ast = Puppet::Pops::Model::AstTransformer.new().transform(expr)
+      Proc.new do |scope|
+        puppet_3_ast.evaluate(scope)
+      end
+    end
+
+    def lookup_producer(type, name)
+      Proc.new do |scope|
+        lookup_type(scope, type, name)
+      end
+    end
+
 end
