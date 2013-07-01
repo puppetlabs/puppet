@@ -1,4 +1,12 @@
-require 'facter/util/plist'
+begin
+  require 'facter'
+  require 'facter/util/cfpropertylist'
+  Puppet.debug('Using cfpropertylist to handle binary plists.')
+rescue LoadError
+  require 'facter/util/plist'
+  Puppet.debug('Using plist and plutil to handle binary plists.')
+end
+
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service
@@ -51,6 +59,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   has_feature :enableable
   has_feature :refreshable
   mk_resource_methods
+
+  @native_bplist_support = defined?(Facter::Util::CFPropertyList) == "constant"
 
   # These are the paths in OS X where a launchd service plist could
   # exist. This is a helper method, versus a constant, for easy testing
@@ -180,12 +190,23 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    begin
-      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
-    rescue Puppet::ExecutionFailure => detail
-      Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
-                     "Details: #{detail}")
-      return nil
+    if @native_bplist_support
+      begin
+        plist = Facter::Util::CFPropertyList::List.new(:file => path)
+        Facter::Util::CFPropertyList.native_types(plist.value)
+      rescue IOError, REXML::ParseException, NoMethodError => detail
+        Puppet.warning("Cannot parse file #{path}; Puppet is skipping it. \n" +
+                       "Details: #{detail}")
+        return nil
+      end
+    else
+      begin
+        Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+      rescue Puppet::ExecutionFailure => detail
+        Puppet.warning("Cannot read file #{path}; Puppet is skipping it. \n" +
+                       "Details: #{detail}")
+        return nil
+      end
     end
   end
 

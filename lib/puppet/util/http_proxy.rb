@@ -1,9 +1,8 @@
 module Puppet::Util::HttpProxy
 
-  # Read HTTP proxy configurationm from Puppet's config file, or the
-  # http_proxy environment variable - non-DRY dup of puppet/forge/repository.rb
   def self.http_proxy_env
-    proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"] || nil
+    # Returns a URI object if proxy is set, or nil
+    proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"]
     begin
       return URI.parse(proxy_env) if proxy_env
     rescue URI::InvalidURIError

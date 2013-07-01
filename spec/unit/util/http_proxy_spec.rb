@@ -12,23 +12,27 @@ describe Puppet::Util::HttpProxy do
     end
 
     it "should return a URI::HTTP object if http_proxy env variable is set" do
-      ENV['http_proxy'] = host
-      subject.http_proxy_env.should == URI.parse(host)
+      Puppet::Util.withenv({['http_proxy'] => host}) do
+        subject.http_proxy_env.should == URI.parse(host)
+      end
     end
 
     it "should return a URI::HTTP object if HTTP_PROXY env variable is set" do
-      ENV['HTTP_PROXY'] = host
-      subject.http_proxy_env.should == URI.parse(host)
+      Puppet::Util.withenv({['HTTP_PROXY'] => host}) do
+        subject.http_proxy_env.should == URI.parse(host)
+      end
     end
 
     it "should return a URI::HTTP object with .host and .port if URI is given" do
-      ENV['http_proxy'] = "http://#{host}:#{port}"
-      subject.http_proxy_env.should == URI.parse("http://#{host}:#{port}")
+      Puppet::Util.withenv({['http_proxy'] => "http://#{host}:#{port}"}) do
+        subject.http_proxy_env.should == URI.parse("http://#{host}:#{port}")
+      end
     end
 
     it "should return nil if proxy variable is malformed" do
-      ENV['http_proxy'] = 'this is not a valid URI'
-      subject.http_proxy_env.should == nil
+      Puppet::Util.withenv({['http_proxy'] => 'this is not a valid URI'}) do
+        subject.http_proxy_env.should == nil
+      end
     end
   end
 
@@ -47,16 +51,18 @@ describe Puppet::Util::HttpProxy do
       subject.http_proxy_host.should == nil
     end
     it "uses environment variable before puppet settings" do
-      ENV["http_proxy"] = "http://#{host}:#{port}"
-      Puppet.settings[:http_proxy_host] = 'not.correct'
-      subject.http_proxy_host.should == host
+      Puppet::Util.withenv({["http_proxy"] => "http://#{host}:#{port}"}) do
+        Puppet.settings[:http_proxy_host] = 'not.correct'
+        subject.http_proxy_host.should == host
+      end
     end
   end
 
   describe ".http_proxy_port" do
     it "should return a proxy port if set in environment" do
-      ENV['http_proxy'] = "http://#{host}:#{port}"
-      subject.http_proxy_port.should == port
+      Puppet::Util.withenv({['http_proxy'] => "http://#{host}:#{port}"}) do
+        subject.http_proxy_port.should == port
+      end
     end
 
     it "should return a proxy port if set in config" do
@@ -65,16 +71,12 @@ describe Puppet::Util::HttpProxy do
     end
 
     it "uses environment variable before puppet settings" do
-      ENV["http_proxy"] = "http://#{host}:#{port}"
-      Puppet.settings[:http_proxy_port] = 7456
-      subject.http_proxy_port.should == port
+      Puppet::Util.withenv({["http_proxy"] => "http://#{host}:#{port}"}) do
+        Puppet.settings[:http_proxy_port] = 7456
+        subject.http_proxy_port.should == port
+      end
     end
 
-  end
-
-  after :each do
-    ENV["http_proxy"] = nil
-    ENV["HTTP_PROXY"] = nil
   end
 
 end
