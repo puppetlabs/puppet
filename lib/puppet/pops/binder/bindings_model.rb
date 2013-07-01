@@ -56,6 +56,13 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'class_name', String
   end
 
+  # A ProducerProducerDescriptor, describes that the produced instance is itself a Producer
+  # that should be used to produce the value.
+  #
+  class ProducerProducerDescriptor < ProducerDescriptor
+    contains_one_uni 'producer', ProducerDescriptor, :lowerBound => 1
+  end
+
   # Produces a value by looking up another key (type/name)
   #
   class LookupProducerDescriptor < ProducerDescriptor
