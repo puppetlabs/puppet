@@ -288,6 +288,17 @@ class Puppet::Pops::Binder::Injector
     create_producer(x)
   end
 
+  def produce_ProducerProducerDescriptor(descriptor, scope, entry)
+    # Should produce an instance of the wanted producer
+    instance_producer = @@producer_visitor.visit_this(self, descriptor.producer, scope, entry)
+    p = Puppet::Pops::Binder::WrappingProducer.new(instance_producer)
+    if caching?(descriptor)
+      singleton_producer_producer(p.produce(scope))
+    else
+      p
+    end
+  end
+
   private
 
   def caching?(descriptor)
@@ -303,11 +314,6 @@ class Puppet::Pops::Binder::Injector
   end
 
   # TODO: MultiLookupProducerDescriptor
-
-  # TODO: Add model, and implementation for a user supplied Producer
-  # This could be a reference to a PType, which is instantiated, then it's #producer method is called to
-  # return a Proc |scope|
-  #
 
   def singleton_producer(value)
     create_producer(lambda {|scope| value })
