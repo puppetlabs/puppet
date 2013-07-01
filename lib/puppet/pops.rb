@@ -40,6 +40,7 @@ module Puppet
       require 'puppet/pops/binder/bindings_factory'
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
+      require 'puppet/pops/binder/injector'
     end
 
     module Parser
