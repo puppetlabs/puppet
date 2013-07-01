@@ -21,30 +21,86 @@ module Puppet::Pops::Binder::BinderIssues
     Puppet::Pops::Issues.hard_issue(issue_code, *args, &block)
   end
 
+  # Producer issues (binding identified using :binding argument)
+
+  MISSING_NAME = issue :MISSING_NAME, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no name"
+  end
+
+  MISSING_DETAIL_NAME = issue :MISSING_DETAIL_NAME, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no detail name"
+  end
+  MISSING_VALUE = issue :MISSING_VALUE, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no value"
+  end
+
+  MISSING_EXPRESSION = issue :MISSING_EXPRESSION, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no expression"
+  end
+
+  MISSING_CLASS_NAME = issue :MISSING_CLASS_NAME, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no class name"
+  end
+
+  CACHED_PRODUCER_MISSING_PRODUCER = issue :PRODUCER_MISSING_PRODUCER, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no producer"
+  end
+
+  INCOMPATIBLE_TYPE = issue :INCOMPATIBLE_TYPE, :binding, :expected_type, :actual_type do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has an incompatible type: expected #{label.a_an(expected_type)}, but got #{label.a_an(actual_type)}."
+  end
+
+  MULTIBIND_INCOMPATIBLE_TYPE = issue :MULTIBIND_INCOMPATIBLE_TYPE, :binding, :actual_type do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} cannot bind #{label.a_an(actual_type)} value"
+  end
+
+  # Binding issues (binding identified using semantic)
+
   MISSING_PRODUCER = issue :MISSING_PRODUCER do
-    # TODO: improve error message with details that identifies the binding
-    "binding has no producer"
+    "#{label.a_an_uc(semantic)} has no producer"
   end
 
   MISSING_TYPE = issue :MISSING_TYPE do
-    # TODO: improve error message with details that identifies the binding
-    "binding has no type"
+    "#{label.a_an_uc(semantic)} has no type"
   end
 
-  INCOMPATIBLE_TYPE = issue :INCOMPATIBLE_TYPE, :expected_type, :actual_type do
-    # TODO: improve error message with details that identifies the binding
-    "Incompatible type: expected #{label.a_an(expected_type)}, but got #{label.a_an(actual_type)}."
+  MULTIBIND_NOT_COLLECTION_PRODUCER = issue :MULTIBIND_NOT_COLLECTION_PRODUCER, :actual_producer do
+    "#{label.a_an_uc(semantic)} must have a MultibindProducerDescriptor, but got: #{label.a_an(actual_producer)}"
   end
 
   MULTIBIND_TYPE_ERROR = issue :MULTIBIND_TYPE_ERROR, :actual_type do
-    "Multibind type error, expected multibind to have Array or Hash type, but got: #{label.a_an(actual_type)}."
+    "#{label.a_an_uc(semantic)} is expected to bind a collection type, but got: #{label.a_an(actual_type)}."
   end
 
-  MULTIBIND_NOT_ARRAY_PRODUCER = issue :MULTIBIND_NOT_ARRAY_PRODUCER, :actual_producer do
-    "A Multibind of Array type must have an ArrayMultibindProducer, but got: #{label.a_an(actual_producer)}"
+  MISSING_BINDINGS = issue :MISSING_BINDINGS do
+    "#{label.a_an_uc(semantic)} has zero bindings"
   end
 
-  MULTIBIND_NOT_HASH_PRODUCER = issue :MULTIBIND_NOT_HASH_PRODUCER, :actual_producer do
-    "A Multibind of Hash type must have a HashMultibindProducer, but got: #{label.a_an(actual_producer)}"
+  MISSING_BINDINGS_NAME = issue :MISSING_BINDINGS_NAME do
+    "#{label.a_an_uc(semantic)} has no name"
+  end
+
+  MISSING_PREDICATES = issue :MISSING_PREDICATES do
+    "#{label.a_an_uc(semantic)} has zero predicates"
+  end
+
+  MISSING_CATEGORIZATION = issue :MISSING_CATEGORIZATION do
+    "#{label.a_an_uc(semantic)} has at least one predicate that lacks categorization"
+  end
+
+  MISSING_CATEGORY_VALUE = issue :MISSING_CATEGORY_VALUE do
+    "#{label.a_an_uc(semantic)} has at least one category that lacks a value"
+  end
+
+  MISSING_LAYERS = issue :MISSING_LAYERS do
+    "#{label.a_an_uc(semantic)} has zero layers"
+  end
+
+  MISSING_LAYER_NAME = issue :MISSING_LAYER_NAME do
+    "#{label.a_an_uc(semantic)} has at least one layer that lacks a name"
+  end
+
+  MISSING_BINDINGS_IN_LAYER = issue :MISSING_BINDINGS_IN_LAYER, :layer do
+    "#{label.a_an_uc(semantic)} has zero bindings in #{label.label(layer)}"
   end
 end

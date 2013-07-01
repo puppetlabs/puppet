@@ -38,6 +38,8 @@ module Puppet
       require 'puppet/pops/binder/binder_issues'
       require 'puppet/pops/binder/bindings_checker'
       require 'puppet/pops/binder/bindings_factory'
+      require 'puppet/pops/binder/bindings_label_provider'
+      require 'puppet/pops/binder/bindings_validator_factory'
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'

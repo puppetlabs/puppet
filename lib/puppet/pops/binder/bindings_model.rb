@@ -126,8 +126,8 @@ module Puppet::Pops::Binder::Bindings
   # A category predicate (the request has to be in this category).
   #
   class Category < Puppet::Pops::Model::PopsObject
-    has_attr 'categorization', String
-    has_attr 'value', String
+    has_attr 'categorization', String, :lowerBound => 1
+    has_attr 'value', String, :lowerBound => 1
   end
 
   # A container of Binding instances that are in effect when the

@@ -20,6 +20,13 @@ module Puppet::Pops::Types::TypeFactory
     Types::PFloatType.new()
   end
 
+  # Produces a string representation of the type
+  # @api public
+  #
+  def self.label(t)
+    @type_calculator.string(t)
+  end
+
   # Produces the String type
   # @api public
   #
