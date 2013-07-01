@@ -162,7 +162,7 @@ class Puppet::Pops::Binder::Binder
     # @returns [Puppet::Pops::Binder::InjectorEntry] the entry with the highest (category) precedence
     # @api private
     def highest(b1, b2)
-      case b1.precedence <=> b2.precendece
+      case b1.precedence <=> b2.precedence
       when 1
         b1
       when -1
@@ -188,7 +188,7 @@ class Puppet::Pops::Binder::Binder
 
     # @api private
     def push_precedences(precedences)
-      prec.stack.push(precedences)
+      prec_stack.push(precedences)
       @effective_prec = nil # clear cache
     end
 
@@ -242,7 +242,7 @@ class Puppet::Pops::Binder::Binder
         prec
       end
 
-      push_precendeces(precedences)
+      push_precedences(precedences)
       o.bindings.each {|b| bind(b) }
       pop_precedences()
     end

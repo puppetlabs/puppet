@@ -82,7 +82,7 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def named_key(type, name)
-    key_factory.named_key(type, name='')
+    key_factory.named_key(type, name)
   end
 
   # Produces a key for a PDataType/name combination
@@ -104,8 +104,8 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_type(scope, type, name='')
-    val = lookup_key(named_key(type, name))
-    unless binder.type_calculator.assignable?(type, val)
+    val = lookup_key(scope, named_key(type, name))
+    unless key_factory.type_calculator.instance?(type, val)
       raise "Type error: incompatible type TODO: detailed error message"
     end
     val

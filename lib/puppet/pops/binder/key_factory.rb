@@ -2,8 +2,9 @@
 #
 class Puppet::Pops::Binder::KeyFactory
 
+  attr_reader :type_calculator
   def initialize(type_calculator = Puppet::Pops::Types::TypeCalculator.new())
-    @tc = type_calculator
+    @type_calculator = type_calculator
   end
 
   def binding_key(binding)
@@ -11,11 +12,11 @@ class Puppet::Pops::Binder::KeyFactory
   end
 
   def named_key(type, name)
-    [(@tc.assignable?(@tc.data, type) ? @tc.data : type), name]
+    [(@type_calculator.assignable?(@type_calculator.data, type) ? @type_calculator.data : type), name]
   end
 
   def data_key(name)
-    [@tc.data, name]
+    [@type_calculator.data, name]
   end
 
   def is_contributions_key?(s)
