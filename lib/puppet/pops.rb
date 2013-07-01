@@ -41,6 +41,7 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
+      require 'puppet/pops/binder/producer'
     end
 
     module Parser
