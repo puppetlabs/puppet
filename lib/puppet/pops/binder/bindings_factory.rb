@@ -69,9 +69,9 @@ class Puppet::Pops::Binder::BindingsFactory
     def when_in_categories(categories_hash)
       binding = Puppet::Pops::Binder::Bindings::CategorizedBindings.new()
       categories_hash.each do |k,v|
-          pred = Puppet::Pops::Binder::Bindings::CategoryPredicate.new()
+          pred = Puppet::Pops::Binder::Bindings::Category.new()
           pred.categorization = k
-          pred.category = v
+          pred.value = v
           binding.addPredicates(pred)
         end
       model.addBindings(binding)
