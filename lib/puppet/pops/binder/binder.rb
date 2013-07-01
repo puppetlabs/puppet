@@ -38,6 +38,8 @@ class Puppet::Pops::Binder::Binder
 
     # Not configured until the fat lady sings
     @configured = false
+
+    @next_anonymous_key = 0
   end
 
   # Answers the question 'is this bindder configured?' to the point it can be used to instantiate an Injector
@@ -60,10 +62,10 @@ class Puppet::Pops::Binder::Binder
   # @api public
   #
   def define_categories(effective_categories)
-    raise ArgumentError, "This binder is already configured. Cannot redefine its content." if configured?()
+    raise ArgumentError, "This categories are already defined. Cannot redefine." unless @category_precedences.empty?
 
     # Note: a model instance is used since a Hash does not have a defined order in all Rubies.
-    unless effective_cateogires.is_a?(Puppet::Pops::Binder::Bindings::EffectiveCategories)
+    unless effective_categories.is_a?(Puppet::Pops::Binder::Bindings::EffectiveCategories)
       raise ArgumentError, "Expected Puppet::Pops::Binder::Bindings::EffectiveCategories, but got a: #{effective_categories.class}"
     end
     categories = effective_categories.categories
@@ -97,7 +99,7 @@ class Puppet::Pops::Binder::Binder
   def define_layers(layered_bindings)
     raise ArgumentError, "This binder is already configured. Cannot redefine its content." if configured?()
 
-    raise ArgumentError, "Categories must be set first" if @category_precedences.empty?
+    raise ArgumentError, "Categories must be defined first" if @category_precedences.empty?
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
     injector_entries.each  do |k,v|
       raise ArgumentError, "Binding with unresolved 'override' detected: #{k}" unless v.is_resolved?()
@@ -106,6 +108,12 @@ class Puppet::Pops::Binder::Binder
     @configured = true
   end
 
+  # @api private
+  def next_anonymous_key
+    tmp = @next_anonymous_key
+    @next_anonymous_key += 1
+    tmp
+  end
 
   # Processes the information in a layer, aggregating it to the injector_entries hash in its parent binder.
   # A LayerProcessor holds the intermediate state required while processing one layer.
@@ -118,6 +126,7 @@ class Puppet::Pops::Binder::Binder
     attr :bindings
     attr :binder
     attr :key_factory
+    attr :contributions
 
     def initialize(binder, key_factory)
       @binder = binder
@@ -125,6 +134,7 @@ class Puppet::Pops::Binder::Binder
       @prec_stack = []
       @effective_prec = nil
       @bindings = []
+      @contributions = []
       @@bind_visitor ||= Puppet::Pops::Visitor.new(nil,"bind",0,0)
     end
 
@@ -136,18 +146,17 @@ class Puppet::Pops::Binder::Binder
     end
 
     # Add a multibind contribution
-    # TODO: NOT IMPLEMENTED YET
     # @api private
     #
     def add_contribution(b)
-      raise NotImplementedError, "Please implement #add_contribution"
+      contributions << Puppet::Pops::Binder::InjectorEntry.new(effective_prec, b)
     end
 
     # Bind given abstract binding
     # @api private
     #
     def bind(binding)
-      @@bind_visitor.visit_this(self, o)
+      @@bind_visitor.visit_this(self, binding)
     end
 
     # @returns [Puppet::Pops::Binder::InjectorEntry] the entry with the highest (category) precedence
@@ -169,7 +178,12 @@ class Puppet::Pops::Binder::Binder
     # @returns [Object] an opaque key
     #
     def key(binding)
-      key_factory.binding_key(binding)
+      k = unless binding.is_a?(Puppet::Pops::Binder::Bindings::MultibindContribution)
+        key_factory.binding_key(binding)
+      else
+        # contributions get a unique (sequencial) key
+        binder.next_anonymous_key()
+      end
     end
 
     # @api private
@@ -243,28 +257,35 @@ class Puppet::Pops::Binder::Binder
 
         processor.bind(layer).each do |k, v|
           raise ArgumentError, "The abstract binding TODO: was not overridden" unless !v.is_abstract?()
-          raise ArgumentError, "Internal Error - redefinition of key (should never happen)" if binder.injector_entries[k]
-          binder.injector_entries[k] = v
+          if entry = binder.injector_entries[k]
+            unless key_factory.is_contributions_key?(k)
+              raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)"
+            end
+            # contributions aggregate
+            binder.injector_entries[k] << v
+          else
+            binder.injector_entries[k] = v
+          end
         end
       end
     end
 
-    # @todo NOT YET IMPLEMENTED
     # @api private
     #
     def bind_MultibindContribution(o)
-      raise NotImplementedError, "Please implement #bind_MultibindContribution"
+      add_contribution(o)
     end
 
     # Processes one named ("top level") layer consisting of a list of NamedBindings
-    # @todo Needs to be modified to handle multibind contributions since the checking if already defined is wrong in this case
     # @api private
     #
     def bind_NamedLayer(o)
       o.bindings.each {|b| bind(b) }
       this_layer = {}
+
+      # process regular bindings
       bindings.each do |b|
-        bkey = key(b)
+        bkey = key(b.binding)
 
         # ignore if a higher layer defined it, but ensure override gets resolved
         if x = binder.injector_entries[bkey]
@@ -279,6 +300,27 @@ class Puppet::Pops::Binder::Binder
         if existing
           winner.mark_override_resolved()
         end
+      end
+
+      # Process contributions
+      # - organize map multibind_id to bindings with this id
+      # - for each id, create an array with the unique anonymous keys to the contributed bindings
+      # - bind the index to a special multibind contributions key (these are aggregated)
+      #
+      c_hash = Hash.new {|hash, key| hash[ key ] = [] }
+      contributions.each {|b| c_hash[ b.multibind_id ] << b }
+      # - for each id
+      c_hash.each do |k, v|
+        index = v.collect do |b|
+          bkey = key(b)
+          this_layer[bkey] = b
+          bkey
+        end
+        contribution_key = key_factory.multibind_contributions(k)
+        unless this_layer[contributions_key]
+          this_layer[contributions_key] = []
+        end
+        this_layer[contributions_key] << index
       end
       this_layer
     end

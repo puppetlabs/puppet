@@ -22,16 +22,16 @@ class Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def bind()
-      binding = Puppet::Pops::Bindings::Binding.new()
+      binding = Puppet::Pops::Binder::Bindings::Binding.new()
       model.addBindings(binding)
-      BindingsFactory.new(binding)
+      BindingsBuilder.new(binding)
     end
 
     # Binds an (almost) empty multibind where later, the looked up result contains all contributions to this key
     # @param id [String] the multibind's id used when adding contributions
     #
     def multibind(id)
-      binding = Puppet::Pops::Bindings::MultiBinding.new()
+      binding = Puppet::Pops::Binder::Bindings::MultiBinding.new()
       binding.id = id
       model.addBindings(binding)
       MultibindingsBuilder.new(binding)
@@ -44,7 +44,7 @@ class Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def bind_in_multibind(id)
-      binding = Puppet::Pops::Bindings::MultibindContribution.new()
+      binding = Puppet::Pops::Binder::Bindings::MultibindContribution.new()
       binding.multibind_id = id
       model.addBindings(binding)
       BindingsBuilder.new(binding)
@@ -67,9 +67,9 @@ class Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def when_in_categories(categories_hash)
-      binding = Puppet::Pops::Bindings::CategorizedBindings.new()
+      binding = Puppet::Pops::Binder::Bindings::CategorizedBindings.new()
       categories_hash.each do |k,v|
-          pred = Puppet::Pops::Bindings::CategoryPredicate.new()
+          pred = Puppet::Pops::Binder::Bindings::CategoryPredicate.new()
           pred.categorization = k
           pred.category = v
           binding.addPredicates(pred)
@@ -84,7 +84,7 @@ class Puppet::Pops::Binder::BindingsFactory
 
     def initialize(binding)
       @model = binding
-      @model.type = data()
+      data()
     end
 
     def model_type=(t)
@@ -158,8 +158,8 @@ class Puppet::Pops::Binder::BindingsFactory
 
     def to(producer)
       # If given producer is not a producer, create a literal producer
-      unless producer.is_a?(Puppet::Pops::Bindings::Producer)
-        producer = Puppet::Pops::Bindings::BindingFactory.literal_producer(producer)
+      unless producer.is_a?(Puppet::Pops::Binder::Bindings::ProducerDescriptor)
+        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       end
       @model.producer = producer
       self
@@ -181,16 +181,41 @@ class Puppet::Pops::Binder::BindingsFactory
   # Unwrap the built result when done.
   #
   def self.named_bindings(name)
-    binding = Puppet::Pops::Bindings::NamedBinding.new()
+    binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
     binding.name = name
     BindingsContainerBuilder.new(binding)
   end
 
   # Creates a literal producer
   def self.literal_producer(value)
-    producer = Puppet::Pops::Bindings::LiteralProducer.new()
+    producer = Puppet::Pops::Binder::Bindings::ConstantProducerDescriptor.new()
     producer.value = value
     producer
   end
 
+  # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
+  #
+  def self.categories(tuple_array)
+    result = Puppet::Pops::Binder::Bindings::EffectiveCategories.new()
+    tuple_array.flatten.each_slice(2) do |c|
+      cat = Puppet::Pops::Binder::Bindings::Category.new()
+      cat.categorization = c[0]
+      cat.value = c[1]
+      result.addCategories(cat)
+    end
+    result
+  end
+
+  def self.named_layer(name, *bindings)
+    result = Puppet::Pops::Binder::Bindings::NamedLayer.new()
+    result.name = name
+    bindings.each { |b| result.addBindings(b) }
+    result
+  end
+
+  def self.layered_bindings(*named_layers)
+    result = Puppet::Pops::Binder::Bindings::LayeredBindings.new()
+    named_layers.each {|b| result.addLayers(b) }
+    result
+  end
 end

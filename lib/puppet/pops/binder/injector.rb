@@ -27,7 +27,7 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def initialize(configured_binder)
-    raise ArgumentError, "Given Binder is not configured" unless comfigured_binder.configured?()
+    raise ArgumentError, "Given Binder is not configured" unless configured_binder && configured_binder.configured?()
     @entries             = configured_binder.injector_entries()
 
     # It is essential that the injector uses the same key factory as the binder since keys must be
@@ -96,13 +96,19 @@ class Puppet::Pops::Binder::Injector
   # Creates a key for the type/name combination using a KeyFactory. Specialization of the Data type are transformed
   # to a Data key, and the result is type checked to conform with the given key.
   #
+  # TODO: Detailed error message
+  #
   # @param type [Puppet::Pops::Types::PObjectType] the type to lookup as defined by Puppet::Pops::Types::TypeFactory
   # @param name [String] the optional name of the entry to lookup
   # @return [Object, nil] the looked up bound object, or nil if not found
   # @api public
   #
   def lookup_type(scope, type, name='')
-    produce(scope, type, lookup_key(named_key(type, name)))
+    val = lookup_key(named_key(type, name))
+    unless binder.type_calculator.assignable?(type, val)
+      raise "Type error: incompatible type TODO: detailed error message"
+    end
+    val
   end
 
   # Looks up the key and returns the entry, or nil if no entry is found.
@@ -114,36 +120,72 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_key(scope, key)
-    entry = entries[key]
-    return nil unless entry # not found
+    produce(scope, entries[key])
   end
 
+  # TODO
   def lookup_producer(scope, *args)
+    # TODO: should return an object that may have additional ways of creating an instance
+    # These are obviously not of value in the Puppet DSL (since methods cannot be invoked)
+    # To support getting a producer that can behave as the Proc producers, the Proc should
+    # be wrapped in an instance when user has not supplied a Producer class.
+    raise NotImplementedError, "lookup_producer is not implemented yet"
   end
 
+  # TODO
   def lookup_producer_key(scope, key)
+    raise NotImplementedError, "lookup_producer_key is not implemented yet"
   end
 
+  # TODO
   def lookup_producer_type(scope, type, name='')
+    raise NotImplementedError, "lookup_producer_type is not implemented yet"
   end
 
   # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production) ??
+  # Produces the value for the entry without performing any type checking
+  # @return [nil] if the entry is nil (i.e. when not found)
+  # @return [Object] the produced instance / value (non type-safe except for multibind contributions)
   #
-  def produce(scope, type, entry)
+  def produce(scope, entry)
     return nil unless entry # not found
-    unless cached = entry.cached_producer
-      entry.cached_producer = @@producer_visitor.visit_this(self, entry.producer, scope, entry)
+    unless entry.cached_producer
+      entry.cached_producer = @@producer_visitor.visit_this(self, entry.binding.producer, scope, entry)
     end
-    cached.call(scope)
+    raise ArgumentError, "Injector entry without a producer TODO: detail" unless entry.cached_producer
+    entry.cached_producer.call(scope)
   end
 
   # Called when producer is missing (e.g. a Multibinding)
   #
-  def produce_NilClass(producer, entry)
+  def produce_NilClass(descriptor, scope, entry)
+    # TODO: When the multibind has a nil producer it is not possible to flag it as being
+    # singleton or not - in this case the collected content will need to determine its state
+    # the issue is if a collected piece of content is dynamic as each multi lookup could potentially
+    # be different
+    #
+
     unless entry.binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding)
       raise ArgumentError, "Binding without producer detected (TODO: details)"
     end
-    
+    case entry.binding.type
+    when Puppet::Pops::Types::PArrayType
+      array_multibind_producer(entry.binding)
+    when Puppet::Pops::Types::PArrayType
+      hash_multibind_producer(entry.binding)
+    else
+      raise ArgumentError, "Unsupported multibind type, must be an array or hash type, but got: '#{entry.binding.type}"
+    end
+  end
+
+  def produce_ArrayMultibindProducerDescriptor(descriptor, entry)
+    p = array_multibind_producer(entry.binding)
+    caching?(descriptor) ? singleton_producer(p.call(scope)) : p
+  end
+
+  def produce_HashMultibindProducerDescriptor(descriptor, entry)
+    p = hash_multibind_producer(entry.binding)
+    caching?(descriptor) ? singleton_producer(p.call(scope)) : p
   end
 
   # Produces a constant value
@@ -172,11 +214,13 @@ class Puppet::Pops::Binder::Injector
   #
   def produce_EvaluatingProducerDescriptor(descriptor, scope, entry)
     if caching?(descriptor)
-      evaluating_proucer(descriptor.expr)
+      evaluating_producer(descriptor.expr)
     else
-      singleton_producer(evaluating_proucer(descriptor.expr).call(scope))
+      singleton_producer(evaluating_producer(descriptor.expr).call(scope))
     end
   end
+
+  private
 
   def caching?(descriptor)
     descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
@@ -197,69 +241,87 @@ class Puppet::Pops::Binder::Injector
   # return a Proc |scope|
   #
 
-
-#  def produce_DynamicProducer(producer, entry)
-#    unless cached = entry.cached_producer
-#      args_hash = entry.arguments.reduce({}) {|memo, arg| memo[arg.name] = arg.value; memo }
-#      cached = entry.cached_producer = Object.const_get(producer.class_name).new(args_hash)
-#    end
-#    return cached.produce()
-#  end
-
-  # TODO:
-  # - producers in the bindings model are instructions, the real producers are defined here (they respond to
-  # to #produce() )
-  # - the model's Producer should define if a producer is singleton or not
-  #   either via an attribute, or a wrapper that makes it a non singleton producer (otherwise all producers
-  #   are singletons
-  # - a constant/literal producer is different in that it can never producer a new object (except by cloning which
-  #   is never a deep clone in Ruby
-  #   (modeled objects are however deeply cloned, and when PuppetTyped objects are used based on a model this will
-  #   work well just not for ruby objects)
-  #   Suggest having a Fake impl using Ruby shallow clone, or using the ugly Marshal.load(Marshal.dump))
-  # - Check what RGen does
-  #
-  # These could be written as Procs
-
-    def singleton_producer(value)
-      Proc.new do |scope|
-        return value
-      end
+  def singleton_producer(value)
+    lambda do |scope|
+      return value
     end
+  end
 
-    def deep_cloning_producer(value)
-      Proc.new do |scope|
-        case value
-        # These are immutable
-        when Integer, Float, TrueClass, FalseClass, Symbol
-          return value
-        # ok if frozen
-        when String
-          return value if value.frozen?
+  def deep_cloning_producer(value)
+    lambda do |scope|
+      case value
+      # These are immutable
+      when Integer, Float, TrueClass, FalseClass, Symbol
+        return value
+      # ok if frozen
+      when String
+        return value if value.frozen?
+      end
+
+      # The default serialize/deserialize to get a deep copy
+      Marshal.load(Marshal.dump(value))
+    end
+  end
+
+  def instantiating_producer(class_name, *init_args)
+    lambda do |scope|
+      Object.const_get(class_name).new(*init_args)
+    end
+  end
+
+  def evaluating_producer(expr)
+    puppet3_ast = Puppet::Pops::Model::AstTransformer.new().transform(expr)
+    lambda do |scope|
+      puppet_3_ast.evaluate(scope)
+    end
+  end
+
+  def lookup_producer(type, name)
+    lambda do |scope|
+      lookup_type(scope, type, name)
+    end
+  end
+
+  # TODO: Support combinator lambda combinator => |$memo, $x| { $memo + $x }
+  # @api private
+  def array_multibind_producer(binding)
+    contributions_key = key_factory.multibind_contributions_key(bindings.id)
+    lambda do |scope|
+      result = []
+      lookup_key(scope, contributions_key).each do |k|
+        val = lookup_key(scope, k)
+        # typecheck
+        # TODO: accepts array, or array of T
+        unless type_calculator.assignable?(binding.type.element_type, val)
+          raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
         end
 
-        # The default serialize/deserialize to get a deep copy
-        Marshal.load(Marshal.dump(value))
+        result << val.is_a?(Array) ? val : [ val ]
       end
+      val
     end
+  end
 
-    def instantiating_producer(class_name, *init_args)
-      Proc.new do |scope|
-        Object.const_get(class_name).new(*init_args)
+  # TODO: Support combinator lambda combinator => |$key, $current, $value| { . . .}
+  # @api private
+  def hash_multibind_producer(binding)
+    contributions_key = key_factory.multibind_contributions_key(bindings.id)
+    lambda do |scope|
+      result = {}
+      lookup_key(scope, contributions_key).each do |k|
+        # get the entry (its name is needed)
+        entry = entries[k]
+        raise ArgumentError, "Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
+        # produce the value
+        val = produce(scope, entry)
+        # and typecheck it
+        unless type_calculator.assignable?(binding.type.element_type, val)
+          raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
+        end
+        # TODO: combinator lambda support
+        result[entry.binding.name] = val
       end
+      val
     end
-
-    def evluating_producer(expr)
-      puppet3_ast = Puppet::Pops::Model::AstTransformer.new().transform(expr)
-      Proc.new do |scope|
-        puppet_3_ast.evaluate(scope)
-      end
-    end
-
-    def lookup_producer(type, name)
-      Proc.new do |scope|
-        lookup_type(scope, type, name)
-      end
-    end
-
+  end
 end

@@ -3,17 +3,25 @@
 # @api private
 #
 class Puppet::Pops::Binder::InjectorEntry
-  attr :precedence
-  attr :binding
-  attr :resolved
-  attr :cached
-  attr :cached_producer
+  # @api private
+  attr_reader :precedence
+
+  # @api private
+  attr_reader :binding
+
+  # @api private
+  attr_accessor :resolved
+
+  # @api private
+  attr_accessor :cached
+
+  # @api private
+  attr_accessor :cached_producer
 
   # @api private
   def initialize(precedence, binding)
     @precedence = precedence
     @binding = binding
-    @cached = nil
     @cached_producer = nil
   end
 
@@ -27,7 +35,11 @@ class Puppet::Pops::Binder::InjectorEntry
   # The binding is resolved if it is non-override, or if the override has been resolved
   # @api private
   #
-  def is_resoved?()
+  def is_resolved?()
     !binding.override || resolved
+  end
+
+  def is_abstract?
+    binding.abstract
   end
 end
