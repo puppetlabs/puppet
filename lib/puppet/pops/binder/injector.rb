@@ -394,6 +394,15 @@ class Puppet::Pops::Binder::Injector
     end
   end
 
+  def transform_LookupProducerDescriptor(descriptor, scope, entry)
+    x = if caching?(descriptor)
+      injecting_producer(descriptor.type, descriptor.name)
+    else
+      singleton_producer(injecting_producer(descriptor.type, descriptor.name).produce(scope))
+    end
+    create_producer(x)
+  end
+
   # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
   # per type (different actions taken depending on the type).
   #
@@ -444,7 +453,7 @@ class Puppet::Pops::Binder::Injector
     create_producer(lambda { |scope| puppet_3_ast.evaluate(scope) })
   end
 
-  def injected_producer(type, name)
+  def injecting_producer(type, name)
     create_producer( lambda { |scope| lookup_type(scope, type, name) })
   end
 
