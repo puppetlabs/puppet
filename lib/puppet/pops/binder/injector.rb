@@ -340,67 +340,45 @@ class Puppet::Pops::Binder::Injector
 
   def transform_ArrayMultibindProducerDescriptor(descriptor, entry)
     p = array_multibind_producer(entry.binding)
-    caching?(descriptor) ? singleton_producer(p.produce(scope)) : p
+    singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
 
   def transform_HashMultibindProducerDescriptor(descriptor, entry)
     p = hash_multibind_producer(entry.binding)
-    caching?(descriptor) ? singleton_producer(p.produce(scope)) : p
+    singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
 
   # Produces a constant value
   # If not a singleton the value is deep-cloned (if not immutable) before returned.
   #
   def transform_ConstantProducerDescriptor(descriptor, scope, entry)
-    x = if caching?(descriptor)
-      deep_cloning_producer(descriptor.value)
-    else
-      singleton_producer(descriptor.value)
-    end
-    create_producer(x)
+    create_producer(singleton?(descriptor) ? singleton_producer(descriptor.value) : deep_cloning_producer(descriptor.value))
   end
 
   # Produces a new instance of the given class with given initialization arguments
   # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
   #
   def transform_InstanceProducer(descriptor, scope, entry)
-    x = if caching?(descriptor)
-      instantiating_producer.new(descriptor.class_name, *(descriptor.arguments))
-    else
-      singleton_producer(instantiating_producer(descriptor.class_name, *(descriptor.arguments)).produce(scope))
-    end
-    create_producer(x)
+    x = instantiating_producer.new(descriptor.class_name, *(descriptor.arguments))
+    create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
   # Evaluates a contained expression. If this is a singleton, the evaluation is performed once.
   #
   def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
-    x = if caching?(descriptor)
-      evaluating_producer(descriptor.expr)
-    else
-      singleton_producer(evaluating_producer(descriptor.expr).produce(scope))
-    end
-    create_producer(x)
+    x = evaluating_producer(descriptor.expr)
+    create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
   def transform_ProducerProducerDescriptor(descriptor, scope, entry)
     # Should produce an instance of the wanted producer
-    instance_producer = transform(descriptor.producer, scope, entry)
-    p = Puppet::Pops::Binder::WrappingProducer.new(instance_producer)
-    if caching?(descriptor)
-      singleton_producer_producer(p.produce(scope))
-    else
-      p
-    end
+    p = Puppet::Pops::Binder::WrappingProducer.new(transform(descriptor.producer, scope, entry))
+    singleton?(descriptor) ? singleton_producer_producer(p.produce(scope)) : p
   end
 
   def transform_LookupProducerDescriptor(descriptor, scope, entry)
-    x = if caching?(descriptor)
-      injecting_producer(descriptor.type, descriptor.name)
-    else
-      singleton_producer(injecting_producer(descriptor.type, descriptor.name).produce(scope))
-    end
-    create_producer(x)
+    x = injecting_producer(descriptor.type, descriptor.name)
+    create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
   # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
@@ -411,13 +389,15 @@ class Puppet::Pops::Binder::Injector
     transform(descriptor.producer, scope, entry)
   end
 
-  # TODO: transform_LookupProducerDescriptor
-  # TODO: transform_FirstFoundProducerDescriptor
+  def transform_FirstFoundProducerDescriptor(descriptor, scope, entry)
+    x = first_found_producer(descriptor.producers.collect {|p| transform(p, scope, entry) })
+    create_producer(singleton?(descriptor) ? singleton_producer(x).produce(scope) : x)
+  end
 
   private
 
-  def caching?(descriptor)
-    descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
+  def singleton?(descriptor)
+    ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
   end
 
 
@@ -446,6 +426,10 @@ class Puppet::Pops::Binder::Injector
 
   def instantiating_producer(class_name, *init_args)
     create_producer(lambda {|scope| Object.const_get(class_name).new(*init_args) } )
+  end
+
+  def first_found_producer(producers)
+    create_producer(lambda {|scope| producers.find {|p| p.produce(scope)}})
   end
 
   def evaluating_producer(expr)
