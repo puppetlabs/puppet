@@ -179,6 +179,7 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+
     # to a lookup of another key
     # @overload to_lookup_of(type, name)
     # @overload to_lookup_of(name)
@@ -191,7 +192,36 @@ class Puppet::Pops::Binder::BindingsFactory
       @model.producer = Puppet::Pops::Binder::BindingsFactory.lookup_producer(type, name)
       self
     end
+
+    # to first found lookup of another key
+    # @param list_of_lookups [Array] array of arrays [type name], or just name (implies data)
+    # @example 
+    #   binder.bind().name('foo').to_first_found(['fee', 'fum', 'extended-bar'])
+    #   binder.bind().name('foo').to_first_found([
+    #     [TypeFactory.ruby(ThisClass), 'fee'],
+    #     [TypeFactory.ruby(ThatClass), 'fum'],
+    #     'extended-bar'])
+    #
+    def to_first_found(list_of_lookups)
+      producers = list_of_lookups.collect do |entry|
+        if entry.is_a?(Array)
+          case entry.size
+          when 2
+            Puppet::Pops::Binder::BindingsFactory.lookup_producer(entry[0], entry[1])
+          when 1
+            Puppet::Pops::Binder::BindingsFactory.lookup_producer(Puppet::Pops::Types::TypeFactory.data(), entry[0])
+          else
+            raise ArgumentError, "Not an array of [type, name], name, or [name]"
+          end
+        else
+          Puppet::Pops::Binder::BindingsFactory.lookup_producer(Puppet::Pops::Types::TypeFactory.data(), entry)
+        end
+      end
+      @model.producer = Puppet::Pops::Binder::BindingsFactory.first_found_producer(producers)
+      self
+    end
   end
+
 
   class MultibindingsBuilder < BindingsBuilder
     def model_type=(type)
@@ -233,7 +263,13 @@ class Puppet::Pops::Binder::BindingsFactory
     p
   end
 
-  # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
+  def self.first_found_producer(producers)
+    p = Puppet::Pops::Binder::Bindings::FirstFoundProducerDescriptor.new()
+    producers.each {|p2| p.addProducers(p2) }
+    p
+  end
+
+# Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
   #
   def self.categories(tuple_array)
     result = Puppet::Pops::Binder::Bindings::EffectiveCategories.new()
