@@ -54,6 +54,10 @@ module Puppet::Pops::Binder::BinderIssues
     "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} cannot bind #{label.a_an(actual_type)} value"
   end
 
+  MODEL_OBJECT_IS_UNBOUND = issue :MODEL_OBJECT_IS_UNBOUND do
+    "#{label.a_an_uc(semantic)} is not contained in a binding"
+  end
+
   # Binding issues (binding identified using semantic)
 
   MISSING_PRODUCER = issue :MISSING_PRODUCER do
@@ -85,11 +89,11 @@ module Puppet::Pops::Binder::BinderIssues
   end
 
   MISSING_CATEGORIZATION = issue :MISSING_CATEGORIZATION do
-    "#{label.a_an_uc(semantic)} has at least one predicate that lacks categorization"
+    "#{label.a_an_uc(semantic)} has a category without categorization"
   end
 
   MISSING_CATEGORY_VALUE = issue :MISSING_CATEGORY_VALUE do
-    "#{label.a_an_uc(semantic)} has at least one category that lacks a value"
+    "#{label.a_an_uc(semantic)} has a category without value"
   end
 
   MISSING_LAYERS = issue :MISSING_LAYERS do
@@ -97,7 +101,7 @@ module Puppet::Pops::Binder::BinderIssues
   end
 
   MISSING_LAYER_NAME = issue :MISSING_LAYER_NAME do
-    "#{label.a_an_uc(semantic)} has at least one layer that lacks a name"
+    "#{label.a_an_uc(semantic)} has a layer without name"
   end
 
   MISSING_BINDINGS_IN_LAYER = issue :MISSING_BINDINGS_IN_LAYER, :layer do
