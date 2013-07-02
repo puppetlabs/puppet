@@ -30,8 +30,8 @@ module BindingsChecker_Test
       b
     }
 
-    def check(binding)
-      Puppet::Pops::Binder::BindingsValidatorFactory.new().validator(acceptor).check(binding)
+    def validate(binding)
+      Puppet::Pops::Binder::BindingsValidatorFactory.new().validator(acceptor).validate(binding)
     end
 
     def bindings(*args)
@@ -101,104 +101,104 @@ module BindingsChecker_Test
     end
 
     it 'should complain about missing producer and type' do
-      check(binding())
+      validate(binding())
       acceptor.should have_issue(Issues::MISSING_PRODUCER)
       acceptor.should have_issue(Issues::MISSING_TYPE)
     end
 
     context 'when checking array multibinding' do
       it 'should complain about non array producers' do
-        check(bad_array_multibinding())
+        validate(bad_array_multibinding())
         acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
       end
     end
 
     context 'when checking hash multibinding' do
       it 'should complain about non hash producers' do
-        check(bad_hash_multibinding())
+        validate(bad_hash_multibinding())
         acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
       end
     end
 
     context 'when checking bindings' do
       it 'should not accept zero bindings' do
-        check(bindings())
+        validate(bindings())
         acceptor.should have_issue(Issues::MISSING_BINDINGS)
       end
 
       it 'should accept non-zero bindings' do
-        check(bindings(ok_binding))
+        validate(bindings(ok_binding))
         acceptor.errors_or_warnings?.should() == false
       end
 
       it 'should check contained bindings' do
-        check(bindings(bad_array_multibinding()))
+        validate(bindings(bad_array_multibinding()))
         acceptor.should have_issue(Issues::MULTIBIND_INCOMPATIBLE_TYPE)
       end
     end
 
     context 'when checking named bindings' do
       it 'should accept named bindings' do
-        check(named_bindings('garfield', ok_binding))
+        validate(named_bindings('garfield', ok_binding))
         acceptor.errors_or_warnings?.should() == false
       end
 
       it 'should not accept unnamed bindings' do
-        check(named_bindings(nil, ok_binding))
+        validate(named_bindings(nil, ok_binding))
         acceptor.should have_issue(Issues::MISSING_BINDINGS_NAME)
       end
 
       it 'should do generic bindings check' do
-        check(named_bindings('garfield'))
+        validate(named_bindings('garfield'))
         acceptor.should have_issue(Issues::MISSING_BINDINGS)
       end
     end
 
     context 'when checking categorized bindings' do
       it 'should accept non-zero predicates' do
-        check(categorized_bindings([ok_binding], category('foo', 'bar')))
+        validate(categorized_bindings([ok_binding], category('foo', 'bar')))
         acceptor.errors_or_warnings?.should() == false
       end
 
       it 'should not accept zero predicates' do
-        check(categorized_bindings([ok_binding]))
+        validate(categorized_bindings([ok_binding]))
         acceptor.should have_issue(Issues::MISSING_PREDICATES)
       end
 
       it 'should not accept predicates that has no categorization' do
-        check(categorized_bindings([ok_binding], category(nil, 'bar')))
+        validate(categorized_bindings([ok_binding], category(nil, 'bar')))
         acceptor.should have_issue(Issues::MISSING_CATEGORIZATION)
       end
 
       it 'should not accept predicates that has no value' do
-        check(categorized_bindings([ok_binding], category('foo', nil)))
+        validate(categorized_bindings([ok_binding], category('foo', nil)))
         acceptor.should have_issue(Issues::MISSING_CATEGORY_VALUE)
       end
 
       it 'should do generic bindings check' do
-        check(categorized_bindings([], category('foo', 'bar')))
+        validate(categorized_bindings([], category('foo', 'bar')))
         acceptor.should have_issue(Issues::MISSING_BINDINGS)
       end
     end
 
     context 'when checking layered bindings' do
       it 'should not accept zero layers' do
-        check(layered_bindings())
+        validate(layered_bindings())
         acceptor.should have_issue(Issues::MISSING_LAYERS)
       end
 
       it 'should accept non-zero layers' do
-        check(layered_bindings(layer('foo', named_bindings('bar', ok_binding))))
+        validate(layered_bindings(layer('foo', named_bindings('bar', ok_binding))))
         acceptor.errors_or_warnings?.should() == false
       end
 
       it 'should not accept unnamed layers' do
-        check(layered_bindings(layer(nil, named_bindings('bar', ok_binding))))
+        validate(layered_bindings(layer(nil, named_bindings('bar', ok_binding))))
         acceptor.should have_issue(Issues::MISSING_LAYER_NAME)
       end
 
       it 'should not accept layers without bindings' do
-        check(layered_bindings(layer('foo')))
+        validate(layered_bindings(layer('foo')))
         acceptor.should have_issue(Issues::MISSING_BINDINGS_IN_LAYER)
       end
     end
