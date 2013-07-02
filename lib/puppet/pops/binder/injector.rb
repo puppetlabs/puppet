@@ -159,7 +159,7 @@ class Puppet::Pops::Binder::Injector
       lookup_producer_type(scope, *args)
     when String
       raise ArgumentError, "lookup_producer of name should only pass the name" unless args.size == 1
-      lookup_key(scope, key_factory.data_key(args[0]))
+      lookup_producer_key(scope, key_factory.data_key(args[0]))
     else
       raise ArgumentError, "lookup_producer using a key should only pass a single key" unless args.size == 1
       lookup_producer_key(scope, args[0])
@@ -345,7 +345,7 @@ class Puppet::Pops::Binder::Injector
     create_producer(lambda { |scope| puppet_3_ast.evaluate(scope) })
   end
 
-  def lookup_producer(type, name)
+  def injected_producer(type, name)
     create_producer( lambda { |scope| lookup_type(scope, type, name) })
   end
 

@@ -152,6 +152,7 @@ describe 'Injector' do
         injector.lookup(null_scope(),'a_string').should == 'good stuff'
       end
     end
+
     context "and dealing with Data types" do
       it "should treat all data as same type w.r.t. key" do
         binder = binder_with_categories()
@@ -195,12 +196,12 @@ describe 'Injector' do
         injector.lookup(null_scope(),'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
 
         # Check lookup using expected type
-        injector.lookup(null_scope(),type_factory.string(), 'a_string').should  == '42'
-        injector.lookup(null_scope(),type_factory.integer(), 'an_int').should    == 43
-        injector.lookup(null_scope(),type_factory.float(),'a_float').should   == 3.14
-        injector.lookup(null_scope(),type_factory.boolean(),'a_boolean').should == true
+        injector.lookup(null_scope(),type_factory.string(), 'a_string').should        == '42'
+        injector.lookup(null_scope(),type_factory.integer(), 'an_int').should         == 43
+        injector.lookup(null_scope(),type_factory.float(),'a_float').should           == 3.14
+        injector.lookup(null_scope(),type_factory.boolean(),'a_boolean').should       == true
         injector.lookup(null_scope(),type_factory.array_of_data(),'an_array').should  == [1,2,3]
-        injector.lookup(null_scope(),type_factory.hash_of_data(),'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
+        injector.lookup(null_scope(),type_factory.hash_of_data(),'a_hash').should     == {'a'=>1,'b'=>2,'c'=>3}
 
         # Check lookup using wrong type
         expect { injector.lookup(null_scope(),type_factory.integer(), 'a_string')}.to raise_error(/Type error/)
@@ -208,8 +209,22 @@ describe 'Injector' do
         expect { injector.lookup(null_scope(),type_factory.string(),'a_float')}.to raise_error(/Type error/)
         expect { injector.lookup(null_scope(),type_factory.string(),'a_boolean')}.to raise_error(/Type error/)
         expect { injector.lookup(null_scope(),type_factory.string(),'an_array')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string,'a_hash')}.to raise_error(/Type error/)
+        expect { injector.lookup(null_scope(),type_factory.string(),'a_hash')}.to raise_error(/Type error/)
       end
     end
+  end
+  context "When looking up producer" do
+    it 'should perform a simple lookup in the common layer' do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      producer = injector.lookup_producer(null_scope(), 'a_string')
+      producer.produce(null_scope()).should == '42'
+    end
+
   end
 end
