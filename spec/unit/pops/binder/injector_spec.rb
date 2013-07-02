@@ -41,6 +41,19 @@ module InjectorSpecModule
     b.define_categories(factory.categories(['highest', 'test', 'node', 'kermit', 'environment','dev']))
     b
   end
+
+  class TestDuck
+  end
+  class Daffy < TestDuck
+  end
+  class Donald < TestDuck
+  end
+  class UncleMcScrooge < TestDuck
+    attr_reader :fortune
+    def initialize(fortune)
+      @fortune = fortune
+    end
+  end
 end
 
 describe 'Injector' do
@@ -318,6 +331,7 @@ describe 'Injector' do
       a.equal?(b).should == false
     end
   end
+
   context "when using the lookup producer" do
     it "should lookup again to produce a value" do
       binder = Puppet::Pops::Binder::Binder.new()
@@ -331,8 +345,21 @@ describe 'Injector' do
       injector.lookup(null_scope(), 'a_string').should == 'hello'
     end
   end
+  context "when using the first found producer" do
+    it "should lookup until it finds a value, but no further" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to_first_found(['b_string', 'c_string', 'g_string'])
+      bindings.bind().name('c_string').to('hello')
+      bindings.bind().name('g_string').to('Oh, mrs. Smith...')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string').should == 'hello'
+    end
+  end
   # TODO: test producer producer
-  # TODO: test lookup producer
   # TODO: test first found producer
   # TODO: test multibinding (array, hash)  
 end

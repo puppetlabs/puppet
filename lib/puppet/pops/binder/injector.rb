@@ -429,7 +429,8 @@ class Puppet::Pops::Binder::Injector
   end
 
   def first_found_producer(producers)
-    create_producer(lambda {|scope| producers.find {|p| p.produce(scope)}})
+    # return the first produced value that is non-nil (unfortunately there is no such enumerable method)
+    create_producer(lambda {|scope| producers.reduce(nil) {|memo, p| break memo unless memo.nil?; p.produce(scope)}})
   end
 
   def evaluating_producer(expr)
