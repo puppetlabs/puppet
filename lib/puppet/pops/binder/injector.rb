@@ -221,6 +221,7 @@ class Puppet::Pops::Binder::Injector
   #
   # @yield [producer] passes the looked up producer to an optional block and returns what this block returns
   #   @yieldparam producer [Puppet::Pops::Binder::Producer, nil] the looked up producer or nil if nothing was bound
+  #
   # @yield [scope, producer] passes scope and producer to the block and returns what this block returns
   #   @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
   #   @yieldparam producer [Object, nil] the looked up producer or nil if nothing was bound
@@ -230,10 +231,6 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_producer(scope, *args, &block)
-    # TODO: should return an object that may have additional ways of creating an instance
-    # These are obviously not of value in the Puppet DSL (since methods cannot be invoked)
-    # To support getting a producer that can behave as the Proc producers, the Proc should
-    # be wrapped in an instance when user has not supplied a Producer class.
     raise ArgumentError, "lookup_producer should be called with two or three arguments, got: #{args.size()+1}" unless args.size <= 2
     p = case args[0]
     when Puppet::Pops::Types::PObjectType
@@ -261,6 +258,7 @@ class Puppet::Pops::Binder::Injector
 
   # Looks up a Producer given an opaque binder key.
   # @returns [Puppet::Pops::Binder::Producer, nil] the bound producer, or nil if no such producer was found.
+  #
   # @api public
   #
   def lookup_producer_key(scope, key)
@@ -270,6 +268,7 @@ class Puppet::Pops::Binder::Injector
   # Looks up a Producer given a type/name key.
   # @note The result is not type checked (it cannot be until the producer has produced an instance).
   # @returns [Puppet::Pops::Binder::Producer, nil] the bound producer, or nil if no such producer was found
+  #
   # @api public
   #
   def lookup_producer_type(scope, type, name='')

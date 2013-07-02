@@ -72,10 +72,16 @@ module Puppet::Pops::Binder::Bindings
 
   # Produces a value by looking up another multibound key, and then looking up
   # the detail using a detail_key.
-  # This is used to producer a specific service of a given type (such as a SyntaxChecker for the syntax "json").
+  # This is used to produce a specific service of a given type (such as a SyntaxChecker for the syntax "json").
   #
   class MultiLookupProducerDescriptor < LookupProducerDescriptor
     has_attr 'detail_name', String
+  end
+
+  # Produces a value by looking up each producer in turn. The first existing producer wins.
+  #
+  class FirstFoundProducerDescriptor < ProducerDescriptor
+    contains_many_uni 'producers', LookupProducerDescriptor
   end
 
   class MultibindProducerDescriptor < ProducerDescriptor
