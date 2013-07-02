@@ -291,4 +291,36 @@ describe 'Injector' do
     end
 
   end
+  context "when dealing with singleton vs. non singleton" do
+    it "should produce the same instance when producer is a singleton" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      a = injector.lookup(null_scope(), 'a_string')
+      b = injector.lookup(null_scope(), 'a_string')
+      a.equal?(b).should == true
+    end
+
+    it "should produce different instances when producer is a non singleton producer" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to_series_of('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      a = injector.lookup(null_scope(), 'a_string')
+      b = injector.lookup(null_scope(), 'a_string')
+      a.equal?(b).should == false
+    end
+  end
+  # TODO: singleton vs non singleton tests
+  # TODO: test producer producer
+  # TODO: test lookup producer
+  # TODO: test first found producer
+  # TODO: test multibinding (array, hash)  
 end

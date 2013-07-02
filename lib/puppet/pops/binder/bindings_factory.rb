@@ -156,6 +156,7 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # to a singleton producer, if producer is a value, a producer is created for it
     def to(producer)
       # If given producer is not a producer, create a literal producer
       unless producer.is_a?(Puppet::Pops::Binder::Bindings::ProducerDescriptor)
@@ -165,6 +166,18 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # to a "non singleton" producer (each produce produces a new copy).
+    #
+    def to_series_of(producer)
+      # If given producer is not a producer, create a literal producer
+      unless producer.is_a?(Puppet::Pops::Binder::Bindings::ProducerDescriptor)
+        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+      end
+      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching.producer = producer
+      @model.producer = non_caching
+      self
+    end
   end
 
   class MultibindingsBuilder < BindingsBuilder
@@ -191,6 +204,13 @@ class Puppet::Pops::Binder::BindingsFactory
     producer = Puppet::Pops::Binder::Bindings::ConstantProducerDescriptor.new()
     producer.value = value
     producer
+  end
+
+  # Creates a literal producer
+  def self.non_caching_producer(producer)
+    p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+    p.producer = producer
+    p
   end
 
   # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`

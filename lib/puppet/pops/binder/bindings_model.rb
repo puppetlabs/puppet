@@ -17,6 +17,7 @@ module Puppet::Pops::Binder::Bindings
 
   # An abstract producer
   class ProducerDescriptor < Puppet::Pops::Model::PopsObject
+    abstract
   end
 
   # All producers are singleton producers unless wrapped in a non caching producer
