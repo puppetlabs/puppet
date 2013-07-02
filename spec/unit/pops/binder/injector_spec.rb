@@ -318,7 +318,19 @@ describe 'Injector' do
       a.equal?(b).should == false
     end
   end
-  # TODO: singleton vs non singleton tests
+  context "when using the lookup producer" do
+    it "should lookup again to produce a value" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to_lookup_of('another_string')
+      bindings.bind().name('another_string').to('hello')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string').should == 'hello'
+    end
+  end
   # TODO: test producer producer
   # TODO: test lookup producer
   # TODO: test first found producer

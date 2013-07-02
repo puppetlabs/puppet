@@ -178,6 +178,19 @@ class Puppet::Pops::Binder::BindingsFactory
       @model.producer = non_caching
       self
     end
+
+    # to a lookup of another key
+    # @overload to_lookup_of(type, name)
+    # @overload to_lookup_of(name)
+    #
+    def to_lookup_of(type, name=nil)
+      unless name
+        name = type
+        type = Puppet::Pops::Types::TypeFactory.data()
+      end
+      @model.producer = Puppet::Pops::Binder::BindingsFactory.lookup_producer(type, name)
+      self
+    end
   end
 
   class MultibindingsBuilder < BindingsBuilder
@@ -210,6 +223,13 @@ class Puppet::Pops::Binder::BindingsFactory
   def self.non_caching_producer(producer)
     p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
     p.producer = producer
+    p
+  end
+
+  def self.lookup_producer(type, name)
+    p = Puppet::Pops::Binder::Bindings::LookupProducerDescriptor.new()
+    p.type = type
+    p.name = name
     p
   end
 
