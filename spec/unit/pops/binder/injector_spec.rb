@@ -72,6 +72,26 @@ describe 'Injector' do
       binder.define_categories(factory.categories([]))
       expect { binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model))) }.to_not raise_exception
     end
+
+    it "should be possible to reference the TypeCalculator" do
+      binder = binder()
+      binder.define_categories(factory.categories([]))
+      bindings = factory.named_bindings('test')
+      binder.define_layers(test_layer_with_bindings(bindings.model))
+      binder.configured?().should == true # of something is very wrong
+      i = injector(binder)
+      i.type_calculator.is_a?(Puppet::Pops::Types::TypeCalculator).should == true
+    end
+
+    it "should be possible to reference the KeyFactory" do
+      binder = binder()
+      binder.define_categories(factory.categories([]))
+      bindings = factory.named_bindings('test')
+      binder.define_layers(test_layer_with_bindings(bindings.model))
+      binder.configured?().should == true # of something is very wrong
+      i = injector(binder)
+      i.key_factory.is_a?(Puppet::Pops::Binder::KeyFactory).should == true
+    end
   end
 
   context "When looking up" do
@@ -84,6 +104,28 @@ describe 'Injector' do
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_string').should == '42'
+    end
+
+    it 'should be possible to use a block to further detail the lookup' do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string') {|val| val + '42' }.should == '4242'
+    end
+
+    it 'should be possible to use a block to produce a default if entry is missing' do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_non_existing_string') {|val| val ? val : '4242' }.should == '4242'
     end
 
     context 'and conditionals are in use' do
@@ -224,6 +266,28 @@ describe 'Injector' do
       injector = injector(binder)
       producer = injector.lookup_producer(null_scope(), 'a_string')
       producer.produce(null_scope()).should == '42'
+    end
+
+    it 'should be possible to use a block to further detail the lookup' do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup_producer(null_scope(), 'a_string') {|scope, p| p.produce(scope) + '42' }.should == '4242'
+    end
+
+    it 'should be possible to use a block to produce a default value if entry is missing' do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to('42')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup_producer(null_scope(), 'a_non_existing_string') {|scope, p| p ? p.produce(scope) : '4242' }.should == '4242'
     end
 
   end
