@@ -51,7 +51,7 @@ class Puppet::Pops::Binder::Injector
     # represented the same (but still opaque) way.
     #
     @key_factory         = configured_binder.key_factory()
-    @@producer_visitor ||= Puppet::Pops::Visitor.new(nil,"produce", 2,  2)
+    @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform", 2,  2)
   end
 
   # Lookup (a.k.a "inject") of a value given a key.
@@ -289,12 +289,15 @@ class Puppet::Pops::Binder::Injector
   def producer(scope, entry)
     return nil unless entry # not found
     unless entry.cached_producer
-      entry.cached_producer = @@producer_visitor.visit_this(self, entry.binding.producer, scope, entry)
+      entry.cached_producer = transform(entry.binding.producer, scope, entry)
     end
     raise ArgumentError, "Injector entry without a producer TODO: detail" unless entry.cached_producer
     entry.cached_producer
   end
 
+  def transform(producer_descriptor, scope, entry)
+    @@transform_visitor.visit_this(self, producer_descriptor, scope, entry)
+  end
   # Creates a producer if given argument is a lambda, else returns the give producer
   # @return [Puppet::Pops::Binder::Producer] the given or producer wrapped lambda producer
   # @api private
@@ -315,7 +318,7 @@ class Puppet::Pops::Binder::Injector
 
   # Called when producer is missing (e.g. a Multibinding)
   #
-  def produce_NilClass(descriptor, scope, entry)
+  def transform_NilClass(descriptor, scope, entry)
     # TODO: When the multibind has a nil producer it is not possible to flag it as being
     # singleton or not - in this case the collected content will need to determine its state
     # the issue is if a collected piece of content is dynamic as each multi lookup could potentially
@@ -335,12 +338,12 @@ class Puppet::Pops::Binder::Injector
     end
   end
 
-  def produce_ArrayMultibindProducerDescriptor(descriptor, entry)
+  def transform_ArrayMultibindProducerDescriptor(descriptor, entry)
     p = array_multibind_producer(entry.binding)
     caching?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
 
-  def produce_HashMultibindProducerDescriptor(descriptor, entry)
+  def transform_HashMultibindProducerDescriptor(descriptor, entry)
     p = hash_multibind_producer(entry.binding)
     caching?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
@@ -348,7 +351,7 @@ class Puppet::Pops::Binder::Injector
   # Produces a constant value
   # If not a singleton the value is deep-cloned (if not immutable) before returned.
   #
-  def produce_ConstantProducerDescriptor(descriptor, scope, entry)
+  def transform_ConstantProducerDescriptor(descriptor, scope, entry)
     x = if caching?(descriptor)
       deep_cloning_producer(descriptor.value)
     else
@@ -360,7 +363,7 @@ class Puppet::Pops::Binder::Injector
   # Produces a new instance of the given class with given initialization arguments
   # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
   #
-  def produce_InstanceProducer(descriptor, scope, entry)
+  def transform_InstanceProducer(descriptor, scope, entry)
     x = if caching?(descriptor)
       instantiating_producer.new(descriptor.class_name, *(descriptor.arguments))
     else
@@ -371,7 +374,7 @@ class Puppet::Pops::Binder::Injector
 
   # Evaluates a contained expression. If this is a singleton, the evaluation is performed once.
   #
-  def produce_EvaluatingProducerDescriptor(descriptor, scope, entry)
+  def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
     x = if caching?(descriptor)
       evaluating_producer(descriptor.expr)
     else
@@ -380,9 +383,9 @@ class Puppet::Pops::Binder::Injector
     create_producer(x)
   end
 
-  def produce_ProducerProducerDescriptor(descriptor, scope, entry)
+  def transform_ProducerProducerDescriptor(descriptor, scope, entry)
     # Should produce an instance of the wanted producer
-    instance_producer = @@producer_visitor.visit_this(self, descriptor.producer, scope, entry)
+    instance_producer = transform(descriptor.producer, scope, entry)
     p = Puppet::Pops::Binder::WrappingProducer.new(instance_producer)
     if caching?(descriptor)
       singleton_producer_producer(p.produce(scope))
@@ -391,19 +394,23 @@ class Puppet::Pops::Binder::Injector
     end
   end
 
+  # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
+  # per type (different actions taken depending on the type).
+  #
+  def transform_NonCachingProducerDescriptor(descriptor, scope, entry)
+    # simply delegates to the wrapped producer
+    transform(descriptor.producer, scope, entry)
+  end
+
+  # TODO: transform_LookupProducerDescriptor
+  # TODO: transform_FirstFoundProducerDescriptor
+
   private
 
   def caching?(descriptor)
     descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
   end
 
-  # This implementation simply delegates since caching status is determined by the polymorph produce_xxx method
-  # per type (different actions taken depending on the type).
-  #
-  def produce_NonCachingProducerDescriptor(descriptor, scope, entry)
-    # simply delegates to the wrapped producer
-    produce(descritor.producer, scope, entry)
-  end
 
   # TODO: MultiLookupProducerDescriptor
 
