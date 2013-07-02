@@ -45,10 +45,10 @@ class Puppet::Pops::Binder::BindingsChecker
     # A multibinding must have PCollectionType
     acceptor.accept(Issues::MULTIBIND_TYPE_ERROR, b, {:actual_type => b.type})  unless b.type.is_a?(Types::PCollectionType)
 
-    if b.producer != nil # if it's nil, a suitable producer will be picked automatically
+    if b.producer # if it's nil, a suitable producer will be picked automatically
       if b.producer.is_a?(Bindings::MultibindProducerDescriptor)
         producer(b.producer, b)
-      elsif b.producer != nil
+      else
         acceptor.accept(Issues::MULTIBIND_NOT_COLLECTION_PRODUCER, b, {:actual_producer => b.producer})
       end
     end
@@ -56,7 +56,7 @@ class Puppet::Pops::Binder::BindingsChecker
 
   # Checks that the bindings object contains at least one binding. Then checks each binding in turn
   def check_Bindings(b)
-    if b.bindings == nil || b.bindings.empty?
+    if b.bindings.nil? || b.bindings.empty?
       acceptor.accept(Issues::MISSING_BINDINGS, b)
     else
       b.bindings.each { |c| check(c) }
