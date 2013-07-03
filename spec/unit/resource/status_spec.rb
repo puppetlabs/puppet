@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'time'
 
 require 'puppet/resource/status'
 
@@ -172,6 +173,7 @@ describe Puppet::Resource::Status do
     tripped.resource_type.should == @status.resource_type
     tripped.evaluation_time.should == @status.evaluation_time
     tripped.tags.should == @status.tags
+    tripped.time.iso8601.should == @status.time.iso8601
     tripped.failed.should == @status.failed
     tripped.changed.should == @status.changed
     tripped.out_of_sync.should == @status.out_of_sync
