@@ -106,7 +106,7 @@ module Puppet
           'resource_type' => @resource_type,
           'evaluation_time' => @evaluation_time,
           'tags' => @tags,
-          'time' => @time.iso8601,
+          'time' => @time.iso8601(9),
           'failed' => @failed,
           'changed' => @changed,
           'out_of_sync' => @out_of_sync,
