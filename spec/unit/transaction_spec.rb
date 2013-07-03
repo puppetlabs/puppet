@@ -594,21 +594,38 @@ describe Puppet::Transaction do
     end
 
     it "should skip device only resouce on normal host" do
+      @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = false
       @transaction.should be_skip(@resource)
     end
 
     it "should not skip device only resouce on remote device" do
+      @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = true
       @transaction.should_not be_skip(@resource)
     end
 
     it "should skip host resouce on device" do
+      @resource.stubs(:appliable_to_host?).returns true
       @resource.stubs(:appliable_to_device?).returns false
       @transaction.for_network_device = true
       @transaction.should be_skip(@resource)
+    end
+
+    it "should not skip resouce available on both device and host when on device" do
+      @resource.stubs(:appliable_to_host?).returns true
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = true
+      @transaction.should_not be_skip(@resource)
+    end
+
+    it "should not skip resouce available on both device and host when on host" do
+      @resource.stubs(:appliable_to_host?).returns true
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = false
+      @transaction.should_not be_skip(@resource)
     end
   end
 
