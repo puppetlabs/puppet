@@ -454,13 +454,20 @@ class Puppet::Transaction
       end
     elsif resource.virtual?
       resource.debug "Skipping because virtual"
-    elsif resource.appliable_to_device? ^ for_network_device
-      resource.debug "Skipping #{resource.appliable_to_device? ? 'device' : 'host'} resources because running on a #{for_network_device ? 'device' : 'host'}"
+    elsif !host_and_device_resource?(resource) && resource.appliable_to_host? && for_network_device
+      resource.debug "Skipping host resources because running on a device"
+    elsif !host_and_device_resource?(resource) && resource.appliable_to_device? && !for_network_device
+      resource.debug "Skipping device resources because running on a posix host"
     else
       return false
     end
     true
   end
+
+  def host_and_device_resource?(resource)
+    resource.appliable_to_host? && resource.appliable_to_device?
+  end
+  private :host_and_device_resource?
 
   # The tags we should be checking.
   def tags
