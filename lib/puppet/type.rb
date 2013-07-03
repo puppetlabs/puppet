@@ -2406,14 +2406,15 @@ class Type
   def exported?; !!@exported; end
 
   # @return [Boolean] Returns whether the resource is applicable to `:device`
-  # @todo Explain what this means
+  # Returns true if a resource of this type can be evaluated on a 'network device' kind
+  # of hosts.
   # @api private
   def appliable_to_device?
     self.class.can_apply_to(:device)
   end
 
   # @return [Boolean] Returns whether the resource is applicable to `:host`
-  # @todo Explain what this means
+  # Returns true if a resource of this type can be evaluated on a regular generalized computer (ie not an appliance like a network device)
   # @api private
   def appliable_to_host?
     self.class.can_apply_to(:host)
