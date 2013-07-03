@@ -45,7 +45,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   # This default implementation does not perform any munging, it just checks the one/many paths
   # constraints. A derived implementation can perform this check as:
   # `paths.is_a?(Array) and ! self.class.arrays?` and raise a {Puppet::Error}.
-  # @param [String, Array<String>] one of multiple paths
+  # @param paths [String, Array<String>] one of multiple paths
   # @return [String, Array<String>] the given paths
   # @raise [Puppet::Error] if the given paths does not comply with the on/many paths rule.
   def unsafe_munge(paths)

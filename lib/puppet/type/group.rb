@@ -161,7 +161,7 @@ module Puppet
     #
     # (see Puppet::Settings#service_group_available?)
     #
-    # @returns [Boolean] if the group exists on the system
+    # @return [Boolean] if the group exists on the system
     # @api private
     def exists?
       provider.exists?

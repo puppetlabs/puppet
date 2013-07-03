@@ -10,7 +10,7 @@ module Puppet::Util::Profiler
 
   NONE = Puppet::Util::Profiler::None.new
 
-  # @returns This thread's configured profiler
+  # @return This thread's configured profiler
   def self.current
     Thread.current[:profiler] || NONE
   end

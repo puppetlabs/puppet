@@ -31,10 +31,14 @@ class Puppet::Pops::Parser::Lexer
     attr_accessor :regex, :name, :string, :skip, :skip_text
     alias skip? skip
 
-    # @param string_or_regex[String] a literal string token matcher
-    # @param string_or_regex[Regexp] a regular expression token text matcher
-    # @param name [String] the token name (what it is known as in the grammar)
-    # @param options [Hash] see {#set_options}
+    # @overload initialize(string)
+    #   @param string [String] a literal string token matcher
+    #   @param name [String] the token name (what it is known as in the grammar)
+    #   @param options [Hash] see {#set_options}
+    # @overload initialize(regex)
+    #   @param regex [Regexp] a regular expression token text matcher
+    #   @param name [String] the token name (what it is known as in the grammar)
+    #   @param options [Hash] see {#set_options}
     #
     def initialize(string_or_regex, name, options = {})
       if string_or_regex.is_a?(String)

@@ -611,7 +611,7 @@ class Puppet::Property < Puppet::Parameter
   end
 
   # (see #should=)
-  def value=(value)
-    self.should = value
+  def value=(values)
+    self.should = values
   end
 end

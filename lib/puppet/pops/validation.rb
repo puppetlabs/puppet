@@ -20,7 +20,7 @@ module Puppet::Pops::Validation
     end
 
     # Returns the severity of the given issue.
-    # @returns [Symbol] severity level :error, :warning, or :ignore
+    # @return [Symbol] severity level :error, :warning, or :ignore
     #
     def severity issue
       assert_issue(issue)
@@ -44,7 +44,7 @@ module Puppet::Pops::Validation
     end
 
     # Returns true if the issue should be reported or not.
-    # @returns [Boolean] this implementation returns true for errors and warnings
+    # @return [Boolean] this implementation returns true for errors and warnings
     #
     def should_report? issue
       diagnose = self[issue]
