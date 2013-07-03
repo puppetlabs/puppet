@@ -273,7 +273,7 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_producer_type(scope, type, name='')
-    lookup_producer_key(named_key(type, name))
+    lookup_producer_key(scope, named_key(type, name))
   end
 
   # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production) ??
