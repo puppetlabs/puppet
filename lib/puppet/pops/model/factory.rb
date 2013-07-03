@@ -180,10 +180,14 @@ class Puppet::Pops::Model::Factory
   end
 
   # Builds body :) from different kinds of input
-  # @param body [nil] unchanged, produces nil
-  # @param body [Array<Expression>] turns into a BlockExpression
-  # @param body [Expression] produces the given expression
-  # @param body [Object] produces the result of calling #build with body as argument
+  # @overload f_build_body(nothing)
+  #   @param nothing [nil] unchanged, produces nil
+  # @overload f_build_body(array)
+  #   @param array [Array<Expression>] turns into a BlockExpression
+  # @overload f_build_body(expr)
+  #   @param expr [Expression] produces the given expression
+  # @overload f_build_body(obj)
+  #   @param obj [Object] produces the result of calling #build with body as argument
   def f_build_body(body)
     case body
     when NilClass
@@ -429,7 +433,7 @@ class Puppet::Pops::Model::Factory
   # Does nothing if file is nil.
   #
   # @param file [String,nil] the file/path to the origin, may contain URI scheme of file: or some other URI scheme
-  # @returns [Factory] returns self
+  # @return [Factory] returns self
   #
   def record_origin(file)
     return self unless file

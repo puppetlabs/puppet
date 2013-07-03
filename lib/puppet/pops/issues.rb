@@ -91,8 +91,8 @@ module Puppet::Pops::Issues
   #
   # @param issue_code [Symbol] the issue code for the issue used as an identifier, should be the same as the constant
   #   the issue is bound to.
-  # @param *args [Symbol] required arguments that must be passed when formatting the message, may be empty
-  # @param &block [Proc] a block producing the message string, evaluated in a MessageData scope. The produced string
+  # @param args [Symbol] required arguments that must be passed when formatting the message, may be empty
+  # @param block [Proc] a block producing the message string, evaluated in a MessageData scope. The produced string
   #   should not end with a period as additional information may be appended.
   #
   # @see MessageData

@@ -249,7 +249,7 @@ class Puppet::Settings
   # "no-" prefix on flag/boolean options).
   #
   # @param [String] opt the command line option that we are munging
-  # @param [String, TrueClass, FalseClass] the value for the setting (as determined by the OptionParser)
+  # @param [String, TrueClass, FalseClass] val the value for the setting (as determined by the OptionParser)
   def self.clean_opt(opt, val)
     # rewrite --[no-]option to --no-option if that's what was given
     if opt =~ /\[no-\]/ and !val

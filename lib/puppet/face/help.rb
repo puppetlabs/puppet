@@ -129,7 +129,7 @@ Detail: "#{detail.message}"
 
   # Return a list of all applications (both legacy and Face applications), along with a summary
   #  of their functionality.
-  # @returns [Array] An Array of Arrays.  The outer array contains one entry per application; each
+  # @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
   #  element in the outer array is a pair whose first element is a String containing the application
   #  name, and whose second element is a String containing the summary for that application.
   def all_application_summaries()
