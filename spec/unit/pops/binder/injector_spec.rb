@@ -398,7 +398,7 @@ describe 'Injector' do
       the_duck.fortune.should == 1234
     end
 
-    it "should lookup a producer and use what it produces (when producer is singleton)" do
+    it "singleton producer should not be recreated between lookups" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
@@ -420,7 +420,7 @@ describe 'Injector' do
       duck_producer.produce(null_scope()).fortune.should == 800
     end
 
-    it "should lookup a producer and use what it produces (when producer is a series of producers)" do
+    it "series of producers should recreate producer on each lookup" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
@@ -434,26 +434,6 @@ describe 'Injector' do
       the_duck.fortune.should == 200
       # series, each lookup gets a new producer (initialized to produce 200)
       the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
-      the_duck.fortune.should == 200
-    end
-
-    it "should lookup a producer and not recreate it until next lookup (when producer is a series)" do
-      binder = Puppet::Pops::Binder::Binder.new()
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
-      bindings.bind().type(duck_type).name('the_duck').to_producer_series(InjectorSpecModule::ScroogeProducer)
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      # series, each lookup gets a new producer (initialized to produce 200)
-      duck_producer = injector.lookup_producer(null_scope(), duck_type, 'the_duck')
-      the_duck = duck_producer.produce(null_scope())
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
-      the_duck.fortune.should == 200
-
-      the_duck = duck_producer.produce(null_scope())
       the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
       the_duck.fortune.should == 200
 
