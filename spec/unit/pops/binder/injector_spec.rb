@@ -54,6 +54,17 @@ module InjectorSpecModule
       @fortune = fortune
     end
   end
+
+  # Test custom producer that on each produce returns a duck that is twice as rich as its predecessor
+  class ScroogeProducer < Puppet::Pops::Binder::Producer
+    attr_reader :next_capital
+    def initialize
+      @next_capital = 100
+    end
+    def produce(scope)
+      UncleMcScrooge.new(@next_capital *= 2)
+    end
+  end
 end
 
 describe 'Injector' do
@@ -358,6 +369,46 @@ describe 'Injector' do
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_string').should == 'hello'
     end
+  end
+  context "when producing instances" do
+     it "should lookup an instance of a class without arguments" do
+       binder = Puppet::Pops::Binder::Binder.new()
+       bindings = factory.named_bindings('test')
+       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+       bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::Daffy)
+
+       binder.define_categories(factory.categories([]))
+       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+       injector = injector(binder)
+       injector.lookup(null_scope(), duck_type, 'the_duck').is_a?(InjectorSpecModule::Daffy).should == true
+     end
+      it "should lookup an instance of a class with arguments" do
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::UncleMcScrooge, 1234)
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
+        the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
+        the_duck.fortune.should == 1234
+      end
+
+#    it "should lookup a producer and use what it produces" do
+#      binder = Puppet::Pops::Binder::Binder.new()
+#      bindings = factory.named_bindings('test')
+#      bindings.bind().type(type_factory.ruby(TestDuck)).named('the_duck').to_producer
+#      bindings.bind().name('a_string').to_first_found(['b_string', 'c_string', 'g_string'])
+#      bindings.bind().name('c_string').to('hello')
+#      bindings.bind().name('g_string').to('Oh, mrs. Smith...')
+#
+#      binder.define_categories(factory.categories([]))
+#      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+#      injector = injector(binder)
+#      injector.lookup(null_scope(), 'a_string').should == 'hello'
+#    end
   end
   # TODO: test producer producer
   # TODO: test first found producer

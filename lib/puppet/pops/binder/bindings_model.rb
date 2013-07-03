@@ -53,7 +53,7 @@ module Puppet::Pops::Binder::Bindings
   #
   class InstanceProducerDescriptor < ProducerDescriptor
     # TODO: This should be a typed Puppet Object ??
-    has_attr 'arguments', Object, :upperBound => -1
+    has_many_attr 'arguments', Object, :upperBound => -1
     has_attr 'class_name', String
   end
 
