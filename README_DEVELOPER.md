@@ -174,6 +174,14 @@ the nested format to see the descriptions:
 
     bundle exec rspec spec/unit/ssl/host_spec.rb --format nested
 
+## Testing dependency version requirements
+
+Puppet is only compatible with certain versions of RSpec and Mocha. If you are
+not using Bundler to install the required test libraries you must ensure that
+you are using the right library versions. Using unsupported versions of Mocha
+and RSpec will probably display many spurious failures. The supported versions
+of RSpec and Mocha can be found in the project Gemfile.
+
 # A brief introduction to testing in Puppet
 
 Puppet relies heavily on automated testing to ensure that Puppet behaves as
