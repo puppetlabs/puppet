@@ -121,6 +121,30 @@ describe Puppet::Indirector::Hiera do
         @hiera_class.hiera_config.should == { :logger => 'puppet' }
       end
     end
+
+    context "when the Hiera configuration is a Hash" do
+      let(:config) { {
+        :backends =>["rspec"],
+        :rspec => {}
+      } }
+
+      before do
+        Puppet.settings[:hiera_config] = config
+      end
+
+      it "should load hiera config hash by delegating to Hiera" do
+        Hiera::Config.expects(:load).with(config).returns({})
+        @hiera_class.hiera_config
+      end
+
+      it "should return a hiera configuration hash" do
+        @hiera_class.hiera_config.should eql(config.merge({
+          :hierarchy => "common",
+          :logger => "puppet",
+          :merge_behavior => :native
+        }))
+      end
+    end
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do

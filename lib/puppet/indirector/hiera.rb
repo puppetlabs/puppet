@@ -18,10 +18,12 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     hiera_config = Puppet.settings[:hiera_config]
     config = {}
 
-    if File.exist?(hiera_config)
-      config = Hiera::Config.load(hiera_config)
-    else
-      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+    if hiera_config.is_a?(Hash) or hiera_config.is_a?(String)
+      if hiera_config.is_a?(String) and not File.exist?(hiera_config)
+        Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+      else
+        config = Hiera::Config.load(hiera_config)
+      end
     end
 
     config[:logger] = 'puppet'
