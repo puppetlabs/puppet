@@ -157,9 +157,19 @@ class Puppet::Pops::Binder::BindingsFactory
     end
 
     # to a singleton producer, if producer is a value, a producer is created for it
-    def to(producer)
+    # @overload to(a_literal)
+    #   a constant producer
+    # @overload to(a_class, *args)
+    #   Instantiating producer
+    # @overload to(a_producer_descriptor)
+    #   a given producer
+    def to(producer, *args)
+      case producer
+      when Class
+        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
+      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+      else
       # If given producer is not a producer, create a literal producer
-      unless producer.is_a?(Puppet::Pops::Binder::Bindings::ProducerDescriptor)
         producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       end
       @model.producer = producer
@@ -167,10 +177,20 @@ class Puppet::Pops::Binder::BindingsFactory
     end
 
     # to a "non singleton" producer (each produce produces a new copy).
+    # @overload to_series_of(a_literal)
+    #   a constant producer
+    # @overload toto_series_of(a_class, *args)
+    #   Instantiating producer
+    # @overload toto_series_of(a_producer_descriptor)
+    #   a given producer
     #
     def to_series_of(producer)
+      case producer
+      when Class
+        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
+      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+      else
       # If given producer is not a producer, create a literal producer
-      unless producer.is_a?(Puppet::Pops::Binder::Bindings::ProducerDescriptor)
         producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       end
       non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
@@ -253,6 +273,13 @@ class Puppet::Pops::Binder::BindingsFactory
   def self.non_caching_producer(producer)
     p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
     p.producer = producer
+    p
+  end
+
+  def self.instance_producer(class_name, *args)
+    p = Puppet::Pops::Binder::Bindings::InstanceProducerDescriptor.new()
+    p.class_name = class_name
+    args.each {|a| p.addArguments(a) }
     p
   end
 

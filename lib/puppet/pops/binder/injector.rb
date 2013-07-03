@@ -358,8 +358,8 @@ class Puppet::Pops::Binder::Injector
   # Produces a new instance of the given class with given initialization arguments
   # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
   #
-  def transform_InstanceProducer(descriptor, scope, entry)
-    x = instantiating_producer.new(descriptor.class_name, *(descriptor.arguments))
+  def transform_InstanceProducerDescriptor(descriptor, scope, entry)
+    x = instantiating_producer(descriptor.class_name, *descriptor.arguments)
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
@@ -425,7 +425,16 @@ class Puppet::Pops::Binder::Injector
   end
 
   def instantiating_producer(class_name, *init_args)
-    create_producer(lambda {|scope| Object.const_get(class_name).new(*init_args) } )
+    the_class = qualified_const_get(class_name)
+    create_producer(lambda {|scope| the_class.new(*init_args) } )
+  end
+  def qualified_const_get(name)
+    path = name.split('::')
+    # always from the root, so remove an empty first segment
+    if path[0].empty?
+      path = path[1..-1]
+    end
+    path.reduce(Object) { |ns, name| ns.const_get(name) }
   end
 
   def first_found_producer(producers)
