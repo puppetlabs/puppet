@@ -188,6 +188,7 @@ class Puppet::Pops::Binder::Injector
     val = produce(scope, entries[key])
     return nil if val.nil?
     unless key_factory.type_calculator.instance?(entry.binding.type, val)
+      require 'debugger'; debugger
       raise "Type error: incompatible type returned by producer TODO: detailed error message"
     end
     val
@@ -371,9 +372,12 @@ class Puppet::Pops::Binder::Injector
   end
 
   def transform_ProducerProducerDescriptor(descriptor, scope, entry)
+#    require 'debugger'; debugger
     # Should produce an instance of the wanted producer
-    p = Puppet::Pops::Binder::WrappingProducer.new(transform(descriptor.producer, scope, entry))
-    singleton?(descriptor) ? singleton_producer_producer(p.produce(scope)) : p
+    p = transform(descriptor.producer, scope, entry)
+#    p = producer_transformer(descriptor.producer, scope, entry)
+#    p = Puppet::Pops::Binder::WrappingProducer.new(transform(descriptor.producer, scope, entry))
+    singleton?(descriptor) ? singleton_producer_producer(p, scope) : producer_producer(p)
   end
 
   def transform_LookupProducerDescriptor(descriptor, scope, entry)
@@ -407,6 +411,21 @@ class Puppet::Pops::Binder::Injector
     create_producer(lambda {|scope| value })
   end
 
+  def producer_transformer(descriptor, scope, entry)
+    create_producer(lambda {|scope| transform(descriptor, scope, entry) })
+  end
+
+  # Produces in two steps
+  def producer_producer(producer)
+    create_producer(lambda {|scope| producer.produce(scope).produce(scope) })
+  end
+
+  # Caches first produce step, and performs the next over and over again
+  def singleton_producer_producer(producer, scope)
+    p = producer.produce(scope)
+    create_producer(lambda {|scope| p.produce(scope) })
+  end
+
   def deep_cloning_producer(value)
     x = lambda do |scope|
       case value
@@ -428,6 +447,7 @@ class Puppet::Pops::Binder::Injector
     the_class = qualified_const_get(class_name)
     create_producer(lambda {|scope| the_class.new(*init_args) } )
   end
+
   def qualified_const_get(name)
     path = name.split('::')
     # always from the root, so remove an empty first segment

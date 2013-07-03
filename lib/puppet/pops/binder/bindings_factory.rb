@@ -176,6 +176,68 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # to a singleton producer
+    # @overload to_producer(a_producer)
+    #   @param a_producer [Puppet::Pops::Binder::Producer] an instantiated producer, not serializeable !
+    #
+    # @overload to_producer(a_class, *args)
+    #   @param a_class [Class] the class to create an instance of
+    #   @param args [Object] the arguments to the given class' new
+    #
+    # @overload to_producer(a_producer_descriptor)
+    #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
+    #      producing Puppet::Pops::Binder::Producer
+    #
+    def to_producer(producer, *args)
+      case producer
+      when Class
+        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
+      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+      when Puppet::Pops::Binder::Producer
+        # a custom producer instance
+        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+      else
+        raise ArgumentError, "Given producer argument is neither a producer descriptor, a class, nor a producer"
+      end
+      metaproducer = Puppet::Pops::Binder::BindingsFactory.producer_producer(producer)
+      @model.producer = metaproducer
+      self
+    end
+
+    # to a series of producers
+    # @overload to_producer(a_producer)
+    #   @param a_producer [Puppet::Pops::Binder::Producer] an instantiated producer, not serializeable !
+    #
+    # @overload to_producer(a_class, *args)
+    #   @param a_class [Class] the class to create an instance of
+    #   @param args [Object] the arguments to the given class' new
+    #
+    # @overload to_producer(a_producer_descriptor)
+    #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
+    #      producing Puppet::Pops::Binder::Producer
+    #
+    def to_producer_series(producer, *args)
+      case producer
+      when Class
+        producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
+      when Puppet::Pops::Binder::Bindings::ProducerDescriptor
+      when Puppet::Pops::Binder::Producer
+        # a custom producer instance
+        producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
+      else
+        raise ArgumentError, "Given producer argument is neither a producer descriptor, a class, nor a producer"
+      end
+      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching.producer = producer
+      metaproducer = Puppet::Pops::Binder::BindingsFactory.producer_producer(non_caching)
+
+      non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+      non_caching.producer = metaproducer
+
+      @model.producer = non_caching
+      self
+    end
+
     # to a "non singleton" producer (each produce produces a new copy).
     # @overload to_series_of(a_literal)
     #   a constant producer
@@ -272,6 +334,13 @@ class Puppet::Pops::Binder::BindingsFactory
   # Creates a literal producer
   def self.non_caching_producer(producer)
     p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
+    p.producer = producer
+    p
+  end
+
+  # Creates a producer producer
+  def self.producer_producer(producer)
+    p = Puppet::Pops::Binder::Bindings::ProducerProducerDescriptor.new()
     p.producer = producer
     p
   end

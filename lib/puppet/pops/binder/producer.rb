@@ -22,12 +22,6 @@ module Puppet::Pops::Binder
     def produce(scope, *args)
       raise NotImplementedError, "Derived class should implement #produce(scope)"
     end
-
-#    # Returns the producer (a Proc/Lambda)
-#    # 
-#    def producer(scope)
-#      raise NotImplementedError, "Derived class should implement #producer()"
-#    end
   end
 
   # Represents a simple producer that produces its value without ny arguments
@@ -39,11 +33,6 @@ module Puppet::Pops::Binder
       @producer = producer
     end
 
-#    def producer(scope=nil)
-#      # Does not depend on scope
-#      @producer
-#    end
-
     def produce(scope, *args)
       @producer.call(scope)
     end
@@ -52,10 +41,11 @@ module Puppet::Pops::Binder
   # A wrapping/delegating producer that delegates to another producer
   # for the production of a value.
   class WrappingProducer < Producer
-    def initialice(producer)
+    def initialize(producer)
       raise ArgumentError, "Argument must be a Producer" unless producer.is_a?(Producer)
       @producer = producer
     end
+
     def produce(scope)
       @producer.produce(scope)
     end
