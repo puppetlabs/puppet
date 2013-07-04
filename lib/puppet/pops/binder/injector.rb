@@ -52,6 +52,7 @@ class Puppet::Pops::Binder::Injector
     #
     @key_factory         = configured_binder.key_factory()
     @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform", 2,  2)
+    @recursion_lock = []
   end
 
   # Lookup (a.k.a "inject") of a value given a key.
@@ -184,14 +185,22 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_key(scope, key)
-    entry = entries[key]
-    return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
-    val = produce(scope, entries[key])
-    return nil if val.nil?
-    unless key_factory.type_calculator.instance?(entry.binding.type, val)
-      raise "Type error: incompatible type returned by producer TODO: detailed error message"
+    if @recursion_lock.include?(key)
+      raise ArgumentError, "Lookup loop detected for key: #{key}"
     end
-    val
+    begin
+      @recursion_lock.push(key)
+      entry = entries[key]
+      return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
+      val = produce(scope, entries[key])
+      return nil if val.nil?
+      unless key_factory.type_calculator.instance?(entry.binding.type, val)
+        raise "Type error: incompatible type returned by producer TODO: detailed error message"
+      end
+      val
+    ensure
+      @recursion_lock.pop()
+    end
   end
 
   # Lookup (a.k.a "inject") producer of a value given a key.
@@ -263,7 +272,15 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_producer_key(scope, key)
-    producer(scope, entries[key], :multiple_use)
+    if @recursion_lock.include?(key)
+      raise ArgumentError, "Lookup loop detected for key: #{key}"
+    end
+    begin
+      @recursion_lock.push(key)
+      producer(scope, entries[key], :multiple_use)
+    ensure
+      @recursion_lock.pop()
+    end
   end
 
   # Looks up a Producer given a type/name key.
