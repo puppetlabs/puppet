@@ -421,6 +421,7 @@ describe 'Injector' do
     end
 
     it "series of producers should recreate producer on each lookup" do
+      scope = null_scope()
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
@@ -429,21 +430,19 @@ describe 'Injector' do
       binder.define_categories(factory.categories([]))
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
-      the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
-      the_duck.fortune.should == 200
-      # series, each lookup gets a new producer (initialized to produce 200)
-      the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
-      the_duck.fortune.should == 200
+      duck_producer = injector.lookup_producer(scope, duck_type, 'the_duck')
+      duck_producer.produce(scope).fortune().should == 200
+      duck_producer.produce(scope).fortune().should == 400
 
-      duck_producer = injector.lookup_producer(null_scope(), duck_type, 'the_duck')
-      the_duck = duck_producer.produce(null_scope())
-      the_duck.fortune.should == 200
+      # series, each lookup gets a new producer (initialized to produce 200)
+      duck_producer = injector.lookup_producer(scope, duck_type, 'the_duck')
+      duck_producer.produce(scope).fortune().should == 200
+      duck_producer.produce(scope).fortune().should == 400
+
+      injector.lookup(scope, duck_type, 'the_duck').fortune().should == 200
+      injector.lookup(scope, duck_type, 'the_duck').fortune().should == 200
     end
   end
 
-  # TODO: test producer producer
-  # TODO: test first found producer
   # TODO: test multibinding (array, hash)  
 end
