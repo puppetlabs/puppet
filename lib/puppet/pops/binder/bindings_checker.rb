@@ -127,10 +127,10 @@ class Puppet::Pops::Binder::BindingsChecker
     acceptor.accept(Issues::MISSING_NAME, p, {:binding => b}) if p.name.nil? # empty string is OK
   end
 
-  # Checks that a detail_name has been declared, then calls producer_LookupProducerDescriptor to perform
+  # Checks that a key has been declared, then calls producer_LookupProducerDescriptor to perform
   # checks associated with the super class
-  def check_MultiLookupProducerDescriptor(p)
-    acceptor.accept(Issues::MISSING_NAME, p, {:binding => binding_parent(p)}) unless has_chars?(p.detail_name)
+  def check_HashLookupProducerDescriptor(p)
+    acceptor.accept(Issues::MISSING_KEY, p, {:binding => binding_parent(p)}) unless has_chars?(p.key)
     check_LookupProducerDescriptor(p)
   end
 

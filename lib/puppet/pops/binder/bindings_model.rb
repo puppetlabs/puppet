@@ -28,13 +28,6 @@ module Puppet::Pops::Binder::Bindings
     contains_one_uni 'producer', ProducerDescriptor
   end
 
-#  class NamedArgument < Puppet::Pops::Model::PopsObject
-#    has_attr 'name', String
-#
-#    # TODO: this should be a typed Puppet Object
-#    has_attr 'value', Object
-#  end
-
   # Produces a constant value (i.e. something of PDataType)
   #
   class ConstantProducerDescriptor < ProducerDescriptor
