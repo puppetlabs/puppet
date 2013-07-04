@@ -68,8 +68,8 @@ module Puppet::Pops::Binder::Bindings
   # the detail using a detail_key.
   # This is used to produce a specific service of a given type (such as a SyntaxChecker for the syntax "json").
   #
-  class MultiLookupProducerDescriptor < LookupProducerDescriptor
-    has_attr 'detail_name', String
+  class HashLookupProducerDescriptor < LookupProducerDescriptor
+    has_attr 'key', String
   end
 
   # Produces a value by looking up each producer in turn. The first existing producer wins.

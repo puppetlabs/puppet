@@ -367,6 +367,22 @@ describe 'Injector' do
     end
   end
 
+  context "When using the hash lookup producer" do
+    it "should lookup again to produce a value" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      data_hash = type_factory.hash_of_data()
+
+      bindings.bind().name('a_string').to_hash_lookup_of(data_hash, 'a_hash', 'huey')
+      bindings.bind().name('a_hash').to({'huey' => 'red', 'dewey' => 'blue', 'louie' => 'green'})
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string').should == 'red'
+    end
+  end
+
   context "When using the first found producer" do
     it "should lookup until it finds a value, but no further" do
       binder = Puppet::Pops::Binder::Binder.new()

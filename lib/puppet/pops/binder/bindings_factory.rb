@@ -275,6 +275,15 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # to a lookup of another key
+    # @overload to_lookup_of(type, name)
+    # @overload to_lookup_of(name)
+    #
+    def to_hash_lookup_of(type, name, key)
+      @model.producer = Puppet::Pops::Binder::BindingsFactory.hash_lookup_producer(type, name, key)
+      self
+    end
+
     # to first found lookup of another key
     # @param list_of_lookups [Array] array of arrays [type name], or just name (implies data)
     # @example 
@@ -356,6 +365,14 @@ class Puppet::Pops::Binder::BindingsFactory
     p = Puppet::Pops::Binder::Bindings::LookupProducerDescriptor.new()
     p.type = type
     p.name = name
+    p
+  end
+
+  def self.hash_lookup_producer(type, name, key)
+    p = Puppet::Pops::Binder::Bindings::HashLookupProducerDescriptor.new()
+    p.type = type
+    p.name = name
+    p.key = key
     p
   end
 
