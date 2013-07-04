@@ -2,15 +2,21 @@
 #
 # Initialization
 # --------------
-# The injector is initialized with a configured Binder. The Binder instance contains a resolved set of key => "binding information"
-# that is used to setup the injector.
+# The injector is initialized with a configured Binder. The Binder instance contains a resolved set of
+# key => "binding information" that is used to setup the injector.
 #
 # Lookup
 # ------
-# It is possible to lookup the value, or a producer of the value. The #lookup method looks up a value, and the
-# #lookup_producer looks up a producer.
-# Both of these methods can be called with three different signatures; #lookup(key), #lookup(type, name), and #lookup(name),
-# and #lookup_producer(key), #lookup_producer(type, name), and #lookup_producer(name).
+# It is possible to lookup the value, or a producer of the value. The {#lookup} method looks up a value, and the
+# {#lookup_producer} looks up a producer.
+# Both of these methods can be called with three different signatures; `lookup(key)`, `lookup(type, name)`, and `lookup(name)`,
+# and `lookup_producer(key)`, `lookup_producer(type, name)`, and `lookup_producer(name)`.
+#
+# It is possible to pass a block to {#lookup} and {#lookup_producer}, the block is passed the result of the lookup
+# and the result of the block is returned as the value of the lookup. This is useful in order to provide a default value.
+#
+# @example Lookup with default value
+#   injector.lookup('favourite_food') {|x| x.nil? ? 'bacon' : x }
 #
 # Singleton or Not
 # ----------------
@@ -22,6 +28,17 @@
 # Custom producers should have non singleton behavior, or if this is not possible ensure that the produced result is
 # immutable. (The behavior if a custom producer hands out a mutable value and this is mutated is undefined).
 #
+# Custom bound producers capable of producing a series of objects when bound as a singleton means that the producer
+# is a singleton, not the value it produces. If such a producer is bound as non singleton, each `lookup` will get a new
+# producer (hence, typically, restarting the series). However, if the producer returned from `lookup_producer` will not
+# recreate the producer on each call to `produce`; i.e. each `lookup_producer` returns a producer capable of returning
+# a series of objects.
+#
+# @see Puppet::Pops::Binder::Binder for details about how to bind keys to producers
+# @see Puppet::Pops::Binder::BindingsFactory for a convenient way to create a Binder and bindings
+#
+# @api public
+#
 class Puppet::Pops::Binder::Injector
 
   # Hash of key => InjectorEntry
@@ -30,8 +47,8 @@ class Puppet::Pops::Binder::Injector
   attr_reader :entries
 
   # The KeyFactory used to produce keys in this injector.
-  # The factory is shared with the Binder to ensure consistent translation to keys. A compatible type calculator
-  # can also be obtained from the key factory.
+  # The factory is shared with the Binder to ensure consistent translation to keys.
+  # A compatible type calculator can also be obtained from the key factory.
   #
   # @api public
   #
@@ -41,6 +58,7 @@ class Puppet::Pops::Binder::Injector
   #
   # @param configured_binder [Puppet::Pops::Binder::Binder] the configured binder containing effective bindings
   # @raises ArgumentError if the given binder is not fully configured
+  #
   # @api public
   #
   def initialize(configured_binder)
@@ -118,9 +136,11 @@ class Puppet::Pops::Binder::Injector
   # Produces a key for a type/name combination.
   # Specialization of the PDataType are transformed to a PDataType key
   # This is a convenience method for the method with the same name in {Puppet::Pops::Binder::KeyFactory}.
+  #
   # @see #key_factory
   # @param type [Puppet::Pops::Types::PObjectType], the type the key should be based on
   # @param name [String]='', the name to base the key on for named keys.
+  #
   # @api public
   #
   def named_key(type, name)
@@ -129,8 +149,10 @@ class Puppet::Pops::Binder::Injector
 
   # Produces a key for a PDataType/name combination
   # This is a convenience method for the method with the same name in {Puppet::Pops::Binder::KeyFactory}.
+  #
   # @see #key_factory
   # @param name [String], the name to base the key on.
+  #
   # @api public
   #
   def data_key(name)
@@ -329,13 +351,14 @@ class Puppet::Pops::Binder::Injector
     producer(scope, entry, :single_use).produce(scope)
   end
 
-  # Called when producer is missing (e.g. a Multibinding)
+  # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically
+  # @api private
   #
   def transform_NilClass(descriptor, scope, entry)
     # TODO: When the multibind has a nil producer it is not possible to flag it as being
     # singleton or not - in this case the collected content will need to determine its state
     # the issue is if a collected piece of content is dynamic as each multi lookup could potentially
-    # be different
+    # be different. (Uncertain if this is an issue...)
     #
 
     unless entry.binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding)
@@ -351,11 +374,13 @@ class Puppet::Pops::Binder::Injector
     end
   end
 
+  # @api private
   def transform_ArrayMultibindProducerDescriptor(descriptor, entry)
     p = array_multibind_producer(entry.binding)
     singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
 
+  # @api private
   def transform_HashMultibindProducerDescriptor(descriptor, entry)
     p = hash_multibind_producer(entry.binding)
     singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
@@ -363,6 +388,7 @@ class Puppet::Pops::Binder::Injector
 
   # Produces a constant value
   # If not a singleton the value is deep-cloned (if not immutable) before returned.
+  # @api private
   #
   def transform_ConstantProducerDescriptor(descriptor, scope, entry)
     create_producer(singleton?(descriptor) ? singleton_producer(descriptor.value) : deep_cloning_producer(descriptor.value))
@@ -370,6 +396,7 @@ class Puppet::Pops::Binder::Injector
 
   # Produces a new instance of the given class with given initialization arguments
   # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
+  # @api private
   #
   def transform_InstanceProducerDescriptor(descriptor, scope, entry)
     x = instantiating_producer(descriptor.class_name, *descriptor.arguments)
@@ -377,22 +404,26 @@ class Puppet::Pops::Binder::Injector
   end
 
   # Evaluates a contained expression. If this is a singleton, the evaluation is performed once.
+  # @api private
   #
   def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
     x = evaluating_producer(descriptor.expr)
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
+  # @api private
   def transform_ProducerProducerDescriptor(descriptor, scope, entry)
     p = transform(descriptor.producer, scope, entry)
     singleton?(descriptor) ? singleton_producer_producer(p, scope) : producer_producer(p)
   end
 
+  # @api private
   def transform_LookupProducerDescriptor(descriptor, scope, entry)
     x = injecting_producer(descriptor.type, descriptor.name)
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
+  # @api private
   def transform_HashLookupProducerDescriptor(descriptor, scope, entry)
     x = injecting_key_producer(descriptor.type, descriptor.name, descriptor.key)
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
@@ -400,12 +431,14 @@ class Puppet::Pops::Binder::Injector
 
   # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
   # per type (different actions taken depending on the type).
+  # @api private
   #
   def transform_NonCachingProducerDescriptor(descriptor, scope, entry)
     # simply delegates to the wrapped producer
     transform(descriptor.producer, scope, entry)
   end
 
+  # @api private
   def transform_FirstFoundProducerDescriptor(descriptor, scope, entry)
     x = first_found_producer(descriptor.producers.collect {|p| transform(p, scope, entry) })
     create_producer(singleton?(descriptor) ? singleton_producer(x).produce(scope) : x)
