@@ -192,7 +192,7 @@ class Puppet::Pops::Binder::Injector
       @recursion_lock.push(key)
       entry = entries[key]
       return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
-      val = produce(scope, entries[key])
+      val = produce(scope, entry)
       return nil if val.nil?
       unless key_factory.type_calculator.instance?(entry.binding.type, val)
         raise "Type error: incompatible type returned by producer TODO: detailed error message"
@@ -417,9 +417,6 @@ class Puppet::Pops::Binder::Injector
     ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
   end
 
-
-  # TODO: MultiLookupProducerDescriptor
-
   def singleton_producer(value)
     create_producer(lambda {|scope| value })
   end
@@ -427,7 +424,6 @@ class Puppet::Pops::Binder::Injector
   # Produces in two steps
   def producer_producer(producer)
     Puppet::Pops::Binder::ProducerProducer.new(producer)
-#    create_producer(lambda {|scope| producer.produce(scope).produce(scope) })
   end
 
   # Caches first produce step, and performs the next over and over again
@@ -497,9 +493,8 @@ class Puppet::Pops::Binder::Injector
       result = []
       lookup_key(scope, contributions_key).each do |k|
         val = lookup_key(scope, k)
-        # typecheck
-        # TODO: accepts array, or array of T
-        unless type_calculator.instance?(binding.type.element_type, val)
+        # typecheck - accepts array[T], or T
+        unless type_calculator.instance?(binding.type.element_type, val) || type_calculator.instance?(binding.type, val)
           raise ArgumentError, "Type Error: contribution #{binding.name} does not match type of multibind #{binding.id}"
         end
 
@@ -521,7 +516,8 @@ class Puppet::Pops::Binder::Injector
         entry = entries[k]
         raise ArgumentError, "Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
         # produce the value
-        val = produce(scope, entry)
+        # look it up (rather than just producing the entry) to get recursion detection
+        val = lookup(scope, k)
         # and typecheck it
         unless type_calculator.instance?(binding.type.element_type, val)
           raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
