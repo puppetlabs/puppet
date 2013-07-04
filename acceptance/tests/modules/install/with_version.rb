@@ -3,23 +3,24 @@ test_name "puppet module install (with version)"
 module_user = "puppetlabs"
 module_name = "apache"
 module_version = "0.0.3"
+module_dependencies   = []
+
+teardown do
+  on master, "rm -rf #{master['distmoduledir']}/*"
+  agents.each do |agent|
+    on agent, "rm -rf #{agent['distmoduledir']}/*"
+  end
+  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
+  module_dependencies.each do |dependency|
+    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
+  end
+end
 
 def semver_to_i ( semver )
   # semver assumed to be in format <major>.<minor>.<patch>
   # calculation assumes that each segment is < 100
   tmp = semver.split('.')
   tmp[0].to_i * 10000 + tmp[1].to_i * 100 + tmp[2].to_i
-end
-
-teardown do
-  agents.each do |agent|
-    result = on agent, puppet("config print modulepath")
-    result.stdout.split(':').each do |module_path|
-      if ! module_path.include? "/opt"
-        on agent, "[ -d #{module_path} ] && rm -fr #{module_path}/* || true"
-      end
-    end
-  end
 end
 
 agents.each do |agent|

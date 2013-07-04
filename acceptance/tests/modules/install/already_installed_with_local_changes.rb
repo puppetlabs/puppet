@@ -1,13 +1,17 @@
 test_name "puppet module install (already installed with local changes)"
 
-module_author = "#{module_author}"
-module_name   = "#{module_name}"
+module_author = "pmtacceptance"
+module_name   = "nginx"
+module_dependencies   = []
 
 teardown do
-  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
   on master, "rm -rf #{master['distmoduledir']}/*"
   agents.each do |agent|
     on agent, "rm -rf #{agent['distmoduledir']}/*"
+  end
+  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
+  module_dependencies.each do |dependency|
+    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
   end
 end
 
