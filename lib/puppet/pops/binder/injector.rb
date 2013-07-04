@@ -263,7 +263,7 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup_producer_key(scope, key)
-    producer(scope, entries[key])
+    producer(scope, entries[key], :multiple_use)
   end
 
   # Looks up a Producer given a type/name key.
@@ -276,29 +276,24 @@ class Puppet::Pops::Binder::Injector
     lookup_producer_key(scope, named_key(type, name))
   end
 
-  # TODO: Optional Producers; they should have a list of other producers (to be tested in turn for production) ??
-  # Produces the value for the entry without performing any type checking
-  # @return [nil] if the entry is nil (i.e. when not found)
-  # @return [Object] the produced instance / value (non type-safe except for multibind contributions)
-  #
-
   # Returns the producer for the entry
   # @return [Puppet::Pops::Binder::Producer] the entry's producer.
   #
   # @api private
   #
-  def producer(scope, entry)
+  def producer(scope, entry, use)
     return nil unless entry # not found
     unless entry.cached_producer
       entry.cached_producer = transform(entry.binding.producer, scope, entry)
     end
     raise ArgumentError, "Injector entry without a producer TODO: detail" unless entry.cached_producer
-    entry.cached_producer
+    entry.cached_producer.producer(scope)
   end
 
   def transform(producer_descriptor, scope, entry)
     @@transform_visitor.visit_this(self, producer_descriptor, scope, entry)
   end
+
   # Creates a producer if given argument is a lambda, else returns the give producer
   # @return [Puppet::Pops::Binder::Producer] the given or producer wrapped lambda producer
   # @api private
@@ -314,7 +309,7 @@ class Puppet::Pops::Binder::Injector
   #
   def produce(scope, entry)
     return nil unless entry # not found
-    producer(scope, entry).produce(scope)
+    producer(scope, entry, :single_use).produce(scope)
   end
 
   # Called when producer is missing (e.g. a Multibinding)
@@ -372,11 +367,7 @@ class Puppet::Pops::Binder::Injector
   end
 
   def transform_ProducerProducerDescriptor(descriptor, scope, entry)
-#    require 'debugger'; debugger
-    # Should produce an instance of the wanted producer
     p = transform(descriptor.producer, scope, entry)
-#    p = producer_transformer(descriptor.producer, scope, entry)
-#    p = Puppet::Pops::Binder::WrappingProducer.new(transform(descriptor.producer, scope, entry))
     singleton?(descriptor) ? singleton_producer_producer(p, scope) : producer_producer(p)
   end
 
@@ -411,13 +402,10 @@ class Puppet::Pops::Binder::Injector
     create_producer(lambda {|scope| value })
   end
 
-  def producer_transformer(descriptor, scope, entry)
-    create_producer(lambda {|scope| transform(descriptor, scope, entry) })
-  end
-
   # Produces in two steps
   def producer_producer(producer)
-    create_producer(lambda {|scope| producer.produce(scope).produce(scope) })
+    Puppet::Pops::Binder::ProducerProducer.new(producer)
+#    create_producer(lambda {|scope| producer.produce(scope).produce(scope) })
   end
 
   # Caches first produce step, and performs the next over and over again

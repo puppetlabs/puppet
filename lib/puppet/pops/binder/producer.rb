@@ -36,18 +36,27 @@ module Puppet::Pops::Binder
     def produce(scope, *args)
       @producer.call(scope)
     end
+
+    def producer(scope)
+      self
+    end
   end
 
-  # A wrapping/delegating producer that delegates to another producer
-  # for the production of a value.
-  class WrappingProducer < Producer
-    def initialize(producer)
-      raise ArgumentError, "Argument must be a Producer" unless producer.is_a?(Producer)
-      @producer = producer
+  class ProducerProducer < Producer
+    def initialize(producer_producer)
+      raise ArgumentError, "Argument must be a Producer" unless producer_producer.is_a?(Producer)
+      @producer_producer = producer_producer
+      @value_producer = nil
     end
 
-    def produce(scope)
-      @producer.produce(scope)
+    def produce(scope, *args)
+      producer() unless @value_producer
+      @value_producer.produce(scope)
+    end
+
+    def producer(scope)
+      @value_producer = @producer_producer.produce(scope)
+      self
     end
   end
 end
