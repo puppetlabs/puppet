@@ -31,7 +31,7 @@ class Puppet::Pops::Binder::BindingsFactory
     # @param id [String] the multibind's id used when adding contributions
     #
     def multibind(id)
-      binding = Puppet::Pops::Binder::Bindings::MultiBinding.new()
+      binding = Puppet::Pops::Binder::Bindings::Multibinding.new()
       binding.id = id
       model.addBindings(binding)
       MultibindingsBuilder.new(binding)

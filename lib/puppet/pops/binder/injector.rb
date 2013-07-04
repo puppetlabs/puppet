@@ -185,10 +185,10 @@ class Puppet::Pops::Binder::Injector
   #
   def lookup_key(scope, key)
     entry = entries[key]
+    return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
     val = produce(scope, entries[key])
     return nil if val.nil?
     unless key_factory.type_calculator.instance?(entry.binding.type, val)
-      require 'debugger'; debugger
       raise "Type error: incompatible type returned by producer TODO: detailed error message"
     end
     val
@@ -327,7 +327,7 @@ class Puppet::Pops::Binder::Injector
     case entry.binding.type
     when Puppet::Pops::Types::PArrayType
       array_multibind_producer(entry.binding)
-    when Puppet::Pops::Types::PArrayType
+    when Puppet::Pops::Types::PHashType
       hash_multibind_producer(entry.binding)
     else
       raise ArgumentError, "Unsupported multibind type, must be an array or hash type, but got: '#{entry.binding.type}"
@@ -483,7 +483,7 @@ class Puppet::Pops::Binder::Injector
   # TODO: Support combinator lambda combinator => |$key, $current, $value| { . . .}
   # @api private
   def hash_multibind_producer(binding)
-    contributions_key = key_factory.multibind_contributions_key(bindings.id)
+    contributions_key = key_factory.multibind_contributions(binding.id)
     x = lambda do |scope|
       result = {}
       lookup_key(scope, contributions_key).each do |k|
@@ -493,13 +493,13 @@ class Puppet::Pops::Binder::Injector
         # produce the value
         val = produce(scope, entry)
         # and typecheck it
-        unless type_calculator.assignable?(binding.type.element_type, val)
+        unless type_calculator.instance?(binding.type.element_type, val)
           raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
         end
         # TODO: combinator lambda support
         result[entry.binding.name] = val
       end
-      val
+      result
     end
     create_producer(x)
   end

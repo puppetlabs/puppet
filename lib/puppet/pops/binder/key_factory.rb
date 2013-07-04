@@ -25,6 +25,6 @@ class Puppet::Pops::Binder::KeyFactory
   end
 
   def multibind_contributions(multibind_id)
-    "mc_#{id}"
+    "mc_#{multibind_id}"
   end
 end
