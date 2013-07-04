@@ -376,6 +376,11 @@ class Puppet::Pops::Binder::Injector
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
+  def transform_HashLookupProducerDescriptor(descriptor, scope, entry)
+    x = injecting_key_producer(descriptor.type, descriptor.name, descriptor.key)
+    create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
+  end
+
   # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
   # per type (different actions taken depending on the type).
   #
@@ -457,6 +462,14 @@ class Puppet::Pops::Binder::Injector
 
   def injecting_producer(type, name)
     create_producer( lambda { |scope| lookup_type(scope, type, name) })
+  end
+
+  def injecting_key_producer(type, name, key)
+    x = lambda do |scope|
+      result = lookup_type(scope, type, name)
+      result.is_a?(Hash) ? result[key] : nil
+      end
+    create_producer(x)
   end
 
   # TODO: Support combinator lambda combinator => |$memo, $x| { $memo + $x }
