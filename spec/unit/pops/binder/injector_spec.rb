@@ -487,7 +487,7 @@ describe 'Injector' do
 
       bindings.multibind(multibind_id).type(array_of_duck).name('donalds_nephews')
       # one with name (ignored, expect no error)
-      bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Huey')
+      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
       # two without name
       bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
       bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
@@ -500,5 +500,6 @@ describe 'Injector' do
       the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
     end
   end
-  # TODO: test multibinding (array, hash)  
+  # TODO: test HashLookupProducerDescriptor
+  # TODO: test EvaluatingProducerDescriptor
 end
