@@ -509,7 +509,13 @@ class Puppet::Pops::Binder::Injector
         unless type_calculator.instance?(binding.type.element_type, val)
           raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
         end
-        # TODO: combinator lambda support
+        if entry.binding.name.nil? || entry.binding.name.empty?
+          raise ArgumentError, "Entry in hash multibind contribution to #{binding.id} must have a name."
+        end
+        unless result[entry.binding.name].nil?
+          # TODO: combinator lambda support
+          raise ArgumentError, "Duplicate key in hash multibind contribution #{binding.id}."
+        end
         result[entry.binding.name] = val
       end
       result
