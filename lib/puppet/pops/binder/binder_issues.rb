@@ -27,9 +27,10 @@ module Puppet::Pops::Binder::BinderIssues
     "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no name"
   end
 
-  MISSING_DETAIL_NAME = issue :MISSING_DETAIL_NAME, :binding do
-    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no detail name"
+  MISSING_KEY = issue :MISSING_KEY, :binding do
+    "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no key"
   end
+
   MISSING_VALUE = issue :MISSING_VALUE, :binding do
     "#{label.a_an_uc(binding)} with #{label.a_an(semantic)} has no value"
   end

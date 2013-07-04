@@ -19,6 +19,7 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   def label_EvaluatingProducerDescriptor o      ; "Evaluating Producer"                          end
   def label_InstanceProducerDescriptor o        ; "Producer[#{o.class_name}]"                    end
   def label_LookupProducerDescriptor o          ; "Lookup Producer[#{o.name}]"                   end
+  def label_HashLookupProducerDescriptor o      ; "Hash Lookup Producer[#{o.name}][#{o.key}]"    end
   def label_FirstFoundProducerDescriptor o      ; "First Found Producer"                         end
   def label_ProducerProducerDescriptor o        ; "Producer[Producer]"                           end
   def label_MultibindProducerDescriptor o       ; "Multibind Producer"                           end
