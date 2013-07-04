@@ -325,6 +325,7 @@ describe 'Injector' do
     end
 
   end
+
   context "When dealing with singleton vs. non singleton" do
     it "should produce the same instance when producer is a singleton" do
       binder = Puppet::Pops::Binder::Binder.new()
@@ -375,6 +376,17 @@ describe 'Injector' do
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_string').should == nil
+    end
+
+    it "should report an error if lookup loop is detected" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to_lookup_of('a_string')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      expect { injector.lookup(null_scope(), 'a_string') }.to raise_error(/Lookup loop/)
     end
   end
 
@@ -560,6 +572,9 @@ describe 'Injector' do
         expect {
           the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
         }.to raise_error(/Duplicate key/)
+      end
+      it "is not an error to bind duplicate key if there is a handler" do
+        # TODO: test hash with handler
       end
     end
 
