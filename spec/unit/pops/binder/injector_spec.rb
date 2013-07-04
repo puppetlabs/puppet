@@ -365,10 +365,21 @@ describe 'Injector' do
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_string').should == 'hello'
     end
+
+    it "should produce nil if looked up key does not exist" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      bindings.bind().name('a_string').to_lookup_of('non_existing')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string').should == nil
+    end
   end
 
   context "When using the hash lookup producer" do
-    it "should lookup again to produce a value" do
+    it "should lookup a key in looked up hash" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       data_hash = type_factory.hash_of_data()
@@ -380,6 +391,20 @@ describe 'Injector' do
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_string').should == 'red'
+    end
+
+    it "should produce nil if looked up entry does not exist" do
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      data_hash = type_factory.hash_of_data()
+
+      bindings.bind().name('a_string').to_hash_lookup_of(data_hash, 'non_existing_entry', 'huey')
+      bindings.bind().name('a_hash').to({'huey' => 'red', 'dewey' => 'blue', 'louie' => 'green'})
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      injector.lookup(null_scope(), 'a_string').should == nil
     end
   end
 
@@ -469,51 +494,98 @@ describe 'Injector' do
       injector.lookup(scope, duck_type, 'the_duck').fortune().should == 200
     end
   end
+
   context "When working with multibind" do
-    it "a hash multibind produces contributed items keyed by their bound key-name" do
-      scope = null_scope()
-      binder = Puppet::Pops::Binder::Binder.new()
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
-      hash_of_duck = type_factory.hash_of(duck_type)
-      multibind_id = "ducks"
+    context "of hash kind" do
+      it "a multibind produces contributed items keyed by their bound key-name" do
+        scope = null_scope()
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        hash_of_duck = type_factory.hash_of(duck_type)
+        multibind_id = "ducks"
 
-      bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
-      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
-      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
-      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
 
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
-      the_ducks.size.should == 3
-      the_ducks['nephew1'].name.should == 'Huey'
-      the_ducks['nephew2'].name.should == 'Dewey'
-      the_ducks['nephew3'].name.should == 'Louie'
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+        the_ducks.size.should == 3
+        the_ducks['nephew1'].name.should == 'Huey'
+        the_ducks['nephew2'].name.should == 'Dewey'
+        the_ducks['nephew3'].name.should == 'Louie'
+      end
+
+      it "is an error to not bind contribution with a name" do
+        scope = null_scope()
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        hash_of_duck = type_factory.hash_of(duck_type)
+        multibind_id = "ducks"
+
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+        # missing name
+        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        expect {
+          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+        }.to raise_error(/must have a name/)
+      end
+
+      it "is an error to bind with duplicate key" do
+        scope = null_scope()
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        hash_of_duck = type_factory.hash_of(duck_type)
+        multibind_id = "ducks"
+
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+        # missing name
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        expect {
+          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+        }.to raise_error(/Duplicate key/)
+      end
     end
 
-    it "an array multibind produces contributed items, names are allowed but ignored" do
-      scope = null_scope()
-      binder = Puppet::Pops::Binder::Binder.new()
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
-      array_of_duck = type_factory.array_of(duck_type)
-      multibind_id = "ducks"
+    context "of array kind" do
+      it "an array multibind produces contributed items, names are allowed but ignored" do
+        scope = null_scope()
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        array_of_duck = type_factory.array_of(duck_type)
+        multibind_id = "ducks"
 
-      bindings.multibind(multibind_id).type(array_of_duck).name('donalds_nephews')
-      # one with name (ignored, expect no error)
-      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
-      # two without name
-      bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
-      bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
+        bindings.multibind(multibind_id).type(array_of_duck).name('donalds_nephews')
+        # one with name (ignored, expect no error)
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
+        # two without name
+        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
 
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      the_ducks = injector.lookup(scope, array_of_duck, "donalds_nephews")
-      the_ducks.size.should == 3
-      the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        the_ducks = injector.lookup(scope, array_of_duck, "donalds_nephews")
+        the_ducks.size.should == 3
+        the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
+      end
     end
   end
   # TODO: test HashLookupProducerDescriptor
