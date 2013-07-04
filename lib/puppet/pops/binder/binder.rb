@@ -102,7 +102,9 @@ class Puppet::Pops::Binder::Binder
     raise ArgumentError, "Categories must be defined first" if @category_precedences.empty?
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
     injector_entries.each  do |k,v|
-      raise ArgumentError, "Binding with unresolved 'override' detected: #{k}" unless v.is_resolved?()
+      unless key_factory.is_contributions_key?(k) || v.is_resolved?()
+        raise ArgumentError, "Binding with unresolved 'override' detected: #{k}"
+      end 
     end
     # and the fat lady has sung
     @configured = true
@@ -256,15 +258,13 @@ class Puppet::Pops::Binder::Binder
         # All except abstract (==error) are transfered to injector_entries
 
         processor.bind(layer).each do |k, v|
-          raise ArgumentError, "The abstract binding TODO: was not overridden" unless !v.is_abstract?()
-          if entry = binder.injector_entries[k]
-            unless key_factory.is_contributions_key?(k)
-              raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)"
-            end
-            # contributions aggregate
-            binder.injector_entries[k] << v
-          else
+          entry = binder.injector_entries[k]
+          unless key_factory.is_contributions_key?(k)
+            raise ArgumentError, "The abstract binding TODO: was not overridden" unless !v.is_abstract?()
+            raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)" if entry
             binder.injector_entries[k] = v
+          else
+            entry ? entry << v : binder.injector_entries[k] = v
           end
         end
       end
@@ -308,19 +308,19 @@ class Puppet::Pops::Binder::Binder
       # - bind the index to a special multibind contributions key (these are aggregated)
       #
       c_hash = Hash.new {|hash, key| hash[ key ] = [] }
-      contributions.each {|b| c_hash[ b.multibind_id ] << b }
+      contributions.each {|b| c_hash[ b.binding.multibind_id ] << b }
       # - for each id
       c_hash.each do |k, v|
         index = v.collect do |b|
-          bkey = key(b)
+          bkey = key(b.binding)
           this_layer[bkey] = b
           bkey
         end
-        contribution_key = key_factory.multibind_contributions(k)
+        contributions_key = key_factory.multibind_contributions(k)
         unless this_layer[contributions_key]
           this_layer[contributions_key] = []
         end
-        this_layer[contributions_key] << index
+        this_layer[contributions_key] += index
       end
       this_layer
     end

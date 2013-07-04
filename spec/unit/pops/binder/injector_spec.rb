@@ -44,14 +44,24 @@ module InjectorSpecModule
 
   class TestDuck
   end
+
   class Daffy < TestDuck
   end
+
   class Donald < TestDuck
   end
+
   class UncleMcScrooge < TestDuck
     attr_reader :fortune
     def initialize(fortune)
       @fortune = fortune
+    end
+  end
+
+  class NamedDuck < TestDuck
+    attr_reader :name
+    def initialize(name)
+      @name = name
     end
   end
 
@@ -315,7 +325,7 @@ describe 'Injector' do
     end
 
   end
-  context "when dealing with singleton vs. non singleton" do
+  context "When dealing with singleton vs. non singleton" do
     it "should produce the same instance when producer is a singleton" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
@@ -343,7 +353,7 @@ describe 'Injector' do
     end
   end
 
-  context "when using the lookup producer" do
+  context "When using the lookup producer" do
     it "should lookup again to produce a value" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
@@ -357,7 +367,7 @@ describe 'Injector' do
     end
   end
 
-  context "when using the first found producer" do
+  context "When using the first found producer" do
     it "should lookup until it finds a value, but no further" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
@@ -372,7 +382,7 @@ describe 'Injector' do
     end
   end
 
-  context "when producing instances" do
+  context "When producing instances" do
     it "should lookup an instance of a class without arguments" do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
@@ -420,7 +430,7 @@ describe 'Injector' do
       duck_producer.produce(null_scope()).fortune.should == 800
     end
 
-    it "series of producers should recreate producer on each lookup" do
+    it "series of producers should recreate producer on each lookup and lookup_producer" do
       scope = null_scope()
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
@@ -443,6 +453,29 @@ describe 'Injector' do
       injector.lookup(scope, duck_type, 'the_duck').fortune().should == 200
     end
   end
+  context "When working with multibind" do
+    it "a hash multibind produces contributed items keyed by their bound key-name" do
+      scope = null_scope()
+      binder = Puppet::Pops::Binder::Binder.new()
+      bindings = factory.named_bindings('test')
+      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+      hash_of_duck = type_factory.hash_of(duck_type)
+      multibind_id = "ducks"
 
+      bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
+      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
+      bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
+
+      binder.define_categories(factory.categories([]))
+      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+      injector = injector(binder)
+      the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+      the_ducks.size.should == 3
+      the_ducks['nephew1'].name.should == 'Huey'
+      the_ducks['nephew2'].name.should == 'Dewey'
+      the_ducks['nephew3'].name.should == 'Louie'
+    end
+  end
   # TODO: test multibinding (array, hash)  
 end
