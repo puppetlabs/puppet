@@ -462,20 +462,20 @@ class Puppet::Pops::Binder::Injector
   # TODO: Support combinator lambda combinator => |$memo, $x| { $memo + $x }
   # @api private
   def array_multibind_producer(binding)
-    contributions_key = key_factory.multibind_contributions_key(bindings.id)
+    contributions_key = key_factory.multibind_contributions(binding.id)
     x = lambda do |scope|
       result = []
       lookup_key(scope, contributions_key).each do |k|
         val = lookup_key(scope, k)
         # typecheck
         # TODO: accepts array, or array of T
-        unless type_calculator.assignable?(binding.type.element_type, val)
-          raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
+        unless type_calculator.instance?(binding.type.element_type, val)
+          raise ArgumentError, "Type Error: contribution #{binding.name} does not match type of multibind #{binding.id}"
         end
 
-        result << val.is_a?(Array) ? val : [ val ]
+        result += val.is_a?(Array) ? val : [ val ]
       end
-      val
+      result
     end
     create_producer(x)
   end
