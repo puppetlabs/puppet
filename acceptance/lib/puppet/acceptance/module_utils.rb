@@ -17,10 +17,8 @@ module Puppet
       def get_installed_modules_for_host (host)
         on host, puppet("module list --render-as s")
         str  = stdout.lines.to_a.last
-        #TODO: Find the right regex to eliminate the parenthesis
-        pat = /\([^()]+\)/
-        mods =  str.scan(pat)
-        mods.map! { |item| item[1..-2] }
+        pat = /\(([^()]+)\)/
+        mods =  str.scan(pat).flatten
         return mods
       end
 
