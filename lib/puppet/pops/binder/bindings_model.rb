@@ -98,10 +98,33 @@ module Puppet::Pops::Binder::Bindings
     contains_one_uni 'producer', ProducerDescriptor
   end
 
+  # A combinator combines the contributions in a multibind
+  #
+  class Combinator < Puppet::Pops::Model::PopsObject
+    abstract
+  end
+
+  # A lambda combinator is a lambda with 2 args for an Array multibind, and 3 args for a Hash multibind
+  # For array the arguments are `memo` and `val` (for what is produced so far, and the new value), returns the
+  # resulting content (the entire array).
+  # For a hash the arguments are `key`, `current` and `val` where `key` is the key something should be stored under,
+  # the `current` is the current value stored at that key, and `val` is the new value to add. The hash combinator
+  # should return the value to store for the given `key`.
+  #
+  # If the operation is not allowed, the puppet logic in the lambda should call the `error` function.
+  #
+  # hash the arguments are 
+  class CombinatorLambda < Combinator
+    contains_one_uni 'lambda', Puppet::Pops::Model::LambdaExpression
+  end
+
+  class CombinatorProducer < Combinator
+    contains_one_uni 'producer', ProducerDescriptor
+  end
+
   class Multibinding < Binding
     has_attr 'id', String
-    # TODO: Add the combinator as described in ARM-8
-    # contains_one_uni 'combinator', [Puppet::Pops::Model::LambdaExpression]
+    contains_one_uni 'combinator', Combinator
   end
 
   # Binding in a multibind
