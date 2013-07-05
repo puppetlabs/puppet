@@ -518,27 +518,53 @@ class Puppet::Pops::Binder::Injector
     create_producer(x)
   end
 
-  # TODO: Support combinator lambda combinator => |$memo, $x| { $memo + $x }
+  def create_combinator(scope, multibinding)
+    mb_type_array = multibinding.type.is_a?(Puppet::Pops::Types::PArrayType)
+    case multibinding.type
+    when Puppet::Pops::Types::PArrayType
+      combinator = case multibinding.combinator
+      when NilClass
+         Puppet::Pops::Binder::MultibindCombinators::ArrayCombinator.new()
+      when Puppet::Pops::Binder::Bindings::CombinatorLambda
+        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
+        Puppet::Pops::Binder::MultibindCombinators::ArrayPuppetLambdaCombinator.new(ast31lambda)
+      when Puppet::Pops::Binder::Bindings::CombinatorProducer
+        transform(multibinding.combinator).produce(scope)
+      end
+    when Puppet::Pops::Types::PHashType
+      combinator = case multibinding.combinator
+      when NilClass
+        Puppet::Pops::Binder::MultibindCombinators::HashCombinator.new()
+      when Puppet::Pops::Binder::Bindings::CombinatorLambda
+        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
+        Puppet::Pops::Binder::MultibindCombinators::HashPuppetLambdaCombinator.new(ast31lambda)
+      when Puppet::Pops::Binder::Bindings::CombinatorProducer
+        transform(multibinding.combinator).produce(scope)
+      end
+    else
+      raise ArgumentError, "Internal Error: multibind is neither Array not Hash based, got: #{type_calculator.label(multibinding.type)}"
+    end
+
+    unless combinator
+      raise ArgumentError, "Internal Error: no multibind combinator created"
+    end
+    combinator
+  end
+
+
   # @api private
   def array_multibind_producer(binding)
     contributions_key = key_factory.multibind_contributions(binding.id)
     x = lambda do |scope|
-      result = []
-      lookup_key(scope, contributions_key).each do |k|
-        val = lookup_key(scope, k)
-        # typecheck - accepts array[T], or T
-        unless type_calculator.instance?(binding.type.element_type, val) || type_calculator.instance?(binding.type, val)
-          raise ArgumentError, "Type Error: contribution #{binding.name} does not match type of multibind #{binding.id}"
-        end
-
-        result += val.is_a?(Array) ? val : [ val ]
+      combinator = create_combinator(scope, binding)
+      # transform array of keys to an array of looked up values
+      lookup_key(scope, contributions_key).reduce([]) do |memo, k|
+        combinator.combine(scope, binding, type_calculator, memo, lookup_key(scope, k))
       end
-      result
     end
     create_producer(x)
   end
 
-  # TODO: Support combinator lambda combinator => |$key, $current, $value| { . . .}
   # @api private
   def hash_multibind_producer(binding)
     contributions_key = key_factory.multibind_contributions(binding.id)
@@ -547,22 +573,11 @@ class Puppet::Pops::Binder::Injector
       lookup_key(scope, contributions_key).each do |k|
         # get the entry (its name is needed)
         entry = entries[k]
-        raise ArgumentError, "Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
-        # produce the value
-        # look it up (rather than just producing the entry) to get recursion detection
-        val = lookup(scope, k)
-        # and typecheck it
-        unless type_calculator.instance?(binding.type.element_type, val)
-          raise ArgumentError, "Type Error: contribution #{entry.binding.name} does not match type of multibind #{binding.id}"
-        end
-        if entry.binding.name.nil? || entry.binding.name.empty?
-          raise ArgumentError, "Entry in hash multibind contribution to #{binding.id} must have a name."
-        end
-        unless result[entry.binding.name].nil?
-          # TODO: combinator lambda support
-          raise ArgumentError, "Duplicate key in hash multibind contribution #{binding.id}."
-        end
-        result[entry.binding.name] = val
+        raise ArgumentError, "Internal Error: Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
+        name = entry.binding.name
+
+        combinator = create_combinator(scope, binding)
+        result[entry.binding.name] = combinator.combine(scope, binding, type_calculator, name, result[name], lookup(scope, k))
       end
       result
     end

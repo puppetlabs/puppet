@@ -44,6 +44,10 @@ module Puppet
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
       require 'puppet/pops/binder/producer'
+
+        module MultibindCombinators
+          require 'puppet/pops/binder/multibind_combinators'
+        end
     end
 
     module Parser
