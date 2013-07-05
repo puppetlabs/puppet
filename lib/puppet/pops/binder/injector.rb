@@ -212,17 +212,50 @@ class Puppet::Pops::Binder::Injector
     end
     begin
       @recursion_lock.push(key)
-      entry = entries[key]
-      return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
-      val = produce(scope, entry)
-      return nil if val.nil?
-      unless key_factory.type_calculator.instance?(entry.binding.type, val)
-        raise "Type error: incompatible type returned by producer TODO: detailed error message"
+      case entry = get_entry(key)
+      when NilClass
+        nil
+      when Puppet::Pops::Binder::InjectorEntry
+#        return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
+        val = produce(scope, entry)
+        return nil if val.nil?
+        unless key_factory.type_calculator.instance?(entry.binding.type, val)
+          raise "Type error: incompatible type returned by producer TODO: detailed error message"
+        end
+        val
+      when Puppet::Pops::Binder::AssistedInjectProducer
+        entry.produce(scope)
+      else
+        # internal, direct entries
+        entry
       end
-      val
     ensure
       @recursion_lock.pop()
     end
+  end
+
+  # @api private
+  def get_entry(key)
+    case entry = entries[key]
+    when NilClass
+      # not found, is this an assisted inject?
+      if clazz = assistable_injected_class(key)
+        entry = Puppet::Pops::Binder::AssistedInjectProducer.new(self, clazz)
+        entries[key] = entry
+      else
+        entries[key] = NotFound.new()
+        entry = nil
+      end
+    when NotFound
+      entry = nil
+    end
+    entry
+  end
+
+  def assistable_injected_class(key)
+    kt = key_factory.get_type(key)
+    return nil unless kt.is_a?(Puppet::Pops::Types::PRubyType) && !key_factory.is_named?(key)
+    type_calculator.injectable_class(kt)
   end
 
   # Lookup (a.k.a "inject") producer of a value given a key.
@@ -299,7 +332,7 @@ class Puppet::Pops::Binder::Injector
     end
     begin
       @recursion_lock.push(key)
-      producer(scope, entries[key], :multiple_use)
+      producer(scope, get_entry(key), :multiple_use)
     ensure
       @recursion_lock.pop()
     end
@@ -322,6 +355,7 @@ class Puppet::Pops::Binder::Injector
   #
   def producer(scope, entry, use)
     return nil unless entry # not found
+    return entry.producer(scope) if entry.is_a?(Puppet::Pops::Binder::AssistedInjectProducer)
     unless entry.cached_producer
       entry.cached_producer = transform(entry.binding.producer, scope, entry)
     end
@@ -483,17 +517,9 @@ class Puppet::Pops::Binder::Injector
   end
 
   def instantiating_producer(class_name, *init_args)
-    the_class = qualified_const_get(class_name)
+    # get class by name
+    the_class = type_calculator.class_get(class_name)
     create_producer(lambda {|scope| the_class.new(*init_args) } )
-  end
-
-  def qualified_const_get(name)
-    path = name.split('::')
-    # always from the root, so remove an empty first segment
-    if path[0].empty?
-      path = path[1..-1]
-    end
-    path.reduce(Object) { |ns, name| ns.const_get(name) }
   end
 
   def first_found_producer(producers)
@@ -562,7 +588,7 @@ class Puppet::Pops::Binder::Injector
       result = {}
       lookup_key(scope, contributions_key).each do |k|
         # get the entry (its name is needed)
-        entry = entries[k]
+        entry = get_entry(k)
         raise ArgumentError, "Internal Error: Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
         name = entry.binding.name
 
@@ -572,5 +598,9 @@ class Puppet::Pops::Binder::Injector
       result
     end
     create_producer(x)
+  end
+
+  # Special marker class used in entries
+  class NotFound
   end
 end

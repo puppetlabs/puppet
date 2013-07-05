@@ -48,11 +48,25 @@ module InjectorSpecModule
   class Daffy < TestDuck
   end
 
-  class Donald < TestDuck
+
+  class AngryDuck < TestDuck
+    # Supports assisted inject, returning a Donald duck as the default impl of Duck
+    def self.inject(injector, scope)
+      Donald.new()
+    end
+  end
+
+  class Donald < AngryDuck
   end
 
   class UncleMcScrooge < TestDuck
     attr_reader :fortune
+
+    # Supports assisted inject, returning an UncleMcScrooge with 1$ fortune
+    def self.inject(injector, scope)
+      self.new(1)
+    end
+
     def initialize(fortune)
       @fortune = fortune
     end
@@ -160,6 +174,41 @@ describe 'Injector' do
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       injector.lookup(null_scope(), 'a_non_existing_string') {|val| val ? val : '4242' }.should == '4242'
+    end
+
+    context "and class is not bound" do
+      it "assisted inject should kick in for classes with zero args constructor" do
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
+        injector.lookup(null_scope(), duck_type).is_a?(InjectorSpecModule::Daffy).should == true
+        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).is_a?(InjectorSpecModule::Daffy).should == true
+      end
+
+      it "assisted inject should kick in for classes with a class inject method" do
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        duck_type = type_factory.ruby(InjectorSpecModule::UncleMcScrooge)
+        injector.lookup(null_scope(), duck_type).fortune.should == 1
+        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).fortune.should == 1
+      end
+
+      it "assisted inject should select inject if it exists over zero args constructor" do
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        duck_type = type_factory.ruby(InjectorSpecModule::AngryDuck)
+        injector.lookup(null_scope(), duck_type).is_a?(InjectorSpecModule::Donald).should == true
+        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).is_a?(InjectorSpecModule::Donald).should == true
+      end
     end
 
     context 'and conditionals are in use' do
@@ -575,6 +624,7 @@ describe 'Injector' do
       end
       it "is not an error to bind duplicate key if there is a handler" do
         # TODO: test hash with handler
+        # Test Handler is a lambda or an injected handler class
       end
     end
 
@@ -601,8 +651,13 @@ describe 'Injector' do
         the_ducks.size.should == 3
         the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
       end
+      it "should be able to use a handler to process each addition" do
+        # TODO Array with combinator handler - say add unique, or doing to upper on entries
+        # Test Both lambda handler, and injected handler
+      end
     end
   end
-  # TODO: test HashLookupProducerDescriptor
   # TODO: test EvaluatingProducerDescriptor
+  # TODO: test combinators for array and hash
+  # TODO: test assisted inject (lookup and lookup producer)
 end

@@ -42,8 +42,49 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Convenience method to get a data type for comparisons
+  # @api private the returned value may not be contained in another element
+  #
   def data
     @data_t
+  end
+
+  # Answers the question 'is it possible to inject an instance of the given class'
+  # A class is injectable if it has a special *assisted inject* class method called `inject` taking
+  # an injector and a scope as argument, or if it has a zero args `initialize` method.
+  #
+  # @param klazz [Class, PRubyType] the class/type to check if it is injectable
+  # @return [Class, nil] the injectable Class, or nil if not injectable
+  # @api public
+  #
+  def injectable_class(klazz)
+    # Handle case when we get a PType instead of a class
+    if klazz.is_a?(Types::PRubyType)
+      klazz = class_get(klazz.ruby_class)
+    end
+
+    # data types can not be injected (check again, it is not safe to assume that given RubyType klazz arg was ok)
+    return false unless type(klazz).is_a?(Types::PRubyType)
+
+    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity() == 2) || klazz.instance_method(:initialize).arity() == 0
+      klazz
+    else
+      nil
+    end
+  end
+
+  # Returns a Class given a fully qualified class name.
+  # Lookup of class is never relative to the calling namespace.
+  # @return [Class, nil] the looked up class or nil if no such class is loaded
+  #
+  def class_get(name)
+    path = name.split('::')
+    # always from the root, so remove an empty first segment
+    if path[0].empty?
+      path = path[1..-1]
+    end
+    result = path.reduce(Object) { |ns, name| ns.const_get(name) }
+    return nil unless result.is_a?(Class)
+    result
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'
