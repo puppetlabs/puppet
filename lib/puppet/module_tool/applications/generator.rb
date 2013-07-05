@@ -27,7 +27,7 @@ module Puppet::ModuleTool
         if destination.directory?
           raise ArgumentError, "#{destination} already exists."
         end
-        Puppet.notice "Generating module at #{Dir.pwd}/#{@metadata.dashed_name}"
+        Puppet.notice "Generating module at #{Dir.pwd}/#{destination}"
         files_created = []
         skeleton.path.find do |path|
           if path == skeleton
@@ -67,7 +67,7 @@ module Puppet::ModuleTool
       end
 
       def destination
-        @destination ||= Pathname.new(@metadata.dashed_name)
+        @destination ||= Pathname.new(@metadata.name)
       end
 
       class Node
