@@ -59,10 +59,10 @@ module InjectorSpecModule
   class Donald < AngryDuck
   end
 
-  class UncleMcScrooge < TestDuck
+  class ScroogeMcDuck < TestDuck
     attr_reader :fortune
 
-    # Supports assisted inject, returning an UncleMcScrooge with 1$ fortune
+    # Supports assisted inject, returning an ScroogeMcDuck with 1$ fortune
     def self.inject(injector, scope)
       self.new(1)
     end
@@ -86,7 +86,7 @@ module InjectorSpecModule
       @next_capital = 100
     end
     def produce(scope)
-      UncleMcScrooge.new(@next_capital *= 2)
+      ScroogeMcDuck.new(@next_capital *= 2)
     end
   end
 end
@@ -210,7 +210,7 @@ describe 'Injector' do
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
         injector = injector(binder)
-        duck_type = type_factory.ruby(InjectorSpecModule::UncleMcScrooge)
+        duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
         injector.lookup(null_scope(), duck_type).fortune.should == 1
         injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).fortune.should == 1
       end
@@ -517,12 +517,12 @@ describe 'Injector' do
       binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
-      bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::UncleMcScrooge, 1234)
+      bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::ScroogeMcDuck, 1234)
       binder.define_categories(factory.categories([]))
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
+      the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 1234
     end
 
@@ -536,12 +536,12 @@ describe 'Injector' do
       binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
       injector = injector(binder)
       the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
+      the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 200
       # singleton, do it again to get next value in series - it is the producer that is a singleton
       # not the produced value
       the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
-      the_duck.is_a?(InjectorSpecModule::UncleMcScrooge).should == true
+      the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 400
 
       duck_producer = injector.lookup_producer(null_scope(), duck_type, 'the_duck')
@@ -672,8 +672,64 @@ describe 'Injector' do
         # Test Both lambda handler, and injected handler
       end
     end
+
+    context "When looking up entries requiring evaluation" do
+      before :each do
+        node     = Puppet::Node.new('localhost')
+        compiler = Puppet::Parser::Compiler.new(node)
+        @scope   = Puppet::Parser::Scope.new(compiler)
+        @parser = Puppet::Pops::Parser::Parser.new()
+      end
+
+      it "should be possible to lookup a concatenated string" do
+        @scope['duck'] = 'Donald Fauntleroy Duck'
+        expr = @parser.parse_string('"Hello $duck"').current()
+
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        bindings.bind.name('the_duck').to(expr)
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+
+        injector = injector(binder)
+        injector.lookup(@scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
+      end
+
+      it "should be possible to compose hash lookups with a lambda" do
+        # This case uses a multibind of individual strings, but combines them
+        # into an array bound to a hash key
+        # (There are other ways to do this - e.g. have the multibind lookup a multibind
+        # of array type to which nephews are contributed).
+        #
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        hash_of_data = type_factory.hash_of_data()
+        model = @parser.parse_string(<<-CODE).current
+        fake() |$memo, $key, $current, $value| {
+          unless $current { [$value] }
+          else { $current + [$value] }
+        }
+        CODE
+        # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
+        multibind_id = "ducks"
+        bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family').combinator(model.lambda)
+
+        # missing name
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
+        bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        ducks = injector.lookup(@scope, 'donalds_family')
+        ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
+        ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
+      end
+    end
   end
-  # TODO: test EvaluatingProducerDescriptor
   # TODO: test combinators for array and hash
-  # TODO: test assisted inject (lookup and lookup producer)
 end

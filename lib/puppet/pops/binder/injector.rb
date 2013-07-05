@@ -138,7 +138,7 @@ class Puppet::Pops::Binder::Injector
   # @api public
   #
   def lookup(scope, *args, &block)
-    raise ArgumentError, "lookup should be called with two or three arguments, got: #{args.size()+1}" unless args.size <= 2
+    raise ArgumentError, "lookup should be called with two or three arguments, got: #{args.size()+1}" unless args.size.between?(1,2)
     val = case args[0]
     when Puppet::Pops::Types::PObjectType
       lookup_type(scope, *args)
@@ -246,7 +246,6 @@ class Puppet::Pops::Binder::Injector
       when NilClass
         nil
       when Puppet::Pops::Binder::InjectorEntry
-#        return entry unless entry.is_a?(Puppet::Pops::Binder::InjectorEntry)
         val = produce(scope, entry)
         return nil if val.nil?
         unless key_factory.type_calculator.instance?(entry.binding.type, val)
@@ -471,7 +470,7 @@ class Puppet::Pops::Binder::Injector
   # @api private
   #
   def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
-    x = evaluating_producer(descriptor.expr)
+    x = evaluating_producer(descriptor.expression)
     create_producer(singleton?(descriptor) ? singleton_producer(x.produce(scope)) : x)
   end
 
@@ -559,7 +558,20 @@ class Puppet::Pops::Binder::Injector
 
   def evaluating_producer(expr)
     puppet3_ast = Puppet::Pops::Model::AstTransformer.new().transform(expr)
-    create_producer(lambda { |scope| puppet_3_ast.evaluate(scope) })
+
+    the_lambda = lambda do |scope|
+      begin
+        # Must CHEAT as the expressions must have access to array/hash concat/merge
+        current_parser = Puppet[:parser]
+        Puppet[:parser] = 'future'
+        puppet3_ast.evaluate(scope)
+      ensure
+        # Stop cheating
+        Puppet[:parser] = current_parser
+      end
+    end
+
+    create_producer(the_lambda)
   end
 
   def injecting_producer(type, name)
@@ -623,7 +635,7 @@ class Puppet::Pops::Binder::Injector
         name = entry.binding.name
 
         combinator = create_hash_combinator(scope, binding)
-        result[entry.binding.name] = combinator.combine(scope, binding, type_calculator, name, result[name], lookup(scope, k))
+        result[entry.binding.name] = combinator.combine(scope, binding, type_calculator, result, name, result[name], lookup(scope, k))
       end
       result
     end
