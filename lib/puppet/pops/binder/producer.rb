@@ -37,7 +37,8 @@ module Puppet::Pops::Binder
     # to perform initialization/refresh of its internal state. This method is called when
     # a producer is requested.
     # @see Puppet::Pops::Binder::ProducerProducer for an example of implementation.
-    #
+    # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
+    # @return [Puppet::Pops::Binder::Producer] the producer to use
     def producer(scope)
       self
     end
@@ -49,11 +50,13 @@ module Puppet::Pops::Binder
   #
   class LambdaProducer < Producer
     # Creates a LambdaProducer based on a lambda taking one argument `scope`.
+    # @param a_producer_lambda [Proc] a lambda taking a scope parameter
     #
     # @api public
-    def initialize(producer)
-      raise ArgumentError, "Argument must be a proc" unless producer.is_a?(Proc)
-      @producer = producer
+    #
+    def initialize(a_producer_lambda)
+      raise ArgumentError, "Argument must be a proc" unless a_producer_lambda.is_a?(Proc)
+      @the_lambda = a_producer_lambda
     end
 
     # Produces the value by calling the lambda given when the producer was created.
@@ -61,7 +64,7 @@ module Puppet::Pops::Binder
     # @api public
     #
     def produce(scope, *args)
-      @producer.call(scope)
+      @the_lambda.call(scope)
     end
 
   end
@@ -101,6 +104,30 @@ module Puppet::Pops::Binder
     #
     def producer(scope)
       @value_producer = @producer_producer.produce(scope)
+      self
+    end
+  end
+
+  class AssistedInjectProducer < Producer
+    def initialize(injector, clazz)
+      raise ArgumentError, "class must be given" unless clazz.is_a?(Class)
+
+      @injector = injector
+      @clazz = clazz
+      @inst = nil
+    end
+
+    def produce(scope, *args)
+      producer(scope) unless @inst
+      @inst
+    end
+
+    def producer(scope)
+      if @clazz.respond_to?(:inject)
+        @inst = @clazz.inject(@injector, scope)
+      else
+        @inst = @clazz.new()
+      end
       self
     end
   end
