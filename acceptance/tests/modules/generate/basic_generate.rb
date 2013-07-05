@@ -11,12 +11,8 @@ agents.each do |agent|
   on agent, puppet("module generate #{module_user}-#{module_name}")
 
   step "Check for #{module_user}-#{module_name} scaffolding"
-  on agent,"test -d #{module_user}-#{module_name}"  do
-    assert_equal(0, exit_code)
-  end
-  on agent,"test -f #{module_user}-#{module_name}/manifests/init.pp"  do
-    assert_equal(0, exit_code)
-  end
+  on agent,"test -d #{module_user}-#{module_name}"
+  on agent,"test -f #{module_user}-#{module_name}/manifests/init.pp"
 
 
   teardown do
