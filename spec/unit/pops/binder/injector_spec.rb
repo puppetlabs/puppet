@@ -667,10 +667,34 @@ describe 'Injector' do
         the_ducks.size.should == 3
         the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
       end
+
       it "should be able to use a handler to process each addition" do
-        # TODO Array with combinator handler - say add unique, or doing to upper on entries
-        # Test Both lambda handler, and injected handler
+        # This case uses a multibind of individual strings, but combines them
+        # into an array of unique values using a Combinator class (produced via injection)
+        #
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        array_of_data = type_factory.array_of_data()
+
+        # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
+        multibind_id = "ducks"
+        combinator_class = Puppet::Pops::Binder::MultibindCombinators::ArraySetCombinator
+        bindings.multibind(multibind_id).type(array_of_data).name('donalds_family').combinator(combinator_class)
+
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey') # duplicate
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        ducks = injector.lookup(null_scope(), 'donalds_family')
+        ducks.should == ['Huey', 'Dewey', 'Louie']
       end
+
     end
 
     context "When looking up entries requiring evaluation" do
@@ -696,7 +720,7 @@ describe 'Injector' do
         injector.lookup(@scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
       end
 
-      it "should be possible to compose hash lookups with a lambda" do
+      it "should be possible to combine hash multibind contributions with a lambda" do
         # This case uses a multibind of individual strings, but combines them
         # into an array bound to a hash key
         # (There are other ways to do this - e.g. have the multibind lookup a multibind
@@ -729,7 +753,39 @@ describe 'Injector' do
         ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
         ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
       end
+
+      it "should be possible to combine array multibind contributions with a lambda" do
+        # This case uses a multibind of individual strings, but combines them
+        # into an array of unique values.
+        #
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        array_of_data = type_factory.array_of_data()
+        model = @parser.parse_string(<<-CODE).current
+        fake() |$memo, $value| {
+          unless $value in $memo { $memo << $value }
+          else { $memo }
+        }
+        CODE
+        # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
+        multibind_id = "ducks"
+        bindings.multibind(multibind_id).type(array_of_data).name('donalds_family').combinator(model.lambda)
+
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey') # duplicate
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        ducks = injector.lookup(@scope, 'donalds_family')
+        ducks.should == ['Huey', 'Dewey', 'Louie']
+      end
     end
   end
-  # TODO: test combinators for array and hash
+  # TODO: test combinators for array and hash using Produced Combinator
+
 end

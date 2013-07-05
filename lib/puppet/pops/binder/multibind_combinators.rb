@@ -34,6 +34,19 @@ module Puppet::Pops::Binder::MultibindCombinators
     end
   end
 
+  # Combines unique entries in an Array
+  # @api public
+  class ArraySetCombinator < ArrayCombinator
+    def combine(scope, binding, tc, memo, value)
+      assert_type(binding, tc, value)
+      if memo.include?(value)
+        memo
+      else
+        memo + (value.is_a?(Array) ? value : [value])
+      end
+    end
+  end
+
   # An array combinator that calls a Puppet Lambda Expression to return the resulting array.
   # Type conformance is checked before the call (as this is awkward to achieve in Puppet DSL language). The
   # value is thus either an array of T, or a single value of type T, where T is a compatible type.
@@ -45,11 +58,20 @@ module Puppet::Pops::Binder::MultibindCombinators
     end
     def combine(scope, binding, tc, memo, value)
       assert_type(binding, tc, value)
-      result = @the_lambda.call(scope, memo, value)
-      unless tc.instance?(binding.type, result)
-        raise ArgumentError, "Type Error: combinator lambda for #{binding.name} produced result incompatible with #{tc.label(binding.type)}"
+      begin
+        # Must CHEAT as the expressions must have access to array/hash concat/merge
+        current_parser = Puppet[:parser]
+        Puppet[:parser] = 'future'
+
+        result = @the_lambda.call(scope, memo, value)
+        unless tc.instance?(binding.type, result)
+          raise ArgumentError, "Type Error: combinator lambda for #{binding.name} produced result incompatible with #{tc.label(binding.type)}"
+        end
+        result
+      ensure
+        # Stop cheating
+        Puppet[:parser] = current_parser
       end
-      result
     end
   end
 

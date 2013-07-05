@@ -438,13 +438,13 @@ class Puppet::Pops::Binder::Injector
   end
 
   # @api private
-  def transform_ArrayMultibindProducerDescriptor(descriptor, entry)
+  def transform_ArrayMultibindProducerDescriptor(descriptor, scope, entry)
     p = array_multibind_producer(entry.binding)
     singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
 
   # @api private
-  def transform_HashMultibindProducerDescriptor(descriptor, entry)
+  def transform_HashMultibindProducerDescriptor(descriptor, scope, entry)
     p = hash_multibind_producer(entry.binding)
     singleton?(descriptor) ? singleton_producer(p.produce(scope)) : p
   end
@@ -505,6 +505,11 @@ class Puppet::Pops::Binder::Injector
   def transform_FirstFoundProducerDescriptor(descriptor, scope, entry)
     x = first_found_producer(descriptor.producers.collect {|p| transform(p, scope, entry) })
     create_producer(singleton?(descriptor) ? singleton_producer(x).produce(scope) : x)
+  end
+
+  # @api private
+  def transform_CombinatorProducer(descriptor, scope, entry)
+    transform(descriptor.producer, scope, entry)
   end
 
   private
@@ -594,7 +599,7 @@ class Puppet::Pops::Binder::Injector
       ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
       Puppet::Pops::Binder::MultibindCombinators::ArrayPuppetLambdaCombinator.new(ast31lambda)
     when Puppet::Pops::Binder::Bindings::CombinatorProducer
-      transform(multibinding.combinator).produce(scope)
+      transform(multibinding.combinator, scope, nil).produce(scope)
     end
   end
 
@@ -606,7 +611,7 @@ class Puppet::Pops::Binder::Injector
       ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
       Puppet::Pops::Binder::MultibindCombinators::HashPuppetLambdaCombinator.new(ast31lambda)
     when Puppet::Pops::Binder::Bindings::CombinatorProducer
-      transform(multibinding.combinator).produce(scope)
+      transform(multibinding.combinator, scope, nil).produce(scope)
     end
   end
 
