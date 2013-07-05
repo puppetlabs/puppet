@@ -104,11 +104,12 @@ module Puppet::Pops::Binder::Bindings
     abstract
   end
 
-  # A lambda combinator is a lambda with 2 args for an Array multibind, and 3 args for a Hash multibind
+  # A lambda combinator is a lambda with 2 args for an Array multibind, and 4 args for a Hash multibind.
   # For array the arguments are `memo` and `val` (for what is produced so far, and the new value), returns the
   # resulting content (the entire array).
-  # For a hash the arguments are `key`, `current` and `val` where `key` is the key something should be stored under,
-  # the `current` is the current value stored at that key, and `val` is the new value to add. The hash combinator
+  # For a hash the arguments are `memo`, `key`, `current` and `val` where `memo` is the current content of the resulting hash
+  # (before the new value has been combined), `key` is the key the value should be stored under,
+  # `current` is the current value stored at that key, and `val` is the new value to add. The hash combinator
   # should return the value to store for the given `key`.
   #
   # If the operation is not allowed, the puppet logic in the lambda should call the `error` function.

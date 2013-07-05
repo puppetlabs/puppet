@@ -3,11 +3,14 @@
 #
 module Puppet::Pops::Binder::MultibindCombinators
 
+  class Combinator
+  end
+
   # This is the default Array Multibind combinator. It concatenates a type compatible array
   # value, or a single value of compatible element type.
   # @api public
   #
-  class ArrayCombinator
+  class ArrayCombinator < Combinator
     # Combines existing result (`memo`) with given `value` in multibinding `binding`.
     # A type calculator is passed to allow type checking using the same type calculator as the injector.
     #
@@ -55,15 +58,20 @@ module Puppet::Pops::Binder::MultibindCombinators
   #
   # @api public
   #
-  class HashCombinator
+  class HashCombinator < Combinator
     # Combines the result of one key in the resulting hash.
     # @param scope [Puppet::Parser::Scope] the scope the combination is evaluated in
     # @param binding [Puppet::Pops::Binder::Bindings::Multibinding] the multibinding
-    # @param tc {Puppet::Pops::Types::TypeCalculator] the type calculator to use for type checks
+    # @param tc [Puppet::Pops::Types::TypeCalculator] the type calculator to use for type checks
+    # @param memo [Hash] the result so far
+    # @param key [Object] the key for the entry being added
+    # @param current [Object] the current value in memo for the given key
+    # @param value [Object] the value to combine for the given key
+    # @return [Object] the resulting value for the given key
     #
     # @api public
     #
-    def combine(scope, binding, tc, key, current, value)
+    def combine(scope, binding, tc, memo, key, current, value)
       assert_type(binding, tc, key, value)
 
       unless current.nil?
@@ -97,13 +105,24 @@ module Puppet::Pops::Binder::MultibindCombinators
       @the_lambda = puppet_lambda
     end
 
-    def combine(scope, binding, tc, key, current, value)
+    def combine(scope, binding, tc, memo, key, current, value)
       assert_type(binding, tc, key, value)
-      result = @the_lambda.call(scope, memo, value)
-      unless tc.instance?(binding.type.element_type, result)
-        raise ArgumentError, "Type Error: combinator lambda for #{binding.name} produced result incompatible with #{tc.label(binding.type)}"
+      current = current.nil? ? :undef : current
+      value = value.nil? ? :undef : value
+      begin
+        # Must CHEAT as the expressions must have access to array/hash concat/merge
+        current_parser = Puppet[:parser]
+        Puppet[:parser] = 'future'
+
+        result = @the_lambda.call(scope, memo, key, current, value)
+        unless tc.instance?(binding.type.element_type, result)
+          raise ArgumentError, "Type Error: combinator lambda for #{binding.name} produced result incompatible with #{tc.label(binding.type)}"
+        end
+        result
+      ensure
+        # Stop cheating
+        Puppet[:parser] = current_parser
       end
-      result
     end
   end
 end
