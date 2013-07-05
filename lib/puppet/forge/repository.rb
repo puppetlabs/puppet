@@ -2,6 +2,7 @@ require 'net/https'
 require 'zlib'
 require 'digest/sha1'
 require 'uri'
+require 'puppet/util/http_proxy'
 require 'puppet/forge/errors'
 
 class Puppet::Forge
@@ -35,42 +36,6 @@ class Puppet::Forge
       @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
       @cache = Cache.new(self)
       @consumer_version = consumer_version
-    end
-
-    # Read HTTP proxy configurationm from Puppet's config file, or the
-    # http_proxy environment variable.
-    def http_proxy_env
-      proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"] || nil
-      begin
-        return URI.parse(proxy_env) if proxy_env
-      rescue URI::InvalidURIError
-        return nil
-      end
-      return nil
-    end
-
-    def http_proxy_host
-      env = http_proxy_env
-
-      if env and env.host then
-        return env.host
-      end
-
-      if Puppet.settings[:http_proxy_host] == 'none'
-        return nil
-      end
-
-      return Puppet.settings[:http_proxy_host]
-    end
-
-    def http_proxy_port
-      env = http_proxy_env
-
-      if env and env.port then
-        return env.port
-      end
-
-      return Puppet.settings[:http_proxy_port]
     end
 
     # Return a Net::HTTPResponse read for this +request_path+.
@@ -115,7 +80,7 @@ class Puppet::Forge
     #
     # @return [Net::HTTP::Proxy] object constructed from repo settings
     def get_http_object
-      proxy_class = Net::HTTP::Proxy(http_proxy_host, http_proxy_port)
+      proxy_class = Net::HTTP::Proxy(Puppet::Util::HttpProxy.http_proxy_host, Puppet::Util::HttpProxy.http_proxy_port)
       proxy = proxy_class.new(@uri.host, @uri.port)
 
       if @uri.scheme == 'https'
