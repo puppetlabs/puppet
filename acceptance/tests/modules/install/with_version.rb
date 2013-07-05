@@ -1,19 +1,17 @@
 test_name "puppet module install (with version)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
 module_user = "puppetlabs"
 module_name = "apache"
 module_version = "0.0.3"
 module_dependencies   = []
 
+orig_installed_modules = get_installed_modules_for_hosts hosts
+
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/*"
-  agents.each do |agent|
-    on agent, "rm -rf #{agent['distmoduledir']}/*"
-  end
-  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
-  module_dependencies.each do |dependency|
-    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
-  end
+  installed_modules = get_installed_modules_for_hosts hosts
+  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
 end
 
 def semver_to_i ( semver )

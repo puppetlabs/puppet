@@ -13,7 +13,6 @@ teardown do
   rm_installed_modules_from_hosts orig_installed_modules, installed_modules
 end
 
-
 step 'Setup'
 
 stub_forge_on(master)

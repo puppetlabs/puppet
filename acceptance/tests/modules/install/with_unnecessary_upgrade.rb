@@ -1,19 +1,18 @@
 test_name "puppet module install (with unnecessary dependency upgrade)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "java"
 module_dependencies   = ["stdlib"]
 
+orig_installed_modules = get_installed_modules_for_hosts hosts
+
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/*"
-  agents.each do |agent|
-    on agent, "rm -rf #{agent['distmoduledir']}/*"
-  end
-  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
-  module_dependencies.each do |dependency|
-    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
-  end
+  installed_modules = get_installed_modules_for_hosts hosts
+  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
 end
+
 step 'Setup'
 
 stub_forge_on(master)

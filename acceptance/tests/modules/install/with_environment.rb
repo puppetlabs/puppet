@@ -1,19 +1,17 @@
 test_name 'puppet module install (with environment)'
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
-module_dependencies   = []
+module_dependencies = []
+
+orig_installed_modules = get_installed_modules_for_hosts hosts
 
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/*"
-  agents.each do |agent|
-    on agent, "rm -rf #{agent['distmoduledir']}/*"
-  end
-  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
-  module_dependencies.each do |dependency|
-    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
-  end
-  # TODO refactor this into a generalized request
+  installed_modules = get_installed_modules_for_hosts hosts
+  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
+  # TODO make helper take environments into account
   on master, "rm -rf #{master['puppetpath']}/testenv #{master['puppetpath']}/puppet2.conf"
 end
 

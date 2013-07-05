@@ -1,10 +1,12 @@
 # encoding: UTF-8
 
 test_name "puppet module install (with modulepath)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
-module_dependencies   = []
+module_dependencies = []
 
 expected_output = <<-OUTPUT
     \e[mNotice: Preparing to install into #{master['puppetpath']}/modules2 ...\e[0m
@@ -14,16 +16,12 @@ expected_output = <<-OUTPUT
     └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
 OUTPUT
 
+orig_installed_modules = get_installed_modules_for_hosts hosts
+
 teardown do
-  on master, "rm -rf #{master['distmoduledir']}/*"
-  agents.each do |agent|
-    on agent, "rm -rf #{agent['distmoduledir']}/*"
-  end
-  on master, "rm -rf #{master['sitemoduledir']}/#{module_name}"
-  module_dependencies.each do |dependency|
-    on master, "rm -rf #{master['sitemoduledir']}/#{dependency}"
-  end
-  # TODO: Refactor
+  installed_modules = get_installed_modules_for_hosts hosts
+  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
+  # TODO: make helper take modulepath
   on master, "rm -rf #{master['puppetpath']}/modules2"
 end
 
