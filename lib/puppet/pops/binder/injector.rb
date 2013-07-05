@@ -518,45 +518,35 @@ class Puppet::Pops::Binder::Injector
     create_producer(x)
   end
 
-  def create_combinator(scope, multibinding)
-    mb_type_array = multibinding.type.is_a?(Puppet::Pops::Types::PArrayType)
-    case multibinding.type
-    when Puppet::Pops::Types::PArrayType
-      combinator = case multibinding.combinator
-      when NilClass
-         Puppet::Pops::Binder::MultibindCombinators::ArrayCombinator.new()
-      when Puppet::Pops::Binder::Bindings::CombinatorLambda
-        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
-        Puppet::Pops::Binder::MultibindCombinators::ArrayPuppetLambdaCombinator.new(ast31lambda)
-      when Puppet::Pops::Binder::Bindings::CombinatorProducer
-        transform(multibinding.combinator).produce(scope)
-      end
-    when Puppet::Pops::Types::PHashType
-      combinator = case multibinding.combinator
-      when NilClass
-        Puppet::Pops::Binder::MultibindCombinators::HashCombinator.new()
-      when Puppet::Pops::Binder::Bindings::CombinatorLambda
-        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
-        Puppet::Pops::Binder::MultibindCombinators::HashPuppetLambdaCombinator.new(ast31lambda)
-      when Puppet::Pops::Binder::Bindings::CombinatorProducer
-        transform(multibinding.combinator).produce(scope)
-      end
-    else
-      raise ArgumentError, "Internal Error: multibind is neither Array not Hash based, got: #{type_calculator.label(multibinding.type)}"
+  def create_array_combinator(scope, multibinding)
+    case multibinding.combinator
+    when NilClass
+       Puppet::Pops::Binder::MultibindCombinators::ArrayCombinator.new()
+    when Puppet::Pops::Binder::Bindings::CombinatorLambda
+      ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
+      Puppet::Pops::Binder::MultibindCombinators::ArrayPuppetLambdaCombinator.new(ast31lambda)
+    when Puppet::Pops::Binder::Bindings::CombinatorProducer
+      transform(multibinding.combinator).produce(scope)
     end
-
-    unless combinator
-      raise ArgumentError, "Internal Error: no multibind combinator created"
-    end
-    combinator
   end
 
+  def create_hash_combinator(scope, multibinding)
+    case multibinding.combinator
+    when NilClass
+      Puppet::Pops::Binder::MultibindCombinators::HashCombinator.new()
+    when Puppet::Pops::Binder::Bindings::CombinatorLambda
+      ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
+      Puppet::Pops::Binder::MultibindCombinators::HashPuppetLambdaCombinator.new(ast31lambda)
+    when Puppet::Pops::Binder::Bindings::CombinatorProducer
+      transform(multibinding.combinator).produce(scope)
+    end
+  end
 
   # @api private
   def array_multibind_producer(binding)
     contributions_key = key_factory.multibind_contributions(binding.id)
     x = lambda do |scope|
-      combinator = create_combinator(scope, binding)
+      combinator = create_array_combinator(scope, binding)
       # transform array of keys to an array of looked up values
       lookup_key(scope, contributions_key).reduce([]) do |memo, k|
         combinator.combine(scope, binding, type_calculator, memo, lookup_key(scope, k))
@@ -576,7 +566,7 @@ class Puppet::Pops::Binder::Injector
         raise ArgumentError, "Internal Error: Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
         name = entry.binding.name
 
-        combinator = create_combinator(scope, binding)
+        combinator = create_hash_combinator(scope, binding)
         result[entry.binding.name] = combinator.combine(scope, binding, type_calculator, name, result[name], lookup(scope, k))
       end
       result
