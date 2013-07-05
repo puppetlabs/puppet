@@ -37,6 +37,36 @@
 # @see Puppet::Pops::Binder::Binder for details about how to bind keys to producers
 # @see Puppet::Pops::Binder::BindingsFactory for a convenient way to create a Binder and bindings
 #
+# Assisted Inject
+# ---------------
+# The injector supports lookup of instances of classes even if the requested class is not explicitly bound.
+# This is possible for classes that have a zero argument `initialize` method, or that has a class method called
+# `inject` that takes two arguments; `injector`, and `scope`.
+# This is useful in ruby logic as a class can then use the given injector to inject details.
+# An `inject` class method wins over a zero argument `initialize` in all cases.
+# 
+# @example Using assisted inject
+#   # Class with assisted inject support
+#   class Duck
+#     attr_reader :name, :year_of_birth
+#
+#     def self.inject(injector, scope)
+#       # lookup default name and year of birth, and use defaults if not present
+#       name = injector.lookup(scope,'default-duck-name') {|x| x ? x : 'Donald Duck' }
+#       year_of_birth = injector.lookup(scope,'default-duck-year_of_birth') {|x| x ? x : 1934 }
+#       self.new(name, year_of_birth)
+#     end
+#
+#     def initialize(name, year_of_birth)
+#       @name = name
+#       @year_of_birth = year_of_birth
+#     end
+#   end
+#
+#   injector.lookup(scope, Duck)
+#   # Produces a Duck named 'Donald Duck' or named after the binding 'default-duck-name' (and with similar treatment of
+#   # year_of_birth
+#
 # @api public
 #
 class Puppet::Pops::Binder::Injector
