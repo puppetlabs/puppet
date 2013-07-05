@@ -188,6 +188,22 @@ describe 'Injector' do
         injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).is_a?(InjectorSpecModule::Daffy).should == true
       end
 
+      it "assisted inject should produce same instance on lookup but not on lookup producer" do
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
+        d1 = injector.lookup(null_scope(), duck_type)
+        d2 = injector.lookup(null_scope(), duck_type)
+        d1.equal?(d2).should == true
+
+        d1 = injector.lookup_producer(null_scope(), duck_type).produce(null_scope())
+        d2 = injector.lookup_producer(null_scope(), duck_type).produce(null_scope())
+        d1.equal?(d2).should == false
+      end
+
       it "assisted inject should kick in for classes with a class inject method" do
         binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
