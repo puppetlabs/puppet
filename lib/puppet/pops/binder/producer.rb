@@ -118,7 +118,7 @@ module Puppet::Pops::Binder
     end
 
     def produce(scope, *args)
-      producer(scope) unless @inst
+      producer(scope, *args) unless @inst
       @inst
     end
 
@@ -126,6 +126,9 @@ module Puppet::Pops::Binder
       if @clazz.respond_to?(:inject)
         @inst = @clazz.inject(@injector, scope, *args)
       else
+        unless args.empty?
+          raise ArgumentError, "Assisted Inject can not pass arguments to no-args constructor when there is no class inject method."
+        end
         @inst = @clazz.new()
       end
       self
