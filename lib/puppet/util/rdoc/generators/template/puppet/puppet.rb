@@ -37,7 +37,7 @@ blockquote,q{quotes:"""";}
 
 body {
     font-family: Verdana,Arial,Helvetica,sans-serif;
-    font-size:12px;
+    font-size: 0.9em;
 }
 
 pre {
@@ -51,7 +51,8 @@ pre {
 
 h1,h2,h3,h4 { margin: 0; color: #efefef; background: transparent; }
 h1 { font-size: 1.2em; }
-h2,h3,h4 { margin-top: 1em; color:#558;}
+h2,h3,h4 { margin-top: 1em; color:#558; }
+h2,h3 { font-size: 1.1em; }
 
 a { color: #037; text-decoration: none; }
 a:hover { color: #04d; }
@@ -103,7 +104,7 @@ div#classHeader a, div#fileHeader a {
 div#classHeader td, div#fileHeader td {
     color: white;
 	padding:3px;
-	font-size:0.8em;
+	font-size:0.9em;
 }
 
 
@@ -180,7 +181,7 @@ table.header-table {
    margin:5px 0 10px 0;
 }
 
-div#class-list, div#methods, div#includes, div#resources, div#requires, div#realizes { padding:10px; }
+div#class-list, div#methods, div#includes, div#resources, div#requires, div#realizes, div#attribute-list { padding:10px; }
 
 .section-title {
     background: #79a;
