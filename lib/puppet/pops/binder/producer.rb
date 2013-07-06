@@ -122,9 +122,9 @@ module Puppet::Pops::Binder
       @inst
     end
 
-    def producer(scope)
+    def producer(scope, *args)
       if @clazz.respond_to?(:inject)
-        @inst = @clazz.inject(@injector, scope)
+        @inst = @clazz.inject(@injector, scope, *args)
       else
         @inst = @clazz.new()
       end

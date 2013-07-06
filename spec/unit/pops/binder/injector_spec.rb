@@ -51,7 +51,7 @@ module InjectorSpecModule
 
   class AngryDuck < TestDuck
     # Supports assisted inject, returning a Donald duck as the default impl of Duck
-    def self.inject(injector, scope)
+    def self.inject(injector, scope, *args)
       Donald.new()
     end
   end
@@ -62,9 +62,11 @@ module InjectorSpecModule
   class ScroogeMcDuck < TestDuck
     attr_reader :fortune
 
-    # Supports assisted inject, returning an ScroogeMcDuck with 1$ fortune
-    def self.inject(injector, scope)
-      self.new(1)
+    # Supports assisted inject, returning an ScroogeMcDuck with 1$ fortune or first arg in args
+    # Note that when injected (via instance producer, or implict assisted inject, the inject method
+    # always wins.
+    def self.inject(injector, scope, *args)
+      self.new(args[0].nil? ? 1 : args[0])
     end
 
     def initialize(fortune)
@@ -210,6 +212,8 @@ describe 'Injector' do
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
         injector = injector(binder)
+        # Do not pass any arguments, the ScroogeMcDuck :inject method should pick 1 by default
+        # This tests zero args passed
         duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
         injector.lookup(null_scope(), duck_type).fortune.should == 1
         injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).fortune.should == 1

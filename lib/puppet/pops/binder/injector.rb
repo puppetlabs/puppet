@@ -544,10 +544,20 @@ class Puppet::Pops::Binder::Injector
     create_producer(x)
   end
 
+  # Perfoms initialization the same way as Assisted Inject does
+  #
   def instantiating_producer(class_name, *init_args)
     # get class by name
     the_class = type_calculator.class_get(class_name)
-    create_producer(lambda {|scope| the_class.new(*init_args) } )
+    injector = self
+    the_lambda = lambda do |scope|
+      if the_class.respond_to?(:inject)
+        the_class.inject(self, scope, *init_args)
+      else
+        the_class.new(*init_args)
+      end
+    end
+    create_producer(the_lambda )
   end
 
   def first_found_producer(producers)
