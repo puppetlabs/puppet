@@ -418,20 +418,14 @@ class Puppet::Pops::Binder::Injector
   # @api private
   #
   def transform_NilClass(descriptor, scope, entry)
-    # TODO: When the multibind has a nil producer it is not possible to flag it as being
-    # singleton or not - in this case the collected content will need to determine its state
-    # the issue is if a collected piece of content is dynamic as each multi lookup could potentially
-    # be different. (Uncertain if this is an issue...)
-    #
-
     unless entry.binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding)
       raise ArgumentError, "Binding without producer detected (TODO: details)"
     end
     case entry.binding.type
     when Puppet::Pops::Types::PArrayType
-      array_multibind_producer(entry.binding)
+      singleton_producer(array_multibind_producer(entry.binding).produce(scope))
     when Puppet::Pops::Types::PHashType
-      hash_multibind_producer(entry.binding)
+      singleton_producer(hash_multibind_producer(entry.binding).produce(scope))
     else
       raise ArgumentError, "Unsupported multibind type, must be an array or hash type, but got: '#{entry.binding.type}"
     end
