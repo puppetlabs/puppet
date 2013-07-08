@@ -17,6 +17,7 @@ step 'Setup'
 
 stub_forge_on(master)
 
+# How does this test differ from a with_version test???
 step "Install a module with cycles"
 on master, puppet("module install #{module_author}-#{module_name} --version 0.0.1") do
   assert_output <<-OUTPUT

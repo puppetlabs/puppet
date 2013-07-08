@@ -23,14 +23,10 @@ PP
 
 step "Try to install a module to a non-existent directory"
 on master, puppet("module install #{module_author}-#{module_name} --target-dir /tmp/modules") do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into /tmp/modules ...\e[0m
-    \e[mNotice: Created target directory /tmp/modules\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    /tmp/modules
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-  OUTPUT
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
 end
 on master, "[ -d /tmp/modules/#{module_name} ]"
 

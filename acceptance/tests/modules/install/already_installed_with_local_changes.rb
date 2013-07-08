@@ -42,39 +42,30 @@ PP
 
 step "Try to install a module that is already installed"
 on master, puppet("module install #{module_author}-#{module_name}"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    STDERR> \e[1;31mError: Could not install module '#{module_author}-#{module_name}' (latest)
-    STDERR>   Module '#{module_author}-#{module_name}' (v0.0.1) is already installed
-    STDERR>     Installed module has had changes made locally
-    STDERR>     Use `puppet module upgrade` to install a different version
-    STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
-  OUTPUT
+  assert_match(/#{module_author}-#{module_name}.*is already installed/, stderr,
+        "Error that module was already installed was not displayed")
+  assert_match(/changes made locally/, stderr,
+        "Error that module has local changes was not displayed")
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install #{module_author}-#{module_name} --version 1.x"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    STDERR> \e[1;31mError: Could not install module '#{module_author}-#{module_name}' (v1.x)
-    STDERR>   Module '#{module_author}-#{module_name}' (v0.0.1) is already installed
-    STDERR>     Installed module has had changes made locally
-    STDERR>     Use `puppet module upgrade` to install a different version
-    STDERR>     Use `puppet module install --force` to re-install only this module\e[0m
-  OUTPUT
+  assert_match(/Could not install module '#{module_author}-#{module_name}' \(v1.x\)/, stderr,
+        "Error that specified module version could not be installed was not displayed")
+  assert_match(/#{module_author}-#{module_name}.*is already installed/, stderr,
+        "Error that module was already installed was not displayed")
+  assert_match(/changes made locally/, stderr,
+        "Error that module has local changes was not displayed")
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    #{master['distmoduledir']}
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-  OUTPUT
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 #validate checksum

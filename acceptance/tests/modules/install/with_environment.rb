@@ -38,12 +38,11 @@ on master, "{ echo '[testenv]'; echo 'modulepath=#{master['puppetpath']}/testenv
 
 step 'Install a module into a non default environment'
 on master, "puppet module install #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --environment=testenv" do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into #{master['puppetpath']}/testenv/modules ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    #{master['puppetpath']}/testenv/modules
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-  OUTPUT
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+  assert_match(/#{master['puppetpath']}\/testenv\/modules/, stdout,
+        "Notice of non default install path was not displayed")
 end
 on master, "[ -d #{master['puppetpath']}/testenv/modules/#{module_name} ]"

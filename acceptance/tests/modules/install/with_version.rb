@@ -26,23 +26,11 @@ agents.each do |agent|
           "Module name not displayed during install")
     assert_match(/Notice: Installing -- do not interrupt/, stdout,
           "No installing notice displayed!")
-    assert_equal( true, semver_to_i(installed_version) < semver_to_i(module_version),
+    assert_equal( true, semver_cmp(installed_version, module_version) < 0,
           "installed version '#{installed_version}' of '#{module_name}' is not less than '#{module_version}'")
   end
 
   step "check for a '#{module_name}' manifest"
-  manifest_found = false
-  result = on agent, puppet("config print modulepath")
-  result.stdout.split(':').each do |module_path|
-    module_path = module_path.strip
-    if ! module_path.include? "/opt"
-      r = on(agent, "[ -f #{module_path}/#{module_name}/manifests/init.pp ]", :acceptable_error_codes => [0,1])
-      if r.exit_code == 0:
-        manifest_found = true
-        break
-      end
-    end
-  end
-  assert_equal( true, manifest_found, "Manifest file not found for '#{module_name}' module")
+    on agent, "[ -f #{master['distmoduledir']}/#{module_name}/manifests/init.pp ]"
 
 end

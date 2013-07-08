@@ -42,69 +42,43 @@ PP
 step "Try to install a module with a name collision"
 module_name   = "nginx"
 on master, puppet("module install #{module_author}-#{module_name}"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not install module '#{module_author}-#{module_name}' (latest: v0.0.1)
-    STDERR>   Installation would overwrite #{master['distmoduledir']}/#{module_name}
-    STDERR>     Currently, 'not#{module_author}-#{module_name}' (v0.0.3) is installed to that directory
-    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
-    STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
-  OUTPUT
+  assert_match(/Installation would overwrite #{master['distmoduledir']}\/#{module_name}/, stderr,
+        "Error of module collision was not displayed")
 end
 on master, "[ -f #{master['distmoduledir']}/#{module_name}/extra.json ]"
 
 step "Try to install a module with a path collision"
 module_name   = "apache"
 on master, puppet("module install #{module_author}-#{module_name}"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not install module '#{module_author}-#{module_name}' (latest: v0.0.1)
-    STDERR>   Installation would overwrite #{master['distmoduledir']}/#{module_name}
-    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
-    STDERR>     Use `puppet module install --force` to install this module anyway\e[0m
-  OUTPUT
+  assert_match(/Installation would overwrite #{master['distmoduledir']}\/#{module_name}/, stderr,
+        "Error of module collision was not displayed")
 end
 on master, "[ -f #{master['distmoduledir']}/#{module_name}/extra.json ]"
 
 step "Try to install a module with a dependency that has collides"
 module_name   = "php"
 on master, puppet("module install #{module_author}-#{module_name} --version 0.0.1"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not install module '#{module_author}-#{module_name}' (v0.0.1)
-    STDERR>   Dependency '#{module_author}-apache' (v0.0.1) would overwrite #{master['distmoduledir']}/apache
-    STDERR>     Use `puppet module install --target-dir <DIR>` to install modules elsewhere
-    STDERR>     Use `puppet module install --ignore-dependencies` to install only this module\e[0m
-  OUTPUT
+  assert_match(/Dependency .* would overwrite/, stderr,
+        "Error of dependency collision was not displayed")
 end
 on master, "[ -f #{master['distmoduledir']}/apache/extra.json ]"
 
 step "Install a module with a name collision by using --force"
 module_name   = "nginx"
 on master, puppet("module install #{module_author}-#{module_name} --force"), :acceptable_exit_codes => [0] do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    #{master['distmoduledir']}
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-  OUTPUT
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
 end
 on master, "[ ! -f #{master['distmoduledir']}/#{module_name}/extra.json ]"
 
 step "Install an module with a name collision by using --force"
 module_name   = "apache"
 on master, puppet("module install #{module_author}-#{module_name} --force"), :acceptable_exit_codes => [0] do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    #{master['distmoduledir']}
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-  OUTPUT
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
 end
 on master, "[ ! -f #{master['distmoduledir']}/#{module_name}/extra.json ]"
-
