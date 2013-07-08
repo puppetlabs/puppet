@@ -7,10 +7,8 @@ module_name   = "nginx"
 module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
-
 teardown do
-  installed_modules = get_installed_modules_for_hosts hosts
-  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
+  rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
   # TODO make helper take environments into account
   on master, "rm -rf #{master['puppetpath']}/testenv #{master['puppetpath']}/puppet2.conf"
 end

@@ -8,10 +8,8 @@ module_version = "0.0.3"
 module_dependencies   = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
-
 teardown do
-  installed_modules = get_installed_modules_for_hosts hosts
-  rm_installed_modules_from_hosts orig_installed_modules, installed_modules
+  rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
 end
 
 agents.each do |agent|
