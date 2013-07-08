@@ -28,17 +28,15 @@ on master, puppet("module install #{module_author}-#{module_name} --target-dir /
 end
 on master, "[ -d /tmp/modules/#{module_name} ]"
 
+step "Try to install a module to a non-existent implicit directory"
 # This test relies on destroying the default module directory...
-#step "Try to install a module to a non-existent implicit directory"
-#on master, puppet("module install #{module_author}-#{module_name}") do
-#  assert_output <<-OUTPUT
-#    \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-#    \e[mNotice: Created target directory #{master['distmoduledir']}\e[0m
-#    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-#    \e[mNotice: Installing -- do not interrupt ...\e[0m
-#    #{master['distmoduledir']}
-#    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-#  OUTPUT
-#end
-#
-#on master, '[ -d #{master['distmoduledir']}/#{module_name} ]'
+on master, "mv #{master['distmoduledir']} #{master['distmoduledir']}-bak"
+on master, puppet("module install #{module_author}-#{module_name}") do
+  assert_match(/Installing -- do not interrupt/, stdout,
+        "Notice that module was installing was not displayed")
+  assert_match(/#{module_author}-#{module_name}/, stdout,
+        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+end
+on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+# Restore default module directory...
+on master, "mv #{master['distmoduledir']}-bak #{master['distmoduledir']}"
