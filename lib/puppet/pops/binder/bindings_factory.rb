@@ -180,7 +180,7 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # to a singleton producer
     # @overload to_producer(a_producer)
-    #   @param a_producer [Puppet::Pops::Binder::Producer] an instantiated producer, not serializeable !
+    #   @param a_producer [Puppet::Pops::Binder::Producers::Producer] an instantiated producer, not serializeable !
     #
     # @overload to_producer(a_class, *args)
     #   @param a_class [Class] the class to create an instance of
@@ -188,14 +188,14 @@ class Puppet::Pops::Binder::BindingsFactory
     #
     # @overload to_producer(a_producer_descriptor)
     #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
-    #      producing Puppet::Pops::Binder::Producer
+    #      producing Puppet::Pops::Binder::Producers::Producer
     #
     def to_producer(producer, *args)
       case producer
       when Class
         producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
       when Puppet::Pops::Binder::Bindings::ProducerDescriptor
-      when Puppet::Pops::Binder::Producer
+      when Puppet::Pops::Binder::Producers::Producer
         # a custom producer instance
         producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       else
@@ -208,7 +208,7 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # to a series of producers
     # @overload to_producer(a_producer)
-    #   @param a_producer [Puppet::Pops::Binder::Producer] an instantiated producer, not serializeable !
+    #   @param a_producer [Puppet::Pops::Binder::Producers::Producer] an instantiated producer, not serializeable !
     #
     # @overload to_producer(a_class, *args)
     #   @param a_class [Class] the class to create an instance of
@@ -216,14 +216,14 @@ class Puppet::Pops::Binder::BindingsFactory
     #
     # @overload to_producer(a_producer_descriptor)
     #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
-    #      producing Puppet::Pops::Binder::Producer
+    #      producing Puppet::Pops::Binder::Producers::Producer
     #
     def to_producer_series(producer, *args)
       case producer
       when Class
         producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
       when Puppet::Pops::Binder::Bindings::ProducerDescriptor
-      when Puppet::Pops::Binder::Producer
+      when Puppet::Pops::Binder::Producers::Producer
         # a custom producer instance
         producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       else
