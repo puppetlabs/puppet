@@ -313,6 +313,16 @@ class Puppet::Pops::Binder::BindingsFactory
       @model.producer = Puppet::Pops::Binder::BindingsFactory.first_found_producer(producers)
       self
     end
+
+    def producer_options(options)
+      options.each do |k, v|
+        arg = Puppet::Pops::Binder::Bindings::NamedArgument.new()
+        arg.name = k.to_s
+        arg.value = v
+        @model.addProducer_args(arg)
+      end
+      self
+    end
   end
 
 
@@ -395,7 +405,7 @@ class Puppet::Pops::Binder::BindingsFactory
     p
   end
 
-# Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
+  # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
   #
   def self.categories(tuple_array)
     result = Puppet::Pops::Binder::Bindings::EffectiveCategories.new()

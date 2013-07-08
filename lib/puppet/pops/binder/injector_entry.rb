@@ -12,15 +12,15 @@ class Puppet::Pops::Binder::InjectorEntry
   # @api private
   attr_accessor :resolved
 
-  # @api private
-  attr_accessor :cached
+#  # @api private
+#  attr_accessor :cached
 
   # @api private
   attr_accessor :cached_producer
 
   # @api private
   def initialize(precedence, binding)
-    @precedence = precedence
+    @precedence = precedence.freeze
     @binding = binding
     @cached_producer = nil
   end
@@ -41,5 +41,14 @@ class Puppet::Pops::Binder::InjectorEntry
 
   def is_abstract?
     binding.abstract
+  end
+
+  # Compares against another InjectorEntry by comparing precedence.
+  # @param injector_entry [InjectorEntry] entry to compare against.
+  # @return [Integer] 1, if this entry has higher precedence, 0 if equal, and -1 if given entry has higher precedence.
+  # @api public
+  #
+  def <=> (injector_entry)
+    precedence <=> injector_entry.precedence
   end
 end

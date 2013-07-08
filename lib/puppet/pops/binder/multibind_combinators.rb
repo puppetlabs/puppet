@@ -1,5 +1,6 @@
 # This module defines classes that are used to combine the contributions to a multibind.
 # The base classes are used if no custom combinators have been defined in the model.
+# TODO: This should mostly be deprecated... parts possibly moved..
 #
 module Puppet::Pops::Binder::MultibindCombinators
 
@@ -33,6 +34,7 @@ module Puppet::Pops::Binder::MultibindCombinators
       end
     end
   end
+
 
   # Combines unique entries in an Array
   # @api public

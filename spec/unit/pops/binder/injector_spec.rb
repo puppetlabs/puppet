@@ -51,7 +51,7 @@ module InjectorSpecModule
 
   class AngryDuck < TestDuck
     # Supports assisted inject, returning a Donald duck as the default impl of Duck
-    def self.inject(injector, scope, *args)
+    def self.inject(injector, scope, binding, *args)
       Donald.new()
     end
   end
@@ -65,7 +65,7 @@ module InjectorSpecModule
     # Supports assisted inject, returning an ScroogeMcDuck with 1$ fortune or first arg in args
     # Note that when injected (via instance producer, or implict assisted inject, the inject method
     # always wins.
-    def self.inject(injector, scope, *args)
+    def self.inject(injector, scope, binding, *args)
       self.new(args[0].nil? ? 1 : args[0])
     end
 
@@ -419,6 +419,8 @@ describe 'Injector' do
       injector = injector(binder)
       a = injector.lookup(null_scope(), 'a_string')
       b = injector.lookup(null_scope(), 'a_string')
+      a.should == '42'
+      b.should == '42'
       a.equal?(b).should == false
     end
   end
@@ -672,7 +674,7 @@ describe 'Injector' do
         the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
       end
 
-      it "should be able to use a handler to process each addition" do
+      it "should be able to make result contain only uniq entries" do
         # This case uses a multibind of individual strings, but combines them
         # into an array of unique values using a Combinator class (produced via injection)
         #
@@ -683,7 +685,8 @@ describe 'Injector' do
         # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
         multibind_id = "ducks"
         combinator_class = Puppet::Pops::Binder::MultibindCombinators::ArraySetCombinator
-        bindings.multibind(multibind_id).type(array_of_data).name('donalds_family').combinator(combinator_class)
+        mb = bindings.multibind(multibind_id).type(array_of_data).name('donalds_family')
+        mb.producer_options(:priority_on_named => false, :uniq => true)
 
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
@@ -741,7 +744,8 @@ describe 'Injector' do
         CODE
         # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
         multibind_id = "ducks"
-        bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family').combinator(model.lambda)
+        mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family').combinator(model.lambda)
+        mb.producer_options(:conflict_resolution => :append)
 
         # missing name
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
@@ -757,39 +761,8 @@ describe 'Injector' do
         ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
         ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
       end
-
-      it "should be possible to combine array multibind contributions with a lambda" do
-        # This case uses a multibind of individual strings, but combines them
-        # into an array of unique values.
-        #
-        binder = Puppet::Pops::Binder::Binder.new()
-        bindings = factory.named_bindings('test')
-        array_of_data = type_factory.array_of_data()
-        model = @parser.parse_string(<<-CODE).current
-        fake() |$memo, $value| {
-          unless $value in $memo { $memo << $value }
-          else { $memo }
-        }
-        CODE
-        # Using a fake function to get the lambda (parser can not parse a lambda as an expression)
-        multibind_id = "ducks"
-        bindings.multibind(multibind_id).type(array_of_data).name('donalds_family').combinator(model.lambda)
-
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey') # duplicate
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
-
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        ducks = injector.lookup(@scope, 'donalds_family')
-        ducks.should == ['Huey', 'Dewey', 'Louie']
-      end
     end
   end
-  # TODO: test combinators for array and hash using Produced Combinator
-
+  # TODO: test producer options; multibind priority for array and hash, uniq, flatten etc.
+  # TODO: test post processing lambda for a producer
 end
