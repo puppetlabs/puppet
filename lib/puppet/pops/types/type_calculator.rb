@@ -64,7 +64,7 @@ class Puppet::Pops::Types::TypeCalculator
 
     # data types can not be injected (check again, it is not safe to assume that given RubyType klazz arg was ok)
     return false unless type(klazz).is_a?(Types::PRubyType)
-    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity() == -3) || klazz.instance_method(:initialize).arity() == 0
+    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity() == -4) || klazz.instance_method(:initialize).arity() == 0
       klazz
     else
       nil

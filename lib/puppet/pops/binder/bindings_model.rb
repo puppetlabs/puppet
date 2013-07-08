@@ -18,6 +18,7 @@ module Puppet::Pops::Binder::Bindings
   # An abstract producer
   class ProducerDescriptor < Puppet::Pops::Model::PopsObject
     abstract
+    contains_one_uni 'transformer', Puppet::Pops::Model::LambdaExpression
   end
 
   # All producers are singleton producers unless wrapped in a non caching producer
@@ -82,12 +83,17 @@ module Puppet::Pops::Binder::Bindings
     abstract
   end
 
-  # Used in a Multibind of Array type
+  # Used in a Multibind of Array type unless it has a producer. May explicitly be used as well.
   class ArrayMultibindProducerDescriptor < MultibindProducerDescriptor
   end
 
-  # Used in a Multibind of Hash type
+  # Used in a Multibind of Hash type unless it has a producer. May explicitly be used as well.
   class HashMultibindProducerDescriptor < MultibindProducerDescriptor
+  end
+
+  class NamedArgument < Puppet::Pops::Model::PopsObject
+    has_attr 'name', String, :lowerBound => 1
+    has_attr 'value', Object, :lowerBound => 1
   end
 
   class Binding < AbstractBinding
@@ -95,7 +101,9 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'name', String
     has_attr 'override', Boolean
     has_attr 'abstract', Boolean
-    contains_one_uni 'producer', ProducerDescriptor
+    # Invariant: Only multibinds may have lowerBound 0, all regular Binding must have a producer.
+    contains_one_uni 'producer', ProducerDescriptor, :lowerBound => 0
+    contains_many_uni 'producer_args', NamedArgument, :lowerBound => 0
   end
 
   # A combinator combines the contributions in a multibind
