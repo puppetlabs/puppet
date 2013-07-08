@@ -71,7 +71,7 @@
 #
 class Puppet::Pops::Binder::Injector
 
-  Producers = Puppet::Pops::Binder
+  Producers = Puppet::Pops::Binder::Producers
 
   # An Injector is initialized with a configured Binder.
   #
@@ -200,10 +200,10 @@ class Puppet::Pops::Binder::Injector
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param name [String], the Data/name to lookup
   #
-  # @return [Puppet::Pops::Binder::Producer, Object, nil] a producer, or what the optional block returns
+  # @return [Puppet::Pops::Binder::Producers::Producer, Object, nil] a producer, or what the optional block returns
   #
   # @yield [producer] passes the looked up producer to an optional block and returns what this block returns
-  #   @yieldparam producer [Puppet::Pops::Binder::Producer, nil] the looked up producer or nil if nothing was bound
+  #   @yieldparam producer [Puppet::Pops::Binder::Producers::Producer, nil] the looked up producer or nil if nothing was bound
   #
   # @yield [scope, producer] passes scope and producer to the block and returns what this block returns
   #   @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
@@ -218,7 +218,7 @@ class Puppet::Pops::Binder::Injector
   end
 
   # Looks up a Producer given an opaque binder key.
-  # @returns [Puppet::Pops::Binder::Producer, nil] the bound producer, or nil if no such producer was found.
+  # @returns [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found.
   #
   # @api public
   #
@@ -228,7 +228,7 @@ class Puppet::Pops::Binder::Injector
 
   # Looks up a Producer given a type/name key.
   # @note The result is not type checked (it cannot be until the producer has produced an instance).
-  # @returns [Puppet::Pops::Binder::Producer, nil] the bound producer, or nil if no such producer was found
+  # @returns [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found
   #
   # @api public
   #
@@ -347,7 +347,7 @@ module Private
             raise "Type error: incompatible type returned by producer TODO: detailed error message"
           end
           val
-        when Puppet::Pops::Binder::AssistedInjectProducer
+        when Producers::AssistedInjectProducer
           entry.produce(scope)
         else
           # internal, direct entries
@@ -366,7 +366,7 @@ module Private
       when NilClass
         # not found, is this an assisted inject?
         if clazz = assistable_injected_class(key)
-          entry = Puppet::Pops::Binder::AssistedInjectProducer.new(self, clazz)
+          entry = Producers::AssistedInjectProducer.new(self, clazz)
           entries[ key ] = entry
         else
           entries[ key ] = NotFound.new()
@@ -444,13 +444,13 @@ module Private
     end
 
     # Returns the producer for the entry
-    # @return [Puppet::Pops::Binder::Producer] the entry's producer.
+    # @return [Puppet::Pops::Binder::Producers::Producer] the entry's producer.
     #
     # @api private
     #
     def producer(scope, entry, use)
       return nil unless entry # not found
-      return entry.producer(scope) if entry.is_a?(Puppet::Pops::Binder::AssistedInjectProducer)
+      return entry.producer(scope) if entry.is_a?(Producers::AssistedInjectProducer)
       unless entry.cached_producer
         entry.cached_producer = transform(entry.binding.producer, scope, entry)
       end

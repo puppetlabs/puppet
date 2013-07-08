@@ -82,7 +82,7 @@ module InjectorSpecModule
   end
 
   # Test custom producer that on each produce returns a duck that is twice as rich as its predecessor
-  class ScroogeProducer < Puppet::Pops::Binder::Producer
+  class ScroogeProducer < Puppet::Pops::Binder::Producers::Producer
     attr_reader :next_capital
     def initialize
       @next_capital = 100

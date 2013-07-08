@@ -33,6 +33,10 @@ module Puppet
     end
 
     module Binder
+      module Producers
+        require 'puppet/pops/binder/producers'
+      end
+
       require 'puppet/pops/binder/binder'
       require 'puppet/pops/binder/bindings_model'
       require 'puppet/pops/binder/binder_issues'
@@ -43,11 +47,11 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
-      require 'puppet/pops/binder/producer'
 
-        module MultibindCombinators
-          require 'puppet/pops/binder/multibind_combinators'
-        end
+
+      module MultibindCombinators
+        require 'puppet/pops/binder/multibind_combinators'
+      end
     end
 
     module Parser

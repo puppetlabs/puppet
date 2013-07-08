@@ -1,12 +1,7 @@
-# This module contains the Puppet Bindings/Injector subsystem.
-# Given a set of layered and precedented bindings, and injector is used to lookup values given a key
-# consisting of a type/name combination.
+# This module contains the varuious producers used by Puppet Bindings.
+# The main class is {Puppet::Pops::Binder::Producers::Producer}
 #
-# TODO: This piece of documentation is in an odd place (in producer.rb) and should be moved.
-#
-# @api public
-#
-module Puppet::Pops::Binder
+module Puppet::Pops::Binder::Producers
   # Producer is an abstract base class representing the base contract for a bound producer.
   # This class is used internally when an explicit producer is wanted (i.e. when looking up
   # a producer instead of an instance).
@@ -25,6 +20,7 @@ module Puppet::Pops::Binder
   class Producer
     # A Puppet 3 AST Lambda Expression
     attr_reader :transformer
+
     # Creates a Producer.
     # Derived classes should call this constructor to get support for transformer lambda.
     #
@@ -55,6 +51,7 @@ module Puppet::Pops::Binder
     # @see Puppet::Pops::Binder::ProducerProducer for an example of implementation.
     # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
     # @return [Puppet::Pops::Binder::Producer] the producer to use
+    #
     def producer(scope)
       self
     end
@@ -69,16 +66,20 @@ module Puppet::Pops::Binder
     protected
 
     # Transforms the produced value if a transformer has been defined.
+    # @param scope [Puppet::Parser::Scope] the scope used for evaluation
+    # @param produced_value [Object, nil] the produced value (possibly nil)
+    # @return [Object] the transformed value if a transformer is defined, else the given produced_value
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
       begin
-        # Must CHEAT as the expressions must have access to array/hash concat/merge
+        # CHEATING as the expressions should have access to array/hash concat/merge in array/hash
         current_parser = Puppet[:parser]
         Puppet[:parser] = 'future'
+        produced_value = :undef if produced_value.nil?
         transformer.call(scope, produced_value)
       ensure
-        # Stop cheating
+        # Stop CHEATING
         Puppet[:parser] = current_parser
       end
     end
@@ -450,19 +451,6 @@ module Puppet::Pops::Binder
 
     protected
 
-#    def internal_produce(scope)
-#      result = {}
-#      injector.lookup_key(scope, contributions_key).each do |k|
-#        # get the entry (its name is needed)
-#        entry = get_entry(k)
-#        raise ArgumentError, "Internal Error: Entry in multibind missing: #{k} for contributions: #{contributions_key}" unless entry
-#        name = binding.name
-#
-#        result[binding.name] = combine(scope, binding, injector.type_calculator, result, name, result[name], injector.lookup(scope, k))
-#      end
-#      result
-#    end
-
     def internal_produce(scope)
       seen = {}
       included_entries = []
@@ -483,8 +471,6 @@ module Puppet::Pops::Binder
           when 'error'
             raise ArgumentError, "Duplicate key contributed to Hash Multibinding '#{binding.name}', key: '#{name}'."
 
-#          when 'merge', 'append'
-#            included_entries << [key, entry]
           end
         else
           seen[name] = true
@@ -507,7 +493,7 @@ module Puppet::Pops::Binder
       result
     end
 
-    # TODO: Unfinished handles append, but not merge
+    # TODO: Unfinished: handles append, but not merge
     #
     def merge(result, name, higher, lower)
       if conflict_resolution.to_s == 'append'
