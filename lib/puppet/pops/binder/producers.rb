@@ -313,31 +313,6 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
-  # Represents a simple producer that produces its value without any arguments
-  # (The default implicit production rule).
-  # @api public
-  #
-  class LambdaProducer < Producer
-    # Creates a LambdaProducer based on a lambda taking one argument `scope`.
-    # @param a_producer_lambda [Proc] a lambda taking a scope parameter
-    #
-    # @api public
-    #
-    def initialize(a_producer_lambda)
-      raise ArgumentError, "Argument must be a proc" unless a_producer_lambda.is_a?(Proc)
-      @the_lambda = a_producer_lambda
-    end
-
-    # Produces the value by calling the lambda given when the producer was created.
-    # The extra arguments are ignored.
-    # @api public
-    #
-    def produce(scope, *args)
-      @the_lambda.call(scope)
-    end
-
-  end
-
   class AssistedInjectProducer < Producer
     def initialize(injector, clazz)
       raise ArgumentError, "class must be given" unless clazz.is_a?(Class)
