@@ -172,6 +172,7 @@ describe Puppet::Resource::Status do
     tripped.resource_type.should == @status.resource_type
     tripped.evaluation_time.should == @status.evaluation_time
     tripped.tags.should == @status.tags
+    tripped.time.should == @status.time
     tripped.failed.should == @status.failed
     tripped.changed.should == @status.changed
     tripped.out_of_sync.should == @status.out_of_sync
