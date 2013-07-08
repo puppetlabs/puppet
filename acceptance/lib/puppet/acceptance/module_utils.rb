@@ -83,6 +83,31 @@ module Puppet
         end
       end
 
+      # Convert a semantic version number string to an integer.
+      #
+      # Example return value given an input of '1.2.42':
+      #
+      #   10242
+      #
+      # @param semver [String] semantic version number
+      def semver_to_i ( semver )
+        # semver assumed to be in format <major>.<minor>.<patch>
+        # calculation assumes that each segment is < 100
+        tmp = semver.split('.')
+        tmp[0].to_i * 10000 + tmp[1].to_i * 100 + tmp[2].to_i
+      end
+
+      # Compare two given semantic version numbers.
+      #
+      # Returns an integer indicating the relationship between the two:
+      #   0 indicates that both are equal
+      #   a value greater than 0 indicates that the semver1 is greater than semver2
+      #   a value less than 0 indicates that the semver1 is less than semver2
+      #
+      def semver_cmp ( semver1, semver2 )
+        semver_to_i(semver1) - semver_to_i(semver2)
+      end
+
     end
   end
 end

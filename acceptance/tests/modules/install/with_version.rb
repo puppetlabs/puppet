@@ -14,13 +14,6 @@ teardown do
   rm_installed_modules_from_hosts orig_installed_modules, installed_modules
 end
 
-def semver_to_i ( semver )
-  # semver assumed to be in format <major>.<minor>.<patch>
-  # calculation assumes that each segment is < 100
-  tmp = semver.split('.')
-  tmp[0].to_i * 10000 + tmp[1].to_i * 100 + tmp[2].to_i
-end
-
 agents.each do |agent|
   step 'setup'
   stub_forge_on(agent)
