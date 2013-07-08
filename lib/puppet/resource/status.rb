@@ -1,3 +1,5 @@
+require 'time'
+
 module Puppet
   class Resource
     class Status
@@ -84,7 +86,7 @@ module Puppet
         @change_count = data['change_count']
         @out_of_sync_count = data['out_of_sync_count']
         @tags = data['tags']
-        @time = data['time']
+        @time = Time.parse(data['time'])
         @out_of_sync = data['out_of_sync']
         @changed = data['changed']
         @skipped = data['skipped']
@@ -104,6 +106,7 @@ module Puppet
           'resource_type' => @resource_type,
           'evaluation_time' => @evaluation_time,
           'tags' => @tags,
+          'time' => @time.iso8601(9),
           'failed' => @failed,
           'changed' => @changed,
           'out_of_sync' => @out_of_sync,
