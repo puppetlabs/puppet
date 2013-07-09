@@ -986,7 +986,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if a certificate already exists for the host" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("him").returns "something"
 
-        expect { @ca.generate("him") }.to raise_error(ArgumentError)
+        expect { @ca.generate("him") }.to raise_error(ArgumentError, /a certificate already exists/i)
       end
 
       it "should create a new Host instance with the correct name" do
@@ -1003,7 +1003,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       context "if no certificate is available after CSR creation (and therefore autosigning is presumed not to have occurred)" do
         it "should explicitly sign the generated request" do
-          host.expects(:certificate).returns(nil)
+          Puppet::SSL::Certificate.indirection.expects(:find).with('him').returns nil
           @ca.expects(:sign).with("him", false)
           @ca.generate("him")
         end
@@ -1011,7 +1011,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       context "if a certificate is available after CSR creation (presumably because it was autosigned)" do
         it "should not attempt to sign again" do
-          host.expects(:certificate).returns(cert)
+          Puppet::SSL::Certificate.indirection.expects(:find).with('him').returns(nil, cert)
           @ca.expects(:sign).never
           @ca.generate("him")
         end
