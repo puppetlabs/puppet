@@ -36,7 +36,7 @@ on master, "{ echo '[testenv]'; echo 'modulepath=#{master['puppetpath']}/testenv
 
 step 'Install a module into a non default environment'
 on master, "puppet module install #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --environment=testenv" do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
   assert_match(/#{master['puppetpath']}\/testenv\/modules/, stdout,
         "Notice of non default install path was not displayed")
 end

@@ -17,7 +17,7 @@ agents.each do |agent|
 
   step "install module '#{module_author}-#{module_name}'"
   on(agent, puppet("module install #{module_author}-#{module_name}")) do
-    assert_module_installed(module_author, module_name)
+    assert_module_installed_ui(stdout, module_author, module_name)
   end
 
   step "check for a '#{module_name}' manifest"

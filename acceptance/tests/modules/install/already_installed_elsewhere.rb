@@ -52,7 +52,7 @@ on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 on master, "[ -f #{master['distmoduledir']}/#{module_name}/manifests/init.pp ]"

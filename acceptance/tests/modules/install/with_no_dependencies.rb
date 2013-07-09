@@ -17,6 +17,6 @@ stub_forge_on(master)
 
 step "Install a module with no dependencies"
 on master, puppet("module install #{module_author}-#{module_name}") do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"

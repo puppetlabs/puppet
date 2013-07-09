@@ -26,9 +26,9 @@ on master, "grep \"version '#{module_version}'\" #{master['distmoduledir']}/#{mo
 
 step "Install a module that requires the older module dependency be upgraded"
 on master, puppet("module install #{module_author}-apollo") do
-  assert_module_installed(module_author, module_name, module_version, '>')
+  assert_module_installed_ui(stdout, module_author, module_name, module_version, '>')
 end
 
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do
-  assert_module_installed(module_author, module_name, module_version, '>')
+  assert_module_installed_ui(stdout, module_author, module_name, module_version, '>')
 end

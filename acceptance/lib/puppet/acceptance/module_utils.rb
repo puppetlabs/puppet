@@ -108,15 +108,21 @@ module Puppet
         semver_to_i(semver1) - semver_to_i(semver2)
       end
 
-      # Assert that a module is installed.
+      # Assert that a module was installed according to the UI..
       #
       # This is a wrapper to centralize the validation about how
-      # a module is installed on system. It is called after a call
-      # to `on ( host )` and inspects STDOUT for specific content.
+      # the UI responded that a module was installed.
+      # It is called after a call # to `on ( host )` and inspects
+      # STDOUT for specific content.
       #
+      # @param stdout [String]
       # @param module_author [String] the author portion of a module name
       # @param module_name [String] the name portion of a module name
-      def assert_module_installed ( module_author, module_name, module_version = nil, compare_op = nil )
+      # @param module_verion [String] the version of the module to compare to
+      #     installed version
+      # @param compare_op [String] the operator for comparing the verions of
+      #     the installed module
+      def assert_module_installed_ui ( stdout, module_author, module_name, module_version = nil, compare_op = nil )
         valid_compare_ops = {'==' => 'equal to', '>' => 'greater than', '<' => 'less than'}
         assert_match(/#{module_author}-#{module_name}/, stdout,
               "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")

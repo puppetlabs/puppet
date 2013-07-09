@@ -27,10 +27,10 @@ on master, "grep \"version '#{module_version}'\" #{master['distmoduledir']}/#{mo
 step "Install a module that depends on a dependency that could be upgraded, but already satisfies constraints"
 module_name   = "apollo"
 on master, puppet("module install #{module_author}-#{module_name}") do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do
   module_name   = "java"
-  assert_module_installed(module_author, module_name, module_version, '==')
+  assert_module_installed_ui(stdout, module_author, module_name, module_version, '==')
 end

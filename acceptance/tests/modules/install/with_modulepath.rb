@@ -23,7 +23,7 @@ on master, "mkdir -p #{master['puppetpath']}/modules2"
 
 step "Install a module with relative modulepath"
 on master, "cd #{master['puppetpath']}/modules2 && puppet module install #{module_author}-#{module_name} --modulepath=." do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
   assert_match(/#{master['puppetpath']}\/modules2/, stdout,
         "Notice of non default install path was not displayed")
 end
@@ -32,7 +32,7 @@ on master, "[ -d #{master['puppetpath']}/modules2/#{module_name} ]"
 step "Install a module with absolute modulepath"
 on master, "test -d #{master['puppetpath']}/modules2/#{module_name} && rm -rf #{master['puppetpath']}/modules2/#{module_name}"
 on master, puppet("module install #{module_author}-#{module_name} --modulepath=#{master['puppetpath']}/modules2") do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
   assert_match(/#{master['puppetpath']}\/modules2/, stdout,
         "Notice of non default install path was not displayed")
 end

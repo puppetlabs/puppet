@@ -64,13 +64,13 @@ on master, "[ -f #{master['distmoduledir']}/apache/extra.json ]"
 step "Install a module with a name collision by using --force"
 module_name   = "nginx"
 on master, puppet("module install #{module_author}-#{module_name} --force"), :acceptable_exit_codes => [0] do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 on master, "[ ! -f #{master['distmoduledir']}/#{module_name}/extra.json ]"
 
 step "Install an module with a name collision by using --force"
 module_name   = "apache"
 on master, puppet("module install #{module_author}-#{module_name} --force"), :acceptable_exit_codes => [0] do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 on master, "[ ! -f #{master['distmoduledir']}/#{module_name}/extra.json ]"

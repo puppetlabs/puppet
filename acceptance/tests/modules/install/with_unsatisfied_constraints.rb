@@ -45,7 +45,7 @@ on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Install the module with an unsatisfiable dependency"
 on master, puppet("module install #{module_author}-#{module_name} --ignore-dependencies") do
-  assert_module_installed(module_author, module_name)
+  assert_module_installed_ui(stdout, module_author, module_name)
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 
@@ -65,6 +65,6 @@ on master, "[ ! -d #{master['distmoduledir']}/stdlib ]"
 
 step "Install the unsatisfiable dependency with --force"
 on master, puppet("module install #{module_author}-stdlib --force") do
-  assert_module_installed(module_author, 'stdlib')
+  assert_module_installed_ui(stdout, module_author, 'stdlib')
 end
 on master, "[ -d #{master['distmoduledir']}/stdlib ]"
