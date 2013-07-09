@@ -431,33 +431,33 @@ class Puppet::Pops::Binder::BindingsFactory
     result
   end
 
-  # Builds a Combinator from the given arguments.
-  # A lambda based combinator takes different number of argumetns for Array/Hash multibinds. An array combinator
-  # gets `memo` (the arrays current value), and `value`, and a hash combinator gets `memo` (the hash's current content),
-  # `key` the current key, `current` (the current value at key), `value` the value to combine.
-  #
-  # @example an array combinator in Puppet DSL (concatenates)
-  #   |$memo, $value| { $memo + [value] }
-  #
-  # @example a hash combinator in Puppet DSL (keeps first value set, ignores duplicates)
-  #   |$memo, $key, $current, $value| { if $current { $current} else {$value} }
-  #
-  # @param x [Puppet::Pops::Model::LambdaExpression, Puppet::Pops::Binder::MultibindCombinators::Combinator] the combinator
-  # @param *args [Object] arguments to an InstanceProducer (arguments passed to new for a given Combinator class)
-  # @return [Puppet::Pops::Binder::Bindings::Combinator
-  #
-  def self.combinator(x, *args)
-
-    if x.is_a?(Puppet::Pops::Model::LambdaExpression)
-      c = Puppet::Pops::Binder::Bindings::CombinatorLambda.new()
-      c.lambda = x
-      c
-    elsif x < Puppet::Pops::Binder::MultibindCombinators::Combinator
-      c = Puppet::Pops::Binder::Bindings::CombinatorProducer.new()
-      c.producer = instance_producer(x.name, *args)
-      c
-    else
-      raise ArgumentError, "Cannot create a combinator from a: #{x.class}."
-    end
-  end
+#  # Builds a Combinator from the given arguments.
+#  # A lambda based combinator takes different number of argumetns for Array/Hash multibinds. An array combinator
+#  # gets `memo` (the arrays current value), and `value`, and a hash combinator gets `memo` (the hash's current content),
+#  # `key` the current key, `current` (the current value at key), `value` the value to combine.
+#  #
+#  # @example an array combinator in Puppet DSL (concatenates)
+#  #   |$memo, $value| { $memo + [value] }
+#  #
+#  # @example a hash combinator in Puppet DSL (keeps first value set, ignores duplicates)
+#  #   |$memo, $key, $current, $value| { if $current { $current} else {$value} }
+#  #
+#  # @param x [Puppet::Pops::Model::LambdaExpression, Puppet::Pops::Binder::MultibindCombinators::Combinator] the combinator
+#  # @param *args [Object] arguments to an InstanceProducer (arguments passed to new for a given Combinator class)
+#  # @return [Puppet::Pops::Binder::Bindings::Combinator
+#  #
+#  def self.combinator(x, *args)
+#
+#    if x.is_a?(Puppet::Pops::Model::LambdaExpression)
+#      c = Puppet::Pops::Binder::Bindings::CombinatorLambda.new()
+#      c.lambda = x
+#      c
+#    elsif x < Puppet::Pops::Binder::MultibindCombinators::Combinator
+#      c = Puppet::Pops::Binder::Bindings::CombinatorProducer.new()
+#      c.producer = instance_producer(x.name, *args)
+#      c
+#    else
+#      raise ArgumentError, "Cannot create a combinator from a: #{x.class}."
+#    end
+#  end
 end

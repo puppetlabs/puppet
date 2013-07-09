@@ -47,11 +47,6 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
-
-
-      module MultibindCombinators
-        require 'puppet/pops/binder/multibind_combinators'
-      end
     end
 
     module Parser
