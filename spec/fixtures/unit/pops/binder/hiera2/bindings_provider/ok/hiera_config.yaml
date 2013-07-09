@@ -1,0 +1,8 @@
+hierarchy:
+  node:
+    - ${node}
+    - ${node}
+
+backends:
+  - yaml
+  - json

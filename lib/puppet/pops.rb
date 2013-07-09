@@ -47,6 +47,7 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
+      require 'puppet/pops/binder/hiera2'
     end
 
     module Parser

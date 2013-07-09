@@ -66,7 +66,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def checker(diagnostic_producer)
-      raise NoMethodError("checker")
+      raise NoMethodError, "checker"
     end
 
     # Produces the label provider to use.
@@ -76,7 +76,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def label_provider
-      raise NoMethodError("label_provider")
+      raise NoMethodError, "label_provider"
     end
   end
 

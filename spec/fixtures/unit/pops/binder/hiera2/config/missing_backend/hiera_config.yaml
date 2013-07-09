@@ -1,0 +1,7 @@
+hierarchy:
+  os:
+    - ${osfamily}
+    - for_${osfamily}
+
+backends:
+  - foobar

@@ -1,0 +1,6 @@
+hierarchy:
+  os:
+    - ${osfamily}
+
+backends:
+  - yaml
