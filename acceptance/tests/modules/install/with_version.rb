@@ -17,12 +17,8 @@ agents.each do |agent|
   stub_forge_on(agent)
 
   step "  install module '#{module_author}-#{module_name}'"
-  on(agent, puppet("module install --version \"<0.0.3\" #{module_author}-#{module_name}")) do
-    assert_module_installed(module_author, module_name)
-    /\(.*v(\d+\.\d+\.\d+)/ =~ stdout
-    installed_version = Regexp.last_match[1]
-    assert_equal( true, semver_cmp(installed_version, module_version) < 0,
-          "installed version '#{installed_version}' of '#{module_name}' is not less than '#{module_version}'")
+  on(agent, puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")) do
+    assert_module_installed(module_author, module_name, module_version, '<')
   end
 
   step "check for a '#{module_name}' manifest"

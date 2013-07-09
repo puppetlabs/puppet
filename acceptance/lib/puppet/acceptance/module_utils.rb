@@ -116,11 +116,18 @@ module Puppet
       #
       # @param module_author [String] the author portion of a module name
       # @param module_name [String] the name portion of a module name
-      def assert_module_installed ( module_author, module_name )
-        assert_match(/Installing -- do not interrupt/, stdout,
-              "Notice that module was installing was not displayed")
+      def assert_module_installed ( module_author, module_name, module_version = nil, compare_op = nil )
+        valid_compare_ops = {'==' => 'equal to', '>' => 'greater than', '<' => 'less than'}
         assert_match(/#{module_author}-#{module_name}/, stdout,
               "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+        if version
+          /#{module_author}-#{module_name} \(.*v(\d+\.\d+\.\d+)/ =~ stdout
+          installed_version = Regexp.last_match[1]
+          if valid_compare_ops.include? compare_op
+            assert_equal( true, semver_cmp(installed_version, module_version).send(compare_op, 0),
+              "Installed version '#{installed_version}' of '#{module_name}' was not #{valid_compare_ops[compare_op]} '#{module_version}'")
+          end
+        end
       end
 
     end

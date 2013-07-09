@@ -26,16 +26,9 @@ on master, "grep \"version '#{module_version}'\" #{master['distmoduledir']}/#{mo
 
 step "Install a module that requires the older module dependency be upgraded"
 on master, puppet("module install #{module_author}-apollo") do
-  assert_module_installed(module_author, module_name)
-  /#{module_author}-#{module_name} \(.*v(\d+\.\d+\.\d+)/ =~ stdout
-  installed_version = Regexp.last_match[1]
-  assert_equal( true, semver_cmp(installed_version, module_version) > 0,
-        "Installed version '#{installed_version}' of '#{module_name}' was not upgraded from '#{module_version}'")
+  assert_module_installed(module_author, module_name, module_version, '>')
 end
 
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do
-  /#{module_author}-#{module_name} \(.*v(\d+\.\d+\.\d+)/ =~ stdout
-  installed_version = Regexp.last_match[1]
-  assert_equal( true, semver_cmp(installed_version, module_version) > 0,
-        "Installed version '#{installed_version}' of '#{module_name}' was not upgraded from '#{module_version}'")
+  assert_module_installed(module_author, module_name, module_version, '>')
 end
