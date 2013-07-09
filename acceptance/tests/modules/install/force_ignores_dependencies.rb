@@ -21,7 +21,6 @@ on master, puppet("module install #{module_author}-#{module_name}"), :acceptable
         "Error that module dependencies could not be met was not displayed")
 end
 on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
-on master, "[ ! -d #{master['distmoduledir']}/apache ]"
 module_dependencies.each do |dependency|
   on master, "[ ! -d #{master['distmoduledir']}/#{dependency} ]"
 end
