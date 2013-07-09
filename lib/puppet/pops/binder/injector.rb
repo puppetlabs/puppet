@@ -321,16 +321,19 @@ module Private
       key_factory.data_key(name)
     end
 
-    # TODO: Detailed error message
     def lookup_type(scope, type, name='')
       val = lookup_key(scope, named_key(type, name))
       unless key_factory.type_calculator.instance?(type, val)
-        raise ArgumentError, "Type error: incompatible type TODO: detailed error message"
+        raise ArgumentError, "Type error: incompatible type, #{type_error_detail(type, val)}"
       end
       val
     end
 
-    # TODO: Detailed error message
+    def type_error_detail(expected, actual)
+      actual_t = type_calculator.infer(actual)
+      "expected: #{type_calculator.string(expected)}, got: #{type_calculator.string(actual_t)}"
+    end
+
     def lookup_key(scope, key)
       if @recursion_lock.include?(key)
         raise ArgumentError, "Lookup loop detected for key: #{key}"
@@ -344,7 +347,7 @@ module Private
           val = produce(scope, entry)
           return nil if val.nil?
           unless key_factory.type_calculator.instance?(entry.binding.type, val)
-            raise "Type error: incompatible type returned by producer TODO: detailed error message"
+            raise "Type error: incompatible type returned by producer, #{type_error_detail(entry.binding.type, val)}"
           end
           val
         when Producers::AssistedInjectProducer
@@ -575,39 +578,10 @@ module Private
         {:producers => descriptor.producers.collect {|p| transform(p, scope, entry) }})
     end
 
-    # @api private
-    def transform_CombinatorProducer(descriptor, scope, entry)
-      transform(descriptor.producer, scope, entry)
-    end
-
     private
 
     def singleton?(descriptor)
       ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
-    end
-
-    def create_array_combinator(scope, multibinding)
-      case multibinding.combinator
-      when NilClass
-         Puppet::Pops::Binder::MultibindCombinators::ArrayCombinator.new()
-      when Puppet::Pops::Binder::Bindings::CombinatorLambda
-        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
-        Puppet::Pops::Binder::MultibindCombinators::ArrayPuppetLambdaCombinator.new(ast31lambda)
-      when Puppet::Pops::Binder::Bindings::CombinatorProducer
-        transform(multibinding.combinator, scope, nil).produce(scope)
-      end
-    end
-
-    def create_hash_combinator(scope, multibinding)
-      case multibinding.combinator
-      when NilClass
-        Puppet::Pops::Binder::MultibindCombinators::HashCombinator.new()
-      when Puppet::Pops::Binder::Bindings::CombinatorLambda
-        ast31lambda = Puppet::Pops::Model::AstTransformer.new().transform(multibinding.combinator.lambda())
-        Puppet::Pops::Binder::MultibindCombinators::HashPuppetLambdaCombinator.new(ast31lambda)
-      when Puppet::Pops::Binder::Bindings::CombinatorProducer
-        transform(multibinding.combinator, scope, nil).produce(scope)
-      end
     end
 
     # Special marker class used in entries

@@ -313,7 +313,15 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # This type of producer should only be created by the Injector.
+  # 
+  # @api private
   class AssistedInjectProducer < Producer
+    # An Assisted Inject Producer is created when a lookup is made of a type that is
+    # not bound. It does not support a transformer lambda. 
+    # @note This initializer has a different signature than all others. Do not use in regular logic.
+    # @api private
+    #
     def initialize(injector, clazz)
       raise ArgumentError, "class must be given" unless clazz.is_a?(Class)
 
@@ -340,30 +348,81 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # Abstract base class for multibind producers.
+  # Is suitable as base class for custom implementations of multibind producers.
+  #
   class MultibindProducer < AbstractArgumentedProducer
     attr_reader :contributions_key
     def initialize(injector, binding, scope, options)
       super
       @contributions_key = injector.key_factory.multibind_contributions(binding.id)
     end
+
+    # @param expected [Array<Puppet::Pops::Types::PObjectType>, Puppet::Pops::Types::PObjectType] expected type or types
+    # @param actual [Object, Puppet::Pops::Types::PObjectType> the actual value (or its type)
+    # @return [String] a formatted string for inclusion as detail in an error message
+    def type_error_detail(expected, actual)
+      tc = injector.type_calculator
+      expected = [expected] unless expected.is_a?(Array)
+      actual_t = tc.is_ptype?(actual) ? actual : tc.infer(actual)
+      expstrs = expected.collect {|t| tc.string(t) }
+      "expected: #{expstrs.join(', or ')}, got: #{tc.string(actual_t)}"
+    end
   end
 
+  # A configurable multibind producer for Array type multibindings.
+  #
+  # This implementation collects all contributions to the multibind and then combines them using the following rules:
+  #
+  # - all *unnamed* entries are added unless the option `:priority_on_unnamed` is set to true, in which case the unnamed
+  #   contribution with the highest priority is added, and the rest are ignored (unless they have the same priority in which
+  #   case an error is raised).
+  # - all *named* entries are handled the same way as *unnamed* but the option `:priority_on_named` controls their handling.
+  # - the option `:uniq` post processes the result to only contain unique entries
+  # - the option `:flatten` post processes the result by flattening all nested arrays.
+  # - If both `:flatten` and `:uniq` are true, flattening is done first.
+  #
+  # @note
+  #   Collection accepts elements that comply with the array's element type, or the entire type (i.e. Array[element_type]).
+  #   If the type is restrictive - e.g. Array[String] and an Array[String] is contributed, the result will not be type
+  #   compliant without also using the `:flatten` option, and a type error will be raised. For an array with relaxed typing
+  #   i.e. Array[Data], it it valid to produce a result such as `['a', ['b', 'c'], 'd']` and no flattening is required
+  #   and no error is raised (but using the array needs to be aware of potential array, non-array entries.
+  #   The use of options `:flatten` and `:flatten_level
+  #
   class ArrayMultibindProducer < MultibindProducer
     attr_reader :uniq
     attr_reader :flatten
     attr_reader :priority_on_named
     attr_reader :priority_on_unnamed
 
+    # @param injector [Puppet::Pops::Binder::Injector] the injector where the request to produce was made
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding where the producer is bound
+    # @param scope [Puppet::Parser::Scope] the scope where the lookup takes place
     # @option options [Boolean] :uniq (false) if collected result should be post-processed to contain only unique entries
-    # @option options [Boolean] :flatten (false) if collected result should be post-processed so all contained arrays are flattened
+    # @option options [Boolean, Integer] :flatten (false) if collected result should be post-processed so all contained arrays
+    #   are flattened. May be set to an Integer value to indicate the level of recursion (-1 is endless, 0 is none).
     # @option options [Boolean] :priority_on_named (true) if highest precedented named element should win or if all should be included
     # @option options [Boolean] :priority_on_unnamed (false) if highest precedented unnamed element should win or if all should be included
+    #
     def initialize(injector, binding, scope, options)
       super
       @uniq = !!options[:uniq]
-      @flatten = !!options[:flatten]
+      @flatten = options[:flatten]
       @priority_on_named = options[:priority_on_named].nil? ? true : options[:priority_on_name]
       @priority_on_unnamed = !!options[:priority_on_unnamed]
+
+      case @flatten
+      when Integer
+      when true
+        @flatten = -1
+      when false
+        @flatten = nil
+      when NilClass
+        @flatten = nil
+      else
+        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten_level.is_a?(Integer)
+      end
     end
 
     protected
@@ -381,12 +440,18 @@ module Puppet::Pops::Binder::Producers
         empty_name = name.nil? || name.empty?
         if existing
           if empty_name && priority_on_unnamed
+            if (seen[name] <=> entry) >= 0
+              raise ArgumentError, "Duplicate key (same priority) contributed to Array Multibinding '#{binding.name}' with unnamed entry."
+            end
             next
           elsif !empty_name && priority_on_named
+            if (seen[name] <=> entry) >= 0
+              raise ArgumentError, "Duplicate key (same priority) contributed to Array Multibinding '#{binding.name}', key: '#{name}'."
+            end
             next
           end
         else
-          seen[name] = true
+          seen[name] = entry
         end
         included_keys << key
       end
@@ -396,14 +461,16 @@ module Puppet::Pops::Binder::Producers
         x
       end
 
-      result.flatten!() if flatten
+      result.flatten!(flatten) if flatten
       result.uniq! if uniq
       result
     end
 
     def assert_type(binding, tc, value)
-      unless tc.instance?(binding.type.element_type, value) || tc.instance?(binding.type, value)
-        raise ArgumentError, "Type Error: contribution #{binding.name} does not match type of multibind #{tc.label(binding.type)}"
+      infered = tc.infer(value)
+      unless tc.assignable?(binding.type.element_type, infered) || tc.assignable?(binding.type, infered)
+        raise ArgumentError, ["Type Error: contribution to '#{binding.name}' does not match type of multibind, ",
+          "#{type_error_detail([binding.type.element_type, binding.type], value)}"].join()
       end
     end
   end
@@ -413,9 +480,20 @@ module Puppet::Pops::Binder::Producers
     attr_reader :uniq
     attr_reader :flatten
 
+    # The hash multibind producer provides options to control conflict resolution.
+    # By default, the hash is produced using `:priority` resolution - the highest entry is selected, the rest are
+    # ignored unless they have the same priority which is an error.
+    #
+    # @param injector [Puppet::Pops::Binder::Injector] the injector where the request to produce was made
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding where the producer is bound
+    # @param scope [Puppet::Parser::Scope] the scope where the lookup takes place
+    # @options options [Symbol, String] :conflict_resolution (:priority) One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
+    # @options options [Boolean] :flatten (false) If appended conflicts should be flattened
+    # @options options [Boolean] :uniq (false) If appended result should be flattened
+    #
     def initialize(injector, binding, scope, options)
       super
-      @conflict_resolution = options[:conflict_resolution].nil? ? :error : options[:conflict_resolution]
+      @conflict_resolution = options[:conflict_resolution].nil? ? :priority : options[:conflict_resolution]
       if conflict_resolution.to_s == 'append'
         # TODO: only applicable when result is Hash<Array> compatible
       end
@@ -441,6 +519,12 @@ module Puppet::Pops::Binder::Producers
         if existing
           case conflict_resolution.to_s
           when 'priority'
+            if (seen[name] <=> entry) >= 0
+              raise ArgumentError, "Duplicate key (same priority) contributed to Hash Multibinding '#{binding.name}', key: '#{name}'."
+            end
+            next
+
+          when 'ignore'
             next
 
           when 'error'
@@ -448,7 +532,7 @@ module Puppet::Pops::Binder::Producers
 
           end
         else
-          seen[name] = true
+          seen[name] = entry
         end
         included_entries << [key, entry]
       end 
@@ -487,7 +571,9 @@ module Puppet::Pops::Binder::Producers
 
     def assert_type(binding, tc, key, value)
       unless tc.instance?(binding.type.key_type, key)
-        raise ArgumentError, "Type Error: key contribution to #{binding.name}['#{key}'] is incompatible with key type: #{tc.label(binding.type)}"
+        raise ArgumentError, ["Type Error: key contribution to #{binding.name}['#{key}'] ",
+          "is incompatible with key type: #{tc.label(binding.type)}, ",
+          type_error_detail(binding.type.key_type, key)].join()
       end
 
       if key.nil? || !key.is_a?(String) || key.empty?
@@ -495,7 +581,9 @@ module Puppet::Pops::Binder::Producers
       end
 
       unless tc.instance?(binding.type.element_type, value)
-        raise ArgumentError, "Type Error: value contribution to #{binding.name}['#{key}'] is incompatible with value type: #{tc.label(binding.type)}"
+        raise ArgumentError, ["Type Error: value contribution to #{binding.name}['#{key}'] ",
+          "is incompatible, ",
+          type_error_detail(binding.type.element_type, value)].join()
       end
     end
   end
