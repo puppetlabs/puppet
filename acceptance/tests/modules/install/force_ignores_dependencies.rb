@@ -20,16 +20,16 @@ on master, puppet("module install #{module_author}-#{module_name}"), :acceptable
   assert_match(/No version of '#{module_author}-#{module_name}' will satisfy dependencies/, stderr,
         "Error that module dependencies could not be met was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_not_installed_on_disk(master, master['distmoduledir'], module_name)
 module_dependencies.each do |dependency|
-  on master, "[ ! -d #{master['distmoduledir']}/#{dependency} ]"
+  assert_module_not_installed_on_disk(master, master['distmoduledir'], dependency)
 end
 
 step "Install an unsatisfiable module with force"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
 module_dependencies.each do |dependency|
-  on master, "[ ! -d #{master['distmoduledir']}/#{dependency} ]"
+  assert_module_not_installed_on_disk(master, master['distmoduledir'], dependency)
 end

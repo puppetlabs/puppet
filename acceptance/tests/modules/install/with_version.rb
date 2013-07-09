@@ -20,8 +20,5 @@ agents.each do |agent|
   on(agent, puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")) do
     assert_module_installed_ui(stdout, module_author, module_name, module_version, '<')
   end
-
-  step "check for a '#{module_name}' manifest"
-    on agent, "[ -f #{master['distmoduledir']}/#{module_name}/manifests/init.pp ]"
-
+  assert_module_installed_on_disk(agent, agent['distmoduledir'], module_name)
 end

@@ -40,4 +40,4 @@ on master, "puppet module install #{module_author}-#{module_name} --config=#{mas
   assert_match(/#{master['puppetpath']}\/testenv\/modules/, stdout,
         "Notice of non default install path was not displayed")
 end
-on master, "[ -d #{master['puppetpath']}/testenv/modules/#{module_name} ]"
+assert_module_installed_on_disk(master, "#{master['puppetpath']}/testenv/modules", module_name)

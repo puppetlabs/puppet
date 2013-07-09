@@ -45,7 +45,7 @@ on master, puppet("module install #{module_author}-#{module_name}"), :acceptable
   assert_match(/changes made locally/, stderr,
         "Error that module has local changes was not displayed")
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
 
 step "Try to install a specific version of a module that is already installed"
 on master, puppet("module install #{module_author}-#{module_name} --version 1.x"), :acceptable_exit_codes => [1] do
@@ -56,11 +56,11 @@ on master, puppet("module install #{module_author}-#{module_name} --version 1.x"
   assert_match(/changes made locally/, stderr,
         "Error that module has local changes was not displayed")
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
   assert_module_installed_ui(stdout, module_author, module_name)
 end
-on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
+assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
 #validate checksum

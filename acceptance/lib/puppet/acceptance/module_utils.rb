@@ -136,6 +136,24 @@ module Puppet
         end
       end
 
+      # Assert that a module is installed on disk.
+      #
+      # @param host [HOST] the host object to make the remote call on
+      # @param moduledir [String] the path where the module should be
+      # @param module_name [String] the name portion of a module name
+      def assert_module_installed_on_disk ( host, moduledir, module_name )
+        on host, "[ -d #{moduledir}/#{module_name} ]"
+      end
+
+      # Assert that a module is not installed on disk.
+      #
+      # @param host [HOST] the host object to make the remote call on
+      # @param moduledir [String] the path where the module should be
+      # @param module_name [String] the name portion of a module name
+      def assert_module_not_installed_on_disk ( host, moduledir, module_name )
+        on host, "[ ! -d #{moduledir}/#{module_name} ]"
+      end
+
     end
   end
 end
