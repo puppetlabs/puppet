@@ -50,10 +50,7 @@ on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Install a module that is already installed (with --force)"
 on master, puppet("module install #{module_author}-#{module_name} --force") do
-  assert_match(/Installing -- do not interrupt/, stdout,
-        "Notice that module was installing was not displayed")
-  assert_match(/#{module_author}-#{module_name}/, stdout,
-        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+  assert_module_installed(module_author, module_name)
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 on master, "[ -f #{master['distmoduledir']}/#{module_name}/manifests/init.pp ]"

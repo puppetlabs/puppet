@@ -17,10 +17,7 @@ agents.each do |agent|
 
   step "install module '#{module_author}-#{module_name}'"
   on(agent, puppet("module install #{module_author}-#{module_name}")) do
-    assert_match(/Notice: Installing -- do not interrupt/, stdout,
-          "No installing notice displayed!")
-    assert_match(/#{module_author}-#{module_name}/, stdout,
-          "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+    assert_module_installed(module_author, module_name)
   end
 
   step "check for a '#{module_name}' manifest"

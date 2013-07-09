@@ -16,10 +16,7 @@ stub_forge_on(master)
 
 step "Install a module, but ignore dependencies"
 on master, puppet("module install #{module_author}-#{module_name} --ignore-dependencies") do
-  assert_match(/Installing -- do not interrupt/, stdout,
-        "Notice that module was installing was not displayed")
-  assert_match(/#{module_author}-#{module_name}/, stdout,
-        "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
+  assert_module_installed(module_author, module_name)
 end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 module_dependencies.each do |dependency|
