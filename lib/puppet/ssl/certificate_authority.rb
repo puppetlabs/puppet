@@ -84,7 +84,10 @@ class Puppet::SSL::CertificateAuthority
     store = autosign_store(auto) if auto != true
 
     Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
-      sign(csr.name) if auto == true or store.allowed?(csr.name, "127.1.1.1")
+      if auto == true or store.allowed?(csr.name, "127.1.1.1")
+        Puppet.info "Autosigning #{csr.name}"
+        sign(csr.name)
+      end
     end
   end
 
@@ -128,16 +131,18 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Generate a new certificate.
+  # @return Puppet::SSL::Certificate
   def generate(name, options = {})
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
-    host = Puppet::SSL::Host.new(name)
 
     # Pass on any requested subjectAltName field.
     san = options[:dns_alt_names]
 
     host = Puppet::SSL::Host.new(name)
     host.generate_certificate_request(:dns_alt_names => san)
-    sign(name, !!san)
+    # CSR may have been implicitly autosigned, generating a certificate
+    # Or sign explicitly
+    host.certificate || sign(name, !!san)
   end
 
   # Generate our CA certificate.
