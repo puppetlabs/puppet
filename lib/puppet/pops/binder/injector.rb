@@ -406,7 +406,8 @@ module Private
     # @api private
     def get_contributions(scope, contributions_key)
       result = {}
-      lookup_key(scope, contributions_key).each { |k| result[k] = get_entry(k) }
+      return [] unless contributions = lookup_key(scope, contributions_key)
+      contributions.each { |k| result[k] = get_entry(k) }
       result.sort_by {|key, entry| entry }
     end
 
