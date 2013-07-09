@@ -30,7 +30,7 @@
 #
 # Custom bound producers capable of producing a series of objects when bound as a singleton means that the producer
 # is a singleton, not the value it produces. If such a producer is bound as non singleton, each `lookup` will get a new
-# producer (hence, typically, restarting the series). However, if the producer returned from `lookup_producer` will not
+# producer (hence, typically, restarting the series). However, the producer returned from `lookup_producer` will not
 # recreate the producer on each call to `produce`; i.e. each `lookup_producer` returns a producer capable of returning
 # a series of objects.
 #
@@ -44,13 +44,13 @@
 # `inject` that takes two arguments; `injector`, and `scope`.
 # This is useful in ruby logic as a class can then use the given injector to inject details.
 # An `inject` class method wins over a zero argument `initialize` in all cases.
-# 
+#
 # @example Using assisted inject
 #   # Class with assisted inject support
 #   class Duck
 #     attr_reader :name, :year_of_birth
 #
-#     def self.inject(injector, scope)
+#     def self.inject(injector, scope, binding, *args)
 #       # lookup default name and year of birth, and use defaults if not present
 #       name = injector.lookup(scope,'default-duck-name') {|x| x ? x : 'Donald Duck' }
 #       year_of_birth = injector.lookup(scope,'default-duck-year_of_birth') {|x| x ? x : 1934 }
@@ -66,6 +66,19 @@
 #   injector.lookup(scope, Duck)
 #   # Produces a Duck named 'Donald Duck' or named after the binding 'default-duck-name' (and with similar treatment of
 #   # year_of_birth
+# @see Puppet::Pops::Binder::Producers::AssistedInjectProducer for more details on assisted injection
+#
+# Access to key factory and type calculator
+# -----------------------------------------
+# It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtaint
+# these with the methods {#key_factory}, and #{type_calculator}.
+#
+# Special support for producers
+# -----------------------------
+# There is one method specially designed for producers. The {#get_contributions} method returns an array of all contributions
+# to a given *contributions key*. This key is obtained from the {#key_factory} for a given multibinding. The returned set of
+# contributed bindings is sorted in descending precedence order. Any conflicts, merges, etc. is performed by the multibinding
+# producer configured for a multibinding.
 #
 # @api public
 #
@@ -279,6 +292,7 @@ module Private
       @recursion_lock = [ ]
     end
 
+    # @api private
     def lookup(scope, *args, &block)
       raise ArgumentError, "lookup should be called with two or three arguments, got: #{args.size()+1}" unless args.size.between?(1,2)
 
@@ -312,15 +326,18 @@ module Private
     end
 
     # Produces a key for a type/name combination.
+    # @api private
     def named_key(type, name)
       key_factory.named_key(type, name)
     end
 
     # Produces a key for a PDataType/name combination
+    # @api private
     def data_key(name)
       key_factory.data_key(name)
     end
 
+    # @api private
     def lookup_type(scope, type, name='')
       val = lookup_key(scope, named_key(type, name))
       unless key_factory.type_calculator.instance?(type, val)
@@ -329,11 +346,13 @@ module Private
       val
     end
 
+    # @api private
     def type_error_detail(expected, actual)
       actual_t = type_calculator.infer(actual)
       "expected: #{type_calculator.string(expected)}, got: #{type_calculator.string(actual_t)}"
     end
 
+    # @api private
     def lookup_key(scope, key)
       if @recursion_lock.include?(key)
         raise ArgumentError, "Lookup loop detected for key: #{key}"
@@ -384,7 +403,7 @@ module Private
     # Returns contributions to a multibind in precedence order; highest first.
     # Returns an Array on the form [ [key, entry], [key, entry]] where the key is intended to be used to lookup the value
     # (or a producer) for that entry.
-    #
+    # @api private
     def get_contributions(scope, contributions_key)
       result = {}
       lookup_key(scope, contributions_key).each { |k| result[k] = get_entry(k) }
@@ -392,6 +411,7 @@ module Private
     end
 
     # Produces an injectable class given a key, or nil if key does not represent an injectable class
+    # @api private
     #
     def assistable_injected_class(key)
       kt = key_factory.get_type(key)
@@ -430,6 +450,7 @@ module Private
       end
     end
 
+    # @api private
     def lookup_producer_key(scope, key)
       if @recursion_lock.include?(key)
         raise ArgumentError, "Lookup loop detected for key: #{key}"
@@ -442,6 +463,7 @@ module Private
       end
     end
 
+    # @api private
     def lookup_producer_type(scope, type, name='')
       lookup_producer_key(scope, named_key(type, name))
     end
@@ -461,6 +483,7 @@ module Private
       entry.cached_producer.producer(scope)
     end
 
+    # @api private
     def transform(producer_descriptor, scope, entry)
       @@transform_visitor.visit_this(self, producer_descriptor, scope, entry)
     end
@@ -474,6 +497,7 @@ module Private
       producer(scope, entry, :single_use).produce(scope)
     end
 
+    # @api private
     def named_arguments_to_hash(named_args)
       nb = named_args.nil? ? [] : named_args
       result = {}
@@ -481,7 +505,7 @@ module Private
       result
     end
 
-    # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically
+    # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically)
     # @api private
     #
     def transform_NilClass(descriptor, scope, entry)
@@ -508,41 +532,32 @@ module Private
       make_producer(Producers::HashMultibindProducer, descriptor, scope, entry, named_arguments_to_hash(entry.binding.producer_args))
     end
 
-    # Produces a constant value
-    # If not a singleton the value is deep-cloned (if not immutable) before returned.
     # @api private
-    #
     def transform_ConstantProducerDescriptor(descriptor, scope, entry)
       producer_class = singleton?(descriptor) ? Producers::SingletonProducer : Producers::DeepCloningProducer
       producer_class.new(self, entry.binding, scope, {:value => descriptor.value})
     end
 
-    # Produces a new instance of the given class with given initialization arguments
-    # If a singleton, the producer is asked to produce a single value and this is then considered a singleton.
     # @api private
-    #
     def transform_InstanceProducerDescriptor(descriptor, scope, entry)
       make_producer(Producers::InstantiatingProducer, descriptor, scope, entry,
         {:class_name => descriptor.class_name, :init_args => descriptor.arguments})
     end
 
-    # Evaluates a contained expression. If this is a singleton, the evaluation is performed once.
     # @api private
-    #
     def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
       make_producer(Producers::EvaluatingProducer, descriptor, scope, entry, {:expression => descriptor.expression})
     end
 
+    # @api private
     def make_producer(clazz, descriptor, scope, entry, options)
       singleton_wrapped(descriptor, scope, entry, clazz.new(self, entry.binding, scope, options))
     end
 
+    # @api private
     def singleton_wrapped(descriptor, scope, entry, producer)
-      if singleton?(descriptor)
-        Producers::SingletonProducer.new(self, entry.binding, scope, {:value => producer.produce(scope)})
-      else
-        producer
-      end
+      return producer unless singleton?(descriptor)
+      Producers::SingletonProducer.new(self, entry.binding, scope, {:value => producer.produce(scope)})
     end
 
     # @api private
@@ -563,10 +578,7 @@ module Private
         {:type => descriptor.type, :name => descriptor.name, :key => descriptor.key})
     end
 
-    # This implementation simply delegates since caching status is determined by the polymorph transform_xxx method
-    # per type (different actions taken depending on the type).
     # @api private
-    #
     def transform_NonCachingProducerDescriptor(descriptor, scope, entry)
       # simply delegates to the wrapped producer
       transform(descriptor.producer, scope, entry)
@@ -578,13 +590,13 @@ module Private
         {:producers => descriptor.producers.collect {|p| transform(p, scope, entry) }})
     end
 
-    private
-
+    # @api private
     def singleton?(descriptor)
       ! descriptor.eContainer().is_a?(Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor)
     end
 
     # Special marker class used in entries
+    # @api private
     class NotFound
     end
   end
