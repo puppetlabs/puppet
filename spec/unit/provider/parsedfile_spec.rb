@@ -1,11 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/files'
 
 require 'puppet/provider/parsedfile'
 
 # Most of the tests for this are still in test/ral/provider/parsedfile.rb.
 describe Puppet::Provider::ParsedFile do
-
   # The ParsedFile provider class is meant to be used as an abstract base class
   # but also stores a lot of state within the singleton class. To avoid
   # sharing data between classes we construct an anonymous class that inherits
@@ -136,9 +136,10 @@ describe Puppet::Provider::ParsedFile do
 end
 
 describe "A very basic provider based on ParsedFile" do
+  include PuppetSpec::Files
 
   let(:input_text) { File.read(my_fixture('simple.txt')) }
-  let(:target) { File.expand_path("/tmp/test") }
+  let(:target) { tmpfile('parsedfile_spec') }
 
   subject do
     example_provider_class = Class.new(Puppet::Provider::ParsedFile)
