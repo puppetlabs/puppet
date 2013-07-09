@@ -54,7 +54,7 @@ Puppet::Type.newtype(:file) do
     end
 
     munge do |value|
-      ::File.expand_path(value)
+      ::File.join(::File.split(::File.expand_path(value)))
     end
   end
 
