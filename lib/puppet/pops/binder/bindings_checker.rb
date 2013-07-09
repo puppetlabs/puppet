@@ -9,9 +9,10 @@ class Puppet::Pops::Binder::BindingsChecker
   attr_reader :acceptor
 
   def initialize(diagnostics_producer)
-    @@check_visitor   ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
-    @type_calculator  = Puppet::Pops::Types::TypeCalculator.new()
-    @acceptor         = diagnostics_producer
+    @@check_visitor     ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
+    @type_calculator      = Puppet::Pops::Types::TypeCalculator.new()
+    @expression_validator = Puppet::Pops::Validation::ValidatorFactory_3_1.new().checker(diagnostics_producer)
+    @acceptor             = diagnostics_producer
   end
 
   # Validates the entire model by visiting each model element and calling `check`.
@@ -151,6 +152,10 @@ class Puppet::Pops::Binder::BindingsChecker
     unless p.producer.is_a?(Bindings::ProducerDescriptor)
       acceptor.accept(Issues::PRODUCER_MISSING_PRODUCER, p, {:binding => binding_parent(p)})
     end
+  end
+
+  def check_Expression(t)
+    @expression_validator.validate(t)
   end
 
   def check_PObjectType(t)
