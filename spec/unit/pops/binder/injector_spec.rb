@@ -358,6 +358,7 @@ describe 'Injector' do
       end
     end
   end
+
   context "When looking up producer" do
     it 'should perform a simple lookup in the common layer' do
       binder = Puppet::Pops::Binder::Binder.new()
@@ -392,7 +393,6 @@ describe 'Injector' do
       injector = injector(binder)
       injector.lookup_producer(null_scope(), 'a_non_existing_string') {|scope, p| p ? p.produce(scope) : '4242' }.should == '4242'
     end
-
   end
 
   context "When dealing with singleton vs. non singleton" do
@@ -624,7 +624,7 @@ describe 'Injector' do
         }.to raise_error(/must have a name/)
       end
 
-      it "is an error to bind with duplicate key" do
+      it "is an error to bind with duplicate key when using default (priority) conflict resolution" do
         scope = null_scope()
         binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
@@ -687,6 +687,32 @@ describe 'Injector' do
         ducks = injector.lookup(@scope, 'donalds_family')
         ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
         ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
+      end
+
+      it "should fail attempts to append, perfor  uniq or flatten on type incompatible multibind hash" do
+        # This case uses a multibind of individual strings, but combines them
+        # into an array bound to a hash key
+        # (There are other ways to do this - e.g. have the multibind lookup a multibind
+        # of array type to which nephews are contributed).
+        #
+        binder = Puppet::Pops::Binder::Binder.new()
+        bindings = factory.named_bindings('test')
+        hash_of_integer = type_factory.hash_of(type_factory.integer())
+        ids = ["ducks1", "ducks2", "ducks3"]
+        mb = bindings.multibind(ids[0]).type(hash_of_integer).name('broken_family0')
+        mb.producer_options(:conflict_resolution => :append)
+        mb = bindings.multibind(ids[1]).type(hash_of_integer).name('broken_family1')
+        mb.producer_options(:flatten => :true)
+        mb = bindings.multibind(ids[2]).type(hash_of_integer).name('broken_family2')
+        mb.producer_options(:uniq => :true)
+
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        expect { injector.lookup(@scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
+        expect { injector.lookup(@scope, 'broken_family1')}.to raise_error(/:flatten/)
+        expect { injector.lookup(@scope, 'broken_family2')}.to raise_error(/:uniq/)
       end
     end
 

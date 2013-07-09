@@ -46,6 +46,9 @@ module Puppet::Pops::Binder::Producers
     # Creates a Producer.
     # Derived classes should call this constructor to get support for transformer lambda.
     #
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     #
     def initialize(injector, binding, scope, options)
@@ -114,6 +117,11 @@ module Puppet::Pops::Binder::Producers
   class AbstractValueProducer < Producer
     attr_reader :value
 
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Puppet::Pops::Model::LambdaExpression, nil] :value (nil) the value to produce
     def initialize(injector, binding, scope, options)
       super
       # nil is ok here, as an abstract value producer may be used to signal "not found"
@@ -153,6 +161,11 @@ module Puppet::Pops::Binder::Producers
   class AbstractArgumentedProducer < Producer
     attr_reader :injector
     attr_reader :binding
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     def initialize(injector, binding, scope, options)
       super
       @injector = injector
@@ -167,6 +180,7 @@ module Puppet::Pops::Binder::Producers
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [String] :class_name The name of the class to create instance of
     # @option options [Array<Object>] :init_args ([]) Optional arguments to class constructor
     #
@@ -201,6 +215,7 @@ module Puppet::Pops::Binder::Producers
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Array<Puppet::Pops::Binder::Producers::Producer>] :producers list of producers to consult. Required.
     #
     def initialize(injector, binding, scope, options)
@@ -228,6 +243,7 @@ module Puppet::Pops::Binder::Producers
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Array<Puppet::Pops::Model::Expression>] :expression The expression to evaluate
     #
     def initialize(injector, binding, scope, options)
@@ -253,6 +269,11 @@ module Puppet::Pops::Binder::Producers
   class LookupProducer < AbstractArgumentedProducer
     attr_reader :type
     attr_reader :name
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
     #
@@ -272,6 +293,14 @@ module Puppet::Pops::Binder::Producers
 
   class LookupKeyProducer < LookupProducer
     attr_reader :key
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
+    # @option options [String] :name ('') The name to lookup
+    # @option options [Puppet::Pops::Types::PObjectType] :key The key to lookup in the hash
     def initialize(injector, binder, scope, options)
       super
       @key = options[:key]
@@ -292,6 +321,13 @@ module Puppet::Pops::Binder::Producers
   #
   class SingletonProducerProducer < Producer
     attr_reader :value_producer
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Puppet::Pops::Model::LambdaExpression] :producer_producer a producer of a value producer (required)
+    #
     def initialize(injector, binding, scope, options)
       super
       p = options[:producer_producer]
@@ -321,7 +357,12 @@ module Puppet::Pops::Binder::Producers
 
     # Creates  new ProducerProducer given a producer.
     #
-    # @option options [Puppet::Pops::Binder::Producer] :producer_producer a producer of a value producer
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @option options [Puppet::Pops::Binder::Producer] :producer_producer a producer of a value producer (required)
+    #
     # @api public
     #
     def initialize(injector, binding, scope, options)
@@ -394,6 +435,14 @@ module Puppet::Pops::Binder::Producers
   #
   class MultibindProducer < AbstractArgumentedProducer
     attr_reader :contributions_key
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    #
+    # @api public
+    #
     def initialize(injector, binding, scope, options)
       super
       @contributions_key = injector.key_factory.multibind_contributions(binding.id)
@@ -437,9 +486,10 @@ module Puppet::Pops::Binder::Producers
     attr_reader :priority_on_named
     attr_reader :priority_on_unnamed
 
-    # @param injector [Puppet::Pops::Binder::Injector] the injector where the request to produce was made
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding where the producer is bound
-    # @param scope [Puppet::Parser::Scope] the scope where the lookup takes place
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Boolean] :uniq (false) if collected result should be post-processed to contain only unique entries
     # @option options [Boolean, Integer] :flatten (false) if collected result should be post-processed so all contained arrays
     #   are flattened. May be set to an Integer value to indicate the level of recursion (-1 is endless, 0 is none).
@@ -525,22 +575,37 @@ module Puppet::Pops::Binder::Producers
     # By default, the hash is produced using `:priority` resolution - the highest entry is selected, the rest are
     # ignored unless they have the same priority which is an error.
     #
-    # @param injector [Puppet::Pops::Binder::Injector] the injector where the request to produce was made
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding where the producer is bound
-    # @param scope [Puppet::Parser::Scope] the scope where the lookup takes place
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @options options [Symbol, String] :conflict_resolution (:priority) One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
-    # @options options [Boolean] :flatten (false) If appended conflicts should be flattened
+    #   - `ignore` the first found highest priority contribution is used, the rest are ignored
+    #   - `error` any duplicate key is an error
+    #   - `append` element type must be compatible with Array, makes elements be arrays and appends all found
+    #   - `merge` element type must be compatible with hash, merges hashes with retention of highest priority hash content
+    #   - `priority` the first found highet priority contribution is used, duplicates with same priority raises and error, the rest are
+    #     ignored.
+    # @options options [Boolean] :flatten (false) If appended should be flattened
     # @options options [Boolean] :uniq (false) If appended result should be flattened
     #
     def initialize(injector, binding, scope, options)
       super
       @conflict_resolution = options[:conflict_resolution].nil? ? :priority : options[:conflict_resolution]
-      if conflict_resolution.to_s == 'append'
-        # TODO: only applicable when result is Hash<Array> compatible
-      end
       @uniq = !!options[:uniq]
       @flatten = !!options[:flatten]
-      # TODO: uniq and flatten only apply when element type is compatible with array (and result is an array  if Data)
+
+      if uniq || flatten || conflict_resolution.to_s == 'append'
+        etype = binding.type.element_type
+        unless etype.class == Puppet::Pops::Types::PDataType || etype.is_a?(Puppet::Pops::Types::PArrayType)
+          detail = []
+          detail << ":uniq" if uniq
+          detail << ":flatten" if flatten
+          detail << ":conflict_resolution => :append" if conflict_resolution.to_s == 'append'
+          raise ArgumentError, ["Options #{detail.join(', and ')} cannot be used with a Multibind ",
+            "of type #{injector.type_calculator.string(binding.type)}"].join()
+        end
+      end
     end
 
     protected
@@ -560,12 +625,14 @@ module Puppet::Pops::Binder::Producers
         if existing
           case conflict_resolution.to_s
           when 'priority'
+            # skip if duplicate has lower prio
             if (seen[name] <=> entry) >= 0
               raise ArgumentError, "Duplicate key (same priority) contributed to Hash Multibinding '#{binding.name}', key: '#{name}'."
             end
             next
 
           when 'ignore'
+            # skip, ignore conflict if prio is the same
             next
 
           when 'error'
