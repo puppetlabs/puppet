@@ -6,9 +6,9 @@ module InjectorSpecModule
     Puppet::Pops::Binder::Injector.new(binder)
   end
 
-  def binder()
-    Puppet::Pops::Binder::Binder.new()
-  end
+#  def binder()
+#    Puppet::Pops::Binder::Binder.new()
+#  end
 
   def factory
     Puppet::Pops::Binder::BindingsFactory
@@ -96,19 +96,19 @@ end
 describe 'Injector' do
   include InjectorSpecModule
 
+  let(:binder) { Puppet::Pops::Binder::Binder.new()}
+
   context 'When created' do
     it 'should raise an error when given binder is not configured at all' do
       expect { injector(binder()) }.to raise_error(/Given Binder is not configured/)
     end
 
     it 'should raise an error if binder has categories, but is not completely configured' do
-      binder = binder()
       binder.define_categories(factory.categories([]))
       expect { injector(binder) }.to raise_error(/Given Binder is not configured/)
     end
 
     it 'should not raise an error if binder is configured' do
-      binder = binder()
       binder.define_categories(factory.categories([]))
       bindings = factory.named_bindings('test')
       binder.define_layers(test_layer_with_bindings(bindings.model))
@@ -117,14 +117,12 @@ describe 'Injector' do
     end
 
     it 'should create an empty injector given an empty binder' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       binder.define_categories(factory.categories([]))
       expect { binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model))) }.to_not raise_exception
     end
 
     it "should be possible to reference the TypeCalculator" do
-      binder = binder()
       binder.define_categories(factory.categories([]))
       bindings = factory.named_bindings('test')
       binder.define_layers(test_layer_with_bindings(bindings.model))
@@ -134,7 +132,6 @@ describe 'Injector' do
     end
 
     it "should be possible to reference the KeyFactory" do
-      binder = binder()
       binder.define_categories(factory.categories([]))
       bindings = factory.named_bindings('test')
       binder.define_layers(test_layer_with_bindings(bindings.model))
@@ -146,7 +143,6 @@ describe 'Injector' do
 
   context "When looking up" do
     it 'should perform a simple lookup in the common layer' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -157,7 +153,6 @@ describe 'Injector' do
     end
 
     it 'should be possible to use a block to further detail the lookup' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -168,7 +163,6 @@ describe 'Injector' do
     end
 
     it 'should be possible to use a block to produce a default if entry is missing' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -180,7 +174,6 @@ describe 'Injector' do
 
     context "and class is not bound" do
       it "assisted inject should kick in for classes with zero args constructor" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
@@ -191,7 +184,6 @@ describe 'Injector' do
       end
 
       it "assisted inject should produce same instance on lookup but not on lookup producer" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
@@ -207,7 +199,6 @@ describe 'Injector' do
       end
 
       it "assisted inject should kick in for classes with a class inject method" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
@@ -220,7 +211,6 @@ describe 'Injector' do
       end
 
       it "assisted inject should select inject if it exists over zero args constructor" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
@@ -232,6 +222,7 @@ describe 'Injector' do
     end
 
     context 'and conditionals are in use' do
+
       it "should be possible to shadow a bound value in a higher precedented category" do
         binder = binder_with_categories()
         bindings = factory.named_bindings('test')
@@ -281,9 +272,9 @@ describe 'Injector' do
     end
 
     context "and multiple layers are in use" do
+
       it "a higher layer shadows anything in a lower layer" do
         binder = binder_with_categories()
-
         bindings1 = factory.named_bindings('test1')
         bindings1.when_in_category("highest", "test").bind().name('a_string').to('bad stuff')
         lower_layer =  factory.named_layer('lower-layer', bindings1.model)
@@ -299,6 +290,7 @@ describe 'Injector' do
     end
 
     context "and dealing with Data types" do
+
       it "should treat all data as same type w.r.t. key" do
         binder = binder_with_categories()
         bindings = factory.named_bindings('test')
@@ -361,7 +353,6 @@ describe 'Injector' do
 
   context "When looking up producer" do
     it 'should perform a simple lookup in the common layer' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -373,7 +364,6 @@ describe 'Injector' do
     end
 
     it 'should be possible to use a block to further detail the lookup' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -384,7 +374,6 @@ describe 'Injector' do
     end
 
     it 'should be possible to use a block to produce a default value if entry is missing' do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -397,7 +386,6 @@ describe 'Injector' do
 
   context "When dealing with singleton vs. non singleton" do
     it "should produce the same instance when producer is a singleton" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
 
@@ -410,7 +398,6 @@ describe 'Injector' do
     end
 
     it "should produce different instances when producer is a non singleton producer" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_series_of('42')
 
@@ -427,7 +414,6 @@ describe 'Injector' do
 
   context "When using the lookup producer" do
     it "should lookup again to produce a value" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('another_string')
       bindings.bind().name('another_string').to('hello')
@@ -439,7 +425,6 @@ describe 'Injector' do
     end
 
     it "should produce nil if looked up key does not exist" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('non_existing')
 
@@ -450,7 +435,6 @@ describe 'Injector' do
     end
 
     it "should report an error if lookup loop is detected" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('a_string')
 
@@ -463,7 +447,6 @@ describe 'Injector' do
 
   context "When using the hash lookup producer" do
     it "should lookup a key in looked up hash" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       data_hash = type_factory.hash_of_data()
 
@@ -477,7 +460,6 @@ describe 'Injector' do
     end
 
     it "should produce nil if looked up entry does not exist" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       data_hash = type_factory.hash_of_data()
 
@@ -493,7 +475,6 @@ describe 'Injector' do
 
   context "When using the first found producer" do
     it "should lookup until it finds a value, but no further" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_first_found(['b_string', 'c_string', 'g_string'])
       bindings.bind().name('c_string').to('hello')
@@ -508,7 +489,6 @@ describe 'Injector' do
 
   context "When producing instances" do
     it "should lookup an instance of a class without arguments" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::Daffy)
@@ -520,7 +500,6 @@ describe 'Injector' do
     end
 
     it "should lookup an instance of a class with arguments" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::ScroogeMcDuck, 1234)
@@ -533,7 +512,6 @@ describe 'Injector' do
     end
 
     it "singleton producer should not be recreated between lookups" do
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to_producer(InjectorSpecModule::ScroogeProducer)
@@ -556,7 +534,6 @@ describe 'Injector' do
 
     it "series of producers should recreate producer on each lookup and lookup_producer" do
       scope = null_scope()
-      binder = Puppet::Pops::Binder::Binder.new()
       bindings = factory.named_bindings('test')
       duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to_producer_series(InjectorSpecModule::ScroogeProducer)
@@ -582,7 +559,6 @@ describe 'Injector' do
     context "of hash kind" do
       it "a multibind produces contributed items keyed by their bound key-name" do
         scope = null_scope()
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
@@ -605,7 +581,6 @@ describe 'Injector' do
 
       it "is an error to not bind contribution with a name" do
         scope = null_scope()
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
@@ -626,13 +601,32 @@ describe 'Injector' do
 
       it "is an error to bind with duplicate key when using default (priority) conflict resolution" do
         scope = null_scope()
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
-        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews').producer_options(:conflict_resolution => :priority)
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+        # missing name
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
+
+        binder.define_categories(factory.categories([]))
+        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
+        injector = injector(binder)
+        expect {
+          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+        }.to raise_error(/Duplicate key/)
+      end
+
+      it "is not an error to bind with duplicate key when using (ignore) conflict resolution" do
+        scope = null_scope()
+        bindings = factory.named_bindings('test')
+        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
+        hash_of_duck = type_factory.hash_of(duck_type)
+        multibind_id = "ducks"
+
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
         # missing name
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
@@ -646,7 +640,6 @@ describe 'Injector' do
       end
 
       it "should produce detailed type error message" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         hash_of_integer = type_factory.hash_of(type_factory.integer())
 
@@ -667,7 +660,6 @@ describe 'Injector' do
         # (There are other ways to do this - e.g. have the multibind lookup a multibind
         # of array type to which nephews are contributed).
         #
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         hash_of_data = type_factory.hash_of_data()
         multibind_id = "ducks"
@@ -689,13 +681,7 @@ describe 'Injector' do
         ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
       end
 
-      it "should fail attempts to append, perfor  uniq or flatten on type incompatible multibind hash" do
-        # This case uses a multibind of individual strings, but combines them
-        # into an array bound to a hash key
-        # (There are other ways to do this - e.g. have the multibind lookup a multibind
-        # of array type to which nephews are contributed).
-        #
-        binder = Puppet::Pops::Binder::Binder.new()
+      it "should fail attempts to append, perform  uniq or flatten on type incompatible multibind hash" do
         bindings = factory.named_bindings('test')
         hash_of_integer = type_factory.hash_of(type_factory.integer())
         ids = ["ducks1", "ducks2", "ducks3"]
@@ -719,7 +705,6 @@ describe 'Injector' do
     context "of array kind" do
       it "an array multibind produces contributed items, names are allowed but ignored" do
         scope = null_scope()
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         array_of_duck = type_factory.array_of(duck_type)
@@ -744,7 +729,6 @@ describe 'Injector' do
         # This case uses a multibind of individual strings, and combines them
         # into an array of unique values
         #
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         array_of_data = type_factory.array_of_data()
 
@@ -772,7 +756,6 @@ describe 'Injector' do
         # This case uses a multibind of individual strings and arrays, and combines them
         # into an array of flattened
         #
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         array_of_string = type_factory.array_of(type_factory.string())
 
@@ -794,7 +777,6 @@ describe 'Injector' do
       end
 
       it "should produce detailed type error message" do
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         array_of_integer = type_factory.array_of(type_factory.integer())
 
@@ -822,7 +804,6 @@ describe 'Injector' do
         @scope['duck'] = 'Donald Fauntleroy Duck'
         expr = @parser.parse_string('"Hello $duck"').current()
 
-        binder = Puppet::Pops::Binder::Binder.new()
         bindings = factory.named_bindings('test')
         bindings.bind.name('the_duck').to(expr)
 
