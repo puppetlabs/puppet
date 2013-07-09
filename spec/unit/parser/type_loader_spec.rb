@@ -193,6 +193,12 @@ describe Puppet::Parser::TypeLoader do
         @loader.environment.known_resource_types.hostclass("one::a::b").should be_instance_of(Puppet::Resource::Type)
         @loader.environment.known_resource_types.hostclass("one::a::b::c").should be_instance_of(Puppet::Resource::Type)
       end
+
+      it "should skip modules that don't have manifests" do
+        @module1 = mk_module(@modulebase1, "one")
+
+        @loader.import_all
+      end
     end
 
     describe "when parsing a file" do
