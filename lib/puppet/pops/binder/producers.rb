@@ -1,18 +1,40 @@
-# This module contains the varuious producers used by Puppet Bindings.
-# The main class is {Puppet::Pops::Binder::Producers::Producer}
+# This module contains the various producers used by Puppet Bindings.
+# The main (abstract) class is {Puppet::Pops::Binder::Producers::Producer} which documents the
+# Producer API and serves as a base class for all other producers.
+# It is required that custom producers inherit from this producer (directly or indirectly).
+#
+# The selection of a Producer is typically performed by the Innjector when it configures itself
+# from a Bindings model where a {Puppet::Pops::Binder::Bindings::ProducerDescriptor} describes 
+# which producer to use. The configuration uses this to create the concrete producer.
+# It is possible to describe that a particular producer class is to be used, and also to describe that
+# a custom producer (derived from Producer) should be used. This is available for both regular
+# bindings as well as multi-bindings.
+#
+#
+# @api public
 #
 module Puppet::Pops::Binder::Producers
   # Producer is an abstract base class representing the base contract for a bound producer.
-  # This class is used internally when an explicit producer is wanted (i.e. when looking up
-  # a producer instead of an instance).
+  # Typically, when a lookup is performed it is the value that is returned (via a producer), but
+  # it is also possible to lookup the producer, and ask it to produce the value (the producer may
+  # return a series of values, which makes this especially useful).
+  #
+  # When looking up a producer, it is of importance to only use the API of the Producer class
+  # unless it is known that a particular custom producer class has been bound.
   #
   # Custom Producers
   # ----------------
-  # The intent is also that this class is derived for custom producers that require additional
-  # arguments when producing an instance. Such a custom producer may raise an error if called
-  # with too few arguments, or may implement specific produce methods and always raise an
+  # The intent is that this class is derived for custom producers that require additional
+  # options/arguments when producing an instance. Such a custom producer may raise an error if called
+  # with too few arguments, or may implement specific `produce` methods and always raise an
   # error on #produce indicating that this producer requires custom calls and that it can not
   # be used as an implicit producer.
+  #
+  # Features of Producer
+  # --------------------
+  # The Producer class is abstract, but offers the ability to transform the produced result
+  # by passing the option `:transformer` which should be a Puppet Lambda Expression taking one argument
+  # and producing the transformed (wanted) result.
   #
   # @abstract
   # @api public
@@ -31,6 +53,7 @@ module Puppet::Pops::Binder::Producers
         raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
         raise ArgumentError, "Transformer lambda must take one argument; scope." unless transformer_lambda.parameters.size() == 1
         # NOTE: This depends on Puppet 3 AST Lambda
+        # TODO: validate the lambda
         @transformer = Puppet::Pops::Model::AstTransformer.new().transform(transformer_lambda)
       end
     end
@@ -44,7 +67,7 @@ module Puppet::Pops::Binder::Producers
       do_transformation(scope, internal_produce(scope))
     end
 
-    # Returns the producer (self) after possibly having recreated an internal/wrapped producer.
+    # Returns the producer after possibly having recreated an internal/wrapped producer.
     # This implementation returns `self`. A derived class may want to override this method
     # to perform initialization/refresh of its internal state. This method is called when
     # a producer is requested.
@@ -59,16 +82,18 @@ module Puppet::Pops::Binder::Producers
     protected
 
     # Derived classes should implement this method to do the production of a value
+    # @param scope [Puppet::Parser::Scope] the scope to use when performing lookup and evaluation
+    # @raises [NotImplementedError] this implementation always raises an error
+    # @abstract
+    #
     def internal_produce(scope)
       raise NotImplementedError, "Producer-class '#{self.class.name}' should implement #internal_produce(scope)"
     end
 
-    protected
-
     # Transforms the produced value if a transformer has been defined.
     # @param scope [Puppet::Parser::Scope] the scope used for evaluation
     # @param produced_value [Object, nil] the produced value (possibly nil)
-    # @return [Object] the transformed value if a transformer is defined, else the given produced_value
+    # @return [Object] the transformed value if a transformer is defined, else the given `produced_value`
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
@@ -88,26 +113,27 @@ module Puppet::Pops::Binder::Producers
   # Abstract Producer holding a value
   class AbstractValueProducer < Producer
     attr_reader :value
+
     def initialize(injector, binding, scope, options)
       super
       # nil is ok here, as an abstract value producer may be used to signal "not found"
       @value = options[:value]
     end
-
   end
 
-  # Produces the same/singlton value on each production
+  # Produces the same/singleton value on each production
   class SingletonProducer < AbstractValueProducer
     protected
+
     def internal_produce(scope)
       value()
     end
   end
 
   # Produces a deep clone of its value on each production.
-  #
   class DeepCloningProducer < AbstractValueProducer
     protected
+
     def internal_produce(scope)
       case value
       when Integer, Float, TrueClass, FalseClass, Symbol
@@ -122,7 +148,7 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
-  # This intermediate producer class remembers the injector and binding
+  # This abstract producer class remembers the injector and binding.
   #
   class AbstractArgumentedProducer < Producer
     attr_reader :injector
@@ -137,6 +163,10 @@ module Puppet::Pops::Binder::Producers
   class InstantiatingProducer < AbstractArgumentedProducer
     attr_reader :the_class
     attr_reader :init_args
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [String] :class_name The name of the class to create instance of
     # @option options [Array<Object>] :init_args ([]) Optional arguments to class constructor
     #
@@ -167,7 +197,11 @@ module Puppet::Pops::Binder::Producers
 
   class FirstFoundProducer < Producer
     attr_reader :producers
-    # @option options [Array<Puppet::Pops::Binder::Producer>] :producers list of producers to consult
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
+    # @option options [Array<Puppet::Pops::Binder::Producers::Producer>] :producers list of producers to consult. Required.
     #
     def initialize(injector, binding, scope, options)
       super
@@ -184,9 +218,16 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # Evaluates a Puppet Expression and returns the result.
+  # This is typically used for strings with interpolated expressions.
+  #
   class EvaluatingProducer < Producer
     # A Puppet 3 AST Expression
     attr_reader :expression
+
+    # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Array<Puppet::Pops::Model::Expression>] :expression The expression to evaluate
     #
     def initialize(injector, binding, scope, options)
