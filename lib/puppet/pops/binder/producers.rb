@@ -595,6 +595,10 @@ module Puppet::Pops::Binder::Producers
       @uniq = !!options[:uniq]
       @flatten = !!options[:flatten]
 
+      unless [:error, :merge, :append, :priority, :ignore].include?(@conflict_resolution)
+        raise ArgumentError, "Unknown conflict_resolution for Multibind Hash: '#{@conflict_resolution}."
+      end
+
       if uniq || flatten || conflict_resolution.to_s == 'append'
         etype = binding.type.element_type
         unless etype.class == Puppet::Pops::Types::PDataType || etype.is_a?(Puppet::Pops::Types::PArrayType)
@@ -660,11 +664,9 @@ module Puppet::Pops::Binder::Producers
       result
     end
 
-    # TODO: Unfinished: handles append, but not merge
-    #
     def merge(result, name, higher, lower)
-      if conflict_resolution.to_s == 'append'
-        # TODO: this is just append
+      case conflict_resolution.to_s
+      when 'append'
         unless higher.is_a?(Array)
           higher = [higher]
         end
@@ -672,8 +674,10 @@ module Puppet::Pops::Binder::Producers
         tmp.flatten! if flatten
         tmp.uniq! if uniq
         result[name] = tmp
-      else
-        raise ArgumentError, "TODO: Merge not implemented"
+
+      when 'merge'
+        result[name] = lower.merge(higher)
+
       end
     end
 
