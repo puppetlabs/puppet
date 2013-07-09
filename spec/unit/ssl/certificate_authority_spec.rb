@@ -973,9 +973,11 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "and generating certificates" do
+      let(:cert) { stub 'cert' }
+      let(:host) { stub 'host', :generate_certificate_request => nil, :certificate => nil }
+
       before do
-        @host = stub 'host', :generate_certificate_request => nil
-        Puppet::SSL::Host.stubs(:new).returns @host
+        Puppet::SSL::Host.stubs(:new).returns host
         Puppet::SSL::Certificate.indirection.stubs(:find).returns nil
 
         @ca.stubs(:sign)
@@ -984,24 +986,35 @@ describe Puppet::SSL::CertificateAuthority do
       it "should fail if a certificate already exists for the host" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("him").returns "something"
 
-        expect { @ca.generate("him") }.to raise_error(ArgumentError)
+        expect { @ca.generate("him") }.to raise_error(ArgumentError, /a certificate already exists/i)
       end
 
       it "should create a new Host instance with the correct name" do
-        Puppet::SSL::Host.expects(:new).with("him").returns @host
+        Puppet::SSL::Host.expects(:new).with("him").returns host
 
         @ca.generate("him")
       end
 
       it "should use the Host to generate the certificate request" do
-        @host.expects :generate_certificate_request
+        host.expects :generate_certificate_request
 
         @ca.generate("him")
       end
 
-      it "should sign the generated request" do
-        @ca.expects(:sign).with("him", false)
-        @ca.generate("him")
+      context "if no certificate is available after CSR creation (and therefore autosigning is presumed not to have occurred)" do
+        it "should explicitly sign the generated request" do
+          Puppet::SSL::Certificate.indirection.expects(:find).with('him').returns nil
+          @ca.expects(:sign).with("him", false)
+          @ca.generate("him")
+        end
+      end
+
+      context "if a certificate is available after CSR creation (presumably because it was autosigned)" do
+        it "should not attempt to sign again" do
+          Puppet::SSL::Certificate.indirection.expects(:find).with('him').returns(nil, cert)
+          @ca.expects(:sign).never
+          @ca.generate("him")
+        end
       end
     end
   end
