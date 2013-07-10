@@ -55,6 +55,18 @@ module InjectorSpecModule
   class Donald < AngryDuck
   end
 
+  class ArneAnka < AngryDuck
+    attr_reader :label
+
+#    def self.inject(injector, scope, binding, *args)
+#      ArneAnka.new('A Swedish Angry Duck')
+#    end
+
+    def initialize()
+      @label = 'A Swedish angry cartoon duck'
+    end
+  end
+
   class ScroogeMcDuck < TestDuck
     attr_reader :fortune
 
@@ -139,31 +151,38 @@ describe 'Injector' do
     end
   end
 
-  context "When looking up" do
-    it 'should perform a simple lookup in the common layer' do
+  context "When looking up objects" do
+    it 'lookup(scope, name) finds bound object of type Data with given name' do
       bindings.bind().name('a_string').to('42')
       injector(lbinder).lookup(scope, 'a_string').should == '42'
     end
 
-    it 'should be possible to use a block to further detail the lookup' do
-      bindings.bind().name('a_string').to('42')
-      injector(lbinder).lookup(scope, 'a_string') {|val| val + '42' }.should == '4242'
-    end
+    context 'a block transforming the result can be given' do
+      it 'that transform a found value given scope and value' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup(scope, 'a_string') {|zcope, val| val + '42' }.should == '4242'
+      end
 
-    it 'should be possible to use a block to produce a default if entry is missing' do
-      bindings.bind().name('a_string').to('42')
-      injector(lbinder).lookup(scope, 'a_non_existing_string') {|val| val ? val : '4242' }.should == '4242'
+      it 'that transform a found value given only value' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup(scope, 'a_string') {|val| val + '42' }.should == '4242'
+      end
+
+      it 'that produces a default value when entry is missing' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup(scope, 'a_non_existing_string') {|val| val ? (raise Error, "Should not happen") : '4242' }.should == '4242'
+      end
     end
 
     context "and class is not bound" do
-      it "assisted inject should kick in for classes with zero args constructor" do
+      it "assisted inject kicks in for classes with zero args constructor" do
         duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
         injector = injector(lbinder)
         injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Daffy).should == true
         injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Daffy).should == true
       end
 
-      it "assisted inject should produce same instance on lookup but not on lookup producer" do
+      it "assisted inject produces same instance on lookup but not on lookup producer" do
         duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
         injector = injector(lbinder)
         d1 = injector.lookup(scope, duck_type)
@@ -175,7 +194,7 @@ describe 'Injector' do
         d1.equal?(d2).should == false
       end
 
-      it "assisted inject should kick in for classes with a class inject method" do
+      it "assisted inject kicks in for classes with a class inject method" do
         duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
         injector = injector(lbinder)
         # Do not pass any arguments, the ScroogeMcDuck :inject method should pick 1 by default
@@ -184,11 +203,18 @@ describe 'Injector' do
         injector.lookup_producer(scope, duck_type).produce(scope).fortune.should == 1
       end
 
-      it "assisted inject should select inject if it exists over zero args constructor" do
+      it "assisted inject selects the inject method if it exists over a zero args constructor" do
         injector = injector(lbinder)
         duck_type = type_factory.ruby(InjectorSpecModule::AngryDuck)
         injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Donald).should == true
         injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Donald).should == true
+      end
+
+      it "assisted inject selects the zero args constructor if injector is from a superclass" do
+        injector = injector(lbinder)
+        duck_type = type_factory.ruby(InjectorSpecModule::ArneAnka)
+        injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::ArneAnka).should == true
+        injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::ArneAnka).should == true
       end
     end
 
@@ -305,19 +331,26 @@ describe 'Injector' do
   end
 
   context "When looking up producer" do
-    it 'should perform a simple lookup in the common layer' do
+    it 'the value is produced by calling produce(scope)' do
       bindings.bind().name('a_string').to('42')
       injector(lbinder).lookup_producer(scope, 'a_string').produce(scope).should == '42'
     end
 
-    it 'should be possible to use a block to further detail the lookup' do
-      bindings.bind().name('a_string').to('42')
-      injector(lbinder).lookup_producer(scope, 'a_string') {|scope, p| p.produce(scope) + '42' }.should == '4242'
-    end
+    context 'a block transforming the result can be given' do
+      it 'that transform a found value given scope and producer' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup_producer(scope, 'a_string') {|zcope, p| p.produce(zcope) + '42' }.should == '4242'
+      end
 
-    it 'should be possible to use a block to produce a default value if entry is missing' do
-      bindings.bind().name('a_string').to('42')
-      injector(lbinder).lookup_producer(scope, 'a_non_existing_string') {|scope, p| p ? p.produce(scope) : '4242' }.should == '4242'
+      it 'that transform a found value given only producer' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup_producer(scope, 'a_string') {|p| p.produce(scope) + '42' }.should == '4242'
+      end
+
+      it 'that can produce a default value when entry is not found' do
+        bindings.bind().name('a_string').to('42')
+        injector(lbinder).lookup_producer(scope, 'a_non_existing_string') {|p| p ? (raise Error,"Should not happen") : '4242' }.should == '4242'
+      end
     end
   end
 
