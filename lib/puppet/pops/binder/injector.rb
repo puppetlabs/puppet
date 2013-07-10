@@ -507,6 +507,11 @@ module Private
       result
     end
 
+    # @api private
+    def merge_producer_options(binding, options)
+      named_arguments_to_hash(binding.producer_args).merge(options)
+    end
+
     # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically)
     # @api private
     #
@@ -537,18 +542,19 @@ module Private
     # @api private
     def transform_ConstantProducerDescriptor(descriptor, scope, entry)
       producer_class = singleton?(descriptor) ? Producers::SingletonProducer : Producers::DeepCloningProducer
-      producer_class.new(self, entry.binding, scope, {:value => descriptor.value})
+      producer_class.new(self, entry.binding, scope, merge_producer_options(entry.binding, {:value => descriptor.value}))
     end
 
     # @api private
     def transform_InstanceProducerDescriptor(descriptor, scope, entry)
       make_producer(Producers::InstantiatingProducer, descriptor, scope, entry,
-        {:class_name => descriptor.class_name, :init_args => descriptor.arguments})
+        merge_producer_options(entry.binding, {:class_name => descriptor.class_name, :init_args => descriptor.arguments}))
     end
 
     # @api private
     def transform_EvaluatingProducerDescriptor(descriptor, scope, entry)
-      make_producer(Producers::EvaluatingProducer, descriptor, scope, entry, {:expression => descriptor.expression})
+      make_producer(Producers::EvaluatingProducer, descriptor, scope, entry,
+        merge_producer_options(entry.binding, {:expression => descriptor.expression}))
     end
 
     # @api private
@@ -559,25 +565,28 @@ module Private
     # @api private
     def singleton_wrapped(descriptor, scope, entry, producer)
       return producer unless singleton?(descriptor)
-      Producers::SingletonProducer.new(self, entry.binding, scope, {:value => producer.produce(scope)})
+      Producers::SingletonProducer.new(self, entry.binding, scope,
+        merge_producer_options(entry.binding, {:value => producer.produce(scope)}))
     end
 
     # @api private
     def transform_ProducerProducerDescriptor(descriptor, scope, entry)
       p = transform(descriptor.producer, scope, entry)
       clazz = singleton?(descriptor) ? Producers::SingletonProducerProducer : Producers::ProducerProducer
-      clazz.new(self, entry.binding, scope, { :producer_producer => p })
+      clazz.new(self, entry.binding, scope, merge_producer_options(entry.binding,
+        merge_producer_options(entry.binding, { :producer_producer => p })))
     end
 
     # @api private
     def transform_LookupProducerDescriptor(descriptor, scope, entry)
-      make_producer(Producers::LookupProducer, descriptor, scope, entry, {:type => descriptor.type, :name => descriptor.name})
+      make_producer(Producers::LookupProducer, descriptor, scope, entry,
+        merge_producer_options(entry.binding, {:type => descriptor.type, :name => descriptor.name}))
     end
 
     # @api private
     def transform_HashLookupProducerDescriptor(descriptor, scope, entry)
       make_producer(Producers::LookupKeyProducer, descriptor, scope,  entry,
-        {:type => descriptor.type, :name => descriptor.name, :key => descriptor.key})
+        merge_producer_options(entry.binding, {:type => descriptor.type, :name => descriptor.name, :key => descriptor.key}))
     end
 
     # @api private
@@ -589,7 +598,7 @@ module Private
     # @api private
     def transform_FirstFoundProducerDescriptor(descriptor, scope, entry)
       make_producer(Producers::FirstFoundProducer, descriptor, scope, entry,
-        {:producers => descriptor.producers.collect {|p| transform(p, scope, entry) }})
+        merge_producer_options(entry.binding, {:producers => descriptor.producers.collect {|p| transform(p, scope, entry) }}))
     end
 
     # @api private
