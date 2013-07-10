@@ -408,7 +408,8 @@ module Private
       result = {}
       return [] unless contributions = lookup_key(scope, contributions_key)
       contributions.each { |k| result[k] = get_entry(k) }
-      result.sort_by {|key, entry| entry }
+      result.sort {|a, b| a[0] <=> b[0] }
+      #result.sort_by {|key, entry| entry }
     end
 
     # Produces an injectable class given a key, or nil if key does not represent an injectable class

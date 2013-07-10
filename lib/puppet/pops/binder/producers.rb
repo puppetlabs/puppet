@@ -638,6 +638,7 @@ module Puppet::Pops::Binder::Producers
       seen = {}
       included_entries = []
 
+      #require 'debugger'; debugger
       injector.get_contributions(scope, contributions_key).each do |element|
         key = element[0]
         entry = element[1]
@@ -650,7 +651,8 @@ module Puppet::Pops::Binder::Producers
           case conflict_resolution.to_s
           when 'priority'
             # skip if duplicate has lower prio
-            if (seen[name] <=> entry) >= 0
+            if (comparison = (seen[name] <=> entry)) <= 0
+              raise ArgumentError, "Internal Error: contributions not given in decreasing precedence order" unless comparison == 0
               raise ArgumentError, "Duplicate key (same priority) contributed to Hash Multibinding '#{binding.name}', key: '#{name}'."
             end
             next
