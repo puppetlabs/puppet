@@ -138,6 +138,12 @@ class Puppet::Module
       reject { |f| FileTest.directory?(f) }
   end
 
+  def all_manifests
+    return [] unless File.exists?(manifests)
+
+    Dir.glob(File.join(manifests, '**', '*.{rb,pp}'))
+  end
+
   def metadata_file
     return @metadata_file if defined?(@metadata_file)
 
