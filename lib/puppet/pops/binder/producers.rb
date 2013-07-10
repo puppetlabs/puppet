@@ -198,14 +198,25 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
-    # Performs initialization the same way as Assisted Inject does
+    # Performs initialization the same way as Assisted Inject does (but handle arguments to
+    # constructor)
     #
     def internal_produce(scope)
+      result = nil
+      # A class :inject method wins over an instance :initialize if it is present, unless a more specific
+      # constructor exists. (i.e do not pick :inject from superclass if class has a constructor).
+      #
       if the_class.respond_to?(:inject)
-        the_class.inject(injector, scope, binding, *init_args)
-      else
-        the_class.new(*init_args)
+        inject_method = the_class.method(:inject)
+        initialize_method = the_class.instance_method(:initialize)
+        if inject_method.owner <= initialize_method.owner
+          result = the_class.inject(injector, scope, binding, *init_args)
+        end
       end
+      if result.nil?
+        result = the_class.new(*init_args)
+      end
+      result
     end
   end
 
@@ -418,9 +429,18 @@ module Puppet::Pops::Binder::Producers
     end
 
     def producer(scope, *args)
+      @inst = nil
+      # A class :inject method wins over an instance :initialize if it is present, unless a more specific zero args
+      # constructor exists. (i.e do not pick :inject from superclass if class has a zero args constructor).
+      #
       if @clazz.respond_to?(:inject)
-        @inst = @clazz.inject(@injector, scope, nil, *args)
-      else
+        inject_method = @clazz.method(:inject)
+        initialize_method = @clazz.instance_method(:initialize)
+        if inject_method.owner <= initialize_method.owner || initialize_method.arity != 0
+          @inst = @clazz.inject(@injector, scope, nil, *args)
+        end
+      end
+      if @inst.nil?
         unless args.empty?
           raise ArgumentError, "Assisted Inject can not pass arguments to no-args constructor when there is no class inject method."
         end
