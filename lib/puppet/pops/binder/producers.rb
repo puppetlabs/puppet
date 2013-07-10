@@ -638,7 +638,6 @@ module Puppet::Pops::Binder::Producers
       seen = {}
       included_entries = []
 
-      #require 'debugger'; debugger
       injector.get_contributions(scope, contributions_key).each do |element|
         key = element[0]
         entry = element[1]
@@ -680,7 +679,7 @@ module Puppet::Pops::Binder::Producers
         if result[ name ]
           merge(result, name, result[ name ], x)
         else
-        result[ name ] = conflict_resolution().to_s == 'append' ? [x] : x
+          result[ name ] = conflict_resolution().to_s == 'append' ? [x] : x
         end
       end
       result
