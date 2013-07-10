@@ -550,10 +550,33 @@ describe 'Injector' do
         mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family')
         mb.producer_options(:conflict_resolution => :append)
 
-        # missing name
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
+        bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
+
+        ducks = injector(lbinder).lookup(scope, 'donalds_family')
+
+        ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
+        ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
+      end
+
+      it "should be possible to combine hash multibind contributions with append, flat, and uniq, on conflict" do
+        # This case uses a multibind of individual strings, but combines them
+        # into an array bound to a hash key
+        # (There are other ways to do this - e.g. have the multibind lookup a multibind
+        # of array type to which nephews are contributed).
+        #
+        hash_of_data = type_factory.hash_of_data()
+        multibind_id = "ducks"
+        mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family')
+        mb.producer_options(:conflict_resolution => :append, :flatten => true, :uniq => true)
+
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind_in_multibind(multibind_id).name('nephews').to(['Huey', ['Louie'], 'Dewey'])
         bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
         bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
 
@@ -597,7 +620,28 @@ describe 'Injector' do
         binder.define_categories(factory.categories(['highest', 'test']))
         binder.define_layers(layered_bindings)
 
-        the_ducks = injector(binder).lookup(scope, hash_of_duck, "donalds_nephews")['nephew'].name.should == 'Huey'
+        injector(binder).lookup(scope, hash_of_duck, "donalds_nephews")['nephew'].name.should == 'Huey'
+      end
+
+      it "a higher priority contribution wins when resolution is :merge" do
+        hash_of_data = type_factory.hash_of_data()
+        multibind_id = "hashed_ducks"
+
+        bindings.multibind(multibind_id).type(hash_of_data).name('donalds_nephews').producer_options(:conflict_resolution => :merge)
+
+        mb1 = bindings.when_in_category("highest", "test").bind_in_multibind(multibind_id)
+        mb1.name('nephew').to({'name' => 'Huey', 'is' => 'winner'})
+
+        mb2 = bindings.bind_in_multibind(multibind_id)
+        mb2.name('nephew').to({'name' => 'Dewey', 'is' => 'looser', 'has' => 'cap'})
+
+        binder.define_categories(factory.categories(['highest', 'test']))
+        binder.define_layers(layered_bindings)
+
+        the_ducks = injector(binder).lookup(scope, "donalds_nephews");
+        the_ducks['nephew']['name'].should == 'Huey'
+        the_ducks['nephew']['is'].should == 'winner'
+        the_ducks['nephew']['has'].should == 'cap'
       end
     end
 
@@ -686,6 +730,6 @@ describe 'Injector' do
       end
     end
   end
-  # TODO: test producer options; multibind priority for array and hash, uniq, flatten etc.
+  # TODO: test producer options; multibind priority for array, uniq, flatten etc.
   # TODO: test post processing lambda for a producer
 end
