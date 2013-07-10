@@ -81,6 +81,7 @@ class Puppet::Pops::Binder::Binder
       @category_precedences[cname] = PRECEDENCE_MAX - index
       @category_values[cname] = c.value
     end
+    self
   end
 
   # Binds layers from highest to lowest as defined by the given LayeredBindings.
@@ -108,6 +109,7 @@ class Puppet::Pops::Binder::Binder
     end
     # and the fat lady has sung
     @configured = true
+    self
   end
 
   # @api private
