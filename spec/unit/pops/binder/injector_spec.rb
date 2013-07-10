@@ -519,14 +519,13 @@ describe 'Injector' do
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
-        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
-        # missing name
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews').producer_options(:conflict_resolution => :ignore)
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
-        }.to raise_error(/Duplicate key/)
+        }.to_not raise_error(/Duplicate key/)
       end
 
       it "should produce detailed type error message" do
@@ -581,6 +580,24 @@ describe 'Injector' do
         expect { injector.lookup(scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
         expect { injector.lookup(scope, 'broken_family1')}.to raise_error(/:flatten/)
         expect { injector.lookup(scope, 'broken_family2')}.to raise_error(/:uniq/)
+      end
+
+      it "a higher priority contribution is selected when resolution is :priority" do
+        hash_of_duck = type_factory.hash_of(duck_type)
+        multibind_id = "ducks"
+
+        bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
+
+        mb1 = bindings.when_in_category("highest", "test").bind_in_multibind(multibind_id)
+        mb1.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Huey')
+
+        mb2 = bindings.bind_in_multibind(multibind_id)
+        mb2.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Dewey')
+
+        binder.define_categories(factory.categories(['highest', 'test']))
+        binder.define_layers(layered_bindings)
+
+        the_ducks = injector(binder).lookup(scope, hash_of_duck, "donalds_nephews")['nephew'].name.should == 'Huey'
       end
     end
 
