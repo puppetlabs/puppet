@@ -6,10 +6,6 @@ module InjectorSpecModule
     Puppet::Pops::Binder::Injector.new(binder)
   end
 
-#  def binder()
-#    Puppet::Pops::Binder::Binder.new()
-#  end
-
   def factory
     Puppet::Pops::Binder::BindingsFactory
   end
@@ -37,7 +33,7 @@ module InjectorSpecModule
   # Returns a binder with the effective categories highest/test, node/kermit, environment/dev (and implicit 'common')
   #
   def binder_with_categories
-    b = binder()
+    b = Puppet::Pops::Binder::Binder.new()
     b.define_categories(factory.categories(['highest', 'test', 'node', 'kermit', 'environment','dev']))
     b
   end
@@ -96,185 +92,146 @@ end
 describe 'Injector' do
   include InjectorSpecModule
 
-  let(:binder) { Puppet::Pops::Binder::Binder.new()}
+  let(:bindings)  { factory.named_bindings('test') }
+  let(:scope)     { null_scope()}
+  let(:duck_type) { type_factory.ruby(InjectorSpecModule::TestDuck) }
+
+  let(:binder)    { Puppet::Pops::Binder::Binder.new()}
+
+  let(:cbinder)   do
+    b = Puppet::Pops::Binder::Binder.new()
+    b.define_categories(factory.categories([]))
+    b
+  end
+
+  let(:lbinder)   do
+    cbinder.define_layers(layered_bindings)
+  end
+
+
+  let(:layered_bindings) { factory.layered_bindings(test_layer_with_bindings(bindings.model)) }
+  let(:xinjector)  { Puppet::Pops::Binder::Injector.new(lbinder) }
 
   context 'When created' do
     it 'should raise an error when given binder is not configured at all' do
-      expect { injector(binder()) }.to raise_error(/Given Binder is not configured/)
+      expect { Puppet::Pops::Binder::Injector.new(binder()) }.to raise_error(/Given Binder is not configured/)
     end
 
     it 'should raise an error if binder has categories, but is not completely configured' do
-      binder.define_categories(factory.categories([]))
-      expect { injector(binder) }.to raise_error(/Given Binder is not configured/)
+      expect { Puppet::Pops::Binder::Injector.new(cbinder) }.to raise_error(/Given Binder is not configured/)
     end
 
     it 'should not raise an error if binder is configured' do
-      binder.define_categories(factory.categories([]))
-      bindings = factory.named_bindings('test')
-      binder.define_layers(test_layer_with_bindings(bindings.model))
-      binder.configured?().should == true # of something is very wrong
-      expect { injector(binder) }.to_not raise_error
+      lbinder.configured?().should == true # of something is very wrong
+      expect { injector(lbinder) }.to_not raise_error
     end
 
     it 'should create an empty injector given an empty binder' do
-      bindings = factory.named_bindings('test')
-      binder.define_categories(factory.categories([]))
-      expect { binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model))) }.to_not raise_exception
+      expect { cbinder.define_layers(layered_bindings) }.to_not raise_exception
     end
 
     it "should be possible to reference the TypeCalculator" do
-      binder.define_categories(factory.categories([]))
-      bindings = factory.named_bindings('test')
-      binder.define_layers(test_layer_with_bindings(bindings.model))
-      binder.configured?().should == true # of something is very wrong
-      i = injector(binder)
-      i.type_calculator.is_a?(Puppet::Pops::Types::TypeCalculator).should == true
+      injector(lbinder).type_calculator.is_a?(Puppet::Pops::Types::TypeCalculator).should == true
     end
 
     it "should be possible to reference the KeyFactory" do
-      binder.define_categories(factory.categories([]))
-      bindings = factory.named_bindings('test')
-      binder.define_layers(test_layer_with_bindings(bindings.model))
-      binder.configured?().should == true # of something is very wrong
-      i = injector(binder)
-      i.key_factory.is_a?(Puppet::Pops::Binder::KeyFactory).should == true
+      injector(lbinder).key_factory.is_a?(Puppet::Pops::Binder::KeyFactory).should == true
     end
   end
 
   context "When looking up" do
     it 'should perform a simple lookup in the common layer' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == '42'
+      injector(lbinder).lookup(scope, 'a_string').should == '42'
     end
 
     it 'should be possible to use a block to further detail the lookup' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string') {|val| val + '42' }.should == '4242'
+      injector(lbinder).lookup(scope, 'a_string') {|val| val + '42' }.should == '4242'
     end
 
     it 'should be possible to use a block to produce a default if entry is missing' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_non_existing_string') {|val| val ? val : '4242' }.should == '4242'
+      injector(lbinder).lookup(scope, 'a_non_existing_string') {|val| val ? val : '4242' }.should == '4242'
     end
 
     context "and class is not bound" do
       it "assisted inject should kick in for classes with zero args constructor" do
-        bindings = factory.named_bindings('test')
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
         duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
-        injector.lookup(null_scope(), duck_type).is_a?(InjectorSpecModule::Daffy).should == true
-        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).is_a?(InjectorSpecModule::Daffy).should == true
+        injector = injector(lbinder)
+        injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Daffy).should == true
+        injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Daffy).should == true
       end
 
       it "assisted inject should produce same instance on lookup but not on lookup producer" do
-        bindings = factory.named_bindings('test')
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
         duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
-        d1 = injector.lookup(null_scope(), duck_type)
-        d2 = injector.lookup(null_scope(), duck_type)
+        injector = injector(lbinder)
+        d1 = injector.lookup(scope, duck_type)
+        d2 = injector.lookup(scope, duck_type)
         d1.equal?(d2).should == true
 
-        d1 = injector.lookup_producer(null_scope(), duck_type).produce(null_scope())
-        d2 = injector.lookup_producer(null_scope(), duck_type).produce(null_scope())
+        d1 = injector.lookup_producer(scope, duck_type).produce(scope)
+        d2 = injector.lookup_producer(scope, duck_type).produce(scope)
         d1.equal?(d2).should == false
       end
 
       it "assisted inject should kick in for classes with a class inject method" do
-        bindings = factory.named_bindings('test')
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
+        injector = injector(lbinder)
         # Do not pass any arguments, the ScroogeMcDuck :inject method should pick 1 by default
         # This tests zero args passed
-        duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
-        injector.lookup(null_scope(), duck_type).fortune.should == 1
-        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).fortune.should == 1
+        injector.lookup(scope, duck_type).fortune.should == 1
+        injector.lookup_producer(scope, duck_type).produce(scope).fortune.should == 1
       end
 
       it "assisted inject should select inject if it exists over zero args constructor" do
-        bindings = factory.named_bindings('test')
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        injector = injector(lbinder)
         duck_type = type_factory.ruby(InjectorSpecModule::AngryDuck)
-        injector.lookup(null_scope(), duck_type).is_a?(InjectorSpecModule::Donald).should == true
-        injector.lookup_producer(null_scope(), duck_type).produce(null_scope()).is_a?(InjectorSpecModule::Donald).should == true
+        injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Donald).should == true
+        injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Donald).should == true
       end
     end
 
     context 'and conditionals are in use' do
+      let(:binder) { binder_with_categories()}
+      let(:lbinder) { binder.define_layers(layered_bindings) }
 
       it "should be possible to shadow a bound value in a higher precedented category" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().name('a_string').to('42')
         bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
         bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should == 'being green'
+        injector(lbinder).lookup(scope,'a_string').should == 'being green'
       end
 
       it "shadowing should not happen when not in a category" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().name('a_string').to('42')
         bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
         bindings.when_in_category('node', 'piggy').bind().name('a_string').to('being green')
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should == '43'
+        injector(lbinder).lookup(scope,'a_string').should == '43'
       end
 
       it "multiple predicates makes binding more specific" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().name('a_string').to('42')
         bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
         bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
         bindings.when_in_categories({'node'=>'kermit', 'environment'=>'dev'}).bind().name('a_string').to('being dev green')
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should == 'being dev green'
+        injector(lbinder).lookup(scope,'a_string').should == 'being dev green'
       end
 
       it "multiple predicates makes binding more specific, but not more specific than higher precedence" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().name('a_string').to('42')
         bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
         bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
         bindings.when_in_categories({'node'=>'kermit', 'environment'=>'dev'}).bind().name('a_string').to('being dev green')
         bindings.when_in_category('highest', 'test').bind().name('a_string').to('bazinga')
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should == 'bazinga'
+        injector(lbinder).lookup(scope,'a_string').should == 'bazinga'
       end
     end
 
     context "and multiple layers are in use" do
+      let(:binder) { binder_with_categories()}
 
       it "a higher layer shadows anything in a lower layer" do
-        binder = binder_with_categories()
         bindings1 = factory.named_bindings('test1')
         bindings1.when_in_category("highest", "test").bind().name('a_string').to('bad stuff')
         lower_layer =  factory.named_layer('lower-layer', bindings1.model)
@@ -285,15 +242,15 @@ describe 'Injector' do
 
         binder.define_layers(factory.layered_bindings(higher_layer, lower_layer))
         injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should == 'good stuff'
+        injector.lookup(scope,'a_string').should == 'good stuff'
       end
     end
 
     context "and dealing with Data types" do
+      let(:binder)  { binder_with_categories()}
+      let(:lbinder) { binder.define_layers(layered_bindings) }
 
       it "should treat all data as same type w.r.t. key" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().name('a_string').to('42')
         bindings.bind().name('an_int').to(43)
         bindings.bind().name('a_float').to(3.14)
@@ -301,19 +258,16 @@ describe 'Injector' do
         bindings.bind().name('an_array').to([1,2,3])
         bindings.bind().name('a_hash').to({'a'=>1,'b'=>2,'c'=>3})
 
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        injector.lookup(null_scope(),'a_string').should  == '42'
-        injector.lookup(null_scope(),'an_int').should    == 43
-        injector.lookup(null_scope(),'a_float').should   == 3.14
-        injector.lookup(null_scope(),'a_boolean').should == true
-        injector.lookup(null_scope(),'an_array').should  == [1,2,3]
-        injector.lookup(null_scope(),'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
+        injector = injector(lbinder)
+        injector.lookup(scope,'a_string').should  == '42'
+        injector.lookup(scope,'an_int').should    == 43
+        injector.lookup(scope,'a_float').should   == 3.14
+        injector.lookup(scope,'a_boolean').should == true
+        injector.lookup(scope,'an_array').should  == [1,2,3]
+        injector.lookup(scope,'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
       end
 
       it "should provide type-safe lookup of given type/name" do
-        binder = binder_with_categories()
-        bindings = factory.named_bindings('test')
         bindings.bind().string().name('a_string').to('42')
         bindings.bind().integer().name('an_int').to(43)
         bindings.bind().float().name('a_float').to(3.14)
@@ -321,91 +275,66 @@ describe 'Injector' do
         bindings.bind().array_of_data().name('an_array').to([1,2,3])
         bindings.bind().hash_of_data().name('a_hash').to({'a'=>1,'b'=>2,'c'=>3})
 
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        injector = injector(lbinder)
 
         # Check lookup using implied Data type
-        injector.lookup(null_scope(),'a_string').should  == '42'
-        injector.lookup(null_scope(),'an_int').should    == 43
-        injector.lookup(null_scope(),'a_float').should   == 3.14
-        injector.lookup(null_scope(),'a_boolean').should == true
-        injector.lookup(null_scope(),'an_array').should  == [1,2,3]
-        injector.lookup(null_scope(),'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
+        injector.lookup(scope,'a_string').should  == '42'
+        injector.lookup(scope,'an_int').should    == 43
+        injector.lookup(scope,'a_float').should   == 3.14
+        injector.lookup(scope,'a_boolean').should == true
+        injector.lookup(scope,'an_array').should  == [1,2,3]
+        injector.lookup(scope,'a_hash').should    == {'a'=>1,'b'=>2,'c'=>3}
 
         # Check lookup using expected type
-        injector.lookup(null_scope(),type_factory.string(), 'a_string').should        == '42'
-        injector.lookup(null_scope(),type_factory.integer(), 'an_int').should         == 43
-        injector.lookup(null_scope(),type_factory.float(),'a_float').should           == 3.14
-        injector.lookup(null_scope(),type_factory.boolean(),'a_boolean').should       == true
-        injector.lookup(null_scope(),type_factory.array_of_data(),'an_array').should  == [1,2,3]
-        injector.lookup(null_scope(),type_factory.hash_of_data(),'a_hash').should     == {'a'=>1,'b'=>2,'c'=>3}
+        injector.lookup(scope,type_factory.string(), 'a_string').should        == '42'
+        injector.lookup(scope,type_factory.integer(), 'an_int').should         == 43
+        injector.lookup(scope,type_factory.float(),'a_float').should           == 3.14
+        injector.lookup(scope,type_factory.boolean(),'a_boolean').should       == true
+        injector.lookup(scope,type_factory.array_of_data(),'an_array').should  == [1,2,3]
+        injector.lookup(scope,type_factory.hash_of_data(),'a_hash').should     == {'a'=>1,'b'=>2,'c'=>3}
 
         # Check lookup using wrong type
-        expect { injector.lookup(null_scope(),type_factory.integer(), 'a_string')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string(), 'an_int')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string(),'a_float')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string(),'a_boolean')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string(),'an_array')}.to raise_error(/Type error/)
-        expect { injector.lookup(null_scope(),type_factory.string(),'a_hash')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.integer(), 'a_string')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.string(), 'an_int')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.string(),'a_float')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.string(),'a_boolean')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.string(),'an_array')}.to raise_error(/Type error/)
+        expect { injector.lookup(scope,type_factory.string(),'a_hash')}.to raise_error(/Type error/)
       end
     end
   end
 
   context "When looking up producer" do
     it 'should perform a simple lookup in the common layer' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      producer = injector.lookup_producer(null_scope(), 'a_string')
-      producer.produce(null_scope()).should == '42'
+      injector(lbinder).lookup_producer(scope, 'a_string').produce(scope).should == '42'
     end
 
     it 'should be possible to use a block to further detail the lookup' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup_producer(null_scope(), 'a_string') {|scope, p| p.produce(scope) + '42' }.should == '4242'
+      injector(lbinder).lookup_producer(scope, 'a_string') {|scope, p| p.produce(scope) + '42' }.should == '4242'
     end
 
     it 'should be possible to use a block to produce a default value if entry is missing' do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup_producer(null_scope(), 'a_non_existing_string') {|scope, p| p ? p.produce(scope) : '4242' }.should == '4242'
+      injector(lbinder).lookup_producer(scope, 'a_non_existing_string') {|scope, p| p ? p.produce(scope) : '4242' }.should == '4242'
     end
   end
 
   context "When dealing with singleton vs. non singleton" do
     it "should produce the same instance when producer is a singleton" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      a = injector.lookup(null_scope(), 'a_string')
-      b = injector.lookup(null_scope(), 'a_string')
+      injector = injector(lbinder)
+      a = injector.lookup(scope, 'a_string')
+      b = injector.lookup(scope, 'a_string')
       a.equal?(b).should == true
     end
 
     it "should produce different instances when producer is a non singleton producer" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_series_of('42')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      a = injector.lookup(null_scope(), 'a_string')
-      b = injector.lookup(null_scope(), 'a_string')
+      injector = injector(lbinder)
+      a = injector.lookup(scope, 'a_string')
+      b = injector.lookup(scope, 'a_string')
       a.should == '42'
       b.should == '42'
       a.equal?(b).should == false
@@ -414,133 +343,84 @@ describe 'Injector' do
 
   context "When using the lookup producer" do
     it "should lookup again to produce a value" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('another_string')
       bindings.bind().name('another_string').to('hello')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == 'hello'
+      injector(lbinder).lookup(scope, 'a_string').should == 'hello'
     end
 
     it "should produce nil if looked up key does not exist" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('non_existing')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == nil
+      injector(lbinder).lookup(scope, 'a_string').should == nil
     end
 
     it "should report an error if lookup loop is detected" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_lookup_of('a_string')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      expect { injector.lookup(null_scope(), 'a_string') }.to raise_error(/Lookup loop/)
+      expect { injector(lbinder).lookup(scope, 'a_string') }.to raise_error(/Lookup loop/)
     end
   end
 
   context "When using the hash lookup producer" do
     it "should lookup a key in looked up hash" do
-      bindings = factory.named_bindings('test')
       data_hash = type_factory.hash_of_data()
-
       bindings.bind().name('a_string').to_hash_lookup_of(data_hash, 'a_hash', 'huey')
       bindings.bind().name('a_hash').to({'huey' => 'red', 'dewey' => 'blue', 'louie' => 'green'})
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == 'red'
+      injector(lbinder).lookup(scope, 'a_string').should == 'red'
     end
 
     it "should produce nil if looked up entry does not exist" do
-      bindings = factory.named_bindings('test')
       data_hash = type_factory.hash_of_data()
-
       bindings.bind().name('a_string').to_hash_lookup_of(data_hash, 'non_existing_entry', 'huey')
       bindings.bind().name('a_hash').to({'huey' => 'red', 'dewey' => 'blue', 'louie' => 'green'})
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == nil
+      injector(lbinder).lookup(scope, 'a_string').should == nil
     end
   end
 
   context "When using the first found producer" do
     it "should lookup until it finds a value, but no further" do
-      bindings = factory.named_bindings('test')
       bindings.bind().name('a_string').to_first_found(['b_string', 'c_string', 'g_string'])
       bindings.bind().name('c_string').to('hello')
       bindings.bind().name('g_string').to('Oh, mrs. Smith...')
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), 'a_string').should == 'hello'
+      injector(lbinder).lookup(scope, 'a_string').should == 'hello'
     end
   end
 
   context "When producing instances" do
     it "should lookup an instance of a class without arguments" do
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::Daffy)
-
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      injector.lookup(null_scope(), duck_type, 'the_duck').is_a?(InjectorSpecModule::Daffy).should == true
+      injector(lbinder).lookup(scope, duck_type, 'the_duck').is_a?(InjectorSpecModule::Daffy).should == true
     end
 
     it "should lookup an instance of a class with arguments" do
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to(InjectorSpecModule::ScroogeMcDuck, 1234)
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
+      injector = injector(lbinder)
+
+      the_duck = injector.lookup(scope, duck_type, 'the_duck')
       the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 1234
     end
 
     it "singleton producer should not be recreated between lookups" do
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to_producer(InjectorSpecModule::ScroogeProducer)
+      injector = injector(lbinder)
 
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
-      the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
+      the_duck = injector.lookup(scope, duck_type, 'the_duck')
       the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 200
+
       # singleton, do it again to get next value in series - it is the producer that is a singleton
       # not the produced value
-      the_duck = injector.lookup(null_scope(), duck_type, 'the_duck')
+      the_duck = injector.lookup(scope, duck_type, 'the_duck')
       the_duck.is_a?(InjectorSpecModule::ScroogeMcDuck).should == true
       the_duck.fortune.should == 400
 
-      duck_producer = injector.lookup_producer(null_scope(), duck_type, 'the_duck')
-      duck_producer.produce(null_scope()).fortune.should == 800
+      duck_producer = injector.lookup_producer(scope, duck_type, 'the_duck')
+      duck_producer.produce(scope).fortune.should == 800
     end
 
     it "series of producers should recreate producer on each lookup and lookup_producer" do
-      scope = null_scope()
-      bindings = factory.named_bindings('test')
-      duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
       bindings.bind().type(duck_type).name('the_duck').to_producer_series(InjectorSpecModule::ScroogeProducer)
+      injector = injector(lbinder)
 
-      binder.define_categories(factory.categories([]))
-      binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-      injector = injector(binder)
       duck_producer = injector.lookup_producer(scope, duck_type, 'the_duck')
       duck_producer.produce(scope).fortune().should == 200
       duck_producer.produce(scope).fortune().should == 400
@@ -558,9 +438,6 @@ describe 'Injector' do
   context "When working with multibind" do
     context "of hash kind" do
       it "a multibind produces contributed items keyed by their bound key-name" do
-        scope = null_scope()
-        bindings = factory.named_bindings('test')
-        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
@@ -569,9 +446,7 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        injector = injector(lbinder)
         the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
         the_ducks.size.should == 3
         the_ducks['nephew1'].name.should == 'Huey'
@@ -580,9 +455,6 @@ describe 'Injector' do
       end
 
       it "is an error to not bind contribution with a name" do
-        scope = null_scope()
-        bindings = factory.named_bindings('test')
-        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
@@ -591,18 +463,12 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Huey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
         expect {
-          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+          the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
         }.to raise_error(/must have a name/)
       end
 
       it "is an error to bind with duplicate key when using default (priority) conflict resolution" do
-        scope = null_scope()
-        bindings = factory.named_bindings('test')
-        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
@@ -611,18 +477,12 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
         expect {
-          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+          the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
         }.to raise_error(/Duplicate key/)
       end
 
       it "is not an error to bind with duplicate key when using (ignore) conflict resolution" do
-        scope = null_scope()
-        bindings = factory.named_bindings('test')
-        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         hash_of_duck = type_factory.hash_of(duck_type)
         multibind_id = "ducks"
 
@@ -631,26 +491,19 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
         expect {
-          the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
+          the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
         }.to raise_error(/Duplicate key/)
       end
 
       it "should produce detailed type error message" do
-        bindings = factory.named_bindings('test')
         hash_of_integer = type_factory.hash_of(type_factory.integer())
 
         multibind_id = "ints"
         mb = bindings.multibind(multibind_id).type(hash_of_integer).name('donalds_family')
         bindings.bind_in_multibind(multibind_id).name('nephew').to('Huey')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        expect { ducks = injector.lookup(null_scope(), 'donalds_family')
+        expect { ducks = injector(lbinder).lookup(scope, 'donalds_family')
         }.to raise_error(%r{expected: Integer, got: String})
       end
 
@@ -660,7 +513,6 @@ describe 'Injector' do
         # (There are other ways to do this - e.g. have the multibind lookup a multibind
         # of array type to which nephews are contributed).
         #
-        bindings = factory.named_bindings('test')
         hash_of_data = type_factory.hash_of_data()
         multibind_id = "ducks"
         mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family')
@@ -673,16 +525,13 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
         bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        ducks = injector.lookup(@scope, 'donalds_family')
+        ducks = injector(lbinder).lookup(scope, 'donalds_family')
+
         ducks['nephews'].should == ['Huey', 'Dewey', 'Louie']
         ducks['uncles'].should == ['Scrooge McDuck', 'Ludwig Von Drake']
       end
 
       it "should fail attempts to append, perform  uniq or flatten on type incompatible multibind hash" do
-        bindings = factory.named_bindings('test')
         hash_of_integer = type_factory.hash_of(type_factory.integer())
         ids = ["ducks1", "ducks2", "ducks3"]
         mb = bindings.multibind(ids[0]).type(hash_of_integer).name('broken_family0')
@@ -696,17 +545,14 @@ describe 'Injector' do
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
         injector = injector(binder)
-        expect { injector.lookup(@scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
-        expect { injector.lookup(@scope, 'broken_family1')}.to raise_error(/:flatten/)
-        expect { injector.lookup(@scope, 'broken_family2')}.to raise_error(/:uniq/)
+        expect { injector.lookup(scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
+        expect { injector.lookup(scope, 'broken_family1')}.to raise_error(/:flatten/)
+        expect { injector.lookup(scope, 'broken_family2')}.to raise_error(/:uniq/)
       end
     end
 
     context "of array kind" do
       it "an array multibind produces contributed items, names are allowed but ignored" do
-        scope = null_scope()
-        bindings = factory.named_bindings('test')
-        duck_type = type_factory.ruby(InjectorSpecModule::TestDuck)
         array_of_duck = type_factory.array_of(duck_type)
         multibind_id = "ducks"
 
@@ -717,10 +563,7 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
         bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        the_ducks = injector.lookup(scope, array_of_duck, "donalds_nephews")
+        the_ducks = injector(lbinder).lookup(scope, array_of_duck, "donalds_nephews")
         the_ducks.size.should == 3
         the_ducks.collect {|d| d.name }.sort.should == ['Dewey', 'Huey', 'Louie']
       end
@@ -729,9 +572,7 @@ describe 'Injector' do
         # This case uses a multibind of individual strings, and combines them
         # into an array of unique values
         #
-        bindings = factory.named_bindings('test')
         array_of_data = type_factory.array_of_data()
-
         multibind_id = "ducks"
         mb = bindings.multibind(multibind_id).type(array_of_data).name('donalds_family')
         # turn off priority on named to not trigger conflict as all additions have the same precedence
@@ -745,10 +586,7 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
         bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        ducks = injector.lookup(null_scope(), 'donalds_family')
+        ducks = injector(lbinder).lookup(scope, 'donalds_family')
         ducks.should == ['Huey', 'Dewey', 'Louie']
       end
 
@@ -756,7 +594,6 @@ describe 'Injector' do
         # This case uses a multibind of individual strings and arrays, and combines them
         # into an array of flattened
         #
-        bindings = factory.named_bindings('test')
         array_of_string = type_factory.array_of(type_factory.string())
 
         multibind_id = "ducks"
@@ -769,49 +606,40 @@ describe 'Injector' do
         bindings.bind_in_multibind(multibind_id).to('Louie') # duplicate
         bindings.bind_in_multibind(multibind_id).to(['Huey', 'Dewey', 'Louie'])
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        ducks = injector.lookup(null_scope(), 'donalds_family')
+        ducks = injector(lbinder).lookup(scope, 'donalds_family')
         ducks.should == ['Huey', 'Dewey', 'Louie', 'Huey', 'Dewey', 'Louie']
       end
 
       it "should produce detailed type error message" do
-        bindings = factory.named_bindings('test')
         array_of_integer = type_factory.array_of(type_factory.integer())
 
         multibind_id = "ints"
         mb = bindings.multibind(multibind_id).type(array_of_integer).name('donalds_family')
         bindings.bind_in_multibind(multibind_id).to('Huey')
 
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
-        expect { ducks = injector.lookup(null_scope(), 'donalds_family')
+        expect { ducks = injector(lbinder).lookup(scope, 'donalds_family')
         }.to raise_error(%r{expected: Integer, or Array\[Integer\], got: String})
       end
     end
 
     context "When looking up entries requiring evaluation" do
-      before :each do
-        node     = Puppet::Node.new('localhost')
-        compiler = Puppet::Parser::Compiler.new(node)
-        @scope   = Puppet::Parser::Scope.new(compiler)
-        @parser = Puppet::Pops::Parser::Parser.new()
-      end
+      let(:node)     { Puppet::Node.new('localhost') }
+      let(:compiler) { Puppet::Parser::Compiler.new(node)}
+      let(:scope)    { Puppet::Parser::Scope.new(compiler) }
+      let(:parser)   { Puppet::Pops::Parser::Parser.new() }
 
       it "should be possible to lookup a concatenated string" do
-        @scope['duck'] = 'Donald Fauntleroy Duck'
-        expr = @parser.parse_string('"Hello $duck"').current()
+        scope['duck'] = 'Donald Fauntleroy Duck'
+        expr = parser.parse_string('"Hello $duck"').current()
 
-        bindings = factory.named_bindings('test')
+
         bindings.bind.name('the_duck').to(expr)
 
         binder.define_categories(factory.categories([]))
         binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
 
         injector = injector(binder)
-        injector.lookup(@scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
+        injector.lookup(scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
       end
 
     end
