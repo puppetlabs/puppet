@@ -613,10 +613,22 @@ module Puppet::Pops::Binder::Producers
       super
       @conflict_resolution = options[:conflict_resolution].nil? ? :priority : options[:conflict_resolution]
       @uniq = !!options[:uniq]
-      @flatten = !!options[:flatten]
+      @flatten = options[:flatten]
 
       unless [:error, :merge, :append, :priority, :ignore].include?(@conflict_resolution)
         raise ArgumentError, "Unknown conflict_resolution for Multibind Hash: '#{@conflict_resolution}."
+      end
+
+      case @flatten
+      when Integer
+      when true
+        @flatten = -1
+      when false
+        @flatten = nil
+      when NilClass
+        @flatten = nil
+      else
+        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten_level.is_a?(Integer)
       end
 
       if uniq || flatten || conflict_resolution.to_s == 'append'
@@ -692,7 +704,7 @@ module Puppet::Pops::Binder::Producers
           higher = [higher]
         end
         tmp = higher + [lower]
-        tmp.flatten! if flatten
+        tmp.flatten!(flatten) if flatten
         tmp.uniq! if uniq
         result[name] = tmp
 

@@ -730,6 +730,5 @@ describe 'Injector' do
       end
     end
   end
-  # TODO: test producer options; multibind priority for array, uniq, flatten etc.
   # TODO: test post processing lambda for a producer
 end
