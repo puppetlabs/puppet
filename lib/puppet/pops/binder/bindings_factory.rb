@@ -1,6 +1,6 @@
 # A helper class that makes it easier to construct a Bindings model
 #
-# Sample:
+# @example Usage of the factory
 #   factory = Puppet::Pops__Binder::BindingsFactory.new()
 #   result = factory.named_bindings("mymodule::mybindings")
 #   result.bind().name("foo").to(42)
@@ -8,12 +8,16 @@
 #   result.bind().string().name("site url").to("http://www.example.com")
 #   result.model()
 #
+# @api public
+#
 class Puppet::Pops::Binder::BindingsFactory
 
+  # @api public
   class BindingsContainerBuilder
     # The built model object.
     attr_reader :model
 
+    # @api public
     def initialize(binding)
       @model = binding
     end
@@ -29,6 +33,7 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # Binds an (almost) empty multibind where later, the looked up result contains all contributions to this key
     # @param id [String] the multibind's id used when adding contributions
+    # @api public
     #
     def multibind(id)
       binding = Puppet::Pops::Binder::Bindings::Multibinding.new()
@@ -79,16 +84,15 @@ class Puppet::Pops::Binder::BindingsFactory
     end
   end
 
+  # Builds a Binding via cconvenience methods.
+  #
+  # @api public
   class BindingsBuilder
     attr_reader :model
 
     def initialize(binding)
       @model = binding
       data()
-    end
-
-    def model_type=(t)
-      @model.type = t
     end
 
     def name(name)
@@ -327,11 +331,12 @@ class Puppet::Pops::Binder::BindingsFactory
 
 
   class MultibindingsBuilder < BindingsBuilder
-    def model_type=(type)
-      unless type.is_a?(Puppet::Pops::Types::PArrayType) || type.is_a?(Puppet::Pops::Types::PArrayType)
-        raise ArgumentError, 'Wrong type; only PArrayType, or PHashType allowed'
+    def type(type)
+      unless type.class == Puppet::Pops::Types::PArrayType || type.class == Puppet::Pops::Types::PHashType
+        raise ArgumentError, "Wrong type; only PArrayType, or PHashType allowed, got '#{type.to_s}'"
       end
       @model.type = type
+      self
     end
 
     def combinator(x)
@@ -430,34 +435,4 @@ class Puppet::Pops::Binder::BindingsFactory
     named_layers.each {|b| result.addLayers(b) }
     result
   end
-
-#  # Builds a Combinator from the given arguments.
-#  # A lambda based combinator takes different number of argumetns for Array/Hash multibinds. An array combinator
-#  # gets `memo` (the arrays current value), and `value`, and a hash combinator gets `memo` (the hash's current content),
-#  # `key` the current key, `current` (the current value at key), `value` the value to combine.
-#  #
-#  # @example an array combinator in Puppet DSL (concatenates)
-#  #   |$memo, $value| { $memo + [value] }
-#  #
-#  # @example a hash combinator in Puppet DSL (keeps first value set, ignores duplicates)
-#  #   |$memo, $key, $current, $value| { if $current { $current} else {$value} }
-#  #
-#  # @param x [Puppet::Pops::Model::LambdaExpression, Puppet::Pops::Binder::MultibindCombinators::Combinator] the combinator
-#  # @param *args [Object] arguments to an InstanceProducer (arguments passed to new for a given Combinator class)
-#  # @return [Puppet::Pops::Binder::Bindings::Combinator
-#  #
-#  def self.combinator(x, *args)
-#
-#    if x.is_a?(Puppet::Pops::Model::LambdaExpression)
-#      c = Puppet::Pops::Binder::Bindings::CombinatorLambda.new()
-#      c.lambda = x
-#      c
-#    elsif x < Puppet::Pops::Binder::MultibindCombinators::Combinator
-#      c = Puppet::Pops::Binder::Bindings::CombinatorProducer.new()
-#      c.producer = instance_producer(x.name, *args)
-#      c
-#    else
-#      raise ArgumentError, "Cannot create a combinator from a: #{x.class}."
-#    end
-#  end
 end
