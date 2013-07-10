@@ -58,10 +58,6 @@ module InjectorSpecModule
   class ArneAnka < AngryDuck
     attr_reader :label
 
-#    def self.inject(injector, scope, binding, *args)
-#      ArneAnka.new('A Swedish Angry Duck')
-#    end
-
     def initialize()
       @label = 'A Swedish angry cartoon duck'
     end
