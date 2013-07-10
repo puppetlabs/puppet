@@ -1,22 +1,24 @@
 test_name "puppet module generate (agent)"
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
-# functions and variable declarations
-module_user = "user"
-module_name = "hello"
+module_author = "pmtacceptance"
+module_name   = "nginx"
+module_dependencies = []
 
-# Test
+orig_installed_modules = get_installed_modules_for_hosts hosts
+teardown do
+  rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
+end
+
 agents.each do |agent|
 
-  step "Generate #{module_user}-#{module_name} module"
-  on agent, puppet("module generate #{module_user}-#{module_name}")
+  step "Generate #{module_author}-#{module_name} module"
+  on agent, puppet("module generate #{module_author}-#{module_name}")
 
-  step "Check for #{module_user}-#{module_name} scaffolding"
-  on agent,"test -d #{module_user}-#{module_name}"
-  on agent,"test -f #{module_user}-#{module_name}/manifests/init.pp"
+  step "Check for #{module_author}-#{module_name} scaffolding"
+  on agent,"test -f #{module_author}-#{module_name}/manifests/init.pp"
 
-
-  teardown do
-    on agent, "rm -fr #{module_user}-#{module_name}"
-  end
-
+  step "Clean up"
+  on agent,"rm -fr #{module_author}-#{module_name}"
 end
