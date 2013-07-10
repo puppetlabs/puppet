@@ -631,17 +631,9 @@ describe 'Injector' do
       it "should be possible to lookup a concatenated string" do
         scope['duck'] = 'Donald Fauntleroy Duck'
         expr = parser.parse_string('"Hello $duck"').current()
-
-
         bindings.bind.name('the_duck').to(expr)
-
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-
-        injector = injector(binder)
-        injector.lookup(scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
+        injector(lbinder).lookup(scope, 'the_duck').should == 'Hello Donald Fauntleroy Duck'
       end
-
     end
   end
   # TODO: test producer options; multibind priority for array and hash, uniq, flatten etc.
