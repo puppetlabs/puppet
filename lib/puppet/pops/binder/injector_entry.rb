@@ -1,19 +1,18 @@
 # Represents an entry in the injectors internal data.
 #
-# @api private
+# @api public
 #
 class Puppet::Pops::Binder::InjectorEntry
-  # @api private
+  # @return [Object] An opaque object representing the precedence
+  # @api public
   attr_reader :precedence
 
-  # @api private
+  # @return [Puppet::Pops::Binder::Bindings::Binding] The binding for this entry
+  # @api public
   attr_reader :binding
 
   # @api private
   attr_accessor :resolved
-
-#  # @api private
-#  attr_accessor :cached
 
   # @api private
   attr_accessor :cached_producer

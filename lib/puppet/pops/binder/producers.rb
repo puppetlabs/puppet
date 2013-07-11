@@ -41,6 +41,8 @@ module Puppet::Pops::Binder::Producers
   #
   class Producer
     # A Puppet 3 AST Lambda Expression
+    # @api public
+    #
     attr_reader :transformer
 
     # Creates a Producer.
@@ -50,6 +52,7 @@ module Puppet::Pops::Binder::Producers
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       if transformer_lambda = options[:transformer]
@@ -65,6 +68,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
     # @param *args [Object] arguments to custom producers, always empty for implicit productions
     # @return [Object] the produced instance (should never be nil).
+    # @api public
     #
     def produce(scope, *args)
       do_transformation(scope, internal_produce(scope))
@@ -77,6 +81,7 @@ module Puppet::Pops::Binder::Producers
     # @see Puppet::Pops::Binder::ProducerProducer for an example of implementation.
     # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
     # @return [Puppet::Pops::Binder::Producer] the producer to use
+    # @api public
     #
     def producer(scope)
       self
@@ -88,6 +93,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] the scope to use when performing lookup and evaluation
     # @raises [NotImplementedError] this implementation always raises an error
     # @abstract
+    # @api private
     #
     def internal_produce(scope)
       raise NotImplementedError, "Producer-class '#{self.class.name}' should implement #internal_produce(scope)"
@@ -97,6 +103,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] the scope used for evaluation
     # @param produced_value [Object, nil] the produced value (possibly nil)
     # @return [Object] the transformed value if a transformer is defined, else the given `produced_value`
+    # @api private
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
@@ -114,7 +121,12 @@ module Puppet::Pops::Binder::Producers
   end
 
   # Abstract Producer holding a value
+  # @abstract
+  # @api public
+  #
   class AbstractValueProducer < Producer
+
+    # @api public
     attr_reader :value
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -122,7 +134,9 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Model::LambdaExpression, nil] :value (nil) the value to produce
-    def initialize(injector, binding, scope, options)
+    # @api public
+    #
+   def initialize(injector, binding, scope, options)
       super
       # nil is ok here, as an abstract value producer may be used to signal "not found"
       @value = options[:value]
@@ -130,18 +144,24 @@ module Puppet::Pops::Binder::Producers
   end
 
   # Produces the same/singleton value on each production
+  # @api public
+  #
   class SingletonProducer < AbstractValueProducer
     protected
 
+    # @api private
     def internal_produce(scope)
       value()
     end
   end
 
   # Produces a deep clone of its value on each production.
+  # @api public
+  #
   class DeepCloningProducer < AbstractValueProducer
     protected
 
+    # @api private
     def internal_produce(scope)
       case value
       when Integer, Float, TrueClass, FalseClass, Symbol
@@ -157,15 +177,23 @@ module Puppet::Pops::Binder::Producers
   end
 
   # This abstract producer class remembers the injector and binding.
+  # @abstract
+  # @api public
   #
   class AbstractArgumentedProducer < Producer
+
+    # @api public
     attr_reader :injector
+
+    # @api public
     attr_reader :binding
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
+    # @api public
+    #
     def initialize(injector, binding, scope, options)
       super
       @injector = injector
@@ -173,8 +201,13 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # @api public
   class InstantiatingProducer < AbstractArgumentedProducer
+
+    # @api public
     attr_reader :the_class
+
+    # @api public
     attr_reader :init_args
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -183,6 +216,7 @@ module Puppet::Pops::Binder::Producers
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [String] :class_name The name of the class to create instance of
     # @option options [Array<Object>] :init_args ([]) Optional arguments to class constructor
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       # Better do this, even if a transformation of a created instance is kind of an odd thing to do, one can imagine
@@ -200,6 +234,7 @@ module Puppet::Pops::Binder::Producers
 
     # Performs initialization the same way as Assisted Inject does (but handle arguments to
     # constructor)
+    # @api private
     #
     def internal_produce(scope)
       result = nil
@@ -220,7 +255,9 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # @api public
   class FirstFoundProducer < Producer
+    # @api public
     attr_reader :producers
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -228,6 +265,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Array<Puppet::Pops::Binder::Producers::Producer>] :producers list of producers to consult. Required.
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       super
@@ -238,6 +276,7 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
+    # @api private
     def internal_produce(scope)
       # return the first produced value that is non-nil (unfortunately there is no such enumerable method)
       producers.reduce(nil) {|memo, p| break memo unless memo.nil?; p.produce(scope)}
@@ -246,9 +285,12 @@ module Puppet::Pops::Binder::Producers
 
   # Evaluates a Puppet Expression and returns the result.
   # This is typically used for strings with interpolated expressions.
+  # @api public
   #
   class EvaluatingProducer < Producer
     # A Puppet 3 AST Expression
+    # @api public
+    #
     attr_reader :expression
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -256,6 +298,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Array<Puppet::Pops::Model::Expression>] :expression The expression to evaluate
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       super
@@ -264,6 +307,7 @@ module Puppet::Pops::Binder::Producers
       @expression = Puppet::Pops::Model::AstTransformer.new().transform(expr)
     end
 
+    # @api private
     def internal_produce(scope)
       begin
         # Must CHEAT as the expressions must have access to array/hash concat/merge
@@ -277,8 +321,13 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # @api public
   class LookupProducer < AbstractArgumentedProducer
+
+    # @api public
     attr_reader :type
+
+    # @api public
     attr_reader :name
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -287,6 +336,7 @@ module Puppet::Pops::Binder::Producers
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
+    # @api public
     #
     def initialize(injector, binder, scope, options)
       super
@@ -297,12 +347,16 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
+    # @api private
     def internal_produce(scope)
       injector.lookup_type(scope, type, name)
     end
   end
 
+  # @api public
   class LookupKeyProducer < LookupProducer
+
+    # @api public
     attr_reader :key
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -312,6 +366,8 @@ module Puppet::Pops::Binder::Producers
     # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
     # @option options [Puppet::Pops::Types::PObjectType] :key The key to lookup in the hash
+    # @api public
+    #
     def initialize(injector, binder, scope, options)
       super
       @key = options[:key]
@@ -320,6 +376,7 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
+    # @api private
     def internal_produce(scope)
 
       result = super
@@ -329,8 +386,11 @@ module Puppet::Pops::Binder::Producers
 
   # Produces the given producer, then uses that producer.
   # @see ProducerProducer for the non singleton version
+  # @api public
   #
   class SingletonProducerProducer < Producer
+
+    # @api public
     attr_reader :value_producer
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -338,6 +398,7 @@ module Puppet::Pops::Binder::Producers
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Model::LambdaExpression] :producer_producer a producer of a value producer (required)
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       super
@@ -348,6 +409,7 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
+    # @api private
     def internal_produce(scope)
       value_producer.produce(scope)
     end
@@ -363,7 +425,11 @@ module Puppet::Pops::Binder::Producers
   # @api public
   #
   class ProducerProducer < Producer
+
+    # @api public
     attr_reader :producer_producer
+
+    # @api public
     attr_reader :value_producer
 
     # Creates  new ProducerProducer given a producer.
@@ -398,7 +464,7 @@ module Puppet::Pops::Binder::Producers
     protected
 
     # Produces a value after having created an instance of the wrapped producer (if not already created).
-    # @api public
+    # @api private
     #
     def internal_produce(scope, *args)
       producer() unless value_producer
@@ -409,6 +475,7 @@ module Puppet::Pops::Binder::Producers
   # This type of producer should only be created by the Injector.
   # 
   # @api private
+  #
   class AssistedInjectProducer < Producer
     # An Assisted Inject Producer is created when a lookup is made of a type that is
     # not bound. It does not support a transformer lambda. 
@@ -428,6 +495,7 @@ module Puppet::Pops::Binder::Producers
       @inst
     end
 
+    # @api private
     def producer(scope, *args)
       @inst = nil
       # A class :inject method wins over an instance :initialize if it is present, unless a more specific zero args
@@ -452,6 +520,8 @@ module Puppet::Pops::Binder::Producers
 
   # Abstract base class for multibind producers.
   # Is suitable as base class for custom implementations of multibind producers.
+  # @abstract
+  # @api public
   #
   class MultibindProducer < AbstractArgumentedProducer
     attr_reader :contributions_key
@@ -471,6 +541,8 @@ module Puppet::Pops::Binder::Producers
     # @param expected [Array<Puppet::Pops::Types::PObjectType>, Puppet::Pops::Types::PObjectType] expected type or types
     # @param actual [Object, Puppet::Pops::Types::PObjectType> the actual value (or its type)
     # @return [String] a formatted string for inclusion as detail in an error message
+    # @api private
+    #
     def type_error_detail(expected, actual)
       tc = injector.type_calculator
       expected = [expected] unless expected.is_a?(Array)
@@ -498,12 +570,26 @@ module Puppet::Pops::Binder::Producers
   #   compliant without also using the `:flatten` option, and a type error will be raised. For an array with relaxed typing
   #   i.e. Array[Data], it it valid to produce a result such as `['a', ['b', 'c'], 'd']` and no flattening is required
   #   and no error is raised (but using the array needs to be aware of potential array, non-array entries.
-  #   The use of options `:flatten` and `:flatten_level
+  #   The use of the option `:flatten` controls how the result is flattened.
+  #
+  # @api public
   #
   class ArrayMultibindProducer < MultibindProducer
+
+    # @return [Boolean] whether the result should be made contain unique (non-equal) entries or not
+    # @api public
     attr_reader :uniq
+
+    # @return [Boolean, Integer] If result should be flattened (true), or not (false), or flattened to given level (0 = none, -1 = all)
+    # @api public
     attr_reader :flatten
+
+    # @return [Boolean] whether priority should be considered for named contributions
+    # @api public
     attr_reader :priority_on_named
+
+    # @return [Boolean] whether priority should be considered for unnamed contributions
+    # @api public
     attr_reader :priority_on_unnamed
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
@@ -515,6 +601,7 @@ module Puppet::Pops::Binder::Producers
     #   are flattened. May be set to an Integer value to indicate the level of recursion (-1 is endless, 0 is none).
     # @option options [Boolean] :priority_on_named (true) if highest precedented named element should win or if all should be included
     # @option options [Boolean] :priority_on_unnamed (false) if highest precedented unnamed element should win or if all should be included
+    # @api public
     #
     def initialize(injector, binding, scope, options)
       super
@@ -532,12 +619,13 @@ module Puppet::Pops::Binder::Producers
       when NilClass
         @flatten = nil
       else
-        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten_level.is_a?(Integer)
+        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten.is_a?(Integer)
       end
     end
 
     protected
 
+    # @api private
     def internal_produce(scope)
       seen = {}
       included_keys = []
@@ -577,6 +665,7 @@ module Puppet::Pops::Binder::Producers
       result
     end
 
+    # @api private
     def assert_type(binding, tc, value)
       infered = tc.infer(value)
       unless tc.assignable?(binding.type.element_type, infered) || tc.assignable?(binding.type, infered)
@@ -586,9 +675,19 @@ module Puppet::Pops::Binder::Producers
     end
   end
 
+  # @api public
   class HashMultibindProducer < MultibindProducer
+
+    # @return [Symbol] One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
+    # @api public
     attr_reader :conflict_resolution
+
+    # @return [Boolean]
+    # @api public
     attr_reader :uniq
+
+    # @return [Boolean, Integer] Flatten all if true, or none if false, or to given level (0 = none, -1 = all)
+    # @api public
     attr_reader :flatten
 
     # The hash multibind producer provides options to control conflict resolution.
@@ -599,17 +698,19 @@ module Puppet::Pops::Binder::Producers
     # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @options options [Symbol, String] :conflict_resolution (:priority) One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
-    #   - `ignore` the first found highest priority contribution is used, the rest are ignored
-    #   - `error` any duplicate key is an error
-    #   - `append` element type must be compatible with Array, makes elements be arrays and appends all found
-    #   - `merge` element type must be compatible with hash, merges hashes with retention of highest priority hash content
-    #   - `priority` the first found highet priority contribution is used, duplicates with same priority raises and error, the rest are
-    #     ignored.
-    # @options options [Boolean] :flatten (false) If appended should be flattened
-    # @options options [Boolean] :uniq (false) If appended result should be flattened
+    # @option options [Symbol, String] :conflict_resolution (:priority) One of `:error`, `:merge`, `:append`, `:priority`, `:ignore`
+    #   <ul><li> `ignore` the first found highest priority contribution is used, the rest are ignored</li>
+    #   <li>`error` any duplicate key is an error</li>
+    #   <li>`append` element type must be compatible with Array, makes elements be arrays and appends all found</li>
+    #   <li>`merge` element type must be compatible with hash, merges hashes with retention of highest priority hash content</li>
+    #   <li>`priority` the first found highet priority contribution is used, duplicates with same priority raises and error, the rest are
+    #     ignored.</li></ul>
+    # @option options [Boolean, Integer] :flatten (false) If appended should be flattened. Also see {#flatten}.
+    # @option options [Boolean] :uniq (false) If appended result should be flattened
     #
-    def initialize(injector, binding, scope, options)
+    # @api public
+    #
+  def initialize(injector, binding, scope, options)
       super
       @conflict_resolution = options[:conflict_resolution].nil? ? :priority : options[:conflict_resolution]
       @uniq = !!options[:uniq]
@@ -628,7 +729,7 @@ module Puppet::Pops::Binder::Producers
       when NilClass
         @flatten = nil
       else
-        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten_level.is_a?(Integer)
+        raise ArgumentError, "Option :flatten must be nil, Boolean, or an integer value" unless @flatten.is_a?(Integer)
       end
 
       if uniq || flatten || conflict_resolution.to_s == 'append'
@@ -646,6 +747,7 @@ module Puppet::Pops::Binder::Producers
 
     protected
 
+    # @api private
     def internal_produce(scope)
       seen = {}
       included_entries = []
@@ -697,6 +799,7 @@ module Puppet::Pops::Binder::Producers
       result
     end
 
+    # @api private
     def merge(result, name, higher, lower)
       case conflict_resolution.to_s
       when 'append'
@@ -714,6 +817,7 @@ module Puppet::Pops::Binder::Producers
       end
     end
 
+    # @api private
     def assert_type(binding, tc, key, value)
       unless tc.instance?(binding.type.key_type, key)
         raise ArgumentError, ["Type Error: key contribution to #{binding.name}['#{key}'] ",
