@@ -101,10 +101,8 @@ class Puppet::Parser::TypeLoader
     # behavior) only load files from the first module of a given name.  E.g.,
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
-      Find.find(mod.manifests) do |path|
-        if path =~ /\.pp$/ or path =~ /\.rb$/
-          import(path)
-        end
+      mod.all_manifests.each do |file|
+        import(file)
       end
     end
   end
@@ -119,15 +117,14 @@ class Puppet::Parser::TypeLoader
   # Try to load the object with the given fully qualified name.
   def try_load_fqname(type, fqname)
     return nil if fqname == "" # special-case main.
-    name2files(fqname).each do |filename|
+    files_to_try_for(fqname).each do |filename|
       begin
         imported_types = import(filename)
         if result = imported_types.find { |t| t.type == type and t.name == fqname }
           Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
           return result
         end
-      rescue Puppet::ImportError
-        # We couldn't load the item
+      rescue Puppet::ImportError => detail
         # I'm not convienced we should just drop these errors, but this
         # preserves existing behaviours.
       end
@@ -138,7 +135,6 @@ class Puppet::Parser::TypeLoader
 
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
-#    parser = Puppet::Parser::Parser.new(environment)
     parser = Puppet::Parser::ParserFactory.parser(environment)
     parser.file = file
     return parser.parse
@@ -148,13 +144,17 @@ class Puppet::Parser::TypeLoader
 
   # Return a list of all file basenames that should be tried in order
   # to load the object with the given fully qualified name.
-  def name2files(fqname)
-    result = []
-    ary = fqname.split("::")
-    while ary.length > 0
-      result << ary.join(File::SEPARATOR)
-      ary.pop
+  def files_to_try_for(qualified_name)
+    qualified_name.split('::').inject([]) do |paths, name|
+      add_path_for_name(paths, name)
     end
-    return result
+  end
+
+  def add_path_for_name(paths, name)
+    if paths.empty?
+      [name]
+    else
+      paths.unshift(File.join(paths.first, name))
+    end
   end
 end
