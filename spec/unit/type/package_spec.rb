@@ -74,7 +74,7 @@ describe Puppet::Type.type(:package) do
 
     it "should not support :purged as a value to :ensure if the provider does not have the :purgeable feature" do
       @provider.expects(:satisfies?).with([:purgeable]).returns(false)
-      proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged) }.to raise_error(Puppet::Error)
     end
 
     it "should support :latest as a value to :ensure if the provider has the :upgradeable feature" do
@@ -84,7 +84,7 @@ describe Puppet::Type.type(:package) do
 
     it "should not support :latest as a value to :ensure if the provider does not have the :upgradeable feature" do
       @provider.expects(:satisfies?).with([:upgradeable]).returns(false)
-      proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest) }.to raise_error(Puppet::Error)
     end
 
     it "should support version numbers as a value to :ensure if the provider has the :versionable feature" do
@@ -94,11 +94,11 @@ describe Puppet::Type.type(:package) do
 
     it "should not support version numbers as a value to :ensure if the provider does not have the :versionable feature" do
       @provider.expects(:satisfies?).with([:versionable]).returns(false)
-      proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0") }.to raise_error(Puppet::Error)
     end
 
     it "should accept any string as an argument to :source" do
-      proc { Puppet::Type.type(:package).new(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :source => "stuff") }.to_not raise_error
     end
   end
 

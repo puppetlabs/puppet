@@ -1124,7 +1124,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        expect { file.write :NOTUSED }.to_not raise_error(Puppet::Error)
+        expect { file.write :NOTUSED }.to_not raise_error
       end
     end
   end

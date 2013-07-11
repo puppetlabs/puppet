@@ -11,7 +11,7 @@ end
 
 describe Puppet::FileServing::Mount::File do
   it "should be invalid if it does not have a path" do
-    lambda { Puppet::FileServing::Mount::File.new("foo").validate }.should raise_error(ArgumentError)
+    expect { Puppet::FileServing::Mount::File.new("foo").validate }.to raise_error(ArgumentError)
   end
 
   it "should be valid if it has a path" do
@@ -19,7 +19,7 @@ describe Puppet::FileServing::Mount::File do
     FileTest.stubs(:readable?).returns true
     mount = Puppet::FileServing::Mount::File.new("foo")
     mount.path = "/foo"
-    lambda { mount.validate }.should_not raise_error(ArgumentError)
+    expect { mount.validate }.not_to raise_error
   end
 
   describe "when setting the path" do
@@ -30,13 +30,13 @@ describe Puppet::FileServing::Mount::File do
 
     it "should fail if the path is not a directory" do
       FileTest.expects(:directory?).returns(false)
-      proc { @mount.path = @dir }.should raise_error(ArgumentError)
+      expect { @mount.path = @dir }.to raise_error(ArgumentError)
     end
 
     it "should fail if the path is not readable" do
       FileTest.expects(:directory?).returns(true)
       FileTest.expects(:readable?).returns(false)
-      proc { @mount.path = @dir }.should raise_error(ArgumentError)
+      expect { @mount.path = @dir }.to raise_error(ArgumentError)
     end
   end
 

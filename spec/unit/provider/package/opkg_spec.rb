@@ -82,7 +82,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
       context "with invalid URL for opkg" do
         before do
           # Emulate the `opkg` command returning a non-zero exit value
-          Puppet::Util::Execution.stubs(:execute).raises Puppet::ExecutionFailure
+          Puppet::Util::Execution.stubs(:execute).raises Puppet::ExecutionFailure, 'oops'
         end
 
         context "puppet://server/whatever" do
@@ -91,7 +91,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
           end
 
           it "should fail" do
-            expect { provider.install }.to raise_error, Puppet::ExecutionFailure
+            expect { provider.install }.to raise_error Puppet::ExecutionFailure
           end
         end
 
@@ -101,7 +101,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
           end
 
           it "should fail" do
-            expect { provider.install }.to raise_error, Puppet::ExecutionFailure
+            expect { provider.install }.to raise_error Puppet::ExecutionFailure
           end
         end
       end
