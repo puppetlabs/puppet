@@ -3,6 +3,8 @@ module Puppet::Pops::Binder::Hiera2
   # Class holding the Hiera2 Configuration
   # The configuration is obtained from the file 'hiera_config.yaml'
   # that must reside in the root directory of the module
+  # @api public
+  #
   class Puppet::Pops::Binder::Hiera2::Config
 
     # Returns a list of configured backends.
@@ -15,12 +17,13 @@ module Puppet::Pops::Binder::Hiera2
     # @return [String] An absolute path
     attr_reader :module_dir
 
-    # The bindings hierarchy is a hash of categorizations where the
-    # array for each category has exactly two elements - the category
-    # value, and the path that is later used by the backend to read
-    # the bindings for the category
+    # The bindings hierarchy is an array of categorizations where the
+    # array for each category has exactly three elements - the categorization name,
+    # category value, and the path that is later used by the backend to read
+    # the bindings for that category
     #
-    # @return [Hash<String,Array<String>>]
+    # @return [Array<Array(String, String, String)>]
+    # @api public
     attr_reader :hierarchy
 
     # Creates a new Config. The configuration is loaded from the file 'hiera_config.yaml' which
@@ -28,6 +31,8 @@ module Puppet::Pops::Binder::Hiera2
     #
     # @param module_dir [String] The module directory
     # @param diagnostics [DiagnosticProducer] collector of diagnostics
+    # @api public
+    #
     def initialize(module_dir, diagnostics)
       @module_dir = module_dir
       config_file = File.join(module_dir, 'hiera_config.yaml')
@@ -44,7 +49,7 @@ module Puppet::Pops::Binder::Hiera2
       rescue ::SyntaxError => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end
-      @hierarchy ||= {}
+      @hierarchy ||= []
       @backends ||= []
     end
 

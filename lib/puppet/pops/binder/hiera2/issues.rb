@@ -16,8 +16,8 @@ module Puppet::Pops::Binder::Hiera2::Issues
     "The configuration file '#{semantic}' contains no backends"
   end
 
-  CATEGORY_MUST_BE_TWO_ELEMENT_ARRAY = issue :CATEGORY_MUST_BE_TWO_ELEMENT_ARRAY do
-    "The configuration file '#{semantic}' has a malformed hierarchy (should consist of keys with two element arrays)"
+  CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY = issue :CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY do
+    "The configuration file '#{semantic}' has a malformed hierarchy (should consist of arrays with three string entries)"
   end
 
   CONFIG_FILE_NOT_FOUND = issue :CONFIG_FILE_NOT_FOUND do

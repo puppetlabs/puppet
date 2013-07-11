@@ -370,6 +370,22 @@ class Puppet::Pops::Binder::BindingsFactory
     end
   end
 
+  # Produces a ContributedBindings
+  # @param name [String] the name of the contributed bindings (for human use in messages/logs only)
+  # @param named_bindings [Puppet::Pops::Binder::Bindings::NamedBindings, Array<Puppet::Pops::Binder::Bindings::NamedBindings>] the
+  #   named bindings to include
+  # @parm effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] the contributors opinion about categorization
+  #   this is used to ensure consistent use of categories.
+  #
+  def self.contributed_bindings(name, named_bindings, effective_categories)
+    cb = Puppet::Pops::Binder::Bindings::ContributedBindings.new()
+    cb.name = name
+    named_bindings = [named_bindings] unless named_bindings.is_a?(Array)
+    named_bindings.each {|b| cb.addBindings(b) }
+    cb.effective_categories = effective_categories
+    cb
+  end
+
   # Creates a named binding container, the top bindings model object.
   # The created container is wrapped in a BindingsContainerBuilder for further detailing.
   # Unwrap the built result when done.

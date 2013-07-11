@@ -36,5 +36,7 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   def label_LayeredBindings o                   ; "Layered Bindings"                             end
   def label_NamedLayer o                        ; "Layer '#{o.name}'"                            end
   def label_EffectiveCategories o               ; "Effective Categories"                         end
+  def label_ContributedBindings o               ; "Contributed Bindings"                         end
+  def label_NamedArgument o                     ; "Named Argument"                               end
 
 end

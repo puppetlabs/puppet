@@ -1,7 +1,5 @@
 hierarchy:
-  node:
-    - ${node}
-    - ${node}
+  - ['node', '${node}', '${node}' ]
 
 backends:
   - yaml

@@ -26,12 +26,12 @@ module Puppet::Pops::Binder::Hiera2
     private
 
     def check_hierarchy(hierarchy, config_file)
-      if !hierarchy.is_a?(Hash) || hierarchy.empty?
+      if !hierarchy.is_a?(Array) || hierarchy.empty?
         @diagnostics.accept(Issues::MISSING_HIERARCHY, config_file)
       else
-        hierarchy.each_pair do |key,value|
-          unless value.is_a?(Array) && value.length() == 2
-            @diagnostics.accept(Issues::CATEGORY_MUST_BE_TWO_ELEMENT_ARRAY, config_file, { :key => key })
+        hierarchy.each do |value|
+          unless value.is_a?(Array) && value.length() == 3
+            @diagnostics.accept(Issues::CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY, config_file)
           end
         end
       end
