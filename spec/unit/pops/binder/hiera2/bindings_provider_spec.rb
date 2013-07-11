@@ -22,16 +22,20 @@ describe 'The hiera2 bindings provider' do
     let(:module_dir) { config_dir('ok') }
     let(:node_binder) {  b = _Binder::Binder.new(); b.define_categories(_Binder::BindingsFactory.categories(['node', node])); b }
     let(:bindings) { _Hiera2::BindingsProvider.new(module_dir, acceptor).load_bindings({'node' => node}) }
-    let(:test_layer_with_bindings) { _Binder::BindingsFactory.named_layer('test-layer', bindings) }
+    let(:test_layer_with_bindings) { bindings }
 
     it 'should load and validate OK bindings' do
       _Binder::BindingsValidatorFactory.new().validator(acceptor).validate(bindings)
       acceptor.errors_or_warnings?.should() == false
     end
 
+    it 'should contain the expected effective categories' do
+      bindings.effective_categories.categories.collect {|c| [c.categorization, c.value] }.should == [['node', 'node.example.com']]
+    end
+
     it 'should produce the expected bindings model' do
-      bindings.class.should() == _Bindings::NamedBindings
-      bindings.bindings.each do |cat|
+      bindings.class.should() == _Bindings::ContributedBindings
+      bindings.bindings.bindings.each do |cat|
         cat.class.should() == _Bindings::CategorizedBindings
         cat.predicates.length.should() == 1
         cat.predicates[0].categorization.should() == 'node'

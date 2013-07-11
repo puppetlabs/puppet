@@ -199,12 +199,22 @@ module Puppet::Pops::Binder::Bindings
     contains_many_uni 'layers', NamedLayer
   end
 
-
-  # A list of categroies consisting of categroization name and category value (i.e. the *state of the request*)
+  # A list of categories consisting of categroization name and category value (i.e. the *state of the request*)
   # @api public
   #
   class EffectiveCategories < Puppet::Pops::Model::PopsObject
     # The order is from highest precedence to lowest
     contains_many_uni 'categories', Category
+  end
+
+  # ContributedBindings is a named container of one or more NamedBindings.
+  # The intent is that a bindings producer returns a ContributedBindings which in addition to the bindings
+  # may optionally contain provider's opinion about the precedence of categories, and their category values.
+  # This enables merging of bindings, and validation of consistency.
+  #
+  # @api public
+  #
+  class ContributedBindings < NamedLayer
+    contains_one_uni 'effective_categories', EffectiveCategories
   end
 end

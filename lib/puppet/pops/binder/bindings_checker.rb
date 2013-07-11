@@ -85,6 +85,10 @@ class Puppet::Pops::Binder::BindingsChecker
     check_Bindings(b)
   end
 
+  # @api private
+  def check_EffectiveCategories(ec)
+  end
+
   # Check that the layer has at least one binding
   # @api private
   def check_NamedLayer(l)
