@@ -64,14 +64,6 @@ class Puppet::Provider
     # @return [???] The source is WHAT?
     attr_writer :source
 
-    # @todo Original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_
-    #   Is this really needed? The comment about backwards compatibility was made in 2007.
-    #
-    # @return [???] A model kept for backwards compatibility.
-    # @api private
-    # @deprecated This attribute is available for backwards compatibility reasons.
-    attr_reader :model
-
     # @todo What is this type? A reference to a Puppet::Type ?
     # @return [Puppet::Type] the resource type (that this provider is ... WHAT?)
     #
@@ -98,11 +90,6 @@ class Puppet::Provider
     #
     attr_writer :doc
   end
-
-  # @todo original = _"LAK 2007-05-09: Keep the model stuff around for backward compatibility"_, why is it
-  #   both here (instance) and at class level? Is this a different model?
-  # @return [???] model is WHAT?
-  attr_reader :model
 
   # @return [???] This resource is what? Is an instance of a provider attached to one particular Puppet::Resource?
   #
@@ -508,7 +495,6 @@ class Puppet::Provider
   # Clears this provider instance to allow GC to clean up.
   def clear
     @resource = nil
-    @model = nil
   end
 
   # (see command)
@@ -540,8 +526,6 @@ class Puppet::Provider
       @property_hash = resource
     elsif resource
       @resource = resource
-      # LAK 2007-05-09: Keep the model stuff around for backward compatibility
-      @model = resource
       @property_hash = {}
     else
       @property_hash = {}
