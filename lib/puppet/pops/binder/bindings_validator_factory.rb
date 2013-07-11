@@ -1,4 +1,5 @@
 # Configures validation suitable for the bindings model
+# @api public
 #
 class Puppet::Pops::Binder::BindingsValidatorFactory < Puppet::Pops::Validation::Factory
   Issues = Puppet::Pops::Binder::BinderIssues

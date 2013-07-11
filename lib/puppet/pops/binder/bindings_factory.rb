@@ -87,74 +87,89 @@ class Puppet::Pops::Binder::BindingsFactory
   # Builds a Binding via cconvenience methods.
   #
   # @api public
+  #
   class BindingsBuilder
     attr_reader :model
 
+    # @api public
     def initialize(binding)
       @model = binding
       data()
     end
 
+    # @api public
     def name(name)
       @model.name = name
       self
     end
 
+    # @api public
     def type(type)
       @model.type = type
       self
     end
 
+    # @api public
     def integer()
       @model.type = Puppet::Pops::Types::TypeFactory.integer()
       self
     end
 
+    # @api public
     def float()
       @model.type = Puppet::Pops::Types::TypeFactory.float()
       self
     end
 
+    # @api public
     def boolean()
       @model.type = Puppet::Pops::Types::TypeFactory.boolean()
       self
     end
 
+    # @api public
     def string()
       @model.type = Puppet::Pops::Types::TypeFactory.string()
       self
     end
 
+    # @api public
     def pattern()
       @model.type = Puppet::Pops::Types::TypeFactory.pattern()
       self
     end
 
+    # @api public
     def literal()
       @model.type = Puppet::Pops::Types::TypeFactory.literal()
       self
     end
 
+    # @api public
     def data()
       @model.type = Puppet::Pops::Types::TypeFactory.data()
       self
     end
 
+    # @api public
     def array_of_data()
       @model.type = Puppet::Pops::Types::TypeFactory.array_of_data()
       self
     end
 
+    # @api public
     def array_of(t)
       @model.type = Puppet::Pops::Types::TypeFactory.array_of(t)
       self
     end
 
+    # @api public
     def hash_of_data()
       @model.type = Puppet::Pops::Types::TypeFactory.hash_of_data()
       self
     end
 
+    # @api public
     def hash_of(t)
       @model.type = Puppet::Pops::Types::TypeFactory.hash_of(t)
       self
@@ -167,6 +182,8 @@ class Puppet::Pops::Binder::BindingsFactory
     #   Instantiating producer
     # @overload to(a_producer_descriptor)
     #   a given producer
+    # @api public
+    #
     def to(producer, *args)
       case producer
       when Class
@@ -193,6 +210,8 @@ class Puppet::Pops::Binder::BindingsFactory
     # @overload to_producer(a_producer_descriptor)
     #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
     #      producing Puppet::Pops::Binder::Producers::Producer
+    #
+    # @api public
     #
     def to_producer(producer, *args)
       case producer
@@ -221,6 +240,8 @@ class Puppet::Pops::Binder::BindingsFactory
     # @overload to_producer(a_producer_descriptor)
     #   @param a_producer_descriptor [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a descriptor
     #      producing Puppet::Pops::Binder::Producers::Producer
+    #
+    # @api public
     #
     def to_producer_series(producer, *args)
       case producer
@@ -252,6 +273,8 @@ class Puppet::Pops::Binder::BindingsFactory
     # @overload toto_series_of(a_producer_descriptor)
     #   a given producer
     #
+    # @api public
+    #
     def to_series_of(producer)
       case producer
       when Class
@@ -271,6 +294,7 @@ class Puppet::Pops::Binder::BindingsFactory
     # to a lookup of another key
     # @overload to_lookup_of(type, name)
     # @overload to_lookup_of(name)
+    # @api public
     #
     def to_lookup_of(type, name=nil)
       unless name
@@ -284,6 +308,7 @@ class Puppet::Pops::Binder::BindingsFactory
     # to a lookup of another key
     # @overload to_lookup_of(type, name)
     # @overload to_lookup_of(name)
+    # @api public
     #
     def to_hash_lookup_of(type, name, key)
       @model.producer = Puppet::Pops::Binder::BindingsFactory.hash_lookup_producer(type, name, key)
@@ -292,12 +317,13 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # to first found lookup of another key
     # @param list_of_lookups [Array] array of arrays [type name], or just name (implies data)
-    # @example 
+    # @example
     #   binder.bind().name('foo').to_first_found(['fee', 'fum', 'extended-bar'])
     #   binder.bind().name('foo').to_first_found([
     #     [TypeFactory.ruby(ThisClass), 'fee'],
     #     [TypeFactory.ruby(ThatClass), 'fum'],
     #     'extended-bar'])
+    # @api public
     #
     def to_first_found(list_of_lookups)
       producers = list_of_lookups.collect do |entry|
@@ -318,6 +344,7 @@ class Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # @api public
     def producer_options(options)
       options.each do |k, v|
         arg = Puppet::Pops::Binder::Bindings::NamedArgument.new()
@@ -329,8 +356,11 @@ class Puppet::Pops::Binder::BindingsFactory
     end
   end
 
-
+  # @api public
   class MultibindingsBuilder < BindingsBuilder
+    # Constraints type to be one of {Puppet::Pops::Types::PArrayType PArrayType}, or {Puppet::Pops::Types:PHashType PHashType}.
+    # @raise [ArgumentError] if type constraint is not met.
+    # @api public
     def type(type)
       unless type.class == Puppet::Pops::Types::PArrayType || type.class == Puppet::Pops::Types::PHashType
         raise ArgumentError, "Wrong type; only PArrayType, or PHashType allowed, got '#{type.to_s}'"
@@ -338,16 +368,12 @@ class Puppet::Pops::Binder::BindingsFactory
       @model.type = type
       self
     end
-
-    def combinator(x)
-      @model.combinator = Puppet::Pops::Binder::BindingsFactory::combinator(x)
-      self
-    end
   end
 
   # Creates a named binding container, the top bindings model object.
   # The created container is wrapped in a BindingsContainerBuilder for further detailing.
   # Unwrap the built result when done.
+  # @api public
   #
   def self.named_bindings(name)
     binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
@@ -356,6 +382,8 @@ class Puppet::Pops::Binder::BindingsFactory
   end
 
   # Creates a literal producer
+  # @api public
+  #
   def self.literal_producer(value)
     producer = Puppet::Pops::Binder::Bindings::ConstantProducerDescriptor.new()
     producer.value = value
@@ -363,6 +391,8 @@ class Puppet::Pops::Binder::BindingsFactory
   end
 
   # Creates a literal producer
+  # @api public
+  #
   def self.non_caching_producer(producer)
     p = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
     p.producer = producer
@@ -370,12 +400,16 @@ class Puppet::Pops::Binder::BindingsFactory
   end
 
   # Creates a producer producer
+  # @api public
+  #
   def self.producer_producer(producer)
     p = Puppet::Pops::Binder::Bindings::ProducerProducerDescriptor.new()
     p.producer = producer
     p
   end
 
+  # @api public
+  #
   def self.instance_producer(class_name, *args)
     p = Puppet::Pops::Binder::Bindings::InstanceProducerDescriptor.new()
     p.class_name = class_name
@@ -383,6 +417,7 @@ class Puppet::Pops::Binder::BindingsFactory
     p
   end
 
+  # @api public
   def self.lookup_producer(type, name)
     p = Puppet::Pops::Binder::Bindings::LookupProducerDescriptor.new()
     p.type = type
@@ -390,6 +425,7 @@ class Puppet::Pops::Binder::BindingsFactory
     p
   end
 
+  # @api public
   def self.hash_lookup_producer(type, name, key)
     p = Puppet::Pops::Binder::Bindings::HashLookupProducerDescriptor.new()
     p.type = type
@@ -398,12 +434,14 @@ class Puppet::Pops::Binder::BindingsFactory
     p
   end
 
+  # @api public
   def self.first_found_producer(producers)
     p = Puppet::Pops::Binder::Bindings::FirstFoundProducerDescriptor.new()
     producers.each {|p2| p.addProducers(p2) }
     p
   end
 
+  # @api public
   def self.evaluating_producer(expression)
     p = Puppet::Pops::Binder::Bindings::EvaluatingProducerDescriptor.new()
     p.expression = expression
@@ -411,6 +449,7 @@ class Puppet::Pops::Binder::BindingsFactory
   end
 
   # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
+  # @api public
   #
   def self.categories(tuple_array)
     result = Puppet::Pops::Binder::Bindings::EffectiveCategories.new()
@@ -423,6 +462,7 @@ class Puppet::Pops::Binder::BindingsFactory
     result
   end
 
+  # @api public
   def self.named_layer(name, *bindings)
     result = Puppet::Pops::Binder::Bindings::NamedLayer.new()
     result.name = name
@@ -430,6 +470,7 @@ class Puppet::Pops::Binder::BindingsFactory
     result
   end
 
+  # @api public
   def self.layered_bindings(*named_layers)
     result = Puppet::Pops::Binder::Bindings::LayeredBindings.new()
     named_layers.each {|b| result.addLayers(b) }

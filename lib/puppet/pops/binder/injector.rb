@@ -65,7 +65,7 @@
 #
 #   injector.lookup(scope, Duck)
 #   # Produces a Duck named 'Donald Duck' or named after the binding 'default-duck-name' (and with similar treatment of
-#   # year_of_birth
+#   # year_of_birth).
 # @see Puppet::Pops::Binder::Producers::AssistedInjectProducer for more details on assisted injection
 #
 # Access to key factory and type calculator
@@ -86,10 +86,10 @@ class Puppet::Pops::Binder::Injector
 
   Producers = Puppet::Pops::Binder::Producers
 
-  # An Injector is initialized with a configured Binder.
+  # An Injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}.
   #
   # @param configured_binder [Puppet::Pops::Binder::Binder] the configured binder containing effective bindings
-  # @raises ArgumentError if the given binder is not fully configured
+  # @raise ArgumentError if the given binder is not fully configured
   #
   # @api public
   #
@@ -131,24 +131,23 @@ class Puppet::Pops::Binder::Injector
   #   @param key [Object] an opaque object being the full key
   #
   # @overload lookup(scope, type, name = '')
-  #  (see #lookup_type)
+  #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param type [Puppet::Pops::Types::PObjectType], the type of what to lookup
-  #   @param name [String], the name to use, defaults to empty string (for unnamed)
+  #   @param type [Puppet::Pops::Types::PObjectType] the type of what to lookup
+  #   @param name [String] the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup(scope, name)
-  #  Lookup of Data type with given name.
+  #   Lookup of Data type with given name.
   #   @see #lookup_type
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param name [String], the Data/name to lookup
+  #   @param name [String] the Data/name to lookup
   #
   # @yield [value] passes the looked up value to an optional block and returns what this block returns
-  #   @yieldparam value [Object, nil] the looked up value or nil if nothing was bound
   # @yield [scope, value] passes scope and value to the block and returns what this block returns
-  #   @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
-  #   @yieldparam value [Object, nil] the looked up value or nil if nothing was bound
+  # @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
+  # @yieldparam value [Object, nil] the looked up value or nil if nothing was found
   #
-  # @raises [ArgumentError] if the block has an arity that is not 1 or 2
+  # @raise [ArgumentError] if the block has an arity that is not 1 or 2
   #
   # @api public
   #
@@ -165,7 +164,7 @@ class Puppet::Pops::Binder::Injector
   #   The name may be an empty String (the default), but not nil. The name is required for lookup for subtypes of
   #   `Data`.
   # @return [Object, nil] the looked up bound object, or nil if not found (type conformance with given type is guaranteed)
-  # @raises [ArgumentError] if the produced value does not conform with the given type
+  # @raise [ArgumentError] if the produced value does not conform with the given type
   #
   # @api public
   #
@@ -180,8 +179,8 @@ class Puppet::Pops::Binder::Injector
   # if this is wanted, or use #lookup_type.
   #
   # @param key [Object] lookup of key as produced by the key factory
-  # @return [Object] produced value of type that conforms with bound type (type conformance with key not guaranteed).
-  # @raises [ArgumentError] if the produced value does not conform with the bound type
+  # @return [Object, nil] produced value of type that conforms with bound type (type conformance with key not guaranteed).
+  # @raise [ArgumentError] if the produced value does not conform with the bound type
   #
   # @api public
   #
@@ -202,13 +201,13 @@ class Puppet::Pops::Binder::Injector
   #   @param key [Object] an opaque object being the full key
   #
   # @overload lookup_producer(scope, type, name = '')
-  #  (see #lookup_type)
+  #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param type [Puppet::Pops::Types::PObjectType], the type of what to lookup
   #   @param name [String], the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup_producer(scope, name)
-  #  Lookup of Data type with given name.
+  #   Lookup of Data type with given name.
   #   @see #lookup_type
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
   #   @param name [String], the Data/name to lookup
@@ -216,13 +215,11 @@ class Puppet::Pops::Binder::Injector
   # @return [Puppet::Pops::Binder::Producers::Producer, Object, nil] a producer, or what the optional block returns
   #
   # @yield [producer] passes the looked up producer to an optional block and returns what this block returns
-  #   @yieldparam producer [Puppet::Pops::Binder::Producers::Producer, nil] the looked up producer or nil if nothing was bound
-  #
   # @yield [scope, producer] passes scope and producer to the block and returns what this block returns
-  #   @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
-  #   @yieldparam producer [Object, nil] the looked up producer or nil if nothing was bound
+  # @yieldparam producer [Puppet::Pops::Binder::Producers::Producer, nil] the looked up producer or nil if nothing was bound
+  # @yieldparam scope [Puppet::Parser::Scope] the scope given to lookup
   #
-  # @raises [ArgumentError] if the block has an arity that is not 1 or 2
+  # @raise [ArgumentError] if the block has an arity that is not 1 or 2
   #
   # @api public
   #
@@ -254,7 +251,7 @@ class Puppet::Pops::Binder::Injector
   #
   # @param scope [Puppet::Parser::Scope] the scope to use
   # @param contributions_key [Object] Opaque key as produced by KeyFactory as the contributions key for a multibinding
-  # @return [Array<Puppet::Pops::Binder::InjectorEntry>] the contributions sorted in order of precedence
+  # @return [Array<Puppet::Pops::Binder::InjectorEntry>] the contributions sorted in deecending order of precedence
   #
   # @api public
   #
@@ -263,7 +260,7 @@ class Puppet::Pops::Binder::Injector
   end
 
 # The implementation of the Injector is private.
-# @see Puppet::Pops::Binder::Injector for the public API
+# @see Puppet::Pops::Binder::Injector The public API this module implements.
 # @api private
 #
 module Private

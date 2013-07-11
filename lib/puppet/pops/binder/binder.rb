@@ -5,6 +5,8 @@
 # effective categories (filtering out everything that does not apply, handle overrides, abstract entries etc.).
 # The constructed hash with key => InjectorEntry mappings is obtained as #injector_entries, and is used to initialize an Injector.
 #
+# @api public
+#
 class Puppet::Pops::Binder::Binder
   # This limits the number of available categorizations, including "common".
   # @api private
@@ -59,6 +61,7 @@ class Puppet::Pops::Binder::Binder
   # @raises ArgumentError if this binder is already configured
   # @raises ArgumentError if the argument is not an EffectiveCategories
   # @raises ArgumentError if there is an attempt to redefine a category (non unique, or 'common').
+  # @return [Puppet::Pops::Binder::Binder] self
   # @api public
   #
   def define_categories(effective_categories)
@@ -95,6 +98,7 @@ class Puppet::Pops::Binder::Binder
   # @raises ArgumentError if this binder is already configured
   # @raises ArgumentError if bindings with unresolved 'override' surfaces as an effective binding
   # @raises ArgumentError if the given argument has the wrong type, or if model is invalid in some way
+  # @return [Puppet::Pops::Binder::Binder] self
   # @api public
   #
   def define_layers(layered_bindings)
@@ -180,6 +184,7 @@ class Puppet::Pops::Binder::Binder
     # Produces the key for the given Binding.
     # @param binding [Puppet::Pops::Binder::Bindings::Binding] they binding to get a key for
     # @returns [Object] an opaque key
+    # @api private
     #
     def key(binding)
       k = unless binding.is_a?(Puppet::Pops::Binder::Bindings::MultibindContribution)
@@ -217,14 +222,17 @@ class Puppet::Pops::Binder::Binder
       @effective_prec
     end
 
+    # @api private
     def bind_Binding(o)
       add(o)
     end
 
+    # @api private
     def bind_Bindings(o)
       o.bindings.each {|b| bind(b) }
     end
 
+    # @api private
     def bind_NamedBindings(o)
       # Name is ignored here, it should be introspected when needed (in case of errors)
       o.bindings.each {|b| bind(b) }
