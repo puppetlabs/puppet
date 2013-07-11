@@ -15,6 +15,7 @@
 # Creates a string representation of a type.
 #
 # @api public
+#
 class Puppet::Pops::Types::TypeCalculator
 
   Types = Puppet::Pops::Types
