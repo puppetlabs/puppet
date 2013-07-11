@@ -33,15 +33,15 @@ describe Puppet::Indirector::Request do
     end
 
     it "should support options specified as a hash" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil, :one => :two) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil, :one => :two) }.to_not raise_error
     end
 
     it "should support nil options" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil) }.to_not raise_error
     end
 
     it "should support unspecified options" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil) }.to_not raise_error
     end
 
     it "should use an empty options hash if nil was provided" do
@@ -190,7 +190,7 @@ describe Puppet::Indirector::Request do
     Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns nil
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
-    lambda { request.model }.should raise_error(ArgumentError)
+    expect { request.model }.to raise_error(ArgumentError)
   end
 
   it "should have a method for determining if the request is plural or singular" do
@@ -425,7 +425,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no key is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("key")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should set its indirector name" do
@@ -435,7 +435,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no type is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("type")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should set its method" do
@@ -445,7 +445,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no method is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("method")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should initialize with all attributes and options" do
