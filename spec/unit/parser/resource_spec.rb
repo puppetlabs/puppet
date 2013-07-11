@@ -181,7 +181,7 @@ describe Puppet::Parser::Resource do
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'other'
 
-      lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
+      expect { resource.evaluate }.to raise_error(ArgumentError, /Could not find stage other specified by/)
     end
 
     it "should add edges from the class resources to the parent's stage if no stage is specified" do
@@ -328,19 +328,19 @@ describe Puppet::Parser::Resource do
     end
 
     it "should fail on tags containing '*' characters" do
-      lambda { @resource.tag("bad*tag") }.should raise_error(Puppet::ParseError)
+      expect { @resource.tag("bad*tag") }.to raise_error(Puppet::ParseError)
     end
 
     it "should fail on tags starting with '-' characters" do
-      lambda { @resource.tag("-badtag") }.should raise_error(Puppet::ParseError)
+      expect { @resource.tag("-badtag") }.to raise_error(Puppet::ParseError)
     end
 
     it "should fail on tags containing ' ' characters" do
-      lambda { @resource.tag("bad tag") }.should raise_error(Puppet::ParseError)
+      expect { @resource.tag("bad tag") }.to raise_error(Puppet::ParseError)
     end
 
     it "should allow alpha tags" do
-      lambda { @resource.tag("good_tag") }.should_not raise_error(Puppet::ParseError)
+      expect { @resource.tag("good_tag") }.to_not raise_error
     end
   end
 
@@ -354,7 +354,7 @@ describe Puppet::Parser::Resource do
     it "should fail when the override was not created by a parent class" do
       @override.source = "source2"
       @override.source.expects(:child_of?).with("source1").returns(false)
-      lambda { @resource.merge(@override) }.should raise_error(Puppet::ParseError)
+      expect { @resource.merge(@override) }.to raise_error(Puppet::ParseError)
     end
 
     it "should succeed when the override was created in the current scope" do
@@ -550,7 +550,7 @@ describe Puppet::Parser::Resource do
       resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => stub("source")
       resource[:one] = :two
       resource.expects(:validate_parameter).with(:one).raises ArgumentError
-      lambda { resource.send(:validate) }.should raise_error(Puppet::ParseError)
+      expect { resource.send(:validate) }.to raise_error(Puppet::ParseError)
     end
   end
 
@@ -567,7 +567,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should fail when provided a parameter name but no value" do
-      lambda { @resource.set_parameter("myparam") }.should raise_error(ArgumentError)
+      expect { @resource.set_parameter("myparam") }.to raise_error(ArgumentError)
     end
 
     it "should allow parameters to be set to 'false'" do

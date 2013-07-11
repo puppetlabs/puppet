@@ -167,13 +167,13 @@ describe Puppet::FileServing::Configuration do
     it "should fail if the mount name is not alpha-numeric" do
       request.expects(:key).returns "foo&bar/asdf"
 
-      lambda { config.split_path(request) }.should raise_error(ArgumentError)
+      expect { config.split_path(request) }.to raise_error(ArgumentError)
     end
 
     it "should support dashes in the mount name" do
       request.expects(:key).returns "foo-bar/asdf"
 
-      lambda { config.split_path(request) }.should_not raise_error(ArgumentError)
+      expect { config.split_path(request) }.to_not raise_error
     end
 
     it "should use the mount name and environment to find the mount" do
