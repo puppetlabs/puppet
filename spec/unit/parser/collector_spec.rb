@@ -23,7 +23,7 @@ describe Puppet::Parser::Collector, "when initializing" do
   end
 
   it "should only accept :virtual or :exported as the collector form" do
-    proc { @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @vquery, @equery, :other) }.should raise_error(ArgumentError)
+    expect { @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @vquery, @equery, :other) }.to raise_error(ArgumentError)
   end
 
   it "should accept an optional virtual query" do
@@ -61,7 +61,7 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
   it "should not fail when it does not find any resources to collect" do
     @collector.resources = ["File[virtual1]", "File[virtual2]"]
     @scope.stubs(:findresource).returns(false)
-    proc { @collector.evaluate }.should_not raise_error
+    expect { @collector.evaluate }.to_not raise_error
   end
 
   it "should mark matched resources as non-virtual" do
@@ -429,7 +429,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @compiler.add_resource(@scope, local)
 
       got = nil
-      expect { got = @collector.evaluate }.not_to raise_error(Puppet::ParseError)
+      expect { got = @collector.evaluate }.not_to raise_error
       got.length.should == 1
       got.first.type.should == "Notify"
       got.first.title.should == "boingy-boingy"

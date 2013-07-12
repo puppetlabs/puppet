@@ -33,7 +33,7 @@ describe Puppet::Application::FaceBase do
     end
 
     describe "with just an action" do
-      before :all do
+      before(:each) do
         # We have to stub Signal.trap to avoid a crazy mess where we take
         # over signal handling and make it impossible to cancel the test
         # suite run.
