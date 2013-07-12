@@ -1,81 +1,52 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/util/watched_file'
+require 'puppet/util/watcher'
 
 describe Puppet::Util::WatchedFile do
+  let(:an_absurdly_long_timeout) { Puppet::Util::Watcher::Timer.new(100000) }
+  let(:an_immediate_timeout) { Puppet::Util::Watcher::Timer.new(0) }
 
-  class WatchedFile_MockTimer
-    def initialize; @expired = false; end
-    def start(_); end
-    def expired=(exp); @expired = exp; end
-    def expired?; @expired; end
+  it "acts like a string so that it can be used as a filename" do
+    watched = Puppet::Util::WatchedFile.new("foo")
+
+    expect(watched.to_str).to eq("foo")
   end
 
-  let(:mock_time) { Time.at(2005).to_i }
+  it "considers the file to be unchanged before the timeout expires" do
+    watched = Puppet::Util::WatchedFile.new(a_file_that_doesnt_exist, an_absurdly_long_timeout)
 
-  let(:timer) { WatchedFile_MockTimer.new }
-
-  subject { described_class.new('/some/file', 15, timer) }
-
-  describe 'with an initially non-existent file' do
-
-    before { subject.ctime = :absent }
-
-    it "isn't marked as changed if the file continues to not exist" do
-      subject.stubs(:file_ctime).returns(:absent)
-      timer.expired = true
-      subject.should_not be_changed
-    end
-
-    it "is marked as changed if the file is created" do
-      subject.stubs(:file_ctime).returns mock_time
-      timer.expired = true
-      subject.should be_changed
-    end
+    expect(watched).to_not be_changed
   end
 
-  describe 'with an initially present file' do
-    before { subject.ctime = mock_time }
+  it "considers a file that is created to be changed" do
+    watched_filename = a_file_that_doesnt_exist
+    watched = Puppet::Util::WatchedFile.new(watched_filename, an_immediate_timeout)
 
-    describe "and the file didn't change" do
-      before { subject.stubs(:file_ctime).returns mock_time }
+    create_file(watched_filename)
 
-      it "should not be changed" do
-        timer.expired = true
-        subject.should_not be_changed
-      end
-    end
-
-    describe "and the file was changed" do
-      before { subject.stubs(:file_ctime).returns mock_time + 60 }
-
-      it "doesn't mark a file as changed until the file timeout expires" do
-        timer.expired = false
-        subject.should_not be_changed
-      end
-
-      it "marks the file as changed after the file timeout expires" do
-        timer.expired = true
-        subject.should be_changed
-      end
-    end
-
-    describe 'and the file was removed' do
-      before { subject.stubs(:file_ctime).returns :absent }
-      it "marks the file as changed" do
-        timer.expired = true
-        subject.should be_changed
-      end
-    end
+    expect(watched).to be_changed
   end
 
-  describe 'with a disabled file timeout time period' do
-    subject { described_class.new('/some/file', -1, timer) }
-    it 'is always marked as changed' do
-      timer.expired = false
-      subject.should be_changed
-      subject.should be_changed
-    end
+  it "considers a missing file to remain unchanged" do
+    watched = Puppet::Util::WatchedFile.new(a_file_that_doesnt_exist, an_immediate_timeout)
+
+    expect(watched).to_not be_changed
+  end
+
+  it "considers a file that has changed but the timeout is not expired to still be unchanged" do
+    watched_filename = a_file_that_doesnt_exist
+    watched = Puppet::Util::WatchedFile.new(watched_filename, an_absurdly_long_timeout)
+
+    create_file(watched_filename)
+
+    expect(watched).to_not be_changed
+  end
+
+  def create_file(name)
+    File.open(name, "wb") { |file| file.puts("contents") }
+  end
+
+  def a_file_that_doesnt_exist
+    PuppetSpec::Files.tmpfile("watched_file")
   end
 end
