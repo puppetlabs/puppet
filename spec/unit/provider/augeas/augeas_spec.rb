@@ -650,28 +650,39 @@ describe provider_class do
       before do
         @augeas.expects(:match).with("/augeas//error").returns(["/augeas/files/foo/error"])
         @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+        @augeas.expects(:get).with("/augeas/files/foo/error").returns("some_failure")
         @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
         @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
       end
 
       it "and output to debug" do
-        @provider.expects(:debug).times(4)
+        @provider.expects(:debug).times(5)
         @provider.print_load_errors
       end
 
       it "and output a warning and to debug" do
         @provider.expects(:warning).once()
-        @provider.expects(:debug).times(3)
+        @provider.expects(:debug).times(4)
         @provider.print_load_errors(:warning => true)
       end
+    end
+
+    it "should find load errors from lenses" do
+      @augeas.expects(:match).with("/augeas//error").returns(["/augeas/load/Xfm/error"])
+      @augeas.expects(:match).with("/augeas/load/Xfm/error/*").returns([])
+      @augeas.expects(:get).with("/augeas/load/Xfm/error").returns(["Could not find lens php.aug"])
+      @provider.expects(:warning).once()
+      @provider.expects(:debug).twice()
+      @provider.print_load_errors(:warning => true)
     end
 
     it "should find save errors and output to debug" do
       @augeas.expects(:match).with("/augeas//error[. = 'put_failed']").returns(["/augeas/files/foo/error"])
       @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+      @augeas.expects(:get).with("/augeas/files/foo/error").returns("some_failure")
       @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
       @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
-      @provider.expects(:debug).times(4)
+      @provider.expects(:debug).times(5)
       @provider.print_put_errors
     end
   end
