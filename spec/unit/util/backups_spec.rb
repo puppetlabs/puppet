@@ -35,7 +35,7 @@ describe Puppet::Util::Backups do
     end
 
     it "a bucket should be used when provided" do
-      File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
+      File.stubs(:lstat).with(path).returns(mock('lstat', :ftype => 'file'))
       bucket.expects(:backup).with(path).returns("mysum")
       FileTest.expects(:exists?).with(path).returns(true)
 
@@ -43,7 +43,7 @@ describe Puppet::Util::Backups do
     end
 
     it "should propagate any exceptions encountered when backing up to a filebucket" do
-      File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
+      File.stubs(:lstat).with(path).returns(mock('lstat', :ftype => 'file'))
       bucket.expects(:backup).raises ArgumentError
       FileTest.expects(:exists?).with(path).returns(true)
 
@@ -108,7 +108,7 @@ describe Puppet::Util::Backups do
 
       bucket.expects(:backup).with(filename).returns true
 
-      File.stubs(:stat).with(path).returns(stub('stat', :ftype => 'directory'))
+      File.stubs(:lstat).with(path).returns(stub('lstat', :ftype => 'directory'))
 
       FileTest.stubs(:exists?).with(path).returns(true)
       FileTest.stubs(:exists?).with(filename).returns(true)
