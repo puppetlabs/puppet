@@ -19,7 +19,7 @@ module Puppet::Util::Backups
 
   def perform_backup_with_bucket(fileobj)
     file = (fileobj.class == String) ? fileobj : fileobj.name
-    case File.ftype(file)
+    case File.stat(file).ftype
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
