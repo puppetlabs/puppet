@@ -14,7 +14,7 @@ module Puppet::ModuleTool::Errors
       @installed_version = options[:installed_version]
       @dependency_name   = options[:dependency_name]
       @conditions        = options[:conditions]
-      super "Could not upgrade '#{@module_name}'; module is not installed"
+      super "Could not upgrade '#{@module_name}';"
     end
 
     def multiline
