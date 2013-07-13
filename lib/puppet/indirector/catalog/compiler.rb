@@ -82,12 +82,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
-    Puppet::Util::Profiler.profile(str) do
-      begin
-        config = Puppet::Parser::Compiler.compile(node)
-      rescue Puppet::Error => detail
-        Puppet.err(detail.to_s) if networked?
-        raise
+    benchmark(:notice, str) do
+      Puppet::Util::Profiler.profile(str) do
+        begin
+          config = Puppet::Parser::Compiler.compile(node)
+        rescue Puppet::Error => detail
+          Puppet.err(detail.to_s) if networked?
+          raise
+        end
       end
     end
 
