@@ -35,4 +35,23 @@ module Puppet::Util::HttpProxy
     return Puppet.settings[:http_proxy_port]
   end
 
+  def self.http_proxy_user
+    env = self.http_proxy_env
+
+    if env and env.user then
+      return env.user
+    end
+
+    return Puppet.settings[:http_proxy_user]
+  end
+
+  def self.http_proxy_password
+    env = self.http_proxy_env
+
+    if env and env.password then
+      return env.password
+    end
+
+    return Puppet.settings[:http_proxy_password]
+  end
 end
