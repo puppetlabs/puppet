@@ -303,7 +303,7 @@ class Type
   # @param metaparam [??? Puppet::Parameter] the meta-parameter to get documentation for.
   # @return [String] the documentation associated with the given meta-parameter, or nil of not such documentation
   #   exists.
-  # @raises [?] if the given metaparam is not a meta-parameter in this type
+  # @raise if the given metaparam is not a meta-parameter in this type
   #
   def self.metaparamdoc(metaparam)
     @@metaparamhash[metaparam].doc
@@ -354,8 +354,7 @@ class Type
   # Returns parameters that act as a key.
   # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result.
   # @todo would like a better explanation
-  # @return Array<??? Puppet::Parameter>
-  #
+  # @return [Array<Puppet::Parameter>] WARNING: this return type is uncertain
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
       @parameters.find_all { |param|
@@ -1138,7 +1137,7 @@ class Type
 
   # Converts a simple hash into a Resource instance.
   # @todo as opposed to a complex hash? Other raised exceptions?
-  # @param [Hash{Symbol, String => Object}] resource attribute to value map to initialize the created resource from
+  # @param [Hash{Symbol, String => Object}] hash resource attribute to value map to initialize the created resource from
   # @return [Puppet::Resource] the resource created from the hash
   # @raise [Puppet::Error] if a title is missing in the given hash
   def self.hash2resource(hash)
@@ -1809,7 +1808,7 @@ class Type
       end
 
       # @todo this does what? where and how?
-      # @returns [String] the name of the provider
+      # @return [String] the name of the provider
       defaultto {
         prov = @resource.class.defaultprovider
         prov.name if prov
@@ -2104,7 +2103,6 @@ class Type
   #
   def self.validate(&block)
     define_method(:validate, &block)
-    #@validate = block
   end
 
   # @return [String] The file from which this type originates from
@@ -2157,8 +2155,8 @@ class Type
   #   resources; one that causes the title to be set to resource.title, and one that
   #   causes the title to be resource.ref ("for components") - what is a component?
   #
-  # @overaload initialize(hsh)
-  #   @param hsh [Hash]
+  # @overload initialize(hash)
+  #   @param [Hash] hash
   #   @raise [Puppet::ResourceError] when the type validation raises
   #     Puppet::Error or ArgumentError
   # @overload initialize(resource)

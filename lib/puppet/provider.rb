@@ -185,7 +185,7 @@ class Puppet::Provider
   # is lazy (when a resource is evaluated) and the absence of commands
   # that will be present after other resources have been applied no longer needs to be specified as
   # optional.
-  # @param [Hash{String => String}] command_specs Named commands that the provider will
+  # @param [Hash{String => String}] hash Named commands that the provider will
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # (@see #has_command)
   # @see commands
@@ -564,7 +564,7 @@ class Puppet::Provider
 
   # Sets the given parameters values as the current values for those parameters.
   # Other parameters are unchanged.
-  # @param [Array<Puppet::Parameter] the parameters with values that should be set
+  # @param [Array<Puppet::Parameter>] params the parameters with values that should be set
   # @return [void]
   #
   def set(params)

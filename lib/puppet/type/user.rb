@@ -365,7 +365,7 @@ module Puppet
     #
     # (see Puppet::Settings#service_user_available?)
     #
-    # @returns [Boolean] if the user exists on the system
+    # @return [Boolean] if the user exists on the system
     # @api private
     def exists?
       provider.exists?

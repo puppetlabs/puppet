@@ -305,7 +305,7 @@ class Puppet::Parser::Scope
   # The scope of the inherited thing of this scope's resource. This could
   # either be a node that was inherited or the class.
   #
-  # @returns [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
+  # @return [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
   def inherited_scope
     if has_inherited_class?
       qualified_scope(resource.resource_type.parent)
@@ -320,7 +320,7 @@ class Puppet::Parser::Scope
   # scope in which it was included. The chain of parent scopes is followed
   # until a node scope or the topscope is found
   #
-  # @returns [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
+  # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
     if has_enclosing_scope?
       if parent.is_topscope? or parent.is_nodescope?
@@ -469,7 +469,7 @@ class Puppet::Parser::Scope
   # scope's symtable. If the parameter `use_ephemeral` is true, the "top most" ephemeral "table"
   # will be returned (irrespective of it being a match scope or a local scope).
   #
-  # @param [Boolean] whether the top most ephemeral (of any kind) should be used or not
+  # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
   def effective_symtable use_ephemeral
     s = @ephemeral.last
     return s if use_ephemeral
