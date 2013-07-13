@@ -48,6 +48,13 @@ module Puppet
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
       require 'puppet/pops/binder/hiera2'
+
+      module Config
+        require 'puppet/pops/binder/config/binder_config'
+        require 'puppet/pops/binder/config/binder_config_checker'
+        require 'puppet/pops/binder/config/issues'
+        require 'puppet/pops/binder/config/diagnostic_producer'
+      end
     end
 
     module Parser

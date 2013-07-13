@@ -9,5 +9,8 @@ module PuppetSpec::Pops
     failure_message_for_should do |actual|
       "expected Acceptor[#{actual.diagnostics.collect { |i| i.issue.issue_code }.join(',')}] to contain issue #{expected.issue_code}"
     end
+    failure_message_for_should_not do |actual|
+      "expected Acceptor[#{actual.diagnostics.collect { |i| i.issue.issue_code }.join(',')}] to not contain issue #{expected.issue_code}"
+    end
   end
 end

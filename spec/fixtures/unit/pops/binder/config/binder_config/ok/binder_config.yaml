@@ -1,0 +1,2 @@
+- {name: site, include: 'confdir-hiera:/'}
+- {name: modules, include: 'module-hiera:/*/', exclude: 'module-hiera:/bad/' }
