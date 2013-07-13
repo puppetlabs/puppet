@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def get_start_link_count
-    Dir.glob("/etc/rc*.d/S*#{@resource[:name]}").length
+    Dir.glob("/etc/rc*.d/S??#{@resource[:name]}").length
   end
 
   def enable
