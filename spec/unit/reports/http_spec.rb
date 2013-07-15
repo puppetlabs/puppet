@@ -89,7 +89,7 @@ describe processor do
         end
       end
 
-      if code.to_i >= 300
+      if code.to_i >= 300 && ![301, 302, 307].include?(code.to_i)
         it "should log error on http code #{code}" do
           response = klass.new('1.1', code, '')
           http.expects(:post).returns(response)
