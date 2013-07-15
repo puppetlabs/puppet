@@ -145,7 +145,6 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-
   context "when methods that accept a block are called with a block" do
     let (:host) { "my_server" }
     let (:port) { 8140 }
@@ -185,6 +184,7 @@ describe Puppet::Network::HTTP::Connection do
 
     let (:host) { "my_server" }
     let (:port) { 8140 }
+    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
     let (:subject) { Puppet::Network::HTTP::Connection.new(host, port) }
 
     def a_connection_that_verifies(args)
@@ -269,11 +269,49 @@ describe Puppet::Network::HTTP::Connection do
         connection.verify_callback.call(true, context)
         connection.verify_callback.call(true, context)
         true
-      end
+      end.returns(httpok)
 
       subject.expects(:warn_if_near_expiration).with(cert, cert)
 
       subject.request(:get, stubs('request'))
     end
   end
+
+  context "when response is a redirect" do
+    let (:other_host) { "redirected" }
+    let (:other_port) { 9292 }
+    let (:other_path) { "other-path" }
+    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, false) }
+    let (:httpredirection) { Net::HTTPFound.new('1.1', 302, 'Moved Temporarily') }
+    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
+
+    before :each do
+      httpredirection['location'] = "http://#{other_host}:#{other_port}/#{other_path}"
+      httpredirection.stubs(:read_body).returns("This resource has moved")
+
+      socket = stub_everything("socket")
+      TCPSocket.stubs(:open).returns(socket)
+
+      Net::HTTP::Get.any_instance.stubs(:exec).returns("")
+      Net::HTTP::Post.any_instance.stubs(:exec).returns("")
+    end
+
+    it "should redirect to the final resource location" do
+      httpok.stubs(:read_body).returns(:body)
+      Net::HTTPResponse.stubs(:read_new).returns(httpredirection).then.returns(httpok)
+
+      subject.get("/foo").body.should == :body
+      subject.port.should == other_port
+      subject.address.should == other_host
+    end
+
+    it "should raise an error after too many redirections" do
+      Net::HTTPResponse.stubs(:read_new).returns(httpredirection)
+
+      expect {
+        subject.get("/foo")
+      }.to raise_error(Puppet::Network::HTTP::RedirectionLimitExceededException)
+    end
+  end
+
 end
