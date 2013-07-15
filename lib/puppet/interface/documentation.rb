@@ -133,11 +133,11 @@ class Puppet::Interface
     #   Sets examples.
     #   @param text [String] Example text
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload examples
     #   Returns documentation of examples
-    #   @returns [String] The examples
+    #   @return [String] The examples
     #   @api private
     attr_doc :examples
 
@@ -146,11 +146,11 @@ class Puppet::Interface
     #   Sets optional notes.
     #   @param text [String] The notes
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload notes
     #   Returns any optional notes
-    #   @returns [String] The notes
+    #   @return [String] The notes
     #   @api private
     attr_doc :notes
 
@@ -159,11 +159,11 @@ class Puppet::Interface
     #   Sets the license text
     #   @param text [String] the license text
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload license
     #   Returns the license
-    #   @returns [String] The license
+    #   @return [String] The license
     #   @api private
     attr_doc :license
 

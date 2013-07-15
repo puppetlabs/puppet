@@ -388,7 +388,7 @@ class Puppet::SSL::CertificateAuthority
   #   x509store(:cache => false)
   #
   # @param [Hash] options the options used for retrieving the X509 Store
-  # @options options [Boolean] :cache whether or not to use a cached version
+  # @option options [Boolean] :cache whether or not to use a cached version
   #   of the X509 Store
   #
   # @return [OpenSSL::X509::Store]
@@ -434,7 +434,7 @@ class Puppet::SSL::CertificateAuthority
   # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
   # @api Puppet Enterprise Licensing
   #
-  # @param [Puppet::SSL::Certificate] the certificate to check validity of
+  # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
   #
   # @return [Boolean] true if signed, false if unsigned or revoked
   def certificate_is_alive?(cert)
@@ -445,7 +445,7 @@ class Puppet::SSL::CertificateAuthority
   # the indirector will be used to locate the actual contents of the
   # certificate with that name.
   #
-  # @param [String] certificate name to verify
+  # @param name [String] certificate name to verify
   #
   # @raise [ArgumentError] if the certificate name cannot be found
   #   (i.e. doesn't exist or is unsigned)
