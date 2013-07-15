@@ -2,6 +2,11 @@ require 'spec_helper'
 require 'semver'
 
 describe SemVer do
+
+  describe 'MAX should be +Infinity' do
+    SemVer::MAX.major.infinite?.should == 1
+  end
+
   describe '::valid?' do
     it 'should validate basic version strings' do
       %w[ 0.0.0 999.999.999 v0.0.0 v999.999.999 ].each do |vstring|
