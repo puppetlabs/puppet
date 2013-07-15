@@ -2,6 +2,7 @@
 # and performs them
 
 require 'puppet'
+require 'puppet/util/signals'
 require 'puppet/util/tagging'
 require 'puppet/application'
 require 'digest/sha1'
@@ -24,6 +25,7 @@ class Puppet::Transaction
   attr_reader :resource_harness
 
   include Puppet::Util
+  include Puppet::Util::Signals
   include Puppet::Util::Tagging
 
   # Wraps application run state check to flag need to interrupt processing
@@ -80,6 +82,13 @@ class Puppet::Transaction
       resource_status(resource).skipped = true
     else
       resource_status(resource).scheduled = true
+
+      if siginfo_supported?
+        Signal.trap "SIGINFO" do
+          puts "Currently evaluating #{resource.type.to_s.capitalize}[#{resource.title}]"
+        end
+      end
+
       apply(resource, ancestor)
     end
 
@@ -493,4 +502,3 @@ class Puppet::Transaction
 end
 
 require 'puppet/transaction/report'
-
