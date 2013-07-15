@@ -74,6 +74,22 @@ class Puppet::Parser::Scope
     def parent
       @parent
     end
+
+    def add_entries_to(target = {})
+      @parent.add_entries_to(target) unless @parent.nil?
+      # do not return pure ephemeral ($0-$n)
+      if is_local_scope?
+        @symbols.each do |k, v|
+          if v == :undef
+            target.delete(k)
+          else
+            target[ k ] = v
+          end
+        end
+      end
+      target
+    end
+
   end
 
   # Initialize a new scope suitable for parser function testing.  This method
@@ -182,7 +198,7 @@ class Puppet::Parser::Scope
     @tags = []
 
     # The symbol table for this scope.  This is where we store variables.
-    @symtable = Ephemeral.new
+    @symtable = Ephemeral.new(nil, true)
 
     @ephemeral = [ Ephemeral.new(@symtable) ]
 
@@ -378,9 +394,10 @@ class Puppet::Parser::Scope
   end
   private :qualified_scope
 
-  # Return a hash containing our variables and their values, optionally (and
-  # by default) including the values defined in our parent.  Local values
-  # shadow parent values.
+  # Returns a Hash containing all variables and their values, optionally (and
+  # by default) including the values defined in parent. Local values
+  # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
+  #
   def to_hash(recursive = true)
     if recursive and parent
       target = parent.to_hash(recursive)
@@ -388,14 +405,8 @@ class Puppet::Parser::Scope
       target = Hash.new
     end
 
-    @symtable.each do |name, value|
-      if value == :undef
-        target.delete(name)
-      else
-        target[name] = value
-      end
-    end
-
+    # add all local scopes
+    @ephemeral.last.add_entries_to(target)
     target
   end
 
