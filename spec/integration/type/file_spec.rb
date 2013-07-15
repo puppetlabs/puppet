@@ -454,7 +454,7 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       File.readlink(link).should == dest2
-      Find.find(bucket[:path]) { |f| File.file?(f) }.should be_nil
+      File.exist?(bucket[:path]).should be_false
     end
 
     it "should backup directories to the local filesystem by copying the whole directory" do
