@@ -42,6 +42,11 @@ test_name "Puppet cert generate behavior (#6112)" do
   # This case succeeds, but future calls such as `puppet agent -t` fail.
   # Haven't fully traced what happens here.
 
+  teardown do
+    step "And try to leave with a good ssl configuration"
+    reset_master_and_agent_ssl
+  end
+
   def clean_cert(host, cn)
     on(host, puppet('cert', 'clean', cn))
     assert_match(/remov.*Certificate.*#{cn}/i, stdout, "Should see a log message that certificate request was removed.")
@@ -154,6 +159,12 @@ test_name "Puppet cert generate behavior (#6112)" do
   #########
   # Case 3:
 
+  # Attempting to run this in a windows machine fails during the CA generation
+  # attempting to set the ssl/ca/serial file.  Fails inside
+  # Puppet::Settings#readwritelock because we can't overwrite the lock file in
+  # Windows.
+  confine :except, :platform => 'windows'
+
   step "Case 3: A host with no ssl infrastructure makes a `puppet cert generate` call"
 
   clear_all_hosts_ssl
@@ -184,8 +195,4 @@ test_name "Puppet cert generate behavior (#6112)" do
   ##########
   # PENDING: Test behavior of `puppet cert generate` with an external ca.
 
-  teardown do
-    step "And try to leave with a good ssl configuration"
-    reset_master_and_agent_ssl
-  end
 end
