@@ -42,6 +42,17 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
 
   let(:remote_dependency_info) do
     {
+      "pmtacceptance/apache" => [
+        { "dependencies" => [],
+          "version"      => "1.0.0-alpha",
+          "file"         => "/pmtacceptance-apache-1.0.0-alpha.tar.gz" },
+        { "dependencies" => [],
+          "version"      => "1.0.0-beta",
+          "file"         => "/pmtacceptance-apache-1.0.0-beta.tar.gz" },
+        { "dependencies" => [],
+          "version"      => "1.0.0-rc1",
+          "file"         => "/pmtacceptance-apache-1.0.0-rc1.tar.gz" },
+      ],
       "pmtacceptance/stdlib" => [
         { "dependencies" => [],
           "version"      => "0.0.1",
@@ -50,8 +61,14 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
           "version"      => "0.0.2",
           "file"         => "/pmtacceptance-stdlib-0.0.2.tar.gz" },
         { "dependencies" => [],
+          "version"      => "1.0.0-pre",
+          "file"         => "/pmtacceptance-stdlib-1.0.0-pre.tar.gz" },
+        { "dependencies" => [],
           "version"      => "1.0.0",
-          "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" }
+          "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" },
+        { "dependencies" => [],
+          "version"      => "1.5.0-pre",
+          "file"         => "/pmtacceptance-stdlib-1.5.0-pre.tar.gz" },
       ],
       "pmtacceptance/java" => [
         { "dependencies" => [["pmtacceptance/stdlib", ">= 0.0.1"]],
@@ -97,7 +114,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
         raise_error(ArgumentError, "Could not install module with invalid name: puppet")
     end
 
-    it "should install the requested module" do
+    it "should install the current stable version of the requested module" do
       Puppet::ModuleTool::Applications::Unpacker.expects(:new).
         with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
         returns(unpacker)
@@ -105,6 +122,36 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       results[:installed_modules].length == 1
       results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
       results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+    end
+
+    it "should install the most recent version of requested module in the absence of a stable version" do
+      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+        with('/fake_cache/pmtacceptance-apache-1.0.0-rc1.tar.gz', options).
+        returns(unpacker)
+      results = installer_class.run('pmtacceptance-apache', forge, install_dir, options)
+      results[:installed_modules].length == 1
+      results[:installed_modules][0][:module].should == "pmtacceptance-apache"
+      results[:installed_modules][0][:version][:vstring].should == "1.0.0-rc1"
+    end
+
+    it "should install the most recent stable version of requested module for the requested version range" do
+      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+        with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options.merge(:version => '1.x')).
+        returns(unpacker)
+      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.x'))
+      results[:installed_modules].length == 1
+      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+      results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+    end
+
+    it "should install the most recent version of requested module for the requested version range in the absence of a stable version" do
+      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+      with('/fake_cache/pmtacceptance-stdlib-1.5.0-pre.tar.gz', options.merge(:version => '1.5.0-pre')).
+        returns(unpacker)
+      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.5.0-pre'))
+      results[:installed_modules].length == 1
+      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
+      results[:installed_modules][0][:version][:vstring].should == "1.5.0-pre"
     end
 
     context "should check the target directory" do

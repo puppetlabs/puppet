@@ -7,7 +7,10 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     ['/sbin/rc-service', '/bin/rc-status', '/sbin/rc-update'].each do |command|
+      # Puppet::Util is both mixed in to providers and is also invoked directly
+      # by Puppet::Provider::CommandDefiner, so we have to stub both out.
       described_class.stubs(:which).with(command).returns(command)
+      Puppet::Util.stubs(:which).with(command).returns(command)
     end
   end
 
@@ -55,6 +58,19 @@ describe Puppet::Type.type(:service).provider(:openrc) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/sbin/rc-service','sshd',:stop], :failonfail => true, :override_locale => false, :squelch => true)
       provider.stop
+    end
+  end
+
+  describe 'when invoking `rc-status`' do
+    subject { described_class.new(Puppet::Type.type(:service).new(:name => 'urandom')) }
+    it "clears the RC_SVCNAME environment variable" do
+      Puppet::Util.withenv(:RC_SVCNAME => 'puppet') do
+        Puppet::Util::Execution.expects(:execute).with(
+          includes('/bin/rc-status'),
+          has_entry(:custom_environment, {:RC_SVCNAME => nil})
+        ).returns ''
+        subject.enabled?
+      end
     end
   end
 

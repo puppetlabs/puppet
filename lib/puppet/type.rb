@@ -358,7 +358,7 @@ class Type
   #
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
-      params = @parameters.find_all { |param|
+      @parameters.find_all { |param|
         param.isnamevar? or param.name == :name
       }
     )
@@ -1044,7 +1044,7 @@ class Type
   end
 
   # Returns a hash of the current properties and their values.
-  # If a resource is absent, it's value is the symbol `:absent`
+  # If a resource is absent, its value is the symbol `:absent`
   # @return [Hash{Puppet::Property => Object}] mapping of property instance to its value
   #
   def currentpropvalues
@@ -1097,7 +1097,7 @@ class Type
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
     providers_by_source.collect do |provider|
-      all_properties = self.properties.find_all do |property|
+      self.properties.find_all do |property|
         provider.supports_parameter?(property)
       end.collect do |property|
         property.name
@@ -1408,7 +1408,7 @@ class Type
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
           description = self.class.direction == :in ? "dependency" : "dependent"
-          fail "Could not find #{description} #{ref} for #{resource.ref}"
+          fail ResourceError, "Could not find #{description} #{ref} for #{resource.ref}"
         end
       end
     end
@@ -1459,7 +1459,7 @@ class Type
           self.debug("requires #{related_resource.ref}")
         end
 
-        rel = Puppet::Relationship.new(source, target, subargs)
+        Puppet::Relationship.new(source, target, subargs)
       end
     end
   end
@@ -1819,7 +1819,7 @@ class Type
         provider_class = provider_class[0] if provider_class.is_a? Array
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
-        unless provider = @resource.class.provider(provider_class)
+        unless @resource.class.provider(provider_class)
           raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
         end
       end
@@ -1953,7 +1953,7 @@ class Type
     reqs = []
     self.class.eachautorequire { |type, block|
       # Ignore any types we can't find, although that would be a bit odd.
-      next unless typeobj = Puppet::Type.type(type)
+      next unless Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
       next unless list = self.instance_eval(&block)
@@ -2351,14 +2351,14 @@ class Type
     end
   end
 
-  # Returns the title of this object, or it's name if title was not explicetly set.
+  # Returns the title of this object, or its name if title was not explicetly set.
   # If the title is not already set, it will be computed by looking up the {#name_var} and using
   # that value as the title.
   # @todo it is somewhat confusing that if the name_var is a valid parameter, it is assumed to
   #  be the name_var called :name, but if it is a property, it uses the name_var.
   #  It is further confusing as Type in some respects supports multiple namevars.
   #
-  # @return [String] Returns the title of this object, or it's name if title was not explicetly set.
+  # @return [String] Returns the title of this object, or its name if title was not explicetly set.
   # @raise [??? devfail] if title is not set, and name_var can not be found.
   def title
     unless @title
@@ -2406,14 +2406,15 @@ class Type
   def exported?; !!@exported; end
 
   # @return [Boolean] Returns whether the resource is applicable to `:device`
-  # @todo Explain what this means
+  # Returns true if a resource of this type can be evaluated on a 'network device' kind
+  # of hosts.
   # @api private
   def appliable_to_device?
     self.class.can_apply_to(:device)
   end
 
   # @return [Boolean] Returns whether the resource is applicable to `:host`
-  # @todo Explain what this means
+  # Returns true if a resource of this type can be evaluated on a regular generalized computer (ie not an appliance like a network device)
   # @api private
   def appliable_to_host?
     self.class.can_apply_to(:host)

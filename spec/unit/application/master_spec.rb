@@ -47,21 +47,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       @master.preinit
     end
-
-    it "should create a Puppet Daemon" do
-      Puppet::Daemon.expects(:new).returns(@daemon)
-
-      @master.preinit
-    end
-
-    it "should give ARGV to the Daemon" do
-      argv = stub 'argv'
-      ARGV.stubs(:dup).returns(argv)
-      @daemon.expects(:argv=).with(argv)
-
-      @master.preinit
-    end
-
   end
 
   [:debug,:verbose].each do |option|

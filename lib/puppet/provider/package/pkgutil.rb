@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   def self.availlist
     output = pkguti ["-a"]
 
-    list = output.split("\n").collect do |line|
+    output.split("\n").collect do |line|
       next if line =~ /^common\s+package/  # header of package list
       next if noise?(line)
 

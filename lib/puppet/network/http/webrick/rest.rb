@@ -15,9 +15,15 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   # Retrieve the request parameters, including authentication information.
   def params(request)
-    result = request.query
-    result = decode_params(result)
-    result.merge(client_information(request))
+    params = request.query || {}
+
+    params = Hash[params.collect do |key, value|
+      all_values = value.list
+      [key, all_values.length == 1 ? value : all_values]
+    end]
+
+    params = decode_params(params)
+    params.merge(client_information(request))
   end
 
   # WEBrick uses a service method to respond to requests.  Simply delegate to the handler response method.

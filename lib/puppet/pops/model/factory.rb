@@ -457,7 +457,7 @@ class Puppet::Pops::Model::Factory
     a.documentation = doc_string
   end
 
-  # Returns symbolic information about a expected share of a resource expression given the LHS of a resource expr.
+  # Returns symbolic information about an expected share of a resource expression given the LHS of a resource expr.
   #
   # * `name { }` => `:resource`,  create a resource of the given type
   # * `Name { }` => ':defaults`, set defauls for the referenced type

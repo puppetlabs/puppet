@@ -1,19 +1,19 @@
 require 'puppet/file_serving/configuration'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 
-class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
+class Puppet::FileServing::Configuration::Parser
   Mount = Puppet::FileServing::Mount
   MODULES = 'modules'
 
   # Parse our configuration file.
   def parse
-    raise("File server configuration #{self.file} does not exist") unless FileTest.exists?(self.file)
-    raise("Cannot read file server configuration #{self.file}") unless FileTest.readable?(self.file)
+    raise("File server configuration #{@file} does not exist") unless FileTest.exists?(@file)
+    raise("Cannot read file server configuration #{@file}") unless FileTest.readable?(@file)
 
     @mounts = {}
     @count = 0
 
-    File.open(self.file) { |f|
+    File.open(@file) { |f|
       mount = nil
       f.each_line { |line|
         # Have the count increment at the top, in case we throw exceptions.
@@ -37,10 +37,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
           when "deny"
             deny(mount, value)
           else
-            raise ArgumentError.new("Invalid argument '#{var}'", @count, file)
+            raise ArgumentError.new("Invalid argument '#{var}'", @count, @file)
           end
         else
-          raise ArgumentError.new("Invalid line '#{line.chomp}'", @count, file)
+          raise ArgumentError.new("Invalid line '#{line.chomp}'", @count, @file)
         end
       }
     }
@@ -50,37 +50,43 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
     @mounts
   end
 
+  def initialize(filename)
+    @file = Puppet::Util::WatchedFile.new(filename)
+  end
+
+  def changed?
+    @file.changed?
+  end
+
   private
 
   # Allow a given pattern access to a mount.
   def allow(mount, value)
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = value.split(/\s*,\s*/).each { |val|
+    value.split(/\s*,\s*/).each { |val|
       begin
         mount.info "allowing #{val} access"
         mount.allow(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(detail.to_s, @count, file)
+        raise ArgumentError.new(detail.to_s, @count, @file)
       end
     }
   end
 
   # Deny a given pattern access to a mount.
   def deny(mount, value)
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = value.split(/\s*,\s*/).each { |val|
+    value.split(/\s*,\s*/).each { |val|
       begin
         mount.info "denying #{val} access"
         mount.deny(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(detail.to_s, @count, file)
+        raise ArgumentError.new(detail.to_s, @count, @file)
       end
     }
   end
 
   # Create a new mount.
   def newmount(name)
-    raise ArgumentError, "#{@mounts[name]} is already mounted at #{name}", @count, file if @mounts.include?(name)
+    raise ArgumentError, "#{@mounts[name]} is already mounted at #{name}", @count, @file if @mounts.include?(name)
     case name
     when "modules"
       mount = Mount::Modules.new(name)

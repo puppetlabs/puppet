@@ -75,7 +75,7 @@ module Puppet
     def checksum_type
       if source = resource.parameter(:source)
         result = source.checksum
-      else checksum = resource.parameter(:checksum)
+      else
         result = resource[:checksum]
       end
       if result =~ /^\{(\w+)\}.+/
@@ -100,6 +100,9 @@ module Puppet
       if resource.should_be_file?
         return false if is == :absent
       else
+        if resource[:ensure] == :present and resource[:content] and s = resource.stat
+          resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
+        end
         return true
       end
 

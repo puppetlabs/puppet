@@ -39,4 +39,93 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
     provider_class.list_all.should == ['root', 'guest']
   end
 
+  describe "#managed_attribute_keys" do
+    let(:existing_attributes) do
+      { :account_locked => 'false',
+        :admin => 'false',
+        :login => 'true',
+        'su' => 'true'
+      }
+    end
+
+    before(:each) do
+      original_parameters = { :attributes => attribute_array }
+      @resource.stubs(:original_parameters).returns(original_parameters)
+    end
+
+    describe "invoked via manifest" do
+      let(:attribute_array) { ["rlogin=false", "login =true"] }
+
+      it "should return only the keys of the attribute key=value pair from manifest" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        keys.should be_include(:rlogin)
+        keys.should be_include(:login)
+        keys.should_not be_include(:su)
+      end
+
+      it "should strip spaces from symbols" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        keys.should be_include(:login)
+        keys.should_not be_include(:"login ")
+      end
+
+      it "should have the same count as that from the manifest" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        keys.size.should == attribute_array.size
+      end
+
+      it "should convert the keys to symbols" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        all_symbols = keys.all? {|k| k.is_a? Symbol}
+        all_symbols.should be_true
+      end
+    end
+
+    describe "invoked via RAL" do
+      let(:attribute_array) { nil }
+
+      it "should return the keys in supplied hash" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        keys.should_not be_include(:rlogin)
+        keys.should be_include(:login)
+        keys.should be_include(:su)
+      end
+
+      it "should convert the keys to symbols" do
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        all_symbols = keys.all? {|k| k.is_a? Symbol}
+        all_symbols.should be_true
+      end
+    end
+  end
+
+  describe "#should_include?" do
+    it "should exclude keys translated into something else" do
+      managed_keys = [:rlogin]
+      @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(true)
+      @provider.class.stubs(:attribute_ignore).returns([])
+      @provider.should_include?(:rlogin, managed_keys).should be_false
+    end
+
+    it "should exclude keys explicitly ignored" do
+      managed_keys = [:rlogin]
+      @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
+      @provider.class.stubs(:attribute_ignore).returns([:rlogin])
+      @provider.should_include?(:rlogin, managed_keys).should be_false
+    end
+
+    it "should exclude keys not specified in manifest" do
+      managed_keys = [:su]
+      @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
+      @provider.class.stubs(:attribute_ignore).returns([])
+      @provider.should_include?(:rlogin, managed_keys).should be_false
+    end
+
+    it "should include keys specified in manifest if not translated or ignored" do
+      managed_keys = [:rlogin]
+      @provider.class.attribute_mapping_from.stubs(:include?).with(:rlogin).returns(false)
+      @provider.class.stubs(:attribute_ignore).returns([])
+      @provider.should_include?(:rlogin, managed_keys).should be_true
+    end
+  end
 end

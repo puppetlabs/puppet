@@ -23,8 +23,6 @@ class Puppet::Parser::AST
       # Get our object reference.
       resource = @object.safeevaluate(scope)
 
-      hash = {}
-
       # Evaluate all of the specified params.
       params = @parameters.collect { |param|
         param.safeevaluate(scope)

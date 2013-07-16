@@ -178,7 +178,11 @@ class Puppet::SimpleGraph
     # Given we are in a failure state here, any extra cost is more or less
     # irrelevant compared to the cost of a fix - which is on a human
     # time-scale.
-    state[:scc].select { |c| c.length > 1 }.map {|x| x.sort }.sort
+    state[:scc].select do |component|
+      multi_vertex_component?(component) || single_vertex_referring_to_self?(component)
+    end.map do |component|
+      component.sort
+    end.sort
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
@@ -544,4 +548,19 @@ class Puppet::SimpleGraph
       instance_variable_set("@#{varname}", value)
     end
   end
+
+  def multi_vertex_component?(component)
+    component.length > 1
+  end
+  private :multi_vertex_component?
+
+  def single_vertex_referring_to_self?(component)
+    if component.length == 1
+      vertex = component[0]
+      adjacent(vertex).include?(vertex)
+    else
+      false
+    end
+  end
+  private :single_vertex_referring_to_self?
 end

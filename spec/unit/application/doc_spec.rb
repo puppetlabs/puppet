@@ -13,7 +13,7 @@ describe Puppet::Application::Doc do
     Puppet::Util::Log.stubs(:newdestination)
   end
 
-  it "should declare a other command" do
+  it "should declare an other command" do
     @doc.should respond_to(:other)
   end
 

@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
 require 'fileutils'
@@ -13,6 +14,7 @@ end
 
 describe Puppet::Transaction do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   before do
     @basepath = make_absolute("/what/ever")
@@ -592,21 +594,38 @@ describe Puppet::Transaction do
     end
 
     it "should skip device only resouce on normal host" do
+      @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = false
       @transaction.should be_skip(@resource)
     end
 
     it "should not skip device only resouce on remote device" do
+      @resource.stubs(:appliable_to_host?).returns false
       @resource.stubs(:appliable_to_device?).returns true
       @transaction.for_network_device = true
       @transaction.should_not be_skip(@resource)
     end
 
     it "should skip host resouce on device" do
+      @resource.stubs(:appliable_to_host?).returns true
       @resource.stubs(:appliable_to_device?).returns false
       @transaction.for_network_device = true
       @transaction.should be_skip(@resource)
+    end
+
+    it "should not skip resouce available on both device and host when on device" do
+      @resource.stubs(:appliable_to_host?).returns true
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = true
+      @transaction.should_not be_skip(@resource)
+    end
+
+    it "should not skip resouce available on both device and host when on host" do
+      @resource.stubs(:appliable_to_host?).returns true
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = false
+      @transaction.should_not be_skip(@resource)
     end
   end
 
@@ -791,6 +810,52 @@ describe Puppet::Transaction do
         @transaction.evaluate
       end
     end
+  end
+
+  it "errors with a dependency cycle for a resource that requires itself" do
+    expect do
+      apply_compiled_manifest(<<-MANIFEST)
+        notify { cycle: require => Notify[cycle] }
+      MANIFEST
+    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+  end
+
+  it "errors with a dependency cycle for a self-requiring resource also required by another resource" do
+    expect do
+      apply_compiled_manifest(<<-MANIFEST)
+        notify { cycle: require => Notify[cycle] }
+        notify { other: require => Notify[cycle] }
+      MANIFEST
+    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+  end
+
+  it "errors with a dependency cycle for a resource that requires itself and another resource" do
+    expect do
+      apply_compiled_manifest(<<-MANIFEST)
+        notify { cycle:
+          require => [Notify[other], Notify[cycle]]
+        }
+        notify { other: }
+      MANIFEST
+    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+  end
+
+  it "errors with a dependency cycle for a resource that is later modified to require itself" do
+    expect do
+      apply_compiled_manifest(<<-MANIFEST)
+        notify { cycle: }
+        Notify <| title == 'cycle' |> {
+          require => Notify[cycle]
+        }
+      MANIFEST
+    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+  end
+
+  it "reports a changed resource with a successful run" do
+    transaction = apply_compiled_manifest("notify { one: }")
+
+    transaction.report.status.should == 'changed'
+    transaction.report.resource_statuses['Notify[one]'].should be_changed
   end
 end
 

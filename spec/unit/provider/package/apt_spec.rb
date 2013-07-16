@@ -8,7 +8,11 @@ describe provider do
     @resource = stub 'resource', :[] => "asdf"
     @provider = provider.new(@resource)
 
-    @fakeresult = "install ok installed asdf 1.0\n"
+    @fakeresult = <<-EOF
+install ok installed asdf 1.0 "asdf summary
+ asdf multiline description
+ with multiple lines
+EOF
   end
 
   it "should be versionable" do

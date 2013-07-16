@@ -294,8 +294,8 @@ module Puppet
     end
 
     newparam(:flavor) do
-      desc "Newer versions of OpenBSD support 'flavors', which are
-        further specifications for which type of package you want."
+      desc "OpenBSD supports 'flavors', which are further specifications for
+        which type of package you want."
     end
 
     newparam(:install_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :install_options) do

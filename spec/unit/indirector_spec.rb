@@ -118,9 +118,9 @@ describe Puppet::Indirector, "when registering an indirection" do
     @indirection = @thingie.indirects :first, :some => :options
   end
 
-  it "should extend the class with the Format Handler" do
+  it "should extend the class to handle serialization" do
     @indirection = @thingie.indirects :first
-    @thingie.singleton_class.ancestors.should be_include(Puppet::Network::FormatHandler)
+    @thingie.should respond_to(:convert_from)
   end
 
   after do

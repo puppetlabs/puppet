@@ -37,9 +37,14 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  facter < 1:2.0
 # Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
 BuildRequires:  ruby >= 1.8.7
+%if 0%{?fedora} >= 18
+BuildRequires:  systemd
+%else
+BuildRequires:  systemd-units
+%endif
 
 BuildArch:      noarch
-Requires:       ruby(abi) >= 1.8
+Requires:       ruby >= 1.8.5
 Requires:       ruby-shadow
 
 # Pull in ruby selinux bindings where available
@@ -94,7 +99,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q -n %{name}-%{realversion}
-patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build

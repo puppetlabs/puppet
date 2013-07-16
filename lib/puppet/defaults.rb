@@ -3,6 +3,14 @@
 
 module Puppet
 
+  def self.default_diffargs
+    if (Facter.value(:kernel) == "AIX" && Facter.value(:kernelmajversion) == "5300")
+      ""
+    else
+      "-u"
+    end
+  end
+
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
   #   see the docs for Settings.define_settings
@@ -80,7 +88,9 @@ module Puppet
     :rundir => {
       :default  => nil,
       :type     => :directory,
-      :mode     => 01777,
+      :mode     => 0755,
+      :owner    => "service",
+      :group    => "service",
       :desc     => "Where Puppet PID files are kept."
     },
     :genconfig => {
@@ -173,7 +183,7 @@ module Puppet
             "this provides the default environment for nodes we know nothing about."
     },
     :diff_args => {
-        :default  => "-u",
+        :default  => default_diffargs,
         :desc     => "Which arguments to pass to the diff command when printing differences between\n" +
             "files. The command to use can be chosen with the `diff` setting.",
     },
@@ -368,6 +378,11 @@ module Puppet
         :desc     => "Freezes the 'main' class, disallowing any code to be added to it.  This\n" +
             "essentially means that you can't have any code outside of a node, class, or definition other\n" +
             "than in the site manifest.",
+    },
+    :stringify_facts => {
+      :default => true,
+      :type    => :boolean,
+      :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or hashes as fact values.",
     }
   )
   Puppet.define_settings(:module_tool,
@@ -1297,6 +1312,16 @@ EOT
     :smtpserver => {
         :default  => "none",
         :desc     => "The server through which to send email reports.",
+    },
+    :smtpport => {
+        :default  => 25,
+        :desc     => "The TCP port through which to send email reports.",
+    },
+    :smtphelo => {
+        :default  => Facter["fqdn"].value,
+        :desc     => "The name by which we identify ourselves in SMTP HELO for reports.
+          If you send to a smtpserver which does strict HELO checking (as with Postfix's
+          `smtpd_helo_restrictions` access controls), you may need to ensure this resolves.",
     }
   )
 

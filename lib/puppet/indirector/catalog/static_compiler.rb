@@ -49,6 +49,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       next unless source =~ /^puppet:/
 
       file = resource.to_ral
+
       if file.recurse?
         add_children(request.key, catalog, resource, file)
       else
@@ -59,6 +60,18 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     catalog
   end
 
+  # Take a resource with a fileserver based file source remove the source
+  # parameter, and insert the file metadata into the resource.
+  #
+  # This method acts to do the fileserver metadata retrieval in advance, while
+  # the file source is local and doesn't require an HTTP request. It retrieves
+  # the file metadata for a given file resource, removes the source parameter
+  # from the resource, inserts the metadata into the file resource, and uploads
+  # the file contents of the source to the file bucket.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param resource [Puppet::Resource] The resource to replace the metadata in
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
   def find_and_replace_metadata(host, resource, file)
     # We remove URL info from it, so it forces a local copy
     # rather than routing through the network.
@@ -71,6 +84,14 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     replace_metadata(host, resource, metadata)
   end
 
+  # Rewrite a given file resource with the metadata from a fileserver based file
+  #
+  # This performs the actual metadata rewrite for the given file resource and
+  # uploads the content of the source file to the filebucket.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param resource [Puppet::Resource] The resource to add the metadata to
+  # @param metadata [Puppet::FileServing::Metadata] The metadata of the given fileserver based file
   def replace_metadata(host, resource, metadata)
     [:mode, :owner, :group].each do |param|
       resource[param] ||= metadata.send(param)
@@ -89,6 +110,12 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
   end
 
+  # Generate children resources for a recursive file and add them to the catalog.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param catalog [Puppet::Resource::Catalog]
+  # @param resource [Puppet::Resource]
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
   def add_children(host, catalog, resource, file)
     file = resource.to_ral
 
@@ -102,6 +129,14 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     end
   end
 
+  # Given a recursive file resource, recursively generate its children resources
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param catalog [Puppet::Resource::Catalog]
+  # @param resource [Puppet::Resource]
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
+  #
+  # @return [Array<Puppet::Resource>] The recursively generated File resources for the given resource
   def get_child_resources(host, catalog, resource, file)
     sourceselect = file[:sourceselect]
     children = {}
@@ -143,12 +178,21 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     children
   end
 
+  # Remove any file resources in the catalog that will be duplicated by the
+  # given file resources.
+  #
+  # @param children [Array<Puppet::Resource>]
+  # @param catalog [Puppet::Resource::Catalog]
   def remove_existing_resources(children, catalog)
     existing_names = catalog.resources.collect { |r| r.to_s }
     both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
     both.each { |name| children.delete(name) }
   end
 
+  # Retrieve the source of a file resource using a fileserver based source and
+  # upload it to the filebucket.
+  #
+  # @param resource [Puppet::Resource]
   def store_content(resource)
     @summer ||= Object.new
     @summer.extend(Puppet::Util::Checksums)

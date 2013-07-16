@@ -29,7 +29,8 @@ module Puppet::Parser
     def self.eparser(environment)
       # Since RGen is optional, test that it is installed
       @@asserted ||= false
-      assert_rgen_installed() unless @asserted
+      assert_rgen_installed() unless @@asserted
+      @@asserted = true
       require 'puppet/parser'
       require 'puppet/parser/e_parser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
@@ -53,7 +54,7 @@ module Puppet::Parser
         container.left_expr = litstring
         raise "no eContainer" if litstring.eContainer() != container
         raise "no eContainingFeature" if litstring.eContainingFeature() != :left_expr
-      rescue =>e
+      rescue
         raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using '--parser future'. An older version is installed, please update.")
       end
     end

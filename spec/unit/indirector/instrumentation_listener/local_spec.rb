@@ -28,7 +28,7 @@ describe Puppet::Indirector::InstrumentationListener::Local do
   end
 
   describe "when finding listeners" do
-    it "should return a Instrumentation Listener instance matching the key" do
+    it "should return an Instrumentation Listener instance matching the key" do
       Puppet::Util::Instrumentation.expects(:[]).with("me").returns(:instance)
       @listener.find(@request).should == :instance
     end

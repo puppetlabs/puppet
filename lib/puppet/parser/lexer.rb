@@ -460,7 +460,6 @@ class Puppet::Parser::Lexer
     skip
 
     until token_queue.empty? and @scanner.eos? do
-      yielded = false
       matched_token, value = find_token
 
       # error out if we didn't match anything at all

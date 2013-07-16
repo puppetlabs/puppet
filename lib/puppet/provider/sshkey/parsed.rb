@@ -27,8 +27,6 @@ Puppet::Type.type(:sshkey).provide(
     },
     :pre_gen => proc { |hash|
       if hash[:host_aliases]
-        names = [hash[:name], hash[:host_aliases]].flatten
-
         hash[:name] = [hash[:name], hash[:host_aliases]].flatten.join(",")
         hash.delete(:host_aliases)
       end

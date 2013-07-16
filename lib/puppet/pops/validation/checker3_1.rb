@@ -281,7 +281,7 @@ class Puppet::Pops::Validation::Checker3_1
   end
 
   def check_QueryExpression(o)
-    rvalue(o.expr) if o.expr  # is optional
+    query(o.expr) if o.expr  # is optional
   end
 
   def relation_Object(o, rel_expr)

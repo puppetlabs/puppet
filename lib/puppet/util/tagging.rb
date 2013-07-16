@@ -62,8 +62,6 @@ module Puppet::Util::Tagging
   private
 
   def handle_qualified_tags(qualified)
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = 1
     qualified.each do |name|
       name.split("::").each do |tag|
         @tags << tag unless @tags.include?(tag)

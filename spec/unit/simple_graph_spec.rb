@@ -282,9 +282,9 @@ describe Puppet::SimpleGraph do
     end
 
     def simplify(cycles)
-      cycles.map do |x|
-        x.map do |y|
-          y.to_s.match(/^Notify\[(.*)\]$/)[1]
+      cycles.map do |cycle|
+        cycle.map do |resource|
+          resource.name
         end
       end
     end
@@ -322,18 +322,20 @@ describe Puppet::SimpleGraph do
       add_edges "b" => "a"
       add_edges "b" => "c"
 
-      cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
-      simplify(cycles).should be == [["a", "b"]]
+      simplify(@graph.find_cycles_in_graph).should be == [["a", "b"]]
+    end
+
+    it "cycle discovery handles a self-loop cycle" do
+      add_edges :a => :a
+
+      simplify(@graph.find_cycles_in_graph).should be == [["a"]]
     end
 
     it "cycle discovery should handle two distinct cycles" do
       add_edges "a" => "a1", "a1" => "a"
       add_edges "b" => "b1", "b1" => "b"
 
-      cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
-      simplify(cycles).should be == [["a1", "a"], ["b1", "b"]]
+      simplify(@graph.find_cycles_in_graph).should be == [["a1", "a"], ["b1", "b"]]
     end
 
     it "cycle discovery should handle two cycles in a connected graph" do
@@ -341,9 +343,7 @@ describe Puppet::SimpleGraph do
       add_edges "a" => "a1", "a1" => "a"
       add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
 
-      cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
-      simplify(cycles).should be == [%w{a1 a}, %w{c1 c2 c3 c}]
+      simplify(@graph.find_cycles_in_graph).should be == [%w{a1 a}, %w{c1 c2 c3 c}]
     end
 
     it "cycle discovery should handle a complicated cycle" do
@@ -352,18 +352,14 @@ describe Puppet::SimpleGraph do
       add_edges "c" => "c1", "c1" => "a"
       add_edges "c" => "c2", "c2" => "b"
 
-      cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
-      simplify(cycles).should be == [%w{a b c1 c2 c}]
+      simplify(@graph.find_cycles_in_graph).should be == [%w{a b c1 c2 c}]
     end
 
     it "cycle discovery should not fail with large data sets" do
       limit = 3000
       (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
 
-      cycles = nil
-      expect { cycles = @graph.find_cycles_in_graph }.to_not raise_error
-      simplify(cycles).should be == []
+      simplify(@graph.find_cycles_in_graph).should be == []
     end
 
     it "path finding should work with a simple cycle" do
@@ -431,10 +427,6 @@ describe Puppet::SimpleGraph do
       @graph.expects(:to_dot).with("name" => @name.to_s.capitalize)
       Puppet[:graph] = true
       @graph.write_graph(@name)
-    end
-
-    after do
-      Puppet.settings.clear
     end
   end
 

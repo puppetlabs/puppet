@@ -101,6 +101,7 @@ describe Puppet::Indirector::REST do
   end
 
   after :all do
+    Puppet::TestModel.indirection.delete
     # Remove the class, unlinking it from the rest of the system.
     Puppet.send(:remove_const, :TestModel)
   end

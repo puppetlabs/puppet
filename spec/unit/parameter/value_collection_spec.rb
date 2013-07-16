@@ -27,7 +27,7 @@ describe Puppet::Parameter::ValueCollection do
   end
 
   it "should be able to add values that are empty strings" do
-    lambda { @collection.newvalue('') }.should_not raise_error
+    expect { @collection.newvalue('') }.to_not raise_error
   end
 
   it "should be able to add values that are empty strings" do
@@ -107,33 +107,33 @@ describe Puppet::Parameter::ValueCollection do
 
     it "should fail if the value is not a defined value or alias and does not match a regex" do
       @collection.newvalues :foo
-      lambda { @collection.validate("bar") }.should raise_error(ArgumentError)
+      expect { @collection.validate("bar") }.to raise_error(ArgumentError)
     end
 
     it "should succeed if the value is one of the defined values" do
       @collection.newvalues :foo
-      lambda { @collection.validate(:foo) }.should_not raise_error(ArgumentError)
+      expect { @collection.validate(:foo) }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined values even if the definition uses a symbol and the validation uses a string" do
       @collection.newvalues :foo
-      lambda { @collection.validate("foo") }.should_not raise_error(ArgumentError)
+      expect { @collection.validate("foo") }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined values even if the definition uses a string and the validation uses a symbol" do
       @collection.newvalues "foo"
-      lambda { @collection.validate(:foo) }.should_not raise_error(ArgumentError)
+      expect { @collection.validate(:foo) }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined aliases" do
       @collection.newvalues :foo
       @collection.aliasvalue :bar, :foo
-      lambda { @collection.validate("bar") }.should_not raise_error(ArgumentError)
+      expect { @collection.validate("bar") }.to_not raise_error
     end
 
     it "should succeed if the value matches one of the regexes" do
       @collection.newvalues %r{\d}
-      lambda { @collection.validate("10") }.should_not raise_error(ArgumentError)
+      expect { @collection.validate("10") }.to_not raise_error
     end
   end
 

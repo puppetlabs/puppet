@@ -21,6 +21,36 @@ describe resources do
     end
   end
 
+  describe :purge do
+    let (:instance) { described_class.new(:name => 'file') }
+
+    it "defaults to false" do
+      instance[:purge].should be_false
+    end
+
+    it "can be set to false" do
+      instance[:purge] = 'false'
+    end
+
+    it "cannot be set to true for a resource type that does not accept ensure" do
+      instance.resource_type.stubs(:respond_to?).returns true
+      instance.resource_type.stubs(:validproperty?).returns false
+      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
+    end
+
+    it "cannot be set to true for a resource type that does not have instances" do
+      instance.resource_type.stubs(:respond_to?).returns false
+      instance.resource_type.stubs(:validproperty?).returns true
+      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
+    end
+
+    it "can be set to true for a resource type that has instances and can accept ensure" do
+      instance.resource_type.stubs(:respond_to?).returns true
+      instance.resource_type.stubs(:validproperty?).returns true
+      expect { instance[:purge] = 'yes' }.not_to raise_error Puppet::Error
+    end
+  end
+
   describe "#generate" do
     before do
       @host1 = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')

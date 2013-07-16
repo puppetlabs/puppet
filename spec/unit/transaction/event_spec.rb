@@ -140,4 +140,61 @@ describe Puppet::Transaction::Event do
       event.to_yaml_properties.should =~ Puppet::Transaction::Event::YAML_ATTRIBUTES
     end
   end
+
+  it "should round trip through pson" do
+      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
+      event = Puppet::Transaction::Event.new(
+        :source_description => "/my/param",
+        :resource => resource,
+        :file => "/foo.rb",
+        :line => 27,
+        :tags => %w{one two},
+        :desired_value => 7,
+        :historical_value => 'Brazil',
+        :message => "Help I'm trapped in a spec test",
+        :name => :mode_changed,
+        :previous_value => 6,
+        :property => :mode,
+        :status => 'success')
+
+      tripped = Puppet::Transaction::Event.from_pson(PSON.parse(event.to_pson))
+
+      tripped.audited.should == event.audited
+      tripped.property.should == event.property
+      tripped.previous_value.should == event.previous_value
+      tripped.desired_value.should == event.desired_value
+      tripped.historical_value.should == event.historical_value
+      tripped.message.should == event.message
+      tripped.name.should == event.name
+      tripped.status.should == event.status
+      tripped.time.should == event.time
+  end
+
+  it "should round trip an event for an inspect report through pson" do
+      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
+      event = Puppet::Transaction::Event.new(
+        :audited => true,
+        :source_description => "/my/param",
+        :resource => resource,
+        :file => "/foo.rb",
+        :line => 27,
+        :tags => %w{one two},
+        :message => "Help I'm trapped in a spec test",
+        :previous_value => 6,
+        :property => :mode,
+        :status => 'success')
+
+      tripped = Puppet::Transaction::Event.from_pson(PSON.parse(event.to_pson))
+
+      tripped.desired_value.should be_nil
+      tripped.historical_value.should be_nil
+      tripped.name.should be_nil
+
+      tripped.audited.should == event.audited
+      tripped.property.should == event.property
+      tripped.previous_value.should == event.previous_value
+      tripped.message.should == event.message
+      tripped.status.should == event.status
+      tripped.time.should == event.time
+  end
 end

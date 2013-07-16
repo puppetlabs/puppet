@@ -79,11 +79,6 @@ module Puppet
 
       # Actually execute the command.
       def sync
-        olddir = nil
-
-        # We need a dir to change to, even if it's just the cwd
-        dir = self.resource[:cwd] || Dir.pwd
-
         event = :executed_command
         tries = self.resource[:tries]
         try_sleep = self.resource[:try_sleep]
@@ -232,7 +227,7 @@ module Puppet
         value = value.shift if value.is_a?(Array)
         begin
           value = Float(value)
-        rescue ArgumentError => e
+        rescue ArgumentError
           raise ArgumentError, "The timeout must be a number."
         end
         [value, 0.0].max

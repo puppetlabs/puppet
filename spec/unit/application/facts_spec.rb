@@ -16,6 +16,7 @@ describe Puppet::Application::Facts do
   end
 
   it "should return facts if a key is given to find" do
+    Puppet[:stringify_facts] = false
     Puppet::Node::Facts.indirection.reset_terminus_class
     Puppet::Node::Facts.indirection.expects(:find).returns(Puppet::Node::Facts.new('whatever', {}))
     subject.command_line.stubs(:args).returns %w{find whatever --render-as yaml}

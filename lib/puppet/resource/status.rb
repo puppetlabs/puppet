@@ -1,3 +1,5 @@
+require 'time'
+
 module Puppet
   class Resource
     class Status
@@ -84,7 +86,7 @@ module Puppet
         @change_count = data['change_count']
         @out_of_sync_count = data['out_of_sync_count']
         @tags = data['tags']
-        @time = data['time']
+        @time = Time.parse(data['time'])
         @out_of_sync = data['out_of_sync']
         @changed = data['changed']
         @skipped = data['skipped']
@@ -93,6 +95,26 @@ module Puppet
         @events = data['events'].map do |event|
           Puppet::Transaction::Event.from_pson(event)
         end
+      end
+
+      def to_pson
+        {
+          'title' => @title,
+          'file' => @file,
+          'line' => @line,
+          'resource' => @resource,
+          'resource_type' => @resource_type,
+          'evaluation_time' => @evaluation_time,
+          'tags' => @tags,
+          'time' => @time.iso8601(9),
+          'failed' => @failed,
+          'changed' => @changed,
+          'out_of_sync' => @out_of_sync,
+          'skipped' => @skipped,
+          'change_count' => @change_count,
+          'out_of_sync_count' => @out_of_sync_count,
+          'events' => @events,
+        }.to_pson
       end
 
       def to_yaml_properties

@@ -36,7 +36,7 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |*args|
-      options = args.pop
+      args.pop
 
       args = [ "all" ] if args.empty?
 

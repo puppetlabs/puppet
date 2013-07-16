@@ -23,7 +23,7 @@ describe Puppet::Type.type(:file).attrclass(:group) do
       resource.provider.stubs(:name2gid).with('bars').returns 1002
     end
 
-    it "should fail if an group's id can't be found by name" do
+    it "should fail if a group's id can't be found by name" do
       resource.provider.stubs(:name2gid).returns nil
 
       expect { group.insync?(5) }.to raise_error(/Could not find group foos/)

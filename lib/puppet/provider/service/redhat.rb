@@ -21,15 +21,12 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   end
 
   def enabled?
-    begin
-      output = chkconfig(@resource[:name])
-    rescue Puppet::ExecutionFailure
-      return :false
-    end
+    # Checkconfig always returns 0 on SuSE unless the --check flag is used.
+    args = (Facter.value(:osfamily) == 'Suse' ? ['--check'] : [])
 
-    # If it's disabled on SuSE, then it will print output showing "off"
-    # at the end
-    if output =~ /.* off$/
+    begin
+      chkconfig(@resource[:name], *args)
+    rescue Puppet::ExecutionFailure
       return :false
     end
 
@@ -39,7 +36,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   # Don't support them specifying runlevels; always use the runlevels
   # in the init scripts.
   def enable
-      output = chkconfig(@resource[:name], :on)
+      chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
   end

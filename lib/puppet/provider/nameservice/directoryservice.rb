@@ -108,7 +108,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # JJM: List all objects of this Puppet::Type already present on the system.
     begin
       dscl_output = execute(get_exec_preamble("-list"))
-    rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure
       fail("Could not get #{@resource_type.name} list from DirectoryService")
     end
     dscl_output.split("\n")
@@ -166,7 +166,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     dscl_vector = get_exec_preamble("-read", resource_name)
     begin
       dscl_output = execute(dscl_vector)
-    rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure
       fail("Could not get report.  command execution failed.")
     end
 
@@ -237,7 +237,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       dscl_vector = self.get_exec_preamble("-merge", resource_name)
       dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
       begin
-        dscl_output = execute(dscl_vector)
+        execute(dscl_vector)
       rescue Puppet::ExecutionFailure => detail
         fail("Could not set AuthenticationAuthority.")
       end
@@ -332,7 +332,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.convert_xml_to_binary(plist_data)
     Puppet.debug('Converting XML plist to binary')
     Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
-    IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert binary1 -o - -', 'r+') do |io|
       io.write plist_data.to_plist
       io.close_write
       @converted_plist = io.read
@@ -345,7 +345,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.convert_binary_to_xml(plist_data)
     Puppet.debug('Converting binary plist to XML')
     Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
-    IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert xml1 -o - -', 'r+') do |io|
       io.write plist_data
       io.close_write
       @converted_plist = io.read
