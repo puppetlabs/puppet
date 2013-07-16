@@ -11,12 +11,14 @@ module Puppet
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
       attr_accessor *STATES
 
-      attr_reader :source_description, :default_log_level, :time, :resource
-      attr_reader :change_count, :out_of_sync_count, :resource_type, :title
+      attr_reader :source_description, :containment_path,
+                  :default_log_level, :time, :resource, :change_count,
+                  :out_of_sync_count, :resource_type, :title
 
       YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
                            @out_of_sync_count @tags @time @events @out_of_sync
-                           @changed @resource_type @title @skipped @failed}.
+                           @changed @resource_type @title @skipped @failed
+                           @containment_path}.
         map(&:to_sym)
 
 
@@ -58,6 +60,7 @@ module Puppet
 
       def initialize(resource)
         @source_description = resource.path
+        @containment_path = resource.pathbuilder
         @resource = resource.to_s
         @change_count = 0
         @out_of_sync_count = 0
@@ -80,6 +83,7 @@ module Puppet
         @resource_type = data['resource_type']
         @title = data['title']
         @resource = data['resource']
+        @containment_path = data['containment_path']
         @file = data['file']
         @line = data['line']
         @evaluation_time = data['evaluation_time']
@@ -104,6 +108,7 @@ module Puppet
           'line' => @line,
           'resource' => @resource,
           'resource_type' => @resource_type,
+          'containment_path' => @containment_path,
           'evaluation_time' => @evaluation_time,
           'tags' => @tags,
           'time' => @time.iso8601(9),
