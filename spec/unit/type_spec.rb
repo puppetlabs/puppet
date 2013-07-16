@@ -105,26 +105,30 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:virtual?)
   end
 
-  it "should consider its version to be its catalog version" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo")
-    catalog = Puppet::Resource::Catalog.new
-    catalog.version = 50
-    catalog.add_resource resource
-
-    resource.version.should == 50
-  end
-
   it "should consider its version to be zero if it has no catalog" do
     Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
   end
 
-  it "should provide source_descriptors" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo")
-    catalog = Puppet::Resource::Catalog.new
-    catalog.version = 50
-    catalog.add_resource resource
+  context "resource attributes" do
+    let(:resource) {
+      resource = Puppet::Type.type(:mount).new(:name => "foo")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.version = 50
+      catalog.add_resource resource
+      resource
+    }
 
-    resource.source_descriptors.should == {:tags=>["mount", "foo"], :path=>"/Mount[foo]"}
+    it "should consider its version to be its catalog version" do
+      resource.version.should == 50
+    end
+
+    it "should have tags" do
+      resource.tags.should == ["mount", "foo"]
+    end
+
+    it "should have a path" do
+      resource.path.should == "/Mount[foo]"
+    end
   end
 
   it "should consider its type to be the name of its class" do

@@ -1,5 +1,4 @@
 require 'puppet/util/methodhelper'
-require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
 
@@ -22,7 +21,6 @@ require 'puppet/util/docs'
 class Puppet::Parameter
   include Puppet::Util
   include Puppet::Util::Errors
-  include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::MethodHelper
 
@@ -307,18 +305,28 @@ class Puppet::Parameter
   #
   attr_accessor :parent
 
-  # @!method line()
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  # @!method file
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  # @!method version
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  #
-  [:line, :file, :version].each do |param|
-    define_method(param) do
-      resource.send(param)
-    end
+  # Returns a string representation of the resource's containment path in
+  # the catalog.
+  # @return [String]
+  def path
+    @path ||= '/' + pathbuilder.join('/')
   end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def line
+    resource.line
+  end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def file
+    resource.file
+  end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def version
+    resource.version
+  end
+
 
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed
