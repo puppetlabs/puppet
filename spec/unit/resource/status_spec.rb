@@ -8,6 +8,8 @@ describe Puppet::Resource::Status do
 
   before do
     @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
+    @containment_path = ["foo", "bar", "baz"]
+    @resource.stubs(:pathbuilder).returns @containment_path
     @status = Puppet::Resource::Status.new(@resource)
   end
 
@@ -42,6 +44,10 @@ describe Puppet::Resource::Status do
   it "should set its source description to the resource's path" do
     @resource.expects(:path).returns "/my/path"
     Puppet::Resource::Status.new(@resource).source_description.should == "/my/path"
+  end
+
+  it "should set its containment path" do
+    Puppet::Resource::Status.new(@resource).containment_path.should == @containment_path
   end
 
   [:file, :line].each do |attr|
@@ -163,9 +169,12 @@ describe Puppet::Resource::Status do
     @status.out_of_sync = true
     @status.skipped = false
 
+    @status.containment_path.should == @containment_path
+
     tripped = Puppet::Resource::Status.from_pson(PSON.parse(@status.to_pson))
 
     tripped.title.should == @status.title
+    tripped.containment_path.should == @status.containment_path
     tripped.file.should == @status.file
     tripped.line.should == @status.line
     tripped.resource.should == @status.resource
