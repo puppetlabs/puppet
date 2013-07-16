@@ -15,7 +15,7 @@ describe Puppet::Type.type(:user) do
     described_class.stubs(:defaultprovider).returns @provider_class
   end
 
-  it "should be able to create a instance" do
+  it "should be able to create an instance" do
     described_class.new(:name => "foo").should_not be_nil
   end
 
@@ -23,11 +23,11 @@ describe Puppet::Type.type(:user) do
     described_class.provider_feature(:allows_duplicates).should_not be_nil
   end
 
-  it "should have an manages_homedir feature" do
+  it "should have a manages_homedir feature" do
     described_class.provider_feature(:manages_homedir).should_not be_nil
   end
 
-  it "should have an manages_passwords feature" do
+  it "should have a manages_passwords feature" do
     described_class.provider_feature(:manages_passwords).should_not be_nil
   end
 
@@ -45,6 +45,29 @@ describe Puppet::Type.type(:user) do
 
   it "should have a system_users feature" do
     described_class.provider_feature(:system_users).should_not be_nil
+  end
+
+  describe :managehome do
+    let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
+    let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
+
+    it "defaults to false" do
+      instance[:managehome].should be_false
+    end
+
+    it "can be set to false" do
+      instance[:managehome] = 'false'
+    end
+
+    it "cannot be set to true for a provider that does not manage homedirs" do
+      provider.class.stubs(:manages_homedir?).returns false
+      expect { instance[:managehome] = 'yes' }.to raise_error Puppet::Error
+    end
+
+    it "can be set to true for a provider that does manage homedirs" do
+      provider.class.stubs(:manages_homedir?).returns true
+      instance[:managehome] = 'yes'
+    end
   end
 
   describe "instances" do

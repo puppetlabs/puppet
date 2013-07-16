@@ -10,8 +10,10 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
   defaultfor :operatingsystem => :gentoo
   defaultfor :operatingsystem => :funtoo
 
+  has_command(:rcstatus, '/bin/rc-status') do
+    environment :RC_SVCNAME => nil
+  end
   commands :rcservice => '/sbin/rc-service'
-  commands :rcstatus  => '/bin/rc-status'
   commands :rcupdate  => '/sbin/rc-update'
 
   self::STATUSLINE = /^\s+(.*?)\s*\[\s*(.*)\s*\]$/

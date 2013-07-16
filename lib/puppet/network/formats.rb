@@ -1,14 +1,12 @@
 require 'puppet/network/format_handler'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
-  # Yaml doesn't need the class name; it's serialized.
   def intern(klass, text)
     data = YAML.load(text, :safe => true, :deserialize_symbols => true)
     return data if data.is_a?(klass)
     klass.from_pson(data)
   end
 
-  # Yaml doesn't need the class name; it's serialized.
   def intern_multiple(klass, text)
     YAML.load(text, :safe => true, :deserialize_symbols => true).collect do |data|
       if data.is_a?(klass)
@@ -159,11 +157,20 @@ Puppet::Network::FormatHandler.create(:console,
     if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
       output = ''
       column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
-      column_b = 79 - column_a
       datum.sort_by { |k,v| k.to_s } .each do |key, value|
         output << key.to_s.ljust(column_a)
         output << json.render(value).
           chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # Print one item per line for arrays
+    if datum.is_a? Array
+      output = ''
+      datum.each do |item|
+        output << item.to_s
         output << "\n"
       end
       return output

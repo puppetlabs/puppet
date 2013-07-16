@@ -51,7 +51,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     genkey(key).should == "ssh-dss AAAAfsfddsjldjgksdflgkjsfdlgkj Just_Testing\n"
   end
 
-  it "should be able to generate a authorized_keys file with options" do
+  it "should be able to generate an authorized_keys file with options" do
 
     key = mkkey(:name    => "root@localhost",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
@@ -246,7 +246,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
     end
 
-    describe "and a invalid user has been specified with no target" do
+    describe "and an invalid user has been specified with no target" do
       it "should catch an exception and raise a Puppet error" do
         @resource[:user] = "thisusershouldnotexist"
 

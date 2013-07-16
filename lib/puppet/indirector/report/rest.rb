@@ -9,7 +9,7 @@ class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST
   private
 
   def deserialize_save(content_type, body)
-    format = Puppet::Network::FormatHandler.protected_format(content_type)
+    format = Puppet::Network::FormatHandler.format_for(content_type)
     format.intern(Array, body)
   end
 end

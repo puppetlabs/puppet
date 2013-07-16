@@ -243,14 +243,25 @@ Puppet::Type.newtype(:cron) do
   newproperty(:special) do
     desc "A special value such as 'reboot' or 'annually'.
        Only available on supported systems such as Vixie Cron.
-       Overrides more specific time of day/week settings."
+       Overrides more specific time of day/week settings.
+       Set to 'absent' to make puppet revert to a plain numeric schedule."
 
     def specials
-      %w{reboot yearly annually monthly weekly daily midnight hourly}
+      %w{reboot yearly annually monthly weekly daily midnight hourly absent} +
+        [ :absent ]
     end
 
     validate do |value|
       raise ArgumentError, "Invalid special schedule #{value.inspect}" unless specials.include?(value)
+    end
+
+    def munge(value)
+      # Support value absent so that a schedule can be
+      # forced to change to numeric.
+      if value == "absent" or value == :absent
+        return :absent
+      end
+      value
     end
   end
 

@@ -35,7 +35,7 @@ module Puppet::Parser::Functions
     key, default, override = HieraPuppet.parse_args(args)
     if answer = HieraPuppet.lookup(key, default, self, override, :array)
       method = Puppet::Parser::Functions.function(:include)
-      send(method, answer)
+      send(method, [answer])
     else
       raise Puppet::ParseError, "Could not find data item #{key}"
     end

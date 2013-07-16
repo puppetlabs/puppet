@@ -85,7 +85,6 @@ class Puppet::Util::Autoload
     # returns nil if no file is found
     def get_file(name, env=nil)
       name = name + '.rb' unless name =~ /\.rb$/
-      dirname, base = File.split(name)
       path = search_directories(env).find { |dir| File.exist?(File.join(dir, name)) }
       path and File.join(path, name)
     end

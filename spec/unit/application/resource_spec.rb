@@ -36,7 +36,7 @@ describe Puppet::Application::Resource do
       @resource_app.host.should == :whatever
     end
 
-    it "should load an display all types with types option" do
+    it "should load a display all types with types option" do
       type1 = stub_everything 'type1', :name => :type1
       type2 = stub_everything 'type2', :name => :type2
       Puppet::Type.stubs(:loadall)

@@ -565,7 +565,6 @@ class Puppet::Pops::Parser::Lexer
     skip
 
     until token_queue.empty? and @scanner.eos? do
-      yielded = false
       offset = @scanner.pos
       matched_token, value = find_token
       end_offset = @scanner.pos
@@ -646,7 +645,6 @@ class Puppet::Pops::Parser::Lexer
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
     last = @scanner.matched
-    tmp_offset = @scanner.pos
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
     str.gsub!(/\\(.)/m) {
       ch = $1

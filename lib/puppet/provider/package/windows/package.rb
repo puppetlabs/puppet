@@ -1,29 +1,4 @@
-# 'puppet/type/package' is being required here to avoid a load order issue that
-# manifests as 'uninitialized constant Puppet::Util::Windows::MsiPackage' or
-# 'uninitialized constant Puppet::Util::Windows::Package' (or similar case
-# where Puppet::Provider::Package::Windows somehow ends up pointing to
-# Puppet:Util::Windows) if puppet/provider/package/windows/package is loaded
-# before the puppet/type/package.
-#
-# Example:
-#
-#  jpartlow@percival:~/work/puppet$ bundle exec rspec spec/unit/provider/package/windows/package_spec.rb spec/unit/provider/package/rpm_spec.rb 
-#  Run options: exclude {:broken=>true}
-#  ..F..FFF........................
-#  
-#  Failures:
-#  
-#    1) Puppet::Util::Package::Windows::Package::each should yield each package it finds
-#       Failure/Error: Puppet::Provider::Package::Windows::MsiPackage.expects(:from_registry).with('Google', {}).returns(package)
-#       NameError:
-#         uninitialized constant Puppet::Util::Windows::MsiPackage
-#       # ./spec/unit/provider/package/windows/package_spec.rb:24:in `block (3 levels) in <top (required)>'
-#
-# ---
-#
-# Needs more investigation to pinpoint what's going on.
-#
-require 'puppet/type/package'
+require 'puppet/provider/package'
 require 'puppet/util/windows'
 
 class Puppet::Provider::Package::Windows

@@ -5,19 +5,19 @@ require 'puppet/configurer/fact_handler'
 
 class FactHandlerTester
   include Puppet::Configurer::FactHandler
+
+  def reload_facter
+    # don't want to do this in tests
+  end
 end
 
 describe Puppet::Configurer::FactHandler do
-  before do
+  before :each do
     @facthandler = FactHandlerTester.new
+    Puppet::Node::Facts.indirection.terminus_class = :memory
   end
 
   describe "when finding facts" do
-    before :each do
-      @facthandler.stubs(:reload_facter)
-      Puppet::Node::Facts.indirection.terminus_class = :memory
-    end
-
     it "should use the node name value to retrieve the facts" do
       foo_facts = Puppet::Node::Facts.new('foo')
       bar_facts = Puppet::Node::Facts.new('bar')
@@ -48,61 +48,30 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should fail if finding facts fails" do
-      Puppet[:trace] = false
-      Puppet[:certname] = "myhost"
       Puppet::Node::Facts.indirection.expects(:find).raises RuntimeError
 
-      lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
+      expect { @facthandler.find_facts }.to raise_error(Puppet::Error, /Could not retrieve local facts/)
+    end
+
+    it "should only load fact plugins once" do
+      Puppet::Node::Facts.indirection.expects(:find).once
+      @facthandler.find_facts
     end
   end
 
-  it "should only load fact plugins once" do
-    Puppet::Node::Facts.indirection.expects(:find).once
-    @facthandler.find_facts
-  end
-
-  # I couldn't get marshal to work for this, only yaml, so we hard-code yaml.
   it "should serialize and CGI escape the fact values for uploading" do
-    facts = stub 'facts'
-    facts.expects(:support_format?).with(:b64_zlib_yaml).returns true
-    facts.expects(:render).returns "my text"
-    text = CGI.escape("my text")
+    facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+    Puppet::Node::Facts.indirection.save(facts)
+    text = CGI.escape(@facthandler.find_facts.render(:pson))
 
-    @facthandler.expects(:find_facts).returns facts
-
-    @facthandler.facts_for_uploading.should == {:facts_format => :b64_zlib_yaml, :facts => text}
+    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
   end
 
   it "should properly accept facts containing a '+'" do
-    facts = stub 'facts'
-    facts.expects(:support_format?).with(:b64_zlib_yaml).returns true
-    facts.expects(:render).returns "my+text"
-    text = "my%2Btext"
+    facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
+    Puppet::Node::Facts.indirection.save(facts)
+    text = CGI.escape(@facthandler.find_facts.render(:pson))
 
-    @facthandler.expects(:find_facts).returns facts
-
-    @facthandler.facts_for_uploading.should == {:facts_format => :b64_zlib_yaml, :facts => text}
-  end
-
-  it "use compressed yaml as the serialization if zlib is supported" do
-    facts = stub 'facts'
-    facts.expects(:support_format?).with(:b64_zlib_yaml).returns true
-    facts.expects(:render).with(:b64_zlib_yaml).returns "my text"
-    text = CGI.escape("my text")
-
-    @facthandler.expects(:find_facts).returns facts
-
-    @facthandler.facts_for_uploading
-  end
-
-  it "should use yaml as the serialization if zlib is not supported" do
-    facts = stub 'facts'
-    facts.expects(:support_format?).with(:b64_zlib_yaml).returns false
-    facts.expects(:render).with(:yaml).returns "my text"
-    text = CGI.escape("my text")
-
-    @facthandler.expects(:find_facts).returns facts
-
-    @facthandler.facts_for_uploading
+    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
   end
 end

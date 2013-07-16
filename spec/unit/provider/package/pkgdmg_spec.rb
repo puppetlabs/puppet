@@ -64,26 +64,81 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
         resource[:source] = "http://fake.puppetlabs.com/foo.dmg"
       end
 
-      it "should call tmpdir and use the returned directory" do
+      it "should call tmpdir and then call curl with that directory" do
         Dir.expects(:mktmpdir).returns tmpdir
         Dir.stubs(:entries).returns ["foo.pkg"]
         described_class.expects(:curl).with do |*args|
-          args[0] == "-o" and args[1].include? tmpdir
+          args[0] == "-o" and args[1].include? tmpdir and args.include? "--fail"
         end
         described_class.stubs(:hdiutil).returns fake_hdiutil_plist
         described_class.expects(:installpkg)
 
         provider.install
       end
+
+      it "should use an http proxy host and port if specified" do
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args.should be_include 'some_host:some_port'
+          args.should be_include '--proxy'
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
+
+      it "should use an http proxy host only if specified" do
+        Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
+        Puppet::Util::HttpProxy.expects(:http_proxy_port).returns nil
+        Dir.expects(:mktmpdir).returns tmpdir
+        Dir.stubs(:entries).returns ["foo.pkg"]
+        described_class.expects(:curl).with do |*args|
+          args.should be_include 'some_host'
+          args.should be_include '--proxy'
+        end
+        described_class.stubs(:hdiutil).returns fake_hdiutil_plist
+        described_class.expects(:installpkg)
+
+        provider.install
+      end
+
     end
   end
 
   describe "when installing flat pkg file" do
-    it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
-      resource[:source] = "/tmp/test.pkg"
-      resource[:name] = "testpkg"
-      provider.class.expects(:installpkgdmg).with("/tmp/test.pkg", "testpkg").returns ""
-      provider.install
+    describe "with a local source" do
+      it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
+        resource[:source] = "/tmp/test.pkg"
+        resource[:name] = "testpkg"
+        provider.class.expects(:installpkgdmg).with("/tmp/test.pkg", "testpkg").returns ""
+        provider.install
+      end
+    end
+
+    describe "with a remote source" do
+      let(:remote_source) { 'http://fake.puppetlabs.com/test.pkg' }
+      let(:tmpdir) { '/path/to/tmpdir' }
+      let(:tmpfile) { File.join(tmpdir, 'testpkg.pkg') }
+
+      before do
+        resource[:name]   = 'testpkg'
+        resource[:source] = remote_source
+
+        Dir.stubs(:mktmpdir).returns tmpdir
+      end
+
+      it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
+        described_class.expects(:curl).with do |*args|
+          args.should be_include tmpfile
+          args.should be_include remote_source
+        end
+        provider.class.expects(:installpkg).with(tmpfile, 'testpkg', remote_source)
+        provider.install
+      end
     end
   end
 end

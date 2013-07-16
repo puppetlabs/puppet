@@ -17,35 +17,6 @@ describe Puppet::Forge::Repository do
     repository.retrieve(uri)
   end
 
-  describe 'http_proxy support' do
-    after :each do
-      ENV["http_proxy"] = nil
-    end
-
-    it "supports environment variable for port and host" do
-      ENV["http_proxy"] = "http://test.com:8011"
-
-      repository.http_proxy_host.should == "test.com"
-      repository.http_proxy_port.should == 8011
-    end
-
-    it "supports puppet configuration for port and host" do
-      ENV["http_proxy"] = nil
-      proxy_settings_of('test.com', 7456)
-
-      repository.http_proxy_port.should == 7456
-      repository.http_proxy_host.should == "test.com"
-    end
-
-    it "uses environment variable before puppet settings" do
-      ENV["http_proxy"] = "http://test1.com:8011"
-      proxy_settings_of('test2.com', 7456)
-
-      repository.http_proxy_host.should == "test1.com"
-      repository.http_proxy_port.should == 8011
-    end
-  end
-
   describe "making a request" do
     before :each do
       proxy_settings_of("proxy", 1234)

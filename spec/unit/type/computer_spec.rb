@@ -18,7 +18,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)
   end
 
-  it "should be able to create a instance" do
+  it "should be able to create an instance" do
     provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
     Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
     computer.new(:name => "bar").should_not be_nil

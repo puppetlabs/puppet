@@ -16,8 +16,6 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
   end
 
   def install
-    should = @resource.should(:ensure)
-
     if @resource[:source] =~ /\/$/
       if @resource[:source] =~ /^(ftp|https?):/
         Puppet::Util.withenv :PACKAGESITE => @resource[:source] do

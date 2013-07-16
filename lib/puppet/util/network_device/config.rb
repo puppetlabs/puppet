@@ -1,8 +1,8 @@
 require 'ostruct'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 require 'puppet/util/network_device'
 
-class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
+class Puppet::Util::NetworkDevice::Config
 
   def self.main
     @main ||= self.new
@@ -18,12 +18,9 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
     FileTest.exists?(@file)
   end
 
-  def initialize()
-    @file = Puppet[:deviceconfig]
+  def initialize
+    @file = Puppet::Util::WatchedFile.new(Puppet[:deviceconfig])
 
-    raise Puppet::DevError, "No device config file defined" unless @file
-    return unless self.exists?
-    super(@file)
     @devices = {}
 
     read(true) # force reading at start
@@ -31,9 +28,9 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
 
   # Read the configuration file.
   def read(force = false)
-    return unless FileTest.exists?(@file)
+    return unless exists?
 
-    parse if force or changed?
+    parse if force or @file.changed?
   end
 
   private

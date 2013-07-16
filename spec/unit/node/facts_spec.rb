@@ -35,6 +35,50 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["environment"].should == "foo"
   end
 
+  describe "when sanitizing facts" do
+    it "should convert fact values if needed" do
+      @facts.values["test"] = /foo/
+      @facts.sanitize
+      @facts.values["test"].should == "(?-mix:foo)"
+    end
+
+    it "should convert hash keys if needed" do
+      @facts.values["test"] = {/foo/ => "bar"}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => "bar"}
+    end
+
+    it "should convert hash values if needed" do
+      @facts.values["test"] = {"foo" => /bar/}
+      @facts.sanitize
+      @facts.values["test"].should == {"foo" => "(?-mix:bar)"}
+    end
+
+    it "should convert array elements if needed" do
+      @facts.values["test"] = [1, "foo", /bar/]
+      @facts.sanitize
+      @facts.values["test"].should == [1, "foo", "(?-mix:bar)"]
+    end
+
+    it "should handle nested arrays" do
+      @facts.values["test"] = [1, "foo", [/bar/]]
+      @facts.sanitize
+      @facts.values["test"].should == [1, "foo", ["(?-mix:bar)"]]
+    end
+
+    it "should handle nested hashes" do
+      @facts.values["test"] = {/foo/ => {"bar" => /baz/}}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => {"bar" => "(?-mix:baz)"}}
+    end
+
+    it "should handle nester arrays and hashes" do
+      @facts.values["test"] = {/foo/ => ["bar", /baz/]}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => ["bar", "(?-mix:baz)"]}
+    end
+  end
+
   describe "when indirecting" do
     before do
       @indirection = stub 'indirection', :request => mock('request'), :name => :facts

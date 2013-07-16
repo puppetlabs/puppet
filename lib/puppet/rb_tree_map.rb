@@ -230,7 +230,7 @@ class Puppet::RbTreeMap
 
     def rotate_left
       r = @right
-      r_key, r_value, r_color = r.key, r.value, r.color
+      r_key, r_value = r.key, r.value
       b = r.left
       r.left = @left
       @left = r
@@ -243,7 +243,7 @@ class Puppet::RbTreeMap
 
     def rotate_right
       l = @left
-      l_key, l_value, l_color = l.key, l.value, l.color
+      l_key, l_value = l.key, l.value
       b = l.right
       l.right = @right
       @right = l

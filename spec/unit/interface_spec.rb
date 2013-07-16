@@ -24,11 +24,11 @@ describe Puppet::Interface do
     end
 
     it "should raise an exception when the requested version is unavailable" do
-      expect { subject[:huzzah, '17.0.0'] }.to raise_error, Puppet::Error
+      expect { subject[:huzzah, '17.0.0'] }.to raise_error(Puppet::Error, /Could not find version/)
     end
 
     it "should raise an exception when the requested face doesn't exist" do
-      expect { subject[:burrble_toot, :current] }.to raise_error, Puppet::Error
+      expect { subject[:burrble_toot, :current] }.to raise_error(Puppet::Error, /Could not find Puppet Face/)
     end
 
     describe "version matching" do

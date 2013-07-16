@@ -186,7 +186,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       Plist::Emit.save_plist(values, tmp.path)
       cmds = []
       cmds << :security << "authorizationdb" << "write" << name
-      output = execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
+      execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
     rescue Errno::EACCES => e
       raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}")
     ensure

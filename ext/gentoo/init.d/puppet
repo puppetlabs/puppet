@@ -10,7 +10,7 @@ depend() {
 
 checkconfig() {
         if [[ ! -d "${PUPPET_PID_DIR}" ]] ; then
-               eerror "Please make sure PUPPET_PID_DIR is defined and points to a existing directory"
+               eerror "Please make sure PUPPET_PID_DIR is defined and points to an existing directory"
                return 1
         fi
 

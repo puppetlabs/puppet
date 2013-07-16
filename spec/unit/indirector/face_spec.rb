@@ -33,7 +33,7 @@ describe Puppet::Indirector::Face do
 
   describe "as an instance" do
     it "should be able to determine its indirection" do
-      # Loading actions here an get, um, complicated
+      # Loading actions here can get, um, complicated
       Puppet::Face.stubs(:load_actions)
       Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection.should equal(Puppet::Resource::Catalog.indirection)
     end

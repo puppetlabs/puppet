@@ -42,7 +42,6 @@ Puppet::Parser::Functions::newfunction(
     end
     enumerator = o.each
     index = 0
-    result = nil
     if serving_size == 1
       (o.size).times do
         pblock.call(scope, enumerator.next)
@@ -68,7 +67,6 @@ Puppet::Parser::Functions::newfunction(
       raise ArgumentError, "Block must define at most two parameters (for hash entry key and value)."
     end
     enumerator = o.each_pair
-    result = nil
     if serving_size == 1
       (o.size).times do
         pblock.call(scope, enumerator.next)

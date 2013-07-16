@@ -69,7 +69,7 @@ module Puppet::Network::HTTP::Compression
         out = @uncompressor.inflate(chunk)
         @first = false
         return out
-      rescue Zlib::DataError => z
+      rescue Zlib::DataError
         # it can happen that we receive a raw deflate stream
         # which might make our inflate throw a data error.
         # in this case, we try with a verbatim (no header)

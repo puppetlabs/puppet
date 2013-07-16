@@ -92,12 +92,6 @@ describe "Puppet defaults" do
     Puppet.settings.setting(:yamldir).group.should == Puppet.settings[:group]
   end
 
-  # See #1232
-  it "should not specify a user or group for the rundir" do
-    Puppet.settings.setting(:rundir).owner.should be_nil
-    Puppet.settings.setting(:rundir).group.should be_nil
-  end
-
   it "should specify that the host private key should be owned by the service user" do
     Puppet.settings.stubs(:service_user_available?).returns true
     Puppet.settings.setting(:hostprivkey).owner.should == Puppet.settings[:user]

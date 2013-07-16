@@ -2,336 +2,522 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
+
+  before :each do
+    Puppet::Type.type(:mount).stubs(:defaultprovider).returns providerclass
+  end
+
+  let :providerclass do
+    described_class.provide(:fake_mount_provider) do
+      attr_accessor :property_hash
+      def create; end
+      def destroy; end
+      def exists?
+        get(:ensure) != :absent
+      end
+      def mount; end
+      def umount; end
+      def mounted?
+        [:mounted, :ghost].include?(get(:ensure))
+      end
+      mk_resource_methods
+    end
+  end
+
+  let :provider do
+    providerclass.new(:name => 'yay')
+  end
+
+  let :resource do
+    described_class.new(:name => "yay", :audit => :ensure, :provider => provider)
+  end
+
+  let :ensureprop do
+    resource.property(:ensure)
+  end
+
   it "should have a :refreshable feature that requires the :remount method" do
-    Puppet::Type.type(:mount).provider_feature(:refreshable).methods.should == [:remount]
+    described_class.provider_feature(:refreshable).methods.should == [:remount]
   end
 
   it "should have no default value for :ensure" do
-    mount = Puppet::Type.type(:mount).new(:name => "yay")
+    mount = described_class.new(:name => "yay")
     mount.should(:ensure).should be_nil
   end
 
   it "should have :name as the only keyattribut" do
-    Puppet::Type.type(:mount).key_attributes.should == [:name]
-  end
-end
-
-describe Puppet::Type.type(:mount), "when validating attributes" do
-  [:name, :remounts, :provider].each do |param|
-    it "should have a #{param} parameter" do
-      Puppet::Type.type(:mount).attrtype(param).should == :param
-    end
+    described_class.key_attributes.should == [:name]
   end
 
-  [:ensure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
-    it "should have a #{param} property" do
-      Puppet::Type.type(:mount).attrtype(param).should == :property
-    end
-  end
-end
-
-describe Puppet::Type.type(:mount)::Ensure, "when validating values", :unless => Puppet.features.microsoft_windows? do
-  before do
-    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil
-    Puppet::Type.type(:mount).defaultprovider.expects(:new).returns(@provider)
-  end
-
-  it "should alias :present to :defined as a value to :ensure" do
-    mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
-    mount.should(:ensure).should == :defined
-  end
-
-  it "should support :present as a value to :ensure" do
-    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
-  end
-
-  it "should support :defined as a value to :ensure" do
-    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :defined)
-  end
-
-  it "should support :unmounted as a value to :ensure" do
-    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :unmounted)
-  end
-
-  it "should support :absent as a value to :ensure" do
-    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :absent)
-  end
-
-  it "should support :mounted as a value to :ensure" do
-    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :mounted)
-  end
-end
-
-describe Puppet::Type.type(:mount)::Ensure, :unless => Puppet.features.microsoft_windows? do
-  before :each do
-    provider_properties = {}
-    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
-    Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
-    @mount = Puppet::Type.type(:mount).new(:name => "yay", :audit => :ensure)
-
-    @ensure = @mount.property(:ensure)
-  end
-
-  def mount_stub(params)
-    Puppet::Type.type(:mount).validproperties.each do |prop|
-      unless params[prop]
-        params[prop] = :absent
-        @mount[prop] = :absent
+  describe "when validating attributes" do
+    [:name, :remounts, :provider].each do |param|
+      it "should have a #{param} parameter" do
+        described_class.attrtype(param).should == :param
       end
     end
 
-    params.each do |param, value|
-      @provider.stubs(param).returns(value)
+    [:ensure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
+      it "should have a #{param} property" do
+        described_class.attrtype(param).should == :property
+      end
     end
   end
 
-  describe Puppet::Type.type(:mount)::Ensure, "when changing the host" do
+  describe "when validating values" do
 
+    describe "for name" do
+      it "should allow full qualified paths" do
+        described_class.new(:name => "/mnt/foo")[:name].should == '/mnt/foo'
+      end
+
+      it "should remove trailing slashes" do
+        described_class.new(:name => '/')[:name].should == '/'
+        described_class.new(:name => '//')[:name].should == '/'
+        described_class.new(:name => '/foo/')[:name].should == '/foo'
+        described_class.new(:name => '/foo/bar/')[:name].should == '/foo/bar'
+        described_class.new(:name => '/foo/bar/baz//')[:name].should == '/foo/bar/baz'
+      end
+
+      it "should not allow spaces" do
+        expect { described_class.new(:name => "/mnt/foo bar") }.to raise_error Puppet::Error, /name.*whitespace/
+      end
+
+      it "should allow pseudo mountpoints (e.g. swap)" do
+        described_class.new(:name => 'none')[:name].should == 'none'
+      end
+    end
+
+    describe "for ensure" do
+      it "should alias :present to :defined as a value to :ensure" do
+        mount = described_class.new(:name => "yay", :ensure => :present)
+        mount.should(:ensure).should == :defined
+      end
+
+      it "should support :present as a value to :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :present) }.to_not raise_error
+      end
+
+      it "should support :defined as a value to :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :defined) }.to_not raise_error
+      end
+
+      it "should support :unmounted as a value to :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :unmounted) }.to_not raise_error
+      end
+
+      it "should support :absent as a value to :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :absent) }.to_not raise_error
+      end
+
+      it "should support :mounted as a value to :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :mounted) }.to_not raise_error
+      end
+
+      it "should not support other values for :ensure" do
+        expect { described_class.new(:name => "yay", :ensure => :mount) }.to raise_error Puppet::Error, /Invalid value/
+      end
+    end
+
+    describe "for device" do
+      it "should support normal /dev paths for device" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/hda1') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/dsk/c0d0s0') }.to_not raise_error
+      end
+
+      it "should support labels for device" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'LABEL=/boot') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'LABEL=SWAP-hda6') }.to_not raise_error
+      end
+
+      it "should support pseudo devices for device" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'ctfs') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'swap') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'sysfs') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'proc') }.to_not raise_error
+      end
+
+      it 'should not support whitespace in device' do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/my dev/foo') }.to raise_error Puppet::Error, /device.*whitespace/
+        expect { described_class.new(:name => "/foo", :ensure => :present, :device => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /device.*whitespace/
+      end
+    end
+
+    describe "for blockdevice" do
+      before :each do
+        # blockdevice is only used on Solaris
+        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
+        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+      end
+
+      it "should support normal /dev/rdsk paths for blockdevice" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '/dev/rdsk/c0d0s0') }.to_not raise_error
+      end
+
+      it "should support a dash for blockdevice" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '-') }.to_not raise_error
+      end
+
+      it "should not support whitespace in blockdevice" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '/dev/my dev/foo') }.to raise_error Puppet::Error, /blockdevice.*whitespace/
+        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /blockdevice.*whitespace/
+      end
+
+      it "should default to /dev/rdsk/DEVICE if device is /dev/dsk/DEVICE" do
+        obj = described_class.new(:name => "/foo", :device => '/dev/dsk/c0d0s0')
+        obj[:blockdevice].should == '/dev/rdsk/c0d0s0'
+      end
+
+      it "should default to - if it is an nfs-share" do
+        obj = described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs')
+        obj[:blockdevice].should == '-'
+      end
+
+      it "should have no default otherwise" do
+        described_class.new(:name => "/foo")[:blockdevice].should == nil
+        described_class.new(:name => "/foo", :device => "/foo")[:blockdevice].should == nil
+      end
+
+      it "should overwrite any default if blockdevice is explicitly set" do
+        described_class.new(:name => "/foo", :device => '/dev/dsk/c0d0s0', :blockdevice => '/foo')[:blockdevice].should == '/foo'
+        described_class.new(:name => "/foo", :device => "server://share", :fstype => 'nfs', :blockdevice => '/foo')[:blockdevice].should == '/foo'
+      end
+    end
+
+    describe "for fstype" do
+      it "should support valid fstypes" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext3') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'proc') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'sysfs') }.to_not raise_error
+      end
+
+      it "should support auto as a special fstype" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'auto') }.to_not raise_error
+      end
+
+      it "should not support whitespace in fstype" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext 3') }.to raise_error Puppet::Error, /fstype.*whitespace/
+      end
+    end
+
+    describe "for options" do
+      it "should support a single option" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro') }.to_not raise_error
+      end
+
+      it "should support muliple options as a comma separated list" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro,rsize=4096') }.to_not raise_error
+      end
+
+      it "should not support whitespace in options" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :options => ['ro','foo bar','intr']) }.to raise_error Puppet::Error, /option.*whitespace/
+      end
+    end
+
+    describe "for pass" do
+      it "should support numeric values" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '0') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '1') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '2') }.to_not raise_error
+      end
+
+      it "should support - on Solaris" do
+        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
+        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '-') }.to_not raise_error
+      end
+
+      it "should default to 0 on non Solaris" do
+        Facter.stubs(:value).with(:osfamily).returns nil
+        Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
+        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == 0
+      end
+
+      it "should default to - on Solaris" do
+        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
+        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == '-'
+      end
+    end
+
+    describe "for dump" do
+      it "should support 0 as a value for dump" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '0') }.to_not raise_error
+      end
+
+      it "should support 1 as a value for dump" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '1') }.to_not raise_error
+      end
+
+      # Unfortunately the operatingsystem is evaluatet at load time so I am unable to stub operatingsystem
+      it "should support 2 as a value for dump on FreeBSD", :if => Facter.value(:operatingsystem) == 'FreeBSD' do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '2') }.to_not raise_error
+      end
+
+      it "should not support 2 as a value for dump when not on FreeBSD", :if => Facter.value(:operatingsystem) != 'FreeBSD' do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '2') }.to raise_error Puppet::Error, /Invalid value/
+      end
+
+      it "should default to 0" do
+        described_class.new(:name => "/foo", :ensure => :present)[:dump].should == 0
+      end
+    end
+
+    describe "for atboot" do
+      it "should support yes as a value for atboot" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :yes) }.to_not raise_error
+      end
+
+      it "should support no as a value for atboot" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :no) }.to_not raise_error
+      end
+
+      it "should not support other values for atboot" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :true) }.to raise_error Puppet::Error, /Invalid value/
+      end
+    end
+  end
+
+
+  describe "when changing the host" do
     def test_ensure_change(options)
-      @provider.stubs(:get).with(:ensure).returns options[:from]
-      @provider.stubs(:ensure).returns options[:from]
-      @provider.stubs(:mounted?).returns([:mounted,:ghost].include? options[:from])
-      @provider.expects(:create).times(options[:create] || 0)
-      @provider.expects(:destroy).times(options[:destroy] || 0)
-      @provider.expects(:mount).never
-      @provider.expects(:unmount).times(options[:unmount] || 0)
-      @ensure.stubs(:syncothers)
-      @ensure.should = options[:to]
-      @ensure.sync
-      (!!@provider.property_hash[:needs_mount]).should == (!!options[:mount])
-   end
+      provider.set(:ensure => options[:from])
+      provider.expects(:create).times(options[:create] || 0)
+      provider.expects(:destroy).times(options[:destroy] || 0)
+      provider.expects(:mount).never
+      provider.expects(:unmount).times(options[:unmount] || 0)
+      ensureprop.stubs(:syncothers)
+      ensureprop.should = options[:to]
+      ensureprop.sync
+      (!!provider.property_hash[:needs_mount]).should == (!!options[:mount])
+    end
 
-   it "should create itself when changing from :ghost to :present" do
-     test_ensure_change(:from => :ghost, :to => :present, :create => 1)
-   end
+    it "should create itself when changing from :ghost to :present" do
+      test_ensure_change(:from => :ghost, :to => :present, :create => 1)
+    end
 
-   it "should create itself when changing from :absent to :present" do
-     test_ensure_change(:from => :absent, :to => :present, :create => 1)
-   end
+    it "should create itself when changing from :absent to :present" do
+      test_ensure_change(:from => :absent, :to => :present, :create => 1)
+    end
 
-   it "should create itself and unmount when changing from :ghost to :unmounted" do
-     test_ensure_change(:from => :ghost, :to => :unmounted, :create => 1, :unmount => 1)
-   end
+    it "should create itself and unmount when changing from :ghost to :unmounted" do
+      test_ensure_change(:from => :ghost, :to => :unmounted, :create => 1, :unmount => 1)
+    end
 
-   it "should unmount resource when changing from :mounted to :unmounted" do
-     test_ensure_change(:from => :mounted, :to => :unmounted, :unmount => 1)
-   end
+    it "should unmount resource when changing from :mounted to :unmounted" do
+      test_ensure_change(:from => :mounted, :to => :unmounted, :unmount => 1)
+    end
 
-   it "should create itself when changing from :absent to :unmounted" do
-     test_ensure_change(:from => :absent, :to => :unmounted, :create => 1)
-   end
+    it "should create itself when changing from :absent to :unmounted" do
+      test_ensure_change(:from => :absent, :to => :unmounted, :create => 1)
+    end
 
-   it "should unmount resource when changing from :ghost to :absent" do
-     test_ensure_change(:from => :ghost, :to => :absent, :unmount => 1)
-   end
+    it "should unmount resource when changing from :ghost to :absent" do
+      test_ensure_change(:from => :ghost, :to => :absent, :unmount => 1)
+    end
 
-   it "should unmount and destroy itself when changing from :mounted to :absent" do
-     test_ensure_change(:from => :mounted, :to => :absent, :destroy => 1, :unmount => 1)
-   end
+    it "should unmount and destroy itself when changing from :mounted to :absent" do
+      test_ensure_change(:from => :mounted, :to => :absent, :destroy => 1, :unmount => 1)
+    end
 
-   it "should destroy itself when changing from :unmounted to :absent" do
-     test_ensure_change(:from => :unmounted, :to => :absent, :destroy => 1)
-   end
+    it "should destroy itself when changing from :unmounted to :absent" do
+      test_ensure_change(:from => :unmounted, :to => :absent, :destroy => 1)
+    end
 
-   it "should create itself when changing from :ghost to :mounted" do
-     test_ensure_change(:from => :ghost, :to => :mounted, :create => 1)
-   end
+    it "should create itself when changing from :ghost to :mounted" do
+      test_ensure_change(:from => :ghost, :to => :mounted, :create => 1)
+    end
 
-   it "should create itself and mount when changing from :absent to :mounted" do
-     test_ensure_change(:from => :absent, :to => :mounted, :create => 1, :mount => 1)
-   end
+    it "should create itself and mount when changing from :absent to :mounted" do
+      test_ensure_change(:from => :absent, :to => :mounted, :create => 1, :mount => 1)
+    end
 
-   it "should mount resource when changing from :unmounted to :mounted" do
-     test_ensure_change(:from => :unmounted, :to => :mounted, :mount => 1)
-   end
+    it "should mount resource when changing from :unmounted to :mounted" do
+      test_ensure_change(:from => :unmounted, :to => :mounted, :mount => 1)
+    end
 
 
-   it "should be in sync if it is :absent and should be :absent" do
-     @ensure.should = :absent
-     @ensure.safe_insync?(:absent).should == true
-   end
+    it "should be in sync if it is :absent and should be :absent" do
+      ensureprop.should = :absent
+      ensureprop.safe_insync?(:absent).should == true
+    end
 
-   it "should be out of sync if it is :absent and should be :defined" do
-     @ensure.should = :defined
-     @ensure.safe_insync?(:absent).should == false
-   end
+    it "should be out of sync if it is :absent and should be :defined" do
+      ensureprop.should = :defined
+      ensureprop.safe_insync?(:absent).should == false
+    end
 
-   it "should be out of sync if it is :absent and should be :mounted" do
-     @ensure.should = :mounted
-     @ensure.safe_insync?(:absent).should == false
-   end
+    it "should be out of sync if it is :absent and should be :mounted" do
+      ensureprop.should = :mounted
+      ensureprop.safe_insync?(:absent).should == false
+    end
 
-   it "should be out of sync if it is :absent and should be :unmounted" do
-     @ensure.should = :unmounted
-     @ensure.safe_insync?(:absent).should == false
-   end
+    it "should be out of sync if it is :absent and should be :unmounted" do
+      ensureprop.should = :unmounted
+      ensureprop.safe_insync?(:absent).should == false
+    end
 
-   it "should be out of sync if it is :mounted and should be :absent" do
-     @ensure.should = :absent
-     @ensure.safe_insync?(:mounted).should == false
-   end
+    it "should be out of sync if it is :mounted and should be :absent" do
+      ensureprop.should = :absent
+      ensureprop.safe_insync?(:mounted).should == false
+    end
 
-   it "should be in sync if it is :mounted and should be :defined" do
-     @ensure.should = :defined
-     @ensure.safe_insync?(:mounted).should == true
-   end
+    it "should be in sync if it is :mounted and should be :defined" do
+      ensureprop.should = :defined
+      ensureprop.safe_insync?(:mounted).should == true
+    end
 
-   it "should be in sync if it is :mounted and should be :mounted" do
-     @ensure.should = :mounted
-     @ensure.safe_insync?(:mounted).should == true
-   end
+    it "should be in sync if it is :mounted and should be :mounted" do
+      ensureprop.should = :mounted
+      ensureprop.safe_insync?(:mounted).should == true
+    end
 
-   it "should be out in sync if it is :mounted and should be :unmounted" do
-     @ensure.should = :unmounted
-     @ensure.safe_insync?(:mounted).should == false
-   end
-
-
-   it "should be out of sync if it is :unmounted and should be :absent" do
-     @ensure.should = :absent
-     @ensure.safe_insync?(:unmounted).should == false
-   end
-
-   it "should be in sync if it is :unmounted and should be :defined" do
-     @ensure.should = :defined
-     @ensure.safe_insync?(:unmounted).should == true
-   end
-
-   it "should be out of sync if it is :unmounted and should be :mounted" do
-     @ensure.should = :mounted
-     @ensure.safe_insync?(:unmounted).should == false
-   end
-
-   it "should be in sync if it is :unmounted and should be :unmounted" do
-     @ensure.should = :unmounted
-     @ensure.safe_insync?(:unmounted).should == true
-   end
+    it "should be out in sync if it is :mounted and should be :unmounted" do
+      ensureprop.should = :unmounted
+      ensureprop.safe_insync?(:mounted).should == false
+    end
 
 
-   it "should be out of sync if it is :ghost and should be :absent" do
-     @ensure.should = :absent
-     @ensure.safe_insync?(:ghost).should == false
-   end
+    it "should be out of sync if it is :unmounted and should be :absent" do
+      ensureprop.should = :absent
+      ensureprop.safe_insync?(:unmounted).should == false
+    end
 
-   it "should be out of sync if it is :ghost and should be :defined" do
-     @ensure.should = :defined
-     @ensure.safe_insync?(:ghost).should == false
-   end
+    it "should be in sync if it is :unmounted and should be :defined" do
+      ensureprop.should = :defined
+      ensureprop.safe_insync?(:unmounted).should == true
+    end
 
-   it "should be out of sync if it is :ghost and should be :mounted" do
-     @ensure.should = :mounted
-     @ensure.safe_insync?(:ghost).should == false
-   end
+    it "should be out of sync if it is :unmounted and should be :mounted" do
+      ensureprop.should = :mounted
+      ensureprop.safe_insync?(:unmounted).should == false
+    end
 
-   it "should be out of sync if it is :ghost and should be :unmounted" do
-     @ensure.should = :unmounted
-     @ensure.safe_insync?(:ghost).should == false
-   end
+    it "should be in sync if it is :unmounted and should be :unmounted" do
+      ensureprop.should = :unmounted
+      ensureprop.safe_insync?(:unmounted).should == true
+    end
 
- end
 
-  describe Puppet::Type.type(:mount), "when responding to refresh" do
+    it "should be out of sync if it is :ghost and should be :absent" do
+      ensureprop.should = :absent
+      ensureprop.safe_insync?(:ghost).should == false
+    end
+
+    it "should be out of sync if it is :ghost and should be :defined" do
+      ensureprop.should = :defined
+      ensureprop.safe_insync?(:ghost).should == false
+    end
+
+    it "should be out of sync if it is :ghost and should be :mounted" do
+      ensureprop.should = :mounted
+      ensureprop.safe_insync?(:ghost).should == false
+    end
+
+    it "should be out of sync if it is :ghost and should be :unmounted" do
+      ensureprop.should = :unmounted
+      ensureprop.safe_insync?(:ghost).should == false
+    end
+  end
+
+  describe "when responding to refresh" do
     pending "2.6.x specifies slightly different behavior and the desired behavior needs to be clarified and revisited.  See ticket #4904" do
-
       it "should remount if it is supposed to be mounted" do
-        @mount[:ensure] = "mounted"
-        @provider.expects(:remount)
+        resource[:ensure] = "mounted"
+        provider.expects(:remount)
 
-        @mount.refresh
+        resource.refresh
       end
 
       it "should not remount if it is supposed to be present" do
-        @mount[:ensure] = "present"
-        @provider.expects(:remount).never
+        resource[:ensure] = "present"
+        provider.expects(:remount).never
 
-        @mount.refresh
+        resource.refresh
       end
 
       it "should not remount if it is supposed to be absent" do
-        @mount[:ensure] = "absent"
-        @provider.expects(:remount).never
+        resource[:ensure] = "absent"
+        provider.expects(:remount).never
 
-        @mount.refresh
+        resource.refresh
       end
 
       it "should not remount if it is supposed to be defined" do
-        @mount[:ensure] = "defined"
-        @provider.expects(:remount).never
+        resource[:ensure] = "defined"
+        provider.expects(:remount).never
 
-        @mount.refresh
+        resource.refresh
       end
 
       it "should not remount if it is supposed to be unmounted" do
-        @mount[:ensure] = "unmounted"
-        @provider.expects(:remount).never
+        resource[:ensure] = "unmounted"
+        provider.expects(:remount).never
 
-        @mount.refresh
+        resource.refresh
       end
 
       it "should not remount swap filesystems" do
-        @mount[:ensure] = "mounted"
-        @mount[:fstype] = "swap"
-        @provider.expects(:remount).never
+        resource[:ensure] = "mounted"
+        resource[:fstype] = "swap"
+        provider.expects(:remount).never
 
-        @mount.refresh
+        resource.refresh
       end
     end
   end
-end
 
-describe Puppet::Type.type(:mount), "when modifying an existing mount entry", :unless => Puppet.features.microsoft_windows? do
-  before do
-    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :remount => nil
-    Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
+  describe "when modifying an existing mount entry" do
 
-    @mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :mounted)
-
-    {:device => "/foo/bar", :blockdevice => "/other/bar", :target => "/what/ever", :fstype => 'eh', :options => "", :pass => 0, :dump => 0, :atboot => 0,
-      :ensure => :mounted}.each do
-      |param, value|
-      @mount.provider.stubs(param).returns value
-      @mount[param] = value
+    let :initial_values do
+      {
+        :ensure      => :mounted,
+        :name        => '/mnt/foo',
+        :device      => "/foo/bar",
+        :blockdevice => "/other/bar",
+        :target      => "/what/ever",
+        :options     => "soft",
+        :pass        => 0,
+        :dump        => 0,
+        :atboot      => :no,
+      }
     end
 
-    @mount.provider.stubs(:mounted?).returns true
 
-    # stub this to not try to create state.yaml
-    Puppet::Util::Storage.stubs(:store)
+    let :resource do
+      described_class.new(initial_values.merge(:provider => provider))
+    end
 
-    @catalog = Puppet::Resource::Catalog.new
-    @catalog.add_resource @mount
+    let :provider do
+      providerclass.new(initial_values)
+    end
+
+    def run_in_catalog(*resources)
+      Puppet::Util::Storage.stubs(:store)
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource *resources
+      catalog.apply
+    end
+
+    it "should use the provider to change the dump value" do
+      provider.expects(:dump=).with(1)
+
+      resource[:dump] = 1
+
+      run_in_catalog(resource)
+    end
+
+    it "should umount before flushing changes to disk" do
+      syncorder = sequence('syncorder')
+
+      provider.expects(:unmount).in_sequence(syncorder)
+      provider.expects(:options=).in_sequence(syncorder).with 'hard'
+      resource.expects(:flush).in_sequence(syncorder) # Call inside syncothers
+      resource.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
+
+      resource[:ensure] = :unmounted
+      resource[:options] = 'hard'
+
+      run_in_catalog(resource)
+    end
   end
-
-  it "should use the provider to change the dump value" do
-    @mount.provider.expects(:dump).returns 0
-    @mount.provider.expects(:dump=).with(1)
-    @mount.provider.stubs(:respond_to?).returns(false)
-    @mount.provider.stubs(:respond_to?).with("dump=").returns(true)
-
-    @mount[:dump] = 1
-
-    @catalog.apply
-  end
-
-  it "should umount before flushing changes to disk" do
-    syncorder = sequence('syncorder')
-    @mount.provider.expects(:options).returns 'soft'
-    @mount.provider.expects(:ensure).returns :mounted
-
-    @mount.provider.stubs(:respond_to?).returns(false)
-    @mount.provider.stubs(:respond_to?).with("options=").returns(true)
-
-    @mount.provider.expects(:unmount).in_sequence(syncorder)
-    @mount.provider.expects(:options=).in_sequence(syncorder).with 'hard'
-    @mount.expects(:flush).in_sequence(syncorder) # Call inside syncothers
-    @mount.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
-
-    @mount.provider.stubs(:respond_to?).with(:options=).returns(true)
-
-    @mount[:ensure] = :unmounted
-    @mount[:options] = 'hard'
-
-    @catalog.apply
-  end
-
 end

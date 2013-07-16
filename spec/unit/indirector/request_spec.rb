@@ -33,15 +33,15 @@ describe Puppet::Indirector::Request do
     end
 
     it "should support options specified as a hash" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil, :one => :two) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil, :one => :two) }.to_not raise_error
     end
 
     it "should support nil options" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil, nil) }.to_not raise_error
     end
 
     it "should support unspecified options" do
-      lambda { Puppet::Indirector::Request.new(:ind, :method, :key, nil) }.should_not raise_error(ArgumentError)
+      expect { Puppet::Indirector::Request.new(:ind, :method, :key, nil) }.to_not raise_error
     end
 
     it "should use an empty options hash if nil was provided" do
@@ -190,7 +190,7 @@ describe Puppet::Indirector::Request do
     Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns nil
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
-    lambda { request.model }.should raise_error(ArgumentError)
+    expect { request.model }.to raise_error(ArgumentError)
   end
 
   it "should have a method for determining if the request is plural or singular" do
@@ -243,76 +243,129 @@ describe Puppet::Indirector::Request do
   end
 
   describe "when building a query string from its options" do
-    before do
-      @request = Puppet::Indirector::Request.new(:myind, :find, "my key", nil)
+    def a_request_with_options(options)
+      Puppet::Indirector::Request.new(:myind, :find, "my key", nil, options)
+    end
+
+    def the_parsed_query_string_from(request)
+      CGI.parse(request.query_string.sub(/^\?/, ''))
     end
 
     it "should return an empty query string if there are no options" do
-      @request.stubs(:options).returns nil
-      @request.query_string.should == ""
+      request = a_request_with_options(nil)
+
+      request.query_string.should == ""
     end
 
     it "should return an empty query string if the options are empty" do
-      @request.stubs(:options).returns({})
-      @request.query_string.should == ""
+      request = a_request_with_options({})
+
+      request.query_string.should == ""
     end
 
     it "should prefix the query string with '?'" do
-      @request.stubs(:options).returns(:one => "two")
-      @request.query_string.should =~ /^\?/
+      request = a_request_with_options(:one => "two")
+
+      request.query_string.should =~ /^\?/
     end
 
     it "should include all options in the query string, separated by '&'" do
-      @request.stubs(:options).returns(:one => "two", :three => "four")
-      @request.query_string.sub(/^\?/, '').split("&").sort.should == %w{one=two three=four}.sort
+      request = a_request_with_options(:one => "two", :three => "four")
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["two"],
+        "three" => ["four"]
+      }
     end
 
     it "should ignore nil options" do
-      @request.stubs(:options).returns(:one => "two", :three => nil)
-      @request.query_string.should_not be_include("three")
+      request = a_request_with_options(:one => "two", :three => nil)
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["two"]
+      }
     end
 
     it "should convert 'true' option values into strings" do
-      @request.stubs(:options).returns(:one => true)
-      @request.query_string.should == "?one=true"
+      request = a_request_with_options(:one => true)
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["true"]
+      }
     end
 
     it "should convert 'false' option values into strings" do
-      @request.stubs(:options).returns(:one => false)
-      @request.query_string.should == "?one=false"
+      request = a_request_with_options(:one => false)
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["false"]
+      }
     end
 
     it "should convert to a string all option values that are integers" do
-      @request.stubs(:options).returns(:one => 50)
-      @request.query_string.should == "?one=50"
+      request = a_request_with_options(:one => 50)
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["50"]
+      }
     end
 
     it "should convert to a string all option values that are floating point numbers" do
-      @request.stubs(:options).returns(:one => 1.2)
-      @request.query_string.should == "?one=1.2"
+      request = a_request_with_options(:one => 1.2)
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["1.2"]
+      }
     end
 
     it "should CGI-escape all option values that are strings" do
-      escaping = CGI.escape("one two")
-      @request.stubs(:options).returns(:one => "one two")
-      @request.query_string.should == "?one=#{escaping}"
+      request = a_request_with_options(:one => "one two")
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["one two"]
+      }
     end
 
-    it "should YAML-dump and CGI-escape arrays" do
-      escaping = CGI.escape(YAML.dump(%w{one two}))
-      @request.stubs(:options).returns(:one => %w{one two})
-      @request.query_string.should == "?one=#{escaping}"
+    it "should convert an array of values into multiple entries for the same key" do
+      request = a_request_with_options(:one => %w{one two})
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["one", "two"]
+      }
+    end
+
+    it "should stringify simple data types inside an array" do
+      request = a_request_with_options(:one => ['one', nil])
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["one"]
+      }
+    end
+
+    it "should error if an array contains another array" do
+      request = a_request_with_options(:one => ['one', ["not allowed"]])
+
+      expect { request.query_string }.to raise_error(ArgumentError)
+    end
+
+    it "should error if an array contains illegal data" do
+      request = a_request_with_options(:one => ['one', { :not => "allowed" }])
+
+      expect { request.query_string }.to raise_error(ArgumentError)
     end
 
     it "should convert to a string and CGI-escape all option values that are symbols" do
-      escaping = CGI.escape("sym bol")
-      @request.stubs(:options).returns(:one => :"sym bol")
-      @request.query_string.should == "?one=#{escaping}"
+      request = a_request_with_options(:one => :"sym bol")
+
+      the_parsed_query_string_from(request).should == {
+        "one" => ["sym bol"]
+      }
     end
 
     it "should fail if options other than booleans or strings are provided" do
-      @request.stubs(:options).returns(:one => {:one => :two})
-      lambda { @request.query_string }.should raise_error(ArgumentError)
+      request = a_request_with_options(:one => { :one => :two })
+
+      expect { request.query_string }.to raise_error(ArgumentError)
     end
   end
 
@@ -372,7 +425,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no key is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("key")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should set its indirector name" do
@@ -382,7 +435,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no type is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("type")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should set its method" do
@@ -392,7 +445,7 @@ describe Puppet::Indirector::Request do
     it "should fail if no method is provided" do
       json = PSON.parse(@request.to_pson)
       json['data'].delete("method")
-      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+      expect { from_json(json.to_pson) }.to raise_error(ArgumentError)
     end
 
     it "should initialize with all attributes and options" do

@@ -7,7 +7,7 @@ module Puppet::Network
     # Create our config object if necessary. If there's no configuration file
     # we install our defaults
     def self.authconfig
-      @auth_config_file ||= Puppet::Util::LoadedFile.new(Puppet[:rest_authconfig])
+      @auth_config_file ||= Puppet::Util::WatchedFile.new(Puppet[:rest_authconfig])
       if (not @auth_config) or @auth_config_file.changed?
         begin
           @auth_config = Puppet::Network::AuthConfigParser.new_from_file(Puppet[:rest_authconfig]).parse

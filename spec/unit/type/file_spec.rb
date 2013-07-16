@@ -184,14 +184,14 @@ describe Puppet::Type.type(:file) do
     [true, :true, :yes].each do |value|
       it "should consider #{value} to be true" do
         file[:replace] = value
-        file[:replace].should == :true
+        file[:replace].should be_true
       end
     end
 
     [false, :false, :no].each do |value|
       it "should consider #{value} to be false" do
         file[:replace] = value
-        file[:replace].should == :false
+        file[:replace].should be_false
       end
     end
   end
@@ -1124,7 +1124,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        expect { file.write :NOTUSED }.to_not raise_error(Puppet::Error)
+        expect { file.write :NOTUSED }.to_not raise_error
       end
     end
   end

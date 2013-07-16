@@ -36,7 +36,7 @@ module Puppet::ModuleTool::Shared
       mod_name, releases = pair
       mod_name = mod_name.gsub('/', '-')
       releases.each do |rel|
-        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer.MIN
+        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer::MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
         @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
@@ -107,7 +107,9 @@ module Puppet::ModuleTool::Shared
         @conditions.each { |_, conds| conds.delete_if { |c| c[:module] == mod } }
       end
 
-      valid_versions = @versions["#{mod}"].select { |h| range === h[:semver] }
+      versions = @versions["#{mod}"].select { |h| range === h[:semver] }
+      valid_versions = versions.select { |x| x[:semver].special == '' }
+      valid_versions = versions if valid_versions.empty?
 
       unless version = valid_versions.last
         req_module   = @module_name

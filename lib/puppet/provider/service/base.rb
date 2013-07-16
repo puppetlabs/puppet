@@ -92,7 +92,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       end
       begin
         output = kill pid
-      rescue Puppet::ExecutionFailure => detail
+      rescue Puppet::ExecutionFailure
         @resource.fail "Could not kill #{self.name}, PID #{pid}: #{output}"
       end
       return true
