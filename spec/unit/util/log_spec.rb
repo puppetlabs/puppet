@@ -255,17 +255,18 @@ describe Puppet::Util::Log do
         end
       end
 
-      it "should use the source_descriptors" do
-        source = stub "source"
-        source.stubs(:source_descriptors).returns(:tags => ["tag","tag2"], :path => "path", :version => 100)
+      it "should set the source to 'path', when available" do
+        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
+        source.tags = ["tag", "tag2"]
 
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
+        log.expects(:tag).with("file")
         log.expects(:tag).with("tag")
         log.expects(:tag).with("tag2")
 
         log.source = source
 
-        log.source.should == "path"
+        log.source.should == "/File[/foo/bar]"
       end
 
       it "should copy over any file and line information" do
@@ -273,8 +274,8 @@ describe Puppet::Util::Log do
         source.file = "/my/file"
         source.line = 50
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
-        log.file.should == "/my/file"
         log.line.should == 50
+        log.file.should == "/my/file"
       end
     end
 
