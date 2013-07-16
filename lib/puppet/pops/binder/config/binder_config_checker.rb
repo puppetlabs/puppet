@@ -7,6 +7,9 @@ module Puppet::Pops::Binder::Config
     #
     def initialize(diagnostics)
       @diagnostics = diagnostics
+      t = Puppet::Pops::Types
+      @type_calculator = t::TypeCalculator.new()
+      @array_of_string_type = t::TypeFactory.array_of(t::TypeFactory.string())
     end
 
     # Validate the consistency of the given data. Diagnostics will be emitted to the DiagnosticProducer
@@ -19,10 +22,10 @@ module Puppet::Pops::Binder::Config
     def validate(data, config_file)
       @unique_layer_names = Set.new()
 
-      if data.is_a?(Array)
-        data.each {|entry| check_layer(entry, config_file) }
+      if data.is_a?(Hash)
+        check_top_level(data, config_file)
       else
-        accept(Issues::CONFIG_IS_NOT_ARRAY, config_file)
+        accept(Issues::CONFIG_IS_NOT_HASH, config_file)
       end
     end
 
@@ -30,6 +33,27 @@ module Puppet::Pops::Binder::Config
 
     def accept(issue, semantic, options = {})
       @diagnostics.accept(issue, semantic, options)
+    end
+
+    def check_top_level(data, config_file)
+      if layers = (data['layers'] || data[:layers])
+        check_layers(layers, config_file)
+      else
+        accept(Issues::CONFIG_LAYERS_MISSING, config_file)
+      end
+      if categories = (data['categories'] || data[:categories])
+        check_categories(categories, config_file)
+      else
+        accept(Issues::CONFIG_CATEGORIES_MISSING, config_file)
+      end
+    end
+
+    def check_layers(layers, config_file)
+      unless layers.is_a?(Array)
+        accept(Issues::LAYERS_IS_NOT_ARRAY, config_file, :klass => data.class)
+      else
+        layers.each {|layer| check_layer(layer, config_file) }
+      end
     end
 
     def check_layer(layer, config_file)
@@ -60,6 +84,29 @@ module Puppet::Pops::Binder::Config
         else
           accept(Issues::UNKNOWN_LAYER_ATTRIBUTE, config_file, :name => k.to_s )
         end
+      end
+    end
+
+    def check_categories(categories, config_file)
+      unless categories.is_a?(Array)
+        accept(Issues::CATEGORIES_IS_NOT_ARRAY, config_file, :klass => categories.class)
+      else
+        categories.each { |entry| check_category(entry, config_file) }
+      end
+    end
+
+    def check_category(category, config_file)
+      type = @type_calculator.infer(category)
+      unless @type_calculator.assignable?(@array_of_string_type, type)
+        accept(Issues::CATEGORY_IS_NOT_ARRAY, config_file, :type => @type_calculator.string(type))
+        return
+      end
+      unless category.size == 2
+        accept(Issues::CATEGORY_NOT_TWO_STRINGS, config_file, :count => category.size)
+        return
+      end
+      unless category[0] =~ /[a-z][a-zA-Z0-9_]*/
+        accept(Issues::INVALID_CATEGORY_NAME, config_file, :name => category[0])
       end
     end
 

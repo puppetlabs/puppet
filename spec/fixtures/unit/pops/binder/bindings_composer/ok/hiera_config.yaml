@@ -1,0 +1,9 @@
+---
+hierarchy:
+  [ ['node', '${fqdn}', '${fqdn}' ],
+    ['common', 'true', 'common' ]
+  ]
+
+backends:
+  - yaml
+  - json

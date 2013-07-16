@@ -128,4 +128,15 @@ module Puppet::Pops::Binder::BinderIssues
   MISSING_BINDINGS_IN_LAYER = issue :MISSING_BINDINGS_IN_LAYER, :layer do
     "#{label.a_an_uc(semantic)} has zero bindings in #{label.label(layer)}"
   end
+
+  # @api public
+  PRECEDENCE_MISMATCH_IN_CONTRIBUTION = issue :PRECEDENCE_MISMATCH_IN_CONTRIBUTION, :categorization do
+    "Precedence mismatch: binding contribution '#{semantic.name}', category: '#{categorization}' is not in correct order"
+  end
+
+  # @api public
+  MISSING_CATEGORY_PRECEDENCE = issue :MISSING_CATEGORY_PRECEDENCE, :categorization do
+    "Missing category precedence: binding contribution '#{semantic.name}', category: '#{categorization}' not found in overall config"
+  end
+
 end

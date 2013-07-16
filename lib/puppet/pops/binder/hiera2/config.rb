@@ -46,6 +46,8 @@ module Puppet::Pops::Binder::Hiera2
         end
       rescue Errno::ENOENT
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
+      rescue Errno::ENOTDIR
+        diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
       rescue ::SyntaxError => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end

@@ -13,14 +13,26 @@ module Puppet::Pops::Binder::Config
     #
     # @return [Array<Hash<String, String>, Hash<String, Array<String>>]
     # @api public
+    #
     attr_reader :layering_config
+
+    # @return [Array<Array(String, String)>] Array of Category tuples
+    # @api public
+    #
+    attr_reader :categorization
 
     def default_config()
       # This is hardcoded now, but may be a user supplied configuration later
-      [
-        { 'name' => 'site', 'include' => 'confdir-hiera:/' },
+      {'layers' => [
+        { 'name' => 'site',    'include' => 'confdir-hiera:/'  },
         { 'name' => 'modules', 'include' => 'module-hiera:/*/' },
-      ]
+      ],
+      'categories' => [
+        ['node',        "${::fqdn}"],
+        ['environment', "${environment}"],
+        ['common',      "true"]
+        ]
+      }
     end
 
     def confdir()
@@ -49,17 +61,19 @@ module Puppet::Pops::Binder::Config
       begin
         data = config_file ? YAML.load_file(config_file) : default_config()
         validator.validate(data, config_file)
-        unless diagnostics.errors?
-          @layering_config = data
-        end
       rescue Errno::ENOENT
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
       rescue ::SyntaxError => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end
-      @layering_config ||= []
+
+      unless diagnostics.errors?
+        @layering_config = data['layers']
+        @categorization = data['categories']
+      else
+        @layering_config = []
+        @categorization = {}
+      end
     end
   end
-
-
 end

@@ -5,17 +5,21 @@ module Puppet::Pops::Binder::Hiera2
   # @api public
   #
   class BindingsProvider
+    # The resulting name of loaded bindings (given when initializing)
+    attr_reader :name
 
     # Creates a new BindingsProvider by reading the hiera_conf.yaml configuration file. Problems
     # with the configuration are reported propagated to the acceptor
     #
-    # @param module_dir [String] Path to the module directory
+    # @param name [String] the name to assign to the result (and in error messages if there is no result)
+    # @param hiera_config_dir [String] Path to the directory containing a hiera_config
     # @param acceptor [Puppet::Pops::Validation::Acceptor] Acceptor that will receive diagnostics
-    def initialize(module_dir, acceptor)
+    def initialize(name, hiera_config_dir, acceptor)
+      @name = name
       @parser = Puppet::Pops::Parser::Parser.new()
       @diagnostics = DiagnosticProducer.new(acceptor)
       @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
-      @config = Config.new(module_dir, @diagnostics)
+      @config = Config.new(hiera_config_dir, @diagnostics)
     end
 
     # Loads a bindings model using the hierarchy and backends configured for this instance.
@@ -25,7 +29,7 @@ module Puppet::Pops::Binder::Hiera2
     # @return [Puppet::Pops::Binder::Bindings::ContributedBindings] A bindings model with effective categories
     def load_bindings(facts)
       factory = Puppet::Pops::Binder::BindingsFactory
-      result = factory.named_bindings(@config.module_name)
+      result = factory.named_bindings(name)
       evaluator = StringEvaluator.new(facts, @parser, @diagnostics)
 
       hierarchy = {}
@@ -65,7 +69,7 @@ module Puppet::Pops::Binder::Hiera2
         end
       end
 
-      factory.contributed_bindings("module-hiera:#{@config.module_name}", result.model, factory.categories(precedence))
+      factory.contributed_bindings(name, result.model, factory.categories(precedence))
     end
 
     private

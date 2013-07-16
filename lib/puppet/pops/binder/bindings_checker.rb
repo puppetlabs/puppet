@@ -89,11 +89,12 @@ class Puppet::Pops::Binder::BindingsChecker
   def check_EffectiveCategories(ec)
   end
 
-  # Check that the layer has at least one binding
+  # Check layer has a name
   # @api private
   def check_NamedLayer(l)
     acceptor.accept(Issues::MISSING_LAYER_NAME, binding_parent(l)) unless has_chars?(l.name)
-    acceptor.accept(Issues::MISSING_BINDINGS_IN_LAYER, binding_parent(l), { :layer => l.name }) unless has_entries?(l.bindings)
+# It is ok to have an empty layer
+#    acceptor.accept(Issues::MISSING_BINDINGS_IN_LAYER, binding_parent(l), { :layer => l.name }) unless has_entries?(l.bindings)
   end
 
   # Checks that the binding has layers and that each layer has a name and at least one binding
