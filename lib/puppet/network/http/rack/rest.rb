@@ -51,7 +51,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
   # Retrieve all headers from the http request, as a map.
   def headers(request)
     request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
-      m[k.sub(/^HTTP_/, '').downcase] = v
+      m[k.sub(/^HTTP_/, '').gsub('_','-').downcase] = v
       m
     end
   end
