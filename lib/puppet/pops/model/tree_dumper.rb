@@ -25,7 +25,7 @@ class Puppet::Pops::Model::TreeDumper
     parts.each_index do |i|
       if i > 0
         # separate with space unless previous ends with whitepsace or (
-        result << ' ' if parts[i] != ")" && parts[i-1] !~ /.*(?:\s+|\()$/ && parts[i] !~ /\s+/
+        result << ' ' if parts[i] != ")" && parts[i-1] !~ /.*(?:\s+|\()$/ && parts[i] !~ /^\s+/
       end
       result << parts[i]
     end
