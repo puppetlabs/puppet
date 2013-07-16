@@ -291,16 +291,11 @@ class Puppet::Util::Log
   # If they pass a source in to us, we make sure it is a string, and
   # we retrieve any tags we can.
   def source=(source)
-    if source.respond_to?(:source_descriptors)
-      descriptors = source.source_descriptors
-      @source = descriptors[:path]
-
-      descriptors[:tags].each { |t| tag(t) }
-
-      [:file, :line].each do |param|
-        next unless descriptors[param]
-        send(param.to_s + "=", descriptors[param])
-      end
+    if source.respond_to?(:path)
+      @source = source.path
+      source.tags.each { |t| tag(t) }
+      self.file = source.file
+      self.line = source.line
     else
       @source = source.to_s
     end
