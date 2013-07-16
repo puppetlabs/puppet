@@ -248,9 +248,10 @@ class Puppet::Pops::Binder::Binder
 
         # Skip bindings if the categorization is not present, or
         # if the category value is not the effective value for the categorization
+        # Ignore the value for the common category (it is not possible to state common 'false' etc.)
         #
         return unless prec
-        return unless binder.category_values[p.categorization] == p.value
+        return unless binder.category_values[p.categorization] == p.value || p.categorization == 'common'
         prec
       end
 

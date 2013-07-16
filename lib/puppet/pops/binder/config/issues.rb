@@ -4,8 +4,36 @@ module Puppet::Pops::Binder::Config::Issues
     Puppet::Pops::Issues.issue(issue_code, *args, &block)
   end
 
-  CONFIG_IS_NOT_ARRAY = issue :CONFIG_IS_NOT_ARRAY do
-    "The configuration file '#{semantic}' has no array at the top level"
+  CONFIG_IS_NOT_HASH = issue :CONFIG_IS_NOT_HASH do
+    "The configuration file '#{semantic}' has no hash at the top level"
+  end
+
+  CONFIG_LAYERS_MISSING = issue :CONFIG_LAYERS_MISSING do
+    "The configuration file '#{semantic}' has no 'layers' entry in the top level hash"
+  end
+
+  CONFIG_CATEGORIES_MISSING = issue :CONFIG_CATEGORIES_MISSING do
+    "The configuration file '#{semantic}' has no 'categories' entry in the top level hash"
+  end
+
+  LAYERS_IS_NOT_ARRAY = issue :LAYERS_IS_NOT_ARRAY, :klass do
+    "The configuration file '#{semantic}' should contain a 'layers' key with an Array value, got: #{klass.name}"
+  end
+
+  CATEGORIES_IS_NOT_ARRAY = issue :CATEGORIES_IS_NOT_ARRAY, :klass do
+    "The configuration file '#{semantic}' should contain a 'categories' key with an Array value, got: #{klass.name}"
+  end
+
+  CATEGORY_IS_NOT_ARRAY = issue :CATEGORY_IS_NOT_ARRAY, :klass do
+    "The configuration file '#{semantic}' each entry in  'categories' should be an Array(String, String), got: #{klass.name}"
+  end
+
+  CATEGORY_NOT_TWO_STRINGS = issue :CATEGORY_NOT_TWO_STRINGS, :count do
+    "The configuration file '#{semantic}' each entry in  'categories' should be an array with 2 strings, got: #{count}"
+  end
+
+  INVALID_CATEGORY_NAME = issue :INVALID_CATEGORY_NAME, :name do
+    "The configuration file '#{semantic}' contains the invalid category: '#{name}', must match /[a-z][a-zA-Z0-9_]*/"
   end
 
   LAYER_IS_NOT_HASH = issue :LAYER_IS_NOT_HASH, :klass do

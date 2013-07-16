@@ -188,9 +188,9 @@ describe 'The bindings checker' do
       acceptor.should have_issue(Issues::MISSING_LAYER_NAME)
     end
 
-    it 'should not accept layers without bindings' do
+    it 'should accept layers without bindings' do
       validate(layered_bindings(layer('foo')))
-      acceptor.should have_issue(Issues::MISSING_BINDINGS_IN_LAYER)
+      acceptor.should_not have_issue(Issues::MISSING_BINDINGS_IN_LAYER)
     end
   end
 end

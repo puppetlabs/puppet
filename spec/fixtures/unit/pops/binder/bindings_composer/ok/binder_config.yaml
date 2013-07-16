@@ -1,0 +1,10 @@
+---
+layers:
+  [{name: site, include: 'confdir-hiera:/'},
+   {name: modules, include: 'module-hiera:/*/', exclude: 'module-hiera:/bad/' }
+  ]
+categories:
+  [['node', '$fqdn'],
+  ['environment', '$environment'],
+  ['common', 'true']
+  ]
