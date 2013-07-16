@@ -11,10 +11,19 @@ describe Puppet::Forge::Repository do
   let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', consumer_version) }
 
   it "retrieve accesses the cache" do
-    uri = URI.parse('http://some.url.com')
-    repository.cache.expects(:retrieve).with(uri)
+    path = '/module/foo.tar.gz'
+    repository.cache.expects(:retrieve)
 
-    repository.retrieve(uri)
+    repository.retrieve(path)
+  end
+
+  it "retrieve merges forge URI and path specified" do
+    path = '/module/foo.tar.gz'
+    repo_uri = 'http://fake.com/test'
+    repository = Puppet::Forge::Repository.new(repo_uri, consumer_version)
+    repository.cache.expects(:retrieve).with(URI.parse(repo_uri+path))
+
+    repository.retrieve(path)
   end
 
   describe "making a request" do
