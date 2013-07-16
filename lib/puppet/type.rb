@@ -7,7 +7,6 @@ require 'puppet/util'
 require 'puppet/util/autoload'
 require 'puppet/metatype/manager'
 require 'puppet/util/errors'
-require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/tagging'
 
@@ -77,7 +76,6 @@ module Puppet
 class Type
   include Puppet::Util
   include Puppet::Util::Errors
-  include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::Tagging
 
@@ -745,6 +743,13 @@ class Type
     return @parameters[name] if @parameters.include?(name)
 
     @parameters[name] = klass.new(:resource => self)
+  end
+
+  # Returns a string representation of the resource's containment path in
+  # the catalog.
+  # @return [String]
+  def path
+    @path ||= '/' + pathbuilder.join('/')
   end
 
   # Returns the value of this object's parameter given by name

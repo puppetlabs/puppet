@@ -37,11 +37,8 @@ describe Puppet::Parameter do
     @parameter.tags.should == %w{one two foo}
   end
 
-  it "should provide source_descriptors" do
-    @resource.expects(:line).returns 10
-    @resource.expects(:file).returns "file"
-    @resource.expects(:tags).returns %w{one two}
-    @parameter.source_descriptors.should == {:tags=>["one", "two", "foo"], :path=>"//foo", :file => "file", :line => 10}
+  it "should have a path" do
+    @parameter.path.should == "//foo"
   end
 
   describe "when returning the value" do
