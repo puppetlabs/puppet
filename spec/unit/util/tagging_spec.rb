@@ -61,10 +61,6 @@ describe Puppet::Util::Tagging, "when adding tags" do
     expect { @tagger.tag("good.tag") }.to_not raise_error
   end
 
-  it "should provide a method for testing tag validity" do
-    @tagger.singleton_class.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
-  end
-
   it "should add qualified classes as tags" do
     @tagger.tag("one::two")
     @tagger.tags.should be_include("one::two")
