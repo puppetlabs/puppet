@@ -1169,10 +1169,12 @@ class Type
     resource
   end
 
-  # Creates the path for logging and such.
-  # @todo "and such?", what?
-  # @api private
+
+  # Returns an array of strings representing the containment heirarchy
+  # (types/classes) that make up the path to the resource from the root
+  # of the catalog.  This is mostly used for logging purposes.
   #
+  # @api private
   def pathbuilder
     if p = parent
       [p.pathbuilder, self.ref].flatten
