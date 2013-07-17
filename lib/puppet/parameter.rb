@@ -386,9 +386,9 @@ class Puppet::Parameter
     tmp
   end
 
-  # @todo Original comment = _return the full path to us, for logging and rollback; not currently
-  #   used_ This is difficult to figure out (if it is used or not as calls are certainly made to "pathbuilder"
-  #   method is several places, not just sure if it is this implementation or not.
+  # Returns an array of strings representing the containment heirarchy
+  # (types/classes) that make up the path to the resource from the root
+  # of the catalog.  This is mostly used for logging purposes.
   #
   # @api private
   def pathbuilder
