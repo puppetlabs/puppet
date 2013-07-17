@@ -33,7 +33,6 @@ require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
 require 'puppet_spec/database'
 require 'monkey_patches/alias_should_to_must'
-require 'monkey_patches/publicize_methods'
 require 'puppet/test/test_helper'
 
 Pathname.glob("#{dir}/shared_contexts/*.rb") do |file|

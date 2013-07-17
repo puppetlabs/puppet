@@ -225,9 +225,10 @@ describe Puppet::Parser::Compiler do
       three = stub 'three', :name => "three"
       @node.stubs(:name).returns("whatever")
       @node.stubs(:classes).returns(classes)
+      compile_stub(:evaluate_node_classes)
 
       @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
-      @compiler.class.publicize_methods(:evaluate_node_classes) { @compiler.evaluate_node_classes }
+      @compiler.compile
     end
 
     it "should evaluate any parameterized classes named in the node" do
@@ -521,7 +522,7 @@ describe Puppet::Parser::Compiler do
         end
       }
 
-      @compiler.class.publicize_methods(:evaluate_collections) { @compiler.evaluate_collections }
+      @compiler.compile
     end
 
     it "should not fail when there are unevaluated resource collections that do not refer to specific resources" do
