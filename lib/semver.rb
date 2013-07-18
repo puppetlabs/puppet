@@ -119,6 +119,6 @@ class SemVer < Numeric
   MIN.instance_variable_set(:@vstring, 'vMIN')
 
   MAX = SemVer.new('8.0.0')
-  MAX.instance_variable_set(:@major, (1.0/0)) # => Infinity
+  MAX.instance_variable_set(:@major, Float::INFINITY) # => Infinity
   MAX.instance_variable_set(:@vstring, 'vMAX')
 end
